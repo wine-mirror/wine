@@ -225,6 +225,91 @@ void* vector_iter_down(const struct vector* v, void* elt)
     return vector_at(v, pos - 1);
 }
 
+/* We construct the sparse array as two vectors (of equal size)
+ * The first vector (key2index) is the lookup table between the key and
+ * an index in the second vector (elements)
+ * When inserting an element, it's always appended in second vector (and
+ * never moved in memory later on), only the first vector is reordered
+ */
+struct key2index
+{
+    unsigned long       key;
+    unsigned            index;
+};
+
+void sparse_array_init(struct sparse_array* sa, unsigned elt_sz, unsigned bucket_sz)
+{
+    vector_init(&sa->key2index, sizeof(struct key2index), bucket_sz);
+    vector_init(&sa->elements, elt_sz, bucket_sz);
+}
+
+/******************************************************************
+ *		spare_array_lookup
+ *
+ * Returns the first index which key is >= at passed key
+ */
+static struct key2index* spare_array_lookup(const struct sparse_array* sa,
+                                            unsigned long key, unsigned* idx)
+{
+    struct key2index*   pk2i;
+
+    /* FIXME: should use bsearch here */
+    for (*idx = 0; *idx < sa->elements.num_elts; (*idx)++)
+    {
+        pk2i = vector_at(&sa->key2index, *idx);
+        if (pk2i && pk2i->key >= key) return pk2i;
+    }
+    return NULL;
+}
+
+void*   sparse_array_find(const struct sparse_array* sa, unsigned long key)
+{
+    unsigned            idx;
+    struct key2index*   pk2i;
+
+    if ((pk2i = spare_array_lookup(sa, key, &idx)) && pk2i->key == key)
+        return vector_at(&sa->elements, pk2i->index);
+    return NULL;
+}
+
+void*   sparse_array_add(struct sparse_array* sa, unsigned long key, 
+                         struct pool* pool)
+{
+    unsigned            idx, i;
+    struct key2index*   pk2i;
+    struct key2index*   to;
+
+    pk2i = spare_array_lookup(sa, key, &idx);
+    if (pk2i && pk2i->key == key)
+    {
+        FIXME("re adding an existing key\n");
+        return NULL;
+    }
+    to = vector_add(&sa->key2index, pool);
+    if (pk2i)
+    {
+        /* we need to shift vector's content... */
+        /* let's do it brute force... (FIXME) */
+        assert(sa->key2index.num_elts >= 2);
+        for (i = sa->key2index.num_elts - 1; i > idx; i--)
+        {
+            pk2i = vector_at(&sa->key2index, i - 1);
+            *to = *pk2i;
+            to = pk2i;
+        }
+    }
+
+    to->key = key;
+    to->index = sa->elements.num_elts;
+
+    return vector_add(&sa->elements, pool);
+}
+
+unsigned sparse_array_length(const struct sparse_array* sa)
+{
+    return sa->elements.num_elts;
+}
+
 unsigned hash_table_hash(const char* name, unsigned num_buckets)
 {
     unsigned    hash = 0;

@@ -63,6 +63,17 @@ void*    vector_add(struct vector* v, struct pool* pool);
 void*    vector_iter_up(const struct vector* v, void* elt);
 void*    vector_iter_down(const struct vector* v, void* elt);
 
+struct sparse_array
+{
+    struct vector               key2index;
+    struct vector               elements;
+};
+
+void     sparse_array_init(struct sparse_array* sa, unsigned elt_sz, unsigned bucket_sz);
+void*    sparse_array_find(const struct sparse_array* sa, unsigned long idx);
+void*    sparse_array_add(struct sparse_array* sa, unsigned long key, struct pool* pool);
+unsigned sparse_array_length(const struct sparse_array* sa);
+
 struct hash_table_elt
 {
     const char*                 name;
