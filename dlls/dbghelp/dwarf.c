@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
  *      o Debug{Start|End}Point
  *      o CFA
  * - Udt
- *      o proper types loading (addresses, bitfield, nesting)
+ *      o proper types loading (nesting)
  */
 
 #if 0
@@ -817,6 +817,8 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
     union attribute name;
     union attribute loc;
     unsigned long offset = 0;
+    union attribute bit_size;
+    union attribute bit_offset;
 
     assert(parent);
 
@@ -830,8 +832,23 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
         offset = dwarf2_compute_location(ctx, loc.block, NULL);
         TRACE("found offset:%lu\n", offset); 		  
     }
-    
-    symt_add_udt_element(ctx->module, parent, name.string, elt_type, offset, 0);
+    if (!dwarf2_find_attribute(di, DW_AT_bit_size, &bit_size))   bit_size.uvalue = 0;
+    if (dwarf2_find_attribute(di, DW_AT_bit_offset, &bit_offset))
+    {
+        /* FIXME: we should only do this when implementation is LSB (which is
+         * the case on i386 processors)
+         */
+        union attribute nbytes;
+        if (!dwarf2_find_attribute(di, DW_AT_byte_size, &nbytes))
+        {
+            DWORD64     size;
+            nbytes.uvalue = symt_get_info(elt_type, TI_GET_LENGTH, &size) ? (unsigned long)size : 0;
+        }
+        bit_offset.uvalue = nbytes.uvalue * 8 - bit_offset.uvalue - bit_size.uvalue;
+    }
+    else bit_offset.uvalue = 0;
+    symt_add_udt_element(ctx->module, parent, name.string, elt_type,    
+                         (offset << 3) + bit_offset.uvalue, bit_size.uvalue);
 
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
