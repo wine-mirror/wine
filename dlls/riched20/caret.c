@@ -718,6 +718,7 @@ ME_CharFromPos(ME_TextEditor *editor, int x, int y)
   GetClientRect(editor->hWnd, &rc);
   if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom)
     return -1;
+  y += ME_GetYScrollPos(editor);
   ME_FindPixelPos(editor, x, y, &cursor, NULL);
   return (ME_GetParagraph(cursor.pRun)->member.para.nCharOfs
           + cursor.pRun->member.run.nCharOfs + cursor.nOffset);
