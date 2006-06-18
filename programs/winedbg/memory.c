@@ -280,17 +280,16 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     long double         val_real;
     DWORD64             size64;
     DWORD               tag, size, count, bt;
-    struct dbg_type     rtype;
+    struct dbg_type     type = lvalue->type;
+    struct dbg_type     sub_type;
 
-    if (lvalue->type.id == dbg_itype_none ||
-        !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
-        return;
+    if (!types_get_real_type(&type, &tag)) return;
 
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size64) ||
-            !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
+        if (!types_get_info(&type, TI_GET_LENGTH, &size64) ||
+            !types_get_info(&type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
@@ -326,16 +325,18 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     case SymTagPointerType:
         if (!memory_read_value(lvalue, sizeof(void*), &val_ptr)) return;
 
-        if (!types_get_info(&lvalue->type, TI_GET_TYPE, &rtype.id) ||
-            rtype.id == dbg_itype_none)
+        sub_type.module = lvalue->type.module;
+        if (!types_get_info(&type, TI_GET_TYPE, &sub_type.id) ||
+            sub_type.id == dbg_itype_none)
         {
             dbg_printf("Internal symbol error: unable to access memory location %p", val_ptr);
             break;
         }
-        rtype.module = lvalue->type.module;
-        if (types_get_info(&rtype, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
-            types_get_info(&rtype, TI_GET_BASETYPE, &bt) && bt == btChar &&
-            types_get_info(&rtype, TI_GET_LENGTH, &size64))
+        if (!types_get_real_type(&sub_type, &tag)) return;
+
+        if (types_get_info(&sub_type, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
+            types_get_info(&sub_type, TI_GET_BASETYPE, &bt) && bt == btChar &&
+            types_get_info(&sub_type, TI_GET_LENGTH, &size64))
         {
             char    buffer[1024];
 
@@ -366,7 +367,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
              */
             if (!be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
 
-            if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
+            if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))
             {
                 char                    buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
                 TI_FINDCHILDREN_PARAMS* fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
@@ -374,19 +375,18 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 char                    tmp[256];
                 VARIANT                 variant;
                 int                     i;
-                struct dbg_type         type;
 
                 fcp->Start = 0;
                 while (count)
                 {
                     fcp->Count = min(count, 256);
-                    if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
+                    if (types_get_info(&type, TI_FINDCHILDREN, fcp))
                     {
-                        type.module = lvalue->type.module;
+                        sub_type.module = type.module;
                         for (i = 0; i < min(fcp->Count, count); i++)
                         {
-                            type.id = fcp->ChildId[i];
-                            if (!types_get_info(&type, TI_GET_VALUE, &variant)) 
+                            sub_type.id = fcp->ChildId[i];
+                            if (!types_get_info(&sub_type, TI_GET_VALUE, &variant)) 
                                 continue;
                             switch (variant.n1.n2.vt)
                             {
@@ -396,7 +396,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                             if (ok)
                             {
                                 ptr = NULL;
-                                types_get_info(&type, TI_GET_SYMNAME, &ptr);
+                                types_get_info(&sub_type, TI_GET_SYMNAME, &ptr);
                                 if (!ptr) continue;
                                 WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                                 HeapFree(GetProcessHeap(), 0, ptr);

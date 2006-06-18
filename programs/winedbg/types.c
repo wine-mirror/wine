@@ -30,6 +30,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /******************************************************************
+ *		types_get_real_type
+ *
+ * Get rid of any potential typedef in the lvalue's type to get
+ * to the 'real' type (the one we can work upon).
+ */
+BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
+{
+    if (type->id == dbg_itype_none) return FALSE;
+    do
+    {
+        if (!types_get_info(type, TI_GET_SYMTAG, tag))
+            return FALSE;
+        if (*tag != SymTagTypedef) return TRUE;
+    } while (types_get_info(type, TI_GET_TYPE, &type->id));
+    return FALSE;
+}
+
+/******************************************************************
  *		types_extract_as_integer
  *
  * Given a lvalue, try to get an integral (or pointer/address) value
@@ -41,12 +59,12 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
     LONGLONG            val;
     DWORD               tag, bt;
     DWORD64             size;
+    struct dbg_type     type = lvalue->type;
 
-    if (lvalue->type.id == dbg_itype_none ||
-        !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
+    if (!types_get_real_type(&type, &tag))
         RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
 
-    if (lvalue->type.id == dbg_itype_segptr)
+    if (type.id == dbg_itype_segptr)
     {
         return (long int)memory_to_linear_addr(&lvalue->addr);
     }
@@ -54,8 +72,8 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
-            !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
+        if (!types_get_info(&type, TI_GET_LENGTH, &size) ||
+            !types_get_info(&type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
@@ -133,7 +151,8 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS* addr)
  */
 BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
 {
-    DWORD       tag;
+    struct dbg_type     type = lvalue->type;
+    DWORD               tag;
 
     memset(result, 0, sizeof(*result));
     result->type.id = dbg_itype_none;
@@ -142,12 +161,11 @@ BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
     /*
      * Make sure that this really makes sense.
      */
-    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
-        tag != SymTagPointerType ||
+    if (!types_get_real_type(&type, &tag) || tag != SymTagPointerType ||
         !memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
-        !types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id))
+        !types_get_info(&type, TI_GET_TYPE, &result->type.id))
         return FALSE;
-    result->type.module = lvalue->type.module;
+    result->type.module = type.module;
     result->cookie = DLV_TARGET;
     /* FIXME: this is currently buggy.
      * there is no way to tell were the deref:ed value is...
@@ -219,7 +237,6 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
     else
     {
         if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
-
     }
     return TRUE;
 }
@@ -279,15 +296,15 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
 BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, 
                        struct dbg_lvalue* result)
 {
-    DWORD       tag, count;
-    DWORD64     length;
+    struct dbg_type     type = lvalue->type;
+    DWORD               tag, count;
+    DWORD64             length;
 
-    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
-        return FALSE;
+    if (!types_get_real_type(&type, &tag)) return FALSE;
     switch (tag)
     {
     case SymTagArrayType:
-        types_get_info(&lvalue->type, TI_GET_COUNT, &count);
+        types_get_info(&type, TI_GET_COUNT, &count);
         if (index < 0 || index >= count) return FALSE;
         /* fall through */
     case SymTagPointerType:
@@ -296,7 +313,7 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
         /*
          * Get the base type, so we know how much to index by.
          */
-        types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id);
+        types_get_info(&type, TI_GET_TYPE, &result->type.id);
         types_get_info(&result->type, TI_GET_LENGTH, &length);
         memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
         result->addr.Offset += index * (DWORD)length;
@@ -399,13 +416,20 @@ struct dbg_type types_find_type(unsigned long linear, const char* name, enum Sym
  */
 void print_value(const struct dbg_lvalue* lvalue, char format, int level)
 {
+    struct dbg_type     type = lvalue->type;
     struct dbg_lvalue   lvalue_field;
     int		        i;
     DWORD               tag;
     DWORD               count;
     DWORD64             size;
 
-    if (lvalue->type.id == dbg_itype_none)
+    if (!types_get_real_type(&type, &tag))
+    {
+        WINE_FIXME("---error\n");
+        return;
+    }
+
+    if (type.id == dbg_itype_none)
     {
         /* No type, just print the addr value */
         print_bare_address(&lvalue->addr);
@@ -418,47 +442,45 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         format = '\0';
     }
 
-    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
-    {
-        WINE_FIXME("---error\n");
-        return;
-    }
     switch (tag)
     {
     case SymTagBaseType:
     case SymTagEnum:
     case SymTagPointerType:
+        /* FIXME: this in not 100% optimal (as we're going through the typedef handling
+         * stuff again
+         */
         print_basic(lvalue, 1, format);
         break;
     case SymTagUDT:
-        if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
+        if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
             char                        tmp[256];
             long int                    tmpbuf;
-            struct dbg_type             type;
+            struct dbg_type             sub_type;
 
             dbg_printf("{");
             fcp->Start = 0;
             while (count)
             {
                 fcp->Count = min(count, 256);
-                if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
+                if (types_get_info(&type, TI_FINDCHILDREN, fcp))
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         ptr = NULL;
-                        type.module = lvalue->type.module;
-                        type.id = fcp->ChildId[i];
-                        types_get_info(&type, TI_GET_SYMNAME, &ptr);
+                        sub_type.module = type.module;
+                        sub_type.id = fcp->ChildId[i];
+                        types_get_info(&sub_type, TI_GET_SYMNAME, &ptr);
                         if (!ptr) continue;
                         WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                         dbg_printf("%s=", tmp);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         lvalue_field = *lvalue;
-                        if (types_get_udt_element_lvalue(&lvalue_field, &type, &tmpbuf))
+                        if (types_get_udt_element_lvalue(&lvalue_field, &sub_type, &tmpbuf))
                         {
                             print_value(&lvalue_field, format, level + 1);
                         }
@@ -476,8 +498,8 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
          * Loop over all of the entries, printing stuff as we go.
          */
         count = 1; size = 1;
-        types_get_info(&lvalue->type, TI_GET_COUNT, &count);
-        types_get_info(&lvalue->type, TI_GET_LENGTH, &size);
+        types_get_info(&type, TI_GET_COUNT, &count);
+        types_get_info(&type, TI_GET_LENGTH, &size);
 
         if (size == count)
 	{
@@ -495,7 +517,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
             break;
         }
         lvalue_field = *lvalue;
-        types_get_info(&lvalue->type, TI_GET_TYPE, &lvalue_field.type.id);
+        types_get_info(&type, TI_GET_TYPE, &lvalue_field.type.id);
         dbg_printf("{");
         for (i = 0; i < count; i++)
 	{
@@ -508,7 +530,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         dbg_printf("Function ");
         print_bare_address(&lvalue->addr);
         dbg_printf(": ");
-        types_print_type(&lvalue->type, FALSE);
+        types_print_type(&type, FALSE);
         break;
     case SymTagTypedef:
         lvalue_field = *lvalue;

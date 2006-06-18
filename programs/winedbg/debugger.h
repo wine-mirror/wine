@@ -392,6 +392,7 @@ extern BOOL             types_deref(const struct dbg_lvalue* value, struct dbg_l
 extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, long int* tmpbuf);
 extern BOOL             types_array_index(const struct dbg_lvalue* value, int index, struct dbg_lvalue* result);
 extern BOOL             types_get_info(const struct dbg_type*, IMAGEHLP_SYMBOL_TYPE_INFO, void*);
+extern BOOL             types_get_real_type(struct dbg_type* type, DWORD* tag);
 extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
 extern struct dbg_type  types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag);
 
