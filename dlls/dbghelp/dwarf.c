@@ -2,6 +2,7 @@
  * File dwarf.c - read dwarf2 information from the ELF modules
  *
  * Copyright (C) 2005, Raphael Junqueira
+ * Copyright (C) 2006, Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -489,6 +490,9 @@ typedef struct dwarf2_parse_context_s {
   unsigned char level;
 } dwarf2_parse_context_t;
 
+/* forward declarations */
+static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx);
+
 static unsigned char dwarf2_parse_byte(dwarf2_parse_context_t* ctx)
 {
   unsigned char uvalue = *(const unsigned char*) ctx->data;
@@ -908,7 +912,7 @@ static struct symt_basic* dwarf2_parse_base_type(struct module* module, dwarf2_a
       TRACE("found name %s\n", name);
       break;
     case DW_AT_byte_size:
-      size = dwarf2_parse_byte(ctx);
+      size = dwarf2_parse_attr_as_data(attr, ctx);
       break;
     case DW_AT_encoding:
       encoding = dwarf2_parse_byte(ctx);
@@ -992,7 +996,7 @@ static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwa
   for (attr = entry->attrs; NULL != attr; attr = attr->next) {
     switch (attr->attribute) {
     case DW_AT_byte_size:
-      size = dwarf2_parse_byte(ctx);
+      size = dwarf2_parse_attr_as_data(attr, ctx);
       break;
     case DW_AT_type:
       {
@@ -1314,6 +1318,12 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
       case DW_TAG_member:
 	dwarf2_parse_udt_member(module, entry, ctx, symt);
 	break;
+      case DW_TAG_enumeration_type:
+	{
+	  struct symt_enum* symt = dwarf2_parse_enumeration_type(module, entry, ctx);
+	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
+	}
+	break;
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
@@ -1349,7 +1359,7 @@ static struct symt_udt* dwarf2_parse_class_type(struct module* module, dwarf2_ab
       TRACE("found name %s\n", name);
       break;
     case DW_AT_byte_size:
-      size = dwarf2_parse_byte(ctx);
+      size = dwarf2_parse_attr_as_data(attr, ctx);
       break;
     case DW_AT_decl_file:
     case DW_AT_decl_line:
@@ -1389,7 +1399,7 @@ static struct symt_udt* dwarf2_parse_struct_type(struct module* module, dwarf2_a
       TRACE("found name %s\n", name);
       break;
     case DW_AT_byte_size:
-      size = dwarf2_parse_byte(ctx);
+      size = dwarf2_parse_attr_as_data(attr, ctx);
       break;
     case DW_AT_decl_file:
     case DW_AT_decl_line:
@@ -1429,7 +1439,7 @@ static struct symt_udt* dwarf2_parse_union_type(struct module* module, dwarf2_ab
       TRACE("found name %s\n", name);
       break;
     case DW_AT_byte_size:
-      size = dwarf2_parse_byte(ctx);
+      size = dwarf2_parse_attr_as_data(attr, ctx);
       break;
     case DW_AT_decl_file:
     case DW_AT_decl_line:
