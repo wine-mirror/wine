@@ -522,7 +522,7 @@ static void dwarf2_parse_attr(dwarf2_abbrev_entry_attr_t* attr,
 
 static struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long ref)
 {
-  TRACE("want ref<0x%lx>\n", ref); 
+  WARN("want ref<0x%lx>\n", ref); 
   return NULL;
 }
 
@@ -556,7 +556,7 @@ static struct symt_basic* dwarf2_parse_base_type(struct module* module, dwarf2_a
       encoding = dwarf2_parse_byte(ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -608,7 +608,7 @@ static struct symt_typedef* dwarf2_parse_typedef(struct module* module, dwarf2_a
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -643,7 +643,7 @@ static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwa
       }
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -686,7 +686,7 @@ static void dwarf2_parse_array_subrange_type(struct module* module, dwarf2_abbre
       max = min + dwarf2_parse_attr_as_data(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -725,7 +725,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
       }
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -757,7 +757,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -790,7 +790,7 @@ static struct symt* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev
       }
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -826,7 +826,7 @@ static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_ab
       }
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -890,7 +890,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
 	  uvalue = dwarf2_parse_u4(ctx);
 	  break;
 	default:
-	  TRACE("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+	  WARN("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
 	  dwarf2_parse_attr(attr, ctx);
 	}
 	if (uvalue) {
@@ -901,7 +901,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
 	    offset = dwarf2_leb128_as_unsigned(ctx);
 	    break;
 	  default:
-	    TRACE("Unhandled attr op at %s, for %s, op:%u\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr), op);
+	    WARN("Unhandled attr op at %s, for %s, op:%u\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr), op);
 	    ctx->data += uvalue;
 	  }
 	  TRACE("found offset:%lu\n", offset); 		  
@@ -913,7 +913,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -959,7 +959,7 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -997,7 +997,7 @@ static struct symt_udt* dwarf2_parse_class_type(struct module* module, dwarf2_ab
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1037,7 +1037,7 @@ static struct symt_udt* dwarf2_parse_struct_type(struct module* module, dwarf2_a
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1077,7 +1077,7 @@ static struct symt_udt* dwarf2_parse_union_type(struct module* module, dwarf2_ab
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1115,12 +1115,12 @@ static void dwarf2_parse_enumerator(struct module* module, dwarf2_abbrev_entry_t
 	TRACE("found value %ld\n", value);
 	break;
       default:
-	TRACE("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
+	WARN("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
 	dwarf2_parse_attr(attr, ctx);
       }
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1158,7 +1158,7 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1188,7 +1188,7 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -1235,7 +1235,7 @@ static void dwarf2_parse_variable(struct module* module,
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1284,7 +1284,7 @@ static void dwarf2_parse_subprogram_parameter(struct module* module,
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1334,7 +1334,7 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1367,7 +1367,7 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -1411,7 +1411,7 @@ static void dwarf2_parse_subprogram_block(struct module* module,
       dwarf2_parse_attr(attr, ctx);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1444,7 +1444,7 @@ static void dwarf2_parse_subprogram_block(struct module* module,
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -1495,7 +1495,7 @@ static void dwarf2_parse_subprogram_content(struct module* module,
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -1573,7 +1573,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
       break;
     */
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1687,7 +1687,7 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, ctx);
 	  }
@@ -1717,7 +1717,7 @@ static struct symt_compiland* dwarf2_parse_compiland(struct module* module, cons
       TRACE("found name %s\n", name);
       break;
     default:
-      TRACE("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
+      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
       dwarf2_parse_attr(attr, ctx);
     }
   }
@@ -1812,7 +1812,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
       default:
 	{
 	  dwarf2_abbrev_entry_attr_t* attr;
-	  TRACE("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(&ctx), entry->entry_code); 
+	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(&ctx), entry->entry_code); 
 	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
 	    dwarf2_parse_attr(attr, &ctx);
 	  }
