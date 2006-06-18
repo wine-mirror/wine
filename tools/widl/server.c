@@ -276,7 +276,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             print_server("NdrConvert(\n");
             indent++;
             print_server("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-            print_server("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", proc_offset);
+            print_server("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
             indent -= 2;
             fprintf(server, "\n");
 
@@ -422,14 +422,14 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             while (var)
             {
-                proc_offset += get_size_procformatstring_var(var);
+                *proc_offset += get_size_procformatstring_var(var);
                 var = PREV_LINK(var);
             }
         }
         if (!is_void(def->type, NULL))
-            proc_offset += get_size_procformatstring_var(def);
+            *proc_offset += get_size_procformatstring_var(def);
         else
-            proc_offset += 2; /* FC_END and FC_PAD */
+            *proc_offset += 2; /* FC_END and FC_PAD */
 
         func = PREV_LINK(func);
     }

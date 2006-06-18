@@ -271,14 +271,14 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             while (var)
             {
-                proc_offset += get_size_procformatstring_var(var);
+                *proc_offset += get_size_procformatstring_var(var);
                 var = PREV_LINK(var);
             }
         }
         if (!is_void(def->type, NULL))
-            proc_offset += get_size_procformatstring_var(def);
+            *proc_offset += get_size_procformatstring_var(def);
         else
-            proc_offset += 2; /* FC_END and FC_PAD */
+            *proc_offset += 2; /* FC_END and FC_PAD */
 
         indent--;
         print_client("}\n");
