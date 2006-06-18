@@ -1127,7 +1127,7 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
   }
 }
 
-static struct symt_udt* dwarf2_parse_class_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_udt* dwarf2_parse_udt_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, enum UdtKind udt)
 {
   struct symt_udt* symt = NULL;
   const char* name = NULL;
@@ -1158,87 +1158,7 @@ static struct symt_udt* dwarf2_parse_class_type(struct module* module, dwarf2_ab
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt = symt_new_udt(module, name, size, UdtClass);
-  dwarf2_parse_udt_members(module, entry, ctx, symt);
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
-}
-
-static struct symt_udt* dwarf2_parse_struct_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
-{
-  struct symt_udt* symt = NULL;
-  const char* name = NULL;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt = symt_new_udt(module, name, size, UdtStruct);
-  dwarf2_parse_udt_members(module, entry, ctx, symt);
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
-}
-
-static struct symt_udt* dwarf2_parse_union_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
-{
-  struct symt_udt* symt = NULL;
-  const char* name = NULL;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt = symt_new_udt(module, name, size, UdtUnion);
+  symt = symt_new_udt(module, name, size, udt);
   dwarf2_parse_udt_members(module, entry, ctx, symt);
 
   /** set correct data cursor */
@@ -1794,19 +1714,19 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 	break;
       case DW_TAG_class_type:
 	{
-	  struct symt_udt* symt = dwarf2_parse_class_type(module, entry, ctx);
+            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtClass);
 	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
 	}
 	break;
       case DW_TAG_structure_type:
 	{
-	  struct symt_udt* symt = dwarf2_parse_struct_type(module, entry, ctx);
+            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtStruct);
 	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
 	}
 	break;
       case DW_TAG_union_type:
 	{
-	  struct symt_udt* symt = dwarf2_parse_union_type(module, entry, ctx);
+            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtUnion);
 	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
 	}
 	break;
