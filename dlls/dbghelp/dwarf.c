@@ -104,21 +104,18 @@ typedef struct dwarf2_abbrev_entry_attr_s {
   struct dwarf2_abbrev_entry_attr_s* next;
 } dwarf2_abbrev_entry_attr_t;
 
-typedef struct dwarf2_abbrev_entry_s {
-  unsigned long entry_code;
-  unsigned long tag;
-  unsigned char have_child;
-  dwarf2_abbrev_entry_attr_t* attrs;
-  struct dwarf2_abbrev_entry_s* next;
+typedef struct dwarf2_abbrev_entry_s
+{
+    unsigned long entry_code;
+    unsigned long tag;
+    unsigned char have_child;
+    unsigned num_attr;
+    dwarf2_abbrev_entry_attr_t* attrs;
 } dwarf2_abbrev_entry_t;
 
-typedef struct dwarf2_abbrev_table_s {
-  dwarf2_abbrev_entry_t* first;
-  unsigned n_entries;
-} dwarf2_abbrev_table_t;
-
 typedef struct dwarf2_parse_context_s {
-  dwarf2_abbrev_table_t* abbrev_table;
+  struct pool pool;
+  struct sparse_array abbrev_table;
   const unsigned char* data_stream;
   const unsigned char* data;
   const unsigned char* start_data;
@@ -216,119 +213,73 @@ static void dwarf2_check_sibling(dwarf2_parse_context_t* ctx, unsigned long next
 }
 
 
-static dwarf2_abbrev_entry_attr_t* dwarf2_abbrev_entry_add_attr(dwarf2_abbrev_entry_t* abbrev_entry, unsigned long attribute, unsigned long form)
+static dwarf2_abbrev_entry_t*
+dwarf2_abbrev_table_find_entry(struct sparse_array* abbrev_table,
+                               unsigned long entry_code)
 {
-  dwarf2_abbrev_entry_attr_t* ret = NULL;
-  dwarf2_abbrev_entry_attr_t* it = NULL;
-
-  assert( NULL != abbrev_entry );
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dwarf2_abbrev_entry_attr_t));
-  assert( NULL != ret );
-
-  ret->attribute = attribute;
-  ret->form      = form;
-
-  ret->next = NULL;
-  if (NULL == abbrev_entry->attrs) {
-    abbrev_entry->attrs = ret;
-  } else {
-    for (it = abbrev_entry->attrs; NULL != it->next; it = it->next) ;
-    it->next = ret;
-  }
-  return ret;
+    assert( NULL != abbrev_table );
+    return sparse_array_find(abbrev_table, entry_code);
 }
 
-static dwarf2_abbrev_entry_t* dwarf2_abbrev_table_add_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code, unsigned long tag, unsigned char have_child)
+static void dwarf2_parse_abbrev_set(dwarf2_parse_context_t* abbrev_ctx, 
+                                    struct sparse_array* abbrev_table,
+                                    struct pool* pool)
 {
-  dwarf2_abbrev_entry_t* ret = NULL;
-
-  assert( NULL != abbrev_table );
-  ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dwarf2_abbrev_entry_t));
-  assert( NULL != ret );
-
-  TRACE("(table:%p,n_entries:%u) entry_code(%lu) tag(0x%lx) have_child(%u) -> %p\n", abbrev_table, abbrev_table->n_entries, entry_code, tag, have_child, ret);
-
-  ret->entry_code = entry_code;
-  ret->tag        = tag;
-  ret->have_child = have_child;
-  ret->attrs      = NULL;
-
-  ret->next       = abbrev_table->first;
-  abbrev_table->first = ret;
-  abbrev_table->n_entries++;
-  return ret;
-}
-
-static dwarf2_abbrev_entry_t* dwarf2_abbrev_table_find_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code)
-{
-  dwarf2_abbrev_entry_t* ret = NULL;
-
-  assert( NULL != abbrev_table );
-  for (ret = abbrev_table->first; ret; ret = ret->next) {
-    if (ret->entry_code == entry_code) { break ; }
-  }
-  return ret;
-}
-
-static void dwarf2_abbrev_table_free(dwarf2_abbrev_table_t* abbrev_table)
-{
-  dwarf2_abbrev_entry_t* entry = NULL;
-  dwarf2_abbrev_entry_t* next_entry = NULL;
-  assert( NULL != abbrev_table );
-  for (entry = abbrev_table->first; NULL != entry; entry = next_entry) {
-    dwarf2_abbrev_entry_attr_t* attr = NULL;
-    dwarf2_abbrev_entry_attr_t* next_attr = NULL;
-    for (attr = entry->attrs; NULL != attr; attr = next_attr) {
-      next_attr = attr->next;
-      HeapFree(GetProcessHeap(), 0, attr);
-    }
-    next_entry = entry->next;
-    HeapFree(GetProcessHeap(), 0, entry);
-  }
-  abbrev_table->first = NULL;
-  abbrev_table->n_entries = 0;
-}
-
-static dwarf2_abbrev_table_t* dwarf2_parse_abbrev_set(dwarf2_parse_context_t* abbrev_ctx)
-{
-  dwarf2_abbrev_table_t* abbrev_table = NULL;
-
-  TRACE("%s, end at %p\n", dwarf2_debug_ctx(abbrev_ctx), abbrev_ctx->end_data); 
-
-  assert( NULL != abbrev_ctx );
-  abbrev_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dwarf2_abbrev_table_t));
-  assert( NULL != abbrev_table );
-
-  while (abbrev_ctx->data < abbrev_ctx->end_data) {
     unsigned long entry_code;
-    unsigned long tag;
-    unsigned char have_child;
     dwarf2_abbrev_entry_t* abbrev_entry;
+    dwarf2_abbrev_entry_attr_t* new = NULL;
+    dwarf2_abbrev_entry_attr_t* last = NULL;
+    unsigned long attribute;
+    unsigned long form;
 
-    TRACE("now at %s\n", dwarf2_debug_ctx(abbrev_ctx)); 
-    entry_code = dwarf2_leb128_as_unsigned(abbrev_ctx);
-    TRACE("found entry_code %lu\n", entry_code);
-    if (0 == entry_code) {
-      TRACE("NULL entry code at %s\n", dwarf2_debug_ctx(abbrev_ctx)); 
-      break ;
+    TRACE("%s, end at %p\n", dwarf2_debug_ctx(abbrev_ctx), abbrev_ctx->end_data); 
+
+    assert( NULL != abbrev_ctx );
+
+    sparse_array_init(abbrev_table, sizeof(dwarf2_abbrev_entry_t), 32);
+    while (abbrev_ctx->data < abbrev_ctx->end_data)
+    {
+        TRACE("now at %s\n", dwarf2_debug_ctx(abbrev_ctx)); 
+        entry_code = dwarf2_leb128_as_unsigned(abbrev_ctx);
+        TRACE("found entry_code %lu\n", entry_code);
+        if (!entry_code)
+        {
+            TRACE("NULL entry code at %s\n", dwarf2_debug_ctx(abbrev_ctx)); 
+            break;
+        }
+        abbrev_entry = sparse_array_add(abbrev_table, entry_code, pool);
+        assert( NULL != abbrev_entry );
+
+        abbrev_entry->entry_code = entry_code;
+        abbrev_entry->tag        = dwarf2_leb128_as_unsigned(abbrev_ctx);
+        abbrev_entry->have_child = dwarf2_parse_byte(abbrev_ctx);
+        abbrev_entry->attrs      = NULL;
+        abbrev_entry->num_attr   = 0;
+
+        TRACE("table:(%p,#%u) entry_code(%lu) tag(0x%lx) have_child(%u) -> %p\n",
+              abbrev_table, sparse_array_length(abbrev_table),
+              entry_code, abbrev_entry->tag, abbrev_entry->have_child, abbrev_entry);
+
+        last = NULL;
+        while (1)
+        {
+            attribute = dwarf2_leb128_as_unsigned(abbrev_ctx);
+            form = dwarf2_leb128_as_unsigned(abbrev_ctx);
+            if (!attribute) break;
+
+            new = pool_alloc(pool, sizeof(dwarf2_abbrev_entry_attr_t));
+            assert(new);
+
+            new->attribute = attribute;
+            new->form      = form;
+            new->next      = NULL;
+            if (abbrev_entry->attrs)    last->next = new;
+            else                        abbrev_entry->attrs = new;
+            last = new;
+            abbrev_entry->num_attr++;
+        }
     }
-    tag = dwarf2_leb128_as_unsigned(abbrev_ctx);
-    have_child = dwarf2_parse_byte(abbrev_ctx);
-
-    abbrev_entry = dwarf2_abbrev_table_add_entry(abbrev_table, entry_code, tag, have_child);
-    assert( NULL != abbrev_entry );
-    while (1) {
-      unsigned long attribute;
-      unsigned long form;
-      attribute = dwarf2_leb128_as_unsigned(abbrev_ctx);
-      form = dwarf2_leb128_as_unsigned(abbrev_ctx);
-      if (0 == attribute) break;
-      dwarf2_abbrev_entry_add_attr(abbrev_entry, attribute, form);
-    }
-  }
-
-  TRACE("found %u entries\n", abbrev_table->n_entries);
-  return abbrev_table;
+    TRACE("found %u entries\n", sparse_array_length(abbrev_table));
 }
 
 static const char* dwarf2_parse_attr_as_string(dwarf2_abbrev_entry_attr_t* attr,
@@ -747,7 +698,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -943,7 +894,7 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1178,7 +1129,7 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1353,7 +1304,7 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1430,7 +1381,7 @@ static void dwarf2_parse_subprogram_block(struct module* module,
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1478,7 +1429,7 @@ static void dwarf2_parse_subprogram_content(struct module* module,
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1613,7 +1564,7 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 	break ;
       }
 
-      entry = dwarf2_abbrev_table_find_entry(ctx->abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
       assert( NULL != entry );
 
       switch (entry->tag) {
@@ -1738,7 +1689,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
   const unsigned char* end_debug = debug + debug_size;
 
   while (comp_unit_cursor < end_debug) {
-    dwarf2_abbrev_table_t* abbrev_table;
     const dwarf2_comp_unit_stream_t* comp_unit_stream;
     dwarf2_comp_unit_t comp_unit;
     dwarf2_parse_context_t ctx;
@@ -1758,6 +1708,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     TRACE("- abbrev_offset: %lu\n", comp_unit.abbrev_offset);
     TRACE("- word_size:     %u\n",  comp_unit.word_size);
 
+    pool_init(&ctx.pool, 65536);
     ctx.data_stream = debug;
     ctx.data = ctx.start_data = comp_unit_cursor + sizeof(dwarf2_comp_unit_stream_t);
     ctx.offset = comp_unit_cursor - debug;
@@ -1772,15 +1723,12 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
       continue ;
     }
 
-    abbrev_ctx.abbrev_table = NULL;
     abbrev_ctx.data_stream = abbrev;
     abbrev_ctx.data = abbrev_ctx.start_data = abbrev + comp_unit.abbrev_offset;
     abbrev_ctx.end_data = abbrev + abbrev_size;
     abbrev_ctx.offset = comp_unit.abbrev_offset;
     abbrev_ctx.str_section = str;
-    abbrev_table = dwarf2_parse_abbrev_set(&abbrev_ctx);    
-
-    ctx.abbrev_table = abbrev_table;
+    dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
 
     while (ctx.data < ctx.end_data) {
       const dwarf2_abbrev_entry_t* entry = NULL;
@@ -1794,10 +1742,10 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
       if (0 == entry_code) {
 	continue ;
       }
-      entry = dwarf2_abbrev_table_find_entry(abbrev_table, entry_code);
+      entry = dwarf2_abbrev_table_find_entry(&ctx.abbrev_table, entry_code);
       if (NULL == entry) {
 	WARN("Cannot find abbrev entry for %lu at 0x%lx\n", entry_code, entry_ref);
-	dwarf2_abbrev_table_free(abbrev_table);
+	pool_destroy(&ctx.pool);
 	return FALSE;
       }
 
@@ -1820,7 +1768,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 	break;
       }
     }
-    dwarf2_abbrev_table_free(abbrev_table);
+    pool_destroy(&ctx.pool);
   }
   
   module->module.SymType = SymDia;
