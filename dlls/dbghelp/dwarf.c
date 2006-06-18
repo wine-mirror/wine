@@ -55,11 +55,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
 
 /* FIXME:
  * - Functions:
- *      o local variables
  *      o unspecified parameters
  *      o inlined functions
  *      o line numbers
  *      o Debug{Start|End}Point
+ *      o CFA
  * - Udt
  *      o proper types loading (addresses, bitfield, nesting)
  */
@@ -941,30 +941,15 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
     return di->symt;
 }
 
-static void dwarf2_parse_variable(dwarf2_parse_context_t* ctx,
-				  dwarf2_debug_info_t* di)
-{
-    struct symt* var_type;
-    union attribute name;
-
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
-
-    var_type = dwarf2_lookup_type(ctx, di);
-    dwarf2_find_name(ctx, di, &name, "variable");
-    /* FIXME: still lots to do !!! */
-
-    if (di->abbrev->have_child) FIXME("Unsupported children\n");
-}
-
 static unsigned dwarf2_map_register(int regno)
 {
     unsigned    reg;
 
     switch (regno)
     {
-    case -1:
+    case Wine_DW_no_register: FIXME("What the heck\n"); reg = 0; break;
     /* FIXME: this is a dirty hack */
-    case -2: reg = 0;          break;
+    case Wine_DW_frame_register: reg = 0;          break;
     case  0: reg = CV_REG_EAX; break;
     case  1: reg = CV_REG_ECX; break;
     case  2: reg = CV_REG_EDX; break;
@@ -1005,63 +990,101 @@ reg: fop   31
     return reg;
 }
 
-static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
-                                              struct symt_function* func,
-					      struct symt_block* block,
-					      dwarf2_debug_info_t* di)
+/* structure used to pass information around when parsing a subprogram */
+typedef struct dwarf2_subprogram_s
+{
+    dwarf2_parse_context_t*     ctx;
+    struct symt_compiland*      compiland;
+    struct symt_function*       func;
+    long                        frame_offset;
+    int                         frame_reg;
+} dwarf2_subprogram_t;
+
+/******************************************************************
+ *		dwarf2_parse_variable
+ *
+ * Parses any variable (parameter, local/global variable)
+ */
+static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
+                                  struct symt_block* block,
+                                  dwarf2_debug_info_t* di)
 {
     struct symt* param_type;
     union attribute loc;
+    BOOL is_pmt = di->abbrev->tag == DW_TAG_formal_parameter;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
-    param_type = dwarf2_lookup_type(ctx, di);
+    param_type = dwarf2_lookup_type(subpgm->ctx, di);
     if (dwarf2_find_attribute(di, DW_AT_location, &loc))
     {
         union attribute name;
-        unsigned long offset;
+        union attribute ext;
+        long offset;
         int in_reg;
 
-        dwarf2_find_name(ctx, di, &name, "parameter");
-        offset = dwarf2_compute_location(ctx, loc.block, &in_reg);
+        dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
+        offset = dwarf2_compute_location(subpgm->ctx, loc.block, &in_reg);
 	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
-              name.string, offset, in_reg, dwarf2_debug_ctx(ctx));
-        symt_add_func_local(ctx->module, func, 
-                            DataIsParam, dwarf2_map_register(in_reg), offset,
-                            block, param_type, name.string);
+              name.string, offset, in_reg, dwarf2_debug_ctx(subpgm->ctx));
+        switch (in_reg)
+        {
+        case Wine_DW_no_register:
+            /* it's a global variable */
+            /* FIXME: we don't handle it's scope yet */
+            if (!dwarf2_find_attribute(di, DW_AT_external, &ext))
+                ext.uvalue = 0;
+            symt_new_global_variable(subpgm->ctx->module, subpgm->compiland,
+                                     name.string, !ext.uvalue,
+                                     subpgm->ctx->module->module.BaseOfImage + offset,
+                                     0, param_type);
+            break;
+        case Wine_DW_frame_register:
+            in_reg = subpgm->frame_reg;
+            offset += subpgm->frame_offset;
+            /* fall through */
+        default:
+            /* either a pmt/variable relative to frame pointer or
+             * pmt/variable in a register
+             */
+            symt_add_func_local(subpgm->ctx->module, subpgm->func, 
+                                is_pmt ? DataIsParam : DataIsLocal,
+                                dwarf2_map_register(in_reg), offset,
+                                block, param_type, name.string);
+            break;
+        }
     }
-    if (func && func->type)
-        symt_add_function_signature_parameter(ctx->module,
-                                              (struct symt_function_signature*)func->type,
+    if (is_pmt && subpgm->func && subpgm->func->type)
+        symt_add_function_signature_parameter(subpgm->ctx->module,
+                                              (struct symt_function_signature*)subpgm->func->type,
                                               param_type);
 
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
-static void dwarf2_parse_subprogram_label(dwarf2_parse_context_t* ctx,
-                                          struct symt_function* func,
+static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
                                           dwarf2_debug_info_t* di)
 {
     union attribute name;
     union attribute low_pc;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.uvalue = 0;
-    dwarf2_find_name(ctx, di, &name, "label");
+    dwarf2_find_name(subpgm->ctx, di, &name, "label");
 
-    symt_add_function_point(ctx->module, func, SymTagLabel,
-                            ctx->module->module.BaseOfImage + low_pc.uvalue, name.string);
+    symt_add_function_point(subpgm->ctx->module, subpgm->func, SymTagLabel,
+                            subpgm->ctx->module->module.BaseOfImage + low_pc.uvalue, name.string);
 }
 
-static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
-					  dwarf2_debug_info_t* di, 
-					  struct symt_function* func);
+static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
+                                          struct symt_block* block_parent,
+					  dwarf2_debug_info_t* di);
 
-static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
+static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             dwarf2_debug_info_t* di)
 {
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     /* FIXME: attributes to handle:
        DW_AT_low_pc:
@@ -1086,7 +1109,9 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
                  */
                 break;
             case DW_TAG_variable:
-                dwarf2_parse_variable(ctx, child);
+                /* FIXME:
+                 * dwarf2_parse_variable(ctx, child);
+                 */
                 break;
             case DW_TAG_lexical_block:
                 /* FIXME:
@@ -1095,28 +1120,35 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
                 break;
             case DW_TAG_inlined_subroutine:
                 /* FIXME */
-                dwarf2_parse_inlined_subroutine(ctx, child);
+                dwarf2_parse_inlined_subroutine(subpgm, child);
                 break;
             case DW_TAG_label:
-                /* FIXME
-                 * dwarf2_parse_subprogram_label(ctx, func, child);
-                 */
+                dwarf2_parse_subprogram_label(subpgm, child);
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+                      child->abbrev->tag, dwarf2_debug_ctx(subpgm->ctx),
+                      dwarf2_debug_di(di));
             }
         }
     }
 }
 
-static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
-					  dwarf2_debug_info_t* di, 
-					  struct symt_function* func)
+static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm, 
+                                          struct symt_block* parent_block,
+					  dwarf2_debug_info_t* di)
 {
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    struct symt_block*  block;
+    union attribute     low_pc;
+    union attribute     high_pc;
 
-    /* if (!dwarf2_find_attribute(di, DW_AT_ranges, ??)): what to do ? */
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+
+    if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc)) high_pc.uvalue = 0;
+
+    block = symt_open_func_block(subpgm->ctx->module, subpgm->func, parent_block,
+                                 low_pc.uvalue, high_pc.uvalue - low_pc.uvalue);
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
@@ -1130,17 +1162,22 @@ static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx,
             switch (child->abbrev->tag)
             {
             case DW_TAG_inlined_subroutine:
-                dwarf2_parse_inlined_subroutine(ctx, child);
+                dwarf2_parse_inlined_subroutine(subpgm, child);
                 break;
             case DW_TAG_variable:
-                dwarf2_parse_variable(ctx, child);
+                dwarf2_parse_variable(subpgm, block, child);
                 break;
             case DW_TAG_lexical_block:
-                dwarf2_parse_subprogram_block(ctx, child, func);
+                dwarf2_parse_subprogram_block(subpgm, block, child);
                 break;
             case DW_TAG_subprogram:
                 /* FIXME: likely a declaration (to be checked)
                  * skip it for now
+                 */
+                break;
+            case DW_TAG_formal_parameter:
+                /* FIXME: likely elements for exception handling (GCC flavor)
+                 * Skip it for now
                  */
                 break;
             case DW_TAG_class_type:
@@ -1151,10 +1188,12 @@ static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx,
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+                      child->abbrev->tag, dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
             }
         }
     }
+
+    symt_close_func_block(subpgm->ctx->module, subpgm->func, block, 0);
 }
 
 static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
@@ -1166,9 +1205,10 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     union attribute high_pc;
     union attribute is_decl;
     union attribute inline_flags;
+    union attribute frame;
     struct symt* ret_type;
-    struct symt_function* func = NULL;
     struct symt_function_signature* sig_type;
+    dwarf2_subprogram_t subpgm;
 
     if (di->symt) return di->symt;
 
@@ -1185,12 +1225,27 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
     if (!is_decl.uvalue)
     {
-        func = symt_new_function(ctx->module, compiland, name.string,
-                                 ctx->module->module.BaseOfImage + low_pc.uvalue,
-                                 high_pc.uvalue - low_pc.uvalue,
-                                 &sig_type->symt);
-        di->symt = &func->symt;
+        subpgm.func = symt_new_function(ctx->module, compiland, name.string,
+                                        ctx->module->module.BaseOfImage + low_pc.uvalue,
+                                        high_pc.uvalue - low_pc.uvalue,
+                                        &sig_type->symt);
+        di->symt = &subpgm.func->symt;
     }
+    else subpgm.func = NULL;
+
+    subpgm.ctx = ctx;
+    subpgm.compiland = compiland;
+    if (dwarf2_find_attribute(di, DW_AT_frame_base, &frame))
+    {
+        subpgm.frame_offset = dwarf2_compute_location(ctx, frame.block, &subpgm.frame_reg);
+        TRACE("For %s got %ld/%d\n", name.string, subpgm.frame_offset, subpgm.frame_reg);
+    }
+    else /* on stack !! */
+    {
+        subpgm.frame_reg = 0;
+        subpgm.frame_offset = 0;
+    }
+
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
         dwarf2_debug_info_t**   pchild = NULL;
@@ -1202,17 +1257,15 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
             switch (child->abbrev->tag)
             {
+            case DW_TAG_variable:
             case DW_TAG_formal_parameter:
-                dwarf2_parse_subprogram_parameter(ctx, func, NULL, child);
+                dwarf2_parse_variable(&subpgm, NULL, child);
                 break;
             case DW_TAG_lexical_block:
-                dwarf2_parse_subprogram_block(ctx, child, func);
-                break;
-            case DW_TAG_variable:
-                dwarf2_parse_variable(ctx, child);
+                dwarf2_parse_subprogram_block(&subpgm, NULL, child);
                 break;
             case DW_TAG_inlined_subroutine:
-                dwarf2_parse_inlined_subroutine(ctx, child);
+                dwarf2_parse_inlined_subroutine(&subpgm, child);
                 break;
             case DW_TAG_subprogram:
                 /* FIXME: likely a declaration (to be checked)
@@ -1220,7 +1273,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                  */
                 break;
             case DW_TAG_label:
-                dwarf2_parse_subprogram_label(ctx, func, child);
+                dwarf2_parse_subprogram_label(&subpgm, child);
                 break;
             case DW_TAG_class_type:
             case DW_TAG_structure_type:
@@ -1239,7 +1292,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 	}
     }
 
-    symt_normalize_function(ctx->module, func);
+    symt_normalize_function(subpgm.ctx->module, subpgm.func);
 
     return di->symt;
 }
