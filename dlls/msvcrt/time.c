@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#define _POSIX_PTHREAD_SEMANTICS /* switch to a 2 arg style asctime_r on Solaris */
 #include <time.h>
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
