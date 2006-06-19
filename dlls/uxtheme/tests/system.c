@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI * pCloseThemeData)(HTHEME);
+static BOOL    (WINAPI * pIsAppThemed)(VOID);
 static BOOL    (WINAPI * pIsThemeActive)(VOID);
 static HTHEME  (WINAPI * pOpenThemeData)(HWND, LPCWSTR);
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, LPCWSTR, LPCWSTR);
@@ -50,11 +51,42 @@ static BOOL InitFunctionPtrs(void)
     if (hUxtheme)
     {
       UXTHEME_GET_PROC(CloseThemeData)
+      UXTHEME_GET_PROC(IsAppThemed)
       UXTHEME_GET_PROC(IsThemeActive)
       UXTHEME_GET_PROC(OpenThemeData)
       UXTHEME_GET_PROC(SetWindowTheme)
     }
     return TRUE;
+}
+
+static void test_IsThemed(void)
+{
+    BOOL bThemeActive;
+    BOOL bAppThemed;
+
+    SetLastError(0xdeadbeef);
+    bThemeActive = pIsThemeActive();
+    trace("Theming is %s\n", (bThemeActive) ? "active" : "inactive");
+    todo_wine
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
+            GetLastError());
+
+    /* This test is not themed */
+    SetLastError(0xdeadbeef);
+    bAppThemed = pIsAppThemed();
+
+    if (bThemeActive)
+        todo_wine
+            ok( bAppThemed == FALSE, "Expected FALSE as this test executable is not (yet) themed.\n");
+    else
+        /* Although Wine currently returns FALSE, the logic behind it is wrong. It is not a todo_wine though in the testing sense */
+        ok( bAppThemed == FALSE, "Expected FALSE as this test executable is not (yet) themed.\n");
+
+    todo_wine
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
+            GetLastError());
 }
 
 static void test_SetWindowTheme(void)
@@ -88,10 +120,6 @@ static void test_OpenThemeData(void)
 
     SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
-    todo_wine
-        ok( GetLastError() == ERROR_SUCCESS,
-            "Expected ERROR_SUCCESS, got 0x%08lx\n",
-            GetLastError());
 
     /* All NULL */
     SetLastError(0xdeadbeef);
@@ -203,6 +231,11 @@ START_TEST(system)
     /* No real functional tests will be done (yet). The current tests
      * only show input/return behaviour
      */
+
+    /* IsThemeActive and IsAppThemed */
+    trace("Starting test_IsThemed()\n");
+    if (pIsAppThemed && pIsThemeActive)
+        test_IsThemed();
 
     /* SetWindowTheme */
     trace("Starting test_SetWindowTheme()\n");
