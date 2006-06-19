@@ -47,8 +47,6 @@
 #include "rpc_message.h"
 #include "rpc_defs.h"
 
-#define MAX_THREADS 128
-
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 typedef struct _RpcPacket
@@ -102,10 +100,6 @@ static HANDLE mgr_mutex;
 /* set when server thread has finished opening connections */
 static HANDLE server_ready_event;
 
-static HANDLE server_sem;
-
-static LONG worker_tls;
-
 static UUID uuid_nil;
 
 inline static RpcObjTypeMap *LookupObjTypeMap(UUID *ObjUuid)
@@ -153,24 +147,11 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
   return cif;
 }
 
-typedef struct {
-  PRPC_MESSAGE msg;
-  void* buf;
-} packet_state;
-
 static WINE_EXCEPTION_FILTER(rpc_filter)
 {
-  packet_state* state;
-  PRPC_MESSAGE msg;
-  state = TlsGetValue(worker_tls);
-  msg = state->msg;
-  if (msg->Buffer != state->buf) I_RpcFreeBuffer(msg);
-  msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
-  msg->BufferLength = sizeof(DWORD);
-  I_RpcGetBuffer(msg);
-  *(DWORD*)msg->Buffer = GetExceptionCode();
-  WARN("exception caught with code 0x%08lx = %ld\n", *(DWORD*)msg->Buffer, *(DWORD*)msg->Buffer);
+  WARN("exception caught with code 0x%08lx = %ld\n", GetExceptionCode(), GetExceptionCode());
   TRACE("returning failure packet\n");
+  /* catch every exception */
   return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -178,15 +159,10 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
 {
   RpcServerInterface* sif;
   RPC_DISPATCH_FUNCTION func;
-  packet_state state;
   UUID *object_uuid;
   RpcPktHdr *response;
   void *buf = msg->Buffer;
   RPC_STATUS status;
-
-  state.msg = msg;
-  state.buf = buf;
-  TlsSetValue(worker_tls, &state);
 
   switch (hdr->common.ptype) {
     case PKT_BIND:
@@ -279,7 +255,12 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       __TRY {
         if (func) func(msg);
       } __EXCEPT(rpc_filter) {
-        /* failure packet was created in rpc_filter */
+        if (msg->Buffer != buf) I_RpcFreeBuffer(msg);
+        /* this will cause a failure packet to be sent in I_RpcSend */
+        msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
+        msg->BufferLength = sizeof(DWORD);
+        I_RpcGetBuffer(msg);
+        *(DWORD*)msg->Buffer = GetExceptionCode();
       } __ENDTRY
 
       /* send response packet */
@@ -304,7 +285,6 @@ fail:
   I_RpcFreeBuffer(msg);
   msg->Buffer = NULL;
   RPCRT4_FreeHeader(hdr);
-  TlsSetValue(worker_tls, NULL);
   HeapFree(GetProcessHeap(), 0, msg);
 }
 
@@ -512,8 +492,6 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
       if (!mgr_mutex) mgr_mutex = CreateMutexW(NULL, FALSE, NULL);
       if (!mgr_event) mgr_event = CreateEventW(NULL, FALSE, FALSE, NULL);
       if (!server_ready_event) server_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-      if (!server_sem) server_sem = CreateSemaphoreW(NULL, 0, MAX_THREADS, NULL);
-      if (!worker_tls) worker_tls = TlsAlloc();
       std_listen = TRUE;
       server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
       CloseHandle(server_thread);
