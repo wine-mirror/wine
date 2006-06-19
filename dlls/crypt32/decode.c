@@ -3070,6 +3070,50 @@ static BOOL WINAPI CRYPT_AsnDecodeEnhancedKeyUsage(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeIssuingDistPoint(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    TRACE("%p, %ld, %08lx, %p, %p, %ld\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_CONTEXT | ASN_CONSTRUCTOR | 0, offsetof(CRL_ISSUING_DIST_POINT,
+           DistPointName), CRYPT_AsnDecodeDistPointName,
+           sizeof(CRL_DIST_POINT_NAME), TRUE, TRUE,
+           offsetof(CRL_ISSUING_DIST_POINT,
+           DistPointName.u.FullName.rgAltEntry), 0 },
+         { ASN_CONTEXT | 1, offsetof(CRL_ISSUING_DIST_POINT,
+           fOnlyContainsUserCerts), CRYPT_AsnDecodeBool, sizeof(BOOL), TRUE,
+           FALSE, 0 },
+         { ASN_CONTEXT | 2, offsetof(CRL_ISSUING_DIST_POINT,
+           fOnlyContainsCACerts), CRYPT_AsnDecodeBool, sizeof(BOOL), TRUE,
+           FALSE, 0 },
+         { ASN_CONTEXT | 3, offsetof(CRL_ISSUING_DIST_POINT,
+           OnlySomeReasonFlags), CRYPT_AsnDecodeBitsInternal,
+           sizeof(CRYPT_BIT_BLOB), TRUE, TRUE, offsetof(CRL_ISSUING_DIST_POINT,
+           OnlySomeReasonFlags.pbData), 0 },
+         { ASN_CONTEXT | 4, offsetof(CRL_ISSUING_DIST_POINT,
+           fIndirectCRL), CRYPT_AsnDecodeBool, sizeof(BOOL), TRUE, FALSE, 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -3179,6 +3223,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)X509_ENHANCED_KEY_USAGE:
             decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
             break;
+        case (WORD)X509_ISSUING_DIST_POINT:
+            decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
+            break;
         default:
             FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
         }
@@ -3211,6 +3258,8 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         decodeFunc = CRYPT_AsnDecodeCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
+    else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
+        decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
     else
         TRACE("OID %s not found or unimplemented, looking for DLL\n",
          debugstr_a(lpszStructType));

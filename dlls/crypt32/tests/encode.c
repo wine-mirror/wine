@@ -2591,6 +2591,198 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     }
 }
 
+static const BYTE badFlagsIDP[] = { 0x30,0x06,0x81,0x01,0xff,0x82,0x01,0xff };
+static const BYTE emptyNameIDP[] = { 0x30,0x04,0xa0,0x02,0xa0,0x00 };
+static const BYTE urlIDP[] = { 0x30,0x17,0xa0,0x15,0xa0,0x13,0x86,0x11,0x68,
+ 0x74,0x74,0x70,0x3a,0x2f,0x2f,0x77,0x69,0x6e,0x65,0x68,0x71,0x2e,0x6f,0x72,
+ 0x67 };
+
+static void test_encodeCRLIssuingDistPoint(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CRL_ISSUING_DIST_POINT point = { { 0 } };
+    CERT_ALT_NAME_ENTRY entry;
+
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptySequence), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, emptySequence, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* nonsensical flags */
+    point.fOnlyContainsUserCerts = TRUE;
+    point.fOnlyContainsCACerts = TRUE;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(badFlagsIDP), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, badFlagsIDP, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* unimplemented name type */
+    point.fOnlyContainsCACerts = point.fOnlyContainsUserCerts = FALSE;
+    point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_ISSUER_RDN_NAME;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* empty name */
+    point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
+    point.DistPointName.FullName.cAltEntry = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptyNameIDP), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, emptyNameIDP, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* name with URL entry */
+    entry.dwAltNameChoice = CERT_ALT_NAME_URL;
+    entry.pwszURL = (LPWSTR)url;
+    point.DistPointName.FullName.cAltEntry = 1;
+    point.DistPointName.FullName.rgAltEntry = &entry;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(urlIDP), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, urlIDP, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void compareAltNameEntry(const CERT_ALT_NAME_ENTRY *expected,
+ const CERT_ALT_NAME_ENTRY *got)
+{
+    ok(expected->dwAltNameChoice == got->dwAltNameChoice,
+     "Expected name choice %ld, got %ld\n", expected->dwAltNameChoice,
+     got->dwAltNameChoice);
+    if (expected->dwAltNameChoice == got->dwAltNameChoice)
+    {
+        switch (got->dwAltNameChoice)
+        {
+        case CERT_ALT_NAME_RFC822_NAME:
+        case CERT_ALT_NAME_DNS_NAME:
+        case CERT_ALT_NAME_EDI_PARTY_NAME:
+        case CERT_ALT_NAME_URL:
+        case CERT_ALT_NAME_REGISTERED_ID:
+            ok((!expected->pwszURL && !got->pwszURL) ||
+             !lstrcmpW(expected->pwszURL, got->pwszURL), "Unexpected name\n");
+            break;
+        case CERT_ALT_NAME_X400_ADDRESS:
+        case CERT_ALT_NAME_DIRECTORY_NAME:
+        case CERT_ALT_NAME_IP_ADDRESS:
+            ok(got->IPAddress.cbData == expected->IPAddress.cbData,
+             "Unexpected IP address length %ld\n", got->IPAddress.cbData);
+            ok(!memcmp(got->IPAddress.pbData, got->IPAddress.pbData,
+             got->IPAddress.cbData), "Unexpected value\n");
+            break;
+        }
+    }
+}
+
+static void compareAltNameInfo(const CERT_ALT_NAME_INFO *expected,
+ const CERT_ALT_NAME_INFO *got)
+{
+    DWORD i;
+
+    ok(expected->cAltEntry == got->cAltEntry, "Expected %ld entries, got %ld\n",
+     expected->cAltEntry, got->cAltEntry);
+    for (i = 0; i < min(expected->cAltEntry, got->cAltEntry); i++)
+        compareAltNameEntry(&expected->rgAltEntry[i], &got->rgAltEntry[i]);
+}
+
+static void compareDistPointName(const CRL_DIST_POINT_NAME *expected,
+ const CRL_DIST_POINT_NAME *got)
+{
+    ok(got->dwDistPointNameChoice == expected->dwDistPointNameChoice,
+     "Unexpected name choice %ld\n", got->dwDistPointNameChoice);
+    if (got->dwDistPointNameChoice == CRL_DIST_POINT_FULL_NAME)
+        compareAltNameInfo(&expected->FullName, &got->FullName);
+}
+
+static void compareCRLIssuingDistPoints(const CRL_ISSUING_DIST_POINT *expected,
+ const CRL_ISSUING_DIST_POINT *got)
+{
+    compareDistPointName(&expected->DistPointName, &got->DistPointName);
+    ok(got->fOnlyContainsUserCerts == expected->fOnlyContainsUserCerts,
+     "Unexpected fOnlyContainsUserCerts\n");
+    ok(got->fOnlyContainsCACerts == expected->fOnlyContainsCACerts,
+     "Unexpected fOnlyContainsCACerts\n");
+    ok(got->OnlySomeReasonFlags.cbData == expected->OnlySomeReasonFlags.cbData,
+     "Unexpected reason flags\n");
+    ok(got->fIndirectCRL == expected->fIndirectCRL,
+     "Unexpected fIndirectCRL\n");
+}
+
+static void test_decodeCRLIssuingDistPoint(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CRL_ISSUING_DIST_POINT point = { { 0 } };
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT,
+     emptySequence, emptySequence[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT,
+     badFlagsIDP, badFlagsIDP[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        point.fOnlyContainsUserCerts = point.fOnlyContainsCACerts = TRUE;
+        compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT,
+     emptyNameIDP, emptyNameIDP[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        point.fOnlyContainsCACerts = point.fOnlyContainsUserCerts = FALSE;
+        point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
+        point.DistPointName.FullName.cAltEntry = 0;
+        compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT,
+     urlIDP, urlIDP[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        CERT_ALT_NAME_ENTRY entry;
+
+        entry.dwAltNameChoice = CERT_ALT_NAME_URL;
+        entry.pwszURL = (LPWSTR)url;
+        point.DistPointName.FullName.cAltEntry = 1;
+        point.DistPointName.FullName.rgAltEntry = &entry;
+        compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
+        LocalFree(buf);
+    }
+}
+
 static const BYTE v1CRL[] = { 0x30, 0x15, 0x30, 0x02, 0x06, 0x00, 0x18, 0x0f,
  0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30,
  0x30, 0x5a };
@@ -2635,6 +2827,13 @@ static const BYTE v2CRLWithExt[] = { 0x30,0x5c,0x02,0x01,0x01,0x30,0x02,0x06,
  0x02,0x01,0x01,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,
  0x30,0x30,0x30,0x30,0x5a,0xa0,0x13,0x30,0x11,0x30,0x0f,0x06,0x03,0x55,0x1d,
  0x13,0x04,0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
+static const BYTE v2CRLWithIssuingDistPoint[] = { 0x30,0x5c,0x02,0x01,0x01,
+ 0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
+ 0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00,0x18,0x0f,0x31,
+ 0x36,0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,
+ 0x16,0x30,0x14,0x02,0x01,0x01,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,0x30,
+ 0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0xa0,0x13,0x30,0x11,0x30,0x0f,0x06,
+ 0x03,0x55,0x1d,0x13,0x04,0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
 
 static void test_encodeCRLToBeSigned(DWORD dwEncoding)
 {
@@ -2643,6 +2842,7 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
     DWORD size = 0;
     CRL_INFO info = { 0 };
     CRL_ENTRY entry = { { 0 }, { 0 }, 0, 0 };
+    CERT_EXTENSION ext;
 
     /* Test with a V1 CRL */
     ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
@@ -2745,6 +2945,21 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
     {
         ok(size == sizeof(v2CRLWithExt), "Wrong size %ld\n", size);
         ok(!memcmp(buf, v2CRLWithExt, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* a v2 CRL with an issuing dist point extension */
+    ext.pszObjId = szOID_ISSUING_DIST_POINT;
+    ext.fCritical = TRUE;
+    ext.Value.cbData = sizeof(urlIDP);
+    ext.Value.pbData = (LPBYTE)urlIDP;
+    entry.rgExtension = &ext;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(v2CRLWithIssuingDistPoint), "Wrong size %ld\n", size);
+        ok(!memcmp(buf, v2CRLWithIssuingDistPoint, size), "Unexpected value\n");
         LocalFree(buf);
     }
 }
@@ -2899,6 +3114,19 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
      v2CRLWithExt, sizeof(v2CRLWithExt), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CRL_INFO *info = (CRL_INFO *)buf;
+
+        ok(info->cExtension == 1, "Expected 1 extensions, got %ld\n",
+         info->cExtension);
+        LocalFree(buf);
+    }
+    /* And again, with an issuing dist point */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
+     v2CRLWithIssuingDistPoint, sizeof(v2CRLWithIssuingDistPoint),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
@@ -3183,6 +3411,8 @@ START_TEST(encode)
         test_decodeCert(encodings[i]);
         test_encodeCRLDistPoints(encodings[i]);
         test_decodeCRLDistPoints(encodings[i]);
+        test_encodeCRLIssuingDistPoint(encodings[i]);
+        test_decodeCRLIssuingDistPoint(encodings[i]);
         test_encodeCRLToBeSigned(encodings[i]);
         test_decodeCRLToBeSigned(encodings[i]);
         test_encodeEnhancedKeyUsage(encodings[i]);

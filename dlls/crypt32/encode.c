@@ -2241,6 +2241,96 @@ static BOOL WINAPI CRYPT_AsnEncodeEnhancedKeyUsage(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeIssuingDistPoint(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const CRL_ISSUING_DIST_POINT *point =
+         (const CRL_ISSUING_DIST_POINT *)pvStructInfo;
+        struct AsnEncodeSequenceItem items[6] = { { 0 } };
+        struct AsnConstructedItem constructed = { 0 };
+        struct AsnEncodeTagSwappedItem swapped[5] = { { 0 } };
+        DWORD cItem = 0, cSwapped = 0;
+
+        ret = TRUE;
+        switch (point->DistPointName.dwDistPointNameChoice)
+        {
+        case CRL_DIST_POINT_NO_NAME:
+            /* do nothing */
+            break;
+        case CRL_DIST_POINT_FULL_NAME:
+            swapped[cSwapped].tag = ASN_CONTEXT | ASN_CONSTRUCTOR | 0;
+            swapped[cSwapped].pvStructInfo = &point->DistPointName.u.FullName;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeAltName;
+            constructed.tag = 0;
+            constructed.pvStructInfo = &swapped[cSwapped];
+            constructed.encodeFunc = CRYPT_AsnEncodeSwapTag;
+            items[cItem].pvStructInfo = &constructed;
+            items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+            cSwapped++;
+            cItem++;
+            break;
+        default:
+            SetLastError(E_INVALIDARG);
+            ret = FALSE;
+        }
+        if (ret && point->fOnlyContainsUserCerts)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 1;
+            swapped[cSwapped].pvStructInfo = &point->fOnlyContainsUserCerts;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBool;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (ret && point->fOnlyContainsCACerts)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 2;
+            swapped[cSwapped].pvStructInfo = &point->fOnlyContainsCACerts;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBool;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (ret && point->OnlySomeReasonFlags.cbData)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 3;
+            swapped[cSwapped].pvStructInfo = &point->OnlySomeReasonFlags;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBits;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (ret && point->fIndirectCRL)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 4;
+            swapped[cSwapped].pvStructInfo = &point->fIndirectCRL;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeBool;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (ret)
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
+             dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
  void *pvEncoded, DWORD *pcbEncoded)
@@ -2340,6 +2430,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)X509_ENHANCED_KEY_USAGE:
             encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
             break;
+        case (WORD)X509_ISSUING_DIST_POINT:
+            encodeFunc = CRYPT_AsnEncodeIssuingDistPoint;
+            break;
         default:
             FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
         }
@@ -2372,6 +2465,8 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         encodeFunc = CRYPT_AsnEncodeCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
+    else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
+        encodeFunc = CRYPT_AsnEncodeIssuingDistPoint;
     else
         TRACE("OID %s not found or unimplemented, looking for DLL\n",
          debugstr_a(lpszStructType));
