@@ -234,12 +234,28 @@ static void init_paths(void)
     init_server_dir( st.st_dev, st.st_ino );
 }
 
+/* check if basedir is a valid build dir by checking for wineserver and ntdll */
+/* helper for running_from_build_dir */
+static inline int is_valid_build_dir( char *basedir, int baselen )
+{
+    struct stat st;
+
+    strcpy( basedir + baselen, "/server/wineserver" );
+    if (stat( basedir, &st ) == -1) return 0;  /* no wineserver found */
+    /* check for ntdll too to make sure */
+    strcpy( basedir + baselen, "/dlls/ntdll/ntdll.dll.so" );
+    if (stat( basedir, &st ) == -1) return 0;  /* no ntdll found */
+
+    basedir[baselen] = 0;
+    return 1;
+}
+
 /* check if we are running from the build directory */
 static char *running_from_build_dir( const char *basedir, const char *bindir )
 {
     struct stat st;
     const char *p;
-    char *path, *end;
+    char *path;
     int res;
 
     if (!(path = build_path( bindir, "wineserver" ))) return NULL;
@@ -254,24 +270,18 @@ static char *running_from_build_dir( const char *basedir, const char *bindir )
     if (p == basedir) return NULL;
     path = xmalloc( p - basedir + sizeof("/dlls/ntdll/ntdll.dll.so") );
     memcpy( path, basedir, p - basedir );
-    end = path + (p - basedir);
 
-    strcpy( end, "/server/wineserver" );
-    if (stat( path, &st ) == -1)
+    if (!is_valid_build_dir( path, p - basedir ))
     {
-        free( path );
-        return NULL;  /* no wineserver found */
+        /* remove another component */
+        while (p > basedir && *p == '/') p--;
+        while (p > basedir && *p != '/') p--;
+        if (p == basedir || !is_valid_build_dir( path, p - basedir ))
+        {
+            free( path );
+            return NULL;
+        }
     }
-
-    /* check for ntdll too to make sure */
-    strcpy( end, "/dlls/ntdll/ntdll.dll.so" );
-    if (stat( path, &st ) == -1)
-    {
-        free( path );
-        return NULL;  /* no ntdll found */
-    }
-
-    *end = 0;
     return path;
 }
 
