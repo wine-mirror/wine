@@ -1127,11 +1127,10 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
 }
 
 /***********************************************************************
- *           DIB_CreateDIBSection
+ *           CreateDIBSection    (GDI32.@)
  */
-HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
-                             VOID **bits, HANDLE section,
-                             DWORD offset, DWORD ovr_pitch)
+HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
+                                VOID **bits, HANDLE section, DWORD offset)
 {
     HBITMAP ret = 0;
     DC *dc;
@@ -1162,7 +1161,7 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
     dib->dsBm.bmType       = 0;
     dib->dsBm.bmWidth      = width;
     dib->dsBm.bmHeight     = height >= 0 ? height : -height;
-    dib->dsBm.bmWidthBytes = ovr_pitch ? ovr_pitch : DIB_GetDIBWidthBytes(width, bpp);
+    dib->dsBm.bmWidthBytes = DIB_GetDIBWidthBytes(width, bpp);
     dib->dsBm.bmPlanes     = planes;
     dib->dsBm.bmBitsPixel  = bpp;
     dib->dsBm.bmBits       = NULL;
@@ -1229,8 +1228,6 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
         mapBits = MapViewOfFile( section, FILE_MAP_ALL_ACCESS, 0, mapOffset, mapSize );
         if (mapBits) dib->dsBm.bmBits = (char *)mapBits + (offset - mapOffset);
     }
-    else if (ovr_pitch && offset)
-        dib->dsBm.bmBits = (LPVOID) offset;
     else
     {
         offset = 0;
@@ -1286,14 +1283,4 @@ error:
     else if (!offset) VirtualFree( dib->dsBm.bmBits, 0, MEM_RELEASE );
     HeapFree( GetProcessHeap(), 0, dib );
     return 0;
-}
-
-/***********************************************************************
- *           CreateDIBSection    (GDI32.@)
- */
-HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
-				VOID **bits, HANDLE section,
-				DWORD offset)
-{
-    return DIB_CreateDIBSection(hdc, bmi, usage, bits, section, offset, 0);
 }

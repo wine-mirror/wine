@@ -519,6 +519,5 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl DIB_CreateDIBSection(long ptr long ptr long long long)
 @ cdecl GDI_GetObjPtr(long long)
 @ cdecl GDI_ReleaseObj(long)
