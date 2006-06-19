@@ -82,6 +82,11 @@ static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *i
 
 #define MAX_VERSION_0_PROP_NAME_LENGTH 256
 
+#define CFTAG_WINDOWS   (-1L)
+#define CFTAG_MACINTOSH (-2L)
+#define CFTAG_FMTID     (-3L)
+#define CFTAG_NODATA      0L
+
 /* The format version (and what it implies) is described here:
  * http://msdn.microsoft.com/library/en-us/stg/stg/format_version.asp
  */
@@ -1137,6 +1142,26 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
     case VT_FILETIME:
         StorageUtl_ReadULargeInteger(data, 0,
          (ULARGE_INTEGER *)&prop->u.filetime);
+        break;
+    case VT_CF:
+        {
+            DWORD len = 0, type = 0, tag = 0;
+
+            StorageUtl_ReadDWord(data, 0, &len);
+            StorageUtl_ReadDWord(data, 4, &tag);
+            StorageUtl_ReadDWord(data, 8, &type);
+            if (tag == CFTAG_WINDOWS && len > 12)
+            {
+                prop->u.pclipdata = CoTaskMemAlloc(sizeof (CLIPDATA));
+                prop->u.pclipdata->cbSize = len;
+                prop->u.pclipdata->ulClipFmt = type;
+                prop->u.pclipdata->pClipData = CoTaskMemAlloc(len);
+                memcpy(prop->u.pclipdata->pClipData, data+12, len - 12);
+                TRACE("returning %p, len %ld\n", prop->u.pclipdata->pClipData, len - 12);
+            }
+            else
+                hr = STG_E_INVALIDPARAMETER;
+        }
         break;
     default:
         FIXME("unsupported type %d\n", prop->vt);
