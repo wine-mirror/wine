@@ -555,7 +555,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
-    char szPath[MAX_PATH];
+    WCHAR wszPath[MAX_PATH];
     HRESULT hr = S_OK;
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
@@ -564,13 +564,14 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
     if (!strRet)
         return E_INVALIDARG;
 
-    szPath[0] = 0x00;
+    wszPath[0] = 0;
 
     if (!pidl->mkid.cb)
     {
         /* parsing name like ::{...} */
-        lstrcpyA (szPath, "::");
-        SHELL32_GUIDToStringA(&CLSID_MyComputer, &szPath[2]);
+        wszPath[0] = ':';
+        wszPath[1] = ':';
+        SHELL32_GUIDToStringW(&CLSID_MyComputer, &wszPath[2]);
     }
     else if (_ILIsPidlSimple(pidl))    
     {
@@ -617,62 +618,63 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
                     if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
                         bWantsForParsing)
                     {
-                        WCHAR wszPath[MAX_PATH];
                         /*
                          * We need the filesystem path to the destination folder
                          * Only the folder itself can know it
                          */
                         hr = SHELL32_GetDisplayNameOfChild (iface, pidl,
                                                 dwFlags, wszPath, MAX_PATH);
-                        if (SUCCEEDED(hr))
-                        {
-                            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH,
-                                                     NULL, NULL))
-                                wszPath[0] = '\0';
-                        }
                     }
                     else
                     {
-                        LPSTR p;
+                        LPWSTR p = wszPath;
 
                         /* parsing name like ::{...} */
-                        p = lstrcpyA(szPath, "::") + 2;
-                        p += SHELL32_GUIDToStringA(&CLSID_MyComputer, p);
+                        p[0] = ':';
+                        p[1] = ':';
+                        p += 2;
+                        p += SHELL32_GUIDToStringW(&CLSID_MyComputer, p);
 
-                        lstrcatA(p, "\\::");
+                        /* \:: */
+                        p[0] = '\\';
+                        p[1] = ':';
+                        p[2] = ':';
                         p += 3;
-                        SHELL32_GUIDToStringA(clsid, p);
+                        SHELL32_GUIDToStringW(clsid, p);
                     }
                 }
                 else
                 {
                     /* user friendly name */
-                    HCR_GetClassNameA (clsid, szPath, MAX_PATH);
+                    HCR_GetClassNameW (clsid, wszPath, MAX_PATH);
                 }
             }
             else
             {
                 /* append my own path */
-                _ILSimpleGetText (pidl, szPath, MAX_PATH);
+                _ILSimpleGetTextW (pidl, wszPath, MAX_PATH);
             }
         }
         else if (_ILIsDrive(pidl))
         {        
-            _ILSimpleGetText (pidl, szPath, MAX_PATH);    /* append my own path */
+            _ILSimpleGetTextW (pidl, wszPath, MAX_PATH);    /* append my own path */
 
             /* long view "lw_name (C:)" */
             if (!(dwFlags & SHGDN_FORPARSING))
             {
                 DWORD dwVolumeSerialNumber, dwMaximumComponetLength, dwFileSystemFlags;
-                char szDrive[18] = "";
+                WCHAR wszDrive[18] = {0};
+                static const WCHAR wszOpenBracket[] = {' ','(',0};
+                static const WCHAR wszCloseBracket[] = {')',0};
 
-                GetVolumeInformationA (szPath, szDrive, sizeof (szDrive) - 6,
+                GetVolumeInformationW (wszPath, wszDrive,
+                           sizeof(wszDrive)/sizeof(wszDrive[0]) - 6,
                            &dwVolumeSerialNumber,
                            &dwMaximumComponetLength, &dwFileSystemFlags, NULL, 0);
-                strcat (szDrive, " (");
-                strncat (szDrive, szPath, 2);
-                strcat (szDrive, ")");
-                strcpy (szPath, szDrive);
+                strcatW (wszDrive, wszOpenBracket);
+                lstrcpynW (wszDrive + strlenW(wszDrive), wszPath, 3);
+                strcatW (wszDrive, wszCloseBracket);
+                strcpyW (wszPath, wszDrive);
             }
         }
         else 
@@ -684,25 +686,19 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
     }
     else
     {
-        WCHAR wszPath[MAX_PATH];
         /* Complex pidl. Let the child folder do the work */
-        strRet->uType = STRRET_CSTR;
         hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, wszPath, MAX_PATH);
-        if (SUCCEEDED(hr))
-        {
-            if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, szPath, MAX_PATH,
-                                     NULL, NULL))
-                wszPath[0] = '\0';
-        }
     }
 
     if (SUCCEEDED (hr))
     {
         strRet->uType = STRRET_CSTR;
-        lstrcpynA (strRet->u.cStr, szPath, MAX_PATH);
+        if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
+                NULL, NULL))
+            strRet->u.cStr[0] = '\0';
     }
 
-    TRACE ("-- (%p)->(%s)\n", This, szPath);
+    TRACE ("-- (%p)->(%s)\n", This, debugstr_w(wszPath));
     return hr;
 }
 
