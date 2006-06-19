@@ -3942,7 +3942,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
         SetLastError(ERROR_INVALID_LEVEL);
 	return FALSE;
     }
-    if(pName != NULL) {
+    if ((pName) && (pName[0])) {
         FIXME("pName= %s - unsupported\n", debugstr_a(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
