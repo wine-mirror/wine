@@ -1061,7 +1061,7 @@ void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
     const char* prefix = pshader? "PC":"VC";
 
     shader_addline(arg->buffer, 
-                   "const vec4 %s%lu = { %f, %f, %f, %f };\n", prefix, reg,
+                   "const vec4 %s%lu = vec4(%f, %f, %f, %f);\n", prefix, reg,
                    *((const float *)(arg->src + 0)),
                    *((const float *)(arg->src + 1)),
                    *((const float *)(arg->src + 2)),
@@ -1077,7 +1077,7 @@ void shader_glsl_defi(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
 
     shader_addline(arg->buffer, 
-                   "const ivec4 I%lu = { %ld, %ld, %ld, %ld };\n", reg,
+                   "const ivec4 I%lu = ivec4(%ld, %ld, %ld, %ld);\n", reg,
                    (long)arg->src[0], (long)arg->src[1],
                    (long)arg->src[2], (long)arg->src[3]);
 
