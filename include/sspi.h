@@ -66,7 +66,11 @@ typedef PSecHandle PCredHandle;
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
 
-typedef LARGE_INTEGER SECURITY_INTEGER, *PSECURITY_INTEGER;
+typedef struct _SECURITY_INTEGER
+{
+    unsigned long LowPart;
+    long HighPart;
+} SECURITY_INTEGER, *PSECURITY_INTEGER;
 typedef SECURITY_INTEGER TimeStamp, *PTimeStamp;
 
 typedef struct _SecPkgInfoA

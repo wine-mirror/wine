@@ -126,7 +126,10 @@ static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,
         phCredential->dwUpper = fCredentialUse;
         /* According to MSDN, all versions prior to XP do this */
         if (ptsExpiry)
-            ptsExpiry->QuadPart = 0;
+        {
+            ptsExpiry->LowPart = 0;
+            ptsExpiry->HighPart = 0;
+        }
         ret = SEC_E_OK;
     }
     return ret;
