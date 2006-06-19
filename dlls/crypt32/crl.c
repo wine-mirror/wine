@@ -32,7 +32,6 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
 {
     PCRL_CONTEXT crl = NULL;
     BOOL ret;
-    PCERT_SIGNED_CONTENT_INFO signedCrl = NULL;
     PCRL_INFO crlInfo = NULL;
     DWORD size = 0;
 
@@ -44,27 +43,9 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
         SetLastError(E_INVALIDARG);
         return NULL;
     }
-    /* First try to decode it as a signed crl. */
-    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT, pbCrlEncoded,
-     cbCrlEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&signedCrl, &size);
-    if (ret)
-    {
-        size = 0;
-        ret = CryptDecodeObjectEx(dwCertEncodingType,
-         X509_CERT_CRL_TO_BE_SIGNED, signedCrl->ToBeSigned.pbData,
-         signedCrl->ToBeSigned.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         (BYTE *)&crlInfo, &size);
-        LocalFree(signedCrl);
-    }
-    /* Failing that, try it as an unsigned crl */
-    if (!ret)
-    {
-        size = 0;
-        ret = CryptDecodeObjectEx(dwCertEncodingType,
-         X509_CERT_CRL_TO_BE_SIGNED, pbCrlEncoded, cbCrlEncoded,
-         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-         (BYTE *)&crlInfo, &size);
-    }
+    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_CRL_TO_BE_SIGNED,
+     pbCrlEncoded, cbCrlEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&crlInfo, &size);
     if (ret)
     {
         BYTE *data = NULL;
