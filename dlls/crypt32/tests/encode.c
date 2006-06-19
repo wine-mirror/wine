@@ -2354,6 +2354,30 @@ static void test_decodeCert(DWORD dwEncoding)
          "Unexpected signature\n");
         LocalFree(buf);
     }
+    /* A signed cert decodes as a CERT_INFO too */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, signedBigCert,
+     sizeof(signedBigCert), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_INFO *info = (CERT_INFO *)buf;
+
+        ok(size >= sizeof(CERT_INFO), "Wrong size %ld\n", size);
+        ok(info->SerialNumber.cbData == 1,
+         "Expected serial number size 1, got %ld\n", info->SerialNumber.cbData);
+        ok(*info->SerialNumber.pbData == *serialNum,
+         "Expected serial number %d, got %d\n", *serialNum,
+         *info->SerialNumber.pbData);
+        ok(info->Issuer.cbData == sizeof(encodedCommonName),
+         "Wrong size %ld\n", info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonName, info->Issuer.cbData),
+         "Unexpected issuer\n");
+        ok(info->Subject.cbData == sizeof(encodedCommonName),
+         "Wrong size %ld\n", info->Subject.cbData);
+        ok(!memcmp(info->Subject.pbData, encodedCommonName,
+         info->Subject.cbData), "Unexpected subject\n");
+        LocalFree(buf);
+    }
 }
 
 static const BYTE emptyDistPoint[] = { 0x30, 0x02, 0x30, 0x00 };
@@ -2830,7 +2854,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
      verisignCRL, sizeof(verisignCRL), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
         CRL_INFO *info = (CRL_INFO *)buf;
@@ -2875,6 +2899,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED,
      v2CRLWithExt, sizeof(v2CRLWithExt), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
         CRL_INFO *info = (CRL_INFO *)buf;
