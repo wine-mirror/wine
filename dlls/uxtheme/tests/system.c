@@ -89,8 +89,8 @@ static void test_OpenThemeData(void)
     SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
     todo_wine
-        ok( GetLastError() == S_OK,
-            "Expected S_OK, got 0x%08lx\n",
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
 
     /* All NULL */
@@ -117,8 +117,8 @@ static void test_OpenThemeData(void)
     {
         ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
         todo_wine
-            ok( GetLastError() == S_OK,
-                "Expected S_OK, got 0x%08lx\n",
+            ok( GetLastError() == ERROR_SUCCESS,
+                "Expected ERROR_SUCCESS, got 0x%08lx\n",
                 GetLastError());
     }
     else
@@ -170,16 +170,16 @@ static void test_OpenThemeData(void)
     hTheme = pOpenThemeData(hWnd, szButtonClassList);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
     todo_wine
-        ok( GetLastError() == S_OK,
-            "Expected S_OK, got 0x%08lx\n",
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeData(hWnd, szClassList);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
     todo_wine
-        ok( GetLastError() == S_OK,
-            "Expected S_OK, got 0x%08lx\n",
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
 }
 
