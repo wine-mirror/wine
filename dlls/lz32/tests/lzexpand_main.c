@@ -52,7 +52,7 @@ static const DWORD uncompressed_data_size = sizeof(uncompressed_data) - 1;
 
 static char *buf;
 
-static void test_lzopenfile(void)
+static void test_LZOpenFileA(void)
 {
   OFSTRUCT test;
   DWORD retval;
@@ -60,41 +60,40 @@ static void test_lzopenfile(void)
   char expected[MAX_PATH];
   char filled_0xA5[OFS_MAXPATHNAME];
 
-
   /* Check for nonexistent file. */
-  file = LZOpenFile("badfilename_", &test, OF_READ);
+  file = LZOpenFileA("badfilename_", &test, OF_READ);
   ok(file == LZERROR_BADINHANDLE, 
-     "LZOpenFile succeeded on nonexistent file\n");
+     "LZOpenFileA succeeded on nonexistent file\n");
   LZClose(file);
 
   /* Create an empty file. */
-  file = LZOpenFile(filename_, &test, OF_CREATE);
-  ok(file >= 0, "LZOpenFile failed on creation\n");
+  file = LZOpenFileA(filename_, &test, OF_CREATE);
+  ok(file >= 0, "LZOpenFileA failed on creation\n");
   LZClose(file);
-  retval = GetFileAttributes(filename_);
-  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
+  retval = GetFileAttributesA(filename_);
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", 
      GetLastError());
 
   /* Check various opening options. */
-  file = LZOpenFile(filename_, &test, OF_READ);
-  ok(file >= 0, "LZOpenFile failed on read\n");
+  file = LZOpenFileA(filename_, &test, OF_READ);
+  ok(file >= 0, "LZOpenFileA failed on read\n");
   LZClose(file);
-  file = LZOpenFile(filename_, &test, OF_WRITE);
-  ok(file >= 0, "LZOpenFile failed on write\n");
+  file = LZOpenFileA(filename_, &test, OF_WRITE);
+  ok(file >= 0, "LZOpenFileA failed on write\n");
   LZClose(file);
-  file = LZOpenFile(filename_, &test, OF_READWRITE);
-  ok(file >= 0, "LZOpenFile failed on read/write\n");
+  file = LZOpenFileA(filename_, &test, OF_READWRITE);
+  ok(file >= 0, "LZOpenFileA failed on read/write\n");
   LZClose(file);
-  file = LZOpenFile(filename_, &test, OF_EXIST);
-  ok(file >= 0, "LZOpenFile failed on read/write\n");
+  file = LZOpenFileA(filename_, &test, OF_EXIST);
+  ok(file >= 0, "LZOpenFileA failed on read/write\n");
   LZClose(file);
 
-  /* If the file "foo.xxx" does not exist, LZOpenFile should then
+  /* If the file "foo.xxx" does not exist, LZOpenFileA should then
      check for the file "foo.xx_" and open that -- at least on some
      operating systems.  Doesn't seem to on my copy of Win98.   
    */
-  retval = GetCurrentDirectory(MAX_PATH, expected);
-  ok(retval > 0, "GetCurrentDirectory returned %ld, GLE=0x%lx\n", 
+  retval = GetCurrentDirectoryA(MAX_PATH, expected);
+  ok(retval > 0, "GetCurrentDirectoryA returned %ld, GLE=0x%lx\n", 
      retval, GetLastError());
   lstrcatA(expected, "\\");
   lstrcatA(expected, filename);
@@ -106,38 +105,37 @@ static void test_lzopenfile(void)
   SetLastError(0xfaceabee);
 
   /* Try to open compressed file. */
-  file = LZOpenFile(filename, &test, OF_EXIST);
-  if(file != LZERROR_BADINHANDLE) {  /* NT */
-    ok(test.cBytes == sizeof(OFSTRUCT),
-       "LZOpenFile set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == 0,
-       "LZOpenFile set test.nErrCode to %d\n", test.nErrCode);
-    ok(lstrcmpA(test.szPathName, expected) == 0,
-       "LZOpenFile returned '%s', but was expected to return '%s'\n",
+  file = LZOpenFileA(filename, &test, OF_EXIST);
+  if(file != LZERROR_BADINHANDLE) {
+    ok(test.cBytes == sizeof(OFSTRUCT), 
+       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
+       test.nErrCode);
+    ok(lstrcmpA(test.szPathName, expected) == 0, 
+       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
        test.szPathName, expected);
     LZClose(file);
-  } else {  /* 9x */
-    ok(test.cBytes == 0xA5,
-       "LZOpenFile set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == ERROR_FILE_NOT_FOUND,
-       "LZOpenFile set test.nErrCode to %d\n", test.nErrCode);
-    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0,
-       "LZOpenFile returned '%s', but was expected to return '%s'\n",
+  } else {
+    ok(test.cBytes == 0xA5, 
+       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+       "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
+       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
        test.szPathName, filled_0xA5);
   }
 
   /* Delete the file then make sure it doesn't exist anymore. */
-  file = LZOpenFile(filename_, &test, OF_DELETE);
-  ok(file >= 0, "LZOpenFile failed on delete\n");
+  file = LZOpenFileA(filename_, &test, OF_DELETE);
+  ok(file >= 0, "LZOpenFileA failed on delete\n");
   LZClose(file);
 
-  retval = GetFileAttributes(filename_);
+  retval = GetFileAttributesA(filename_);
   ok(retval == INVALID_FILE_ATTRIBUTES, 
-     "GetFileAttributes succeeded on deleted file\n");
-  
+     "GetFileAttributesA succeeded on deleted file\n");
 }
 
-static void test_lzread(void)
+static void test_LZRead(void)
 {
   HANDLE file;
   DWORD ret;
@@ -146,15 +144,15 @@ static void test_lzread(void)
   BOOL retok;
 
   /* Create the compressed file. */
-  file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
+  file = CreateFileA(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
   ok(file != INVALID_HANDLE_VALUE, "Could not create test file\n");
   retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
   ok( retok, "WriteFile: error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes with WriteFile?\n");
   CloseHandle(file);
 
-  cfile = LZOpenFile(filename_, &test, OF_READ);
-  ok(cfile > 0, "LZOpenFile failed\n");
+  cfile = LZOpenFileA(filename_, &test, OF_READ);
+  ok(cfile > 0, "LZOpenFileA failed\n");
 
   ret = LZRead(cfile, buf, uncompressed_data_size);
   ok(ret == uncompressed_data_size, "Read wrong number of bytes\n");
@@ -171,11 +169,11 @@ static void test_lzread(void)
 
   LZClose(cfile);
 
-  ret = DeleteFile(filename_);
-  ok(ret, "DeleteFile: error %ld\n", GetLastError());
+  ret = DeleteFileA(filename_);
+  ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
-static void test_lzcopy(void)
+static void test_LZCopy(void)
 {
   HANDLE file;
   DWORD ret;
@@ -184,18 +182,18 @@ static void test_lzcopy(void)
   BOOL retok;
 
   /* Create the compressed file. */
-  file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
+  file = CreateFileA(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
   ok(file != INVALID_HANDLE_VALUE, 
-     "CreateFile: error %ld\n", GetLastError());
+     "CreateFileA: error %ld\n", GetLastError());
   retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
   ok( retok, "WriteFile error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes\n");
   CloseHandle(file);
 
-  source = LZOpenFile(filename_, &stest, OF_READ);
-  ok(source >= 0, "LZOpenFile failed on compressed file\n");
-  dest = LZOpenFile(filename2, &dtest, OF_CREATE);
-  ok(dest >= 0, "LZOpenFile failed on creating new file %d\n", dest);
+  source = LZOpenFileA(filename_, &stest, OF_READ);
+  ok(source >= 0, "LZOpenFileA failed on compressed file\n");
+  dest = LZOpenFileA(filename2, &dtest, OF_CREATE);
+  ok(dest >= 0, "LZOpenFileA failed on creating new file %d\n", dest);
 
   ret = LZCopy(source, dest);
   ok(ret > 0, "LZCopy error\n");
@@ -203,10 +201,10 @@ static void test_lzcopy(void)
   LZClose(source);
   LZClose(dest);
 
-  file = CreateFile(filename2, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+  file = CreateFileA(filename2, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		    0, 0);
   ok(file != INVALID_HANDLE_VALUE,
-     "CreateFile: error %ld\n", GetLastError());
+     "CreateFileA: error %ld\n", GetLastError());
 
   retok = ReadFile(file, buf, uncompressed_data_size*2, &ret, 0);
   ok( retok && ret == uncompressed_data_size, "ReadFile: error %ld\n", GetLastError());
@@ -215,17 +213,17 @@ static void test_lzcopy(void)
      "buffer contents mismatch\n");
   CloseHandle(file);
 
-  ret = DeleteFile(filename_);
-  ok(ret, "DeleteFile: error %ld\n", GetLastError());
-  ret = DeleteFile(filename2);
-  ok(ret, "DeleteFile: error %ld\n", GetLastError());
+  ret = DeleteFileA(filename_);
+  ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+  ret = DeleteFileA(filename2);
+  ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
 START_TEST(lzexpand_main)
 {
   buf = malloc(uncompressed_data_size * 2);
-  test_lzopenfile();
-  test_lzread();
-  test_lzcopy();
+  test_LZOpenFileA();
+  test_LZRead();
+  test_LZCopy();
   free(buf);
 }
