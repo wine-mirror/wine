@@ -1226,7 +1226,7 @@ void SECUR32_initNTLMSP(void)
     if((ret = fork_helper(&helper, "ntlm_auth", args)) != SEC_E_OK)
     {
         /* Cheat and allocate a helper anyway, so cleanup later will work. */
-        helper = HeapAlloc(GetProcessHeap,0, sizeof(PNegoHelper));
+        helper = HeapAlloc(GetProcessHeap(),0, sizeof(PNegoHelper));
         helper->version = -1;
     }
     else
