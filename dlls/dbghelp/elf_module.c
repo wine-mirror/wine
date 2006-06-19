@@ -22,6 +22,13 @@
 #include "config.h"
 #include "wine/port.h"
 
+#if defined(__svr4__) || defined(__sun)
+#define __ELF__
+/* large files are not supported by libelf */
+#undef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 32
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,10 +47,6 @@
 #endif
 
 #include "dbghelp_private.h"
-
-#if defined(__svr4__) || defined(__sun)
-#define __ELF__
-#endif
 
 #ifdef HAVE_ELF_H
 # include <elf.h>
