@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
