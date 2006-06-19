@@ -132,43 +132,9 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Przegl¹daj...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-/*
-	special folders
-*/
 STRINGTABLE DISCARDABLE
 {
-	IDS_DESKTOP		"Pulpit"
-	IDS_MYCOMPUTER		"Mój komputer"
-}
-
-/*
-	context menus
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_VIEW_LARGE		"&Du¿e Ikony"
-	IDS_VIEW_SMALL		"&Ma³e Ikony"
-	IDS_VIEW_LIST		"&Lista"
-	IDS_VIEW_DETAILS	"&Szczegó³y"
-	IDS_SELECT		"Zaznacz"
-	IDS_OPEN		"Otwórz"
-}
-
-STRINGTABLE DISCARDABLE
-{
-	IDS_CREATEFOLDER_DENIED "Nie mogê utworzyæ nowego katalogu: Brak dostêpu."
-	IDS_CREATEFOLDER_CAPTION "B³¹d przy tworzeniu nowego katalogu."
-	IDS_DELETEITEM_CAPTION "PotwierdŸ usuniêcia pliku"
-	IDS_DELETEFOLDER_CAPTION "PotwierdŸ usuniêcie katalogu"
-	IDS_DELETEITEM_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ te %1 pliki?"
-	IDS_OVERWRITEFILE_TEXT "Zast¹piæ plik %1?"
-	IDS_OVERWRITEFILE_CAPTION "PotwierdŸ zast¹pienie pliku"
-}
-
-/*	columns in the shellview	*/
-STRINGTABLE
-BEGIN
+        /* columns in the shellview */
 	IDS_SHV_COLUMN1		"Plik"
 	IDS_SHV_COLUMN2		"Wielkoœæ"
 	IDS_SHV_COLUMN3		"Typ"
@@ -178,13 +144,62 @@ BEGIN
 	IDS_SHV_COLUMN7		"Dostêpna wielkoœæ"
 	IDS_SHV_COLUMN8		"Nazwa"
 	IDS_SHV_COLUMN9		"Komentarz"
-END
+	IDS_SHV_COLUMN10        "W³aœciciel"
+	IDS_SHV_COLUMN11        "Grupa"
 
-/* message box strings */
-STRINGTABLE DISCARDABLE
-{
-       IDS_RESTART_TITLE       "Uruchom ponownie"
-       IDS_RESTART_PROMPT      "Czy chcesz zasymulowaæ zrestartowanie Windowsa?"
-       IDS_SHUTDOWN_TITLE      "Wy³¹cz"
-       IDS_SHUTDOWN_PROMPT     "Czy chcesz wy³¹czyæ sesjê Wine'a?"
+        /* special folders */
+	IDS_DESKTOP		"Pulpit"
+	IDS_MYCOMPUTER		"Mój komputer"
+
+	/* context menus */
+	IDS_VIEW_LARGE		"&Du¿e Ikony"
+	IDS_VIEW_SMALL		"&Ma³e Ikony"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Szczegó³y"
+	IDS_SELECT		"Zaznacz"
+	IDS_OPEN		"Otwórz"
+
+	IDS_CREATEFOLDER_DENIED "Nie mogê utworzyæ nowego katalogu: Brak dostêpu."
+	IDS_CREATEFOLDER_CAPTION "B³¹d przy tworzeniu nowego katalogu."
+	IDS_DELETEITEM_CAPTION "PotwierdŸ usuniêcia pliku"
+	IDS_DELETEFOLDER_CAPTION "PotwierdŸ usuniêcie katalogu"
+	IDS_DELETEITEM_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ te %1 pliki?"
+	IDS_OVERWRITEFILE_TEXT "Zast¹piæ plik %1?"
+	IDS_OVERWRITEFILE_CAPTION "PotwierdŸ zast¹pienie pliku"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "Uruchom ponownie"
+        IDS_RESTART_PROMPT      "Czy chcesz zasymulowaæ zrestartowanie Windowsa?"
+        IDS_SHUTDOWN_TITLE      "Wy³¹cz"
+        IDS_SHUTDOWN_PROMPT     "Czy chcesz wy³¹czyæ sesjê Wine'a?"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Menu Start\\Programy"
+	IDS_PERSONAL                "Moje dokumenty"
+	IDS_FAVORITES               "Ulubione"
+	IDS_STARTUP                 "Menu Start\\Programy\\AutoStart"
+	IDS_RECENT                  "Recent"
+	IDS_SENDTO                  "SendTo"
+	IDS_STARTMENU               "Menu Start"
+	IDS_MYMUSIC                 "Moja muzyka"
+	IDS_MYVIDEO                 "Moje wideo"
+	IDS_DESKTOPDIRECTORY        "Pulpit"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Szablony"
+	IDS_APPDATA                 "Dane aplikacji"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Ustawienia lokalne\\Dane aplikacji"
+	IDS_INTERNET_CACHE          "Ustawienia lokalne\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Ustawienia Lokalne\\Historia"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "Moje obrazy"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Dokumenty"
+	IDS_ADMINTOOLS              "Menu Start\\Programy\\Narzêdzia administracyjne"
+	IDS_COMMON_MUSIC            "Documenty\\Moja muzyka"
+	IDS_COMMON_PICTURES         "Documenty\\Moje obrazy"
+	IDS_COMMON_VIDEO            "Documenty\\Moje wideo"
+	IDS_CDBURN_AREA             "Ustawienia lokalne\Dane aplikacji\\Microsoft\\Nagrywanie dysków CD"
 }
