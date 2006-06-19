@@ -58,11 +58,6 @@ static void function_header( FILE *outfile, const char *name )
 }
 
 
-static inline const char *data16_prefix(void)
-{
-    return (target_platform == PLATFORM_SVR4) ? "\tdata16\n" : "";
-}
-
 /*******************************************************************
  *         BuildCallFrom16Core
  *
@@ -160,8 +155,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         fprintf( outfile, "\t.byte 0x2e\n\tmovl %s,%%edx\n", asm_name("CallTo16_DataSelector") );
 
     /* Load 32-bit segment registers */
-    fprintf( outfile, "%s\tmovw %%dx, %%ds\n", data16_prefix() );
-    fprintf( outfile, "%s\tmovw %%dx, %%es\n", data16_prefix() );
+    fprintf( outfile, "\tmovw %%dx, %%ds\n" );
+    fprintf( outfile, "\tmovw %%dx, %%es\n" );
 
     if ( UsePIC )
         fprintf( outfile, "\tmovw %s-1b(%%ecx), %%fs\n", asm_name("CallTo16_TebSelector") );
@@ -192,7 +187,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     fprintf( outfile, "\tpushl %%ebp\n" );
 
     /* Switch stacks */
-    fprintf( outfile, "%s\t.byte 0x64\n\tmovw %%ss, (%d)\n", data16_prefix(), STACKOFFSET + 2 );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw %%ss, (%d)\n", STACKOFFSET + 2 );
     fprintf( outfile, "\t.byte 0x64\n\tmovw %%sp, (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tpushl %%ds\n" );
     fprintf( outfile, "\tpopl %%ss\n" );
@@ -475,7 +470,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     /* Switch to the 16-bit stack */
     fprintf( outfile, "\tmovl %%esp,%%edx\n" );
-    fprintf( outfile, "%s\t.byte 0x64\n\tmovw (%d),%%ss\n", data16_prefix(), STACKOFFSET + 2);
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
@@ -554,8 +549,8 @@ static void BuildRet16Func( FILE *outfile )
 
     fprintf( outfile, "\t.byte 0x2e\n\tmovl %s", asm_name("CallTo16_DataSelector") );
     fprintf( outfile, "-%s,%%edi\n", asm_name("__wine_call16_start") );
-    fprintf( outfile, "%s\tmovw %%di,%%ds\n", data16_prefix() );
-    fprintf( outfile, "%s\tmovw %%di,%%es\n", data16_prefix() );
+    fprintf( outfile, "\tmovw %%di,%%ds\n" );
+    fprintf( outfile, "\tmovw %%di,%%es\n" );
 
     fprintf( outfile, "\t.byte 0x2e\n\tmov %s", asm_name("CallTo16_TebSelector") );
     fprintf( outfile, "-%s,%%fs\n", asm_name("__wine_call16_start") );
@@ -564,7 +559,7 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Restore the 32-bit stack */
 
-    fprintf( outfile, "%s\tmovw %%di,%%ss\n", data16_prefix() );
+    fprintf( outfile, "\tmovw %%di,%%ss\n" );
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
 
     /* Return to caller */

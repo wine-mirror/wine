@@ -65,8 +65,6 @@ enum target_cpu target_cpu = CPU_POWERPC;
 
 #ifdef __APPLE__
 enum target_platform target_platform = PLATFORM_APPLE;
-#elif defined(__svr4__)
-enum target_platform target_platform = PLATFORM_SVR4;
 #elif defined(_WINDOWS)
 enum target_platform target_platform = PLATFORM_WINDOWS;
 #else
@@ -126,7 +124,6 @@ static const struct
 {
     { "macos",   PLATFORM_APPLE },
     { "darwin",  PLATFORM_APPLE },
-    { "sunos",   PLATFORM_SVR4 },
     { "windows", PLATFORM_WINDOWS },
     { "winnt",   PLATFORM_WINDOWS }
 };
