@@ -590,6 +590,8 @@ static void start_server(void)
 {
     static int started;  /* we only try once */
     char *argv[3];
+    static char wineserver[] = "server/wineserver";
+    static char debug[] = "-d";
 
     if (!started)
     {
@@ -598,8 +600,8 @@ static void start_server(void)
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
-            argv[0] = "server/wineserver";
-            argv[1] = TRACE_ON(server) ? "-d" : NULL;
+            argv[0] = wineserver;
+            argv[1] = TRACE_ON(server) ? debug : NULL;
             argv[2] = NULL;
             wine_exec_wine_binary( argv[0], argv, getenv("WINESERVER") );
             fatal_error( "could not exec wineserver\n" );
