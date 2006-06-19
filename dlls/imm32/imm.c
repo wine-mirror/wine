@@ -209,10 +209,10 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
     InputContextData *data = (InputContextData*)hIMC;
 
-    WARN("(%p, %p): semi-stub\n",hWnd,hIMC);
+    WARN("(%p, %p): semi-stub\n", hWnd, hIMC);
 
-    if (!data)
-        return FALSE;
+    if (!hIMC)
+        return NULL;
 
     /*
      * WINE SPECIFIC! MAY CONFLICT
@@ -227,7 +227,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
      * If already associated just return
      */
     if (data->hwnd == hWnd)
-        return (HIMC)data;
+        return hIMC;
 
     if (IsWindow(data->hwnd))
     {
@@ -251,7 +251,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
      * TODO: We need to keep track of the old context associated
      * with a window and return it for now we will return NULL;
      */
-    return (HIMC)NULL;
+    return NULL;
 }
 
 /***********************************************************************
