@@ -73,33 +73,15 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
 {
     PCERT_CONTEXT cert = NULL;
     BOOL ret;
-    PCERT_SIGNED_CONTENT_INFO signedCert = NULL;
     PCERT_INFO certInfo = NULL;
     DWORD size = 0;
 
     TRACE("(%08lx, %p, %ld)\n", dwCertEncodingType, pbCertEncoded,
      cbCertEncoded);
 
-    /* First try to decode it as a signed cert. */
-    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT, pbCertEncoded,
-     cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&signedCert, &size);
-    if (ret)
-    {
-        size = 0;
-        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
-         signedCert->ToBeSigned.pbData, signedCert->ToBeSigned.cbData,
-         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&certInfo, &size);
-        LocalFree(signedCert);
-    }
-    /* Failing that, try it as an unsigned cert */
-    if (!ret)
-    {
-        size = 0;
-        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
-         pbCertEncoded, cbCertEncoded,
-         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-         (BYTE *)&certInfo, &size);
-    }
+    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
+     pbCertEncoded, cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&certInfo, &size);
     if (ret)
     {
         BYTE *data = NULL;
