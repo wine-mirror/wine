@@ -1257,7 +1257,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             ERR( "Unable to read color profile\n" );
 
             CloseHandle( handle );
-            HeapFree( GetProcessHeap, 0, iccprofile );
+            HeapFree( GetProcessHeap(), 0, iccprofile );
             return NULL;
         }
 
