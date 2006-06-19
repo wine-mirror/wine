@@ -31,6 +31,9 @@ static char filename_[] = "testfile.xx_";
 static char filename[] = "testfile.xxx";
 static char filename2[] = "testfile.yyy";
 
+static WCHAR filename_W[] = {'t','e','s','t','f','i','l','e','.','x','x','_',0};
+static WCHAR filenameW[]  = {'t','e','s','t','f','i','l','e','.','x','x','x',0};
+
 /* This is the hex string representation of the file created by compressing
    a simple text file with the contents "This is a test file."
  
@@ -221,10 +224,102 @@ static void test_LZCopy(void)
   ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
+static void test_LZOpenFileW(void)
+{
+  OFSTRUCT test;
+  DWORD retval;
+  INT file;
+  char expected[MAX_PATH];
+  char filled_0xA5[OFS_MAXPATHNAME];
+  static WCHAR badfilenameW[] = {'b','a','d','f','i','l','e','n','a','m','e','.','x','t','n',0};
+
+  SetLastError(0xfaceabee);
+  /* Check for nonexistent file. */
+  file = LZOpenFileW(badfilenameW, &test, OF_READ);
+  if(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    trace("LZOpenFileW call not implemented, skipping rest of the test\n");
+    return;
+  }
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileW succeeded on nonexistent file\n");
+  LZClose(file);
+
+  /* Create an empty file. */
+  file = LZOpenFileW(filename_W, &test, OF_CREATE);
+  ok(file >= 0, "LZOpenFile failed on creation\n");
+  LZClose(file);
+  retval = GetFileAttributesW(filename_W);
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
+    GetLastError());
+
+  /* Check various opening options. */
+  file = LZOpenFileW(filename_W, &test, OF_READ);
+  ok(file >= 0, "LZOpenFileW failed on read\n");
+  LZClose(file);
+  file = LZOpenFileW(filename_W, &test, OF_WRITE);
+  ok(file >= 0, "LZOpenFileW failed on write\n");
+  LZClose(file);
+  file = LZOpenFileW(filename_W, &test, OF_READWRITE);
+  ok(file >= 0, "LZOpenFileW failed on read/write\n");
+  LZClose(file);
+  file = LZOpenFileW(filename_W, &test, OF_EXIST);
+  ok(file >= 0, "LZOpenFileW failed on read/write\n");
+  LZClose(file);
+
+  /* If the file "foo.xxx" does not exist, LZOpenFileW should then
+     check for the file "foo.xx_" and open that -- at least on some
+     operating systems.  Doesn't seem to on my copy of Win98.   
+   */
+  retval = GetCurrentDirectoryA(MAX_PATH, expected);
+  ok(retval > 0, "GetCurrentDirectoryW returned %ld, GLE=0x%lx\n", 
+     retval, GetLastError());
+  lstrcatA(expected, "\\");
+  /* We probably should use WideCharToMultiByte() on filenameW here: */
+  lstrcatA(expected, filename);
+  /* Compressed file name ends with underscore. */
+  retval = lstrlenA(expected);
+  expected[retval-1] = '_';
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+
+  /* Try to open compressed file. */
+  file = LZOpenFileW(filenameW, &test, OF_EXIST);
+  if(file != LZERROR_BADINHANDLE) {
+    ok(test.cBytes == sizeof(OFSTRUCT), 
+       "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == 0, "LZOpenFileW set test.nErrCode to %d\n", 
+       test.nErrCode);
+    ok(lstrcmpA(test.szPathName, expected) == 0, 
+       "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
+       test.szPathName, expected);
+    LZClose(file);
+  } else {
+    ok(test.cBytes == 0xA5, 
+       "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+       "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
+       "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
+       test.szPathName, filled_0xA5);
+  }
+
+  /* Delete the file then make sure it doesn't exist anymore. */
+  file = LZOpenFileW(filename_W, &test, OF_DELETE);
+  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  LZClose(file);
+
+  retval = GetFileAttributesW(filename_W);
+  ok(retval == INVALID_FILE_ATTRIBUTES, 
+     "GetFileAttributesA succeeded on deleted file\n");
+}
+
+
 START_TEST(lzexpand_main)
 {
   buf = malloc(uncompressed_data_size * 2);
   test_LZOpenFileA();
+  test_LZOpenFileW();
   test_LZRead();
   test_LZCopy();
   free(buf);
