@@ -234,6 +234,17 @@ HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
+        LPCWSTR pwzLocation, IHlinkSite *pihlsite, DWORD dwSiteData,
+        IHlinkFrame *pihlframe, DWORD grfHLNF, LPBC pibc,
+        IBindStatusCallback *pibsc, IHlinkBrowseContext *pihlbc)
+{
+    FIXME("%s %s %p %08lx %p %08lx %p %p %p\n",
+          debugstr_w(pwzTarget), debugstr_w(pwzLocation), pihlsite,
+          dwSiteData, pihlframe, grfHLNF, pibc, pibsc, pihlbc);
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
