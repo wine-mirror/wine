@@ -93,28 +93,6 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS nego_AcquireCredentialsHandle(ULONG fCredentialsUse,
-        PCredHandle phCredential, PTimeStamp ptsExpiry)
-{
-    SECURITY_STATUS ret;
-
-    if(fCredentialsUse == SECPKG_CRED_BOTH)
-    {
-        ret = SEC_E_NO_CREDENTIALS;
-    }
-    else
-    {
-        /* Ok, just store the direction like schannel does for now.
-         * FIXME: This should probably do something useful later on
-         */
-        phCredential->dwUpper = fCredentialsUse;
-        /* Same here, shamelessly stolen from schannel.c */
-        if (ptsExpiry)
-            ptsExpiry->QuadPart = 0;
-        ret = SEC_E_OK;
-    }
-    return ret;
-}
 
 /***********************************************************************
  *              AcquireCredentialsHandleA
@@ -124,11 +102,10 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p) stub\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return nego_AcquireCredentialsHandle(fCredentialUse, phCredential,
-            ptsExpiry);
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /***********************************************************************
@@ -139,11 +116,10 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p) stub\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return nego_AcquireCredentialsHandle(fCredentialUse, phCredential,
-            ptsExpiry);
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /***********************************************************************
