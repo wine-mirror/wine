@@ -166,18 +166,21 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                     mdThd->Stack.StartOfMemoryRange = (ctx->Esp - 4);
                 else
                     mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-                mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase - 
-                    mdThd->Stack.StartOfMemoryRange;
 #elif defined(__powerpc__)
                 if (ctx->Iar)
                     mdThd->Stack.StartOfMemoryRange = ctx->Iar - 4;
                 else
                     mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-                mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase - 
-                    mdThd->Stack.StartOfMemoryRange;
+#elif defined(__x86_64__)
+                if (ctx->Rsp)
+                    mdThd->Stack.StartOfMemoryRange = (ctx->Rsp - 8);
+                else
+                    mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
 #else
-#error unsupported CPU                            
+#error unsupported CPU
 #endif
+                mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase -
+                    mdThd->Stack.StartOfMemoryRange;
             }
             ResumeThread(hThread);
         }
