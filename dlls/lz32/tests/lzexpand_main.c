@@ -60,10 +60,13 @@ static void test_LZOpenFileA(void)
   char expected[MAX_PATH];
   char filled_0xA5[OFS_MAXPATHNAME];
 
+  SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
   file = LZOpenFileA("badfilename_", &test, OF_READ);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND, 
+     "GetLastError() returns %ld\n", GetLastError());
   LZClose(file);
 
   /* Create an empty file. */
@@ -102,7 +105,6 @@ static void test_LZOpenFileA(void)
   expected[retval-1] = '_';
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
-  SetLastError(0xfaceabee);
 
   /* Try to open compressed file. */
   file = LZOpenFileA(filename, &test, OF_EXIST);
