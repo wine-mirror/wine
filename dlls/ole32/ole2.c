@@ -2699,7 +2699,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
         if (pvarSrc->u.pclipdata)
         {
             len = pvarSrc->u.pclipdata->cbSize - sizeof(pvarSrc->u.pclipdata->ulClipFmt);
-            CoTaskMemAlloc(len);
+            pvarDest->u.pclipdata->pClipData = CoTaskMemAlloc(len);
             CopyMemory(pvarDest->u.pclipdata->pClipData, pvarSrc->u.pclipdata->pClipData, len);
         }
         break;
