@@ -144,4 +144,21 @@ void shader_generate_arb_declarations(
                    This->baseShader.limits.constant_float - 1);
 }
 
+/** Process the D3DSIO_DEF opcode into an ARB string - creates a local vec4
+ * float constant, and stores it's usage on the regmaps. */
+void shader_hw_def(SHADER_OPCODE_ARG* arg) {
+
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+
+    shader_addline(arg->buffer, 
+                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
+                   *((const float *)(arg->src + 0)),
+                   *((const float *)(arg->src + 1)),
+                   *((const float *)(arg->src + 2)),
+                   *((const float *)(arg->src + 3)) );
+
+    arg->reg_maps->constantsF[reg] = 1;
+}
+
+
 /* TODO: Add more ARB_[vertex/fragment]_program specific code here */

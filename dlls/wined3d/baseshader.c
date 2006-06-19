@@ -823,22 +823,6 @@ void shader_dump_ins_modifiers(const DWORD output) {
         FIXME("_unrecognized_modifier(%#lx)", mmask >> D3DSP_DSTMOD_SHIFT);
 }
 
-/** Process the D3DSIO_DEF opcode into an ARB string - creates a local vec4
- * float constant, and stores it's usage on the regmaps. */
-void shader_hw_def(SHADER_OPCODE_ARG* arg) {
-
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-
-    shader_addline(arg->buffer, 
-                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
-                   *((const float *)(arg->src + 0)),
-                   *((const float *)(arg->src + 1)),
-                   *((const float *)(arg->src + 2)),
-                   *((const float *)(arg->src + 3)) );
-
-    arg->reg_maps->constantsF[reg] = 1;
-}
-
 /* First pass: trace shader, initialize length and version */
 void shader_trace_init(
     IWineD3DBaseShader *iface,
