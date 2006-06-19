@@ -31,6 +31,7 @@
 #endif
 #ifdef HAVE_ARPA_NAMESER_H
 # include <arpa/nameser.h>
+# undef NOERROR
 #endif
 #ifdef HAVE_RESOLV_H
 # include <resolv.h>
