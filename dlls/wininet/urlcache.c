@@ -560,6 +560,7 @@ void URLCacheContainers_CreateDefaults(void)
         }
 
         wszCachePath[path_len] = '\\';
+        wszCachePath[path_len+1] = 0;
 
         strcpyW(wszMutexName, wszCachePath);
         
