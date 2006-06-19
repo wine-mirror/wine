@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #ifdef HAVE_LIBXSHAPE
 #include <X11/extensions/shape.h>
 #endif /* HAVE_LIBXSHAPE */
