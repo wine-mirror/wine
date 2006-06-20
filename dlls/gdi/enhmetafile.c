@@ -1339,10 +1339,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (!lpScaleViewportExtEx->xNum || !lpScaleViewportExtEx->xDenom || 
             !lpScaleViewportExtEx->yNum || !lpScaleViewportExtEx->yDenom)
             break;
-        info->vportExtX = (info->vportExtX * lpScaleViewportExtEx->xNum) / 
-                                  lpScaleViewportExtEx->xDenom;
-        info->vportExtY = (info->vportExtY * lpScaleViewportExtEx->yNum) / 
-                                  lpScaleViewportExtEx->yDenom;
+        info->vportExtX = MulDiv(info->vportExtX, lpScaleViewportExtEx->xNum,
+                                 lpScaleViewportExtEx->xDenom);
+        info->vportExtY = MulDiv(info->vportExtY, lpScaleViewportExtEx->yNum,
+                                 lpScaleViewportExtEx->yDenom);
         if (info->vportExtX == 0) info->vportExtX = 1;
         if (info->vportExtY == 0) info->vportExtY = 1;
         if (info->mode == MM_ISOTROPIC)
@@ -1364,10 +1364,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (!lpScaleWindowExtEx->xNum || !lpScaleWindowExtEx->xDenom || 
             !lpScaleWindowExtEx->xNum || !lpScaleWindowExtEx->yDenom)
             break;
-        info->wndExtX = (info->wndExtX * lpScaleWindowExtEx->xNum) / 
-                                  lpScaleWindowExtEx->xDenom;
-        info->wndExtY = (info->wndExtY * lpScaleWindowExtEx->yNum) / 
-                                  lpScaleWindowExtEx->yDenom;
+        info->wndExtX = MulDiv(info->wndExtX, lpScaleWindowExtEx->xNum,
+                               lpScaleWindowExtEx->xDenom);
+        info->wndExtY = MulDiv(info->wndExtY, lpScaleWindowExtEx->yNum,
+                               lpScaleWindowExtEx->yDenom);
         if (info->wndExtX == 0) info->wndExtX = 1;
         if (info->wndExtY == 0) info->wndExtY = 1;
         if (info->mode == MM_ISOTROPIC)
@@ -2627,6 +2627,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     RECT rc, *prcFrame = NULL;
     gdi_mf_comment *mfcomment;
     UINT mfcomment_size;
+    LONG mm, xExt, yExt;
 
     TRACE("(%d, %p, %p, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
 
@@ -2641,19 +2642,45 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
         hdcRef = hdcdisp = CreateDCW(szDisplayW, NULL, NULL, NULL);
 
     if (lpmfp)
-        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
-    
-    if (lpmfp && (lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC))
     {
-        rc.left = rc.top = 0;
-        rc.right = lpmfp->xExt;
-        rc.bottom = lpmfp->yExt;
-        prcFrame = &rc;
+        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
+
+        mm = lpmfp->mm;
+        xExt = lpmfp->xExt;
+        yExt = lpmfp->yExt;
+    }
+    else
+    {
+        TRACE("lpmfp == NULL\n");
+
+        /* Use the whole device surface */
+        mm = MM_ANISOTROPIC;
+        xExt = 0;
+        yExt = 0;
+    }
+
+    if (mm == MM_ISOTROPIC || mm == MM_ANISOTROPIC)
+    {
+        if (xExt < 0 || yExt < 0)
+        {
+          /* Use the whole device surface */
+          xExt = 0;
+          yExt = 0;
+        }
+
+        /* Use the x and y extents as the frame box */
+        if (xExt && yExt)
+        {
+            rc.left = rc.top = 0;
+            rc.right = xExt;
+            rc.bottom = yExt;
+            prcFrame = &rc;
+        }
     }
 
     if(!(hdc = CreateEnhMetaFileW(hdcRef, NULL, prcFrame, NULL)))
     {
-        ERR("CreateEnhMetaFile fails?\n");
+        ERR("CreateEnhMetaFile failed\n");
         goto end;
     }
 
@@ -2676,23 +2703,33 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
         HeapFree(GetProcessHeap(), 0, mfcomment);
     }
 
-    if(lpmfp && lpmfp->mm != MM_TEXT)
-        SetMapMode(hdc, lpmfp->mm);
+    if (mm != MM_TEXT)
+        SetMapMode(hdc, mm);
 
-    if (lpmfp && (lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC))
+    if (mm == MM_ISOTROPIC || mm == MM_ANISOTROPIC)
     {
-        INT horzres, vertres, horzsize, vertsize, xext, yext;
+        INT horzsize, vertsize, horzres, vertres;
 
-        horzres = GetDeviceCaps(hdcRef, HORZRES);
-        vertres = GetDeviceCaps(hdcRef, VERTRES);
         horzsize = GetDeviceCaps(hdcRef, HORZSIZE);
         vertsize = GetDeviceCaps(hdcRef, VERTSIZE);
+        horzres = GetDeviceCaps(hdcRef, HORZRES);
+        vertres = GetDeviceCaps(hdcRef, VERTRES);
+
+        if (!xExt || !yExt)
+        {
+            /* Use the whole device surface */
+           xExt = horzres;
+           yExt = vertres;
+        }
+        else
+        {
+            xExt = MulDiv(xExt, horzres, 100 * horzsize);
+            yExt = MulDiv(yExt, vertres, 100 * vertsize);
+        }
 
         /* set the initial viewport:window ratio as 1:1 */
-        xext = lpmfp->xExt*horzres/(100*horzsize);
-        yext = lpmfp->yExt*vertres/(100*vertsize);
-        SetViewportExtEx(hdc, xext, yext, NULL);
-        SetWindowExtEx(hdc,   xext, yext, NULL);
+        SetViewportExtEx(hdc, xExt, yExt, NULL);
+        SetWindowExtEx(hdc,   xExt, yExt, NULL);
     }
 
     PlayMetaFile(hdc, hmf);

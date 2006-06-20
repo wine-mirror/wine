@@ -1299,6 +1299,217 @@ static void test_mf_conversions(void)
     }
 }
 
+static BOOL getConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL mfpIsNull,
+                                       LONG mm, LONG xExt, LONG yExt,
+                                       RECTL * rclBounds, RECTL * rclFrame)
+{
+  METAFILEPICT mfp;
+  METAFILEPICT * mfpPtr = NULL;
+  HENHMETAFILE emf;
+  ENHMETAHEADER header;
+  UINT res;
+
+  if (!mfpIsNull)
+  {
+    mfp.mm = mm;
+    mfp.xExt = xExt;
+    mfp.yExt = yExt;
+    mfpPtr = &mfp;
+  }
+
+  emf = SetWinMetaFileBits(buffer_size, buffer, NULL, mfpPtr);
+  ok(emf != NULL, "SetWinMetaFileBits failed\n");
+  if (!emf) return FALSE;
+  res = GetEnhMetaFileHeader(emf, sizeof(header), &header);
+  ok(res != 0, "GetEnhMetaHeader failed\n");
+  DeleteEnhMetaFile(emf);
+  if (!res) return FALSE;
+
+  *rclBounds = header.rclBounds;
+  *rclFrame = header.rclFrame;
+  return TRUE;
+}
+
+static void checkConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL mfpIsNull,
+                                         LONG mm, LONG xExt, LONG yExt,
+                                         RECTL * rclBoundsExpected, RECTL * rclFrameExpected)
+{
+  RECTL rclBounds, rclFrame;
+
+  if (getConvertedFrameAndBounds(buffer_size, buffer, mfpIsNull, mm, xExt, yExt, &rclBounds, &rclFrame))
+  {
+    char * msg;
+    char buf[64];
+
+    if (mfpIsNull)
+    {
+       msg = "mfp == NULL";
+    }
+    else
+    {
+      char * mm_str;
+      switch (mm)
+      {
+         case MM_ANISOTROPIC: mm_str = "MM_ANISOTROPIC"; break;
+         case MM_ISOTROPIC:   mm_str = "MM_ISOTROPIC"; break;
+         default:             mm_str = "Unexpected";
+      }
+      snprintf(buf, 64, "mm=%s, xExt=%ld, yExt=%ld", mm_str, xExt, yExt);
+      msg = buf;
+    }
+
+    ok(rclBounds.left == rclBoundsExpected->left, "rclBounds.left: Expected %ld, got %ld (%s)\n", rclBoundsExpected->left, rclBounds.left, msg);
+    ok(rclBounds.top == rclBoundsExpected->top, "rclBounds.top: Expected %ld, got %ld (%s)\n", rclBoundsExpected->top, rclBounds.top, msg);
+    ok(rclBounds.right == rclBoundsExpected->right, "rclBounds.right: Expected %ld, got %ld (%s)\n", rclBoundsExpected->right, rclBounds.right, msg);
+    ok(rclBounds.bottom == rclBoundsExpected->bottom, "rclBounds.bottom: Expected %ld, got %ld (%s)\n", rclBoundsExpected->bottom, rclBounds.bottom, msg);
+    ok(rclFrame.left == rclFrameExpected->left, "rclFrame.left: Expected %ld, got %ld (%s)\n", rclFrameExpected->left, rclFrame.left, msg);
+    ok(rclFrame.top == rclFrameExpected->top, "rclFrame.top: Expected %ld, got %ld (%s)\n", rclFrameExpected->top, rclFrame.top, msg);
+    ok(rclFrame.right == rclFrameExpected->right, "rclFrame.right: Expected %ld, got %ld (%s)\n", rclFrameExpected->right, rclFrame.right, msg);
+    ok(rclFrame.bottom == rclFrameExpected->bottom, "rclFrame.bottom: Expected %ld, got %ld (%s)\n", rclFrameExpected->bottom, rclFrame.bottom, msg);
+  }
+}
+
+static void test_SetWinMetaFileBits(void)
+{
+  HMETAFILE wmf;
+  HDC wmfDC;
+  BYTE * buffer;
+  UINT buffer_size;
+  RECT rect;
+  UINT res;
+  RECTL rclBoundsAnisotropic, rclFrameAnisotropic;
+  RECTL rclBoundsIsotropic, rclFrameIsotropic;
+  RECTL rclBounds, rclFrame;
+  HDC dc;
+  LONG diffx, diffy;
+
+  wmfDC = CreateMetaFile(NULL);
+  ok(wmfDC != NULL, "CreateMetaFile failed\n");
+  if (!wmfDC) return;
+
+  SetWindowExtEx(wmfDC, 100, 100, NULL);
+  rect.left = rect.top = 0;
+  rect.right = rect.bottom = 50;
+  FillRect(wmfDC, &rect, GetStockObject(BLACK_BRUSH));
+  wmf = CloseMetaFile(wmfDC);
+  ok(wmf != NULL, "Metafile creation failed\n");
+  if (!wmf) return;
+
+  buffer_size = GetMetaFileBitsEx(wmf, 0, NULL);
+  ok(buffer_size != 0, "GetMetaFileBitsEx failed\n");
+  if (buffer_size == 0)
+  {
+    DeleteMetaFile(wmf);
+    return;
+  }
+
+  buffer = (BYTE *)HeapAlloc(GetProcessHeap(), 0, buffer_size);
+  ok(buffer != NULL, "HeapAlloc failed\n");
+  if (!buffer)
+  {
+    DeleteMetaFile(wmf);
+    return;
+  }
+
+  res = GetMetaFileBitsEx(wmf, buffer_size, buffer);
+  ok(res == buffer_size, "GetMetaFileBitsEx failed\n");
+  DeleteMetaFile(wmf);
+  if (res != buffer_size)
+  {
+     HeapFree(GetProcessHeap(), 0, buffer);
+     return;
+  }
+
+  /* Get the reference bounds and frame */
+  getConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 0, 0, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  getConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 0, 0,  &rclBoundsIsotropic, &rclFrameIsotropic);
+
+  ok(rclBoundsAnisotropic.left == 0 && rclBoundsAnisotropic.top == 0 &&
+     rclBoundsIsotropic.left == 0 && rclBoundsIsotropic.top == 0,
+     "SetWinMetaFileBits: Reference bounds: Left and top bound must be zero\n");
+
+  ok(rclBoundsAnisotropic.right >= rclBoundsIsotropic.right, "SetWinMetaFileBits: Reference bounds: Invalid right bound\n");
+  ok(rclBoundsAnisotropic.bottom >= rclBoundsIsotropic.bottom, "SetWinMetaFileBits: Reference bounds: Invalid bottom bound\n");
+  diffx = rclBoundsIsotropic.right - rclBoundsIsotropic.bottom;
+  if (diffx < 0) diffx = -diffx;
+  ok(diffx <= 1, "SetWinMetaFileBits (MM_ISOTROPIC): Reference bounds are not isotropic\n");
+
+  dc = CreateCompatibleDC(NULL);
+  todo_wine
+  {
+  ok(rclBoundsAnisotropic.right == GetDeviceCaps(dc, HORZRES) / 2 - 1 &&
+     rclBoundsAnisotropic.bottom == GetDeviceCaps(dc, VERTRES) / 2 - 1,
+     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference bounds: The whole device surface must be used (%dx%d), but got (%ldx%ld)\n",
+     GetDeviceCaps(dc, HORZRES) / 2 - 1, GetDeviceCaps(dc, VERTRES) / 2 - 1, rclBoundsAnisotropic.right, rclBoundsAnisotropic.bottom);
+  }
+
+  /* Allow 1 mm difference (rounding errors) */
+  diffx = rclFrameAnisotropic.right / 100 - GetDeviceCaps(dc, HORZSIZE) / 2;
+  diffy = rclFrameAnisotropic.bottom / 100 - GetDeviceCaps(dc, VERTSIZE) / 2;
+  if (diffx < 0) diffx = -diffx;
+  if (diffy < 0) diffy = -diffy;
+  todo_wine
+  {
+  ok(diffx <= 1 && diffy <= 1,
+     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference frame: The whole device surface must be used (%dx%d), but got (%ldx%ld)\n",
+     GetDeviceCaps(dc, HORZSIZE) / 2, GetDeviceCaps(dc, VERTSIZE) / 2, rclFrameAnisotropic.right / 100, rclFrameAnisotropic.bottom / 100);
+  }
+  DeleteDC(dc);
+
+  /* If the METAFILEPICT pointer is NULL, the MM_ANISOTROPIC mapping mode and the whole device surface are used */
+  checkConvertedFrameAndBounds(buffer_size, buffer, TRUE, 0, 0, 0, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+
+  /* If xExt or yExt is zero or negative, the whole device surface is used */
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 10000, 0, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 10000, 0, &rclBoundsIsotropic, &rclFrameIsotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 0, 10000, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 0, 10000, &rclBoundsIsotropic, &rclFrameIsotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, -10000, 0, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, -10000, 0, &rclBoundsIsotropic, &rclFrameIsotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 0, -10000, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 0, -10000, &rclBoundsIsotropic, &rclFrameIsotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, -10000, 10000, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, -10000, 10000, &rclBoundsIsotropic, &rclFrameIsotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 10000, -10000, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 10000, -10000, &rclBoundsIsotropic, &rclFrameIsotropic);
+
+  /* MSDN says that negative xExt and yExt values specify a ratio.
+     Check that this is wrong and the whole device surface is used */
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, -1000, -100, &rclBoundsAnisotropic, &rclFrameAnisotropic);
+  checkConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, -1000, -100, &rclBoundsIsotropic, &rclFrameIsotropic);
+
+  /* Ordinary conversions */
+
+  if (getConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ANISOTROPIC, 30000, 20000, &rclBounds, &rclFrame))
+  {
+    ok(rclFrame.left == 0 && rclFrame.top == 0 && rclFrame.right == 30000 && rclFrame.bottom == 20000,
+       "SetWinMetaFileBits (MM_ANISOTROPIC): rclFrame contains invalid values\n");
+    ok(rclBounds.left == 0 && rclBounds.top == 0 && rclBounds.right > rclBounds.bottom,
+       "SetWinMetaFileBits (MM_ANISOTROPIC): rclBounds contains invalid values\n");
+  }
+
+  if (getConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_ISOTROPIC, 30000, 20000, &rclBounds, &rclFrame))
+  {
+    ok(rclFrame.left == 0 && rclFrame.top == 0 && rclFrame.right == 30000 && rclFrame.bottom == 20000,
+       "SetWinMetaFileBits (MM_ISOTROPIC): rclFrame contains invalid values\n");
+    ok(rclBounds.left == 0 && rclBounds.top == 0,
+       "SetWinMetaFileBits (MM_ISOTROPIC): rclBounds contains invalid values\n");
+
+    /* Wine has a rounding error */
+    diffx = rclBounds.right - rclBounds.bottom;
+    if (diffx < 0) diffx = -diffx;
+    ok(diffx <= 1, "SetWinMetaFileBits (MM_ISOTROPIC): rclBounds is not isotropic\n");
+  }
+
+  if (getConvertedFrameAndBounds(buffer_size, buffer, FALSE, MM_HIMETRIC, 30000, 20000, &rclBounds, &rclFrame))
+  {
+    ok(rclFrame.right - rclFrame.left != 30000 && rclFrame.bottom - rclFrame.top != 20000,
+       "SetWinMetaFileBits: xExt and yExt must be ignored for mapping modes other than MM_ANISOTROPIC and MM_ISOTROPIC\n");
+  }
+
+  HeapFree(GetProcessHeap(), 0, buffer);
+}
+
 static BOOL (WINAPI *pGdiIsMetaPrintDC)(HDC);
 static BOOL (WINAPI *pGdiIsMetaFileDC)(HDC);
 static BOOL (WINAPI *pGdiIsPlayMetafileDC)(HDC);
@@ -1366,6 +1577,7 @@ START_TEST(metafile)
 
     /* For metafile conversions */
     test_mf_conversions();
+    test_SetWinMetaFileBits();
 
     test_gdiis();
 }
