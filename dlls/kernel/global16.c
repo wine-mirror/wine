@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(global);
   /* Global arena block */
 typedef struct
 {
-    DWORD     base;          /* Base address (0 if discarded) */
+    DWORD_PTR base;          /* Base address (0 if discarded) */
     DWORD     size;          /* Size in bytes (0 indicates a free block) */
     HGLOBAL16 handle;        /* Handle for this block */
     HGLOBAL16 hOwner;        /* Owner of this block */
@@ -155,7 +155,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 
       /* Fill the arena block */
 
-    pArena->base = (DWORD)ptr;
+    pArena->base = (DWORD_PTR)ptr;
     pArena->size = GetSelectorLimit16(sel) + 1;
     pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
     pArena->hOwner = hOwner;
