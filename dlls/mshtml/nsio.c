@@ -456,8 +456,14 @@ static nsresult NSAPI nsChannel_SetNotificationCallbacks(nsIHttpChannel *iface,
 static nsresult NSAPI nsChannel_GetSecurityInfo(nsIHttpChannel *iface, nsISupports **aSecurityInfo)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aSecurityInfo);
-    return nsIChannel_GetSecurityInfo(This->channel, aSecurityInfo);
+
+    if(This->channel)
+        return nsIChannel_GetSecurityInfo(This->channel, aSecurityInfo);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString *aContentType)
