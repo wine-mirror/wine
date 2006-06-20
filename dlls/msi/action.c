@@ -1421,6 +1421,7 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
          ' ','=',' ','\'','%','s','\'',
          0};
     static const WCHAR szDot[] = { '.',0 };
+    static WCHAR szEmpty[] = { 0 };
     LPWSTR p, tgt_short, tgt_long, src_short, src_long;
     LPCWSTR parent;
     MSIRECORD *row;
@@ -1454,11 +1455,11 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
     tgt_long = folder_split_path( tgt_short, '|' );
     src_long = folder_split_path( src_short, '|' );
 
-    /* check for root dirs */
+    /* check for no-op dirs */
     if (!lstrcmpW(szDot, tgt_short))
-        tgt_short = NULL;
-    if (!lstrcmpW(szDot, tgt_long))
-        tgt_long = NULL;
+        tgt_short = szEmpty;
+    if (!lstrcmpW(szDot, src_short))
+        src_short = szEmpty;
 
     if (!tgt_long)
         tgt_long = tgt_short;
