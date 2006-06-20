@@ -49,6 +49,721 @@ static void init_function_pointers(void)
     CRYPT_GET_PROC(CryptVerifyCertificateSignatureEx);
 }
 
+static const BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+ 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61,
+ 0x6e, 0x67, 0x00 };
+static const BYTE serialNum[] = { 1 };
+static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+static const BYTE bigCertHash[] = { 0x6e, 0x30, 0x90, 0x71, 0x5f, 0xd9, 0x23,
+ 0x56, 0xeb, 0xae, 0x25, 0x40, 0xe6, 0x22, 0xda, 0x19, 0x26, 0x02, 0xa6, 0x08 };
+
+static const BYTE bigCertWithDifferentSubject[] = { 0x30, 0x7a, 0x02, 0x01, 0x02,
+ 0x30, 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55,
+ 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67,
+ 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15,
+ 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c,
+ 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06,
+ 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55,
+ 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02,
+ 0x01, 0x01 };
+static const BYTE bigCertWithDifferentIssuer[] = { 0x30, 0x7a, 0x02, 0x01,
+ 0x01, 0x30, 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03,
+ 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e,
+ 0x67, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30,
+ 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a,
+ 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02,
+ 0x06, 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03,
+ 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff,
+ 0x02, 0x01, 0x01 };
+
+static const BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+ 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61,
+ 0x6e, 0x67, 0x00 };
+static const BYTE bigCert2[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+static const BYTE bigCert2WithDifferentSerial[] = { 0x30, 0x7a, 0x02, 0x01,
+ 0x02, 0x30, 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03,
+ 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e,
+ 0x67, 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30,
+ 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41,
+ 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02,
+ 0x06, 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03,
+ 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff,
+ 0x02, 0x01, 0x01 };
+static const BYTE bigCert2Hash[] = { 0x4a, 0x7f, 0x32, 0x1f, 0xcf, 0x3b, 0xc0,
+ 0x87, 0x48, 0x2b, 0xa1, 0x86, 0x54, 0x18, 0xe4, 0x3a, 0x0e, 0x53, 0x7e, 0x2b };
+
+static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
+ 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04,
+ 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00,
+ 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31,
+ 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61,
+ 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00,
+ 0x03, 0x01, 0x00, 0xa3, 0x2f, 0x30, 0x2d, 0x30, 0x2b, 0x06, 0x03, 0x55, 0x1d,
+ 0x25, 0x01, 0x01, 0xff, 0x04, 0x21, 0x30, 0x1f, 0x06, 0x08, 0x2b, 0x06, 0x01,
+ 0x05, 0x05, 0x07, 0x03, 0x03, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07,
+ 0x03, 0x02, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+
+static void testAddCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        HCERTSTORE collection;
+        PCCERT_CONTEXT context;
+        BOOL ret;
+
+        /* Weird--bad add disposition leads to an access violation in Windows.
+         */
+        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+         sizeof(bigCert), 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+
+        /* Weird--can add a cert to the NULL store (does this have special
+         * meaning?)
+         */
+        context = NULL;
+        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+         sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+            CertFreeCertificateContext(context);
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        /* This has the same name as bigCert, so finding isn't done by name */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context != NULL, "Expected a context\n");
+        if (context)
+        {
+            CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
+             (LPBYTE)bigCert2Hash };
+
+            /* Duplicate (AddRef) the context so we can still use it after
+             * deleting it from the store.
+             */
+            CertDuplicateCertificateContext(context);
+            CertDeleteCertificateFromStore(context);
+            /* Set the same hash as bigCert2, and try to readd it */
+            ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+             0, &hash);
+            ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+             GetLastError());
+            ret = CertAddCertificateContextToStore(store, context,
+             CERT_STORE_ADD_NEW, NULL);
+            /* The failure is a bit odd (CRYPT_E_ASN1_BADTAG), so just check
+             * that it fails.
+             */
+            ok(!ret, "Expected failure\n");
+            CertFreeCertificateContext(context);
+        }
+        context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+         sizeof(bigCert2));
+        ok(context != NULL, "Expected a context\n");
+        if (context)
+        {
+            /* Try to readd bigCert2 to the store */
+            ret = CertAddCertificateContextToStore(store, context,
+             CERT_STORE_ADD_NEW, NULL);
+            ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+             "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+            CertFreeCertificateContext(context);
+        }
+
+        /* Adding a cert with the same issuer name and serial number (but
+         * different subject) as an existing cert succeeds.
+         */
+        context = NULL;
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2WithDifferentSerial, sizeof(bigCert2WithDifferentSerial),
+         CERT_STORE_ADD_NEW, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+            CertDeleteCertificateFromStore(context);
+
+        /* Adding a cert with the same subject name and serial number (but
+         * different issuer) as an existing cert succeeds.
+         */
+        context = NULL;
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCertWithDifferentSubject, sizeof(bigCertWithDifferentSubject),
+         CERT_STORE_ADD_NEW, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+            CertDeleteCertificateFromStore(context);
+
+        /* Adding a cert with the same issuer name and serial number (but
+         * different otherwise) as an existing cert succeeds.
+         */
+        context = NULL;
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCertWithDifferentIssuer, sizeof(bigCertWithDifferentIssuer),
+         CERT_STORE_ADD_NEW, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+            CertDeleteCertificateFromStore(context);
+
+        collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        ok(collection != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+        if (collection)
+        {
+            /* Add store to the collection, but disable updates */
+            CertAddStoreToCollection(collection, store, 0, 0);
+
+            context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+             sizeof(bigCert2));
+            ok(context != NULL, "Expected a context\n");
+            if (context)
+            {
+                /* Try to readd bigCert2 to the collection */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_NEW, NULL);
+                ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+                 "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+                /* Replacing an existing certificate context is allowed, even
+                 * though updates to the collection aren't..
+                 */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+                ok(ret, "CertAddCertificateContextToStore failed: %08lx\n",
+                 GetLastError());
+                /* but adding a new certificate isn't allowed. */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_ALWAYS, NULL);
+                ok(!ret && GetLastError() == E_ACCESSDENIED,
+                 "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
+                CertFreeCertificateContext(context);
+            }
+
+            CertCloseStore(collection, 0);
+        }
+
+        CertCloseStore(store, 0);
+    }
+}
+
+static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
+ PCCERT_CONTEXT context, DWORD propID)
+{
+    BYTE hash[20] = { 0 }, hashProperty[20];
+    BOOL ret;
+    DWORD size;
+
+    memset(hash, 0, sizeof(hash));
+    memset(hashProperty, 0, sizeof(hashProperty));
+    size = sizeof(hash);
+    ret = CryptHashCertificate(0, algID, 0, data, dataLen, hash, &size);
+    ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context, propID, hashProperty,
+     &size);
+    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    ok(!memcmp(hash, hashProperty, size), "Unexpected hash for property %ld\n",
+     propID);
+}
+
+static void testCertProperties(void)
+{
+    PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert));
+
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        DWORD propID, numProps, access, size;
+        BOOL ret;
+        BYTE hash[20] = { 0 }, hashProperty[20];
+        CRYPT_DATA_BLOB blob;
+
+        /* This crashes
+        propID = CertEnumCertificateContextProperties(NULL, 0);
+         */
+
+        propID = 0;
+        numProps = 0;
+        do {
+            propID = CertEnumCertificateContextProperties(context, propID);
+            if (propID)
+                numProps++;
+        } while (propID != 0);
+        ok(numProps == 0, "Expected 0 properties, got %ld\n", numProps);
+
+        /* Tests with a NULL cert context.  Prop ID 0 fails.. */
+        ret = CertSetCertificateContextProperty(NULL, 0, 0, NULL);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+        /* while this just crashes.
+        ret = CertSetCertificateContextProperty(NULL,
+         CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
+         */
+
+        ret = CertSetCertificateContextProperty(context, 0, 0, NULL);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+        /* Can't set the cert property directly, this crashes.
+        ret = CertSetCertificateContextProperty(context,
+         CERT_CERT_PROP_ID, 0, bigCert2);
+         */
+
+        /* These all crash.
+        ret = CertGetCertificateContextProperty(context,
+         CERT_ACCESS_STATE_PROP_ID, 0, NULL);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+         NULL, NULL);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+         hashProperty, NULL);
+         */
+        /* A missing prop */
+        size = 0;
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+        ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        /* And, an implicit property */
+        size = sizeof(access);
+        ret = CertGetCertificateContextProperty(context,
+         CERT_ACCESS_STATE_PROP_ID, &access, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
+         "Didn't expect a persisted cert\n");
+        /* Trying to set this "read only" property crashes.
+        access |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
+        ret = CertSetCertificateContextProperty(context,
+         CERT_ACCESS_STATE_PROP_ID, 0, &access);
+         */
+
+        /* Can I set the hash to an invalid hash? */
+        blob.pbData = hash;
+        blob.cbData = sizeof(hash);
+        ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
+         &blob);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        size = sizeof(hashProperty);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+         hashProperty, &size);
+        ok(!memcmp(hashProperty, hash, sizeof(hash)), "Unexpected hash\n");
+        /* Delete the (bogus) hash, and get the real one */
+        ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
+         NULL);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        checkHash(bigCert, sizeof(bigCert), CALG_SHA1, context,
+         CERT_HASH_PROP_ID);
+
+        /* Now that the hash property is set, we should get one property when
+         * enumerating.
+         */
+        propID = 0;
+        numProps = 0;
+        do {
+            propID = CertEnumCertificateContextProperties(context, propID);
+            if (propID)
+                numProps++;
+        } while (propID != 0);
+        ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
+
+        /* Check a few other implicit properties */
+        checkHash(bigCert, sizeof(bigCert), CALG_MD5, context,
+         CERT_MD5_HASH_PROP_ID);
+        checkHash(
+         context->pCertInfo->Subject.pbData,
+         context->pCertInfo->Subject.cbData,
+         CALG_MD5, context, CERT_SUBJECT_NAME_MD5_HASH_PROP_ID);
+        checkHash(
+         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
+         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
+         CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
+
+        /* Odd: this doesn't fail on other certificates, so there must be
+         * something weird about this cert that causes it to fail.
+         */
+        size = 0;
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+        todo_wine ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+
+        CertFreeCertificateContext(context);
+    }
+}
+
+static void testDupCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        PCCERT_CONTEXT context, dupContext;
+        BOOL ret;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context != NULL, "Expected a valid cert context\n");
+        if (context)
+        {
+            ok(context->cbCertEncoded == sizeof(bigCert),
+             "Wrong cert size %ld\n", context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
+             "Unexpected encoded cert in context\n");
+            ok(context->hCertStore == store, "Unexpected store\n");
+
+            dupContext = CertDuplicateCertificateContext(context);
+            ok(dupContext != NULL, "Expected valid duplicate\n");
+            /* Not only is it a duplicate, it's identical: the address is the
+             * same.
+             */
+            ok(dupContext == context, "Expected identical context addresses\n");
+            CertFreeCertificateContext(dupContext);
+            CertFreeCertificateContext(context);
+        }
+        CertCloseStore(store, 0);
+    }
+}
+
+static void testFindCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store)
+    {
+        PCCERT_CONTEXT context = NULL;
+        BOOL ret;
+        CERT_INFO certInfo = { 0 };
+        CRYPT_HASH_BLOB blob;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        /* This has the same name as bigCert */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+
+        /* Crashes
+        context = CertFindCertificateInStore(NULL, 0, 0, 0, NULL, NULL);
+         */
+
+        /* Check first cert's there, by issuer */
+        certInfo.Subject.pbData = (LPBYTE)subjectName;
+        certInfo.Subject.cbData = sizeof(subjectName);
+        certInfo.SerialNumber.pbData = (LPBYTE)serialNum;
+        certInfo.SerialNumber.cbData = sizeof(serialNum);
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_ISSUER_NAME, &certInfo.Subject, NULL);
+        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+        {
+            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+            ok(context != NULL, "Expected more than one cert\n");
+            if (context)
+            {
+                context = CertFindCertificateInStore(store, X509_ASN_ENCODING,
+                 0, CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+                ok(context == NULL, "Expected precisely two certs\n");
+            }
+        }
+
+        /* Check second cert's there as well, by subject name */
+        certInfo.Subject.pbData = (LPBYTE)subjectName2;
+        certInfo.Subject.cbData = sizeof(subjectName2);
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_NAME, &certInfo.Subject, NULL);
+        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+        {
+            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+            ok(context == NULL, "Expected one cert only\n");
+        }
+
+        /* Strange but true: searching for the subject cert requires you to set
+         * the issuer, not the subject
+         */
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_CERT, &certInfo.Subject, NULL);
+        ok(context == NULL, "Expected no certificate\n");
+        certInfo.Subject.pbData = NULL;
+        certInfo.Subject.cbData = 0;
+        certInfo.Issuer.pbData = (LPBYTE)subjectName2;
+        certInfo.Issuer.cbData = sizeof(subjectName2);
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
+        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+        {
+            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+            ok(context == NULL, "Expected one cert only\n");
+        }
+
+        /* The nice thing about hashes, they're unique */
+        blob.pbData = (LPBYTE)bigCertHash;
+        blob.cbData = sizeof(bigCertHash);
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SHA1_HASH, &blob, NULL);
+        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+        {
+            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+            ok(context == NULL, "Expected one cert only\n");
+        }
+
+        CertCloseStore(store, 0);
+    }
+}
+
+static void testGetSubjectCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        PCCERT_CONTEXT context1, context2;
+        CERT_INFO info = { 0 };
+        BOOL ret;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, &context1);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context1 != NULL, "Expected a context\n");
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         NULL);
+        ok(!context2 && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        info.SerialNumber.cbData = sizeof(serialNum);
+        info.SerialNumber.pbData = (LPBYTE)serialNum;
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        info.Issuer.cbData = sizeof(subjectName2);
+        info.Issuer.pbData = (LPBYTE)subjectName2;
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(context2 != NULL,
+         "CertGetSubjectCertificateFromStore failed: %08lx\n", GetLastError());
+        /* Not only should this find a context, but it should be the same
+         * (same address) as context1.
+         */
+        ok(context1 == context2, "Expected identical context addresses\n");
+        CertFreeCertificateContext(context2);
+
+        CertFreeCertificateContext(context1);
+        CertCloseStore(store, 0);
+    }
+}
+
+/* This expires in 1970 or so */
+static const BYTE expiredCert[] = { 0x30, 0x82, 0x01, 0x33, 0x30, 0x81, 0xe2,
+ 0xa0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x10, 0xc4, 0xd7, 0x7f, 0x0e, 0x6f, 0xa6,
+ 0x8c, 0xaa, 0x47, 0x47, 0x40, 0xe7, 0xb7, 0x0b, 0x4a, 0x7f, 0x30, 0x09, 0x06,
+ 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1d, 0x05, 0x00, 0x30, 0x1f, 0x31, 0x1d, 0x30,
+ 0x1b, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x14, 0x61, 0x72, 0x69, 0x63, 0x40,
+ 0x63, 0x6f, 0x64, 0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e, 0x63,
+ 0x6f, 0x6d, 0x30, 0x1e, 0x17, 0x0d, 0x36, 0x39, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x17, 0x0d, 0x37, 0x30, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x36, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x1f, 0x31, 0x1d, 0x30,
+ 0x1b, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x14, 0x61, 0x72, 0x69, 0x63, 0x40,
+ 0x63, 0x6f, 0x64, 0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e, 0x63,
+ 0x6f, 0x6d, 0x30, 0x5c, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7,
+ 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x4b, 0x00, 0x30, 0x48, 0x02, 0x41,
+ 0x00, 0xa1, 0xaf, 0x4a, 0xea, 0xa7, 0x83, 0x57, 0xc0, 0x37, 0x33, 0x7e, 0x29,
+ 0x5e, 0x0d, 0xfc, 0x44, 0x74, 0x3a, 0x1d, 0xc3, 0x1b, 0x1d, 0x96, 0xed, 0x4e,
+ 0xf4, 0x1b, 0x98, 0xec, 0x69, 0x1b, 0x04, 0xea, 0x25, 0xcf, 0xb3, 0x2a, 0xf5,
+ 0xd9, 0x22, 0xd9, 0x8d, 0x08, 0x39, 0x81, 0xc6, 0xe0, 0x4f, 0x12, 0x37, 0x2a,
+ 0x3f, 0x80, 0xa6, 0x6c, 0x67, 0x43, 0x3a, 0xdd, 0x95, 0x0c, 0xbb, 0x2f, 0x6b,
+ 0x02, 0x03, 0x01, 0x00, 0x01, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02,
+ 0x1d, 0x05, 0x00, 0x03, 0x41, 0x00, 0x8f, 0xa2, 0x5b, 0xd6, 0xdf, 0x34, 0xd0,
+ 0xa2, 0xa7, 0x47, 0xf1, 0x13, 0x79, 0xd3, 0xf3, 0x39, 0xbd, 0x4e, 0x2b, 0xa3,
+ 0xf4, 0x63, 0x37, 0xac, 0x5a, 0x0c, 0x5e, 0x4d, 0x0d, 0x54, 0x87, 0x4f, 0x31,
+ 0xfb, 0xa0, 0xce, 0x8f, 0x9a, 0x2f, 0x4d, 0x48, 0xc6, 0x84, 0x8d, 0xf5, 0x70,
+ 0x74, 0x17, 0xa5, 0xf3, 0x66, 0x47, 0x06, 0xd6, 0x64, 0x45, 0xbc, 0x52, 0xef,
+ 0x49, 0xe5, 0xf9, 0x65, 0xf3 };
+
+/* This expires in 2036 or so */
+static const BYTE childOfExpired[] = { 0x30, 0x81, 0xcc, 0x30, 0x78, 0xa0,
+ 0x03, 0x02, 0x01, 0x02, 0x02, 0x01, 0x01, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86,
+ 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x05, 0x05, 0x00, 0x30, 0x1f, 0x31, 0x1d,
+ 0x30, 0x1b, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x14, 0x61, 0x72, 0x69, 0x63,
+ 0x40, 0x63, 0x6f, 0x64, 0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e,
+ 0x63, 0x6f, 0x6d, 0x30, 0x1e, 0x17, 0x0d, 0x30, 0x36, 0x30, 0x35, 0x30, 0x35,
+ 0x31, 0x37, 0x31, 0x32, 0x34, 0x39, 0x5a, 0x17, 0x0d, 0x33, 0x36, 0x30, 0x35,
+ 0x30, 0x35, 0x31, 0x37, 0x31, 0x32, 0x34, 0x39, 0x5a, 0x30, 0x15, 0x31, 0x13,
+ 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e,
+ 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03,
+ 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01,
+ 0x01, 0x05, 0x05, 0x00, 0x03, 0x41, 0x00, 0x20, 0x3b, 0xdb, 0x4d, 0x67, 0x50,
+ 0xec, 0x73, 0x9d, 0xf9, 0x85, 0x5d, 0x18, 0xe9, 0xb4, 0x98, 0xe3, 0x31, 0xb7,
+ 0x03, 0x0b, 0xc0, 0x39, 0x93, 0x56, 0x81, 0x0a, 0xfc, 0x78, 0xa8, 0x29, 0x42,
+ 0x5f, 0x69, 0xfb, 0xbc, 0x5b, 0xf2, 0xa6, 0x2a, 0xbe, 0x91, 0x2c, 0xfc, 0x89,
+ 0x69, 0x15, 0x18, 0x58, 0xe5, 0x02, 0x75, 0xf7, 0x2a, 0xb6, 0xa9, 0xfb, 0x47,
+ 0x6a, 0x6e, 0x0a, 0x9b, 0xe9, 0xdc };
+
+static void testGetIssuerCert(void)
+{
+    BOOL ret;
+    PCCERT_CONTEXT parent, child;
+    DWORD flags = 0xffffffff;
+    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     expiredCert, sizeof(expiredCert), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     childOfExpired, sizeof(childOfExpired), CERT_STORE_ADD_ALWAYS, &child);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+
+    /* These crash:
+    parent = CertGetIssuerCertificateFromStore(NULL, NULL, NULL, NULL);
+    parent = CertGetIssuerCertificateFromStore(store, NULL, NULL, NULL);
+     */
+    parent = CertGetIssuerCertificateFromStore(NULL, NULL, NULL, &flags);
+    ok(!parent && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    parent = CertGetIssuerCertificateFromStore(store, NULL, NULL, &flags);
+    ok(!parent && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
+    ok(!parent && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* Confusing: the caller cannot set either of the
+     * CERT_STORE_NO_*_FLAGs, as these are not checks,
+     * they're results:
+     */
+    flags = CERT_STORE_NO_CRL_FLAG | CERT_STORE_NO_ISSUER_FLAG;
+    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
+    ok(!parent && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* Perform no checks */
+    flags = 0;
+    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
+    ok(parent != NULL, "CertGetIssuerCertificateFromStore failed: %08lx\n",
+     GetLastError());
+    if (parent)
+        CertFreeCertificateContext(parent);
+    /* Check revocation and signature only */
+    flags = CERT_STORE_REVOCATION_FLAG | CERT_STORE_SIGNATURE_FLAG;
+    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
+    ok(parent != NULL, "CertGetIssuerCertificateFromStore failed: %08lx\n",
+     GetLastError());
+    /* Confusing: CERT_STORE_REVOCATION_FLAG succeeds when there is no CRL by
+     * setting CERT_STORE_NO_CRL_FLAG.
+     */
+    ok(flags == (CERT_STORE_REVOCATION_FLAG | CERT_STORE_NO_CRL_FLAG),
+     "Expected CERT_STORE_REVOCATION_FLAG | CERT_STORE_NO_CRL_FLAG, got %08lx\n",
+     flags);
+    if (parent)
+        CertFreeCertificateContext(parent);
+    /* Now check just the time */
+    flags = CERT_STORE_TIME_VALIDITY_FLAG;
+    parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
+    ok(parent != NULL, "CertGetIssuerCertificateFromStore failed: %08lx\n",
+     GetLastError());
+    /* Oops: the child is not expired, so the time validity check actually
+     * succeeds, even though the signing cert is expired.
+     */
+    ok(!flags, "Expected check to succeed, got %08lx\n", flags);
+    if (parent)
+        CertFreeCertificateContext(parent);
+
+    CertFreeCertificateContext(child);
+    CertCloseStore(store, 0);
+}
+
 static void testCryptHashCert(void)
 {
     static const BYTE emptyHash[] = { 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b,
@@ -292,10 +1007,6 @@ static void testCertSigs(void)
      CRYPT_DELETEKEYSET);
 }
 
-static const BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
- 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61,
- 0x6e, 0x67, 0x00 };
-
 static void testCreateSelfSignCert(void)
 {
     PCCERT_CONTEXT context;
@@ -376,32 +1087,8 @@ static void testCreateSelfSignCert(void)
      CRYPT_DELETEKEYSET);
 }
 
-static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
- 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
- 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
- 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
- 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
- 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
- 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
- 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
- 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
- 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
-
 static const LPCSTR keyUsages[] = { szOID_PKIX_KP_CODE_SIGNING,
  szOID_PKIX_KP_CLIENT_AUTH, szOID_RSA_RSA };
-
-static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
- 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04,
- 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00,
- 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
- 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30,
- 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31,
- 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61,
- 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00,
- 0x03, 0x01, 0x00, 0xa3, 0x2f, 0x30, 0x2d, 0x30, 0x2b, 0x06, 0x03, 0x55, 0x1d,
- 0x25, 0x01, 0x01, 0xff, 0x04, 0x21, 0x30, 0x1f, 0x06, 0x08, 0x2b, 0x06, 0x01,
- 0x05, 0x05, 0x07, 0x03, 0x03, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07,
- 0x03, 0x02, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
 
 static void testKeyUsage(void)
 {
@@ -798,12 +1485,6 @@ static void testComparePublicKeyInfo(void)
     ok(!ret, "Expected keys not to compare\n");
 }
 
-static const BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
- 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61,
- 0x6e, 0x67, 0x00 };
-
-static const BYTE serialNum[] = { 1 };
-
 void testCompareCert(void)
 {
     CERT_INFO info1 = { 0 }, info2 = { 0 };
@@ -836,18 +1517,6 @@ void testCompareCert(void)
     ret = CertCompareCertificate(X509_ASN_ENCODING, &info1, &info2);
     ok(!ret, "Expected certs not to be equal\n");
 }
-
-static const BYTE bigCertWithDifferentSubject[] = { 0x30, 0x7a, 0x02, 0x01, 0x02,
- 0x30, 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55,
- 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67,
- 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31,
- 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31,
- 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15,
- 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c,
- 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06,
- 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55,
- 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02,
- 0x01, 0x01 };
 
 static void testVerifySubjectCert(void)
 {
@@ -907,6 +1576,14 @@ static void testVerifySubjectCert(void)
 START_TEST(cert)
 {
     init_function_pointers();
+
+    testAddCert();
+    testCertProperties();
+    testDupCert();
+    testFindCert();
+    testGetSubjectCert();
+    testGetIssuerCert();
+
     testCryptHashCert();
     testCertSigs();
     testCreateSelfSignCert();

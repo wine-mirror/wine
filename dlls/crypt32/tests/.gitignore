@@ -1,6 +1,7 @@
 Makefile
 base64.ok
 cert.ok
+crl.ok
 encode.ok
 main.ok
 oid.ok
