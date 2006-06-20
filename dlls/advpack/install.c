@@ -460,6 +460,41 @@ typedef struct
     LPCSTR section_name;
 } SETUPCOMMAND_PARAMS;
 
+typedef struct
+{
+    HWND hwnd;
+    LPCWSTR title;
+    LPCWSTR inf_name;
+    LPCWSTR dir;
+    LPCWSTR section_name;
+} SETUPCOMMAND_PARAMSW;
+
+/* internal: see DoInfInstall */
+static HRESULT DoInfInstallW(const SETUPCOMMAND_PARAMSW *setup)
+{
+    ADVInfo info;
+    HRESULT hr;
+
+    TRACE("(%p)\n", setup);
+
+    ZeroMemory(&info, sizeof(ADVInfo));
+
+    hr = install_init(setup->inf_name, setup->section_name, setup->dir, 0, &info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = spapi_install(&info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = adv_install(&info);
+
+done:
+    install_release(&info);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      DoInfInstall  (ADVPACK.@)
  *
@@ -474,24 +509,32 @@ typedef struct
  */
 HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 {
-    BOOL ret;
-    HINF hinf;
-    void *callback_context;
+    UNICODE_STRING title, inf, section, dir;
+    SETUPCOMMAND_PARAMSW params;
+    HRESULT hr;
 
-    TRACE("(%p)\n", setup);
+    if (!setup)
+        return E_INVALIDARG;
 
-    hinf = SetupOpenInfFileA(setup->inf_name, NULL, INF_STYLE_WIN4, NULL);
-    if (hinf == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32(GetLastError());
+    RtlCreateUnicodeStringFromAsciiz(&title, setup->title);
+    RtlCreateUnicodeStringFromAsciiz(&inf, setup->inf_name);
+    RtlCreateUnicodeStringFromAsciiz(&section, setup->section_name);
+    RtlCreateUnicodeStringFromAsciiz(&dir, setup->dir);
 
-    callback_context = SetupInitDefaultQueueCallback(setup->hwnd);
+    params.title = title.Buffer;
+    params.inf_name = inf.Buffer;
+    params.section_name = section.Buffer;
+    params.dir = dir.Buffer;
+    params.hwnd = setup->hwnd;
 
-    ret = SetupInstallFromInfSectionA(NULL, hinf, setup->section_name, SPINST_ALL,
-                                      NULL, NULL, 0, SetupDefaultQueueCallbackA,
-                                      callback_context, NULL, NULL);
-    SetupTermDefaultQueueCallback(callback_context);
-    SetupCloseInfFile(hinf);
+    hr = DoInfInstallW(&params);
 
-    return ret ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+    RtlFreeUnicodeString(&title);
+    RtlFreeUnicodeString(&inf);
+    RtlFreeUnicodeString(&section);
+    RtlFreeUnicodeString(&dir);
+
+    return hr;
 }
 
 /***********************************************************************
