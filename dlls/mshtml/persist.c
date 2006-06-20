@@ -155,7 +155,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
     BSCallback *bscallback;
-    LPOLESTR url;
+    LPOLESTR url = NULL;
     HRESULT hres;
     nsresult nsres;
 
