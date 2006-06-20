@@ -60,7 +60,7 @@ void shader_glsl_load_psamplers(
     int i;
     char sampler_name[20];
 
-    for (i=0; i< GL_LIMITS(textures); ++i) {
+    for (i=0; i< GL_LIMITS(samplers); ++i) {
         if (stateBlock->textures[i] != NULL) {
            snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
            name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
