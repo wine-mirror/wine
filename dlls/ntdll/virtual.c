@@ -196,7 +196,8 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 /***********************************************************************
  *           VIRTUAL_Dump
  */
-void VIRTUAL_Dump(void)
+#if WINE_VM_DEBUG
+static void VIRTUAL_Dump(void)
 {
     struct file_view *view;
 
@@ -208,6 +209,7 @@ void VIRTUAL_Dump(void)
     }
     RtlLeaveCriticalSection(&csVirtual);
 }
+#endif
 
 
 /***********************************************************************
