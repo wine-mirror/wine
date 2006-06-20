@@ -274,19 +274,21 @@ static void test_LZOpenFileW(void)
   ok(retval > 0, "GetCurrentDirectoryW returned %ld, GLE=0x%lx\n", 
      retval, GetLastError());
   lstrcatA(expected, "\\");
-  /* We probably should use WideCharToMultiByte() on filenameW here: */
+  /* It's probably better to use WideCharToMultiByte() on filenameW: */
   lstrcatA(expected, filename);
   /* Compressed file name ends with underscore. */
   retval = lstrlenA(expected);
   expected[retval-1] = '_';
+  memset(&test, 0xA5, sizeof(test));
 
   /* Try to open compressed file. */
   file = LZOpenFileW(filenameW, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileW failed on switching to a compressed file name\n");
   ok(test.cBytes == sizeof(OFSTRUCT), 
      "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
-  ok(test.nErrCode == 0, "LZOpenFileW set test.nErrCode to %d\n", 
+  ok(test.nErrCode == ERROR_SUCCESS, "LZOpenFileW set test.nErrCode to %d\n", 
      test.nErrCode);
+  /* Note that W-function returns A-string by a OFSTRUCT.szPathName: */
   ok(lstrcmpA(test.szPathName, expected) == 0, 
      "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
      test.szPathName, expected);
@@ -294,12 +296,12 @@ static void test_LZOpenFileW(void)
 
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFileW(filename_W, &test, OF_DELETE);
-  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  ok(file >= 0, "LZOpenFileW failed on delete\n");
   LZClose(file);
 
   retval = GetFileAttributesW(filename_W);
   ok(retval == INVALID_FILE_ATTRIBUTES, 
-     "GetFileAttributesA succeeded on deleted file\n");
+     "GetFileAttributesW succeeded on deleted file\n");
 }
 
 
