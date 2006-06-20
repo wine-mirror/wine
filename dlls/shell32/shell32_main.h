@@ -149,7 +149,7 @@ void FreeChangeNotifications(void);
 
 BOOL SHELL_DeleteDirectoryW(LPCWSTR pwszDir, BOOL bShowUI);
 BOOL SHELL_DeleteFileW(LPCWSTR pwszFile, BOOL bShowUI);
-BOOL SHELL_ConfirmDialog(int nKindOfDialog, LPCSTR szDir);
+BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir);
 
 /* 16-bit functions */
 void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);

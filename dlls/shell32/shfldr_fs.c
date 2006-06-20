@@ -1172,10 +1172,11 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 
     /* deleting multiple items so give a slightly different warning */
     if (cidl != 1) {
-        char tmp[8];
+        WCHAR tmp[8];
+        static const WCHAR format[] = {'%','d',0};
 
-        snprintf (tmp, sizeof (tmp), "%d", cidl);
-        if (!SHELL_ConfirmDialog(ASK_DELETE_MULTIPLE_ITEM, tmp))
+        wnsprintfW (tmp, sizeof(tmp)/sizeof(tmp[0]), format, cidl);
+        if (!SHELL_ConfirmDialogW(ASK_DELETE_MULTIPLE_ITEM, tmp))
             return E_FAIL;
         bConfirm = FALSE;
     }
