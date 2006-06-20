@@ -3394,32 +3394,20 @@ HICON WINAPI ExtractIconWrapW(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.376]
- */
-LANGID WINAPI MLGetUILanguage(void)
-{
-    FIXME("() stub\n");
-    /* FIXME: This should be a forward in the .spec file to the win2k function
-     * kernel32.GetUserDefaultUILanguage, however that function isn't there yet.
-     */
-    return GetUserDefaultLangID();
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.377]
  *
  * Load a library from the directory of a particular process.
  *
  * PARAMS
- *  new_mod   [I] Library name
- *  inst_hwnd [I] Module whose directory is to be used
- *  dwFlags   [I] Flags controlling the load
+ *  new_mod        [I] Library name
+ *  inst_hwnd      [I] Module whose directory is to be used
+ *  bCrossCodePage [I] Should be FALSE (currently ignored)
  *
  * RETURNS
  *  Success: A handle to the loaded module
  *  Failure: A NULL handle.
  */
-HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
+HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCodePage)
 {
   /* FIXME: Native appears to do DPA_Create and a DPA_InsertPtr for
    *        each call here.
@@ -3443,7 +3431,7 @@ HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
     LPSTR ptr;
     DWORD len;
 
-    FIXME("(%s,%p,0x%08lx) semi-stub!\n", debugstr_a(new_mod), inst_hwnd, dwFlags);
+    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_a(new_mod), inst_hwnd, bCrossCodePage);
     len = GetModuleFileNameA(inst_hwnd, mod_path, sizeof(mod_path));
     if (!len || len >= sizeof(mod_path)) return NULL;
 
@@ -3461,13 +3449,13 @@ HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
  *
  * Unicode version of MLLoadLibraryA.
  */
-HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwFlags)
+HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCodePage)
 {
     WCHAR mod_path[2*MAX_PATH];
     LPWSTR ptr;
     DWORD len;
 
-    FIXME("(%s,%p,0x%08lx) semi-stub!\n", debugstr_w(new_mod), inst_hwnd, dwFlags);
+    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_w(new_mod), inst_hwnd, bCrossCodePage);
     len = GetModuleFileNameW(inst_hwnd, mod_path, sizeof(mod_path) / sizeof(WCHAR));
     if (!len || len >= sizeof(mod_path) / sizeof(WCHAR)) return NULL;
 
