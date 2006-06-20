@@ -231,6 +231,8 @@ void  output_c_preamble (void)
            "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
            "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%ld, %%p)\\n\",hinstDLL,"
            "fdwReason,lpvReserved);\n\n\t"
+           "if (fdwReason == DLL_WINE_PREATTACH) return FALSE;\t"
+           "/* prefer native version */\n\n\t"
            "if (fdwReason == DLL_PROCESS_ATTACH)\n\t{\n\t\t");
 
   if (globals.forward_dll)
