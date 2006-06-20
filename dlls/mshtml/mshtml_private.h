@@ -86,6 +86,7 @@ typedef struct {
 
     ConnectionPoint *cp_htmldocevents;
     ConnectionPoint *cp_htmldocevents2;
+    ConnectionPoint *cp_propnotif;
 
     HTMLDOMNode *nodes;
 } HTMLDocument;

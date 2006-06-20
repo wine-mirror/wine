@@ -199,6 +199,9 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     }else if(IsEqualGUID(&DIID_HTMLDocumentEvents2, riid)) {
         TRACE("(%p)->(DIID_HTMLDocumentEvents2 %p)\n", This, ppCP);
         *ppCP = CONPOINT(This->cp_htmldocevents2);
+    }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
+        TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
+        *ppCP = CONPOINT(This->cp_htmldocevents);
     }
 
     if(*ppCP) {
