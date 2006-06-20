@@ -95,23 +95,6 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 	return FALSE;
 }
 
-BOOL SHELL_ConfirmDialog(int nKindOfDialog, LPCSTR szDir)
-{
-	CHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
-	SHELL_ConfirmIDstruc ids;
-
-	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
-	  return FALSE;
-
-	LoadStringA(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption));
-	LoadStringA(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText));
-
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
-
-	return (IDOK == MessageBoxA(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
-}
-
 BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
 {
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
