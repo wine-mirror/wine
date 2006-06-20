@@ -103,8 +103,8 @@ BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
 	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
 	  return FALSE;
 
-	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption));
-	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText));
+	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption)/sizeof(WCHAR));
+	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText)/sizeof(WCHAR));
 
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
