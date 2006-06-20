@@ -425,6 +425,52 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
     return ret;
 }
 
+BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
+ PCCRL_CONTEXT pCrl, DWORD dwFlags, void *pvReserved)
+{
+    TRACE("(%p, %p, %08lx, %p)\n", pCert, pCrl, dwFlags, pvReserved);
+    return TRUE;
+}
+
+static PCRL_ENTRY CRYPT_FindCertificateInCRL(PCERT_INFO cert, PCRL_INFO crl)
+{
+    DWORD i;
+    PCRL_ENTRY entry = NULL;
+
+    /* FIXME: do I need to compare the issuers of the cert and CRL? */
+    for (i = 0; !entry && i < crl->cCRLEntry; i++)
+        if (CertCompareIntegerBlob(&crl->rgCRLEntry[i].SerialNumber,
+         &cert->SerialNumber))
+            entry = &crl->rgCRLEntry[i];
+    return entry;
+}
+
+BOOL WINAPI CertFindCertificateInCRL(PCCERT_CONTEXT pCert,
+ PCCRL_CONTEXT pCrlContext, DWORD dwFlags, void *pvReserved,
+ PCRL_ENTRY *ppCrlEntry)
+{
+    TRACE("(%p, %p, %08lx, %p, %p)\n", pCert, pCrlContext, dwFlags, pvReserved,
+     ppCrlEntry);
+
+    *ppCrlEntry = CRYPT_FindCertificateInCRL(pCert->pCertInfo,
+     pCrlContext->pCrlInfo);
+    return TRUE;
+}
+
+BOOL WINAPI CertVerifyCRLRevocation(DWORD dwCertEncodingType,
+ PCERT_INFO pCertId, DWORD cCrlInfo, PCRL_INFO rgpCrlInfo[])
+{
+    DWORD i;
+    PCRL_ENTRY entry = NULL;
+
+    TRACE("(%08lx, %p, %ld, %p)\n", dwCertEncodingType, pCertId, cCrlInfo,
+     rgpCrlInfo);
+
+    for (i = 0; !entry && i < cCrlInfo; i++)
+        entry = CRYPT_FindCertificateInCRL(pCertId, rgpCrlInfo[i]);
+    return entry == NULL;
+}
+
 LONG WINAPI CertVerifyCRLTimeValidity(LPFILETIME pTimeToVerify,
  PCRL_INFO pCrlInfo)
 {

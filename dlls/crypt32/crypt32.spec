@@ -38,6 +38,7 @@
 @ stdcall CertFindCRLInStore(long long long long ptr ptr)
 @ stub CertFindCTLInStore
 @ stdcall CertFindCertificateInStore(long long long long ptr ptr)
+@ stdcall CertFindCertificateInCRL(ptr ptr long ptr ptr)
 @ stdcall CertFindExtension(str long ptr)
 @ stdcall CertFindRDNAttr(str ptr)
 @ stub CertFindSubjectInCTL
@@ -60,6 +61,7 @@
 @ stdcall CertGetSubjectCertificateFromStore(ptr long ptr)
 @ stdcall CertGetValidUsages(long ptr ptr ptr ptr)
 @ stub CertIsRDNAttrsInCertificateName
+@ stdcall CertIsValidCRLForCertificate(ptr ptr long ptr)
 @ stdcall CertNameToStrA(long ptr long ptr long)
 @ stdcall CertNameToStrW(long ptr long ptr long)
 @ stdcall CertOIDToAlgId(str)
@@ -80,7 +82,7 @@
 @ stdcall CertSetEnhancedKeyUsage(ptr ptr)
 @ stub CertStrToNameA
 @ stub CertStrToNameW
-@ stub CertVerifyCRLRevocation
+@ stdcall CertVerifyCRLRevocation(long ptr long ptr)
 @ stdcall CertVerifyCRLTimeValidity(ptr ptr)
 @ stub CertVerifyCTLUsage
 @ stub CertVerifyRevocation
