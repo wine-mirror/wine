@@ -1443,15 +1443,18 @@ static void test_read_write(void)
     ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
-static void test_OpenFile_exists(void)
+static void test_OpenFile(void)
 {
     HFILE hFile;
     OFSTRUCT ofs;
+    BOOL ret;
+    DWORD retval;
     
     static const char *file = "\\regsvr32.exe";
     char buff[MAX_PATH];
     UINT length;
     
+    /* Check for existing file */
     length = GetSystemDirectoryA(buff, MAX_PATH);
 
     if ((length + lstrlen(file) < MAX_PATH))
@@ -1462,8 +1465,45 @@ static void test_OpenFile_exists(void)
 	ok( hFile == TRUE, "%s not found : %ld\n", buff, GetLastError());
     }
 
+    /* Check for nonexistent file */ 
+    SetLastError(0xfaceabee);
     hFile = OpenFile(".\\foo-bar-foo.baz", &ofs, OF_EXIST);
     ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() returns %ld\n", GetLastError() );
+
+    /* Create an empty file */
+    hFile = OpenFile(filename, &ofs, OF_CREATE);
+    ok( hFile != HFILE_ERROR, "OpenFile failed to create nonexistent file\n" );
+    ret = CloseHandle((HANDLE)hFile);
+    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+    retval = GetFileAttributesA(filename);
+    ok( retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError() );
+
+    /* Check various opening options */
+    hFile = OpenFile(filename, &ofs, OF_READ);
+    ok( hFile != HFILE_ERROR, "OpenFile failed on read\n" );
+    ret = CloseHandle((HANDLE)hFile);
+    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+
+    hFile = OpenFile(filename, &ofs, OF_WRITE);
+    ok( hFile != HFILE_ERROR, "OpenFile failed on write\n" );
+    ret = CloseHandle((HANDLE)hFile);
+    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+
+    hFile = OpenFile(filename, &ofs, OF_READWRITE);
+    ok( hFile != HFILE_ERROR, "OpenFile failed on read/write\n" );
+    ret = CloseHandle((HANDLE)hFile);
+    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+
+    hFile = OpenFile(filename, &ofs, OF_EXIST);
+    ok( hFile == 1, "OpenFile failed on finding our created file\n" );
+
+    /* Delete the file and make sure it doesn't exist anymore */
+    hFile = OpenFile(filename, &ofs, OF_DELETE);
+    ok( hFile == 1, "OpenFile failed on delete (%d)\n", hFile );
+
+    retval = GetFileAttributesA(filename);
+    ok( retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file\n" );
 }
 
 static void test_overlapped(void)
@@ -1552,6 +1592,6 @@ START_TEST(file)
     test_GetFileType();
     test_async_file_errors();
     test_read_write();
-    test_OpenFile_exists();
+    test_OpenFile();
     test_overlapped();
 }
