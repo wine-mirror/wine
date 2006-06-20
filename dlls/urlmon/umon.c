@@ -734,8 +734,8 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                     InternetCloseHandle(bind->hinternet);
                 } while(0);
 
-                Binding_CloseCacheDownload(bind);
                 Binding_FinishedDownload(bind, hres);
+                Binding_CloseCacheDownload(bind);
 
                 HeapFree(GetProcessHeap(), 0, user);
                 HeapFree(GetProcessHeap(), 0, pass);
