@@ -229,7 +229,7 @@ static inline int mmap_reserve( void *addr, size_t size )
 
 #ifdef MAP_TRYFIXED
     flags |= MAP_TRYFIXED;
-#elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
+#elif defined(__APPLE__)
     return try_mmap_fixed( addr, size, PROT_NONE, flags, get_fdzero(), 0 );
 #endif
     ptr = mmap( addr, size, PROT_NONE, flags, get_fdzero(), 0 );
@@ -242,12 +242,34 @@ static inline int mmap_reserve( void *addr, size_t size )
  *           reserve_area
  *
  * Reserve as much memory as possible in the given area.
- * FIXME: probably needs a different algorithm for Solaris
  */
 static void reserve_area( void *addr, void *end )
 {
     size_t size = (char *)end - (char *)addr;
 
+#if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
+    /* try_mmap_fixed is inefficient when using vfork, so we need a different algorithm here */
+    /* we assume no other thread is running at this point */
+    size_t i, pagesize = getpagesize();
+    char vec;
+
+    while (size)
+    {
+        for (i = 0; i < size; i += pagesize)
+            if (mincore( (caddr_t)addr + i, pagesize, &vec ) != -1) break;
+
+        i &= ~granularity_mask;
+        if (i && mmap( addr, i, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+                       get_fdzero(), 0 ) != (void *)-1)
+            wine_mmap_add_reserved_area( addr, i );
+
+        i += granularity_mask + 1;
+        if ((char *)addr + i < (char *)addr) break;  /* overflow */
+        addr = (char *)addr + i;
+        if (addr >= end) break;
+        size = (char *)end - (char *)addr;
+    }
+#else
     if (!size) return;
 
     if (mmap_reserve( addr, size ))
@@ -261,6 +283,7 @@ static void reserve_area( void *addr, void *end )
         reserve_area( addr, (char *)addr + new_size );
         reserve_area( (char *)addr + new_size, end );
     }
+#endif
 }
 
 
@@ -298,7 +321,7 @@ void mmap_init(void)
 #if defined(__i386__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__)  /* commented out until FreeBSD gets fixed */
     char stack;
     char * const stack_ptr = &stack;
-    char *user_space_limit = (char *)0x80000000;
+    char *user_space_limit = (char *)0x7ffe0000;
 
     /* check for a reserved area starting at the user space limit */
     /* to avoid wasting time trying to allocate it again */
