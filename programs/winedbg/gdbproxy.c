@@ -338,6 +338,33 @@ static size_t cpu_register_map[] = {
     FIELD_OFFSET(CONTEXT, Fpcr),
     FIELD_OFFSET(CONTEXT, SoftFpcr),
 };
+#elif defined(__x86_64__)
+static size_t cpu_register_map[] = {
+    FIELD_OFFSET(CONTEXT, Rax),
+    FIELD_OFFSET(CONTEXT, Rbx),
+    FIELD_OFFSET(CONTEXT, Rcx),
+    FIELD_OFFSET(CONTEXT, Rdx),
+    FIELD_OFFSET(CONTEXT, Rsi),
+    FIELD_OFFSET(CONTEXT, Rdi),
+    FIELD_OFFSET(CONTEXT, Rbp),
+    FIELD_OFFSET(CONTEXT, Rsp),
+    FIELD_OFFSET(CONTEXT, R8),
+    FIELD_OFFSET(CONTEXT, R9),
+    FIELD_OFFSET(CONTEXT, R10),
+    FIELD_OFFSET(CONTEXT, R11),
+    FIELD_OFFSET(CONTEXT, R12),
+    FIELD_OFFSET(CONTEXT, R13),
+    FIELD_OFFSET(CONTEXT, R14),
+    FIELD_OFFSET(CONTEXT, R15),
+    FIELD_OFFSET(CONTEXT, Rip),
+    FIELD_OFFSET(CONTEXT, EFlags),
+    FIELD_OFFSET(CONTEXT, SegCs),
+    FIELD_OFFSET(CONTEXT, SegSs),
+    FIELD_OFFSET(CONTEXT, SegDs),
+    FIELD_OFFSET(CONTEXT, SegEs),
+    FIELD_OFFSET(CONTEXT, SegFs),
+    FIELD_OFFSET(CONTEXT, SegGs),
+};
 #else
 # error Define the registers map for your CPU
 #endif

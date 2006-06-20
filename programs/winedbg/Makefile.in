@@ -11,6 +11,7 @@ C_SRCS = \
 	be_alpha.c \
 	be_i386.c \
 	be_ppc.c \
+	be_x86_64.c \
 	break.c \
 	db_disasm.c \
 	display.c \
