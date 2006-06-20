@@ -30,6 +30,7 @@ BASEDIRS = \
 	comcat \
 	comctl32 \
 	comdlg32 \
+	compstui \
 	crtdll \
 	crypt32 \
 	cryptdll \
@@ -445,6 +446,7 @@ IMPORT_LIBS = \
 	cfgmgr32/libcfgmgr32.$(IMPLIBEXT) \
 	comctl32/libcomctl32.$(IMPLIBEXT) \
 	comdlg32/libcomdlg32.$(IMPLIBEXT) \
+	compstui/libcompstui.$(IMPLIBEXT) \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
 	crypt32/libcrypt32.$(IMPLIBEXT) \
 	cryptdll/libcryptdll.$(IMPLIBEXT) \
@@ -585,6 +587,9 @@ comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
 
 comdlg32/libcomdlg32.$(IMPLIBEXT): comdlg32/comdlg32.spec $(WINEBUILD)
 	@cd comdlg32 && $(MAKE) libcomdlg32.$(IMPLIBEXT)
+
+compstui/libcompstui.$(IMPLIBEXT): compstui/compstui.spec $(WINEBUILD)
+	@cd compstui && $(MAKE) libcompstui.$(IMPLIBEXT)
 
 crtdll/libcrtdll.$(IMPLIBEXT): crtdll/crtdll.spec $(WINEBUILD)
 	@cd crtdll && $(MAKE) libcrtdll.$(IMPLIBEXT)
