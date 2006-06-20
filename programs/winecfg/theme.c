@@ -529,7 +529,7 @@ static void on_theme_install(HWND dialog)
       WCHAR themeFilePath[MAX_PATH];
       SHFILEOPSTRUCTW shfop;
 
-      if (FAILED (SHGetFolderPathW (NULL, CSIDL_RESOURCES, NULL, 
+      if (FAILED (SHGetFolderPathW (NULL, CSIDL_RESOURCES|CSIDL_FLAG_CREATE, NULL, 
           SHGFP_TYPE_CURRENT, themeFilePath))) return;
 
       PathRemoveExtensionW (filetitle);
