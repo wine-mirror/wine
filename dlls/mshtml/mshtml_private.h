@@ -251,6 +251,7 @@ HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
+void HTMLDocument_OleCmd_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);

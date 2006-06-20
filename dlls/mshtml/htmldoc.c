@@ -1047,6 +1047,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     HTMLDocument_HTMLDocument3_Init(ret);
     HTMLDocument_Persist_Init(ret);
+    HTMLDocument_OleCmd_Init(ret);
     HTMLDocument_OleObj_Init(ret);
     HTMLDocument_View_Init(ret);
     HTMLDocument_Window_Init(ret);

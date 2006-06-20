@@ -27,6 +27,7 @@ C_SRCS = \
 	nsembed.c \
 	nsio.c \
 	nsservice.c\
+	olecmd.c \
 	oleobj.c \
 	olewnd.c \
 	persist.c \
