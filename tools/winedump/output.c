@@ -483,7 +483,7 @@ void  output_install_script (void)
     "cp Makefile.in $1/dlls/%s/Makefile.in\n"
     "echo Copied DLL files\n\n"
     "cd $1\n\n"
-    "sed '/dlls\\/x11drv\\/Makefile/"
+    "sed '/dlls\\/ntdll\\/Makefile/"
         "{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac >t.tmp\n"
     "mv -f t.tmp configure.ac\n"
     "echo Patched configure.ac\n\n"
