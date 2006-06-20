@@ -1051,12 +1051,28 @@ case $host_os in
       DLLFLAGS="$DLLFLAGS -fPIC"
       DLLEXT=".so"
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
-          [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
+          [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
                                 ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
-        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+        LDSHARED="\$(CC) -shared"
         LDDLLFLAGS="-shared -Wl,-Bsymbolic"
+        AC_CACHE_CHECK([whether the linker accepts soname], ac_cv_c_sonames,
+          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
+                           ac_cv_c_sonames="yes",ac_cv_c_sonames="no")])
+        if test "$ac_cv_c_sonames" = "yes"
+        then
+          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+        else
+          AC_CACHE_CHECK([check to see if -h soname is an alternate], ac_cv_c_h_sonames,
+            [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
+                             ac_cv_c_h_sonames="yes",ac_cv_c_h_sonames="no")])
+          if test "$ac_cv_c_h_sonames" = "yes"
+          then
+            LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
+          fi
+        fi
+
         AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
           [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
                            ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
