@@ -1215,19 +1215,15 @@ case $host_os in
     ;;
 esac
 
+AC_SUBST(MAIN_BINARY,"wine-pthread")  dnl Default value
 case $host_cpu in
   *i[[3456789]]86*)
     case $host_os in
       linux* | k*bsd*-gnu)
         AC_SUBST(MAIN_BINARY,"wine-glibc")
         AC_SUBST(EXTRA_BINARIES,"wine-kthread wine-pthread wine-preloader") ;;
-      darwin*|freebsd*)
-        AC_SUBST(MAIN_BINARY,"wine-pthread") ;;
-      *)
-        AC_SUBST(MAIN_BINARY,"wine-kthread") ;;
     esac
     ;;
-  *) AC_SUBST(MAIN_BINARY,"wine-pthread") ;;
 esac
 
 dnl **** Get the soname for libraries that we load dynamically ****

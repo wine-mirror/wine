@@ -17266,7 +17266,8 @@ case $host_os in
     ;;
 esac
 
-case $host_cpu in
+MAIN_BINARY="wine-pthread"
+  case $host_cpu in
   *i[3456789]86*)
     case $host_os in
       linux* | k*bsd*-gnu)
@@ -17274,16 +17275,8 @@ case $host_cpu in
 
         EXTRA_BINARIES="wine-kthread wine-pthread wine-preloader"
  ;;
-      darwin*|freebsd*)
-        MAIN_BINARY="wine-pthread"
- ;;
-      *)
-        MAIN_BINARY="wine-kthread"
- ;;
     esac
     ;;
-  *) MAIN_BINARY="wine-pthread"
- ;;
 esac
 
 
