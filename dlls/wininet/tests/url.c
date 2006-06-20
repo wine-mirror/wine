@@ -330,21 +330,28 @@ static void InternetCrackUrlW_test(void)
 
 static void fill_url_components(LPURL_COMPONENTS lpUrlComponents)
 {
-	lpUrlComponents->dwStructSize = sizeof(URL_COMPONENTS);
-	lpUrlComponents->lpszScheme = "http";
-	lpUrlComponents->dwSchemeLength = strlen(lpUrlComponents->lpszScheme);
-	lpUrlComponents->nScheme = INTERNET_SCHEME_HTTP;
-	lpUrlComponents->lpszHostName = "www.winehq.org";
-	lpUrlComponents->dwHostNameLength = strlen(lpUrlComponents->lpszHostName);
-	lpUrlComponents->nPort = 80;
-	lpUrlComponents->lpszUserName = "username";
-	lpUrlComponents->dwUserNameLength = strlen(lpUrlComponents->lpszUserName);
-	lpUrlComponents->lpszPassword = "password";
-	lpUrlComponents->dwPasswordLength = strlen(lpUrlComponents->lpszPassword);
-	lpUrlComponents->lpszUrlPath = "/site/about";
-	lpUrlComponents->dwUrlPathLength = strlen(lpUrlComponents->lpszUrlPath);
-	lpUrlComponents->lpszExtraInfo = "";
-	lpUrlComponents->dwExtraInfoLength = strlen(lpUrlComponents->lpszExtraInfo);
+    static CHAR http[]       = "http",
+                winehq[]     = "www.winehq.org",
+                username[]   = "username",
+                password[]   = "password",
+                site_about[] = "/site/about",
+                empty[]      = "";
+
+    lpUrlComponents->dwStructSize = sizeof(URL_COMPONENTS);
+    lpUrlComponents->lpszScheme = http;
+    lpUrlComponents->dwSchemeLength = strlen(lpUrlComponents->lpszScheme);
+    lpUrlComponents->nScheme = INTERNET_SCHEME_HTTP;
+    lpUrlComponents->lpszHostName = winehq;
+    lpUrlComponents->dwHostNameLength = strlen(lpUrlComponents->lpszHostName);
+    lpUrlComponents->nPort = 80;
+    lpUrlComponents->lpszUserName = username;
+    lpUrlComponents->dwUserNameLength = strlen(lpUrlComponents->lpszUserName);
+    lpUrlComponents->lpszPassword = password;
+    lpUrlComponents->dwPasswordLength = strlen(lpUrlComponents->lpszPassword);
+    lpUrlComponents->lpszUrlPath = site_about;
+    lpUrlComponents->dwUrlPathLength = strlen(lpUrlComponents->lpszUrlPath);
+    lpUrlComponents->lpszExtraInfo = empty;
+    lpUrlComponents->dwExtraInfoLength = strlen(lpUrlComponents->lpszExtraInfo);
 }
 
 static void InternetCreateUrlA_test(void)
@@ -353,6 +360,17 @@ static void InternetCreateUrlA_test(void)
 	LPSTR szUrl;
 	DWORD len = -1;
 	BOOL ret;
+        static CHAR empty[]      = "",
+                    nhttp[]      = "nhttp",
+                    http[]       = "http",
+                    https[]      = "https",
+                    winehq[]     = "www.winehq.org",
+                    username[]   = "username",
+                    password[]   = "password",
+                    site_about[] = "/site/about",
+                    about[]      = "about",
+                    blank[]      = "blank",
+                    host[]       = "host";
 
 	/* test NULL lpUrlComponents */
 	ret = InternetCreateUrlA(NULL, 0, NULL, &len);
@@ -462,7 +480,7 @@ static void InternetCreateUrlA_test(void)
 	/* valid username, empty password */
 	fill_url_components(&urlComp);
 	SetLastError(0xdeadbeef);
-	urlComp.lpszPassword = "";
+	urlComp.lpszPassword = empty;
 	len = 51;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
 	ok(ret, "Expected success\n");
@@ -490,7 +508,7 @@ static void InternetCreateUrlA_test(void)
 	 */
 	fill_url_components(&urlComp);
 	SetLastError(0xdeadbeef);
-	urlComp.lpszUserName = "";
+	urlComp.lpszUserName = empty;
 	len = 51;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
 	ok(ret, "Expected success\n");
@@ -515,8 +533,8 @@ static void InternetCreateUrlA_test(void)
 	/* empty username, empty password */
 	fill_url_components(&urlComp);
 	SetLastError(0xdeadbeef);
-	urlComp.lpszUserName = "";
-	urlComp.lpszPassword = "";
+	urlComp.lpszUserName = empty;
+	urlComp.lpszPassword = empty;
 	len = 51;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
 	ok(ret, "Expected success\n");
@@ -530,7 +548,7 @@ static void InternetCreateUrlA_test(void)
 	 */
 	fill_url_components(&urlComp);
 	HeapFree(GetProcessHeap(), 0, szUrl);
-	urlComp.lpszScheme = "nhttp";
+	urlComp.lpszScheme = nhttp;
 	urlComp.dwSchemeLength = strlen(urlComp.lpszScheme);
 	len = strlen(CREATE_URL6) + 1;
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, len);
@@ -541,7 +559,7 @@ static void InternetCreateUrlA_test(void)
 
 	/* if lpszScheme != "http" or nPort != 80, display nPort */
 	HeapFree(GetProcessHeap(), 0, szUrl);
-	urlComp.lpszScheme = "http";
+        urlComp.lpszScheme = http;
 	urlComp.dwSchemeLength = strlen(urlComp.lpszScheme);
 	urlComp.nPort = 42;
 	szUrl = HeapAlloc(GetProcessHeap(), 0, ++len);
@@ -555,19 +573,19 @@ static void InternetCreateUrlA_test(void)
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
-	urlComp.lpszScheme = "http";
+	urlComp.lpszScheme = http;
 	urlComp.dwSchemeLength = 0;
 	urlComp.nScheme = INTERNET_SCHEME_HTTP;
-	urlComp.lpszHostName = "www.winehq.org";
+	urlComp.lpszHostName = winehq;
 	urlComp.dwHostNameLength = 0;
 	urlComp.nPort = 80;
-	urlComp.lpszUserName = "username";
+	urlComp.lpszUserName = username;
 	urlComp.dwUserNameLength = 0;
-	urlComp.lpszPassword = "password";
+	urlComp.lpszPassword = password;
 	urlComp.dwPasswordLength = 0;
-	urlComp.lpszUrlPath = "/site/about";
+	urlComp.lpszUrlPath = site_about;
 	urlComp.dwUrlPathLength = 0;
-	urlComp.lpszExtraInfo = "";
+	urlComp.lpszExtraInfo = empty;
 	urlComp.dwExtraInfoLength = 0;
 	len = strlen(CREATE_URL1);
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
@@ -578,19 +596,19 @@ static void InternetCreateUrlA_test(void)
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
-	urlComp.lpszScheme = "https";
+	urlComp.lpszScheme = https;
 	urlComp.dwSchemeLength = 0;
 	urlComp.nScheme = INTERNET_SCHEME_HTTP;
-	urlComp.lpszHostName = "www.winehq.org";
+	urlComp.lpszHostName = winehq;
 	urlComp.dwHostNameLength = 0;
 	urlComp.nPort = 443;
-	urlComp.lpszUserName = "username";
+	urlComp.lpszUserName = username;
 	urlComp.dwUserNameLength = 0;
-	urlComp.lpszPassword = "password";
+	urlComp.lpszPassword = password;
 	urlComp.dwPasswordLength = 0;
-	urlComp.lpszUrlPath = "/site/about";
+	urlComp.lpszUrlPath = site_about;
 	urlComp.dwUrlPathLength = 0;
-	urlComp.lpszExtraInfo = "";
+	urlComp.lpszExtraInfo = empty;
 	urlComp.dwExtraInfoLength = 0;
 	len = strlen(CREATE_URL8);
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
@@ -603,9 +621,9 @@ static void InternetCreateUrlA_test(void)
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
-	urlComp.lpszScheme = "about";
+	urlComp.lpszScheme = about;
 	urlComp.dwSchemeLength = 5;
-	urlComp.lpszUrlPath = "blank";
+	urlComp.lpszUrlPath = blank;
 	urlComp.dwUrlPathLength = 5;
 	len = strlen(CREATE_URL9);
 	len++; /* work around bug in native wininet */
@@ -619,9 +637,9 @@ static void InternetCreateUrlA_test(void)
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
-	urlComp.lpszScheme = "about";
-	urlComp.lpszHostName = "host";
-	urlComp.lpszUrlPath = "blank";
+	urlComp.lpszScheme = about;
+	urlComp.lpszHostName = host;
+	urlComp.lpszUrlPath = blank;
 	len = strlen(CREATE_URL10);
 	len++; /* work around bug in native wininet */
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
@@ -635,7 +653,7 @@ static void InternetCreateUrlA_test(void)
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
 	urlComp.nPort = 8080;
-	urlComp.lpszScheme = "about";
+	urlComp.lpszScheme = about;
 	len = strlen(CREATE_URL11);
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
@@ -647,10 +665,10 @@ static void InternetCreateUrlA_test(void)
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
-	urlComp.lpszScheme = "http";
+	urlComp.lpszScheme = http;
 	urlComp.dwSchemeLength = 0;
 	urlComp.nScheme = INTERNET_SCHEME_HTTP;
-	urlComp.lpszHostName = "www.winehq.org";
+	urlComp.lpszHostName = winehq;
 	urlComp.dwHostNameLength = 0;
 	urlComp.nPort = 65535;
 	len = strlen(CREATE_URL12);
