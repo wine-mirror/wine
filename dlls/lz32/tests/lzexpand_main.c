@@ -230,7 +230,6 @@ static void test_LZOpenFileW(void)
   DWORD retval;
   INT file;
   char expected[MAX_PATH];
-  char filled_0xA5[OFS_MAXPATHNAME];
   static WCHAR badfilenameW[] = {'b','a','d','f','i','l','e','n','a','m','e','.','x','t','n',0};
 
   SetLastError(0xfaceabee);
@@ -280,29 +279,18 @@ static void test_LZOpenFileW(void)
   /* Compressed file name ends with underscore. */
   retval = lstrlenA(expected);
   expected[retval-1] = '_';
-  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
-  memset(&test, 0xA5, sizeof(test));
 
   /* Try to open compressed file. */
   file = LZOpenFileW(filenameW, &test, OF_EXIST);
-  if(file != LZERROR_BADINHANDLE) {
-    ok(test.cBytes == sizeof(OFSTRUCT), 
-       "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == 0, "LZOpenFileW set test.nErrCode to %d\n", 
-       test.nErrCode);
-    ok(lstrcmpA(test.szPathName, expected) == 0, 
-       "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
-       test.szPathName, expected);
-    LZClose(file);
-  } else {
-    ok(test.cBytes == 0xA5, 
-       "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
-       "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
-    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
-       "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
-       test.szPathName, filled_0xA5);
-  }
+  ok(file >= 0, "LZOpenFileW failed on switching to a compressed file name\n");
+  ok(test.cBytes == sizeof(OFSTRUCT), 
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == 0, "LZOpenFileW set test.nErrCode to %d\n", 
+     test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0, 
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
+     test.szPathName, expected);
+  LZClose(file);
 
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFileW(filename_W, &test, OF_DELETE);
