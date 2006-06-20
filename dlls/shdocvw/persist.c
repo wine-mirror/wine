@@ -171,7 +171,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 {
     WebBrowser *This = PERSTRINIT_THIS(iface);
     FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 #undef PERSTRINIT_THIS
