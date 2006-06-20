@@ -36,6 +36,12 @@
 #if !defined(MTSETBLK) && defined(MTSETBSIZ)
 #define MTSETBLK MTSETBSIZ
 #endif
+#if !defined(MTSETBLK) && defined(MTSRSZ)
+#define MTSETBLK MTSRSZ
+#endif
+#ifndef MT_ST_BLKSIZE_MASK
+#define MT_ST_BLKSIZE_MASK 0xffffff
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
