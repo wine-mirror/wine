@@ -1448,7 +1448,7 @@ static void test_OpenFile_exists(void)
     HFILE hFile;
     OFSTRUCT ofs;
     
-    static const char *file = "\\winver.exe";
+    static const char *file = "\\regsvr32.exe";
     char buff[MAX_PATH];
     UINT length;
     
@@ -1456,7 +1456,7 @@ static void test_OpenFile_exists(void)
 
     if ((length + lstrlen(file) < MAX_PATH))
     {
-	lstrcat(buff, file);
+	lstrcatA(buff, file);
 
 	hFile = OpenFile(buff, &ofs, OF_EXIST);
 	ok( hFile == TRUE, "%s not found : %ld\n", buff, GetLastError());
