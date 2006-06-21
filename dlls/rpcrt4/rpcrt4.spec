@@ -439,7 +439,7 @@
 @ stdcall RpcMgmtIsServerListening(ptr)
 @ stub RpcMgmtSetAuthorizationFn
 @ stub RpcMgmtSetCancelTimeout
-@ stub RpcMgmtSetComTimeout
+@ stdcall RpcMgmtSetComTimeout(ptr long)
 @ stub RpcMgmtSetParameter # win9x
 @ stub RpcMgmtSetServerStackSize
 @ stub RpcMgmtStatsVectorFree
@@ -458,7 +458,7 @@
 @ stub RpcProtseqVectorFreeW
 @ stdcall RpcRaiseException(long)
 @ stub RpcRegisterAsyncInfo
-@ stub RpcRevertToSelf
+@ stdcall RpcRevertToSelf()
 @ stdcall RpcRevertToSelfEx(ptr)
 @ stdcall RpcServerInqBindings(ptr)
 @ stub RpcServerInqCallAttributesA # wxp

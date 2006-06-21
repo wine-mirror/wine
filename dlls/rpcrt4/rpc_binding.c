@@ -953,6 +953,24 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
 }
 
 /***********************************************************************
+ *             RpcRevertToSelf (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcRevertToSelf(void)
+{
+    FIXME("stub\n");
+    return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcMgmtSetComTimeout (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtSetComTimeout(RPC_BINDING_HANDLE BindingHandle, unsigned int Timeout)
+{
+    FIXME("(%p, %d): stub\n", BindingHandle, Timeout);
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcBindingInqAuthInfoExA (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
