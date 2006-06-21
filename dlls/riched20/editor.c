@@ -1381,7 +1381,7 @@ static const char * const richedit_messages[] = {
 static const char *
 get_msg_name(UINT msg)
 {
-  if (msg >= EM_GETSEL && msg <= EM_SETLIMITTEXT)
+  if (msg >= EM_GETSEL && msg <= EM_CHARFROMPOS)
     return edit_messages[msg - EM_GETSEL];
   if (msg >= EM_CANPASTE && msg <= EM_GETIMEMODEBIAS)
     return richedit_messages[msg - EM_CANPASTE];
