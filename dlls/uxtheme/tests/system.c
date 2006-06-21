@@ -97,7 +97,12 @@ static void test_SetWindowTheme(void)
     SetLastError(0xdeadbeef);
     hRes = pSetWindowTheme(NULL, NULL, NULL);
     todo_wine
+    {
         ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
+        ok( GetLastError() == 0xdeadbeef,
+            "Expected 0xdeadbeef, got 0x%08lx\n",
+            GetLastError());
+    }
 
     /* Only do the bare minumum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
@@ -106,6 +111,9 @@ static void test_SetWindowTheme(void)
     SetLastError(0xdeadbeef);
     hRes = pSetWindowTheme(hWnd, NULL, NULL);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
 }
 
 static void test_OpenThemeData(void)
@@ -118,7 +126,6 @@ static void test_OpenThemeData(void)
     WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
     WCHAR szClassList[]        = {'B','u','t','t','o','n',';','L','i','s','t','B','o','x', 0 };
 
-    SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
 
     /* All NULL */
