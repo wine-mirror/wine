@@ -20,8 +20,8 @@
  28 stdcall -private DllCanUnloadNow()
  29 stub MAPIOpenFormMgr
  30 stub MAPIOpenFormMgr@8
- 31 stub MAPIOpenLocalFormContainer
- 32 stub MAPIOpenLocalFormContainer@4
+ 31 stdcall MAPIOpenLocalFormContainer(ptr)
+ 32 stdcall MAPIOpenLocalFormContainer@4(ptr) MAPIOpenLocalFormContainer
  33 stdcall ScInitMapiUtil@4(long) ScInitMapiUtil
  34 stdcall DeinitMapiUtil@0() DeinitMapiUtil
  35 stub ScGenerateMuid@4

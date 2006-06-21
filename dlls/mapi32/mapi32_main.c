@@ -100,6 +100,12 @@ HRESULT WINAPI MAPILogonEx(ULONG_PTR uiparam, LPWSTR profile,
     return SUCCESS_SUCCESS;
 }
 
+HRESULT WINAPI MAPIOpenLocalFormContainer(LPVOID *ppfcnt)
+{
+    FIXME("(%p) Stub\n", ppfcnt);
+    return E_FAIL;
+}
+
 VOID WINAPI MAPIUninitialize(void)
 {
     FIXME("Stub\n");
