@@ -365,6 +365,25 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
 
 static void test_UrlGetPart(void)
 {
+  CHAR szPart[INTERNET_MAX_URL_LENGTH];
+  DWORD dwSize;
+  HRESULT res;
+
+  dwSize = sizeof szPart;
+  szPart[0]='x'; szPart[1]=0;
+  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
+  todo_wine {
+  ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08lX\n", res);
+  ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
+  }
+  dwSize = sizeof szPart;
+  szPart[0]='x'; szPart[1]=0;
+  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_QUERY, 0);
+  todo_wine {
+  ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08lX\n", res);
+  ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
+  }
+  
   test_url_part(TEST_URL_3, URL_PART_HOSTNAME, 0, "localhost");
   test_url_part(TEST_URL_3, URL_PART_PORT, 0, "21");
   test_url_part(TEST_URL_3, URL_PART_USERNAME, 0, "foo");
@@ -435,9 +454,19 @@ static void test_UrlEscape(void)
 static void test_UrlCanonicalize(void)
 {
     unsigned int i;
+    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    DWORD dwSize;
+
     for(i=0; i<sizeof(TEST_CANONICALIZE)/sizeof(TEST_CANONICALIZE[0]); i++) {
         test_url_canonicalize(TEST_CANONICALIZE[i].url, TEST_CANONICALIZE[i].flags,
                               TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expecturl);
+    }
+
+    /* move to TEST_CANONICALIZE when fixed */
+    dwSize = sizeof szReturnUrl;
+    ok(UrlCanonicalizeA("c:\\tests\\foo bar", szReturnUrl, &dwSize, 0) == S_OK, "UrlCanonicalizeA didn't return 0x%08lx\n", S_OK);
+    todo_wine {
+        ok(strcmp(szReturnUrl,"file:///c:/tests/foo%20bar")==0, "UrlCanonicalizeA got %s\n", szReturnUrl);
     }
 }
 
