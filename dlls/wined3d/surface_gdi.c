@@ -1042,7 +1042,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
 error:
     if (Flags && FIXME_ON(d3d_surface))
     {
-        FIXME("\tUnsupported flags: %08lx", Flags);
+        FIXME("\tUnsupported flags: %08lx\n", Flags);
     }
 
 release:
