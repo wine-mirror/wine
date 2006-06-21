@@ -96,6 +96,13 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
     return S_OK;
 }
 
+HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEA *pM, LPCOLESTR lpszIndex, 
+                                    BSTR *pbstrPath, ITypeLib **ppTypeLib)
+{
+    FIXME("(%p, %s, %p, %p): stub\n", pM, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
+    return E_FAIL;
+}
+
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM)
 {
     _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;

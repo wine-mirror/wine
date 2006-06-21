@@ -47,6 +47,6 @@
 53 stub AtlIPersistPropertyBag_Save
 54 stub AtlGetObjectSourceInterface
 55 stub AtlModuleUnRegisterTypeLib
-56 stub AtlModuleLoadTypeLib
+56 stdcall AtlModuleLoadTypeLib(ptr wstr ptr ptr)
 57 stdcall AtlModuleUnregisterServerEx(ptr long ptr)
 58 stdcall AtlModuleAddTermFunc(ptr ptr long)
