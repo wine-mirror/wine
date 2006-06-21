@@ -28,6 +28,7 @@ DLLs (under dlls/):
 	comcat/			- Component category manager
 	comctl32/		- Common controls
 	comdlg32/               - Common dialog boxes (both 16 & 32 bit)
+	compstui/               - Common Property Sheet User Interface
 	crtdll/			- Old C runtime library
 	crypt32/		- Cryptography
 	cryptdll/		- Cryptography Manager
@@ -66,12 +67,14 @@ DLLs (under dlls/):
 	glut32/			- OpenGL Utility Toolkit
 	gphoto2.ds/             - Contains libgphoto2 based TWAIN datasource driver
 	hhctrl.ocx/             - HHCTRL OCX implementation
+	hlink/			- Microsoft Hyperlink Library
 	iccvid/			- Radius Cinepak Video Decoder
 	icmp/			- ICMP protocol (networking)
 	ifsmgr.vxd/		- IFSMGR VxD implementation
 	imaadp32.acm/		- IMA ADPCM Audio Codec
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
+	inseng/			- Install engine
 	iphlpapi/       	- IP Helper API
 	itss/			- Infotech Structured Storage (HTML Help)
 	kernel/			- The Windows kernel
@@ -155,6 +158,7 @@ DLLs (under dlls/):
 	url/			- Internet shortcut shell extension
 	urlmon/			- URL Moniker allows binding to a URL
 	user/			- Window management, standard controls, etc.
+	userenv/		- User - Environment and Policy Management
 	usp10/			- Uniscribe Script Processor
 	uxtheme/		- Theme library
 	vdhcp.vxd/		- VDHCP VxD implementation
@@ -170,12 +174,14 @@ DLLs (under dlls/):
 	winedos/		- DOS features and BIOS calls (Wine specific)
 	winemp3.acm/		- Mpeg Layer 3 Audio Codec
 	wineps.drv/             - Postscript driver (Wine specific)
+	winex11.drv/		- X11 display driver (Wine specific)
 	wininet/		- Internet extensions
 	winmm/			- Multimedia (16 & 32 bit)
 	winmm/joystick/		- Joystick driver
 	winmm/winealsa/		- ALSA audio driver
 	winmm/winearts/		- aRts audio driver
 	winmm/wineaudioio/ 	- audioio audio driver
+	winmm/winecoreaudio/ 	- CoreAudio audio driver (MacOS)
 	winmm/winejack/		- JACK audio server driver
 	winmm/winenas/		- NAS audio driver
 	winmm/wineoss/		- OSS audio driver
@@ -189,7 +195,6 @@ DLLs (under dlls/):
 	ws2_32/			- Sockets 2.0 (networking)
 	wsock32/		- Sockets 1.1 (networking)
 	wtsapi32/		- Terminal Services
-	x11drv/			- X11 display driver (Wine specific)
 
 Winelib programs (under programs/):
 -----------------------------------
@@ -205,6 +210,7 @@ Winelib programs (under programs/):
 	iexplore/               - Internet Explorer replacement 
 	msiexec/		- Microsoft Installer frontend
 	notepad/		- Notepad replacement 
+	oleview/		- OLE/COM Object Viewer
 	progman/		- Program manager
 	regedit/		- Registry editor
 	regsvr32/		- Register COM server
@@ -241,6 +247,7 @@ Support programs, libraries, etc:
 	dlls/uuid/		- Windows-compatible UUID import lib
 	documentation/		- some documentation
 	include/		- Windows standard includes
+	include/ddk/		- Windows DDK compatible headers
 	include/msvcrt/		- MSVC compatible libc headers
 	include/wine/		- Wine specific headers
 	libs/			- the Wine libraries
