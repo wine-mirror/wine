@@ -58,6 +58,15 @@ static BOOL InitFunctionPtrs(void)
       UXTHEME_GET_PROC(OpenThemeData)
       UXTHEME_GET_PROC(SetWindowTheme)
     }
+    /* The following functions should be available, if not return FALSE. The Vista functions will
+     * be checked (at some point in time) within the single tests if needed. All used functions for
+     * now are present on WinXP, W2K3 and Wine.
+     */
+    if (!pCloseThemeData || !pGetWindowTheme ||
+        !pIsAppThemed || !pIsThemeActive ||
+        !pOpenThemeData || !pSetWindowTheme)
+        return FALSE;
+
     return TRUE;
 }
 
@@ -268,28 +277,23 @@ START_TEST(system)
 
     /* IsThemeActive and IsAppThemed */
     trace("Starting test_IsThemed()\n");
-    if (pIsAppThemed && pIsThemeActive)
-        test_IsThemed();
+    test_IsThemed();
 
     /* GetWindowTheme */
     trace("Starting test_GetWindowTheme()\n");
-    if (pGetWindowTheme)
-        test_GetWindowTheme();
+    test_GetWindowTheme();
 
     /* SetWindowTheme */
     trace("Starting test_SetWindowTheme()\n");
-    if (pSetWindowTheme)
-        test_SetWindowTheme();
+    test_SetWindowTheme();
 
     /* OpenThemeData */
     trace("Starting test_OpenThemeData()\n");
-    if (pOpenThemeData && pIsThemeActive) 
-        test_OpenThemeData();
+    test_OpenThemeData();
 
     /* CloseThemeData */
     trace("Starting test_CloseThemeData()\n");
-    if (pCloseThemeData)
-        test_CloseThemeData();
+    test_CloseThemeData();
 
     FreeLibrary(hUxtheme);
 }
