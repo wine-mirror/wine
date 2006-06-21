@@ -99,6 +99,14 @@ static void test_mbsspn( void)
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
 }
 
+static void test_strdup(void)
+{
+   char *str;
+   str = _strdup( 0 );
+   ok( str == 0, "strdup returns %s should be 0\n", str);
+   free( str );
+}
+
 START_TEST(string)
 {
     void *mem;
@@ -125,4 +133,6 @@ START_TEST(string)
     test_ismbblead();
    /* test _mbsspn */
     test_mbsspn();
+   /* test _strdup */
+    test_strdup();
 }
