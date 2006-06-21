@@ -938,6 +938,15 @@ RPC_STATUS WINAPI RpcMgmtStopServerListening ( RPC_BINDING_HANDLE Binding )
 }
 
 /***********************************************************************
+ *             RpcMgmtEnableIdleCleanup (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtEnableIdleCleanup(void)
+{
+    FIXME("(): stub\n");
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *             I_RpcServerStartListening (RPCRT4.@)
  */
 RPC_STATUS WINAPI I_RpcServerStartListening( HWND hWnd )

@@ -423,7 +423,7 @@
 @ stub RpcInitializeAsyncHandle
 @ stub RpcMgmtBindingInqParameter # win9x
 @ stub RpcMgmtBindingSetParameter # win9x
-@ stub RpcMgmtEnableIdleCleanup
+@ stdcall RpcMgmtEnableIdleCleanup()
 @ stdcall RpcMgmtEpEltInqBegin(ptr long ptr long ptr ptr)
 @ stub RpcMgmtEpEltInqDone
 @ stub RpcMgmtEpEltInqNextA
