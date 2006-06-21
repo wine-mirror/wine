@@ -357,9 +357,21 @@ void drawPrimitive(IWineD3DDevice *iface,
                     int   minIndex,
                     WineDirect3DVertexStridedData *DrawPrimStrideData);
 
-void primitiveConvertToStridedData(IWineD3DDevice *iface,
-                                   WineDirect3DVertexStridedData *strided,
-                                   LONG BaseVertexIndex);
+void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex, BOOL *fixup);
+
+void primitiveDeclarationConvertToStridedData(
+     IWineD3DDevice *iface,
+     BOOL useVertexShaderFunction,
+     WineDirect3DVertexStridedData *strided,
+     LONG BaseVertexIndex, 
+     DWORD *fvf,
+     BOOL *fixup);
+
+void primitiveConvertFVFtoOffset(DWORD thisFVF,
+                                 DWORD stride,
+                                 BYTE *data,
+                                 WineDirect3DVertexStridedData *strided,
+                                 GLint streamVBO);
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
@@ -615,10 +627,24 @@ typedef struct IWineD3DVertexBufferImpl
     /* WineD3DVertexBuffer specifics */
     DWORD                     fvf;
 
+    /* Vertex buffer object support */
+    GLuint                    vbo;
+    BYTE                      Flags;
+    UINT                      stream;
+
+    UINT                      dirtystart, dirtyend;
+
+    /* Last description of the buffer */
+    WineDirect3DVertexStridedData strided;
 } IWineD3DVertexBufferImpl;
 
 extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 
+#define VBFLAG_LOAD           0x01    /* Data is written from allocatedMemory to the VBO */
+#define VBFLAG_OPTIMIZED      0x02    /* Optimize has been called for the VB */
+#define VBFLAG_DIRTY          0x04    /* Buffer data has been modified */
+#define VBFLAG_STREAM         0x08    /* The vertex buffer is in a stream */
+#define VBFLAG_HASDESC        0x10    /* A vertex description has been found */
 
 /*****************************************************************************
  * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
@@ -1220,7 +1246,7 @@ void multiply_matrix(D3DMATRIX *dest, D3DMATRIX *src1, D3DMATRIX *src2);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
 
-    extern BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset);
+    extern BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
     extern HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface);

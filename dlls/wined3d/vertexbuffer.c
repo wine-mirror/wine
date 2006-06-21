@@ -152,8 +152,9 @@ const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_GetDesc
 };
 
-BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset) {
+BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
+    *vbo = 0;
 
     return This->resource.allocatedMemory + iOffset;
 }

@@ -5107,14 +5107,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBufferImpl *SrcImpl = (IWineD3DVertexBufferImpl *) pVertexDecl;
     WineDirect3DVertexStridedData strided;
-    HRESULT hr;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%ld\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
 
-    hr = IWineD3DDevice_SetFVF(iface, SrcImpl->fvf);
-    hr = IWineD3DDevice_SetStreamSource(iface, 0, pVertexDecl, get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, get_flexible_vertex_size(SrcImpl->fvf));
-
     memset(&strided, 0, sizeof(strided));
-    primitiveConvertToStridedData(iface, &strided, 0);
+    primitiveConvertFVFtoOffset(SrcImpl->fvf, get_flexible_vertex_size(SrcImpl->fvf), SrcImpl->resource.allocatedMemory + get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, &strided, 0);
 
     return process_vertices_strided(This, DestIndex, VertexCount, &strided, SrcImpl->fvf, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
 }
