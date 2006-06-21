@@ -928,11 +928,21 @@ static void test_CompareStringA(void)
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 7, "aLuZkUtZ\0A", 10);
     ok(ret == 1, "aLuZkUtZ vs aLuZkUtZ\\0A expected 1, got %d\n", ret);
 
+    /* WinXP handles embedded NULLs differently than earlier versions */
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ\0A", 10);
-    ok(ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0A expected 2, got %d\n", ret);
+    ok(ret == 1 || ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0A expected 1 or 2, got %d\n", ret);
 
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLu\0ZkUtZ", 8, "aLu\0ZkUtZ\0A", 10);
-    ok(ret == 2, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected 2, got %d\n", ret);
+    ok(ret == 1 || ret == 2, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected 1 or 2, got %d\n", ret);
+
+    ret = CompareStringA(lcid, 0, "a\0b", -1, "a", -1);
+    ok(ret == 2, "a vs a expected 2, got %d\n", ret);
+
+    ret = CompareStringA(lcid, 0, "a\0b", 4, "a", 2);
+    ok(ret == 3, "a\\0b vs a expected 3, got %d\n", ret);
+
+    ret = CompareStringA(lcid, 0, "\1\0\2", 4, "\1\0\1", 4);
+    todo_wine ok(ret != 2, "\\1\\0\\2 vs \\1\\0\\1 expected unequal\n");
 }
 
 static void test_LCMapStringA(void)
