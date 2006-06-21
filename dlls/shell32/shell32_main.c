@@ -963,8 +963,8 @@ INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                 while (*pstr)
                 {
                     WCHAR name[64];
-                    /* authors list is in iso-8859-1 format */
-                    MultiByteToWideChar( 28591, 0, *pstr, -1, name, sizeof(name)/sizeof(WCHAR) );
+                    /* authors list is in utf-8 format */
+                    MultiByteToWideChar( CP_UTF8, 0, *pstr, -1, name, sizeof(name)/sizeof(WCHAR) );
                     SendMessageW( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)name );
                     pstr++;
                 }
