@@ -82,14 +82,14 @@ static unsigned char byte_from_hex_char(WCHAR wHex)
     case '7':
     case '8':
     case '9':
-        return wHex - '0';
+        return (wHex - '0') & 0xf;
     case 'a':
     case 'b':
     case 'c':
     case 'd':
     case 'e':
     case 'f':
-        return wHex - 'a' + 10;
+        return (wHex - 'a' + 10) & 0xf;
     default:
         return 0;
     }
