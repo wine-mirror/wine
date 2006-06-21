@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI * pCloseThemeData)(HTHEME);
+static HTHEME  (WINAPI * pGetWindowTheme)(HWND);
 static BOOL    (WINAPI * pIsAppThemed)(VOID);
 static BOOL    (WINAPI * pIsThemeActive)(VOID);
 static HTHEME  (WINAPI * pOpenThemeData)(HWND, LPCWSTR);
@@ -51,6 +52,7 @@ static BOOL InitFunctionPtrs(void)
     if (hUxtheme)
     {
       UXTHEME_GET_PROC(CloseThemeData)
+      UXTHEME_GET_PROC(GetWindowTheme)
       UXTHEME_GET_PROC(IsAppThemed)
       UXTHEME_GET_PROC(IsThemeActive)
       UXTHEME_GET_PROC(OpenThemeData)
@@ -87,6 +89,31 @@ static void test_IsThemed(void)
         ok( GetLastError() == ERROR_SUCCESS,
             "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
+}
+
+static void test_GetWindowTheme(void)
+{
+    HTHEME    hTheme;
+    HWND      hWnd;
+
+    SetLastError(0xdeadbeef);
+    hTheme = pGetWindowTheme(NULL);
+    ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
+    todo_wine
+        ok( GetLastError() == E_HANDLE,
+            "Expected E_HANDLE, got 0x%08lx\n",
+            GetLastError());
+
+    /* Only do the bare minumum to get a valid hwnd */
+    hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
+    if (!hWnd) return;
+
+    SetLastError(0xdeadbeef);
+    hTheme = pGetWindowTheme(hWnd);
+    ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
 }
 
 static void test_SetWindowTheme(void)
@@ -243,6 +270,11 @@ START_TEST(system)
     trace("Starting test_IsThemed()\n");
     if (pIsAppThemed && pIsThemeActive)
         test_IsThemed();
+
+    /* GetWindowTheme */
+    trace("Starting test_GetWindowTheme()\n");
+    if (pGetWindowTheme)
+        test_GetWindowTheme();
 
     /* SetWindowTheme */
     trace("Starting test_SetWindowTheme()\n");
