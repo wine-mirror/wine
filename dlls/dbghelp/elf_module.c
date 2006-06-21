@@ -280,7 +280,8 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
         /* Ignore certain types of entries which really aren't of that much
          * interest.
          */
-        if ((ELF32_ST_TYPE(symp->st_info) != STT_FILE &&
+        if ((ELF32_ST_TYPE(symp->st_info) != STT_NOTYPE &&
+             ELF32_ST_TYPE(symp->st_info) != STT_FILE &&
              ELF32_ST_TYPE(symp->st_info) != STT_OBJECT &&
              ELF32_ST_TYPE(symp->st_info) != STT_FUNC) ||
             symp->st_shndx == SHN_UNDEF)
@@ -549,6 +550,9 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                                              ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL,
                                              addr, ste->symp->st_size, NULL);
                     break;
+                case STT_NOTYPE:
+                    /* at least winebuild specific symbols */
+                    break;
                 default:
                     FIXME("Shouldn't happen\n");
                     break;
@@ -608,10 +612,11 @@ static int elf_new_public_symbols(struct module* module, struct hash_table* symt
     hash_table_iter_init(symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
     {
-        symt_new_public(module, ste->compiland, ste->ht_elt.name,
-                        module->elf_info->elf_addr + ste->symp->st_value,
-                        ste->symp->st_size, TRUE /* FIXME */, 
-                        ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
+        if (ELF32_ST_TYPE(ste->symp->st_info) != STT_NOTYPE)
+            symt_new_public(module, ste->compiland, ste->ht_elt.name,
+                            module->elf_info->elf_addr + ste->symp->st_value,
+                            ste->symp->st_size, TRUE /* FIXME */, 
+                            ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
     }
     return TRUE;
 }
