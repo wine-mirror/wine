@@ -11,6 +11,7 @@
 # install:         install everything
 # uninstall:       uninstall everything
 # depend:          create the dependencies
+# ctags:           create a tags file for vim and others.
 # etags:           create a TAGS file for Emacs.
 # manpages:        compile manpages for Wine API
 # htmlpages:       compile html pages for Wine API
