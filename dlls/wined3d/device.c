@@ -614,23 +614,144 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnkno
     return WINED3D_OK;
 }
 
+static void CreateVBO(IWineD3DVertexBufferImpl *object) {
+    IWineD3DDeviceImpl *This = object->resource.wineD3DDevice;  /* Needed for GL_EXTCALL */
+    GLenum error, glUsage;
+    DWORD vboUsage = object->resource.usage;
+    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p\n", object);
+
+    ENTER_GL();
+    /* Make sure that the gl error is cleared. Do not use checkGLcall
+      * here because checkGLcall just prints a fixme and continues. However,
+      * if an error during VBO creation occurs we can fall back to non-vbo operation
+      * with full functionality(but performance loss)
+      */
+    while(glGetError() != GL_NO_ERROR);
+
+    /* Basically the FVF parameter passed to CreateVertexBuffer is no good
+      * It is the FVF set with IWineD3DDevice::SetFVF or the Vertex Declaration set with
+      * IWineD3DDevice::SetVertexDeclaration that decides how the vertices in the buffer
+      * look like. This means that on each DrawPrimitive call the vertex buffer has to be verified
+      * to check if the rhw and color values are in the correct format.
+      */
+
+    GL_EXTCALL(glGenBuffersARB(1, &object->vbo));
+    error = glGetError();
+    if(object->vbo == 0 || error != GL_NO_ERROR) {
+        WARN("Failed to create a VBO with error %d\n", error);
+        goto error;
+    }
+
+    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, object->vbo));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        WARN("Failed to bind the VBO, error %d\n", error);
+        goto error;
+    }
+
+    /* Transformed vertices are horribly inflexible. If the app specifies an
+      * vertex buffer with transformed vertices in default pool without DYNAMIC
+      * usage assume DYNAMIC usage and print a warning. The app will have to update
+      * the vertices regularily for them to be useful
+      */
+    if(((object->fvf & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) &&
+        !(vboUsage & WINED3DUSAGE_DYNAMIC)) {
+        WARN("Application creates a vertex buffer holding transformed vertices which doesn't specify dynamic usage\n");
+        vboUsage |= WINED3DUSAGE_DYNAMIC;
+    }
+
+    /* Don't use static, because dx apps tend to update the buffer
+      * quite often even if they specify 0 usage
+      */
+    switch(vboUsage & (D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC) ) {
+        case D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC:
+            TRACE("Gl usage = GL_STREAM_DRAW\n");
+            glUsage = GL_STREAM_DRAW_ARB;
+            break;
+        case D3DUSAGE_WRITEONLY:
+            TRACE("Gl usage = GL_STATIC_DRAW\n");
+            glUsage = GL_DYNAMIC_DRAW_ARB;
+            break;
+        case D3DUSAGE_DYNAMIC:
+            TRACE("Gl usage = GL_STREAM_COPY\n");
+            glUsage = GL_STREAM_COPY_ARB;
+            break;
+        default:
+            TRACE("Gl usage = GL_STATIC_COPY\n");
+            glUsage = GL_DYNAMIC_COPY_ARB;
+            break;
+    }
+
+    /* Reserve memory for the buffer. The amount of data won't change
+      * so we are safe with calling glBufferData once with a NULL ptr and
+      * calling glBufferSubData on updates
+      */
+    GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        WARN("glBufferDataARB failed with error %d\n", error);
+        goto error;
+    }
+
+    LEAVE_GL();
+
+    return;
+    error:
+    /* Clean up all vbo init, but continue because we can work without a vbo :-) */
+    FIXME("Failed to create a vertex buffer object. Continuing, but performance issues can occur\n");
+    if(object->vbo) GL_EXTCALL(glDeleteBuffersARB(1, &object->vbo));
+    object->vbo = 0;
+    LEAVE_GL();
+    return;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
                              DWORD FVF, WINED3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
                              IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBufferImpl *object;
     WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
+    int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
+    BOOL conv;
     D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, WINED3DRTYPE_VERTEXBUFFER, Size)
-    
-    /*TODO: use VBO's */
+
+    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
+    *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
+
+    if(Size == 0) return WINED3DERR_INVALIDCALL;
+
     if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
         object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
     }
     object->fvf = FVF;
 
-    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
-    *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
+    /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
+     * drawStridedFast (half-life 2).
+     *
+     * Basically converting the vertices in the buffer is quite expensive, and observations
+     * show that drawStridedSlow is faster than converting + uploading + drawStridedFast.
+     * Therefore do not create a VBO for WINED3DUSAGE_DYNAMIC buffers.
+     *
+     * Direct3D7 has another problem: Its vertexbuffer api doesn't offer a way to specify
+     * the range of vertices beeing locked, so each lock will require the whole buffer to be transformed.
+     * Moreover geometry data in dx7 is quite simple, so drawStridedSlow isn't a big hit. A plus
+     * is that the vertex buffers fvf can be trusted in dx7. So only create non-converted vbos for
+     * dx7 apps.
+     * There is a IDirect3DVertexBuffer7::Optimize call after which the buffer can't be locked any
+     * more. In this call we can convert dx7 buffers too.
+     */
+    conv = ((FVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW ) || (FVF & (D3DFVF_DIFFUSE | D3DFVF_SPECULAR));
+    if( GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) && Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && 
+        (dxVersion > 7 || !conv) ) {
+        CreateVBO(object);
 
+        /* DX7 buffers can be locked directly into the VBO(no conversion, see above */
+        if(dxVersion == 7 && object->vbo) {
+            HeapFree(GetProcessHeap(), 0, object->resource.allocatedMemory);
+            object->resource.allocatedMemory = NULL;
+        }
+
+    }
     return WINED3D_OK;
 }
 
@@ -2315,9 +2436,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     which suggests that we shouldn't be ref counting? and do need a _release on the stream source to reset the stream source
     so for now, just count internally   */
     if (pStreamData != NULL) {
+        IWineD3DVertexBufferImpl *vbImpl = (IWineD3DVertexBufferImpl *) pStreamData;
+        if( (vbImpl->Flags & VBFLAG_STREAM) && vbImpl->stream != StreamNumber) {
+            WARN("Assigning a Vertex Buffer to stream %d which is already assigned to stream %d\n", StreamNumber, vbImpl->stream);
+        }
+        vbImpl->stream = StreamNumber;
+        vbImpl->Flags |= VBFLAG_STREAM;
         IWineD3DVertexBuffer_AddRef(pStreamData);
     }
     if (oldSrc != NULL) {
+        ((IWineD3DVertexBufferImpl *) oldSrc)->Flags &= ~VBFLAG_STREAM;
         IWineD3DVertexBuffer_Release(oldSrc);
     }
 
@@ -4850,7 +4978,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT
 process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount, WineDirect3DVertexStridedData *lpStrideData, DWORD SrcFVF, IWineD3DVertexBufferImpl *dest, DWORD dwFlags) {
-    char *dest_ptr;
+    char *dest_ptr, *dest_conv = NULL;
     unsigned int i;
     DWORD DestFVF = dest->fvf;
     D3DVIEWPORT9 vp;
@@ -4867,9 +4995,46 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* We might access VBOs from this code, so hold the lock */
+    ENTER_GL();
+
     if (dest->resource.allocatedMemory == NULL) {
-        ERR("Destination buffer has no memory allocated\n");
-        return WINED3DERR_INVALIDCALL;
+        /* This may happen if we do direct locking into a vbo. Unlikely,
+         * but theoretically possible(ddraw processvertices test)
+         */
+        dest->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, dest->resource.size);
+        if(!dest->resource.allocatedMemory) {
+            LEAVE_GL();
+            ERR("Out of memory\n");
+            return E_OUTOFMEMORY;
+        }
+        if(dest->vbo) {
+            void *src;
+            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
+            checkGLcall("glBindBufferARB");
+            src = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_ONLY));
+            if(src) {
+                memcpy(dest->resource.allocatedMemory, src, dest->resource.size);
+            }
+            GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
+            checkGLcall("glUnmapBufferARB");
+        }
+    }
+
+    /* Get a pointer into the destination vbo(create one if none exists) and
+     * write correct opengl data into it. It's cheap and allows us to run drawStridedFast
+     */
+    if(!dest->vbo && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
+        CreateVBO(dest);
+    }
+
+    if(dest->vbo) {
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
+        dest_conv = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY));
+        if(!dest_conv) {
+            ERR("glMapBuffer failed\n");
+            /* Continue without storing converted vertices */
+        }
     }
 
     /* Should I clip?
@@ -4893,6 +5058,9 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
         }
     } else doClip = FALSE;
     dest_ptr = ((char *) dest->resource.allocatedMemory) + dwDestIndex * get_flexible_vertex_size(DestFVF);
+    if(dest_conv) {
+        dest_conv = ((char *) dest_conv) + dwDestIndex * get_flexible_vertex_size(DestFVF);
+    }
 
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
                                  D3DTS_VIEW,
@@ -5035,9 +5203,24 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             if((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
                 dest_ptr += sizeof(float);
             }
+
+            if(dest_conv) {
+                float w = 1 / rhw;
+                ( (float *) dest_conv)[0] = x * w;
+                ( (float *) dest_conv)[1] = y * w;
+                ( (float *) dest_conv)[2] = z * w;
+                ( (float *) dest_conv)[3] = w;
+
+                dest_conv += 3 * sizeof(float);
+
+                if((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+                    dest_conv += sizeof(float);
+                }
+            }
         }
         if (DestFVF & D3DFVF_PSIZE) {
             dest_ptr += sizeof(DWORD);
+            if(dest_conv) dest_conv += sizeof(DWORD);
         }
         if (DestFVF & D3DFVF_NORMAL) {
             float *normal =
@@ -5045,6 +5228,9 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             /* AFAIK this should go into the lighting information */
             FIXME("Didn't expect the destination to have a normal\n");
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
+            if(dest_conv) {
+                copy_and_next(dest_conv, normal, 3 * sizeof(float));
+            }
         }
 
         if (DestFVF & D3DFVF_DIFFUSE) {
@@ -5060,9 +5246,21 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
                 *( (DWORD *) dest_ptr) = 0xffffffff;
                 dest_ptr += sizeof(DWORD);
+
+                if(dest_conv) {
+                    *( (DWORD *) dest_conv) = 0xffffffff;
+                    dest_conv += sizeof(DWORD);
+                }
             }
-            else
+            else {
                 copy_and_next(dest_ptr, color_d, sizeof(DWORD));
+                if(dest_conv) {
+                    *( (DWORD *) dest_conv)  = (*color_d & 0xff00ff00)      ; /* Alpha + green */
+                    *( (DWORD *) dest_conv) |= (*color_d & 0x00ff0000) >> 16; /* Red */
+                    *( (DWORD *) dest_conv) |= (*color_d & 0xff0000ff) << 16; /* Blue */
+                    dest_conv += sizeof(DWORD);
+                }
+            }
         }
 
         if (DestFVF & D3DFVF_SPECULAR) { 
@@ -5079,9 +5277,20 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
                 *( (DWORD *) dest_ptr) = 0xFF000000;
                 dest_ptr += sizeof(DWORD);
+
+                if(dest_conv) {
+                    *( (DWORD *) dest_conv) = 0xFF000000;
+                    dest_conv += sizeof(DWORD);
+                }
             }
             else {
                 copy_and_next(dest_ptr, color_s, sizeof(DWORD));
+                if(dest_conv) {
+                    *( (DWORD *) dest_conv)  = (*color_s & 0xff00ff00)      ; /* Alpha + green */
+                    *( (DWORD *) dest_conv) |= (*color_s & 0x00ff0000) >> 16; /* Red */
+                    *( (DWORD *) dest_conv) |= (*color_s & 0xff0000ff) << 16; /* Blue */
+                    dest_conv += sizeof(DWORD);
+                }
             }
         }
 
@@ -5092,12 +5301,23 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             if(!tex_coord) {
                 ERR("No source texture, but destination requests one\n");
                 dest_ptr+=GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
+                if(dest_conv) dest_conv += GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
             }
             else {
                 copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float));
+                if(dest_conv) {
+                    copy_and_next(dest_conv, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float));
+                }
             }
         }
     }
+
+    if(dest_conv) {
+        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
+        checkGLcall("glUnmapBufferARB(GL_ARRAY_BUFFER_ARB)");
+    }
+
+    LEAVE_GL();
 
     return WINED3D_OK;
 }
@@ -5108,6 +5328,46 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     IWineD3DVertexBufferImpl *SrcImpl = (IWineD3DVertexBufferImpl *) pVertexDecl;
     WineDirect3DVertexStridedData strided;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%ld\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
+
+    /* We don't need the source vbo because this buffer is only used as
+     * a source for ProcessVertices. Avoid wasting resources by converting the
+     * buffer and loading the VBO
+     */
+    if(SrcImpl->vbo) {
+        TRACE("Releaseing the source vbo, it won't be needed\n");
+
+        if(!SrcImpl->resource.allocatedMemory) {
+            /* Rescue the data from the buffer */
+            void *src;
+            SrcImpl->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, SrcImpl->resource.size);
+            if(!SrcImpl->resource.allocatedMemory) {
+                ERR("Out of memory\n");
+                return E_OUTOFMEMORY;
+            }
+
+            ENTER_GL();
+            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, SrcImpl->vbo));
+            checkGLcall("glBindBufferARB");
+
+            src = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_ONLY));
+            if(src) {
+                memcpy(SrcImpl->resource.allocatedMemory, src, SrcImpl->resource.size);
+            }
+
+            GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
+            checkGLcall("glUnmapBufferARB");
+        } else {
+            ENTER_GL();
+        }
+
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glDeleteBuffersARB(1, &SrcImpl->vbo));
+        checkGLcall("glDeleteBuffersARB");
+        LEAVE_GL();
+
+        SrcImpl->vbo = 0;
+    }
 
     memset(&strided, 0, sizeof(strided));
     primitiveConvertFVFtoOffset(SrcImpl->fvf, get_flexible_vertex_size(SrcImpl->fvf), SrcImpl->resource.allocatedMemory + get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, &strided, 0);
