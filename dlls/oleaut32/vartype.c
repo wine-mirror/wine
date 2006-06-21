@@ -6584,27 +6584,31 @@ HRESULT WINAPI VarBstrFromDisp(IDispatch* pdispIn, LCID lcid, ULONG dwFlags, BST
  */
 HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
 {
-  unsigned int len;
+  unsigned int lenLeft, lenRight;
+
+  TRACE("%s,%s,%p\n",
+   debugstr_wn(pbstrLeft, SysStringLen(pbstrLeft)),
+   debugstr_wn(pbstrRight, SysStringLen(pbstrRight)), pbstrOut);
 
   if (!pbstrOut)
     return E_INVALIDARG;
 
-  len = pbstrLeft ? strlenW(pbstrLeft) : 0;
-  if (pbstrRight)
-    len += strlenW(pbstrRight);
+  lenLeft = pbstrLeft ? SysStringLen(pbstrLeft) : 0;
+  lenRight = pbstrRight ? SysStringLen(pbstrRight) : 0;
 
-  *pbstrOut = SysAllocStringLen(NULL, len);
+  *pbstrOut = SysAllocStringLen(NULL, lenLeft + lenRight);
   if (!*pbstrOut)
     return E_OUTOFMEMORY;
 
   (*pbstrOut)[0] = '\0';
 
   if (pbstrLeft)
-    strcpyW(*pbstrOut, pbstrLeft);
+    memcpy(*pbstrOut, pbstrLeft, lenLeft * sizeof(WCHAR));
 
   if (pbstrRight)
-    strcatW(*pbstrOut, pbstrRight);
+    memcpy(*pbstrOut + lenLeft, pbstrRight, lenRight * sizeof(WCHAR));
 
+  TRACE("%s\n", debugstr_wn(*pbstrOut, SysStringLen(*pbstrOut)));
   return S_OK;
 }
 
@@ -6629,6 +6633,12 @@ HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
  */
 HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFlags)
 {
+    HRESULT hres;
+
+    TRACE("%s,%s,%ld,%08lx\n",
+     debugstr_wn(pbstrLeft, SysStringLen(pbstrLeft)),
+     debugstr_wn(pbstrRight, SysStringLen(pbstrRight)), lcid, dwFlags);
+
     if (!pbstrLeft || !*pbstrLeft)
     {
       if (!pbstrRight || !*pbstrRight)
@@ -6638,7 +6648,10 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
     else if (!pbstrRight || !*pbstrRight)
         return VARCMP_GT;
 
-    return CompareStringW(lcid, dwFlags, pbstrLeft, -1, pbstrRight, -1) - 1;
+    hres = CompareStringW(lcid, dwFlags, pbstrLeft, SysStringLen(pbstrLeft),
+            pbstrRight, SysStringLen(pbstrRight)) - 1;
+    TRACE("%ld\n", hres);
+    return hres;
 }
 
 /*

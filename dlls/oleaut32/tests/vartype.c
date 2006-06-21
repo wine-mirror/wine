@@ -4898,8 +4898,8 @@ static void test_VarBstrFromDec(void)
 #define _VARBSTRCMP(left,right,lcid,flags,result) \
         hres = pVarBstrCmp(left,right,lcid,flags); \
         ok(hres == result, "VarBstrCmp: expected " #result ", got hres=0x%lx\n", hres)
-#define VARBSTRCMP(left,right,result) \
-        _VARBSTRCMP(left,right,lcid,0,result)
+#define VARBSTRCMP(left,right,flags,result) \
+        _VARBSTRCMP(left,right,lcid,flags,result)
 
 static void test_VarBstrCmp(void)
 {
@@ -4907,7 +4907,11 @@ static void test_VarBstrCmp(void)
     HRESULT hres;
     static const WCHAR sz[] = {'W','u','r','s','c','h','t','\0'};
     static const WCHAR szempty[] = {'\0'};
-    BSTR bstr, bstrempty;
+    static const WCHAR sz1[] = { 'a',0 };
+    static const WCHAR sz2[] = { 'A',0 };
+    static const WCHAR s1[] = { 'a',0 };
+    static const WCHAR s2[] = { 'a',0,'b' };
+    BSTR bstr, bstrempty, bstr2;
 
     CHECKPTR(VarBstrCmp);
     
@@ -4916,13 +4920,34 @@ static void test_VarBstrCmp(void)
     bstrempty = SysAllocString(szempty);
     
     /* NULL handling. Yepp, MSDN is totaly wrong here */
-    VARBSTRCMP(NULL,NULL,VARCMP_EQ);
-    VARBSTRCMP(bstr,NULL,VARCMP_GT);
-    VARBSTRCMP(NULL,bstr,VARCMP_LT);
+    VARBSTRCMP(NULL,NULL,0,VARCMP_EQ);
+    VARBSTRCMP(bstr,NULL,0,VARCMP_GT);
+    VARBSTRCMP(NULL,bstr,0,VARCMP_LT);
 
     /* NULL and empty string comparisions */
-    VARBSTRCMP(bstrempty,NULL,VARCMP_EQ);
-    VARBSTRCMP(NULL,bstrempty,VARCMP_EQ);
+    VARBSTRCMP(bstrempty,NULL,0,VARCMP_EQ);
+    VARBSTRCMP(NULL,bstrempty,0,VARCMP_EQ);
+
+    SysFreeString(bstr);
+    bstr = SysAllocString(sz1);
+
+    bstr2 = SysAllocString(sz2);
+    VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
+    VARBSTRCMP(bstr,bstr2,NORM_IGNORECASE,VARCMP_EQ);
+    SysFreeString(bstr2);
+    /* These two strings are considered equal even though one is
+     * NULL-terminated and the other not.
+     */
+    bstr2 = SysAllocStringLen(s1, sizeof(s1) / sizeof(WCHAR));
+    VARBSTRCMP(bstr,bstr2,0,VARCMP_EQ);
+    SysFreeString(bstr2);
+
+    /* These two strings are not equal */
+    bstr2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
+    VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
+    SysFreeString(bstr2);
+
+    SysFreeString(bstr);
 }
 
 /* Get the internal representation of a BSTR */
@@ -5173,6 +5198,73 @@ static void test_BstrCopy(void)
     ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
   }
+}
+
+static void test_VarBstrCat(void)
+{
+    static const WCHAR sz1[] = { 'a',0 };
+    static const WCHAR sz2[] = { 'b',0 };
+    static const WCHAR sz1sz2[] = { 'a','b',0 };
+    static const WCHAR s1[] = { 'a',0 };
+    static const WCHAR s2[] = { 'b',0 };
+    static const WCHAR s1s2[] = { 'a',0,'b',0 };
+    HRESULT ret;
+    BSTR str1, str2, res;
+
+    /* Crash
+    ret = VarBstrCat(NULL, NULL, NULL);
+     */
+
+    /* Concatenation of two NULL strings works */
+    ret = VarBstrCat(NULL, NULL, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == 0, "Expected a 0-length string\n");
+    SysFreeString(res);
+
+    str1 = SysAllocString(sz1);
+
+    /* Concatenation with one NULL arg */
+    ret = VarBstrCat(NULL, str1, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
+    ok(!memcmp(res, sz1, SysStringLen(str1)), "Unexpected value\n");
+    SysFreeString(res);
+    ret = VarBstrCat(str1, NULL, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
+    ok(!memcmp(res, sz1, SysStringLen(str1)), "Unexpected value\n");
+    SysFreeString(res);
+
+    /* Concatenation of two zero-terminated strings */
+    str2 = SysAllocString(sz2);
+    ret = VarBstrCat(str1, str2, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == sizeof(sz1sz2) / sizeof(WCHAR) - 1,
+     "Unexpected length\n");
+    ok(!memcmp(res, sz1sz2, sizeof(sz1sz2)), "Unexpected value\n");
+    SysFreeString(res);
+
+    SysFreeString(str2);
+    SysFreeString(str1);
+
+    /* Concatenation of two strings with embedded NULLs */
+    str1 = SysAllocStringLen(s1, sizeof(s1) / sizeof(WCHAR));
+    str2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
+
+    ret = VarBstrCat(str1, str2, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == sizeof(s1s2) / sizeof(WCHAR),
+     "Unexpected length\n");
+    ok(!memcmp(res, s1s2, sizeof(s1s2)), "Unexpected value\n");
+    SysFreeString(res);
+
+    SysFreeString(str2);
+    SysFreeString(str1);
 }
 
 /* IUnknown */
@@ -5940,6 +6032,7 @@ START_TEST(vartype)
   test_SysReAllocString();
   test_SysReAllocStringLen();
   test_BstrCopy();
+  test_VarBstrCat();
 
   test_IUnknownClear();
   test_IUnknownCopy();
