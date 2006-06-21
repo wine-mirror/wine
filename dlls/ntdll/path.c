@@ -356,11 +356,8 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
         end = p - 1;
         if (end >= dos_name && *end == ':') end--;  /* remove trailing ':' before extension */
     }
-    else
-    {
-        /* no extension, remove trailing spaces */
-        while (end >= dos_name && *end == ' ') end--;
-    }
+    /* remove trailing spaces */
+    while (end >= dos_name && *end == ' ') end--;
 
     /* now we have a potential device name between start and end, check it */
     switch(end - start + 1)
