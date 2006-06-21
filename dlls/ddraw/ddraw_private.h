@@ -270,7 +270,8 @@ typedef enum
 {
     DDrawHandle_Unknown       = 0,
     DDrawHandle_Texture       = 1,
-    DDrawHandle_Material      = 2
+    DDrawHandle_Material      = 2,
+    DDrawHandle_Matrix        = 3
 } DDrawHandleTypes;
 
 struct HandleEntry

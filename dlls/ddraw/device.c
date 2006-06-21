@@ -341,6 +341,16 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                         FIXME("Material handle %ld not unset properly\n", i + 1);
                         mat->Handle = 0;
                     }
+                    break;
+
+                    case DDrawHandle_Matrix:
+                    {
+                        /* No fixme here because this might happen because of sloppy apps */
+                        WARN("Leftover matrix handle %ld, deleting\n", i + 1);
+                        IDirect3DDevice_DeleteMatrix(ICOM_INTERFACE(This, IDirect3DDevice),
+                                                     i + 1);
+                    }
+                    break;
 
                     default:
                         FIXME("Unknown handle %ld not unset properly\n", i + 1);
@@ -1186,8 +1196,8 @@ Thunk_IDirect3DDeviceImpl_1_EnumTextureFormats(IDirect3DDevice *iface,
 /*****************************************************************************
  * IDirect3DDevice::CreateMatrix
  *
- * Creates a matrix handle. In Wine, Matrix handles are simply pointers
- * to a D3DMATRIX structure
+ * Creates a matrix handle. A handle is created and memory for a D3DMATRIX is
+ * allocated for the handle.
  *
  * Version 1 only
  *
@@ -1203,13 +1213,28 @@ static HRESULT WINAPI
 IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DMatHandle)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
+    D3DMATRIX *Matrix;
     TRACE("(%p)->(%p)\n", This, D3DMatHandle);
 
     if(!D3DMatHandle)
         return DDERR_INVALIDPARAMS;
 
-    *D3DMatHandle = (D3DMATRIXHANDLE) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(D3DMATRIX));
-    TRACE(" returning matrix handle %p\n", (void *) *D3DMatHandle);
+    Matrix = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(D3DMATRIX));
+    if(!Matrix)
+    {
+        ERR("Out of memory when allocating a D3DMATRIX\n");
+        return DDERR_OUTOFMEMORY;
+    }
+    *D3DMatHandle = IDirect3DDeviceImpl_CreateHandle(This);
+    if(!(*D3DMatHandle))
+    {
+        ERR("Failed to create a matrix handle\n");
+        HeapFree(GetProcessHeap(), 0, Matrix);
+        return DDERR_OUTOFMEMORY;
+    }
+    This->Handles[(DWORD) D3DMatHandle - 1].ptr = Matrix;
+    This->Handles[(DWORD) D3DMatHandle - 1].type = DDrawHandle_Matrix;
+    TRACE(" returning matrix handle %ld\n", *D3DMatHandle);
 
     return D3D_OK;
 }
@@ -1217,9 +1242,8 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
 /*****************************************************************************
  * IDirect3DDevice::SetMatrix
  *
- * Sets a matrix for a matrix handle. As matrix handles are pointers to
- * a D3DMATRIX structure, the matrix is simply copied into the allocated
- * memory.
+ * Sets a matrix for a matrix handle. The matrix is copied into the memory
+ * allocated for the handle
  *
  * Version 1 only
  *
@@ -1229,7 +1253,8 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if the handle of the matrix is NULL
+ *  DDERR_INVALIDPARAMS if the handle of the matrix is invalid or the matrix
+ *   to set is NULL
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1243,10 +1268,21 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
     if( (!D3DMatHandle) || (!D3DMatrix) )
         return DDERR_INVALIDPARAMS;
 
+    if(D3DMatHandle > This->numHandles)
+    {
+        ERR("Handle %ld out of range\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
+    {
+        ERR("Handle %ld is not a matrix handle\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+
     if (TRACE_ON(d3d7))
         dump_D3DMATRIX(D3DMatrix);
 
-    *((D3DMATRIX *) D3DMatHandle) = *D3DMatrix;
+    *((D3DMATRIX *) This->Handles[D3DMatHandle - 1].ptr) = *D3DMatrix;
 
     return D3D_OK;
 }
@@ -1264,7 +1300,7 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if D3DMatHandle or D3DMatrix are NULL
+ *  DDERR_INVALIDPARAMS if D3DMatHandle is invalid or D3DMatrix is NULL
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1277,11 +1313,22 @@ IDirect3DDeviceImpl_1_GetMatrix(IDirect3DDevice *iface,
 
     if(!D3DMatrix)
         return DDERR_INVALIDPARAMS;
-    if(!(D3DMATRIX *) D3DMatHandle)
+    if(!D3DMatHandle)
         return DDERR_INVALIDPARAMS;
 
+    if(D3DMatHandle > This->numHandles)
+    {
+        ERR("Handle %ld out of range\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
+    {
+        ERR("Handle %ld is not a matrix handle\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+
     /* The handle is simply a pointer to a D3DMATRIX structure */
-    *D3DMatrix = *((D3DMATRIX *) D3DMatHandle);
+    *D3DMatrix = *((D3DMATRIX *) This->Handles[D3DMatHandle - 1].ptr);
 
     return D3D_OK;
 }
@@ -1289,7 +1336,7 @@ IDirect3DDeviceImpl_1_GetMatrix(IDirect3DDevice *iface,
 /*****************************************************************************
  * IDirect3DDevice::DeleteMatrix
  *
- * Destroys a Matrix handle.
+ * Destroys a Matrix handle. Frees the memory and unsets the handle data
  *
  * Version 1 only
  *
@@ -1298,7 +1345,7 @@ IDirect3DDeviceImpl_1_GetMatrix(IDirect3DDevice *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if D3DMatHandle is NULL
+ *  DDERR_INVALIDPARAMS if D3DMatHandle is invalid
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1308,10 +1355,23 @@ IDirect3DDeviceImpl_1_DeleteMatrix(IDirect3DDevice *iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
     TRACE("(%p)->(%08lx)\n", This, (DWORD) D3DMatHandle);
 
-    if(!(D3DMATRIX *) D3DMatHandle)
+    if(!D3DMatHandle)
         return DDERR_INVALIDPARAMS;
 
-    HeapFree(GetProcessHeap(), 0, (void *) D3DMatHandle);
+    if(D3DMatHandle > This->numHandles)
+    {
+        ERR("Handle %ld out of range\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
+    {
+        ERR("Handle %ld is not a matrix handle\n", D3DMatHandle);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->Handles[D3DMatHandle - 1].ptr);
+    This->Handles[D3DMatHandle - 1].ptr = NULL;
+    This->Handles[D3DMatHandle - 1].type = DDrawHandle_Unknown;
 
     return D3D_OK;
 }
