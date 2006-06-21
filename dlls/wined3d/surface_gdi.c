@@ -462,6 +462,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
     WINED3DFORMAT       dfmt = WINED3DFMT_UNKNOWN, sfmt = WINED3DFMT_UNKNOWN;
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     int x, y;
+    const PixelFormatDesc *sEntry, *dEntry;
     LPBYTE dbuf, sbuf;
     TRACE("(%p)->(%p,%p,%p,%lx,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
 
@@ -494,6 +495,8 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         dfmt = This->resource.format;
         slock = dlock;
         sfmt = dfmt;
+        sEntry = getFormatDescEntry(sfmt);
+        dEntry = sEntry;
     }
     else
     {
@@ -502,13 +505,15 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
             IWineD3DSurface_LockRect(SrcSurface, &slock, NULL, D3DLOCK_READONLY);
             sfmt = Src->resource.format;
         }
+        sEntry = getFormatDescEntry(sfmt);
         dfmt = This->resource.format;
+        dEntry = getFormatDescEntry(dfmt);
         IWineD3DSurface_LockRect(iface, &dlock,NULL,0);
     }
 
     if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~DDBLT_DDFX;
 
-    if (isFourcc(sfmt) && isFourcc(dfmt))
+    if (sEntry->isFourcc && dEntry->isFourcc)
     {
         if (sfmt != dfmt)
         {
@@ -521,8 +526,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         goto release;
     }
 
-    if (isFourcc(sfmt) &&
-        (!isFourcc(dfmt)))
+    if (sEntry->isFourcc && !dEntry->isFourcc)
     {
         FIXME("DXTC decompression not supported right now\n");
         goto release;
@@ -897,9 +901,9 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
               }
               else
               {
-                  keymask = get_bitmask_red(Src->resource.format)   |
-                            get_bitmask_green(Src->resource.format) |
-                            get_bitmask_blue(Src->resource.format);
+                  keymask = sEntry->redMask   |
+                            sEntry->greenMask |
+                            sEntry->blueMask;
               }
               Flags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
           }
@@ -1086,6 +1090,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
     RECT                rsrc2;
     RECT                lock_src, lock_dst, lock_union;
     BYTE                *sbuf, *dbuf;
+    const PixelFormatDesc *sEntry, *dEntry;
 
     if (TRACE_ON(d3d_surface))
     {
@@ -1169,8 +1174,10 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
 
         /* Since slock was originally copied from this surface's description, we can just reuse it */
         assert(This->resource.allocatedMemory != NULL);
-        sbuf = (BYTE *)This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp; 
-        dbuf = (BYTE *)This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp; 
+        sbuf = (BYTE *)This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
+        dbuf = (BYTE *)This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
+        sEntry = getFormatDescEntry(Src->resource.format);
+        dEntry = sEntry;
     }
     else
     {
@@ -1182,10 +1189,13 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         sbuf = slock.pBits;
         dbuf = dlock.pBits;
         TRACE("Dst is at %p, Src is at %p\n", dbuf, sbuf);
+
+        sEntry = getFormatDescEntry(Src->resource.format);
+        dEntry = getFormatDescEntry(This->resource.format);
     }
 
     /* Handle first the FOURCC surfaces... */
-    if (isFourcc(Src->resource.format) && isFourcc(This->resource.format))
+    if (sEntry->isFourcc && dEntry->isFourcc)
     {
         TRACE("Fourcc -> Fourcc copy\n");
         if (trans)
@@ -1202,8 +1212,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         memcpy(dbuf, sbuf, This->resource.size);
         goto error;
     }
-    if ((isFourcc(Src->resource.format)) &&
-        (!isFourcc(This->resource.format)))
+    if (sEntry->isFourcc && !dEntry->isFourcc)
     {
         /* TODO: Use the libtxc_dxtn.so shared library to do
          * software decompression
@@ -1360,6 +1369,7 @@ const char* filename)
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     static char *output = NULL;
     static int size = 0;
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     if (This->pow2Width > size) {
         output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pow2Width * 3);
@@ -1404,9 +1414,9 @@ const char* filename)
 
         pix_width = This->bytesPerPixel;
 
-        red_shift = get_shift(get_bitmask_red(This->resource.format));
-        green_shift = get_shift(get_bitmask_green(This->resource.format));
-        blue_shift = get_shift(get_bitmask_blue(This->resource.format));
+        red_shift = get_shift(formatEntry->redMask);
+        green_shift = get_shift(formatEntry->greenMask);
+        blue_shift = get_shift(formatEntry->blueMask);
 
         for (y = 0; y < This->pow2Height; y++) {
             unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
@@ -1421,11 +1431,11 @@ const char* filename)
                 }
                 src += 1 * pix_width;
 
-                comp = color & get_bitmask_red(This->resource.format);
+                comp = color & formatEntry->redMask;
                 output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
-                comp = color & get_bitmask_green(This->resource.format);
+                comp = color & formatEntry->greenMask;
                 output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
-                comp = color & get_bitmask_blue(This->resource.format);
+                comp = color & formatEntry->blueMask;
                 output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
             }
             fwrite(output, 3 * This->pow2Width, 1, f);
@@ -1467,7 +1477,7 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     This->resource.allocatedMemory = NULL;
 
     /* We don't mind the nonpow2 stuff in GDI */
-    This->resource.size = This->currentDesc.Width * D3DFmtGetBpp(This->resource.wineD3DDevice, This->resource.format) * This->currentDesc.Width;
+    This->resource.size = This->currentDesc.Width * getFormatDescEntry(This->resource.format)->bpp * This->currentDesc.Width;
     This->pow2Size = This->resource.size;
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;

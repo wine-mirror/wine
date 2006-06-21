@@ -798,6 +798,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int pow2Width, pow2Height;
     unsigned int Size       = 1;
+    const PixelFormatDesc *tableEntry = getFormatDescEntry(Format);
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -861,13 +862,13 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
         Size = 0;
     } else if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-       Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4)) >> 1;
+       Size = ((max(pow2Width,4) * tableEntry->bpp) * max(pow2Height,4)) >> 1;
 
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-       Size = ((max(pow2Width,4) * D3DFmtGetBpp(This, Format)) * max(pow2Height,4));
+       Size = ((max(pow2Width,4) * tableEntry->bpp) * max(pow2Height,4));
     } else {
-       Size = (pow2Width * D3DFmtGetBpp(This, Format)) * pow2Height;
+       Size = (pow2Width * tableEntry->bpp) * pow2Height;
     }
 
     /** Create and initialise the surface resource **/
@@ -881,15 +882,9 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
 
     /* Setup some glformat defaults */
-    if (WINED3DFMT_UNKNOWN != Format) {
-        object->glDescription.glFormat         = D3DFmt2GLFmt(This, object->resource.format);
-        object->glDescription.glFormatInternal = D3DFmt2GLIntFmt(This, object->resource.format);
-        object->glDescription.glType           = D3DFmt2GLType(This, object->resource.format);
-    } else {
-        object->glDescription.glFormat         = 0;
-        object->glDescription.glFormatInternal = 0;
-        object->glDescription.glType           = 0;
-    }
+    object->glDescription.glFormat         = tableEntry->glFormat;
+    object->glDescription.glFormatInternal = tableEntry->glInternal;
+    object->glDescription.glType           = tableEntry->glType;
 
     object->glDescription.textureName      = 0;
     object->glDescription.level            = Level;
@@ -908,7 +903,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
 
 
     if (WINED3DFMT_UNKNOWN != Format) {
-        object->bytesPerPixel = D3DFmtGetBpp(This, Format);
+        object->bytesPerPixel = tableEntry->bpp;
         object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
     } else {
         object->bytesPerPixel = 0;
@@ -1148,8 +1143,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
+    const PixelFormatDesc *formatDesc  = getFormatDescEntry(Format);
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, WINED3DRTYPE_VOLUME, ((Width * D3DFmtGetBpp(This, Format)) * Height * Depth))
+    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, WINED3DRTYPE_VOLUME, ((Width * formatDesc->bpp) * Height * Depth))
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -1157,7 +1153,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->currentDesc.Width   = Width;
     object->currentDesc.Height  = Height;
     object->currentDesc.Depth   = Depth;
-    object->bytesPerPixel       = D3DFmtGetBpp(This, Format);
+    object->bytesPerPixel       = formatDesc->bpp;
 
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
     object->lockable            = TRUE;
@@ -2043,6 +2039,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface,
 
     DEVMODEW DevModeW;
     int i;
+    const PixelFormatDesc *formatDesc  = getFormatDescEntry(pixelformat);
 
     TRACE("(%p)->(%lx,%d,%d,%d,%p,%p)\n", This, Flags, Width, Height, pixelformat, context, callback);
 
@@ -2050,7 +2047,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface,
         /* Ignore some modes if a description was passed */
         if ( (Width > 0)  && (Width != DevModeW.dmPelsWidth)) continue;
         if ( (Height > 0)  && (Height != DevModeW.dmPelsHeight)) continue;
-        if ( (pixelformat != WINED3DFMT_UNKNOWN) && ( D3DFmtGetBpp(NULL, pixelformat) != DevModeW.dmBitsPerPel) ) continue;
+        if ( (pixelformat != WINED3DFMT_UNKNOWN) && ( formatDesc->bpp != DevModeW.dmBitsPerPel) ) continue;
 
         TRACE("Enumerating %ldx%ld@%s\n", DevModeW.dmPelsWidth, DevModeW.dmPelsHeight, debug_d3dformat(pixelformat_for_depth(DevModeW.dmBitsPerPel)));
 
@@ -2065,6 +2062,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
+    const PixelFormatDesc *formatDesc  = getFormatDescEntry(pMode->Format);
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
 
@@ -2075,7 +2073,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
      */
 
     devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-    devmode.dmBitsPerPel = D3DFmtGetBpp(This, pMode->Format) * 8;
+    devmode.dmBitsPerPel = formatDesc->bpp * 8;
     if(devmode.dmBitsPerPel == 24) devmode.dmBitsPerPel = 32;
     devmode.dmPelsWidth  = pMode->Width;
     devmode.dmPelsHeight = pMode->Height;

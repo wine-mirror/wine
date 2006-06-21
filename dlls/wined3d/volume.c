@@ -283,28 +283,28 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWi
 
 static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
-    IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
             GL_TEXTURE_3D,
             gl_level,
-            D3DFmt2GLIntFmt(myDevice, This->resource.format),
+            formatEntry->glInternal,
             This->currentDesc.Width,
             This->currentDesc.Height,
             This->currentDesc.Depth,
             0,
-            D3DFmt2GLFmt(myDevice, This->resource.format),
-            D3DFmt2GLType(myDevice, This->resource.format),
+            formatEntry->glFormat,
+            formatEntry->glType,
             This->resource.allocatedMemory);
     glTexImage3D(GL_TEXTURE_3D,
                     gl_level,
-                    D3DFmt2GLIntFmt(myDevice, This->resource.format),
+                    formatEntry->glInternal,
                     This->currentDesc.Width,
                     This->currentDesc.Height,
                     This->currentDesc.Depth,
                     0,
-                    D3DFmt2GLFmt(myDevice, This->resource.format),
-                    D3DFmt2GLType(myDevice, This->resource.format),
+                    formatEntry->glFormat,
+                    formatEntry->glType,
                     This->resource.allocatedMemory);
     checkGLcall("glTexImage3D");
     return WINED3D_OK;

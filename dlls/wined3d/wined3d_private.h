@@ -1169,11 +1169,6 @@ GLenum StencilFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
 
-SHORT  D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
-GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
-GLenum D3DFmt2GLType(IWineD3DDeviceImpl *This, D3DFORMAT fmt);
-GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
-
 int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
 
 /* Math utils */
@@ -1574,10 +1569,17 @@ DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags);
 
 /* DirectDraw utility functions */
 extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
-LONG get_bitmask_red(WINED3DFORMAT fmt);
-LONG get_bitmask_green(WINED3DFORMAT fmt);
-LONG get_bitmask_blue(WINED3DFORMAT fmt);
-LONG get_bitmask_alpha(WINED3DFORMAT fmt);
-BOOL isFourcc(WINED3DFORMAT fmt);
 
+/*****************************************************************************
+ * Pixel format management
+ */
+typedef struct {
+    WINED3DFORMAT           format;
+    DWORD                   alphaMask, redMask, greenMask, blueMask;
+    UINT                    bpp;
+    BOOL                    isFourcc;
+    GLint                   glInternal, glFormat, glType;
+} PixelFormatDesc;
+
+const PixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt);
 #endif

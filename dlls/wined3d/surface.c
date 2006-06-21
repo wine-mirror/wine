@@ -967,6 +967,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     DWORD *masks;
     HRESULT hr;
     RGBQUAD col[256];
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     TRACE("(%p)->(%p)\n",This,pHDC);
 
@@ -1049,9 +1050,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
             case WINED3DFMT_A16B16G16R16:
                 usage = 0;
                 b_info->bmiHeader.biCompression = BI_BITFIELDS;
-                masks[0] = get_bitmask_red(This->resource.format);
-                masks[1] = get_bitmask_green(This->resource.format);
-                masks[2] = get_bitmask_blue(This->resource.format);
+                masks[0] = formatEntry->redMask;
+                masks[1] = formatEntry->greenMask;
+                masks[2] = formatEntry->blueMask;
                 break;
 
             default:
@@ -1186,14 +1187,12 @@ typedef enum {
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & DDSD_CKSRCBLT);
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     /* Default values: From the surface */
-    *format = D3DFmt2GLFmt(This->resource.wineD3DDevice,
-                           This->resource.format);
-    *internal = D3DFmt2GLIntFmt(This->resource.wineD3DDevice,
-                                This->resource.format);
-    *type = D3DFmt2GLType(This->resource.wineD3DDevice,
-                          This->resource.format);
+    *format = formatEntry->glFormat;
+    *internal = formatEntry->glInternal;
+    *type = formatEntry->glType;
     *convert = NO_CONVERSION;
     *target_bpp = This->bytesPerPixel;
 
@@ -1873,6 +1872,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3D
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(format);
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
         FIXME("(%p) : The foramt of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
@@ -1884,29 +1884,23 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
         This->resource.size = 0;
     } else if (format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-        This->resource.size = ((max(This->pow2Width, 4) * D3DFmtGetBpp(This->resource.wineD3DDevice, format)) * max(This->pow2Height, 4)) >> 1;
+        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4)) >> 1;
 
     } else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
                format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
-        This->resource.size = ((max(This->pow2Width, 4) * D3DFmtGetBpp(This->resource.wineD3DDevice, format)) * max(This->pow2Height, 4));
+        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
     } else {
-        This->resource.size = (This->pow2Width * D3DFmtGetBpp(This->resource.wineD3DDevice, format)) * This->pow2Height;
+        This->resource.size = (This->pow2Width * formatEntry->bpp) * This->pow2Height;
     }
 
 
     /* Setup some glformat defaults */
-    if (format != WINED3DFMT_UNKNOWN) {
-        This->glDescription.glFormat         = D3DFmt2GLFmt(This->resource.wineD3DDevice, format);
-        This->glDescription.glFormatInternal = D3DFmt2GLIntFmt(This->resource.wineD3DDevice, format);
-        This->glDescription.glType           = D3DFmt2GLType(This->resource.wineD3DDevice, format);
-    } else {
-        This->glDescription.glFormat         = 0;
-        This->glDescription.glFormatInternal = 0;
-        This->glDescription.glType           = 0;
-    }
+    This->glDescription.glFormat         = formatEntry->glFormat;
+    This->glDescription.glFormatInternal = formatEntry->glInternal;
+    This->glDescription.glType           = formatEntry->glType;
 
     if (format != WINED3DFMT_UNKNOWN) {
-        This->bytesPerPixel = D3DFmtGetBpp(This->resource.wineD3DDevice, format);
+        This->bytesPerPixel = formatEntry->bpp;
         This->pow2Size      = (This->pow2Width * This->bytesPerPixel) * This->pow2Height;
     } else {
         This->bytesPerPixel = 0;
