@@ -50,9 +50,13 @@ char* msvcrt_strndup(const char* buf, unsigned int size)
  */
 char* CDECL _strdup(const char* str)
 {
-    char * ret = MSVCRT_malloc(strlen(str)+1);
-    if (ret) strcpy( ret, str );
-    return ret;
+    if(str)
+    {
+      char * ret = MSVCRT_malloc(strlen(str)+1);
+      if (ret) strcpy( ret, str );
+      return ret;
+    }
+    else return 0;
 }
 
 /*********************************************************************
