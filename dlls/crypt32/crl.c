@@ -184,6 +184,47 @@ PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+PCCRL_CONTEXT WINAPI CertGetCRLFromStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pIssuerContext, PCCRL_CONTEXT pPrevCrlContext, DWORD *pdwFlags)
+{
+    static const DWORD supportedFlags = CERT_STORE_SIGNATURE_FLAG |
+     CERT_STORE_TIME_VALIDITY_FLAG | CERT_STORE_BASE_CRL_FLAG |
+     CERT_STORE_DELTA_CRL_FLAG;
+    PCCRL_CONTEXT ret;
+
+    TRACE("(%p, %p, %p, %08lx)\n", hCertStore, pIssuerContext, pPrevCrlContext,
+     *pdwFlags);
+
+    if (*pdwFlags & ~supportedFlags)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if (pIssuerContext)
+        ret = CertFindCRLInStore(hCertStore, pIssuerContext->dwCertEncodingType,
+         0, CRL_FIND_ISSUED_BY, pIssuerContext, pPrevCrlContext);
+    else
+        ret = CertFindCRLInStore(hCertStore, 0, 0, CRL_FIND_ANY, NULL,
+         pPrevCrlContext);
+    if (ret)
+    {
+        if (*pdwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
+        {
+            if (0 == CertVerifyCRLTimeValidity(NULL, ret->pCrlInfo))
+                *pdwFlags &= ~CERT_STORE_TIME_VALIDITY_FLAG;
+        }
+        if (*pdwFlags & CERT_STORE_SIGNATURE_FLAG)
+        {
+            if (CryptVerifyCertificateSignatureEx(0, ret->dwCertEncodingType,
+             CRYPT_VERIFY_CERT_SIGN_SUBJECT_CRL, (void *)ret,
+             CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)pIssuerContext, 0,
+             NULL))
+                *pdwFlags &= ~CERT_STORE_SIGNATURE_FLAG;
+        }
+    }
+    return ret;
+}
+
 PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
 {
     TRACE("(%p)\n", pCrlContext);
@@ -437,7 +478,6 @@ static PCRL_ENTRY CRYPT_FindCertificateInCRL(PCERT_INFO cert, PCRL_INFO crl)
     DWORD i;
     PCRL_ENTRY entry = NULL;
 
-    /* FIXME: do I need to compare the issuers of the cert and CRL? */
     for (i = 0; !entry && i < crl->cCRLEntry; i++)
         if (CertCompareIntegerBlob(&crl->rgCRLEntry[i].SerialNumber,
          &cert->SerialNumber))

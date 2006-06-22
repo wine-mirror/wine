@@ -48,7 +48,7 @@
 @ stub CertFreeCertificateChainEngine
 @ stdcall CertFreeCertificateContext(ptr)
 @ stdcall CertGetCRLContextProperty(ptr long ptr ptr)
-@ stub CertGetCRLFromStore
+@ stdcall CertGetCRLFromStore(ptr ptr ptr ptr)
 @ stdcall CertGetCTLContextProperty(ptr long ptr ptr)
 @ stub CertGetCertificateChain
 @ stdcall CertGetCertificateContextProperty(ptr long ptr ptr)

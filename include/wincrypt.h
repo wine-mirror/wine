@@ -2881,6 +2881,9 @@ PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
 PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, PCERT_INFO pCertId);
 
+PCCRL_CONTEXT WINAPI CertGetCRLFromStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pIssuerContext, PCCRL_CONTEXT pPrevCrlContext, DWORD *pdwFlags);
+
 BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
  DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
 

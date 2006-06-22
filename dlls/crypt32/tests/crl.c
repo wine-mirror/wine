@@ -249,6 +249,67 @@ static void testFindCRL(void)
     CertCloseStore(store, 0);
 }
 
+static void testGetCRLFromStore(void)
+{
+    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    PCCRL_CONTEXT context;
+    PCCERT_CONTEXT cert;
+    DWORD flags;
+    BOOL ret;
+
+    if (!store) return;
+
+    /* Crash
+    context = CertGetCRLFromStore(NULL, NULL, NULL, NULL);
+    context = CertGetCRLFromStore(store, NULL, NULL, NULL);
+     */
+
+    /* Bogus flags */
+    flags = 0xffffffff;
+    context = CertGetCRLFromStore(store, NULL, NULL, &flags);
+    ok(!context && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+
+    /* Test an empty store */
+    flags = 0;
+    context = CertGetCRLFromStore(store, NULL, NULL, &flags);
+    ok(context == NULL && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+
+    ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
+     sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+
+    /* NULL matches any CRL */
+    flags = 0;
+    context = CertGetCRLFromStore(store, NULL, NULL, &flags);
+    ok(context != NULL, "Expected a context\n");
+    CertFreeCRLContext(context);
+
+    /* This cert's issuer isn't in */
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+     sizeof(bigCert2));
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    context = CertGetCRLFromStore(store, cert, NULL, &flags);
+    ok(context == NULL && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+    CertFreeCertificateContext(cert);
+
+    /* But this one is */
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert));
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    context = CertGetCRLFromStore(store, cert, NULL, &flags);
+    ok(context != NULL, "Expected a context\n");
+    CertFreeCRLContext(context);
+    CertFreeCertificateContext(cert);
+
+    CertCloseStore(store, 0);
+}
+
 static void checkCRLHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
  PCCRL_CONTEXT context, DWORD propID)
 {
@@ -513,6 +574,13 @@ static void testIsValidCRLForCert(void)
     CertFreeCertificateContext(cert1);
 }
 
+static const BYTE crlWithDifferentIssuer[] = {
+ 0x30,0x47,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,0x11,
+ 0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x41,0x6c,0x65,0x78,0x20,0x4c,0x61,0x6e,
+ 0x67,0x00,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,
+ 0x30,0x30,0x30,0x5a,0x30,0x16,0x30,0x14,0x02,0x01,0x01,0x18,0x0f,0x31,0x36,
+ 0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a };
+
 static void testFindCertInCRL(void)
 {
     BOOL ret;
@@ -544,6 +612,14 @@ static void testFindCertInCRL(void)
 
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
+    ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+    ok(ret, "CertFindCertificateInCRL failed: %08lx\n", GetLastError());
+    ok(entry != NULL, "Expected to find an entry in CRL\n");
+    CertFreeCRLContext(crl);
+
+    /* Entry found even though CRL issuer doesn't match cert issuer */
+    crl = CertCreateCRLContext(X509_ASN_ENCODING, crlWithDifferentIssuer,
+     sizeof(crlWithDifferentIssuer));
     ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
     ok(ret, "CertFindCertificateInCRL failed: %08lx\n", GetLastError());
     ok(entry != NULL, "Expected to find an entry in CRL\n");
@@ -583,6 +659,15 @@ static void testVerifyCRLRevocation(void)
     ok(!ret, "CertVerifyCRLRevocation should have been revoked\n");
     CertFreeCRLContext(crl);
 
+    /* Check against CRL with different issuer and entry for the cert */
+    crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
+     sizeof(v1CRLWithIssuerAndEntry));
+    ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, cert->pCertInfo, 1,
+     (PCRL_INFO *)&crl->pCrlInfo);
+    ok(!ret, "CertVerifyCRLRevocation should have been revoked\n");
+    CertFreeCRLContext(crl);
+
     /* Check against CRL without entry for the cert */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL));
@@ -602,6 +687,7 @@ START_TEST(crl)
     testCreateCRL();
     testAddCRL();
     testFindCRL();
+    testGetCRLFromStore();
 
     testCRLProperties();
 
