@@ -373,6 +373,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         FIXME("unsupported nCmdID %ld of CGID_ShellDocView group\n", nCmdID);
         return OLECMDERR_E_NOTSUPPORTED;
+    }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        FIXME("unsupported nCmdID %ld of CGID_MSHTML group\n", nCmdID);
+        return OLECMDERR_E_NOTSUPPORTED;
     }
 
     FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
