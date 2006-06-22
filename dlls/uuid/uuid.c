@@ -63,6 +63,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "downloadmgr.h"
 #include "objsel.h"
 #include "hlink.h"
+#include "optary.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
