@@ -104,6 +104,7 @@ static void test_GetWindowTheme(void)
 {
     HTHEME    hTheme;
     HWND      hWnd;
+    BOOL    bDestroyed;
 
     SetLastError(0xdeadbeef);
     hTheme = pGetWindowTheme(NULL);
@@ -123,12 +124,18 @@ static void test_GetWindowTheme(void)
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
+
+    bDestroyed = DestroyWindow(hWnd);
+    if (!bDestroyed)
+        trace("Window %p couldn't be destroyed : 0x%08lx\n",
+            hWnd, GetLastError());
 }
 
 static void test_SetWindowTheme(void)
 {
     HRESULT hRes;
     HWND    hWnd;
+    BOOL    bDestroyed;
 
     SetLastError(0xdeadbeef);
     hRes = pSetWindowTheme(NULL, NULL, NULL);
@@ -150,6 +157,11 @@ static void test_SetWindowTheme(void)
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
+
+    bDestroyed = DestroyWindow(hWnd);
+    if (!bDestroyed)
+        trace("Window %p couldn't be destroyed : 0x%08lx\n",
+            hWnd, GetLastError());
 }
 
 static void test_OpenThemeData(void)
@@ -157,6 +169,7 @@ static void test_OpenThemeData(void)
     HTHEME    hTheme;
     HWND      hWnd;
     BOOL      bThemeActive;
+    BOOL      bDestroyed;
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
     WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
@@ -222,7 +235,6 @@ static void test_OpenThemeData(void)
             "Expected GLE() to be E_PROP_ID_UNSUPPORTED, got 0x%08lx\n",
             GetLastError());
 
-
     if (!bThemeActive)
     {
         SetLastError(0xdeadbeef);
@@ -262,6 +274,11 @@ static void test_OpenThemeData(void)
         ok( GetLastError() == ERROR_SUCCESS,
             "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
+
+    bDestroyed = DestroyWindow(hWnd);
+    if (!bDestroyed)
+        trace("Window %p couldn't be destroyed : 0x%08lx\n",
+            hWnd, GetLastError());
 }
 
 static void test_CloseThemeData(void)
