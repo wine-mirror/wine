@@ -59,7 +59,7 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
 
         if(retEnum != ERROR_SUCCESS)
         {
-            if(!i && strlenW(wszKeyName) > 1)
+            if(!i && lstrlenW(wszKeyName) > 1)
             {
                 tvis.item.pszText = (LPWSTR)wszKeyName;
                 addPlace = TreeView_InsertItem(details.hReg, &tvis);
@@ -75,8 +75,8 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
             for(j=0; j<MAX_LOAD_STRING/3-1; j++)
                 wsprintfW(&wszBuf[3*j], wszBinary, (int)((unsigned char)wszData[j]));
             wszBuf[(lenData*3>=MAX_LOAD_STRING ? MAX_LOAD_STRING-1 : lenData*3)] = '\0';
-            strcpyW(wszData, wszBuf);
-            strcpyW(&wszData[MAX_LOAD_STRING-5], wszDots);
+            lstrcpyW(wszData, wszBuf);
+            lstrcpyW(&wszData[MAX_LOAD_STRING-5], wszDots);
         }
 
         if(lenName) wsprintfW(wszTree, wszFormat1, wszKeyName, wszName, wszData);
@@ -86,9 +86,9 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
 
         if(addings && !memcmp(wszName, wszAppID, sizeof(WCHAR[6])))
         {
-            strcpyW(wszTree, wszName);
+            lstrcpyW(wszTree, wszName);
             memmove(&wszData[6], wszData, sizeof(WCHAR[MAX_LOAD_STRING-6]));
-            strcpyW(wszData, wszCLSID);
+            lstrcpyW(wszData, wszCLSID);
             wszData[5] = '\\';
 
             if(RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
@@ -229,7 +229,7 @@ void CreateReg(WCHAR *buffer)
                 return;
 
             lastLenBuffer = lenBuffer+1;
-            lenBuffer = strlenW(buffer);
+            lenBuffer = lstrlenW(buffer);
             *path = '\\';
             path += 1;
 
@@ -287,7 +287,7 @@ void RefreshDetails(HTREEITEM item)
 
     if(tvi.lParam)
         wsprintfW(wszStaticText, wszFormat, tvi.pszText, ((ITEM_INFO *)tvi.lParam)->clsid);
-    else strcpyW(wszStaticText, tvi.pszText);
+    else lstrcpyW(wszStaticText, tvi.pszText);
 
     SetWindowText(details.hStatic, wszStaticText);
 

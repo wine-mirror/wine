@@ -24,7 +24,6 @@
 #include <winreg.h>
 #include <commctrl.h>
 #include <unknwn.h>
-#include <wine/unicode.h>
 
 #include "resource.h"
 

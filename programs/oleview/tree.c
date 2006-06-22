@@ -44,8 +44,8 @@ LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
     memset(reg, 0, sizeof(ITEM_INFO));
 
     reg->cFlag = flag;
-    strcpyW(reg->info, info);
-    if(clsid) strcpyW(reg->clsid, clsid);
+    lstrcpyW(reg->info, info);
+    if(clsid) lstrcpyW(reg->clsid, clsid);
 
     return (LPARAM)reg;
 }
@@ -116,7 +116,7 @@ void CreateInst(HTREEITEM item)
                 LoadString(globals.hMainInst, IDS_ERROR_UNKN, wszFlagName, MAX_LOAD_STRING);
         }
 
-        wsprintfW(&wszMessage[strlenW(wszMessage)], wszFormat,
+        wsprintfW(&wszMessage[lstrlenW(wszMessage)], wszFormat,
                 wszFlagName, (unsigned)hRes);
         MessageBox(globals.hMainWnd, wszMessage, wszTitle, MB_OK|MB_ICONEXCLAMATION);
         return;
@@ -151,8 +151,8 @@ void CreateInst(HTREEITEM item)
         {
             IUnknown_Release(unk);
 
-            strcpyW(wszRegPath, wszInterface);
-            strcpyW(&wszRegPath[strlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
+            lstrcpyW(wszRegPath, wszInterface);
+            lstrcpyW(&wszRegPath[lstrlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
             tvis.item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
                     wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid);
             SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
@@ -216,7 +216,7 @@ BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
 
         if(tvi.lParam && (((ITEM_INFO *)tvi.lParam)->cFlag & (REGPATH|REGTOP)))
         {
-            bufLen = strlenW(((ITEM_INFO *)tvi.lParam)->info);
+            bufLen = lstrlenW(((ITEM_INFO *)tvi.lParam)->info);
             memmove(&buffer[bufLen], buffer, sizeof(WCHAR[bufSize-bufLen]));
             memcpy(buffer, ((ITEM_INFO *)tvi.lParam)->info, sizeof(WCHAR[bufLen]));
         }
@@ -295,7 +295,7 @@ void AddCOMandAll(void)
                 tvi.hItem = curSearch;
                 SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 
-                if(tvi.lParam && !strcmpW(((ITEM_INFO *)tvi.lParam)->info, wszComp))
+                if(tvi.lParam && !lstrcmpW(((ITEM_INFO *)tvi.lParam)->info, wszComp))
                 {
                     tvis.hParent = curSearch;
 
@@ -403,7 +403,7 @@ void AddTypeLib(void)
                 LoadString(globals.hMainInst, IDS_TL_VER, wszVer,
                         sizeof(WCHAR[MAX_LOAD_STRING]));
 
-                wsprintfW(&buffer[strlenW(buffer)], wszFormat, wszVer, valName);
+                wsprintfW(&buffer[lstrlenW(buffer)], wszFormat, wszVer, valName);
                 tvis.item.pszText = buffer;
             }
             else tvis.item.pszText = valName;
