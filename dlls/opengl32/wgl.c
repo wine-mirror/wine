@@ -94,6 +94,7 @@ static Wine_GLContext *context_list;
 static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
 {
     Wine_GLContext *ret;
+    if (!ctx) return NULL;
     for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
     return ret;
 }
