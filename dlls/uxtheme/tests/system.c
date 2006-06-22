@@ -166,9 +166,10 @@ static void test_SetWindowTheme(void)
 
 static void test_OpenThemeData(void)
 {
-    HTHEME    hTheme;
+    HTHEME    hTheme, hTheme2;
     HWND      hWnd;
     BOOL      bThemeActive;
+    HRESULT   hRes;
     BOOL      bDestroyed;
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
@@ -275,6 +276,40 @@ static void test_OpenThemeData(void)
             "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
 
+    /* GetWindowTheme should return the last handle opened by OpenThemeData */
+    SetLastError(0xdeadbeef);
+    hTheme2 = pGetWindowTheme(hWnd);
+    ok( hTheme == hTheme2, "Expected the same HTHEME handle (%p<->%p)\n",
+        hTheme, hTheme2);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hRes = pCloseThemeData(hTheme);
+    ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
+
+    /* Close a second time */
+    SetLastError(0xdeadbeef);
+    hRes = pCloseThemeData(hTheme);
+    ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
+
+    /* See if closing makes a difference for GetWindowTheme */
+    SetLastError(0xdeadbeef);
+    hTheme2 = NULL;
+    hTheme2 = pGetWindowTheme(hWnd);
+    ok( hTheme == hTheme2, "Expected the same HTHEME handle (%p<->%p)\n",
+        hTheme, hTheme2);
+    ok( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n",
+        GetLastError());
+
     bDestroyed = DestroyWindow(hWnd);
     if (!bDestroyed)
         trace("Window %p couldn't be destroyed : 0x%08lx\n",
@@ -314,7 +349,7 @@ START_TEST(system)
     trace("Starting test_SetWindowTheme()\n");
     test_SetWindowTheme();
 
-    /* OpenThemeData */
+    /* OpenThemeData, a bit more functional now */
     trace("Starting test_OpenThemeData()\n");
     test_OpenThemeData();
 
