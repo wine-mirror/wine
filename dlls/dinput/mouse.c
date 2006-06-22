@@ -136,6 +136,7 @@ struct SysMouseImpl
     /* warping: whether we need to move mouse back to middle once we
      * reach window borders (for e.g. shooters, "surface movement" games) */
     WARP_STATUS		            need_warp;
+    DWORD                           last_warped;
     int				    acquired;
     HANDLE			    hEvent;
     CRITICAL_SECTION		    crit;
@@ -418,7 +419,6 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = (SysMouseImpl*) current_lock;
     DWORD dwCoop;
-    static long last_event = 0;
     int wdata;
 
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
@@ -426,16 +426,6 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     EnterCriticalSection(&(This->crit));
     dwCoop = This->dwCoopLevel;
 
-    /* Only allow mouse events every 10 ms.
-     * This is to allow the cursor to start acceleration before
-     * the warps happen. But if it involves a mouse button event we
-     * allow it since we don't want to lose the clicks.
-     */
-    if (((GetCurrentTime() - last_event) < 10)
-        && wparam == WM_MOUSEMOVE)
-	goto end;
-    else last_event = GetCurrentTime();
-    
     /* Mouse moved -> send event if asked */
     if (This->hEvent)
         SetEvent(This->hEvent);
@@ -623,6 +613,8 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
       MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
       TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+      This->last_warped = GetCurrentTime();
+
 #ifdef MOUSE_HACK
       This->need_warp = WARP_DONE;
 #else
@@ -698,11 +690,12 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     }
     
     /* Check if we need to do a mouse warping */
-    if (This->need_warp == WARP_NEEDED) {
+    if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
 	dinput_window_check(This);
 	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-	
+        This->last_warped = GetCurrentTime();
+
 #ifdef MOUSE_HACK
 	This->need_warp = WARP_DONE;
 #else
@@ -791,11 +784,12 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     LeaveCriticalSection(&(This->crit));
     
     /* Check if we need to do a mouse warping */
-    if (This->need_warp == WARP_NEEDED) {
+    if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
 	dinput_window_check(This);
 	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-	
+        This->last_warped = GetCurrentTime();
+
 #ifdef MOUSE_HACK
 	This->need_warp = WARP_DONE;
 #else
