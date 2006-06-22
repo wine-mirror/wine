@@ -70,7 +70,8 @@ static const CHAR component_dat[] = "Component\tComponentId\tDirectory_\tAttribu
                                     "Four\t{FD37B4EA-7209-45C0-8917-535F35A2F080}\tCABOUTDIR\t2\t\tfour.txt\n"
                                     "One\t{783B242E-E185-4A56-AF86-C09815EC053C}\tMSITESTDIR\t2\t\tone.txt\n"
                                     "Three\t{010B6ADD-B27D-4EDD-9B3D-34C4F7D61684}\tCHANGEDDIR\t2\t\tthree.txt\n"
-                                    "Two\t{BF03D1A6-20DA-4A65-82F3-6CAC995915CE}\tFIRSTDIR\t2\t\ttwo.txt";
+                                    "Two\t{BF03D1A6-20DA-4A65-82F3-6CAC995915CE}\tFIRSTDIR\t2\t\ttwo.txt\n"
+                                    "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata";
 
 static const CHAR directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
                                     "s72\tS72\tl255\n"
@@ -151,7 +152,8 @@ static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
                                    "Registry\tRegistry\n"
                                    "Apples\t2\tSOFTWARE\\Wine\\msitest\tName\timaname\tOne\n"
-                                   "Oranges\t2\tSOFTWARE\\Wine\\msitest\tnumber\t#314\tTwo";
+                                   "Oranges\t2\tSOFTWARE\\Wine\\msitest\tnumber\t#314\tTwo\n"
+                                   "regdata\t2\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler";
 
 typedef struct _msi_table
 {
@@ -623,6 +625,14 @@ static void test_MsiInstallProduct(void)
         ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
     }
 
+    size = MAX_PATH;
+    type = REG_SZ;
+    res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+    }
+
     size = sizeof(num);
     type = REG_DWORD;
     res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
@@ -635,6 +645,43 @@ static void test_MsiInstallProduct(void)
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
 }
 
+static void test_MsiSetComponentState(void)
+{
+    MSIHANDLE package;
+    char path[MAX_PATH];
+    UINT r;
+
+    CoInitialize(NULL);
+
+    lstrcpy(path, CURR_DIR);
+    lstrcat(path, "\\");
+    lstrcat(path, msifile);
+
+    r = MsiOpenPackage(path, &package);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiDoAction(package, "CostInitialize");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    }
+
+    r = MsiDoAction(package, "FileCost");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiDoAction(package, "CostFinalize");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSetComponentState(package, "dangler", INSTALLSTATE_SOURCE);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    }
+
+    MsiCloseHandle(package);
+    CoUninitialize();
+}
+
 START_TEST(install)
 {
     if (!init_function_pointers())
@@ -644,6 +691,7 @@ START_TEST(install)
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
     
     test_MsiInstallProduct();
+    test_MsiSetComponentState();
     
     delete_test_files();
 }

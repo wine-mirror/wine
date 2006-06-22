@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msi.dll
-IMPORTS   = cabinet msi advapi32 kernel32
+IMPORTS   = cabinet msi ole32 advapi32 kernel32
 
 CTESTS = \
 	db.c \
