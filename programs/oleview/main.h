@@ -51,6 +51,7 @@ typedef struct
     HINSTANCE hMainInst;
     BOOL bExpert;
     DWORD dwClsCtx;
+    WCHAR wszMachineName[MAX_LOAD_STRING];
 }GLOBALS;
 
 typedef struct
@@ -115,5 +116,5 @@ void AddTreeEx(void);
 void AddTree(void);
 HWND CreateTreeWindow(HINSTANCE hInst);
 BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize);
-void CreateInst(HTREEITEM item);
+void CreateInst(HTREEITEM item, WCHAR *wszMachineName);
 void ReleaseInst(HTREEITEM item);

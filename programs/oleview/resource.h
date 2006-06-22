@@ -67,3 +67,6 @@
 
 #define IDS_CGCOFAIL               300
 #define IDS_ERROR_UNKN             301
+
+#define DLG_CREATEINSTON           1000
+#define IDC_MACHINE                1001

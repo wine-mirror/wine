@@ -50,7 +50,7 @@ LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
     return (LPARAM)reg;
 }
 
-void CreateInst(HTREEITEM item)
+void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
 {
     TVITEM tvi;
     HTREEITEM hCur;
@@ -62,6 +62,8 @@ void CreateInst(HTREEITEM item)
     WCHAR wszRegPath[MAX_LOAD_STRING];
     const WCHAR wszFormat[] = { '\n','%','s',' ','(','$','%','x',')','\n','\0' };
     CLSID clsid;
+    COSERVERINFO remoteInfo;
+    MULTI_QI qi;
     IUnknown *obj, *unk;
     HRESULT hRes;
 
@@ -86,7 +88,21 @@ void CreateInst(HTREEITEM item)
 
     if(FAILED(CLSIDFromString(((ITEM_INFO *)tvi.lParam)->clsid, &clsid))) return;
 
-    hRes = CoCreateInstance(&clsid, NULL, globals.dwClsCtx,
+    if(wszMachineName)
+    {
+        remoteInfo.dwReserved1 = 0;
+        remoteInfo.dwReserved2 = 0;
+        remoteInfo.pAuthInfo = NULL;
+        remoteInfo.pwszName = wszMachineName;
+
+        qi.pIID = &IID_IUnknown;
+
+        CoCreateInstanceEx(&clsid, NULL, globals.dwClsCtx|CLSCTX_REMOTE_SERVER,
+                &remoteInfo, 1, &qi);
+        hRes = qi.hr;
+        obj = qi.pItf;
+    }
+    else hRes = CoCreateInstance(&clsid, NULL, globals.dwClsCtx,
             &IID_IUnknown, (void **)&obj);
 
     if(FAILED(hRes))
@@ -637,7 +653,7 @@ LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch(((LPNMHDR)lParam)->code)
             {
                 case TVN_ITEMEXPANDING:
-                    CreateInst(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                    CreateInst(((NMTREEVIEW *)lParam)->itemNew.hItem, NULL);
                     break;
                 case TVN_SELCHANGED:
                     RefreshMenu(((NMTREEVIEW *)lParam)->itemNew.hItem);

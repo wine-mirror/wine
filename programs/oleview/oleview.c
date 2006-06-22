@@ -23,6 +23,32 @@
 GLOBALS globals;
 static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' };
 
+INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HWND hEdit;
+
+    switch(uMsg)
+    {
+        case WM_COMMAND:
+            switch(LOWORD(wParam)) {
+            case IDOK:
+                memset(globals.wszMachineName, 0, sizeof(WCHAR[MAX_LOAD_STRING]));
+                hEdit = GetDlgItem(hDlgWnd, IDC_MACHINE);
+
+                if (GetWindowTextLength(hEdit)>0)
+                    GetWindowText(hEdit, globals.wszMachineName, MAX_LOAD_STRING);
+
+                EndDialog(hDlgWnd, IDOK);
+                return TRUE;
+            case IDCANCEL:
+                EndDialog(hDlgWnd, IDCANCEL);
+                return TRUE;
+            }
+    }
+
+    return FALSE;
+}
+
 void ResizeChild(void)
 {
     RECT client, stat, tool;
@@ -125,7 +151,14 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
             break;
         case IDM_CREATEINST:
             hSelect = TreeView_GetSelection(globals.hTree);
-            CreateInst(hSelect);
+            CreateInst(hSelect, NULL);
+            SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
+            break;
+        case IDM_CREATEINSTON:
+            if(DialogBox(0, MAKEINTRESOURCE(DLG_CREATEINSTON),
+                        hWnd, CreateInstOnProc) == IDCANCEL) break;
+            hSelect = TreeView_GetSelection(globals.hTree);
+            CreateInst(hSelect, globals.wszMachineName);
             SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
             break;
         case IDM_RELEASEINST:
