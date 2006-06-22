@@ -122,6 +122,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
             {
                 static const char username_arg[] = "--username=";
                 static const char domain_arg[] = "--domain=";
+                static char ntlm_auth[] = "ntlm_auth";
+                static char helper_protocol[] = "--helper-protocol=ntlmssp-client-1";
                 int unixcp_size;
 
                 if(pAuthData == NULL)
@@ -187,8 +189,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                         -1, client_domain_arg + sizeof(domain_arg) - 1, 
                         unixcp_size - sizeof(domain) + 1, NULL, NULL);
 
-                client_argv[0] = "ntlm_auth";
-                client_argv[1] = "--helper-protocol=ntlmssp-client-1";
+                client_argv[0] = ntlm_auth;
+                client_argv[1] = helper_protocol;
                 client_argv[2] = client_user_arg;
                 client_argv[3] = client_domain_arg;
                 client_argv[4] = NULL;
