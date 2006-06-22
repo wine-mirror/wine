@@ -480,8 +480,8 @@ AC_SUBST(XSLTINCL,"")
 if test "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0`"
-    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0`"
+    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
+    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
     AC_CHECK_HEADERS(libxml/parser.h,
         [AC_CHECK_LIB(xml2, xmlParseMemory,
@@ -492,8 +492,8 @@ then
             [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
         ])
     CPPFLAGS="$ac_save_CPPFLAGS"
-    ac_xslt_libs="`$PKG_CONFIG --libs libxslt`"
-    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt`"
+    ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
+    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
     AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
         [AC_CHECK_LIB(xslt, xsltCompilePattern,
@@ -512,8 +512,8 @@ AC_SUBST(HALINCL,"")
 if test "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_hal_libs="`$PKG_CONFIG --libs hal`"
-    ac_hal_cflags="`$PKG_CONFIG --cflags hal`"
+    ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
+    ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
     AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h])
     if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"

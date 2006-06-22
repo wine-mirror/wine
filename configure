@@ -3988,7 +3988,7 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lXt $LIBS"
+  LIBS="-lX11 $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4050,7 +4050,7 @@ for ac_dir in `echo "$ac_x_includes $ac_x_header_dirs" | sed s/include/lib/g`
 do
   # Don't even attempt the hair of trying to link an X program!
   for ac_extension in a so sl; do
-    if test -r "$ac_dir/libXt.$ac_extension"; then
+    if test -r "$ac_dir/libX11.$ac_extension"; then
       ac_x_libraries=$ac_dir
       break 2
     fi
@@ -10747,8 +10747,8 @@ XSLTINCL=""
 if test "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0`"
-    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0`"
+    ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
+    ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
 
 for ac_header in libxml/parser.h
@@ -11092,8 +11092,8 @@ fi
 done
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    ac_xslt_libs="`$PKG_CONFIG --libs libxslt`"
-    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt`"
+    ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
+    ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
 
 
@@ -11268,8 +11268,8 @@ HALINCL=""
 if test "$PKG_CONFIG" != "false"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_hal_libs="`$PKG_CONFIG --libs hal`"
-    ac_hal_cflags="`$PKG_CONFIG --cflags hal`"
+    ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
+    ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
 
 
