@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
-*/
+ */
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
@@ -58,7 +58,7 @@ IDM_MENU MENU
     {
         MENUITEM "&Expert mode",    IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "&Hidden component cattegories",    IDM_HIDDEN, GRAYED
+        MENUITEM "&Hidden component categories",    IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Toolbar",    IDM_TOOLBAR,CHECKED
         MENUITEM "&Status Bar",    IDM_STATUSBAR,CHECKED
@@ -98,7 +98,7 @@ STRINGTABLE
     IDM_TOOLBAR,           "Show or hide the toolbar"
     IDM_STATUSBAR,         "Show or hide the status bar"
     IDM_REFRESH,           "Refresh all lists"
-    IDM_ABOUT,             "Display program information, version namber and copyright"
+    IDM_ABOUT,             "Display program information, version number and copyright"
 
     IDS_TREE_OC,           "ObjectClasses"
     IDS_TREE_GBCC,         "Grouped by Component Category"
