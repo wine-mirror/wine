@@ -24,7 +24,79 @@ GLOBALS globals;
 static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' };
 static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
-    '>','\n','<','/','o','b','j','e','c','t','>' };
+    '>','\n','<','/','o','b','j','e','c','t','>','\0' };
+
+INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HKEY hKey;
+    WCHAR buffer[MAX_LOAD_STRING];
+    DWORD bufSize;
+
+    WCHAR wszReg[] = { 'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','O','L','E','\\','\0' };
+    WCHAR wszEnableDCOM[] = { 'E','n','a','b','l','e','D','C','O','M','\0' };
+    WCHAR wszEnableRemote[] = { 'E','n','a','b','l','e',
+        'R','e','m','o','t','e','C','o','n','n','e','c','t','\0' };
+    WCHAR wszYes[] = { 'Y', '\0' };
+    WCHAR wszNo[] = { 'N', '\0' };
+
+    switch(uMsg)
+    {
+        case WM_INITDIALOG:
+            if(RegOpenKey(HKEY_LOCAL_MACHINE, wszReg, &hKey) != ERROR_SUCCESS)
+                RegCreateKey(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+
+            bufSize = sizeof(buffer);
+            if(RegGetValue(hKey, NULL, wszEnableDCOM, RRF_RT_REG_SZ,
+                        NULL, buffer, &bufSize) != ERROR_SUCCESS)
+            {
+                bufSize = sizeof(wszYes);
+                RegSetValueEx(hKey, wszEnableDCOM, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+            }
+
+            CheckDlgButton(hDlgWnd, IDC_ENABLEDCOM,
+                    buffer[0]=='Y' ? BST_CHECKED : BST_UNCHECKED);
+
+            bufSize = sizeof(buffer);
+            if(RegGetValue(hKey, NULL, wszEnableRemote, RRF_RT_REG_SZ,
+                        NULL, buffer, &bufSize) != ERROR_SUCCESS)
+            {
+                bufSize = sizeof(wszYes);
+                RegSetValueEx(hKey, wszEnableRemote, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+            }
+
+            CheckDlgButton(hDlgWnd, IDC_ENABLEREMOTE,
+                    buffer[0]=='Y' ? BST_CHECKED : BST_UNCHECKED);
+            
+            RegCloseKey(hKey);
+            return TRUE;
+        case WM_COMMAND:
+            switch(LOWORD(wParam)) {
+            case IDOK:
+                bufSize = sizeof(wszYes);
+
+                RegOpenKey(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+
+                RegSetValueEx(hKey, wszEnableDCOM, 0, REG_SZ,
+                        IsDlgButtonChecked(hDlgWnd, IDC_ENABLEDCOM) == BST_CHECKED ?
+                        (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
+
+                RegSetValueEx(hKey, wszEnableRemote, 0, REG_SZ,
+                        IsDlgButtonChecked(hDlgWnd, IDC_ENABLEREMOTE) == BST_CHECKED ?
+                        (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
+
+                RegCloseKey(hKey);
+
+                EndDialog(hDlgWnd, IDOK);
+                return TRUE;
+            case IDCANCEL:
+                EndDialog(hDlgWnd, IDCANCEL);
+                return TRUE;
+            }
+    }
+
+    return FALSE;
+}
 
 INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -294,6 +366,9 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
             CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
                     vis ? MF_UNCHECKED : MF_CHECKED);
             ResizeChild();
+            break;
+        case IDM_SYSCONF:
+            DialogBox(0, MAKEINTRESOURCE(DLG_SYSCONF), hWnd, SysConfProc);
             break;
         case IDM_TOOLBAR:
             vis = IsWindowVisible(globals.hToolBar);

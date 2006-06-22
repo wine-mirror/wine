@@ -70,3 +70,7 @@
 
 #define DLG_CREATEINSTON           1000
 #define IDC_MACHINE                1001
+
+#define DLG_SYSCONF                1010
+#define IDC_ENABLEDCOM             1011
+#define IDC_ENABLEREMOTE           1012
