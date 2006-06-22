@@ -160,6 +160,7 @@ static void test_OpenThemeData(void)
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
     WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
+    WCHAR szButtonClassList2[]  = {'b','U','t','T','o','N', 0 };
     WCHAR szClassList[]        = {'B','u','t','t','o','n',';','L','i','s','t','B','o','x', 0 };
 
     bThemeActive = pIsThemeActive();
@@ -239,6 +240,15 @@ static void test_OpenThemeData(void)
 
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeData(hWnd, szButtonClassList);
+    ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
+    todo_wine
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
+            GetLastError());
+
+    /* Test with bUtToN instead of Button */
+    SetLastError(0xdeadbeef);
+    hTheme = pOpenThemeData(hWnd, szButtonClassList2);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
     todo_wine
         ok( GetLastError() == ERROR_SUCCESS,
