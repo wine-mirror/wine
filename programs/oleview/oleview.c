@@ -22,6 +22,9 @@
 
 GLOBALS globals;
 static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' };
+static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
+    'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
+    '>','\n','<','/','o','b','j','e','c','t','>' };
 
 INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -64,6 +67,31 @@ void CopyClsid(HTREEITEM item)
         LPVOID pLoc = GlobalLock(hClipData);
 
         lstrcpyW(pLoc, ((ITEM_INFO *)tvi.lParam)->clsid);
+        GlobalUnlock(hClipData);
+        hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
+        CloseClipboard();
+    }
+}
+
+void CopyHTMLTag(HTREEITEM item)
+{
+    TVITEM tvi;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = item;
+    tvi.cchTextMax = MAX_LOAD_STRING;
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    if(OpenClipboard(globals.hMainWnd) && EmptyClipboard() && tvi.lParam)
+    {
+        HANDLE hClipData = GlobalAlloc(GHND, sizeof(WCHAR[MAX_LOAD_STRING]));
+        LPVOID pLoc = GlobalLock(hClipData);
+        int clsidLen = lstrlenW(((ITEM_INFO *)tvi.lParam)->clsid)-1;
+
+        ((ITEM_INFO *)tvi.lParam)->clsid[clsidLen] = '\0';
+        wsprintfW(pLoc, wszFormat, ((ITEM_INFO *)tvi.lParam)->clsid+1);
+        ((ITEM_INFO *)tvi.lParam)->clsid[clsidLen] = '}';
+
         GlobalUnlock(hClipData);
         hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
         CloseClipboard();
@@ -150,7 +178,7 @@ void RefreshMenu(HTREEITEM item)
         EnableMenuItem(hMenu, IDM_VIEW, MF_GRAYED);
     }
     parent = TreeView_GetParent(globals.hTree, item);
-    if(parent==tree.hAID || parent==tree.hGBCC)
+    if(parent==tree.hAID || parent==tree.hGBCC || parent==tree.hTL)
         EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
 }
 
@@ -173,6 +201,10 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
         case IDM_COPYCLSID:
             hSelect = TreeView_GetSelection(globals.hTree);
             CopyClsid(hSelect);
+            break;
+        case IDM_HTMLTAG:
+            hSelect = TreeView_GetSelection(globals.hTree);
+            CopyHTMLTag(hSelect);
             break;
         case IDM_CREATEINST:
             hSelect = TreeView_GetSelection(globals.hTree);

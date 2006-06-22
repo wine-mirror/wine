@@ -49,7 +49,7 @@ IDM_MENU MENU
         MENUITEM "Create Instance &On",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Release Instance",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Copy &CLSID to clipboard",    IDM_COPYCLSID, GRAYED
+        MENUITEM "Copy C&LSID to clipboard",    IDM_COPYCLSID, GRAYED
         MENUITEM "Copy &HTML object Tag to clipboard", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&View...",    IDM_VIEW, GRAYED
