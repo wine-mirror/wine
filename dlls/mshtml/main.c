@@ -176,6 +176,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     }else if(IsEqualGUID(&CLSID_SysimageProtocol, rclsid)) {
         TRACE("(CLSID_SysimageProtocol %s %p)\n", debugstr_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_HTMLLoadOptions, rclsid)) {
+        TRACE("(CLSID_HTMLLoadOptions %s %p)\n", debugstr_guid(riid), ppv);
+        return ClassFactory_Create(riid, ppv, HTMLLoadOptions_Create);
     }
 
     FIXME("Unknown class %s\n", debugstr_guid(rclsid));

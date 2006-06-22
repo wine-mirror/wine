@@ -248,6 +248,7 @@ typedef struct {
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
+HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
