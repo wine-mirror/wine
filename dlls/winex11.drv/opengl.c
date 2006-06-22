@@ -156,7 +156,7 @@ LOAD_FUNCPTR(glXDestroyGLXPixmap)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
-    if (pglXQueryExtension(gdi_display, &event_base, &error_base) == True) {
+    if (pglXQueryExtension(gdi_display, &error_base, &event_base) == True) {
 	TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
         wine_dlclose(opengl_handle, NULL, 0);
