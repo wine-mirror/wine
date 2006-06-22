@@ -201,7 +201,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         *ppCP = CONPOINT(This->cp_htmldocevents2);
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_htmldocevents);
+        *ppCP = CONPOINT(This->cp_propnotif);
     }
 
     if(*ppCP) {
@@ -227,6 +227,7 @@ void HTMLDocument_ConnectionPoints_Init(HTMLDocument *This)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
 
+    ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_propnotif);
     ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents, &This->cp_htmldocevents);
     ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents2, &This->cp_htmldocevents2);
 }
