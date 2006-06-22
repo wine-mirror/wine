@@ -1377,6 +1377,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
     const char *spec = NULL;
+    NSContainer *nscontainer = NULL;
     nsIURI *uri;
     PRBool is_javascript = FALSE;
     nsresult nsres;
@@ -1416,7 +1417,24 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         return NS_OK;
     }
 
-    return create_uri(uri, NULL, _retval);
+    if(aBaseURI) {
+        nsIWineURI *wine_uri;
+
+        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&wine_uri);
+        if(NS_SUCCEEDED(nsres)) {
+            nsIWineURI_GetNSContainer(wine_uri, &nscontainer);
+            nsIWineURI_Release(wine_uri);
+        }else {
+            ERR("Could not get nsIWineURI: %08lx\n", nsres);
+        }
+    }
+
+    nsres = create_uri(uri, nscontainer, _retval);
+
+    if(nscontainer)
+        nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
+
+    return nsres;
 }
 
 static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile,
