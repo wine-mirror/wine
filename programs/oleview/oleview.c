@@ -49,6 +49,27 @@ INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM
     return FALSE;
 }
 
+void CopyClsid(HTREEITEM item)
+{
+    TVITEM tvi;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = item;
+    tvi.cchTextMax = MAX_LOAD_STRING;
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    if(OpenClipboard(globals.hMainWnd) && EmptyClipboard() && tvi.lParam)
+    {
+        HANDLE hClipData = GlobalAlloc(GHND, sizeof(WCHAR[MAX_LOAD_STRING]));
+        LPVOID pLoc = GlobalLock(hClipData);
+
+        lstrcpyW(pLoc, ((ITEM_INFO *)tvi.lParam)->clsid);
+        GlobalUnlock(hClipData);
+        hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
+        CloseClipboard();
+    }
+}
+
 void ResizeChild(void)
 {
     RECT client, stat, tool;
@@ -148,6 +169,10 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
             LoadString(globals.hMainInst, IDS_ABOUTVER, wszAboutVer,
                     sizeof(WCHAR[MAX_LOAD_STRING]));
             ShellAbout(hWnd, wszAbout, wszAboutVer, NULL);
+            break;
+        case IDM_COPYCLSID:
+            hSelect = TreeView_GetSelection(globals.hTree);
+            CopyClsid(hSelect);
             break;
         case IDM_CREATEINST:
             hSelect = TreeView_GetSelection(globals.hTree);
