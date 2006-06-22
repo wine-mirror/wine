@@ -261,6 +261,7 @@ static void testCodepage(void)
 {
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static CHAR aval[] = "hi";
     static const WCHAR wval[] = { 'h','i',0 };
     HRESULT hr;
     IStorage *storage = NULL;
@@ -323,7 +324,7 @@ static void testCodepage(void)
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PID_FIRST_USABLE;
     var.vt = VT_LPSTR;
-    U(var).pszVal = "hi";
+    U(var).pszVal = aval;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
