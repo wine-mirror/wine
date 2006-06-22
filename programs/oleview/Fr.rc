@@ -1,0 +1,119 @@
+/*
+ * OleView (Fr.rc)
+ * Frencg Language Support
+ *
+ * Copyright 2006 Jonathan Ernst
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+
+IDM_MENU MENU
+{
+    POPUP "&Fichier"
+    {
+        MENUITEM "&Lier au fichier...",    IDM_BIND
+        MENUITEM "&Afficher la TypeLib...",    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&Configuration système",    IDM_SYSCONF
+        MENUITEM "&Exécuter l'éditeur de la base de registre",    IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Quitter",    IDM_EXIT
+    }
+    POPUP "&Objet"
+    {
+        POPUP "&CoCreateInstance Flag"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "Afficher les informations sur le &type",    IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Créer une &instance",    IDM_CREATEINST, GRAYED
+        MENUITEM "Créer une instance &sur",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Libérer l'instance",    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Copier le &CLSID dans le presse-papiers",    IDM_COPYCLSID, GRAYED
+        MENUITEM "Copier la balse &HTML de l'objet dans le presse-papiers", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Afficher...",    IDM_VIEW, GRAYED
+    }
+    POPUP "&Affichage"
+    {
+        MENUITEM "Mode &expert",    IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Catégories de compsants &cachés",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Barre d'outils",    IDM_TOOLBAR,CHECKED
+        MENUITEM "Barre d'é&tat",    IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "A&ctualiser\tF5",    IDM_REFRESH
+    }
+    POPUP "Aid&e"
+    {
+        MENUITEM "À &propos de OleView",    IDM_ABOUT
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "Prêt"
+    IDS_ABOUT              "OleView - Visionneur d'objets OLE/COM"
+    IDS_ABOUTVER           "version 1.0"
+
+    IDM_BIND,              "Lie à un fichier à l'aide d'un File Moniker"
+    IDM_TYPELIB,           "Ouvre un fichier TypeLib et afficher son contenu"
+    IDM_SYSCONF,           "Modifie les paramètres COM distribuées pour l'ensemble de la machine"
+    IDM_REGEDIT,           "Exécute l'éditeur de base de registre de Wine"
+    IDM_EXIT,              "Quitte l'application après avoir demandé s'il faut enregistrer les modifications"
+    IDM_CREATEINST,        "Crée une instance de l'objet sélectionné"
+    IDM_CREATEINSTON,      "Crée une instance de l'objet sélectionné sur une machine spécifique"
+    IDM_RELEASEINST,       "Libère l'instance de l'objet actuellement sélectionné"
+    IDM_COPYCLSID,         "Copie le GUID de l'objet actuellement sélectionné dans le presse-papiers"
+    IDM_VIEW,              "Affiche le visionneur pour l'objet actuellement sélectionné"
+    IDM_FLAG_INSERV,       "Utilise CLSCTX_INPROC_SERVER lors de l'appel à CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Utilise CLSCTX_INPROC_HANDLER lors de l'appel à CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Utilise CLSCTX_LOCAL_SERVER lors de l'appel à CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Utilise CLSCTX_REMOTE_SERVER lors de l'appel à CoGetClassObject"
+    IDM_EXPERT,            "Bascule entre le mode d'affichage expert et le mode d'affichage débutant"
+    IDM_HIDDEN,            "Bascule l'affichage des catégories des composant qui ne sont pas prévue pour être visible"
+    IDM_TOOLBAR,           "Affiche ou masque la barre d'outils"
+    IDM_STATUSBAR,         "Affiche ou masque la barre d'état"
+    IDM_REFRESH,           "Actualise toutes les listes"
+    IDM_ABOUT,             "Affiche les informations sur le programme ; le numéro de version et la licence"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "Groupés par catégorie de composants"
+    IDS_TREE_O1O,          "Objets OLE 1.0"
+    IDS_TREE_CLO,          "Objets de la bibliothèque COM"
+    IDS_TREE_AO,           "Tous les objets"
+    IDS_TREE_AID,          "Identificateurs d'application"
+    IDS_TREE_TL,           "Bibliothèques type"
+    IDS_TL_VER,            "ver."
+    IDS_TREE_I,            "Interfaces"
+
+    IDS_TAB_REG,           "Base de registre"
+    IDS_TAB_IMPL,          "Implémentation"
+    IDS_TAB_ACTIV,         "Activation"
+
+    IDS_CGCOFAIL,          "CoGetClassObject a échoué."
+    IDS_ERROR_UNKN,        "Erreur inconnue"
+}
