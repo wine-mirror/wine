@@ -2639,7 +2639,7 @@ static void test_encodeCRLIssuingDistPoint(DWORD dwEncoding)
      "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* empty name */
     point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
-    point.DistPointName.FullName.cAltEntry = 0;
+    U(point.DistPointName).FullName.cAltEntry = 0;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
@@ -2651,9 +2651,9 @@ static void test_encodeCRLIssuingDistPoint(DWORD dwEncoding)
     }
     /* name with URL entry */
     entry.dwAltNameChoice = CERT_ALT_NAME_URL;
-    entry.pwszURL = (LPWSTR)url;
-    point.DistPointName.FullName.cAltEntry = 1;
-    point.DistPointName.FullName.rgAltEntry = &entry;
+    U(entry).pwszURL = (LPWSTR)url;
+    U(point.DistPointName).FullName.cAltEntry = 1;
+    U(point.DistPointName).FullName.rgAltEntry = &entry;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ISSUING_DIST_POINT, &point,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
@@ -2680,16 +2680,16 @@ static void compareAltNameEntry(const CERT_ALT_NAME_ENTRY *expected,
         case CERT_ALT_NAME_EDI_PARTY_NAME:
         case CERT_ALT_NAME_URL:
         case CERT_ALT_NAME_REGISTERED_ID:
-            ok((!expected->pwszURL && !got->pwszURL) ||
-             !lstrcmpW(expected->pwszURL, got->pwszURL), "Unexpected name\n");
+            ok((!U(*expected).pwszURL && !U(*got).pwszURL) ||
+               !lstrcmpW(U(*expected).pwszURL, U(*got).pwszURL), "Unexpected name\n");
             break;
         case CERT_ALT_NAME_X400_ADDRESS:
         case CERT_ALT_NAME_DIRECTORY_NAME:
         case CERT_ALT_NAME_IP_ADDRESS:
-            ok(got->IPAddress.cbData == expected->IPAddress.cbData,
-             "Unexpected IP address length %ld\n", got->IPAddress.cbData);
-            ok(!memcmp(got->IPAddress.pbData, got->IPAddress.pbData,
-             got->IPAddress.cbData), "Unexpected value\n");
+            ok(U(*got).IPAddress.cbData == U(*expected).IPAddress.cbData,
+               "Unexpected IP address length %ld\n", U(*got).IPAddress.cbData);
+            ok(!memcmp(U(*got).IPAddress.pbData, U(*got).IPAddress.pbData,
+                       U(*got).IPAddress.cbData), "Unexpected value\n");
             break;
         }
     }
@@ -2712,7 +2712,7 @@ static void compareDistPointName(const CRL_DIST_POINT_NAME *expected,
     ok(got->dwDistPointNameChoice == expected->dwDistPointNameChoice,
      "Unexpected name choice %ld\n", got->dwDistPointNameChoice);
     if (got->dwDistPointNameChoice == CRL_DIST_POINT_FULL_NAME)
-        compareAltNameInfo(&expected->FullName, &got->FullName);
+        compareAltNameInfo(&(U(*expected).FullName), &(U(*got).FullName));
 }
 
 static void compareCRLIssuingDistPoints(const CRL_ISSUING_DIST_POINT *expected,
@@ -2763,7 +2763,7 @@ static void test_decodeCRLIssuingDistPoint(DWORD dwEncoding)
     {
         point.fOnlyContainsCACerts = point.fOnlyContainsUserCerts = FALSE;
         point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
-        point.DistPointName.FullName.cAltEntry = 0;
+        U(point.DistPointName).FullName.cAltEntry = 0;
         compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
         LocalFree(buf);
     }
@@ -2775,9 +2775,9 @@ static void test_decodeCRLIssuingDistPoint(DWORD dwEncoding)
         CERT_ALT_NAME_ENTRY entry;
 
         entry.dwAltNameChoice = CERT_ALT_NAME_URL;
-        entry.pwszURL = (LPWSTR)url;
-        point.DistPointName.FullName.cAltEntry = 1;
-        point.DistPointName.FullName.rgAltEntry = &entry;
+        U(entry).pwszURL = (LPWSTR)url;
+        U(point.DistPointName).FullName.cAltEntry = 1;
+        U(point.DistPointName).FullName.rgAltEntry = &entry;
         compareCRLIssuingDistPoints(&point, (PCRL_ISSUING_DIST_POINT)buf);
         LocalFree(buf);
     }
