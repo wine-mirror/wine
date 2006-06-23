@@ -941,8 +941,8 @@ static void test_CompareStringA(void)
     ret = CompareStringA(lcid, 0, "a\0b", 4, "a", 2);
     ok(ret == 3, "a\\0b vs a expected 3, got %d\n", ret);
 
-    ret = CompareStringA(lcid, 0, "\1\0\2", 4, "\1\0\1", 4);
-    todo_wine ok(ret != 2, "\\1\\0\\2 vs \\1\\0\\1 expected unequal\n");
+    ret = CompareStringA(lcid, 0, "\2", 2, "\1", 2);
+    todo_wine ok(ret != 2, "\\2 vs \\1 expected unequal\n");
 }
 
 static void test_LCMapStringA(void)
