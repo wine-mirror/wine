@@ -163,7 +163,7 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
   TRACE("(%p,%s,%s)\n", lpszDest, debugstr_w(lpszDir), debugstr_w(lpszFile));
 
   if (!lpszDest || (!lpszDir && !lpszFile))
-    return lpszDest; /* Invalid parameters */
+    return NULL; /* Invalid parameters */
 
   if (!lpszFile || !*lpszFile)
   {

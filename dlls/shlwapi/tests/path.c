@@ -31,6 +31,7 @@
 static HMODULE hShlwapi;
 static HRESULT (WINAPI *pPathIsValidCharA)(char,DWORD);
 static HRESULT (WINAPI *pPathIsValidCharW)(WCHAR,DWORD);
+static LPWSTR  (WINAPI *pPathCombineW)(LPWSTR, LPCWSTR, LPCWSTR);
 
 const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
@@ -860,6 +861,37 @@ static void test_PathMatchSpec(void)
     ok (PathMatchSpecA(file, spec13) == TRUE, "PathMatchSpec: Spec13 failed\n");
 }
 
+static void test_PathCombine(void)
+{
+    LPSTR  szString, szString2;
+    LPWSTR wszString, wszString2;
+   
+    szString2 = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(char));
+    wszString2 = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+
+    /* NULL test */
+    szString = PathCombineA(NULL, NULL, NULL);
+    ok (szString == NULL, "Expected a NULL return\n");
+
+    if (pPathCombineW)
+    {
+        wszString = pPathCombineW(NULL, NULL, NULL);
+        ok (wszString == NULL, "Expected a NULL return\n");
+    }
+
+    /* Some NULL */
+    szString = PathCombineA(szString2, NULL, NULL);
+    ok (szString == NULL, "Expected a NULL return\n");
+
+    if (pPathCombineW)
+    {
+        wszString = pPathCombineW(wszString2, NULL, NULL);
+        ok (wszString == NULL, "Expected a NULL return\n");
+    }
+
+    HeapFree(GetProcessHeap(), 0, szString2);
+    HeapFree(GetProcessHeap(), 0, wszString2);
+}
 
 START_TEST(path)
 {
@@ -893,4 +925,7 @@ START_TEST(path)
      pPathIsValidCharW = (void*)GetProcAddress(hShlwapi, (LPSTR)456);
      if (pPathIsValidCharW) test_PathIsValidCharW();
   }
+
+  pPathCombineW = (void*)GetProcAddress(hShlwapi, "PathCombineW");
+  test_PathCombine();
 }
