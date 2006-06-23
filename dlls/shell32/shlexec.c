@@ -426,10 +426,18 @@ end:
 static UINT SHELL_FindExecutableByOperation(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation, LPWSTR key, LPWSTR filetype, LPWSTR command, LONG commandlen)
 {
     static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
+    HKEY hkeyClass;
+    WCHAR verb[MAX_PATH];
+
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, 0x02000000, &hkeyClass))
+        return 31; /* default - 'No association was found' */
+    if (!HCR_GetDefaultVerbW(hkeyClass, lpOperation, verb, sizeof(verb)))
+        return 31; /* default - 'No association was found' */
+    RegCloseKey(hkeyClass);
 
     /* Looking for ...buffer\shell\<verb>\command */
     strcatW(filetype, wszShell);
-    strcatW(filetype, lpOperation);
+    strcatW(filetype, verb);
     strcatW(filetype, wCommand);
 
     if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, command,
@@ -508,10 +516,10 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     if (key) *key = '\0';
 
     /* trap NULL parameters on entry */
-    if ((lpFile == NULL) || (lpResult == NULL) || (lpOperation == NULL))
+    if ((lpFile == NULL) || (lpResult == NULL))
     {
-        WARN("(lpFile=%s,lpResult=%s,lpOperation=%s): NULL parameter\n",
-             debugstr_w(lpFile), debugstr_w(lpOperation), debugstr_w(lpResult));
+        WARN("(lpFile=%s,lpResult=%s): NULL parameter\n",
+             debugstr_w(lpFile), debugstr_w(lpResult));
         return 2; /* File not found. Close enough, I guess. */
     }
 
@@ -1292,7 +1300,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         ULONG cmask=(sei_tmp.fMask & SEE_MASK_CLASSALL);
         HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? sei_tmp.hkeyClass : NULL,
                                (cmask == SEE_MASK_CLASSNAME) ? sei_tmp.lpClass: NULL,
-                               (sei_tmp.lpVerb) ? sei_tmp.lpVerb : wszOpen,
+                               sei_tmp.lpVerb,
                                wszParameters, sizeof(wszParameters)/sizeof(WCHAR));
 
         /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
@@ -1332,7 +1340,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		if (attribs != INVALID_FILE_ATTRIBUTES &&
 		    (attribs & FILE_ATTRIBUTE_DIRECTORY) &&
 		    HCR_GetExecuteCommandW(0, wszFolder,
-		                           sei_tmp.lpVerb?sei_tmp.lpVerb:wszOpen,
+		                           sei_tmp.lpVerb,
 		                           buffer, sizeof(buffer))) {
 		    SHELL_ArgifyW(wszApplicationName, dwApplicationNameLen,
 		                  buffer, target, sei_tmp.lpIDList, NULL);
@@ -1426,11 +1434,6 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         strcatW(wcmd, wSpace);
         strcatW(wcmd, wszParameters);
     }
-
-    /* We set the default to open, and that should generally work.
-       But that is not really the way the MS docs say to do it. */
-    if (!sei_tmp.lpVerb)
-        sei_tmp.lpVerb = wszOpen;
 
     retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
     if (retval > 32) {

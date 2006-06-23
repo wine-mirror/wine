@@ -117,30 +117,86 @@ BOOL HCR_MapTypeToValueA(LPCSTR szExtension, LPSTR szFileType, LONG len, BOOL bP
 	return TRUE;
 }
 
+static const WCHAR swShell[] = {'s','h','e','l','l','\\',0};
+static const WCHAR swOpen[] = {'o','p','e','n',0};
+static const WCHAR swCommand[] = {'\\','c','o','m','m','a','n','d',0};
+
+BOOL HCR_GetDefaultVerbW( HKEY hkeyClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len )
+{
+        WCHAR sTemp[MAX_PATH];
+        LONG size;
+        HKEY hkey;
+
+	TRACE("%p %s %p\n", hkeyClass, debugstr_w(szVerb), szDest);
+
+        if (szVerb)
+        {
+            lstrcpynW(szDest, szVerb, len);
+            return TRUE;
+        }
+
+        size=len;
+        *szDest='\0';
+        if (!RegQueryValueW(hkeyClass, swShell, szDest, &size) && *szDest)
+        {
+            /* The MSDN says to first try the default verb */
+            lstrcpyW(sTemp, swShell);
+            lstrcatW(sTemp, szDest);
+            lstrcatW(sTemp, swCommand);
+            if (!RegOpenKeyExW(hkeyClass, sTemp, 0, 0, &hkey))
+            {
+                RegCloseKey(hkey);
+                TRACE("default verb=%s\n", debugstr_w(szDest));
+                return TRUE;
+            }
+        }
+
+        /* then fallback to 'open' */
+        lstrcpyW(sTemp, swShell);
+        lstrcatW(sTemp, swOpen);
+        lstrcatW(sTemp, swCommand);
+        if (!RegOpenKeyExW(hkeyClass, sTemp, 0, 0, &hkey))
+        {
+            RegCloseKey(hkey);
+            lstrcpynW(szDest, swOpen, len);
+            TRACE("default verb=open\n");
+            return TRUE;
+        }
+
+        /* and then just use the first verb on Windows >= 2000 */
+        if (!RegEnumKeyW(hkeyClass, 0, szDest, len) && *szDest)
+        {
+            TRACE("default verb=first verb=%s\n", debugstr_w(szDest));
+            return TRUE;
+        }
+
+        TRACE("no default verb!\n");
+	return FALSE;
+}
 
 BOOL HCR_GetExecuteCommandW( HKEY hkeyClass, LPCWSTR szClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len )
 {
-        static const WCHAR swShell[] = {'s','h','e','l','l','\\',0};
-        static const WCHAR swCommand[] = {'\\','c','o','m','m','a','n','d',0};
-	BOOL	ret = FALSE;
+	WCHAR sTempVerb[MAX_PATH];
+	BOOL ret;
 
 	TRACE("%p %s %s %p\n", hkeyClass, debugstr_w(szClass), debugstr_w(szVerb), szDest);
 
 	if (szClass)
             RegOpenKeyExW(HKEY_CLASSES_ROOT, szClass, 0, 0x02000000, &hkeyClass);
+        if (!hkeyClass)
+            return FALSE;
+        ret = FALSE;
 
-        if (hkeyClass)
-	{
-	    WCHAR sTemp[MAX_PATH];
-	    lstrcpyW(sTemp, swShell);
-	    lstrcatW(sTemp, szVerb);
-	    lstrcatW(sTemp, swCommand);
-
-	    ret = (ERROR_SUCCESS == SHGetValueW(hkeyClass, sTemp, NULL, NULL, szDest, &len));
-
-	    if (szClass)
-	       RegCloseKey(hkeyClass);
-	}
+        if (HCR_GetDefaultVerbW(hkeyClass, szVerb, sTempVerb, sizeof(sTempVerb)))
+        {
+            WCHAR sTemp[MAX_PATH];
+            lstrcpyW(sTemp, swShell);
+            lstrcatW(sTemp, sTempVerb);
+            lstrcatW(sTemp, swCommand);
+            ret = (ERROR_SUCCESS == SHGetValueW(hkeyClass, sTemp, NULL, NULL, szDest, &len));
+        }
+        if (szClass)
+            RegCloseKey(hkeyClass);
 
 	TRACE("-- %s\n", debugstr_w(szDest) );
 	return ret;
