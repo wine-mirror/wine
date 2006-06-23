@@ -523,12 +523,64 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   return TRUE;
 }
 
+static XID create_glxpixmap(X11DRV_PDEVICE *physDev)
+{
+    GLXPixmap ret;
+    XVisualInfo *vis;
+    XVisualInfo template;
+    int num;
+    GLXFBConfig *cfgs;
+
+    wine_tsx11_lock();
+    cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &num);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[physDev->current_pf - 1], GLX_VISUAL_ID, (int *)&template.visualid);
+
+    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+
+    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
+    XFree(vis);
+    XFree(cfgs);
+    wine_tsx11_unlock(); 
+    TRACE("return %lx\n", ret);
+    return ret;
+}
+
+Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
+{
+    Drawable ret;
+
+    if(physDev->bitmap)
+    {
+        if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
+            ret = physDev->drawable; /* PBuffer */
+        else
+        {
+            if(!physDev->bitmap->glxpixmap)
+                physDev->bitmap->glxpixmap = create_glxpixmap(physDev);
+            ret = physDev->bitmap->glxpixmap;
+        }
+    }
+    else
+        ret = physDev->drawable;
+    return ret;
+}
+
+BOOL destroy_glxpixmap(XID glxpixmap)
+{
+    wine_tsx11_lock(); 
+    pglXDestroyGLXPixmap(gdi_display, glxpixmap);
+    wine_tsx11_unlock(); 
+    return TRUE;
+}
+
 /**
  * X11DRV_SwapBuffers
  *
  * Swap the buffers of this DC
  */
-BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
+BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
+{
+  GLXDrawable drawable;
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
@@ -536,8 +588,9 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   
   TRACE_(opengl)("(%p)\n", physDev);
 
+  drawable = get_glxdrawable(physDev);
   wine_tsx11_lock();
-  pglXSwapBuffers(gdi_display, physDev->drawable);
+  pglXSwapBuffers(gdi_display, drawable);
   wine_tsx11_unlock();
 
   return TRUE;
@@ -585,36 +638,6 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
     }
     TRACE("Visual ID %lx Chosen\n",visual->visualid);
     return visual;
-}
-
-XID create_glxpixmap(X11DRV_PDEVICE *physDev)
-{
-    GLXPixmap ret;
-    XVisualInfo *vis;
-    XVisualInfo template;
-    int num;
-    GLXFBConfig *cfgs;
-
-    wine_tsx11_lock();
-    cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &num);
-    pglXGetFBConfigAttrib(gdi_display, cfgs[physDev->current_pf - 1], GLX_VISUAL_ID, (int *)&template.visualid);
-
-    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
-
-    ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
-    XFree(vis);
-    XFree(cfgs);
-    wine_tsx11_unlock(); 
-    TRACE("return %lx\n", ret);
-    return ret;
-}
-
-BOOL destroy_glxpixmap(XID glxpixmap)
-{
-    wine_tsx11_lock(); 
-    pglXDestroyGLXPixmap(gdi_display, glxpixmap);
-    wine_tsx11_unlock(); 
-    return TRUE;
 }
 
 #else  /* no OpenGL includes */
@@ -679,7 +702,7 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
   return NULL;
 }
 
-XID create_glxpixmap(X11DRV_PDEVICE *physDev)
+Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
 {
     return 0;
 }

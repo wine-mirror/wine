@@ -410,18 +410,7 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
             case X11DRV_GET_GLX_DRAWABLE:
                 if (out_count >= sizeof(Drawable))
                 {
-                    if(physDev->bitmap)
-                    {
-                        if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
-                            *(Drawable *)out_data = physDev->drawable; /* PBuffer */
-                        else {
-                            if(!physDev->bitmap->glxpixmap)
-                                physDev->bitmap->glxpixmap = create_glxpixmap(physDev);
-                            *(Drawable *)out_data = physDev->bitmap->glxpixmap;
-                        }
-                    }
-                    else
-                        *(Drawable *)out_data = physDev->drawable;
+                    *(Drawable *)out_data = get_glxdrawable(physDev);
                     return TRUE;
                 }
                 break;

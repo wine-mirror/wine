@@ -272,7 +272,7 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
-extern XID create_glxpixmap(X11DRV_PDEVICE *physDev);
+extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
 extern BOOL destroy_glxpixmap(XID glxpixmap);
 
 /* XIM support */
