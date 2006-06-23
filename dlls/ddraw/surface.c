@@ -1860,48 +1860,61 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
                                       DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
-    BYTE *newSurface = NULL;
-    DWORD newSize = 0;
     WINED3DFORMAT newFormat = WINED3DFMT_UNKNOWN;
     HRESULT hr;
-    FIXME("(%p)->(%p,%lx)\n", This, DDSD, Flags);
-    assert(0);
+    TRACE("(%p)->(%p,%lx)\n", This, DDSD, Flags);
 
     if(!DDSD)
         return DDERR_INVALIDPARAMS;
 
+    if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
+    {
+        ERR("Setting the surface memory isn't supported yet\n");
+        return DDERR_INVALIDPARAMS;
+
+    }
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
     {
         newFormat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
+
+        if(newFormat == WINED3DFMT_UNKNOWN)
+        {
+            ERR("Requested to set an unknown pixelformat\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if(newFormat != PixelFormat_DD2WineD3D(&This->surface_desc.u4.ddpfPixelFormat) )
+        {
+            hr = IWineD3DSurface_SetFormat(This->WineD3DSurface,
+                                           newFormat);
+            if(hr != DD_OK) return hr;
+        }
     }
-    if (DDSD->dwFlags & DDSD_LPSURFACE)
+    if (DDSD->dwFlags & DDSD_CKDESTOVERLAY)
     {
-        newSurface = DDSD->lpSurface;
-        newSize = DDSD->u1.dwLinearSize;
-        /* to avoid unpredictable things */
-        assert(newSize != 0);
+        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                    DDCKEY_DESTOVERLAY,
+                                    &DDSD->u3.ddckCKDestOverlay);
+    }
+    if (DDSD->dwFlags & DDSD_CKDESTBLT)
+    {
+        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                    DDCKEY_DESTBLT,
+                                    &DDSD->ddckCKDestBlt);
+    }
+    if (DDSD->dwFlags & DDSD_CKSRCOVERLAY)
+    {
+        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                    DDCKEY_SRCOVERLAY,
+                                    &DDSD->ddckCKSrcOverlay);
+    }
+    if (DDSD->dwFlags & DDSD_CKSRCBLT)
+    {
+        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                    DDCKEY_SRCBLT,
+                                    &DDSD->ddckCKSrcBlt);
     }
 
-    /* Better: Use SetFormat */
-    hr = IWineD3DSurface_SetPixelFormat(This->WineD3DSurface,
-                                        newFormat,
-                                        newSurface,
-                                        newSize);
-    if(hr != DD_OK) return hr;
-
-    /* Store the new data. Not really necessary, as WineD3D stores it too,
-     * but for completeness
-     */
-    if(newFormat != WINED3DFMT_UNKNOWN)
-    {
-        This->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-        This->surface_desc.u4.ddpfPixelFormat = DDSD->u4.ddpfPixelFormat;
-    }
-    if(newSurface != NULL)
-    {
-        This->surface_desc.lpSurface = newSurface;
-        This->surface_desc.u1.dwLinearSize = newSize;
-    }
+    This->surface_desc = *DDSD;
 
     return DD_OK;
 }

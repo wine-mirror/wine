@@ -1133,7 +1133,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(IsLost)(THIS) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD dstx, DWORD dsty, IWineD3DSurface *src, RECT *rsrc, DWORD trans) PURE;
-    STDMETHOD(SetPixelFormat)(THIS_ WINED3DFORMAT Format, BYTE *Surface, DWORD Size) PURE;
     STDMETHOD(GetPalette)(THIS_ struct IWineD3DPalette **Palette) PURE;
     STDMETHOD(SetPalette)(THIS_ struct IWineD3DPalette *Palette) PURE;
     STDMETHOD(RealizePalette)(THIS) PURE;
@@ -1185,7 +1184,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_IsLost(p)                    (p)->lpVtbl->IsLost(p)
 #define IWineD3DSurface_Restore(p)                   (p)->lpVtbl->Restore(p)
 #define IWineD3DSurface_BltFast(p,a,b,c,d,e)         (p)->lpVtbl->BltFast(p,a,b,c,d,e)
-#define IWineD3DSurface_SetPixelFormat(p,a,b,c)      (p)->lpVtbl->SetPixelFormat(p,a,b,c)
 #define IWineD3DSurface_GetPalette(p, a)             (p)->lpVtbl->GetPalette(p, a)
 #define IWineD3DSurface_SetPalette(p, a)             (p)->lpVtbl->SetPalette(p, a)
 #define IWineD3DSurface_RealizePalette(p)            (p)->lpVtbl->RealizePalette(p)

@@ -2536,11 +2536,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
     return IWineGDISurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
 HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     TRACE("(%p)->(%p)\n", This, Pal);
@@ -2790,7 +2785,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_IsLost,
     IWineD3DSurfaceImpl_Restore,
     IWineD3DSurfaceImpl_BltFast,
-    IWineD3DSurfaceImpl_SetPixelFormat,
     IWineD3DSurfaceImpl_GetPalette,
     IWineD3DSurfaceImpl_SetPalette,
     IWineD3DSurfaceImpl_RealizePalette,

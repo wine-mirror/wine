@@ -1538,7 +1538,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DSurfaceImpl_IsLost,
     IWineD3DSurfaceImpl_Restore,
     IWineGDISurfaceImpl_BltFast,
-    IWineD3DSurfaceImpl_SetPixelFormat,
     IWineD3DSurfaceImpl_GetPalette,
     IWineD3DSurfaceImpl_SetPalette,
     IWineD3DSurfaceImpl_RealizePalette,
