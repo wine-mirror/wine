@@ -291,21 +291,25 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
 
         symname = strp + symp->st_name;
 
-        if (ELF32_ST_TYPE(symp->st_info) == STT_FILE)
+        /* handle some specific symtab (that we'll throw away when done) */
+        switch (ELF32_ST_TYPE(symp->st_info))
         {
+        case STT_FILE:
             compiland = symname ? symt_new_compiland(module, source_new(module, NULL, symname)) : NULL;
             continue;
-        }
-        for (j = 0; thunks[j].symname; j++)
-        {
-            if (!strcmp(symname, thunks[j].symname))
+        case STT_NOTYPE:
+            /* we are only interested in wine markers inserted by winebuild */
+            for (j = 0; thunks[j].symname; j++)
             {
-                thunks[j].rva_start = symp->st_value;
-                thunks[j].rva_end   = symp->st_value + symp->st_size;
-                break;
+                if (!strcmp(symname, thunks[j].symname))
+                {
+                    thunks[j].rva_start = symp->st_value;
+                    thunks[j].rva_end   = symp->st_value + symp->st_size;
+                    break;
+                }
             }
+            continue;
         }
-        if (thunks[j].symname) continue;
 
         /* FIXME: we don't need to handle them (GCC internals)
          * Moreover, they screw up our symbol lookup :-/
@@ -550,9 +554,6 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                                              ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL,
                                              addr, ste->symp->st_size, NULL);
                     break;
-                case STT_NOTYPE:
-                    /* at least winebuild specific symbols */
-                    break;
                 default:
                     FIXME("Shouldn't happen\n");
                     break;
@@ -612,11 +613,10 @@ static int elf_new_public_symbols(struct module* module, struct hash_table* symt
     hash_table_iter_init(symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
     {
-        if (ELF32_ST_TYPE(ste->symp->st_info) != STT_NOTYPE)
-            symt_new_public(module, ste->compiland, ste->ht_elt.name,
-                            module->elf_info->elf_addr + ste->symp->st_value,
-                            ste->symp->st_size, TRUE /* FIXME */, 
-                            ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
+        symt_new_public(module, ste->compiland, ste->ht_elt.name,
+                        module->elf_info->elf_addr + ste->symp->st_value,
+                        ste->symp->st_size, TRUE /* FIXME */, 
+                        ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
     }
     return TRUE;
 }
