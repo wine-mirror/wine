@@ -32,7 +32,9 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
-#include <pthread.h>
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
