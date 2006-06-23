@@ -198,7 +198,7 @@ struct _expr_t {
 };
 
 struct _type_t {
-  char *name;
+  const char *name;
   unsigned char type;
   struct _type_t *ref;
   const attr_t *attrs;
