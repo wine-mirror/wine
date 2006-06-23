@@ -629,7 +629,7 @@
 @ stdcall SystemFunction032(ptr ptr)
 @ stub SystemFunction033
 @ stub SystemFunction034
-@ stub SystemFunction035
+@ stdcall SystemFunction035(str)
 @ stdcall SystemFunction036(ptr long) # RtlGenRandom
 @ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory

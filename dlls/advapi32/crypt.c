@@ -1984,6 +1984,21 @@ BOOL WINAPI SystemFunction030(PVOID b1, PVOID b2)
 }
 
 /******************************************************************************
+ * SystemFunction035   (ADVAPI32.@)
+ *
+ * Described here:
+http://disc.server.com/discussion.cgi?disc=148775;article=942;title=Coding%2FASM%2FSystem
+ *
+ * NOTES
+ *  Stub, always return TRUE.
+ */
+BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
+{
+    FIXME("%s: stub\n", debugstr_a(lpszDllFilePath));
+    return TRUE;
+}
+
+/******************************************************************************
  * SystemFunction036   (ADVAPI32.@)
  *
  * MSDN documents this function as RtlGenRandom and declares it in ntsecapi.h
