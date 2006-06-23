@@ -81,9 +81,9 @@ static void test_ddraw(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
 
     hr = IDirectDraw7_CreateSurface(DDraw, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface failed with %08lx\n", hr);
