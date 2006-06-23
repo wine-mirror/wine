@@ -1019,6 +1019,9 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
     DWORD size;
     switch(*pFormat)
     {
+    case RPC_FC_STRUCT:
+        size = *(const WORD*)(pFormat + 2);
+        break;
     case RPC_FC_CARRAY:
         size = *(const WORD*)(pFormat + 2);
         ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
