@@ -106,8 +106,9 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
+void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
+    flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->psr    = from->psr;
@@ -165,17 +166,23 @@ void *get_context_ip( const CONTEXT *context )
     return (void *)context->pc;
 }
 
+/* return the context flag that contains the CPU id */
+unsigned int get_context_cpu_flag(void)
+{
+    return CONTEXT_SPARC;
+}
+
+/* return only the context flags that correspond to system regs */
+/* (system regs are the ones we can't access on the client side) */
+unsigned int get_context_system_regs( unsigned int flags )
+{
+    return flags & ~CONTEXT_SPARC;
+}
+
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    context->ContextFlags |= CONTEXT_SPARC;
-    flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
-
-    if (thread->context)  /* thread is inside an exception event or suspended */
-    {
-        copy_context( context, thread->context, flags );
-    }
-    else if (flags && suspend_for_ptrace( thread ))
+    if (suspend_for_ptrace( thread ))
     {
         get_thread_context_ptrace( thread, flags, context );
         resume_after_ptrace( thread );
@@ -185,13 +192,7 @@ void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int f
 /* set the thread context */
 void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
-
-    if (thread->context)  /* thread is inside an exception event or suspended */
-    {
-        copy_context( thread->context, context, flags );
-    }
-    else if (flags && suspend_for_ptrace( thread ))
+    if (suspend_for_ptrace( thread ))
     {
         set_thread_context_ptrace( thread, flags, context );
         resume_after_ptrace( thread );

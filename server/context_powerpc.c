@@ -201,7 +201,7 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 #define FREG(x) to->Fpr##x = from->Fpr##x;
 #define CREG(x) to->x = from->x;
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
+void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
     if (flags & CONTEXT_CONTROL)
     {
@@ -266,14 +266,23 @@ void *get_context_ip( const CONTEXT *context )
     return (void *)context->Iar;
 }
 
+/* return the context flag that contains the CPU id */
+unsigned int get_context_cpu_flag(void)
+{
+    return 0;
+}
+
+/* return only the context flags that correspond to system regs */
+/* (system regs are the ones we can't access on the client side) */
+unsigned int get_context_system_regs( unsigned int flags )
+{
+    return flags;
+}
+
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    if (thread->context)  /* thread is inside an exception event or suspended */
-    {
-        copy_context( context, thread->context, flags );
-    }
-    else if (flags && suspend_for_ptrace( thread ))
+    if (suspend_for_ptrace( thread ))
     {
         get_thread_context_ptrace( thread, flags, context );
         resume_after_ptrace( thread );
@@ -283,11 +292,7 @@ void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int f
 /* set the thread context */
 void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    if (thread->context)  /* thread is inside an exception event or suspended */
-    {
-        copy_context( thread->context, context, flags );
-    }
-    else if (flags && suspend_for_ptrace( thread ))
+    if (suspend_for_ptrace( thread ))
     {
         set_thread_context_ptrace( thread, flags, context );
         resume_after_ptrace( thread );

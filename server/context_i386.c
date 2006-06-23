@@ -89,10 +89,15 @@ static inline int get_debug_reg( int pid, int num, DWORD *data )
     return 0;
 }
 
-/* retrieve the thread x86 debug registers */
-static int get_thread_debug_regs( struct thread *thread, CONTEXT *context )
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
     int pid = get_ptrace_pid(thread);
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
 
     if (get_debug_reg( pid, 0, &context->Dr0 ) == -1) goto error;
     if (get_debug_reg( pid, 1, &context->Dr1 ) == -1) goto error;
@@ -100,70 +105,95 @@ static int get_thread_debug_regs( struct thread *thread, CONTEXT *context )
     if (get_debug_reg( pid, 3, &context->Dr3 ) == -1) goto error;
     if (get_debug_reg( pid, 6, &context->Dr6 ) == -1) goto error;
     if (get_debug_reg( pid, 7, &context->Dr7 ) == -1) goto error;
-    return 1;
+    context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+    resume_after_ptrace( thread );
+    return;
  error:
     file_set_error();
-    return 0;
+    resume_after_ptrace( thread );
 }
 
-/* set the thread x86 debug registers */
-static int set_thread_debug_regs( struct thread *thread, const CONTEXT *context )
+/* set the thread x86 registers */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    int pid = get_ptrace_pid(thread);
+    int pid = get_ptrace_pid( thread );
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
 
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->Dr0 ) == -1) goto error;
+    if (thread->context) thread->context->Dr0 = context->Dr0;
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->Dr1 ) == -1) goto error;
+    if (thread->context) thread->context->Dr1 = context->Dr1;
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->Dr2 ) == -1) goto error;
+    if (thread->context) thread->context->Dr2 = context->Dr2;
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->Dr3 ) == -1) goto error;
+    if (thread->context) thread->context->Dr3 = context->Dr3;
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->Dr6 ) == -1) goto error;
+    if (thread->context) thread->context->Dr6 = context->Dr6;
     if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->Dr7 ) == -1) goto error;
-    return 1;
+    if (thread->context) thread->context->Dr7 = context->Dr7;
+    resume_after_ptrace( thread );
+    return;
  error:
     file_set_error();
-    return 0;
+    resume_after_ptrace( thread );
 }
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #include <machine/reg.h>
 
-/* retrieve the thread x86 debug registers */
-static int get_thread_debug_regs( struct thread *thread, CONTEXT *context )
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
 #ifdef PTRACE_GETDBREGS
     int pid = get_ptrace_pid(thread);
-
     struct dbreg dbregs;
-    if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1)
-        goto error;
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
+    if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
+    else
+    {
 #ifdef DBREG_DRX
-    /* needed for FreeBSD, the structure fields have changed under 5.x */
-    context->Dr0 = DBREG_DRX((&dbregs), 0);
-    context->Dr1 = DBREG_DRX((&dbregs), 1);
-    context->Dr2 = DBREG_DRX((&dbregs), 2);
-    context->Dr3 = DBREG_DRX((&dbregs), 3);
-    context->Dr6 = DBREG_DRX((&dbregs), 6);
-    context->Dr7 = DBREG_DRX((&dbregs), 7);
+        /* needed for FreeBSD, the structure fields have changed under 5.x */
+        context->Dr0 = DBREG_DRX((&dbregs), 0);
+        context->Dr1 = DBREG_DRX((&dbregs), 1);
+        context->Dr2 = DBREG_DRX((&dbregs), 2);
+        context->Dr3 = DBREG_DRX((&dbregs), 3);
+        context->Dr6 = DBREG_DRX((&dbregs), 6);
+        context->Dr7 = DBREG_DRX((&dbregs), 7);
 #else
-    context->Dr0 = dbregs.dr0;
-    context->Dr1 = dbregs.dr1;
-    context->Dr2 = dbregs.dr2;
-    context->Dr3 = dbregs.dr3;
-    context->Dr6 = dbregs.dr6;
-    context->Dr7 = dbregs.dr7;
+        context->Dr0 = dbregs.dr0;
+        context->Dr1 = dbregs.dr1;
+        context->Dr2 = dbregs.dr2;
+        context->Dr3 = dbregs.dr3;
+        context->Dr6 = dbregs.dr6;
+        context->Dr7 = dbregs.dr7;
 #endif
-    return 1;
- error:
-    file_set_error();
+        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+    }
+    resume_after_ptrace( thread );
 #endif
-    return 0;
 }
 
-/* set the thread x86 debug registers */
-static int set_thread_debug_regs( struct thread *thread, const CONTEXT *context )
+/* set the thread x86 registers */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
 #ifdef PTRACE_SETDBREGS
     int pid = get_ptrace_pid(thread);
     struct dbreg dbregs;
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
 #ifdef DBREG_DRX
     /* needed for FreeBSD, the structure fields have changed under 5.x */
     DBREG_DRX((&dbregs), 0) = context->Dr0;
@@ -184,32 +214,39 @@ static int set_thread_debug_regs( struct thread *thread, const CONTEXT *context 
     dbregs.dr6 = context->Dr6;
     dbregs.dr7 = context->Dr7;
 #endif
-    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) != -1) return 1;
-    file_set_error();
+    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
+    else if (thread->context)  /* update the cached values */
+    {
+        thread->context->Dr0 = context->Dr0;
+        thread->context->Dr1 = context->Dr1;
+        thread->context->Dr2 = context->Dr2;
+        thread->context->Dr3 = context->Dr3;
+        thread->context->Dr6 = context->Dr6;
+        thread->context->Dr7 = context->Dr7;
+    }
+    resume_after_ptrace( thread );
 #endif
-    return 0;
 }
 
 #else  /* linux || __FreeBSD__ */
 
-/* retrieve the thread x86 debug registers */
-static int get_thread_debug_regs( struct thread *thread, CONTEXT *context )
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    return 0;
 }
 
 /* set the thread x86 debug registers */
-static int set_thread_debug_regs( struct thread *thread, const CONTEXT *context )
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    return 0;
 }
 
 #endif  /* linux || __FreeBSD__ */
 
 
 /* copy a context structure according to the flags */
-static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
+void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->Ebp    = from->Ebp;
@@ -257,34 +294,17 @@ void *get_context_ip( const CONTEXT *context )
     return (void *)context->Eip;
 }
 
-/* retrieve the thread context */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
+/* return the context flag that contains the CPU id */
+unsigned int get_context_cpu_flag(void)
 {
-    context->ContextFlags |= CONTEXT_i386;
-    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
-
-    if (thread->context)  /* thread is inside an exception event or suspended */
-        copy_context( context, thread->context, flags & ~CONTEXT_DEBUG_REGISTERS );
-
-    if ((flags & CONTEXT_DEBUG_REGISTERS) && suspend_for_ptrace( thread ))
-    {
-        if (get_thread_debug_regs( thread, context )) context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-        resume_after_ptrace( thread );
-    }
+    return CONTEXT_i386;
 }
 
-/* set the thread context */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
+/* return only the context flags that correspond to system regs */
+/* (system regs are the ones we can't access on the client side) */
+unsigned int get_context_system_regs( unsigned int flags )
 {
-    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
-
-    if ((flags & CONTEXT_DEBUG_REGISTERS) && suspend_for_ptrace( thread ))
-    {
-        if (!set_thread_debug_regs( thread, context )) flags &= ~CONTEXT_DEBUG_REGISTERS;
-        resume_after_ptrace( thread );
-    }
-
-    if (thread->context) copy_context( thread->context, context, flags );
+    return flags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386);
 }
 
 #endif  /* __i386__ */

@@ -119,13 +119,18 @@ extern int thread_get_inflight_fd( struct thread *thread, int client );
 extern struct thread_snapshot *thread_snap( int *count );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
 
+/* CPU context functions */
+extern void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags );
+extern void *get_context_ip( const CONTEXT *context );
+extern unsigned int get_context_cpu_flag(void);
+extern unsigned int get_context_system_regs( unsigned int flags );
+
 /* ptrace functions */
 
 extern void sigchld_callback(void);
 extern int get_ptrace_pid( struct thread *thread );
 extern int suspend_for_ptrace( struct thread *thread );
 extern void resume_after_ptrace( struct thread *thread );
-extern void *get_context_ip( const CONTEXT *context );
 extern void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );

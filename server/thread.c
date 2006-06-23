@@ -1043,7 +1043,7 @@ DECL_HANDLER(get_apc)
 DECL_HANDLER(get_thread_context)
 {
     struct thread *thread;
-    void *data;
+    CONTEXT *context;
 
     if (get_reply_max_size() < sizeof(CONTEXT))
     {
@@ -1072,10 +1072,14 @@ DECL_HANDLER(get_thread_context)
         if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
         else set_error( STATUS_PENDING );
     }
-    else if ((data = set_reply_data_size( sizeof(CONTEXT) )))
+    else if ((context = set_reply_data_size( sizeof(CONTEXT) )))
     {
-        memset( data, 0, sizeof(CONTEXT) );
-        get_thread_context( thread, data, req->flags );
+        unsigned int flags = get_context_system_regs( req->flags );
+
+        memset( context, 0, sizeof(CONTEXT) );
+        context->ContextFlags = get_context_cpu_flag();
+        if (thread->context) copy_context( context, thread->context, req->flags & ~flags );
+        if (flags) get_thread_context( thread, context, flags );
     }
     reply->self = (thread == current);
     release_object( thread );
@@ -1115,7 +1119,12 @@ DECL_HANDLER(set_thread_context)
     }
     else
     {
-        set_thread_context( thread, get_req_data(), req->flags );
+        const CONTEXT *context = get_req_data();
+        unsigned int flags = get_context_system_regs( req->flags );
+
+        if (flags) set_thread_context( thread, context, flags );
+        if (thread->context && !get_error())
+            copy_context( thread->context, context, req->flags & ~flags );
     }
     reply->self = (thread == current);
     release_object( thread );
