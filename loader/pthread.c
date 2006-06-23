@@ -100,6 +100,7 @@ static int create_thread( struct wine_pthread_thread_info *info )
     pthread_attr_init( &attr );
     pthread_attr_setstacksize( &attr, info->stack_size );
     pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
+    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread on Solaris */
     if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) ret = -1;
     pthread_attr_destroy( &attr );
     return ret;
@@ -129,7 +130,11 @@ static void init_current_teb( struct wine_pthread_thread_info *info )
 
     /* set pid and tid */
     info->pid = getpid();
+#ifdef __sun
+    info->tid = pthread_self();  /* this should return the lwp id on solaris */
+#else
     info->tid = gettid();
+#endif
 }
 
 
