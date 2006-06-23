@@ -636,7 +636,7 @@ static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL 
         return BrsFolder_OnSetSelectionW(info, selection, is_str);
     
     if ((length = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, NULL, 0)) &&
-        (selectionW = HeapAlloc(GetProcessHeap(), 0, length)) &&
+        (selectionW = HeapAlloc(GetProcessHeap(), 0, length * sizeof(WCHAR))) &&
         MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, selectionW, length))
     {
         result = BrsFolder_OnSetSelectionW(info, selectionW, is_str);
