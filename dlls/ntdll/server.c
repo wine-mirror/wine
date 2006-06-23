@@ -159,7 +159,7 @@ void server_exit_thread( int status )
     NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base, &size, MEM_RELEASE | MEM_SYSTEM );
     info.teb_size = size;
 
-    sigprocmask( SIG_BLOCK, &block_set, NULL );
+    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
@@ -173,7 +173,7 @@ void server_exit_thread( int status )
  */
 void server_abort_thread( int status )
 {
-    sigprocmask( SIG_BLOCK, &block_set, NULL );
+    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
@@ -312,10 +312,10 @@ unsigned int wine_server_call( void *req_ptr )
     struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
 
-    sigprocmask( SIG_BLOCK, &block_set, &old_set );
+    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, &old_set );
     send_request( req );
     wait_reply( req );
-    sigprocmask( SIG_SETMASK, &old_set, NULL );
+    pthread_functions.sigprocmask( SIG_SETMASK, &old_set, NULL );
     return req->u.reply.reply_header.error;
 }
 

@@ -184,7 +184,8 @@ const struct wine_pthread_functions pthread_functions =
     init_current_teb,
     get_current_teb,
     exit_thread,
-    abort_thread
+    abort_thread,
+    pthread_sigmask
 };
 
 #endif  /* HAVE_PTHREAD_H */

@@ -23,6 +23,8 @@
 
 struct wine_pthread_callbacks;
 
+#include <signal.h>
+
 #ifdef HAVE_PTHREAD_H
 
 #define _GNU_SOURCE
@@ -99,6 +101,7 @@ struct wine_pthread_functions
     void   (*exit_thread)( struct wine_pthread_thread_info *info );
     void   (*abort_thread)( long status );
 #endif
+    int    (*sigprocmask)( int how, const sigset_t *newset, sigset_t *oldset );
 };
 
 extern void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_t size );
