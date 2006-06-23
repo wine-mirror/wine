@@ -467,7 +467,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                 case 8:
                     if(DDPixelFormat->u1.dwAlphaBitDepth == 8)
                         return WINED3DFMT_A8L8;
-                    ERR("Unkown Alpha / Lumincase bit depth combination\n");
+                    ERR("Unknown Alpha / Lumincase bit depth combination\n");
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -484,7 +484,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                     return WINED3DFMT_L8;
 
                 default:
-                    ERR("Unkown luminance-only bit depth 0x%lx\n", DDPixelFormat->u1.dwLuminanceBitCount);
+                    ERR("Unknown luminance-only bit depth 0x%lx\n", DDPixelFormat->u1.dwLuminanceBitCount);
                     return WINED3DFMT_UNKNOWN;
              }
         }
@@ -497,7 +497,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
             switch(DDPixelFormat->u1.dwZBufferBitDepth)
             {
                 case 8:
-                    ERR("8 Bits Z+Stencil buffer pixelformat is not supported. Returning WINED3DFMT_UNKOWN\n");
+                    ERR("8 Bits Z+Stencil buffer pixelformat is not supported. Returning WINED3DFMT_UNKNOWN\n");
                     return WINED3DFMT_UNKNOWN;
 
                 case 15:
@@ -519,7 +519,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                         return WINED3DFMT_D24X4S4;
 
                 default:
-                    ERR("Unkown Z buffer depth %ld\n", DDPixelFormat->u1.dwZBufferBitDepth);
+                    ERR("Unknown Z buffer depth %ld\n", DDPixelFormat->u1.dwZBufferBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -1123,7 +1123,7 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
  * Params:
  *  dest: Pointer to the destination matrix
  *  src1: Pointer to the first source matrix
- *  src2: Pointer to the secound source matrix
+ *  src2: Pointer to the second source matrix
  *
  *****************************************************************************/
 void

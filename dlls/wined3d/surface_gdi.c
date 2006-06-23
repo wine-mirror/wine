@@ -438,7 +438,7 @@ _Blt_ColorFill(BYTE *buf,
 /*****************************************************************************
  * IWineD3DSurface::Blt, GDI version
  *
- * Performs blits to a surface, eighter from a source of source-less blts
+ * Performs blits to a surface, eigher from a source of source-less blts
  * This is the main functionality of DirectDraw
  *
  * Params:

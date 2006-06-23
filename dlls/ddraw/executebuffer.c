@@ -78,7 +78,7 @@ static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
  * for drawing the vertices. It is called from
  * IDirect3DDevice::Execute
  *
- * TODO: Perhaps some comments about the varios opcodes wouldn't hurt
+ * TODO: Perhaps some comments about the various opcodes wouldn't hurt
  *
  * Don't declare this static, as it's called from device.c,
  * IDirect3DDevice::Execute

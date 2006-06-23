@@ -51,7 +51,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /*****************************************************************************
- * IUnkown parts follow
+ * IUnknown parts follow
  *****************************************************************************/
 
 /*****************************************************************************
@@ -172,7 +172,7 @@ IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
  *
  * A helper function for IDirectDrawSurface7::Release
  *
- * Frees the surface, regardless of it's refcount.
+ * Frees the surface, regardless of its refcount.
  *  See IDirectDrawSurface7::Release for more information
  *
  * Params:
@@ -196,10 +196,10 @@ static void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
     /* Check for attached surfaces and detach them */
     if(This->first_attached != This)
     {
-        /* Well, this shouldn't happen: The surface beeing attached is addref()ed
+        /* Well, this shouldn't happen: The surface being attached is addref()ed
           * in AddAttachedSurface, so it shouldn't be released until DeleteAttachedSurface
-          * is called, because the refcount is hold. It looks like the app released()
-          * it often enought to force this
+          * is called, because the refcount is held. It looks like the app released()
+          * it often enough to force this
           */
         IDirectDrawSurface7 *root = ICOM_INTERFACE(This->first_attached, IDirectDrawSurface7);
         IDirectDrawSurface7 *detach = ICOM_INTERFACE(This, IDirectDrawSurface7);
@@ -262,16 +262,16 @@ static void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
  * It has a nice graph explaining the connection.
  *
  * What happens here is basically this:
- * When a surface is destroyed, it's WineD3DSurface is released,
+ * When a surface is destroyed, its WineD3DSurface is released,
  * and the refcount of the DirectDraw interface is reduced by 1. If it has
  * complex surfaces attached to it, then these surfaces are destroyed too,
- * regardless of their refcount. If any surface beeing destroyed has another
- * surface attached to it(with a "soft" attachment, not complex), then
+ * regardless of their refcount. If any surface being destroyed has another
+ * surface attached to it (with a "soft" attachment, not complex), then
  * this surface is detached with DeleteAttachedSurface.
  *
  * When the surface is a texture, the WineD3DTexture is released.
  * If the surface is the Direct3D render target, then the D3D
- * capatiblities of the WineD3DDevice are uninitialized, which causes the
+ * capabilities of the WineD3DDevice are uninitialized, which causes the
  * swapchain to be released.
  *
  * Returns:
@@ -394,7 +394,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
 /*****************************************************************************
  * IDirectDrawSurface7::GetAttachedSurface
  *
- * Returns an attached surface with the requested caps. Surface attchment
+ * Returns an attached surface with the requested caps. Surface attachment
  * and complex surfaces are not clearly described by the MSDN or sdk,
  * so this method is tricky and likely to contain problems.
  * This implementation searches the complex chain first, then the
@@ -405,7 +405,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
  * returned. The MSDN says that this method fails if more than one surface
  * matches the caps, but apparently this is incorrect.
  *
- * The found surface is AddRefed before it's returned.
+ * The found surface is AddRef-ed before it is returned.
  *
  * Params:
  *  Caps: Pointer to a DDCAPS2 structure describing the caps asked for
@@ -461,7 +461,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
              * that matches the capabilities requested."
              *
              * The mipmap demo of the DirectX7 sdk shows what to do here:
-             * aparently apps expect the first found surface to be returned.
+             * apparently apps expect the first found surface to be returned.
              */
 
             TRACE("(%p): Returning surface %p\n", This, surf);
@@ -493,7 +493,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
              * that matches the capabilities requested."
              *
              * The mipmap demo of the DirectX7 sdk shows what to do here:
-             * aparently apps expect the first found surface to be returned.
+             * apparently apps expect the first found surface to be returned.
              */
 
             TRACE("(%p): Returning surface %p\n", This, surf);
@@ -526,7 +526,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
 /*****************************************************************************
  * IDirectDrawSurface7::Lock
  *
- * Locks the surface and returnes a pointer to the surface's memory
+ * Locks the surface and returns a pointer to the surface's memory
  *
  * Params:
  *  Rect: Rectangle to lock. If NULL, the whole surface is locked
@@ -716,18 +716,18 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
 /*****************************************************************************
  * IDirectDrawSurface7::AddAttachedSurface
  *
- * Attaches an surface to another surface. Surface attachments are
+ * Attaches a surface to another surface. Surface attachments are
  * incorrectly described in the SDK and the MSDN, and this method
- * is prone to bugs. The surface that is attached is AddRefed.
+ * is prone to bugs. The surface that is attached is AddRef-ed.
  *
- * The attachment list consists of a first surface(first_attached) and
+ * The attachment list consists of a first surface (first_attached) and
  * for each surface a pointer to the next attached surface (next_attached).
  * For the first surface, and a surface that has no attachments
  * first_attached points to the surface itself. A surface that has
  * no successors in the chain has next_attached set to NULL.
  *
  * Newly attached surfaces are attached right after the root surface. The
- * complex chains are handled seperately in a simmilar chain, with
+ * complex chains are handled separately in a similar chain, with
  * first_complex and next_complex. If a surface is attached to a complex
  * surface compound, it's attached to the surface that the app requested,
  * not the complex root. See GetAttachedSurface for a description
@@ -833,7 +833,7 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
          * and all parent surfaces */
     }
 
-    /* Find the Precessor of the detached surface */
+    /* Find the predecessor of the detached surface */
     while(Prev)
     {
         if(Prev->next_attached == Surf) break;
@@ -1046,7 +1046,7 @@ IDirectDrawSurfaceImpl_SetPrivateData(IDirectDrawSurface7 *iface,
 /*****************************************************************************
  * IDirectDrawSurface7::GetPrivateData
  *
- * Returnes the private data set with IDirectDrawSurface7::SetPrivateData
+ * Returns the private data set with IDirectDrawSurface7::SetPrivateData
  *
  * Params:
  *  tag: GUID of the data to return
@@ -1080,7 +1080,7 @@ IDirectDrawSurfaceImpl_GetPrivateData(IDirectDrawSurface7 *iface,
 /*****************************************************************************
  * IDirectDrawSurface7::FreePrivateData
  *
- * Frees private stored in the surface
+ * Frees private data stored in the surface
  *
  * Params:
  *  tag: Tag of the data to free
@@ -1645,7 +1645,7 @@ static HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSu
     volatile IDirectDrawSurfaceImpl* vThis = This;
 
     TRACE("(%p)\n",This);
-    /* A uniquness value of 0 is apparently special.
+    /* A uniqueness value of 0 is apparently special.
     * This needs to be checked. */
     while (1) {
         DWORD old_uniqueness_value = vThis->uniqueness_value;

@@ -189,7 +189,7 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
  * via IPersistFolder3 or IPersistFolder.
  *
  * NOTES
- *   pathRoot can be NULL for Folders beeing a drive.
+ *   pathRoot can be NULL for Folders being a drive.
  *   In this case the absolute path is built from pidlChild (eg. C:)
  */
 static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,

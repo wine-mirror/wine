@@ -71,7 +71,7 @@ WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
  *  iid: requested version ID.
  *
  * Returns:
- *  DD_OK if the Interface was created sucessfully
+ *  DD_OK if the Interface was created successfully
  *  CLASS_E_NOAGGREGATION if UnkOuter is not NULL
  *  E_OUTOFMEMORY if some allocation failed
  *
@@ -111,7 +111,7 @@ DDRAW_Create(GUID *guid,
         devicetype = 0;
     }
 
-    /* DDraw doesn't support aggreation, according to msdn */
+    /* DDraw doesn't support aggregation, according to msdn */
     if (UnkOuter != NULL)
         return CLASS_E_NOAGGREGATION;
 
@@ -169,7 +169,7 @@ DDRAW_Create(GUID *guid,
     /* Initialized member...
      *
      * It is set to false at creation time, and set to true in
-     * IDirectDraw7::Initialize. It's sole purpose is to return DD_OK on
+     * IDirectDraw7::Initialize. Its sole purpose is to return DD_OK on
      * initialize only once
      */
     This->initialized = FALSE;
@@ -177,7 +177,7 @@ DDRAW_Create(GUID *guid,
     /* Initialize WineD3DDevice
      *
      * It is used for screen setup, surface and palette creation
-     * When a Direct3DDevice7 is created, the D3D capatiblities of WineD3D are
+     * When a Direct3DDevice7 is created, the D3D capabilities of WineD3D are
      * initialized
      */
     hr = IWineD3D_CreateDevice(wineD3D,

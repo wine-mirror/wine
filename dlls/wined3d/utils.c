@@ -2086,7 +2086,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
         Rect->top -= This->glRect.top;
         Rect->bottom -= This->glRect.top;
 
-        /* Get the gl coordinates. The gl rectangle is a power of 2, eighter the max size,
+        /* Get the gl coordinates. The gl rectangle is a power of 2, eigher the max size,
          * or the pow2Width / pow2Height of the surface
          */
         glTexCoord[0] = (float) Rect->left / (float) (This->glRect.right - This->glRect.left);

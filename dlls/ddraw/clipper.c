@@ -212,7 +212,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_GetClipList(
  *
  * Sets or deletes (if lprgn is NULL) the clip list
  *
- * This implementation is a stup and returns DD_OK always to make the app
+ * This implementation is a stub and returns DD_OK always to make the app
  * happy.
  *
  * PARAMS
@@ -265,7 +265,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_GetHWnd(
  *
  * Return values:
  *  DD_OK on success
- *  DDERR_ALREADYINITIALIZED if this interface isn't initialized allready
+ *  DDERR_ALREADYINITIALIZED if this interface isn't initialized already
  *****************************************************************************/
 static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(
      LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD, DWORD dwFlags

@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
 /**********************************************************
- * IUnkown parts follow
+ * IUnknown parts follow
  **********************************************************/
 
 /**********************************************************

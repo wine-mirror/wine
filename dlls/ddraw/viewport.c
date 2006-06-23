@@ -676,7 +676,7 @@ IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
  * IDirect3DViewport3::GetViewport2
  *
  * Returns the currently set viewport in a D3DVIEWPORT2 structure.
- * Simmilar to IDirect3DViewport3::GetViewport
+ * Similar to IDirect3DViewport3::GetViewport
  *
  * Params:
  *  lpData: Pointer to the structure to fill

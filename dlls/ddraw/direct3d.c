@@ -243,7 +243,7 @@ IDirect3DImpl_7_EnumDevices(IDirect3D7 *iface,
  * IDirect3D3::EnumDevices
  *
  * Enumerates all supported Direct3DDevice interfaces. This is the
- * implementation for Direct3D 1 to Direc3D 3, Version 7 has it's own.
+ * implementation for Direct3D 1 to Direc3D 3, Version 7 has its own.
  *
  * Version 1, 2 and 3
  *
@@ -425,7 +425,7 @@ Thunk_IDirect3DImpl_1_CreateLight(IDirect3D *iface,
  * IDirect3D3::CreateMaterial
  *
  * Creates an IDirect3DMaterial interface. This interface is used by Direct3D3
- * and older versions. The IDirect3DMaterial implementation wraps it's
+ * and older versions. The IDirect3DMaterial implementation wraps its
  * functionality to IDirect3DDevice7::SetMaterial and friends.
  *
  * Version 1, 2 and 3
@@ -521,7 +521,7 @@ Thunk_IDirect3DImpl_1_CreateMaterial(IDirect3D *iface,
  * by Direct3D and earlier versions for Viewport management. In Direct3D7
  * it has been replaced by a viewport structure and
  * IDirect3DDevice7::*Viewport. Wine's IDirect3DViewport implementation
- * uses the IDirect3DDevice7 methods for it's functionality
+ * uses the IDirect3DDevice7 methods for its functionality
  *
  * Params:
  *  Viewport: Address to store the new interface pointer
@@ -600,7 +600,7 @@ Thunk_IDirect3DImpl_1_CreateViewport(IDirect3D *iface,
  *
  * Verion 1, 2 and 3
  * Params:
- *  D3DDFS: Describes the requested device charakteristics
+ *  D3DDFS: Describes the requested device characteristics
  *  D3DFDR: Returns the device description
  *
  * Returns:
@@ -767,12 +767,12 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IndexBufferParent->ref = 1;
 
     /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
-     * Create a (hopefully) long enought buffer, and copy the indices into it
+     * Create a (hopefully) long enough buffer, and copy the indices into it
      * Ideally, a IWineD3DIndexBuffer::SetData method could be created, which
      * takes the pointer and avoids the memcpy
      */
     hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice,
-                                          0x40000, /* Lenght. Don't know how long it should be */
+                                          0x40000, /* Length. Don't know how long it should be */
                                           0, /* Usage */
                                           WINED3DFMT_INDEX16, /* Format. D3D7 uses WORDS */
                                           WINED3DPOOL_DEFAULT,
@@ -832,7 +832,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     }
 
     /* AddRef the render target. Also AddRef the render target from ddraw,
-     * because if it released before the app releases the D3D device, the D3D capatiblities
+     * because if it is released before the app releases the D3D device, the D3D capabilities
      * of WineD3D will be uninitialized, which has bad effects.
      *
      * In most cases, those surfaces are the surfaces are the same anyway, but this will simply
@@ -919,7 +919,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p,%p,%08lx)\n", This, Desc, VertexBuffer, Flags);
 
-    TRACE("(%p) Vertex buffer description: \n", This);
+    TRACE("(%p) Vertex buffer description:\n", This);
     TRACE("(%p)  dwSize=%ld\n", This, Desc->dwSize);
     TRACE("(%p)  dwCaps=%08lx\n", This, Desc->dwCaps);
     TRACE("(%p)  FVF=%08lx\n", This, Desc->dwFVF);
@@ -1081,7 +1081,7 @@ Thunk_IDirect3DImpl_3_EnumZBufferFormats(IDirect3D3 *iface,
 /*****************************************************************************
  * IDirect3D7::EvictManagedTextures
  *
- * Removes all managed textures(=surfaces with DDSCAPS2_TEXTUREMANAGE or
+ * Removes all managed textures (=surfaces with DDSCAPS2_TEXTUREMANAGE or
  * DDSCAPS2_D3DTEXTUREMANAGE caps) to be removed from video memory.
  *
  * Version 3 and 7
@@ -1121,8 +1121,8 @@ Thunk_IDirect3DImpl_3_EvictManagedTextures(IDirect3D3 *iface)
  *
  * Params:
  *  WineD3D: The interface to get the caps from
- *  Desc123: Old D3D <3 structure to fill(needed)
- *  Desc7: D3D7 device desc structure to fill(needed)
+ *  Desc123: Old D3D <3 structure to fill (needed)
+ *  Desc7: D3D7 device desc structure to fill (needed)
  *
  * Returns
  *  D3D_OK on success, or the return value of IWineD3D::GetCaps

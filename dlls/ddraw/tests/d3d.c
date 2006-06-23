@@ -33,7 +33,7 @@ static LPDIRECT3DVERTEXBUFFER7 lpVBufDest1 = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufDest2 = NULL;
 
 /* To compare bad floating point numbers. Not the ideal way to do it,
- * but it should be enought for here */
+ * but it should be enough for here */
 #define comparefloat(a, b) ( ((a - b) < 0.0001) && ((a-b) > -0.0001) )
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);

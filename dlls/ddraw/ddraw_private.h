@@ -98,7 +98,7 @@ struct IDirectDrawImpl
     IDirectDrawSurfaceImpl  *DepthStencilBuffer;
     BOOL                    d3d_initialized;
 
-    /* misc ddraw fields */
+    /* Misc ddraw fields */
     UINT                    total_vidmem;
     DWORD                   cur_scanline;
     BOOL                    fake_vblank;
@@ -121,7 +121,7 @@ struct IDirectDrawImpl
     IDirect3DDeviceImpl     *d3ddevice;
     int                     d3dversion;
 
-    /* Varios HWNDs */
+    /* Various HWNDs */
     HWND                    focuswindow;
     HWND                    devicewindow;
 
@@ -396,7 +396,7 @@ struct IDirectDrawPaletteImpl
 const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
 
 /******************************************************************************
- * DirectDraw ClassFactory Implementation - incomplete
+ * DirectDraw ClassFactory implementation - incomplete
  ******************************************************************************/
 typedef struct
 {
@@ -470,7 +470,7 @@ struct IDirect3DMaterialImpl
     void (*activate)(IDirect3DMaterialImpl* this);
 };
 
-/* VTables in varios versions */
+/* VTables in various versions */
 const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl;
 const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl;
 const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl;

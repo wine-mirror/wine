@@ -70,7 +70,7 @@ const GUID IID_D3DDEVICE_WineD3D = {
  *
  * Used to query other interfaces from a Direct3DDevice interface.
  * It can return interface pointers to all Direct3DDevice versions as well
- * as IDirectDraw and IDirect3D. For a link for QueryInterface
+ * as IDirectDraw and IDirect3D. For a link to QueryInterface
  * rules see ddraw.c, IDirectDraw7::QueryInterface
  *
  * Exists in Version 1, 2, 3 and 7
@@ -217,7 +217,7 @@ Thunk_IDirect3DDeviceImpl_1_QueryInterface(IDirect3DDevice *iface,
  * IDirect3DDevice7::AddRef
  *
  * Increases the refcount....
- * The most exciting Method, definitly
+ * The most exciting Method, definitely
  *
  * Exists in Version 1, 2, 3 and 7
  *
@@ -435,7 +435,7 @@ IDirect3DDeviceImpl_1_Initialize(IDirect3DDevice *iface,
 /*****************************************************************************
  * IDirect3DDevice7::GetCaps
  *
- * Retrieves the device's capatiblities
+ * Retrieves the device's capabilities
  *
  * This implementation is used for Version 7 only, the older versions have
  * their own implementation.
@@ -463,8 +463,8 @@ IDirect3DDeviceImpl_7_GetCaps(IDirect3DDevice7 *iface,
 /*****************************************************************************
  * IDirect3DDevice3::GetCaps
  *
- * Retrieves the capatiblities of the hardware device and the emulation
- * device. For Wine, hardware and emulation are the same(it's all HW).
+ * Retrieves the capabilities of the hardware device and the emulation
+ * device. For Wine, hardware and emulation are the same (it's all HW).
  *
  * This implementation is used for Version 1, 2, and 3. Version 7 has its own
  *
@@ -634,7 +634,7 @@ Thunk_IDirect3DDeviceImpl_1_GetStats(IDirect3DDevice *iface,
  * Params:
  *  Desc: Buffer description
  *  ExecuteBuffer: Address to return the Interface pointer at
- *  UnkOuter: Must be NULL. Basically for aggreation, which ddraw doesn't
+ *  UnkOuter: Must be NULL. Basically for aggregation, which ddraw doesn't
  *            support
  *
  * Returns:
@@ -874,7 +874,7 @@ Thunk_IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
 /*****************************************************************************
  * IDirect3DDevice3::NextViewport
  *
- * Returns an viewport from the viewport list, depending on the
+ * Returns a viewport from the viewport list, depending on the
  * passed viewport and the flags.
  *
  * Exists in Version 1, 2 and 3. Note that all Viewport interface versions
@@ -886,7 +886,7 @@ Thunk_IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if the flags were wrong, ir Viewport was NULL
+ *  DDERR_INVALIDPARAMS if the flags were wrong, or Viewport was NULL
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1093,7 +1093,7 @@ EnumTextureFormatsCB(IUnknown *Device,
         ( fmt == WINED3DFMT_V8U8)        ||
         ( fmt == WINED3DFMT_L6V5U5)      )
     {
-        /* These formats exist exist in D3D3 and D3D7 only,
+        /* These formats exist in D3D3 and D3D7 only,
          * so do not call the older callback
          */
         if(cbs->cbv7) return cbs->cbv7(pformat, cbs->Context);
@@ -1115,7 +1115,7 @@ EnumTextureFormatsCB(IUnknown *Device,
  * and a EnumTextureFormatsCB translated the WineD3DFormats to DDraw
  * formats and calls the application callback.
  *
- * This is for Version 7 and 3, the older versions have a different
+ * This is for Version 7 and 3, older versions have a different
  * callback function and their own implementation
  *
  * Params:
@@ -1385,7 +1385,7 @@ IDirect3DDeviceImpl_1_DeleteMatrix(IDirect3DDevice *iface,
  * Version 1, 2, 3 and 7
  *
  * Returns:
- *  D3D_OK on sucess, for details see IWineD3DDevice::BeginScene
+ *  D3D_OK on success, for details see IWineD3DDevice::BeginScene
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1784,7 +1784,7 @@ Thunk_IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *iface,
 /*****************************************************************************
  * IDirect3DDevice3::Begin
  *
- * Begins a description block of vertices. This is simmilar to glBegin()
+ * Begins a description block of vertices. This is similar to glBegin()
  * and glEnd(). After a call to IDirect3DDevice3::End, the vertices
  * described with IDirect3DDevice::Vertex are drawn.
  *
@@ -1853,7 +1853,7 @@ Thunk_IDirect3DDeviceImpl_2_Begin(IDirect3DDevice2 *iface,
  * Params:
  *  PrimitiveType: Primitive type to draw
  *  VertexType: A FVF description of the vertex format
- *  Vertices: pointer to an array containg the vertices
+ *  Vertices: pointer to an array containing the vertices
  *  NumVertices: The number of vertices in the vertex array
  *  Flags: Some flags ...
  *
@@ -1908,7 +1908,7 @@ Thunk_IDirect3DDeviceImpl_2_BeginIndexed(IDirect3DDevice2 *iface,
  * IDirect3DDevice3::Vertex
  *
  * Draws a vertex as described by IDirect3DDevice3::Begin. It places all
- * drawn vertices in an vertex buffer. If the buffer is to small, its
+ * drawn vertices in a vertex buffer. If the buffer is too small, its
  * size is increased.
  *
  * Version 2 and 3
@@ -1962,7 +1962,7 @@ Thunk_IDirect3DDeviceImpl_2_Vertex(IDirect3DDevice2 *iface,
 /*****************************************************************************
  * IDirect3DDevice3::Index
  *
- * Specifies an index to an vertex to be drawn. The vertex array has to
+ * Specifies an index to a vertex to be drawn. The vertex array has to
  * be specified with BeginIndexed first.
  *
  * Parameters:
@@ -2256,7 +2256,7 @@ Thunk_IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if the paramters were incorrect
+ *  DDERR_INVALIDPARAMS if the parameters were incorrect
  *  Also check IDirect3DDevice7::SetRenderState
  *
  *****************************************************************************/
@@ -2449,11 +2449,11 @@ Thunk_IDirect3DDeviceImpl_2_GetLightState(IDirect3DDevice2 *iface,
 /*****************************************************************************
  * IDirect3DDevice7::SetTransform
  *
- * Assignes a D3DMATRIX to a transform type. The transform types are defined
+ * Assigns a D3DMATRIX to a transform type. The transform types are defined
  * in include/d3dtypes.h.
  * The D3DTRANSFORMSTATE_WORLD (=1) is translated to D3DTS_WORLDMATRIX(0)
  * (=255) for wined3d, because the 1 transform state was removed in d3d8
- * and WineD3D allready understands the replacement D3DTS_WORLDMATRIX(0)
+ * and WineD3D already understands the replacement D3DTS_WORLDMATRIX(0)
  *
  * Version 2, 3 and 7
  *
@@ -2643,7 +2643,7 @@ Thunk_IDirect3DDeviceImpl_2_MultiplyTransform(IDirect3DDevice2 *iface,
 /*****************************************************************************
  * IDirect3DDevice7::DrawPrimitive
  *
- * Draws primitves based on vertices in an application-provided pointer
+ * Draws primitives based on vertices in an application-provided pointer
  *
  * Version 2, 3 and 7. The IDirect3DDevice2 thunk converts the fixed vertex type into
  * an FVF format for D3D7
@@ -3014,7 +3014,7 @@ Thunk_IDirect3DDeviceImpl_2_GetClipStatus(IDirect3DDevice2 *iface,
  *
  * Params:
  *  PrimitiveType: The primitive type to draw
- *  VertexType: The FVF description of the vertices to draw(for the stride??)
+ *  VertexType: The FVF description of the vertices to draw (for the stride??)
  *  D3DDrawPrimStrideData: A D3DDRAWPRIMITIVESTRIDEDDATA structure describing
  *                         the vertex data locations
  *  VertexCount: The number of vertices to draw
@@ -3044,8 +3044,8 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
     /* Get the strided data right. the wined3d structure is a bit bigger
      * Watch out: The contents of the strided data are determined by the fvf,
      * not by the members set in D3DDrawPrimStrideData. So it's valid
-     * to have diffuse.lpvData set to 0xdeadbeef and not setting the diffuse
-     * flag in the fvf.
+     * to have diffuse.lpvData set to 0xdeadbeef if the diffuse flag is
+     * not set in the fvf.
      */
     if(VertexType & D3DFVF_POSITION_MASK)
     {
@@ -3300,7 +3300,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    /* Set the vertex stream souce */
+    /* Set the vertex stream source */
     hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,
                                         0 /* StreamNumber */,
                                         vb->wineD3DVertexBuffer,
@@ -3462,7 +3462,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
                                    This->indexbuffer,
                                    0);
 
-    /* Set the vertex stream souce */
+    /* Set the vertex stream source */
     hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,
                                         0 /* StreamNumber */,
                                         vb->wineD3DVertexBuffer,
@@ -3513,19 +3513,19 @@ Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface,
  *
  * Calculates the visibility of spheres in the current viewport. The spheres
  * are passed in the Centers and Radii arrays, the results are passed back
- * in the ReturnValues array. Return values are eighter completely visible,
+ * in the ReturnValues array. Return values are either completely visible,
  * partially visible or completely invisible.
  * The return value consist of a combination of D3DCLIP_* flags, or it's
  * 0 if the sphere is completely visible(according to the SDK, not checked)
  *
- * Sounds like an overdose math ;)
+ * Sounds like an overdose of math ;)
  *
  * Version 3 and 7
  *
  * Params:
  *  Centers: Array containing the sphere centers
- *  Radii: Array containing the sphere radis
- *  NumSpheres: The number of centers and radiis in the arrays
+ *  Radii: Array containing the sphere radii
+ *  NumSpheres: The number of centers and radii in the arrays
  *  Flags: Some flags
  *  ReturnValues: Array to write the results to
  *
@@ -3564,7 +3564,7 @@ IDirect3DDeviceImpl_7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
      *    Not visible
      * ->Some intersections: Partially visible
      *
-     * Implement this call in WineD3D. Eighter implement the
+     * Implement this call in WineD3D. Either implement the
      * matrix and vector stuff in WineD3D, or use some external
      * math library.
      */
@@ -3663,7 +3663,7 @@ Thunk_IDirect3DDeviceImpl_3_GetTexture(IDirect3DDevice3 *iface,
 /*****************************************************************************
  * IDirect3DDevice7::SetTexture
  *
- * Assignes a texture to a texture stage. Is the texture AddRefed?
+ * Assigns a texture to a texture stage. Is the texture AddRef-ed?
  *
  * Version 3 and 7
  *
@@ -3848,7 +3848,7 @@ Thunk_IDirect3DDeviceImpl_3_SetTextureStageState(IDirect3DDevice3 *iface,
  * Version 3 and 7
  *
  * Params:
- *  NumPasses: Address to write the number of neccessary passes for the
+ *  NumPasses: Address to write the number of necessary passes for the
  *             desired effect to.
  *
  * Returns:
@@ -4012,7 +4012,7 @@ IDirect3DDeviceImpl_7_SetMaterial(IDirect3DDevice7 *iface,
  * Version 7
  *
  * Params:
- *  Mat: D3DMATERIAL7 structure to write the material paramters to
+ *  Mat: D3DMATERIAL7 structure to write the material parameters to
  *
  * Returns:
  *  D3D_OK on success
@@ -4313,7 +4313,7 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
 /*****************************************************************************
  * IDirect3DDevice7::Load
  *
- * Loads an rectangular area from the source into the destination texture.
+ * Loads a rectangular area from the source into the destination texture.
  * It can also copy the source to the faces of a cubic environment map
  *
  * Version 7
@@ -4385,7 +4385,7 @@ IDirect3DDeviceImpl_7_LightEnable(IDirect3DDevice7 *iface,
 /*****************************************************************************
  * IDirect3DDevice7::GetLightEnable
  *
- * Retrieves if the light with the given index is enables or not
+ * Retrieves if the light with the given index is enabled or not
  *
  * Version 7
  *
@@ -4479,7 +4479,7 @@ IDirect3DDeviceImpl_7_GetClipPlane(IDirect3DDevice7 *iface,
  * IDirect3DDevice7::GetInfo
  *
  * Retrieves some information about the device. The DirectX sdk says that
- * this version returnes S_FALSE for all retail build of DirectX, that's
+ * this version returns S_FALSE for all retail builds of DirectX, that's what
  * this implementation does.
  *
  * Params:

@@ -25,7 +25,7 @@
 #define IDI_WINEFILE                    100
 
 
-/* accellerators and menus */
+/* accelerators and menus */
 
 #define IDA_WINEFILE                    101
 #define IDM_WINEFILE                    102

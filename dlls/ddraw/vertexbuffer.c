@@ -188,8 +188,8 @@ Thunk_IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
  * IDirect3DVertexBuffer7::Lock
  *
  * Locks the vertex buffer and returns a pointer to the vertex data
- * Locking vertex buffers is simmilar to locking surfaces, because Windows
- * uses surfaces to store vertex data internally(According to the DX sdk)
+ * Locking vertex buffers is similar to locking surfaces, because Windows
+ * uses surfaces to store vertex data internally (According to the DX sdk)
  *
  * Params:
  *  Flags: Locking flags. Relevant here are DDLOCK_READONLY, DDLOCK_WRITEONLY,

@@ -5184,7 +5184,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
                 x  /= 2;
                 y  /= 2;
 
-                /* Msdn mentiones that Direct3D9 keeps a list of clipped vertices
+                /* Msdn mentions that Direct3D9 keeps a list of clipped vertices
                  * outside of the main vertex buffer memory. That needs some more
                  * investigation...
                  */

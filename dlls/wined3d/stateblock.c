@@ -89,7 +89,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 IWineD3DVertexDeclaration_Release(This->vertexDecl);
             }
 
-            /* NOTE: according to MSDN: The applicaion is responsible for making sure the texture references are cleared down */
+            /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(textures); counter++) {
                 if (This->textures[counter]) {
                     /* release our 'internal' hold on the texture */
