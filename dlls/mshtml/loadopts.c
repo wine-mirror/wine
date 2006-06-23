@@ -35,10 +35,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct load_opt {
+    DWORD option;
+    PVOID buffer;
+    DWORD size;
+
+    struct load_opt *next;
+} load_opt;
+
 typedef struct {
     const IHtmlLoadOptionsVtbl *lpHtmlLoadOptionsVtbl;
 
     LONG ref;
+
+    load_opt *opts;
 } HTMLLoadOptions;
 
 #define LOADOPTS(x)  ((IHtmlLoadOptions*) &(x)->lpHtmlLoadOptionsVtbl)
@@ -89,8 +99,19 @@ static ULONG WINAPI HtmlLoadOptions_Release(IHtmlLoadOptions *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        load_opt *iter = This->opts, *last;
+
+        while(iter) {
+            last = iter;
+            iter = iter->next;
+
+            HeapFree(GetProcessHeap(), 0, last->buffer);
+            HeapFree(GetProcessHeap(), 0, last);
+        }
+
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -99,16 +120,66 @@ static HRESULT WINAPI HtmlLoadOptions_QueryOption(IHtmlLoadOptions *iface, DWORD
         LPVOID pBuffer, ULONG *pcbBuf)
 {
     HTMLLoadOptions *This = LOADOPTS_THIS(iface);
-    FIXME("(%p)->(%ld %p %p)\n", This, dwOption, pBuffer, pcbBuf);
-    return E_NOTIMPL;
+    load_opt *iter;
+
+    TRACE("(%p)->(%ld %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+
+    for(iter = This->opts; iter; iter = iter->next) {
+        if(iter->option == dwOption)
+            break;
+    }
+
+    if(!iter) {
+        *pcbBuf = 0;
+        return S_OK;
+    }
+
+    if(*pcbBuf < iter->size) {
+        *pcbBuf = iter->size;
+        return E_FAIL;
+    }
+
+    memcpy(pBuffer, iter->buffer, iter->size);
+    *pcbBuf = iter->size;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD dwOption,
         LPVOID pBuffer, ULONG cbBuf)
 {
     HTMLLoadOptions *This = LOADOPTS_THIS(iface);
-    FIXME("(%p)->(%ld %p %ld)\n", This, dwOption, pBuffer, cbBuf);
-    return E_NOTIMPL;
+    load_opt *iter = NULL;
+
+    TRACE("(%p)->(%ld %p %ld)\n", This, dwOption, pBuffer, cbBuf);
+
+    for(iter = This->opts; iter; iter = iter->next) {
+        if(iter->option == dwOption)
+            break;
+    }
+
+    if(!iter) {
+        iter = HeapAlloc(GetProcessHeap(), 0, sizeof(load_opt));
+        iter->next = This->opts;
+        This->opts = iter;
+
+        iter->option = dwOption;
+    }else {
+        HeapFree(GetProcessHeap(), 0, iter->buffer);
+    }
+
+    if(!cbBuf) {
+        iter->buffer = NULL;
+        iter->size = 0;
+
+        return S_OK;
+    }
+
+    iter->size = cbBuf;
+    iter->buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf);
+    memcpy(iter->buffer, pBuffer, iter->size);
+
+    return S_OK;
 }
 
 #undef LOADOPTS_THIS
@@ -132,6 +203,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown *pUnkOuter, REFIID riid, void** ppv)
 
     ret->lpHtmlLoadOptionsVtbl = &HtmlLoadOptionsVtbl;
     ret->ref = 1;
+    ret->opts = NULL;
 
     hres = IHtmlLoadOptions_QueryInterface(LOADOPTS(ret), riid, ppv);
     IHtmlLoadOptions_Release(LOADOPTS(ret));
