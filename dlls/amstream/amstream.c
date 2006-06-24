@@ -2,6 +2,7 @@
  * Implementation of IAMMultiMediaStream Interface
  *
  * Copyright 2004 Christian Costa
+ * Copyright 2006 Ivan Leo Puoti
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -38,6 +39,8 @@ typedef struct {
     IAMMultiMediaStream lpVtbl;
     LONG ref;
     IGraphBuilder* pFilterGraph;
+    IPin* ipin;
+    IGraphBuilder* GraphBuilder;
     ULONG nbStreams;
     IMediaStream** pStreams;
     STREAM_TYPE StreamType;
@@ -280,11 +283,67 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR pszFileName, DWORD dwFlags)
 {
+    HRESULT ret;
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
+    IFileSourceFilter *SourceFilter;
+    IBaseFilter *BaseFilter;
+    IEnumPins *EnumPins;
+    IPin *ipin;
+    PIN_DIRECTION pin_direction;
 
-    FIXME("(%p/%p)->(%s,%lx) stub!\n", This, iface, debugstr_w(pszFileName), dwFlags);
+    TRACE("(%p/%p)->(%s,%lx)\n", This, iface, debugstr_w(pszFileName), dwFlags);
 
-    return E_NOTIMPL;
+    ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
+    if(ret != S_OK)
+        return ret;
+
+    ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
+    if(ret != S_OK)
+    {
+        IFileSourceFilter_Release(SourceFilter);
+        return ret;
+    }
+
+    ret = IFileSourceFilter_QueryInterface(SourceFilter, &IID_IBaseFilter, (void**)&BaseFilter);
+    if(ret != S_OK)
+    {
+        IFileSourceFilter_Release(SourceFilter);
+        return ret;
+    }
+
+    ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
+    if(ret != S_OK)
+    {
+        goto end;
+    }
+
+    ret = IEnumPins_Next(EnumPins, 1, &ipin, NULL);
+    if(ret == S_OK)
+    {
+        ret = IPin_QueryDirection(ipin, &pin_direction);
+        IEnumPins_Release(EnumPins);
+        if(ret == S_OK && pin_direction == PINDIR_OUTPUT)
+            This->ipin = ipin;
+        else
+            goto end;
+    }
+    else
+    {
+        IEnumPins_Release(EnumPins);
+        goto end;
+    }
+
+    ret = IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)&This->GraphBuilder);
+    if(ret != S_OK)
+    {
+        goto end;
+    }
+
+    ret = IGraphBuilder_AddSourceFilter(This->GraphBuilder, pszFileName, pszFileName, &BaseFilter);
+    end:
+    IBaseFilter_Release(BaseFilter);
+    IFileSourceFilter_Release(SourceFilter);
+    return ret;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenMoniker(IAMMultiMediaStream* iface, IBindCtx* pCtx, IMoniker* pMoniker, DWORD dwFlags)
@@ -300,9 +359,12 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%lx) stub!\n", This, iface, dwFlags); 
+    FIXME("(%p/%p)->(%lx)\n", This, iface, dwFlags);
 
-    return E_NOTIMPL;
+    if(dwFlags != AMMSF_NOCLOCK)
+        return E_INVALIDARG;
+
+    return IGraphBuilder_Render(This->GraphBuilder, This->ipin);
 }
 
 static const IAMMultiMediaStreamVtbl AM_Vtbl =
