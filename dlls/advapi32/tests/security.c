@@ -706,6 +706,9 @@ static void test_token_attr(void)
     DWORD i, GLE;
     LPSTR SidString;
 
+    if(!pConvertSidToStringSidA)
+        return;
+
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
     GLE = GetLastError();
     ok(ret || (GLE == ERROR_CALL_NOT_IMPLEMENTED), 
