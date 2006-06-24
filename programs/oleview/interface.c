@@ -110,24 +110,28 @@ INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
     return FALSE;
 }
 
-void IPersistStreamInterfaceViewer(WCHAR *clsid)
+void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
     WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
 
-    di.wszLabel = wszClassMoniker;
+    if(wszName[0] == '{')
+        di.wszLabel = wszClassMoniker;
+    else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
     DialogBoxParam(0, MAKEINTRESOURCE(DLG_IPERSISTSTREAM_IV),
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
-void IPersistInterfaceViewer(WCHAR *clsid)
+void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
     WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
 
-    di.wszLabel = wszClassMoniker;
+    if(wszName[0] == '{')
+        di.wszLabel = wszClassMoniker;
+    else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
     DialogBoxParam(0, MAKEINTRESOURCE(DLG_IPERSIST_IV),
@@ -150,6 +154,7 @@ void InterfaceViewer(HTREEITEM item)
     TVITEM tvi;
     WCHAR *clsid;
     WCHAR wszName[MAX_LOAD_STRING];
+    WCHAR wszParent[MAX_LOAD_STRING];
     WCHAR wszIPersistStream[] = { '{','0','0','0','0','0','1','0','9','-',
         '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
         '0','0','0','0','0','0','0','0','0','0','4','6','}','\0' };
@@ -166,11 +171,19 @@ void InterfaceViewer(HTREEITEM item)
     SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
     clsid = ((ITEM_INFO*)tvi.lParam)->clsid;
 
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_TEXT;
+    tvi.hItem = TreeView_GetParent(globals.hTree, item);
+    tvi.cchTextMax = MAX_LOAD_STRING;
+    tvi.pszText = wszParent;
+
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
     if(!memcmp(clsid, wszIPersistStream, sizeof(wszIPersistStream)))
-        IPersistStreamInterfaceViewer(clsid);
+        IPersistStreamInterfaceViewer(clsid, wszParent);
 
     else if(!memcmp(clsid, wszIPersist, sizeof(wszIPersist)))
-        IPersistInterfaceViewer(clsid);
+        IPersistInterfaceViewer(clsid, wszParent);
 
     else DefaultInterfaceViewer(clsid, wszName);
 }
