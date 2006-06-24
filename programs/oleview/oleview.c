@@ -203,6 +203,8 @@ void RefreshMenu(HTREEITEM item)
     tvi.hItem = item;
     SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 
+    parent = TreeView_GetParent(globals.hTree, item);
+
     SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
     SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
     SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
@@ -228,7 +230,8 @@ void RefreshMenu(HTREEITEM item)
             SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, TRUE);
         }
     }
-    else if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag&INTERFACE)
+    else if(tvi.lParam && 
+            (((ITEM_INFO *)tvi.lParam)->cFlag&INTERFACE || parent==tree.hTL))
     {
         EnableMenuItem(hMenu, IDM_TYPEINFO, MF_GRAYED);
         EnableMenuItem(hMenu, IDM_CREATEINST, MF_GRAYED);
@@ -249,8 +252,8 @@ void RefreshMenu(HTREEITEM item)
         EnableMenuItem(hMenu, IDM_HTMLTAG, MF_GRAYED);
         EnableMenuItem(hMenu, IDM_VIEW, MF_GRAYED);
     }
-    parent = TreeView_GetParent(globals.hTree, item);
-    if(parent==tree.hAID || parent==tree.hGBCC || parent==tree.hTL)
+
+    if(parent==tree.hAID || parent==tree.hGBCC)
         EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
 }
 
@@ -376,6 +379,10 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
             CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
                     vis ? MF_UNCHECKED : MF_CHECKED);
             ResizeChild();
+            break;
+        case IDM_VIEW:
+            hSelect = TreeView_GetSelection(globals.hTree);
+            if(IsInterface(hSelect)) InterfaceViewer(hSelect);
             break;
         case IDM_EXIT:
             DestroyWindow(hWnd);

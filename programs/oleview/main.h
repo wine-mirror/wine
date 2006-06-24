@@ -118,3 +118,7 @@ HWND CreateTreeWindow(HINSTANCE hInst);
 BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize);
 void CreateInst(HTREEITEM item, WCHAR *wszMachineName);
 void ReleaseInst(HTREEITEM item);
+
+/* interface.h */
+BOOL IsInterface(HTREEITEM item);
+void InterfaceViewer(HTREEITEM item);

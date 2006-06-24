@@ -10,6 +10,7 @@ EXTRADEFS = -DUNICODE
 
 C_SRCS = \
 	details.c \
+	interface.c \
 	oleview.c \
 	pane.c \
 	tree.c

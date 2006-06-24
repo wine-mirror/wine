@@ -74,3 +74,16 @@
 #define DLG_SYSCONF                1010
 #define IDC_ENABLEDCOM             1011
 #define IDC_ENABLEREMOTE           1012
+
+#define DLG_IPERSIST_IV            1020
+
+#define DLG_DEFAULT_IV             1030
+#define IDC_VIEWTYPEINFO           1031
+#define IDC_LABEL                  1032
+#define IDC_IDENTIFIER             1033
+
+#define DLG_IPERSISTSTREAM_IV      1040
+#define IDC_ISDIRTY                1041
+#define IDC_GETSIZEMAX             1042
+#define IDC_ISDIRTY_BUTTON         1043
+#define IDC_GETSIZEMAX_BUTTON      1044
