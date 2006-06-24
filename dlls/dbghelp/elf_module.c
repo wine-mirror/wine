@@ -125,7 +125,7 @@ struct symtab_elt
     unsigned                    used;
 };
 
-struct thunk_area
+struct elf_thunk_area
 {
     const char*                 symname;
     THUNK_ORDINAL               ordinal;
@@ -250,13 +250,32 @@ static void elf_unmap_file(struct elf_file_map* fmap)
 }
 
 /******************************************************************
+ *		elf_is_in_thunk_area
+ *
+ * Check whether an address lies within one of the thunk area we
+ * know of.
+ */
+int elf_is_in_thunk_area(unsigned long addr,
+                         const struct elf_thunk_area* thunks)
+{
+    unsigned i;
+
+    for (i = 0; thunks[i].symname; i++)
+    {
+        if (addr >= thunks[i].rva_start && addr < thunks[i].rva_end)
+            return i;
+    }
+    return -1;
+}
+
+/******************************************************************
  *		elf_hash_symtab
  *
  * creating an internal hash table to ease use ELF symtab information lookup
  */
 static void elf_hash_symtab(struct module* module, struct pool* pool, 
                             struct hash_table* ht_symtab, struct elf_file_map* fmap,
-                            int symtab_idx, struct thunk_area* thunks)
+                            int symtab_idx, struct elf_thunk_area* thunks)
 {
     int		                i, j, nsym;
     const char*                 strp;
@@ -503,7 +522,7 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
  * creating the thunk objects for a wine native DLL
  */
 static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symtab,
-                               unsigned num_areas, struct thunk_area* thunks)
+                               const struct elf_thunk_area* thunks)
 {
     int		                j;
     struct hash_table_iter      hti;
@@ -518,13 +537,8 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
 
         addr = module->elf_info->elf_addr + ste->symp->st_value;
 
-        for (j = 0; j < num_areas; j++)
-        {
-            if (ste->symp->st_value >= thunks[j].rva_start && 
-                ste->symp->st_value < thunks[j].rva_end)
-                break;
-        }
-        if (j < num_areas) /* thunk found */
+        j = elf_is_in_thunk_area(ste->symp->st_value, thunks);
+        if (j >= 0) /* thunk found */
         {
             symt_new_thunk(module, ste->compiland, ste->ht_elt.name, thunks[j].ordinal,
                            addr, ste->symp->st_size);
@@ -767,7 +781,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect;
     int                 debug_sect, debug_str_sect, debug_abbrev_sect, debug_line_sect;
     int                 debuglink_sect;
-    struct thunk_area   thunks[] = 
+    struct elf_thunk_area thunks[] = 
     {
         {"__wine_spec_import_thunks",           THUNK_ORDINAL_NOTYPE, 0, 0},    /* inter DLL calls */
         {"__wine_spec_delayed_import_loaders",  THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
@@ -883,7 +897,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
-                lret = dwarf2_parse(module, module->elf_info->elf_addr,
+                lret = dwarf2_parse(module, module->elf_info->elf_addr, thunks,
                                     dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
                                     dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
                                     dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
@@ -930,8 +944,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     {
         /* add the thunks for native libraries */
         if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
-            elf_new_wine_thunks(module, ht_symtab, 
-                                sizeof(thunks) / sizeof(thunks[0]), thunks);
+            elf_new_wine_thunks(module, ht_symtab, thunks);
     }
     /* add all the public symbols from symtab */
     if (elf_new_public_symbols(module, ht_symtab) && !ret) ret = TRUE;

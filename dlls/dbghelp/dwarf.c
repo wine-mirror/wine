@@ -170,6 +170,7 @@ typedef struct dwarf2_parse_context_s
 {
     struct pool                 pool;
     struct module*              module;
+    const struct elf_thunk_area*thunks;
     struct sparse_array         abbrev_table;
     struct sparse_array         debug_info_table;
     unsigned char               word_size;
@@ -1255,6 +1256,13 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.uvalue = 0;
     if (!dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc)) high_pc.uvalue = 0;
+    /* As functions (defined as inline assembly) get debug info with dwarf
+     * (not the case for stabs), we just drop Wine's thunks here...
+     * Actual thunks will be created in elf_module from the symbol table
+     */
+    if (elf_is_in_thunk_area(ctx->module->module.BaseOfImage + low_pc.uvalue,
+                             ctx->thunks) >= 0)
+        return NULL;
     if (!dwarf2_find_attribute(di, DW_AT_declaration, &is_decl)) is_decl.uvalue = 0;
     if (!dwarf2_find_attribute(di, DW_AT_inline, &inline_flags)) inline_flags.uvalue = 0;
     dwarf2_find_name(ctx, di, &name, "subprogram");
@@ -1558,6 +1566,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
                                           const dwarf2_comp_unit_t* comp_unit,
                                           struct module* module,
+                                          const struct elf_thunk_area* thunks,
                                           const unsigned char* comp_unit_cursor)
 {
     dwarf2_parse_context_t ctx;
@@ -1583,6 +1592,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     pool_init(&ctx.pool, 65536);
     ctx.module = module;
     ctx.word_size = comp_unit->word_size;
+    ctx.thunks = thunks;
 
     traverse.sections = sections;
     traverse.section = section_debug;
@@ -1634,6 +1644,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 }
 
 BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
+                  const struct elf_thunk_area* thunks,
 		  const unsigned char* debug, unsigned int debug_size,
 		  const unsigned char* abbrev, unsigned int abbrev_size,
 		  const unsigned char* str, unsigned int str_size,
@@ -1663,7 +1674,8 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
         comp_unit.abbrev_offset = *(unsigned long*) comp_unit_stream->abbrev_offset;
         comp_unit.word_size = *(unsigned char*) comp_unit_stream->word_size;
 
-        dwarf2_parse_compilation_unit(section, &comp_unit, module, comp_unit_cursor);
+        dwarf2_parse_compilation_unit(section, &comp_unit, module,
+                                      thunks, comp_unit_cursor);
         comp_unit_cursor += comp_unit.length + sizeof(unsigned);
     }
     module->module.SymType = SymDia;

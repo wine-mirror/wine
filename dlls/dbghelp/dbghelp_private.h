@@ -375,7 +375,8 @@ extern struct module*
                     elf_load_module(struct process* pcs, const char* name, unsigned long);
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
-
+struct elf_thunk_area;
+extern int          elf_is_in_thunk_area(unsigned long addr, const struct elf_thunk_area* thunks);
 extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* module.c */
@@ -432,6 +433,7 @@ extern BOOL         stabs_parse(struct module* module, unsigned long load_offset
 
 /* dwarf.c */
 extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offset,
+                                 const struct elf_thunk_area* thunks,
 				 const unsigned char* debug, unsigned int debug_size, 
 				 const unsigned char* abbrev, unsigned int abbrev_size, 
 				 const unsigned char* str, unsigned int str_size,
