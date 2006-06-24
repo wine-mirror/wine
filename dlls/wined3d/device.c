@@ -1779,7 +1779,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         object->wantsDepthStencilBuffer = FALSE;
     }
 
-    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? NULL : object->backBuffer[0], object->wantsDepthStencilBuffer);
+    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? object->backBuffer[0] : NULL, object->wantsDepthStencilBuffer);
 
 
    /*********************
