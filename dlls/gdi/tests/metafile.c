@@ -1338,7 +1338,7 @@ static void checkConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL m
 
   if (getConvertedFrameAndBounds(buffer_size, buffer, mfpIsNull, mm, xExt, yExt, &rclBounds, &rclFrame))
   {
-    char * msg;
+    const char * msg;
     char buf[64];
 
     if (mfpIsNull)
@@ -1347,7 +1347,7 @@ static void checkConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL m
     }
     else
     {
-      char * mm_str;
+      const char * mm_str;
       switch (mm)
       {
          case MM_ANISOTROPIC: mm_str = "MM_ANISOTROPIC"; break;
