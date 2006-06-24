@@ -43,9 +43,9 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
     TVINSERTSTRUCT tvis;
     HTREEITEM addPlace = parent;
 
-    tvis.item.mask = TVIF_TEXT;
-    tvis.item.cchTextMax = MAX_LOAD_STRING;
-    tvis.item.pszText = wszTree;
+    U(tvis).item.mask = TVIF_TEXT;
+    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    U(tvis).item.pszText = wszTree;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = parent;
 
@@ -61,9 +61,9 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
         {
             if(!i && lstrlenW(wszKeyName) > 1)
             {
-                tvis.item.pszText = (LPWSTR)wszKeyName;
+                U(tvis).item.pszText = (LPWSTR)wszKeyName;
                 addPlace = TreeView_InsertItem(details.hReg, &tvis);
-                tvis.item.pszText = wszTree;
+                U(tvis).item.pszText = wszTree;
             }
             break;
         }
@@ -210,9 +210,9 @@ void CreateReg(WCHAR *buffer)
     TVINSERTSTRUCT tvis;
     HTREEITEM addPlace = TVI_ROOT;
 
-    tvis.item.mask = TVIF_TEXT;
-    tvis.item.cchTextMax = MAX_LOAD_STRING;
-    tvis.item.pszText = wszTree;
+    U(tvis).item.mask = TVIF_TEXT;
+    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    U(tvis).item.pszText = wszTree;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = TVI_ROOT;
 

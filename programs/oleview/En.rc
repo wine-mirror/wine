@@ -116,6 +116,9 @@ STRINGTABLE
 
     IDS_CGCOFAIL,          "CoGetClassObject failed."
     IDS_ERROR_UNKN,        "Unknown error"
+    IDS_TRUE               "True"
+    IDS_FALSE              "False"
+    IDS_BYTES              "bytes"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41

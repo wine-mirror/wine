@@ -72,9 +72,8 @@ INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
     HRESULT hRes;
     ULARGE_INTEGER size;
     WCHAR wszSize[MAX_LOAD_STRING];
-    WCHAR wszTRUE[] = { 'T','R','U','E','\0' };
-    WCHAR wszFALSE[] = { 'F','A','L','S','E','\0' };
-    WCHAR wszFormat[] = { '%','d',' ','b','y','t','e','s','\0' };
+    WCHAR wszBuf[MAX_LOAD_STRING];
+    WCHAR wszFormat[] = { '%','d',' ','%','s','\0' };
 
     switch(uMsg)
     {
@@ -94,14 +93,21 @@ INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 unk = GetInterface();
                 hRes = IPersistStream_IsDirty((IPersistStream *)unk);
                 IUnknown_Release(unk);
+                if(hRes == S_OK)
+                    LoadString(globals.hMainInst, IDS_FALSE, wszBuf,
+                            sizeof(WCHAR[MAX_LOAD_STRING]));
+                else LoadString(globals.hMainInst, IDS_TRUE, wszBuf,
+                        sizeof(WCHAR[MAX_LOAD_STRING]));
                 hObject = GetDlgItem(hDlgWnd, IDC_ISDIRTY);
-                SetWindowText(hObject, hRes ==  S_OK ? wszFALSE : wszTRUE);
+                SetWindowText(hObject, wszBuf);
                 return TRUE;
             case IDC_GETSIZEMAX_BUTTON:
                 unk = GetInterface();
                 IPersistStream_GetSizeMax((IPersistStream *)unk, &size);
                 IUnknown_Release(unk);
-                wsprintfW(wszSize, wszFormat, size);
+                LoadString(globals.hMainInst, IDS_BYTES, wszBuf,
+                        sizeof(WCHAR[MAX_LOAD_STRING]));
+                wsprintfW(wszSize, wszFormat, U(size).LowPart, wszBuf);
                 hObject = GetDlgItem(hDlgWnd, IDC_GETSIZEMAX);
                 SetWindowText(hObject, wszSize);
                 return TRUE;
