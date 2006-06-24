@@ -1787,6 +1787,10 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
                                  DDSCAPS_3DDEVICE       ) )
     {
         Usage |= WINED3DUSAGE_RENDERTARGET;
+
+        pDDSD->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY |
+                                 DDSCAPS_VISIBLE     |
+                                 DDSCAPS_LOCALVIDMEM;
     }
     if(This->depthstencil)
     {
