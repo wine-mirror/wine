@@ -159,21 +159,25 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
 
         if ( IsEqualGUID( &IID_IDirect3D  , refiid ) )
         {
+            This->d3dversion = 1;
             *obj = ICOM_INTERFACE(This, IDirect3D);
             TRACE(" returning Direct3D interface at %p.\n", *obj);
         }
         else if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) )
         {
+            This->d3dversion = 2;
             *obj = ICOM_INTERFACE(This, IDirect3D2);
             TRACE(" returning Direct3D2 interface at %p.\n", *obj);
         }
         else if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) )
         {
+            This->d3dversion = 3;
             *obj = ICOM_INTERFACE(This, IDirect3D3);
             TRACE(" returning Direct3D3 interface at %p.\n", *obj);
         }
         else if(IsEqualGUID( &IID_IDirect3D7  , refiid ))
         {
+            This->d3dversion = 7;
             *obj = ICOM_INTERFACE(This, IDirect3D7);
             TRACE(" returning Direct3D7 interface at %p.\n", *obj);
         }

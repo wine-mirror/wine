@@ -276,7 +276,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     hr = IDirect3DImpl_GetCaps(This->wineD3D, &dref, &newDesc);
     if(hr != D3D_OK) return hr;
 
-    /* Do I have to enumerate the reference id? I try without. Note from old d3d7:
+    /* Do I have to enumerate the reference id? Note from old d3d7:
      * "It seems that enumerating the reference IID on Direct3D 1 games
      * (AvP / Motoracer2) breaks them". So do not enumerate this iid in V1
      *
@@ -284,14 +284,34 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
      * which enables / disables enumerating the reference rasterizer. It's a DWORD,
      * 0 means disabled, 2 means enabled. The enablerefrast.reg and disablerefrast.reg
      * files in the DirectX 7.0 sdk demo directory suggest this.
+     *
+     * Some games(GTA 2) seem to use the secound enumerated device, so I have to enumerate
+     * at least 2 devices. So enumerate the reference device to have 2 devices.
      */
+
+    if(This->d3dversion != 1)
+    {
+        TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
+        d1 = dref;
+        d2 = dref;
+        hr = Callback( (LPIID) &IID_IDirect3DRefDevice, "Reference Direct3D ID", device_name, &d1, &d2, Context);
+        if(hr != D3DENUMRET_OK)
+        {
+            TRACE("Application cancelled the enumeration\n");
+            return D3D_OK;
+        }
+    }
 
     TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
     d1 = dref;
     d2 = dref;
-    Callback( (LPIID) &IID_D3DDEVICE_WineD3D, "Wine D3DDevice using WineD3D and OpenGL", device_name, &d1, &d2, Context);
+    hr = Callback( (LPIID) &IID_D3DDEVICE_WineD3D, "Wine D3DDevice using WineD3D and OpenGL", device_name, &d1, &d2, Context);
+    if(hr != D3DENUMRET_OK)
+    {
+        TRACE("Application cancelled the enumeration\n");
+        return D3D_OK;
+    }
     TRACE("(%p) End of enumeration\n", This);
-    if(hr != D3DENUMRET_OK) return D3D_OK;
 
     return D3D_OK;
 }

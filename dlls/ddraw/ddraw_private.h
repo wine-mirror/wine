@@ -119,13 +119,14 @@ struct IDirectDrawImpl
     IDirectDrawSurfaceImpl  *d3d_target;
     HWND                    d3d_window;
     IDirect3DDeviceImpl     *d3ddevice;
+    int                     d3dversion;
 
     /* Varios HWNDs */
     HWND                    focuswindow;
     HWND                    devicewindow;
 
     /* The surface type to request */
-    WINED3DSURFTYPE ImplType;
+    WINED3DSURFTYPE         ImplType;
 
     /* The surface list - can't relay this to WineD3D
      * because of IParent
