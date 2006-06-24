@@ -768,7 +768,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
         if (backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
             GLint  prev_store;
-            GLint  prev_draw;
             GLint  prev_depth_test;
             GLint  prev_rasterpos[4];
 
@@ -792,8 +791,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             glFlush();
             vcheckGLcall("glFlush");
-            glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
-            vcheckGLcall("glIntegerv");
             glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
             vcheckGLcall("glIntegerv");
             glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
@@ -920,8 +917,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             glPixelZoom(1.0,1.0);
             vcheckGLcall("glPixelZoom");
-            glDrawBuffer(prev_draw);
-            vcheckGLcall("glDrawBuffer");
+            if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
+                glDrawBuffer(GL_BACK);
+                vcheckGLcall("glDrawBuffer");
+            }
             glRasterPos3iv(&prev_rasterpos[0]);
             vcheckGLcall("glRasterPos3iv");
             if(prev_depth_test) glEnable(GL_DEPTH_TEST);
@@ -2357,7 +2356,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* This is easy to handle for the D3D Device... */
         DWORD color;
         IWineD3DSwapChainImpl *implSwapChain;
-        GLint  prev_draw;
 
         TRACE("Colorfill\n");
 
@@ -2396,10 +2394,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             return WINED3DERR_INVALIDCALL;
         }
 
-        /* Are we drawing to the Front buffer or the back buffer? */
-        glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
-        vcheckGLcall("glIntegerv");
-
         TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) implSwapChain );
@@ -2427,8 +2421,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                               0 /* Stencil */);
 
         /* Restore the original draw buffer */
-        glDrawBuffer(prev_draw);
-        vcheckGLcall("glDrawBuffer");
+        if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
+            glDrawBuffer(GL_BACK);
+            vcheckGLcall("glDrawBuffer");
+        }
 
         return WINED3D_OK;
     }
