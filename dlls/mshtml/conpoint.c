@@ -197,6 +197,19 @@ static void ConnectionPoint_Create(HTMLDocument *doc, REFIID riid, ConnectionPoi
     *cp = ret;
 }
 
+static void ConnectionPoint_Destroy(ConnectionPoint *This)
+{
+    int i;
+
+    for(i=0; i<This->sinks_size; i++) {
+        if(This->sinks[i].unk)
+            IUnknown_Release(This->sinks[i].unk);
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->sinks);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 #define CONPTCONT_THIS(iface) DEFINE_THIS(HTMLDocument, ConnectionPointContainer, iface)
 
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
@@ -270,4 +283,11 @@ void HTMLDocument_ConnectionPoints_Init(HTMLDocument *This)
     ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_propnotif);
     ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents, &This->cp_htmldocevents);
     ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents2, &This->cp_htmldocevents2);
+}
+
+void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument *This)
+{
+    ConnectionPoint_Destroy(This->cp_propnotif);
+    ConnectionPoint_Destroy(This->cp_htmldocevents);
+    ConnectionPoint_Destroy(This->cp_htmldocevents2);
 }

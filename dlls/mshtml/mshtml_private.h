@@ -260,6 +260,8 @@ void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 void HTMLDocument_ConnectionPoints_Init(HTMLDocument*);
 
+void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument*);
+
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 

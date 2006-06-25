@@ -157,6 +157,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
         release_nodes(This);
 
+        HTMLDocument_ConnectionPoints_Destroy(This);
+
         if(This->nscontainer)
             NSContainer_Release(This->nscontainer);
 
