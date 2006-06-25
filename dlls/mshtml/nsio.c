@@ -255,8 +255,8 @@ static nsresult NSAPI nsChannel_GetStatus(nsIHttpChannel *iface, nsresult *aStat
     if(This->channel)
         return nsIChannel_GetStatus(This->channel, aStatus);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    TRACE("returning NS_OK\n");
+    return *aStatus = NS_OK;
 }
 
 static nsresult NSAPI nsChannel_Cancel(nsIHttpChannel *iface, nsresult aStatus)
