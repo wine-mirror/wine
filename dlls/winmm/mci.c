@@ -1285,6 +1285,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     /* Determine devType from open */
     if (!strcmpW(verb, wszOpen)) {
 	LPWSTR	devType, tmp;
+        WCHAR	buf[128];
 
 	/* case dev == 'new' has to be handled */
 	if (!strcmpW(dev, wszNew)) {
@@ -1310,8 +1311,9 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    devType = str_dup_upper(devType);
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD)dev;
-	} else if (strchrW(dev, '.') == NULL) {
-	    tmp = strchrW(dev,' ');
+	} else if (DRIVER_GetLibName(dev, wszMci, buf, sizeof(buf))) {
+            /* this is the name of a mci driver's type */
+	    tmp = strchrW(dev, ' ');
 	    if (tmp) *tmp = '\0';
 	    data[2] = (DWORD)dev;
 	    devType = str_dup_upper(dev);
@@ -1326,7 +1328,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 		if (tmp) *tmp = ' ';
 		/* dwFlags and data[2] will be correctly set in ParseOpt loop */
 	    } else {
-		WCHAR	buf[32];
 		if ((dwRet = MCI_GetDevTypeFromFileName(dev, buf, sizeof(buf))))
 		    goto errCleanUp;
 
