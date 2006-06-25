@@ -358,6 +358,8 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
 
                 if(This->nsstream->buf_size)
                     FIXME("buffer is not empty!\n");
+            }else {
+                break;
             }
         }while(hres == S_OK);
     }
