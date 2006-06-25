@@ -480,8 +480,9 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
     if(This->channel)
         return nsIChannel_GetContentType(This->channel, aContentType);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    TRACE("returning default text/html\n");
+    nsACString_Init(aContentType, "text/html");
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetContentType(nsIHttpChannel *iface,
