@@ -158,8 +158,15 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, dwCookie);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%ld)\n", This, dwCookie);
+
+    if(!dwCookie || dwCookie > This->sinks_size || !This->sinks[dwCookie-1].unk)
+        return CONNECT_E_NOCONNECTION;
+
+    IUnknown_Release(This->sinks[dwCookie-1].unk);
+    This->sinks[dwCookie-1].unk = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
