@@ -40,6 +40,14 @@ struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
     HTMLDocument *doc;
+
+    union {
+        IUnknown *unk;
+        IDispatch *disp;
+        IPropertyNotifySink *propnotif;
+    } *sinks;
+    DWORD sinks_size;
+
     IID iid;
 };
 
@@ -113,8 +121,38 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
                                              DWORD *pdwCookie)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, pUnkSink, pdwCookie);
-    return E_NOTIMPL;
+    IUnknown *sink;
+    DWORD i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p)\n", This, pUnkSink, pdwCookie);
+
+    hres = IUnknown_QueryInterface(pUnkSink, &This->iid, (void**)&sink);
+    if(FAILED(hres) && !IsEqualGUID(&IID_IPropertyNotifySink, &This->iid)) {
+        hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatch, (void**)&sink);
+        if(FAILED(hres))
+            return CONNECT_E_CANNOTCONNECT;
+    }
+
+    if(This->sinks) {
+        for(i=0; i<This->sinks_size; i++) {
+            if(!This->sinks[i].unk)
+                break;
+        }
+
+        if(i == This->sinks_size)
+            This->sinks = HeapReAlloc(GetProcessHeap(), 0, This->sinks,
+                    (++This->sinks_size)*sizeof(*This->sinks));
+    }else {
+        This->sinks = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->sinks));
+        This->sinks_size = 1;
+        i = 0;
+    }
+
+    This->sinks[i].unk = sink;
+    *pdwCookie = i+1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
@@ -152,6 +190,8 @@ static void ConnectionPoint_Create(HTMLDocument *doc, REFIID riid, ConnectionPoi
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
     ret->doc = doc;
+    ret->sinks = NULL;
+    ret->sinks_size = 0;
     memcpy(&ret->iid, riid, sizeof(IID));
 
     *cp = ret;
