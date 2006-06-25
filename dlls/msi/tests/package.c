@@ -404,14 +404,10 @@ static void test_settargetpath(void)
         {
             sprintf( tempdir, "%s\\subdir", buffer );
             r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
-            todo_wine {
             ok( r == ERROR_SUCCESS, "MsiSetTargetPath on file returned %d\n", r );
-            }
 
             r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
-            todo_wine {
             ok( r == ERROR_SUCCESS, "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
-            }
 
             DeleteFile( buffer );
 
@@ -422,9 +418,7 @@ static void test_settargetpath(void)
             ok ( r == INVALID_FILE_ATTRIBUTES, "file/directory exists after MsiSetTargetPath. Attributes: %08X\n", r );
 
             r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
-            todo_wine {
             ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
-            }
         } else {
             trace("GetTempFileName failed, cannot do some tests\n");
         }

@@ -336,24 +336,14 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 
     attrib = GetFileAttributesW(szFolderPath);
     if ( attrib != INVALID_FILE_ATTRIBUTES &&
-          (!(attrib & FILE_ATTRIBUTE_DIRECTORY) ||
-           attrib & FILE_ATTRIBUTE_OFFLINE ||
-           attrib & FILE_ATTRIBUTE_READONLY))
+          (attrib & FILE_ATTRIBUTE_OFFLINE ||
+           attrib & FILE_ATTRIBUTE_READONLY)) /* actually native MSI tests writeability by making temporary files at each drive */
         return ERROR_FUNCTION_FAILED;
 
     path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
     if (!path)
         return ERROR_DIRECTORY;
 
-    if (attrib == INVALID_FILE_ATTRIBUTES)
-    {
-        if (!CreateDirectoryW(szFolderPath,NULL))
-        {
-            msi_free( path );
-            return ERROR_FUNCTION_FAILED;
-        }
-        RemoveDirectoryW(szFolderPath);
-    }
 
     msi_free(folder->Property);
     folder->Property = build_directory_name(2, szFolderPath, NULL);
