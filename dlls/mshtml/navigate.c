@@ -293,7 +293,13 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         HRESULT hresult, LPCWSTR szError)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
+
+    TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
+
+    if(This->nslistener)
+        nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
+                This->nscontext, NS_OK);
+
     return S_OK;
 }
 
