@@ -45,7 +45,7 @@
 @ stdcall SymEnumTypes(ptr double ptr ptr)
 @ stub SymEnumTypesW
 @ stdcall SymEnumerateModules(long ptr ptr)
-@ stub SymEnumerateModules64
+@ stdcall SymEnumerateModules64(long ptr ptr)
 @ stub SymEnumerateModulesW64
 @ stdcall SymEnumerateSymbols(long long ptr ptr)
 @ stub SymEnumerateSymbols64

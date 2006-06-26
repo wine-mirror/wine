@@ -608,6 +608,30 @@ BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
 }
 
 /******************************************************************
+ *		SymEnumerateModules64 (DBGHELP.@)
+ *
+ */
+BOOL  WINAPI SymEnumerateModules64(HANDLE hProcess,
+                                   PSYM_ENUMMODULES_CALLBACK64 EnumModulesCallback,  
+                                   PVOID UserContext)
+{
+    struct process*     pcs = process_find_by_handle(hProcess);
+    struct module*      module;
+
+    if (!pcs) return FALSE;
+    
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
+            continue;
+        if (!EnumModulesCallback(module->module.ModuleName, 
+                                 module->module.BaseOfImage, UserContext))
+            break;
+    }
+    return TRUE;
+}
+
+/******************************************************************
  *		EnumerateLoadedModules (DBGHELP.@)
  *
  */
