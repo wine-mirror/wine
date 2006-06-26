@@ -117,11 +117,10 @@ void info_help(void)
     while (infotext[i]) dbg_printf("%s\n", infotext[i++]);
 }
 
-static const char* get_symtype_str(SYM_TYPE st)
+static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
 {
-    switch (st)
+    switch (mi->SymType)
     {
-    case -1:            return "\\";
     default:
     case SymNone:       return "--none--";
     case SymCoff:       return "COFF";
@@ -130,40 +129,53 @@ static const char* get_symtype_str(SYM_TYPE st)
     case SymExport:     return "Export";
     case SymDeferred:   return "Deferred";
     case SymSym:        return "Sym";
-    case SymDia:        return "DIA";
-    case NumSymTypes:   return "Stabs";
+    case SymDia:
+        switch (mi->CVSig)
+        {
+        case 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24):
+            return "Stabs";
+        case 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24):
+            return "Dwarf";
+        default:
+            return "DIA";
+
+        }
     }
 }
 
 struct info_module
 {
-    IMAGEHLP_MODULE*    mi;
+    IMAGEHLP_MODULE64*  mi;
     unsigned            num_alloc;
     unsigned            num_used;
 };
 
-static void module_print_info(const IMAGEHLP_MODULE* mi, SYM_TYPE st)
+static void module_print_info(const IMAGEHLP_MODULE64* mi, BOOL is_embedded)
 {
-    dbg_printf("0x%08lx-%08lx\t%-16s%s\n",
-               mi->BaseOfImage, mi->BaseOfImage + mi->ImageSize,
-               get_symtype_str(st), mi->ModuleName);
+    dbg_printf("%s-%s\t%-16s%s\n",
+               wine_dbgstr_longlong(mi->BaseOfImage),
+               wine_dbgstr_longlong(mi->BaseOfImage + mi->ImageSize),
+               is_embedded ? "\\" : get_symtype_str(mi), mi->ModuleName);
 }
 
 static int      module_compare(const void* p1, const void* p2)
 {
-    return (char*)(((const IMAGEHLP_MODULE*)p1)->BaseOfImage) -
-        (char*)(((const IMAGEHLP_MODULE*)p2)->BaseOfImage);
+    LONGLONG val = ((const IMAGEHLP_MODULE64*)p1)->BaseOfImage -
+        ((const IMAGEHLP_MODULE64*)p2)->BaseOfImage;
+    if (val < 0) return -1;
+    else if (val > 0) return 1;
+    else return 0;
 }
 
-static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
-                                     const IMAGEHLP_MODULE* wmod_child)
+static inline BOOL module_is_container(const IMAGEHLP_MODULE64* wmod_cntnr,
+                                       const IMAGEHLP_MODULE64* wmod_child)
 {
     return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
-        (DWORD)wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
-        (DWORD)wmod_child->BaseOfImage + wmod_child->ImageSize;
+        wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
+        wmod_child->BaseOfImage + wmod_child->ImageSize;
 }
 
-static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD base, void* ctx)
+static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD64 base, void* ctx)
 {
     struct info_module* im = (struct info_module*)ctx;
 
@@ -173,7 +185,7 @@ static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD base, void* ctx)
         im->mi = dbg_heap_realloc(im->mi, im->num_alloc * sizeof(*im->mi));
     }
     im->mi[im->num_used].SizeOfStruct = sizeof(im->mi[im->num_used]);
-    if (SymGetModuleInfo(dbg_curr_process->handle, base, &im->mi[im->num_used]))
+    if (SymGetModuleInfo64(dbg_curr_process->handle, base, &im->mi[im->num_used]))
     {
         im->num_used++;
     }   
@@ -195,16 +207,16 @@ void info_win32_module(DWORD base)
 
     if (base)
     {
-        IMAGEHLP_MODULE     mi;
+        IMAGEHLP_MODULE64       mi;
 
         mi.SizeOfStruct = sizeof(mi);
 
-        if (!SymGetModuleInfo(dbg_curr_process->handle, base, &mi))
+        if (!SymGetModuleInfo64(dbg_curr_process->handle, base, &mi))
         {
             dbg_printf("'0x%08lx' is not a valid module address\n", base);
             return;
         }
-        module_print_info(&mi, mi.SymType);
+        module_print_info(&mi, FALSE);
     }
     else
     {
@@ -219,7 +231,7 @@ void info_win32_module(DWORD base)
          * enumeration
          */
         SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-        SymEnumerateModules(dbg_curr_process->handle, info_mod_cb, (void*)&im);
+        SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, (void*)&im);
         SymSetOptions(opt);
 
         qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
@@ -231,14 +243,14 @@ void info_win32_module(DWORD base)
             if (strstr(im.mi[i].ModuleName, "<elf>"))
             {
                 dbg_printf("ELF\t");
-                module_print_info(&im.mi[i], (im.mi[i].SymType == SymDia) ? NumSymTypes : im.mi[i].SymType);
+                module_print_info(&im.mi[i], FALSE);
                 /* print all modules embedded in this one */
                 for (j = 0; j < im.num_used; j++)
                 {
                     if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
                     {
                         dbg_printf("  \\-PE\t");
-                        module_print_info(&im.mi[j], -1);
+                        module_print_info(&im.mi[j], TRUE);
                     }
                 }
             }
@@ -255,7 +267,7 @@ void info_win32_module(DWORD base)
                     dbg_printf("ELF\t");
                 else
                     dbg_printf("PE\t");
-                module_print_info(&im.mi[i], im.mi[i].SymType);
+                module_print_info(&im.mi[i], FALSE);
             }
         }
         HeapFree(GetProcessHeap(), 0, im.mi);
