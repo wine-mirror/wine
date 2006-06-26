@@ -165,7 +165,7 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
   if (!lpszDest || (!lpszDir && !lpszFile))
     return NULL; /* Invalid parameters */
 
-  if (!lpszFile || !*lpszFile)
+  if ((!lpszFile || !*lpszFile) && lpszDir)
   {
     /* Use dir only */
     lstrcpynW(szTemp, lpszDir, MAX_PATH);
