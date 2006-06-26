@@ -1319,7 +1319,7 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
         if (DDSD->dwFlags & DDSD_WIDTH)
             Width = DDSD->dwWidth;
         if (DDSD->dwFlags & DDSD_HEIGHT)
-            Width = DDSD->dwHeight;
+            Height = DDSD->dwHeight;
         if ((DDSD->dwFlags & DDSD_PIXELFORMAT) && (DDSD->u4.ddpfPixelFormat.dwFlags & DDPF_RGB) )
             pixelformat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
     }
