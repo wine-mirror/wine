@@ -146,6 +146,7 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
 struct info_module
 {
     IMAGEHLP_MODULE64*  mi;
+    DWORD               base;
     unsigned            num_alloc;
     unsigned            num_used;
 };
@@ -199,79 +200,70 @@ static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD64 base, void* ctx)
  */
 void info_win32_module(DWORD base)
 {
+    struct info_module  im;
+    int                 i, j, num_printed = 0;
+    DWORD               opt;
+
     if (!dbg_curr_process || !dbg_curr_thread)
     {
         dbg_printf("Cannot get info on module while no process is loaded\n");
         return;
     }
 
-    if (base)
+    im.mi = NULL;
+    im.num_alloc = im.num_used = 0;
+
+    /* this is a wine specific options to return also ELF modules in the
+     * enumeration
+     */
+    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, (void*)&im);
+    SymSetOptions(opt);
+
+    qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
+
+    dbg_printf("Module\tAddress\t\t\tDebug info\tName (%d modules)\n", im.num_used);
+
+    for (i = 0; i < im.num_used; i++)
     {
-        IMAGEHLP_MODULE64       mi;
-
-        mi.SizeOfStruct = sizeof(mi);
-
-        if (!SymGetModuleInfo64(dbg_curr_process->handle, base, &mi))
+        if (base && 
+            (base < im.mi[i].BaseOfImage || base >= im.mi[i].BaseOfImage + im.mi[i].ImageSize))
+            continue;
+        if (strstr(im.mi[i].ModuleName, "<elf>"))
         {
-            dbg_printf("'0x%08lx' is not a valid module address\n", base);
-            return;
-        }
-        module_print_info(&mi, FALSE);
-    }
-    else
-    {
-        struct info_module      im;
-        int			i, j;
-        DWORD                   opt;
-
-        im.mi = NULL;
-        im.num_alloc = im.num_used = 0;
-
-        /* this is a wine specific options to return also ELF modules in the
-         * enumeration
-         */
-        SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-        SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, (void*)&im);
-        SymSetOptions(opt);
-
-        qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
-
-        dbg_printf("Module\tAddress\t\t\tDebug info\tName (%d modules)\n", im.num_used);
-
-        for (i = 0; i < im.num_used; i++)
-        {
-            if (strstr(im.mi[i].ModuleName, "<elf>"))
+            dbg_printf("ELF\t");
+            module_print_info(&im.mi[i], FALSE);
+            /* print all modules embedded in this one */
+            for (j = 0; j < im.num_used; j++)
             {
+                if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
+                {
+                    dbg_printf("  \\-PE\t");
+                    module_print_info(&im.mi[j], TRUE);
+                }
+            }
+        }
+        else
+        {
+            /* check module is not embedded in another module */
+            for (j = 0; j < im.num_used; j++) 
+            {
+                if (strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[j], &im.mi[i]))
+                    break;
+            }
+            if (j < im.num_used) continue;
+            if (strstr(im.mi[i].ModuleName, ".so") || strchr(im.mi[i].ModuleName, '<'))
                 dbg_printf("ELF\t");
-                module_print_info(&im.mi[i], FALSE);
-                /* print all modules embedded in this one */
-                for (j = 0; j < im.num_used; j++)
-                {
-                    if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
-                    {
-                        dbg_printf("  \\-PE\t");
-                        module_print_info(&im.mi[j], TRUE);
-                    }
-                }
-            }
             else
-            {
-                /* check module is not embedded in another module */
-                for (j = 0; j < im.num_used; j++) 
-                {
-                    if (strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[j], &im.mi[i]))
-                        break;
-                }
-                if (j < im.num_used) continue;
-                if (strstr(im.mi[i].ModuleName, ".so") || strchr(im.mi[i].ModuleName, '<'))
-                    dbg_printf("ELF\t");
-                else
-                    dbg_printf("PE\t");
-                module_print_info(&im.mi[i], FALSE);
-            }
+                dbg_printf("PE\t");
+            module_print_info(&im.mi[i], FALSE);
         }
-        HeapFree(GetProcessHeap(), 0, im.mi);
+        num_printed++;
     }
+    HeapFree(GetProcessHeap(), 0, im.mi);
+
+    if (base && !num_printed)
+        dbg_printf("'0x%08lx' is not a valid module address\n", base);
 }
 
 struct class_walker
