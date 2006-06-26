@@ -359,7 +359,7 @@
 @ stdcall SHHelpShortcuts_RunDLLW(long long long long)
 @ stub SHInvokePrinterCommandA
 @ stub SHInvokePrinterCommandW
-@ stub SHIsFileAvailableOffline
+@ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(long)
 @ stub SHLoadNonloadedIconOverlayIdentifiers
 @ stub SHPathPrepareForWriteA

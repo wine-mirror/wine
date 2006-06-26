@@ -86,6 +86,12 @@ BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
     return TRUE;
 }
 
+HRESULT WINAPI SHIsFileAvailableOffline(LPCWSTR path, LPDWORD status)
+{
+    FIXME("(%s, %p) stub\n", debugstr_w(path), status);
+    return E_FAIL;
+}
+
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
