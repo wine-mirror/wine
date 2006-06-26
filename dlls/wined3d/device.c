@@ -1582,16 +1582,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     XFree(object->visInfo);
     object->visInfo = NULL;
 
-    if (NULL == object->glCtx) {
-        ERR("cannot create glxContext\n");
-        LEAVE_GL();
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
     LEAVE_GL();
-    if (object->glCtx == NULL) {
-        ERR("Error in context creation !\n");
-        return WINED3DERR_INVALIDCALL;
+
+    if (!object->glCtx) {
+        ERR("Failed to create GLX context\n");
+        return WINED3DERR_NOTAVAILABLE;
     } else {
         TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
                 object->win_handle, object->glCtx, object->win, object->visInfo);
