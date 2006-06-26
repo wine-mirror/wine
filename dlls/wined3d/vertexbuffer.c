@@ -142,9 +142,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                 /* Using shaders? No conversion needed, the shaders handle this */
                 TRACE("Using vertex shaders, not doing any vertex conversion\n");
                 ENTER_GL();
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER, This->vbo));
+                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
                 checkGLcall("glBindBufferARB");
-                GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER, 0, This->resource.size, This->resource.allocatedMemory));
+                GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
                 checkGLcall("glUnmapBuffer glBufferSubDataARB");
                 LEAVE_GL();
                 HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
@@ -299,9 +299,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER, start, end - start, data));
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
 
@@ -346,21 +346,21 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
           data = This->resource.allocatedMemory;
           This->Flags |= VBFLAG_DIRTY;
     } else {
-        GLenum mode = GL_READ_WRITE;
+        GLenum mode = GL_READ_WRITE_ARB;
         /* Return data to the VBO */
 
         TRACE("Locking directly into the buffer\n");
 
         if((This->resource.usage & WINED3DUSAGE_WRITEONLY) || ( Flags & D3DLOCK_DISCARD) ) {
-            mode = GL_WRITE_ONLY;
+            mode = GL_WRITE_ONLY_ARB;
         } else if( Flags & (D3DLOCK_READONLY | D3DLOCK_NO_DIRTY_UPDATE) ) {
-            mode = GL_READ_ONLY;
+            mode = GL_READ_ONLY_ARB;
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        data = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER, mode));
+        data = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, mode));
         LEAVE_GL();
         if(!data) {
             ERR("glMapBuffer failed\n");
@@ -378,9 +378,9 @@ HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     TRACE("(%p)\n", This);
     if(!This->resource.allocatedMemory) {
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER));
+        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
         checkGLcall("glUnmapBufferARB");
         LEAVE_GL();
     } else {
