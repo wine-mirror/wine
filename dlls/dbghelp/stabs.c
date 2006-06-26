@@ -1534,6 +1534,13 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
               stab_ptr->n_type, stab_ptr->n_value, debugstr_a(strs + stab_ptr->n_un.n_strx));
     }
     module->module.SymType = SymDia;
+    module->module.CVSig = 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24);
+    /* FIXME: we could have a finer grain here */
+    module->module.LineNumbers = TRUE;
+    module->module.GlobalSymbols = TRUE;
+    module->module.TypeInfo = TRUE;
+    module->module.SourceIndexed = TRUE;
+    module->module.Publics = TRUE;
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();

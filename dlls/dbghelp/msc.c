@@ -2189,7 +2189,6 @@ static BOOL pdb_process_internal(const struct process* pcs,
     else
         pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image, pdb_lookup, 
                                    module_index);
-    msc_dbg->module->module.SymType = SymCv;
     ret = TRUE;
 
  leave:
@@ -2214,6 +2213,22 @@ static BOOL pdb_process_file(const struct process* pcs,
     codeview_init_basic_types(msc_dbg->module);
     ret = pdb_process_internal(pcs, msc_dbg, pdb_lookup, -1);
     codeview_clear_type_table();
+    if (ret)
+    {
+        msc_dbg->module->module.SymType = SymCv;
+        if (pdb_lookup->kind == PDB_JG)
+            msc_dbg->module->module.PdbSig = pdb_lookup->u.jg.timestamp;
+        else
+            msc_dbg->module->module.PdbSig70 = pdb_lookup->u.ds.guid;
+        msc_dbg->module->module.PdbAge = pdb_lookup->age;
+        strcpy(msc_dbg->module->module.LoadedPdbName, pdb_lookup->filename);
+        /* FIXME: we could have a finer grain here */
+        msc_dbg->module->module.LineNumbers = TRUE;
+        msc_dbg->module->module.GlobalSymbols = TRUE;
+        msc_dbg->module->module.TypeInfo = TRUE;
+        msc_dbg->module->module.SourceIndexed = TRUE;
+        msc_dbg->module->module.Publics = TRUE;
+    }
     return ret;
 }
 
@@ -2336,6 +2351,12 @@ static BOOL codeview_process_info(const struct process* pcs,
         }
 
         msc_dbg->module->module.SymType = SymCv;
+        /* FIXME: we could have a finer grain here */
+        msc_dbg->module->module.LineNumbers = TRUE;
+        msc_dbg->module->module.GlobalSymbols = TRUE;
+        msc_dbg->module->module.TypeInfo = TRUE;
+        msc_dbg->module->module.SourceIndexed = TRUE;
+        msc_dbg->module->module.Publics = TRUE;
         codeview_clear_type_table();
         ret = TRUE;
         break;
@@ -2362,6 +2383,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         pdb_lookup.kind = PDB_DS;
         pdb_lookup.u.ds.guid = rsds->guid;
         pdb_lookup.u.ds.toc = NULL;
+        pdb_lookup.age = rsds->unknown;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
     }
@@ -2370,7 +2392,12 @@ static BOOL codeview_process_info(const struct process* pcs,
             cv->dwSignature, msc_dbg->module->module.ModuleName);
         break;
     }
-
+    if (ret)
+    {
+        msc_dbg->module->module.CVSig = cv->dwSignature;
+        memcpy(msc_dbg->module->module.CVData, cv,
+               sizeof(msc_dbg->module->module.CVData));
+    }
     return ret;
 }
 

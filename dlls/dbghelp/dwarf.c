@@ -1679,5 +1679,12 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
         comp_unit_cursor += comp_unit.length + sizeof(unsigned);
     }
     module->module.SymType = SymDia;
+    module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
+    /* FIXME: we could have a finer grain here */
+    module->module.LineNumbers = TRUE;
+    module->module.GlobalSymbols = TRUE;
+    module->module.TypeInfo = TRUE;
+    module->module.SourceIndexed = TRUE;
+    module->module.Publics = TRUE;
     return TRUE;
 }

@@ -298,8 +298,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             DWORD base = msc_dbg->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
             nampnt = coff_get_name(coff_sym, coff_strtab);
 
-            TRACE("%d: %lx %s\n",
-                  i, msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
+            TRACE("%d: %s %s\n",
+                  i, wine_dbgstr_longlong(msc_dbg->module->module.BaseOfImage + base + coff_sym->Value),
                   nampnt);
             TRACE("\tAdding global symbol %s (sect=%s)\n",
                   nampnt, msc_dbg->sectp[coff_sym->SectionNumber - 1].Name);
@@ -343,8 +343,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
              */
             nampnt = coff_get_name(coff_sym, coff_strtab);
 
-            TRACE("%d: %lx %s\n",
-                  i, msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
+            TRACE("%d: %s %s\n",
+                  i, wine_dbgstr_longlong(msc_dbg->module->module.BaseOfImage + base + coff_sym->Value),
                   nampnt);
             TRACE("\tAdding global data symbol %s\n", nampnt);
 
@@ -442,6 +442,12 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 	}
         HeapFree(GetProcessHeap(), 0, coff_files.files);
         msc_dbg->module->module.SymType = SymCoff;
+        /* FIXME: we could have a finer grain here */
+        msc_dbg->module->module.LineNumbers = TRUE;
+        msc_dbg->module->module.GlobalSymbols = TRUE;
+        msc_dbg->module->module.TypeInfo = FALSE;
+        msc_dbg->module->module.SourceIndexed = TRUE;
+        msc_dbg->module->module.Publics = TRUE;
         ret = TRUE;
     }
 

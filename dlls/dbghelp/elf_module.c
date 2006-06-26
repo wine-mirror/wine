@@ -929,7 +929,9 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                 fmap_link.with_crc = 1;
                 lret = elf_load_debug_info_from_map(module, &fmap_link, pool,
                                                     ht_symtab);
-                if (!lret)
+                if (lret)
+                    strcpy(module->module.LoadedPdbName, dbg_link);
+                else
                     WARN("Couldn't load debug information from %s\n", dbg_link);
                 ret = ret || lret;
             }

@@ -274,7 +274,7 @@ enum module_type
 
 struct module
 {
-    IMAGEHLP_MODULE             module;
+    IMAGEHLP_MODULE64           module;
     struct module*              next;
     enum module_type		type : 16;
     unsigned short              is_virtual : 1;
