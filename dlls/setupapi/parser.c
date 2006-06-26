@@ -1220,6 +1220,8 @@ void WINAPI SetupCloseInfFile( HINF hinf )
     struct inf_file *file = hinf;
     unsigned int i;
 
+    if (!file) return;
+
     for (i = 0; i < file->nb_sections; i++) HeapFree( GetProcessHeap(), 0, file->sections[i] );
     HeapFree( GetProcessHeap(), 0, file->filename );
     HeapFree( GetProcessHeap(), 0, file->sections );

@@ -387,10 +387,18 @@ static void test_key_names(void)
 
 }
 
+static void test_close_inf_file(void)
+{
+    SetLastError(0xdeadbeef);
+    SetupCloseInfFile(NULL);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+}
+
 START_TEST(parser)
 {
     test_invalid_files();
     test_section_names();
     test_key_names();
+    test_close_inf_file();
     DeleteFileA( tmpfile );
 }
