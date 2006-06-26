@@ -1833,7 +1833,8 @@ Thunk_IDirect3DDeviceImpl_2_Begin(IDirect3DDevice2 *iface,
         case D3DVT_LVERTEX: FVF = D3DFVF_LVERTEX; break;
         case D3DVT_TLVERTEX: FVF = D3DFVF_TLVERTEX; break;
         default:
-            assert(0);  /* Should never happen */
+            ERR("Unexpected vertex type %d\n", dwVertexTypeDesc);
+            return DDERR_INVALIDPARAMS;  /* Should never happen */
     };
 
     return IDirect3DDevice3_Begin(ICOM_INTERFACE(This, IDirect3DDevice3),
@@ -1893,7 +1894,8 @@ Thunk_IDirect3DDeviceImpl_2_BeginIndexed(IDirect3DDevice2 *iface,
         case D3DVT_LVERTEX: FVF = D3DFVF_LVERTEX; break;
         case D3DVT_TLVERTEX: FVF = D3DFVF_TLVERTEX; break;
         default:
-            assert(0);  /* Should never happen */
+            ERR("Unexpected vertex type %d\n", d3dvtVertexType);
+            return DDERR_INVALIDPARAMS;  /* Should never happen */
     };
 
     return IDirect3DDevice3_BeginIndexed(ICOM_INTERFACE(This,IDirect3DDevice3),
@@ -2758,7 +2760,8 @@ Thunk_IDirect3DDeviceImpl_2_DrawPrimitive(IDirect3DDevice2 *iface,
         case D3DVT_LVERTEX: FVF = D3DFVF_LVERTEX; break;
         case D3DVT_TLVERTEX: FVF = D3DFVF_TLVERTEX; break;
         default:
-            assert(0);  /* Should never happen */
+            ERR("Unexpected vertex type %d\n", VertexType);
+            return DDERR_INVALIDPARAMS;  /* Should never happen */
     }
 
     return IDirect3DDevice7_DrawPrimitive(ICOM_INTERFACE(This, IDirect3DDevice7),
@@ -2898,7 +2901,8 @@ Thunk_IDirect3DDeviceImpl_2_DrawIndexedPrimitive(IDirect3DDevice2 *iface,
         case D3DVT_LVERTEX: FVF = D3DFVF_LVERTEX; break;
         case D3DVT_TLVERTEX: FVF = D3DFVF_TLVERTEX; break;
         default:
-            assert(0);  /* Should never happen */
+            ERR("Unexpected vertex type %d\n", VertexType);
+            return DDERR_INVALIDPARAMS;  /* Should never happen */
     }
 
     return IDirect3DDevice7_DrawIndexedPrimitive(ICOM_INTERFACE(This, IDirect3DDevice7),
