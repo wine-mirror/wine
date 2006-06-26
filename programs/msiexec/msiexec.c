@@ -25,6 +25,7 @@
 #include <msi.h>
 #include <objbase.h>
 #include <stdio.h>
+#include <shellapi.h>
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -210,14 +211,6 @@ static DWORD msi_atou(LPCWSTR str)
 	return 0;
 }
 
-static LPWSTR msi_strdup(LPCWSTR str)
-{
-	DWORD len = lstrlenW(str)+1;
-	LPWSTR ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
-	lstrcpyW(ret, str);
-	return ret;
-}
-
 /* str1 is the same as str2, ignoring case */
 static BOOL msi_strequal(LPCWSTR str1, LPCSTR str2)
 {
@@ -316,97 +309,6 @@ static DWORD DoDllUnregisterServer(LPCWSTR DllName)
 	return 0;
 }
 
-/*
- * state machine to break up the command line properly
- */
-
-enum chomp_state
-{
-	cs_whitespace,
-	cs_token,
-	cs_quote
-};
-
-static int chomp( WCHAR *str )
-{
-	enum chomp_state state = cs_whitespace;
-	WCHAR *p, *out;
-	int count = 0, ignore;
-
-	for( p = str, out = str; *p; p++ )
-	{
-		ignore = 1;
-		switch( state )
-		{
-		case cs_whitespace:
-			switch( *p )
-			{
-			case ' ':
-				break;
-			case '"':
-				state = cs_quote;
-				count++;
-				break;
-			default:
-				count++;
-				ignore = 0;
-				state = cs_token;
-			}
-			break;
-
-		case cs_token:
-			switch( *p )
-			{
-			case '"':
-				state = cs_quote;
-				break;
-			case ' ':
-				state = cs_whitespace;
-				*out++ = 0;
-				break;
-			default:
-				ignore = 0;
-			}
-			break;
-
-		case cs_quote:
-			switch( *p )
-			{
-			case '"':
-				state = cs_token;
-				break;
-			default:
-				ignore = 0;
-			}
-			break;
-		}
-		if( !ignore )
-			*out++ = *p;
-	}
-
-	*out = 0;
-
-	return count;
-}
-
-static void process_args( WCHAR *cmdline, int *pargc, WCHAR ***pargv )
-{
-	WCHAR **argv, *p = msi_strdup(cmdline);
-	int i, n;
-
-	n = chomp( p );
-	argv = HeapAlloc(GetProcessHeap(), 0, sizeof (WCHAR*)*(n+1));
-	for( i=0; i<n; i++ )
-	{
-		argv[i] = p;
-		p += lstrlenW(p) + 1;
-	}
-	argv[i] = NULL;
-
-	*pargc = n;
-	*pargv = argv;
-}
-
 static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 {
 	LONG r;
@@ -425,7 +327,7 @@ static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 		r = RegQueryValueExW(hkey, ident, 0, &type, (LPBYTE)buf, &sz);
 		if( r == ERROR_SUCCESS )
 		{
-			process_args(buf, pargc, pargv);
+			*pargv = CommandLineToArgvW(buf, pargc);
 			ret = TRUE;
 		}
 	}
@@ -471,7 +373,7 @@ int main(int argc, char **argv)
 	LPWSTR *argvW = NULL;
 
 	/* overwrite the command line */
-	process_args( GetCommandLineW(), &argc, &argvW );
+	argvW = CommandLineToArgvW( GetCommandLineW(), &argc );
 
 	/*
 	 * If the args begin with /@ IDENT then we need to load the real
