@@ -991,12 +991,13 @@ BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
 
         if(lpgmf)
         {
-            lpgmf->gmfBlackBoxX = gm.gmBlackBoxX / em_size;
-            lpgmf->gmfBlackBoxY = gm.gmBlackBoxY / em_size;
-            lpgmf->gmfptGlyphOrigin.x = gm.gmptGlyphOrigin.x / em_size;
-            lpgmf->gmfptGlyphOrigin.y = gm.gmptGlyphOrigin.y / em_size;
-            lpgmf->gmfCellIncX = gm.gmCellIncX / em_size;
-            lpgmf->gmfCellIncY = gm.gmCellIncY / em_size;
+            lpgmf->gmfBlackBoxX = (float)gm.gmBlackBoxX / em_size;
+            lpgmf->gmfBlackBoxY = (float)gm.gmBlackBoxY / em_size;
+            lpgmf->gmfptGlyphOrigin.x = (float)gm.gmptGlyphOrigin.x / em_size;
+            lpgmf->gmfptGlyphOrigin.y = (float)gm.gmptGlyphOrigin.y / em_size;
+            lpgmf->gmfCellIncX = (float)gm.gmCellIncX / em_size;
+            lpgmf->gmfCellIncY = (float)gm.gmCellIncY / em_size;
+
             TRACE("%fx%f at %f,%f inc %f,%f\n", lpgmf->gmfBlackBoxX, lpgmf->gmfBlackBoxY,
                   lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY); 
             lpgmf++;
@@ -1063,6 +1064,7 @@ BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
 
 error_in_list:
         gluTessEndPolygon(tess);
+        glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
         glEndList();
         LEAVE_GL();
         HeapFree(GetProcessHeap(), 0, buf);
