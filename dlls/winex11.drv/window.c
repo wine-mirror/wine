@@ -411,8 +411,10 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     /* class hints */
     if ((class_hints = XAllocClassHint()))
     {
+        static char wine[] = "Wine";
+
         class_hints->res_name = process_name;
-        class_hints->res_class = "Wine";
+        class_hints->res_class = wine;
         XSetClassHint( display, data->whole_window, class_hints );
         XFree( class_hints );
     }
