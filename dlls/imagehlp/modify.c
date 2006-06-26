@@ -246,7 +246,7 @@ DWORD WINAPI MapFileAndCheckSumW(
 			      0,
 			      0,
 			      0);
-  if (hMapping == 0)
+  if (BaseAddress == 0)
   {
     CloseHandle(hMapping);
     CloseHandle(hFile);
