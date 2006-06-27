@@ -2076,6 +2076,46 @@ void inline drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataL
 
 }
 
+static void drawPrimitiveUploadTexturesPS(IWineD3DDeviceImpl* This) {
+    INT i;
+
+    for (i = 0; i < GL_LIMITS(samplers); ++i) {
+        /* Pixel shader support should imply multitexture support. */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
+        } else if (i) {
+            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        }
+
+        if (!This->stateBlock->textures[i]) continue;
+
+        /* Enable the correct target. Is this required for GLSL? For ARB_fragment_program it isn't, afaik. */
+        glDisable(GL_TEXTURE_1D);
+        This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
+        switch(This->stateBlock->textureDimensions[i]) {
+            case GL_TEXTURE_2D:
+                glDisable(GL_TEXTURE_3D);
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                break;
+            case GL_TEXTURE_3D:
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                glDisable(GL_TEXTURE_2D);
+                break;
+            case GLTEXTURECUBEMAP:
+                glDisable(GL_TEXTURE_2D);
+                glDisable(GL_TEXTURE_3D);
+                break;
+        }
+        glEnable(This->stateBlock->textureDimensions[i]);
+
+        /* Upload texture, apply states */
+        IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
+        IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
+    }
+}
+
 /* uploads textures and setup texture states ready for rendering */
 void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
 
@@ -2282,8 +2322,11 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL || dataLocations->u.s.diffuse.VBO != 0));
 
-    drawPrimitiveUploadTextures(This);
-
+    if (usePixelShaderFunction) {
+        drawPrimitiveUploadTexturesPS(This);
+    } else {
+        drawPrimitiveUploadTextures(This);
+    }
 
     {
         GLenum glPrimType;
