@@ -1043,16 +1043,44 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     return ERROR_SUCCESS;
 }
 
+static BOOL confirm_delete_list(DWORD fFlags, FILE_LIST *flFrom)
+{
+    if (flFrom->dwNumFiles > 1)
+    {
+        WCHAR tmp[8];
+        const WCHAR format[] = {'%','d',0};
+
+        wnsprintfW(tmp, sizeof(tmp)/sizeof(tmp[0]), format, flFrom->dwNumFiles);
+        return SHELL_ConfirmDialogW(ASK_DELETE_MULTIPLE_ITEM, tmp);
+    }
+    else
+    {
+        FILE_ENTRY *fileEntry = &flFrom->feFiles[0];
+
+        if (IsAttribFile(fileEntry->attributes))
+            return SHELL_ConfirmDialogW(ASK_DELETE_FILE, fileEntry->szFullPath);
+        else if (!(fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
+            return SHELL_ConfirmDialogW(ASK_DELETE_FOLDER, fileEntry->szFullPath);
+    }
+    return TRUE;
+}
+
 /* the FO_DELETE operation */
 static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
 {
     FILE_ENTRY *fileEntry;
     DWORD i;
     BOOL bPathExists;
-    BOOL bConfirm = !(lpFileOp->fFlags & FOF_NOCONFIRMATION);
 
     if (!flFrom->dwNumFiles)
         return ERROR_SUCCESS;
+
+    if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
+        if (!confirm_delete_list(lpFileOp->fFlags, flFrom))
+        {
+            lpFileOp->fAnyOperationsAborted = TRUE;
+            return 0;
+        }
 
     for (i = 0; i < flFrom->dwNumFiles; i++)
     {
@@ -1063,7 +1091,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         if (IsAttribFile(fileEntry->attributes))
             bPathExists = DeleteFileW(fileEntry->szFullPath);
         else if (!(lpFileOp->fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
-            bPathExists = SHELL_DeleteDirectoryW(fileEntry->szFullPath, bConfirm);
+            bPathExists = SHELL_DeleteDirectoryW(fileEntry->szFullPath, FALSE);
 
         if (!bPathExists)
             return ERROR_PATH_NOT_FOUND;
@@ -1192,7 +1220,7 @@ static HRESULT rename_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_
 static void check_flags(FILEOP_FLAGS fFlags)
 {
     WORD wUnsupportedFlags = FOF_ALLOWUNDO | FOF_NO_CONNECTED_ELEMENTS |
-        FOF_NOCOPYSECURITYATTRIBS | FOF_NORECURSEREPARSE | FOF_WANTNUKEWARNING |
+        FOF_NOCOPYSECURITYATTRIBS | FOF_NORECURSEREPARSE |
         FOF_RENAMEONCOLLISION | FOF_WANTMAPPINGHANDLE;
 
     if (fFlags & wUnsupportedFlags)
