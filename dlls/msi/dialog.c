@@ -71,6 +71,7 @@ typedef struct msi_font_tag
 {
     struct msi_font_tag *next;
     HFONT hfont;
+    COLORREF color;
     WCHAR name[1];
 } msi_font;
 
@@ -242,6 +243,8 @@ static UINT msi_dialog_add_font( MSIRECORD *rec, LPVOID param )
     strcpyW( font->name, name );
     font->next = dialog->font_list;
     dialog->font_list = font;
+
+    font->color = MSI_RecordGetInteger( rec, 4 );
 
     memset( &lf, 0, sizeof lf );
     face = MSI_RecordGetString( rec, 2 );
@@ -563,6 +566,7 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
 
 struct msi_text_info
 {
+    msi_font *font;
     WNDPROC oldproc;
     DWORD attributes;
 };
@@ -592,6 +596,9 @@ MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     info = GetPropW(hWnd, szButtonData);
 
+    if ( info->font )
+        SetTextColor( (HDC)wParam, info->font->color );
+
     if( msg == WM_CTLCOLORSTATIC &&
        ( info->attributes & msidbControlAttributesTransparent ) )
     {
@@ -619,6 +626,8 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     struct msi_text_info *info;
+    LPCWSTR text, ptr;
+    LPWSTR font_name;
 
     TRACE("%p %p\n", dialog, rec);
 
@@ -629,6 +638,11 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
     info = msi_alloc( sizeof *info );
     if( !info )
         return ERROR_SUCCESS;
+
+    text = MSI_RecordGetString( rec, 10 );
+    font_name = msi_dialog_get_style( text, &ptr );
+    info->font = ( font_name ) ? msi_dialog_find_font( dialog, font_name ) : NULL;
+    msi_free( font_name );
 
     info->attributes = MSI_RecordGetInteger( rec, 8 );
     if( info->attributes & msidbControlAttributesTransparent )
