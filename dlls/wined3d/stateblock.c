@@ -819,44 +819,45 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
        bound. We emulate this by creating dummy textures and binding them to each
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
+    if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        ENTER_GL();
 
-    ENTER_GL();
+        for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+            GLubyte white = 255;
 
-    for (i = 0; i < GL_LIMITS(texture_stages); i++) {
-        GLubyte white = 255;
+            /* Note this avoids calling settexture, so pretend it has been called */
+            This->set.textures[i]     = TRUE;
+            This->changed.textures[i] = TRUE;
+            This->textures[i]         = NULL;
 
-        /* Note this avoids calling settexture, so pretend it has been called */
-        This->set.textures[i]     = TRUE;
-        This->changed.textures[i] = TRUE;
-        This->textures[i]         = NULL;
+            /* Make appropriate texture active */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+                checkGLcall("glActiveTextureARB");
+            } else if (i > 0) {
+                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            }
 
-        /* Make appropriate texture active */
-        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-            checkGLcall("glActiveTextureARB");
-        } else if (i > 0) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            /* Generate an opengl texture name */
+            glGenTextures(1, &ThisDevice->dummyTextureName[i]);
+            checkGLcall("glGenTextures");
+            TRACE("Dummy Texture %d given name %d\n", i, ThisDevice->dummyTextureName[i]);
+
+            /* Generate a dummy 1d texture */
+            This->textureDimensions[i] = GL_TEXTURE_1D;
+            glBindTexture(GL_TEXTURE_1D, ThisDevice->dummyTextureName[i]);
+            checkGLcall("glBindTexture");
+
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
+            checkGLcall("glTexImage1D");
+#if 1   /* TODO: move the setting texture states off to basetexture */
+            /* Reapply all the texture state information to this texture */
+            IWineD3DDevice_SetupTextureStates(device, i, i, REAPPLY_ALL);
+#endif
         }
 
-        /* Generate an opengl texture name */
-        glGenTextures(1, &ThisDevice->dummyTextureName[i]);
-        checkGLcall("glGenTextures");
-        TRACE("Dummy Texture %d given name %d\n", i, ThisDevice->dummyTextureName[i]);
-
-        /* Generate a dummy 1d texture */
-        This->textureDimensions[i] = GL_TEXTURE_1D;
-        glBindTexture(GL_TEXTURE_1D, ThisDevice->dummyTextureName[i]);
-        checkGLcall("glBindTexture");
-
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
-        checkGLcall("glTexImage1D");
-#if 1   /* TODO: move the setting texture states off to basetexture */
-        /* Reapply all the texture state information to this texture */
-        IWineD3DDevice_SetupTextureStates(device, i, REAPPLY_ALL);
-#endif
+        LEAVE_GL();
     }
-
-    LEAVE_GL();
 
     /* Defaulting palettes - Note these are device wide but reinitialized here for convenience*/
     for (i = 0; i < MAX_PALETTES; ++i) {

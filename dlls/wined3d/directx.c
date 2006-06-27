@@ -618,7 +618,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->ps_nv_version = PS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", gl_info->ps_nv_version);
             } else if (strcmp(ThisExtn, "GL_NV_register_combiners") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (1) support\n");
+                glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);
+                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
+                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (1) support - GL_MAX_GENERAL_COMBINERS_NV=%d\n", gl_max);
                 gl_info->supported[NV_REGISTER_COMBINERS] = TRUE;
             } else if (strcmp(ThisExtn, "GL_NV_register_combiners2") == 0) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (2) support\n");

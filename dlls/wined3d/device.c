@@ -418,7 +418,7 @@ static void delete_glsl_shader_list(IWineD3DDevice* iface) {
 
 
 /* Apply the current values to the specified texture stage */
-static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD Flags) {
+static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD texture_idx, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     float col[4];
 
@@ -438,7 +438,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
     VTRACE(("Activating appropriate texture state %ld\n", Sampler));
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         ENTER_GL();
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + Sampler));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         checkGLcall("glActiveTextureARB");
         LEAVE_GL();
         /* Could we use bindTexture and then apply the states instead of GLACTIVETEXTURE */
@@ -3824,20 +3824,21 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                 WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
             }
 
-            /* And now the default texture color as well */
-            for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+            if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+                /* And now the default texture color as well */
+                for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+                    /* Note the D3DRS value applies to all textures, but GL has one
+                       per texture, so apply it now ready to be used!               */
+                    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+                        checkGLcall("glActiveTextureARB");
+                    } else if (i>0) {
+                        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+                    }
 
-                /* Note the D3DRS value applies to all textures, but GL has one
-                   per texture, so apply it now ready to be used!               */
-                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-                    checkGLcall("glActiveTextureARB");
-                } else if (i>0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+                    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
                 }
-
-                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
             }
         }
         break;

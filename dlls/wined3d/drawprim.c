@@ -1024,6 +1024,7 @@ void loadNumberedArrays(
 
 static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd) {
     unsigned int textureNo   = 0;
+    unsigned int texture_idx = 0;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint curVBO = -1;
 
@@ -1313,7 +1314,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
     /* Texture coords -------------------------------------------*/
 
-    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+    for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
         /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
         /* Abort if we don't support the extension. */
         if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
@@ -1321,21 +1322,24 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             continue;
         }
 
-        /* Select the correct texture stage */
-        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
+        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) {
+            /* Select the correct texture stage */
+            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
+        }
+
         if (This->stateBlock->textures[textureNo] != NULL) {
             int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
-            TRACE("Setting up texture %u, cordindx %u, data %p\n", textureNo, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
+            TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n", textureNo, texture_idx, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
 
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL && sd->u.s.texCoords[coordIdx].VBO == 0) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
 
             } else {
                 if(curVBO != sd->u.s.texCoords[coordIdx].VBO) {
@@ -1347,8 +1351,15 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                 glTexCoordPointer(WINED3D_ATR_SIZE(texCoords[coordIdx]), WINED3D_ATR_GLTYPE(texCoords[coordIdx]), sd->u.s.texCoords[coordIdx].dwStride, sd->u.s.texCoords[coordIdx].lpData);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
-
-        } else {
+        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
+        }
+        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) ++texture_idx;
+    }
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        for (textureNo = texture_idx; textureNo < GL_LIMITS(textures); ++textureNo) {
+            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
@@ -1399,6 +1410,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
     unsigned int               textureNo    = 0;
+    unsigned int               texture_idx  = 0;
     const short               *pIdxBufS     = NULL;
     const long                *pIdxBufL     = NULL;
     LONG                       SkipnStrides = 0;
@@ -1509,7 +1521,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         }
 
         /* Texture coords --------------------------- */
-        for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+        for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
@@ -1581,7 +1593,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord1fARB(textureNo, s));
+                            GL_EXTCALL(glMultiTexCoord1fARB(texture_idx, s));
                         } else {
                             glTexCoord1f(s);
                         }
@@ -1589,7 +1601,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT2:
                         VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s, t));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord2fARB(textureNo, s, t));
+                            GL_EXTCALL(glMultiTexCoord2fARB(texture_idx, s, t));
                         } else {
                             glTexCoord2f(s, t);
                         }
@@ -1597,7 +1609,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT3:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s, t, r));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord3fARB(textureNo, s, t, r));
+                            GL_EXTCALL(glMultiTexCoord3fARB(texture_idx, s, t, r));
                         } else {
                             glTexCoord3f(s, t, r);
                         }
@@ -1605,7 +1617,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT4:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s, t, r, q));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord4fARB(textureNo, s, t, r, q));
+                            GL_EXTCALL(glMultiTexCoord4fARB(texture_idx, s, t, r, q));
                         } else {
                             glTexCoord4f(s, t, r, q);
                         }
@@ -1615,6 +1627,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     }
                 }
             }
+            if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) ++texture_idx;
         } /* End of textures */
 
         /* Diffuse -------------------------------- */
@@ -2111,109 +2124,134 @@ static void drawPrimitiveUploadTexturesPS(IWineD3DDeviceImpl* This) {
 
         /* Upload texture, apply states */
         IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
+        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, i, REAPPLY_ALPHAOP);
         IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
     }
 }
 
 /* uploads textures and setup texture states ready for rendering */
-void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
-
+static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
+    INT current_sampler = 0;
+    float constant_color[4];
     unsigned int i;
-/**
-* OK, here we clear down any old junk iect in the context
-* enable the new texture and apply any state changes:
-*
-* Loop through all textures
-* select texture unit
-* if there is a texture bound to that unit then..
-* disable all textures types on that unit
-* enable and bind the texture that is bound to that unit.
-* otherwise disable all texture types on that unit.
-**/
-    /* upload the textures */
-    for (i = 0; i< GL_LIMITS(texture_stages); ++i) {
-        /* Bind the texture to the stage here */
-        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-            checkGLcall("glActiveTextureARB");
-        } else if (0 < i) {
-            /* This isn't so much a warn as a message to the user about lack of hardware support */
-            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+
+    /* ARB_texture_env_combine is limited to GL_MAX_TEXTURE_UNITS stages. On
+     * nVidia cards GL_MAX_TEXTURE_UNITS is generally not larger than 4.
+     * Register combiners however provide up to 8 combiner stages. In order to
+     * take advantage of this, we need to be separate D3D texture stages from
+     * GL texture units. When using register combiners GL_MAX_TEXTURE_UNITS
+     * corresponds to MaxSimultaneousTextures and GL_MAX_GENERAL_COMBINERS_NV
+     * corresponds to MaxTextureBlendStages in the caps. */
+
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        glEnable(GL_REGISTER_COMBINERS_NV);
+        D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], constant_color);
+        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &constant_color[0]));
+    }
+
+    for (i = 0; i < GL_LIMITS(texture_stages); ++i) {
+        INT texture_idx = -1;
+
+        /* D3DTOP_DISABLE disables the current & any higher texture stages */
+        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] == D3DTOP_DISABLE) break;
+
+        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[i]) {
+            texture_idx = current_sampler++;
+
+            /* Active the texture unit corresponding to the current texture stage */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
+                checkGLcall("glActiveTextureARB");
+            } else if (i) {
+                WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            }
         }
 
-        /* don't bother with textures that have a colorop of disable */
-        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] != D3DTOP_DISABLE) {
-            if (This->stateBlock->textures[i] != NULL) {
-
-                glDisable(GL_TEXTURE_1D);
-                This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
-                /* disable all texture states that aren't the selected textures' dimension */
-                switch(This->stateBlock->textureDimensions[i]) {
+        if (This->stateBlock->textures[i]) {
+            /* Enable the correct target. */
+            glDisable(GL_TEXTURE_1D);
+            This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
+            switch(This->stateBlock->textureDimensions[i]) {
                 case GL_TEXTURE_2D:
                     glDisable(GL_TEXTURE_3D);
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                break;
+                    break;
                 case GL_TEXTURE_3D:
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     glDisable(GL_TEXTURE_2D);
-                break;
+                    break;
                 case GLTEXTURECUBEMAP:
                     glDisable(GL_TEXTURE_2D);
                     glDisable(GL_TEXTURE_3D);
-                break;
-                }
-                /* imply GL_SUPPORT(NV_TEXTURE_SHADER) when setting texture_shader_active */
-                if (This->texture_shader_active && This->stateBlock->textureDimensions[i] == GL_TEXTURE_2D) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
-                } else {
-                    glEnable(This->stateBlock->textureDimensions[i]);
-                }
-                  /* Load up the texture now */
-                IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-                IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, REAPPLY_ALPHAOP);
-                /* this is a stub function representing the state blocks
-                 * being separated here we are only updating the texture
-                 * state changes, other objects and units get updated when
-                 * they change (or need to be updated), e.g. states that
-                 * relate to a context member line the texture unit are
-                 * only updated when the context needs updating
-                 */
-                /* Tell the abse texture to sync it's states */
-                IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
-
-              }
-            /* Bind a default texture if no texture has been set, but colour-op is enabled */
-            else {
-                glDisable(GL_TEXTURE_2D);
-                glDisable(GL_TEXTURE_3D);
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                glEnable(GL_TEXTURE_1D);
-                This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
-                glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
+                    break;
             }
-/** these ops apply to the texture unit, so they are preserved between texture changes, but for now brute force and reapply all
-        dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
-            set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
-                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
-                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
-                        This->stateBlock->textureState[i][WINED3DTSS_COLORARG0]);
-            /* alphaop */
-            set_tex_op((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
-                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
-                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
-                        This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0]);
-        } else {
 
-            /* no colorop so disable all the texture states */
-            glDisable(GL_TEXTURE_1D);
+            /* imply GL_SUPPORT(NV_TEXTURE_SHADER) when setting texture_shader_active */
+            if (This->texture_shader_active && This->stateBlock->textureDimensions[i] == GL_TEXTURE_2D) {
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
+            } else {
+                glEnable(This->stateBlock->textureDimensions[i]);
+            }
+
+            /* Upload texture, apply states */
+            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+            IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, texture_idx, REAPPLY_ALPHAOP);
+            IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
+        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+            /* ARB_texture_env_combine needs a valid texture bound to the
+             * texture unit, even if it isn't used. Bind a dummy texture. */
             glDisable(GL_TEXTURE_2D);
             glDisable(GL_TEXTURE_3D);
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-          }
+            glEnable(GL_TEXTURE_1D);
+            This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
+            glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
+        }
 
-      }
+        /** these ops apply to the texture unit, so they are preserved between texture changes, but for now brute force and reapply all
+          dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
+        if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+            set_tex_op_nvrc((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG0],
+                    texture_idx);
+            /* alphaop */
+            set_tex_op_nvrc((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0],
+                    texture_idx);
+        } else {
+            set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
+                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG0]);
+            /* alphaop */
+            set_tex_op((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
+                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0]);
+        }
+    }
 
+    /* If we're using register combiners, set the amount of *used* combiners.
+     * Ie, the number of stages below the first stage to have a color op of
+     * D3DTOP_DISABLE. */
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        /* NUM_GENERAL_COMBINERS_NV should be > 0 */
+        if (!i) glDisable(GL_REGISTER_COMBINERS_NV);
+        else GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, i));
+    }
+
+    /* Disable the remaining texture units. */
+    for (i = current_sampler; i < GL_LIMITS(textures); ++i) {
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+        glDisable(GL_TEXTURE_1D);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_3D);
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+    }
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
