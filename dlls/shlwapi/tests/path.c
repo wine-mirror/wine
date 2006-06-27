@@ -1163,6 +1163,139 @@ static void test_PathAddBackslash(void)
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 }
 
+static void test_PathAppendA(void)
+{
+    char path[MAX_PATH];
+    char too_long[LONG_LEN];
+    char one[HALF_LEN], two[HALF_LEN];
+    BOOL res;
+
+    lstrcpy(path, "C:\\one");
+
+    /* try NULL pszMore */
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, NULL);
+    ok(!res, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
+
+    /* try empty pszMore */
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one"), "Expected C:\\one, got %s\n", path);
+
+    /* try NULL pszPath */
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(NULL, "two\\three");
+    ok(!res, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try empty pszPath */
+    path[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "two\\three");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "two\\three"), "Expected \\two\\three, got %s\n", path);
+
+    /* try empty pszPath and empty pszMore */
+    path[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "\\"), "Expected \\, got %s\n", path);
+
+    /* try legit params */
+    lstrcpy(path, "C:\\one");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "two\\three");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+
+    /* try pszPath with backslash after it */
+    lstrcpy(path, "C:\\one\\");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "two\\three");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+
+    /* try pszMore with backslash before it */
+    lstrcpy(path, "C:\\one");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "\\two\\three");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one\\two\\three"), "Expected C:\\one\\two\\three, got %s\n", path);
+
+    /* try pszMore with backslash after it */
+    lstrcpy(path, "C:\\one");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "two\\three\\");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one\\two\\three\\"), "Expected C:\\one\\two\\three\\, got %s\n", path);
+
+    /* try spaces in pszPath */
+    lstrcpy(path, "C: \\ one ");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, "two\\three");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C: \\ one \\two\\three"), "Expected C: \\ one \\two\\three, got %s\n", path);
+
+    /* try spaces in pszMore */
+    lstrcpy(path, "C:\\one");
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, " two \\ three ");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(path, "C:\\one\\ two \\ three "), "Expected 'C:\\one\\ two \\ three ', got %s\n", path);
+
+    /* pszPath is too long */
+    memset(too_long, 'a', LONG_LEN);
+    too_long[LONG_LEN - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(too_long, "two\\three");
+    todo_wine
+    {
+        ok(!res, "Expected failure\n");
+        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+        ok(lstrlen(too_long) == 0, "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
+    }
+
+    /* pszMore is too long */
+    lstrcpy(path, "C:\\one");
+    memset(too_long, 'a', LONG_LEN);
+    too_long[LONG_LEN - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(path, too_long);
+    todo_wine
+    {
+        ok(!res, "Expected failure\n");
+        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+        ok(lstrlen(path) == 0, "Expected length of path to be zero, got %i\n", lstrlen(path));
+    }
+
+    /* both params combined are too long */
+    memset(one, 'a', HALF_LEN);
+    one[HALF_LEN - 1] = '\0';
+    memset(two, 'b', HALF_LEN);
+    two[HALF_LEN - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathAppendA(one, two);
+    todo_wine
+    {
+        ok(!res, "Expected failure\n");
+        ok(lstrlen(one) == 0, "Expected length of one to be zero, got %i\n", lstrlen(one));
+    }
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -1202,4 +1335,5 @@ START_TEST(path)
     test_PathCombineW();
 
   test_PathCombineA();
+  test_PathAppendA();
 }
