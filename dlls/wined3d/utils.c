@@ -480,6 +480,41 @@ const char* debug_d3dtexturestate(DWORD state) {
   }
 }
 
+const char* debug_d3dtop(D3DTEXTUREOP d3dtop) {
+    switch (d3dtop) {
+#define D3DTOP_TO_STR(u) case u: return #u
+        D3DTOP_TO_STR(D3DTOP_DISABLE);
+        D3DTOP_TO_STR(D3DTOP_SELECTARG1);
+        D3DTOP_TO_STR(D3DTOP_SELECTARG2);
+        D3DTOP_TO_STR(D3DTOP_MODULATE);
+        D3DTOP_TO_STR(D3DTOP_MODULATE2X);
+        D3DTOP_TO_STR(D3DTOP_MODULATE4X);
+        D3DTOP_TO_STR(D3DTOP_ADD);
+        D3DTOP_TO_STR(D3DTOP_ADDSIGNED);
+        D3DTOP_TO_STR(D3DTOP_SUBTRACT);
+        D3DTOP_TO_STR(D3DTOP_ADDSMOOTH);
+        D3DTOP_TO_STR(D3DTOP_BLENDDIFFUSEALPHA);
+        D3DTOP_TO_STR(D3DTOP_BLENDTEXTUREALPHA);
+        D3DTOP_TO_STR(D3DTOP_BLENDFACTORALPHA);
+        D3DTOP_TO_STR(D3DTOP_BLENDTEXTUREALPHAPM);
+        D3DTOP_TO_STR(D3DTOP_BLENDCURRENTALPHA);
+        D3DTOP_TO_STR(D3DTOP_PREMODULATE);
+        D3DTOP_TO_STR(D3DTOP_MODULATEALPHA_ADDCOLOR);
+        D3DTOP_TO_STR(D3DTOP_MODULATECOLOR_ADDALPHA);
+        D3DTOP_TO_STR(D3DTOP_MODULATEINVALPHA_ADDCOLOR);
+        D3DTOP_TO_STR(D3DTOP_MODULATEINVCOLOR_ADDALPHA);
+        D3DTOP_TO_STR(D3DTOP_BUMPENVMAP);
+        D3DTOP_TO_STR(D3DTOP_BUMPENVMAPLUMINANCE);
+        D3DTOP_TO_STR(D3DTOP_DOTPRODUCT3);
+        D3DTOP_TO_STR(D3DTOP_MULTIPLYADD);
+        D3DTOP_TO_STR(D3DTOP_LERP);
+#undef D3DTOP_TO_STR
+        default:
+            FIXME("Unrecognized %u D3DTOP\n", d3dtop);
+            return "unrecognized";
+    }
+}
+
 const char* debug_d3dpool(WINED3DPOOL Pool) {
   switch (Pool) {
 #define POOL_TO_STR(p) case p: return #p;
@@ -601,7 +636,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
         BOOL Handled = FALSE;
         IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-        TRACE("Alpha?(%d), Stage:%d Op(%d), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, op, arg1, arg2, arg3);
+        TRACE("Alpha?(%d), Stage:%d Op(%s), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, debug_d3dtop(op), arg1, arg2, arg3);
 
         ENTER_GL();
 
@@ -1665,7 +1700,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 Handled   = FALSE;
                 break;
               default:
-                FIXME("Can't use COMBINE4 and COMBINE together, thisop=%d, otherop=%ld, isAlpha(%d)\n", op, op2, isAlpha);
+                FIXME("Can't use COMBINE4 and COMBINE together, thisop=%s, otherop=%s, isAlpha(%d)\n", debug_d3dtop(op), debug_d3dtop(op2), isAlpha);
                 LEAVE_GL();
                 return;
               }
@@ -1684,7 +1719,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
         LEAVE_GL();
 
         /* After all the extensions, if still unhandled, report fixme */
-        FIXME("Unhandled texture operation %d\n", op);
+        FIXME("Unhandled texture operation %s\n", debug_d3dtop(op));
         #undef GLINFO_LOCATION
 }
 #endif
