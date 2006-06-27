@@ -1489,4 +1489,10 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
 {
     return FALSE;
 }
+
+int elf_is_in_thunk_area(unsigned long addr,
+                         const struct elf_thunk_area* thunks)
+{
+    return -1;
+}
 #endif  /* __ELF__ */
