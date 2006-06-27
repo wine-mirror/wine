@@ -432,8 +432,10 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
      *  with Default values
      */
     memset(&gl_info->supported, 0, sizeof(gl_info->supported));
-    gl_info->max_textures   = 1;
-    gl_info->max_samplers   = 1;
+    gl_info->max_textures       = 1;
+    gl_info->max_texture_stages = 1;
+    gl_info->max_samplers       = 1;
+    gl_info->max_sampler_stages = 1;
     gl_info->ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     gl_info->vs_arb_version = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
@@ -503,6 +505,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
                 gl_info->supported[ARB_MULTITEXTURE] = TRUE;
                 gl_info->max_textures = min(MAX_TEXTURES, gl_max);
+                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
                 gl_info->max_samplers = max(gl_info->max_samplers, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
@@ -667,6 +670,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
             if (*GL_Extensions == ' ') GL_Extensions++;
         }
     }
+    gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
 
     /* Load all the lookup tables
     TODO: It may be a good idea to make minLookup and maxLookup const and populate them in wined3d_private.h where they are declared */
@@ -1680,7 +1684,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             D3DTEXOPCAPS_PREMODULATE */
 #endif
 
-    *pCaps->MaxTextureBlendStages   = GL_LIMITS(textures);
+    *pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
     *pCaps->MaxSimultaneousTextures = GL_LIMITS(textures);
     *pCaps->MaxUserClipPlanes       = GL_LIMITS(clipplanes);
     *pCaps->MaxActiveLights         = GL_LIMITS(lights);

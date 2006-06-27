@@ -1003,7 +1003,7 @@ typedef struct SAVEDSTATES {
         BOOL                      fvf;
         BOOL                      streamSource[MAX_STREAMS];
         BOOL                      streamFreq[MAX_STREAMS];
-        BOOL                      textures[MAX_TEXTURES];
+        BOOL                      textures[MAX_SAMPLERS];
         BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
         BOOL                      viewport;
         BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
@@ -1092,7 +1092,7 @@ struct IWineD3DStateBlockImpl
     DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
 
     /* Texture */
-    IWineD3DBaseTexture      *textures[MAX_TEXTURES];
+    IWineD3DBaseTexture      *textures[MAX_SAMPLERS];
     int                       textureDimensions[MAX_SAMPLERS];
 
     /* Texture State Stage */

@@ -1313,7 +1313,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
     /* Texture coords -------------------------------------------*/
 
-    for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
         /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
         /* Abort if we don't support the extension. */
         if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
@@ -1509,7 +1509,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         }
 
         /* Texture coords --------------------------- */
-        for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+        for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
@@ -2092,7 +2092,7 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
 * otherwise disable all texture types on that unit.
 **/
     /* upload the textures */
-    for (i = 0; i< GL_LIMITS(textures); ++i) {
+    for (i = 0; i< GL_LIMITS(texture_stages); ++i) {
         /* Bind the texture to the stage here */
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));

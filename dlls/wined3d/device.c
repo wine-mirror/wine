@@ -431,8 +431,8 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
     clamping, MIPLOD, etc. This will work for up to 16 samplers.
     */
    
-    if (Sampler >= GL_LIMITS(samplers)) {
-        FIXME("Trying to set the state of more samplers %ld than are supported %d by this openGL implementation\n", Sampler, GL_LIMITS(samplers));
+    if (Sampler >= GL_LIMITS(sampler_stages)) {
+        FIXME("Trying to set the state of more samplers %ld than are supported %d by this openGL implementation\n", Sampler, GL_LIMITS(sampler_stages));
         return;
     }
     VTRACE(("Activating appropriate texture state %ld\n", Sampler));
@@ -828,7 +828,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
         }
-        for (j = 0; j < GL_LIMITS(textures); j++) {
+        for (j = 0; j < GL_LIMITS(texture_stages); j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 object->changed.textureState[j][SavedPixelStates_T[i]] = TRUE;
             }
@@ -856,7 +856,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
         }
-        for (j = 0; j < GL_LIMITS(textures); j++) {
+        for (j = 0; j < GL_LIMITS(texture_stages); j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
                 object->changed.textureState[j][SavedVertexStates_T[i]] = TRUE;
             }
@@ -2098,7 +2098,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    int texstage;
+    int sampler;
     IUnknown* stencilBufferParent;
     IUnknown* swapChainParent;
     uint i;
@@ -2106,8 +2106,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
 
-    for(texstage = 0; texstage < GL_LIMITS(textures); texstage++) {
-        IWineD3DDevice_SetTexture(iface, texstage, NULL);
+    for(sampler = 0; sampler < GL_LIMITS(sampler_stages); ++sampler) {
+        IWineD3DDevice_SetTexture(iface, sampler, NULL);
     }
 
     /* Release the buffers (with sanity checks)*/
@@ -3825,7 +3825,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
             }
 
             /* And now the default texture color as well */
-            for (i = 0; i < GL_LIMITS(textures); i++) {
+            for (i = 0; i < GL_LIMITS(texture_stages); i++) {
 
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
@@ -4528,9 +4528,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
     /** NOTE: States are appled in IWineD3DBaseTextre ApplyStateChanges and IWineD3DDevice SetupTextureStates**/
-    if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
+    if(Sampler >  GL_LIMITS(sampler_stages) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
          FIXME("sampler %ld type %s(%u) is out of range [max_samplers=%d, highest_state=%d]\n",
-            Sampler, debug_d3dsamplerstate(Type), Type, GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE);
+            Sampler, debug_d3dsamplerstate(Type), Type, GL_LIMITS(sampler_stages), WINED3D_HIGHEST_SAMPLER_STATE);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -5384,7 +5384,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
     /* Check that the stage is within limits  */
-    if (Stage >= GL_LIMITS(textures) || Stage < 0) {
+    if (Stage >= GL_LIMITS(texture_stages) || Stage < 0) {
         TRACE("Attempt to access invalid texture rejected\n");
         return;
     }
@@ -5600,7 +5600,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     TRACE("(%p) : Stage=%ld, Type=%s(%d), Value=%ld\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
     /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(textures)) {
+    if (Stage >= GL_LIMITS(texture_stages)) {
         TRACE("Attempt to access invalid texture rejected\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -5638,7 +5638,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
 #endif
 
     /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(textures) || Stage < 0) {
+    if (Stage >= GL_LIMITS(sampler_stages) || Stage < 0) {
         WARN("Attempt to access invalid texture rejected\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -5653,7 +5653,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 
     oldTexture = This->updateStateBlock->textures[Stage];
-    TRACE("GL_LIMITS %d\n",GL_LIMITS(textures));
+    TRACE("GL_LIMITS %d\n",GL_LIMITS(sampler_stages));
     TRACE("(%p) : oldtexture(%p)\n", This,oldTexture);
 
     This->updateStateBlock->set.textures[Stage]     = TRUE;
@@ -5702,7 +5702,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
     TRACE("(%p) : (%ld /* Stage */,%p /* ppTexture */)\n", This, Stage, ppTexture);
 
     /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(textures)) {
+    if (Stage >= GL_LIMITS(sampler_stages)) {
         TRACE("Attempt to access invalid texture rejected\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -7774,7 +7774,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         case WINED3DRTYPE_TEXTURE:
         case WINED3DRTYPE_CUBETEXTURE:
         case WINED3DRTYPE_VOLUMETEXTURE:
-                for (counter = 0; counter < GL_LIMITS(textures); counter++) {
+                for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                     if (This->stateBlock != NULL && This->stateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
                         WARN("Texture being released is still by a stateblock, Stage = %u Texture = %p\n", counter, resource);
                         This->stateBlock->textures[counter] = NULL;
