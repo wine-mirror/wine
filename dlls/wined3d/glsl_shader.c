@@ -416,6 +416,9 @@ static void shader_glsl_gen_modifier (
 
     out_str[0] = 0;
     
+    if (instr == D3DSIO_TEXKILL)
+        return;
+
     switch (instr & D3DSP_SRCMOD_MASK) {
     case D3DSPSM_NONE:
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
@@ -1266,8 +1269,6 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
 void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
-    /* FIXME: Make this work for more than just 2D textures */
-
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_str[100];
@@ -1275,7 +1276,24 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.x = dot(vec3(T%lu), vec3(%s));\n", reg, src0_name, src0_mask, src0_str);
+    shader_addline(buffer, "tmp0.x = dot(vec3(T%lu), vec3(%s));\n", reg, src0_name, src0_str);
+}
+
+/** Process the D3DSIO_TEXM3X3PAD instruction in GLSL
+ * Calculate the 1st or 2nd row of a 3-row matrix multiplication. */
+void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    char src0_str[100];
+    char src0_name[50];
+    char src0_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+    shader_addline(buffer, "tmp%i.x = dot(vec3(T%lu), vec3(%s));\n", current_state->current_row, reg, src0_str);
+    current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
 void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
@@ -1291,6 +1309,84 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
     shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.st);\n", reg, reg);
+}
+
+/** Process the D3DSIO_TEXM3X3VSPEC instruction in GLSL 
+ * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
+void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    char src0_str[100], src0_name[50], src0_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+
+    /* Perform the last matrix multiply operation */
+    shader_addline(buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+
+    /* Construct the eye-ray vector from w coordinates */
+    shader_addline(buffer, "tmp1.x = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[0]);
+    shader_addline(buffer, "tmp1.x = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[1]);
+    shader_addline(buffer, "tmp1.z = gl_TexCoord[%lu].w;\n", reg);
+
+    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
+    shader_addline(buffer, "tmp0.x = dot(vec3(tmp0), vec3(tmp1));\n");
+    shader_addline(buffer, "tmp0 = tmp0.w * tmp0;\n");
+    shader_addline(buffer, "tmp0 = (2.0 * tmp0) - tmp1;\n");
+
+    /* FIXME:
+     * The ARB_fragment_program implementation uses Cube texture lookups here, but that is just a guess.
+     * We probably need to push back the pixel shader generation code until drawPrimitive() for 
+     * shader versions < 2.0, since that's the only time we can guarantee that we're sampling
+     * the correct type of texture because we can lookup what textures are bound at that point.
+     * For now, just sample the texture as if it's 2D.
+     */
+    FIXME("Incorrect dimensionality for pixel shader texm3x3vspec instruction.\n");
+    shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.xy);\n", reg, reg);
+    current_state->current_row = 0;
+}
+
+/** Process the D3DSIO_TEXBEM instruction in GLSL.
+ * Apply a fake bump map transform.
+ * FIXME: Should apply the BUMPMAPENV matrix.  For now, just sample the texture */
+void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
+
+    DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+
+    FIXME("Not applying the BUMPMAPENV matrix for pixel shader instruction texbem.\n");
+    shader_addline(arg->buffer, "T%lu = texture2D(Psampler%lu, gl_TexCoord[%lu].xy + T%lu.xy);\n",
+            reg1, reg1, reg1, reg2);
+}
+
+/** Process the D3DSIO_TEXKILL instruction in GLSL.
+ * If any of the first 3 components are < 0, discard this pixel */
+void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100], src0_name[50], src0_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+    shader_addline(arg->buffer, "if (%s.x < 0.0 || %s.y < 0.0 || %s.z < 0.0) discard;\n", src0_name, src0_name, src0_name);
+}
+
+/** Process the D3DSIO_DP2ADD instruction in GLSL.
+ * dst = dot2(src0, src1) + src2 */
+void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
+
+    char tmpLine[256];
+    char dst_str[100], src0_str[100], src1_str[100], src2_str[100];
+    char dst_reg[50], src0_reg[50], src1_reg[50], src2_reg[50];
+    char dst_mask[6], src0_mask[6], src1_mask[6], src2_mask[6];
+ 
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
+    shader_glsl_add_param(arg, arg->src[2], arg->src_addr[2], TRUE, src2_reg, src2_mask, src2_str);   
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_addline(arg->buffer, "%sdot(vec2(%s), vec2(%s)) + %s)%s;\n",
+                   tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
 
 void pshader_glsl_input_pack(

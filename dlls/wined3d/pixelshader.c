@@ -676,7 +676,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
     {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, shader_glsl_sincos, D3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
-    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, NULL, D3DPS_VERSION(2,0), -1},
+    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, pshader_glsl_dp2add, D3DPS_VERSION(2,0), -1},
 
     /* Matrix */
     {D3DSIO_M4x4, "m4x4", "undefined", 1, 3, pshader_m4x4, NULL, shader_glsl_mnxn, 0, 0},
@@ -713,21 +713,21 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     /* Texture */
     {D3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, 0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXCOORD, "texcrd",   "undefined", 1, 2, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_texkill,     pshader_hw_map2gl, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
+    {D3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_texkill,     pshader_hw_map2gl, pshader_glsl_texkill, D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
     {D3DSIO_TEX,      "tex",      "undefined", 1, 1, pshader_tex,         pshader_hw_tex, pshader_glsl_tex, 0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEX,      "texld",    "undefined", 1, 2, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_TEX,      "texld",    "undefined", 1, 3, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, D3DPS_VERSION(2,0), -1},
-    {D3DSIO_TEXBEM,   "texbem",   "undefined", 1, 2, pshader_texbem,      pshader_hw_texbem, NULL, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXBEM,   "texbem",   "undefined", 1, 2, pshader_texbem,      pshader_hw_texbem, pshader_glsl_texbem, 0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texbeml, NULL, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2AR,"texreg2ar","undefined", 1, 2, pshader_texreg2ar,   pshader_hw_texreg2ar, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2GB,"texreg2gb","undefined", 1, 2, pshader_texreg2gb,   pshader_hw_texreg2gb, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texreg2rgb,  NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined", 1, 2, pshader_texm3x2pad,   pshader_hw_texm3x2pad, pshader_glsl_texm3x2pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined", 1, 2, pshader_texm3x2tex,   pshader_hw_texm3x2tex, pshader_glsl_texm3x2tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined", 1, 2, pshader_texm3x3pad,   pshader_hw_texm3x3pad, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined", 1, 2, pshader_texm3x3pad,   pshader_hw_texm3x3pad, pshader_glsl_texm3x3pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3diff,  NULL, NULL, D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
     {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined", 1, 3, pshader_texm3x3spec,  pshader_hw_texm3x3spec, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined", 1, 2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspec",  "undefined", 1, 2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, pshader_glsl_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined", 1, 2, pshader_texm3x3tex,   pshader_hw_texm3x3tex, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3tex,   NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x2depth, NULL, NULL, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
@@ -1226,12 +1226,12 @@ static void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
-    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
-    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state.current_row, reg, src0_name);
-    current_state.texcoord_w[current_state.current_row++] = reg;
+    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state->current_row, reg, src0_name);
+    current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
 static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
@@ -1239,7 +1239,7 @@ static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
-    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
@@ -1247,7 +1247,7 @@ static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     /* Cubemap textures will be more used than 3D ones. */
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-    current_state.current_row = 0;
+    current_state->current_row = 0;
 }
 
 static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
@@ -1255,15 +1255,15 @@ static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
-    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
     shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
-    shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", current_state.texcoord_w[0]);
-    shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%lu].w;\n", current_state.texcoord_w[1]);
+    shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", current_state->texcoord_w[0]);
+    shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%lu].w;\n", current_state->texcoord_w[1]);
     shader_addline(buffer, "MOV TMP2.z, fragment.texcoord[%lu].w;\n", reg);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
@@ -1273,7 +1273,7 @@ static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     /* Cubemap textures will be more used than 3D ones. */
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-    current_state.current_row = 0;
+    current_state->current_row = 0;
 }
 
 static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
@@ -1281,7 +1281,7 @@ static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     DWORD reg3 = arg->src[1] & D3DSP_REGNUM_MASK;
-    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
@@ -1295,7 +1295,7 @@ static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     /* Cubemap textures will be more used than 3D ones. */
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-    current_state.current_row = 0;
+    current_state->current_row = 0;
 }
 
 /** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB

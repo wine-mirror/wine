@@ -375,6 +375,7 @@ void shader_get_registers_used(
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
                 (D3DSIO_TEX == curOpcode->opcode ||
+                 D3DSIO_TEXBEM == curOpcode->opcode ||
                  D3DSIO_TEXM3x2TEX == curOpcode->opcode ||
                  D3DSIO_TEXM3x3TEX == curOpcode->opcode ||
                  D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||

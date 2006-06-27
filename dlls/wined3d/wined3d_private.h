@@ -1411,6 +1411,11 @@ extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
    DWORD* semantics_out);
