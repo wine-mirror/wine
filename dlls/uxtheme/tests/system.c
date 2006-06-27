@@ -30,6 +30,7 @@ static HRESULT (WINAPI * pGetCurrentThemeName)(LPWSTR, int, LPWSTR, int, LPWSTR,
 static HTHEME  (WINAPI * pGetWindowTheme)(HWND);
 static BOOL    (WINAPI * pIsAppThemed)(VOID);
 static BOOL    (WINAPI * pIsThemeActive)(VOID);
+static BOOL    (WINAPI * pIsThemePartDefined)(HTHEME, int, int);
 static HTHEME  (WINAPI * pOpenThemeData)(HWND, LPCWSTR);
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, LPCWSTR, LPCWSTR);
 
@@ -57,6 +58,7 @@ static BOOL InitFunctionPtrs(void)
       UXTHEME_GET_PROC(GetWindowTheme)
       UXTHEME_GET_PROC(IsAppThemed)
       UXTHEME_GET_PROC(IsThemeActive)
+      UXTHEME_GET_PROC(IsThemePartDefined)
       UXTHEME_GET_PROC(OpenThemeData)
       UXTHEME_GET_PROC(SetWindowTheme)
     }
@@ -64,10 +66,10 @@ static BOOL InitFunctionPtrs(void)
      * be checked (at some point in time) within the single tests if needed. All used functions for
      * now are present on WinXP, W2K3 and Wine.
      */
-    if (!pCloseThemeData || !pGetWindowTheme ||
-        !pIsAppThemed || !pIsThemeActive ||
-        !pOpenThemeData || !pSetWindowTheme ||
-        !pGetCurrentThemeName)
+    if (!pCloseThemeData || !pGetCurrentThemeName ||
+        !pGetWindowTheme || !pIsAppThemed ||
+        !pIsThemeActive || !pIsThemePartDefined ||
+        !pOpenThemeData || !pSetWindowTheme)
         return FALSE;
 
     return TRUE;
@@ -77,6 +79,7 @@ static void test_IsThemed(void)
 {
     BOOL bThemeActive;
     BOOL bAppThemed;
+    BOOL bTPDefined;
 
     SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
@@ -101,6 +104,13 @@ static void test_IsThemed(void)
         ok( GetLastError() == ERROR_SUCCESS,
             "Expected ERROR_SUCCESS, got 0x%08lx\n",
             GetLastError());
+
+    SetLastError(0xdeadbeef);
+    bTPDefined = pIsThemePartDefined(NULL, 0 , 0);
+    ok( bTPDefined == FALSE, "Expected FALSE\n");
+    ok( GetLastError() == E_HANDLE,
+        "Expected E_HANDLE, got 0x%08lx\n",
+        GetLastError());
 }
 
 static void test_GetWindowTheme(void)
@@ -174,6 +184,7 @@ static void test_OpenThemeData(void)
     BOOL      bThemeActive;
     HRESULT   hRes;
     BOOL      bDestroyed;
+    BOOL      bTPDefined;
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
     WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
@@ -312,6 +323,16 @@ static void test_OpenThemeData(void)
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
+
+    SetLastError(0xdeadbeef);
+    bTPDefined = pIsThemePartDefined(hTheme, 0 , 0);
+    todo_wine
+    {
+        ok( bTPDefined == FALSE, "Expected FALSE\n");
+        ok( GetLastError() == ERROR_SUCCESS,
+            "Expected ERROR_SUCCESS, got 0x%08lx\n",
+            GetLastError());
+    }
 
     bDestroyed = DestroyWindow(hWnd);
     if (!bDestroyed)
@@ -461,7 +482,7 @@ START_TEST(system)
      * only show input/return behaviour
      */
 
-    /* IsThemeActive and IsAppThemed */
+    /* IsThemeActive, IsAppThemed and IsThemePartDefined*/
     trace("Starting test_IsThemed()\n");
     test_IsThemed();
 
