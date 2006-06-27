@@ -1530,6 +1530,13 @@ typedef enum _GL_SupportedExt {
     /* GL_ATI_separate_stencil */ \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, glStencilOpSeparateATI); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, glStencilFuncSeparateATI); \
+    /* GL_NV_register_combiners */ \
+    USE_GL_FUNC(PGLFNCOMBINERINPUTNVPROC,                       glCombinerInputNV); \
+    USE_GL_FUNC(PGLFNCOMBINEROUTPUTNVPROC,                      glCombinerOutputNV); \
+    USE_GL_FUNC(PGLFNCOMBINERPARAMETERFNVPROC,                  glCombinerParameterfNV); \
+    USE_GL_FUNC(PGLFNCOMBINERPARAMETERFVNVPROC,                 glCombinerParameterfvNV); \
+    USE_GL_FUNC(PGLFNCOMBINERPARAMETERINVPROC,                  glCombinerParameteriNV); \
+    USE_GL_FUNC(PGLFNCOMBINERPARAMETERIVNVPROC,                 glCombinerParameterivNV); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
