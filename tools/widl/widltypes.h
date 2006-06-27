@@ -48,7 +48,7 @@ typedef struct _typelib_t typelib_t;
 
 #define DECL_LINK(type) \
   type *l_next; \
-  type *l_prev;
+  type *l_prev
 
 #define LINK(x,y) do { x->l_next = y; if (y) y->l_prev = x; } while (0)
 
@@ -178,7 +178,7 @@ struct _attr_t {
     void *pval;
   } u;
   /* parser-internal */
-  DECL_LINK(attr_t)
+  DECL_LINK(attr_t);
 };
 
 struct _expr_t {
@@ -194,7 +194,7 @@ struct _expr_t {
   int is_const;
   long cval;
   /* parser-internal */
-  DECL_LINK(expr_t)
+  DECL_LINK(expr_t);
 };
 
 struct _type_t {
@@ -208,7 +208,7 @@ struct _type_t {
   int defined, written, user_types_registered;
   int typelib_idx;
   /* parser-internal */
-  DECL_LINK(type_t)
+  DECL_LINK(type_t);
 };
 
 struct _typeref_t {
@@ -228,7 +228,7 @@ struct _var_t {
   expr_t *eval;
 
   /* parser-internal */
-  DECL_LINK(var_t)
+  DECL_LINK(var_t);
 };
 
 struct _func_t {
@@ -237,7 +237,7 @@ struct _func_t {
   int ignore, idx;
 
   /* parser-internal */
-  DECL_LINK(func_t)
+  DECL_LINK(func_t);
 };
 
 struct _ifref_t {
@@ -245,7 +245,7 @@ struct _ifref_t {
   attr_t *attrs;
 
   /* parser-internal */
-  DECL_LINK(ifref_t)
+  DECL_LINK(ifref_t);
 };
 
 struct _class_t {
@@ -254,7 +254,7 @@ struct _class_t {
   ifref_t *ifaces;
 
   /* parser-internal */
-  DECL_LINK(class_t)
+  DECL_LINK(class_t);
 };
 
 struct _typelib_entry_t {
@@ -267,7 +267,7 @@ struct _typelib_entry_t {
         type_t *enumeration;
         var_t *tdef;
     } u;
-    DECL_LINK(typelib_entry_t)
+    DECL_LINK(typelib_entry_t);
 };
 
 struct _importinfo_t {
