@@ -633,6 +633,7 @@ typedef struct IWineD3DVertexBufferImpl
     UINT                      stream;
 
     UINT                      dirtystart, dirtyend;
+    LONG                      lockcount;
 
     /* Last description of the buffer */
     WineDirect3DVertexStridedData strided;

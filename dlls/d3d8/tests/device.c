@@ -267,6 +267,20 @@ static void test_refcount(void)
     hr = IDirect3DDevice8_CreateAdditionalSwapChain( pDevice, &d3dpp, &pSwapChain );
     CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, refcount+1 );
 
+    if(pVertexBuffer)
+    {
+        BYTE *data;
+        /* Vertex buffers can be locked multiple times */
+        hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08lx\n", hr);
+        hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08lx\n", hr);
+        hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08lx\n", hr);
+        hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08lx\n", hr);
+    }
+
 cleanup:
     if (pDevice)              IUnknown_Release( pDevice );
 

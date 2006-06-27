@@ -214,20 +214,22 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08lx,%p,%p)\n", This, Flags, Data, Size);
 
-    /* Get the size, for returning it, and for locking */
-    hr = IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer,
-                                      &Desc);
-    if(hr != D3D_OK)
+    if(*Size)
     {
-        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08lx\n", This, hr);
-        return hr;
+        /* Get the size, for returning it, and for locking */
+        hr = IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer,
+                                          &Desc);
+        if(hr != D3D_OK)
+        {
+            ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08lx\n", This, hr);
+            return hr;
+        }
+        *Size = Desc.Size;
     }
-
-    if(Size) *Size = Desc.Size;
 
     return IWineD3DVertexBuffer_Lock(This->wineD3DVertexBuffer,
                                      0 /* OffsetToLock */,
-                                     Desc.Size,
+                                     0 /* SizeToLock, 0 == Full lock */,
                                      (BYTE **) Data,
                                      Flags);
 }

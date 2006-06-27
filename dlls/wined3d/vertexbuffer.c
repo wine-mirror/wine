@@ -145,8 +145,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                 GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
                 checkGLcall("glBindBufferARB");
                 GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
-                checkGLcall("glUnmapBuffer glBufferSubDataARB");
+                checkGLcall("glBufferSubDataARB");
                 LEAVE_GL();
+                /* Lock directly into the VBO in the future */
                 HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
                 This->resource.allocatedMemory = NULL;
                 This->Flags &= ~VBFLAG_DIRTY;
@@ -334,12 +335,21 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
     BYTE *data;
     TRACE("(%p)->%d, %d, %p, %08lx\n", This, OffsetToLock, SizeToLock, ppbData, Flags);
 
+    InterlockedIncrement(&This->lockcount);
+
     if(This->Flags & VBFLAG_DIRTY) {
         if(This->dirtystart > OffsetToLock) This->dirtystart = OffsetToLock;
-        if(This->dirtyend < OffsetToLock + SizeToLock) This->dirtyend = OffsetToLock + SizeToLock;
+        if(SizeToLock) {
+            if(This->dirtyend < OffsetToLock + SizeToLock) This->dirtyend = OffsetToLock + SizeToLock;
+        } else {
+            This->dirtyend = This->resource.size;
+        }
     } else {
         This->dirtystart = OffsetToLock;
-        This->dirtyend = OffsetToLock + SizeToLock;
+        if(SizeToLock)
+            This->dirtyend = OffsetToLock + SizeToLock;
+        else
+            This->dirtyend = OffsetToLock + This->resource.size;
     }
 
     if(This->resource.allocatedMemory) {
@@ -375,7 +385,16 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
 }
 HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
+    LONG lockcount;
     TRACE("(%p)\n", This);
+
+    lockcount = InterlockedDecrement(&This->lockcount);
+    if(lockcount > 0) {
+        /* Delay loading the buffer until everything is unlocked */
+        TRACE("Ignoring the unlock\n");
+        return D3D_OK;
+    }
+
     if(!This->resource.allocatedMemory) {
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
