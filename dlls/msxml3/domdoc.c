@@ -664,12 +664,7 @@ static HRESULT WINAPI domdoc_get_documentElement(
 
     *DOMElement = NULL;
 
-    if ( !This->node )
-        return S_FALSE;
-
     xmldoc = get_doc( This );
-    if ( !xmldoc )
-        return S_FALSE;
 
     root = xmlDocGetRootElement( xmldoc );
     if ( !root )
@@ -811,7 +806,6 @@ static HRESULT WINAPI domdoc_createNode(
     DOMNodeType node_type;
     xmlNodePtr xmlnode = NULL;
     xmlChar *xml_name;
-    xmlDocPtr xmldoc;
 
     TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
 
@@ -819,13 +813,6 @@ static HRESULT WINAPI domdoc_createNode(
     TRACE("node_type %d\n", node_type);
 
     xml_name = xmlChar_from_wchar((WCHAR*)name);
-
-    if(!get_doc(This))
-    {
-        xmldoc = xmlNewDoc(NULL);
-        xmldoc->_private = 0;
-        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
-    }
 
     switch(node_type)
     {
@@ -959,7 +946,8 @@ static HRESULT WINAPI domdoc_load(
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     LPWSTR filename = NULL;
-    xmlDocPtr xmldoc;
+    xmlDocPtr xmldoc = NULL;
+    HRESULT hr = S_FALSE;
 
     TRACE("type %d\n", V_VT(&xmlSource) );
 
@@ -975,22 +963,26 @@ static HRESULT WINAPI domdoc_load(
         filename = V_BSTR(&xmlSource);
     }
 
-    if ( !filename )
-        return S_FALSE;
-
-    xmldoc = doread( filename );
-    if ( !xmldoc )
+    if ( filename )
     {
-        This->error = E_FAIL;
-        return S_FALSE;
+        xmldoc = doread( filename );
+    
+        if ( !xmldoc )
+            This->error = E_FAIL;
+        else
+        {
+            hr = This->error = S_OK;
+            *isSuccessful = VARIANT_TRUE;
+        }
     }
 
-    This->error = S_OK;
+    if(!xmldoc)
+        xmldoc = xmlNewDoc(NULL);
+
     xmldoc->_private = 0;
     attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
 
-    *isSuccessful = VARIANT_TRUE;
-    return S_OK;
+    return hr;
 }
 
 
@@ -1084,9 +1076,10 @@ static HRESULT WINAPI domdoc_loadXML(
     VARIANT_BOOL* isSuccessful )
 {
     domdoc *This = impl_from_IXMLDOMDocument( iface );
-    xmlDocPtr xmldoc;
+    xmlDocPtr xmldoc = NULL;
     char *str;
     int len;
+    HRESULT hr = S_FALSE;
 
     TRACE("%p %s %p\n", This, debugstr_w( bstrXML ), isSuccessful );
 
@@ -1094,31 +1087,30 @@ static HRESULT WINAPI domdoc_loadXML(
 
     attach_xmlnode( This->node, NULL );
 
-    if ( !isSuccessful )
-        return S_FALSE;
-
-    *isSuccessful = VARIANT_FALSE;
-
-    if ( !bstrXML )
-        return S_FALSE;
-
-    if ( !bstr_to_utf8( bstrXML, &str, &len ) )
-        return S_FALSE;
-
-    xmldoc = doparse( str, len );
-    HeapFree( GetProcessHeap(), 0, str );
-    if ( !xmldoc )
+    if ( isSuccessful )
     {
-        This->error = E_FAIL;
-        return S_FALSE;
-    }
+        *isSuccessful = VARIANT_FALSE;
 
-    This->error = S_OK;
+        if ( bstrXML  && bstr_to_utf8( bstrXML, &str, &len ) )
+        {
+            xmldoc = doparse( str, len );
+            HeapFree( GetProcessHeap(), 0, str );
+            if ( !xmldoc )
+                This->error = E_FAIL;
+            else
+            {
+                hr = This->error = S_OK;
+                *isSuccessful = VARIANT_TRUE;
+            }
+        }
+    }
+    if(!xmldoc)
+        xmldoc = xmlNewDoc(NULL);
+
     xmldoc->_private = 0;
     attach_xmlnode( This->node, (xmlNodePtr) xmldoc );
 
-    *isSuccessful = VARIANT_TRUE;
-    return S_OK;
+    return hr;
 }
 
 
@@ -1325,6 +1317,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     domdoc *doc;
     HRESULT hr;
+    xmlDocPtr xmldoc;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
@@ -1337,9 +1330,19 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->async = 0;
     doc->error = S_OK;
 
-    doc->node_unk = create_basic_node( NULL, (IUnknown*)&doc->lpVtbl );
+    xmldoc = xmlNewDoc(NULL);
+    if(!xmldoc)
+    {
+        HeapFree(GetProcessHeap(), 0, doc);
+        return E_OUTOFMEMORY;
+    }
+
+    xmldoc->_private = 0;
+
+    doc->node_unk = create_basic_node( (xmlNodePtr)xmldoc, (IUnknown*)&doc->lpVtbl );
     if(!doc->node_unk)
     {
+        xmlFreeDoc(xmldoc);
         HeapFree(GetProcessHeap(), 0, doc);
         return E_FAIL;
     }

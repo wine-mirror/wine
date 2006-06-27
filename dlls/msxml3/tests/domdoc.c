@@ -98,6 +98,7 @@ void test_domdoc( void )
     IXMLDOMDocument *doc = NULL;
     IXMLDOMParseError *error;
     IXMLDOMElement *element = NULL;
+    IXMLDOMNode *node;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -141,6 +142,13 @@ void test_domdoc( void )
     element = NULL;
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_FALSE, "should be no document element\n");
+
+    /* try finding a node */
+    node = NULL;
+    str = SysAllocString( szstr1 );
+    r = IXMLDOMDocument_selectSingleNode( doc, str, &node );
+    ok( r == S_FALSE, "ret %08lx\n", r );
+    SysFreeString( str );
 
     b = VARIANT_TRUE;
     str = SysAllocString( szIncomplete );
