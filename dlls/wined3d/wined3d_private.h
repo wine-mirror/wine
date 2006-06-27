@@ -1194,6 +1194,7 @@ const char* debug_d3dpool(WINED3DPOOL pool);
 GLenum StencilOp(DWORD op);
 GLenum StencilFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
+void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
 
 int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
