@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -599,6 +602,23 @@ int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
 
 
 /***********************************************************************
+ *           set_max_limit
+ *
+ * Set a user limit to the maximum allowed value.
+ */
+static void set_max_limit( int limit )
+{
+    struct rlimit rlimit;
+
+    if (!getrlimit( limit, &rlimit ))
+    {
+        rlimit.rlim_cur = rlimit.rlim_max;
+        setrlimit( limit, &rlimit );
+    }
+}
+
+
+/***********************************************************************
  *           wine_init
  *
  * Main Wine initialisation.
@@ -609,6 +629,10 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     char *path;
     void *ntdll = NULL;
     void (*init_func)(void);
+
+    /* force a few limits that are set too low on some platforms */
+    set_max_limit( RLIMIT_NOFILE );
+    set_max_limit( RLIMIT_AS );
 
     wine_init_argv0_path( argv[0] );
     build_dll_path();
