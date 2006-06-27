@@ -472,14 +472,14 @@ static void test_get_osfhandle(void)
     DWORD bytes_written;
     HANDLE handle;
 
-    fd = _sopen(fname, _O_CREAT|_O_RDWR, _SH_DENYRW, 0);
+    fd = _sopen(fname, _O_CREAT|_O_RDWR, _SH_DENYRW, _S_IREAD | _S_IWRITE);
     handle = (HANDLE)_get_osfhandle(fd);
     WriteFile(handle, "bar", 3, &bytes_written, NULL);
     _close(fd);
     fd = _open(fname, _O_RDONLY, 0);
     ok(fd != -1, "Coudn't open '%s' after _get_osfhanle()\n", fname);
 
-    CloseHandle(handle);
+    _close(fd);
     _unlink(fname);
 }
 
