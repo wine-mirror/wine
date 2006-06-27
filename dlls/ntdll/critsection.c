@@ -90,11 +90,111 @@ static inline int use_futexes(void)
     return supported;
 }
 
-#else  /* linux */
+static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    int val;
+    struct timespec timespec;
 
-static inline int futex_wait( int *addr, int val, struct timespec *timeout ) { return -ENOSYS; }
-static inline int futex_wake( int *addr, int val ) { return -ENOSYS; }
-static inline int use_futexes(void) { return 0; }
+    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
+
+    timespec.tv_sec  = timeout;
+    timespec.tv_nsec = 0;
+    while ((val = interlocked_cmpxchg( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
+    {
+        /* note: this may wait longer than specified in case of signals or */
+        /*       multiple wake-ups, but that shouldn't be a problem */
+        if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -ETIMEDOUT)
+            return STATUS_TIMEOUT;
+    }
+    return STATUS_WAIT_0;
+}
+
+static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
+{
+    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
+
+    *(int *)&crit->LockSemaphore = 1;
+    futex_wake( (int *)&crit->LockSemaphore, 1 );
+    return STATUS_SUCCESS;
+}
+
+static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    if (!use_futexes()) NtClose( crit->LockSemaphore );
+}
+
+#elif defined(__APPLE__)
+
+#include <mach/mach.h>
+#include <mach/task.h>
+#include <mach/semaphore.h>
+
+static inline semaphore_t get_mach_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    semaphore_t ret = *(int *)&crit->LockSemaphore;
+    if (!ret)
+    {
+        semaphore_t sem;
+        if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 )) return 0;
+        if (!(ret = interlocked_cmpxchg( (int *)&crit->LockSemaphore, sem, 0 )))
+            ret = sem;
+        else
+            semaphore_destroy( mach_task_self(), sem );  /* somebody beat us to it */
+    }
+    return ret;
+}
+
+static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    mach_timespec_t timespec;
+    semaphore_t sem = get_mach_semaphore( crit );
+
+    timespec.tv_sec = timeout;
+    timespec.tv_nsec = 0;
+    for (;;)
+    {
+        switch( semaphore_timedwait( sem, timespec ))
+        {
+        case KERN_SUCCESS:
+            return STATUS_WAIT_0;
+        case KERN_ABORTED:
+            continue;  /* got a signal, restart */
+        case KERN_OPERATION_TIMED_OUT:
+            return STATUS_TIMEOUT;
+        default:
+            return STATUS_INVALID_HANDLE;
+        }
+    }
+}
+
+static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
+{
+    semaphore_t sem = get_mach_semaphore( crit );
+    semaphore_signal( sem );
+    return STATUS_SUCCESS;
+}
+
+static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    semaphore_destroy( mach_task_self(), *(int *)&crit->LockSemaphore );
+}
+
+#else  /* __APPLE__ */
+
+static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    NtClose( crit->LockSemaphore );
+}
 
 #endif
 
@@ -122,30 +222,18 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
  */
 static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
 {
-    if (use_futexes() && crit->DebugInfo)  /* debug info is cleared by MakeCriticalSectionGlobal */
-    {
-        int val;
-        struct timespec timespec;
+    NTSTATUS ret;
 
-        timespec.tv_sec  = timeout;
-        timespec.tv_nsec = 0;
-        while ((val = interlocked_cmpxchg( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
-        {
-            /* note: this may wait longer than specified in case of signals or */
-            /*       multiple wake-ups, but that shouldn't be a problem */
-            if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -ETIMEDOUT)
-                return STATUS_TIMEOUT;
-        }
-        return STATUS_WAIT_0;
-    }
-    else
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit->DebugInfo || ((ret = fast_wait( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
     {
         HANDLE sem = get_semaphore( crit );
         LARGE_INTEGER time;
 
         time.QuadPart = timeout * (LONGLONG)-10000000;
-        return NtWaitForSingleObject( sem, FALSE, &time );
+        ret = NtWaitForSingleObject( sem, FALSE, &time );
     }
+    return ret;
 }
 
 /***********************************************************************
@@ -261,8 +349,6 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
-    if (crit->LockSemaphore) NtClose( crit->LockSemaphore );
-    crit->LockSemaphore  = 0;
     if (crit->DebugInfo)
     {
         /* only free the ones we made in here */
@@ -271,7 +357,10 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
             RtlFreeHeap( GetProcessHeap(), 0, crit->DebugInfo );
             crit->DebugInfo = NULL;
         }
+        close_semaphore( crit );
     }
+    else NtClose( crit->LockSemaphore );
+    crit->LockSemaphore = 0;
     return STATUS_SUCCESS;
 }
 
@@ -360,19 +449,16 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    if (use_futexes() && crit->DebugInfo)  /* debug info is cleared by MakeCriticalSectionGlobal */
-    {
-        *(int *)&crit->LockSemaphore = 1;
-        futex_wake( (int *)&crit->LockSemaphore, 1 );
-        return STATUS_SUCCESS;
-    }
-    else
+    NTSTATUS ret;
+
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit->DebugInfo || ((ret = fast_wake( crit )) == STATUS_NOT_IMPLEMENTED))
     {
         HANDLE sem = get_semaphore( crit );
-        NTSTATUS res = NtReleaseSemaphore( sem, 1, NULL );
-        if (res) RtlRaiseStatus( res );
-        return res;
+        ret = NtReleaseSemaphore( sem, 1, NULL );
     }
+    if (ret) RtlRaiseStatus( ret );
+    return ret;
 }
 
 
