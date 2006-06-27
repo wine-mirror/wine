@@ -437,6 +437,9 @@
 /* Define to 1 if the system has the type `mode_t'. */
 #undef HAVE_MODE_T
 
+/* Define to 1 if you have the `mousemask' function. */
+#undef HAVE_MOUSEMASK
+
 /* Define if you have NAS including devel headers */
 #undef HAVE_NAS
 

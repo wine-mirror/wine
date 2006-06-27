@@ -40,7 +40,10 @@
 #elif defined(HAVE_CURSES_H)
 # include <curses.h>
 #endif
-#undef KEY_EVENT  /* avoid redefinition warning */
+/* avoid redefinition warnings */
+#undef KEY_EVENT
+#undef MOUSE_MOVED
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -67,7 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(curses);
 
 struct inner_data_curse 
 {
-    mmask_t             initial_mouse_mask;
+    unsigned long       initial_mouse_mask;
     HANDLE              hInput;
     WINDOW*             pad;
     chtype*             line;
@@ -77,23 +80,30 @@ struct inner_data_curse
 
 static void *nc_handle = NULL;
 
+#ifdef initscr  /* work around Solaris breakage */
+#undef initscr
+extern WINDOW *initscr(void);
+#endif
+
 #define MAKE_FUNCPTR(f) static typeof(f) * p_##f;
 
 MAKE_FUNCPTR(curs_set)
 MAKE_FUNCPTR(delwin)
 MAKE_FUNCPTR(endwin)
+#ifndef getmaxx
+MAKE_FUNCPTR(getmaxx)
+#endif
+#ifndef getmaxy
+MAKE_FUNCPTR(getmaxy)
+#endif
 MAKE_FUNCPTR(getmouse)
 MAKE_FUNCPTR(has_colors)
 MAKE_FUNCPTR(init_pair)
-#ifndef initscr
 MAKE_FUNCPTR(initscr)
-#endif
 #ifndef intrflush
 MAKE_FUNCPTR(intrflush)
 #endif
 MAKE_FUNCPTR(keypad)
-MAKE_FUNCPTR(mouseinterval)
-MAKE_FUNCPTR(mousemask)
 MAKE_FUNCPTR(newpad)
 #ifndef nodelay
 MAKE_FUNCPTR(nodelay)
@@ -108,6 +118,10 @@ MAKE_FUNCPTR(stdscr)
 MAKE_FUNCPTR(waddchnstr)
 MAKE_FUNCPTR(wmove)
 MAKE_FUNCPTR(wgetch)
+#ifdef HAVE_MOUSEMASK
+MAKE_FUNCPTR(mouseinterval)
+MAKE_FUNCPTR(mousemask)
+#endif
 
 #undef MAKE_FUNCPTR
 
@@ -139,18 +153,20 @@ static BOOL WCCURSES_bind_libcurses(void)
     LOAD_FUNCPTR(curs_set)
     LOAD_FUNCPTR(delwin)
     LOAD_FUNCPTR(endwin)
+#ifndef getmaxx
+    LOAD_FUNCPTR(getmaxx)
+#endif
+#ifndef getmaxy
+    LOAD_FUNCPTR(getmaxy)
+#endif
     LOAD_FUNCPTR(getmouse)
     LOAD_FUNCPTR(has_colors)
     LOAD_FUNCPTR(init_pair)
-#ifndef initscr
     LOAD_FUNCPTR(initscr)
-#endif
 #ifndef intrflush
     LOAD_FUNCPTR(intrflush)
 #endif
     LOAD_FUNCPTR(keypad)
-    LOAD_FUNCPTR(mouseinterval)
-    LOAD_FUNCPTR(mousemask)
     LOAD_FUNCPTR(newpad)
 #ifndef nodelay
     LOAD_FUNCPTR(nodelay)
@@ -165,6 +181,10 @@ static BOOL WCCURSES_bind_libcurses(void)
     LOAD_FUNCPTR(waddchnstr)
     LOAD_FUNCPTR(wmove)
     LOAD_FUNCPTR(wgetch)
+#ifdef HAVE_MOUSEMASK
+    LOAD_FUNCPTR(mouseinterval)
+    LOAD_FUNCPTR(mousemask)
+#endif
 
 #undef LOAD_FUNCPTR
 
@@ -183,12 +203,16 @@ sym_not_found:
 #define curs_set p_curs_set
 #define delwin p_delwin
 #define endwin p_endwin
+#ifndef getmaxx
+#define getmaxx p_getmaxx
+#endif
+#ifndef getmaxy
+#define getmaxy p_getmaxy
+#endif
 #define getmouse p_getmouse
 #define has_colors p_has_colors
 #define init_pair p_init_pair
-#ifndef initscr
 #define initscr p_initscr
-#endif
 #ifndef intrflush
 #define intrflush p_intrflush
 #endif
@@ -551,6 +575,7 @@ static unsigned WCCURSES_FillComplexChar(INPUT_RECORD* ir, WORD vk, WORD kc, DWO
  */
 static unsigned WCCURSES_FillMouse(INPUT_RECORD* ir)
 {
+#ifdef HAVE_MOUSEMASK
     static	unsigned	bstate /* = 0 */;
     static	COORD 		pos /* = {0, 0} */;
 
@@ -603,6 +628,9 @@ static unsigned WCCURSES_FillMouse(INPUT_RECORD* ir)
     pos.X = mevt.x; pos.Y = mevt.y;
 
     return 1;
+#else
+    return 0;
+#endif
 }
 
 /******************************************************************
@@ -745,7 +773,6 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_REFERENCE:
     case KEY_REFRESH:
     case KEY_REPLACE:
-    case KEY_RESIZE:
     case KEY_RESTART:
     case KEY_RESUME:
     case KEY_SAVE:
@@ -754,6 +781,9 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_SCOMMAND:
     case KEY_SCOPY:
     case KEY_SCREATE:
+#ifdef KEY_RESIZE
+    case KEY_RESIZE:
+#endif
         goto notFound;
 
     case KEY_SDC:
@@ -829,7 +859,7 @@ static void WCCURSES_GetEvents(struct inner_data* data)
     
     WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
     
-    if (inchar & KEY_CODE_YES)
+    if (inchar >= KEY_MIN && inchar <= KEY_MAX)
     {
         numEvent = WCCURSES_FillCode(data, ir, inchar);
     }
@@ -848,14 +878,17 @@ static void WCCURSES_GetEvents(struct inner_data* data)
  */
 static void WCCURSES_DeleteBackend(struct inner_data* data)
 {
-    mmask_t     mm;
-
     if (!PRIVATE(data)) return;
 
     CloseHandle(PRIVATE(data)->hInput);
 
     delwin(PRIVATE(data)->pad);
-    mousemask(PRIVATE(data)->initial_mouse_mask, &mm);
+#ifdef HAVE_MOUSEMASK
+    {
+        mmask_t mm;
+        mousemask(PRIVATE(data)->initial_mouse_mask, &mm);
+    }
+#endif
     endwin();
 
     HeapFree(GetProcessHeap(), 0, PRIVATE(data)->line);
@@ -950,23 +983,29 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     intrflush(stdscr, FALSE);
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
+#ifdef HAVE_MOUSEMASK
     if (data->curcfg.quick_edit)
     {
+        mmask_t mm;
         mousemask(BUTTON1_PRESSED|BUTTON1_RELEASED|
                   BUTTON2_PRESSED|BUTTON2_RELEASED|
                   BUTTON3_PRESSED|BUTTON3_RELEASED|
                   BUTTON_SHIFT|BUTTON_CTRL|BUTTON_ALT|REPORT_MOUSE_POSITION,
-                  &PRIVATE(data)->initial_mouse_mask);
+                  &mm);
         /* no click event generation... we just need button up/down events
          * it doesn't seem that mouseinterval(-1) behaves as documented... 
          * 0 seems to be better value to disable click event generation
          */
         mouseinterval(0);
+        PRIVATE(data)->initial_mouse_mask = mm;
     }
     else
     {
-        mousemask(0, &PRIVATE(data)->initial_mouse_mask);
+        mmask_t mm;
+        mousemask(0, &mm);
+        PRIVATE(data)->initial_mouse_mask = mm;
     }
+#endif
 
     return init_success;
 }

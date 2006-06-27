@@ -541,6 +541,10 @@ then
             [AC_DEFINE(HAVE_LIBCURSES, 1, [Define if you have the curses library (-lcurses)])
              CURSESLIBS="-lcurses"])
     fi
+    ac_save_LIBS="$LIBS"
+    LIBS="$LIBS $CURSESLIBS"
+    AC_CHECK_FUNCS(mousemask)
+    LIBS="$ac_save_LIBS"
 fi
 AC_SUBST(CURSESLIBS)
 
