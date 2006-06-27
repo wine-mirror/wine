@@ -29,6 +29,12 @@
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
+#ifdef HAVE_SYS_REG_H
+#include <sys/reg.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
@@ -59,6 +65,19 @@
 #endif
 #ifndef PTRACE_POKEDATA
 #define PTRACE_POKEDATA PT_WRITE_D
+#endif
+#ifndef PTRACE_PEEKUSER
+#define PTRACE_PEEKUSER PT_READ_U
+#endif
+#ifndef PTRACE_POKEUSER
+#define PTRACE_POKEUSER PT_WRITE_U
+#endif
+
+#ifdef PT_GETDBREGS
+#define PTRACE_GETDBREGS PT_GETDBREGS
+#endif
+#ifdef PT_SETDBREGS
+#define PTRACE_SETDBREGS PT_SETDBREGS
 #endif
 
 #ifndef HAVE_SYS_PTRACE_H
@@ -133,6 +152,13 @@ void sigchld_callback(void)
     }
 }
 
+/* return the Unix pid to use in ptrace calls for a given thread */
+static int get_ptrace_pid( struct thread *thread )
+{
+    if (thread->unix_tid != -1) return thread->unix_tid;
+    return thread->unix_pid;
+}
+
 /* wait for a ptraced child to get a certain signal */
 static int wait4_thread( struct thread *thread, int signal )
 {
@@ -162,13 +188,6 @@ static int wait4_thread( struct thread *thread, int signal )
     }
     stop_watchdog();
     return (thread->unix_pid != -1);
-}
-
-/* return the Unix pid to use in ptrace calls for a given thread */
-int get_ptrace_pid( struct thread *thread )
-{
-    if (thread->unix_tid != -1) return thread->unix_tid;
-    return thread->unix_pid;
 }
 
 /* send a signal to a specific thread */
@@ -225,9 +244,19 @@ int send_thread_signal( struct thread *thread, int sig )
     return (ret != -1);
 }
 
+/* resume a thread after we have used ptrace on it */
+static void resume_after_ptrace( struct thread *thread )
+{
+    if (thread->unix_pid == -1) return;
+    if (ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 ) == -1)
+    {
+        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
+    }
+}
+
 /* suspend a thread to allow using ptrace on it */
 /* you must do a resume_after_ptrace when finished with the thread */
-int suspend_for_ptrace( struct thread *thread )
+static int suspend_for_ptrace( struct thread *thread )
 {
     /* can't stop a thread while initialisation is in progress */
     if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) goto error;
@@ -243,16 +272,6 @@ int suspend_for_ptrace( struct thread *thread )
  error:
     set_error( STATUS_ACCESS_DENIED );
     return 0;
-}
-
-/* resume a thread after we have used ptrace on it */
-void resume_after_ptrace( struct thread *thread )
-{
-    if (thread->unix_pid == -1) return;
-    if (ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 ) == -1)
-    {
-        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
-    }
 }
 
 /* read an int from a thread address space */
@@ -440,3 +459,179 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
         resume_after_ptrace( thread );
     }
 }
+
+
+#if defined(linux) && (defined(__i386__) || defined(__x86_64__))
+
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+
+/* debug register offset in struct user */
+#define DR_OFFSET(dr) ((int)((((struct user *)0)->u_debugreg) + (dr)))
+
+/* retrieve a debug register */
+static inline int get_debug_reg( int pid, int num, DWORD *data )
+{
+    int res;
+    errno = 0;
+    res = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(num), 0 );
+    if ((res == -1) && errno)
+    {
+        file_set_error();
+        return -1;
+    }
+    *data = res;
+    return 0;
+}
+
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
+{
+    int pid = get_ptrace_pid(thread);
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
+    if (get_debug_reg( pid, 0, &context->Dr0 ) == -1) goto error;
+    if (get_debug_reg( pid, 1, &context->Dr1 ) == -1) goto error;
+    if (get_debug_reg( pid, 2, &context->Dr2 ) == -1) goto error;
+    if (get_debug_reg( pid, 3, &context->Dr3 ) == -1) goto error;
+    if (get_debug_reg( pid, 6, &context->Dr6 ) == -1) goto error;
+    if (get_debug_reg( pid, 7, &context->Dr7 ) == -1) goto error;
+    context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+    resume_after_ptrace( thread );
+    return;
+ error:
+    file_set_error();
+    resume_after_ptrace( thread );
+}
+
+/* set the thread x86 registers */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
+{
+    int pid = get_ptrace_pid( thread );
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->Dr0 ) == -1) goto error;
+    if (thread->context) thread->context->Dr0 = context->Dr0;
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->Dr1 ) == -1) goto error;
+    if (thread->context) thread->context->Dr1 = context->Dr1;
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->Dr2 ) == -1) goto error;
+    if (thread->context) thread->context->Dr2 = context->Dr2;
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->Dr3 ) == -1) goto error;
+    if (thread->context) thread->context->Dr3 = context->Dr3;
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->Dr6 ) == -1) goto error;
+    if (thread->context) thread->context->Dr6 = context->Dr6;
+    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->Dr7 ) == -1) goto error;
+    if (thread->context) thread->context->Dr7 = context->Dr7;
+    resume_after_ptrace( thread );
+    return;
+ error:
+    file_set_error();
+    resume_after_ptrace( thread );
+}
+
+#elif defined(__i386__) && defined(PTRACE_GETDBREGS) && defined(PTRACE_SETDBREGS) && \
+    (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__NetBSD__))
+
+#include <machine/reg.h>
+
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
+{
+    int pid = get_ptrace_pid(thread);
+    struct dbreg dbregs;
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
+    if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
+    else
+    {
+#ifdef DBREG_DRX
+        /* needed for FreeBSD, the structure fields have changed under 5.x */
+        context->Dr0 = DBREG_DRX((&dbregs), 0);
+        context->Dr1 = DBREG_DRX((&dbregs), 1);
+        context->Dr2 = DBREG_DRX((&dbregs), 2);
+        context->Dr3 = DBREG_DRX((&dbregs), 3);
+        context->Dr6 = DBREG_DRX((&dbregs), 6);
+        context->Dr7 = DBREG_DRX((&dbregs), 7);
+#else
+        context->Dr0 = dbregs.dr0;
+        context->Dr1 = dbregs.dr1;
+        context->Dr2 = dbregs.dr2;
+        context->Dr3 = dbregs.dr3;
+        context->Dr6 = dbregs.dr6;
+        context->Dr7 = dbregs.dr7;
+#endif
+        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+    }
+    resume_after_ptrace( thread );
+}
+
+/* set the thread x86 registers */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
+{
+    int pid = get_ptrace_pid(thread);
+    struct dbreg dbregs;
+
+    /* all other regs are handled on the client side */
+    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
+
+    if (!suspend_for_ptrace( thread )) return;
+
+#ifdef DBREG_DRX
+    /* needed for FreeBSD, the structure fields have changed under 5.x */
+    DBREG_DRX((&dbregs), 0) = context->Dr0;
+    DBREG_DRX((&dbregs), 1) = context->Dr1;
+    DBREG_DRX((&dbregs), 2) = context->Dr2;
+    DBREG_DRX((&dbregs), 3) = context->Dr3;
+    DBREG_DRX((&dbregs), 4) = 0;
+    DBREG_DRX((&dbregs), 5) = 0;
+    DBREG_DRX((&dbregs), 6) = context->Dr6;
+    DBREG_DRX((&dbregs), 7) = context->Dr7;
+#else
+    dbregs.dr0 = context->Dr0;
+    dbregs.dr1 = context->Dr1;
+    dbregs.dr2 = context->Dr2;
+    dbregs.dr3 = context->Dr3;
+    dbregs.dr4 = 0;
+    dbregs.dr5 = 0;
+    dbregs.dr6 = context->Dr6;
+    dbregs.dr7 = context->Dr7;
+#endif
+    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
+    else if (thread->context)  /* update the cached values */
+    {
+        thread->context->Dr0 = context->Dr0;
+        thread->context->Dr1 = context->Dr1;
+        thread->context->Dr2 = context->Dr2;
+        thread->context->Dr3 = context->Dr3;
+        thread->context->Dr6 = context->Dr6;
+        thread->context->Dr7 = context->Dr7;
+    }
+    resume_after_ptrace( thread );
+}
+
+#else  /* linux || __FreeBSD__ */
+
+/* retrieve the thread x86 registers */
+void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
+{
+}
+
+/* set the thread x86 debug registers */
+void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
+{
+}
+
+#endif  /* linux || __FreeBSD__ */

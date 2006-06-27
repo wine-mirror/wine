@@ -34,6 +34,8 @@
 # include <sys/ptrace.h>
 #endif
 
+#if 0  /* no longer used */
+
 #ifndef PTRACE_PEEKUSER
 # ifdef PT_READ_D
 #  define PTRACE_PEEKUSER PT_READ_D
@@ -197,6 +199,8 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 #undef IREG
 #undef FREG
 
+#endif /* 0 */
+
 #define IREG(x) to->Gpr##x = from->Gpr##x;
 #define FREG(x) to->Fpr##x = from->Fpr##x;
 #define CREG(x) to->x = from->x;
@@ -276,27 +280,7 @@ unsigned int get_context_cpu_flag(void)
 /* (system regs are the ones we can't access on the client side) */
 unsigned int get_context_system_regs( unsigned int flags )
 {
-    return flags;
-}
-
-/* retrieve the thread context */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
-}
-
-/* set the thread context */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        set_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
+    return 0;  /* FIXME: implement client-side handling */
 }
 
 #endif  /* __powerpc__ */

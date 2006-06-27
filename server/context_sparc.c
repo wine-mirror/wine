@@ -40,6 +40,7 @@
 #include "thread.h"
 #include "request.h"
 
+#if 0  /* no longer used */
 
 #if defined(__sun) || defined(__sun__)
 
@@ -104,6 +105,7 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
 #error You must implement get/set_thread_context_ptrace for your platform
 #endif  /* __sun__ */
 
+#endif /* 0 */
 
 /* copy a context structure according to the flags */
 void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
@@ -176,27 +178,7 @@ unsigned int get_context_cpu_flag(void)
 /* (system regs are the ones we can't access on the client side) */
 unsigned int get_context_system_regs( unsigned int flags )
 {
-    return flags & ~CONTEXT_SPARC;
-}
-
-/* retrieve the thread context */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
-}
-
-/* set the thread context */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        set_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
+    return 0;  /* FIXME: implement client-side handling */
 }
 
 #endif  /* __sparc__ */

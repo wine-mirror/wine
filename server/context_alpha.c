@@ -37,6 +37,8 @@
 #include "thread.h"
 #include "request.h"
 
+#if 0  /* no longer used */
+
 #ifdef HAVE_SYS_USER_H
 # include <sys/user.h>
 #endif
@@ -238,6 +240,8 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
     file_set_error();
 }
 
+#endif /* 0 */
+
 /* copy a context structure according to the flags */
 void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 {
@@ -338,27 +342,7 @@ unsigned int get_context_cpu_flag(void)
 /* (system regs are the ones we can't access on the client side) */
 unsigned int get_context_system_regs( unsigned int flags )
 {
-    return flags & ~CONTEXT_ALPHA;
-}
-
-/* retrieve the thread context */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
-}
-
-/* set the thread context */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        set_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
+    return 0;  /* FIXME: implement client-side handling */
 }
 
 #endif  /* __ALPHA__ */

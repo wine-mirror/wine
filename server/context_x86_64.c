@@ -26,12 +26,6 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_PTRACE_H
-# include <sys/ptrace.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
 
 #define NONAMELESSUNION
 #include "windef.h"
@@ -40,167 +34,6 @@
 #include "file.h"
 #include "thread.h"
 #include "request.h"
-
-#ifdef __linux__
-
-#ifdef HAVE_SYS_USER_H
-# include <sys/user.h>
-#endif
-
-/* debug register offset in struct user */
-#define DR_OFFSET(dr) ((unsigned long)((((struct user *)0)->u_debugreg) + (dr)))
-
-/* retrieve a debug register */
-static inline int get_debug_reg( int pid, int num, DWORD64 *data )
-{
-    int res;
-    errno = 0;
-    res = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(num), 0 );
-    if ((res == -1) && errno)
-    {
-        file_set_error();
-        return -1;
-    }
-    *data = res;
-    return 0;
-}
-
-/* retrieve a thread context */
-static void get_thread_context_ptrace( struct thread *thread, unsigned int flags, CONTEXT *context )
-{
-    int pid = get_ptrace_pid(thread);
-    if (flags & CONTEXT_FULL)
-    {
-        struct user_regs_struct regs;
-        if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
-        if (flags & CONTEXT_INTEGER)
-        {
-            context->Rax = regs.rax;
-            context->Rbx = regs.rbx;
-            context->Rcx = regs.rcx;
-            context->Rdx = regs.rdx;
-            context->Rsi = regs.rsi;
-            context->Rdi = regs.rdi;
-            context->R8  = regs.r8;
-            context->R9  = regs.r9;
-            context->R10 = regs.r10;
-            context->R11 = regs.r11;
-            context->R12 = regs.r12;
-            context->R13 = regs.r13;
-            context->R14 = regs.r14;
-            context->R15 = regs.r15;
-        }
-        if (flags & CONTEXT_CONTROL)
-        {
-            context->Rbp    = regs.rbp;
-            context->Rsp    = regs.rsp;
-            context->Rip    = regs.rip;
-            context->SegCs  = regs.cs;
-            context->SegSs  = regs.ss;
-            context->EFlags = regs.eflags;
-        }
-        if (flags & CONTEXT_SEGMENTS)
-        {
-            context->SegDs = regs.ds;
-            context->SegEs = regs.es;
-            context->SegFs = regs.fs;
-            context->SegGs = regs.gs;
-        }
-        context->ContextFlags |= flags & CONTEXT_FULL;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        if (get_debug_reg( pid, 0, &context->Dr0 ) == -1) goto error;
-        if (get_debug_reg( pid, 1, &context->Dr1 ) == -1) goto error;
-        if (get_debug_reg( pid, 2, &context->Dr2 ) == -1) goto error;
-        if (get_debug_reg( pid, 3, &context->Dr3 ) == -1) goto error;
-        if (get_debug_reg( pid, 6, &context->Dr6 ) == -1) goto error;
-        if (get_debug_reg( pid, 7, &context->Dr7 ) == -1) goto error;
-        context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        /* we can use context->FloatSave directly as it is using the */
-        /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_GETFPREGS, pid, 0, &context->u.FltSave ) == -1) goto error;
-        context->ContextFlags |= CONTEXT_FLOATING_POINT;
-    }
-    return;
- error:
-    file_set_error();
-}
-
-
-/* set a thread context */
-static void set_thread_context_ptrace( struct thread *thread, unsigned int flags, const CONTEXT *context )
-{
-    int pid = get_ptrace_pid(thread);
-    if (flags & CONTEXT_FULL)
-    {
-        struct user_regs_struct regs;
-
-        /* need to preserve some registers (at a minimum orig_eax must always be preserved) */
-        if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
-
-        if (flags & CONTEXT_INTEGER)
-        {
-            regs.rax = context->Rax;
-            regs.rbx = context->Rbx;
-            regs.rcx = context->Rcx;
-            regs.rdx = context->Rdx;
-            regs.rsi = context->Rsi;
-            regs.rdi = context->Rdi;
-            regs.r8  = context->R8;
-            regs.r9  = context->R9;
-            regs.r10 = context->R10;
-            regs.r11 = context->R11;
-            regs.r12 = context->R12;
-            regs.r13 = context->R13;
-            regs.r14 = context->R14;
-            regs.r15 = context->R15;
-        }
-        if (flags & CONTEXT_CONTROL)
-        {
-            regs.rbp = context->Rbp;
-            regs.rip = context->Rip;
-            regs.rsp = context->Rsp;
-            regs.cs  = context->SegCs;
-            regs.ss  = context->SegSs;
-            regs.eflags = context->EFlags;
-        }
-        if (flags & CONTEXT_SEGMENTS)
-        {
-            regs.ds = context->SegDs;
-            regs.es = context->SegEs;
-            regs.fs = context->SegFs;
-            regs.gs = context->SegGs;
-        }
-        if (ptrace( PTRACE_SETREGS, pid, 0, &regs ) == -1) goto error;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->Dr0 ) == -1) goto error;
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->Dr1 ) == -1) goto error;
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->Dr2 ) == -1) goto error;
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->Dr3 ) == -1) goto error;
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->Dr6 ) == -1) goto error;
-        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->Dr7 ) == -1) goto error;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        /* we can use context->FloatSave directly as it is using the */
-        /* correct structure (the same as fsave/frstor) */
-        if (ptrace( PTRACE_SETFPREGS, pid, 0, &context->u.FltSave ) == -1) goto error;
-    }
-    return;
- error:
-    file_set_error();
-}
-
-#else  /* linux */
-#error You must implement get/set_thread_context_ptrace for your platform
-#endif  /* linux */
-
 
 /* copy a context structure according to the flags */
 void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
@@ -266,26 +99,6 @@ unsigned int get_context_cpu_flag(void)
 unsigned int get_context_system_regs( unsigned int flags )
 {
     return flags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64);
-}
-
-/* retrieve the thread context */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
-}
-
-/* set the thread context */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
-{
-    if (suspend_for_ptrace( thread ))
-    {
-        set_thread_context_ptrace( thread, flags, context );
-        resume_after_ptrace( thread );
-    }
 }
 
 #endif  /* __x86_64__ */

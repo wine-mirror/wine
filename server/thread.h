@@ -128,9 +128,6 @@ extern unsigned int get_context_system_regs( unsigned int flags );
 /* ptrace functions */
 
 extern void sigchld_callback(void);
-extern int get_ptrace_pid( struct thread *thread );
-extern int suspend_for_ptrace( struct thread *thread );
-extern void resume_after_ptrace( struct thread *thread );
 extern void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );
