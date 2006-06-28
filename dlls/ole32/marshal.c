@@ -379,11 +379,49 @@ static HRESULT WINAPI Proxy_MarshalInterface(
     if (SUCCEEDED(hr))
     {
         STDOBJREF stdobjref = ifproxy->stdobjref;
-        /* FIXME: optimization - share out proxy's public references if possible
-         * instead of making new proxy do a roundtrip through the server */
-        stdobjref.cPublicRefs = 0; /* InterlockedDecrement(&This->stdobjref.cPublicRefs) >= 0 ? 1 : 0 */
+        ULONG cPublicRefs = ifproxy->refs;
+        ULONG cPublicRefsOld;
 
-        hr = IStream_Write(pStm, &stdobjref, sizeof(stdobjref), NULL);
+        /* optimization - share out proxy's public references if possible
+         * instead of making new proxy do a roundtrip through the server */
+        do
+        {
+            ULONG cPublicRefsNew;
+            cPublicRefsOld = cPublicRefs;
+            stdobjref.cPublicRefs = cPublicRefs / 2;
+            cPublicRefsNew = cPublicRefs - stdobjref.cPublicRefs;
+            cPublicRefs = InterlockedCompareExchange(
+                (LONG *)&ifproxy->refs, cPublicRefsNew, cPublicRefsOld);
+        } while (cPublicRefs != cPublicRefsOld);
+
+        if (!stdobjref.cPublicRefs)
+        {
+            IRemUnknown *remunk;
+            hr = proxy_manager_get_remunknown(This, &remunk);
+            if (hr == S_OK)
+            {
+                HRESULT hrref = S_OK;
+                REMINTERFACEREF rif;
+                rif.ipid = ifproxy->stdobjref.ipid;
+                rif.cPublicRefs = NORMALEXTREFS;
+                rif.cPrivateRefs = 0;
+                hr = IRemUnknown_RemAddRef(remunk, 1, &rif, &hrref);
+                if (hr == S_OK && hrref == S_OK)
+                    stdobjref.cPublicRefs = rif.cPublicRefs;
+                else
+                    ERR("IRemUnknown_RemAddRef returned with 0x%08lx, hrref = 0x%08lx\n", hr, hrref);
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            TRACE("writing stdobjref:\n\tflags = %04lx\n\tcPublicRefs = %ld\n\toxid = %s\n\toid = %s\n\tipid = %s\n",
+                stdobjref.flags, stdobjref.cPublicRefs,
+                wine_dbgstr_longlong(stdobjref.oxid),
+                wine_dbgstr_longlong(stdobjref.oid),
+                debugstr_guid(&stdobjref.ipid));
+            hr = IStream_Write(pStm, &stdobjref, sizeof(stdobjref), NULL);
+        }
     }
     else
     {

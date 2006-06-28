@@ -434,6 +434,10 @@ static void test_interthread_marshal_and_unmarshal(void)
     end_host_object(tid, thread);
 }
 
+/* the number of external references that Wine's proxy manager normally gives
+ * out, so we can test the border case of running out of references */
+#define NORMALEXTREFS 5
+
 /* tests success case of an interthread marshal and then marshaling the proxy */
 static void test_proxy_marshal_and_unmarshal(void)
 {
@@ -443,6 +447,7 @@ static void test_proxy_marshal_and_unmarshal(void)
     IUnknown *pProxy2 = NULL;
     DWORD tid;
     HANDLE thread;
+    int i;
 
     cLocks = 0;
 
@@ -465,14 +470,26 @@ static void test_proxy_marshal_and_unmarshal(void)
 
     ok_more_than_one_lock();
 
+    /* marshal 5 more times to exhaust the normal external references of 5 */
+    for (i = 0; i < NORMALEXTREFS; i++)
+    {
+        hr = CoMarshalInterface(pStream, &IID_IClassFactory, pProxy, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        ok_ole_success(hr, CoMarshalInterface);
+    }
+
+    ok_more_than_one_lock();
+
+    /* release the original proxy to test that we successfully keep the
+     * original object alive */
+    IUnknown_Release(pProxy);
+
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    /* unmarshal the second proxy to the object */
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
     ok_ole_success(hr, CoUnmarshalInterface);
-    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
 
     /* now the proxies should be as follows:
-     *  pProxy -> &Test_ClassFactory
      *  pProxy2 -> &Test_ClassFactory
      * they should NOT be as follows:
      *  pProxy -> &Test_ClassFactory
@@ -480,15 +497,20 @@ static void test_proxy_marshal_and_unmarshal(void)
      * the above can only really be tested by looking in +ole traces
      */
 
-    ok_more_than_one_lock();
-
-    IUnknown_Release(pProxy);
-
-    ok_more_than_one_lock();
-
     IUnknown_Release(pProxy2);
 
+    /* unmarshal all of the proxies to check that the object stub still exists */
+    for (i = 0; i < NORMALEXTREFS; i++)
+    {
+        hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+        ok_ole_success(hr, CoUnmarshalInterface);
+
+        IUnknown_Release(pProxy2);
+    }
+
     ok_no_locks();
+
+    IStream_Release(pStream);
 
     end_host_object(tid, thread);
 }
