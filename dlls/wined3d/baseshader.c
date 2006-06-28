@@ -377,13 +377,22 @@ void shader_get_registers_used(
                 (D3DSIO_TEX == curOpcode->opcode ||
                  D3DSIO_TEXBEM == curOpcode->opcode ||
                  D3DSIO_TEXM3x2TEX == curOpcode->opcode ||
-                 D3DSIO_TEXM3x3TEX == curOpcode->opcode ||
-                 D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
-                 D3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
+                 D3DSIO_TEXM3x3TEX == curOpcode->opcode)) {
 
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | D3DSTT_2D;
+                
+            } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+                (D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
+                 D3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
+
+                /* 3D sampler usage, only set reserved bit and ttype
+                 * FIXME: This could be either Cube or Volume, but we wouldn't know unless
+                 * we waited to generate the shader until the textures were all bound.
+                 * For now, use Cube textures because they are more common. */
+                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | D3DSTT_CUBE;
             }
 
             /* This will loop over all the registers and try to

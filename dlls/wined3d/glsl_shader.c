@@ -1049,8 +1049,8 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
     
-    shader_addline(arg->buffer, "%s(%s * (%s - %s) + %s))%s;\n", 
-                   tmpLine, src2_str, src1_str, src0_str, src0_str, dst_mask);
+    shader_addline(arg->buffer, "%s%s + %s * (%s - %s))%s;\n",
+                   tmpLine, src2_str, src0_str, src1_str, src2_str, dst_mask);
 }
 
 /** Process the D3DSIO_DEF opcode into a GLSL string - creates a local vec4
@@ -1292,7 +1292,7 @@ void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp%i.x = dot(vec3(T%lu), vec3(%s));\n", current_state->current_row, reg, src0_str);
+    shader_addline(buffer, "tmp0.%c = dot(vec3(T%lu), vec3(%s));\n", 'x' + current_state->current_row, reg, src0_str);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
@@ -1328,7 +1328,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     /* Construct the eye-ray vector from w coordinates */
     shader_addline(buffer, "tmp1.x = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[0]);
-    shader_addline(buffer, "tmp1.x = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[1]);
+    shader_addline(buffer, "tmp1.y = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[1]);
     shader_addline(buffer, "tmp1.z = gl_TexCoord[%lu].w;\n", reg);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
@@ -1337,14 +1337,13 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "tmp0 = (2.0 * tmp0) - tmp1;\n");
 
     /* FIXME:
-     * The ARB_fragment_program implementation uses Cube texture lookups here, but that is just a guess.
+     * We don't really know if a Cube or a Volume texture is being sampled, but since Cube textures
+     * are used more commonly, we'll default to that.
      * We probably need to push back the pixel shader generation code until drawPrimitive() for 
      * shader versions < 2.0, since that's the only time we can guarantee that we're sampling
      * the correct type of texture because we can lookup what textures are bound at that point.
-     * For now, just sample the texture as if it's 2D.
      */
-    FIXME("Incorrect dimensionality for pixel shader texm3x3vspec instruction.\n");
-    shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.xy);\n", reg, reg);
+    shader_addline(buffer, "T%lu = textureCube(Psampler%lu, tmp0.xyz);\n", reg, reg);
     current_state->current_row = 0;
 }
 
