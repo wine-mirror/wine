@@ -30,7 +30,7 @@
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr)
 @ stdcall CoGetMalloc(long ptr)
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
-@ stub CoGetObject
+@ stdcall CoGetObject(wstr ptr ptr ptr)
 @ stdcall CoGetPSClsid(ptr ptr)
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
 @ stdcall CoGetState(ptr)

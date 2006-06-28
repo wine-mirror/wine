@@ -2909,6 +2909,58 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     return hr;
 }
 
+
+/***********************************************************************
+ *           CoGetObject [OLE32.@]
+ *
+ * Gets the object named by coverting the name to a moniker and binding to it.
+ *
+ * PARAMS
+ *  pszName      [I] String representing the object.
+ *  pBindOptions [I] Parameters affecting the binding to the named object.
+ *  riid         [I] Interface to bind to on the objecct.
+ *  ppv          [O] On output, the interface riid of the object represented
+ *                   by pszName.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  MkParseDisplayName.
+ */
+HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions,
+    REFIID riid, void **ppv)
+{
+    IBindCtx *pbc;
+    HRESULT hr;
+
+    *ppv = NULL;
+
+    hr = CreateBindCtx(0, &pbc);
+    if (SUCCEEDED(hr))
+    {
+        if (pBindOptions)
+            hr = IBindCtx_SetBindOptions(pbc, pBindOptions);
+
+        if (SUCCEEDED(hr))
+        {
+            ULONG chEaten;
+            IMoniker *pmk;
+
+            hr = MkParseDisplayName(pbc, pszName, &chEaten, &pmk);
+            if (SUCCEEDED(hr))
+            {
+                hr = IMoniker_BindToObject(pmk, pbc, NULL, riid, ppv);
+                IMoniker_Release(pmk);
+            }
+        }
+
+        IBindCtx_Release(pbc);
+    }
+    return hr;
+}
+
 /***********************************************************************
  *		DllMain (OLE32.@)
  */
