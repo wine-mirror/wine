@@ -3979,7 +3979,7 @@ static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
 
     TRACE("(%p/%p)->(%ld)\n", This, iface, lNoNotifyFlags);
 
-    if ((lNoNotifyFlags != 0) || (lNoNotifyFlags != 1))
+    if ((lNoNotifyFlags != 0) && (lNoNotifyFlags != 1))
 	return E_INVALIDARG;
 
     This->notif.disabled = lNoNotifyFlags;
