@@ -34,6 +34,7 @@ BASEDIRS = \
 	crtdll \
 	crypt32 \
 	cryptdll \
+	cryptnet \
 	ctl3d32 \
 	d3d8 \
 	d3d9 \
