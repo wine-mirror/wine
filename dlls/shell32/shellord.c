@@ -1301,6 +1301,14 @@ HRESULT WINAPI DriveType(DWORD u)
 	return 0;
 }
 /*************************************************************************
+ * InvalidateDriveType			[SHELL32.65]
+ *
+ */
+int WINAPI InvalidateDriveType(int u)
+{	FIXME("0x%08x stub\n",u);
+	return 0;
+}
+/*************************************************************************
  * SHAbortInvokeCommand				[SHELL32.198]
  *
  */

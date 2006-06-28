@@ -59,7 +59,7 @@
   62 stdcall -noname PickIconDlg(long long long long)
   63 stdcall -noname GetFileNameFromBrowse(long long long long str str str)
   64 stdcall -noname DriveType(long)
-  65 stub -noname InvalidateDriveType
+  65 stdcall -noname InvalidateDriveType(long)
   66 stdcall -noname IsNetDrive(long)
   67 stdcall -noname Shell_MergeMenus(long long long long long long)
   68 stdcall -noname SHGetSetSettings(ptr long long)
