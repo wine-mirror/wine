@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "shlguid.h"
 
 #include "wine/test.h"
 
@@ -57,6 +58,26 @@ static void test_CoGetPSClsid(void)
 	ok(hr == REGDB_E_IIDNOTREG,
 	   "CoGetPSClsid for random IID returned 0x%08lx instead of REGDB_E_IIDNOTREG\n",
 	   hr);
+}
+
+static void test_cocreateinstance_proxy(void)
+{
+    IUnknown *pProxy;
+    IMultiQI *pMQI;
+    HRESULT hr;
+
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = CoCreateInstance(&CLSID_ShellDesktop, NULL, CLSCTX_INPROC, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, CoCreateInstance);
+    hr = IUnknown_QueryInterface(pProxy, &IID_IMultiQI, (void **)&pMQI);
+    todo_wine
+    ok(hr == S_OK, "created object is not a proxy, so was created in the wrong apartment\n");
+    if (hr == S_OK)
+        IMultiQI_Release(pMQI);
+    IUnknown_Release(pProxy);
+
+    CoUninitialize();
 }
 
 static const LARGE_INTEGER ullZero;
@@ -2213,6 +2234,8 @@ START_TEST(marshal)
     wndclass.lpfnWndProc = window_proc;
     wndclass.lpszClassName = "WineCOMTest";
     RegisterClass(&wndclass);
+
+    test_cocreateinstance_proxy();
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
