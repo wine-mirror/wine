@@ -214,7 +214,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08lx,%p,%p)\n", This, Flags, Data, Size);
 
-    if(*Size)
+    if(Size)
     {
         /* Get the size, for returning it, and for locking */
         hr = IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer,
