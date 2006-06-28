@@ -1367,12 +1367,13 @@ static void *TLB_CopyTypeDesc( TYPEDESC *dest, const TYPEDESC *src, void *buffer
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
  */
-/* read function */
-static DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
+static inline unsigned int MSFT_Tell(TLBContext *pcx)
 {
-    TRACE_(typelib)("pos=0x%08x len=0x%08lx 0x%08x 0x%08x 0x%08lx\n",
-       pcx->pos, count, pcx->oStart, pcx->length, where);
+    return pcx->pos;
+}
 
+static inline void MSFT_Seek(TLBContext *pcx, long where)
+{
     if (where != DO_NOT_SEEK)
     {
         where += pcx->oStart;
@@ -1384,6 +1385,15 @@ static DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
         }
         pcx->pos = where;
     }
+}
+
+/* read function */
+static DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
+{
+    TRACE_(typelib)("pos=0x%08x len=0x%08lx 0x%08x 0x%08x 0x%08lx\n",
+       pcx->pos, count, pcx->oStart, pcx->length, where);
+
+    MSFT_Seek(pcx, where);
     if (pcx->pos + count > pcx->length) count = pcx->length - pcx->pos;
     memcpy( buffer, (char *)pcx->mapping + pcx->pos, count );
     pcx->pos += count;
@@ -1561,16 +1571,23 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
             char * ptr;
             MSFT_ReadLEDWords(&size, sizeof(INT), pcx, DO_NOT_SEEK );
 	    if(size < 0) {
-	        FIXME("BSTR length = %d?\n", size);
-	    } else {
-                ptr=TLB_Alloc(size);/* allocate temp buffer */
-		MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);/* read string (ANSI) */
-		V_BSTR(pVar)=SysAllocStringLen(NULL,size);
-		/* FIXME: do we need a AtoW conversion here? */
-		V_UNION(pVar, bstrVal[size])=L'\0';
-		while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
-		TLB_Free(ptr);
+                char next;
+                DWORD origPos = MSFT_Tell(pcx), nullPos;
+
+                do {
+                    MSFT_Read(&next, 1, pcx, DO_NOT_SEEK);
+                } while (next);
+                nullPos = MSFT_Tell(pcx);
+                size = nullPos - origPos;
+                MSFT_Seek(pcx, origPos);
 	    }
+            ptr=TLB_Alloc(size);/* allocate temp buffer */
+            MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);/* read string (ANSI) */
+            V_BSTR(pVar)=SysAllocStringLen(NULL,size);
+            /* FIXME: do we need a AtoW conversion here? */
+            V_UNION(pVar, bstrVal[size])=L'\0';
+            while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
+            TLB_Free(ptr);
 	}
 	size=-4; break;
     /* FIXME: this will not work AT ALL when the variant contains a pointer */
