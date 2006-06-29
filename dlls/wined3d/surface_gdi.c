@@ -196,6 +196,17 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
         TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
+        if ((pRect->top < 0) ||
+             (pRect->left < 0) ||
+             (pRect->left >= pRect->right) ||
+             (pRect->top >= pRect->bottom) ||
+             (pRect->right > This->currentDesc.Width) ||
+             (pRect->bottom > This->currentDesc.Height))
+        {
+            WARN(" Invalid values in pRect !!!\n");
+            return D3DERR_INVALIDCALL;
+        }
+
         if (This->resource.format == WINED3DFMT_DXT1)
         {
             /* DXT1 is half byte per pixel */
