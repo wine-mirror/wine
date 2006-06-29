@@ -108,16 +108,14 @@ static LPTSTR CombinePaths(LPCTSTR pPaths[], int nPaths) {
     return combined;
 }
 
-LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
-    LPCTSTR parts[3] = {_T(""), _T(""), _T("")};
+static LPTSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+    LPCTSTR parts[2] = {_T(""), _T("")};
     TCHAR text[260];
     HKEY hRootKey = NULL;
     if (!hItem)
         hItem = TreeView_GetSelection(hwndTV);
-    parts[2] = GetItemPath(hwndTV, hItem, &hRootKey);
-    if (!parts[2])
-        parts[2] = _T("");
-    if (!bFull && !hRootKey && !*parts[2])
+    GetItemPath(hwndTV, hItem, &hRootKey);
+    if (!bFull && !hRootKey)
         return NULL;
     if (hRootKey)
         parts[1] = GetRootKeyName(hRootKey);
@@ -126,7 +124,27 @@ LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
         GetComputerName(text, &dwSize);
         parts[0] = text;
     }
-    return CombinePaths(parts, 3);
+    return CombinePaths(parts, 2);
+}
+
+LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+    LPTSTR parts[2] = {_T(""), _T("")};
+    HKEY hRootKey = NULL;
+    LPTSTR ret;
+    parts[0] = GetPathRoot(hwndTV, hItem, bFull);
+    parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
+    ret = CombinePaths((LPCTSTR *)parts, 2);
+    HeapFree(GetProcessHeap(), 0, parts[0]);
+    return ret;
+}
+
+LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
+    LPTSTR parts[2] = {_T(""), _T("")}, ret;
+    parts[0] = GetPathRoot(hwndTV, 0, TRUE);
+    parts[1] = path;
+    ret = CombinePaths((LPCTSTR *)parts, 2);
+    HeapFree(GetProcessHeap(), 0, parts[0]);
+    return ret;
 }
 
 static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
@@ -317,10 +335,14 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
 		if (res) {
 		    TVITEMEX item;
+                    LPTSTR fullPath = GetPathFullPath(pChildWnd->hTreeWnd,
+                     dispInfo->item.pszText);
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
 		    item.hItem = TreeView_GetSelection(pChildWnd->hTreeWnd);
 		    item.pszText = dispInfo->item.pszText;
                     SendMessage( pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
+                    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+                    HeapFree(GetProcessHeap(), 0, fullPath);
 		}
 		return res;
 	    }
