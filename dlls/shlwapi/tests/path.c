@@ -1296,6 +1296,129 @@ static void test_PathAppendA(void)
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 }
 
+static void test_PathCanonicalizeA(void)
+{
+    char dest[MAX_PATH];
+    char too_long[LONG_LEN];
+    BOOL res;
+
+    /* try a NULL source */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, NULL);
+    ok(!res, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, 
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    todo_wine
+    {
+        ok(!lstrcmp(dest, "test"), "Expected test, got %s\n", dest);
+    }
+
+    /* try an empty source */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "\\"), "Expected \\, got %s\n", dest);
+
+    /* try a NULL dest */
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(NULL, "C:\\");
+    ok(!res, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, 
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    /* try empty dest */
+    dest[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
+
+    /* try non-empty dest */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\"), "Expected C:\\, got %s\n", dest);
+
+    /* try a space for source */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, " ");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, " "), "Expected ' ', got %s\n", dest);
+
+    /* try a relative path */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "one\\two");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "one\\two"), "Expected one\\two, got %s\n", dest);
+
+    /* try current dir and previous dir */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\one\\.\\..\\two\\three\\..");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\two"), "Expected C:\\two, got %s\n", dest);
+
+    /* try simple forward slashes */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\one/two/three\\four/five\\six");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\one/two/three\\four/five\\six"),
+       "Expected C:\\one/two/three\\four/five\\six, got %s\n", dest);
+
+    /* try simple forward slashes with same dir */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\one/.\\two");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\one/.\\two"), "Expected C:\\one/.\\two, got %s\n", dest);
+
+    /* try simple forward slashes with change dir */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\one/.\\two\\..");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\one/."), "Expected C:\\one/., got %s\n", dest);
+
+    /* try forward slashes with change dirs
+     * NOTE: if there is a forward slash in between two backslashes,
+     * everything in between the two backslashes is considered on dir
+     */
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "C:\\one/.\\..\\two/three\\..\\four/.five");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(!lstrcmp(dest, "C:\\four/.five"), "Expected C:\\four/.five, got %s\n", dest);
+
+    /* try src is too long */
+    memset(too_long, 'a', LONG_LEN);
+    too_long[LONG_LEN - 1] = '\0';
+    lstrcpy(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, too_long);
+    todo_wine
+    {
+        ok(!res, "Expected failure\n");
+        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    }
+    ok(lstrlen(too_long) == LONG_LEN - 1, "Expected length LONG_LEN - 1, got %i\n", lstrlen(too_long));
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -1336,4 +1459,5 @@ START_TEST(path)
 
   test_PathCombineA();
   test_PathAppendA();
+  test_PathCanonicalizeA();
 }
