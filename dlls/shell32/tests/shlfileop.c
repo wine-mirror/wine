@@ -343,10 +343,12 @@ static void test_rename(void)
     retval = SHFileOperationA(&shfo);
         ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", retval);
 
-    /* pFrom is NULL */
+    /* pFrom is NULL, commented out because it crashes on nt 4.0 */
+#if 0
     shfo.pFrom = NULL;
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", retval);
+    ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", retval);
+#endif
 }
 
 /* tests the FO_COPY action */
