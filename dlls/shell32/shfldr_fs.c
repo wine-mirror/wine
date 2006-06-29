@@ -1155,6 +1155,36 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
 }
 
 /****************************************************************************
+ * build_paths_list
+ *
+ * Builds a list of paths like the one used in SHFileOperation from a table of
+ * PIDLs relative to the given base folder
+ */
+WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, LPCITEMIDLIST *pidls)
+{
+    WCHAR *wszPathsList;
+    WCHAR *wszListPos;
+    int iPathLen;
+    int i;
+    
+    iPathLen = lstrlenW(wszBasePath);
+    wszPathsList = HeapAlloc(GetProcessHeap(), 0, MAX_PATH*sizeof(WCHAR)*cidl+1);
+    wszListPos = wszPathsList;
+    
+    for (i = 0; i < cidl; i++) {
+        if (!_ILIsFolder(pidls[i]) && !_ILIsValue(pidls[i]))
+            continue;
+
+        lstrcpynW(wszListPos, wszBasePath, MAX_PATH);
+        /* FIXME: abort if path too long */
+        _ILSimpleGetTextW(pidls[i], wszListPos+iPathLen, MAX_PATH-iPathLen);
+        wszListPos += lstrlenW(wszListPos)+1;
+    }
+    *wszListPos=0;
+    return wszPathsList;
+}
+
+/****************************************************************************
  * ISFHelper_fnDeleteItems
  *
  * deletes items in folder
@@ -1164,59 +1194,60 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
     UINT i;
+    SHFILEOPSTRUCTW op;
     WCHAR wszPath[MAX_PATH];
-    int iPathLen;
-    BOOL bConfirm = TRUE;
+    WCHAR *wszPathsList;
+    HRESULT ret;
+    WCHAR *wszCurrentPath;
 
     TRACE ("(%p)(%u %p)\n", This, cidl, apidl);
-
-    /* deleting multiple items so give a slightly different warning */
-    if (cidl != 1) {
-        WCHAR tmp[8];
-        static const WCHAR format[] = {'%','d',0};
-
-        wnsprintfW (tmp, sizeof(tmp)/sizeof(tmp[0]), format, cidl);
-        if (!SHELL_ConfirmDialogW(ASK_DELETE_MULTIPLE_ITEM, tmp))
-            return E_FAIL;
-        bConfirm = FALSE;
-    }
+    if (cidl==0) return S_OK;
 
     if (This->sPathTarget)
         lstrcpynW(wszPath, This->sPathTarget, MAX_PATH);
     else
         wszPath[0] = '\0';
     PathAddBackslashW(wszPath);
-    iPathLen = lstrlenW(wszPath);
-    
-    for (i = 0; i < cidl; i++) {
-        _ILSimpleGetTextW (apidl[i], wszPath+iPathLen, MAX_PATH-iPathLen);
+    wszPathsList = build_paths_list(wszPath, cidl, apidl);
 
-        if (_ILIsFolder (apidl[i])) {
-            LPITEMIDLIST pidl;
+    ZeroMemory(&op, sizeof(op));
+    op.hwnd = GetActiveWindow();
+    op.wFunc = FO_DELETE;
+    op.pFrom = wszPathsList;
+    op.fFlags = 0;
+    if (SHFileOperationW(&op))
+    {
+        WARN("SHFileOperation failed\n");
+        ret = E_FAIL;
+    }
+    else
+        ret = S_OK;
 
-            TRACE ("delete %s\n", debugstr_w(wszPath));
-            if (!SHELL_DeleteDirectoryW (wszPath, bConfirm)) {
-                TRACE ("delete %s failed, bConfirm=%d\n", debugstr_w(wszPath), bConfirm);
-                return E_FAIL;
-            }
-            pidl = ILCombine (This->pidlRoot, apidl[i]);
-            SHChangeNotify (SHCNE_RMDIR, SHCNF_IDLIST, pidl, NULL);
-            SHFree (pidl);
-        } else if (_ILIsValue (apidl[i])) {
-            LPITEMIDLIST pidl;
+    /* we currently need to manually send the notifies */
+    wszCurrentPath = wszPathsList;
+    for (i = 0; i < cidl; i++)
+    {
+        LONG wEventId;
 
-            TRACE ("delete %s\n", debugstr_w(wszPath));
-            if (!SHELL_DeleteFileW (wszPath, bConfirm)) {
-                TRACE ("delete %s failed, bConfirm=%d\n", debugstr_w(wszPath), bConfirm);
-                return E_FAIL;
-            }
-            pidl = ILCombine (This->pidlRoot, apidl[i]);
-            SHChangeNotify (SHCNE_DELETE, SHCNF_IDLIST, pidl, NULL);
-            SHFree (pidl);
+        if (_ILIsFolder(apidl[i]))
+            wEventId = SHCNE_RMDIR;
+        else if (_ILIsValue(apidl[i]))
+            wEventId = SHCNE_DELETE;
+        else
+            continue;
+
+        /* check if file exists */
+        if (GetFileAttributesW(wszCurrentPath) == INVALID_FILE_ATTRIBUTES)
+        {
+            LPITEMIDLIST pidl = ILCombine(This->pidlRoot, apidl[i]);
+            SHChangeNotify(wEventId, SHCNF_IDLIST, pidl, NULL);
+            SHFree(pidl);
         }
 
+        wszCurrentPath += lstrlenW(wszCurrentPath)+1;
     }
-    return S_OK;
+    HeapFree(GetProcessHeap(), 0, wszPathsList);
+    return ret;
 }
 
 /****************************************************************************
