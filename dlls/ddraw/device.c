@@ -1232,8 +1232,8 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
         HeapFree(GetProcessHeap(), 0, Matrix);
         return DDERR_OUTOFMEMORY;
     }
-    This->Handles[(DWORD) D3DMatHandle - 1].ptr = Matrix;
-    This->Handles[(DWORD) D3DMatHandle - 1].type = DDrawHandle_Matrix;
+    This->Handles[(DWORD) *D3DMatHandle - 1].ptr = Matrix;
+    This->Handles[(DWORD) *D3DMatHandle - 1].type = DDrawHandle_Matrix;
     TRACE(" returning matrix handle %ld\n", *D3DMatHandle);
 
     return D3D_OK;

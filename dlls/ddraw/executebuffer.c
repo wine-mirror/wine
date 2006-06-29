@@ -192,16 +192,26 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		
 		for (i = 0; i < count; i++) {
 		    LPD3DMATRIXMULTIPLY ci = (LPD3DMATRIXMULTIPLY) instr;
-		    LPD3DMATRIX a = (LPD3DMATRIX) ci->hDestMatrix;
-		    LPD3DMATRIX b = (LPD3DMATRIX) ci->hSrcMatrix1;
-		    LPD3DMATRIX c = (LPD3DMATRIX) ci->hSrcMatrix2;
-		    
-		    TRACE("  Dest : %08lx  Src1 : %08lx  Src2 : %08lx\n",
-			  ci->hDestMatrix, ci->hSrcMatrix1, ci->hSrcMatrix2);
-		    
-                    multiply_matrix(a,c,b);
+                    LPD3DMATRIX a, b, c;
 
-		    instr += size;
+                    if(!ci->hDestMatrix || ci->hDestMatrix > lpDevice->numHandles ||
+                       !ci->hSrcMatrix1 || ci->hSrcMatrix1 > lpDevice->numHandles ||
+                       !ci->hSrcMatrix2 || ci->hSrcMatrix2 > lpDevice->numHandles) {
+                        ERR("Handles out of bounds\n");
+                    } else if (lpDevice->Handles[ci->hDestMatrix - 1].type != DDrawHandle_Matrix ||
+                               lpDevice->Handles[ci->hSrcMatrix1 - 1].type != DDrawHandle_Matrix ||
+                               lpDevice->Handles[ci->hSrcMatrix2 - 1].type != DDrawHandle_Matrix) {
+                        ERR("Handle types invalid\n");
+                    } else {
+                        a = (LPD3DMATRIX) lpDevice->Handles[ci->hDestMatrix - 1].ptr;
+                        b = (LPD3DMATRIX) lpDevice->Handles[ci->hSrcMatrix1 - 1].ptr;
+                        c = (LPD3DMATRIX) lpDevice->Handles[ci->hSrcMatrix2 - 1].ptr;
+                        TRACE("  Dest : %p  Src1 : %p  Src2 : %p\n",
+                            a, b, c);
+                        multiply_matrix(a,c,b);
+                    }
+
+                    instr += size;
 		}
 	    } break;
 
@@ -212,9 +222,16 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 
-		    IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
-						  ci->u1.drstRenderStateType, (LPD3DMATRIX)ci->u2.dwArg[0]);
-		    
+                    if(!ci->u2.dwArg[0]) {
+                        ERR("Setting a NULL matrix handle, what should I do?\n");
+                    } else if(ci->u2.dwArg[0] > lpDevice->numHandles) {
+                        ERR("Handle %ld is out of bounds\n", ci->u2.dwArg[0]);
+                    } else if(lpDevice->Handles[ci->u2.dwArg[0] - 1].type != DDrawHandle_Matrix) {
+                        ERR("Handle %ld is not a matrix handle\n", ci->u2.dwArg[0]);
+                    } else {
+                        IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
+                                                      ci->u1.drstRenderStateType, (LPD3DMATRIX) lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
+                    }
 		    instr += size;
 		}
 	    } break;
