@@ -529,13 +529,13 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
  * This only works for mapped windows.
  */
 static void update_fullscreen_state( Display *display, struct x11drv_win_data *data,
-                                     const RECT *old_client_rect )
+                                     const RECT *old_client_rect, const RECT *old_screen_rect )
 {
     XEvent xev;
     BOOL old_fs_state = FALSE, new_fs_state = FALSE;
 
-    if (old_client_rect->left <= 0 && old_client_rect->right >= screen_width &&
-        old_client_rect->top <= 0 && old_client_rect->bottom >= screen_height)
+    if (old_client_rect->left <= 0 && old_client_rect->right >= old_screen_rect->right &&
+        old_client_rect->top <= 0 && old_client_rect->bottom >= old_screen_rect->bottom)
         old_fs_state = TRUE;
 
     if (data->client_rect.left <= 0 && data->client_rect.right >= screen_width &&
@@ -574,7 +574,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
                             const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
     struct x11drv_win_data *data;
-    RECT new_whole_rect, old_client_rect;
+    RECT new_whole_rect, old_client_rect, old_screen_rect;
     WND *win;
     DWORD old_style, new_style;
     BOOL ret;
@@ -718,7 +718,8 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
                     XMapWindow( display, data->whole_window );
                     wine_tsx11_unlock();
                 }
-                update_fullscreen_state( display, data, &old_client_rect );
+                SetRect( &old_screen_rect, 0, 0, screen_width, screen_height );
+                update_fullscreen_state( display, data, &old_client_rect, &old_screen_rect );
             }
         }
     }
@@ -1220,16 +1221,36 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 }
 
 
+static BOOL CALLBACK update_windows_fullscreen_state( HWND hwnd, LPARAM lparam )
+{
+    struct x11drv_win_data *data;
+    Display *display = thread_display();
+    RECT *old_screen_rect = (RECT *)lparam;
+
+    if ((data = X11DRV_get_win_data( hwnd )) &&
+        (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
+    {
+        update_fullscreen_state( display, data, &data->client_rect, old_screen_rect );
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *		X11DRV_handle_desktop_resize
  */
 void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 {
+    unsigned int old_screen_width, old_screen_height;
     RECT rect;
     HWND hwnd = GetDesktopWindow();
     struct x11drv_win_data *data;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    old_screen_width = screen_width;
+    old_screen_height = screen_height;
+
     screen_width  = width;
     screen_height = height;
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
@@ -1239,6 +1260,9 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     data->lock_changes--;
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
+
+    SetRect( &rect, 0, 0, old_screen_width, old_screen_height );
+    EnumWindows( update_windows_fullscreen_state, (LPARAM)&rect );
 }
 
 
