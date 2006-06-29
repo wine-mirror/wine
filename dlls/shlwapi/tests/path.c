@@ -1419,6 +1419,72 @@ static void test_PathCanonicalizeA(void)
     ok(lstrlen(too_long) == LONG_LEN - 1, "Expected length LONG_LEN - 1, got %i\n", lstrlen(too_long));
 }
 
+static void test_PathFindExtensionA(void)
+{
+    LPSTR ext;
+    char path[MAX_PATH];
+    char too_long[LONG_LEN];
+
+    /* try a NULL path */
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(NULL);
+    ok(ext == NULL, "Expected NULL, got %p\n", ext);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try an empty path */
+    path[0] = '\0';
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(path);
+    ok(ext == path, "Expected ext == path, got %p\n", ext);
+    ok(lstrlen(ext) == 0, "Expected length 0, got %i\n", lstrlen(ext));
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try a path without an extension */
+    lstrcpy(path, "file");
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(path);
+    ok(ext == path + lstrlen(path), "Expected ext == path, got %p\n", ext);
+    ok(lstrlen(ext) == 0, "Expected length 0, got %i\n", lstrlen(ext));
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try a path with an extension */
+    lstrcpy(path, "file.txt");
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(path);
+    ok(ext == path + lstrlen("file"),
+       "Expected ext == path + lstrlen(\"file\"), got %p\n", ext);
+    ok(!lstrcmp(ext, ".txt"), "Expected .txt, got %s\n", ext);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try a path with two extensions */
+    lstrcpy(path, "file.txt.doc");
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(path);
+    ok(ext == path + lstrlen("file.txt"),
+       "Expected ext == path + lstrlen(\"file.txt\"), got %p\n", ext);
+    ok(!lstrcmp(ext, ".doc"), "Expected .txt, got %s\n", ext);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try a path longer than MAX_PATH without an extension*/
+    memset(too_long, 'a', LONG_LEN);
+    too_long[LONG_LEN - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(too_long);
+    ok(ext == too_long + LONG_LEN - 1, "Expected ext == too_long + LONG_LEN - 1, got %p\n", ext);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* try a path longer than MAX_PATH with an extension*/
+    memset(too_long, 'a', LONG_LEN);
+    too_long[LONG_LEN - 1] = '\0';
+    lstrcpy(too_long + 300, ".abcde");
+    too_long[lstrlen(too_long)] = 'a';
+    SetLastError(0xdeadbeef);
+    ext = PathFindExtensionA(too_long);
+    ok(ext == too_long + 300, "Expected ext == too_long + 300, got %p\n", ext);
+    ok(lstrlen(ext) == LONG_LEN - 301, "Expected LONG_LEN - 301, got %i\n", lstrlen(ext));
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -1460,4 +1526,5 @@ START_TEST(path)
   test_PathCombineA();
   test_PathAppendA();
   test_PathCanonicalizeA();
+  test_PathFindExtensionA();
 }
