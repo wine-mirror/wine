@@ -173,12 +173,12 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	}
 
 	if (list->ps_clsid) {
-	    register_key_guid(iid_key, ps_clsid_keyname, list->ps_clsid);
+	    res = register_key_guid(iid_key, ps_clsid_keyname, list->ps_clsid);
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 	}
 
 	if (list->ps_clsid32) {
-	    register_key_guid(iid_key, ps_clsid32_keyname, list->ps_clsid32);
+	    res = register_key_guid(iid_key, ps_clsid32_keyname, list->ps_clsid32);
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 	}
 
