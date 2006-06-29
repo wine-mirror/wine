@@ -106,4 +106,13 @@ inline static void WIN_ReleasePtr( WND *ptr )
 
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 
+extern BOOL WINPOS_RedrawIconTitle( HWND hWnd );
+extern BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow );
+extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos, POINT *minTrack,
+                                  POINT *maxTrack );
+extern LONG WINPOS_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos);
+extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest );
+extern void WINPOS_CheckInternalPos( HWND hwnd );
+extern void WINPOS_ActivateOtherWindow( HWND hwnd );
+
 #endif  /* __WINE_WIN_H */

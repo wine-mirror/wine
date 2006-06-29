@@ -38,7 +38,6 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "win.h"
-#include "winpos.h"
 #include "user_private.h"
 #include "wine/debug.h"
 

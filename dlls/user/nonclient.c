@@ -30,7 +30,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "winpos.h"
 #include "shellapi.h"
 #include "wine/debug.h"
 

@@ -36,7 +36,6 @@
 #include "winproc.h"
 #include "user_private.h"
 #include "controls.h"
-#include "winpos.h"
 #include "winerror.h"
 #include "wine/debug.h"
 

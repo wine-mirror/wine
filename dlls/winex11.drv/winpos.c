@@ -38,7 +38,6 @@
 
 #include "x11drv.h"
 #include "win.h"
-#include "winpos.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"
