@@ -310,7 +310,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
       IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
       if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
           This->activate(This);
-      IDirect3DViewport3_Release(current_viewport);
+      if(current_viewport) IDirect3DViewport3_Release(current_viewport);
     }
 
     return DD_OK;

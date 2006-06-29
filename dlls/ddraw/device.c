@@ -1639,7 +1639,7 @@ IDirect3DDeviceImpl_3_GetCurrentViewport(IDirect3DDevice3 *iface,
     *Direct3DViewport3 = ICOM_INTERFACE(This->current_viewport, IDirect3DViewport3);
 
     /* AddRef the returned viewport */
-    IDirect3DViewport3_AddRef(*Direct3DViewport3);
+    if(*Direct3DViewport3) IDirect3DViewport3_AddRef(*Direct3DViewport3);
 
     TRACE(" returning interface %p\n", *Direct3DViewport3);
 
@@ -2279,7 +2279,23 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
 
     if (LightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
     {
-        IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) Value;
+        IDirect3DMaterialImpl *mat;
+
+        if(Value == 0) mat = NULL;
+        else if(Value > This->numHandles)
+        {
+            ERR("Material handle out of range(%ld)\n", Value);
+            return DDERR_INVALIDPARAMS;
+        }
+        else if(This->Handles[Value - 1].type != DDrawHandle_Material)
+        {
+            ERR("Invalid handle %ld\n", Value);
+            return DDERR_INVALIDPARAMS;
+        }
+        else
+        {
+            mat = (IDirect3DMaterialImpl *) This->Handles[Value - 1].ptr;
+        }
 
         if (mat != NULL)
         {

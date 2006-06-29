@@ -311,6 +311,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     IDirect3DDeviceImpl *device = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, lpDirect3DDevice3);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, device, lpHandle);
 
+    This->active_device = device;
     if(!This->Handle)
     {
         This->Handle = IDirect3DDeviceImpl_CreateHandle(device);
