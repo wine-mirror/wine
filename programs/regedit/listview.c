@@ -252,6 +252,19 @@ static BOOL CreateListColumns(HWND hWndListView)
 static void OnGetDispInfo(NMLVDISPINFO* plvdi)
 {
     static TCHAR buffer[200];
+    static TCHAR reg_szT[]               = {'R','E','G','_','S','Z',0},
+                 reg_expand_szT[]        = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0},
+                 reg_binaryT[]           = {'R','E','G','_','B','I','N','A','R','Y',0},
+                 reg_dwordT[]            = {'R','E','G','_','D','W','O','R','D',0},
+                 reg_dword_big_endianT[] = {'R','E','G','_','D','W','O','R','D','_',
+                                            'B','I','G','_','E','N','D','I','A','N',0},
+                 reg_multi_szT[]         = {'R','E','G','_','M','U','L','T','I','_','S','Z',0},
+                 reg_linkT[]             = {'R','E','G','_','L','I','N','K',0},
+                 reg_resource_listT[]    = {'R','E','G','_','R','E','S','O','U','R','C','E','_','L','I','S','T',0},
+                 reg_noneT[]             = {'R','E','G','_','N','O','N','E',0},
+                 not_setT[]              = {'(','v','a','l','u','e',' ','n','o','t',' ','s','e','t',')',0},
+                 emptyT[]                = {0};
+    static const TCHAR unknownT[] = {'u','n','k','n','o','w','n','(','%','d',')',0};
 
     plvdi->item.pszText = NULL;
     plvdi->item.cchTextMax = 0;
@@ -263,43 +276,43 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
     case 1:
         switch (((LINE_INFO*)plvdi->item.lParam)->dwValType) {
         case REG_SZ:
-            plvdi->item.pszText = _T("REG_SZ");
+            plvdi->item.pszText = reg_szT;
             break;
         case REG_EXPAND_SZ:
-            plvdi->item.pszText = _T("REG_EXPAND_SZ");
+            plvdi->item.pszText = reg_expand_szT;
             break;
         case REG_BINARY:
-            plvdi->item.pszText = _T("REG_BINARY");
+            plvdi->item.pszText = reg_binaryT;
             break;
         case REG_DWORD:
-            plvdi->item.pszText = _T("REG_DWORD");
+            plvdi->item.pszText = reg_dwordT;
             break;
         case REG_DWORD_BIG_ENDIAN:
-            plvdi->item.pszText = _T("REG_DWORD_BIG_ENDIAN");
+            plvdi->item.pszText = reg_dword_big_endianT;
             break;
         case REG_MULTI_SZ:
-            plvdi->item.pszText = _T("REG_MULTI_SZ");
+            plvdi->item.pszText = reg_multi_szT;
             break;
         case REG_LINK:
-            plvdi->item.pszText = _T("REG_LINK");
+            plvdi->item.pszText = reg_linkT;
             break;
         case REG_RESOURCE_LIST:
-            plvdi->item.pszText = _T("REG_RESOURCE_LIST");
+            plvdi->item.pszText = reg_resource_listT;
             break;
         case REG_NONE:
-            plvdi->item.pszText = _T("REG_NONE");
+            plvdi->item.pszText = reg_noneT;
             break;
         default:
-            wsprintf(buffer, _T("unknown(%d)"), plvdi->item.lParam);
+            wsprintf(buffer, unknownT, plvdi->item.lParam);
             plvdi->item.pszText = buffer;
             break;
         }
         break;
     case 2:
-        plvdi->item.pszText = _T("(value not set)");
+        plvdi->item.pszText = not_setT;
         break;
     case 3:
-        plvdi->item.pszText = _T("");
+        plvdi->item.pszText = emptyT;
         break;
     }
 }
