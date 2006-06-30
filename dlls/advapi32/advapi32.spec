@@ -475,7 +475,7 @@
 @ stdcall RegDeleteKeyW(long wstr)
 @ stdcall RegDeleteValueA(long str)
 @ stdcall RegDeleteValueW(long wstr)
-# @ stub RegDisablePredefinedCache
+@ stdcall RegDisablePredefinedCache()
 @ stdcall RegEnumKeyA(long long ptr long)
 @ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
 @ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)

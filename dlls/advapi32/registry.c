@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define NB_SPECIAL_ROOT_KEYS      ((UINT)HKEY_SPECIAL_ROOT_LAST - (UINT)HKEY_SPECIAL_ROOT_FIRST + 1)
 
 static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
+static BOOL hkcu_cache_disabled;
 
 static const WCHAR name_CLASSES_ROOT[] =
     {'M','a','c','h','i','n','e','\\',
@@ -108,6 +109,10 @@ static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
     {
         if (RtlOpenCurrentUser( access, &hkey )) return 0;
         TRACE( "HKEY_CURRENT_USER -> %p\n", hkey );
+
+        /* don't cache the key in the table if caching is disabled */
+        if (hkcu_cache_disabled)
+            return hkey;
     }
     else
     {
@@ -2564,4 +2569,35 @@ cleanup:
     RtlFreeUnicodeString(&valueW);
  
     return result;
+}
+
+/******************************************************************************
+ * RegDisablePredefinedCache [ADVAPI32.@]
+ *
+ * Disables the caching of the HKEY_CLASSES_ROOT key for the process.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
+ * 
+ * NOTES
+ *  This is useful for services that use impersonation.
+ */
+LONG WINAPI RegDisablePredefinedCache(void)
+{
+    HKEY hkey_current_user;
+    int idx = (UINT_PTR)HKEY_CURRENT_USER - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
+
+    /* prevent caching of future requests */
+    hkcu_cache_disabled = TRUE;
+
+    hkey_current_user = InterlockedExchangePointer( (void **)&special_root_keys[idx], NULL );
+
+    if (hkey_current_user)
+        NtClose( hkey_current_user );
+
+    return ERROR_SUCCESS;
 }
