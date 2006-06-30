@@ -1,6 +1,7 @@
 Makefile
 authors.c
 cdrom.ico
+delete.ico
 desktop.ico
 document.ico
 drive.ico

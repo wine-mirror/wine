@@ -74,22 +74,26 @@ typedef struct
 
 static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 {
-        ids->hIconInstance = NULL;
-        ids->icon_resource_id = IDI_WARNING;
+        ids->hIconInstance = shell32_hInstance;
 	switch (nKindOfDialog) {
 	  case ASK_DELETE_FILE:
+            ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
 	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
 	    ids->text_resource_id  = IDS_DELETEITEM_TEXT;
 	    return TRUE;
 	  case ASK_DELETE_FOLDER:
+            ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
 	    ids->caption_resource_id  = IDS_DELETEFOLDER_CAPTION;
 	    ids->text_resource_id  = IDS_DELETEITEM_TEXT;
 	    return TRUE;
 	  case ASK_DELETE_MULTIPLE_ITEM:
+            ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
 	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
 	    ids->text_resource_id  = IDS_DELETEMULTIPLE_TEXT;
 	    return TRUE;
 	  case ASK_OVERWRITE_FILE:
+            ids->hIconInstance = NULL;
+            ids->icon_resource_id = IDI_WARNING;
 	    ids->caption_resource_id  = IDS_OVERWRITEFILE_CAPTION;
 	    ids->text_resource_id  = IDS_OVERWRITEFILE_TEXT;
 	    return TRUE;

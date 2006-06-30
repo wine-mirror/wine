@@ -55,6 +55,7 @@ RC_BINSRC = shres.rc
 RC_BINARIES = \
 	cdrom.ico \
 	desktop.ico \
+	delete.ico \
 	document.ico \
 	drive.ico \
 	floppy.ico \
