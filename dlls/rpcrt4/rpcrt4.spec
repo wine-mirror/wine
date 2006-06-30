@@ -441,7 +441,7 @@
 @ stub RpcMgmtSetCancelTimeout
 @ stdcall RpcMgmtSetComTimeout(ptr long)
 @ stub RpcMgmtSetParameter # win9x
-@ stub RpcMgmtSetServerStackSize
+@ stdcall RpcMgmtSetServerStackSize(long)
 @ stub RpcMgmtStatsVectorFree
 @ stdcall RpcMgmtStopServerListening(ptr)
 @ stdcall RpcMgmtWaitServerListen()

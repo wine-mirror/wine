@@ -997,10 +997,19 @@ RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, unsigned long
 }
 
 /***********************************************************************
- *             RpcMgmtEpEltInqBegin (RPCRT4.@)
+ *             RpcMgmtIsServerListening (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 {
   FIXME("(%p): stub\n", Binding);
   return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcMgmtSetServerStackSize (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtSetServerStackSize(unsigned int ThreadStackSize)
+{
+  FIXME("(0x%x): stub\n", ThreadStackSize);
+  return RPC_S_OK;
 }
