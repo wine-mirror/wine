@@ -175,17 +175,6 @@ BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 }
 
 /**************************************************************************
- *  SHELL_DeleteFileW()      [internal]
- */
-BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
-{
-	if (bShowUI && !SHELL_ConfirmDialogW(ASK_DELETE_FILE, pszFile))
-	  return FALSE;
-
-	return (SHNotifyDeleteFileW(pszFile) == ERROR_SUCCESS);
-}
-
-/**************************************************************************
  * Win32CreateDirectory      [SHELL32.93]
  *
  * Creates a directory. Also triggers a change notify if one exists.
