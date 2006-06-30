@@ -77,6 +77,25 @@ void TypeLibResizeChild(void)
             client.right, client.bottom-stat.bottom, TRUE);
 }
 
+void TypeLibMenuCommand(WPARAM wParam, HWND hWnd)
+{
+    BOOL vis;
+
+    switch(wParam)
+    {
+        case IDM_STATUSBAR:
+            vis = IsWindowVisible(typelib.hStatusBar);
+            ShowWindow(typelib.hStatusBar, vis ? SW_HIDE : SW_SHOW);
+            CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            TypeLibResizeChild();
+            break;
+        case IDM_CLOSE:
+            DestroyWindow(hWnd);
+            break;
+    }
+}
+
 void UpdateTypeLibStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
@@ -109,6 +128,8 @@ LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             SetFocus(typelib.hTree);
             break;
         }
+        case WM_COMMAND:
+            TypeLibMenuCommand(LOWORD(wParam), hWnd);
         case WM_MENUSELECT:
             UpdateTypeLibStatusBar(LOWORD(wParam));
             break;

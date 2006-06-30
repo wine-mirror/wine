@@ -83,7 +83,7 @@ IDM_TYPELIB MENU
         MENUITEM "&Group by type kind", IDM_GROUP
         MENUITEM SEPARATOR
         MENUITEM "&Toolbar",    IDM_TOOLBAR
-        MENUITEM "&Status Bar", IDM_STATUSBAR
+        MENUITEM "&Status Bar", IDM_STATUSBAR,CHECKED
     }
 }
 
