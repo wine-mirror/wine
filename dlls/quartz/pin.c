@@ -1131,8 +1131,10 @@ ULONG WINAPI PullPin_Release(IPin * iface)
     {
         if (This->hThread)
             PullPin_StopProcessing(This);
-        IMemAllocator_Release(This->pAlloc);
-        IAsyncReader_Release(This->pReader);
+        if(This->pAlloc)
+            IMemAllocator_Release(This->pAlloc);
+        if(This->pReader)
+            IAsyncReader_Release(This->pReader);
         CloseHandle(This->hEventStateChanged);
         CoTaskMemFree(This);
         return 0;
