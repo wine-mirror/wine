@@ -47,6 +47,12 @@ typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 
+typedef enum {
+    UNKNOWN_USERMODE,
+    BROWSEMODE,
+    EDITMODE        
+} USERMODE;
+
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
@@ -78,6 +84,7 @@ typedef struct {
     HWND hwnd;
     HWND tooltips_hwnd;
 
+    USERMODE usermode;
     BOOL in_place_active;
     BOOL ui_active;
     BOOL window_active;

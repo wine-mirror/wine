@@ -30,6 +30,7 @@
 #include "shlguid.h"
 #include "mshtmdid.h"
 #include "idispids.h"
+#include "mshtmcid.h"
 
 #include "wine/debug.h"
 
@@ -237,6 +238,15 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
+static HRESULT exec_browsemode(HTMLDocument *This)
+{
+    WARN("(%p)\n", This);
+
+    This->usermode = BROWSEMODE;
+
+    return S_OK;
+}
+
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
@@ -374,8 +384,13 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         FIXME("unsupported nCmdID %ld of CGID_ShellDocView group\n", nCmdID);
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
-        FIXME("unsupported nCmdID %ld of CGID_MSHTML group\n", nCmdID);
-        return OLECMDERR_E_NOTSUPPORTED;
+        switch(nCmdID) {
+        case IDM_BROWSEMODE:
+            return exec_browsemode(This);
+        default:
+            FIXME("unsupported nCmdID %ld of CGID_MSHTML group\n", nCmdID);
+            return OLECMDERR_E_NOTSUPPORTED;
+        }
     }
 
     FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
