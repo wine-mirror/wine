@@ -119,11 +119,10 @@ LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
+BOOL PaneRegisterClass(void)
 {
     WNDCLASS wcc;
     const WCHAR wszPaneClass[] = { 'P','A','N','E','\0' };
-    PANE *pane;
 
     memset(&wcc, 0, sizeof(WNDCLASS));
     wcc.lpfnWndProc = PaneProc;
@@ -132,6 +131,13 @@ BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
 
     if(!RegisterClass(&wcc))
         return FALSE;
+    return TRUE;
+}
+
+BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
+{
+    const WCHAR wszPaneClass[] = { 'P','A','N','E','\0' };
+    PANE *pane;
 
     pane = HeapAlloc(GetProcessHeap(), 0, sizeof(PANE));
     *hWndCreated = CreateWindow(wszPaneClass, NULL, WS_CHILD|WS_VISIBLE,

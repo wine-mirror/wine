@@ -35,8 +35,9 @@ static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\\','\0' };
 static const WCHAR wszInterface[] = { 'I','n','t','e','r','f','a','c','e','\\','\0' };
 static const WCHAR wszComponentCategories[] = { 'C','o','m','p','o','n','e','n','t',
     ' ','C','a','t','e','g','o','r','i','e','s','\\','\0' };
+static const WCHAR wszGetPath[] = { '0','\\','w','i','n','3','2','\0' };
 
-LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
+LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid, const WCHAR *path)
 {
     ITEM_INFO *reg;
 
@@ -46,6 +47,7 @@ LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
     reg->cFlag = flag;
     lstrcpyW(reg->info, info);
     if(clsid) lstrcpyW(reg->clsid, clsid);
+    if(path) lstrcpyW(reg->path, path);
 
     return (LPARAM)reg;
 }
@@ -170,7 +172,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
             lstrcpyW(wszRegPath, wszInterface);
             lstrcpyW(&wszRegPath[lstrlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
             U(tvis).item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
-                    wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid);
+                    wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid, NULL);
             SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
         }
         hCur = TreeView_GetNextSibling(globals.hTree, hCur);
@@ -294,7 +296,7 @@ void AddCOMandAll(void)
             U(tvis).item.pszText = buffer;
         else U(tvis).item.pszText = valName;
     
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName);
+        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName, NULL);
         if(tvis.hParent) SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
 
         if(RegOpenKey(hCurKey, wszImplementedCategories, &hInfo) == ERROR_SUCCESS)
@@ -318,7 +320,7 @@ void AddCOMandAll(void)
                     memmove(&valName[6], valName, sizeof(WCHAR[MAX_LOAD_STRING-6]));
                     memmove(valName, wszCLSID, sizeof(WCHAR[6]));
                     U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH|SHOWALL,
-                            valName, &valName[6]);
+                            valName, &valName[6], NULL);
 
                     SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
                     break;
@@ -366,7 +368,7 @@ void AddApplicationID(void)
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH, valName, valName);
+        U(tvis).item.lParam = CreateITEM_INFO(REGPATH, valName, valName, NULL);
         SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
     }
     RegCloseKey(hKey);
@@ -377,11 +379,12 @@ void AddApplicationID(void)
 void AddTypeLib(void)
 {
     TVINSERTSTRUCT tvis;
-    HKEY hKey, hCurKey, hInfoKey;
+    HKEY hKey, hCurKey, hInfoKey, hPath;
     WCHAR valName[MAX_LOAD_STRING];
     WCHAR valParent[MAX_LOAD_STRING];
     WCHAR buffer[MAX_LOAD_STRING];
     WCHAR wszVer[MAX_LOAD_STRING];
+    WCHAR wszPath[MAX_LOAD_STRING];
     const WCHAR wszFormat[] = { ' ','(','%','s',' ','%','s',')','\0' };
     const WCHAR wszFormat2[] = { '%','s','\\','%','s','\0' };
     LONG lenBuffer;
@@ -421,13 +424,18 @@ void AddTypeLib(void)
 
                 wsprintfW(&buffer[lstrlenW(buffer)], wszFormat, wszVer, valName);
                 U(tvis).item.pszText = buffer;
+
+                lenBuffer = MAX_LOAD_STRING;
+                RegOpenKey(hInfoKey, wszGetPath, &hPath);
+                RegQueryValue(hPath, NULL, wszPath, &lenBuffer);
+                RegCloseKey(hPath);
             }
             else U(tvis).item.pszText = valName;
 
             RegCloseKey(hInfoKey);
 
             wsprintfW(wszVer, wszFormat2, valParent, valName);
-            U(tvis).item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent);
+            U(tvis).item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent, wszPath);
 
             SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
         }
@@ -471,7 +479,7 @@ void AddInterfaces(void)
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|INTERFACE, valName, valName);
+        U(tvis).item.lParam = CreateITEM_INFO(REGPATH|INTERFACE, valName, valName, NULL);
         SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
     }
 
@@ -520,7 +528,7 @@ void AddComponentCategories(void)
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGTOP, valName, valName);
+        U(tvis).item.lParam = CreateITEM_INFO(REGTOP, valName, valName, NULL);
         SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
     }
 
@@ -544,17 +552,17 @@ void AddBaseEntries(void)
 
     LoadString(globals.hMainInst, IDS_TREE_I, U(tvis).item.pszText,
             sizeof(WCHAR[MAX_LOAD_STRING]));
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL);
+    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL, NULL);
     tree.hI = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_TL, U(tvis).item.pszText,
             sizeof(WCHAR[MAX_LOAD_STRING]));
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL);
+    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL, NULL);
     tree.hTL = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_AID, U(tvis).item.pszText,
             sizeof(WCHAR[MAX_LOAD_STRING]));
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL);
+    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL, NULL);
     tree.hAID = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_OC, U(tvis).item.pszText,
@@ -566,7 +574,7 @@ void AddBaseEntries(void)
     tvis.hParent = tree.hOC;
     LoadString(globals.hMainInst, IDS_TREE_AO, U(tvis).item.pszText,
             sizeof(WCHAR[MAX_LOAD_STRING]));
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL);
+    U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL, NULL);
     tree.hAO = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_CLO, U(tvis).item.pszText,
@@ -580,7 +588,8 @@ void AddBaseEntries(void)
 
     LoadString(globals.hMainInst, IDS_TREE_GBCC, U(tvis).item.pszText,
             sizeof(WCHAR[MAX_LOAD_STRING]));
-    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszComponentCategories, NULL);
+    U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH,
+            wszComponentCategories, NULL, NULL);
     tree.hGBCC = TreeView_InsertItem(globals.hTree, &tvis);
 
     SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tree.hOC);

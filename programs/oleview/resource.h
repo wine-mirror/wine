@@ -23,6 +23,7 @@
 #define IDM_MENU                   3
 #define IDB_TOOLBAR                4
 #define IDA_OLEVIEW                5
+#define IDS_TYPELIBTITLE           6
 
 #define IDS_READY                  10
 #define IDS_ABOUT                  20
@@ -91,3 +92,7 @@
 #define IDC_GETSIZEMAX             1042
 #define IDC_ISDIRTY_BUTTON         1043
 #define IDC_GETSIZEMAX_BUTTON      1044
+
+#define IDM_SAVEAS                 3001
+#define IDM_CLOSE                  3002
+#define IDM_GROUP                  3003

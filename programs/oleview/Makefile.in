@@ -13,7 +13,8 @@ C_SRCS = \
 	interface.c \
 	oleview.c \
 	pane.c \
-	tree.c
+	tree.c \
+	typelib.c
 
 RC_SRCS = rsrc.rc
 RC_BINSRC = rsrc.rc

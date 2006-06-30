@@ -383,6 +383,7 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
         case IDM_VIEW:
             hSelect = TreeView_GetSelection(globals.hTree);
             if(IsInterface(hSelect)) InterfaceViewer(hSelect);
+            else CreateTypeLibWindow(globals.hMainInst);
             break;
         case IDM_EXIT:
             DestroyWindow(hWnd);
@@ -408,6 +409,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
     {
         case WM_CREATE:
             OleInitialize(NULL);
+            PaneRegisterClass();
+            TypeLibRegisterClass();
             if(!CreatePanedWindow(hWnd, &globals.hPaneWnd, globals.hMainInst))
                 PostQuitMessage(0);
             SetLeft(globals.hPaneWnd, CreateTreeWindow(globals.hMainInst));

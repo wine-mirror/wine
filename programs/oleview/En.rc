@@ -71,6 +71,22 @@ IDM_MENU MENU
     }
 }
 
+IDM_TYPELIB MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "&Save as",    IDM_SAVEAS
+        MENUITEM "&Close",  IDM_CLOSE
+    }
+    POPUP "&View"
+    {
+        MENUITEM "&Group by type kind", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "&Toolbar",    IDM_TOOLBAR
+        MENUITEM "&Status Bar", IDM_STATUSBAR
+    }
+}
+
 STRINGTABLE
 {
     IDS_APPNAME            "OleView"
@@ -78,6 +94,7 @@ STRINGTABLE
     IDS_READY              "Ready"
     IDS_ABOUT              "OleView - OLE/COM Object Viewer"
     IDS_ABOUTVER           "version 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib viewer"
 
     IDM_BIND,              "Bind to file via a File Moniker"
     IDM_TYPELIB,           "Open a TypeLib file and view the contents"

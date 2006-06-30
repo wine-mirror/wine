@@ -54,6 +54,7 @@ typedef struct
     HWND hToolBar;
     HWND hTree;
     HWND hDetails;
+    HWND hTypeLibWnd;
     HINSTANCE hMainInst;
     BOOL bExpert;
     DWORD dwClsCtx;
@@ -89,6 +90,7 @@ typedef struct
     CHAR cFlag;
     WCHAR info[MAX_LOAD_STRING];
     WCHAR clsid[MAX_LOAD_STRING];
+    WCHAR path[MAX_LOAD_STRING];
     BOOL loaded;
     IUnknown *pU;
 }ITEM_INFO;
@@ -100,8 +102,16 @@ typedef struct
     HWND hReg;
 }DETAILS;
 
+typedef struct
+{
+    HWND hPaneWnd;
+    HWND hTree;
+    HWND hEdit;
+}TYPELIB;
+
 extern GLOBALS globals;
 extern TREE tree;
+extern TYPELIB typelib;
 
 /* Predefinitions: */
 /* details.c */
@@ -113,10 +123,11 @@ void RefreshMenu(HTREEITEM item);
 
 /* pane.c */
 BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst);
+BOOL PaneRegisterClass(void);
 void SetLeft(HWND hParent, HWND hWnd);
 void SetRight(HWND hParent, HWND hWnd);
 
-/* tree.h */
+/* tree.c */
 void EmptyTree(void);
 void AddTreeEx(void);
 void AddTree(void);
@@ -125,6 +136,10 @@ BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize);
 void CreateInst(HTREEITEM item, WCHAR *wszMachineName);
 void ReleaseInst(HTREEITEM item);
 
-/* interface.h */
+/* typelib.c */
+BOOL CreateTypeLibWindow(HINSTANCE hInst);
+BOOL TypeLibRegisterClass(void);
+
+/* interface.c */
 BOOL IsInterface(HTREEITEM item);
 void InterfaceViewer(HTREEITEM item);
