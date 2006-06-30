@@ -16915,7 +16915,7 @@ echo "${ECHO_T}$ac_cv_ld_rpath" >&6; }
         fi
 
         case $host_cpu in
-          *i[3456789]86*)
+          *i[3456789]86* | x86_64)
             { echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
 echo $ECHO_N "checking whether we can relocate the executable to 0x7bf00000... $ECHO_C" >&6; }
 if test "${ac_cv_ld_reloc_exec+set}" = set; then

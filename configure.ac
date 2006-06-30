@@ -1121,7 +1121,7 @@ case $host_os in
         fi
 
         case $host_cpu in
-          *i[[3456789]]86*)
+          *i[[3456789]]86* | x86_64)
             AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,
               [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
                                ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
