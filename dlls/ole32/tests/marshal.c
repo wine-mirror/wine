@@ -998,6 +998,20 @@ static void test_lock_object_external(void)
 
     cLocks = 0;
 
+    /* test the stub manager creation aspect of CoLockObjectExternal when the
+     * object hasn't been marshaled yet */
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, TRUE);
+
+    ok_more_than_one_lock();
+
+    CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
+
+    ok_no_locks();
+
+    /* test our empty stub manager being handled correctly in
+     * CoMarshalInterface */
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, TRUE);
+
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
     hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
@@ -1006,11 +1020,15 @@ static void test_lock_object_external(void)
     CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, TRUE);
 
     ok_more_than_one_lock();
-    
+
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoReleaseMarshalData(pStream);
     ok_ole_success(hr, CoReleaseMarshalData);
     IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, TRUE);
 
     ok_more_than_one_lock();
 

@@ -2098,6 +2098,10 @@ static void COM_RevokeAllClasses()
  * RETURNS
  *  Success: S_OK.
  *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  If fLock is TRUE and an object is passed in that doesn't have a stub
+ *  manager then a new stub manager is created for the object.
  */
 HRESULT WINAPI CoLockObjectExternal(
     LPUNKNOWN pUnk,
@@ -2123,6 +2127,18 @@ HRESULT WINAPI CoLockObjectExternal(
             stub_manager_ext_release(stubmgr, 1);
         
         stub_manager_int_release(stubmgr);
+
+        return S_OK;
+    }
+    else if (fLock)
+    {
+        stubmgr = new_stub_manager(apt, pUnk);
+
+        if (stubmgr)
+        {
+            stub_manager_ext_addref(stubmgr, 1);
+            stub_manager_int_release(stubmgr);
+        }
 
         return S_OK;
     }
