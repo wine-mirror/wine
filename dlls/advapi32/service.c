@@ -57,10 +57,15 @@ typedef struct service_start_info_t
 typedef struct service_data_t
 {
     struct service_data_t *next;
-    LPHANDLER_FUNCTION handler;
+    union {
+        LPHANDLER_FUNCTION handler;
+        LPHANDLER_FUNCTION_EX handler_ex;
+    } handler;
+    LPVOID context;
     SERVICE_STATUS status;
     HANDLE thread;
-    BOOL unicode;
+    BOOL unicode : 1;
+    BOOL extended : 1; /* uses handler_ex instead of handler? */
     union {
         LPSERVICE_MAIN_FUNCTIONA a;
         LPSERVICE_MAIN_FUNCTIONW w;
@@ -573,7 +578,7 @@ static BOOL service_accepts_control(service_data *service, DWORD dwControl)
         if (a&SERVICE_ACCEPT_NETBINDCHANGE)
             return TRUE;
     }
-    if (1) /* (!service->handlerex) */
+    if (!service->extended)
         return FALSE;
     switch (dwControl)
     {
@@ -603,10 +608,18 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
 
     TRACE("received control %ld\n", dwControl);
     
-    if (service_accepts_control(service, dwControl) && service->handler)
+    if (service_accepts_control(service, dwControl))
     {
-        service->handler(dwControl);
-        ret = ERROR_SUCCESS;
+        if (service->extended && service->handler.handler)
+        {
+            service->handler.handler(dwControl);
+            ret = ERROR_SUCCESS;
+        }
+        else if (service->handler.handler_ex)
+        {
+            service->handler.handler_ex(dwControl, 0, NULL, service->context);
+            ret = ERROR_SUCCESS;
+        }
     }
     return WriteFile(pipe, &ret, sizeof ret, &count, NULL);
 }
@@ -886,7 +899,7 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
         if(!strcmpW(lpServiceName, service->name))
             break;
     if (service)
-        service->handler = lpfHandler;
+        service->handler.handler = lpfHandler;
     LeaveCriticalSection( &service_cs );
 
     return (SERVICE_STATUS_HANDLE)service;
@@ -2251,6 +2264,21 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR lpServiceName
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceName,
         LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
 {
-    FIXME("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
-    return 0;
+    service_data *service;
+
+    TRACE("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
+
+    EnterCriticalSection( &service_cs );
+    for(service = service_list; service; service = service->next)
+        if(!strcmpW(lpServiceName, service->name))
+            break;
+    if (service)
+    {
+        service->handler.handler_ex = lpHandlerProc;
+        service->context = lpContext;
+        service->extended = TRUE;
+    }
+    LeaveCriticalSection( &service_cs );
+
+    return (SERVICE_STATUS_HANDLE)service;
 }
