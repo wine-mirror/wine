@@ -186,7 +186,7 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
     /* Unknown interface */
     else
     {
-        ERR("(%p)->(%s, %p): No interface found", This, debugstr_guid(refiid), obj);
+        ERR("(%p)->(%s, %p): No interface found\n", This, debugstr_guid(refiid), obj);
         return E_NOINTERFACE;
     }
 
