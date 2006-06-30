@@ -298,9 +298,37 @@ static void test_NtCreateKey(void)
     ACCESS_MASK am = GENERIC_ALL;
     NTSTATUS status;
 
+    /* All NULL */
+    status = pNtCreateKey(NULL, 0, NULL, 0, 0, 0, 0);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
+
+    /* Only the key */
+    status = pNtCreateKey(&key, 0, NULL, 0, 0, 0, 0);
+    ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
+
+    /* Only accessmask */
+    status = pNtCreateKey(NULL, am, NULL, 0, 0, 0, 0);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
+
+    /* Key and accessmask */
+    status = pNtCreateKey(&key, am, NULL, 0, 0, 0, 0);
+    ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
+
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+
+    /* Only attributes */
+    status = pNtCreateKey(NULL, 0, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
+
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08lx\n", status);
+
+    /* Length > sizeof(OBJECT_ATTRIBUTES) */
+    attr.Length *= 2;
+    status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
 
     pNtClose(&key);
 }
