@@ -45,12 +45,64 @@ static void be_x86_64_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
 
 static struct dbg_internal_var be_x86_64_ctx[] =
 {
+    {CV_AMD64_AL,       "AL",           (DWORD*)FIELD_OFFSET(CONTEXT, Rax),     dbg_itype_unsigned_char_int},
+    {CV_AMD64_BL,       "BL",           (DWORD*)FIELD_OFFSET(CONTEXT, Rbx),     dbg_itype_unsigned_char_int},
+    {CV_AMD64_CL,       "CL",           (DWORD*)FIELD_OFFSET(CONTEXT, Rcx),     dbg_itype_unsigned_char_int},
+    {CV_AMD64_DL,       "DL",           (DWORD*)FIELD_OFFSET(CONTEXT, Rdx),     dbg_itype_unsigned_char_int},
+    {CV_AMD64_AH,       "AH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Rax)+1), dbg_itype_unsigned_char_int},
+    {CV_AMD64_BH,       "BH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Rbx)+1), dbg_itype_unsigned_char_int},
+    {CV_AMD64_CH,       "CH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Rcx)+1), dbg_itype_unsigned_char_int},
+    {CV_AMD64_DH,       "DH",           (DWORD*)(FIELD_OFFSET(CONTEXT, Rdx)+1), dbg_itype_unsigned_char_int},
+    {CV_AMD64_AX,       "AX",           (DWORD*)FIELD_OFFSET(CONTEXT, Rax),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_BX,       "BX",           (DWORD*)FIELD_OFFSET(CONTEXT, Rbx),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_CX,       "CX",           (DWORD*)FIELD_OFFSET(CONTEXT, Rcx),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_DX,       "DX",           (DWORD*)FIELD_OFFSET(CONTEXT, Rdx),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_SP,       "SP",           (DWORD*)FIELD_OFFSET(CONTEXT, Rsp),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_BP,       "BP",           (DWORD*)FIELD_OFFSET(CONTEXT, Rbp),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_SI,       "SI",           (DWORD*)FIELD_OFFSET(CONTEXT, Rsi),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_DI,       "DI",           (DWORD*)FIELD_OFFSET(CONTEXT, Rdi),     dbg_itype_unsigned_short_int},
+    {CV_AMD64_EAX,      "EAX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rax),     dbg_itype_unsigned_int},
+    {CV_AMD64_EBX,      "EBX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rbx),     dbg_itype_unsigned_int},
+    {CV_AMD64_ECX,      "ECX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rcx),     dbg_itype_unsigned_int},
+    {CV_AMD64_EDX,      "EDX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rdx),     dbg_itype_unsigned_int},
+    {CV_AMD64_ESP,      "ESP",          (DWORD*)FIELD_OFFSET(CONTEXT, Rsp),     dbg_itype_unsigned_int},
+    {CV_AMD64_EBP,      "EBP",          (DWORD*)FIELD_OFFSET(CONTEXT, Rbp),     dbg_itype_unsigned_int},
+    {CV_AMD64_ESI,      "ESI",          (DWORD*)FIELD_OFFSET(CONTEXT, Rsi),     dbg_itype_unsigned_int},
+    {CV_AMD64_EDI,      "EDI",          (DWORD*)FIELD_OFFSET(CONTEXT, Rdi),     dbg_itype_unsigned_int},
+    {CV_AMD64_ES,       "ES",           (DWORD*)FIELD_OFFSET(CONTEXT, SegEs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_CS,       "CS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegCs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_SS,       "SS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegSs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_DS,       "DS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegDs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_FS,       "FS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegFs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_GS,       "GS",           (DWORD*)FIELD_OFFSET(CONTEXT, SegGs),   dbg_itype_unsigned_short_int},
+    {CV_AMD64_FLAGS,    "FLAGS",        (DWORD*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_short_int},
+    {CV_AMD64_EFLAGS,   "EFLAGS",       (DWORD*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_int},
+    {CV_AMD64_RIP,      "RIP",          (DWORD*)FIELD_OFFSET(CONTEXT, Rip),     dbg_itype_unsigned_int},
+    {CV_AMD64_RAX,      "RAX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rax),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RBX,      "RBX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rbx),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RCX,      "RCX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rcx),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RDX,      "RDX",          (DWORD*)FIELD_OFFSET(CONTEXT, Rdx),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RSP,      "RSP",          (DWORD*)FIELD_OFFSET(CONTEXT, Rsp),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RBP,      "RBP",          (DWORD*)FIELD_OFFSET(CONTEXT, Rbp),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RSI,      "RSI",          (DWORD*)FIELD_OFFSET(CONTEXT, Rsi),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_RDI,      "RDI",          (DWORD*)FIELD_OFFSET(CONTEXT, Rdi),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R8,       "R8",           (DWORD*)FIELD_OFFSET(CONTEXT, R8),      dbg_itype_unsigned_long_int},
+    {CV_AMD64_R9,       "R9",           (DWORD*)FIELD_OFFSET(CONTEXT, R9),      dbg_itype_unsigned_long_int},
+    {CV_AMD64_R10,      "R10",          (DWORD*)FIELD_OFFSET(CONTEXT, R10),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R11,      "R11",          (DWORD*)FIELD_OFFSET(CONTEXT, R11),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R12,      "R12",          (DWORD*)FIELD_OFFSET(CONTEXT, R12),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R13,      "R13",          (DWORD*)FIELD_OFFSET(CONTEXT, R13),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R14,      "R14",          (DWORD*)FIELD_OFFSET(CONTEXT, R14),     dbg_itype_unsigned_long_int},
+    {CV_AMD64_R15,      "R15",          (DWORD*)FIELD_OFFSET(CONTEXT, R15),     dbg_itype_unsigned_long_int},
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
 static const struct dbg_internal_var* be_x86_64_init_registers(CONTEXT* ctx)
 {
-    dbg_printf("not done\n");
+    struct dbg_internal_var*    div;
+
+    for (div = be_x86_64_ctx; div->name; div++)
+        div->pval = (DWORD*)((char*)ctx + (DWORD_PTR)div->pval);
     return be_x86_64_ctx;
 }
 
