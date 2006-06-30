@@ -62,6 +62,31 @@ void PopulateTree(void)
     ITypeLib_Release(pTypeLib);
 }
 
+void TypeLibResizeChild(void)
+{
+    RECT client, stat;
+
+    MoveWindow(typelib.hStatusBar, 0, 0, 0, 0, TRUE);
+
+    if(IsWindowVisible(typelib.hStatusBar))
+        GetClientRect(typelib.hStatusBar, &stat);
+    else stat.bottom = 0;
+
+    GetClientRect(globals.hTypeLibWnd, &client);
+    MoveWindow(typelib.hPaneWnd, 0, 0,
+            client.right, client.bottom-stat.bottom, TRUE);
+}
+
+void UpdateTypeLibStatusBar(int itemID)
+{
+    WCHAR info[MAX_LOAD_STRING];
+
+    if(!LoadString(globals.hMainInst, itemID, info, sizeof(WCHAR[MAX_LOAD_STRING])))
+        LoadString(globals.hMainInst, IDS_READY, info, sizeof(WCHAR[MAX_LOAD_STRING]));
+
+    SendMessage(typelib.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
+}
+
 LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -81,11 +106,18 @@ LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             SetRight(typelib.hPaneWnd, typelib.hEdit);
 
             PopulateTree();
+            SetFocus(typelib.hTree);
             break;
         }
+        case WM_MENUSELECT:
+            UpdateTypeLibStatusBar(LOWORD(wParam));
+            break;
+        case WM_SETFOCUS:
+            SetFocus(typelib.hTree);
+            break;
         case WM_SIZE:
-            MoveWindow(typelib.hPaneWnd, 0, 0,
-                    LOWORD(lParam), HIWORD(lParam), TRUE);
+            if(wParam == SIZE_MINIMIZED) break;
+            TypeLibResizeChild();
             break;
         case WM_DESTROY:
             break;
@@ -119,7 +151,11 @@ BOOL CreateTypeLibWindow(HINSTANCE hInst)
     globals.hTypeLibWnd = CreateWindow(wszTypeLib, wszTitle,
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInst, NULL);
-
     if(!globals.hTypeLibWnd) return FALSE;
+
+    typelib.hStatusBar = CreateStatusWindow(WS_VISIBLE|WS_CHILD,
+            (LPWSTR)wszTitle, globals.hTypeLibWnd, 0);
+
+    TypeLibResizeChild();
     return TRUE;
 }

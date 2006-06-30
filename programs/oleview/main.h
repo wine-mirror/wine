@@ -107,6 +107,7 @@ typedef struct
     HWND hPaneWnd;
     HWND hTree;
     HWND hEdit;
+    HWND hStatusBar;
 }TYPELIB;
 
 extern GLOBALS globals;

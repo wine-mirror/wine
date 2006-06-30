@@ -117,6 +117,10 @@ STRINGTABLE
     IDM_REFRESH,           "Refresh all lists"
     IDM_ABOUT,             "Display program information, version number and copyright"
 
+    IDM_SAVEAS,            "Save as an .IDL or .H file"
+    IDM_CLOSE,             "Close window"
+    IDM_GROUP,             "Group typeinfos by kind"
+
     IDS_TREE_OC,           "ObjectClasses"
     IDS_TREE_GBCC,         "Grouped by Component Category"
     IDS_TREE_O1O,          "OLE 1.0 Objects"
