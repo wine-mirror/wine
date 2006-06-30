@@ -67,11 +67,15 @@ static DWORD SHFindAttrW(LPCWSTR pName, BOOL fileOnly);
 
 typedef struct
 {
+        HINSTANCE hIconInstance;
+        UINT icon_resource_id;
 	UINT caption_resource_id, text_resource_id;
 } SHELL_ConfirmIDstruc;
 
 static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 {
+        ids->hIconInstance = NULL;
+        ids->icon_resource_id = IDI_WARNING;
 	switch (nKindOfDialog) {
 	  case ASK_DELETE_FILE:
 	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
@@ -99,6 +103,7 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 {
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	SHELL_ConfirmIDstruc ids;
+	MSGBOXPARAMSW params;
 
 	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
 	  return FALSE;
@@ -109,7 +114,16 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
 
-	return (IDOK == MessageBoxW(hWnd, szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
+        ZeroMemory(&params, sizeof(params));
+        params.cbSize = sizeof(MSGBOXPARAMSW);
+        params.hwndOwner = hWnd;
+        params.hInstance = ids.hIconInstance;
+        params.lpszText = szBuffer;
+        params.lpszCaption = szCaption;
+        params.lpszIcon = (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id);
+        params.dwStyle = MB_OKCANCEL | MB_USERICON;
+
+	return (IDOK == MessageBoxIndirectW(&params));
 }
 
 static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)
