@@ -192,8 +192,6 @@ void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 
-HRESULT create_mozctl(REFIID,void**);
-
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);
 

@@ -122,19 +122,13 @@ static const IClassFactoryVtbl WBCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    HRESULT hres;
-
     static IClassFactoryImpl WB1ClassFactory = {&WBCF_Vtbl, WebBrowserV1_Create};
     static IClassFactoryImpl WB2ClassFactory = {&WBCF_Vtbl, WebBrowserV2_Create};
 
     TRACE("\n");
 
-    if(IsEqualGUID(&CLSID_WebBrowser, rclsid))  {
-        hres = create_mozctl(riid, ppv);
-        if(SUCCEEDED(hres))
-            return hres;
+    if(IsEqualGUID(&CLSID_WebBrowser, rclsid))
         return IClassFactory_QueryInterface(FACTORY(&WB2ClassFactory), riid, ppv);
-    }
 
     if(IsEqualGUID(&CLSID_WebBrowser_V1, rclsid))
         return IClassFactory_QueryInterface(FACTORY(&WB1ClassFactory), riid, ppv);
