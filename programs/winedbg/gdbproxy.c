@@ -1302,7 +1302,7 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     char               *addr;
     unsigned int        len, blk_len, nread;
     char                buffer[32];
-    unsigned long       r = 0;
+    SIZE_T              r = 0;
 
     assert(gdbctx->in_trap);
     /* FIXME:check in_packet_len for reading %p,%x */
@@ -1334,7 +1334,7 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     unsigned int        len, blk_len;
     char*               ptr;
     char                buffer[32];
-    unsigned long       w;
+    SIZE_T              w;
 
     assert(gdbctx->in_trap);
     ptr = memchr(gdbctx->in_packet, ':', gdbctx->in_packet_len);

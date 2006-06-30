@@ -467,7 +467,7 @@ static unsigned be_i386_insert_Xpoint(HANDLE hProcess, const struct be_process_i
                                       void* addr, unsigned long* val, unsigned size)
 {
     unsigned char       ch;
-    unsigned long       sz;
+    SIZE_T              sz;
     unsigned long*      pr;
     int                 reg;
     unsigned long       bits;
@@ -517,7 +517,7 @@ static unsigned be_i386_remove_Xpoint(HANDLE hProcess, const struct be_process_i
                                       CONTEXT* ctx, enum be_xpoint_type type, 
                                       void* addr, unsigned long val, unsigned size)
 {
-    unsigned long       sz;
+    SIZE_T              sz;
     unsigned char       ch;
 
     switch (type)

@@ -218,8 +218,8 @@ struct dbg_process
 struct be_process_io
 {
     BOOL        (*close_process)(struct dbg_process*, BOOL);
-    BOOL        (WINAPI *read)(HANDLE, const void*, void*, DWORD, DWORD*);
-    BOOL        (WINAPI *write)(HANDLE, void*, const void*, DWORD, DWORD*);
+    BOOL        (WINAPI *read)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
+    BOOL        (WINAPI *write)(HANDLE, void*, const void*, SIZE_T, SIZE_T*);
 };
 
 extern	struct dbg_process*	dbg_curr_process;

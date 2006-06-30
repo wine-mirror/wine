@@ -231,7 +231,7 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
 BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
                        BOOL unicode, char* buffer, int size)
 {
-    DWORD       sz;
+    SIZE_T      sz;
     WCHAR*      buffW;
 
     buffer[0] = 0;
@@ -262,7 +262,7 @@ BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
 BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size)
 {
     void*       ad;
-    DWORD	sz;
+    SIZE_T	sz;
 
     buffer[0] = 0;
     if (addr && 

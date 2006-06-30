@@ -100,7 +100,7 @@ static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io
                                      void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
-    unsigned long       sz;
+    SIZE_T              sz;
 
     switch (type)
     {
@@ -121,7 +121,7 @@ static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io
                                      CONTEXT* ctx, enum be_xpoint_type type,
                                      void* addr, unsigned long val, unsigned size)
 {
-    unsigned long       sz;
+    SIZE_T              sz;
 
     switch (type)
     {

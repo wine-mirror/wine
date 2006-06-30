@@ -127,9 +127,14 @@ BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
 static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD addr, 
                                     PVOID buffer, DWORD size, PDWORD written)
 {
+    SIZE_T sz;
+    BOOL ret;
+
     struct dbg_process* pcs = dbg_get_process_h(hProc);
     if (!pcs) return FALSE;
-    return pcs->process_io->read(hProc, (const void*)addr, buffer, size, written);
+    ret = pcs->process_io->read(hProc, (const void*)addr, buffer, size, &sz);
+    if (written != NULL) *written = sz;
+    return ret;
 }
 
 /******************************************************************

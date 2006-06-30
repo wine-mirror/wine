@@ -87,7 +87,7 @@ static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, const struct be_process_
                                        void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
-    unsigned long       sz;
+    SIZE_T              sz;
 
     switch (type)
     {
