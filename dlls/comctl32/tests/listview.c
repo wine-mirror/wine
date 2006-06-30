@@ -33,6 +33,7 @@ START_TEST(listview)
     HIMAGELIST himl;
     HBITMAP hbmp;
     RECT r1, r2;
+    static CHAR hello[] = "hello";
 
     icc.dwICC = 0;
     icc.dwSize = sizeof icc;
@@ -71,7 +72,7 @@ START_TEST(listview)
     ok(r == -1, "should fail\n");
 
     item.iSubItem = 0;
-    item.pszText = "hello";
+    item.pszText = hello;
     r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
     ok(r == 0, "should not fail\n");
 
@@ -83,7 +84,7 @@ START_TEST(listview)
     ok(r == TRUE, "should not fail\n");
 
     item.iSubItem = 0;
-    item.pszText = "hello";
+    item.pszText = hello;
     r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
     ok(r == 0, "should not fail\n");
 
