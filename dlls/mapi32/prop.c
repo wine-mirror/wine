@@ -1461,13 +1461,13 @@ static IPropDataItem *IMAPIPROP_AddValue(IPropDataImpl *This,
 /* Internal - Lock an IPropData object */
 static inline void IMAPIPROP_Lock(IPropDataImpl *This)
 {
-    RtlEnterCriticalSection(&This->cs);
+    EnterCriticalSection(&This->cs);
 }
 
 /* Internal - Unlock an IPropData object */
 static inline void IMAPIPROP_Unlock(IPropDataImpl *This)
 {
-    RtlLeaveCriticalSection(&This->cs);
+    LeaveCriticalSection(&This->cs);
 }
 
 /* This one seems to be missing from mapidefs.h */
@@ -1553,7 +1553,7 @@ static inline ULONG WINAPI IMAPIProp_fnRelease(LPMAPIPROP iface)
             This->lpFree(current->value);
             This->lpFree(current);
         }
-        RtlDeleteCriticalSection(&This->cs);
+        DeleteCriticalSection(&This->cs);
         This->lpFree(This);
     }
     return (ULONG)lRef;
@@ -2542,7 +2542,7 @@ SCODE WINAPI CreateIProp(LPCIID iid, ALLOCATEBUFFER *lpAlloc,
         lpPropData->ulObjAccess = IPROP_READWRITE;
         lpPropData->ulNumValues = 0;
         list_init(&lpPropData->values);
-        RtlInitializeCriticalSection(&lpPropData->cs);
+        InitializeCriticalSection(&lpPropData->cs);
         *lppPropData = (LPPROPDATA)lpPropData;
     }
     return scode;
