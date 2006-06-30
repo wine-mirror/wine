@@ -4981,7 +4981,7 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
         break;
 
     case TKIND_UNION:
-        FIXME("TKIND_RECORD unhandled.\n");
+        FIXME("TKIND_UNION unhandled.\n");
         hr = E_NOTIMPL;
         break;
 
