@@ -994,7 +994,7 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    int count = get_req_data_size() / sizeof(int);
+    int count = get_req_data_size() / sizeof(obj_handle_t);
     select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout, req->signal );
 }
 
