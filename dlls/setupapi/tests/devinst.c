@@ -44,7 +44,7 @@ static void test_Device_Info_List(void)
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %ld, (expected %d)", error, ERROR_INVALID_PARAMETER);
+    ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %ld, (expected %d)\n", error, ERROR_INVALID_PARAMETER);
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set MachineName to something */
@@ -52,7 +52,7 @@ static void test_Device_Info_List(void)
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %ld, (expected %d)", error, ERROR_INVALID_MACHINENAME);
+    ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %ld, (expected %d)\n", error, ERROR_INVALID_MACHINENAME);
 
     /* create empty DeviceInfoList */
     devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
@@ -60,7 +60,7 @@ static void test_Device_Info_List(void)
 
     /* destroy DeviceInfoList */
     ret = SetupDiDestroyDeviceInfoList(devlist);
-    ok(ret, "SetupDiDestroyDeviceInfoList failed : %ld", error);
+    ok(ret, "SetupDiDestroyDeviceInfoList failed : %ld\n", error);
 }
 
 START_TEST(devinst)
