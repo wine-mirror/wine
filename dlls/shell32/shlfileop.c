@@ -95,7 +95,7 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 	return FALSE;
 }
 
-BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
+BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 {
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	SHELL_ConfirmIDstruc ids;
@@ -109,7 +109,7 @@ BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
 
-	return (IDOK == MessageBoxW(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
+	return (IDOK == MessageBoxW(hWnd, szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
 }
 
 static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)
@@ -139,7 +139,7 @@ static void SHELL32_FreeUnicodeBuf(LPWSTR wPath)
  * Asks for confirmation when bShowUI is true and deletes the directory and
  * all its subdirectories and files if necessary.
  */
-BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
+BOOL SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pszDir, BOOL bShowUI)
 {
 	BOOL    ret = TRUE;
 	HANDLE  hFind;
@@ -152,7 +152,7 @@ BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 	if (hFind == INVALID_HANDLE_VALUE)
 	  return FALSE;
 
-	if (!bShowUI || (ret = SHELL_ConfirmDialogW(ASK_DELETE_FOLDER, pszDir)))
+	if (!bShowUI || (ret = SHELL_ConfirmDialogW(hwnd, ASK_DELETE_FOLDER, pszDir)))
 	{
 	  do
 	  {
@@ -163,7 +163,7 @@ BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 	      continue;
 	    PathCombineW(szTemp, pszDir, lp);
 	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
-	      ret = SHELL_DeleteDirectoryW(szTemp, FALSE);
+	      ret = SHELL_DeleteDirectoryW(hwnd, szTemp, FALSE);
 	    else
 	      ret = (SHNotifyDeleteFileW(szTemp) == ERROR_SUCCESS);
 	  } while (ret && FindNextFileW(hFind, &wfd));
@@ -1032,7 +1032,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     return ERROR_SUCCESS;
 }
 
-static BOOL confirm_delete_list(DWORD fFlags, FILE_LIST *flFrom)
+static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, FILE_LIST *flFrom)
 {
     if (flFrom->dwNumFiles > 1)
     {
@@ -1040,16 +1040,16 @@ static BOOL confirm_delete_list(DWORD fFlags, FILE_LIST *flFrom)
         const WCHAR format[] = {'%','d',0};
 
         wnsprintfW(tmp, sizeof(tmp)/sizeof(tmp[0]), format, flFrom->dwNumFiles);
-        return SHELL_ConfirmDialogW(ASK_DELETE_MULTIPLE_ITEM, tmp);
+        return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_MULTIPLE_ITEM, tmp);
     }
     else
     {
         FILE_ENTRY *fileEntry = &flFrom->feFiles[0];
 
         if (IsAttribFile(fileEntry->attributes))
-            return SHELL_ConfirmDialogW(ASK_DELETE_FILE, fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_FILE, fileEntry->szFullPath);
         else if (!(fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
-            return SHELL_ConfirmDialogW(ASK_DELETE_FOLDER, fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_FOLDER, fileEntry->szFullPath);
     }
     return TRUE;
 }
@@ -1065,7 +1065,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         return ERROR_SUCCESS;
 
     if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
-        if (!confirm_delete_list(lpFileOp->fFlags, flFrom))
+        if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, flFrom))
         {
             lpFileOp->fAnyOperationsAborted = TRUE;
             return 0;
@@ -1080,7 +1080,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         if (IsAttribFile(fileEntry->attributes))
             bPathExists = DeleteFileW(fileEntry->szFullPath);
         else if (!(lpFileOp->fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
-            bPathExists = SHELL_DeleteDirectoryW(fileEntry->szFullPath, FALSE);
+            bPathExists = SHELL_DeleteDirectoryW(lpFileOp->hwnd, fileEntry->szFullPath, FALSE);
 
         if (!bPathExists)
             return ERROR_PATH_NOT_FOUND;

@@ -148,9 +148,8 @@ void FreeChangeNotifications(void);
 #define ASK_CREATE_FOLDER         4
 #define ASK_OVERWRITE_FILE        5
 
-BOOL SHELL_DeleteDirectoryW(LPCWSTR pwszDir, BOOL bShowUI);
-BOOL SHELL_DeleteFileW(LPCWSTR pwszFile, BOOL bShowUI);
-BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir);
+BOOL SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pwszDir, BOOL bShowUI);
+BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir);
 
 /* 16-bit functions */
 void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
