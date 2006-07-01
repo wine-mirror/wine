@@ -957,13 +957,15 @@ static void test_VarParseNumFromStr(void)
   EXPECTRGB(4,FAILDIG);
 
   /* VB hex lower case and leading zero */
-  CONVERT("&h0abcd", NUMPRS_HEX_OCT);
-  EXPECT(4,NUMPRS_HEX_OCT,0x40,7,4,0);
+  CONVERT("&h0abcdef", NUMPRS_HEX_OCT);
+  EXPECT(6,NUMPRS_HEX_OCT,0x40,9,4,0);
   EXPECTRGB(0,10);
   EXPECTRGB(1,11);
   EXPECTRGB(2,12);
   EXPECTRGB(3,13);
-  EXPECTRGB(4,FAILDIG);
+  EXPECTRGB(4,14);
+  EXPECTRGB(5,15);
+  EXPECTRGB(6,FAILDIG);
 
   /* VB oct */
   CONVERT("&O300", NUMPRS_HEX_OCT);

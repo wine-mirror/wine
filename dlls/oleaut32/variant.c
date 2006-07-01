@@ -1732,23 +1732,6 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         }
       }
     }
-    else if ((*lpszStr == 'e' || *lpszStr == 'E') &&
-             pNumprs->dwInFlags & NUMPRS_EXPONENT &&
-             !(pNumprs->dwOutFlags & NUMPRS_EXPONENT))
-    {
-      dwState |= B_PROCESSING_EXPONENT;
-      pNumprs->dwOutFlags |= NUMPRS_EXPONENT;
-      cchUsed++;
-    }
-    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cPositiveSymbol)
-    {
-      cchUsed++; /* Ignore positive exponent */
-    }
-    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cNegativeSymbol)
-    {
-      dwState |= B_NEGATIVE_EXPONENT;
-      cchUsed++;
-    }
     else if (((*lpszStr >= 'a' && *lpszStr <= 'f') ||
              (*lpszStr >= 'A' && *lpszStr <= 'F')) &&
              dwState & B_PROCESSING_HEX)
@@ -1767,6 +1750,23 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       pNumprs->cDig++;
       cchUsed++;
     }
+    else if ((*lpszStr == 'e' || *lpszStr == 'E') &&
+             pNumprs->dwInFlags & NUMPRS_EXPONENT &&
+             !(pNumprs->dwOutFlags & NUMPRS_EXPONENT))
+    {
+      dwState |= B_PROCESSING_EXPONENT;
+      pNumprs->dwOutFlags |= NUMPRS_EXPONENT;
+      cchUsed++;
+    }
+    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cPositiveSymbol)
+    {
+      cchUsed++; /* Ignore positive exponent */
+    }
+    else if (dwState & B_PROCESSING_EXPONENT && *lpszStr == chars.cNegativeSymbol)
+    {
+      dwState |= B_NEGATIVE_EXPONENT;
+      cchUsed++;
+    }
     else
       break; /* Stop at an unrecognised character */
 
@@ -1783,6 +1783,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   if (pNumprs->dwOutFlags & NUMPRS_EXPONENT && dwState & B_PROCESSING_EXPONENT)
   {
     pNumprs->cchUsed = cchUsed;
+    WARN("didn't completely parse exponent\n");
     return DISP_E_TYPEMISMATCH; /* Failed to completely parse the exponent */
   }
 
