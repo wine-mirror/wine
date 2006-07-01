@@ -223,34 +223,39 @@ static void DebugChannels_OnCreate(HWND hwndDlg)
 {
     HWND        hLV = GetDlgItem(hwndDlg, IDC_DEBUG_CHANNELS_LIST);
     LVCOLUMN    lvc;
+    static TCHAR debug_channelT[] = {'D','e','b','u','g',' ','C','h','a','n','n','e','l',0},
+                 fixmeT[]         = {'F','i','x','m','e',0},
+                 errT[]           = {'E','r','r',0},
+                 warnT[]          = {'W','a','r','n',0},
+                 traceT[]         = {'T','r','a','c','e',0};
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_LEFT;
-    lvc.pszText = _T("Debug Channel");
+    lvc.pszText = debug_channelT;
     lvc.cx = 100;
     SendMessage(hLV, LVM_INSERTCOLUMN, 0, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = _T("Fixme");
+    lvc.pszText = fixmeT;
     lvc.cx = 55;
     SendMessage(hLV, LVM_INSERTCOLUMN, 1, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = _T("Err");
+    lvc.pszText = errT;
     lvc.cx = 55;
     SendMessage(hLV, LVM_INSERTCOLUMN, 2, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = _T("Warn");
+    lvc.pszText = warnT;
     lvc.cx = 55;
     SendMessage(hLV, LVM_INSERTCOLUMN, 3, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = _T("Trace");
+    lvc.pszText = traceT;
     lvc.cx = 55;
     SendMessage(hLV, LVM_INSERTCOLUMN, 4, (LPARAM) &lvc);
 
