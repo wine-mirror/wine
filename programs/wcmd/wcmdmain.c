@@ -61,21 +61,30 @@ int main (int argc, char *argv[])
   opt_c=opt_k=opt_q=0;
   while (*argv!=NULL)
   {
-      if (lstrcmpi(*argv,"/c")==0) {
+      char c;
+      if ((*argv)[0]!='/' || (*argv)[1]=='\0') {
+          argv++;
+          continue;
+      }
+
+      c=(*argv)[1];
+      if (tolower(c)=='c') {
           opt_c=1;
-          argv++;
-          break;
-      } else if (lstrcmpi(*argv,"/q")==0) {
+      } else if (tolower(c)=='q') {
           opt_q=1;
-      } else if (lstrcmpi(*argv,"/k")==0) {
+      } else if (tolower(c)=='k') {
           opt_k=1;
-          argv++;
-          break;
-      } else if (lstrcmpi(*argv,"/t")==0 || lstrcmpi(*argv,"/x")==0 ||
-                 lstrcmpi(*argv,"/y")==0) {
+      } else if (tolower(c)=='t' || tolower(c)=='x' || tolower(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
-      argv++;
+
+      if ((*argv)[2]==0)
+          argv++;
+      else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
+          *argv+=2;
+
+      if (opt_c || opt_k) /* break out of parsing immediately after c or k */
+          break;
   }
 
   if (opt_q) {
