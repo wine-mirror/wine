@@ -94,7 +94,8 @@ int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
     ITypeLib *pTypeLib;
-    ITypeInfo *pTypeInfo;
+    ITypeInfo *pTypeInfo, *pRefTypeInfo;
+    HREFTYPE hRefType;
     TYPEATTR *pTypeAttr;
     INT count, i;
     BSTR bstrName;
@@ -161,9 +162,24 @@ int PopulateTree(void)
             TKINDADDTOSTR(TKIND_RECORD);
             TKINDADDTOSTR(TKIND_MODULE);
             TKINDADDTOSTR(TKIND_INTERFACE);
-            TKINDADDTOSTR(TKIND_DISPATCH);
             TKINDADDTOSTR(TKIND_COCLASS);
             TKINDADDTOSTR(TKIND_UNION);
+            case TKIND_DISPATCH:
+                AddToStrW(wszText, wszTKIND_DISPATCH);
+                AddToStrW(wszText, bstrName);
+                if(SUCCEEDED(ITypeInfo_GetRefTypeOfImplType(pTypeInfo, -1, &hRefType)))
+                {
+                    SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+                    memset(wszText, 0, sizeof(wszText));
+
+                    ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo);
+                    ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
+                                NULL, NULL, NULL);
+                    AddToStrW(wszText, wszTKIND_INTERFACE);
+                    AddToStrW(wszText, bstrName);
+                    ITypeInfo_Release(pRefTypeInfo);
+                }
+                break;
             case TKIND_ALIAS:
                 AddToStrW(wszText, wszTKIND_ALIAS);
                 CreateTypeInfo(wszText, pTypeAttr->tdescAlias, pTypeInfo);
