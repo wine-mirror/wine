@@ -108,6 +108,7 @@ typedef struct
     HWND hTree;
     HWND hEdit;
     HWND hStatusBar;
+    WCHAR wszFileName[MAX_LOAD_STRING];
 }TYPELIB;
 
 extern GLOBALS globals;
@@ -138,7 +139,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName);
 void ReleaseInst(HTREEITEM item);
 
 /* typelib.c */
-BOOL CreateTypeLibWindow(HINSTANCE hInst);
+BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName);
 BOOL TypeLibRegisterClass(void);
 
 /* interface.c */

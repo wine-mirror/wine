@@ -25,6 +25,13 @@ static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' }
 static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
     '>','\n','<','/','o','b','j','e','c','t','>','\0' };
+WCHAR wszFilter[] = { 'T','y','p','e','L','i','b',' ','F','i','l','e','s',' ',
+    '(','*','t','l','b',';','*','o','l','b',';','*','.','d','l','l',';',
+    '*','.','o','c','x',';','*','.','e','x','e',')','\0',
+    '*','.','t','l','b',';','*','.','o','l','b',';','*','.','d','l','l',';',
+    '*','.','o','c','x','*','.','e','x','e','\0',
+    'A','l','l',' ','F','i','l','e','s',' ','(','*','.','*',')','\0',
+    '*','.','*','\0','\0' };
 
 INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -122,6 +129,22 @@ INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM
     }
 
     return FALSE;
+}
+
+void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
+        WCHAR *wszTitle, WCHAR *wszFileName)
+{
+    memset(pofn, 0, sizeof(OPENFILENAME));
+    pofn->lStructSize = sizeof(OPENFILENAME);
+    pofn->hwndOwner = hWnd;
+    pofn->hInstance = globals.hMainInst;
+
+    pofn->lpstrTitle = wszTitle;
+    pofn->lpstrFilter = wszFilter;
+    pofn->nFilterIndex = 0;
+    pofn->lpstrFile = wszFileName;
+    pofn->nMaxFile = MAX_LOAD_STRING;
+    pofn->Flags = OFN_HIDEREADONLY;
 }
 
 void CopyClsid(HTREEITEM item)
@@ -380,10 +403,21 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
                     vis ? MF_UNCHECKED : MF_CHECKED);
             ResizeChild();
             break;
+        case IDM_TYPELIB:
+            {
+            OPENFILENAME ofn;
+            static WCHAR wszTitle[MAX_LOAD_STRING];
+            static WCHAR wszName[MAX_LOAD_STRING];
+
+            LoadString(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle));
+            InitOpenFileName(hWnd, &ofn, wszFilter, wszTitle, wszName);
+            if(GetOpenFileName(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
+            break;
+            }
         case IDM_VIEW:
             hSelect = TreeView_GetSelection(globals.hTree);
             if(IsInterface(hSelect)) InterfaceViewer(hSelect);
-            else CreateTypeLibWindow(globals.hMainInst);
+            else CreateTypeLibWindow(globals.hMainInst, NULL);
             break;
         case IDM_EXIT:
             DestroyWindow(hWnd);

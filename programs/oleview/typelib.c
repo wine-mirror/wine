@@ -30,7 +30,6 @@ void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 
 int PopulateTree(void)
 {
-    TVITEM tvi;
     TVINSERTSTRUCT tvis;
     ITypeLib *pTypeLib;
     ITypeInfo *pTypeInfo, *pRefTypeInfo;
@@ -64,9 +63,6 @@ int PopulateTree(void)
     const WCHAR wszVT_BSTR[] = { 'B','S','T','R',' ','\0' };
     const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y',' ','\0' };
 
-    memset(&tvi, 0, sizeof(TVITEM));
-    tvi.hItem = TreeView_GetSelection(globals.hTree);
-
     U(tvis).item.mask = TVIF_TEXT|TVIF_CHILDREN;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
@@ -74,15 +70,14 @@ int PopulateTree(void)
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = TVI_ROOT;
 
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-    if(FAILED((hRes = LoadTypeLib(((ITEM_INFO*)tvi.lParam)->path, &pTypeLib))))
+    if(FAILED((hRes = LoadTypeLib(typelib.wszFileName, &pTypeLib))))
     {
         WCHAR wszMessage[MAX_LOAD_STRING];
         WCHAR wszError[MAX_LOAD_STRING];
 
         LoadString(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
                 wszError, sizeof(WCHAR[MAX_LOAD_STRING]));
-        wsprintfW(wszMessage, wszError, ((ITEM_INFO*)tvi.lParam)->path, hRes);
+        wsprintfW(wszMessage, wszError, typelib.wszFileName, hRes);
         MessageBox(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
     }
@@ -261,10 +256,22 @@ BOOL TypeLibRegisterClass(void)
     return TRUE;
 }
 
-BOOL CreateTypeLibWindow(HINSTANCE hInst)
+BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
 {
     WCHAR wszTitle[MAX_LOAD_STRING];
     LoadString(hInst, IDS_TYPELIBTITLE, wszTitle, sizeof(WCHAR[MAX_LOAD_STRING]));
+
+    if(wszFileName) lstrcpyW(typelib.wszFileName, wszFileName);
+    else
+    {
+        TVITEM tvi;
+
+        memset(&tvi, 0, sizeof(TVITEM));
+        tvi.hItem = TreeView_GetSelection(globals.hTree);
+
+        SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        lstrcpyW(typelib.wszFileName, ((ITEM_INFO*)tvi.lParam)->path);
+    }
 
     globals.hTypeLibWnd = CreateWindow(wszTypeLib, wszTitle,
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
