@@ -503,10 +503,9 @@ static int ALSA_TestDeviceForWine(int card, int device,  snd_pcm_stream_t stream
     char pcmname[256];
     int retcode;
     snd_pcm_hw_params_t *hwparams;
-    char *reason = NULL;
+    const char *reason = NULL;
     unsigned int rrate;
 
-    
     /* Note that the plug: device masks out a lot of info, we want to avoid that */
     sprintf(pcmname, "hw:%d,%d", card, device);
     retcode = snd_pcm_open(&pcm, pcmname, streamtype, SND_PCM_NONBLOCK);
@@ -527,7 +526,7 @@ static int ALSA_TestDeviceForWine(int card, int device,  snd_pcm_stream_t stream
         goto exit;
     }
 
-	/* set the count of channels */
+    /* set the count of channels */
     retcode = snd_pcm_hw_params_set_channels(pcm, hwparams, 2);
     if (retcode < 0)
     {
@@ -567,7 +566,6 @@ exit:
         TRACE("Discarding card %d/device %d:  %s [%d(%s)]\n", card, device, reason, retcode, snd_strerror(retcode));
 
     return retcode;
-
 }
 
 /**************************************************************************
