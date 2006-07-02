@@ -530,15 +530,15 @@ static void test_menu_add_string( void )
 
     char strback[0x80];
     WCHAR strbackW[0x80];
-    static const WCHAR expectedString[] = {'D', 'u', 'm', 'm', 'y', ' ', 
-                         's', 't', 'r', 'i', 'n', 'g', 0};
+    static CHAR blah[] = "blah";
+    static const WCHAR expectedString[] = {'D','u','m','m','y',' ','s','t','r','i','n','g', 0};
 
     hmenu = CreateMenu();
 
     memset( &info, 0, sizeof info );
     info.cbSize = sizeof info;
     info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE | MIIM_ID;
-    info.dwTypeData = "blah";
+    info.dwTypeData = blah;
     info.cch = 6;
     info.dwItemData = 0;
     info.wID = 1;
@@ -1179,6 +1179,8 @@ void test_menu_search_bycommand( void )
     UINT         id;
     char         strback[0x80];
     char         strIn[0x80];
+    static CHAR menuitem[]  = "MenuItem",
+                menuitem2[] = "MenuItem 2";
 
     /* Case 1: Menu containing a menu item */
     hmenu = CreateMenu();
@@ -1322,15 +1324,15 @@ void test_menu_search_bycommand( void )
         Case 3: Menu containing a popup menu which in turn 
            contains 2 items with the same id as the popup itself
      */
-             
+
     hmenu = CreateMenu();
     hmenuSub = CreateMenu();
-    
+
     memset( &info, 0, sizeof info );
     info.cbSize = sizeof info;
     info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
     info.fType = MFT_STRING;
-    info.dwTypeData = "MenuItem";
+    info.dwTypeData = menuitem;
     info.wID = (UINT_PTR) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
 
     rc = InsertMenu(hmenu, 0, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)hmenuSub, "Submenu");
@@ -1343,9 +1345,9 @@ void test_menu_search_bycommand( void )
     info.cbSize = sizeof info;
     info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
     info.fType = MFT_STRING;
-    info.dwTypeData = "MenuItem 2";
+    info.dwTypeData = menuitem2;
     info.wID = (UINT_PTR) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
-    
+
     rc = InsertMenuItem(hmenuSub, 1, TRUE, &info );
     ok (rc, "Inserting the sub menu menuitem 2 failed\n");
 
@@ -1386,9 +1388,9 @@ void test_menu_search_bycommand( void )
     info.cbSize = sizeof info;
     info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
     info.fType = MFT_STRING;
-    info.dwTypeData = "MenuItem";
+    info.dwTypeData = menuitem;
     info.wID = (UINT_PTR) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
-   
+
     rc = InsertMenuItem(hmenuSub2, 0, TRUE, &info );
     ok (rc, "Inserting the sub menu menuitem failed\n");
 
@@ -1396,9 +1398,9 @@ void test_menu_search_bycommand( void )
     info.cbSize = sizeof info;
     info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID;
     info.fType = MFT_STRING;
-    info.dwTypeData = "MenuItem 2";
+    info.dwTypeData = menuitem2;
     info.wID = (UINT_PTR) hmenuSub; /* Enforce id collisions with the hmenu of the popup submenu*/
-    
+
     rc = InsertMenuItem(hmenuSub2, 1, TRUE, &info );
     ok (rc, "Inserting the sub menu menuitem 2 failed\n");
 
