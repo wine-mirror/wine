@@ -73,6 +73,8 @@
 #define IDS_FALSE                  311
 #define IDS_BYTES                  312
 
+#define IDS_ERROR_LOADTYPELIB      400
+
 #define DLG_CREATEINSTON           1000
 #define IDC_MACHINE                1001
 

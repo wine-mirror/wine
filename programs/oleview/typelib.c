@@ -23,43 +23,140 @@
 TYPELIB typelib;
 static const WCHAR wszTypeLib[] = { 'T','Y','P','E','L','I','B','\0' };
 
-void PopulateTree(void)
+void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
+{
+    lstrcpyW(&wszDest[lstrlenW(wszDest)], wszSource);
+}
+
+int PopulateTree(void)
 {
     TVITEM tvi;
     TVINSERTSTRUCT tvis;
     ITypeLib *pTypeLib;
+    ITypeInfo *pTypeInfo, *pRefTypeInfo;
+    TYPEATTR *pTypeAttr;
     INT count, i;
     BSTR bstrName;
+    BSTR bstrData;
+    WCHAR wszText[MAX_LOAD_STRING];
+    HRESULT hRes;
+
+    const WCHAR wszFormat[] = { '%','s',' ','(','%','s',')','\0' };
+    const WCHAR wszSpace[] = { ' ','\0' };
+
+    const WCHAR wszTKIND_ENUM[] = { 't','y','p','e','d','e','f',' ','e','n','u','m',' ','\0' };
+    const WCHAR wszTKIND_RECORD[]
+        = { 't','y','p','e','d','e','f',' ','s','t','r','u','c','t',' ','\0' };
+    const WCHAR wszTKIND_MODULE[] = { 'm','o','d','u','l','e',' ','\0' };
+    const WCHAR wszTKIND_INTERFACE[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
+    const WCHAR wszTKIND_DISPATCH[]
+        = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
+    const WCHAR wszTKIND_COCLASS[] = { 'c','o','c','l','a','s','s',' ','\0' };
+    const WCHAR wszTKIND_ALIAS[] = { 't','y','p','e','d','e','f',' ','\0' };
+    const WCHAR wszTKIND_UNION[]
+        = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
+
+    const WCHAR wszVT_BOOL[] = { 'V','A','R','I','A','N','T','_','B','O','O','L',' ','\0' };
+    const WCHAR wszVT_UI4[] = { 'u','n','s','i','g','n','e','d',' ','l','o','n','g',' ','\0' };
+    const WCHAR wszVT_I4[] = { 'l','o','n','g',' ','\0' };
+    const WCHAR wszVT_R4[] = { 's','i','n','g','l','e',' ','\0' };
+    const WCHAR wszVT_INT[] = { 'i','n','t',' ','\0' };
+    const WCHAR wszVT_BSTR[] = { 'B','S','T','R',' ','\0' };
+    const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y',' ','\0' };
 
     memset(&tvi, 0, sizeof(TVITEM));
     tvi.hItem = TreeView_GetSelection(globals.hTree);
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_CHILDREN;
+    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    U(tvis).item.pszText = wszText;
     U(tvis).item.cChildren = 1;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = TVI_ROOT;
 
     SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-    if(FAILED(LoadTypeLib(((ITEM_INFO*)tvi.lParam)->path, &pTypeLib))) return;
+    if(FAILED((hRes = LoadTypeLib(((ITEM_INFO*)tvi.lParam)->path, &pTypeLib))))
+    {
+        WCHAR wszMessage[MAX_LOAD_STRING];
+        WCHAR wszError[MAX_LOAD_STRING];
+
+        LoadString(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
+                wszError, sizeof(WCHAR[MAX_LOAD_STRING]));
+        wsprintfW(wszMessage, wszError, ((ITEM_INFO*)tvi.lParam)->path, hRes);
+        MessageBox(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
+        return 1;
+    }
 
     count = ITypeLib_GetTypeInfoCount(pTypeLib);
 
-    for(i=-1; i<count; i++) {
-        ITypeLib_GetDocumentation(pTypeLib, i, &bstrName, NULL, NULL, NULL);
+    ITypeLib_GetDocumentation(pTypeLib, -1, &bstrName, &bstrData, NULL, NULL);
+    wsprintfW(wszText, wszFormat, bstrName, bstrData);
+    SysFreeString(bstrName);
+    SysFreeString(bstrData);
+    tvis.hParent = (HTREEITEM)SendMessage(typelib.hTree,
+            TVM_INSERTITEM, 0, (LPARAM)&tvis);
 
-        U(tvis).item.cchTextMax = SysStringLen(bstrName);
-        U(tvis).item.pszText = bstrName;
+    for(i=0; i<count; i++)
+    {
+        ITypeLib_GetTypeInfo(pTypeLib, i, &pTypeInfo);
 
-        if(i==-1)
-            tvis.hParent = (HTREEITEM)SendMessage(typelib.hTree,
-                    TVM_INSERTITEM, 0, (LPARAM)&tvis);
-        else SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        ITypeInfo_GetDocumentation(pTypeInfo, MEMBERID_NIL, &bstrName, NULL, NULL, NULL);
+        ITypeInfo_GetTypeAttr(pTypeInfo, &pTypeAttr);
 
+        memset(wszText, 0, sizeof(wszText));
+        switch(pTypeAttr->typekind)
+        {
+#define TKINDADDTOSTR(x) case x:\
+    AddToStrW(wszText, wsz##x);\
+    AddToStrW(wszText, bstrName);\
+    break
+            TKINDADDTOSTR(TKIND_ENUM);
+            TKINDADDTOSTR(TKIND_RECORD);
+            TKINDADDTOSTR(TKIND_MODULE);
+            TKINDADDTOSTR(TKIND_INTERFACE);
+            TKINDADDTOSTR(TKIND_DISPATCH);
+            TKINDADDTOSTR(TKIND_COCLASS);
+            TKINDADDTOSTR(TKIND_UNION);
+            case TKIND_ALIAS:
+                AddToStrW(wszText, wszTKIND_ALIAS);
+
+                switch(pTypeAttr->tdescAlias.vt&VT_TYPEMASK)
+                {
+#define VTADDTOSTR(x) case x:\
+    AddToStrW(wszText, wsz##x);\
+    break
+                    VTADDTOSTR(VT_BOOL);
+                    VTADDTOSTR(VT_UI4);
+                    VTADDTOSTR(VT_I4);
+                    VTADDTOSTR(VT_R4);
+                    VTADDTOSTR(VT_INT);
+                    VTADDTOSTR(VT_BSTR);
+                    VTADDTOSTR(VT_CY);
+                    case VT_USERDEFINED:
+                    ITypeInfo_GetRefTypeInfo(pTypeInfo, U(pTypeAttr->tdescAlias).hreftype, &pRefTypeInfo);
+                    ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrData, NULL, NULL, NULL);
+                    AddToStrW(wszText, bstrData);
+                    AddToStrW(wszText, wszSpace);
+                    SysFreeString(bstrData);
+                    ITypeInfo_Release(pRefTypeInfo);
+                    break;
+                }
+
+                AddToStrW(wszText, bstrName);
+                break;
+            default:
+                lstrcpyW(wszText, bstrName);
+        }
+        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+
+        ITypeInfo_ReleaseTypeAttr(pTypeInfo, pTypeAttr);
+        ITypeInfo_Release(pTypeInfo);
         SysFreeString(bstrName);
     }
     SendMessage(typelib.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
 
     ITypeLib_Release(pTypeLib);
+    return 0;
 }
 
 void TypeLibResizeChild(void)
@@ -124,8 +221,8 @@ LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             SetLeft(typelib.hPaneWnd, typelib.hTree);
             SetRight(typelib.hPaneWnd, typelib.hEdit);
 
-            PopulateTree();
-            SetFocus(typelib.hTree);
+            if(PopulateTree()) DestroyWindow(hWnd);
+            else SetFocus(typelib.hTree);
             break;
         }
         case WM_COMMAND:
