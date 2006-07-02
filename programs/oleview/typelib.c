@@ -20,19 +20,81 @@
 
 #include "main.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(oleview);
+
 TYPELIB typelib;
 static const WCHAR wszTypeLib[] = { 'T','Y','P','E','L','I','B','\0' };
+
+static const WCHAR wszFailed[] = { '<','f','a','i','l','e','d','>','\0' };
+static const WCHAR wszSpace[] = { ' ','\0' };
+static const WCHAR wszAsterix[] = { '*','\0' };
+
+static const WCHAR wszVT_BOOL[]
+    = { 'V','A','R','I','A','N','T','_','B','O','O','L','\0' };
+static const WCHAR wszVT_UI1[]
+    = { 'u','n','s','i','g','n','e','d',' ','c','h','a','r','\0' };
+static const WCHAR wszVT_UI4[]
+    = { 'u','n','s','i','g','n','e','d',' ','l','o','n','g','\0' };
+static const WCHAR wszVT_I4[] = { 'l','o','n','g','\0' };
+static const WCHAR wszVT_R4[] = { 's','i','n','g','l','e','\0' };
+static const WCHAR wszVT_INT[] = { 'i','n','t','\0' };
+static const WCHAR wszVT_BSTR[] = { 'B','S','T','R','\0' };
+static const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y','\0' };
 
 void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 {
     lstrcpyW(&wszDest[lstrlenW(wszDest)], wszSource);
 }
 
+void CreateTypeInfo(WCHAR *wszAddTo, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
+{
+    BSTR bstrData;
+    HRESULT hRes;
+    ITypeInfo *pRefTypeInfo;
+
+    switch(tdesc.vt&VT_TYPEMASK)
+    {
+#define VTADDTOSTR(x) case x:\
+        AddToStrW(wszAddTo, wsz##x);\
+        break
+        VTADDTOSTR(VT_BOOL);
+        VTADDTOSTR(VT_UI1);
+        VTADDTOSTR(VT_UI4);
+        VTADDTOSTR(VT_I4);
+        VTADDTOSTR(VT_R4);
+        VTADDTOSTR(VT_INT);
+        VTADDTOSTR(VT_BSTR);
+        VTADDTOSTR(VT_CY);
+        case VT_PTR:
+        CreateTypeInfo(wszAddTo, *U(tdesc).lptdesc, pTypeInfo);
+        AddToStrW(wszAddTo, wszAsterix);
+        break;
+        case VT_USERDEFINED:
+        hRes = ITypeInfo_GetRefTypeInfo(pTypeInfo,
+                U(tdesc).hreftype, &pRefTypeInfo);
+        if(SUCCEEDED(hRes))
+        {
+            ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL,
+                    &bstrData, NULL, NULL, NULL);
+            AddToStrW(wszAddTo, bstrData);
+            SysFreeString(bstrData);
+            ITypeInfo_Release(pRefTypeInfo);
+        }
+        else AddToStrW(wszAddTo, wszFailed);
+        break;
+        default:
+        WINE_FIXME("tdesc.vt&VT_TYPEMASK == %d not supported\n",
+                tdesc.vt&VT_TYPEMASK);
+    }
+}
+
 int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
     ITypeLib *pTypeLib;
-    ITypeInfo *pTypeInfo, *pRefTypeInfo;
+    ITypeInfo *pTypeInfo;
     TYPEATTR *pTypeAttr;
     INT count, i;
     BSTR bstrName;
@@ -41,7 +103,6 @@ int PopulateTree(void)
     HRESULT hRes;
 
     const WCHAR wszFormat[] = { '%','s',' ','(','%','s',')','\0' };
-    const WCHAR wszSpace[] = { ' ','\0' };
 
     const WCHAR wszTKIND_ENUM[] = { 't','y','p','e','d','e','f',' ','e','n','u','m',' ','\0' };
     const WCHAR wszTKIND_RECORD[]
@@ -54,14 +115,6 @@ int PopulateTree(void)
     const WCHAR wszTKIND_ALIAS[] = { 't','y','p','e','d','e','f',' ','\0' };
     const WCHAR wszTKIND_UNION[]
         = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
-
-    const WCHAR wszVT_BOOL[] = { 'V','A','R','I','A','N','T','_','B','O','O','L',' ','\0' };
-    const WCHAR wszVT_UI4[] = { 'u','n','s','i','g','n','e','d',' ','l','o','n','g',' ','\0' };
-    const WCHAR wszVT_I4[] = { 'l','o','n','g',' ','\0' };
-    const WCHAR wszVT_R4[] = { 's','i','n','g','l','e',' ','\0' };
-    const WCHAR wszVT_INT[] = { 'i','n','t',' ','\0' };
-    const WCHAR wszVT_BSTR[] = { 'B','S','T','R',' ','\0' };
-    const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y',' ','\0' };
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_CHILDREN;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
@@ -81,7 +134,6 @@ int PopulateTree(void)
         MessageBox(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
     }
-
     count = ITypeLib_GetTypeInfoCount(pTypeLib);
 
     ITypeLib_GetDocumentation(pTypeLib, -1, &bstrName, &bstrData, NULL, NULL);
@@ -114,36 +166,16 @@ int PopulateTree(void)
             TKINDADDTOSTR(TKIND_UNION);
             case TKIND_ALIAS:
                 AddToStrW(wszText, wszTKIND_ALIAS);
-
-                switch(pTypeAttr->tdescAlias.vt&VT_TYPEMASK)
-                {
-#define VTADDTOSTR(x) case x:\
-    AddToStrW(wszText, wsz##x);\
-    break
-                    VTADDTOSTR(VT_BOOL);
-                    VTADDTOSTR(VT_UI4);
-                    VTADDTOSTR(VT_I4);
-                    VTADDTOSTR(VT_R4);
-                    VTADDTOSTR(VT_INT);
-                    VTADDTOSTR(VT_BSTR);
-                    VTADDTOSTR(VT_CY);
-                    case VT_USERDEFINED:
-                    ITypeInfo_GetRefTypeInfo(pTypeInfo, U(pTypeAttr->tdescAlias).hreftype, &pRefTypeInfo);
-                    ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrData, NULL, NULL, NULL);
-                    AddToStrW(wszText, bstrData);
-                    AddToStrW(wszText, wszSpace);
-                    SysFreeString(bstrData);
-                    ITypeInfo_Release(pRefTypeInfo);
-                    break;
-                }
-
+                CreateTypeInfo(wszText, pTypeAttr->tdescAlias, pTypeInfo);
+                AddToStrW(wszText, wszSpace);
                 AddToStrW(wszText, bstrName);
                 break;
             default:
                 lstrcpyW(wszText, bstrName);
+                WINE_FIXME("pTypeAttr->typekind ==  %d\n not supported",
+                        pTypeAttr->typekind);
         }
         SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-
         ITypeInfo_ReleaseTypeAttr(pTypeInfo, pTypeAttr);
         ITypeInfo_Release(pTypeInfo);
         SysFreeString(bstrName);
