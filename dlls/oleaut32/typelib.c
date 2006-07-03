@@ -2635,26 +2635,9 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     return ptr - (char*)pLibBlk;
 }
 
-static WORD *SLTG_DoType(WORD *pType, char *pBlk, ELEMDESC *pElem)
+static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD)
 {
     BOOL done = FALSE;
-    TYPEDESC *pTD = &pElem->tdesc;
-
-    /* Handle [in/out] first */
-    if((*pType & 0xc000) == 0xc000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_NONE;
-    else if(*pType & 0x8000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN | PARAMFLAG_FOUT;
-    else if(*pType & 0x4000)
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FOUT;
-    else
-        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN;
-
-    if(*pType & 0x2000)
-        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FLCID;
-
-    if(*pType & 0x80)
-        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FRETVAL;
 
     while(!done) {
         if((*pType & 0xe00) == 0xe00) {
@@ -2716,6 +2699,27 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, ELEMDESC *pElem)
 	pType++;
     }
     return pType;
+}
+
+static WORD *SLTG_DoElem(WORD *pType, char *pBlk, ELEMDESC *pElem)
+{
+    /* Handle [in/out] first */
+    if((*pType & 0xc000) == 0xc000)
+        pElem->u.paramdesc.wParamFlags = PARAMFLAG_NONE;
+    else if(*pType & 0x8000)
+        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN | PARAMFLAG_FOUT;
+    else if(*pType & 0x4000)
+        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FOUT;
+    else
+        pElem->u.paramdesc.wParamFlags = PARAMFLAG_FIN;
+
+    if(*pType & 0x2000)
+        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FLCID;
+
+    if(*pType & 0x80)
+        pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FRETVAL;
+
+    return SLTG_DoType(pType, pBlk, &pElem->tdesc);
 }
 
 
@@ -2889,7 +2893,7 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	    pType = (WORD*)(pFirstItem + pFunc->rettype);
 
 
-	SLTG_DoType(pType, pFirstItem, &(*ppFuncDesc)->funcdesc.elemdescFunc);
+	SLTG_DoElem(pType, pFirstItem, &(*ppFuncDesc)->funcdesc.elemdescFunc);
 
 	(*ppFuncDesc)->funcdesc.lprgelemdescParam =
 	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -2926,13 +2930,13 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 
 	    if(HaveOffs) { /* the next word is an offset to type */
 	        pType = (WORD*)(pFirstItem + *pArg);
-		SLTG_DoType(pType, pFirstItem,
+		SLTG_DoElem(pType, pFirstItem,
 			    &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
 		pArg++;
 	    } else {
 		if(paramName)
 		  paramName--;
-		pArg = SLTG_DoType(pArg, pFirstItem,
+		pArg = SLTG_DoElem(pArg, pFirstItem,
 			   &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
 	    }
 
@@ -2989,7 +2993,7 @@ static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
 	  break;
       }
 
-      SLTG_DoType(pType, pFirstItem,
+      SLTG_DoElem(pType, pFirstItem,
 		  &(*ppVarDesc)->vardesc.elemdescVar);
 
       /* FIXME("helpcontext, helpstring\n"); */
@@ -3006,8 +3010,7 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
 			      char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			      SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_AliasItem *pItem;
-  TYPEDESC *tdesc = &pTI->TypeAttr.tdescAlias;
+  WORD *pType;
 
   if (pTITail->simple_alias) {
     /* if simple alias, no more processing required */
@@ -3015,27 +3018,10 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
     return;
   }
 
-  /* otherwise it is an offset */
-  pItem = (SLTG_AliasItem *)(pBlk + pTITail->tdescalias_vt);
+  /* otherwise it is an offset to a type */
+  pType = (WORD *)(pBlk + pTITail->tdescalias_vt);
 
-  /* This is used for creating a TYPEDESC chain in case of VT_USERDEFINED */
-  while (TRUE) {
-    if (pItem->flags != 0)
-      FIXME("unknown flag(s) 0x%x for type 0x%x\n", pItem->flags, pItem->vt);
-
-    if (pItem->vt == VT_USERDEFINED) {
-      tdesc->vt = pItem->vt;
-      /* guessing here ... */
-      pItem++;
-      tdesc->u.hreftype = *(WORD *)pItem;
-      pItem = (SLTG_AliasItem *)((char *)pItem + sizeof(WORD));
-      FIXME("Guessing TKIND_ALIAS of VT_USERDEFINED with hreftype 0x%lx\n", tdesc->u.hreftype);
-      break;
-    } else {
-      FIXME("unhandled alias vt 0x%x\n", pItem->vt);
-      break;
-    }
-  }
+  SLTG_DoType(pType, pBlk, &pTI->TypeAttr.tdescAlias);
 }
 
 static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,

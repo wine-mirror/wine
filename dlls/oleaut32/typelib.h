@@ -477,14 +477,6 @@ typedef struct {
 #define SLTG_ENUMITEM_MAGIC 0x120a
 
 typedef struct {
-/*00*/	BYTE vt;	/* vartype */
-/*01*/	BYTE flags;     /* unknown flags */
-} SLTG_AliasItem;
-
-#define SLTG_ALIASITEM_MAGIC 0x001d
-
-
-typedef struct {
 	BYTE magic;	/* 0x4c or 0x6c */
 	BYTE inv;	/* high nibble is INVOKE_KIND, low nibble = 2 */
 	WORD next;	/* byte offset from beginning of group to next fn */
