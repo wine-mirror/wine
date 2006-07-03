@@ -1379,6 +1379,26 @@ extern void shader_arb_load_constants(
 /* ARB shader program Prototypes */
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
+/* ARB pixel shader prototypes */
+extern void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
+extern void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
+
+/* ARB vertex shader prototypes */
+extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+extern void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
+
 /* GLSL helper functions */
 extern void set_glsl_shader_program(IWineD3DDevice *iface);
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
