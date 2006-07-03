@@ -1184,6 +1184,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
 const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
+const char* debug_d3ddeclusage(BYTE usage);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
 const char* debug_d3dsamplerstate(DWORD state);
