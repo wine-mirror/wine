@@ -3018,6 +3018,11 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
     return;
   }
 
+  if(pTIHeader->href_table != 0xffffffff) {
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+		  pNameTable);
+  }
+
   /* otherwise it is an offset to a type */
   pType = (WORD *)(pBlk + pTITail->tdescalias_vt);
 
