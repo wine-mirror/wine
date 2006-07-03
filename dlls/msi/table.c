@@ -1680,7 +1680,6 @@ static void dump_table( string_table *st, USHORT *rawdata, UINT rawsize )
     for( i=0; i<(rawsize/2); i++ )
     {
         sval = msi_string_lookup_id( st, rawdata[i] );
-        if( !sval ) sval = (WCHAR[]) {0};
         MESSAGE(" %04x %s\n", rawdata[i], debugstr_w(sval) );
     }
 }
