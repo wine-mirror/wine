@@ -800,10 +800,14 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     int nComponents = 0;
     SHADER_OPCODE_ARG tmpArg;
 
+    memset(&tmpArg, 0, sizeof(SHADER_OPCODE_ARG));
+
     /* Set constants for the temporary argument */
-    tmpArg.shader   = arg->shader;
-    tmpArg.buffer   = arg->buffer;
-    tmpArg.src[0]   = arg->src[0];
+    tmpArg.shader      = arg->shader;
+    tmpArg.buffer      = arg->buffer;
+    tmpArg.src[0]      = arg->src[0];
+    tmpArg.src_addr[0] = arg->src_addr[0];
+    tmpArg.reg_maps = arg->reg_maps;
 
     switch(arg->opcode->opcode) {
     case D3DSIO_M4x4:
