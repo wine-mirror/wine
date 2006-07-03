@@ -4681,6 +4681,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt * sizeof(BOOL));
+    for (i = 0; i < cnt; i++)
+        TRACE("Set BOOL constant %u to %s\n", i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsB[i] = TRUE;
@@ -4725,6 +4727,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
+    for (i = 0; i < cnt; i++)
+        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", i,
+           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsI[i] = TRUE;
@@ -4769,6 +4774,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
+    for (i = 0; i < cnt; i++)
+        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", i,
+           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
@@ -4855,6 +4863,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt * sizeof(BOOL));
+    for (i = 0; i < cnt; i++)
+        TRACE("Set BOOL constant %u to %s\n", i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsB[i] = TRUE;
@@ -4899,6 +4909,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
+    for (i = 0; i < cnt; i++)
+        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", i,
+           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsI[i] = TRUE;
@@ -4943,6 +4956,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
+    for (i = 0; i < cnt; i++)
+        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", i,
+           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
