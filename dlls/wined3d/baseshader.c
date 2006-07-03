@@ -410,7 +410,7 @@ void shader_get_registers_used(
                 DWORD param, addr_token, reg, regtype;
                 pToken += shader_get_param(iface, pToken, &param, &addr_token);
 
-                regtype = (param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT;
+                regtype = shader_get_regtype(param);
                 reg = param & D3DSP_REGNUM_MASK;
 
                 if (D3DSPR_TEXTURE == regtype) { /* vs: D3DSPR_ADDR */
