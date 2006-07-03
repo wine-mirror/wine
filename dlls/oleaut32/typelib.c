@@ -2047,12 +2047,9 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->pTypeLib = pLibInfo;
     ptiRet->index=count;
 /* fill in the typeattr fields */
-    WARN("Assign constructor/destructor memid\n");
 
     MSFT_ReadGuid(&ptiRet->TypeAttr.guid, tiBase.posguid, pcx);
     ptiRet->TypeAttr.lcid=pLibInfo->LibAttr.lcid;   /* FIXME: correct? */
-    ptiRet->TypeAttr.memidConstructor=MEMBERID_NIL ;/* FIXME */
-    ptiRet->TypeAttr.memidDestructor=MEMBERID_NIL ; /* FIXME */
     ptiRet->TypeAttr.lpstrSchema=NULL;              /* reserved */
     ptiRet->TypeAttr.cbSizeInstance=tiBase.size;
     ptiRet->TypeAttr.typekind=tiBase.typekind & 0xF;
@@ -4193,6 +4190,8 @@ static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
       pTypeInfoImpl->lpVtblTypeComp = &tcompvt;
       pTypeInfoImpl->ref=1;
       pTypeInfoImpl->hreftype = -1;
+      pTypeInfoImpl->TypeAttr.memidConstructor = MEMBERID_NIL;
+      pTypeInfoImpl->TypeAttr.memidDestructor = MEMBERID_NIL;
     }
     TRACE("(%p)\n", pTypeInfoImpl);
     return (ITypeInfo2*) pTypeInfoImpl;
