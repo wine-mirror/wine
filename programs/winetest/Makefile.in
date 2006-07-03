@@ -23,6 +23,7 @@ TESTBINS = \
 	advpack_test.exe$(DLLEXT) \
 	cabinet_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
+	comdlg32_test.exe$(DLLEXT) \
 	crypt32_test.exe$(DLLEXT) \
 	d3d8_test.exe$(DLLEXT) \
 	d3d9_test.exe$(DLLEXT) \
@@ -109,6 +110,8 @@ cabinet_test.exe$(DLLEXT): $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT)
 	cp $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+comdlg32_test.exe$(DLLEXT): $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/comdlg32/tests/comdlg32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 crypt32_test.exe$(DLLEXT): $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 d3d8_test.exe$(DLLEXT): $(DLLDIR)/d3d8/tests/d3d8_test.exe$(DLLEXT)

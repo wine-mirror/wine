@@ -44,6 +44,8 @@ RC_BINARIES = \
 	pd32_nocollate.ico \
 	pd32_portrait.ico 
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
