@@ -439,7 +439,7 @@ typedef struct {
 /*16*/  WORD res16; /* always ffff */
 /*18*/  WORD res18; /* always 0000 */
 /*1a*/  WORD res1a; /* always 0000 */
-/*1c*/  WORD res1c;
+/*1c*/  WORD simple_alias; /* tdescalias_vt is a vt rather than an offset? */
 /*1e*/  WORD res1e; /* always 0000 */
 /*20*/  WORD cbSizeInstance;
 /*22*/  WORD cbAlignment;
@@ -477,8 +477,8 @@ typedef struct {
 #define SLTG_ENUMITEM_MAGIC 0x120a
 
 typedef struct {
-/*00*/	WORD vt;	/* vartype, 0xffff marks end. */
-/*02*/	WORD res02;	/* ?, 0xffff marks end */
+/*00*/	BYTE vt;	/* vartype */
+/*01*/	BYTE flags;     /* unknown flags */
 } SLTG_AliasItem;
 
 #define SLTG_ALIASITEM_MAGIC 0x001d

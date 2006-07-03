@@ -2819,49 +2819,40 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
     return (char*)info;
 }
 
-static SLTG_TypeInfoTail *SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
-					      char *pNameTable)
+static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
+				char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+				SLTG_TypeInfoTail *pTITail)
 {
-    SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-    SLTG_MemberHeader *pMemHeader;
     char *pFirstItem, *pNextItem;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)(pBlk + pTIHeader->href_table), pTI,
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
 		    pNameTable);
     }
 
-
-    pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-
-    pFirstItem = pNextItem = (char*)(pMemHeader + 1);
+    pFirstItem = pNextItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
         pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE);
     }
-
-    return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
 
-static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
-						char *pNameTable)
+static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
+				  char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+				  SLTG_TypeInfoTail *pTITail)
 {
-    SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-    SLTG_MemberHeader *pMemHeader;
     SLTG_Function *pFunc;
     char *pFirstItem, *pNextItem;
     TLBFuncDesc **ppFuncDesc = &pTI->funclist;
     int num = 0;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)(pBlk + pTIHeader->href_table), pTI,
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
 		    pNameTable);
     }
 
-    pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-
-    pFirstItem = pNextItem = (char*)(pMemHeader + 1);
+    pFirstItem = pNextItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
         pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE);
@@ -2876,7 +2867,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	if(pFunc->magic != SLTG_FUNCTION_MAGIC &&
 	   pFunc->magic != SLTG_FUNCTION_WITH_FLAGS_MAGIC) {
 	    FIXME("func magic = %02x\n", pFunc->magic);
-	    return NULL;
+	    return;
 	}
 	*ppFuncDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				sizeof(**ppFuncDesc));
@@ -2962,14 +2953,12 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
     pTI->TypeAttr.cFuncs = num;
     if (TRACE_ON(typelib))
         dump_TLBFuncDesc(pTI->funclist);
-    return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
-static SLTG_TypeInfoTail *SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
-					     char *pNameTable)
+static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
+			       char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+			       SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-  SLTG_MemberHeader *pMemHeader;
   SLTG_RecordItem *pItem;
   char *pFirstItem;
   TLBVarDesc **ppVarDesc = &pTI->varlist;
@@ -2977,14 +2966,12 @@ static SLTG_TypeInfoTail *SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
   WORD *pType;
   char buf[300];
 
-  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-
-  pFirstItem = (char*)(pMemHeader + 1);
+  pFirstItem = pBlk;
   for(pItem = (SLTG_RecordItem *)pFirstItem, num = 1; 1;
       pItem = (SLTG_RecordItem *)(pFirstItem + pItem->next), num++) {
       if(pItem->magic != SLTG_RECORD_MAGIC) {
 	  FIXME("record magic = %02x\n", pItem->magic);
-	  return NULL;
+	  return;
       }
       *ppVarDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			     sizeof(**ppVarDesc));
@@ -3013,79 +3000,66 @@ static SLTG_TypeInfoTail *SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
       if(pItem->next == 0xffff) break;
   }
   pTI->TypeAttr.cVars = num;
-  return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
-static SLTG_TypeInfoTail *SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
-					   char *pNameTable)
+static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
+			      char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+			      SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-  SLTG_MemberHeader *pMemHeader;
   SLTG_AliasItem *pItem;
-  int i, mustbelast;
+  TYPEDESC *tdesc = &pTI->TypeAttr.tdescAlias;
 
-  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-  pItem = (SLTG_AliasItem*)(pMemHeader + 1);
-
-  mustbelast = 0;
-  /* This is used for creating a TYPEDESC chain in case of VT_USERDEFINED */
-  for (i = 0 ; i<pMemHeader->cbExtra/4 ; i++) {
-    if (pItem->vt == 0xffff) {
-      if (i<(pMemHeader->cbExtra/4-1))
-	FIXME("Endmarker too early in process alias data!\n");
-      break;
-    }
-    if (mustbelast) {
-      FIXME("Chain extends over last entry?\n");
-      break;
-    }
-    if (pItem->vt == VT_USERDEFINED) {
-      pTI->TypeAttr.tdescAlias.vt = pItem->vt;
-      /* guessing here ... */
-      FIXME("Guessing TKIND_ALIAS of VT_USERDEFINED with hreftype 0x%x\n",pItem->res02);
-      pTI->TypeAttr.tdescAlias.u.hreftype = pItem->res02;
-      mustbelast = 1;
-    } else {
-      FIXME("alias %d: 0x%x\n",i,pItem->vt);
-      FIXME("alias %d: 0x%x\n",i,pItem->res02);
-    }
-    pItem++;
+  if (pTITail->simple_alias) {
+    /* if simple alias, no more processing required */
+    pTI->TypeAttr.tdescAlias.vt = pTITail->tdescalias_vt;
+    return;
   }
-  return (SLTG_TypeInfoTail*)((char*)(pMemHeader + 1)+pMemHeader->cbExtra);
+
+  /* otherwise it is an offset */
+  pItem = (SLTG_AliasItem *)(pBlk + pTITail->tdescalias_vt);
+
+  /* This is used for creating a TYPEDESC chain in case of VT_USERDEFINED */
+  while (TRUE) {
+    if (pItem->flags != 0)
+      FIXME("unknown flag(s) 0x%x for type 0x%x\n", pItem->flags, pItem->vt);
+
+    if (pItem->vt == VT_USERDEFINED) {
+      tdesc->vt = pItem->vt;
+      /* guessing here ... */
+      pItem++;
+      tdesc->u.hreftype = *(WORD *)pItem;
+      pItem = (SLTG_AliasItem *)((char *)pItem + sizeof(WORD));
+      FIXME("Guessing TKIND_ALIAS of VT_USERDEFINED with hreftype 0x%lx\n", tdesc->u.hreftype);
+      break;
+    } else {
+      FIXME("unhandled alias vt 0x%x\n", pItem->vt);
+      break;
+    }
+  }
 }
 
-static SLTG_TypeInfoTail *SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
-					   char *pNameTable)
+static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
+				 char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+				 SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-  SLTG_MemberHeader *pMemHeader;
-  SLTG_AliasItem *pItem;
-
-  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-  pItem = (SLTG_AliasItem*)(pMemHeader + 1);
-  FIXME("memh.cbExtra is %ld\n",pMemHeader->cbExtra);
-  FIXME("offset 0 0x%x\n",*(WORD*)pItem);
-  return (SLTG_TypeInfoTail*)((char*)(pMemHeader + 1)+pMemHeader->cbExtra);
+  FIXME("offset 0 0x%x\n",*(WORD*)pBlk);
 }
 
-static SLTG_TypeInfoTail *SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
-					   char *pNameTable)
+static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
+			     char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+                             SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
-  SLTG_MemberHeader *pMemHeader;
   SLTG_EnumItem *pItem;
   char *pFirstItem;
   TLBVarDesc **ppVarDesc = &pTI->varlist;
   int num = 0;
 
-  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
-
-  pFirstItem = (char*)(pMemHeader + 1);
+  pFirstItem = pBlk;
   for(pItem = (SLTG_EnumItem *)pFirstItem, num = 1; 1;
       pItem = (SLTG_EnumItem *)(pFirstItem + pItem->next), num++) {
       if(pItem->magic != SLTG_ENUMITEM_MAGIC) {
 	  FIXME("enumitem magic = %04x\n", pItem->magic);
-	  return NULL;
+	  return;
       }
       *ppVarDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			     sizeof(**ppVarDesc));
@@ -3104,7 +3078,6 @@ static SLTG_TypeInfoTail *SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
       if(pItem->next == 0xffff) break;
   }
   pTI->TypeAttr.cVars = num;
-  return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
@@ -3299,6 +3272,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       SLTG_TypeInfoHeader *pTIHeader;
       SLTG_TypeInfoTail *pTITail;
+      SLTG_MemberHeader *pMemHeader;
 
       if(strcmp(pBlkEntry[order].index_string + (char*)pMagic,
 		pOtherTypeInfoBlks[i].index_name)) {
@@ -3311,6 +3285,9 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	FIXME("TypeInfoHeader magic = %04x\n", pTIHeader->magic);
 	return NULL;
       }
+      TRACE("pTIHeader->res06 = %lx, pTIHeader->res0e = %lx, pTIHeader->res16 = %lx, pTIHeader->res1e = %lx\n",
+        pTIHeader->res06, pTIHeader->res0e, pTIHeader->res16, pTIHeader->res1e);
+
       *ppTypeInfoImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
       (*ppTypeInfoImpl)->pTypeLib = pTypeLibImpl;
       (*ppTypeInfoImpl)->index = i;
@@ -3337,36 +3314,43 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	    debugstr_guid(&(*ppTypeInfoImpl)->TypeAttr.guid),
 	    (*ppTypeInfoImpl)->TypeAttr.wTypeFlags);
 
+      pMemHeader = (SLTG_MemberHeader*)((char *)pBlk + pTIHeader->elem_table);
+
+      pTITail = (SLTG_TypeInfoTail*)((char *)(pMemHeader + 1) + pMemHeader->cbExtra);
+
       switch(pTIHeader->typekind) {
       case TKIND_ENUM:
-	pTITail = SLTG_ProcessEnum(pBlk, *ppTypeInfoImpl, pNameTable);
+	SLTG_ProcessEnum((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                         pTIHeader, pTITail);
 	break;
 
       case TKIND_RECORD:
-	pTITail = SLTG_ProcessRecord(pBlk, *ppTypeInfoImpl, pNameTable);
+	SLTG_ProcessRecord((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                           pTIHeader, pTITail);
 	break;
 
       case TKIND_INTERFACE:
-	pTITail = SLTG_ProcessInterface(pBlk, *ppTypeInfoImpl, pNameTable);
+	SLTG_ProcessInterface((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                              pTIHeader, pTITail);
 	break;
 
       case TKIND_COCLASS:
-	pTITail = SLTG_ProcessCoClass(pBlk, *ppTypeInfoImpl, pNameTable);
+	SLTG_ProcessCoClass((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                            pTIHeader, pTITail);
 	break;
 
       case TKIND_ALIAS:
-	pTITail = SLTG_ProcessAlias(pBlk, *ppTypeInfoImpl, pNameTable);
-	if (pTITail->tdescalias_vt)
-	  (*ppTypeInfoImpl)->TypeAttr.tdescAlias.vt = pTITail->tdescalias_vt;
+	SLTG_ProcessAlias((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                          pTIHeader, pTITail);
 	break;
 
       case TKIND_DISPATCH:
-	pTITail = SLTG_ProcessDispatch(pBlk, *ppTypeInfoImpl, pNameTable);
+	SLTG_ProcessDispatch((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                             pTIHeader, pTITail);
 	break;
 
       default:
 	FIXME("Not processing typekind %d\n", pTIHeader->typekind);
-	pTITail = NULL;
 	break;
 
       }
@@ -3382,7 +3366,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	  X(16);
 	  X(18);
 	  X(1a);
-	  X(1c);
 	  X(1e);
 	  X(24);
 	  X(26);
