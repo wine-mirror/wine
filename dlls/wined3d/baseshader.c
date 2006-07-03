@@ -432,26 +432,35 @@ void shader_get_registers_used(
 }
 
 static void shader_dump_decl_usage(
+    IWineD3DBaseShaderImpl* This,
     DWORD decl, 
     DWORD param) {
 
     DWORD regtype = shader_get_regtype(param);
-    TRACE("dcl_");
+
+    TRACE("dcl");
 
     if (regtype == D3DSPR_SAMPLER) {
         DWORD ttype = decl & D3DSP_TEXTURETYPE_MASK;
 
         switch (ttype) {
-            case D3DSTT_2D: TRACE("2d"); break;
-            case D3DSTT_CUBE: TRACE("cube"); break;
-            case D3DSTT_VOLUME: TRACE("volume"); break;
-            default: TRACE("unknown_ttype(%08lx)", ttype); 
+            case D3DSTT_2D: TRACE("_2d"); break;
+            case D3DSTT_CUBE: TRACE("_cube"); break;
+            case D3DSTT_VOLUME: TRACE("_volume"); break;
+            default: TRACE("_unknown_ttype(%08lx)", ttype); 
        }
 
     } else { 
 
         DWORD usage = decl & D3DSP_DCL_USAGE_MASK;
         DWORD idx = (decl & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+
+        /* Pixel shaders 3.0 don't have usage semantics */
+        char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+        if (pshader && This->baseShader.hex_version < D3DPS_VERSION(3,0))
+            return;
+        else
+            TRACE("_");
 
         switch(usage) {
         case D3DDECLUSAGE_POSITION:
@@ -884,7 +893,7 @@ void shader_trace_init(
                     DWORD usage = *pToken;
                     DWORD param = *(pToken + 1);
 
-                    shader_dump_decl_usage(usage, param);
+                    shader_dump_decl_usage(This, usage, param);
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
                     shader_dump_param(iface, param, 0, 0);
