@@ -3057,10 +3057,14 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
 				 char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 				 SLTG_TypeInfoTail *pTITail)
 {
+  if (pTIHeader->href_table != 0xffffffff)
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+                                  pNameTable);
+
   if (pTITail->vars_off != 0xffff)
     SLTG_DoVars(pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
 
-  FIXME_(typelib)("process refs and funcs\n");
+  FIXME_(typelib)("process funcs\n");
 }
 
 static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
