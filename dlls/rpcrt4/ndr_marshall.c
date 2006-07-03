@@ -2002,7 +2002,6 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     case RPC_FC_STRUCTPAD2:
       size += 2;
-      pStubMsg->Buffer += 2;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       size += pFormat[1];
