@@ -1674,6 +1674,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 {
     static const WCHAR szDefaultUsername[] = {'a','n','o','n','y','m','o','u','s','\0'};
     static const WCHAR szDefaultPassword[] = {'u','s','e','r','@','s','e','r','v','e','r','\0'};
+    static const WCHAR szEmpty[] = {'\0'};
     struct sockaddr_in socketAddr;
     INT nsocket = -1;
     UINT sock_namelen;
@@ -1733,7 +1734,11 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     }
     else {
         lpwfs->lpszUserName = WININET_strdupW(lpszUserName);
-        lpwfs->lpszPassword = WININET_strdupW(lpszPassword);
+
+        if (lpszPassword)
+            lpwfs->lpszPassword = WININET_strdupW(lpszPassword);
+        else
+            lpwfs->lpszPassword = WININET_strdupW(szEmpty);
     }
     
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
