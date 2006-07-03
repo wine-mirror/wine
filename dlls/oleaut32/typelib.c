@@ -2906,14 +2906,25 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsig
         int param;
 	WORD *pType, *pArg;
 
-	if(pFunc->magic != SLTG_FUNCTION_MAGIC &&
-	   pFunc->magic != SLTG_FUNCTION_WITH_FLAGS_MAGIC &&
-           pFunc->magic != SLTG_DISPATCH_FUNCTION_MAGIC) {
-	    FIXME("func magic = %02x\n", pFunc->magic);
-	    return;
-	}
 	*ppFuncDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				sizeof(**ppFuncDesc));
+
+        switch (pFunc->magic & ~SLTG_FUNCTION_FLAGS_PRESENT) {
+        case SLTG_FUNCTION_MAGIC:
+            (*ppFuncDesc)->funcdesc.funckind = FUNC_PUREVIRTUAL;
+            break;
+        case SLTG_DISPATCH_FUNCTION_MAGIC:
+            (*ppFuncDesc)->funcdesc.funckind = FUNC_DISPATCH;
+            break;
+        case SLTG_STATIC_FUNCTION_MAGIC:
+            (*ppFuncDesc)->funcdesc.funckind = FUNC_STATIC;
+            break;
+        default:
+	    FIXME("unimplemented func magic = %02x\n", pFunc->magic & ~SLTG_FUNCTION_FLAGS_PRESENT);
+            HeapFree(GetProcessHeap(), 0, *ppFuncDesc);
+            *ppFuncDesc = NULL;
+	    return;
+	}
 	(*ppFuncDesc)->Name = TLB_MultiByteToBSTR(pFunc->name + pNameTable);
 
 	(*ppFuncDesc)->funcdesc.memid = pFunc->dispid;
@@ -2923,7 +2934,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsig
 	(*ppFuncDesc)->funcdesc.cParamsOpt = (pFunc->retnextopt & 0x7e) >> 1;
 	(*ppFuncDesc)->funcdesc.oVft = pFunc->vtblpos;
 
-	if(pFunc->magic == SLTG_FUNCTION_WITH_FLAGS_MAGIC)
+	if(pFunc->magic & SLTG_FUNCTION_FLAGS_PRESENT)
 	    (*ppFuncDesc)->funcdesc.wFuncFlags = pFunc->funcflags;
 
 	if(pFunc->retnextopt & 0x80)
@@ -3096,6 +3107,21 @@ static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
                              SLTG_TypeInfoTail *pTITail)
 {
   SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+}
+
+static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
+			       char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+			       SLTG_TypeInfoTail *pTITail)
+{
+  if (pTIHeader->href_table != 0xffffffff)
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+                                  pNameTable);
+
+  if (pTITail->vars_off != 0xffff)
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+
+  if (pTITail->funcs_off != 0xffff)
+    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
@@ -3369,6 +3395,11 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       case TKIND_DISPATCH:
 	SLTG_ProcessDispatch((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
                              pTIHeader, pTITail);
+	break;
+
+      case TKIND_MODULE:
+	SLTG_ProcessModule((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                           pTIHeader, pTITail);
 	break;
 
       default:

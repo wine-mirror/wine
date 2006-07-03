@@ -477,7 +477,7 @@ typedef struct {
 #define SLTG_ENUMITEM_MAGIC 0x120a
 
 typedef struct {
-	BYTE magic;	/* 0x4c or 0x6c */
+	BYTE magic;	/* 0x4c, 0xcb or 0x8b with optional SLTG_FUNCTION_FLAGS_PRESENT flag */
 	BYTE inv;	/* high nibble is INVOKE_KIND, low nibble = 2 */
 	WORD next;	/* byte offset from beginning of group to next fn */
 	WORD name;	/* Offset within name table to name */
@@ -491,7 +491,7 @@ typedef struct {
 			   middle 6 bits */
 	WORD rettype;	/* return type VT_?? or offset to ret type */
 	WORD vtblpos;	/* position in vtbl? */
-	WORD funcflags; /* present if magic == 0x6c */
+	WORD funcflags; /* present if magic & 0x20 */
 /* Param list starts, repeat next two as required */
 #if 0
 	WORD  name;	/* offset to 2nd letter of name */
@@ -499,9 +499,10 @@ typedef struct {
 #endif
 } SLTG_Function;
 
+#define SLTG_FUNCTION_FLAGS_PRESENT 0x20
 #define SLTG_FUNCTION_MAGIC 0x4c
-#define SLTG_FUNCTION_WITH_FLAGS_MAGIC 0x6c
 #define SLTG_DISPATCH_FUNCTION_MAGIC 0xcb
+#define SLTG_STATIC_FUNCTION_MAGIC 0x8b
 
 typedef struct {
 /*00*/	BYTE magic;		/* 0xdf */
