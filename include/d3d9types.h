@@ -133,7 +133,7 @@
 #define MAX_DEVICE_IDENTIFIER_STRING        512
 
 #define D3DFVF_RESERVED0           0x0001
-#define D3DFVF_POSITION_MASK       0x4000E
+#define D3DFVF_POSITION_MASK       0x000E
 #define D3DFVF_XYZ                 0x0002
 #define D3DFVF_XYZRHW              0x0004
 #define D3DFVF_XYZB1               0x0006
