@@ -2884,47 +2884,14 @@ static void SLTG_DoVars(char *pBlk, ITypeInfoImpl *pTI, unsigned short cVars, ch
   pTI->TypeAttr.cVars = cVars;
 }
 
-static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
-				char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
-				SLTG_TypeInfoTail *pTITail)
-{
-    char *pFirstItem, *pNextItem;
-
-    if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
-		    pNameTable);
-    }
-
-    pFirstItem = pNextItem = pBlk;
-
-    if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE);
-    }
-}
-
-
-static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
-				  char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
-				  SLTG_TypeInfoTail *pTITail)
+static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cFuncs, char *pNameTable)
 {
     SLTG_Function *pFunc;
-    char *pFirstItem, *pNextItem;
+    unsigned short i;
     TLBFuncDesc **ppFuncDesc = &pTI->funclist;
-    int num = 0;
 
-    if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
-		    pNameTable);
-    }
-
-    pFirstItem = pNextItem = pBlk;
-
-    if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE);
-    }
-
-    for(pFunc = (SLTG_Function*)pNextItem, num = 1; 1;
-	pFunc = (SLTG_Function*)(pFirstItem + pFunc->next), num++) {
+    for(pFunc = (SLTG_Function*)pFirstItem, i = 0; i < cFuncs;
+	pFunc = (SLTG_Function*)(pBlk + pFunc->next), i++) {
 
         int param;
 	WORD *pType, *pArg;
@@ -2951,10 +2918,9 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	if(pFunc->retnextopt & 0x80)
 	    pType = &pFunc->rettype;
 	else
-	    pType = (WORD*)(pFirstItem + pFunc->rettype);
+	    pType = (WORD*)(pBlk + pFunc->rettype);
 
-
-	SLTG_DoElem(pType, pFirstItem, &(*ppFuncDesc)->funcdesc.elemdescFunc);
+	SLTG_DoElem(pType, pBlk, &(*ppFuncDesc)->funcdesc.elemdescFunc);
 
 	(*ppFuncDesc)->funcdesc.lprgelemdescParam =
 	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -2963,7 +2929,7 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 		    (*ppFuncDesc)->funcdesc.cParams * sizeof(TLBParDesc));
 
-	pArg = (WORD*)(pFirstItem + pFunc->arg_off);
+	pArg = (WORD*)(pBlk + pFunc->arg_off);
 
 	for(param = 0; param < (*ppFuncDesc)->funcdesc.cParams; param++) {
 	    char *paramName = pNameTable + *pArg;
@@ -2990,14 +2956,14 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	    pArg++;
 
 	    if(HaveOffs) { /* the next word is an offset to type */
-	        pType = (WORD*)(pFirstItem + *pArg);
-		SLTG_DoElem(pType, pFirstItem,
+	        pType = (WORD*)(pBlk + *pArg);
+		SLTG_DoElem(pType, pBlk,
 			    &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
 		pArg++;
 	    } else {
 		if(paramName)
 		  paramName--;
-		pArg = SLTG_DoElem(pArg, pFirstItem,
+		pArg = SLTG_DoElem(pArg, pBlk,
 			   &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
 	    }
 
@@ -3015,7 +2981,48 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 	ppFuncDesc = &((*ppFuncDesc)->next);
 	if(pFunc->next == 0xffff) break;
     }
-    pTI->TypeAttr.cFuncs = num;
+    pTI->TypeAttr.cFuncs = cFuncs;
+}
+
+static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
+				char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+				SLTG_TypeInfoTail *pTITail)
+{
+    char *pFirstItem, *pNextItem;
+
+    if(pTIHeader->href_table != 0xffffffff) {
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+		    pNameTable);
+    }
+
+    pFirstItem = pNextItem = pBlk;
+
+    if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE);
+    }
+}
+
+
+static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
+				  char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+				  SLTG_TypeInfoTail *pTITail)
+{
+    char *pFirstItem, *pNextItem;
+
+    if(pTIHeader->href_table != 0xffffffff) {
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+		    pNameTable);
+    }
+
+    pFirstItem = pNextItem = pBlk;
+
+    if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE);
+    }
+
+    if (pTITail->funcs_off != 0xffff)
+        SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
+
     if (TRACE_ON(typelib))
         dump_TLBFuncDesc(pTI->funclist);
 }
@@ -3061,7 +3068,8 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
   if (pTITail->vars_off != 0xffff)
     SLTG_DoVars(pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
 
-  FIXME_(typelib)("process funcs\n");
+  if (pTITail->funcs_off != 0xffff)
+    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
 }
 
 static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
