@@ -571,17 +571,17 @@ typedef struct {
 
 typedef struct {
   BYTE magic; /* 0x0a */
-  BYTE typepos;
+  BYTE flags;
   WORD next;
   WORD name;
-  WORD byte_offs; /* pos in struct */
-  WORD type; /* if typepos == 0x02 this is the type, else offset to type */
+  WORD byte_offs; /* pos in struct, or offset to const type */
+  WORD type; /* if flags & 0x02 this is the type, else offset to type */
   DWORD memid;
   WORD helpcontext; /* ?? */
   WORD helpstring; /* ?? */
-} SLTG_RecordItem;
+} SLTG_Variable;
 
-#define SLTG_RECORD_MAGIC 0x0a
+#define SLTG_VAR_MAGIC 0x0a
 
 
 /* CARRAYs look like this
