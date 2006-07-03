@@ -501,6 +501,7 @@ typedef struct {
 
 #define SLTG_FUNCTION_MAGIC 0x4c
 #define SLTG_FUNCTION_WITH_FLAGS_MAGIC 0x6c
+#define SLTG_DISPATCH_FUNCTION_MAGIC 0xcb
 
 typedef struct {
 /*00*/	BYTE magic;		/* 0xdf */

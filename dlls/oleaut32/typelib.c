@@ -2897,7 +2897,8 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsig
 	WORD *pType, *pArg;
 
 	if(pFunc->magic != SLTG_FUNCTION_MAGIC &&
-	   pFunc->magic != SLTG_FUNCTION_WITH_FLAGS_MAGIC) {
+	   pFunc->magic != SLTG_FUNCTION_WITH_FLAGS_MAGIC &&
+           pFunc->magic != SLTG_DISPATCH_FUNCTION_MAGIC) {
 	    FIXME("func magic = %02x\n", pFunc->magic);
 	    return;
 	}
@@ -3070,6 +3071,14 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
 
   if (pTITail->funcs_off != 0xffff)
     SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
+
+  /* this is necessary to cope with MSFT typelibs that set cFuncs to the number
+   * of dispinterface functons including the IDispatch ones, so
+   * ITypeInfo::GetFuncDesc takes the real value for cFuncs from cbSizeVft */
+  pTI->TypeAttr.cbSizeVft = pTI->TypeAttr.cFuncs * sizeof(void *);
+
+  if (TRACE_ON(typelib))
+      dump_TLBFuncDesc(pTI->funclist);
 }
 
 static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
@@ -3317,6 +3326,10 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       pTITail = (SLTG_TypeInfoTail*)((char *)(pMemHeader + 1) + pMemHeader->cbExtra);
 
+      (*ppTypeInfoImpl)->TypeAttr.cbAlignment = pTITail->cbAlignment;
+      (*ppTypeInfoImpl)->TypeAttr.cbSizeInstance = pTITail->cbSizeInstance;
+      (*ppTypeInfoImpl)->TypeAttr.cbSizeVft = pTITail->cbSizeVft;
+
       switch(pTIHeader->typekind) {
       case TKIND_ENUM:
 	SLTG_ProcessEnum((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
@@ -3356,10 +3369,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       if(pTITail) { /* could get cFuncs, cVars and cImplTypes from here
 		       but we've already set those */
-	  (*ppTypeInfoImpl)->TypeAttr.cbAlignment = pTITail->cbAlignment;
-	  (*ppTypeInfoImpl)->TypeAttr.cbSizeInstance = pTITail->cbSizeInstance;
-	  (*ppTypeInfoImpl)->TypeAttr.cbSizeVft = pTITail->cbSizeVft;
-
 #define X(x) TRACE_(typelib)("tt "#x": %x\n",pTITail->res##x);
 	  X(06);
 	  X(16);
