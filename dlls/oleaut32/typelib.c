@@ -3379,12 +3379,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
 #define X(x) TRACE_(typelib)("tt "#x": %x\n",pTITail->res##x);
 	  X(06);
-	  X(08);
-	  X(0a);
-	  X(0c);
-	  X(0e);
-	  X(10);
-	  X(12);
 	  X(16);
 	  X(18);
 	  X(1a);

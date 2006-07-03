@@ -428,28 +428,28 @@ typedef struct {
 /*00*/  WORD cFuncs;
 /*02*/  WORD cVars;
 /*04*/  WORD cImplTypes;
-/*06*/  WORD res06;
-/*08*/  WORD res08;
-/*0a*/  WORD res0a;
-/*0c*/  WORD res0c;
-/*0e*/  WORD res0e;
-/*10*/  WORD res10;
-/*12*/  WORD res12;
+/*06*/  WORD res06; /* always 0000 */
+/*08*/  WORD funcs_off; /* offset to functions (starting from the member header) */
+/*0a*/  WORD vars_off; /* offset to vars (starting from the member header) */
+/*0c*/  WORD impls_off; /* offset to implemented types (starting from the member header) */
+/*0e*/  WORD funcs_bytes; /* bytes used by function data */
+/*10*/  WORD vars_bytes; /* bytes used by var data */
+/*12*/  WORD impls_bytes; /* bytes used by implemented type data */
 /*14*/  WORD tdescalias_vt; /* for TKIND_ALIAS */
-/*16*/  WORD res16;
-/*18*/  WORD res18;
-/*1a*/  WORD res1a;
+/*16*/  WORD res16; /* always ffff */
+/*18*/  WORD res18; /* always 0000 */
+/*1a*/  WORD res1a; /* always 0000 */
 /*1c*/  WORD res1c;
-/*1e*/  WORD res1e;
+/*1e*/  WORD res1e; /* always 0000 */
 /*20*/  WORD cbSizeInstance;
 /*22*/  WORD cbAlignment;
 /*24*/  WORD res24;
 /*26*/  WORD res26;
 /*28*/  WORD cbSizeVft;
-/*2a*/  WORD res2a;
-/*2c*/  WORD res2c;
-/*2e*/  WORD res2e;
-/*30*/  WORD res30;
+/*2a*/  WORD res2a; /* always ffff */
+/*2c*/  WORD res2c; /* always ffff */
+/*2e*/  WORD res2e; /* always ffff */
+/*30*/  WORD res30; /* always ffff */
 /*32*/  WORD res32;
 /*34*/  WORD res34;
 } SLTG_TypeInfoTail;
