@@ -2820,26 +2820,32 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
     return (char*)info;
 }
 
-static void SLTG_DoVars(char *pBlk, ITypeInfoImpl *pTI, unsigned short cVars, char *pNameTable)
+static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cVars, char *pNameTable)
 {
   TLBVarDesc **ppVarDesc = &pTI->varlist;
+  BSTR bstrPrevName = NULL;
   SLTG_Variable *pItem;
   unsigned short i;
   WORD *pType;
   char buf[300];
 
-  for(pItem = (SLTG_Variable *)pBlk, i = 0; i < cVars;
+  for(pItem = (SLTG_Variable *)pFirstItem, i = 0; i < cVars;
       pItem = (SLTG_Variable *)(pBlk + pItem->next), i++) {
 
       *ppVarDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			     sizeof(**ppVarDesc));
-      (*ppVarDesc)->Name = TLB_MultiByteToBSTR(pItem->name + pNameTable);
       (*ppVarDesc)->vardesc.memid = pItem->memid;
 
-      if(pItem->magic != SLTG_VAR_MAGIC) {
+      if (pItem->magic != SLTG_VAR_MAGIC &&
+          pItem->magic != SLTG_VAR_WITH_FLAGS_MAGIC) {
 	  FIXME_(typelib)("var magic = %02x\n", pItem->magic);
 	  return;
       }
+
+      if (pItem->name == 0xfffe)
+        (*ppVarDesc)->Name = SysAllocString(bstrPrevName);
+      else
+        (*ppVarDesc)->Name = TLB_MultiByteToBSTR(pItem->name + pNameTable);
 
       TRACE_(typelib)("byte_offs = 0x%x\n", pItem->byte_offs);
       TRACE_(typelib)("memid = 0x%lx\n", pItem->memid);
@@ -2863,6 +2869,9 @@ static void SLTG_DoVars(char *pBlk, ITypeInfoImpl *pTI, unsigned short cVars, ch
         (*ppVarDesc)->vardesc.varkind = VAR_PERINSTANCE;
       }
 
+      if (pItem->magic == SLTG_VAR_WITH_FLAGS_MAGIC)
+        (*ppVarDesc)->vardesc.wVarFlags = pItem->varflags;
+
       if (pItem->flags & 0x80)
         (*ppVarDesc)->vardesc.wVarFlags |= VARFLAG_FREADONLY;
 
@@ -2879,6 +2888,7 @@ static void SLTG_DoVars(char *pBlk, ITypeInfoImpl *pTI, unsigned short cVars, ch
 
       dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
 
+      bstrPrevName = (*ppVarDesc)->Name;
       ppVarDesc = &((*ppVarDesc)->next);
   }
   pTI->TypeAttr.cVars = cVars;
@@ -3032,7 +3042,7 @@ static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
 			       char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			       SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_DoVars(pBlk, pTI, pTITail->cVars, pNameTable);
+  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
 }
 
 static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
@@ -3067,7 +3077,7 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
                                   pNameTable);
 
   if (pTITail->vars_off != 0xffff)
-    SLTG_DoVars(pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
 
   if (pTITail->funcs_off != 0xffff)
     SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
@@ -3085,7 +3095,7 @@ static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
 			     char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
                              SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_DoVars(pBlk, pTI, pTITail->cVars, pNameTable);
+  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more

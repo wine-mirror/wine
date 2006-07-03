@@ -580,9 +580,11 @@ typedef struct {
   DWORD memid;
   WORD helpcontext; /* ?? */
   WORD helpstring; /* ?? */
+  WORD varflags; /* only present if magic & 0x02 */
 } SLTG_Variable;
 
 #define SLTG_VAR_MAGIC 0x0a
+#define SLTG_VAR_WITH_FLAGS_MAGIC 0x2a
 
 
 /* CARRAYs look like this
