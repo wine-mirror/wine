@@ -610,14 +610,14 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
     
     if (service_accepts_control(service, dwControl))
     {
-        if (service->extended && service->handler.handler)
-        {
-            service->handler.handler(dwControl);
-            ret = ERROR_SUCCESS;
-        }
-        else if (service->handler.handler_ex)
+        if (service->extended && service->handler.handler_ex)
         {
             service->handler.handler_ex(dwControl, 0, NULL, service->context);
+            ret = ERROR_SUCCESS;
+        }
+        else if (service->handler.handler)
+        {
+            service->handler.handler(dwControl);
             ret = ERROR_SUCCESS;
         }
     }
