@@ -713,6 +713,28 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ProcessVertices(LPDIRECT3DDEVICE9 i
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9 iface, DWORD FVF) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
+
+    if (0 != FVF) {
+         HRESULT hr;
+         D3DVERTEXELEMENT9* elements = NULL;
+         IDirect3DVertexDeclaration9* pDecl = NULL;
+
+         hr = vdecl_convert_fvf(FVF, &elements);
+         if (hr != S_OK) goto exit;
+
+         hr = IDirect3DDevice9Impl_CreateVertexDeclaration(iface, elements, &pDecl);
+         if (hr != S_OK) goto exit;
+             
+         hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, pDecl);
+         if (hr != S_OK) goto exit;
+         pDecl = NULL;
+
+         exit:
+         HeapFree(GetProcessHeap(), 0, elements);
+         if (pDecl) IUnknown_Release(pDecl);
+         if (hr != S_OK) return hr;
+    }
+
     return IWineD3DDevice_SetFVF(This->WineD3DDevice, FVF);
 }
 

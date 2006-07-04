@@ -40,6 +40,13 @@
 #include "wine/wined3d_interface.h"
 
 /* ===========================================================================
+   Internal use
+   =========================================================================== */
+extern HRESULT vdecl_convert_fvf(
+    DWORD FVF,
+    D3DVERTEXELEMENT9** ppVertexElements);
+
+/* ===========================================================================
     Macros
    =========================================================================== */
 /* Not nice, but it lets wined3d support different versions of directx */

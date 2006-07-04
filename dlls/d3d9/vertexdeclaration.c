@@ -24,6 +24,162 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
+typedef struct _D3DDECLTYPE_INFO {
+    D3DDECLTYPE d3dType;
+    int         size;
+    int         typesize;
+} D3DDECLTYPE_INFO;
+
+D3DDECLTYPE_INFO static const d3d_dtype_lookup[D3DDECLTYPE_UNUSED] = {
+   {D3DDECLTYPE_FLOAT1,    1, sizeof(float)},
+   {D3DDECLTYPE_FLOAT2,    2, sizeof(float)},
+   {D3DDECLTYPE_FLOAT3,    3, sizeof(float)},
+   {D3DDECLTYPE_FLOAT4,    4, sizeof(float)},
+   {D3DDECLTYPE_D3DCOLOR,  4, sizeof(BYTE)},
+   {D3DDECLTYPE_UBYTE4,    4, sizeof(BYTE)},
+   {D3DDECLTYPE_SHORT2,    2, sizeof(short int)},
+   {D3DDECLTYPE_SHORT4,    4, sizeof(short int)},
+   {D3DDECLTYPE_UBYTE4N,   4, sizeof(BYTE)},
+   {D3DDECLTYPE_SHORT2N,   2, sizeof(short int)},
+   {D3DDECLTYPE_SHORT4N,   4, sizeof(short int)},
+   {D3DDECLTYPE_USHORT2N,  2, sizeof(short int)},
+   {D3DDECLTYPE_USHORT4N,  4, sizeof(short int)},
+   {D3DDECLTYPE_UDEC3,     3, sizeof(short int)},
+   {D3DDECLTYPE_DEC3N,     3, sizeof(short int)},
+   {D3DDECLTYPE_FLOAT16_2, 2, sizeof(short int)},
+   {D3DDECLTYPE_FLOAT16_4, 4, sizeof(short int)}};
+
+#define D3D_DECL_SIZE(type)          d3d_dtype_lookup[type].size
+#define D3D_DECL_TYPESIZE(type)      d3d_dtype_lookup[type].typesize
+
+HRESULT vdecl_convert_fvf(
+    DWORD fvf,
+    D3DVERTEXELEMENT9** ppVertexElements) {
+
+    unsigned int idx, idx2;
+    unsigned int offset;
+    BOOL has_pos = (fvf & D3DFVF_POSITION_MASK) != 0;
+    BOOL has_blend = (fvf & D3DFVF_XYZB5) > D3DFVF_XYZRHW;
+    BOOL has_blend_idx = has_blend &&
+       (((fvf & D3DFVF_XYZB5) == D3DFVF_XYZB5) ||
+        (fvf & D3DFVF_LASTBETA_D3DCOLOR) ||
+        (fvf & D3DFVF_LASTBETA_UBYTE4));
+    BOOL has_normal = (fvf & D3DFVF_NORMAL) != 0;
+    BOOL has_psize = (fvf & D3DFVF_PSIZE) != 0;
+    BOOL has_diffuse = (fvf & D3DFVF_DIFFUSE) != 0;
+    BOOL has_specular = (fvf & D3DFVF_SPECULAR) !=0;
+
+    DWORD num_textures = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+    DWORD texcoords = (fvf & 0x00FF0000) >> 16;
+
+    D3DVERTEXELEMENT9 end_element = D3DDECL_END();
+    D3DVERTEXELEMENT9 *elements = NULL;
+
+    unsigned int size;
+    DWORD num_blends = 1 + (((fvf & D3DFVF_XYZB5) - D3DFVF_XYZB1) >> 1);
+    if (has_blend_idx) num_blends--;
+
+    /* Compute declaration size */
+    size = has_pos + (has_blend && num_blends > 0) + has_blend_idx + has_normal +
+           has_psize + has_diffuse + has_specular + num_textures + 1;
+
+    /* convert the declaration */
+    elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(D3DVERTEXELEMENT9));
+    if (!elements) 
+        return D3DERR_OUTOFVIDEOMEMORY;
+
+    memcpy(&elements[size-1], &end_element, sizeof(D3DVERTEXELEMENT9));
+    idx = 0;
+    if (has_pos) {
+        if (!has_blend && (fvf & D3DFVF_XYZRHW)) {
+            elements[idx].Type = D3DDECLTYPE_FLOAT4;
+            elements[idx].Usage = D3DDECLUSAGE_POSITIONT;
+        }
+        else {
+            elements[idx].Type = D3DDECLTYPE_FLOAT3;
+            elements[idx].Usage = D3DDECLUSAGE_POSITION;
+        }
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_blend && (num_blends > 0)) {
+        if (((fvf & D3DFVF_XYZB5) == D3DFVF_XYZB2) && (fvf & D3DFVF_LASTBETA_D3DCOLOR))
+            elements[idx].Type = D3DDECLTYPE_D3DCOLOR;
+        else
+            elements[idx].Type = D3DDECLTYPE_FLOAT1 + num_blends - 1;
+        elements[idx].Usage = D3DDECLUSAGE_BLENDWEIGHT;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_blend_idx) {
+        if (fvf & D3DFVF_LASTBETA_UBYTE4 ||
+            (((fvf & D3DFVF_XYZB5) == D3DFVF_XYZB2) && (fvf & D3DFVF_LASTBETA_D3DCOLOR)))
+            elements[idx].Type = D3DDECLTYPE_UBYTE4;
+        else if (fvf & D3DFVF_LASTBETA_D3DCOLOR)
+            elements[idx].Type = D3DDECLTYPE_D3DCOLOR;
+        else
+            elements[idx].Type = D3DDECLTYPE_FLOAT1;
+        elements[idx].Usage = D3DDECLUSAGE_BLENDINDICES;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_normal) {
+        elements[idx].Type = D3DDECLTYPE_FLOAT3;
+        elements[idx].Usage = D3DDECLUSAGE_NORMAL;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_psize) {
+        elements[idx].Type = D3DDECLTYPE_FLOAT1;
+        elements[idx].Usage = D3DDECLUSAGE_PSIZE;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_diffuse) {
+        elements[idx].Type = D3DDECLTYPE_D3DCOLOR;
+        elements[idx].Usage = D3DDECLUSAGE_COLOR;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_specular) {
+        elements[idx].Type = D3DDECLTYPE_D3DCOLOR;
+        elements[idx].Usage = D3DDECLUSAGE_COLOR;
+        elements[idx].UsageIndex = 1;
+        idx++;
+    }
+    for (idx2 = 0; idx2 < num_textures; idx2++) {
+        unsigned int numcoords = (texcoords >> (idx2*2)) & 0x03;
+        switch (numcoords) {
+            case D3DFVF_TEXTUREFORMAT1:
+                elements[idx].Type = D3DDECLTYPE_FLOAT1;
+                break;
+            case D3DFVF_TEXTUREFORMAT2:
+                elements[idx].Type = D3DDECLTYPE_FLOAT2;
+                break;
+            case D3DFVF_TEXTUREFORMAT3:
+                elements[idx].Type = D3DDECLTYPE_FLOAT3;
+                break;
+            case D3DFVF_TEXTUREFORMAT4:
+                elements[idx].Type = D3DDECLTYPE_FLOAT4;
+                break;
+        }
+        elements[idx].Usage = D3DDECLUSAGE_TEXCOORD;
+        elements[idx].UsageIndex = idx2;
+        idx++;
+    }
+
+    /* Now compute offsets, and initialize the rest of the fields */
+    for (idx = 0, offset = 0; idx < size-1; idx++) {
+        elements[idx].Stream = 0;
+        elements[idx].Method = D3DDECLMETHOD_DEFAULT;
+        elements[idx].Offset = offset;
+        offset += D3D_DECL_SIZE(elements[idx].Type) * D3D_DECL_TYPESIZE(elements[idx].Type);
+    }
+
+    *ppVertexElements = elements;
+    return D3D_OK;
+}
+
 /* IDirect3DVertexDeclaration9 IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDECLARATION9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;

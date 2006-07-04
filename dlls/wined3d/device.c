@@ -2355,15 +2355,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf
     This->updateStateBlock->set.fvf          = TRUE;
 
     TRACE("(%p) : FVF Shader FVF set to %lx\n", This, fvf);
-
-    if (0 != fvf) {
-        /* clear down the vertex declaration
-         NOTE: Axis and Allies doesn't work properly otherwise
-         (may be a stateblock problem though!)
-        */
-      hr = IWineD3DDevice_SetVertexDeclaration(iface, NULL);
-    }
-
     return hr;
 }
 
@@ -4639,11 +4630,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     }
     if (NULL != oldShader) {
         IWineD3DVertexShader_Release(oldShader);
-    }
-
-    if (pShader != NULL && ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration != NULL) {
-        TRACE("(%p) : setting vertexDeclaration(%p)\n", This, ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration);
-        IWineD3DDevice_SetVertexDeclaration(iface, ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration);
     }
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
