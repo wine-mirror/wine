@@ -1577,7 +1577,7 @@ lend:
 }
 
 /***********************************************************************
- *           FTP_FtpRenameFileA  (Internal)
+ *           FTP_FtpRenameFileW  (Internal)
  *
  * Rename a file on the ftp server
  *
@@ -1806,6 +1806,7 @@ lerror:
     {
         HeapFree(GetProcessHeap(), 0, lpwfs);
         WININET_FreeHandle( handle );
+        handle = NULL;
         lpwfs = NULL;
     }
 
