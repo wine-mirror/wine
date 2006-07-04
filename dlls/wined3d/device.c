@@ -2424,7 +2424,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         return WINED3D_OK;
     }
 
-    /* Not recording... */
+    /* Same stream object: no action */
+    if (oldSrc == pStreamData)
+        return WINED3D_OK;
+
     /* Need to do a getParent and pass the reffs up */
     /* MSDN says ..... When an application no longer holds a references to this interface, the interface will automatically be freed.
     which suggests that we shouldn't be ref counting? and do need a _release on the stream source to reset the stream source
