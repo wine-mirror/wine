@@ -798,21 +798,11 @@ static void pshader_set_limits(
     or GLSL and send it to the card */
 inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
     IWineD3DPixelShader *iface,
+    shader_reg_maps* reg_maps,
     CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     SHADER_BUFFER buffer;
-
-    /* First pass: figure out which registers are used, what the semantics are, etc.. */
-    shader_reg_maps reg_maps;
-    DWORD semantics_in[WINED3DSHADERDECLUSAGE_MAX_USAGE];
-
-    memset(&reg_maps, 0, sizeof(shader_reg_maps));
-    memset(semantics_in, 0, WINED3DSHADERDECLUSAGE_MAX_USAGE * sizeof(DWORD));
-    reg_maps.semantics_in = semantics_in;
-    reg_maps.semantics_out = NULL;
-    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps, pFunction);
-    /* FIXME: validate against OpenGL */
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -835,14 +825,14 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
         /* Base Declarations */
-        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
 
         /* Pack 3.0 inputs */
         if (This->baseShader.hex_version >= D3DPS_VERSION(3,0))
-            pshader_glsl_input_pack(&buffer, semantics_in);
+            pshader_glsl_input_pack(&buffer, This->semantics_in);
 
         /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
@@ -871,10 +861,10 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
 
         /* Base Declarations */
-        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
 
         /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
             shader_addline(&buffer, "MOV result.color, R0;\n");
@@ -908,15 +898,23 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+    shader_reg_maps reg_maps;
 
+    /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     pshader_set_limits(This);
+
+    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+    memset(&reg_maps, 0, sizeof(shader_reg_maps)); 
+    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
+        This->semantics_in, NULL, pFunction);
+    /* FIXME: validate reg_maps against OpenGL */
 
     /* Generate HW shader in needed */
     This->baseShader.shader_mode = wined3d_settings.ps_selected_mode;
     if (NULL != pFunction && This->baseShader.shader_mode != SHADER_SW) {
         TRACE("(%p) : Generating hardware program\n", This);
-        IWineD3DPixelShaderImpl_GenerateShader(iface, pFunction);
+        IWineD3DPixelShaderImpl_GenerateShader(iface, &reg_maps, pFunction);
     }
 
     TRACE("(%p) : Copying the function\n", This);

@@ -501,18 +501,18 @@ static void shader_glsl_get_register_name(
                     strcpy(tmpStr, "gl_SecondaryColor");
             }
         } else {
-            IWineD3DVertexShaderImpl *vshader = (IWineD3DVertexShaderImpl*) arg->shader;
+            IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl*) arg->shader;
 
-            if (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
-                reg == (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
+            if (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
+                reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
                 *is_color = TRUE;
 
-            if (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] &&
-                reg == (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
+            if (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] &&
+                reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
                 *is_color = TRUE;
 
             /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
-             * the reg value from the vertex declaration. However, arrayUsageMap is not initialized
+             * the reg value from the vertex declaration. However, semantics are not initialized
               * in that case - how can we know if an input contains color data or not? */
 
             sprintf(tmpStr, "attrib%lu", reg);

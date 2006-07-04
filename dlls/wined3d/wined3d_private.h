@@ -1297,11 +1297,6 @@ typedef struct shader_reg_maps {
     char constantsI[MAX_CONST_I];           /* pixel & vertex >= 2.0 */
     char constantsB[MAX_CONST_B];           /* pixel & vertex >= 2.0 */
     
-    /* Semantics maps (semantic -> reg_token)
-     * Use 0 as default (bit 31 is always 1 on a valid token) */
-    DWORD* semantics_in;                    /* vertex, pixel */
-    DWORD* semantics_out;                   /* vertex */
-
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[MAX_SAMPLERS];
@@ -1480,6 +1475,8 @@ typedef struct IWineD3DBaseShaderImpl {
 extern void shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
+    DWORD* semantics_in,
+    DWORD* semantics_out,
     CONST DWORD* pToken);
 
 extern void shader_generate_glsl_declarations(
@@ -1561,9 +1558,10 @@ typedef struct IWineD3DVertexShaderImpl {
 
     DWORD usage;
 
-    /* vertex declaration array mapping */
-    DWORD arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];
- 
+    /* Vertex shader input and output semantics */
+    DWORD semantics_in [WINED3DSHADERDECLUSAGE_MAX_USAGE];
+    DWORD semantics_out [WINED3DSHADERDECLUSAGE_MAX_USAGE];
+
     /* run time datas...  */
     VSHADERDATA                *data;
     IWineD3DVertexDeclaration  *vertexDeclaration;
@@ -1590,6 +1588,9 @@ typedef struct IWineD3DPixelShaderImpl {
     /* IWineD3DPixelShaderImpl */
     IUnknown                   *parent;
     IWineD3DDeviceImpl         *wineD3DDevice;
+
+    /* Pixel shader input semantics */
+    DWORD semantics_in [WINED3DSHADERDECLUSAGE_MAX_USAGE];
 
     /* run time data */
     PSHADERDATA                *data;

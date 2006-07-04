@@ -295,6 +295,8 @@ static void shader_parse_decl_usage(
 void shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
+    DWORD* semantics_in,
+    DWORD* semantics_out,
     CONST DWORD* pToken) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
@@ -348,12 +350,12 @@ void shader_get_registers_used(
                 else
                     reg_maps->packed_input[regnum] = 1;
 
-                shader_parse_decl_usage(reg_maps->semantics_in, usage, param);
+                shader_parse_decl_usage(semantics_in, usage, param);
 
             /* Vshader: mark 3.0 output registers used, save token */
             } else if (D3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
-                shader_parse_decl_usage(reg_maps->semantics_out, usage, param);
+                shader_parse_decl_usage(semantics_out, usage, param);
 
             /* Save sampler usage token */
             } else if (D3DSPR_SAMPLER == regtype)

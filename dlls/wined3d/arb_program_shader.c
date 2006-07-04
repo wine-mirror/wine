@@ -317,6 +317,8 @@ static void pshader_get_register_name(const DWORD param, char* regstr, CHAR *con
 /* TODO: merge with pixel shader */
 static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param, BOOL is_input, char *hwLine) {
 
+  IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) arg->shader;
+
   /* oPos, oFog and oPts in D3D */
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
 
@@ -338,16 +340,16 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     break;
   case D3DSPR_INPUT:
 
-    if (arg->reg_maps->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
-        reg == (arg->reg_maps->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
+    if (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
+        reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
         is_color = TRUE;
 
-    if (arg->reg_maps->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] &&
-        reg == (arg->reg_maps->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
+    if (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] &&
+        reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
         is_color = TRUE;
 
     /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
-     * the reg value from the vertex declaration. However, usage map is not initialized
+     * the reg value from the vertex declaration. However, semantics are not initialized
      * in that case - how can we know if an input contains color data or not? */
 
     sprintf(tmpReg, "vertex.attrib[%lu]", reg);

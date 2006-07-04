@@ -1951,7 +1951,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
             /* load the array data using ordinal mapping */
             loadNumberedArrays(iface, dataLocations, 
-                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->arrayUsageMap);
+                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->semantics_in);
 
             useDrawStridedSlow = FALSE;
         } else { /* If this happens we must drawStridedSlow later on */ 

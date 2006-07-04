@@ -611,23 +611,13 @@ static void vshader_set_limits(
 
 /** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
     or GLSL and send it to the card */
-inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
+static VOID IWineD3DVertexShaderImpl_GenerateShader(
     IWineD3DVertexShader *iface,
+    shader_reg_maps* reg_maps,
     CONST DWORD *pFunction) {
 
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     SHADER_BUFFER buffer;
-
-    /* First pass: figure out which registers are used, what the semantics are, etc.. */
-    shader_reg_maps reg_maps;
-    DWORD semantics_out[WINED3DSHADERDECLUSAGE_MAX_USAGE];
-
-    memset(&reg_maps, 0, sizeof(shader_reg_maps));
-    memset(semantics_out, 0, WINED3DSHADERDECLUSAGE_MAX_USAGE * sizeof(DWORD));
-    reg_maps.semantics_in = This->arrayUsageMap;
-    reg_maps.semantics_out = semantics_out;
-    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps, pFunction);
-    /* FIXME: validate against OpenGL */
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -650,14 +640,14 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
         /* Base Declarations */
-        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
 
         /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Unpack 3.0 outputs */
         if (This->baseShader.hex_version >= D3DVS_VERSION(3,0))
-            vshader_glsl_output_unpack(&buffer, semantics_out);
+            vshader_glsl_output_unpack(&buffer, This->semantics_out);
 
         shader_addline(&buffer, "}\n\0");
 
@@ -680,10 +670,10 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
                 min(95, This->baseShader.limits.constant_float);
 
         /* Base Declarations */
-        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
 
         /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         shader_addline(&buffer, "END\n\0"); 
 
@@ -1050,14 +1040,21 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
 static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    shader_reg_maps reg_maps;
 
+    /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     vshader_set_limits(This);
+
+    /* Second pass: figure out registers used, semantics, etc.. */
+    memset(&reg_maps, 0, sizeof(shader_reg_maps));
+    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
+       This->semantics_in, This->semantics_out, pFunction);
 
     /* Generate HW shader in needed */
     This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;
     if (NULL != pFunction && This->baseShader.shader_mode != SHADER_SW) 
-        IWineD3DVertexShaderImpl_GenerateShader(iface, pFunction);
+        IWineD3DVertexShaderImpl_GenerateShader(iface, &reg_maps, pFunction);
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
