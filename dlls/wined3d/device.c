@@ -287,7 +287,7 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
         This->stateBlock->shaderPrgId = 0;
         return;
     }
-    
+
     ptr = list_head( &This->glsl_shader_progs );
     while (ptr) {
         /* At least one program exists - see if it matches our ps/vs combination */
@@ -302,17 +302,23 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
         /* This isn't the entry we need - try the next one */
         ptr = list_next( &This->glsl_shader_progs, ptr );
     }
-    
+
     /* If we get to this point, then no matching program exists, so we create one */
     programId = GL_EXTCALL(glCreateProgramObjectARB());
     TRACE_(d3d_shader)("Created new GLSL shader program %u\n", programId);
     This->stateBlock->shaderPrgId = programId;
-    
-    if (NULL != vshader) {
+
+    /* Allocate a new link for the list of programs */
+    newLink = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
+    newLink->programId    = programId;
+   
+    /* Attach GLSL vshader */ 
+    if (NULL != vshader && wined3d_settings.vs_selected_mode == SHADER_GLSL) {
         int i;
         int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
         char tmp_name[10];
-       
+    
+        TRACE("Attaching vertex shader to GLSL program\n");    
         attach_glsl_shader(iface, (IWineD3DBaseShader*)vshader);
         
         /* Bind vertex attributes to a corresponding index number to match
@@ -329,28 +335,21 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
              GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
         }
         checkGLcall("glBindAttribLocationARB");
+        newLink->vertexShader = vshader;
     }
     
-    if (NULL != pshader) {
+    /* Attach GLSL pshader */
+    if (NULL != pshader && wined3d_settings.ps_selected_mode == SHADER_GLSL) {
+        TRACE("Attaching pixel shader to GLSL program\n");
         attach_glsl_shader(iface, (IWineD3DBaseShader*)pshader);
-    }
-    
+        newLink->pixelShader = pshader;
+    }    
+
     /* Link the program */
     TRACE_(d3d_shader)("Linking GLSL shader program %u\n", programId);
     GL_EXTCALL(glLinkProgramARB(programId));
     print_glsl_info_log(&GLINFO_LOCATION, programId);
-    
-    /* Now, we add a list item to associate this program with the vertex and
-     * pixel shaders that it is attached to.
-     * 
-     * These list items will be deleted when the device is released.
-     */
-    newLink = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
-    newLink->programId    = programId;
-    newLink->pixelShader  = pshader;
-    newLink->vertexShader = vshader;
     list_add_head( &This->glsl_shader_progs, &newLink->entry);
- 
     return;
 }
 
