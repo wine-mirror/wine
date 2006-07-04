@@ -1860,59 +1860,29 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
 #endif
 
-void inline  drawPrimitiveDrawStrided(IWineD3DDevice *iface, BOOL useVertexShaderFunction, BOOL usePixelShaderFunction, int useHW, WineDirect3DVertexStridedData *dataLocations,
-UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idxData, short idxSize, int minIndex, long StartIdx, BOOL fixup) {
+static inline void drawPrimitiveDrawStrided(
+    IWineD3DDevice *iface,
+    BOOL useVertexShaderFunction,
+    BOOL usePixelShaderFunction,
+    WineDirect3DVertexStridedData *dataLocations,
+    UINT numberOfvertices,
+    UINT numberOfIndicies,
+    GLenum glPrimType,
+    const void *idxData,
+    short idxSize,
+    int minIndex,
+    long StartIdx,
+    BOOL fixup) {
+
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     BOOL useDrawStridedSlow;
 
-    /* Now draw the graphics to the screen */
-    if  (FALSE /* disable software vs for now */ && useVertexShaderFunction && !useHW) {
-        FIXME("drawing using software vertex shaders (line %d)\n", __LINE__);
-        /* Ideally, we should have software FV and hardware VS, possibly
-           depending on the device type? */
-#if 0 /* TODO: vertex and pixel shaders */
-        drawStridedSoftwareVS(iface, dataLocations, PrimitiveType, NumPrimitives,
-                    idxData, idxSize, minIndex, StartIdx);
-#endif
-
-    } else {
-
-        /* TODO: Work out if fixup are required at all (this can be a flag against the vertex declaration) */
-        int startStride = idxData == NULL ? 0 : idxData == (void *) -1 ? 0 :(idxSize == 2 ? *(((const short *) idxData) + StartIdx) : *((const int *) idxData) + StartIdx);
-        int endStride = startStride;
-        TRACE("begin Start stride %d, end stride %d, number of indices%d, number of vertices%d\n", startStride, endStride, numberOfIndicies, numberOfvertices);
-
-#if 0 /* TODO: Vertex fixups (diffuse and specular) */
-        if (idxData != NULL) { /* index data isn't linear, so lookup the real start and end strides */
-            int t;
-            if (idxSize == 2) {
-                unsigned short *index = (unsigned short *)idxData;
-                index += StartIdx;
-                for (t = 0 ; t < numberOfIndicies; t++) {
-                    if (startStride >  *index)
-                        startStride = *index;
-                    if (endStride < *index)
-                        endStride = *index;
-                    index++;
-                }
-            } else {  /* idxSize == 4 */
-                unsigned int *index = (unsigned int *)idxData;
-                index += StartIdx;
-                for (t = 0 ; t < numberOfIndicies; t++) {
-                    if (startStride > *index)
-                        startStride = *index;
-                    if (endStride < *index)
-                        endStride = *index;
-                    index++;
-                }
-            }
-        } else {
-            endStride += numberOfvertices -1;
-        }
-#endif
-        TRACE("end Start stride %d, end stride %d, number of indices%d, number of vertices%d\n", startStride, endStride, numberOfIndicies, numberOfvertices);
-        /* pre-transform verticex */
-        /* TODO: Caching, VBO's etc.. */
+    int startStride = idxData == NULL ? 0 : 
+                      idxData == (void *) -1 ? 0 :
+                      (idxSize == 2 ? *(((const short *) idxData) + StartIdx) : *((const int *) idxData) + StartIdx);
+    int endStride = startStride;
+    TRACE("begin Start stride %d, end stride %d, number of indices%d, number of vertices%d\n",
+        startStride, endStride, numberOfIndicies, numberOfvertices);
 
 /* Generate some fixme's if unsupported functionality is being used */
 #define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
@@ -1931,132 +1901,114 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
     }
 #undef BUFFER_OR_DATA
 
-#if 0/* TODO: Vertex fixups (diffuse and specular) */
-        fixupVertices(This, dataLocations, &transformedDataLocations, 1 + endStride - startStride, startStride);
-#endif
+    /* Fixed pipeline, no fixups required - load arrays */
+    if (!useVertexShaderFunction &&
+       ((dataLocations->u.s.pSize.lpData == NULL &&
+         dataLocations->u.s.diffuse.lpData == NULL &&
+         dataLocations->u.s.specular.lpData == NULL) ||
+         fixup) ) {
 
-        /* If the only vertex data used by the shader is supported by OpenGL then*/
-        if (!useVertexShaderFunction &&
-           ((dataLocations->u.s.pSize.lpData == NULL &&
-             dataLocations->u.s.diffuse.lpData == NULL &&
-             dataLocations->u.s.specular.lpData == NULL) ||
-             fixup) ) {
+        /* Load the vertex data using named arrays */
+        TRACE("(%p) Loading vertex data\n", This);
+        loadVertexData(iface, dataLocations);
+        useDrawStridedSlow = FALSE;
 
-            /* Load the vertex data using named arrays */
-            TRACE("(%p) Loading vertex data\n", This);
-            loadVertexData(iface, dataLocations);
-            useDrawStridedSlow = FALSE;
+    /* Shader pipeline - load attribute arrays */
+    } else if(useVertexShaderFunction) {
 
-        } else if(useVertexShaderFunction) {
+        loadNumberedArrays(iface, dataLocations, 
+            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->semantics_in);
+        useDrawStridedSlow = FALSE;
 
-            /* load the array data using ordinal mapping */
-            loadNumberedArrays(iface, dataLocations, 
-                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->semantics_in);
+    /* Draw vertex by vertex */
+    } else { 
+        TRACE("Not loading vertex data\n");
+        useDrawStridedSlow = TRUE;
+    }
 
-            useDrawStridedSlow = FALSE;
-        } else { /* If this happens we must drawStridedSlow later on */ 
-		TRACE("Not loading vertex data\n");
-		useDrawStridedSlow = TRUE;
-        }
+    /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
+    if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
+        wined3d_settings.ps_selected_mode == SHADER_GLSL) {
 
-        TRACE("Loaded arrays\n");
-
-        /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
-        if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
-            wined3d_settings.ps_selected_mode == SHADER_GLSL) {
-
-            set_glsl_shader_program(iface);
-            /* Start using this program ID (if it's 0, there is no shader program to use, so 
-             * glUseProgramObjectARB(0) will disable the use of any shaders) */
-            if (This->stateBlock->shaderPrgId) {
-                TRACE_(d3d_shader)("Using GLSL program %u\n", This->stateBlock->shaderPrgId);
-            }
-            GL_EXTCALL(glUseProgramObjectARB(This->stateBlock->shaderPrgId));
-            checkGLcall("glUseProgramObjectARB");
-        }
+        set_glsl_shader_program(iface);
+        /* Start using this program ID (if it's 0, there is no shader program to use, so 
+         * glUseProgramObjectARB(0) will disable the use of any shaders) */
+        if (This->stateBlock->shaderPrgId) 
+            TRACE_(d3d_shader)("Using GLSL program %u\n", This->stateBlock->shaderPrgId);
+        GL_EXTCALL(glUseProgramObjectARB(This->stateBlock->shaderPrgId));
+        checkGLcall("glUseProgramObjectARB");
+    }
         
-        if (useVertexShaderFunction) {
+    if (useVertexShaderFunction) {
 
-            TRACE("Using vertex shader\n");
+        TRACE("Using vertex shader\n");
 
-            if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
-                /* Bind the vertex program */
-                GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
-                    ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
-                checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
+        if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
+            /* Bind the vertex program */
+            GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
+                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
+            checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
 
-                /* Enable OpenGL vertex programs */
-                glEnable(GL_VERTEX_PROGRAM_ARB);
-                checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-                TRACE_(d3d_shader)("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n",
-                    This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
-            }
-        }
-
-        if (usePixelShaderFunction) {
-
-            TRACE("Using pixel shader\n");
-
-            if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
-                 /* Bind the fragment program */
-                 GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-                     ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
-                 checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
-
-                 /* Enable OpenGL fragment programs */
-                 glEnable(GL_FRAGMENT_PROGRAM_ARB);
-                 checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-                 TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
-                     This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
-            }
-        }
-       
-        /* Load any global constants/uniforms that may have been set by the application */
-        if (wined3d_settings.vs_selected_mode == SHADER_GLSL || wined3d_settings.ps_selected_mode == SHADER_GLSL)
-          shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
-        else if (wined3d_settings.vs_selected_mode== SHADER_ARB || wined3d_settings.ps_selected_mode == SHADER_ARB)
-          shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
-        
-
-        /* DirectX colours are in a different format to opengl colours
-         * so if diffuse or specular are used then we need to use drawStridedSlow
-         * to correct the colours */
-        if (useDrawStridedSlow) {
-            /* TODO: replace drawStridedSlow with vertex fixups */
-
-            drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType,
-                            idxData, idxSize, minIndex,  StartIdx);
-
-        } else {
-            /* OpenGL can manage everything in hardware so we can use drawStridedFast */
-            drawStridedFast(iface, numberOfIndicies, glPrimType,
-                idxData, idxSize, minIndex, StartIdx);
-        }
-
-        /* Cleanup vertex program */
-        if (useVertexShaderFunction) {
-            /* disable any attribs (this is the same for both GLSL and ARB modes) */
-            GLint maxAttribs;
-            int i;
-            /* Leave all the attribs disabled */
-            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
-            /* MESA does not support it right not */
-            if (glGetError() != GL_NO_ERROR)
-                maxAttribs = 16;
-            for (i = 0; i < maxAttribs; ++i) {
-                GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-                checkGLcall("glDisableVertexAttribArrayARB(reg);");
-            }
-
-            if (wined3d_settings.vs_selected_mode == SHADER_ARB)
-                glDisable(GL_VERTEX_PROGRAM_ARB);
-        }
-
-        /* Cleanup fragment program */
-        if (usePixelShaderFunction && wined3d_settings.ps_selected_mode == SHADER_ARB) {
-            glDisable(GL_FRAGMENT_PROGRAM_ARB);
+            /* Enable OpenGL vertex programs */
+            glEnable(GL_VERTEX_PROGRAM_ARB);
+            checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
+            TRACE_(d3d_shader)("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n",
+                This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
         }
     }
+
+    if (usePixelShaderFunction) {
+
+        TRACE("Using pixel shader\n");
+
+        if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
+             /* Bind the fragment program */
+             GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
+                 ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
+             checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
+
+             /* Enable OpenGL fragment programs */
+             glEnable(GL_FRAGMENT_PROGRAM_ARB);
+             checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+             TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
+                 This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
+        }
+        }
+       
+    /* Load any global constants/uniforms that may have been set by the application */
+    if (wined3d_settings.vs_selected_mode == SHADER_GLSL || wined3d_settings.ps_selected_mode == SHADER_GLSL)
+        shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
+    else if (wined3d_settings.vs_selected_mode== SHADER_ARB || wined3d_settings.ps_selected_mode == SHADER_ARB)
+        shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
+        
+    /* Draw vertex-by-vertex */
+    if (useDrawStridedSlow)
+        drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType, idxData, idxSize, minIndex,  StartIdx);
+    else
+        drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx);
+
+    /* Cleanup vertex program */
+    if (useVertexShaderFunction) {
+        /* disable any attribs (this is the same for both GLSL and ARB modes) */
+        GLint maxAttribs;
+        int i;
+        /* Leave all the attribs disabled */
+        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
+        /* MESA does not support it right not */
+        if (glGetError() != GL_NO_ERROR)
+            maxAttribs = 16;
+        for (i = 0; i < maxAttribs; ++i) {
+            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+            checkGLcall("glDisableVertexAttribArrayARB(reg);");
+        }
+
+        if (wined3d_settings.vs_selected_mode == SHADER_ARB)
+            glDisable(GL_VERTEX_PROGRAM_ARB);
+    }
+
+    /* Cleanup fragment program */
+    if (usePixelShaderFunction && wined3d_settings.ps_selected_mode == SHADER_ARB) 
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
 void inline drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataLocations,DWORD fvf) {
@@ -2277,7 +2229,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          isLightingOn = FALSE;
     WineDirect3DVertexStridedData *dataLocations;
     IWineD3DSwapChainImpl         *swapchain;
-    int                           useHW = FALSE, i;
+    int                           i;
     BOOL                          fixup = FALSE;
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
@@ -2341,19 +2293,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     drawPrimitiveTraceDataLocations(dataLocations, fvf);
 
     /* Setup transform matrices and sort out */
-    if (useHW) {
-        /* Lighting is not completely bypassed with ATI drivers although it should be. Mesa is ok from this respect...
-        So make sure lighting is disabled. */
-        isLightingOn = glIsEnabled(GL_LIGHTING);
-        glDisable(GL_LIGHTING);
-        checkGLcall("glDisable(GL_LIGHTING);");
-        TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn);
-    } else {
-        isLightingOn = primitiveInitState(iface,
-                                          fvf & D3DFVF_XYZRHW,
-                                          !(fvf & D3DFVF_NORMAL),
-                                          useVertexShaderFunction);
-    }
+    isLightingOn = primitiveInitState(iface, fvf & D3DFVF_XYZRHW, !(fvf & D3DFVF_NORMAL), useVertexShaderFunction);
 
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL || dataLocations->u.s.diffuse.VBO != 0));
@@ -2369,14 +2309,12 @@ void drawPrimitive(IWineD3DDevice *iface,
         /* Ok, Work out which primitive is requested and how many vertexes that
            will be                                                              */
         UINT calculatedNumberOfindices = primitiveToGl(PrimitiveType, NumPrimitives, &glPrimType);
-#if 0 /* debugging code... just information not an error */
-        if(numberOfVertices != 0 && numberOfVertices != calculatedNumberOfindices){
-            FIXME("Number of vertices %u and Caculated number of indicies %u differ\n", numberOfVertices, calculatedNumberOfindices);
-        }
-#endif
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
-        drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction, useHW, dataLocations, numberOfVertices, calculatedNumberOfindices, glPrimType, idxData, idxSize, minIndex, StartIdx, fixup);
+
+        drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction,
+            dataLocations, numberOfVertices, calculatedNumberOfindices, glPrimType,
+            idxData, idxSize, minIndex, StartIdx, fixup);
     }
 
     if(!DrawPrimStrideData) HeapFree(GetProcessHeap(), 0, dataLocations);
