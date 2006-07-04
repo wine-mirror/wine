@@ -199,6 +199,43 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     return ref;
 }
 
+/* Set the shader type for this device, depending on the given capabilities,
+ * the device type, and the user preferences in wined3d_settings */
+
+static void select_shader_mode(
+    WineD3D_GL_Info *gl_info,
+    WINED3DDEVTYPE DeviceType,
+    int* ps_selected,
+    int* vs_selected) {
+
+    /* Give priority to user disable/emulation request.
+     * Then respect REF device for software.
+     * Then check capabilities for hardware, and fallback to software */
+
+    if (wined3d_settings.vs_mode == VS_NONE)
+        *vs_selected = SHADER_NONE;
+    else if (DeviceType == WINED3DDEVTYPE_REF || wined3d_settings.vs_mode == VS_SW)
+        *vs_selected = SHADER_SW;
+    else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested)
+        *vs_selected = SHADER_GLSL;
+    else if (gl_info->supported[ARB_VERTEX_PROGRAM])
+        *vs_selected = SHADER_ARB;
+    else
+        *vs_selected = SHADER_SW;
+
+    /* Fallback to SHADER_NONE where software pixel shaders should be used */
+    if (wined3d_settings.ps_mode == PS_NONE)
+        *ps_selected = SHADER_NONE;
+    else if (DeviceType == WINED3DDEVTYPE_REF)
+        *ps_selected = SHADER_NONE;
+    else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested)
+        *ps_selected = SHADER_GLSL;
+    else if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        *ps_selected = SHADER_ARB;
+    else
+        *ps_selected = SHADER_NONE;
+}
+
 /**********************************************************
  * IWineD3D parts follows
  **********************************************************/
@@ -751,17 +788,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
 #define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
-
-    /* Determine shader mode to use based on GL caps */
-    if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested
-        && (wined3d_settings.vs_mode == VS_HW || wined3d_settings.ps_mode == PS_HW))
-        wined3d_settings.shader_mode = SHADER_GLSL;
-    else if ((gl_info->supported[ARB_VERTEX_PROGRAM] && wined3d_settings.vs_mode == VS_HW) ||
-              (gl_info->supported[ARB_FRAGMENT_PROGRAM] && wined3d_settings.ps_mode == PS_HW))
-        wined3d_settings.shader_mode = SHADER_ARB;
-    else
-        wined3d_settings.shader_mode = SHADER_SW;
-
 
     /* If we created a dummy context, throw it away */
     if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
@@ -1467,6 +1493,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* FIXME: both the gl_info and the shader_mode should be made per adapter */
+
     /* If we don't know the device settings, go query them now */
     if (This->isGLInfoValid == FALSE) {
         /* use the desktop window to fill gl caps */
@@ -1474,8 +1502,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
         /* We are running off a real context, save the values */
         if (rc) This->isGLInfoValid = TRUE;
-
     }
+    select_shader_mode(&This->gl_info, DeviceType,
+        &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
 
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
@@ -1718,19 +1747,16 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
-    if (wined3d_settings.vs_mode == VS_HW && wined3d_settings.shader_mode == SHADER_GLSL
-         && DeviceType != WINED3DDEVTYPE_REF) {
+    /* FIXME: the shader mode should be per adapter */
+    if (wined3d_settings.vs_selected_mode == SHADER_GLSL) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
-        TRACE_(d3d_caps)("Hardware vertex shader versions 2.0+ enabled\n");
-         } else if (wined3d_settings.vs_mode == VS_HW
-                    && wined3d_settings.shader_mode == SHADER_ARB
-                    && DeviceType != WINED3DDEVTYPE_REF) {
+        TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (GLSL)\n");
+    } else if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-        TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled\n");
-    } else if (wined3d_settings.vs_mode == VS_SW || DeviceType == WINED3DDEVTYPE_REF) {
-        /* FIXME: Change the following line (when needed) to reflect the reported software vertex shader version implemented */
-        *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-        TRACE_(d3d_caps)("Software vertex shader version 1.1 enabled\n");
+        TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
+    } else if (wined3d_settings.vs_selected_mode == SHADER_SW) {
+        *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
+        TRACE_(d3d_caps)("Software vertex shader version 3.0 enabled\n");
     } else {
         *pCaps->VertexShaderVersion  = 0;
         TRACE_(d3d_caps)("Vertex shader functionality not available\n");
@@ -1742,23 +1768,21 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
     }
 
-    if (wined3d_settings.ps_mode == PS_HW && wined3d_settings.shader_mode == SHADER_GLSL
-        && DeviceType != WINED3DDEVTYPE_REF) {
+    /* FIXME: the shader ode should be per adapter */
+    if (wined3d_settings.ps_selected_mode == SHADER_GLSL) {
         *pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
         /* FIXME: The following line is card dependent. -1.0 to 1.0 is a safe default clamp range for now */
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Hardware pixel shader versions 2.0+ enabled\n");
-        } else if (wined3d_settings.ps_mode == PS_HW
-                   && wined3d_settings.shader_mode == SHADER_ARB
-                   && DeviceType != WINED3DDEVTYPE_REF) {
+        TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (GLSL)\n");
+    } else if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled\n");
-    /* FIXME: Uncomment this when there is support for software Pixel Shader 1.4 and PS_SW is defined
-    } else if (wined3d_settings.ps_mode == PS_SW || DeviceType == WINED3DDEVTYPE_REF) {
-        *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
+        TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+    /* FIXME: Uncomment this when there is support for software Pixel Shader 3.0 and PS_SW is defined
+    } else if (wined3d_settings.ps_selected_mode = SHADER_SW) {
+        *pCaps->PixelShaderVersion    = D3DPS_VERSION(3,0);
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Software pixel shader version 1.4 enabled\n"); */
+        TRACE_(d3d_caps)("Software pixel shader version 3.0 enabled\n"); */
     } else {
         *pCaps->PixelShaderVersion    = 0;
         *pCaps->PixelShader1xMaxValue = 0.0;
@@ -1865,8 +1889,11 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
 
     /* Setup some defaults for creating the implicit swapchain */
     ENTER_GL();
+    /* FIXME: both of those should be made per adapter */
     IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
     LEAVE_GL();
+    select_shader_mode(&This->gl_info, DeviceType,
+        &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
 
     /* set the state of the device to valid */
     object->state = WINED3D_OK;

@@ -73,7 +73,7 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
-        if (wined3d_settings.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
+        if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             /* If this shader is still attached to a program, GL will perform a lazy delete */
             TRACE("Deleting shader object %u\n", This->baseShader.prgId);
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
@@ -829,7 +829,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    if (wined3d_settings.shader_mode == SHADER_GLSL) {
+    if (This->baseShader.shader_mode == SHADER_GLSL) {
 
         /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
@@ -857,7 +857,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Store the shader object */
         This->baseShader.prgId = shader_obj;
 
-    } else if (wined3d_settings.shader_mode == SHADER_ARB) {
+    } else if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBfp1.0\n");
 
@@ -913,7 +913,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     pshader_set_limits(This);
 
     /* Generate HW shader in needed */
-    if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) {
+    This->baseShader.shader_mode = wined3d_settings.ps_selected_mode;
+    if (NULL != pFunction && This->baseShader.shader_mode != SHADER_SW) {
         TRACE("(%p) : Generating hardware program\n", This);
         IWineD3DPixelShaderImpl_GenerateShader(iface, pFunction);
     }

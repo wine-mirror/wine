@@ -136,6 +136,7 @@ WINED3DGLTYPE static const glTypeLookup[D3DDECLTYPE_UNUSED] = {
 #define SHADER_SW   0
 #define SHADER_ARB  1
 #define SHADER_GLSL 2
+#define SHADER_NONE 3
 
 typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
@@ -146,7 +147,8 @@ typedef struct wined3d_settings_s {
     we should use it.  However, until it's fully implemented, we'll leave it as a registry
     setting for developers. */
   BOOL glslRequested;
-  int shader_mode;
+  int vs_selected_mode;
+  int ps_selected_mode;
 /* nonpower 2 function */
   int nonpower2_mode;
 } wined3d_settings_t;
@@ -1460,6 +1462,10 @@ typedef struct IWineD3DBaseShaderClass
     CONST DWORD                     *function;
     UINT                            functionLength;
     GLuint                          prgId;
+
+    /* Type of shader backend */
+    int shader_mode;
+
 } IWineD3DBaseShaderClass;
 
 typedef struct IWineD3DBaseShaderImpl {

@@ -567,9 +567,9 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         ** ***************************/
 
         /* Delete any GLSL shader programs that may exist */
-        if (wined3d_settings.shader_mode == SHADER_GLSL) {
+        if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
+            wined3d_settings.ps_selected_mode == SHADER_GLSL)
             delete_glsl_shader_list(iface);
-        }
     
         /* Release the update stateblock */
         if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){

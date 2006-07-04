@@ -644,7 +644,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    if (wined3d_settings.shader_mode == SHADER_GLSL) {
+    if (This->baseShader.shader_mode == SHADER_GLSL) {
 
         /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
@@ -669,7 +669,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Store the shader object */
         This->baseShader.prgId = shader_obj;
 
-    } else if (wined3d_settings.shader_mode == SHADER_ARB) {
+    } else if (This->baseShader.shader_mode == SHADER_ARB) {
 
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBvp1.0\n");
@@ -990,7 +990,7 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         if (This->vertexDeclaration) IWineD3DVertexDeclaration_Release(This->vertexDeclaration);
-        if (wined3d_settings.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
+        if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             /* If this shader is still attached to a program, GL will perform a lazy delete */
             TRACE("Deleting shader object %u\n", This->baseShader.prgId);
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
@@ -1055,7 +1055,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     vshader_set_limits(This);
 
     /* Generate HW shader in needed */
-    if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) 
+    This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;
+    if (NULL != pFunction && This->baseShader.shader_mode != SHADER_SW) 
         IWineD3DVertexShaderImpl_GenerateShader(iface, pFunction);
 
     /* copy the function ... because it will certainly be released by application */
@@ -1065,6 +1066,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     } else {
         This->baseShader.function = NULL;
     }
+
     return WINED3D_OK;
 }
 

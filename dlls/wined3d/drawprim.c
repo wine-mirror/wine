@@ -1962,7 +1962,9 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         TRACE("Loaded arrays\n");
 
         /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
-        if (wined3d_settings.shader_mode == SHADER_GLSL) {
+        if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
+            wined3d_settings.ps_selected_mode == SHADER_GLSL) {
+
             set_glsl_shader_program(iface);
             /* Start using this program ID (if it's 0, there is no shader program to use, so 
              * glUseProgramObjectARB(0) will disable the use of any shaders) */
@@ -1977,7 +1979,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
             TRACE("Using vertex shader\n");
 
-            if (wined3d_settings.shader_mode == SHADER_ARB) {
+            if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
                 /* Bind the vertex program */
                 GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
                     ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
@@ -1995,7 +1997,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
             TRACE("Using pixel shader\n");
 
-            if (wined3d_settings.shader_mode == SHADER_ARB) {
+            if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
                  /* Bind the fragment program */
                  GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
                      ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
@@ -2008,12 +2010,12 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
                      This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
             }
         }
-        
+       
         /* Load any global constants/uniforms that may have been set by the application */
-        if (wined3d_settings.shader_mode == SHADER_GLSL)
-            shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
-        else if (wined3d_settings.shader_mode == SHADER_ARB)
-            shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
+        if (wined3d_settings.vs_selected_mode == SHADER_GLSL || wined3d_settings.ps_selected_mode == SHADER_GLSL)
+          shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
+        else if (wined3d_settings.vs_selected_mode== SHADER_ARB || wined3d_settings.ps_selected_mode == SHADER_ARB)
+          shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
         
 
         /* DirectX colours are in a different format to opengl colours
@@ -2046,12 +2048,12 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
                 checkGLcall("glDisableVertexAttribArrayARB(reg);");
             }
 
-            if (wined3d_settings.shader_mode == SHADER_ARB)
+            if (wined3d_settings.vs_selected_mode == SHADER_ARB)
                 glDisable(GL_VERTEX_PROGRAM_ARB);
         }
 
         /* Cleanup fragment program */
-        if (usePixelShaderFunction && wined3d_settings.shader_mode == SHADER_ARB) {
+        if (usePixelShaderFunction && wined3d_settings.ps_selected_mode == SHADER_ARB) {
             glDisable(GL_FRAGMENT_PROGRAM_ARB);
         }
     }
@@ -2278,19 +2280,15 @@ void drawPrimitive(IWineD3DDevice *iface,
     int                           useHW = FALSE, i;
     BOOL                          fixup = FALSE;
 
-    if (This->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
-            &&((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL
-            && GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
+     * here simply check whether a shader was set, or the user disabled shaders */
+    if (wined3d_settings.vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader && 
+        ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL) 
         useVertexShaderFunction = TRUE;
-    } else {
-        useVertexShaderFunction = FALSE;
-    }
 
-    if (wined3d_settings.ps_mode != PS_NONE && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)
-            && This->stateBlock->pixelShader
-            && ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) {
+    if (wined3d_settings.ps_selected_mode != SHADER_NONE && This->stateBlock->pixelShader &&
+        ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) 
         usePixelShaderFunction = TRUE;
-    }
 
     if (This->stateBlock->vertexDecl == NULL) {
         /* Work out what the FVF should look like */

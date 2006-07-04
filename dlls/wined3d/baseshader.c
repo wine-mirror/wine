@@ -747,9 +747,14 @@ void shader_generate_main(
             /* Read opcode */
             opcode_token = *pToken++;
             curOpcode = shader_get_opcode(iface, opcode_token);
-            hw_fct = (curOpcode == NULL)? NULL:
-                     (wined3d_settings.shader_mode == SHADER_GLSL)?
-                         curOpcode->hw_glsl_fct : curOpcode->hw_fct;
+
+            /* Select handler */
+            if (curOpcode == NULL)
+                hw_fct = NULL;
+            else if (This->baseShader.shader_mode == SHADER_GLSL)
+                hw_fct = curOpcode->hw_glsl_fct;
+            else if (This->baseShader.shader_mode == SHADER_ARB)
+                hw_fct = curOpcode->hw_fct;
 
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
@@ -802,7 +807,7 @@ void shader_generate_main(
                 hw_fct(&hw_arg);
 
                 /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
-                if (wined3d_settings.shader_mode == SHADER_GLSL)
+                if (This->baseShader.shader_mode == SHADER_GLSL)
                     shader_glsl_add_instruction_modifiers(&hw_arg);
 
             /* Unhandled opcode */
