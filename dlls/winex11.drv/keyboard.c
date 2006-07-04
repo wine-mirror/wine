@@ -771,13 +771,14 @@ static const char main_key_LA[MAIN_LEN][4] =
  "<>"
 };
 
-/*** Lithuanian (Baltic) keyboard layout (pc/lt in XFree86 4.3.0, contributed by Nerijus Baliûnas) */
+/*** Lithuanian keyboard layout (setxkbmap lt) */
 static const char main_key_LT_B[MAIN_LEN][4] =
 {
  "`~","àÀ","èÈ","æÆ","ëË","áÁ","ðÐ","øØ","ûÛ","¥(","´)","-_","þÞ","\\|",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
+ "ª¬"
 };
 
 /*** Turkish keyboard Layout */
