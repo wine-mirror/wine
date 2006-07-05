@@ -305,6 +305,7 @@ BSCallback *create_bscallback(HTMLDocument*,LPCOLESTR);
 HRESULT start_binding(BSCallback*,IMoniker*);
 
 IHlink *Hlink_Create(void);
+IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
 
 void HTMLElement_Create(HTMLDOMNode*);
 void HTMLBodyElement_Create(HTMLElement*);

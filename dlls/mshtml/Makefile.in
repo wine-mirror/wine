@@ -33,6 +33,7 @@ C_SRCS = \
 	olewnd.c \
 	persist.c \
 	protocol.c \
+	selection.c \
 	service.c \
 	view.c
 

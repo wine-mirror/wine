@@ -326,8 +326,23 @@ static HRESULT WINAPI HTMLDocument_get_designMode(IHTMLDocument2 *iface, BSTR *p
 
 static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSelectionObject **p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+    nsISelection *nsselection = NULL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nscontainer) {
+        nsIDOMWindow *dom_window = NULL;
+
+        nsIWebBrowser_GetContentDOMWindow(This->nscontainer->webbrowser, &dom_window);
+        if(dom_window) {
+            nsIDOMWindow_GetSelection(dom_window, &nsselection);
+            nsIDOMWindow_Release(dom_window);
+        }
+    }
+
+    *p = HTMLSelectionObject_Create(nsselection);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p)

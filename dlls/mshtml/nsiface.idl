@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -90,7 +90,6 @@ typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIDOMWindowCollection;
-typedef nsISupports nsISelection;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
 typedef nsISupports nsIDOMNamedNodeMap;
@@ -106,6 +105,7 @@ typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
+typedef nsISupports nsIDOMRange;
 
 [
     object,
@@ -517,6 +517,33 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     nsresult Write(const nsAString *text);
     nsresult Writeln(const nsAString *text);
     nsresult GetElementsByName(const nsAString *elementName, nsIDOMNodeList **_retval);
+}
+
+[
+    object,
+    uuid(b2c7ed59-8634-4352-9e37-5484c8b6e4e1)
+]
+interface nsISelection : nsISupports
+{
+    nsresult GetAnchorNode(nsIDOMNode **aAnchorNode);
+    nsresult GetAnchorOffset(PRInt32 *aAnchorOffset);
+    nsresult GetFocusNode(nsIDOMNode **aFocusNode);
+    nsresult GetFocusOffset(PRInt32 *aFocusOffset);
+    nsresult GetIsCollapsed(PRBool *aIsCollapsed);
+    nsresult GetRangeCount(PRInt32 *aRangeCount);
+    nsresult GetRangeAt(PRInt32 index, nsIDOMRange **_retval);
+    nsresult Collapse(nsIDOMNode *parentNode, PRInt32 offset);
+    nsresult Extend(nsIDOMNode *parentNode, PRInt32 offset);
+    nsresult CollapseToStart();
+    nsresult CollapseToEnd();
+    nsresult ContainsNode(nsIDOMNode *node, PRBool entirelyContained, PRBool *_retval);
+    nsresult SelectAllChildren(nsIDOMNode *parentNode);
+    nsresult AddRange(nsIDOMRange *range);
+    nsresult RemoveRange(nsIDOMRange *range);
+    nsresult RemoveAllRanges();
+    nsresult DeleteFromDocument();
+    nsresult SelectionLanguageChange(PRBool langRTL);
+    nsresult ToString(PRUnichar **_retval);
 }
 
 [
