@@ -247,6 +247,12 @@ static HRESULT exec_browsemode(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_baselinefont3(HTMLDocument *This)
+{
+    FIXME("(%p)\n", This);
+    return S_OK;
+}
+
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
@@ -387,6 +393,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case IDM_BROWSEMODE:
             return exec_browsemode(This);
+        case IDM_BASELINEFONT3:
+            return exec_baselinefont3(This);
         default:
             FIXME("unsupported nCmdID %ld of CGID_MSHTML group\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
