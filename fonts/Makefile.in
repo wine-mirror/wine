@@ -334,10 +334,10 @@ vgas1255.fon: system-1255-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-1255-96-16.fnt $@
 
 vgas1256.fon: system-1256-96-16.fnt $(FNT2FON)
-	$(FNT2FON) system-1255-96-16.fnt $@
+	$(FNT2FON) system-1256-96-16.fnt $@
 
 vgas1257.fon: system-1257-96-16.fnt $(FNT2FON)
-	$(FNT2FON) system-1255-96-16.fnt $@
+	$(FNT2FON) system-1257-96-16.fnt $@
 
 vgas874.fon: system-874-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-874-96-16.fnt $@
