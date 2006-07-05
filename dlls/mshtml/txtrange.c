@@ -152,8 +152,26 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUnichar *nstext = NULL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nsselection) {
+        static const WCHAR empty[] = {0};
+        *p = SysAllocString(empty);
+        return S_OK;
+    }
+
+    nsres = nsISelection_ToString(This->nsselection, &nstext);
+    if(NS_FAILED(nsres) || !nstext) {
+        ERR("toString failed: %08lx\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = SysAllocString(nstext);
+    nsfree(nstext);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElement **parent)
