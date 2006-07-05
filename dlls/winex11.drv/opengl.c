@@ -30,6 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #if defined(HAVE_GL_GL_H) && defined(HAVE_GL_GLX_H)
 
@@ -592,6 +593,21 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   wine_tsx11_lock();
   pglXSwapBuffers(gdi_display, drawable);
   wine_tsx11_unlock();
+
+  /* FPS support */
+  if (TRACE_ON(fps))
+  {
+      static long prev_time, frames;
+
+      DWORD time = GetTickCount();
+      frames++;
+      /* every 1.5 seconds */
+      if (time - prev_time > 1500) {
+          TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+          prev_time = time;
+          frames = 0;
+      }
+  }
 
   return TRUE;
 }

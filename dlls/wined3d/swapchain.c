@@ -51,7 +51,7 @@ inline static Display *get_display( HDC hdc )
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_fps);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 
 /* IDirect3DSwapChain IUnknown parts follow: */
@@ -265,7 +265,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     TRACE("glXSwapBuffers called, Starting new frame\n");
     /* FPS support */
-    if (TRACE_ON(d3d_fps))
+    if (TRACE_ON(fps))
     {
         static long prev_time, frames;
 
@@ -273,7 +273,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         frames++;
         /* every 1.5 seconds */
         if (time - prev_time > 1500) {
-            TRACE_(d3d_fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+            TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
             prev_time = time;
             frames = 0;
         }

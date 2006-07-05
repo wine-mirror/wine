@@ -34,6 +34,7 @@
 
 /* Use the d3d_surface debug channel to have one channel for all surfaces */
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 /*****************************************************************************
  * x11_copy_to_screen
@@ -378,6 +379,21 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
 
     /* Update the screen */
     x11_copy_to_screen(This, NULL);
+
+    /* FPS support */
+    if (TRACE_ON(fps))
+    {
+        static long prev_time, frames;
+
+        DWORD time = GetTickCount();
+        frames++;
+        /* every 1.5 seconds */
+        if (time - prev_time > 1500) {
+            TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+            prev_time = time;
+            frames = 0;
+        }
+    }
 
     return WINED3D_OK;
 }
