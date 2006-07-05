@@ -160,8 +160,18 @@ static HRESULT WINAPI HTMLSelectionObject_clear(IHTMLSelectionObject *iface)
 static HRESULT WINAPI HTMLSelectionObject_get_type(IHTMLSelectionObject *iface, BSTR *p)
 {
     HTMLSelectionObject *This = HTMLSELOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 range_cnt = 0;
+
+    static const WCHAR wszNone[] = {'N','o','n','e',0};
+    static const WCHAR wszText[] = {'T','e','x','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->nsselection)
+        nsISelection_GetRangeCount(This->nsselection, &range_cnt);
+
+    *p = SysAllocString(range_cnt ? wszText : wszNone); /* FIXME: control */
+    return S_OK;
 }
 
 #undef HTMLSELOBJ_THIS
