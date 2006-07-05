@@ -883,7 +883,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             case WINED3DFMT_R8G8B8:
                 {
                     glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGB, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
+                                 GL_BGR, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
                     vcheckGLcall("glDrawPixels");
                 }
                 break;

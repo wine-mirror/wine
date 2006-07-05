@@ -60,7 +60,7 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_A8P8        ,0x0000ff00 ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,0                      ,0                  ,0                              },
     {WINED3DFMT_P8          ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,FALSE      ,GL_COLOR_INDEX8_EXT    ,GL_COLOR_INDEX     ,GL_UNSIGNED_BYTE               },
     /* Standard ARGB formats. Keep WINED3DFMT_R8G8B8(=20) at position 20 */
-    {WINED3DFMT_R8G8B8      ,0x0        ,0x00ff0000 ,0x0000ff00 ,0x000000ff ,3      ,FALSE      ,GL_RGB8                ,GL_RGB             ,GL_UNSIGNED_BYTE               },
+    {WINED3DFMT_R8G8B8      ,0x0        ,0x00ff0000 ,0x0000ff00 ,0x000000ff ,3      ,FALSE      ,GL_RGB8                ,GL_BGR             ,GL_UNSIGNED_BYTE               },
     {WINED3DFMT_A8R8G8B8    ,0xff000000 ,0x00ff0000 ,0x0000ff00 ,0x000000ff ,4      ,FALSE      ,GL_RGBA8               ,GL_BGRA            ,GL_UNSIGNED_INT_8_8_8_8_REV    },
     {WINED3DFMT_X8R8G8B8    ,0x0        ,0x00ff0000 ,0x0000ff00 ,0x000000ff ,4      ,FALSE      ,GL_RGB8                ,GL_BGRA            ,GL_UNSIGNED_INT_8_8_8_8_REV    },
     {WINED3DFMT_R5G6B5      ,0x0        ,0x0000F800 ,0x000007e0 ,0x0000001f ,2      ,FALSE      ,GL_RGB5                ,GL_RGB             ,GL_UNSIGNED_SHORT_5_6_5        },
