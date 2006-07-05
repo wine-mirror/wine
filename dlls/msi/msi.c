@@ -1497,35 +1497,20 @@ end:
     return ret;
 }
 
+/***********************************************************************
+ * MsiUseFeatureW             [MSI.@]
+ */
 INSTALLSTATE WINAPI MsiUseFeatureW( LPCWSTR szProduct, LPCWSTR szFeature )
 {
-    FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
-
-    return INSTALLSTATE_LOCAL;
+    return MsiUseFeatureExW(szProduct, szFeature, 0, 0);
 }
 
+/***********************************************************************
+ * MsiUseFeatureA             [MSI.@]
+ */
 INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
 {
-    INSTALLSTATE ret = INSTALLSTATE_UNKNOWN;
-    LPWSTR prod = NULL, feat = NULL;
-
-    TRACE("%s %s\n", debugstr_a(szProduct), debugstr_a(szFeature) );
-
-    prod = strdupAtoW( szProduct );
-    if (szProduct && !prod)
-        goto end;
-
-    feat = strdupAtoW( szFeature );
-    if (szFeature && !feat)
-        goto end;
-
-    ret = MsiUseFeatureW( prod, feat );
-
-end:
-    msi_free( prod );
-    msi_free( feat );
-
-    return ret;
+    return MsiUseFeatureExA(szProduct, szFeature, 0, 0);
 }
 
 /***********************************************************************
