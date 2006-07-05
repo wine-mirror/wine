@@ -35,6 +35,7 @@ C_SRCS = \
 	protocol.c \
 	selection.c \
 	service.c \
+	txtrange.c \
 	view.c
 
 RC_SRCS = rsrc.rc

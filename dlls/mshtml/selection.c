@@ -139,8 +139,11 @@ static HRESULT WINAPI HTMLSelectionObject_Invoke(IHTMLSelectionObject *iface, DI
 static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *iface, IDispatch **range)
 {
     HTMLSelectionObject *This = HTMLSELOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, range);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, range);
+
+    *range = (IDispatch*)HTMLTxtRange_Create(This->nsselection);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectionObject_empty(IHTMLSelectionObject *iface)

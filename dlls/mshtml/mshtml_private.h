@@ -306,6 +306,7 @@ HRESULT start_binding(BSCallback*,IMoniker*);
 
 IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
+IHTMLTxtRange *HTMLTxtRange_Create(nsISelection*);
 
 void HTMLElement_Create(HTMLDOMNode*);
 void HTMLBodyElement_Create(HTMLElement*);
