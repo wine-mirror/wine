@@ -424,9 +424,9 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         Time event_time = (Time)event->data.l[1];
         HWND last_focus = x11drv_thread_data()->last_focus;
 
-        TRACE( "got take focus msg for %p, enabled=%d, focus=%p, active=%p, fg=%p, last=%p\n",
-               hwnd, IsWindowEnabled(hwnd), GetFocus(), GetActiveWindow(),
-               GetForegroundWindow(), last_focus );
+        TRACE( "got take focus msg for %p, enabled=%d, visible=%d (style %08lx), focus=%p, active=%p, fg=%p, last=%p\n",
+               hwnd, IsWindowEnabled(hwnd), IsWindowVisible(hwnd), GetWindowLongW(hwnd, GWL_STYLE),
+               GetFocus(), GetActiveWindow(), GetForegroundWindow(), last_focus );
 
         if (can_activate_window(hwnd))
         {
