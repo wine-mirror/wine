@@ -92,9 +92,7 @@ extern "C" {
 typedef unsigned char byte;
 #define hyper __int64
 #define MIDL_uhyper unsigned __int64
-/* 'boolean' tend to conflict, let's call it _wine_boolean */
-typedef unsigned char _wine_boolean;
-/* typedef _wine_boolean boolean; */
+typedef unsigned char boolean;
 
 #define __RPC_CALLEE WINAPI
 #define RPC_VAR_ENTRY __cdecl
@@ -121,7 +119,7 @@ typedef struct
 
 typedef void (__RPC_USER *NDR_RUNDOWN)(void *context);
 typedef void (__RPC_USER *NDR_NOTIFY_ROUTINE)(void);
-typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(_wine_boolean flag);
+typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(boolean flag);
 
 #define DECLSPEC_UUID(x)
 #define MIDL_INTERFACE(x)   struct

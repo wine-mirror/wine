@@ -83,7 +83,9 @@
 #define UINT8 JPEG_UINT8
 #define UINT16 JPEG_UINT16
 #undef FAR
+#define boolean jpeg_boolean
 # include <jpeglib.h>
+#undef jpeg_boolean
 #undef UINT16
 #ifndef SONAME_LIBJPEG
 #define SONAME_LIBJPEG "libjpeg.so"
