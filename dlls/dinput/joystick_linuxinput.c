@@ -123,6 +123,7 @@ struct JoystickImpl
 
 	int				joyfd;
 
+	LPDIDATAFORMAT			internal_df;
 	LPDIDATAFORMAT			df;
 	DataFormat			*transform;	/* wine to user format converter */
 	int				*offsets;	/* object offsets */
@@ -154,6 +155,9 @@ static void fake_current_js_state(JoystickImpl *ji);
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph);
 static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
+static int lxinput_to_djoy2_offset(int ie_type, int ie_code);
+static int offset_to_object(JoystickImpl *This, int offset);
+static void calculate_ids(LPDIDATAFORMAT df);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -370,29 +374,44 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->df = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwSize);
   if (newDevice->df == 0)
     goto FAILED;
-
   CopyMemory(newDevice->df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
 
   /* copy default objects */
   newDevice->df->rgodf = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
   if (newDevice->df->rgodf == 0)
     goto FAILED;
-
   CopyMemory(newDevice->df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
+
+  /* no do the same for the internal df */
+  newDevice->internal_df = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwSize);
+  if (newDevice->internal_df == 0)
+    goto FAILED;
+  CopyMemory(newDevice->internal_df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
+
+  /* copy default objects */
+  newDevice->internal_df->rgodf = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
+  if (newDevice->internal_df->rgodf == 0)
+    goto FAILED;
+  CopyMemory(newDevice->internal_df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
 
   /* create an offsets array */
   newDevice->offsets = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,c_dfDIJoystick2.dwNumObjs*sizeof(int));
   if (newDevice->offsets == 0)
     goto FAILED;
 
+  calculate_ids(newDevice->internal_df);
+
   /* create the default transform filter */
-  newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->df, newDevice->offsets);
+  newDevice->transform = create_DataFormat(newDevice->internal_df, newDevice->df, newDevice->offsets);
+  calculate_ids(newDevice->df);
 
   return newDevice;
 
 FAILED:
   HeapFree(GetProcessHeap(),0,newDevice->df->rgodf);
   HeapFree(GetProcessHeap(),0,newDevice->df);
+  HeapFree(GetProcessHeap(),0,newDevice->internal_df->rgodf);
+  HeapFree(GetProcessHeap(),0,newDevice->internal_df);
   HeapFree(GetProcessHeap(),0,newDevice);
   return NULL;
 }
@@ -546,7 +565,8 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   }
   memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
 
-  This->transform = create_DataFormat(&c_dfDIJoystick2, This->df, This->offsets);
+  This->transform = create_DataFormat(This->internal_df, This->df, This->offsets);
+  calculate_ids(This->df);
 
   return DI_OK;
 }
@@ -708,32 +728,145 @@ static DWORD map_pov(int event_value, int is_x)
 
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph)
 {
+  int i, ofs = -1;
   switch (ph->dwHow) {
-    case DIPH_BYOFFSET: {
-                          int i;
-                          for (i=0; i<This->df->dwNumObjs; i++) {
-                            if (This->df->rgodf[i].dwOfs == ph->dwObj) {
-                              return i;
-                            }
-                          }
-                        }
-                        break;
-    case DIPH_BYID: {
-                      return DIDFT_GETINSTANCE(ph->dwObj)>>WINE_JOYSTICK_AXIS_BASE;
-                    }
-                    break;
+    case DIPH_BYOFFSET:
+      for (i=0; i<This->df->dwNumObjs; i++) {
+	if (This->offsets[i]==ph->dwObj) {
+	  return i;
+	}
+      }
+      break;
+    case DIPH_BYID:
+      for (i=0; i<This->df->dwNumObjs; i++) {
+	if ((This->df->rgodf[i].dwType & 0x00ffffff) == (ph->dwObj & 0x00ffffff)) {
+	  ofs = This->df->rgodf[i].dwOfs;
+	  break;
+	}
+      }
+      if (ofs!=-1) {
+	for (i=0; i<This->df->dwNumObjs; i++) {
+	  if (This->offsets[i]==ofs) {
+	    return i;
+	  }
+	}
+      }
+      break;
     default:
-                    FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
+      FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
   }
 
   return -1;
+}
+
+/* defines how the linux input system offset mappings into c_dfDIJoystick2 */
+static int
+lxinput_to_djoy2_offset( int ie_type, int ie_code )
+{
+  switch (ie_type) {
+    case EV_ABS:
+      switch (ie_code) {
+        case ABS_X:             return 0;
+        case ABS_Y:             return 1;
+        case ABS_Z:             return 2;
+        case ABS_RX:            return 3;
+        case ABS_RY:            return 4;
+        case ABS_RZ:            return 5;
+        case ABS_THROTTLE:      return 6;
+        case ABS_RUDDER:        return 7;
+        case ABS_HAT0X:
+        case ABS_HAT0Y:         return 8;
+        case ABS_HAT1X: 
+        case ABS_HAT1Y:         return 9;
+        case ABS_HAT2X: 
+        case ABS_HAT2Y:         return 10;
+        case ABS_HAT3X:
+        case ABS_HAT3Y:         return 11;
+        default:
+          FIXME("Unhandled EV_ABS(0x%02X)\n", ie_code);
+          return -1;
+      }
+    case EV_KEY:
+      if (ie_code < 128) {
+        return 12 + ie_code;
+      } else {
+        WARN("DX8 does not support more than 128 buttons\n");
+      }
+      return -1;
+  }
+  FIXME("Unhandled type(0x%02X)\n", ie_type);
+  return -1;
+}
+
+/* convert wine format offset to user format object index */
+static int offset_to_object(JoystickImpl *This, int offset)
+{
+    int i;
+
+    for (i = 0; i < This->df->dwNumObjs; i++) {
+        if (This->df->rgodf[i].dwOfs == offset)
+            return i;
+    }
+
+    return -1;
+}
+
+static void calculate_ids(LPDIDATAFORMAT df)
+{
+    int i;
+    int axis = 0;
+    int button = 0;
+    int pov = 0;
+    int axis_base;
+    int pov_base;
+    int button_base;
+
+    /* Make two passes over the format. The first counts the number
+     * for each type and the second sets the id */
+    for (i = 0; i < df->dwNumObjs; i++) {
+        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS)
+            axis++;
+        else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_POV)
+            pov++;
+        else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_BUTTON)
+            button++;
+    }
+
+    axis_base = 0;
+    pov_base = axis;
+    button_base = axis + pov;
+
+    axis = 0;
+    button = 0;
+    pov = 0;
+
+    for (i = 0; i < df->dwNumObjs; i++) {
+        DWORD type = 0;
+        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS) {
+            axis++;
+            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
+                DIDFT_MAKEINSTANCE(axis + axis_base);
+            TRACE("axis type = 0x%08lx\n", type);
+        } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_POV) {
+            pov++;
+            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
+                DIDFT_MAKEINSTANCE(pov + pov_base);
+            TRACE("POV type = 0x%08lx\n", type);
+        } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_BUTTON) {
+            button++;
+            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
+                DIDFT_MAKEINSTANCE(button + button_base);
+            TRACE("button type = 0x%08lx\n", type);
+        }
+        df->rgodf[i].dwType = type;
+    }
 }
 
 static void joy_polldev(JoystickImpl *This) {
     struct timeval tv;
     fd_set	readfds;
     struct	input_event ie;
-    int         btn;
+    int         btn, offset;
 
     if (This->joyfd==-1)
 	return;
@@ -753,67 +886,87 @@ static void joy_polldev(JoystickImpl *This) {
 	TRACE("input_event: type %d, code %d, value %d\n",ie.type,ie.code,ie.value);
 	switch (ie.type) {
 	case EV_KEY:	/* button */
-		btn = This->buttons[ie.code];
-		TRACE("(%p) %d -> %d\n", This, ie.code, btn);
-		if (btn&0x80) {
-			btn &= 0x7F;
-			This->js.rgbButtons[btn] = ie.value?0x80:0x00;
-			GEN_EVENT(DIJOFS_BUTTON(btn),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		}
-		break;
+            btn = This->buttons[ie.code];
+            TRACE("(%p) %d -> %d\n", This, ie.code, btn);
+            if (btn&0x80) {
+              btn &= 0x7F;
+	      /* see if there is a mapping */
+	      offset = lxinput_to_djoy2_offset(ie.type, btn);
+	      if (offset==-1) {
+		return;
+	      }
+	      /* and see if there is an offset in the df */
+	      offset = This->offsets[offset];
+	      if (offset==-1) {
+		return;
+	      }
+              This->js.rgbButtons[btn] = ie.value?0x80:0x00;
+              GEN_EVENT(offset,This->js.rgbButtons[btn],ie.time.tv_usec,(This->dinput->evsequence)++);
+            }
+            break;
 	case EV_ABS:
+            /* see if there is a mapping */
+            offset = lxinput_to_djoy2_offset(ie.type, ie.code);
+            if (offset==-1) {
+              return;
+            }
+            /* and see if there is an offset in the df */
+            offset = This->offsets[offset];
+            if (offset==-1) {
+              return;
+            }
 	    switch (ie.code) {
 	    case ABS_X:
 		This->js.lX = map_axis(This,ABS_X,ie.value);
-		GEN_EVENT(DIJOFS_X,This->js.lX,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lX,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_Y:
 		This->js.lY = map_axis(This,ABS_Y,ie.value);
-		GEN_EVENT(DIJOFS_Y,This->js.lY,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lY,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_Z:
 		This->js.lZ = map_axis(This,ABS_Z,ie.value);
-		GEN_EVENT(DIJOFS_Z,This->js.lZ,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lZ,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RX:
 		This->js.lRx = map_axis(This,ABS_RX,ie.value);
-		GEN_EVENT(DIJOFS_RX,This->js.lRx,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lRx,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RY:
 		This->js.lRy = map_axis(This,ABS_RY,ie.value);
-		GEN_EVENT(DIJOFS_RY,This->js.lRy,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lRy,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RZ:
 		This->js.lRz = map_axis(This,ABS_RZ,ie.value);
-		GEN_EVENT(DIJOFS_RZ,This->js.lRz,ie.time.tv_usec,(This->dinput->evsequence)++);
+		GEN_EVENT(offset,This->js.lRz,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_THROTTLE:
                 This->js.rglSlider[0] = map_axis(This,ABS_THROTTLE,ie.value);
-                GEN_EVENT(DIJOFS_SLIDER(0),This->js.rglSlider[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rglSlider[0],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    case ABS_RUDDER:
                 This->js.rglSlider[1] = map_axis(This,ABS_RUDDER,ie.value);
-                GEN_EVENT(DIJOFS_SLIDER(1),This->js.rglSlider[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rglSlider[1],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    case ABS_HAT0X:
 	    case ABS_HAT0Y:
                 This->js.rgdwPOV[0] = map_pov(ie.value,ie.code==ABS_HAT0X);
-                GEN_EVENT(DIJOFS_POV(0),This->js.rgdwPOV[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rgdwPOV[0],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    case ABS_HAT1X:
 	    case ABS_HAT1Y:
                 This->js.rgdwPOV[1] = map_pov(ie.value,ie.code==ABS_HAT1X);
-                GEN_EVENT(DIJOFS_POV(1),This->js.rgdwPOV[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rgdwPOV[1],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    case ABS_HAT2X:
 	    case ABS_HAT2Y:
                 This->js.rgdwPOV[2] = map_pov(ie.value,ie.code==ABS_HAT2X);
-                GEN_EVENT(DIJOFS_POV(2),This->js.rgdwPOV[2],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rgdwPOV[2],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    case ABS_HAT3X:
 	    case ABS_HAT3Y:
                 This->js.rgdwPOV[3] = map_pov(ie.value,ie.code==ABS_HAT3X);
-                GEN_EVENT(DIJOFS_POV(3),This->js.rgdwPOV[3],ie.time.tv_usec,(This->dinput->evsequence)++);
+                GEN_EVENT(offset,This->js.rgdwPOV[3],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
@@ -846,17 +999,19 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 ) {
     JoystickImpl *This = (JoystickImpl *)iface;
 
+    TRACE("(this=%p,0x%08lx,%p)\n",This,len,ptr);
+
+    if (This->joyfd==-1) {
+        WARN("not acquired\n");
+        return DIERR_NOTACQUIRED;
+    }
+
     joy_polldev(This);
 
-    TRACE("(this=%p,0x%08lx,%p)\n",This,len,ptr);
-    if ((len != sizeof(DIJOYSTATE)) && (len != sizeof(DIJOYSTATE2))) {
-    	FIXME("len %ld is not sizeof(DIJOYSTATE) or DIJOYSTATE2, unsupported format.\n",len);
-	return E_FAIL;
-    }
-    memcpy(ptr,&(This->js),len);
-    This->queue_head = 0;
-    This->queue_tail = 0;
-    return 0;
+    /* convert and copy data to user supplied buffer */
+    fill_DataFormat(ptr, &This->js, This->transform);
+
+    return DI_OK;
 }
 
 /******************************************************************************
@@ -1106,6 +1261,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 {
   JoystickImpl *This = (JoystickImpl *)iface;
   DIDEVICEOBJECTINSTANCEA ddoi;
+  int user_offset, user_object;
 
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
@@ -1129,35 +1285,27 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       switch (i) {
       case ABS_X:
 	ddoi.guidType = GUID_XAxis;
-	ddoi.dwOfs = DIJOFS_X;
 	break;
       case ABS_Y:
 	ddoi.guidType = GUID_YAxis;
-	ddoi.dwOfs = DIJOFS_Y;
 	break;
       case ABS_Z:
 	ddoi.guidType = GUID_ZAxis;
-	ddoi.dwOfs = DIJOFS_Z;
 	break;
       case ABS_RX:
 	ddoi.guidType = GUID_RxAxis;
-	ddoi.dwOfs = DIJOFS_RX;
 	break;
       case ABS_RY:
 	ddoi.guidType = GUID_RyAxis;
-	ddoi.dwOfs = DIJOFS_RY;
 	break;
       case ABS_RZ:
 	ddoi.guidType = GUID_RzAxis;
-	ddoi.dwOfs = DIJOFS_RZ;
 	break;
       case ABS_THROTTLE:
 	ddoi.guidType = GUID_Slider;
-	ddoi.dwOfs = DIJOFS_SLIDER(0);
 	break;
       case ABS_RUDDER:
 	ddoi.guidType = GUID_Slider;
-	ddoi.dwOfs = DIJOFS_SLIDER(1);
 	break;
       case ABS_HAT0X: case ABS_HAT0Y:
       case ABS_HAT1X: case ABS_HAT1Y:
@@ -1169,7 +1317,17 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
   	FIXME("unhandled abs axis 0x%02x, ignoring!\n",i);
 	continue;
       }
-      ddoi.dwType = DIDFT_MAKEINSTANCE(i << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
+      user_offset = lxinput_to_djoy2_offset(EV_ABS, i);
+      if (user_offset == -1) {
+        continue;
+      }
+      user_offset = This->offsets[user_offset];
+      if (user_offset == -1) {
+        continue;
+      }
+      user_object = offset_to_object(This, user_offset);
+      ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
+      ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
       /* Linux event force feedback supports only (and always) x and y axes */
       if (i == ABS_X || i == ABS_Y) {
 	if (This->has_ff)
@@ -1189,8 +1347,17 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
     ddoi.guidType = GUID_POV;
     for (i=0; i<4; i++) {
       if (test_bit(This->joydev->absbits,ABS_HAT0X+(i<<1)) && test_bit(This->joydev->absbits,ABS_HAT0Y+(i<<1))) {
-        ddoi.dwOfs = DIJOFS_POV(i);
-        ddoi.dwType = DIDFT_MAKEINSTANCE(i << WINE_JOYSTICK_POV_BASE) | DIDFT_POV;
+        user_offset = lxinput_to_djoy2_offset(EV_ABS, ABS_HAT0X+i);
+        if (user_offset == -1) {
+          continue;
+        }
+        user_offset = This->offsets[user_offset];
+        if (user_offset == -1) {
+          continue;
+        }
+        user_object = offset_to_object(This, user_offset);
+        ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
+        ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
         sprintf(ddoi.tszName, "%d-POV", i);
         _dump_OBJECTINSTANCEA(&ddoi);
         if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
@@ -1210,8 +1377,17 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
     for (i = 0; i < KEY_MAX; i++) {
       if (!test_bit(This->joydev->keybits,i)) continue;
-      ddoi.dwOfs = DIJOFS_BUTTON(btncount);
-      ddoi.dwType = DIDFT_MAKEINSTANCE(btncount << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
+      user_offset = lxinput_to_djoy2_offset(EV_KEY, btncount);
+      if (user_offset == -1) {
+        continue;
+      }
+      user_offset = This->offsets[user_offset];
+      if (user_offset == -1) {
+        continue;
+      }
+      user_object = offset_to_object(This, user_offset);
+      ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
+      ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
       sprintf(ddoi.tszName, "%d-Button", btncount);
       btncount++;
       _dump_OBJECTINSTANCEA(&ddoi);
