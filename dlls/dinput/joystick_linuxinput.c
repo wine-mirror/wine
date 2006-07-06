@@ -688,14 +688,14 @@ static void fake_current_js_state(JoystickImpl *ji)
 {
 	int i;
 	/* center the axes */
-	ji->js.lX  = map_axis(ji, ABS_X,  ji->joydev->axes[ABS_X ][AXE_ABS]);
-	ji->js.lY  = map_axis(ji, ABS_Y,  ji->joydev->axes[ABS_Y ][AXE_ABS]);
-	ji->js.lZ  = map_axis(ji, ABS_Z,  ji->joydev->axes[ABS_Z ][AXE_ABS]);
-	ji->js.lRx = map_axis(ji, ABS_RX, ji->joydev->axes[ABS_RX][AXE_ABS]);
-	ji->js.lRy = map_axis(ji, ABS_RY, ji->joydev->axes[ABS_RY][AXE_ABS]);
-	ji->js.lRz = map_axis(ji, ABS_RZ, ji->joydev->axes[ABS_RZ][AXE_ABS]);
-	ji->js.rglSlider[0] = map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXE_ABS]);
-	ji->js.rglSlider[1] = map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXE_ABS]);
+	ji->js.lX           = test_bit(ji->joydev->absbits, ABS_X)        ? map_axis(ji, ABS_X,        ji->joydev->axes[ABS_X       ][AXE_ABS]) : 0;
+	ji->js.lY           = test_bit(ji->joydev->absbits, ABS_Y)        ? map_axis(ji, ABS_Y,        ji->joydev->axes[ABS_Y       ][AXE_ABS]) : 0;
+	ji->js.lZ           = test_bit(ji->joydev->absbits, ABS_Z)        ? map_axis(ji, ABS_Z,        ji->joydev->axes[ABS_Z       ][AXE_ABS]) : 0;
+	ji->js.lRx          = test_bit(ji->joydev->absbits, ABS_RX)       ? map_axis(ji, ABS_RX,       ji->joydev->axes[ABS_RX      ][AXE_ABS]) : 0;
+	ji->js.lRy          = test_bit(ji->joydev->absbits, ABS_RY)       ? map_axis(ji, ABS_RY,       ji->joydev->axes[ABS_RY      ][AXE_ABS]) : 0;
+	ji->js.lRz          = test_bit(ji->joydev->absbits, ABS_RZ)       ? map_axis(ji, ABS_RZ,       ji->joydev->axes[ABS_RZ      ][AXE_ABS]) : 0;
+	ji->js.rglSlider[0] = test_bit(ji->joydev->absbits, ABS_THROTTLE) ? map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXE_ABS]) : 0;
+	ji->js.rglSlider[1] = test_bit(ji->joydev->absbits, ABS_RUDDER)   ? map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXE_ABS]) : 0;
 	/* POV center is -1 */
 	for (i=0; i<4; i++) {
 		ji->js.rgdwPOV[i] = -1;
