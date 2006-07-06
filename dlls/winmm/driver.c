@@ -131,7 +131,7 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 /**************************************************************************
  *				DRIVER_SendMessage		[internal]
  */
-static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
+inline static LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
                                          LPARAM lParam1, LPARAM lParam2)
 {
     LRESULT		ret = 0;

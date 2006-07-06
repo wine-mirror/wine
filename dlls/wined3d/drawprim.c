@@ -1860,7 +1860,7 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
 #endif
 
-static inline void drawPrimitiveDrawStrided(
+inline static void drawPrimitiveDrawStrided(
     IWineD3DDevice *iface,
     BOOL useVertexShaderFunction,
     BOOL usePixelShaderFunction,
@@ -2011,7 +2011,7 @@ static inline void drawPrimitiveDrawStrided(
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
-void inline drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataLocations,DWORD fvf) {
+inline void drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataLocations,DWORD fvf) {
 
     /* Dump out what parts we have supplied */
     TRACE("Strided Data (from FVF/VS): %lx\n", fvf);

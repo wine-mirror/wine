@@ -211,7 +211,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
 }
 
-static void inline cpinfo_cmp(MIMECPINFO *cpinfo1, MIMECPINFO *cpinfo2)
+inline static void cpinfo_cmp(MIMECPINFO *cpinfo1, MIMECPINFO *cpinfo2)
 {
     ok(cpinfo1->dwFlags == cpinfo2->dwFlags, "dwFlags mismatch: %08lx != %08lx\n", cpinfo1->dwFlags, cpinfo2->dwFlags);
     ok(cpinfo1->uiCodePage == cpinfo2->uiCodePage, "uiCodePage mismatch: %u != %u\n", cpinfo1->uiCodePage, cpinfo2->uiCodePage);
@@ -487,7 +487,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     IEnumCodePage_Release(iEnumCP);
 }
 
-static void inline scriptinfo_cmp(SCRIPTINFO *sinfo1, SCRIPTINFO *sinfo2)
+inline static void scriptinfo_cmp(SCRIPTINFO *sinfo1, SCRIPTINFO *sinfo2)
 {
     ok(sinfo1->ScriptId == sinfo2->ScriptId, "ScriptId mismatch: %d != %d\n", sinfo1->ScriptId, sinfo2->ScriptId);
     ok(sinfo1->uiCodePage == sinfo2->uiCodePage, "uiCodePage mismatch: %u != %u\n", sinfo1->uiCodePage, sinfo2->uiCodePage);
