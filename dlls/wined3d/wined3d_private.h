@@ -92,7 +92,7 @@ typedef struct _WINED3DGLTYPE {
 } WINED3DGLTYPE;
 
 /* NOTE: Make sure these are in the correct numerical order. (see /include/d3d9types.h typedef enum _D3DDECLTYPE) */
-WINED3DGLTYPE static const glTypeLookup[D3DDECLTYPE_UNUSED] = {
+static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
                                   {D3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
                                   {D3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
                                   {D3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},

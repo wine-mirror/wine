@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
-const static WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d','\0'};
+static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d','\0'};
 
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]

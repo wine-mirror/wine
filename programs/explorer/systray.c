@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-const static WCHAR adaptor_classname[] = /* Adaptor */ {'A','d','a','p','t','o','r',0};
+static const WCHAR adaptor_classname[] = /* Adaptor */ {'A','d','a','p','t','o','r',0};
 
 /* tray state */
 struct tray
@@ -192,7 +192,7 @@ static void add_icon(const NOTIFYICONDATAW *nid)
 {
     RECT rect;
     struct icon  *icon;
-    const static WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
+    static const WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
 
     WINE_TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
 
