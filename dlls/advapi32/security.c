@@ -1485,15 +1485,15 @@ LookupAccountSidA(
 	      domain,domainSize,domainSize?*domainSize:0,
 	      name_use);
 
-	if (accountSize) *accountSize = strlen(ac)+1;
+	*accountSize = strlen(ac)+1;
 	if (account && (*accountSize > strlen(ac)))
 	  strcpy(account, ac);
 
-	if (domainSize) *domainSize = strlen(dm)+1;
+	*domainSize = strlen(dm)+1;
 	if (domain && (*domainSize > strlen(dm)))
 	  strcpy(domain,dm);
 
-	if (name_use) *name_use = SidTypeUser;
+	*name_use = SidTypeUser;
 	return TRUE;
 }
 
@@ -1527,15 +1527,15 @@ LookupAccountSidW(
 	      domain,domainSize,domainSize?*domainSize:0,
 	      name_use);
 
-	if (accountSize) *accountSize = strlenW(ac)+1;
+	*accountSize = strlenW(ac)+1;
 	if (account && (*accountSize > strlenW(ac)))
             strcpyW(account, ac);
 
-	if (domainSize) *domainSize = strlenW(dm)+1;
+	*domainSize = strlenW(dm)+1;
 	if (domain && (*domainSize > strlenW(dm)))
             strcpyW(domain,dm);
 
-	if (name_use) *name_use = SidTypeUser;
+	*name_use = SidTypeUser;
 	return TRUE;
 }
 

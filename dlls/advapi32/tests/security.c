@@ -772,6 +772,34 @@ static void test_token_attr(void)
     }
 }
 
+static void test_LookupAccountSid(void)
+{
+    SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
+    char account[MAX_PATH], domain[MAX_PATH];
+    DWORD acc_size, dom_size;
+    PSID pUsersSid = NULL;
+    SID_NAME_USE use;
+    BOOL ret;
+
+    /* native windows crashes if account size, domain size, or name use is NULL */
+
+    ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &pUsersSid);
+    ok(ret, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());    
+
+    /* try NULL account */
+    acc_size = MAX_PATH;
+    dom_size = MAX_PATH;
+    ret = LookupAccountSid(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
+    ok(ret, "Expected TRUE, got FALSE\n");
+
+    /* try NULL domain */
+    acc_size = MAX_PATH;
+    dom_size = MAX_PATH;
+    ret = LookupAccountSid(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
+    ok(ret, "Expected TRUE, got FALSE\n");
+}
+
 START_TEST(security)
 {
     init();
@@ -782,4 +810,5 @@ START_TEST(security)
     test_FileSecurity();
     test_AccessCheck();
     test_token_attr();
+    test_LookupAccountSid();
 }
