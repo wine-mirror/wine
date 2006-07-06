@@ -91,6 +91,11 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
 	    ids->text_resource_id  = IDS_DELETEMULTIPLE_TEXT;
 	    return TRUE;
+	  case ASK_DELETE_SELECTED:
+            ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
+            ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
+            ids->text_resource_id  = IDS_DELETESELECTED_TEXT;
+            return TRUE;
 	  case ASK_OVERWRITE_FILE:
             ids->hIconInstance = NULL;
             ids->icon_resource_id = IDI_WARNING;

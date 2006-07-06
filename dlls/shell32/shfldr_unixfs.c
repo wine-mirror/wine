@@ -1825,7 +1825,11 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, LPCITEMI
 static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, LPCITEMIDLIST *apidl)
 {
     char szAbsolute[FILENAME_MAX], *pszRelative;
+    static const WCHAR empty[] = {0};
     int i;
+    
+    if (!SHELL_ConfirmDialogW(GetActiveWindow(), ASK_DELETE_SELECTED, empty))
+        return S_OK;
     
     lstrcpyA(szAbsolute, This->m_pszPath);
     pszRelative = szAbsolute + lstrlenA(szAbsolute);

@@ -164,6 +164,7 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Confirm folder deletion"
 	IDS_DELETEITEM_TEXT "Are you sure you want to delete '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Are you sure you want to delete these %1 items?"
+	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
 	IDS_OVERWRITEFILE_TEXT "OverWrite File %1?"
 	IDS_OVERWRITEFILE_CAPTION "Confirm File OverWrite"
 
