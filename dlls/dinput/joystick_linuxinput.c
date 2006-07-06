@@ -973,7 +973,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	LPDIDEVCAPS lpDIDevCaps)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
-    int		i,axes,buttons;
+    int		i,axes,buttons,povs;
 
     TRACE("%p->(%p)\n",iface,lpDIDevCaps);
 
@@ -997,12 +997,19 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     for (i=0;i<ABS_MAX;i++) if (test_bit(This->joydev->absbits,i)) axes++;
     buttons=0;
     for (i=0;i<KEY_MAX;i++) if (test_bit(This->joydev->keybits,i)) buttons++;
+    povs=0;
+    for (i=0; i<4; i++) {
+      if (test_bit(This->joydev->absbits,ABS_HAT0X+(i<<1)) && test_bit(This->joydev->absbits,ABS_HAT0Y+(i<<1))) {
+        povs ++;
+      }
+    }
 
     if (This->has_ff) 
 	 lpDIDevCaps->dwFlags |= DIDC_FORCEFEEDBACK;
 
     lpDIDevCaps->dwAxes = axes;
     lpDIDevCaps->dwButtons = buttons;
+    lpDIDevCaps->dwPOVs = povs;
 
     return DI_OK;
 }
