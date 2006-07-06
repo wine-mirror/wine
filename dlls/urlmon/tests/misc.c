@@ -332,6 +332,7 @@ static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','
     'o','c','t','e','t','-','s','t','r','e','a','m',0};
 static const WCHAR mimeImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
 static const WCHAR mimeImageGif[] = {'i','m','a','g','e','/','g','i','f',0};
+static const WCHAR mimeImageBmp[] = {'i','m','a','g','e','/','b','m','p',0};
 
 static const struct {
     LPCWSTR url;
@@ -373,7 +374,12 @@ static BYTE data24[] = {'g','i','f','8','7','a'};
 static BYTE data25[] = {'G','i','F','8','7','A'};
 static BYTE data26[] = {'G','i','F','8','7','a','<','h','t','m','l','>'};
 static BYTE data27[] = {0x30,'G','i','F','8','7','A'};
-
+static BYTE data28[] = {0x42,0x4d,0x6e,0x42,0x1c,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00};
+static BYTE data29[] = {0x42,0x4d,'x','x','x','x',0x00,0x00,0x00,0x00,'x','x','x','x'};
+static BYTE data30[] = {0x42,0x4d,'x','x','x','x',0x00,0x01,0x00,0x00,'x','x','x','x'};
+static BYTE data31[] = {0x42,0x4d,'x','x','x','x',0x00,0x00,0x00,0x00,'<','h','t','m','l','>'};
+static BYTE data32[] = {0x42,0x4d,'x','x','x','x',0x00,0x00,0x00,0x00,'x','x','x'};
+static BYTE data33[] = {0x00,0x42,0x4d,'x','x','x','x',0x00,0x00,0x00,0x00,'x','x','x'};
 
 static const struct {
     BYTE *data;
@@ -406,7 +412,13 @@ static const struct {
     {data24, sizeof(data24), mimeImageGif},
     {data25, sizeof(data25), mimeImageGif},
     {data26, sizeof(data26), mimeTextHtml},
-    {data27, sizeof(data27), mimeTextPlain}
+    {data27, sizeof(data27), mimeTextPlain},
+    {data28, sizeof(data28), mimeImageBmp},
+    {data29, sizeof(data29), mimeImageBmp},
+    {data30, sizeof(data30), mimeAppOctetStream},
+    {data31, sizeof(data31), mimeTextHtml},
+    {data32, sizeof(data32), mimeAppOctetStream},
+    {data33, sizeof(data32), mimeAppOctetStream}
 };
 
 static void test_FindMimeFromData(void)
