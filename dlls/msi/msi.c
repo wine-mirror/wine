@@ -974,58 +974,8 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return r;
 }
 
-INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
-                                         LPSTR lpPathBuf, DWORD* pcchBuf)
-{
-    LPWSTR szwProduct = NULL, szwComponent = NULL, lpwPathBuf= NULL;
-    INSTALLSTATE rc;
-    UINT incoming_len;
-
-    if( szProduct )
-    {
-        szwProduct = strdupAtoW( szProduct );
-        if( !szwProduct)
-            return ERROR_OUTOFMEMORY;
-    }
-
-    if( szComponent )
-    {
-        szwComponent = strdupAtoW( szComponent );
-        if( !szwComponent )
-        {
-            msi_free( szwProduct);
-            return ERROR_OUTOFMEMORY;
-        }
-    }
-
-    if( pcchBuf && *pcchBuf > 0 )
-    {
-        lpwPathBuf = msi_alloc( *pcchBuf * sizeof(WCHAR));
-        incoming_len = *pcchBuf;
-    }
-    else
-    {
-        lpwPathBuf = NULL;
-        incoming_len = 0;
-    }
-
-    rc = MsiGetComponentPathW(szwProduct, szwComponent, lpwPathBuf, pcchBuf);
-
-    msi_free( szwProduct);
-    msi_free( szwComponent);
-    if (lpwPathBuf)
-    {
-        if (rc != INSTALLSTATE_UNKNOWN)
-            WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, incoming_len,
-                            lpPathBuf, incoming_len, NULL, NULL);
-        msi_free( lpwPathBuf);
-    }
-
-    return rc;
-}
-
-INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
-                                         LPWSTR lpPathBuf, DWORD* pcchBuf)
+INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
+                                         awstring* lpPathBuf, DWORD* pcchBuf)
 {
     WCHAR squished_pc[GUID_SIZE];
     UINT rc;
@@ -1042,37 +992,43 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     if( lpPathBuf && !pcchBuf )
         return INSTALLSTATE_INVALIDARG;
 
-    squash_guid(szProduct,squished_pc);
+    squash_guid( szProduct, squished_pc );
 
     rc = MSIREG_OpenProductsKey( szProduct, &hkey, FALSE);
     if( rc != ERROR_SUCCESS )
-        goto end;
+        return INSTALLSTATE_UNKNOWN;
 
     RegCloseKey(hkey);
 
     rc = MSIREG_OpenComponentsKey( szComponent, &hkey, FALSE);
     if( rc != ERROR_SUCCESS )
-        goto end;
+        return INSTALLSTATE_UNKNOWN;
 
     sz = 0;
     type = 0;
     rc = RegQueryValueExW( hkey, squished_pc, NULL, &type, NULL, &sz );
-    if( rc != ERROR_SUCCESS )
-        goto end;
-    if( type != REG_SZ )
-        goto end;
-
-    sz += sizeof(WCHAR);
-    path = msi_alloc( sz );
-    if( !path )
-        goto end;
-
-    rc = RegQueryValueExW( hkey, squished_pc, NULL, NULL, (LPVOID) path, &sz );
-    if( rc != ERROR_SUCCESS )
-        goto end;
+    if( rc == ERROR_SUCCESS && type == REG_SZ )
+    {
+        sz += sizeof(WCHAR);
+        path = msi_alloc( sz );
+        if( path )
+        {
+            path[0] = 0;
+            rc = RegQueryValueExW( hkey, squished_pc, NULL, NULL, (LPVOID) path, &sz );
+            if( rc != ERROR_SUCCESS )
+            {
+                msi_free( path );
+                path = NULL;
+            }
+        }
+    }
+    RegCloseKey(hkey);
 
     TRACE("found path of (%s:%s)(%s)\n", debugstr_w(szComponent),
            debugstr_w(szProduct), debugstr_w(path));
+
+    if (!path)
+        return INSTALLSTATE_UNKNOWN;
 
     if (path[0]=='0')
     {
@@ -1081,25 +1037,60 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     }
     else
     {
-        /* PROBABLY a file */
         if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
             rrc = INSTALLSTATE_LOCAL;
         else
             rrc = INSTALLSTATE_ABSENT;
     }
 
-    if( pcchBuf )
-    {
-        sz = sz / sizeof(WCHAR);
-        if( *pcchBuf >= sz )
-            lstrcpyW( lpPathBuf, path );
-        *pcchBuf = sz;
-    }
+    msi_strcpy_to_awstring( path, lpPathBuf, pcchBuf );
+
+    msi_free( path );
+    return rrc;
+}
+
+/******************************************************************
+ * MsiGetComponentPathW      [MSI.@]
+ */
+INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
+                                         LPWSTR lpPathBuf, DWORD* pcchBuf)
+{
+    awstring path;
+
+    path.unicode = TRUE;
+    path.str.w = lpPathBuf;
+
+    return MSI_GetComponentPath( szProduct, szComponent, &path, pcchBuf );
+}
+
+/******************************************************************
+ * MsiGetComponentPathA      [MSI.@]
+ */
+INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
+                                         LPSTR lpPathBuf, DWORD* pcchBuf)
+{
+    LPWSTR szwProduct, szwComponent = NULL;
+    INSTALLSTATE r = INSTALLSTATE_UNKNOWN;
+    awstring path;
+
+    szwProduct = strdupAtoW( szProduct );
+    if( szProduct && !szwProduct)
+        goto end;
+
+    szwComponent = strdupAtoW( szComponent );
+    if( szComponent && !szwComponent )
+        goto end;
+
+    path.unicode = FALSE;
+    path.str.a = lpPathBuf;
+
+    r = MSI_GetComponentPath( szwProduct, szwComponent, &path, pcchBuf );
 
 end:
-    msi_free(path );
-    RegCloseKey(hkey);
-    return rrc;
+    msi_free( szwProduct );
+    msi_free( szwComponent );
+
+    return r;
 }
 
 /******************************************************************
