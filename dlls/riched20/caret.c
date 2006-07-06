@@ -765,8 +765,8 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   y += ME_GetYScrollPos(editor);
 
   tmp_cursor = editor->pCursors[0];
-  if (!ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd))
-    /* return */;
+  /* FIXME: do something with the return value of ME_FindPixelPos */
+  ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
   
   if (tmp_cursor.pRun == editor->pCursors[0].pRun && 
       tmp_cursor.nOffset == editor->pCursors[0].nOffset)
