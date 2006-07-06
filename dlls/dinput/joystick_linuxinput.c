@@ -994,7 +994,19 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
         lpDIDevCaps->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
 
     axes=0;
-    for (i=0;i<ABS_MAX;i++) if (test_bit(This->joydev->absbits,i)) axes++;
+    for (i=0;i<ABS_MAX;i++) {
+      if (!test_bit(This->joydev->absbits,i)) continue;
+      switch (i) {
+      case ABS_HAT0X: case ABS_HAT0Y:
+      case ABS_HAT1X: case ABS_HAT1Y:
+      case ABS_HAT2X: case ABS_HAT2Y:
+      case ABS_HAT3X: case ABS_HAT3Y:
+        /* will be handled as POV - see below */
+        break;
+      default:
+        axes++;
+      }
+    }
     buttons=0;
     for (i=0;i<KEY_MAX;i++) if (test_bit(This->joydev->keybits,i)) buttons++;
     povs=0;
@@ -1090,8 +1102,15 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	ddoi.guidType = GUID_Slider;
 	ddoi.dwOfs = DIJOFS_SLIDER(1);
 	break;
+      case ABS_HAT0X: case ABS_HAT0Y:
+      case ABS_HAT1X: case ABS_HAT1Y:
+      case ABS_HAT2X: case ABS_HAT2Y:
+      case ABS_HAT3X: case ABS_HAT3Y:
+        /* will be handled as POV - see below */
+        continue;
       default:
-	FIXME("unhandled abs axis %d, ignoring!\n",i);
+  	FIXME("unhandled abs axis 0x%02x, ignoring!\n",i);
+	continue;
       }
       ddoi.dwType = DIDFT_MAKEINSTANCE(i << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
       /* Linux event force feedback supports only (and always) x and y axes */
