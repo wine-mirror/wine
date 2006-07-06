@@ -1675,13 +1675,16 @@ ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
  */
 BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 {
+    DWORD size;
     NTSTATUS Status;
     HANDLE ImpersonationToken;
-    TOKEN_TYPE Type = TokenImpersonation;
+    TOKEN_TYPE Type;
 
     FIXME( "(%p)\n", hToken );
 
-    /* FIXME: get token type */
+    if (!GetTokenInformation( hToken, TokenType, &Type,
+                              sizeof(TOKEN_TYPE), &size ))
+        return FALSE;
 
     if (Type == TokenPrimary)
     {
