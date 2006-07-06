@@ -1140,6 +1140,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->wantmax[obj] = pr->lMax;
         }
       }
+      fake_current_js_state(This);
       return DI_OK;
     }
     case (DWORD)DIPROP_DEADZONE: {
@@ -1157,6 +1158,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->deadz[obj] = pd->dwData;
         }
       }
+      fake_current_js_state(This);
       return DI_OK;
     }
     default:
@@ -1164,7 +1166,6 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       break;
     }
   }
-  fake_current_js_state(This);
   return 0;
 }
 
