@@ -455,7 +455,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     if(!ppwzMimeOut || (!pwzUrl && !pBuffer))
         return E_INVALIDARG;
 
-    if(pwzMimeProposed && (!pwzUrl || !pBuffer || (pBuffer && !cbSize))) {
+    if(pwzMimeProposed && (!pBuffer || (pBuffer && !cbSize))) {
         DWORD len;
 
         if(!pwzMimeProposed)
@@ -470,7 +470,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     if(pBuffer) {
         DWORD len;
         LPCWSTR ret = NULL;
-        int i = 0;
+        int i;
 
         static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
         static const WCHAR wszImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
@@ -491,10 +491,35 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         if(!cbSize)
             return E_FAIL;
 
+        if(pwzMimeProposed && strcmpW(pwzMimeProposed, wszAppOctetStream)) {
+            for(i=0; i < sizeof(mime_filters)/sizeof(*mime_filters); i++) {
+                if(!strcmpW(pwzMimeProposed, mime_filters[i].mime))
+                    break;
+            }
+
+            if(i == sizeof(mime_filters)/sizeof(*mime_filters)
+                    || mime_filters[i].filter(pBuffer, cbSize)) {
+                len = strlenW(pwzMimeProposed)+1;
+                *ppwzMimeOut = CoTaskMemAlloc(len*sizeof(WCHAR));
+                memcpy(*ppwzMimeOut, pwzMimeProposed, len*sizeof(WCHAR));
+                return S_OK;
+            }
+        }
+
+        i=0;
         while(!ret) {
             if(mime_filters[i].filter(pBuffer, cbSize))
                 ret = mime_filters[i].mime;
             i++;
+        }
+
+        if(pwzMimeProposed) {
+            if(i == sizeof(mime_filters)/sizeof(*mime_filters))
+                ret = pwzMimeProposed;
+
+            /* text/html is a special case */
+           if(!strcmpW(pwzMimeProposed, wszTextHtml) && !strcmpW(ret, wszTextPlain))
+                ret = wszTextHtml;
         }
 
         len = strlenW(ret)+1;
