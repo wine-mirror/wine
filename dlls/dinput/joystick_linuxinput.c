@@ -124,6 +124,8 @@ struct JoystickImpl
 	int				joyfd;
 
 	LPDIDATAFORMAT			df;
+	DataFormat			*transform;	/* wine to user format converter */
+	int				*offsets;	/* object offsets */
         HANDLE				hEvent;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
@@ -338,6 +340,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   int i;
 
   newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
+  if (newDevice==NULL) {
+    return NULL;
+  }
+
   newDevice->lpVtbl = jvt;
   newDevice->ref = 1;
   newDevice->joyfd = -1;
@@ -358,7 +364,37 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     newDevice->deadz[i]   =  0;
   }
   fake_current_js_state(newDevice);
+
+  /* wine uses DIJOYSTATE2 as it's internal format so copy
+   * the already defined format c_dfDIJoystick2 */
+  newDevice->df = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwSize);
+  if (newDevice->df == 0)
+    goto FAILED;
+
+  CopyMemory(newDevice->df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
+
+  /* copy default objects */
+  newDevice->df->rgodf = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
+  if (newDevice->df->rgodf == 0)
+    goto FAILED;
+
+  CopyMemory(newDevice->df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
+
+  /* create an offsets array */
+  newDevice->offsets = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,c_dfDIJoystick2.dwNumObjs*sizeof(int));
+  if (newDevice->offsets == 0)
+    goto FAILED;
+
+  /* create the default transform filter */
+  newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->df, newDevice->offsets);
+
   return newDevice;
+
+FAILED:
+  HeapFree(GetProcessHeap(),0,newDevice->df->rgodf);
+  HeapFree(GetProcessHeap(),0,newDevice->df);
+  HeapFree(GetProcessHeap(),0,newDevice);
+  return NULL;
 }
 
 static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
@@ -378,6 +414,10 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
           IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
         *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, &joydevs[i]);
         TRACE("Creating a Joystick device (%p)\n", *pdev);
+        if (*pdev==0) {
+          ERR("out of memory\n");
+          return DIERR_OUTOFMEMORY;
+        }
         return DI_OK;
       } else {
         return DIERR_NOINTERFACE;
@@ -406,6 +446,10 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
           IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
         *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, &joydevs[i]);
         TRACE("Creating a Joystick device (%p)\n", *pdev);
+        if (*pdev==0) {
+          ERR("out of memory\n");
+          return DIERR_OUTOFMEMORY;
+        }
         return DI_OK;
       } else {
         return DIERR_NOINTERFACE;
@@ -443,10 +487,17 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	HeapFree(GetProcessHeap(),0,This->data_queue);
 
 	/* Free the DataFormat */
+	HeapFree(GetProcessHeap(), 0, This->df->rgodf);
 	HeapFree(GetProcessHeap(), 0, This->df);
 
-	HeapFree(GetProcessHeap(),0,This);
-	return 0;
+        /* Free the offsets array */
+        HeapFree(GetProcessHeap(),0,This->offsets);
+        
+        /* release the data transform filter */
+        release_DataFormat(This->transform);
+        
+        HeapFree(GetProcessHeap(),0,This);
+        return 0;
 }
 
 /******************************************************************************
@@ -478,6 +529,10 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     return DIERR_ACQUIRED;
   }
 
+  HeapFree(GetProcessHeap(),0,This->df->rgodf);
+  HeapFree(GetProcessHeap(),0,This->df);
+  release_DataFormat(This->transform);
+
   /* Store the new data format */
   This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
   if (This->df==NULL) {
@@ -490,6 +545,8 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     return DIERR_OUTOFMEMORY;
   }
   memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
+
+  This->transform = create_DataFormat(&c_dfDIJoystick2, This->df, This->offsets);
 
   return DI_OK;
 }
