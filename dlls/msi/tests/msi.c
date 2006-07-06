@@ -31,6 +31,8 @@ typedef UINT (WINAPI *fnMsiOpenPackageExA)(LPCSTR, DWORD, MSIHANDLE*);
 fnMsiOpenPackageExA pMsiOpenPackageExA;
 typedef UINT (WINAPI *fnMsiOpenPackageExW)(LPCWSTR, DWORD, MSIHANDLE*);
 fnMsiOpenPackageExW pMsiOpenPackageExW;
+typedef INSTALLSTATE (WINAPI *fnMsiGetComponentPathA)(LPCSTR, LPCSTR, LPSTR, DWORD*);
+fnMsiGetComponentPathA pMsiGetComponentPathA;
 
 static void test_usefeature(void)
 {
@@ -83,6 +85,46 @@ static void test_null(void)
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
 }
 
+static void test_getcomponentpath(void)
+{
+    INSTALLSTATE r;
+    char buffer[0x100];
+    DWORD sz;
+
+    if(!pMsiGetComponentPathA)
+        return;
+
+    r = pMsiGetComponentPathA( NULL, NULL, NULL, NULL );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "bogus", "bogus", NULL, NULL );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "bogus", "{00000000-0000-0000-000000000000}", NULL, NULL );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    sz = sizeof buffer;
+    buffer[0]=0;
+    r = pMsiGetComponentPathA( "bogus", "{00000000-0000-0000-000000000000}", buffer, &sz );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "{00000000-78E1-11D2-B60F-006097C998E7}",
+        "{00000000-0000-0000-0000-000000000000}", buffer, &sz );
+    ok( r == INSTALLSTATE_UNKNOWN, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "{00000409-78E1-11D2-B60F-006097C998E7}",
+        "{00000000-0000-0000-0000-00000000}", buffer, &sz );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "{00000409-78E1-11D2-B60F-006097C998E7}",
+        "{029E403D-A86A-1D11-5B5B0006799C897E}", buffer, &sz );
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return value\n");
+
+    r = pMsiGetComponentPathA( "{00000000-78E1-11D2-B60F-006097C9987e}",
+                            "{00000000-A68A-11d1-5B5B-0006799C897E}", buffer, &sz );
+    ok( r == INSTALLSTATE_UNKNOWN, "wrong return value\n");
+}
+
 START_TEST(msi)
 {
     HMODULE hmod = GetModuleHandle("msi.dll");
@@ -92,7 +134,10 @@ START_TEST(msi)
         GetProcAddress(hmod, "MsiOpenPackageExA");
     pMsiOpenPackageExW = (fnMsiOpenPackageExW) 
         GetProcAddress(hmod, "MsiOpenPackageExW");
+    pMsiGetComponentPathA = (fnMsiGetComponentPathA)
+        GetProcAddress(hmod, "MsiGetComponentPathA" );
 
     test_usefeature();
     test_null();
+    test_getcomponentpath();
 }

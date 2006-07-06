@@ -977,7 +977,7 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
 INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
                                          awstring* lpPathBuf, DWORD* pcchBuf)
 {
-    WCHAR squished_pc[GUID_SIZE];
+    WCHAR squished_pc[GUID_SIZE], squished_comp[GUID_SIZE];
     UINT rc;
     INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
     HKEY hkey = 0;
@@ -992,7 +992,9 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if( lpPathBuf && !pcchBuf )
         return INSTALLSTATE_INVALIDARG;
 
-    squash_guid( szProduct, squished_pc );
+    if (!squash_guid( szProduct, squished_pc ) ||
+        !squash_guid( szComponent, squished_comp ))
+        return INSTALLSTATE_INVALIDARG;
 
     rc = MSIREG_OpenProductsKey( szProduct, &hkey, FALSE);
     if( rc != ERROR_SUCCESS )
