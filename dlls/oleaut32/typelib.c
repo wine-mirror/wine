@@ -6544,7 +6544,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
     *ppTInfo = NULL;
 
     for(pFDesc = This->funclist; pFDesc; pFDesc = pFDesc->next)
-        if (!strcmpW(pFDesc->Name, szName)) {
+        if (!strcmpiW(pFDesc->Name, szName)) {
             if (!wFlags || (pFDesc->funcdesc.invkind & wFlags))
                 break;
             else
@@ -6566,7 +6566,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         return S_OK;
     } else {
         for(pVDesc = This->varlist; pVDesc; pVDesc = pVDesc->next) {
-            if (!strcmpW(pVDesc->Name, szName)) {
+            if (!strcmpiW(pVDesc->Name, szName)) {
                 HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
                 if (FAILED(hr))
                     return hr;

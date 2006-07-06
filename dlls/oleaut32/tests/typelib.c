@@ -83,6 +83,7 @@ static void test_TypeComp(void)
     static WCHAR wszStdPicture[] = {'S','t','d','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_COLOR[] = {'O','L','E','_','C','O','L','O','R',0};
     static WCHAR wszClone[] = {'C','l','o','n','e',0};
+    static WCHAR wszclone[] = {'c','l','o','n','e',0};
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -244,6 +245,18 @@ static void test_TypeComp(void)
         desckind);
     ok(!pTypeInfo, "pTypeInfo should have been set to NULL\n");
     ok(!bindptr.lptcomp, "bindptr should have been set to NULL\n");
+
+    /* tests that the compare is case-insensitive */
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszclone);
+    hr = ITypeComp_Bind(pTypeComp, wszclone, ulHash, 0, &pTypeInfo, &desckind, &bindptr);
+    ok_ole_success(hr, ITypeComp_Bind);
+
+    ok(desckind == DESCKIND_FUNCDESC,
+        "desckind should have been DESCKIND_FUNCDESC instead of %d\n",
+        desckind);
+    ok(bindptr.lpfuncdesc != NULL, "bindptr.lpfuncdesc should not have been set to NULL\n");
+    ITypeInfo_ReleaseFuncDesc(pTypeInfo, bindptr.lpfuncdesc);
+    ITypeInfo_Release(pTypeInfo);
 
     ITypeComp_Release(pTypeComp);
     ITypeInfo_Release(pFontTypeInfo);
