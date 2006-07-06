@@ -434,6 +434,12 @@ static BOOL image_pjpeg_filter(LPVOID buf, DWORD size)
     return size > 2 && *(BYTE*)buf == 0xff && *((BYTE*)buf+1) == 0xd8;
 }
 
+static BOOL image_xpng_filter(LPVOID buf, DWORD size)
+{
+    static const BYTE xpng_header[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a};
+    return size > sizeof(xpng_header) && !memcmp(buf, xpng_header, sizeof(xpng_header));
+}
+
 static BOOL image_bmp_filter(LPVOID buf, DWORD size)
 {
     return size >= 14
@@ -496,6 +502,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
         static const WCHAR wszImageGif[] = {'i','m','a','g','e','/','g','i','f',0};
         static const WCHAR wszImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
+        static const WCHAR wszImageXPng[] = {'i','m','a','g','e','/','x','-','p','n','g',0};
         static const WCHAR wszImageBmp[] = {'i','m','a','g','e','/','b','m','p',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
         static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
@@ -508,6 +515,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             {wszTextHtml,       text_html_filter},
             {wszImageGif,       image_gif_filter},
             {wszImagePjpeg,     image_pjpeg_filter},
+            {wszImageXPng,      image_xpng_filter},
             {wszImageBmp,       image_bmp_filter},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
