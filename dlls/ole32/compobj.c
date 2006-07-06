@@ -1540,25 +1540,25 @@ end:
  *
  *	Reads a registry value and expands it when necessary
  */
-HRESULT COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen)
+static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen)
 {
-	HRESULT hres;
+	DWORD ret;
 	HKEY key;
 	DWORD keytype;
 	WCHAR src[MAX_PATH];
 	DWORD dwLength = dstlen * sizeof(WCHAR);
 
-	if((hres = RegOpenKeyExW(hkeyroot, keyname, 0, KEY_READ, &key)) == ERROR_SUCCESS) {
-          if( (hres = RegQueryValueExW(key, NULL, NULL, &keytype, (LPBYTE)src, &dwLength)) == ERROR_SUCCESS ) {
+	if((ret = RegOpenKeyExW(hkeyroot, keyname, 0, KEY_READ, &key)) == ERROR_SUCCESS) {
+          if( (ret = RegQueryValueExW(key, NULL, NULL, &keytype, (LPBYTE)src, &dwLength)) == ERROR_SUCCESS ) {
             if (keytype == REG_EXPAND_SZ) {
-              if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) hres = ERROR_MORE_DATA;
+              if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
               lstrcpynW(dst, src, dstlen);
             }
 	  }
           RegCloseKey (key);
 	}
-	return hres;
+	return ret;
 }
 
 static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv)
