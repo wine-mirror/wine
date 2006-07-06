@@ -165,7 +165,8 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
             if (ValBuf) {
                 ListView_SetItemText(hwndLV, index, 2, ValBuf);
             } else {
-                ListView_SetItemText(hwndLV, index, 2, "(not set)");
+                TCHAR textT[] = {'(','n','o','t',' ','s','e','t',')',0};
+                ListView_SetItemText(hwndLV, index, 2, textT);
             }
             break;
         case REG_DWORD: {
