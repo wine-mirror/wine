@@ -809,6 +809,7 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     tmpArg.buffer      = arg->buffer;
     tmpArg.src[0]      = arg->src[0];
     tmpArg.src_addr[0] = arg->src_addr[0];
+    tmpArg.src_addr[1] = arg->src_addr[1];
     tmpArg.reg_maps = arg->reg_maps;
 
     switch(arg->opcode->opcode) {

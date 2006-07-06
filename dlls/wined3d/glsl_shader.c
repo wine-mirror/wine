@@ -995,6 +995,7 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     tmpArg.buffer      = arg->buffer;
     tmpArg.src[0]      = arg->src[0];
     tmpArg.src_addr[0] = arg->src_addr[0];
+    tmpArg.src_addr[1] = arg->src_addr[1];
     tmpArg.reg_maps = arg->reg_maps; 
     
     switch(arg->opcode->opcode) {
@@ -1025,7 +1026,6 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     for (i = 0; i < nComponents; i++) {
         tmpArg.dst = ((arg->dst) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
         tmpArg.src[1]      = arg->src[1]+i;
-	tmpArg.src_addr[1] = arg->src[1]+i;
         shader_glsl_dot(&tmpArg);
     }
 }
