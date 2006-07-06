@@ -99,6 +99,21 @@ struct JoyDev {
 	BYTE				absbits[(ABS_MAX+7)/8];
 	BYTE				keybits[(KEY_MAX+7)/8];
 	BYTE				ffbits[(FF_MAX+7)/8];	
+
+#define AXE_ABS		0
+#define AXE_ABSMIN	1
+#define AXE_ABSMAX	2
+#define AXE_ABSFUZZ	3
+#define AXE_ABSFLAT	4
+
+	/* data returned by the EVIOCGABS() ioctl */
+	int				axes[ABS_MAX][5];
+	/* LUT for KEY_ to offset in rgbButtons */
+	BYTE				buttons[KEY_MAX];
+
+	/* autodetecting ranges per axe by following movement */
+	LONG				havemax[ABS_MAX];
+	LONG				havemin[ABS_MAX];
 };
 
 struct JoystickImpl
@@ -117,10 +132,6 @@ struct JoystickImpl
 	LONG				wantmax[ABS_MAX];
 	LONG				deadz[ABS_MAX];
 
-	/* autodetecting ranges per axe by following movement */
-	LONG				havemax[ABS_MAX];
-	LONG				havemin[ABS_MAX];
-
 	int				joyfd;
 
 	LPDIDATAFORMAT			internal_df;
@@ -138,17 +149,6 @@ struct JoystickImpl
 	int				num_effects;
 	EffectListItem*			top_effect;
 	int				ff_state;
-
-	/* data returned by the EVIOCGABS() ioctl */
-	int				axes[ABS_MAX][5];
-	/* LUT for KEY_ to offset in rgbButtons */
-	BYTE				buttons[KEY_MAX];
-
-#define AXE_ABS		0
-#define AXE_ABSMIN	1
-#define AXE_ABSMAX	2
-#define AXE_ABSFUZZ	3
-#define AXE_ABSFLAT	4
 };
 
 static void fake_current_js_state(JoystickImpl *ji);
@@ -189,6 +189,7 @@ static void find_joydevs(void)
     struct JoyDev joydev = {0};
     int fd;
     int no_ff_check = 0;
+    int j, buttons;
 
     snprintf(buf,MAX_PATH,EVDEVPREFIX"%d",i);
     buf[MAX_PATH-1] = 0;
@@ -253,6 +254,32 @@ static void find_joydevs(void)
 	  }
         }
 #endif
+
+	for (j=0;j<ABS_MAX;j++) {
+	  if (test_bit(joydev.absbits,j)) {
+	    if (-1!=ioctl(fd,EVIOCGABS(j),&(joydev.axes[j]))) {
+	      TRACE(" ... with axe %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
+		  j,
+		  joydev.axes[j][AXE_ABS],
+		  joydev.axes[j][AXE_ABSMIN],
+		  joydev.axes[j][AXE_ABSMAX],
+		  joydev.axes[j][AXE_ABSFUZZ],
+		  joydev.axes[j][AXE_ABSFLAT]
+		  );
+	      joydev.havemin[j] = joydev.axes[j][AXE_ABSMIN];
+	      joydev.havemax[j] = joydev.axes[j][AXE_ABSMAX];
+	    }
+	  }
+	}
+
+	buttons = 0;
+	for (j=0;j<KEY_MAX;j++) {
+	  if (test_bit(joydev.keybits,j)) {
+	    TRACE(" ... with button %d: %d\n", j, buttons);
+	    joydev.buttons[j] = 0x80 | buttons;
+	    buttons++;
+	  }
+	}
 
 	if (have_joydevs==0) {
 	  joydevs = HeapAlloc(GetProcessHeap(), 0, sizeof(struct JoyDev));
@@ -358,8 +385,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 #endif
   memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
   for (i=0;i<ABS_MAX;i++) {
-    newDevice->wantmin[i] = -32768;
-    newDevice->wantmax[i] =  32767;
+    /* apps expect the range to be the same they would get from the
+     * GetProperty/range method */
+    newDevice->wantmin[i] = newDevice->joydev->havemin[i];
+    newDevice->wantmax[i] = newDevice->joydev->havemax[i];
     /* TODO: 
      * direct input defines a default for the deadzone somewhere; but as long
      * as in map_axis the code for the dead zone is commented out its no
@@ -576,7 +605,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   */
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    int		i, buttons;
     JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(this=%p)\n",This);
@@ -596,33 +624,6 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
         WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
       }
     }
-
-    for (i=0;i<ABS_MAX;i++) {
-	if (test_bit(This->joydev->absbits,i)) {
-	  if (-1==ioctl(This->joyfd,EVIOCGABS(i),&(This->axes[i])))
-	    continue;
-	  TRACE("axe %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
-	      i,
-	      This->axes[i][AXE_ABS],
-	      This->axes[i][AXE_ABSMIN],
-	      This->axes[i][AXE_ABSMAX],
-	      This->axes[i][AXE_ABSFUZZ],
-	      This->axes[i][AXE_ABSFLAT]
-	  );
-	  This->havemin[i] = This->axes[i][AXE_ABSMIN];
-	  This->havemax[i] = This->axes[i][AXE_ABSMAX];
-	}
-    }
-    buttons = 0;
-    for (i=0;i<KEY_MAX;i++) {
-	    if (test_bit(This->joydev->keybits,i)) {
-		    TRACE("button %d: %d\n", i, buttons);
-		    This->buttons[i] = 0x80 | buttons;
-		    buttons++;
-	    }
-    }
-
-    fake_current_js_state(This);
 
     return 0;
 }
@@ -651,16 +652,16 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  */
 static int
 map_axis(JoystickImpl* This, int axis, int val) {
-    int	xmin = This->axes[axis][AXE_ABSMIN];
-    int	xmax = This->axes[axis][AXE_ABSMAX];
-    int hmax = This->havemax[axis];
-    int hmin = This->havemin[axis];
+    int	xmin = This->joydev->axes[axis][AXE_ABSMIN];
+    int	xmax = This->joydev->axes[axis][AXE_ABSMAX];
+    int hmax = This->joydev->havemax[axis];
+    int hmin = This->joydev->havemin[axis];
     int	wmin = This->wantmin[axis];
     int	wmax = This->wantmax[axis];
     int ret;
 
-    if (val > hmax) This->havemax[axis] = hmax = val;
-    if (val < hmin) This->havemin[axis] = hmin = val;
+    if (val > hmax) This->joydev->havemax[axis] = hmax = val;
+    if (val < hmin) This->joydev->havemin[axis] = hmin = val;
 
     if (xmin == xmax) return val;
 
@@ -687,14 +688,14 @@ static void fake_current_js_state(JoystickImpl *ji)
 {
 	int i;
 	/* center the axes */
-	ji->js.lX  = map_axis(ji, ABS_X,  ji->axes[ABS_X ][AXE_ABS]);
-	ji->js.lY  = map_axis(ji, ABS_Y,  ji->axes[ABS_Y ][AXE_ABS]);
-	ji->js.lZ  = map_axis(ji, ABS_Z,  ji->axes[ABS_Z ][AXE_ABS]);
-	ji->js.lRx = map_axis(ji, ABS_RX, ji->axes[ABS_RX][AXE_ABS]);
-	ji->js.lRy = map_axis(ji, ABS_RY, ji->axes[ABS_RY][AXE_ABS]);
-	ji->js.lRz = map_axis(ji, ABS_RZ, ji->axes[ABS_RZ][AXE_ABS]);
-	ji->js.rglSlider[0] = map_axis(ji, ABS_THROTTLE, ji->axes[ABS_THROTTLE][AXE_ABS]);
-	ji->js.rglSlider[1] = map_axis(ji, ABS_RUDDER,   ji->axes[ABS_RUDDER  ][AXE_ABS]);
+	ji->js.lX  = map_axis(ji, ABS_X,  ji->joydev->axes[ABS_X ][AXE_ABS]);
+	ji->js.lY  = map_axis(ji, ABS_Y,  ji->joydev->axes[ABS_Y ][AXE_ABS]);
+	ji->js.lZ  = map_axis(ji, ABS_Z,  ji->joydev->axes[ABS_Z ][AXE_ABS]);
+	ji->js.lRx = map_axis(ji, ABS_RX, ji->joydev->axes[ABS_RX][AXE_ABS]);
+	ji->js.lRy = map_axis(ji, ABS_RY, ji->joydev->axes[ABS_RY][AXE_ABS]);
+	ji->js.lRz = map_axis(ji, ABS_RZ, ji->joydev->axes[ABS_RZ][AXE_ABS]);
+	ji->js.rglSlider[0] = map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXE_ABS]);
+	ji->js.rglSlider[1] = map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXE_ABS]);
 	/* POV center is -1 */
 	for (i=0; i<4; i++) {
 		ji->js.rgdwPOV[i] = -1;
@@ -886,7 +887,7 @@ static void joy_polldev(JoystickImpl *This) {
 	TRACE("input_event: type %d, code %d, value %d\n",ie.type,ie.code,ie.value);
 	switch (ie.type) {
 	case EV_KEY:	/* button */
-            btn = This->buttons[ie.code];
+            btn = This->joydev->buttons[ie.code];
             TRACE("(%p) %d -> %d\n", This, ie.code, btn);
             if (btn&0x80) {
               btn &= 0x7F;
