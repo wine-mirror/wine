@@ -6535,6 +6535,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
     const TLBFuncDesc *pFDesc;
     const TLBVarDesc *pVDesc;
+    HRESULT hr = DISP_E_MEMBERNOTFOUND;
 
     TRACE("(%s, %lx, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
@@ -6543,10 +6544,13 @@ static HRESULT WINAPI ITypeComp_fnBind(
     *ppTInfo = NULL;
 
     for(pFDesc = This->funclist; pFDesc; pFDesc = pFDesc->next)
-        if (!wFlags || (pFDesc->funcdesc.invkind & wFlags))
-            if (!strcmpW(pFDesc->Name, szName)) {
+        if (!strcmpW(pFDesc->Name, szName)) {
+            if (!wFlags || (pFDesc->funcdesc.invkind & wFlags))
                 break;
-            }
+            else
+                /* name found, but wrong flags */
+                hr = TYPE_E_TYPEMISMATCH;
+        }
 
     if (pFDesc)
     {
@@ -6574,7 +6578,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
     }
     /* FIXME: search each inherited interface, not just the first */
-    if (This->TypeAttr.cImplTypes) {
+    if (hr == DISP_E_MEMBERNOTFOUND && This->TypeAttr.cImplTypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;
@@ -6594,7 +6598,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         WARN("Could not search inherited interface!\n");
     }
     WARN("did not find member with name %s, flags 0x%x!\n", debugstr_w(szName), wFlags);
-    return DISP_E_MEMBERNOTFOUND;
+    return hr;
 }
 
 static HRESULT WINAPI ITypeComp_fnBindType(

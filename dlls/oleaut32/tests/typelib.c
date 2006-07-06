@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "oleauto.h"
+#include "ocidl.h"
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 
@@ -71,6 +72,7 @@ static void test_TypeComp(void)
     DESCKIND desckind;
     BINDPTR bindptr;
     ITypeInfo *pTypeInfo;
+    ITypeInfo *pFontTypeInfo;
     static WCHAR wszStdFunctions[] = {'S','t','d','F','u','n','c','t','i','o','n','s',0};
     static WCHAR wszSavePicture[] = {'S','a','v','e','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_TRISTATE[] = {'O','L','E','_','T','R','I','S','T','A','T','E',0};
@@ -80,6 +82,7 @@ static void test_TypeComp(void)
     static WCHAR wszGUID[] = {'G','U','I','D',0};
     static WCHAR wszStdPicture[] = {'S','t','d','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_COLOR[] = {'O','L','E','_','C','O','L','O','R',0};
+    static WCHAR wszClone[] = {'C','l','o','n','e',0};
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -213,6 +216,37 @@ static void test_TypeComp(void)
     ok(!bindptr.lptcomp, "bindptr should have been set to NULL\n");
 
     ITypeComp_Release(pTypeComp);
+
+    /* tests for ITypeComp on an interface */
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IFont, &pFontTypeInfo);
+    ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid);
+
+    hr = ITypeInfo_GetTypeComp(pFontTypeInfo, &pTypeComp);
+    ok_ole_success(hr, ITypeLib_GetTypeComp);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszClone);
+    hr = ITypeComp_Bind(pTypeComp, wszClone, ulHash, 0, &pTypeInfo, &desckind, &bindptr);
+    ok_ole_success(hr, ITypeComp_Bind);
+
+    ok(desckind == DESCKIND_FUNCDESC,
+        "desckind should have been DESCKIND_FUNCDESC instead of %d\n",
+        desckind);
+    ok(bindptr.lpfuncdesc != NULL, "bindptr.lpfuncdesc should not have been set to NULL\n");
+    ITypeInfo_ReleaseFuncDesc(pTypeInfo, bindptr.lpfuncdesc);
+    ITypeInfo_Release(pTypeInfo);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszClone);
+    hr = ITypeComp_Bind(pTypeComp, wszClone, ulHash, INVOKE_PROPERTYGET, &pTypeInfo, &desckind, &bindptr);
+    ok(hr == TYPE_E_TYPEMISMATCH, "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08lx\n", hr);
+
+    ok(desckind == DESCKIND_NONE,
+        "desckind should have been DESCKIND_NONE instead of %d\n",
+        desckind);
+    ok(!pTypeInfo, "pTypeInfo should have been set to NULL\n");
+    ok(!bindptr.lptcomp, "bindptr should have been set to NULL\n");
+
+    ITypeComp_Release(pTypeComp);
+    ITypeInfo_Release(pFontTypeInfo);
     ITypeLib_Release(pTypeLib);
 }
 
