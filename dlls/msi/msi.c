@@ -1123,15 +1123,25 @@ end:
 /******************************************************************
  * MsiQueryFeatureStateW      [MSI.@]
  *
- * This does not verify that the Feature is functional. So i am only going to
- * check the existence of the key in the registry. This should tell me if it is
- * installed.
+ * Checks the state of a feature
+ *
+ * PARAMS
+ *   szProduct     [I]  Product's GUID string
+ *   szFeature     [I]  Feature's GUID string
+ *
+ * RETURNS
+ *   INSTALLSTATE_LOCAL        Feature is installed and useable
+ *   INSTALLSTATE_ABSENT       Feature is absent
+ *   INSTALLSTATE_ADVERTISED   Feature should be installed on demand
+ *   INSTALLSTATE_UNKNOWN      An error occured
+ *   INSTALLSTATE_INVALIDARG   One of the GUIDs was invalid
+ *
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
-    WCHAR squishProduct[GUID_SIZE];
+    WCHAR squishProduct[GUID_SIZE], buffer[MAX_FEATURE_CHARS+2];
     UINT rc;
-    DWORD sz = 0;
+    DWORD sz, type;
     HKEY hkey;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
@@ -1142,17 +1152,30 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (!squash_guid( szProduct, squishProduct ))
         return INSTALLSTATE_INVALIDARG;
 
-    rc = MSIREG_OpenFeaturesKey(szProduct, &hkey, FALSE);
+    rc = MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
         return INSTALLSTATE_UNKNOWN;
 
-    rc = RegQueryValueExW( hkey, szFeature, NULL, NULL, NULL, &sz);
+    buffer[0] = 0;
+    sz = sizeof buffer;
+    type = 0;
+    rc = RegQueryValueExW(hkey, szFeature, NULL, &type, (LPBYTE) buffer, &sz);
     RegCloseKey(hkey);
 
-    if (rc == ERROR_SUCCESS)
-        return INSTALLSTATE_LOCAL;
+    TRACE("rc = %d buffer = %s\n", rc, debugstr_w(buffer));
 
-    return INSTALLSTATE_UNKNOWN;
+    if (rc != ERROR_SUCCESS || sz == 0 || type != REG_SZ)
+        return INSTALLSTATE_UNKNOWN;
+
+    if (buffer[0] == 6)
+        return INSTALLSTATE_ABSENT;
+
+    /* FIXME:
+     * Return INSTALLSTATE_ADVERTISED when
+     * the components exist in the registry, but not on the disk.
+     */
+
+    return INSTALLSTATE_LOCAL;
 }
 
 /******************************************************************
