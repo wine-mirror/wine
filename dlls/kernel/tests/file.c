@@ -1451,56 +1451,175 @@ static void test_OpenFile(void)
     DWORD retval;
     
     static const char *file = "\\regsvr32.exe";
+    static const char *foo = ".\\foo-bar-foo.baz";
+    static const char *foo_too_long = ".\\foo-bar-foo.baz+++++++++++++++"
+        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    static const char *backslash = "\\";
     char buff[MAX_PATH];
+    char buff_long[4*MAX_PATH];
+    char filled_0xA5[OFS_MAXPATHNAME];
     UINT length;
     
     /* Check for existing file */
     length = GetSystemDirectoryA(buff, MAX_PATH);
 
-    if ((length + lstrlen(file) < MAX_PATH))
+    if (length + lstrlen(file) < MAX_PATH)
     {
-	lstrcatA(buff, file);
+        lstrcatA(buff, file);
+        memset(&ofs, 0xA5, sizeof(ofs));
+        SetLastError(0xfaceabee);
 
-	hFile = OpenFile(buff, &ofs, OF_EXIST);
-	ok( hFile == TRUE, "%s not found : %ld\n", buff, GetLastError());
+        hFile = OpenFile(buff, &ofs, OF_EXIST);
+        ok( hFile == TRUE, "%s not found : %ld\n", buff, GetLastError() );
+        ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+            "GetLastError() returns %ld\n", GetLastError() );
+        ok( ofs.cBytes == sizeof(ofs), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+        ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+        ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+            "OpenFile returned '%s', but was expected to return '%s' or string filled with 0xA5\n",
+            ofs.szPathName, buff );
     }
 
-    /* Check for nonexistent file */ 
-    SetLastError(0xfaceabee);
-    hFile = OpenFile(".\\foo-bar-foo.baz", &ofs, OF_EXIST);
-    ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() returns %ld\n", GetLastError() );
+    memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+    length = GetCurrentDirectoryA(MAX_PATH, buff);
 
+    /* Check for nonexistent file */
+    if (length + lstrlenA(foo + 1) < MAX_PATH)
+    {
+        lstrcatA(buff, foo + 1); /* Avoid '.' during concatenation */
+        memset(&ofs, 0xA5, sizeof(ofs));
+        SetLastError(0xfaceabee);
+
+        hFile = OpenFile(foo, &ofs, OF_EXIST);
+        ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
+        ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() returns %ld\n", GetLastError() );
+        todo_wine
+        ok( ofs.cBytes == 0xA5, "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+        ok( ofs.nErrCode == ERROR_FILE_NOT_FOUND, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+        ok( lstrcmpiA(ofs.szPathName, buff) == 0 || strncmp(ofs.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0,
+            "OpenFile returned '%s', but was expected to return '%s' or string filled with 0xA5\n", 
+            ofs.szPathName, buff );
+    }
+
+    length = GetCurrentDirectoryA(MAX_PATH, buff_long);
+    length += lstrlenA(foo_too_long + 1);
+
+    /* Check for nonexistent file with too long filename */ 
+    if (length >= OFS_MAXPATHNAME && length < sizeof(buff_long)) 
+    {
+        lstrcatA(buff_long, foo_too_long + 1); /* Avoid '.' during concatenation */
+        memset(&ofs, 0xA5, sizeof(ofs));
+        SetLastError(0xfaceabee);
+
+        hFile = OpenFile(foo_too_long, &ofs, OF_EXIST);
+        ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
+        ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_FILENAME_EXCED_RANGE, 
+            "GetLastError() returns %ld\n", GetLastError() );
+        todo_wine
+        ok( ofs.cBytes == 0xA5, "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+        ok( ofs.nErrCode == ERROR_INVALID_DATA || ofs.nErrCode == ERROR_FILENAME_EXCED_RANGE,
+            "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+        ok( strncmp(ofs.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
+            "OpenFile returned '%s', but was expected to return string filled with 0xA5\n", 
+            ofs.szPathName );
+    }
+
+    length = GetCurrentDirectoryA(MAX_PATH, buff);
+    length += lstrlenA(backslash);
+    length += lstrlenA(filename);
+
+    if (length >= MAX_PATH) 
+    {
+        trace("Buffer too small, requested length = %d, but MAX_PATH = %d.  Skipping test.\n", length, MAX_PATH);
+        return;
+    }
+    lstrcatA(buff, backslash);
+    lstrcatA(buff, filename);
+
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
     /* Create an empty file */
     hFile = OpenFile(filename, &ofs, OF_CREATE);
     ok( hFile != HFILE_ERROR, "OpenFile failed to create nonexistent file\n" );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ret = CloseHandle((HANDLE)hFile);
     ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
     retval = GetFileAttributesA(filename);
     ok( retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError() );
 
-    /* Check various opening options */
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
+    /* Check various opening options: */
+    /* for reading only, */
     hFile = OpenFile(filename, &ofs, OF_READ);
     ok( hFile != HFILE_ERROR, "OpenFile failed on read\n" );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
     ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
 
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
+    /* for writing only, */
     hFile = OpenFile(filename, &ofs, OF_WRITE);
     ok( hFile != HFILE_ERROR, "OpenFile failed on write\n" );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
     ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
 
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
+    /* for reading and writing, */
     hFile = OpenFile(filename, &ofs, OF_READWRITE);
     ok( hFile != HFILE_ERROR, "OpenFile failed on read/write\n" );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
     ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
 
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
+    /* for checking file presence. */
     hFile = OpenFile(filename, &ofs, OF_EXIST);
     ok( hFile == 1, "OpenFile failed on finding our created file\n" );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
 
+    memset(&ofs, 0xA5, sizeof(ofs));
+    SetLastError(0xfaceabee);
     /* Delete the file and make sure it doesn't exist anymore */
     hFile = OpenFile(filename, &ofs, OF_DELETE);
     ok( hFile == 1, "OpenFile failed on delete (%d)\n", hFile );
+    ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
+        "GetLastError() returns %ld\n", GetLastError() );
+    ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
+    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
 
     retval = GetFileAttributesA(filename);
     ok( retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file\n" );
