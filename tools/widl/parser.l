@@ -172,6 +172,8 @@ static struct keyword {
 	int token;
 	int val;
 } keywords[] = {
+	{"FALSE",			tFALSE},
+	{"TRUE",			tTRUE},
 	{"__cdecl",			tCDECL},
 	{"__int64",			tINT64},
 	{"__stdcall",			tSTDCALL},
@@ -307,7 +309,7 @@ static struct keyword {
 	{"version",			tVERSION},
 	{"void",			tVOID},
 	{"wchar_t",			tWCHAR},
-	{"wire_marshal",		tWIREMARSHAL}
+	{"wire_marshal",		tWIREMARSHAL},
 };
 #define NKEYWORDS (sizeof(keywords)/sizeof(keywords[0]))
 #define KWP(p) ((const struct keyword *)(p))

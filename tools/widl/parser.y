@@ -141,6 +141,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tENDPOINT
 %token tENTRY tENUM tERRORSTATUST
 %token tEXPLICITHANDLE tEXTERN
+%token tFALSE
 %token tFLOAT
 %token tHANDLE
 %token tHANDLET
@@ -188,6 +189,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tSTRING tSTRUCT
 %token tSWITCH tSWITCHIS tSWITCHTYPE
 %token tTRANSMITAS
+%token tTRUE
 %token tTYPEDEF
 %token tUNION
 %token tUNIQUE
@@ -496,6 +498,8 @@ m_expr:						{ $$ = make_expr(EXPR_VOID); }
 
 expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
+	| tFALSE				{ $$ = make_exprl(EXPR_TRUEFALSE, 0); }
+	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
 	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
 	| expr '|' expr				{ $$ = make_expr2(EXPR_OR , $1, $3); }
@@ -859,7 +863,9 @@ static expr_t *make_exprl(enum expr_type type, long val)
   e->is_const = FALSE;
   INIT_LINK(e);
   /* check for numeric constant */
-  if (type == EXPR_NUM || type == EXPR_HEXNUM) {
+  if (type == EXPR_NUM || type == EXPR_HEXNUM || type == EXPR_TRUEFALSE) {
+    /* make sure true/false value is valid */
+    assert(type != EXPR_TRUEFALSE || val == 0 || val == 1);
     e->is_const = TRUE;
     e->cval = val;
   }

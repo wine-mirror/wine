@@ -73,6 +73,7 @@ static int compare_expr(const expr_t *a, const expr_t *b)
     {
         case EXPR_NUM:
         case EXPR_HEXNUM:
+        case EXPR_TRUEFALSE:
             return a->u.lval - b->u.lval;
         case EXPR_IDENTIFIER:
             return strcmp(a->u.sval, b->u.sval);
@@ -1956,6 +1957,12 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             break;
         case EXPR_HEXNUM:
             fprintf(h, "0x%lx", e->u.lval);
+            break;
+        case EXPR_TRUEFALSE:
+            if (e->u.lval == 0)
+                fprintf(h, "FALSE");
+            else
+                fprintf(h, "TRUE");
             break;
         case EXPR_IDENTIFIER:
         {
