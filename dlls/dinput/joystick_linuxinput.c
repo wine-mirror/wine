@@ -1443,13 +1443,14 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     }
 
     case (DWORD) DIPROP_RANGE: {
-      /* LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph; */
-      if ((pdiph->dwHow == DIPH_BYID) &&
-	  (pdiph->dwObj & DIDFT_ABSAXIS)) {
-	/* The app is querying the current range of the axis : return the lMin and lMax values */
-	FIXME("unimplemented axis range query.\n");
+      LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
+      int obj = find_property_offset(This, pdiph);
+      if (obj >= 0) {
+	pr->lMin = This->joydev->havemin[obj];
+	pr->lMax = This->joydev->havemax[obj];
+	TRACE("range(%ld, %ld) obj=%d\n", pr->lMin, pr->lMax, obj);
+	return DI_OK;
       }
-
       break;
     }
 
