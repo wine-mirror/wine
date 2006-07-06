@@ -416,6 +416,19 @@ static BOOL text_html_filter(LPVOID buf, DWORD size)
     return FALSE;
 }
 
+static BOOL image_gif_filter(LPVOID buf, DWORD size)
+{
+    const BYTE const *b = buf;
+
+    return size >= 6
+        && (b[0] == 'G' || b[0] == 'g')
+        && (b[1] == 'I' || b[1] == 'i')
+        && (b[2] == 'F' || b[2] == 'f')
+        &&  b[3] == '8'
+        && (b[4] == '7' || b[4] == '9')
+        && (b[5] == 'A' || b[5] == 'a');
+}
+
 static BOOL image_pjpeg_filter(LPVOID buf, DWORD size)
 {
     return size > 2 && *(BYTE*)buf == 0xff && *((BYTE*)buf+1) == 0xd8;
@@ -473,6 +486,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         int i;
 
         static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+        static const WCHAR wszImageGif[] = {'i','m','a','g','e','/','g','i','f',0};
         static const WCHAR wszImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
         static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
@@ -483,6 +497,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             BOOL (*filter)(LPVOID,DWORD);
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
+            {wszImageGif,       image_gif_filter},
             {wszImagePjpeg,     image_pjpeg_filter},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
