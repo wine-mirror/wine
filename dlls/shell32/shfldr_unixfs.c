@@ -1763,6 +1763,87 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
     }
 }
 
+/*
+ * Delete specified files by converting the path to DOS paths and calling
+ * SHFileOperationW. If an error occurs it returns an error code. If the paths can't
+ * be converted, S_FALSE is returned. In such situation DeleteItems will try to delete
+ * the files using syscalls
+ */
+static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, LPCITEMIDLIST *apidl)
+{
+    char szAbsolute[FILENAME_MAX], *pszRelative;
+    LPWSTR wszPathsList, wszListPos;
+    SHFILEOPSTRUCTW op;
+    HRESULT ret;
+    int i;
+    
+    lstrcpyA(szAbsolute, This->m_pszPath);
+    pszRelative = szAbsolute + lstrlenA(szAbsolute);
+    
+    wszListPos = wszPathsList = HeapAlloc(GetProcessHeap(), 0, cidl*MAX_PATH*sizeof(WCHAR)+1);
+    if (wszPathsList == NULL)
+        return E_OUTOFMEMORY;
+    for (i=0; i<cidl; i++) {
+        LPWSTR wszDosPath;
+        
+        if (!_ILIsFolder(apidl[i]) && !_ILIsValue(apidl[i]))
+            continue;
+        if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelative))
+        {
+            HeapFree(GetProcessHeap(), 0, wszPathsList);
+            return E_INVALIDARG;
+        }
+        wszDosPath = wine_get_dos_file_name(szAbsolute);
+        if (wszDosPath == NULL || lstrlenW(wszDosPath) >= MAX_PATH)
+        {
+            HeapFree(GetProcessHeap(), 0, wszPathsList);
+            HeapFree(GetProcessHeap(), 0, wszDosPath);
+            return S_FALSE;
+        }
+        lstrcpyW(wszListPos, wszDosPath);
+        wszListPos += lstrlenW(wszListPos)+1;
+        HeapFree(GetProcessHeap(), 0, wszDosPath);
+    }
+    *wszListPos = 0;
+    
+    ZeroMemory(&op, sizeof(op));
+    op.hwnd = GetActiveWindow();
+    op.wFunc = FO_DELETE;
+    op.pFrom = wszPathsList;
+    if (!SHFileOperationW(&op))
+    {
+        WARN("SHFileOperationW failed\n");
+        ret = E_FAIL;
+    }
+    else
+        ret = S_OK;
+
+    HeapFree(GetProcessHeap(), 0, wszPathsList);
+    return ret;
+}
+
+static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, LPCITEMIDLIST *apidl)
+{
+    char szAbsolute[FILENAME_MAX], *pszRelative;
+    int i;
+    
+    lstrcpyA(szAbsolute, This->m_pszPath);
+    pszRelative = szAbsolute + lstrlenA(szAbsolute);
+    
+    for (i=0; i<cidl; i++) {
+        if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelative))
+            return E_INVALIDARG;
+        if (_ILIsFolder(apidl[i])) {
+            if (rmdir(szAbsolute))
+                return E_FAIL;
+        } else if (_ILIsValue(apidl[i])) {
+            if (unlink(szAbsolute))
+                return E_FAIL;
+        }
+    }
+    return S_OK;
+}
+
 static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT cidl, 
     LPCITEMIDLIST* apidl)
 {
@@ -1771,26 +1852,27 @@ static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT ci
     LPITEMIDLIST pidlAbsolute;
     HRESULT hr = S_OK;
     UINT i;
+    struct stat st;
     
     TRACE("(iface=%p, cidl=%d, apidl=%p)\n", iface, cidl, apidl);
+
+    hr = UNIXFS_delete_with_shfileop(This, cidl, apidl);
+    if (hr == S_FALSE)
+        hr = UNIXFS_delete_with_syscalls(This, cidl, apidl);
 
     lstrcpyA(szAbsolute, This->m_pszPath);
     pszRelative = szAbsolute + lstrlenA(szAbsolute);
     
-    for (i=0; i<cidl && SUCCEEDED(hr); i++) {
+    /* we need to manually send the notifies if the files doesn't exist */
+    for (i=0; i<cidl; i++) {
         if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelative))
-            return E_INVALIDARG;
+            continue;
         pidlAbsolute = ILCombine(This->m_pidlLocation, apidl[i]);
-        if (_ILIsFolder(apidl[i])) {
-            if (rmdir(szAbsolute)) {
-                hr = E_FAIL;
-            } else {
+        if (stat(szAbsolute, &st))
+        {
+            if (_ILIsFolder(apidl[i])) {
                 SHChangeNotify(SHCNE_RMDIR, SHCNF_IDLIST, pidlAbsolute, NULL);
-            }
-        } else if (_ILIsValue(apidl[i])) {
-            if (unlink(szAbsolute)) {
-                hr = E_FAIL;
-            } else {
+            } else if (_ILIsValue(apidl[i])) {
                 SHChangeNotify(SHCNE_DELETE, SHCNF_IDLIST, pidlAbsolute, NULL);
             }
         }
