@@ -330,6 +330,7 @@ static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
 static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
     'o','c','t','e','t','-','s','t','r','e','a','m',0};
+static const WCHAR mimeImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
 
 static const struct {
     LPCWSTR url;
@@ -358,6 +359,10 @@ static BYTE data11[] = "blah<HTML>blahblah";
 static BYTE data12[] = "blah<HTMLblahblah";
 static BYTE data13[] = "blahHTML>blahblah";
 static BYTE data14[] = "blah<HTMblahblah";
+static BYTE data15[] = {0xff,0xd8};
+static BYTE data16[] = {0xff,0xd8,'h'};
+static BYTE data17[] = {0,0xff,0xd8};
+static BYTE data18[] = {0xff,0xd8,'<','h','t','m','l','>'};
 
 static const struct {
     BYTE *data;
@@ -377,7 +382,11 @@ static const struct {
     {data11, sizeof(data11), mimeTextHtml},
     {data12, sizeof(data12), mimeTextHtml},
     {data13, sizeof(data13), mimeTextPlain},
-    {data14, sizeof(data14), mimeTextPlain}
+    {data14, sizeof(data14), mimeTextPlain},
+    {data15, sizeof(data15), mimeTextPlain},
+    {data16, sizeof(data16), mimeImagePjpeg},
+    {data17, sizeof(data17), mimeAppOctetStream},
+    {data18, sizeof(data18), mimeTextHtml}
 };
 
 static void test_FindMimeFromData(void)
@@ -421,7 +430,20 @@ static void test_FindMimeFromData(void)
         hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeTextHtml, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
-        ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime\n", i);
+        if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime)
+           || !lstrcmpW(mimeTextPlain, mime_tests2[i].mime))
+            ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime\n", i);
+        else
+            ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
+
+        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+                mimeImagePjpeg, 0, &mime, 0);
+        ok(hres == S_OK, "[%d] FindMimeFromData failed: %08lx\n", i, hres);
+        if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime) || i == 17)
+            ok(!lstrcmpW(mime, mimeImagePjpeg), "[%d] wrong mime\n", i);
+        else
+            ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
+
         CoTaskMemFree(mime);
     }
 
