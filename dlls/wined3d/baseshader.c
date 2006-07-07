@@ -436,6 +436,7 @@ void shader_dump_param(
 
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
+    DWORD modifier = param & D3DSP_SRCMOD_MASK;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
@@ -449,15 +450,19 @@ void shader_dump_param(
     swizzle_reg_chars[3] = pshader? 'a': 'w';
 
     if (input) {
-        if ( ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) ||
-             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_BIASNEG) ||
-             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_SIGNNEG) ||
-             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_X2NEG) )
+        if ( (modifier == D3DSPSM_NEG) ||
+             (modifier == D3DSPSM_BIASNEG) ||
+             (modifier == D3DSPSM_SIGNNEG) ||
+             (modifier == D3DSPSM_X2NEG) ||
+             (modifier == D3DSPSM_ABSNEG) )
             TRACE("-");
-        else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_COMP)
+        else if (modifier == D3DSPSM_COMP)
             TRACE("1-");
-        else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NOT)
+        else if (modifier == D3DSPSM_NOT)
             TRACE("!");
+
+        if (modifier == D3DSPSM_ABS || modifier == D3DSPSM_ABSNEG) 
+            TRACE("abs(");
     }
 
     switch (regtype) {
@@ -546,9 +551,8 @@ void shader_dump_param(
         DWORD swizzle_b = (swizzle >> 4) & 0x03;
         DWORD swizzle_a = (swizzle >> 6) & 0x03;
 
-        if (0 != (param & D3DSP_SRCMOD_MASK)) {
-            DWORD mask = param & D3DSP_SRCMOD_MASK;
-            switch (mask) {
+        if (0 != modifier) {
+            switch (modifier) {
                 case D3DSPSM_NONE:    break;
                 case D3DSPSM_NEG:     break;
                 case D3DSPSM_NOT:     break;
@@ -561,8 +565,10 @@ void shader_dump_param(
                 case D3DSPSM_X2NEG:   TRACE("_x2"); break;
                 case D3DSPSM_DZ:      TRACE("_dz"); break;
                 case D3DSPSM_DW:      TRACE("_dw"); break;
+                case D3DSPSM_ABSNEG:  TRACE(")"); break;
+                case D3DSPSM_ABS:     TRACE(")"); break;
                 default:
-                    TRACE("_unknown_modifier(%#lx)", mask >> D3DSP_SRCMOD_SHIFT);
+                    TRACE("_unknown_modifier(%#lx)", modifier >> D3DSP_SRCMOD_SHIFT);
             }
         }
 
