@@ -130,6 +130,7 @@ BASEDIRS = \
 	psapi \
 	qcap \
 	quartz \
+	query \
 	rasapi32 \
 	riched20 \
 	riched32 \

@@ -1702,6 +1702,7 @@ dlls/psapi/tests/Makefile
 dlls/qcap/Makefile
 dlls/quartz/Makefile
 dlls/quartz/tests/Makefile
+dlls/query/Makefile
 dlls/rasapi32/Makefile
 dlls/riched20/Makefile
 dlls/riched20/tests/Makefile
