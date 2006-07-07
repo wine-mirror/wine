@@ -453,8 +453,10 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
       xev = *event;
       
       TRACE("NET_WM Ping\n");
+      wine_tsx11_lock();
       xev.window = DefaultRootWindow(xev.display);
       XSendEvent(xev.display, xev.window, False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*)&xev);
+      wine_tsx11_unlock();
       /* this line is semi-stolen from gtk2 */
       TRACE("NET_WM Pong\n");
     }
