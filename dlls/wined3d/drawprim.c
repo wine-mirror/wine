@@ -451,19 +451,6 @@ void primitiveDeclarationConvertToStridedData(
 
         TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
 
-        if (useVertexShaderFunction && reg != -1 && (data || streamVBO) ) {
-            WINED3DGLTYPE glType = glTypeLookup[element->Type];
-
-            TRACE("(%p) : Set vertex attrib pointer: reg 0x%08x, d3d type 0x%08x, stride 0x%08lx, data %p)\n", This, reg, element->Type, stride, data);
-
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, streamVBO));
-            checkGLcall("glBindBufferARB");
-            GL_EXTCALL(glVertexAttribPointerARB(reg, glType.size, glType.glType, glType.normalized, stride, data));
-            checkGLcall("glVertexAttribPointerARB");
-            GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
-            checkGLcall("glEnableVertexAttribArrayARB");
-        }
-
         if (useVertexShaderFunction)
             stride_used = vshader_get_input(This->stateBlock->vertexShader,
                 element->Usage, element->UsageIndex, &idx);

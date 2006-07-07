@@ -609,6 +609,28 @@ static void vshader_set_limits(
       }
 }
 
+/* This is an internal function,
+ * used to create fake semantics for shaders
+ * that don't have them - d3d8 shaders where the declaration
+ * stores the register for each input
+ */
+static void vshader_set_input(
+    IWineD3DVertexShaderImpl* This,
+    unsigned int regnum,
+    BYTE usage, BYTE usage_idx) {
+
+    /* Fake usage: set reserved bit, usage, usage_idx */
+    DWORD usage_token = (0x1 << 31) |
+        (usage << D3DSP_DCL_USAGE_SHIFT) | (usage_idx << D3DSP_DCL_USAGEINDEX_SHIFT);
+
+    /* Fake register; set reserved bit, regnum, type: input, wmask: all */
+    DWORD reg_token = (0x1 << 31) |
+        D3DSP_WRITEMASK_ALL | (D3DSPR_INPUT << D3DSP_REGTYPE_SHIFT) | regnum;
+
+    This->semantics_in[regnum].usage = usage_token;
+    This->semantics_in[regnum].reg = reg_token;
+}
+
 BOOL vshader_get_input(
     IWineD3DVertexShader* iface,
     BYTE usage_req, BYTE usage_idx_req,
@@ -637,7 +659,13 @@ BOOL vshader_input_is_color(
     IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
     DWORD usage_token = This->semantics_in[regnum].usage;
     DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-    return usage == D3DDECLUSAGE_COLOR;
+
+    /* FIXME: D3D8 shader: the semantics token is not the way to 
+     * determine color info, since it is just a fake map to shader inputs */
+    if (This->vertexDeclaration != NULL)
+        return FALSE; 
+    else
+        return usage == D3DDECLUSAGE_COLOR;
 }
 
 /** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
@@ -1076,6 +1104,16 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     vshader_set_limits(This);
+
+    /* Preload semantics for d3d8 shaders */
+    if (This->vertexDeclaration) {
+       IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*) This->vertexDeclaration;
+       int i;
+       for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
+           WINED3DVERTEXELEMENT* element = vdecl->pDeclarationWine + i;
+           vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);
+       }
+    }
 
     /* Second pass: figure out registers used, semantics, etc.. */
     memset(&reg_maps, 0, sizeof(shader_reg_maps));
