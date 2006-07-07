@@ -34,6 +34,8 @@
 # include <sys/ptrace.h>
 #endif
 
+#include "windef.h"
+
 #if 0  /* no longer used */
 
 #ifndef PTRACE_PEEKUSER
@@ -47,8 +49,6 @@
 #  define PTRACE_POKEUSER PT_WRITE_D
 # endif
 #endif /* PTRACE_POKEUSER */
-
-#include "windef.h"
 
 #include "file.h"
 #include "thread.h"
