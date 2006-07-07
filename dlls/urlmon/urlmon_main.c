@@ -44,6 +44,8 @@ HINSTANCE URLMON_hInstance = 0;
 
 DWORD urlmon_tls = 0;
 
+static void init_session(BOOL);
+
 /***********************************************************************
  *		DllMain (URLMON.init)
  */
@@ -55,11 +57,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
         URLMON_hInstance = hinstDLL;
+        init_session(TRUE);
 	break;
 
     case DLL_PROCESS_DETACH:
         if(urlmon_tls)
             TlsFree(urlmon_tls);
+        init_session(FALSE);
         URLMON_hInstance = 0;
 	break;
     }
@@ -186,16 +190,42 @@ struct object_creation_info
 {
     const CLSID *clsid;
     IClassFactory *cf;
+    LPCWSTR protocol;
 };
+
+static const WCHAR wszFile[] = {'f','i','l','e',0};
+static const WCHAR wszFtp[]  = {'f','t','p',0};
+static const WCHAR wszHttp[] = {'h','t','t','p',0};
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_FileProtocol,            CLASSFACTORY(&FileProtocolCF) },
-    { &CLSID_FtpProtocol,             CLASSFACTORY(&FtpProtocolCF) },
-    { &CLSID_HttpProtocol,            CLASSFACTORY(&HttpProtocolCF) },
-    { &CLSID_InternetSecurityManager, CLASSFACTORY(&SecurityManagerCF) },
-    { &CLSID_InternetZoneManager,     CLASSFACTORY(&ZoneManagerCF) }
+    { &CLSID_FileProtocol,            CLASSFACTORY(&FileProtocolCF),    wszFile },
+    { &CLSID_FtpProtocol,             CLASSFACTORY(&FtpProtocolCF),     wszFtp  },
+    { &CLSID_HttpProtocol,            CLASSFACTORY(&HttpProtocolCF),    wszHttp },
+    { &CLSID_InternetSecurityManager, CLASSFACTORY(&SecurityManagerCF), NULL    },
+    { &CLSID_InternetZoneManager,     CLASSFACTORY(&ZoneManagerCF),     NULL    }
 };
+
+static void init_session(BOOL init)
+{
+    IInternetSession *session;
+    int i;
+
+    CoInternetGetSession(0, &session, 0);
+
+    for(i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++) {
+        if(object_creation[i].protocol) {
+            if(init)
+                IInternetSession_RegisterNameSpace(session, object_creation[i].cf,
+                        object_creation[i].clsid, object_creation[i].protocol, 0, NULL, 0);
+            else
+                IInternetSession_UnregisterNameSpace(session, object_creation[i].cf,
+                        object_creation[i].protocol);
+        }
+    }
+
+    IInternetSession_Release(session);
+}
 
 /*******************************************************************************
  * DllGetClassObject [URLMON.@]
