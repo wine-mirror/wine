@@ -12,6 +12,7 @@ docobj.h
 downloadmgr.h
 exdisp.h
 hlink.h
+htiframe.h
 iads.h
 indexsvr.h
 mediaobj.h

@@ -17,6 +17,7 @@ WINDOWS_IDL_SRCS = \
 	downloadmgr.idl \
 	exdisp.idl \
 	hlink.idl \
+	htiframe.idl \
 	iads.idl \
 	indexsvr.idl \
 	mediaobj.idl \
