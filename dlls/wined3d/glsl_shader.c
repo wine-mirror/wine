@@ -1401,7 +1401,7 @@ void pshader_glsl_input_pack(
                if (usage_idx == 0)
                    shader_addline(buffer, "IN%lu%s = vec4(gl_Color)%s;\n",
                        i, reg_mask, reg_mask);
-               if (usage_idx == 1)
+               else if (usage_idx == 1)
                    shader_addline(buffer, "IN%lu%s = vec4(gl_SecondaryColor)%s;\n",
                        i, reg_mask, reg_mask);
                else
