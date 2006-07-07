@@ -92,69 +92,51 @@ HRESULT WINAPI DllCanUnloadNow(void)
  * Urlmon ClassFactory
  */
 typedef struct {
-    IClassFactory ITF_IClassFactory;
+    const IClassFactoryVtbl *lpClassFactoryVtbl;
 
-    LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
-} IClassFactoryImpl;
+} ClassFactory;
 
-struct object_creation_info
-{
-    const CLSID *clsid;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
-};
- 
-static const struct object_creation_info object_creation[] =
-{
-    { &CLSID_FileProtocol, FileProtocol_Construct },
-    { &CLSID_FtpProtocol, FtpProtocol_Construct },
-    { &CLSID_HttpProtocol, HttpProtocol_Construct },
-    { &CLSID_InternetSecurityManager, &SecManagerImpl_Construct },
-    { &CLSID_InternetZoneManager, ZoneMgrImpl_Construct }
-};
+#define CLASSFACTORY(x)  ((IClassFactory*)  &(x)->lpClassFactoryVtbl)
 
-static HRESULT WINAPI
-CF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+static HRESULT WINAPI CF_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppv)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    *ppv = NULL;
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IClassFactory))
-    {
-	IClassFactory_AddRef(iface);
-	*ppobj = This;
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(riid, &IID_IClassFactory)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+	IUnknown_AddRef((IUnknown*)*ppv);
 	return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p),not found\n", iface, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI CF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI CF_AddRef(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    return InterlockedIncrement(&This->ref);
+    URLMON_LockModule();
+    return 2;
 }
 
-static ULONG WINAPI CF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI CF_Release(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This);
-        URLMON_UnlockModule();
-    }
-
-    return ref;
+    URLMON_UnlockModule();
+    return 1;
 }
 
 
-static HRESULT WINAPI CF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
+static HRESULT WINAPI CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                         REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ClassFactory *This = (ClassFactory*)iface;
     HRESULT hres;
     LPUNKNOWN punk;
     
@@ -180,13 +162,39 @@ static HRESULT WINAPI CF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static const IClassFactoryVtbl CF_Vtbl =
+static const IClassFactoryVtbl ClassFactoryVtbl =
 {
     CF_QueryInterface,
     CF_AddRef,
     CF_Release,
     CF_CreateInstance,
     CF_LockServer
+};
+
+static const ClassFactory FileProtocolCF =
+    { &ClassFactoryVtbl, FileProtocol_Construct};
+static const ClassFactory FtpProtocolCF =
+    { &ClassFactoryVtbl, FtpProtocol_Construct};
+static const ClassFactory HttpProtocolCF =
+    { &ClassFactoryVtbl, HttpProtocol_Construct};
+static const ClassFactory SecurityManagerCF =
+    { &ClassFactoryVtbl, SecManagerImpl_Construct};
+static const ClassFactory ZoneManagerCF =
+    { &ClassFactoryVtbl, ZoneMgrImpl_Construct};
+ 
+struct object_creation_info
+{
+    const CLSID *clsid;
+    IClassFactory *cf;
+};
+
+static const struct object_creation_info object_creation[] =
+{
+    { &CLSID_FileProtocol,            CLASSFACTORY(&FileProtocolCF) },
+    { &CLSID_FtpProtocol,             CLASSFACTORY(&FtpProtocolCF) },
+    { &CLSID_HttpProtocol,            CLASSFACTORY(&HttpProtocolCF) },
+    { &CLSID_InternetSecurityManager, CLASSFACTORY(&SecurityManagerCF) },
+    { &CLSID_InternetZoneManager,     CLASSFACTORY(&ZoneManagerCF) }
 };
 
 /*******************************************************************************
@@ -210,38 +218,17 @@ static const IClassFactoryVtbl CF_Vtbl =
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i;
-    IClassFactoryImpl *factory;
     
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     
-    if ( !IsEqualGUID( &IID_IClassFactory, riid )
-	 && ! IsEqualGUID( &IID_IUnknown, riid) )
-	return E_NOINTERFACE;
-
     for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
     {
 	if (IsEqualGUID(object_creation[i].clsid, rclsid))
-	    break;
+	    return IClassFactory_QueryInterface(object_creation[i].cf, riid, ppv);
     }
 
-    if (i == sizeof(object_creation)/sizeof(object_creation[0]))
-    {
-	FIXME("%s: no class found.\n", debugstr_guid(rclsid));
-	return CLASS_E_CLASSNOTAVAILABLE;
-    }
-
-    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
-    if (factory == NULL) return E_OUTOFMEMORY;
-
-    factory->ITF_IClassFactory.lpVtbl = &CF_Vtbl;
-    factory->ref = 1;
-    factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
-
-    *ppv = &(factory->ITF_IClassFactory);
-
-    URLMON_LockModule();
-
-    return S_OK;
+    FIXME("%s: no class found.\n", debugstr_guid(rclsid));
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 
