@@ -145,8 +145,6 @@ struct JoystickImpl
 	DIJOYSTATE2			js;
 
 	/* Force feedback variables */
-	BOOL				has_ff;
-	int				num_effects;
 	EffectListItem*			top_effect;
 	int				ff_state;
 };
@@ -1230,7 +1228,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
       }
     }
 
-    if (This->has_ff) 
+    if (This->joydev->has_ff) 
 	 lpDIDevCaps->dwFlags |= DIDC_FORCEFEEDBACK;
 
     lpDIDevCaps->dwAxes = axes;
@@ -1332,7 +1330,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
       /* Linux event force feedback supports only (and always) x and y axes */
       if (i == ABS_X || i == ABS_Y) {
-	if (This->has_ff)
+	if (This->joydev->has_ff)
 	  ddoi.dwFlags |= DIDOI_FFACTUATOR;
       }
       sprintf(ddoi.tszName, "%d-Axis", i);
