@@ -111,11 +111,11 @@ static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
                                   {D3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
                                   {D3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
 
-#define WINED3D_ATR_TYPE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType].d3dType
-#define WINED3D_ATR_SIZE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType].size
-#define WINED3D_ATR_GLTYPE(_attribute)        glTypeLookup[sd->u.s._attribute.dwType].glType
-#define WINED3D_ATR_NORMALIZED(_attribute)    glTypeLookup[sd->u.s._attribute.dwType].normalized
-#define WINED3D_ATR_TYPESIZE(_attribute)      glTypeLookup[sd->u.s._attribute.dwType].typesize
+#define WINED3D_ATR_TYPE(type)          glTypeLookup[type].d3dType
+#define WINED3D_ATR_SIZE(type)          glTypeLookup[type].size
+#define WINED3D_ATR_GLTYPE(type)        glTypeLookup[type].glType
+#define WINED3D_ATR_NORMALIZED(type)    glTypeLookup[type].normalized
+#define WINED3D_ATR_TYPESIZE(type)      glTypeLookup[type].typesize
 
 /**
  * Settings 

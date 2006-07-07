@@ -812,9 +812,9 @@ void loadNumberedArrays(
             curVBO = sd->u.s._arrayName.VBO; \
         } \
         GL_EXTCALL(glVertexAttribPointerARB(idx, \
-                        WINED3D_ATR_SIZE(_arrayName), \
-                        WINED3D_ATR_GLTYPE(_arrayName), \
-                        WINED3D_ATR_NORMALIZED(_arrayName), \
+                        WINED3D_ATR_SIZE(sd->u.s._arrayName.dwType), \
+                        WINED3D_ATR_GLTYPE(sd->u.s._arrayName.dwType), \
+                        WINED3D_ATR_NORMALIZED(sd->u.s._arrayName.dwType), \
                         sd->u.s._arrayName.dwStride, \
                         sd->u.s._arrayName.lpData)); \
         GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
@@ -831,12 +831,13 @@ void loadNumberedArrays(
             curVBO = sd->u.s.position2.VBO; \
         } \
         GL_EXTCALL(glVertexAttribPointerARB(idx, \
-                        WINED3D_ATR_SIZE(position2), \
-                        WINED3D_ATR_GLTYPE(position2), \
-                        WINED3D_ATR_NORMALIZED(position2), \
+                        WINED3D_ATR_SIZE(sd->u.s.position2.dwType), \
+                        WINED3D_ATR_GLTYPE(sd->u.s.position2.dwType), \
+                        WINED3D_ATR_NORMALIZED(sd->u.s.position2.dwType), \
                         sd->u.s.position2.dwStride, \
                         ((char *)sd->u.s.position2.lpData) + \
-                        WINED3D_ATR_SIZE(position2) * WINED3D_ATR_TYPESIZE(position2) * _lookupNumber)); \
+                           WINED3D_ATR_SIZE(sd->u.s.position2.dwType) * \
+                           WINED3D_ATR_TYPESIZE(sd->u.s.position2.dwType) * _lookupNumber)); \
         GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
     }
 
@@ -913,7 +914,8 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
 #endif
 
-            TRACE("Blend %d %p %ld\n", WINED3D_ATR_SIZE(blendWeights), sd->u.s.blendWeights.lpData, sd->u.s.blendWeights.dwStride);
+            TRACE("Blend %d %p %ld\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
+                sd->u.s.blendWeights.lpData, sd->u.s.blendWeights.dwStride);
             /* FIXME("TODO\n");*/
             /* Note dwType == float3 or float4 == 2 or 3 */
 
@@ -921,12 +923,12 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             /* with this on, the normals appear to be being modified,
                but the vertices aren't being translated as they should be
                Maybe the world matrix aren't being setup properly? */
-            glVertexBlendARB(WINED3D_ATR_SIZE(blendWeights) + 1);
+            glVertexBlendARB(WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) + 1);
 #endif
 
 
             VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %ld, %p)\n",
-                WINED3D_ATR_SIZE(blendWeights) ,
+                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) ,
                 sd->u.s.blendWeights.dwStride,
                 sd->u.s.blendWeights.lpData));
 
@@ -936,9 +938,11 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                 curVBO = sd->u.s.blendWeights.VBO;
             }
 
-            GL_EXTCALL(glWeightPointerARB)(WINED3D_ATR_SIZE(blendWeights), WINED3D_ATR_GLTYPE(blendWeights),
-                            sd->u.s.blendWeights.dwStride,
-                            sd->u.s.blendWeights.lpData);
+            GL_EXTCALL(glWeightPointerARB)(
+                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
+                WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
+                sd->u.s.blendWeights.dwStride,
+                sd->u.s.blendWeights.lpData);
 
             checkGLcall("glWeightPointerARB");
 
@@ -950,15 +954,15 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                 }
             }
 
-
-
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
             /* FIXME("TODO\n");*/
 #if 0
 
-            GL_EXTCALL(glVertexWeightPointerEXT)(WINED3D_ATR_SIZE(blendWeights), WINED3D_ATR_GLTYPE(blendWeights),
-                                                sd->u.s.blendWeights.dwStride,
-                                                sd->u.s.blendWeights.lpData);
+            GL_EXTCALL(glVertexWeightPointerEXT)(
+                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
+                WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
+                sd->u.s.blendWeights.dwStride,
+                sd->u.s.blendWeights.lpData);
             checkGLcall("glVertexWeightPointerEXT(numBlends, ...)");
             glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
@@ -987,9 +991,10 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
         /* TODO: fog*/
     if (GL_SUPPORT(EXT_FOG_COORD) {
              glEnableClientState(GL_FOG_COORDINATE_EXT);
-            (GL_EXTCALL)(FogCoordPointerEXT)(WINED3D_ATR_GLTYPE(fog),
-                        sd->u.s.fog.dwStride,
-                        sd->u.s.fog.lpData);
+            (GL_EXTCALL)(FogCoordPointerEXT)(
+                WINED3D_ATR_GLTYPE(sd->u.s.fog.dwType),
+                sd->u.s.fog.dwStride,
+                sd->u.s.fog.lpData);
         } else {
             /* don't bother falling back to 'slow' as we don't support software FOG yet. */
             /* FIXME: fixme once */
@@ -1010,17 +1015,19 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
         if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
             if (sd->u.s.tangent.lpData || sd->u.s.tangent.VBO) {
                 glEnable(GL_TANGENT_ARRAY_EXT);
-                (GL_EXTCALL)(TangentPointerEXT)(WINED3D_ATR_GLTYPE(tangent),
-                            sd->u.s.tangent.dwStride,
-                            sd->u.s.tangent.lpData);
+                (GL_EXTCALL)(TangentPointerEXT)(
+                    WINED3D_ATR_GLTYPE(sd->u.s.tangent.dwType),
+                    sd->u.s.tangent.dwStride,
+                    sd->u.s.tangent.lpData);
             } else {
                     glDisable(GL_TANGENT_ARRAY_EXT);
             }
             if (sd->u.s.binormal.lpData || sd->u.s.binormal.VBO) {
                     glEnable(GL_BINORMAL_ARRAY_EXT);
-                    (GL_EXTCALL)(BinormalPointerEXT)(WINED3D_ATR_GLTYPE(binormal),
-                                                sd->u.s.binormal.dwStride,
-                                                sd->u.s.binormal.lpData);
+                    (GL_EXTCALL)(BinormalPointerEXT)(
+                        WINED3D_ATR_GLTYPE(sd->u.s.binormal.dwType),
+                        sd->u.s.binormal.dwStride,
+                        sd->u.s.binormal.lpData);
             } else{
                     glDisable(GL_BINORMAL_ARRAY_EXT);
             }
@@ -1071,11 +1078,14 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
            This only applies to user pointer sources, in VBOs the vertices are fixed up
          */
         if(sd->u.s.position.VBO == 0) {
-            glVertexPointer(3 /* min(WINED3D_ATR_SIZE(position),3) */, WINED3D_ATR_GLTYPE(position),
-                            sd->u.s.position.dwStride, sd->u.s.position.lpData);
+            glVertexPointer(3 /* min(WINED3D_ATR_SIZE(sd->u.s.position.dwType),3) */,
+                WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
+                sd->u.s.position.dwStride, sd->u.s.position.lpData);
         } else {
-            glVertexPointer(WINED3D_ATR_SIZE(position), WINED3D_ATR_GLTYPE(position),
-                            sd->u.s.position.dwStride, sd->u.s.position.lpData);
+            glVertexPointer(
+                WINED3D_ATR_SIZE(sd->u.s.position.dwType),
+                WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
+                sd->u.s.position.dwStride, sd->u.s.position.lpData);
         }
         checkGLcall("glVertexPointer(...)");
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -1097,9 +1107,10 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             checkGLcall("glBindBufferARB");
             curVBO = sd->u.s.normal.VBO;
         }
-        glNormalPointer(WINED3D_ATR_GLTYPE(normal),
-                        sd->u.s.normal.dwStride,
-                        sd->u.s.normal.lpData);
+        glNormalPointer(
+            WINED3D_ATR_GLTYPE(sd->u.s.normal.dwType),
+            sd->u.s.normal.dwStride,
+            sd->u.s.normal.lpData);
         checkGLcall("glNormalPointer(...)");
         glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
@@ -1220,7 +1231,11 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                     curVBO = sd->u.s.texCoords[coordIdx].VBO;
                 }
                 /* The coords to supply depend completely on the fvf / vertex shader */
-                glTexCoordPointer(WINED3D_ATR_SIZE(texCoords[coordIdx]), WINED3D_ATR_GLTYPE(texCoords[coordIdx]), sd->u.s.texCoords[coordIdx].dwStride, sd->u.s.texCoords[coordIdx].lpData);
+                glTexCoordPointer(
+                    WINED3D_ATR_SIZE(sd->u.s.texCoords[coordIdx].dwType),
+                    WINED3D_ATR_GLTYPE(sd->u.s.texCoords[coordIdx].dwType),
+                    sd->u.s.texCoords[coordIdx].dwStride,
+                    sd->u.s.texCoords[coordIdx].lpData);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
