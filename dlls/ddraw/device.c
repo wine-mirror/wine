@@ -3076,7 +3076,9 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
         if (VertexType & D3DFVF_XYZRHW)
         {
             WineD3DStrided.u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
-        }
+            WineD3DStrided.u.s.position_transformed = TRUE;
+        } else
+            WineD3DStrided.u.s.position_transformed = FALSE;
     }
 
     if(VertexType & D3DFVF_NORMAL)

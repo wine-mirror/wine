@@ -38,30 +38,6 @@ extern IWineD3DPixelShaderImpl*             PixelShaders[64];
 #undef GL_VERSION_1_4 /* To be fixed, caused by mesa headers */
 #endif
 
-/* Returns bits for what is expected from the fixed function pipeline, and whether
-   a vertex shader will be in use. Note the fvf bits returned may be split over
-   multiple streams only if the vertex shader was created, otherwise it all relates
-   to stream 0                                                                      */
-static BOOL initializeFVF(IWineD3DDevice *iface, DWORD *FVFbits)
-{
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-#if 0 /* TODO: d3d8 call setvertexshader needs to set the FVF in the state block when implemented */
-    /* The first thing to work out is if we are using the fixed function pipeline
-       which is either SetVertexShader with < VS_HIGHESTFIXEDFXF - in which case this
-       is the FVF, or with a shader which was created with no function - in which
-       case there is an FVF per declared stream. If this occurs, we also maintain
-       an 'OR' of all the FVF's together so we know what to expect across all the
-       streams                                                                        */
-#endif
-    *FVFbits = This->stateBlock->fvf;
-#if 0
-        *FVFbits = This->stateBlock->vertexShaderDecl->allFVF;
-#endif
-    return FALSE;
-}
-
 /* Issues the glBegin call for gl given the primitive type and count */
 static DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
                     DWORD            NumPrimitives,
@@ -246,21 +222,37 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied
     Returns: Whether to restore lighting afterwards           */
-static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL vtx_lit, BOOL useVS) {
+static void primitiveInitState(
+    IWineD3DDevice *iface,
+    WineDirect3DVertexStridedData* strided,
+    BOOL useVS,
+    BOOL* lighting_changed,
+    BOOL* lighting_original) {
 
-    BOOL isLightingOn = FALSE;
+    BOOL fixed_vtx_transformed =
+       (strided->u.s.position.lpData != NULL || strided->u.s.position.VBO != 0 ||
+        strided->u.s.position2.lpData != NULL || strided->u.s.position2.VBO != 0) && 
+        strided->u.s.position_transformed;
+
+    BOOL fixed_vtx_lit = 
+        strided->u.s.normal.lpData == NULL && strided->u.s.normal.VBO == 0 &&
+        strided->u.s.normal2.lpData == NULL && strided->u.s.normal2.VBO == 0;
+
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    *lighting_changed = FALSE;
 
     /* If no normals, DISABLE lighting otherwise, don't touch lighing as it is
        set by the appropriate render state. Note Vertex Shader output is already lit */
-    if (vtx_lit || useVS) {
-        isLightingOn = glIsEnabled(GL_LIGHTING);
+    if (fixed_vtx_lit || useVS) {
+        *lighting_changed = TRUE;
+        *lighting_original = glIsEnabled(GL_LIGHTING);
         glDisable(GL_LIGHTING);
         checkGLcall("glDisable(GL_LIGHTING);");
-        TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn);
+        TRACE("Disabled lighting, old state = %d\n", *lighting_original);
     }
 
-    if (!useVS && vtx_transformed) {
+    if (!useVS && fixed_vtx_transformed) {
         d3ddevice_set_ortho(This);
 
     } else {
@@ -352,7 +344,6 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
             }
         }
     }
-    return isLightingOn;
 }
 
 void primitiveDeclarationConvertToStridedData(
@@ -360,7 +351,6 @@ void primitiveDeclarationConvertToStridedData(
      BOOL useVertexShaderFunction,
      WineDirect3DVertexStridedData *strided,
      LONG BaseVertexIndex, 
-     DWORD *fvf,
      BOOL *fixup) {
 
      /* We need to deal with frequency data!*/
@@ -442,6 +432,7 @@ void primitiveDeclarationConvertToStridedData(
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2", data, element->Type, stride);
                 break;
                 }
+                strided->u.s.position_transformed = FALSE;
         break;
         case D3DDECLUSAGE_NORMAL:
                 switch (element->UsageIndex) {
@@ -461,7 +452,6 @@ void primitiveDeclarationConvertToStridedData(
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "normal2", data, element->Type, stride);
                 break;
                 }
-                *fvf |=  D3DFVF_NORMAL;
         break;
         case D3DDECLUSAGE_BLENDINDICES:
         /* demo @http://www.ati.com/developer/vertexblend.html
@@ -573,9 +563,7 @@ void primitiveDeclarationConvertToStridedData(
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2T", data, element->Type, stride);
                 break;
                 }
-                /* TODO: change fvf usage to a plain boolean flag */
-                *fvf |= D3DFVF_XYZRHW;
-            /* FIXME: were faking this flag so that we don't transform the data again */
+                strided->u.s.position_transformed = TRUE;
         break;
         case D3DDECLUSAGE_FOG:
         /* maybe GL_EXT_fog_coord ?
@@ -632,8 +620,10 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         data += 3 * sizeof(float);
         if (thisFVF & D3DFVF_XYZRHW) {
             strided->u.s.position.dwType = D3DDECLTYPE_FLOAT4;
+            strided->u.s.position_transformed = TRUE;
             data += sizeof(float);
-        }
+        } else
+            strided->u.s.position_transformed = FALSE;
     }
 
     /* Blending is numBlends * FLOATs followed by a DWORD for UBYTE4 */
@@ -1469,7 +1459,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             VTRACE(("x,y,z=%f,%f,%f\n", x,y,z));
 
             /* RHW follows, only if transformed, ie 4 floats were provided */
-            if (sd->u.s.position.dwType == D3DDECLTYPE_FLOAT4) {
+            if (sd->u.s.position_transformed) {
                 rhw = ptrToCoords[3];
                 VTRACE(("rhw=%f\n", rhw));
             }
@@ -2016,10 +2006,11 @@ inline static void drawPrimitiveDrawStrided(
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
-inline void drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataLocations,DWORD fvf) {
+inline void drawPrimitiveTraceDataLocations(
+    WineDirect3DVertexStridedData *dataLocations) {
 
     /* Dump out what parts we have supplied */
-    TRACE("Strided Data (from FVF/VS): %lx\n", fvf);
+    TRACE("Strided Data:\n");
     TRACE_STRIDED((dataLocations), position);
     TRACE_STRIDED((dataLocations), blendWeights);
     TRACE_STRIDED((dataLocations), blendMatrixIndices);
@@ -2226,16 +2217,15 @@ void drawPrimitive(IWineD3DDevice *iface,
                    int   minIndex,
                    WineDirect3DVertexStridedData *DrawPrimStrideData) {
 
-    BOOL                          rc = FALSE;
-    DWORD                         fvf = 0;
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          usePixelShaderFunction = FALSE;
-    BOOL                          isLightingOn = FALSE;
     WineDirect3DVertexStridedData *dataLocations;
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
     BOOL                          fixup = FALSE;
+
+    BOOL lighting_changed, lighting_original = FALSE;
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
      * here simply check whether a shader was set, or the user disabled shaders */
@@ -2246,14 +2236,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     if (wined3d_settings.ps_selected_mode != SHADER_NONE && This->stateBlock->pixelShader &&
         ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) 
         usePixelShaderFunction = TRUE;
-
-    if (This->stateBlock->vertexDecl == NULL) {
-        /* Work out what the FVF should look like */
-        rc = initializeFVF(iface, &fvf);
-        if (rc) return;
-    } else {
-        TRACE("(%p) : using vertex declaration %p\n", iface, This->stateBlock->vertexDecl);
-    }
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < IWineD3DDevice_GetNumberOfSwapChains(iface); i++) {
@@ -2266,8 +2248,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
-
-    /* convert the FVF or vertexDeclaration into a strided stream (this should be done when the fvf or declaration is created) */
 
     if(DrawPrimStrideData) {
         TRACE("================ Strided Input ===================\n");
@@ -2282,7 +2262,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             ERR("Out of memory!\n");
             return;
         }
-        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fvf, &fixup);
+        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fixup);
 
     } else {
         TRACE("================ FVF ===================\n");
@@ -2295,10 +2275,10 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
 
     /* write out some debug information*/
-    drawPrimitiveTraceDataLocations(dataLocations, fvf);
+    drawPrimitiveTraceDataLocations(dataLocations);
 
     /* Setup transform matrices and sort out */
-    isLightingOn = primitiveInitState(iface, fvf & D3DFVF_XYZRHW, !(fvf & D3DFVF_NORMAL), useVertexShaderFunction);
+    primitiveInitState(iface, dataLocations, useVertexShaderFunction, &lighting_changed, &lighting_original);
 
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL || dataLocations->u.s.diffuse.VBO != 0));
@@ -2325,8 +2305,8 @@ void drawPrimitive(IWineD3DDevice *iface,
     if(!DrawPrimStrideData) HeapFree(GetProcessHeap(), 0, dataLocations);
 
     /* If vertex shaders or no normals, restore previous lighting state */
-    if (useVertexShaderFunction || !(fvf & D3DFVF_NORMAL)) {
-        if (isLightingOn) glEnable(GL_LIGHTING);
+    if (lighting_changed) {
+        if (lighting_original) glEnable(GL_LIGHTING);
         else glDisable(GL_LIGHTING);
         TRACE("Restored lighting to original state\n");
     }

@@ -366,7 +366,6 @@ void primitiveDeclarationConvertToStridedData(
      BOOL useVertexShaderFunction,
      WineDirect3DVertexStridedData *strided,
      LONG BaseVertexIndex, 
-     DWORD *fvf,
      BOOL *fixup);
 
 void primitiveConvertFVFtoOffset(DWORD thisFVF,

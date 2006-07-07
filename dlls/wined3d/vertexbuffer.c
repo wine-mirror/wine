@@ -117,7 +117,6 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         BOOL useVertexShaderFunction = FALSE, fixup = FALSE;
         BYTE *data;
         UINT i;
-        DWORD declFVF;  /* Not interested */
         UINT start = 0, end = 0, stride = 0;
 
         if(This->Flags & VBFLAG_DIRTY) {
@@ -173,7 +172,6 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                                                         useVertexShaderFunction,
                                                         &strided,
                                                         0,
-                                                        &declFVF,
                                                         &fixup);
                 This->Flags &= ~VBFLAG_LOAD;
 
@@ -198,7 +196,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             }
 
             /* If any data that needs conversion has changed we have to reload the whole buffer */
-            if( ( (This->strided.u.s.position.dwType != WINED3DDECLTYPE_FLOAT4 || strided.u.s.position.dwType != WINED3DDECLTYPE_FLOAT4) &&
+            if( ( (This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
                   This->strided.u.s.position.lpData != strided.u.s.position.lpData) ||
                 !(This->strided.u.s.diffuse.lpData == strided.u.s.diffuse.lpData || strided.u.s.diffuse.VBO != This->vbo)   ||
                 !(This->strided.u.s.specular.lpData == strided.u.s.specular.lpData || strided.u.s.specular.VBO != This->vbo) ) {
@@ -240,8 +238,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             memcpy(data, This->resource.allocatedMemory + start, end - start);
 
             for(i = 0; i < ( end - start) / stride; i++) {
-                if(strided.u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 ) {
-                    float *p = (float *) (((int) This->resource.allocatedMemory + (int) strided.u.s.position.lpData) + start + i * stride);
+                if(strided.u.s.position_transformed) {
+                    float *p = (float *) (((int) This->resource.allocatedMemory + 
+                       (int) strided.u.s.position.lpData) + start + i * stride);
                     float x, y, z, w;
 
                     /* rhw conversion like in drawStridedSlow */

@@ -905,6 +905,7 @@ typedef struct WineDirect3DVertexStridedData {
     union {
         struct {
              WineDirect3DStridedData  position;
+             BOOL position_transformed;
              WineDirect3DStridedData  blendWeights;
              WineDirect3DStridedData  blendMatrixIndices;
              WineDirect3DStridedData  normal;
