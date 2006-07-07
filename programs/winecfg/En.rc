@@ -62,31 +62,31 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Window settings ",IDC_STATIC,8,25,244,180
+    GROUPBOX        " Window settings ",IDC_STATIC,8,4,244,180
 
-    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
+    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
     LTEXT 	    "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
-    		    IDC_STATIC,15,58,228,80
-    CONTROL	    "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+    		    IDC_STATIC,15,37,228,80
+    CONTROL	    "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
     
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
-                    IDC_STATIC,15,146,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
+                    IDC_STATIC,15,125,228,28
+    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
 
-    LTEXT	    "Vertex Shader Support: ",IDC_STATIC,15,220,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Vertex Shader Support: ",IDC_STATIC,15,199,80,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,197,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
+    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
