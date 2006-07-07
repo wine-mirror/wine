@@ -151,6 +151,12 @@ static void SHELL32_FreeUnicodeBuf(LPWSTR wPath)
 	HeapFree(GetProcessHeap(), 0, wPath);
 }
 
+HRESULT WINAPI SHIsFileAvailableOffline(LPCWSTR path, LPDWORD status)
+{
+    FIXME("(%s, %p) stub\n", debugstr_w(path), status);
+    return E_FAIL;
+}
+
 /**************************************************************************
  * SHELL_DeleteDirectory()  [internal]
  *
