@@ -340,17 +340,8 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     break;
   case D3DSPR_INPUT:
 
-    if (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
-        reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
+    if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
         is_color = TRUE;
-
-    if (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] &&
-        reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
-        is_color = TRUE;
-
-    /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
-     * the reg value from the vertex declaration. However, semantics are not initialized
-     * in that case - how can we know if an input contains color data or not? */
 
     sprintf(tmpReg, "vertex.attrib[%lu]", reg);
     strcat(hwLine, tmpReg);

@@ -171,132 +171,14 @@ unsigned int shader_get_float_offset(const DWORD reg) {
      }
 }
 
-static void shader_parse_decl_usage(
-    DWORD *semantics_map,
-    DWORD usage_token, DWORD param) {
-
-    unsigned int usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-    unsigned int usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
-    unsigned int regnum = param & D3DSP_REGNUM_MASK;
-
-    switch(usage) {
-        case D3DDECLUSAGE_POSITION:
-            if (usage_idx == 0) { /* tween data */
-                TRACE("Setting position to %d\n", regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_POSITION] = param;
-            } else {
-                /* TODO: position indexes go from 0-8!!*/
-                TRACE("Setting position 2 to %d because usage_idx = %d\n", regnum, usage_idx);
-                /* robots uses positions up to 8, the position arrays are just packed.*/
-                if (usage_idx > 1) {
-                    TRACE("Loaded for position %d (greater than 2)\n", usage_idx);
-                }
-                semantics_map[WINED3DSHADERDECLUSAGE_POSITION2 + usage_idx-1] = param;
-            }
-            break;
-
-        case D3DDECLUSAGE_BLENDINDICES:
-            TRACE("Setting BLENDINDICES to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_BLENDINDICES] = param;
-            if (usage_idx != 0) FIXME("Extended BLENDINDICES\n");
-            break;
-
-        case D3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("Setting BLENDWEIGHT to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_BLENDWEIGHT] = param;
-            if (usage_idx != 0) FIXME("Extended blend weights\n");
-            break;
-
-        case D3DDECLUSAGE_NORMAL:
-            if (usage_idx == 0) { /* tween data */
-                TRACE("Setting normal to %d\n", regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_NORMAL] = param;
-            } else {
-                TRACE("Setting normal 2 to %d because usage = %d\n", regnum, usage_idx);
-                semantics_map[WINED3DSHADERDECLUSAGE_NORMAL2] = param;
-            }
-            break;
-
-        case D3DDECLUSAGE_PSIZE:
-            TRACE("Setting PSIZE to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_PSIZE] = param;
-            if (usage_idx != 0) FIXME("Extended PSIZE\n");
-            break;
-
-        case D3DDECLUSAGE_COLOR:
-            if (usage_idx == 0)  {
-                TRACE("Setting DIFFUSE to %d\n", regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_DIFFUSE] = param;
-            } else {
-                TRACE("Setting SPECULAR to %d\n", regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_SPECULAR] = param;
-            }
-            break;
-
-        case D3DDECLUSAGE_TEXCOORD:
-            if (usage_idx > 7) {
-                FIXME("Program uses texture coordinate %d but only 0-7 have been "
-                    "implemented\n", usage_idx);
-            } else {
-                TRACE("Setting TEXCOORD %d  to %d\n", usage_idx, regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_TEXCOORD0 + usage_idx] = param;
-            }
-            break;
-
-        case D3DDECLUSAGE_TANGENT:
-            TRACE("Setting TANGENT to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_TANGENT] = param;
-            break;
-
-        case D3DDECLUSAGE_BINORMAL:
-            TRACE("Setting BINORMAL to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_BINORMAL] = param;
-            break;
-
-        case D3DDECLUSAGE_TESSFACTOR:
-            TRACE("Setting TESSFACTOR to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_TESSFACTOR] = param;
-            break;
-
-        case D3DDECLUSAGE_POSITIONT:
-            if (usage_idx == 0) { /* tween data */
-                FIXME("Setting positiont to %d\n", regnum);
-                semantics_map[WINED3DSHADERDECLUSAGE_POSITIONT] = param;
-            } else {
-                FIXME("Setting positiont 2 to %d because usage = %d\n", regnum, usage_idx);
-                semantics_map[WINED3DSHADERDECLUSAGE_POSITIONT2] = param;
-                if (usage_idx != 0) FIXME("Extended positiont\n");
-            }
-            break;
-
-        case D3DDECLUSAGE_FOG:
-            TRACE("Setting FOG to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_FOG] = param;
-            break;
-
-        case D3DDECLUSAGE_DEPTH:
-            TRACE("Setting DEPTH to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_DEPTH] = param;
-            break;
-
-        case D3DDECLUSAGE_SAMPLE:
-            TRACE("Setting SAMPLE to %d\n", regnum);
-            semantics_map[WINED3DSHADERDECLUSAGE_SAMPLE] = param;
-            break;
-
-        default:
-            FIXME("Unrecognised dcl %#x", usage);
-    }
-}
-
 /* Note that this does not count the loop register
  * as an address register. */
 
 void shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    DWORD* semantics_in,
-    DWORD* semantics_out,
+    semantic* semantics_in,
+    semantic* semantics_out,
     CONST DWORD* pToken) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
@@ -350,12 +232,14 @@ void shader_get_registers_used(
                 else
                     reg_maps->packed_input[regnum] = 1;
 
-                shader_parse_decl_usage(semantics_in, usage, param);
+                semantics_in[regnum].usage = usage;
+                semantics_in[regnum].reg = param;
 
             /* Vshader: mark 3.0 output registers used, save token */
             } else if (D3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
-                shader_parse_decl_usage(semantics_out, usage, param);
+                semantics_out[regnum].usage = usage;
+                semantics_out[regnum].reg = param;
 
             /* Save sampler usage token */
             } else if (D3DSPR_SAMPLER == regtype)

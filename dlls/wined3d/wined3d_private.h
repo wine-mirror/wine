@@ -1283,6 +1283,11 @@ struct glsl_shader_prog_link {
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 
+typedef struct semantic {
+    DWORD usage;
+    DWORD reg;
+} semantic;
+
 typedef struct shader_reg_maps {
 
     char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
@@ -1367,6 +1372,16 @@ extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
 
+/* Vertex shader utility functions */
+extern BOOL vshader_get_input(
+    IWineD3DVertexShader* iface,
+    BYTE usage_req, BYTE usage_idx_req,
+    unsigned int* regnum);
+
+extern BOOL vshader_input_is_color(
+    IWineD3DVertexShader* iface,
+    unsigned int regnum);
+
 /* ARB_[vertex/fragment]_program helper functions */
 extern void shader_arb_load_constants(
     IWineD3DStateBlock* iface,
@@ -1437,12 +1452,12 @@ extern void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
-   DWORD* semantics_out);
+   semantic* semantics_out);
 
 /** GLSL Vertex Shader Prototypes */
 extern void vshader_glsl_output_unpack(
    SHADER_BUFFER* buffer,
-   DWORD* semantics_out);
+   semantic* semantics_out);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
@@ -1474,8 +1489,8 @@ typedef struct IWineD3DBaseShaderImpl {
 extern void shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    DWORD* semantics_in,
-    DWORD* semantics_out,
+    semantic* semantics_in,
+    semantic* semantics_out,
     CONST DWORD* pToken);
 
 extern void shader_generate_glsl_declarations(
@@ -1558,8 +1573,8 @@ typedef struct IWineD3DVertexShaderImpl {
     DWORD usage;
 
     /* Vertex shader input and output semantics */
-    DWORD semantics_in [WINED3DSHADERDECLUSAGE_MAX_USAGE];
-    DWORD semantics_out [WINED3DSHADERDECLUSAGE_MAX_USAGE];
+    semantic semantics_in [MAX_ATTRIBS];
+    semantic semantics_out [MAX_REG_OUTPUT];
 
     /* run time datas...  */
     VSHADERDATA                *data;
@@ -1589,7 +1604,7 @@ typedef struct IWineD3DPixelShaderImpl {
     IWineD3DDeviceImpl         *wineD3DDevice;
 
     /* Pixel shader input semantics */
-    DWORD semantics_in [WINED3DSHADERDECLUSAGE_MAX_USAGE];
+    semantic semantics_in [MAX_REG_INPUT];
 
     /* run time data */
     PSHADERDATA                *data;

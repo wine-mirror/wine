@@ -501,20 +501,8 @@ static void shader_glsl_get_register_name(
                     strcpy(tmpStr, "gl_SecondaryColor");
             }
         } else {
-            IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl*) arg->shader;
-
-            if (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
-                reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
-                *is_color = TRUE;
-
-            if (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] &&
-                reg == (This->semantics_in[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
-                *is_color = TRUE;
-
-            /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
-             * the reg value from the vertex declaration. However, semantics are not initialized
-              * in that case - how can we know if an input contains color data or not? */
-
+            if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
+               *is_color = TRUE;
             sprintf(tmpStr, "attrib%lu", reg);
         } 
         break;
@@ -1390,53 +1378,50 @@ void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
 
 void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
-   DWORD* semantics_in) {
+   semantic* semantics_in) {
 
    unsigned int i;
 
-   for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++) {
+   for (i = 0; i < MAX_REG_INPUT; i++) {
 
-       DWORD reg = semantics_in[i];
-       unsigned int regnum = reg & D3DSP_REGNUM_MASK;
+       DWORD usage_token = semantics_in[i].usage;
+       DWORD register_token = semantics_in[i].reg;
+       DWORD usage, usage_idx;
        char reg_mask[6];
 
        /* Uninitialized */
-       if (!reg) continue;
+       if (!usage_token) continue;
+       usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
+       usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+       shader_glsl_get_output_register_swizzle(register_token, reg_mask);
 
-       shader_glsl_get_output_register_swizzle(reg, reg_mask);
+       switch(usage) {
 
-       switch(i) {
-
-           case WINED3DSHADERDECLUSAGE_DIFFUSE:
-               shader_addline(buffer, "IN%lu%s = vec4(gl_Color)%s;\n",
-                   regnum, reg_mask, reg_mask);
+           case D3DDECLUSAGE_COLOR:
+               if (usage_idx == 0)
+                   shader_addline(buffer, "IN%lu%s = vec4(gl_Color)%s;\n",
+                       i, reg_mask, reg_mask);
+               if (usage_idx == 1)
+                   shader_addline(buffer, "IN%lu%s = vec4(gl_SecondaryColor)%s;\n",
+                       i, reg_mask, reg_mask);
+               else
+                   shader_addline(buffer, "IN%lu%s = vec4(unsupported_color_input)%s;\n",
+                       i, reg_mask, reg_mask);
                break;
 
-           case WINED3DSHADERDECLUSAGE_SPECULAR:
-               shader_addline(buffer, "IN%lu%s = vec4(gl_SecondaryColor)%s;\n",
-                   regnum, reg_mask, reg_mask);
-               break;
-
-           case WINED3DSHADERDECLUSAGE_TEXCOORD0:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD1:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD2:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD3:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD4:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD5:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD6:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD7:
+           case D3DDECLUSAGE_TEXCOORD:
                shader_addline(buffer, "IN%lu%s = vec4(gl_TexCoord[%lu])%s;\n",
-                   regnum, reg_mask, i - WINED3DSHADERDECLUSAGE_TEXCOORD0, reg_mask );
+                   i, reg_mask, usage_idx, reg_mask );
                break;
 
-           case WINED3DSHADERDECLUSAGE_FOG:
+           case D3DDECLUSAGE_FOG:
                shader_addline(buffer, "IN%lu%s = vec4(gl_FogFragCoord)%s;\n",
-                   regnum, reg_mask, reg_mask);
+                   i, reg_mask, reg_mask);
                break;
 
            default:
                shader_addline(buffer, "IN%lu%s = vec4(unsupported_input)%s;\n",
-                   regnum, reg_mask, reg_mask);
+                   i, reg_mask, reg_mask);
         }
     }
 }
@@ -1447,57 +1432,54 @@ void pshader_glsl_input_pack(
 
 void vshader_glsl_output_unpack(
    SHADER_BUFFER* buffer,
-   DWORD* semantics_out) {
+   semantic* semantics_out) {
 
    unsigned int i;
 
-   for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++) {
+   for (i = 0; i < MAX_REG_OUTPUT; i++) {
 
-       DWORD reg = semantics_out[i];
-       unsigned int regnum = reg & D3DSP_REGNUM_MASK;
+       DWORD usage_token = semantics_out[i].usage;
+       DWORD register_token = semantics_out[i].reg;
+       DWORD usage, usage_idx;
        char reg_mask[6];
 
        /* Uninitialized */
-       if (!reg) continue;
+       if (!usage_token) continue;
 
-       shader_glsl_get_output_register_swizzle(reg, reg_mask);
+       usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
+       usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+       shader_glsl_get_output_register_swizzle(register_token, reg_mask);
 
-       switch(i) {
+       switch(usage) {
 
-           case WINED3DSHADERDECLUSAGE_DIFFUSE:
-               shader_addline(buffer, "gl_FrontColor%s = OUT%lu%s;\n", reg_mask, regnum, reg_mask);
+           case D3DDECLUSAGE_COLOR:
+               if (usage_idx == 0)
+                   shader_addline(buffer, "gl_FrontColor%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+               else if (usage_idx == 1)
+                   shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+               else
+                   shader_addline(buffer, "unsupported_color_output%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
                break;
 
-           case WINED3DSHADERDECLUSAGE_SPECULAR:
-               shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT%lu%s;\n", reg_mask, regnum, reg_mask);
+           case D3DDECLUSAGE_POSITION:
+               shader_addline(buffer, "gl_Position%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
                break;
-
-           case WINED3DSHADERDECLUSAGE_POSITION:
-               shader_addline(buffer, "gl_Position%s = OUT%lu%s;\n", reg_mask, regnum, reg_mask);
-               break;
-
-           case WINED3DSHADERDECLUSAGE_TEXCOORD0:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD1:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD2:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD3:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD4:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD5:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD6:
-           case WINED3DSHADERDECLUSAGE_TEXCOORD7:
+ 
+           case D3DDECLUSAGE_TEXCOORD:
                shader_addline(buffer, "gl_TexCoord[%lu]%s = OUT%lu%s;\n",
-                   i - WINED3DSHADERDECLUSAGE_TEXCOORD0, reg_mask, regnum, reg_mask);
+                   usage_idx, reg_mask, i, reg_mask);
                break;
 
            case WINED3DSHADERDECLUSAGE_PSIZE:
-               shader_addline(buffer, "gl_PointSize = OUT%lu.x;\n", regnum);
+               shader_addline(buffer, "gl_PointSize = OUT%lu.x;\n", i);
                break;
 
            case WINED3DSHADERDECLUSAGE_FOG:
-               shader_addline(buffer, "gl_FogFragCoord%s = OUT%lu%s;\n", reg_mask, regnum, reg_mask);
+               shader_addline(buffer, "gl_FogFragCoord%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
                break;
 
            default:
-               shader_addline(buffer, "unsupported_output%s = OUT%lu%s;\n", reg_mask, regnum, reg_mask);
-      }
-   }
+               shader_addline(buffer, "unsupported_output%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+       }
+    }
 }

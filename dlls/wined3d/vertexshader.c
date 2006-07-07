@@ -609,6 +609,37 @@ static void vshader_set_limits(
       }
 }
 
+BOOL vshader_get_input(
+    IWineD3DVertexShader* iface,
+    BYTE usage_req, BYTE usage_idx_req,
+    unsigned int* regnum) {
+
+    IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
+    int i;
+
+    for (i = 0; i < MAX_ATTRIBS; i++) {
+        DWORD usage_token = This->semantics_in[i].usage;
+        DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
+        DWORD usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+
+        if (usage_token && (usage == usage_req && usage_idx == usage_idx_req)) {
+            *regnum = i;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+BOOL vshader_input_is_color(
+    IWineD3DVertexShader* iface,
+    unsigned int regnum) {
+
+    IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
+    DWORD usage_token = This->semantics_in[regnum].usage;
+    DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
+    return usage == D3DDECLUSAGE_COLOR;
+}
+
 /** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
     or GLSL and send it to the card */
 static VOID IWineD3DVertexShaderImpl_GenerateShader(

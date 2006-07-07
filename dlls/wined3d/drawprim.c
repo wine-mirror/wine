@@ -464,7 +464,12 @@ void primitiveDeclarationConvertToStridedData(
             checkGLcall("glEnableVertexAttribArrayARB");
         }
 
-        stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+        if (useVertexShaderFunction)
+            stride_used = vshader_get_input(This->stateBlock->vertexShader,
+                element->Usage, element->UsageIndex, &idx);
+        else
+            stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+
         if (stride_used) {
            TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
                  "stream=%u, offset=%u, stride=%lu, VBO=%u]\n",
@@ -476,10 +481,12 @@ void primitiveDeclarationConvertToStridedData(
            strided->u.input[idx].dwType = element->Type;
            strided->u.input[idx].dwStride = stride;
            strided->u.input[idx].VBO = streamVBO;
-           if (element->Usage == D3DDECLUSAGE_POSITION)
-               strided->u.s.position_transformed = FALSE;
-           else if (element->Usage == D3DDECLUSAGE_POSITIONT)
-               strided->u.s.position_transformed = TRUE;
+           if (!useVertexShaderFunction) {
+               if (element->Usage == D3DDECLUSAGE_POSITION)
+                   strided->u.s.position_transformed = FALSE;
+               else if (element->Usage == D3DDECLUSAGE_POSITIONT)
+                   strided->u.s.position_transformed = TRUE;
+           }
         }
     };
 }
@@ -794,105 +801,35 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
 }
 #endif /* TODO: Software shaders */
 
-void loadNumberedArrays(
-    IWineD3DDevice *iface, 
-    WineDirect3DVertexStridedData *sd, 
-    DWORD arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+static void loadNumberedArrays(
+    IWineD3DDevice *iface,
+    IWineD3DVertexShader *shader,
+    WineDirect3DVertexStridedData *strided) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint curVBO = -1;
+    int i;
 
-#define LOAD_NUMBERED_ARRAY(_arrayName, _lookupName) \
-    if ((sd->u.s._arrayName.lpData != NULL || sd->u.s._arrayName.VBO != 0) && arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName]) { \
-        unsigned int idx = arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName] & D3DSP_REGNUM_MASK; \
-        TRACE_(d3d_shader)("Loading array %u with data from %s\n", idx,  #_arrayName); \
-        if(curVBO != sd->u.s._arrayName.VBO) { \
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s._arrayName.VBO)); \
-            checkGLcall("glBindBufferARB"); \
-            curVBO = sd->u.s._arrayName.VBO; \
-        } \
-        GL_EXTCALL(glVertexAttribPointerARB(idx, \
-                        WINED3D_ATR_SIZE(sd->u.s._arrayName.dwType), \
-                        WINED3D_ATR_GLTYPE(sd->u.s._arrayName.dwType), \
-                        WINED3D_ATR_NORMALIZED(sd->u.s._arrayName.dwType), \
-                        sd->u.s._arrayName.dwStride, \
-                        sd->u.s._arrayName.lpData)); \
-        GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
-    }
+    for (i = 0; i < MAX_ATTRIBS; i++) {
 
+        if (!strided->u.input[i].lpData && !strided->u.input[i].VBO)
+            continue;
 
-#define LOAD_NUMBERED_POSITION_ARRAY(_lookupNumber) \
-    if ((sd->u.s.position2.lpData != NULL  || sd->u.s.position2.VBO != 0)&& arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber]) { \
-        unsigned int idx = arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber] & D3DSP_REGNUM_MASK; \
-        TRACE_(d3d_shader)("Loading array %u with data from %s\n", idx, "position2"); \
-        if(curVBO != sd->u.s.position2.VBO) { \
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.position2.VBO)); \
-            checkGLcall("glBindBufferARB"); \
-            curVBO = sd->u.s.position2.VBO; \
-        } \
-        GL_EXTCALL(glVertexAttribPointerARB(idx, \
-                        WINED3D_ATR_SIZE(sd->u.s.position2.dwType), \
-                        WINED3D_ATR_GLTYPE(sd->u.s.position2.dwType), \
-                        WINED3D_ATR_NORMALIZED(sd->u.s.position2.dwType), \
-                        sd->u.s.position2.dwStride, \
-                        ((char *)sd->u.s.position2.lpData) + \
-                           WINED3D_ATR_SIZE(sd->u.s.position2.dwType) * \
-                           WINED3D_ATR_TYPESIZE(sd->u.s.position2.dwType) * _lookupNumber)); \
-        GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
-    }
+        TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, strided->u.input[i].VBO);
 
-/* Generate some lookup tables */
-    /* drop the RHW coord, there must be a nicer way of doing this. */
-    sd->u.s.position.dwType  = min(D3DDECLTYPE_FLOAT3, sd->u.s.position.dwType);
-    sd->u.s.position2.dwType = min(D3DDECLTYPE_FLOAT3, sd->u.s.position2.dwType);
-
-    LOAD_NUMBERED_ARRAY(blendWeights,BLENDWEIGHT);
-    LOAD_NUMBERED_ARRAY(blendMatrixIndices,BLENDINDICES);
-    LOAD_NUMBERED_ARRAY(position,POSITION);
-    LOAD_NUMBERED_ARRAY(normal,NORMAL);
-    LOAD_NUMBERED_ARRAY(pSize,PSIZE);
-    LOAD_NUMBERED_ARRAY(diffuse,DIFFUSE);
-    LOAD_NUMBERED_ARRAY(specular,SPECULAR);
-    LOAD_NUMBERED_ARRAY(texCoords[0],TEXCOORD0);
-    LOAD_NUMBERED_ARRAY(texCoords[1],TEXCOORD1);
-    LOAD_NUMBERED_ARRAY(texCoords[2],TEXCOORD2);
-    LOAD_NUMBERED_ARRAY(texCoords[3],TEXCOORD3);
-    LOAD_NUMBERED_ARRAY(texCoords[4],TEXCOORD4);
-    LOAD_NUMBERED_ARRAY(texCoords[5],TEXCOORD5);
-    LOAD_NUMBERED_ARRAY(texCoords[6],TEXCOORD6);
-    LOAD_NUMBERED_ARRAY(texCoords[7],TEXCOORD7);
-#if 0   /* TODO: Samplers may allow for more texture coords */
-    LOAD_NUMBERED_ARRAY(texCoords[8],TEXCOORD8);
-    LOAD_NUMBERED_ARRAY(texCoords[9],TEXCOORD9);
-    LOAD_NUMBERED_ARRAY(texCoords[10],TEXCOORD10);
-    LOAD_NUMBERED_ARRAY(texCoords[11],TEXCOORD11);
-    LOAD_NUMBERED_ARRAY(texCoords[12],TEXCOORD12);
-    LOAD_NUMBERED_ARRAY(texCoords[13],TEXCOORD13);
-    LOAD_NUMBERED_ARRAY(texCoords[14],TEXCOORD14);
-    LOAD_NUMBERED_ARRAY(texCoords[15],TEXCOORD15);
-#endif
-    LOAD_NUMBERED_ARRAY(position,POSITIONT);
-    /* d3d9 types */
-    LOAD_NUMBERED_ARRAY(tangent,TANGENT);
-    LOAD_NUMBERED_ARRAY(binormal,BINORMAL);
-    LOAD_NUMBERED_ARRAY(tessFactor,TESSFACTOR);
-    LOAD_NUMBERED_ARRAY(position2,POSITION2);
-    /* there can be lots of position arrays */
-    LOAD_NUMBERED_POSITION_ARRAY(0);
-    LOAD_NUMBERED_POSITION_ARRAY(1);
-    LOAD_NUMBERED_POSITION_ARRAY(2);
-    LOAD_NUMBERED_POSITION_ARRAY(3);
-    LOAD_NUMBERED_POSITION_ARRAY(4);
-    LOAD_NUMBERED_POSITION_ARRAY(5);
-    LOAD_NUMBERED_POSITION_ARRAY(6);
-    LOAD_NUMBERED_POSITION_ARRAY(7);
-    LOAD_NUMBERED_ARRAY(position2,POSITIONT2);
-    LOAD_NUMBERED_ARRAY(normal2,NORMAL2);
-    LOAD_NUMBERED_ARRAY(fog,FOG);
-    LOAD_NUMBERED_ARRAY(depth,DEPTH);
-    LOAD_NUMBERED_ARRAY(sample,SAMPLE);
-
-#undef LOAD_NUMBERED_ARRAY
+        if(curVBO != strided->u.input[i].VBO) {
+            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, strided->u.input[i].VBO));
+            checkGLcall("glBindBufferARB");
+            curVBO = strided->u.input[i].VBO;
+        }
+        GL_EXTCALL(glVertexAttribPointerARB(i,
+                        WINED3D_ATR_SIZE(strided->u.input[i].dwType),
+                        WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
+                        WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
+                        strided->u.input[i].dwStride,
+                        strided->u.input[i].lpData));
+        GL_EXTCALL(glEnableVertexAttribArrayARB(i));
+   }
 }
 
 static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd) {
@@ -1803,8 +1740,7 @@ inline static void drawPrimitiveDrawStrided(
     /* Shader pipeline - load attribute arrays */
     } else if(useVertexShaderFunction) {
 
-        loadNumberedArrays(iface, dataLocations, 
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->semantics_in);
+        loadNumberedArrays(iface, This->stateBlock->vertexShader, dataLocations);
         useDrawStridedSlow = FALSE;
 
     /* Draw vertex by vertex */
@@ -2147,11 +2083,21 @@ void drawPrimitive(IWineD3DDevice *iface,
     ENTER_GL();
 
     if(DrawPrimStrideData) {
+
+        /* Note: this is a ddraw fixed-function code path */
+
         TRACE("================ Strided Input ===================\n");
         dataLocations = DrawPrimStrideData;
+        drawPrimitiveTraceDataLocations(dataLocations);
         fixup = FALSE;
     }
-    else if (This->stateBlock->vertexDecl != NULL || (useVertexShaderFunction  && NULL != ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)) {
+
+    else if (This->stateBlock->vertexDecl != NULL || useVertexShaderFunction) {
+
+        /* Note: This is a fixed function or shader codepath.
+         * This means it must handle both types of strided data.
+         * Shaders must go through here to zero the strided data, even if they
+         * don't set any declaration at all */
 
         TRACE("================ Vertex Declaration  ===================\n");
         dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
@@ -2159,9 +2105,19 @@ void drawPrimitive(IWineD3DDevice *iface,
             ERR("Out of memory!\n");
             return;
         }
-        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fixup);
+
+        if (This->stateBlock->vertexDecl != NULL ||
+            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration != NULL)            
+
+            primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, 
+                dataLocations, StartVertexIndex, &fixup);
 
     } else {
+
+        /* Note: This codepath is not reachable from d3d9 (see fvf->decl9 conversion)
+         * It is reachable through d3d8, but only for fixed-function.
+         * It will not work properly for shaders. */
+
         TRACE("================ FVF ===================\n");
         dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
         if(!dataLocations) {
@@ -2169,10 +2125,8 @@ void drawPrimitive(IWineD3DDevice *iface,
             return;
         }
         primitiveConvertToStridedData(iface, dataLocations, StartVertexIndex, &fixup);
+        drawPrimitiveTraceDataLocations(dataLocations);
     }
-
-    /* write out some debug information*/
-    drawPrimitiveTraceDataLocations(dataLocations);
 
     /* Setup transform matrices and sort out */
     primitiveInitState(iface, dataLocations, useVertexShaderFunction, &lighting_changed, &lighting_original);
