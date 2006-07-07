@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = shdocvw.dll
-IMPORTS   = shell32 ole32 advapi32 kernel32
+IMPORTS   = shell32 ole32 user32 advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \
