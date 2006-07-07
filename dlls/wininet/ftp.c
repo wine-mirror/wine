@@ -1665,6 +1665,15 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
  *   HINTERNET a session handle on success
  *   NULL on failure
  *
+ * NOTES:
+ *
+ * Windows uses 'anonymous' as the username, when given a NULL username
+ * and a NULL password. The password is first looked up in:
+ *
+ * HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings\EmailName
+ *
+ * If this entry is not present it uses the current username as the password.
+ *
  */
 
 HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
@@ -1672,8 +1681,13 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
 	DWORD dwInternalFlags)
 {
+    static const WCHAR szKey[] = {'S','o','f','t','w','a','r','e','\\',
+                                   'M','i','c','r','o','s','o','f','t','\\',
+                                   'W','i','n','d','o','w','s','\\',
+                                   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                   'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
+    static const WCHAR szValue[] = {'E','m','a','i','l','N','a','m','e',0};
     static const WCHAR szDefaultUsername[] = {'a','n','o','n','y','m','o','u','s','\0'};
-    static const WCHAR szDefaultPassword[] = {'u','s','e','r','@','s','e','r','v','e','r','\0'};
     static const WCHAR szEmpty[] = {'\0'};
     struct sockaddr_in socketAddr;
     INT nsocket = -1;
@@ -1729,8 +1743,24 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
             FIXME("Proxy bypass is ignored.\n");
     }
     if ( !lpszUserName) {
+        HKEY key;
+        WCHAR szPassword[MAX_PATH];
+        DWORD len = sizeof(szPassword);
+
         lpwfs->lpszUserName = WININET_strdupW(szDefaultUsername);
-        lpwfs->lpszPassword = WININET_strdupW(szDefaultPassword);
+
+        RegOpenKeyW(HKEY_CURRENT_USER, szKey, &key);
+        if (RegQueryValueExW(key, szValue, NULL, NULL, (LPBYTE)szPassword, &len)) {
+            /* Nothing in the registry, get the username and use that as the password */
+            if (!GetUserNameW(szPassword, &len)) {
+                /* Should never get here, but use an empty password as failsafe */
+                strcpyW(szPassword, szEmpty);
+            }
+        }
+        RegCloseKey(key);
+
+        TRACE("Password used for anonymous ftp : (%s)\n", debugstr_w(szPassword));
+        lpwfs->lpszPassword = WININET_strdupW(szPassword);
     }
     else {
         lpwfs->lpszUserName = WININET_strdupW(lpszUserName);
