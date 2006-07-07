@@ -207,6 +207,7 @@ static void initAudioDeviceTree(HWND hDlg)
     HIMAGELIST hImageList;
     HBITMAP hBitMap;
     HCURSOR old_cursor;
+    static TCHAR driver_typeT[] = {'S','o','u','n','d',' ','D','r','i','v','e','r','s',0};
 
     tree = GetDlgItem(hDlg, IDC_AUDIO_TREE);
 
@@ -227,7 +228,7 @@ static void initAudioDeviceTree(HWND hDlg)
     insert.hParent = TVI_ROOT;
     insert.hInsertAfter = TVI_LAST;
     insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-    insert.u.item.pszText = "Sound Drivers";
+    insert.u.item.pszText = driver_typeT;
     insert.u.item.cChildren = 1;
     root = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
 
@@ -306,9 +307,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_wod)
                     {
+                        TCHAR dev_typeT[] = {'W','a','v','e',' ','O','u','t',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "Wave Out Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
@@ -332,9 +335,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_wid)
                     {
+                        TCHAR dev_typeT[] = {'W','a','v','e',' ','I','n',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "Wave In Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
@@ -358,9 +363,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_mod)
                     {
+                        TCHAR dev_typeT[] = {'M','I','D','I',' ','O','u','t',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "MIDI Out Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
@@ -384,9 +391,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_mid)
                     {
+                        TCHAR dev_typeT[] = {'M','I','D','I',' ','I','n',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "MIDI In Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
@@ -410,9 +419,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_aux)
                     {
+                        TCHAR dev_typeT[] = {'A','u','x',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "Aux Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
@@ -436,9 +447,11 @@ static void initAudioDeviceTree(HWND hDlg)
 
                     if (num_mxd)
                     {
+                        TCHAR dev_typeT[] = {'M','i','x','e','r',' ','D','e','v','i','c','e','s',0};
+
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = "Mixer Devices";
+                        insert.u.item.pszText = dev_typeT;
                         insert.u.item.cChildren = 1;
 
                         type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
