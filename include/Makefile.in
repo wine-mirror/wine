@@ -18,6 +18,7 @@ WINDOWS_IDL_SRCS = \
 	exdisp.idl \
 	hlink.idl \
 	iads.idl \
+	indexsvr.idl \
 	mediaobj.idl \
 	mimeinfo.idl \
 	mlang.idl \

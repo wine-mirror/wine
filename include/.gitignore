@@ -13,6 +13,7 @@ downloadmgr.h
 exdisp.h
 hlink.h
 iads.h
+indexsvr.h
 mediaobj.h
 mimeinfo.h
 mlang.h
