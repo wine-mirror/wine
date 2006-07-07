@@ -904,8 +904,10 @@ typedef struct WineDirect3DStridedData {
 typedef struct WineDirect3DVertexStridedData {
     union {
         struct {
+
+             /* Do not add or reorder fields here,
+              * so this can be indexed as an array */
              WineDirect3DStridedData  position;
-             BOOL position_transformed;
              WineDirect3DStridedData  blendWeights;
              WineDirect3DStridedData  blendMatrixIndices;
              WineDirect3DStridedData  normal;
@@ -921,6 +923,10 @@ typedef struct WineDirect3DVertexStridedData {
              WineDirect3DStridedData  fog;
              WineDirect3DStridedData  depth;
              WineDirect3DStridedData  sample;
+
+             /* Add fields here */
+             BOOL position_transformed;
+
         } s;
         WineDirect3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
     } u;

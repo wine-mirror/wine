@@ -346,6 +346,56 @@ static void primitiveInitState(
     }
 }
 
+static BOOL fixed_get_input(
+    BYTE usage, BYTE usage_idx,
+    unsigned int* regnum) {
+
+    *regnum = -1;
+
+    /* Those positions must have the order in the
+     * named part of the strided data */
+
+    if ((usage == D3DDECLUSAGE_POSITION || usage == D3DDECLUSAGE_POSITIONT) && usage_idx == 0)
+        *regnum = 0;
+    else if (usage == D3DDECLUSAGE_BLENDWEIGHT && usage_idx == 0)
+        *regnum = 1;
+    else if (usage == D3DDECLUSAGE_BLENDINDICES && usage_idx == 0)
+        *regnum = 2;
+    else if (usage == D3DDECLUSAGE_NORMAL && usage_idx == 0)
+        *regnum = 3;
+    else if (usage == D3DDECLUSAGE_PSIZE && usage_idx == 0)
+        *regnum = 4;
+    else if (usage == D3DDECLUSAGE_COLOR && usage_idx == 0)
+        *regnum = 5;
+    else if (usage == D3DDECLUSAGE_COLOR && usage_idx == 1)
+        *regnum = 6;
+    else if (usage == D3DDECLUSAGE_TEXCOORD && usage_idx < D3DDP_MAXTEXCOORD)
+        *regnum = 7 + usage_idx;
+    else if ((usage == D3DDECLUSAGE_POSITION || usage == D3DDECLUSAGE_POSITIONT) && usage_idx == 1)
+        *regnum = 7 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_NORMAL && usage_idx == 1)
+        *regnum = 8 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_TANGENT && usage_idx == 0)
+        *regnum = 9 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_BINORMAL && usage_idx == 0)
+        *regnum = 10 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_TESSFACTOR && usage_idx == 0)
+        *regnum = 11 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_FOG && usage_idx == 0)
+        *regnum = 12 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_DEPTH && usage_idx == 0)
+        *regnum = 13 + D3DDP_MAXTEXCOORD;
+    else if (usage == D3DDECLUSAGE_SAMPLE && usage_idx == 0)
+        *regnum = 14 + D3DDP_MAXTEXCOORD;
+
+    if (*regnum < 0) {
+        FIXME("Unsupported input stream [usage=%s, usage_idx=%u]\n",
+            debug_d3ddeclusage(usage), usage_idx);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 void primitiveDeclarationConvertToStridedData(
      IWineD3DDevice *iface,
      BOOL useVertexShaderFunction,
@@ -355,7 +405,6 @@ void primitiveDeclarationConvertToStridedData(
 
      /* We need to deal with frequency data!*/
 
-    int           textureNo =0;
     BYTE  *data    = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl* vertexDeclaration = NULL;
@@ -376,6 +425,8 @@ void primitiveDeclarationConvertToStridedData(
     /* Translate the declaration into strided data */
     for (i = 0 ; i < vertexDeclaration->declarationWNumElements - 1; ++i) {
         GLint streamVBO = 0;
+        BOOL stride_used;
+        unsigned int idx;
 
         element = vertexDeclaration->pDeclarationWine + i;
         TRACE("%p Elements %p %d or %d\n", vertexDeclaration->pDeclarationWine, element,  i, vertexDeclaration->declarationWNumElements);
@@ -413,193 +464,24 @@ void primitiveDeclarationConvertToStridedData(
             checkGLcall("glEnableVertexAttribArrayARB");
         }
 
-        switch (element->Usage) {
-        case D3DDECLUSAGE_POSITION:
-                switch (element->UsageIndex) {
-                case 0: /* N-patch */
-                    strided->u.s.position.lpData    = data;
-                    strided->u.s.position.dwType    = element->Type;
-                    strided->u.s.position.dwStride  = stride;
-                    strided->u.s.position.VBO       = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position", data, element->Type, stride);
-                break;
-                case 1: /* tweened see http://www.gamedev.net/reference/articles/article2017.asp */
-                    TRACE("Tweened positions\n");
-                    strided->u.s.position2.lpData    = data;
-                    strided->u.s.position2.dwType    = element->Type;
-                    strided->u.s.position2.dwStride  = stride;
-                    strided->u.s.position2.VBO      = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2", data, element->Type, stride);
-                break;
-                }
-                strided->u.s.position_transformed = FALSE;
-        break;
-        case D3DDECLUSAGE_NORMAL:
-                switch (element->UsageIndex) {
-                case 0: /* N-patch */
-                    strided->u.s.normal.lpData    = data;
-                    strided->u.s.normal.dwType    = element->Type;
-                    strided->u.s.normal.dwStride  = stride;
-                    strided->u.s.normal.VBO       = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "normal", data, element->Type, stride);
-                break;
-                case 1: /* skinning */
-                    TRACE("Skinning / tween normals\n");
-                    strided->u.s.normal2.lpData    = data;
-                    strided->u.s.normal2.dwType    = element->Type;
-                    strided->u.s.normal2.dwStride  = stride;
-                    strided->u.s.normal2.VBO       = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "normal2", data, element->Type, stride);
-                break;
-                }
-        break;
-        case D3DDECLUSAGE_BLENDINDICES:
-        /* demo @http://www.ati.com/developer/vertexblend.html
-            and http://www.flipcode.com/articles/article_dx8shaders.shtml
-        */
-            strided->u.s.blendMatrixIndices.lpData  = data;
-            strided->u.s.blendMatrixIndices.dwType  = element->Type;
-            strided->u.s.blendMatrixIndices.dwStride= stride;
-            strided->u.s.blendMatrixIndices.VBO     = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "blendMatrixIndices", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_BLENDWEIGHT:
-            strided->u.s.blendWeights.lpData        = data;
-            strided->u.s.blendWeights.dwType        = element->Type;
-            strided->u.s.blendWeights.dwStride      = stride;
-            strided->u.s.blendWeights.VBO           = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "blendWeights", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_PSIZE:
-            strided->u.s.pSize.lpData               = data;
-            strided->u.s.pSize.dwType               = element->Type;
-            strided->u.s.pSize.dwStride             = stride;
-            strided->u.s.pSize.VBO                  = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "pSize", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_COLOR:
-        switch (element->UsageIndex) {
-        case 0:/* diffuse */
-            strided->u.s.diffuse.lpData             = data;
-            strided->u.s.diffuse.dwType             = element->Type;
-            strided->u.s.diffuse.dwStride           = stride;
-            strided->u.s.diffuse.VBO                = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "diffuse", data, element->Type, stride);
-        break;
-        case 1: /* specular */
-            strided->u.s.specular.lpData            = data;
-            strided->u.s.specular.dwType            = element->Type;
-            strided->u.s.specular.dwStride          = stride;
-            strided->u.s.specular.VBO               = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "specular", data, element->Type, stride);
+        stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+        if (stride_used) {
+           TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
+                 "stream=%u, offset=%u, stride=%lu, VBO=%u]\n",
+                 useVertexShaderFunction? "shader": "fixed function", idx,
+                 debug_d3ddeclusage(element->Usage), element->UsageIndex,
+                 element->Stream, element->Offset, stride, streamVBO);
 
+           strided->u.input[idx].lpData = data;
+           strided->u.input[idx].dwType = element->Type;
+           strided->u.input[idx].dwStride = stride;
+           strided->u.input[idx].VBO = streamVBO;
+           if (element->Usage == D3DDECLUSAGE_POSITION)
+               strided->u.s.position_transformed = FALSE;
+           else if (element->Usage == D3DDECLUSAGE_POSITIONT)
+               strided->u.s.position_transformed = TRUE;
         }
-
-        break;
-        case D3DDECLUSAGE_TEXCOORD:
-        /* For some odd reason Microsoft decided to sum usage accross all the streams,
-        which means we need to do a count and not just use the usage number */
-
-            strided->u.s.texCoords[textureNo].lpData    = data;
-            strided->u.s.texCoords[textureNo].dwType    = element->Type;
-            strided->u.s.texCoords[textureNo].dwStride  = stride;
-            strided->u.s.texCoords[textureNo].VBO       = streamVBO;
-            TRACE("Set strided %s.%d data %p, type %d. stride %ld\n", "texCoords", textureNo, data, element->Type, stride);
-
-            ++textureNo;
-        break;
-        case D3DDECLUSAGE_TANGENT:
-        /* Implement tangents and binormals using http://oss.sgi.com/projects/ogl-sample/registry/EXT/coordinate_frame.txt
-        this is easy so long as the OpenGL implementation supports it, otherwise drop back to calculating the
-        normal using tangents where no normal data has been provided */
-            TRACE("Tangents\n");
-            strided->u.s.tangent.lpData   = data;
-            strided->u.s.tangent.dwType   = element->Type;
-            strided->u.s.tangent.dwStride = stride;
-            strided->u.s.tangent.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "tangent", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_BINORMAL:
-        /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basically they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
-        tangent data makes it easier to perform some calculations (a bit like using 2d graph paper instead of the normal of the piece of paper)
-        The only thing they are useful for in fixed function would be working out normals when none are given.
-        */
-            TRACE("BI-Normal\n");
-            strided->u.s.binormal.lpData   = data;
-            strided->u.s.binormal.dwType   = element->Type;
-            strided->u.s.binormal.dwStride = stride;
-            strided->u.s.binormal.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "binormal", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_TESSFACTOR:
-        /* a google for D3DDECLUSAGE_TESSFACTOR turns up a whopping 36 entries, 7 of which are from MSDN.
-        */
-            TRACE("Tess Factor\n");
-            strided->u.s.tessFactor.lpData   = data;
-            strided->u.s.tessFactor.dwType   = element->Type;
-            strided->u.s.tessFactor.dwStride = stride;
-            strided->u.s.tessFactor.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "tessFactor", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_POSITIONT:
-
-               switch (element->UsageIndex) {
-                case 0: /* N-patch */
-                    strided->u.s.position.lpData    = data;
-                    strided->u.s.position.dwType    = element->Type;
-                    strided->u.s.position.dwStride  = stride;
-                    strided->u.s.position.VBO       = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "positionT", data, element->Type, stride);
-                break;
-                case 1: /* skinning */
-                        /* see http://rsn.gamedev.net/tutorials/ms3danim.asp
-                        http://xface.blogspot.com/2004_08_01_xface_archive.html
-                        */
-                    TRACE("Skinning positionsT\n");
-                    strided->u.s.position2.lpData    = data;
-                    strided->u.s.position2.dwType    = element->Type;
-                    strided->u.s.position2.dwStride  = stride;
-                    strided->u.s.position2.VBO       = streamVBO;
-                    TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2T", data, element->Type, stride);
-                break;
-                }
-                strided->u.s.position_transformed = TRUE;
-        break;
-        case D3DDECLUSAGE_FOG:
-        /* maybe GL_EXT_fog_coord ?
-        * http://oss.sgi.com/projects/ogl-sample/registry/EXT/fog_coord.txt
-        * This extension allows specifying an explicit per-vertex fog
-        * coordinate to be used in fog computations, rather than using a
-        * fragment depth-based fog equation.
-        *
-        * */
-            TRACE("Fog\n");
-            strided->u.s.fog.lpData   = data;
-            strided->u.s.fog.dwType   = element->Type;
-            strided->u.s.fog.dwStride = stride;
-            strided->u.s.fog.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "fog", data, element->Type, stride);
-        break;
-        case D3DDECLUSAGE_DEPTH:
-            TRACE("depth\n");
-            strided->u.s.depth.lpData   = data;
-            strided->u.s.depth.dwType   = element->Type;
-            strided->u.s.depth.dwStride = stride;
-            strided->u.s.depth.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "depth", data, element->Type, stride);
-            break;
-        case D3DDECLUSAGE_SAMPLE: /* VertexShader textures */
-            TRACE("depth\n");
-            strided->u.s.sample.lpData   = data;
-            strided->u.s.sample.dwType   = element->Type;
-            strided->u.s.sample.dwStride = stride;
-            strided->u.s.sample.VBO      = streamVBO;
-            TRACE("Set strided %s. data %p, type %d. stride %ld\n", "sample", data, element->Type, stride);
-        break;
-        };
-
     };
-
 }
 
 void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDirect3DVertexStridedData *strided, GLint streamVBO) {
