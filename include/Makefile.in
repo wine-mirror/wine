@@ -209,6 +209,7 @@ WINDOWS_INCLUDES = \
 	ntddscsi.h \
 	ntddstor.h \
 	ntdsapi.h \
+	ntquery.h \
 	ntsecapi.h \
 	ntstatus.h \
 	objbase.h \
