@@ -110,7 +110,7 @@ static struct window *taskman_window;
 inline static struct window *get_window( user_handle_t handle )
 {
     struct window *ret = get_user_object( handle, USER_WINDOW );
-    if (!ret) set_error( STATUS_INVALID_HANDLE );
+    if (!ret) set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
     return ret;
 }
 

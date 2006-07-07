@@ -1999,26 +1999,21 @@ DECL_HANDLER(set_key_state)
 /* set the system foreground window */
 DECL_HANDLER(set_foreground_window)
 {
+    struct thread *thread;
     struct msg_queue *queue = get_current_queue();
 
     reply->previous = foreground_input ? foreground_input->active : 0;
     reply->send_msg_old = (reply->previous && foreground_input != queue->input);
     reply->send_msg_new = FALSE;
 
-    if (req->handle)
+    if (is_top_level_window( req->handle ) &&
+        ((thread = get_window_thread( req->handle ))))
     {
-        struct thread *thread;
-
-        if (is_top_level_window( req->handle ) &&
-            ((thread = get_window_thread( req->handle ))))
-        {
-            foreground_input = thread->queue->input;
-            reply->send_msg_new = (foreground_input != queue->input);
-            release_object( thread );
-        }
-        else set_error( STATUS_INVALID_HANDLE );
+        foreground_input = thread->queue->input;
+        reply->send_msg_new = (foreground_input != queue->input);
+        release_object( thread );
     }
-    else foreground_input = NULL;
+    else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
 }
 
 

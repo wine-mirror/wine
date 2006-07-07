@@ -299,7 +299,8 @@ HWND WINAPI SetFocus( HWND hwnd )
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
     TRACE( "%p\n", hwnd );
-    if (hwnd) hwnd = WIN_GetFullHandle( hwnd );
+
+    hwnd = WIN_GetFullHandle( hwnd );
     return set_foreground_window( hwnd, FALSE );
 }
 

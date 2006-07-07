@@ -2101,40 +2101,6 @@ static void test_SetFocus(HWND hwnd)
     DestroyWindow( child );
 }
 
-static void test_SetActiveWindow(HWND hwnd)
-{
-    HWND hwnd2;
-
-    ShowWindow(hwnd, SW_SHOW);
-    SetActiveWindow(0);
-    SetActiveWindow(hwnd);
-    ok( GetActiveWindow() == hwnd, "Failed to set focus to visible window %p\n", hwnd );
-    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
-    ok( GetActiveWindow() == hwnd, "Window %p no longer active\n", hwnd );
-    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
-    ShowWindow(hwnd, SW_HIDE);
-    ok( GetActiveWindow() != hwnd, "Window %p is still active\n", hwnd );
-
-    /* trace("**testing an invisible window now\n"); */
-    SetActiveWindow(hwnd);
-    ok( GetActiveWindow() == hwnd, "Window %p not active\n", hwnd );
-    ok( !(GetWindowLong(hwnd,GWL_STYLE) & WS_VISIBLE), "Window %p is visible\n", hwnd );
-    
-    ShowWindow(hwnd, SW_SHOW);
-
-    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
-    ok( GetActiveWindow() == hwnd2, "Window %p is not active\n", hwnd2 );
-    DestroyWindow(hwnd2);
-    ok( GetActiveWindow() != hwnd2, "Window %p is still active\n", hwnd2 );
-
-    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
-    ok( GetActiveWindow() == hwnd2, "Window %p is not active\n", hwnd2 );
-    SetWindowPos(hwnd2,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
-    ok( GetActiveWindow() == hwnd2, "Window %p no longer active (%p)\n", hwnd2, GetActiveWindow() );
-    DestroyWindow(hwnd2);
-    ok( GetActiveWindow() != hwnd2, "Window %p is still active\n", hwnd2 );
-}
-
 static void check_wnd_state(HWND active, HWND foreground, HWND focus, HWND capture)
 {
     ok(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
@@ -2142,6 +2108,122 @@ static void check_wnd_state(HWND active, HWND foreground, HWND focus, HWND captu
 	ok(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
     ok(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
     ok(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
+}
+
+static void test_SetActiveWindow(HWND hwnd)
+{
+    HWND hwnd2;
+
+    ShowWindow(hwnd, SW_HIDE);
+    SetFocus(0);
+    SetActiveWindow(0);
+    check_wnd_state(0, 0, 0, 0);
+
+    /*trace("testing SetActiveWindow %p\n", hwnd);*/
+
+    ShowWindow(hwnd, SW_SHOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = SetActiveWindow(0);
+    ok(hwnd2 == hwnd, "SetActiveWindow returned %p instead of %p\n", hwnd2, hwnd);
+    check_wnd_state(0, 0, 0, 0);
+
+    hwnd2 = SetActiveWindow(hwnd);
+    ok(hwnd2 == 0, "SetActiveWindow returned %p instead of 0\n", hwnd2);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    ShowWindow(hwnd, SW_HIDE);
+    check_wnd_state(0, 0, 0, 0);
+
+    /*trace("testing SetActiveWindow on an invisible window %p\n", hwnd);*/
+    SetActiveWindow(hwnd);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    
+    ShowWindow(hwnd, SW_SHOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    DestroyWindow(hwnd2);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    SetWindowPos(hwnd2,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    DestroyWindow(hwnd2);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+}
+
+static void test_SetForegroundWindow(HWND hwnd)
+{
+    BOOL ret;
+    HWND hwnd2;
+
+    ShowWindow(hwnd, SW_HIDE);
+    SetFocus(0);
+    SetActiveWindow(0);
+    check_wnd_state(0, 0, 0, 0);
+
+    /*trace("testing SetForegroundWindow %p\n", hwnd);*/
+
+    ShowWindow(hwnd, SW_SHOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = SetActiveWindow(0);
+    ok(hwnd2 == hwnd, "SetActiveWindow(0) returned %p instead of %p\n", hwnd2, hwnd);
+    check_wnd_state(0, 0, 0, 0);
+
+    ret = SetForegroundWindow(hwnd);
+    ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    SetLastError(0xdeadbeef);
+    ret = SetForegroundWindow(0);
+    ok(!ret, "SetForegroundWindow returned TRUE instead of FALSE\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got error %ld expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    ShowWindow(hwnd, SW_HIDE);
+    check_wnd_state(0, 0, 0, 0);
+
+    /*trace("testing SetForegroundWindow on an invisible window %p\n", hwnd);*/
+    ret = SetForegroundWindow(hwnd);
+    ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    
+    ShowWindow(hwnd, SW_SHOW);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    DestroyWindow(hwnd2);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    SetWindowPos(hwnd2,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    DestroyWindow(hwnd2);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
 }
 
 static WNDPROC old_button_proc;
@@ -3794,6 +3876,7 @@ START_TEST(win)
     test_SetMenu(hwndMain);
     test_SetFocus(hwndMain);
     test_SetActiveWindow(hwndMain);
+    test_SetForegroundWindow(hwndMain);
 
     test_children_zorder(hwndMain);
     test_keyboard_input(hwndMain);
