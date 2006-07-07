@@ -282,12 +282,6 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     struct list *ptr                       = NULL;
     GLhandleARB programId                  = 0;
     
-    if (NULL == vshader && NULL == pshader) {
-        /* No pixel or vertex shader specified */
-        This->stateBlock->shaderPrgId = 0;
-        return;
-    }
-
     ptr = list_head( &This->glsl_shader_progs );
     while (ptr) {
         /* At least one program exists - see if it matches our ps/vs combination */

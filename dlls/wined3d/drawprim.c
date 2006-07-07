@@ -1926,13 +1926,18 @@ inline static void drawPrimitiveDrawStrided(
         useDrawStridedSlow = TRUE;
     }
 
-    /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
-    if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
+    /* If GLSL is used for either pixel or vertex shaders, make a GLSL program 
+     * Otherwise set 0, which restores fixed function */
+    if ((wined3d_settings.vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
+        (wined3d_settings.ps_selected_mode == SHADER_GLSL && usePixelShaderFunction)) 
+        set_glsl_shader_program(iface);
+    else
+        This->stateBlock->shaderPrgId = 0;
+
+    /* If GLSL is used now, or might have been used before, (re)set the program */
+    if (wined3d_settings.vs_selected_mode == SHADER_GLSL || 
         wined3d_settings.ps_selected_mode == SHADER_GLSL) {
 
-        set_glsl_shader_program(iface);
-        /* Start using this program ID (if it's 0, there is no shader program to use, so 
-         * glUseProgramObjectARB(0) will disable the use of any shaders) */
         if (This->stateBlock->shaderPrgId) 
             TRACE_(d3d_shader)("Using GLSL program %u\n", This->stateBlock->shaderPrgId);
         GL_EXTCALL(glUseProgramObjectARB(This->stateBlock->shaderPrgId));
