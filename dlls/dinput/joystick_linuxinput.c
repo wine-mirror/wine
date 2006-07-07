@@ -664,7 +664,7 @@ map_axis(JoystickImpl* This, int axis, int val) {
     if (xmin == xmax) return val;
 
     /* map the value from the hmin-hmax range into the wmin-wmax range */
-    ret = ((val-hmin) * (wmax-wmin)) / (hmax-hmin) + wmin;
+    ret = MulDiv( val - hmin, wmax - wmin, hmax - hmin ) + wmin;
 
     TRACE("xmin=%d xmax=%d hmin=%d hmax=%d wmin=%d wmax=%d val=%d ret=%d\n", xmin, xmax, hmin, hmax, wmin, wmax, val, ret);
 
