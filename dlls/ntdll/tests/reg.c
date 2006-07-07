@@ -88,6 +88,7 @@ static NTSTATUS (WINAPI * pRtlOpenCurrentUser)(IN ACCESS_MASK, OUT PHKEY);
 static NTSTATUS (WINAPI * pNtOpenKey)(PHANDLE, IN ACCESS_MASK, IN POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI * pNtClose)(IN HANDLE);
 static NTSTATUS (WINAPI * pNtDeleteValueKey)(IN HANDLE, IN PUNICODE_STRING);
+static NTSTATUS (WINAPI * pNtFlushKey)(HKEY);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HKEY);
 static NTSTATUS (WINAPI * pNtCreateKey)( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
@@ -134,6 +135,7 @@ static BOOL InitFunctionPtrs(void)
         NTDLL_GET_PROC(NtClose)
         NTDLL_GET_PROC(NtDeleteValueKey)
         NTDLL_GET_PROC(NtCreateKey)
+        NTDLL_GET_PROC(NtFlushKey)
         NTDLL_GET_PROC(NtDeleteKey)
         NTDLL_GET_PROC(NtSetValueKey)
         NTDLL_GET_PROC(NtOpenKey)
@@ -290,6 +292,38 @@ static void test_RtlQueryRegistryValues(void)
     pRtlFreeHeap(GetProcessHeap(), 0, QueryTable);
 }
 
+static void test_NtOpenKey(void)
+{
+    HANDLE key;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    ACCESS_MASK am = KEY_READ;
+
+#if 0 /* Crashes Wine */
+    /* All NULL */
+    status = pNtOpenKey(NULL, 0, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
+
+    /* NULL attributes */
+    status = pNtOpenKey(&key, 0, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
+#endif 
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+
+    /* NULL key */
+    status = pNtOpenKey(NULL, 0, &attr);
+    todo_wine
+        ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
+
+    /* Length > sizeof(OBJECT_ATTRIBUTES) */
+    attr.Length *= 2;
+    status = pNtOpenKey(&key, am, &attr);
+    todo_wine
+        ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
+}
+
 static void test_NtCreateKey(void)
 {
     /*Create WineTest*/
@@ -375,12 +409,34 @@ static void test_RtlCheckRegistryKey(void)
     ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08lx\n", status);
 }
 
+static void test_NtFlushKey(void)
+{
+    NTSTATUS status;
+    HANDLE hkey;
+    OBJECT_ATTRIBUTES attr;
+    ACCESS_MASK am = KEY_ALL_ACCESS;
+
+    status = pNtFlushKey(NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    pNtOpenKey(&hkey, am, &attr);
+
+    status = pNtFlushKey(hkey);
+    ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08lx\n", status);
+
+    pNtClose(hkey);
+}
+
 static void test_NtDeleteKey(void)
 {
     NTSTATUS status;
     HANDLE hkey;
     OBJECT_ATTRIBUTES attr;
     ACCESS_MASK am = KEY_ALL_ACCESS;
+
+    status = pNtDeleteKey(NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&hkey, am, &attr);
@@ -401,11 +457,13 @@ START_TEST(reg)
 
     pRtlAppendUnicodeToString(&winetestpath, winetest);
 
+    test_NtOpenKey();
     test_NtCreateKey();
     test_NtSetValueKey();
     test_RtlCheckRegistryKey();
     test_RtlOpenCurrentUser();
     test_RtlQueryRegistryValues();
+    test_NtFlushKey();
     test_NtDeleteKey();
 
     pRtlFreeUnicodeString(&winetestpath);
