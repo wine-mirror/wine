@@ -1364,10 +1364,10 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
  * If any of the first 3 components are < 0, discard this pixel */
 void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
 
-    char src0_str[100], src0_name[50], src0_mask[6];
+    char dst_str[100], dst_name[50], dst_mask[6];
 
-    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(arg->buffer, "if (%s.x < 0.0 || %s.y < 0.0 || %s.z < 0.0) discard;\n", src0_name, src0_name, src0_name);
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
+    shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_name);
 }
 
 /** Process the D3DSIO_DP2ADD instruction in GLSL.
