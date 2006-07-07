@@ -236,6 +236,9 @@ struct IDirect3DSurface8Impl
 
     /* IDirect3DSurface8 fields */
     IWineD3DSurface             *wineD3DSurface;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8                  parentDevice;
 };
 
 /* ------------------ */

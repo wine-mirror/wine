@@ -32,9 +32,17 @@ static int get_refcount(IUnknown *object)
 #define CHECK_CALL(r,c,d,rc) \
     if (SUCCEEDED(r)) {\
         int tmp1 = get_refcount( (IUnknown *)d ); \
-        ok(rc == tmp1, "Invalid refcount. Expected %d got %d\n", rc, tmp1); \
+        int rc_new = rc; \
+        ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     } else {\
         trace("%s failed: %s\n", c, DXGetErrorString8(r)); \
+    }
+#define CHECK_RELEASE(obj,d,rc) \
+    if (obj) { \
+        int tmp1, rc_new = rc; \
+        IUnknown_Release( obj ); \
+        tmp1 = get_refcount( (IUnknown *)d ); \
+        ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
 
 static void test_swapchain(void)
@@ -160,21 +168,21 @@ static void test_refcount(void)
     IDirect3DDevice8            *pDevice            = NULL;
     IDirect3DVertexBuffer8      *pVertexBuffer      = NULL;
     IDirect3DIndexBuffer8       *pIndexBuffer       = NULL;
-    DWORD dVertexShader         = -1;
-    DWORD dPixelShader          = -1;
+    DWORD                       dVertexShader       = -1;
+    DWORD                       dPixelShader        = -1;
     IDirect3DCubeTexture8       *pCubeTexture       = NULL;
     IDirect3DTexture8           *pTexture           = NULL;
     IDirect3DVolumeTexture8     *pVolumeTexture     = NULL;
     IDirect3DSurface8           *pStencilSurface    = NULL;
-    IDirect3DSurface8           *pImageSurface = NULL;
+    IDirect3DSurface8           *pImageSurface      = NULL;
     IDirect3DSurface8           *pRenderTarget      = NULL;
     IDirect3DSurface8           *pTextureLevel      = NULL;
-    DWORD dStateBlock           = -1;
+    DWORD                       dStateBlock         = -1;
     IDirect3DSwapChain8         *pSwapChain         = NULL;
 
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
-    int                          refcount, tmp;
+    int                          refcount = 0, tmp;
 
     DWORD decl[] =
     {
@@ -215,57 +223,47 @@ static void test_refcount(void)
     ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
     if (FAILED(hr)) goto cleanup;
 
+    refcount = get_refcount( (IUnknown *)pDevice );
+    ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
 
     /* Buffers */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateIndexBuffer( pDevice, 16, 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIndexBuffer );
-    CHECK_CALL( hr, "CreateIndexBuffer", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateIndexBuffer", pDevice, ++refcount );
     hr = IDirect3DDevice8_CreateVertexBuffer( pDevice, 16, 0, D3DFVF_XYZ, D3DPOOL_DEFAULT, &pVertexBuffer );
-    CHECK_CALL( hr, "CreateVertexBuffer", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateVertexBuffer", pDevice, ++refcount );
     /* Shaders */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateVertexShader( pDevice, decl, simple_vs, &dVertexShader, 0 );
     CHECK_CALL( hr, "CreateVertexShader", pDevice, refcount );
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreatePixelShader( pDevice, simple_ps, &dPixelShader );
     CHECK_CALL( hr, "CreatePixelShader", pDevice, refcount );
     /* Textures */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateTexture( pDevice, 32, 32, 3, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture );
-    CHECK_CALL( hr, "CreateTexture", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateTexture", pDevice, ++refcount );
     if (pTexture)
     {
         tmp = get_refcount( (IUnknown *)pTexture );
         /* This should not increment device refcount */
         hr = IDirect3DTexture8_GetSurfaceLevel( pTexture, 1, &pTextureLevel );
-        CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount+1 );
+        CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount );
         /* But should increment texture's refcount */
         CHECK_CALL( hr, "GetSurfaceLevel", pTexture, tmp+1 );
     }
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateCubeTexture( pDevice, 32, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pCubeTexture );
-    CHECK_CALL( hr, "CreateCubeTexture", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateCubeTexture", pDevice, ++refcount );
     hr = IDirect3DDevice8_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture );
-    CHECK_CALL( hr, "CreateVolumeTexture", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
     /* Surfaces */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateDepthStencilSurface( pDevice, 32, 32, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, &pStencilSurface );
-    todo_wine {CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, refcount+1 );}
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
     hr = IDirect3DDevice8_CreateImageSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, &pImageSurface );
-    todo_wine {CHECK_CALL( hr, "CreateImageSurface", pDevice, refcount+1 );}
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateImageSurface", pDevice, ++refcount );
     hr = IDirect3DDevice8_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, TRUE, &pRenderTarget );
-    todo_wine {CHECK_CALL( hr, "CreateRenderTarget", pDevice, refcount+1 );}
+    CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
     /* Misc */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateStateBlock( pDevice, D3DSBT_ALL, &dStateBlock );
     CHECK_CALL( hr, "CreateStateBlock", pDevice, refcount );
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice8_CreateAdditionalSwapChain( pDevice, &d3dpp, &pSwapChain );
-    CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, ++refcount );
 
     if(pVertexBuffer)
     {
@@ -282,28 +280,28 @@ static void test_refcount(void)
     }
 
 cleanup:
-    if (pDevice)              IUnknown_Release( pDevice );
+    CHECK_RELEASE(pDevice,              pDevice, --refcount);
 
     /* Buffers */
-    if (pVertexBuffer)        IUnknown_Release( pVertexBuffer );
-    if (pIndexBuffer)         IUnknown_Release( pIndexBuffer );
+    CHECK_RELEASE(pVertexBuffer,        pDevice, --refcount);
+    CHECK_RELEASE(pIndexBuffer,         pDevice, --refcount);
     /* Shaders */
     if (dVertexShader != -1)  IDirect3DDevice8_DeleteVertexShader( pDevice, dVertexShader );
     if (dPixelShader != -1)   IDirect3DDevice8_DeletePixelShader( pDevice, dPixelShader );
     /* Textures */
-    if (pTexture)             IUnknown_Release( pTexture );
-    if (pTextureLevel)        IUnknown_Release( pTextureLevel );
-    if (pCubeTexture)         IUnknown_Release( pCubeTexture );
-    if (pVolumeTexture)       IUnknown_Release( pVolumeTexture );
+    /* pTextureLevel is holding a reference to the pTexture */
+    CHECK_RELEASE(pTexture,             pDevice,   refcount);
+    CHECK_RELEASE(pTextureLevel,        pDevice, --refcount);
+    CHECK_RELEASE(pCubeTexture,         pDevice, --refcount);
+    CHECK_RELEASE(pVolumeTexture,       pDevice, --refcount);
     /* Surfaces */
-    if (pStencilSurface)      IUnknown_Release( pStencilSurface );
-    if (pImageSurface)        IUnknown_Release( pImageSurface );
-    if (pRenderTarget)        IUnknown_Release( pRenderTarget );
+    CHECK_RELEASE(pStencilSurface,      pDevice, --refcount);
+    CHECK_RELEASE(pImageSurface,        pDevice, --refcount);
+    CHECK_RELEASE(pRenderTarget,        pDevice, --refcount);
     /* Misc */
     if (dStateBlock != -1)    IDirect3DDevice8_DeleteStateBlock( pDevice, dStateBlock );
-    /* Avoid crash for now.
+    /* This will destroy device - cannot check the refcount here */
     if (pSwapChain)           IUnknown_Release( pSwapChain );
-    */
 
     if (pD3d)                 IUnknown_Release( pD3d );
 
