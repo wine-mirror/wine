@@ -26,6 +26,7 @@
 #include <string.h>
 #include "wine/debug.h"
 #include "shdocvw.h"
+#include "htiframe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -206,6 +207,7 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE pClientSite)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
+    IOleContainer *container;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
@@ -246,6 +248,20 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
                                          (void**)&This->doc_host.hostui);
     if(FAILED(hres))
         This->doc_host.hostui = NULL;
+
+    hres = IOleClientSite_GetContainer(This->client, &container);
+    if(SUCCEEDED(hres)) {
+        ITargetContainer *target_container;
+
+        hres = IOleContainer_QueryInterface(container, &IID_ITargetContainer,
+                                            (void**)&target_container);
+        if(SUCCEEDED(hres)) {
+            FIXME("Unsupported ITargetContainer\n");
+            ITargetContainer_Release(target_container);
+        }
+
+        IOleContainer_Release(container);
+    }
 
     create_shell_embedding_hwnd(This);
 
