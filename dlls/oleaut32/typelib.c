@@ -1721,7 +1721,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
     int infolen, nameoffset, reclength, nrattributes, i;
     int recoffset = offset + sizeof(INT);
 
-    char recbuf[512];
+    char *recbuf = HeapAlloc(GetProcessHeap(), 0, 0xffff);
     MSFT_FuncRecord * pFuncRec=(MSFT_FuncRecord *) recbuf;
     TLBFuncDesc *ptfd_prev = NULL;
 
@@ -1747,7 +1747,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         /* read the function information record */
         MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
 
-        reclength &= 0x1ff;
+        reclength &= 0xffff;
 
         MSFT_ReadLEDWords(pFuncRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK);
 
@@ -1892,6 +1892,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         pptfd      = & ((*pptfd)->next);
         recoffset += reclength;
     }
+    HeapFree(GetProcessHeap(), 0, recbuf);
 }
 
 static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
