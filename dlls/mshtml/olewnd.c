@@ -91,11 +91,17 @@ static HRESULT WINAPI OleInPlaceActiveObject_TranslateAccelerator(IOleInPlaceAct
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)
+static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,
+        BOOL fActivate)
 {
     HTMLDocument *This = ACTOBJ_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, fActivate);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, fActivate);
+
+    if(This->hostui)
+        IDocHostUIHandler_OnFrameWindowActivate(This->hostui, fActivate);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleInPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)

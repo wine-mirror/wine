@@ -101,6 +101,7 @@ DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(UpdateUI);
 DEFINE_EXPECT(Navigate);
+DEFINE_EXPECT(OnFrameWindowActivate);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -832,10 +833,12 @@ static HRESULT WINAPI DocHostUIHandler_OnDocWindowActivate(IDocHostUIHandler2 *i
     return E_NOTIMPL;
 }
 
+static BOOL expect_OnFrameWindowActivate_fActivate;
 static HRESULT WINAPI DocHostUIHandler_OnFrameWindowActivate(IDocHostUIHandler2 *iface, BOOL fActivate)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT2(OnFrameWindowActivate);
+    ok(fActivate == expect_OnFrameWindowActivate_fActivate, "fActivate=%x\n", fActivate);
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_ResizeBorder(IDocHostUIHandler2 *iface, LPCRECT prcBorder,
@@ -1808,6 +1811,50 @@ static void test_Close(IUnknown *unk, BOOL set_client)
     IOleObject_Release(oleobj);
 }
 
+static void test_OnFrameWindowActivate(IUnknown *unk)
+{
+    IOleInPlaceActiveObject *inplaceact;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&inplaceact);
+    ok(hres == S_OK, "QueryInterface(IID_IOleInPlaceActiveObject) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    if(set_clientsite) {
+        expect_OnFrameWindowActivate_fActivate = TRUE;
+        SET_EXPECT(OnFrameWindowActivate);
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, TRUE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnFrameWindowActivate);
+
+        SET_EXPECT(OnFrameWindowActivate);
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, TRUE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnFrameWindowActivate);
+
+        expect_OnFrameWindowActivate_fActivate = FALSE;
+        SET_EXPECT(OnFrameWindowActivate);
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, FALSE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnFrameWindowActivate);
+
+        expect_OnFrameWindowActivate_fActivate = TRUE;
+        SET_EXPECT(OnFrameWindowActivate);
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, TRUE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnFrameWindowActivate);
+    }else {
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, FALSE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+
+        hres = IOleInPlaceActiveObject_OnFrameWindowActivate(inplaceact, TRUE);
+        ok(hres == S_OK, "OnFrameWindowActivate failed: %08lx\n", hres);
+    }
+
+    IOleInPlaceActiveObject_Release(inplaceact);
+}
+
 static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
 {
     IOleInPlaceObjectWindowless *windowlessobj = NULL;
@@ -1851,12 +1898,17 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
     ok(hres == S_OK, "GetUserClassID failed: %08lx\n", hres);
     ok(IsEqualGUID(&guid, &CLSID_HTMLDocument), "guid != CLSID_HTMLDocument\n");
 
+    test_OnFrameWindowActivate(unk);
+
     test_ClientSite(oleobj, flags);
     test_InPlaceDeactivate(unk, FALSE);
 
     hres = test_DoVerb(oleobj);
 
     IOleObject_Release(oleobj);
+
+    test_OnFrameWindowActivate(unk);
+
     return hres;
 }
 
