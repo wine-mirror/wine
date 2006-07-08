@@ -58,14 +58,23 @@ DEFINE_EXPECT(ShowObject);
 DEFINE_EXPECT(CanInPlaceActivate);
 DEFINE_EXPECT(OnInPlaceActivate);
 DEFINE_EXPECT(OnUIActivate);
+DEFINE_EXPECT(GetWindowContext);
+DEFINE_EXPECT(Frame_GetWindow);
+DEFINE_EXPECT(Frame_SetActiveObject);
+DEFINE_EXPECT(UIWindow_SetActiveObject);
+DEFINE_EXPECT(SetMenu);
 
-static HWND container_hwnd;
+static const WCHAR wszItem[] = {'i','t','e','m',0};
+
+static HWND container_hwnd, shell_embedding_hwnd;
 
 static HRESULT QueryInterface(REFIID,void**);
 
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_ITargetContainer, riid))
+        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_IOleCommandTarget, riid))
         return E_NOINTERFACE; /* TODO */
 
     ok(0, "unexpected call\n");
@@ -182,6 +191,158 @@ static const IOleClientSiteVtbl ClientSiteVtbl = {
     ClientSite_RequestNewObjectLayout
 };
 
+static HRESULT WINAPI InPlaceUIWindow_QueryInterface(IOleInPlaceFrame *iface,
+                                                     REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InPlaceUIWindow_AddRef(IOleInPlaceFrame *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InPlaceUIWindow_Release(IOleInPlaceFrame *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
+{
+    CHECK_EXPECT(Frame_GetWindow);
+    ok(phwnd != NULL, "phwnd == NULL\n");
+    if(phwnd)
+        *phwnd = container_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_ContextSensitiveHelp(IOleInPlaceFrame *iface, BOOL fEnterMode)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_GetBorder(IOleInPlaceFrame *iface, LPRECT lprectBorder)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_RequestBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_SetBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
+        IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
+{
+    CHECK_EXPECT(UIWindow_SetActiveObject);
+    ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+    ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
+        IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
+{
+    CHECK_EXPECT(Frame_SetActiveObject);
+    ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+    ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetMenu(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        HOLEMENU holemenu, HWND hwndActiveObject)
+{
+    CHECK_EXPECT(SetMenu);
+    ok(hmenuShared == NULL, "hmenuShared=%p\n", hmenuShared);
+    ok(holemenu == NULL, "holemenu=%p\n", holemenu);
+    ok(hwndActiveObject == shell_embedding_hwnd, "hwndActiveObject=%p, expected %p\n",
+       hwndActiveObject, shell_embedding_hwnd);
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hmenuShared)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg, WORD wID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceFrameVtbl InPlaceUIWindowVtbl = {
+    InPlaceUIWindow_QueryInterface,
+    InPlaceUIWindow_AddRef,
+    InPlaceUIWindow_Release,
+    InPlaceUIWindow_GetWindow,
+    InPlaceUIWindow_ContextSensitiveHelp,
+    InPlaceUIWindow_GetBorder,
+    InPlaceUIWindow_RequestBorderSpace,
+    InPlaceUIWindow_SetBorderSpace,
+    InPlaceUIWindow_SetActiveObject,
+};
+
+static IOleInPlaceUIWindow InPlaceUIWindow = { (IOleInPlaceUIWindowVtbl*)&InPlaceUIWindowVtbl };
+
+static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
+    InPlaceUIWindow_QueryInterface,
+    InPlaceUIWindow_AddRef,
+    InPlaceUIWindow_Release,
+    InPlaceFrame_GetWindow,
+    InPlaceUIWindow_ContextSensitiveHelp,
+    InPlaceUIWindow_GetBorder,
+    InPlaceUIWindow_RequestBorderSpace,
+    InPlaceUIWindow_SetBorderSpace,
+    InPlaceFrame_SetActiveObject,
+    InPlaceFrame_InsertMenus,
+    InPlaceFrame_SetMenu,
+    InPlaceFrame_RemoveMenus,
+    InPlaceFrame_SetStatusText,
+    InPlaceFrame_EnableModeless,
+    InPlaceFrame_TranslateAccelerator
+};
+
+static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
+
 static IOleClientSite ClientSite = { &ClientSiteVtbl };
 
 static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSiteEx *iface, REFIID riid, void **ppv)
@@ -236,8 +397,37 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
         IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
         LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    static const RECT pos_rect = {2,1,1002,901};
+    static const RECT clip_rect = {10,10,990,890};
+
+    CHECK_EXPECT(GetWindowContext);
+
+    ok(ppFrame != NULL, "ppFrame = NULL\n");
+    if(ppFrame)
+        *ppFrame = &InPlaceFrame;
+
+    ok(ppDoc != NULL, "ppDoc = NULL\n");
+    if(ppDoc)
+        *ppDoc = &InPlaceUIWindow;
+
+    ok(lprcPosRect != NULL, "lprcPosRect = NULL\n");
+    if(lprcPosRect)
+        memcpy(lprcPosRect, &pos_rect, sizeof(RECT));
+
+    ok(lprcClipRect != NULL, "lprcClipRect = NULL\n");
+    if(lprcClipRect)
+        memcpy(lprcClipRect, &clip_rect, sizeof(RECT));
+
+    ok(lpFrameInfo != NULL, "lpFrameInfo = NULL\n");
+    if(lpFrameInfo) {
+        lpFrameInfo->cb = sizeof(*lpFrameInfo);
+        lpFrameInfo->fMDIApp = FALSE;
+        lpFrameInfo->hwndFrame = container_hwnd;
+        lpFrameInfo->haccel = NULL;
+        lpFrameInfo->cAccelEntries = 0;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSiteEx *iface, SIZE scrollExtant)
@@ -361,6 +551,52 @@ static HWND create_container_window(void)
             CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 }
 
+static void test_DoVerb(IUnknown *unk)
+{
+    IOleObject *oleobj;
+    RECT rect = {0,0,1000,1000};
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    SET_EXPECT(CanInPlaceActivate);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(OnInPlaceActivate);
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Frame_GetWindow);
+    SET_EXPECT(OnUIActivate);
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(SetMenu);
+
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
+                             0, container_hwnd, &rect);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+
+    CHECK_CALLED(CanInPlaceActivate);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(OnInPlaceActivate);
+    CHECK_CALLED(GetWindowContext);
+    CHECK_CALLED(ShowObject);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Frame_GetWindow);
+    CHECK_CALLED(OnUIActivate);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(SetMenu);
+
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
+                           0, container_hwnd, &rect);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+
+    IOleObject_Release(oleobj);
+}
+
 static void test_GetMiscStatus(IOleObject *oleobj)
 {
     DWORD st, i;
@@ -419,6 +655,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
     ok((hwnd == NULL) == (client == NULL), "unexpected hwnd %p\n", hwnd);
 
+    shell_embedding_hwnd = hwnd;
+
     IOleInPlaceObject_Release(inplace);
     IOleObject_Release(oleobj);
 }
@@ -469,6 +707,7 @@ static void test_WebBrowser(void)
 
     test_ClassInfo(unk);
     test_ClientSite(unk, &ClientSite);
+    test_DoVerb(unk);
     test_ClientSite(unk, NULL);
 
     ref = IUnknown_Release(unk);
