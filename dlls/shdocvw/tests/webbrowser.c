@@ -361,6 +361,22 @@ static HWND create_container_window(void)
             CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 }
 
+static void test_GetMiscStatus(IOleObject *oleobj)
+{
+    DWORD st, i;
+    HRESULT hres;
+
+    for(i=0; i<10; i++) {
+        st = 0xdeadbeef;
+        hres = IOleObject_GetMiscStatus(oleobj, i, &st);
+        ok(hres == S_OK, "GetMiscStatus failed: %08lx\n", hres);
+        ok(st == (OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
+                  |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE),
+           "st=%08lx, expected OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|"
+           "OLEMISC_INSIDEOUT|OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE)\n", st);
+    }
+}
+
 static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
 {
     IOleObject *oleobj;
@@ -372,6 +388,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
+
+    test_GetMiscStatus(oleobj);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
     ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08lx\n", hres);
