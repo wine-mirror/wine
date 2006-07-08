@@ -862,12 +862,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
         fill_stream_buffer(This->stream);
 
-        /* FIXME: Always call FindMediaFromData (its implementation is not yet ready for this). */
-        if(This->mime)
-            mime = This->mime;
-        else
-            FindMimeFromData(NULL, This->url, This->stream->buf,
-                              min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
+        FindMimeFromData(NULL, This->url, This->stream->buf,
+                         min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
 
         on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
