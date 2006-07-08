@@ -255,15 +255,15 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         /* dx and dy can be negative numbers for relative movements */
         SystemParametersInfoW(SPI_GETMOUSE, 0, accel, 0);
 
-        if (x > accel[0] && accel[2] != 0)
+        if (abs(x) > accel[0] && accel[2] != 0)
         {
             xMult = 2;
-            if ((x > accel[1]) && (accel[2] == 2)) xMult = 4;
+            if ((abs(x) > accel[1]) && (accel[2] == 2)) xMult = 4;
         }
-        if (y > accel[0] && accel[2] != 0)
+        if (abs(y) > accel[0] && accel[2] != 0)
         {
             yMult = 2;
-            if ((y > accel[1]) && (accel[2] == 2)) yMult = 4;
+            if ((abs(y) > accel[1]) && (accel[2] == 2)) yMult = 4;
         }
 
         wine_tsx11_lock();
