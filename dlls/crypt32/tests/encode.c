@@ -659,6 +659,8 @@ static void test_encodeName(DWORD dwEncoding)
     CERT_RDN_ATTR attrs[2];
     CERT_RDN rdn;
     CERT_NAME_INFO info;
+    static CHAR oid_common_name[] = szOID_COMMON_NAME,
+                oid_sur_name[]    = szOID_SUR_NAME;
     BYTE *buf = NULL;
     DWORD size = 0;
     BOOL ret;
@@ -721,11 +723,11 @@ static void test_encodeName(DWORD dwEncoding)
     /* Check with two CERT_RDN_ATTRs.  Note DER encoding forces the order of
      * the encoded attributes to be swapped.
      */
-    attrs[0].pszObjId = szOID_COMMON_NAME;
+    attrs[0].pszObjId = oid_common_name;
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[0].Value.cbData = sizeof(commonName);
     attrs[0].Value.pbData = (BYTE *)commonName;
-    attrs[1].pszObjId = szOID_SUR_NAME;
+    attrs[1].pszObjId = oid_sur_name;
     attrs[1].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[1].Value.cbData = sizeof(surName);
     attrs[1].Value.pbData = (BYTE *)surName;
@@ -2839,6 +2841,7 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
 {
     BOOL ret;
     BYTE *buf = NULL;
+    static CHAR oid_issuing_dist_point[] = szOID_ISSUING_DIST_POINT;
     DWORD size = 0;
     CRL_INFO info = { 0 };
     CRL_ENTRY entry = { { 0 }, { 0 }, 0, 0 };
@@ -2948,7 +2951,7 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
         LocalFree(buf);
     }
     /* a v2 CRL with an issuing dist point extension */
-    ext.pszObjId = szOID_ISSUING_DIST_POINT;
+    ext.pszObjId = oid_issuing_dist_point;
     ext.fCritical = TRUE;
     ext.Value.cbData = sizeof(urlIDP);
     ext.Value.pbData = (LPBYTE)urlIDP;
