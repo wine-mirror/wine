@@ -171,9 +171,8 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND p
     if(This->uiwindow)
         IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
 
-    /* TODO:
-     * IOleInPlaceFrmae_SetMenu
-     */
+    if(This->frame)
+        IOleInPlaceFrame_SetMenu(This->frame, NULL, NULL, This->shell_embedding_hwnd);
 
     SetFocus(This->shell_embedding_hwnd);
 
