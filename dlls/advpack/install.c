@@ -43,6 +43,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 #define ADV_HRESULT(x)  ((x & SPAPI_ERROR) ? HRESULT_FROM_SPAPI(x) : HRESULT_FROM_WIN32(x))
 
+#define ADV_SUCCESS     0
+#define ADV_FAILURE     1
+
 /* contains information about a specific install instance */
 typedef struct _ADVInfo
 {
@@ -636,6 +639,9 @@ INT WINAPI LaunchINFSectionA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
 
     TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
 
+    if (!cmdline)
+        return ADV_FAILURE;
+
     RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
 
     hr = LaunchINFSectionW(hWnd, hInst, cmd.Buffer, show);
@@ -657,8 +663,8 @@ INT WINAPI LaunchINFSectionA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
  *   show    [I] How the window should be shown.
  *
  * RETURNS
- *  Success: S_OK.
- *  Failure: S_FALSE
+ *  Success: ADV_SUCCESS.
+ *  Failure: ADV_FAILURE.
  *
  * NOTES
  *  INF - Filename of the INF to launch.
@@ -681,7 +687,7 @@ INT WINAPI LaunchINFSectionW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT sho
     TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_w(cmdline), show);
 
     if (!cmdline)
-        return E_INVALIDARG;
+        return ADV_FAILURE;
 
     cmdline_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
     cmdline_ptr = cmdline_copy;
@@ -710,7 +716,7 @@ done:
     install_release(&info);
     HeapFree(GetProcessHeap(), 0, cmdline_copy);
 
-    return hr;
+    return SUCCEEDED(hr) ? ADV_SUCCESS : ADV_FAILURE;
 }
 
 /***********************************************************************
@@ -724,6 +730,9 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
     HRESULT hr;
 
     TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
+
+    if (!cmdline)
+        return ADV_FAILURE;
 
     RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
 
@@ -746,8 +755,8 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
  *   show    [I] How the window should be shown.
  *
  * RETURNS
- *  Success: S_OK.
- *  Failure: E_FAIL.
+ *  Success: ADV_SUCCESS.
+ *  Failure: ADV_FAILURE.
  *
  * NOTES
  *  INF - Filename of the INF to launch.
@@ -771,7 +780,7 @@ HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, I
     TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_w(cmdline), show);
 
     if (!cmdline)
-        return E_INVALIDARG;
+        return ADV_FAILURE;
 
     cmdline_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
     cmdline_ptr = cmdline_copy;
@@ -802,7 +811,7 @@ HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, I
 done:
     HeapFree(GetProcessHeap(), 0, cmdline_copy);
 
-    return hr;
+    return SUCCEEDED(hr) ? ADV_SUCCESS : ADV_FAILURE;
 }
 
 HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)
