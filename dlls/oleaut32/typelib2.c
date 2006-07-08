@@ -276,7 +276,7 @@ static int ctl2_hash_guid(
 	hash ^= ((const short *)guid)[i];
     }
 
-    return (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
+    return hash & 0x1f;
 }
 
 /****************************************************************************
