@@ -528,6 +528,23 @@ static void test_VariantCopy(void)
            vt | ExtraFlags[i], V_VT(&vDst));
     }
   }
+  
+  /* Test that copying a NULL BSTR results in an empty BSTR */
+  memset(&vDst, 0, sizeof(vDst));
+  V_VT(&vDst) = VT_EMPTY;
+  memset(&vSrc, 0, sizeof(vSrc));
+  V_VT(&vSrc) = VT_BSTR;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK, "Copy(NULL BSTR): Failed to copy a NULL BSTR\n");
+  if (hres == S_OK)
+  {
+    ok((V_VT(&vDst) == VT_BSTR) && V_BSTR(&vDst),
+       "Copy(NULL BSTR): should have non-NULL result\n");
+    if ((V_VT(&vDst) == VT_BSTR) && V_BSTR(&vDst))
+    {
+      ok(*V_BSTR(&vDst) == 0, "Copy(NULL BSTR): result not empty\n");
+    }
+  }
 }
 
 /* Determine if a vt is valid for VariantCopyInd() */

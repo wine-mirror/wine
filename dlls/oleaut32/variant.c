@@ -718,15 +718,12 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
       }
       else if (V_VT(pvargSrc) == VT_BSTR)
       {
-        if (V_BSTR(pvargSrc))
-        {
-          V_BSTR(pvargDest) = SysAllocStringByteLen((char*)V_BSTR(pvargSrc), SysStringByteLen(V_BSTR(pvargSrc)));
-          if (!V_BSTR(pvargDest))
-	  {
-	    TRACE("!V_BSTR(pvargDest), SysAllocStringByteLen() failed to allocate %d bytes\n", SysStringByteLen(V_BSTR(pvargSrc)));
-            hres = E_OUTOFMEMORY;
-	  }
-        }
+        V_BSTR(pvargDest) = SysAllocStringByteLen((char*)V_BSTR(pvargSrc), SysStringByteLen(V_BSTR(pvargSrc)));
+        if (!V_BSTR(pvargDest))
+	{
+	  TRACE("!V_BSTR(pvargDest), SysAllocStringByteLen() failed to allocate %d bytes\n", SysStringByteLen(V_BSTR(pvargSrc)));
+          hres = E_OUTOFMEMORY;
+	}
       }
       else if (V_VT(pvargSrc) == VT_RECORD)
       {
