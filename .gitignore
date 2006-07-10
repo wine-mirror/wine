@@ -8,6 +8,7 @@
 *.rej
 *.res
 *.so
+*.tab.[ch]
 *.tlb
 *~
 /Make.rules
@@ -19,3 +20,4 @@
 /tags
 /wine
 Makefile
+lex.yy.c
