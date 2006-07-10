@@ -43,6 +43,7 @@ WINDOWS_IDL_SRCS = \
 	shobjidl.idl \
 	shtypes.idl \
 	strmif.idl \
+	tom.idl \
 	unknwn.idl \
 	urlmon.idl \
 	wtypes.idl \
