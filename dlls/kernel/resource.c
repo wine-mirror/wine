@@ -137,8 +137,8 @@ static HRSRC find_resourceA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lan
     {
         if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS) goto done;
         if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS) goto done;
-        info.Type = (ULONG)typeW.Buffer;
-        info.Name = (ULONG)nameW.Buffer;
+        info.Type = (ULONG_PTR)typeW.Buffer;
+        info.Name = (ULONG_PTR)nameW.Buffer;
         info.Language = lang;
         status = LdrFindResource_U( hModule, &info, 3, &entry );
     done:
@@ -170,8 +170,8 @@ static HRSRC find_resourceW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD l
     {
         if ((status = get_res_nameW( name, &nameW )) != STATUS_SUCCESS) goto done;
         if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS) goto done;
-        info.Type = (ULONG)typeW.Buffer;
-        info.Name = (ULONG)nameW.Buffer;
+        info.Type = (ULONG_PTR)typeW.Buffer;
+        info.Name = (ULONG_PTR)nameW.Buffer;
         info.Language = lang;
         status = LdrFindResource_U( hModule, &info, 3, &entry );
     done:
@@ -495,8 +495,8 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
         goto done;
     if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS)
         goto done;
-    info.Type = (ULONG)typeW.Buffer;
-    info.Name = (ULONG)nameW.Buffer;
+    info.Type = (ULONG_PTR)typeW.Buffer;
+    info.Name = (ULONG_PTR)nameW.Buffer;
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
         goto done;
 
@@ -538,8 +538,8 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
         goto done;
     if ((status = get_res_nameW( name, &nameW )) != STATUS_SUCCESS)
         goto done;
-    info.Type = (ULONG)typeW.Buffer;
-    info.Name = (ULONG)nameW.Buffer;
+    info.Type = (ULONG_PTR)typeW.Buffer;
+    info.Name = (ULONG_PTR)nameW.Buffer;
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
         goto done;
 
