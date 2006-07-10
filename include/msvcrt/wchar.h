@@ -35,10 +35,18 @@ typedef unsigned short wchar_t;
 #define WCHAR_MIN 0
 #define WCHAR_MAX ((wchar_t)-1)
 
+#if !defined(_MSC_VER) && !defined(__int64)
+#define __int64 long long
+#endif
+
 typedef int mbstate_t;
 
 #ifndef _SIZE_T_DEFINED
+#ifdef _WIN64
+typedef unsigned __int64 size_t;
+#else
 typedef unsigned int size_t;
+#endif
 #define _SIZE_T_DEFINED
 #endif
 
@@ -46,12 +54,6 @@ typedef unsigned int size_t;
 typedef unsigned short  wint_t;
 typedef unsigned short  wctype_t;
 #define _WCTYPE_T_DEFINED
-#endif
-
-#ifndef _MSC_VER
-# ifndef __int64
-#  define __int64 long long
-# endif
 #endif
 
 #ifndef WEOF

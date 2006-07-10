@@ -22,8 +22,16 @@ typedef unsigned short wchar_t;
 #endif
 #endif
 
+#if !defined(_MSC_VER) && !defined(__int64)
+#define __int64 long long
+#endif
+
 #ifndef _SIZE_T_DEFINED
+#ifdef _WIN64
+typedef unsigned __int64 size_t;
+#else
 typedef unsigned int size_t;
+#endif
 #define _SIZE_T_DEFINED
 #endif
 

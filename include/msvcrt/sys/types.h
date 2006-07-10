@@ -23,6 +23,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#if !defined(_MSC_VER) && !defined(__int64)
+#define __int64 long long
+#endif
+
 #ifndef _DEV_T_DEFINED
 typedef unsigned int   _dev_t;
 #define _DEV_T_DEFINED
@@ -67,7 +71,11 @@ typedef int pid_t;
 #endif
 
 #ifndef _SSIZE_T_DEFINED
+#ifdef _WIN64
+typedef __int64 ssize_t;
+#else
 typedef int ssize_t;
+#endif
 #define _SSIZE_T_DEFINED
 #endif
 
