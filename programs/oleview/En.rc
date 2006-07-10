@@ -143,6 +143,7 @@ STRINGTABLE
     IDS_BYTES,             "bytes"
 
     IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) failed ($%x)"
+    IDS_INHERITINTERFACES, "Inherited Interfaces"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41

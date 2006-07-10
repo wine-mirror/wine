@@ -35,24 +35,40 @@ static const WCHAR wszVT_BOOL[]
     = { 'V','A','R','I','A','N','T','_','B','O','O','L','\0' };
 static const WCHAR wszVT_UI1[]
     = { 'u','n','s','i','g','n','e','d',' ','c','h','a','r','\0' };
+static const WCHAR wszVT_UI2[]
+    = { 'u','n','s','i','g','n','e','d',' ','s','h','o','r','t','\0' };
 static const WCHAR wszVT_UI4[]
     = { 'u','n','s','i','g','n','e','d',' ','l','o','n','g','\0' };
+static const WCHAR wszVT_UI8[] = { 'u','i','n','t','6','4','\0' };
+static const WCHAR wszVT_UINT[]
+    = { 'u','n','s','i','g','n','e','d',' ','i','n','t','\0' };
+static const WCHAR wszVT_I1[] = { 'c','h','a','r','\0' };
+static const WCHAR wszVT_I2[] = { 's','h','o','r','t','\0' };
 static const WCHAR wszVT_I4[] = { 'l','o','n','g','\0' };
+static const WCHAR wszVT_I8[] = { 'i','n','t','6','4','\0' };
 static const WCHAR wszVT_R4[] = { 's','i','n','g','l','e','\0' };
 static const WCHAR wszVT_INT[] = { 'i','n','t','\0' };
 static const WCHAR wszVT_BSTR[] = { 'B','S','T','R','\0' };
 static const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y','\0' };
+static const WCHAR wszVT_VARIANT[] = { 'V','A','R','I','A','N','T','\0' };
+static const WCHAR wszVT_VOID[] = { 'v','o','i','d','\0' };
+static const WCHAR wszVT_ERROR[] = { 'S','C','O','D','E','\0' };
+static const WCHAR wszVT_LPSTR[] = { 'L','P','S','T','R','\0' };
+static const WCHAR wszVT_LPWSTR[] = { 'L','P','W','S','T','R','\0' };
 
 void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 {
     lstrcpyW(&wszDest[lstrlenW(wszDest)], wszSource);
 }
 
-void CreateTypeInfo(WCHAR *wszAddTo, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
+void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
 {
+    int i;
     BSTR bstrData;
     HRESULT hRes;
     ITypeInfo *pRefTypeInfo;
+    WCHAR wszBuf[MAX_LOAD_STRING];
+    WCHAR wszFormat[] = { '[','%','l','u',']','\0' };
 
     switch(tdesc.vt&VT_TYPEMASK)
     {
@@ -61,14 +77,33 @@ void CreateTypeInfo(WCHAR *wszAddTo, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
         break
         VTADDTOSTR(VT_BOOL);
         VTADDTOSTR(VT_UI1);
+        VTADDTOSTR(VT_UI2);
         VTADDTOSTR(VT_UI4);
+        VTADDTOSTR(VT_UI8);
+        VTADDTOSTR(VT_UINT);
+        VTADDTOSTR(VT_I1);
+        VTADDTOSTR(VT_I2);
         VTADDTOSTR(VT_I4);
+        VTADDTOSTR(VT_I8);
         VTADDTOSTR(VT_R4);
         VTADDTOSTR(VT_INT);
         VTADDTOSTR(VT_BSTR);
         VTADDTOSTR(VT_CY);
+        VTADDTOSTR(VT_VARIANT);
+        VTADDTOSTR(VT_VOID);
+        VTADDTOSTR(VT_ERROR);
+        VTADDTOSTR(VT_LPSTR);
+        VTADDTOSTR(VT_LPWSTR);
+        case VT_CARRAY:
+        for(i=0; i<U(tdesc).lpadesc->cDims; i++)
+        {
+            wsprintfW(wszBuf, wszFormat, U(tdesc).lpadesc->rgbounds[i].cElements);
+            AddToStrW(wszAddAfter, wszBuf);
+        }
+        CreateTypeInfo(wszAddTo, wszAddAfter, U(tdesc).lpadesc->tdescElem, pTypeInfo);
+        break;
         case VT_PTR:
-        CreateTypeInfo(wszAddTo, *U(tdesc).lptdesc, pTypeInfo);
+        CreateTypeInfo(wszAddTo, wszAddAfter, *U(tdesc).lptdesc, pTypeInfo);
         AddToStrW(wszAddTo, wszAsterix);
         break;
         case VT_USERDEFINED:
@@ -90,6 +125,118 @@ void CreateTypeInfo(WCHAR *wszAddTo, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
     }
 }
 
+int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
+{
+    int i;
+    TVINSERTSTRUCT tvis;
+    VARDESC *pVarDesc;
+    BSTR bstrName;
+    WCHAR wszText[MAX_LOAD_STRING];
+    WCHAR wszAfter[MAX_LOAD_STRING];
+
+    U(tvis).item.mask = TVIF_TEXT;
+    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    U(tvis).item.pszText = wszText;
+    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hParent = hParent;
+
+    for(i=0; i<cVars; i++)
+    {
+        if(FAILED(ITypeInfo_GetVarDesc(pTypeInfo, i, &pVarDesc))) continue;
+        if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pVarDesc->memid, &bstrName,
+                NULL, NULL, NULL))) continue;
+
+        memset(wszText, 0, sizeof(wszText));
+        memset(wszAfter, 0, sizeof(wszAfter));
+        CreateTypeInfo(wszText, wszAfter, pVarDesc->elemdescVar.tdesc, pTypeInfo);
+        AddToStrW(wszText, wszSpace);
+        AddToStrW(wszText, bstrName);
+        AddToStrW(wszText, wszAfter);
+
+        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        SysFreeString(bstrName);
+        ITypeInfo_ReleaseVarDesc(pTypeInfo, pVarDesc);
+    }
+
+    return 0;
+}
+
+int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
+{
+    int i;
+    TVINSERTSTRUCT tvis;
+    FUNCDESC *pFuncDesc;
+    BSTR bstrName;
+
+    U(tvis).item.mask = TVIF_TEXT;
+    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hParent = hParent;
+
+    for(i=0; i<cFuncs; i++)
+    {
+        if(FAILED(ITypeInfo_GetFuncDesc(pTypeInfo, i, &pFuncDesc))) continue;
+        if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pFuncDesc->memid, &bstrName,
+                NULL, NULL, NULL))) continue;
+
+        U(tvis).item.cchTextMax = SysStringLen(bstrName);
+        U(tvis).item.pszText = bstrName;
+
+        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        SysFreeString(bstrName);
+        ITypeInfo_ReleaseFuncDesc(pTypeInfo, pFuncDesc);
+    }
+
+    return 0;
+}
+
+int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
+{
+    int i;
+    TVINSERTSTRUCT tvis;
+    ITypeInfo *pRefTypeInfo;
+    HREFTYPE hRefType;
+    TYPEATTR *pTypeAttr;
+    BSTR bstrName;
+    WCHAR wszInheritedInterfaces[MAX_LOAD_STRING];
+
+    if(!cImplTypes) return 0;
+
+    LoadString(globals.hMainInst, IDS_INHERITINTERFACES, wszInheritedInterfaces,
+            sizeof(WCHAR[MAX_LOAD_STRING]));
+
+    U(tvis).item.mask = TVIF_TEXT;
+    U(tvis).item.cchTextMax = MAX_LOAD_STRING;
+    U(tvis).item.pszText = wszInheritedInterfaces;
+    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hParent = hParent;
+
+    tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+
+    for(i=0; i<cImplTypes; i++)
+    {
+        if(FAILED(ITypeInfo_GetRefTypeOfImplType(pTypeInfo, i, &hRefType))) continue;
+        if(FAILED(ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo)))
+            continue;
+        if(FAILED(ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
+                NULL, NULL, NULL))) continue;
+        if(FAILED(ITypeInfo_GetTypeAttr(pRefTypeInfo, &pTypeAttr))) continue;
+
+        U(tvis).item.cchTextMax = SysStringLen(bstrName);
+        U(tvis).item.pszText = bstrName;
+
+        hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+        EnumVars(pRefTypeInfo, pTypeAttr->cVars, hParent);
+        EnumFuncs(pRefTypeInfo, pTypeAttr->cFuncs, hParent);
+        EnumImplTypes(pRefTypeInfo, pTypeAttr->cImplTypes, hParent);
+
+        SysFreeString(bstrName);
+        ITypeInfo_ReleaseTypeAttr(pRefTypeInfo, pTypeAttr);
+        ITypeInfo_Release(pRefTypeInfo);
+    }
+
+    return 0;
+}
+
 int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
@@ -101,7 +248,9 @@ int PopulateTree(void)
     BSTR bstrName;
     BSTR bstrData;
     WCHAR wszText[MAX_LOAD_STRING];
+    WCHAR wszAfter[MAX_LOAD_STRING];
     HRESULT hRes;
+    HTREEITEM hParent;
 
     const WCHAR wszFormat[] = { '%','s',' ','(','%','s',')','\0' };
 
@@ -117,10 +266,9 @@ int PopulateTree(void)
     const WCHAR wszTKIND_UNION[]
         = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
 
-    U(tvis).item.mask = TVIF_TEXT|TVIF_CHILDREN;
+    U(tvis).item.mask = TVIF_TEXT;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
-    U(tvis).item.cChildren = 1;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = TVI_ROOT;
 
@@ -152,6 +300,7 @@ int PopulateTree(void)
         ITypeInfo_GetTypeAttr(pTypeInfo, &pTypeAttr);
 
         memset(wszText, 0, sizeof(wszText));
+        memset(wszAfter, 0, sizeof(wszAfter));
         switch(pTypeAttr->typekind)
         {
 #define TKINDADDTOSTR(x) case x:\
@@ -169,7 +318,8 @@ int PopulateTree(void)
                 AddToStrW(wszText, bstrName);
                 if(SUCCEEDED(ITypeInfo_GetRefTypeOfImplType(pTypeInfo, -1, &hRefType)))
                 {
-                    SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+                    hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                    EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
                     memset(wszText, 0, sizeof(wszText));
 
                     ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo);
@@ -182,16 +332,22 @@ int PopulateTree(void)
                 break;
             case TKIND_ALIAS:
                 AddToStrW(wszText, wszTKIND_ALIAS);
-                CreateTypeInfo(wszText, pTypeAttr->tdescAlias, pTypeInfo);
+                CreateTypeInfo(wszText, wszAfter, pTypeAttr->tdescAlias, pTypeInfo);
                 AddToStrW(wszText, wszSpace);
                 AddToStrW(wszText, bstrName);
+                AddToStrW(wszText, wszAfter);
                 break;
             default:
                 lstrcpyW(wszText, bstrName);
                 WINE_FIXME("pTypeAttr->typekind ==  %d\n not supported",
                         pTypeAttr->typekind);
         }
-        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+
+        EnumVars(pTypeInfo, pTypeAttr->cVars, hParent);
+        EnumFuncs(pTypeInfo, pTypeAttr->cFuncs, hParent);
+        EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
+
         ITypeInfo_ReleaseTypeAttr(pTypeInfo, pTypeAttr);
         ITypeInfo_Release(pTypeInfo);
         SysFreeString(bstrName);
