@@ -331,6 +331,25 @@ static void test_gettargetpath_bad(void)
     DeleteFile(msifile);
 }
 
+static void query_file_path(MSIHANDLE hpkg, LPCSTR file, LPSTR buff)
+{
+    UINT r;
+    DWORD size;
+    MSIHANDLE rec;
+
+    rec = MsiCreateRecord( 1 );
+    ok(rec, "MsiCreate record failed\n");
+
+    r = MsiRecordSetString( rec, 0, file );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    size = MAX_PATH;
+    r = MsiFormatRecord( hpkg, rec, buff, &size );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    MsiCloseHandle( rec );
+}
+
 static void test_settargetpath(void)
 {
     char tempdir[MAX_PATH+8], buffer[MAX_PATH];
@@ -363,6 +382,12 @@ static void test_settargetpath(void)
     ok( r == S_OK, "cannot add dummy component: %d\n", r );
 
     r = run_query( hdb,
+            "INSERT INTO `Component`  "
+            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
+            "VALUES( 'TestComp', '{A3FB59C8-C293-4F7E-B8C5-F0E1D8EEE4E5}', 'TestDir', 0, '', 'TestFile')" );
+    ok( r == S_OK, "cannot add test component: %d\n", r );
+
+    r = run_query( hdb,
             "CREATE TABLE `Feature` ( "
             "`Feature` CHAR(38) NOT NULL, "
             "`Feature_Parent` CHAR(38), "
@@ -375,11 +400,55 @@ static void test_settargetpath(void)
             "PRIMARY KEY `Feature`)" );
     ok( r == S_OK, "cannot create Feature table: %d\n", r );
 
+    r = run_query( hdb,
+            "INSERT INTO `Feature` "
+            "(`Feature`, `Feature_Parent`, `Display`, `Level`, `Attributes`) "
+            "VALUES( 'TestFeature', '', 0, 1, 0 )" );
+    ok( r == ERROR_SUCCESS, "cannot add TestFeature to Feature table: %d\n", r );
+
+    r = run_query( hdb,
+            "CREATE TABLE `FeatureComponents` ( "
+            "`Feature_` CHAR(38) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Feature_` )" );
+    ok( r == S_OK, "cannot create FeatureComponents table: %d\n", r );
+
+    r = run_query( hdb,
+            "INSERT INTO `FeatureComponents` "
+            "(`Feature_`, `Component_`) "
+            "VALUES( 'TestFeature', 'TestComp' )" );
+    ok( r == S_OK, "cannot insert component into FeatureComponents table: %d\n", r );
+
+    add_directory_entry( hdb, "'TestParent', 'TARGETDIR', 'TestParent'" );
+    add_directory_entry( hdb, "'TestDir', 'TestParent', 'TestDir'" );
+
+    r = run_query( hdb,
+            "CREATE TABLE `File` ("
+            "`File` CHAR(72) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL, "
+            "`FileName` CHAR(255) NOT NULL, "
+            "`FileSize` LONG NOT NULL, "
+            "`Version` CHAR(72), "
+            "`Language` CHAR(20), "
+            "`Attributes` SHORT, "
+            "`Sequence` SHORT NOT NULL "
+            "PRIMARY KEY `File`)" );
+    ok( r == S_OK, "cannot create File table: %d\n", r );
+
+    r = run_query( hdb,
+            "INSERT INTO `File` "
+            "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
+            "VALUES( 'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1 )" );
+    ok( r == S_OK, "cannot add file to the File table: %d\n", r );
+
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
+
+    r = MsiDoAction( hpkg, "FileCost");
+    ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
@@ -424,6 +493,16 @@ static void test_settargetpath(void)
         }
     } else {
         trace( "MsiGetTargetPath failed: %d\n", r );
+    }
+
+    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
+
+    query_file_path( hpkg, "[#TestFile]", buffer );
+    todo_wine
+    {
+        ok( !lstrcmp(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
+            "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
     }
     
     MsiCloseHandle( hpkg );
