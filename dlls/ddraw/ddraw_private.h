@@ -393,6 +393,7 @@ struct IDirectDrawPaletteImpl
 
     /* IDirectDrawPalette fields */
     IDirectDrawImpl           *ddraw_owner;
+    IUnknown                  *ifaceToRelease;
 };
 const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
 

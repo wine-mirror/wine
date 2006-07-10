@@ -236,10 +236,13 @@ IDirectDrawImpl_CreatePalette(LPDIRECTDRAW This, DWORD dwFlags,
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
+        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw,
                              IDirectDraw7,
                              This));
+        impl->ifaceToRelease = NULL;
+
     }
     return hr;
 }
@@ -251,18 +254,21 @@ IDirectDraw2Impl_CreatePalette(LPDIRECTDRAW2 This, DWORD dwFlags,
 			       IUnknown *pUnkOuter)
 {
     HRESULT hr;
-    return IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
+    hr = IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw2,
 							 IDirectDraw7,
 							 This),
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
+        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
-                             IDirectDraw,
+                             IDirectDraw2,
                              IDirectDraw7,
                              This));
+        impl->ifaceToRelease = NULL;
     }
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -272,18 +278,22 @@ IDirectDraw4Impl_CreatePalette(LPDIRECTDRAW4 This, DWORD dwFlags,
 			       IUnknown *pUnkOuter)
 {
     HRESULT hr;
-    return IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
+    hr = IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw4,
 							 IDirectDraw7,
 							 This),
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
+        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
-                             IDirectDraw,
+                             IDirectDraw4,
                              IDirectDraw7,
                              This));
+        IDirectDraw4_AddRef(This);
+        impl->ifaceToRelease = (IUnknown *) This;
     }
+    return hr;
 }
 
 static HRESULT WINAPI

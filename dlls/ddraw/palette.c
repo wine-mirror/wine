@@ -21,6 +21,8 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
+#define COBJMACROS
+
 #include <assert.h>
 #include <string.h>
 
@@ -104,7 +106,10 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
     if (ref == 0)
     {
         IWineD3DPalette_Release(This->wineD3DPalette);
-        IDirectDraw7_Release(ICOM_INTERFACE(This->ddraw_owner, IDirectDraw7));
+        if(This->ifaceToRelease)
+        {
+            IUnknown_Release(This->ifaceToRelease);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 

@@ -47,32 +47,42 @@ static void test_ddraw_objects(void)
 {
     HRESULT hr;
     unsigned long ref;
-    IDirectDraw7 *DDraw;
+    IDirectDraw7 *DDraw7;
+    IDirectDraw4 *DDraw4;
+    IDirectDraw4 *DDraw2;
+    IDirectDraw4 *DDraw1;
     IDirectDrawPalette *palette;
     IDirectDrawSurface7 *surface;
     PALETTEENTRY Table[256];
     DDSURFACEDESC2 ddsd;
 
-    hr = pDirectDrawCreateEx(NULL, (void **) &DDraw, &IID_IDirectDraw7, NULL);
+    hr = pDirectDrawCreateEx(NULL, (void **) &DDraw7, &IID_IDirectDraw7, NULL);
     ok(hr == DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", hr);
-    if(!DDraw)
+    if(!DDraw7)
     {
         trace("Couldn't create DDraw interface, skipping tests\n");
         return;
     }
 
-    ref = getRefcount( (IUnknown *) DDraw);
+    hr = IDirectDraw7_QueryInterface(DDraw7, &IID_IDirectDraw4, (void **) &DDraw4);
+    ok(hr == DD_OK, "IDirectDraw7_QueryInterface returned %08lx\n", hr);
+    hr = IDirectDraw7_QueryInterface(DDraw7, &IID_IDirectDraw2, (void **) &DDraw2);
+    ok(hr == DD_OK, "IDirectDraw7_QueryInterface returned %08lx\n", hr);
+    hr = IDirectDraw7_QueryInterface(DDraw7, &IID_IDirectDraw, (void **) &DDraw1);
+    ok(hr == DD_OK, "IDirectDraw7_QueryInterface returned %08lx\n", hr);
+
+    ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
     /* Fails without a cooplevel */
-    hr = IDirectDraw7_CreatePalette(DDraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    hr = IDirectDraw7_CreatePalette(DDraw7, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
     ok(hr == DDERR_NOCOOPERATIVELEVELSET, "CreatePalette returned %08lx\n", hr);
 
     /* This check is before the cooplevel check */
-    hr = IDirectDraw7_CreatePalette(DDraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, (void *) 0xdeadbeef);
+    hr = IDirectDraw7_CreatePalette(DDraw7, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, (void *) 0xdeadbeef);
     ok(hr == CLASS_E_NOAGGREGATION, "CreatePalette returned %08lx\n", hr);
 
-    hr = IDirectDraw7_SetCooperativeLevel(DDraw, 0, DDSCL_NORMAL);
+    hr = IDirectDraw7_SetCooperativeLevel(DDraw7, 0, DDSCL_NORMAL);
     ok(hr == DD_OK, "SetCooperativeLevel failed with %08lx\n", hr);
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -85,22 +95,22 @@ static void test_ddraw_objects(void)
     U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
     U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
 
-    hr = IDirectDraw7_CreateSurface(DDraw, &ddsd, &surface, NULL);
+    hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface failed with %08lx\n", hr);
 
     /* DDraw refcount increased by 1 */
-    ref = getRefcount( (IUnknown *) DDraw);
+    ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
 
     /* Surface refcount starts with 1 */
     ref = getRefcount( (IUnknown *) surface);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
-    hr = IDirectDraw7_CreatePalette(DDraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    hr = IDirectDraw7_CreatePalette(DDraw7, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
     ok(hr == DD_OK, "CreatePalette returned %08lx\n", hr);
 
     /* DDraw refcount increased by 1 */
-    ref = getRefcount( (IUnknown *) DDraw);
+    ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 3, "Got refcount %ld, expected 3\n", ref);
 
     /* Palette starts with 1 */
@@ -119,7 +129,7 @@ static void test_ddraw_objects(void)
 
     IDirectDrawSurface7_Release(surface);
     /* Incresed before - decrease now */
-    ref = getRefcount( (IUnknown *) DDraw);
+    ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
 
     /* Releasing the surface detaches the palette */
@@ -129,10 +139,34 @@ static void test_ddraw_objects(void)
     IDirectDrawPalette_Release(palette);
 
     /* Incresed before - decrease now */
-    ref = getRefcount( (IUnknown *) DDraw);
+    ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
-    IDirectDraw7_Release(DDraw);
+    /* Not all interfaces are AddRefed when a palette is created */
+    hr = IDirectDraw4_CreatePalette(DDraw4, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08lx\n", hr);
+    ref = getRefcount( (IUnknown *) DDraw4);
+    ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
+    IDirectDrawPalette_Release(palette);
+
+    /* No addref here */
+    hr = IDirectDraw2_CreatePalette(DDraw2, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08lx\n", hr);
+    ref = getRefcount( (IUnknown *) DDraw2);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    IDirectDrawPalette_Release(palette);
+
+    /* No addref here */
+    hr = IDirectDraw_CreatePalette(DDraw1, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08lx\n", hr);
+    ref = getRefcount( (IUnknown *) DDraw1);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    IDirectDrawPalette_Release(palette);
+
+    IDirectDraw7_Release(DDraw7);
+    IDirectDraw4_Release(DDraw4);
+    IDirectDraw2_Release(DDraw2);
+    IDirectDraw_Release(DDraw1);
 }
 
 static void test_iface_refcnt(void)

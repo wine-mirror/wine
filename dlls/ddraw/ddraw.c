@@ -3007,6 +3007,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     }
 
     IDirectDraw7_AddRef(iface);
+    object->ifaceToRelease = (IUnknown *) iface;
     *Palette = ICOM_INTERFACE(object, IDirectDrawPalette);
     return DD_OK;
 }
