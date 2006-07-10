@@ -59,6 +59,11 @@ static const WCHAR szComplete4[] = {
             'f','n','2','.','t','x','t','\n',
         '<','/','p','r','>','\n',
         '<','e','m','p','t','y','>','<','/','e','m','p','t','y','>','\n',
+        '<','f','o','>','\n',
+            '<','b','a','>','\n',
+                'f','1','\n',
+            '<','/','b','a','>','\n',
+        '<','/','f','o','>','\n',
     '<','/','l','c','>','\n',0
 };
 static const WCHAR szComplete5[] = {
@@ -517,7 +522,7 @@ todo_wine
     {
         r = IXMLDOMNodeList_get_length( list, &count );
         ok( r == S_OK, "get_length returns %08lx\n", r );
-        ok( count == 3, "get_length got %ld\n", count );
+        ok( count == 4, "get_length got %ld\n", count );
 
         r = IXMLDOMNodeList_nextNode( list, &node );
         ok( r == S_OK, "nextNode returned wrong code\n");
@@ -858,7 +863,7 @@ static void test_getElementsByTagName(void)
     ok( r == S_OK, "ret %08lx\n", r );
     r = IXMLDOMNodeList_get_length( node_list, &len );
     ok( r == S_OK, "ret %08lx\n", r );
-    ok( len == 4, "len %ld\n", len );
+    ok( len == 6, "len %ld\n", len );
     IXMLDOMNodeList_Release( node_list );
     SysFreeString( str );
 
@@ -989,7 +994,7 @@ static void test_get_childNodes(void)
 
     r = IXMLDOMNodeList_get_length( node_list, &len );
     ok( r == S_OK, "ret %08lx\n", r);
-    ok( len == 3, "len %ld\n", len);
+    ok( len == 4, "len %ld\n", len);
 
     r = IXMLDOMNodeList_get_item( node_list, 2, &node );
     ok( r == S_OK, "ret %08lx\n", r);
@@ -1010,7 +1015,60 @@ static void test_get_childNodes(void)
     IXMLDOMElement_Release( element );
     IXMLDOMDocument_Release( doc );
 }
-    
+
+static void test_removeChild(void)
+{
+    HRESULT r;
+    BSTR str;
+    VARIANT_BOOL b;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    IXMLDOMNode *node, *node2, *node3, *node4;
+    IXMLDOMNodeList *node_list, *node_list2;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "ret %08lx\n", r);
+
+    r = IXMLDOMElement_get_childNodes( element, &node_list );
+    ok( r == S_OK, "ret %08lx\n", r);
+
+    r = IXMLDOMNodeList_get_item( node_list, 3, &node );
+    ok( r == S_OK, "ret %08lx\n", r);
+ 
+    r = IXMLDOMNode_get_childNodes( node, &node_list2 );
+    ok( r == S_OK, "ret %08lx\n", r);
+ 
+    r = IXMLDOMNodeList_get_item( node_list, 0, &node4 );
+    ok( r == S_OK, "ret %08lx\n", r);
+
+    r = IXMLDOMElement_removeChild( element, node4, &node2 );
+    ok( r == S_OK, "ret %08lx\n", r);
+    ok( node4 == node2, "node %p node2 %p\n", node4, node2 );
+
+    r = IXMLDOMNode_get_parentNode( node4, &node3 );
+    ok( r == S_FALSE, "ret %08lx\n", r);
+    ok( node3 == NULL, "%p\n", node3 );
+
+    IXMLDOMNode_Release( node2 );
+    IXMLDOMNode_Release( node4 );
+    IXMLDOMNodeList_Release( node_list2 );
+    IXMLDOMNode_Release( node );
+    IXMLDOMNodeList_Release( node_list );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1025,6 +1083,7 @@ START_TEST(domdoc)
     test_getElementsByTagName();
     test_get_text();
     test_get_childNodes();
+    test_removeChild();
 
     CoUninitialize();
 }
