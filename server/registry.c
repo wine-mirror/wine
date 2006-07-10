@@ -1003,10 +1003,16 @@ static void delete_value( struct key *key, const struct unicode_str *name )
 }
 
 /* get the registry key corresponding to an hkey handle */
-static struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
+static inline struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
+{
+    return (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
+}
+
+/* get the registry key corresponding to a parent key handle */
+static inline struct key *get_parent_hkey_obj( obj_handle_t hkey )
 {
     if (!hkey) return (struct key *)grab_object( root_key );
-    return (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
+    return (struct key *)get_handle_obj( current->process, hkey, 0, &key_ops );
 }
 
 /* read a line from the input file */
@@ -1727,7 +1733,7 @@ DECL_HANDLER(create_key)
     name.len = (class.str - name.str) * sizeof(WCHAR);
 
     /* NOTE: no access rights are required from the parent handle to create a key */
-    if ((parent = get_hkey_obj( req->parent, 0 )))
+    if ((parent = get_parent_hkey_obj( req->parent )))
     {
         int flags = (req->options & REG_OPTION_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
@@ -1750,7 +1756,7 @@ DECL_HANDLER(open_key)
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
     /* NOTE: no access rights are required to open the parent key, only the child key */
-    if ((parent = get_hkey_obj( req->parent, 0 )))
+    if ((parent = get_parent_hkey_obj( req->parent )))
     {
         get_req_path( &name, !req->parent );
         if ((key = open_key( parent, &name )))
@@ -1883,7 +1889,7 @@ DECL_HANDLER(load_registry)
         return;
     }
 
-    if ((parent = get_hkey_obj( req->hkey, 0 )))
+    if ((parent = get_parent_hkey_obj( req->hkey )))
     {
         int dummy;
         get_req_path( &name, !req->hkey );
