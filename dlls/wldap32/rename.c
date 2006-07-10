@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_rename_extA     (WLDAP32.@)
+ *
+ *  See ldap_rename_extW.
+ */
 ULONG CDECL ldap_rename_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
     PCHAR newparent, INT delete, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG *message )
@@ -92,6 +97,30 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_rename_extW     (WLDAP32.@)
+ *
+ * Change the DN of a directory entry (asynchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to change.
+ *  newrdn      [I] New RDN for the entry.
+ *  newparent   [I] New parent for the entry.
+ *  delete      [I] Delete old RDN?
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  message     [O] Message ID of the operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG CDECL ldap_rename_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
     PWCHAR newparent, INT delete, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG *message )
@@ -144,6 +173,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_rename_ext_sA     (WLDAP32.@)
+ *
+ *  See ldap_rename_ext_sW.
+ */
 ULONG CDECL ldap_rename_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
     PCHAR newparent, INT delete, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls )
@@ -195,7 +229,24 @@ exit:
 #endif
     return ret;
 }
-
+/***********************************************************************
+ *      ldap_rename_ext_sW     (WLDAP32.@)
+ *
+ * Change the DN of a directory entry (synchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to change.
+ *  newrdn      [I] New RDN for the entry.
+ *  newparent   [I] New parent for the entry.
+ *  delete      [I] Delete old RDN?
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */ 
 ULONG CDECL ldap_rename_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
     PWCHAR newparent, INT delete, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls )
