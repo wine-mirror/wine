@@ -374,6 +374,14 @@ foreach my $mod (sort keys %directories)
     next unless defined $altnames{$mod};
     push @ignores, map { "/" . $_ . "16"; } @{$altnames{$mod}};
 }
+foreach my $mod (sort keys %importlibs)
+{
+    my $dir = $directories{$mod};
+    my $def = $mod;
+    $def =~ s/\.(dll|drv)$//;
+    push @ignores, "$dir/lib$def.def";
+}
+
 print GITIGNORE join("\n", sort @ignores) . "\n";
 
 close GITIGNORE;
