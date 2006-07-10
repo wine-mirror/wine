@@ -1282,6 +1282,10 @@ struct glsl_shader_prog_link {
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 
+/* FIXME: This needs to go up to 2048 for
+ * Shader model 3 according to msdn (and for software shaders) */
+#define MAX_LABELS 16
+
 typedef struct semantic {
     DWORD usage;
     DWORD reg;
@@ -1301,6 +1305,7 @@ typedef struct shader_reg_maps {
     char packed_input[MAX_REG_INPUT];       /* pshader >= 3.0 */
     char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char attributes[MAX_ATTRIBS];           /* vertex */
+    char labels[MAX_LABELS];                /* pixel, vertex */
 
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
@@ -1368,6 +1373,7 @@ typedef struct SHADER_LIMITS {
     unsigned int packed_output;
     unsigned int packed_input;
     unsigned int attributes;
+    unsigned int label;
 } SHADER_LIMITS;
 
 /** Keeps track of details for TEX_M#x# shader opcodes which need to 
@@ -1463,6 +1469,9 @@ extern void shader_glsl_else(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_break(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_breakc(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_rep(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_call(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_callnz(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_label(SHADER_OPCODE_ARG* arg);
 
 /** GLSL Pixel Shader Prototypes */
 extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);

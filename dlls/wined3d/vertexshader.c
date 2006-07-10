@@ -545,12 +545,12 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_BREAK,    "break",    NULL, 0, 0, vshader_break,   NULL, shader_glsl_break,  D3DVS_VERSION(2,1), -1},
     {D3DSIO_BREAKC,   "breakc",   NULL, 0, 2, vshader_breakc,  NULL, shader_glsl_breakc, D3DVS_VERSION(2,1), -1},
     {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, vshader_breakp,  NULL, NULL, 0, 0},
-    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL, 0, 1, vshader_call,    NULL, NULL, 0, 0},
-    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL, 0, 2, vshader_callnz,  NULL, NULL, 0, 0},
+    {D3DSIO_CALL,     "call",     NULL, 0, 1, vshader_call,    NULL, shader_glsl_call,   D3DVS_VERSION(2,0), -1},
+    {D3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, vshader_callnz,  NULL, shader_glsl_callnz, D3DVS_VERSION(2,0), -1},
     {D3DSIO_LOOP,     "loop",     NULL, 0, 2, vshader_loop,    NULL, shader_glsl_loop,   D3DVS_VERSION(2,0), -1},
-    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL, 0, 0, vshader_ret,     NULL, NULL, 0, 0},
+    {D3DSIO_RET,      "ret",      NULL, 0, 0, vshader_ret,     NULL, NULL,               D3DVS_VERSION(2,0), -1},
     {D3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, vshader_endloop, NULL, shader_glsl_end,    D3DVS_VERSION(2,0), -1},
-    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL, 0, 1, vshader_label,   NULL, NULL, 0, 0},
+    {D3DSIO_LABEL,    "label",    NULL, 0, 1, vshader_label,   NULL, shader_glsl_label,  D3DVS_VERSION(2,0), -1},
 
     {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_mova,    NULL, shader_glsl_mov, 0, 0},
     {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, vshader_setp,    NULL, NULL, 0, 0},
@@ -577,6 +577,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
+                   This->baseShader.limits.label = 0;
                    break;
       
           case D3DVS_VERSION(2,0):
@@ -587,6 +588,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
+                   This->baseShader.limits.label = 16;
                    break;
 
           case D3DVS_VERSION(3,0):
@@ -596,6 +598,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 12;
                    This->baseShader.limits.sampler = 4;
+                   This->baseShader.limits.label = 16; /* FIXME: 2048 */
                    break;
 
           default: This->baseShader.limits.temporary = 12;
@@ -604,6 +607,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
+                   This->baseShader.limits.label = 16;
                    FIXME("Unrecognized vertex shader version %#lx\n",
                        This->baseShader.hex_version);
       }

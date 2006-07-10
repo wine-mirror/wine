@@ -331,6 +331,12 @@ void shader_generate_glsl_declarations(
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
     char prefix = pshader ? 'P' : 'V';
 
+    /* Prototype the subroutines */
+    for (i = 0; i < This->baseShader.limits.label; i++) {
+        if (reg_maps->labels[i])
+            shader_addline(buffer, "void subroutine%lu();\n", i);
+    }
+
     /* Declare the constants (aka uniforms) */
     if (This->baseShader.limits.constant_float > 0)
         shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, This->baseShader.limits.constant_float);
@@ -494,6 +500,9 @@ static void shader_glsl_gen_modifier (
         break;
     case D3DSPSM_NEG:
         sprintf(out_str, "-%s%s", in_reg, in_regswizzle);
+        break;
+    case D3DSPSM_NOT:
+        sprintf(out_str, "!%s%s", in_reg, in_regswizzle);
         break;
     case D3DSPSM_BIAS:
         sprintf(out_str, "(%s%s - vec4(0.5)%s)", in_reg, in_regswizzle, in_regswizzle);
@@ -1236,6 +1245,29 @@ void shader_glsl_breakc(SHADER_OPCODE_ARG* arg) {
 
     shader_addline(arg->buffer, "if (%s %s %s) break;\n",
         src0_str, shader_get_comp_op(arg->opcode_token), src1_str);
+}
+
+void shader_glsl_label(SHADER_OPCODE_ARG* arg) {
+
+    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    shader_addline(arg->buffer, "}\n");
+    shader_addline(arg->buffer, "void subroutine%lu () {\n",  snum);
+}
+
+void shader_glsl_call(SHADER_OPCODE_ARG* arg) {
+    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    shader_addline(arg->buffer, "subroutine%lu();\n", snum);
+}
+
+void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
+
+    char src1_str[100];
+    char src1_reg[50];
+    char src1_mask[6];
+   
+    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
+    shader_addline(arg->buffer, "if (%s) subroutine%lu();\n", src1_str, snum);
 }
 
 /*********************************************

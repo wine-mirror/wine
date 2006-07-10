@@ -685,12 +685,12 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_BREAK,    "break",    NULL, 0, 0, pshader_break,   NULL, shader_glsl_break,  D3DPS_VERSION(2,1), -1},
     {D3DSIO_BREAKC,   "breakc",   NULL, 0, 2, pshader_breakc,  NULL, shader_glsl_breakc, D3DPS_VERSION(2,1), -1},
     {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, pshader_breakp,  NULL, NULL, 0, 0},
-    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL, 0, 1, pshader_call,    NULL, NULL, 0, 0},
-    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL, 0, 2, pshader_callnz,  NULL, NULL, 0, 0},
+    {D3DSIO_CALL,     "call",     NULL, 0, 1, pshader_call,    NULL, shader_glsl_call, D3DPS_VERSION(2,1), -1},
+    {D3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, pshader_callnz,  NULL, shader_glsl_callnz, D3DPS_VERSION(2,1), -1},
     {D3DSIO_LOOP,     "loop",     NULL, 0, 2, pshader_loop,    NULL, shader_glsl_loop,   D3DPS_VERSION(3,0), -1},
-    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL, 0, 0, pshader_ret,     NULL, NULL, 0, 0},
+    {D3DSIO_RET,      "ret",      NULL, 0, 0, pshader_ret,     NULL, NULL,               D3DPS_VERSION(2,1), -1},
     {D3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, pshader_endloop, NULL, shader_glsl_end,    D3DPS_VERSION(3,0), -1},
-    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL, 0, 1, pshader_label,   NULL, NULL, 0, 0},
+    {D3DSIO_LABEL,    "label",    NULL, 0, 1, pshader_label,   NULL, shader_glsl_label,  D3DPS_VERSION(2,1), -1},
 
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      "undefined",         1, 5, pshader_def,     NULL, NULL, 0, 0},
@@ -751,6 +751,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.texcoord = 4;
                    This->baseShader.limits.sampler = 4;
                    This->baseShader.limits.packed_input = 0;
+                   This->baseShader.limits.label = 0;
                    break;
 
           case D3DPS_VERSION(1,4):
@@ -761,10 +762,20 @@ static void pshader_set_limits(
                    This->baseShader.limits.texcoord = 6;
                    This->baseShader.limits.sampler = 6;
                    This->baseShader.limits.packed_input = 0;
+                   This->baseShader.limits.label = 0;
                    break;
                
           /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
           case D3DPS_VERSION(2,0):
+                   This->baseShader.limits.temporary = 32;
+                   This->baseShader.limits.constant_float = 32;
+                   This->baseShader.limits.constant_int = 16;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.texcoord = 8;
+                   This->baseShader.limits.sampler = 16;
+                   This->baseShader.limits.packed_input = 0;
+                   break;
+
           case D3DPS_VERSION(2,1):
                    This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 32;
@@ -773,6 +784,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.texcoord = 8;
                    This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
+                   This->baseShader.limits.label = 16;
                    break;
 
           case D3DPS_VERSION(3,0):
@@ -783,6 +795,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.texcoord = 0;
                    This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 12;
+                   This->baseShader.limits.label = 16; /* FIXME: 2048 */
                    break;
 
           default: This->baseShader.limits.temporary = 32;
@@ -792,6 +805,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.texcoord = 8;
                    This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
+                   This->baseShader.limits.label = 0;
                    FIXME("Unrecognized pixel shader version %#lx\n", 
                        This->baseShader.hex_version);
       }

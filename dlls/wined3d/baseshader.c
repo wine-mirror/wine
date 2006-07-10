@@ -277,7 +277,14 @@ HRESULT shader_get_registers_used(
                    D3DSIO_REP == curOpcode->opcode) {
             reg_maps->loop = 1;
             pToken += curOpcode->num_params;
-        
+   
+        /* For subroutine prototypes */
+        } else if (D3DSIO_LABEL == curOpcode->opcode) {
+
+            DWORD snum = *pToken & D3DSP_REGNUM_MASK; 
+            reg_maps->labels[snum] = 1;
+            pToken += curOpcode->num_params;
+ 
         /* Set texture, address, temporary registers */
         } else {
             int i, limit;
@@ -683,7 +690,8 @@ void shader_generate_main(
                        D3DSIO_NOP == curOpcode->opcode ||
                        D3DSIO_DEF == curOpcode->opcode ||
                        D3DSIO_DEFI == curOpcode->opcode ||
-                       D3DSIO_DEFB == curOpcode->opcode) {
+                       D3DSIO_DEFB == curOpcode->opcode ||
+                       D3DSIO_RET == curOpcode->opcode) {
 
                 pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
 
