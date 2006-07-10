@@ -90,7 +90,7 @@ pointer_default(unique)
 interface IMultiMediaStream : IUnknown {
 
 	HRESULT GetInformation(
-		[out, optional] char *pdwFlags,
+		[out, optional] DWORD *pdwFlags,
 		[out, optional] STREAM_TYPE *pStreamType);
 
 	HRESULT GetMediaStream(

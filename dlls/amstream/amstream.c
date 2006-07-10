@@ -110,7 +110,7 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
 }
 
 /*** IMultiMediaStream methods ***/
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetInformation(IAMMultiMediaStream* iface, char* pdwFlags, STREAM_TYPE* pStreamType)
+static HRESULT WINAPI IAMMultiMediaStreamImpl_GetInformation(IAMMultiMediaStream* iface, DWORD* pdwFlags, STREAM_TYPE* pStreamType)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
