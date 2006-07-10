@@ -310,7 +310,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
                 goto end;
         }
 
-        rc = RegCreateKeyW(rootKey, keyPath, &key);
+        rc = RegOpenKeyW(rootKey, keyPath, &key);
         if (rc)
         {
             TRACE("RegCreateKeyW returned %d\n", rc);
