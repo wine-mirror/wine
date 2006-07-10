@@ -4654,7 +4654,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4681,7 +4681,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4700,7 +4700,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4728,7 +4728,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4747,7 +4747,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4775,7 +4775,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4836,7 +4836,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4863,7 +4863,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4882,7 +4882,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4910,7 +4910,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4929,7 +4929,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4957,7 +4957,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - (start + 1));
+    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
