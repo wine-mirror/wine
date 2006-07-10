@@ -25,16 +25,34 @@
 static unsigned be_x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx, 
                                  enum be_cpu_addr bca, ADDRESS* addr)
 {
-    dbg_printf("not done\n");
-    return FALSE;
+    addr->Mode = AddrModeFlat;
+    switch (bca)
+    {
+    case be_cpu_addr_pc:
+        addr->Segment = ctx->SegCs;
+        addr->Offset = ctx->Rip;
+        return TRUE;
+    case be_cpu_addr_stack:
+        addr->Segment = ctx->SegSs;
+        addr->Offset = ctx->Rsp;
+        return TRUE;
+    case be_cpu_addr_frame:
+        addr->Segment = ctx->SegSs;
+        addr->Offset = ctx->Rbp;
+        return TRUE;
+    default:
+        addr->Mode = -1;
+        return FALSE;
+    }
 }
 
 static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done single_step\n");
 }
 
-static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx)
+static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
+                                    int all_regs)
 {
     dbg_printf("Context printing for x86_64 not done yet\n");
 }
@@ -106,26 +124,27 @@ static const struct dbg_internal_var* be_x86_64_init_registers(CONTEXT* ctx)
     return be_x86_64_ctx;
 }
 
-static unsigned be_x86_64_is_step_over_insn(void* insn)
+static unsigned be_x86_64_is_step_over_insn(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done step_over_insn\n");
     return FALSE;
 }
 
-static unsigned be_x86_64_is_function_return(void* insn)
+static unsigned be_x86_64_is_function_return(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done is_function_return\n");
     return FALSE;
 }
 
-static unsigned be_x86_64_is_break_insn(void* insn)
+static unsigned be_x86_64_is_break_insn(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done is_break_insn\n");
     return FALSE;
 }
 
-static unsigned be_x86_64_is_func_call(void* insn, void** insn_callee)
+static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS* callee)
 {
+    dbg_printf("not done is_func_call\n");
     return FALSE;
 }
 
@@ -138,7 +157,7 @@ static unsigned be_x86_64_insert_Xpoint(HANDLE hProcess, const struct be_process
                                        CONTEXT* ctx, enum be_xpoint_type type,
                                        void* addr, unsigned long* val, unsigned size)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done insert_Xpoint\n");
     return 0;
 }
 
@@ -146,38 +165,43 @@ static unsigned be_x86_64_remove_Xpoint(HANDLE hProcess, const struct be_process
                                        CONTEXT* ctx, enum be_xpoint_type type, 
                                        void* addr, unsigned long val, unsigned size)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done remove_Xpoint\n");
     return FALSE;
 }
 
 static unsigned be_x86_64_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done is_watchpoint_set\n");
     return FALSE;
 }
 
 static void be_x86_64_clear_watchpoint(CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done clear_watchpoint\n");
 }
 
 static int be_x86_64_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 {
-    dbg_printf("not done\n");
-    return 0;
+    if (way)
+    {
+        ctx->Rip--;
+        return -1;
+    }
+    ctx->Rip++;
+    return 1;
 }
 
 static int be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                   unsigned ext_sign, LONGLONG* ret)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done fetch_integer\n");
     return FALSE;
 }
 
 static int be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, 
                                 long double* ret)
 {
-    dbg_printf("not done\n");
+    dbg_printf("not done fetch_float\n");
     return FALSE;
 }
 

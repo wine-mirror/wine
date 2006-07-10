@@ -421,13 +421,13 @@ extern int              gdb_main(int argc, char* argv[]);
 
 static inline BOOL dbg_read_memory(const void* addr, void* buffer, size_t len)
 {
-    DWORD rlen;
+    SIZE_T rlen;
     return dbg_curr_process->process_io->read(dbg_curr_process->handle, addr, buffer, len, &rlen) && len == rlen;
 }
 
 static inline BOOL dbg_write_memory(void* addr, const void* buffer, size_t len)
 {
-    DWORD wlen;
+    SIZE_T wlen;
     return dbg_curr_process->process_io->write(dbg_curr_process->handle, addr, buffer, len, &wlen) && len == wlen;
 }
 
