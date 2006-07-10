@@ -1245,7 +1245,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
     if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "%s = gl_TexCoord[%lu];\n", tmpReg, reg);
+        shader_addline(buffer, "%s = clamp(gl_TexCoord[%lu], 0.0, 1.0);\n", tmpReg, reg);
     } else {
         DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
         shader_addline(buffer, "%s = gl_TexCoord[%lu]%s;\n", tmpStr, reg2, tmpMask);

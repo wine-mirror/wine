@@ -640,7 +640,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
     pshader_get_write_mask(dst, tmp);
     if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = dst & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "MOV T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
+        shader_addline(buffer, "MOV_SAT T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
     } else {
         DWORD reg1 = dst & D3DSP_REGNUM_MASK;
         DWORD reg2 = src[0] & D3DSP_REGNUM_MASK;
