@@ -364,6 +364,7 @@ my @ignores =
  "/Makeimplib.rules",
  "/Maketest.rules",
  "*/tests/testlist.c",
+ "*/tests/*.ok",
 );
 
 foreach my $mod (sort @lib_symlinks)
