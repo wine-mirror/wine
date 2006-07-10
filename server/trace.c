@@ -2983,7 +2983,7 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%lu,", (unsigned long)req->extra_size );
-    fprintf( stderr, " extra_value=%08x", req->extra_value );
+    fprintf( stderr, " extra_value=%lx", req->extra_value );
 }
 
 static void dump_set_class_info_reply( const struct set_class_info_reply *req )
@@ -2993,7 +2993,7 @@ static void dump_set_class_info_reply( const struct set_class_info_reply *req )
     fprintf( stderr, " old_extra=%d,", req->old_extra );
     fprintf( stderr, " old_win_extra=%d,", req->old_win_extra );
     fprintf( stderr, " old_instance=%p,", req->old_instance );
-    fprintf( stderr, " old_extra_value=%08x", req->old_extra_value );
+    fprintf( stderr, " old_extra_value=%lx", req->old_extra_value );
 }
 
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )

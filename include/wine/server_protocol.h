@@ -3401,7 +3401,7 @@ struct set_class_info_request
     void*          instance;
     int            extra_offset;
     size_t         extra_size;
-    unsigned int   extra_value;
+    unsigned long  extra_value;
 };
 struct set_class_info_reply
 {
@@ -3411,7 +3411,7 @@ struct set_class_info_reply
     int            old_extra;
     int            old_win_extra;
     void*          old_instance;
-    unsigned int   old_extra_value;
+    unsigned long  old_extra_value;
 };
 #define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002
@@ -4382,6 +4382,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 236
+#define SERVER_PROTOCOL_VERSION 237
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

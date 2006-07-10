@@ -2384,14 +2384,14 @@ enum message_type
     void*          instance;       /* module instance */
     int            extra_offset;   /* offset to set in extra bytes */
     size_t         extra_size;     /* size to set in extra bytes */
-    unsigned int   extra_value;    /* value to set in extra bytes */
+    unsigned long  extra_value;    /* value to set in extra bytes */
 @REPLY
     atom_t         old_atom;       /* previous class atom */
     unsigned int   old_style;      /* previous class style */
     int            old_extra;      /* previous number of class extra bytes */
     int            old_win_extra;  /* previous number of window extra bytes */
     void*          old_instance;   /* previous module instance */
-    unsigned int   old_extra_value; /* old value in extra bytes */
+    unsigned long  old_extra_value; /* old value in extra bytes */
 @END
 #define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002
