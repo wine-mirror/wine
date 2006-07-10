@@ -92,7 +92,7 @@ struct timer
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
     unsigned int    id;        /* timer id */
-    unsigned int    lparam;    /* lparam for message */
+    unsigned long   lparam;    /* lparam for message */
 };
 
 struct thread_input
