@@ -1,3 +1,2 @@
-Makefile
-iphlpapi.ok
-testlist.c
+/iphlpapi.ok
+/testlist.c

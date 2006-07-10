@@ -1,3 +1,2 @@
-Makefile
-libd3drm.def
-version.res
+/libd3drm.def
+/version.res

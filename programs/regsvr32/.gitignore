@@ -1,3 +1,2 @@
-Makefile
-regsvr32
-regsvr32.res
+/regsvr32
+/regsvr32.res

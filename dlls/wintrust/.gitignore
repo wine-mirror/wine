@@ -1,3 +1,2 @@
-Makefile
-libwintrust.def
-version.res
+/libwintrust.def
+/version.res

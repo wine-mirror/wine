@@ -1,4 +1,3 @@
-Makefile
-libgdi32.def
-version.res
-version16.res
+/libgdi32.def
+/version.res
+/version16.res

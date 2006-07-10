@@ -1,5 +1,4 @@
-Makefile
-info.ok
-install.ok
-testlist.c
-version.res
+/info.ok
+/install.ok
+/testlist.c
+/version.res

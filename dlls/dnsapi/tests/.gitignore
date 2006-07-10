@@ -1,4 +1,3 @@
-Makefile
-name.ok
-record.ok
-testlist.c
+/name.ok
+/record.ok
+/testlist.c

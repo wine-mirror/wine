@@ -1,4 +1,3 @@
-Makefile
-about.ico
-cmdlgr.res
-cmdlgtst
+/about.ico
+/cmdlgr.res
+/cmdlgtst

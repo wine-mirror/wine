@@ -1,4 +1,3 @@
-Makefile
-oleview
-rsrc.res
-toolbar.bmp
+/oleview
+/rsrc.res
+/toolbar.bmp

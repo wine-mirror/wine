@@ -1,3 +1,2 @@
-Makefile
-libddraw.def
-version.res
+/libddraw.def
+/version.res

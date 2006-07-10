@@ -1,6 +1,5 @@
-Makefile
-lex.yy.c
-parser.tab.c
-parser.tab.h
-wrc
-wrc.man
+/lex.yy.c
+/parser.tab.c
+/parser.tab.h
+/wrc
+/wrc.man

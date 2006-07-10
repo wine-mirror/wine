@@ -1,5 +1,4 @@
-Makefile
-htmldoc.ok
-misc.ok
-protocol.ok
-testlist.c
+/htmldoc.ok
+/misc.ok
+/protocol.ok
+/testlist.c

@@ -1,3 +1,2 @@
-Makefile
-wineconsole
-wineconsole_res.res
+/wineconsole
+/wineconsole_res.res

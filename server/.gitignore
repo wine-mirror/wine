@@ -1,3 +1,2 @@
-Makefile
-wineserver
-wineserver.man
+/wineserver
+/wineserver.man

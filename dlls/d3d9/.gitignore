@@ -1,3 +1,2 @@
-Makefile
-libd3d9.def
-version.res
+/libd3d9.def
+/version.res

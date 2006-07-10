@@ -1,9 +1,8 @@
-Makefile
-db.ok
-format.ok
-install.ok
-msi.ok
-package.ok
-record.ok
-suminfo.ok
-testlist.c
+/db.ok
+/format.ok
+/install.ok
+/msi.ok
+/package.ok
+/record.ok
+/suminfo.ok
+/testlist.c

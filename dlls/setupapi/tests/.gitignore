@@ -1,6 +1,5 @@
-Makefile
-devinst.ok
-parser.ok
-query.ok
-stringtable.ok
-testlist.c
+/devinst.ok
+/parser.ok
+/query.ok
+/stringtable.ok
+/testlist.c

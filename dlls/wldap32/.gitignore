@@ -1,3 +1,2 @@
-Makefile
-libwldap32.def
-wldap32.res
+/libwldap32.def
+/wldap32.res

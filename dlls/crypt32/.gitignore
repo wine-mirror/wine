@@ -1,3 +1,2 @@
-Makefile
-crypt32.res
-libcrypt32.def
+/crypt32.res
+/libcrypt32.def

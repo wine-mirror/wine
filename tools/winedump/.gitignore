@@ -1,3 +1,2 @@
-Makefile
-winedump
-winedump.man
+/winedump
+/winedump.man

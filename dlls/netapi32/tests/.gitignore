@@ -1,6 +1,5 @@
-Makefile
-access.ok
-apibuf.ok
-ds.ok
-testlist.c
-wksta.ok
+/access.ok
+/apibuf.ok
+/ds.ok
+/testlist.c
+/wksta.ok

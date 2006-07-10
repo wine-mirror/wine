@@ -1,9 +1,8 @@
-Makefile
-olefont.ok
-olepicture.ok
-safearray.ok
-testlist.c
-typelib.ok
-usrmarshal.ok
-vartest.ok
-vartype.ok
+/olefont.ok
+/olepicture.ok
+/safearray.ok
+/testlist.c
+/typelib.ok
+/usrmarshal.ok
+/vartest.ok
+/vartype.ok

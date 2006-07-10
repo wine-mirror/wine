@@ -1,3 +1,2 @@
-Makefile
-libdsound.def
-version.res
+/libdsound.def
+/version.res

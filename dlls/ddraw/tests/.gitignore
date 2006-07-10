@@ -1,6 +1,5 @@
-Makefile
-d3d.ok
-ddrawmodes.ok
-dsurface.ok
-refcount.ok
-testlist.c
+/d3d.ok
+/ddrawmodes.ok
+/dsurface.ok
+/refcount.ok
+/testlist.c

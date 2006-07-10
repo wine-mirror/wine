@@ -1,3 +1,2 @@
-Makefile
-liboleaut32.def
-oleaut32.res
+/liboleaut32.def
+/oleaut32.res

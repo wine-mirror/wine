@@ -1,3 +1,2 @@
-Makefile
-libmswsock.def
-version.res
+/libmswsock.def
+/version.res

@@ -1,4 +1,3 @@
-Makefile
-libwininet.def
-rsrc.res
-version.res
+/libwininet.def
+/rsrc.res
+/version.res

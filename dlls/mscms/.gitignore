@@ -1,3 +1,2 @@
-Makefile
-libmscms.def
-version.res
+/libmscms.def
+/version.res

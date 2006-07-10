@@ -1,3 +1,2 @@
-Makefile
-libmsvcrt.def
-rsrc.res
+/libmsvcrt.def
+/rsrc.res

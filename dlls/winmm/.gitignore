@@ -1,3 +1,2 @@
-Makefile
-libwinmm.def
-winmm_res.res
+/libwinmm.def
+/winmm_res.res

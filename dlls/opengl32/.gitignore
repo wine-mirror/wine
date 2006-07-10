@@ -1,3 +1,2 @@
-Makefile
-libopengl32.def
-version.res
+/libopengl32.def
+/version.res

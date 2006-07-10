@@ -1,4 +1,3 @@
-Makefile
-Makeprog.rules
-wineapploader
-winelauncher
+/Makeprog.rules
+/wineapploader
+/winelauncher

@@ -1,9 +1,8 @@
-Makefile
-font.bmp
-taskmgr
-taskmgr.ico
-taskmgr.res
-trayicon.bmp
-traymask.bmp
-window.ico
-windowsm.ico
+/font.bmp
+/taskmgr
+/taskmgr.ico
+/taskmgr.res
+/trayicon.bmp
+/traymask.bmp
+/window.ico
+/windowsm.ico

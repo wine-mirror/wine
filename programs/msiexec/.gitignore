@@ -1,4 +1,3 @@
-Makefile
-msiexec
-msiexec.ico
-rsrc.res
+/msiexec
+/msiexec.ico
+/rsrc.res

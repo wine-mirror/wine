@@ -1,3 +1,2 @@
-Makefile
-libquartz.def
-version.res
+/libquartz.def
+/version.res

@@ -1,3 +1,2 @@
-Makefile
-libdinput8.def
-version.res
+/libdinput8.def
+/version.res

@@ -1,3 +1,2 @@
-Makefile
-libmsdmo.def
-rsrc.res
+/libmsdmo.def
+/rsrc.res

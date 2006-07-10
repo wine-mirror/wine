@@ -1,5 +1,4 @@
-Makefile
-winecpp
-wineg++
-winegcc
-winegcc.man
+/winecpp
+/wineg++
+/winegcc
+/winegcc.man

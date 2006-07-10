@@ -1,6 +1,5 @@
-Makefile
-dist.res
-tests.rc
-wine.ico
-winetest
-winetest.res
+/dist.res
+/tests.rc
+/wine.ico
+/winetest
+/winetest.res

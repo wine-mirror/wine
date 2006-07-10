@@ -1,3 +1,2 @@
-Makefile
-libwinspool.def
-winspool.res
+/libwinspool.def
+/winspool.res

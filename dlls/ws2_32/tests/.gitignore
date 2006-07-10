@@ -1,4 +1,3 @@
-Makefile
-protocol.ok
-sock.ok
-testlist.c
+/protocol.ok
+/sock.ok
+/testlist.c

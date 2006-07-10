@@ -1,3 +1,2 @@
-Makefile
-device.ok
-testlist.c
+/device.ok
+/testlist.c

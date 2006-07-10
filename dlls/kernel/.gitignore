@@ -1,4 +1,3 @@
-Makefile
-kernel.res
-libkernel32.def
-version16.res
+/kernel.res
+/libkernel32.def
+/version16.res

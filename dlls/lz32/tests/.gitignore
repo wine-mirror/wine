@@ -1,3 +1,2 @@
-Makefile
-lzexpand_main.ok
-testlist.c
+/lzexpand_main.ok
+/testlist.c

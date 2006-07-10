@@ -1,4 +1,3 @@
-Makefile
-Makelib.rules
-libwine.so.1
-libwine_unicode.so.1
+/Makelib.rules
+/libwine.so.1
+/libwine_unicode.so.1

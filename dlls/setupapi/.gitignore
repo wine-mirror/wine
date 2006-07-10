@@ -1,3 +1,2 @@
-Makefile
-libsetupapi.def
-setupapi.res
+/libsetupapi.def
+/setupapi.res

@@ -1,9 +1,8 @@
-Makefile
-device.ok
-shader.ok
-stateblock.ok
-surface.ok
-testlist.c
-texture.ok
-vertexdeclaration.ok
-volume.ok
+/device.ok
+/shader.ok
+/stateblock.ok
+/surface.ok
+/testlist.c
+/texture.ok
+/vertexdeclaration.ok
+/volume.ok

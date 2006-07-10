@@ -1,3 +1,2 @@
-Makefile
-libws2_32.def
-version.res
+/libws2_32.def
+/version.res

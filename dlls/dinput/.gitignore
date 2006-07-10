@@ -1,3 +1,2 @@
-Makefile
-libdinput.def
-version.res
+/libdinput.def
+/version.res

@@ -1,5 +1,4 @@
-Makefile
-generated.ok
-ndr_marshall.ok
-rpc.ok
-testlist.c
+/generated.ok
+/ndr_marshall.ok
+/rpc.ok
+/testlist.c

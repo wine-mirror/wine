@@ -1,3 +1,2 @@
-Makefile
-libmsvfw32.def
-rsrc.res
+/libmsvfw32.def
+/rsrc.res

@@ -1,4 +1,3 @@
-Makefile
-lex.yy.c
-rsrc.res
-winhelp
+/lex.yy.c
+/rsrc.res
+/winhelp

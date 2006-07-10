@@ -1,8 +1,7 @@
-Makefile
-dcom.h
-drag_copy.cur
-drag_link.cur
-drag_move.cur
-libole32.def
-nodrop.cur
-ole32res.res
+/dcom.h
+/drag_copy.cur
+/drag_link.cur
+/drag_move.cur
+/libole32.def
+/nodrop.cur
+/ole32res.res

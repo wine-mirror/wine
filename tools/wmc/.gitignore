@@ -1,5 +1,4 @@
-Makefile
-mcy.tab.c
-mcy.tab.h
-wmc
-wmc.man
+/mcy.tab.c
+/mcy.tab.h
+/wmc
+/wmc.man

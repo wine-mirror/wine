@@ -1,4 +1,3 @@
-Makefile
-wcmd
-wcmd.ico
-wcmdrc.res
+/wcmd
+/wcmd.ico
+/wcmdrc.res

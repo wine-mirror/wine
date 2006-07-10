@@ -1,4 +1,3 @@
-Makefile
-rsrc.res
-uninstaller
-uninstaller.ico
+/rsrc.res
+/uninstaller
+/uninstaller.ico

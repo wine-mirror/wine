@@ -1,4 +1,3 @@
-Makefile
-filtergraph.ok
-memallocator.ok
-testlist.c
+/filtergraph.ok
+/memallocator.ok
+/testlist.c

@@ -1,3 +1,2 @@
-Makefile
-winebuild
-winebuild.man
+/winebuild
+/winebuild.man

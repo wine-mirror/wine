@@ -1,3 +1,2 @@
-Makefile
-libwsock32.def
-version.res
+/libwsock32.def
+/version.res

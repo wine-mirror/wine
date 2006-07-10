@@ -1,5 +1,4 @@
-Makefile
-imalloc.ok
-prop.ok
-testlist.c
-util.ok
+/imalloc.ok
+/prop.ok
+/testlist.c
+/util.ok

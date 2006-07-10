@@ -1,7 +1,6 @@
-Makefile
-drivebar.bmp
-images.bmp
-rsrc.res
-toolbar.bmp
-winefile
-winefile.ico
+/drivebar.bmp
+/images.bmp
+/rsrc.res
+/toolbar.bmp
+/winefile
+/winefile.ico
