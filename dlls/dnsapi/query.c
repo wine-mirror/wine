@@ -496,7 +496,7 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
 
     memset( ncb.ncb_callname, ' ', sizeof(ncb.ncb_callname) );
     memcpy( ncb.ncb_callname, name, len );
-    ncb.ncb_callname[NCBNAMSZ] = '\0';
+    ncb.ncb_callname[NCBNAMSZ - 1] = '\0';
 
     ret = Netbios( &ncb );
     if (ret != NRC_GOODRET) return ERROR_INVALID_NAME;
