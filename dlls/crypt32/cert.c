@@ -307,6 +307,40 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
             ret = TRUE;
         }
         break;
+    case CERT_KEY_IDENTIFIER_PROP_ID:
+        ret = CertContext_GetProperty((void *)pCertContext, dwPropId,
+         pvData, pcbData);
+        if (!ret)
+            SetLastError(ERROR_INVALID_DATA);
+        break;
+    case CERT_KEY_PROV_HANDLE_PROP_ID:
+    {
+        CERT_KEY_CONTEXT keyContext;
+        DWORD size = sizeof(keyContext);
+
+        ret = CertContext_GetProperty((void *)pCertContext,
+         CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
+        if (ret)
+        {
+            if (!pvData)
+            {
+                *pcbData = sizeof(HCRYPTPROV);
+                ret = TRUE;
+            }
+            else if (*pcbData < sizeof(HCRYPTPROV))
+            {
+                SetLastError(ERROR_MORE_DATA);
+                *pcbData = sizeof(HCRYPTPROV);
+                ret = FALSE;
+            }
+            else
+            {
+                *(HCRYPTPROV *)pvData = keyContext.hCryptProv;
+                ret = TRUE;
+            }
+        }
+        break;
+    }
     case CERT_KEY_PROV_INFO_PROP_ID:
         ret = CertContext_GetProperty((void *)pCertContext, dwPropId, pvData,
          pcbData);
@@ -397,11 +431,6 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
 
     if (!properties)
         ret = FALSE;
-    else if (!pvData)
-    {
-        ContextPropertyList_RemoveProperty(properties, dwPropId);
-        ret = TRUE;
-    }
     else
     {
         switch (dwPropId)
@@ -424,20 +453,76 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
         case CERT_CROSS_CERT_DIST_POINTS_PROP_ID:
         case CERT_RENEWAL_PROP_ID:
         {
-            PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvData;
+            if (pvData)
+            {
+                PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvData;
 
-            ret = ContextPropertyList_SetProperty(properties, dwPropId,
-             blob->pbData, blob->cbData);
+                ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                 blob->pbData, blob->cbData);
+            }
+            else
+            {
+                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ret = TRUE;
+            }
             break;
         }
         case CERT_DATE_STAMP_PROP_ID:
-            ret = ContextPropertyList_SetProperty(properties, dwPropId,
-             (LPBYTE)pvData, sizeof(FILETIME));
+            if (pvData)
+                ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                 (LPBYTE)pvData, sizeof(FILETIME));
+            else
+            {
+                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ret = TRUE;
+            }
             break;
+        case CERT_KEY_CONTEXT_PROP_ID:
+        {
+            if (pvData)
+            {
+                PCERT_KEY_CONTEXT keyContext = (PCERT_KEY_CONTEXT)pvData;
+
+                ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                 (const BYTE *)keyContext, keyContext->cbSize);
+            }
+            else
+            {
+                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ret = TRUE;
+            }
+            break;
+        }
         case CERT_KEY_PROV_INFO_PROP_ID:
-            ret = CertContext_SetKeyProvInfoProperty(properties,
-             (PCRYPT_KEY_PROV_INFO)pvData);
+            if (pvData)
+                ret = CertContext_SetKeyProvInfoProperty(properties,
+                 (PCRYPT_KEY_PROV_INFO)pvData);
+            else
+            {
+                ContextPropertyList_RemoveProperty(properties, dwPropId);
+                ret = TRUE;
+            }
             break;
+        case CERT_KEY_PROV_HANDLE_PROP_ID:
+        {
+            CERT_KEY_CONTEXT keyContext;
+            DWORD size = sizeof(keyContext);
+
+            ret = CertContext_GetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+             &keyContext, &size);
+            if (ret)
+            {
+                if (!(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
+                    CryptReleaseContext(keyContext.hCryptProv, 0);
+                if (pvData)
+                    keyContext.hCryptProv = *(HCRYPTPROV *)pvData;
+                else
+                    keyContext.hCryptProv = 0;
+                ret = CertContext_SetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+                 0, &keyContext);
+            }
+            break;
+        }
         default:
             FIXME("%ld: stub\n", dwPropId);
             ret = FALSE;

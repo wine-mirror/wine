@@ -310,6 +310,9 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
      propID);
 }
 
+static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
+ 'm','p',0 };
+
 static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -323,6 +326,8 @@ static void testCertProperties(void)
         BOOL ret;
         BYTE hash[20] = { 0 }, hashProperty[20];
         CRYPT_DATA_BLOB blob;
+        CERT_KEY_CONTEXT keyContext;
+        HCRYPTPROV csp;
 
         /* This crashes
         propID = CertEnumCertificateContextProperties(NULL, 0);
@@ -425,14 +430,71 @@ static void testCertProperties(void)
          context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
          CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
 
-        /* Odd: this doesn't fail on other certificates, so there must be
-         * something weird about this cert that causes it to fail.
-         */
+        /* Test key identifiers and handles and such */
         size = 0;
         ret = CertGetCertificateContextProperty(context,
          CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
-        todo_wine ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
          "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+        size = sizeof(CERT_KEY_CONTEXT);
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
+        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+        /* Key context with an invalid size */
+        keyContext.cbSize = 0;
+        ret = CertSetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        size = sizeof(keyContext);
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        keyContext.cbSize = sizeof(keyContext);
+        keyContext.hCryptProv = 0;
+        keyContext.dwKeySpec = AT_SIGNATURE;
+        /* Crash
+        ret = CertSetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
+        ret = CertSetCertificateContextProperty(context,
+         CERT_KEY_IDENTIFIER_PROP_ID, CERT_STORE_NO_CRYPT_RELEASE_FLAG,
+         &keyContext);
+         */
+        ret = CryptAcquireContextW(&csp, cspNameW,
+         MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+        ok(ret, "CryptAcquireContextW failed: %08lx\n", GetLastError());
+        keyContext.hCryptProv = csp;
+        ret = CertSetCertificateContextProperty(context,
+         CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        /* Now that that's set, the key prov handle property is also gettable.
+         */
+        size = sizeof(DWORD);
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_PROV_HANDLE_PROP_ID, &keyContext.hCryptProv, &size);
+        ok(ret, "Expected to get the CERT_KEY_PROV_HANDLE_PROP_ID, got %08lx\n",
+         GetLastError());
+        /* Remove the key prov handle property.. */
+        ret = CertSetCertificateContextProperty(context,
+         CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        /* and the key context's CSP is set to NULL. */
+        size = sizeof(keyContext);
+        ret = CertGetCertificateContextProperty(context,
+         CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        ok(keyContext.hCryptProv == 0, "Expected no hCryptProv\n");
+
+        CryptReleaseContext(csp, 0);
 
         CertFreeCertificateContext(context);
     }
@@ -798,9 +860,6 @@ static void testCryptHashCert(void)
     ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
     ok(!memcmp(hash, knownHash, sizeof(knownHash)), "Unexpected hash\n");
 }
-
-static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
- 'm','p',0 };
 
 static void verifySig(HCRYPTPROV csp, const BYTE *toSign, size_t toSignLen,
  const BYTE *sig, unsigned int sigLen)
