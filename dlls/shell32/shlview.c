@@ -779,19 +779,21 @@ static void ShellView_MergeFileMenu(IShellViewImpl * This, HMENU hSubMenu)
 */
 
 static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
-{	MENUITEMINFOA	mii;
-
+{
 	TRACE("(%p)->(submenu=%p)\n",This,hSubMenu);
 
 	if(hSubMenu)
 	{ /*add a separator at the correct position in the menu*/
+	  MENUITEMINFOA mii;
+	  static char view[] = "View";
+
 	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
 
 	  ZeroMemory(&mii, sizeof(mii));
 	  mii.cbSize = sizeof(mii);
 	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;
 	  mii.fType = MFT_STRING;
-	  mii.dwTypeData = "View";
+	  mii.dwTypeData = view;
 	  mii.hSubMenu = LoadMenuA(shell32_hInstance, "MENU_001");
 	  InsertMenuItemA(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 	}
