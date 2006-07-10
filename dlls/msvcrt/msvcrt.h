@@ -37,13 +37,9 @@
 #define __WINE_MSVCRT_H
 
 #include <stdarg.h>
-#include <ctype.h>
-#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
-#include "winnls.h"
 
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
