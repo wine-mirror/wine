@@ -273,7 +273,8 @@ HRESULT shader_get_registers_used(
             pToken += curOpcode->num_params;
 
         /* If there's a loop in the shader */
-        } else if (D3DSIO_LOOP == curOpcode->opcode) {
+        } else if (D3DSIO_LOOP == curOpcode->opcode ||
+                   D3DSIO_REP == curOpcode->opcode) {
             reg_maps->loop = 1;
             pToken += curOpcode->num_params;
         
@@ -632,7 +633,6 @@ void shader_generate_main(
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
     SHADER_HANDLER hw_fct = NULL;
-    DWORD opcode_token;
     DWORD i;
     SHADER_OPCODE_ARG hw_arg;
 
@@ -662,8 +662,8 @@ void shader_generate_main(
             }
 
             /* Read opcode */
-            opcode_token = *pToken++;
-            curOpcode = shader_get_opcode(iface, opcode_token);
+            hw_arg.opcode_token = *pToken++;
+            curOpcode = shader_get_opcode(iface, hw_arg.opcode_token);
 
             /* Select handler */
             if (curOpcode == NULL)
@@ -675,7 +675,7 @@ void shader_generate_main(
 
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
-                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                FIXME("Unrecognized opcode: token=%08lX\n", hw_arg.opcode_token);
                 pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* Nothing to do */
@@ -685,7 +685,7 @@ void shader_generate_main(
                        D3DSIO_DEFI == curOpcode->opcode ||
                        D3DSIO_DEFB == curOpcode->opcode) {
 
-                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
+                pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
 
             /* If a generator function is set for current shader target, use it */
             } else if (hw_fct != NULL) {
@@ -702,17 +702,16 @@ void shader_generate_main(
                 }
 
                 /* Predication token */
-                if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
+                if (hw_arg.opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
                     hw_arg.predicate = *pToken++;
 
                 /* Other source tokens */
-                for (i = curOpcode->dst_token; i < curOpcode->num_params; i++) {
+                for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); i++) {
 
                     DWORD param, addr_token = 0; 
-
                     pToken += shader_get_param(iface, pToken, &param, &addr_token);
-                    hw_arg.src[i-1] = param;
-                    hw_arg.src_addr[i-1] = addr_token;
+                    hw_arg.src[i] = param;
+                    hw_arg.src_addr[i] = addr_token;
                 }
 
                 /* Call appropriate function for output target */
@@ -726,7 +725,7 @@ void shader_generate_main(
             } else {
 
                 FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
+                pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
             }
         }
         /* TODO: What about result.depth? */
@@ -862,6 +861,22 @@ void shader_trace_init(
                     }
 
                     TRACE("%s", curOpcode->name);
+
+                    if (curOpcode->opcode == D3DSIO_IFC ||
+                        curOpcode->opcode == D3DSIO_BREAKC) {
+
+                        DWORD op = (opcode_token & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
+                        switch (op) {
+                            case COMPARISON_GT: TRACE("_gt"); break;
+                            case COMPARISON_EQ: TRACE("_eq"); break;
+                            case COMPARISON_GE: TRACE("_ge"); break;
+                            case COMPARISON_LT: TRACE("_lt"); break;
+                            case COMPARISON_NE: TRACE("_ne"); break;
+                            case COMPARISON_LE: TRACE("_le"); break;
+                            default:
+                                TRACE("_(%lu)", op);
+                        }
+                    }
 
                     /* Destination token */
                     if (curOpcode->dst_token) {

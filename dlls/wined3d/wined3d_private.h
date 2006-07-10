@@ -1318,6 +1318,19 @@ typedef struct SHADER_BUFFER {
     unsigned int lineNo;
 } SHADER_BUFFER;
 
+/* Undocumented opcode controls */
+#define INST_CONTROLS_SHIFT 16
+#define INST_CONTROLS_MASK 0x00ff0000
+
+typedef enum COMPARISON_TYPE {
+    COMPARISON_GT = 1,
+    COMPARISON_EQ = 2,
+    COMPARISON_GE = 3,
+    COMPARISON_LT = 4,
+    COMPARISON_NE = 5,
+    COMPARISON_LE = 6
+} COMPARISON_TYPE;
+
 typedef struct SHADER_OPCODE {
     unsigned int  opcode;
     const char*   name;
@@ -1335,6 +1348,7 @@ typedef struct SHADER_OPCODE_ARG {
     IWineD3DBaseShader* shader;
     shader_reg_maps* reg_maps;
     CONST SHADER_OPCODE* opcode;
+    DWORD opcode_token;
     DWORD dst;
     DWORD dst_addr;
     DWORD predicate;
@@ -1442,7 +1456,13 @@ extern void shader_glsl_lit(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_dst(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_sincos(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_loop(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_endloop(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_end(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_if(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_ifc(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_else(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_break(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_breakc(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_rep(SHADER_OPCODE_ARG* arg);
 
 /** GLSL Pixel Shader Prototypes */
 extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);

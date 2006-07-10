@@ -755,9 +755,10 @@ static void shader_glsl_add_param(
 
 /** Process GLSL instruction modifiers */
 void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
-        
-    if (0 != (arg->dst & D3DSP_DSTMOD_MASK)) {
-        DWORD mask = arg->dst & D3DSP_DSTMOD_MASK;
+    
+    DWORD mask = arg->dst & D3DSP_DSTMOD_MASK;
+ 
+    if (arg->opcode->dst_token && mask != 0) {
         char dst_reg[50];
         char dst_mask[6];
         char dst_str[100];
@@ -774,6 +775,23 @@ void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
         if (mask & D3DSPDM_PARTIALPRECISION) {
             /* MSDN says this modifier can be safely ignored, so that's what we'll do. */
         }
+    }
+}
+
+static inline const char* shader_get_comp_op(
+    const DWORD opcode) {
+
+    DWORD op = (opcode & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
+    switch (op) {
+        case COMPARISON_GT: return ">";
+        case COMPARISON_EQ: return "==";
+        case COMPARISON_GE: return ">=";
+        case COMPARISON_LT: return "<";
+        case COMPARISON_NE: return "!=";
+        case COMPARISON_LE: return "<=";
+        default:
+            FIXME("Unrecognized comparison value: %lu\n", op);
+            return "(\?\?)";
     }
 }
 
@@ -1152,24 +1170,73 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
  */
 void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     
-    char src0_str[100];
-    char src0_reg[50];
-    char src0_mask[6];
+    char src1_str[100];
+    char src1_reg[50];
+    char src1_mask[6];
     
-    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
   
     shader_addline(arg->buffer, "for (tmpInt = 0, aL = %s.y; tmpInt < %s.x; tmpInt++, aL += %s.z) {\n",
-                   src0_reg, src0_reg, src0_reg);
+                   src1_reg, src1_reg, src1_reg);
 }
 
-/** Process the D3DSIO_ENDLOOP instruction in GLSL:
- * End the for() loop
- */
-void shader_glsl_endloop(SHADER_OPCODE_ARG* arg) {
-
+void shader_glsl_end(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "}\n");
 }
 
+void shader_glsl_rep(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_addline(arg->buffer, "for (tmpInt = 0; tmpInt < %s.x; tmpInt++) {\n", src0_reg);
+}
+
+void shader_glsl_if(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_addline(arg->buffer, "if (%s) {\n", src0_str); 
+}
+
+void shader_glsl_ifc(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100], src1_str[100];
+    char src0_reg[50], src1_reg[50];
+    char src0_mask[6], src1_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
+
+    shader_addline(arg->buffer, "if (%s %s %s) {\n",
+        src0_str, shader_get_comp_op(arg->opcode_token), src1_str);
+}
+
+void shader_glsl_else(SHADER_OPCODE_ARG* arg) {
+    shader_addline(arg->buffer, "} else {\n");
+}
+
+void shader_glsl_break(SHADER_OPCODE_ARG* arg) {
+    shader_addline(arg->buffer, "break;\n");
+}
+
+void shader_glsl_breakc(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100], src1_str[100];
+    char src0_reg[50], src1_reg[50];
+    char src0_mask[6], src1_mask[6];
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
+
+    shader_addline(arg->buffer, "if (%s %s %s) break;\n",
+        src0_str, shader_get_comp_op(arg->opcode_token), src1_str);
+}
 
 /*********************************************
  * Pixel Shader Specific Code begins here
