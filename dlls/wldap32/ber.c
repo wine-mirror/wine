@@ -34,6 +34,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ber_alloc_t     (WLDAP32.@)
+ *
+ * Allocate a berelement structure.
+ *
+ * PARAMS
+ *  options [I] Must be LBER_USE_DER.
+ *
+ * RETURNS
+ *  Success: Pointer to an allocated berelement structure.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  Free the berelement structure with ber_free.
  */
 BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
 {
@@ -47,6 +59,18 @@ BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
 
 /***********************************************************************
  *      ber_bvdup     (WLDAP32.@)
+ *
+ * Copy a berval structure.
+ *
+ * PARAMS
+ *  berval [I] Pointer to the berval structure to be copied.
+ *
+ * RETURNS
+ *  Success: Pointer to a copy of the berval structure.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  Free the copy with ber_bvfree.
  */
 BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
 {
@@ -60,6 +84,18 @@ BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
 
 /***********************************************************************
  *      ber_bvecfree     (WLDAP32.@)
+ *
+ * Free an array of berval structures.
+ *
+ * PARAMS
+ *  berval [I] Pointer to an array of berval structures.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Use this function only to free an array of berval structures
+ *  returned by a call to ber_scanf with a 'V' in the format string.
  */
 void CDECL WLDAP32_ber_bvecfree( PBERVAL *berval )
 {
@@ -71,6 +107,18 @@ void CDECL WLDAP32_ber_bvecfree( PBERVAL *berval )
 
 /***********************************************************************
  *      ber_bvfree     (WLDAP32.@)
+ *
+ * Free a berval structure.
+ *
+ * PARAMS
+ *  berval [I] Pointer to a berval structure.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Use this function only to free berval structures allocated by
+ *  an LDAP API.
  */
 void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 {
@@ -82,6 +130,20 @@ void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 
 /***********************************************************************
  *      ber_first_element     (WLDAP32.@)
+ *
+ * Return the tag of the first element in a set or sequence.
+ *
+ * PARAMS
+ *  berelement [I] Pointer to a berelement structure.
+ *  len        [O] Receives the length of the first element.
+ *  opaque     [O] Receives a pointer to a cookie.
+ *
+ * RETURNS
+ *  Success: Tag of the first element.
+ *  Failure: LBER_DEFAULT (no more data).
+ *
+ * NOTES
+ *  len and cookie should be passed to ber_next_element.
  */
 ULONG CDECL WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
 {
@@ -95,6 +157,19 @@ ULONG CDECL WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR 
 
 /***********************************************************************
  *      ber_flatten     (WLDAP32.@)
+ *
+ * Flatten a berelement structure into a berval structure.
+ *
+ * PARAMS
+ *  berlement [I] Pointer to a berelement structure.
+ *  berval    [O] Pointer to a berval structure.
+ *
+ * RETURNS
+ *  Success: 0
+ *  Failure: LBER_ERROR
+ *
+ * NOTES
+ *  Free the berval structure with ber_bvfree.
  */
 INT CDECL WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 {
@@ -108,6 +183,19 @@ INT CDECL WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 
 /***********************************************************************
  *      ber_free     (WLDAP32.@)
+ *
+ * Free a berelement structure.
+ *
+ * PARAMS
+ *  berlement [I] Pointer to the berelement structure to be freed.
+ *  buf       [I] Flag.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Set buf to 0 if the berelement was allocated with ldap_first_attribute
+ *  or ldap_next_attribute, otherwise set it to 1.
  */
 void CDECL WLDAP32_ber_free( BerElement *berelement, INT buf )
 {
@@ -119,6 +207,18 @@ void CDECL WLDAP32_ber_free( BerElement *berelement, INT buf )
 
 /***********************************************************************
  *      ber_init     (WLDAP32.@)
+ *
+ * Initialise a berelement structure from a berval structure.
+ *
+ * PARAMS
+ *  berval [I] Pointer to a berval structure.
+ *
+ * RETURNS
+ *  Success: Pointer to a berelement structure.
+ *  Failure: NULL
+ *
+ * NOTES
+ *  Call ber_free to free the returned berelement structure.
  */
 BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
 {
@@ -132,6 +232,21 @@ BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
 
 /***********************************************************************
  *      ber_next_element     (WLDAP32.@)
+ *
+ * Return the tag of the next element in a set or sequence.
+ *
+ * PARAMS
+ *  berelement [I]   Pointer to a berelement structure.
+ *  len        [I/O] Receives the length of the next element.
+ *  opaque     [I/O] Pointer to a cookie.
+ *
+ * RETURNS
+ *  Success: Tag of the next element.
+ *  Failure: LBER_DEFAULT (no more data).
+ *
+ * NOTES
+ *  len and cookie are intitialised by ber_first_element and should
+ *  be passed on in subsequent calls to ber_next_element.
  */
 ULONG CDECL WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
 {
@@ -145,6 +260,16 @@ ULONG CDECL WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *
 
 /***********************************************************************
  *      ber_peek_tag     (WLDAP32.@)
+ *
+ * Return the tag of the next element.
+ *
+ * PARAMS
+ *  berelement [I] Pointer to a berelement structure.
+ *  len        [O] Receives the length of the next element.
+ *
+ * RETURNS
+ *  Success: Tag of the next element.
+ *  Failure: LBER_DEFAULT (no more data).
  */
 ULONG CDECL WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 {
@@ -158,6 +283,16 @@ ULONG CDECL WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 
 /***********************************************************************
  *      ber_skip_tag     (WLDAP32.@)
+ *
+ * Skip the current tag and return the tag of the next element.
+ *
+ * PARAMS
+ *  berelement [I] Pointer to a berelement structure.
+ *  len        [O] Receives the length of the skipped element.
+ *
+ * RETURNS
+ *  Success: Tag of the next element.
+ *  Failure: LBER_DEFAULT (no more data).
  */
 ULONG CDECL WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 {
@@ -171,6 +306,21 @@ ULONG CDECL WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 
 /***********************************************************************
  *      ber_printf     (WLDAP32.@)
+ *
+ * Encode a berelement structure.
+ *
+ * PARAMS
+ *  berelement [I/O] Pointer to a berelement structure.
+ *  fmt        [I]   Format string.
+ *  ...        [I]   Values to encode.
+ *
+ * RETURNS
+ *  Success: Non-negative number. 
+ *  Failure: LBER_ERROR
+ *
+ * NOTES
+ *  berelement must have been allocated with ber_alloc_t. This function
+ *  can be called multiple times to append data.
  */
 INT CDECL WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 {
@@ -250,6 +400,21 @@ INT CDECL WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 
 /***********************************************************************
  *      ber_scanf     (WLDAP32.@)
+ *
+ * Decode a berelement structure.
+ *
+ * PARAMS
+ *  berelement [I/O] Pointer to a berelement structure.
+ *  fmt        [I]   Format string.
+ *  ...        [I]   Pointers to values to be decoded.
+ *
+ * RETURNS
+ *  Success: Non-negative number. 
+ *  Failure: LBER_ERROR
+ *
+ * NOTES
+ *  berelement must have been allocated with ber_init. This function
+ *  can be called multiple times to decode data.
  */
 INT CDECL WLDAP32_ber_scanf( BerElement *berelement, PCHAR fmt, ... )
 {
