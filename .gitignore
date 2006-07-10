@@ -1,7 +1,14 @@
 *.[oa]
+*.avi
+*.bmp
+*.cur
+*.ico
+*.mc.rc
 *.orig
 *.rej
+*.res
 *.so
+*.tlb
 *~
 /Make.rules
 /TAGS
