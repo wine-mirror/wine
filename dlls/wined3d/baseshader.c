@@ -174,7 +174,7 @@ unsigned int shader_get_float_offset(const DWORD reg) {
 /* Note that this does not count the loop register
  * as an address register. */
 
-void shader_get_registers_used(
+HRESULT shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     semantic* semantics_in,
@@ -187,7 +187,7 @@ void shader_get_registers_used(
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
     if (pToken == NULL)
-        return;
+        return WINED3D_OK;
 
     while (D3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
@@ -245,8 +245,31 @@ void shader_get_registers_used(
             } else if (D3DSPR_SAMPLER == regtype)
                 reg_maps->samplers[regnum] = usage;
 
-        /* Skip definitions (for now) */
         } else if (D3DSIO_DEF == curOpcode->opcode) {
+
+            local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            if (!lconst) return E_OUTOFMEMORY;
+            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
+            list_add_head(&This->baseShader.constantsF, &lconst->entry);
+            pToken += curOpcode->num_params;
+
+        } else if (D3DSIO_DEFI == curOpcode->opcode) {
+
+            local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            if (!lconst) return E_OUTOFMEMORY;
+            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
+            list_add_head(&This->baseShader.constantsI, &lconst->entry);
+            pToken += curOpcode->num_params;
+
+        } else if (D3DSIO_DEFB == curOpcode->opcode) {
+
+            local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            if (!lconst) return E_OUTOFMEMORY;
+            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            memcpy(&lconst->value, pToken + 1, 1 * sizeof(DWORD));
+            list_add_head(&This->baseShader.constantsB, &lconst->entry);
             pToken += curOpcode->num_params;
 
         /* If there's a loop in the shader */
@@ -315,6 +338,8 @@ void shader_get_registers_used(
              }
         }
     }
+
+    return WINED3D_OK;
 }
 
 static void shader_dump_decl_usage(
@@ -655,7 +680,10 @@ void shader_generate_main(
 
             /* Nothing to do */
             } else if (D3DSIO_DCL == curOpcode->opcode ||
-                       D3DSIO_NOP == curOpcode->opcode) {
+                       D3DSIO_NOP == curOpcode->opcode ||
+                       D3DSIO_DEF == curOpcode->opcode ||
+                       D3DSIO_DEFI == curOpcode->opcode ||
+                       D3DSIO_DEFB == curOpcode->opcode) {
 
                 pToken += shader_skip_opcode(This, curOpcode, opcode_token);
 
@@ -682,15 +710,7 @@ void shader_generate_main(
 
                     DWORD param, addr_token = 0; 
 
-                    /* DEF* instructions have constant src parameters, not registers */
-                    if (curOpcode->opcode == D3DSIO_DEF || 
-                        curOpcode->opcode == D3DSIO_DEFI || 
-                        curOpcode->opcode == D3DSIO_DEFB) {
-                        param = *pToken++;
-
-                    } else
-                        pToken += shader_get_param(iface, pToken, &param, &addr_token);
-
+                    pToken += shader_get_param(iface, pToken, &param, &addr_token);
                     hw_arg.src[i-1] = param;
                     hw_arg.src_addr[i-1] = addr_token;
                 }
@@ -882,4 +902,16 @@ void shader_trace_init(
     }
 }
 
-/* TODO: Move other shared code here */
+void shader_delete_constant_list(
+    struct list* clist) {
+
+    struct list *ptr;
+    struct local_constant* constant;
+
+    ptr = list_head(clist);
+    while (ptr) {
+        constant = LIST_ENTRY(ptr, struct local_constant, entry);
+        ptr = list_next(clist, ptr);
+        HeapFree(GetProcessHeap(), 0, constant);
+    }
+}

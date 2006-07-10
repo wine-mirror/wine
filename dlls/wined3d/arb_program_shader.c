@@ -46,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
 void shader_arb_load_constantsF(
+    IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLuint target_type,
     unsigned max_constants,
@@ -53,6 +54,7 @@ void shader_arb_load_constantsF(
     BOOL* constants_set) {
 
     int i;
+    struct list* ptr;
     
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
@@ -63,6 +65,22 @@ void shader_arb_load_constantsF(
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i * sizeof(float)]));
             checkGLcall("glProgramEnvParameter4fvARB");
         }
+    }
+
+    /* Load immediate constants */
+    ptr = list_head(&This->baseShader.constantsF);
+    while (ptr) {
+
+        local_constant* lconst = LIST_ENTRY(ptr, struct local_constant, entry);
+        unsigned int idx = lconst->idx;
+        GLfloat* values = (GLfloat*) lconst->value;
+
+        TRACE("Loading local constants %i: %f, %f, %f, %f\n", idx,
+            values[0], values[1], values[2], values[3]);
+
+        GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, idx, values));
+        checkGLcall("glProgramEnvParameter4fvARB");
+        ptr = list_next(&This->baseShader.constantsF, ptr);
     }
 }
 
@@ -81,19 +99,20 @@ void shader_arb_load_constants(
     WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)stateBlock->wineD3DDevice->wineD3D)->gl_info;
 
     if (useVertexShader) {
-        IWineD3DVertexShaderImpl* vshader = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
+        IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+        IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexDeclarationImpl* vertexDeclaration = 
-            (IWineD3DVertexDeclarationImpl*) vshader->vertexDeclaration;
+            (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants for vertex shader */
-            shader_arb_load_constantsF(gl_info, GL_VERTEX_PROGRAM_ARB,
+            shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
                                        WINED3D_VSHADER_MAX_CONSTANTS,
                                        vertexDeclaration->constants, NULL);
         }
 
         /* Load DirectX 9 float constants for vertex shader */
-        shader_arb_load_constantsF(gl_info, GL_VERTEX_PROGRAM_ARB,
+        shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
                                    WINED3D_VSHADER_MAX_CONSTANTS,
                                    stateBlock->vertexShaderConstantF,
                                    stateBlock->set.vertexShaderConstantsF);
@@ -101,8 +120,10 @@ void shader_arb_load_constants(
 
     if (usePixelShader) {
 
+        IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+
         /* Load DirectX 9 float constants for pixel shader */
-        shader_arb_load_constantsF(gl_info, GL_FRAGMENT_PROGRAM_ARB, WINED3D_PSHADER_MAX_CONSTANTS,
+        shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, WINED3D_PSHADER_MAX_CONSTANTS,
                                    stateBlock->pixelShaderConstantF,
                                    stateBlock->set.pixelShaderConstantsF);
     }
@@ -264,7 +285,8 @@ static void vshader_program_add_input_param_swizzle(const DWORD param, int is_co
     }
 }
 
-static void pshader_get_register_name(const DWORD param, char* regstr, CHAR *constants) {
+static void pshader_get_register_name(
+    const DWORD param, char* regstr) {
 
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
@@ -281,10 +303,7 @@ static void pshader_get_register_name(const DWORD param, char* regstr, CHAR *con
         }
     break;
     case D3DSPR_CONST:
-        if (constants[reg])
-            sprintf(regstr, "C%lu", reg);
-        else
-            sprintf(regstr, "C[%lu]", reg);
+        sprintf(regstr, "C[%lu]", reg);
     break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         sprintf(regstr,"T%lu", reg);
@@ -347,15 +366,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_CONST:
-    /* FIXME: some constants are named so we need a constants map*/
-    if (arg->reg_maps->constantsF[reg]) {
-        if (param & D3DVS_ADDRMODE_RELATIVE) {
-            FIXME("Relative addressing not expected for a named constant %lu\n", reg);
-        }
-        sprintf(tmpReg, "C%lu", reg);
-    } else {
-        sprintf(tmpReg, "C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
-    }
+    sprintf(tmpReg, "C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
@@ -394,8 +405,7 @@ static void pshader_gen_input_modifier_line (
     SHADER_BUFFER* buffer,
     const DWORD instr,
     int tmpreg,
-    char *outregstr,
-    CHAR *constants) {
+    char *outregstr) {
 
     /* Generate a line that does the input modifier computation and return the input register to use */
     char regstr[256];
@@ -406,7 +416,7 @@ static void pshader_gen_input_modifier_line (
     insert_line = 1;
 
     /* Get register name */
-    pshader_get_register_name(instr, regstr, constants);
+    pshader_get_register_name(instr, regstr);
     pshader_get_input_register_swizzle(instr, swzstr);
 
     switch (instr & D3DSP_SRCMOD_MASK) {
@@ -469,22 +479,6 @@ inline static void pshader_gen_output_modifier_line(
         regstr, write_mask, regstr, shift_tab[shift]);
 }
 
-/** Process the D3DSIO_DEF opcode into an ARB string - creates a local vec4
- * float constant, and stores it's usage on the regmaps. */
-void shader_hw_def(SHADER_OPCODE_ARG* arg) {
-
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-
-    shader_addline(arg->buffer, 
-                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
-                   *((const float *)(arg->src + 0)),
-                   *((const float *)(arg->src + 1)),
-                   *((const float *)(arg->src + 2)),
-                   *((const float *)(arg->src + 3)) );
-
-    arg->reg_maps->constantsF[reg] = 1;
-}
-
 void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
@@ -495,14 +489,14 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    pshader_get_register_name(arg->dst, dst_name, arg->reg_maps->constantsF);
+    pshader_get_register_name(arg->dst, dst_name);
     pshader_get_write_mask(arg->dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0], arg->reg_maps->constantsF);
-    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1], arg->reg_maps->constantsF);
-    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1]);
+    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2]);
 
     shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
     shader_addline(buffer, "CMP %s, TMP, %s, %s;\n", dst_name, src_name[1], src_name[2]);
@@ -518,14 +512,14 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    pshader_get_register_name(arg->dst, dst_name, arg->reg_maps->constantsF);
+    pshader_get_register_name(arg->dst, dst_name);
     pshader_get_write_mask(arg->dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     /* Generate input register names (with modifiers) */
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0], arg->reg_maps->constantsF);
-    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1], arg->reg_maps->constantsF);
-    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1]);
+    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2]);
 
     shader_addline(buffer, "CMP %s, %s, %s, %s;\n", dst_name,
         src_name[0], src_name[2], src_name[1]);
@@ -574,10 +568,10 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
           /* Generate input register names (with modifiers) */
           for (i = 1; i < curOpcode->num_params; ++i)
-              pshader_gen_input_modifier_line(buffer, src[i-1], i-1, operands[i], arg->reg_maps->constantsF);
+              pshader_gen_input_modifier_line(buffer, src[i-1], i-1, operands[i]);
 
           /* Handle output register */
-          pshader_get_register_name(dst, output_rname, arg->reg_maps->constantsF);
+          pshader_get_register_name(dst, output_rname);
           strcpy(operands[0], output_rname);
           pshader_get_write_mask(dst, output_wmask);
           strcat(operands[0], output_wmask);
@@ -614,14 +608,14 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     /* All versions have a destination register */
     reg_dest_code = dst & D3DSP_REGNUM_MASK;
-    pshader_get_register_name(dst, reg_dest, arg->reg_maps->constantsF);
+    pshader_get_register_name(dst, reg_dest);
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
    if (hex_version < D3DPS_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else
-      pshader_gen_input_modifier_line(buffer, src[0], 0, reg_coord, arg->reg_maps->constantsF);
+      pshader_gen_input_modifier_line(buffer, src[0], 0, reg_coord);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
@@ -693,7 +687,7 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, src0_name);
 }
 
@@ -703,7 +697,7 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.y, T%lu, %s;\n", reg, src0_name);
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
 }
@@ -716,7 +710,7 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state->current_row, reg, src0_name);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
@@ -729,7 +723,7 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Cubemap textures will be more used than 3D ones. */
@@ -745,7 +739,7 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
@@ -772,7 +766,7 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
-    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */

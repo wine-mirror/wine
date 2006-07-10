@@ -1279,7 +1279,6 @@ struct glsl_shader_prog_link {
 #define MAX_REG_INPUT 12
 #define MAX_REG_OUTPUT 12
 #define MAX_ATTRIBS 16
-#define MAX_CONST_F 256
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 
@@ -1287,6 +1286,12 @@ typedef struct semantic {
     DWORD usage;
     DWORD reg;
 } semantic;
+
+typedef struct local_constant {
+    struct list entry;
+    unsigned int idx;
+    DWORD value[4];
+} local_constant;
 
 typedef struct shader_reg_maps {
 
@@ -1297,10 +1302,6 @@ typedef struct shader_reg_maps {
     char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char attributes[MAX_ATTRIBS];           /* vertex */
 
-    char constantsF[MAX_CONST_F];           /* pixel, vertex */
-    char constantsI[MAX_CONST_I];           /* pixel & vertex >= 2.0 */
-    char constantsB[MAX_CONST_B];           /* pixel & vertex >= 2.0 */
-    
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[MAX_SAMPLERS];
@@ -1371,6 +1372,9 @@ extern int shader_addline(
 extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
+
+extern void shader_delete_constant_list(
+    struct list* clist);
 
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(
@@ -1475,6 +1479,11 @@ typedef struct IWineD3DBaseShaderClass
     /* Type of shader backend */
     int shader_mode;
 
+    /* Immediate constants (override global ones) */
+    struct list constantsB;
+    struct list constantsF;
+    struct list constantsI;
+
 } IWineD3DBaseShaderClass;
 
 typedef struct IWineD3DBaseShaderImpl {
@@ -1486,7 +1495,7 @@ typedef struct IWineD3DBaseShaderImpl {
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
 
-extern void shader_get_registers_used(
+extern HRESULT shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     semantic* semantics_in,

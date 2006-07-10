@@ -72,13 +72,16 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This);
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             /* If this shader is still attached to a program, GL will perform a lazy delete */
             TRACE("Deleting shader object %u\n", This->baseShader.prgId);
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
             checkGLcall("glDeleteObjectARB");
         }
+        shader_delete_constant_list(&This->baseShader.constantsF);
+        shader_delete_constant_list(&This->baseShader.constantsB);
+        shader_delete_constant_list(&This->baseShader.constantsI);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -690,9 +693,9 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL, 0, 1, pshader_label,   NULL, NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      "undefined",         1, 5, pshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, pshader_defb,    NULL, shader_glsl_defb, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, pshader_defi,    NULL, shader_glsl_defi, 0, 0},
+    {D3DSIO_DEF,      "def",      "undefined",         1, 5, pshader_def,     NULL, NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, pshader_defb,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, pshader_defi,    NULL, NULL, 0, 0},
 
     /* Texture */
     {D3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, 0, D3DPS_VERSION(1,3)},
@@ -898,16 +901,23 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+    HRESULT hr;
     shader_reg_maps reg_maps;
 
     /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     pshader_set_limits(This);
 
+    /* Initialize immediate constant lists */
+    list_init(&This->baseShader.constantsF);
+    list_init(&This->baseShader.constantsB);
+    list_init(&This->baseShader.constantsI);
+
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    memset(&reg_maps, 0, sizeof(shader_reg_maps)); 
-    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
+    memset(&reg_maps, 0, sizeof(shader_reg_maps));
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
         This->semantics_in, NULL, pFunction);
+    if (hr != WINED3D_OK) return hr;
     /* FIXME: validate reg_maps against OpenGL */
 
     /* Generate HW shader in needed */
@@ -920,13 +930,12 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     TRACE("(%p) : Copying the function\n", This);
     if (NULL != pFunction) {
         This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
+        if (!This->baseShader.function) return E_OUTOFMEMORY;
         memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
     } else {
         This->baseShader.function = NULL;
     }
 
-    /* TODO: Some proper return values for failures */
-    TRACE("(%p) : Returning WINED3D_OK\n", This);
     return WINED3D_OK;
 }
 

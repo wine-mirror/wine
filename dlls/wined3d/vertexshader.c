@@ -531,9 +531,9 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_DCL,      "dcl",      NULL,                0, 2, vshader_dcl,     NULL, NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      NULL,                1, 5, vshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_defb,    NULL, shader_glsl_defb, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, vshader_defi,    NULL, shader_glsl_defi, 0, 0},
+    {D3DSIO_DEF,      "def",      NULL,                1, 5, vshader_def,     NULL, NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_defb,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, vshader_defi,    NULL, NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
     {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL, 0, 1, vshader_rep,     NULL, NULL, 0, 0},
@@ -1045,7 +1045,11 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
             checkGLcall("glDeleteObjectARB");
         }
-            HeapFree(GetProcessHeap(), 0, This);
+        shader_delete_constant_list(&This->baseShader.constantsF);
+        shader_delete_constant_list(&This->baseShader.constantsB);
+        shader_delete_constant_list(&This->baseShader.constantsI);
+        HeapFree(GetProcessHeap(), 0, This);
+
     }
     return ref;
 }
@@ -1099,11 +1103,17 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
 static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    HRESULT hr;
     shader_reg_maps reg_maps;
 
     /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     vshader_set_limits(This);
+
+    /* Initialize immediate constant lists */
+    list_init(&This->baseShader.constantsF);
+    list_init(&This->baseShader.constantsB);
+    list_init(&This->baseShader.constantsI);
 
     /* Preload semantics for d3d8 shaders */
     if (This->vertexDeclaration) {
@@ -1117,8 +1127,9 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
     /* Second pass: figure out registers used, semantics, etc.. */
     memset(&reg_maps, 0, sizeof(shader_reg_maps));
-    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
        This->semantics_in, This->semantics_out, pFunction);
+    if (hr != WINED3D_OK) return hr;
 
     /* Generate HW shader in needed */
     This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;
@@ -1128,6 +1139,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
         This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
+        if (!This->baseShader.function) return E_OUTOFMEMORY;
         memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
     } else {
         This->baseShader.function = NULL;

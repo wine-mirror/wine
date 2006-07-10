@@ -78,17 +78,19 @@ void shader_glsl_load_psamplers(
  * When @constants_set == NULL, it will load all the constants.
  */
 void shader_glsl_load_constantsF(
+    IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,
     unsigned max_constants,
     float* constants,
-    BOOL* constants_set,
-    char is_pshader) {
+    BOOL* constants_set) {
         
     GLhandleARB tmp_loc;
     int i;
     char tmp_name[7];
+    char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PC":"VC";
+    struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
@@ -108,6 +110,26 @@ void shader_glsl_load_constantsF(
             }
         }
     }
+
+    /* Load immediate constants */
+    ptr = list_head(&This->baseShader.constantsF);
+    while (ptr) {
+        local_constant* lconst = LIST_ENTRY(ptr, struct local_constant, entry);
+        unsigned int idx = lconst->idx;
+        GLfloat* values = (GLfloat*) lconst->value;
+
+        TRACE("Loading local constants %i: %f, %f, %f, %f\n", idx,
+            values[0], values[1], values[2], values[3]);
+
+        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
+        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+        if (tmp_loc != -1) {
+            /* We found this uniform name in the program - go ahead and send the data */
+            GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, values));
+            checkGLcall("glUniform4fvARB");
+        }
+        ptr = list_next(&This->baseShader.constantsF, ptr);
+    }
 }
 
 /** 
@@ -115,17 +137,19 @@ void shader_glsl_load_constantsF(
  * When @constants_set == NULL, it will load all the constants.
  */
 void shader_glsl_load_constantsI(
+    IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,
     unsigned max_constants,
     int* constants,
-    BOOL* constants_set,
-    char is_pshader) {
+    BOOL* constants_set) {
     
     GLhandleARB tmp_loc;
     int i;
     char tmp_name[7];
+    char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PI":"VI";
+    struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
@@ -144,6 +168,26 @@ void shader_glsl_load_constantsI(
             }
         }
     }
+
+    /* Load immediate constants */
+    ptr = list_head(&This->baseShader.constantsI);
+    while (ptr) {
+        local_constant* lconst = LIST_ENTRY(ptr, struct local_constant, entry);
+        unsigned int idx = lconst->idx;
+        GLint* values = (GLint*) lconst->value;
+
+        TRACE("Loading local constants %i: %i, %i, %i, %i\n", idx,
+            values[0], values[1], values[2], values[3]);
+
+        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
+        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+        if (tmp_loc != -1) {
+            /* We found this uniform name in the program - go ahead and send the data */
+            GL_EXTCALL(glUniform4ivARB(tmp_loc, 1, values));
+            checkGLcall("glUniform4ivARB");
+        }
+        ptr = list_next(&This->baseShader.constantsI, ptr);
+    }
 }
 
 /** 
@@ -151,17 +195,19 @@ void shader_glsl_load_constantsI(
  * When @constants_set == NULL, it will load all the constants.
  */
 void shader_glsl_load_constantsB(
+    IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,
     unsigned max_constants,
     BOOL* constants,
-    BOOL* constants_set,
-    char is_pshader) {
+    BOOL* constants_set) {
     
     GLhandleARB tmp_loc;
     int i;
     char tmp_name[7];
+    char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PB":"VB";
+    struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
@@ -178,6 +224,25 @@ void shader_glsl_load_constantsB(
                 checkGLcall("glUniform1ivARB");
             }
         }
+    }
+
+    /* Load immediate constants */
+    ptr = list_head(&This->baseShader.constantsB);
+    while (ptr) {
+        local_constant* lconst = LIST_ENTRY(ptr, struct local_constant, entry);
+        unsigned int idx = lconst->idx;
+        GLint* values = (GLint*) lconst->value;
+
+        TRACE("Loading local constants %i: %i\n", idx, values[0]);
+
+        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
+        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+        if (tmp_loc != -1) {
+            /* We found this uniform name in the program - go ahead and send the data */
+            GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, values));
+            checkGLcall("glUniform1ivARB");
+        }
+        ptr = list_next(&This->baseShader.constantsB, ptr);
     }
 }
 
@@ -201,51 +266,55 @@ void shader_glsl_load_constants(
     }
 
     if (useVertexShader) {
-        IWineD3DVertexShaderImpl* vshader = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
+        IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+        IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) vshader;
+
         IWineD3DVertexDeclarationImpl* vertexDeclaration =
-            (IWineD3DVertexDeclarationImpl*) vshader->vertexDeclaration;
+            (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants/uniforms for vertex shader */
-            shader_glsl_load_constantsF(gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
-                                        vertexDeclaration->constants, NULL, 0);
+            shader_glsl_load_constantsF(vshader, gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+                                        vertexDeclaration->constants, NULL);
         }
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+        shader_glsl_load_constantsF(vshader, gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
                                     stateBlock->vertexShaderConstantF, 
-                                    stateBlock->set.vertexShaderConstantsF, 0);
+                                    stateBlock->set.vertexShaderConstantsF);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(gl_info, programId, MAX_CONST_I,
+        shader_glsl_load_constantsI(vshader, gl_info, programId, MAX_CONST_I,
                                     stateBlock->vertexShaderConstantI,
-                                    stateBlock->set.vertexShaderConstantsI, 0);
+                                    stateBlock->set.vertexShaderConstantsI);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        shader_glsl_load_constantsB(gl_info, programId, MAX_CONST_B,
+        shader_glsl_load_constantsB(vshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->vertexShaderConstantB,
-                                    stateBlock->set.vertexShaderConstantsB, 0);
+                                    stateBlock->set.vertexShaderConstantsB);
     }
 
     if (usePixelShader) {
+
+        IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
         /* Load pixel shader samplers */
         shader_glsl_load_psamplers(gl_info, iface);
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(gl_info, programId, WINED3D_PSHADER_MAX_CONSTANTS,
+        shader_glsl_load_constantsF(pshader, gl_info, programId, WINED3D_PSHADER_MAX_CONSTANTS,
                                     stateBlock->pixelShaderConstantF,
-                                    stateBlock->set.pixelShaderConstantsF, 1);
+                                    stateBlock->set.pixelShaderConstantsF);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(gl_info, programId, MAX_CONST_I,
+        shader_glsl_load_constantsI(pshader, gl_info, programId, MAX_CONST_I,
                                     stateBlock->pixelShaderConstantI, 
-                                    stateBlock->set.pixelShaderConstantsI, 1);
+                                    stateBlock->set.pixelShaderConstantsI);
         
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        shader_glsl_load_constantsB(gl_info, programId, MAX_CONST_B,
+        shader_glsl_load_constantsB(pshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->pixelShaderConstantB, 
-                                    stateBlock->set.pixelShaderConstantsB, 1);
+                                    stateBlock->set.pixelShaderConstantsB);
     }
 }
 
@@ -510,61 +579,34 @@ static void shader_glsl_get_register_name(
     {
         const char* prefix = pshader? "PC":"VC";
 
-        if (arg->reg_maps->constantsF[reg]) {
-            /* Use a local constant declared by "def" */
-            
-            if (param & D3DVS_ADDRMODE_RELATIVE) {
-                 /* FIXME: Copy all constants (local & global) into a single array
-                  * to handle this case where we want a relative address from a 
-                  * local constant. */
-                FIXME("Relative addressing not yet supported on named constants\n");
-            } else {
-                sprintf(tmpStr, "%s%lu", prefix, reg);
-            }
-        } else {
-            /* Use a global constant declared in Set____ShaderConstantF() */
-            if (param & D3DVS_ADDRMODE_RELATIVE) {
-                /* Relative addressing on shaders 2.0+ have a relative address token, 
-                 * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
-                if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
-                    char relStr[100], relReg[50], relMask[6];
-                    shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
-                    sprintf(tmpStr, "%s[%s + %lu]", prefix, relStr, reg);
-                } else {
-                    sprintf(tmpStr, "%s[A0.x + %lu]", prefix, reg);
-                }
-            } else {
-                /* Just a normal global constant - no relative addressing */
-                sprintf(tmpStr, "%s[%lu]", prefix, reg);
-            }
-        }
+        /* Relative addressing */
+        if (param & D3DVS_ADDRMODE_RELATIVE) {
+
+           /* Relative addressing on shaders 2.0+ have a relative address token, 
+            * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
+           if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
+               char relStr[100], relReg[50], relMask[6];
+               shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
+               sprintf(tmpStr, "%s[%s + %lu]", prefix, relStr, reg);
+           } else
+               sprintf(tmpStr, "%s[A0.x + %lu]", prefix, reg);
+
+        } else
+             sprintf(tmpStr, "%s[%lu]", prefix, reg);
+
         break;
     }
     case D3DSPR_CONSTINT:
-        if (arg->reg_maps->constantsI[reg]) {
-            /* Integer vector was defined locally using "defi" */
-            sprintf(tmpStr, "I%lu", reg);
-        } else {
-            /* Uniform integer value - pixel or vertex specific */
-            if (pshader) {
-                sprintf(tmpStr, "PI[%lu]", reg);
-            } else {
-                sprintf(tmpStr, "VI[%lu]", reg);
-            }
-        }
+        if (pshader)
+            sprintf(tmpStr, "PI[%lu]", reg);
+        else
+            sprintf(tmpStr, "VI[%lu]", reg);
         break;
     case D3DSPR_CONSTBOOL:
-        if (arg->reg_maps->constantsB[reg]) {
-            /* Boolean was defined locally using "defb" */
-            sprintf(tmpStr, "B%lu", reg);
-        } else {
-            /* Uniform boolean value - pixel or vertex specific */
-            if (pshader) {
-                sprintf(tmpStr, "PB[%lu]", reg);
-            } else {
-                sprintf(tmpStr, "VB[%lu]", reg);
-            }
-        }
+        if (pshader)
+            sprintf(tmpStr, "PB[%lu]", reg);
+        else
+            sprintf(tmpStr, "VB[%lu]", reg);
         break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         if (pshader) {
@@ -1039,51 +1081,6 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
     
     shader_addline(arg->buffer, "%s%s + %s * (%s - %s))%s;\n",
                    tmpLine, src2_str, src0_str, src1_str, src2_str, dst_mask);
-}
-
-/** Process the D3DSIO_DEF opcode into a GLSL string - creates a local vec4
- * float constant, and stores it's usage on the regmaps. */
-void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
-
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-
-    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
-    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
-    const char* prefix = pshader? "PC":"VC";
-
-    shader_addline(arg->buffer, 
-                   "const vec4 %s%lu = vec4(%f, %f, %f, %f);\n", prefix, reg,
-                   *((const float *)(arg->src + 0)),
-                   *((const float *)(arg->src + 1)),
-                   *((const float *)(arg->src + 2)),
-                   *((const float *)(arg->src + 3)) );
-
-    arg->reg_maps->constantsF[reg] = 1;
-}
-
-/** Process the D3DSIO_DEFI opcode into a GLSL string - creates a local ivec4
- * integer constant, and stores it's usage on the regmaps. */
-void shader_glsl_defi(SHADER_OPCODE_ARG* arg) {
-
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-
-    shader_addline(arg->buffer, 
-                   "const ivec4 I%lu = ivec4(%ld, %ld, %ld, %ld);\n", reg,
-                   (long)arg->src[0], (long)arg->src[1],
-                   (long)arg->src[2], (long)arg->src[3]);
-
-    arg->reg_maps->constantsI[reg] = 1;
-}
-
-/** Process the D3DSIO_DEFB opcode into a GLSL string - creates a local boolean
- * constant, and stores it's usage on the regmaps. */
-void shader_glsl_defb(SHADER_OPCODE_ARG* arg) {
-
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-
-    shader_addline(arg->buffer, "const bool B%lu = %s;\n", reg, (arg->src[0]) ? "true" : "false");
-
-    arg->reg_maps->constantsB[reg] = 1;
 }
 
 /** Process the D3DSIO_LIT instruction in GLSL:
