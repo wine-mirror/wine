@@ -69,6 +69,7 @@ WINDOWS_INCLUDES = \
 	basetyps.h \
 	cderr.h \
 	cguid.h \
+	cierror.h \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
