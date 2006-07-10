@@ -932,10 +932,20 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         break;
     case CPU_x86_64:
         fprintf( outfile, "\tpushq %%rdi\n" );
+        fprintf( outfile, "\tpushq %%rsi\n" );
+        fprintf( outfile, "\tpushq %%rdx\n" );
+        fprintf( outfile, "\tpushq %%rcx\n" );
+        fprintf( outfile, "\tpushq %%r8\n" );
+        fprintf( outfile, "\tpushq %%r9\n" );
         fprintf( outfile, "\tsubq $8,%%rsp\n" );
         fprintf( outfile, "\tmovq %%r11,%%rdi\n" );
         fprintf( outfile, "\tcall %s\n", asm_name("__wine_spec_delay_load") );
         fprintf( outfile, "\taddq $8,%%rsp\n" );
+        fprintf( outfile, "\tpopq %%r9\n" );
+        fprintf( outfile, "\tpopq %%r8\n" );
+        fprintf( outfile, "\tpopq %%rcx\n" );
+        fprintf( outfile, "\tpopq %%rdx\n" );
+        fprintf( outfile, "\tpopq %%rsi\n" );
         fprintf( outfile, "\tpopq %%rdi\n" );
         fprintf( outfile, "\tjmp *%%rax\n" );
         break;
