@@ -1,18 +1,18 @@
-This is release 0.9.16 of Wine, a free implementation of Windows on Unix.
+This is release 0.9.17 of Wine, a free implementation of Windows on Unix.
 
 What's new in this release:
-  - More work on Direct3D shaders.
-  - Major DirectDraw rewrite on top of Direct3D.
-  - Support for debug information in Dwarf format.
-  - Beginnings of an OleView Winelib application.
+  - Still more work on Direct3D shaders.
+  - Now using the Gecko engine directly for MSHTML.
+  - Better support for apps switching to full screen mode.
+  - Support for multiple joysticks.
   - Lots of bug fixes.
 
 Because of lags created by using mirrors, this message may reach you
 before the release is available at the public sites. The sources will
 be available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.16.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-0.9.16.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.17.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-0.9.17.tar.bz2
 
 Binary packages for various distributions will be available from:
 
