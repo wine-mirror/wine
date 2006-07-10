@@ -1502,7 +1502,8 @@ dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in
   *i[[3456789]]86*) WINE_CHECK_DEFINE([__i386__]) ;;
-  *x86_64*)         WINE_CHECK_DEFINE([__x86_64__]) ;;
+  *x86_64*)         WINE_CHECK_DEFINE([__x86_64__])
+                    WINE_CHECK_DEFINE([_WIN64]) ;;
   *alpha*)          WINE_CHECK_DEFINE([__ALPHA__]) ;;
   *sparc*)          WINE_CHECK_DEFINE([__sparc__]) ;;
   *powerpc*)        WINE_CHECK_DEFINE([__powerpc__]) ;;

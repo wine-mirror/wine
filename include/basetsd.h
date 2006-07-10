@@ -38,7 +38,7 @@ extern "C" {
  * type model where int and long are 32 bit and pointer is 64-bit.
  */
 
-#ifdef __x86_64__
+#if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
 #endif
 

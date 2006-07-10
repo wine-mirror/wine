@@ -269,10 +269,17 @@ static void compile(struct options* opts, const char* lang)
         strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
 
+#ifdef _WIN64
+    strarray_add(comp_args, "-DWIN64");
+    strarray_add(comp_args, "-D_WIN64");
+    strarray_add(comp_args, "-D__WIN64");
+    strarray_add(comp_args, "-D__WIN64__");
+#else
     strarray_add(comp_args, "-DWIN32");
     strarray_add(comp_args, "-D_WIN32");
     strarray_add(comp_args, "-D__WIN32");
     strarray_add(comp_args, "-D__WIN32__");
+#endif
     strarray_add(comp_args, "-D__WINNT");
     strarray_add(comp_args, "-D__WINNT__");
 

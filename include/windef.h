@@ -45,7 +45,7 @@ extern "C" {
 # define __i386__
 #endif
 
-#ifdef __x86_64__
+#if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
 #endif
 
