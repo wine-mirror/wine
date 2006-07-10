@@ -4,6 +4,7 @@
  * Copyright 1998 Jean-Claude Cote
  * Copyright 2003 Jon Griffiths
  * Copyright 2005 Daniel Remenak
+ * Copyright 2006 Google (Benjamin Arai)
  *
  * The alorithm for conversion from Julian days to day/month/year is based on
  * that devised by Henry Fliegel, as implemented in PostgreSQL, which is
@@ -2443,53 +2444,142 @@ VarNumFromParseNum_DecOverflow:
  */
 HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
+    VARTYPE leftvt,rightvt;
+    HRESULT hres;
+    static const WCHAR str_true[] = {'T','r','u','e','\0'};
+    static const WCHAR str_false[] = {'F','a','l','s','e','\0'};
+    leftvt = V_VT(left);
+    rightvt = V_VT(right);
+
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), out);
 
-    /* Should we VariantClear out? */
-    /* Can we handle array, vector, by ref etc. */
-    if ((V_VT(left)&VT_TYPEMASK) == VT_NULL &&
-        (V_VT(right)&VT_TYPEMASK) == VT_NULL)
+    /* Null and Null simply return Null */
+    if (leftvt == VT_NULL && rightvt == VT_NULL)
     {
         V_VT(out) = VT_NULL;
         return S_OK;
     }
 
-    if (V_VT(left) == VT_BSTR && V_VT(right) == VT_BSTR)
+    /* VT_ERROR with any other value should return VT_NULL */
+    else if (V_VT(left) == VT_ERROR || V_VT(right) == VT_ERROR)
     {
-        V_VT(out) = VT_BSTR;
-        VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
-        return S_OK;
+        V_VT(out) = VT_EMPTY;
+        return DISP_E_BADVARTYPE;
     }
-    if (V_VT(left) == VT_BSTR) {
-        VARIANT bstrvar;
-	HRESULT hres;
 
+   /* Concat all type that match conformance test */
+    if ((leftvt == VT_I2 || leftvt == VT_I4 ||
+        leftvt == VT_R4 || leftvt == VT_R8 ||
+        leftvt == VT_CY || leftvt == VT_BOOL ||
+        leftvt == VT_BSTR || leftvt == VT_I1 ||
+        leftvt == VT_UI1 || leftvt == VT_UI2 ||
+        leftvt == VT_UI4 || leftvt == VT_I8 ||
+        leftvt == VT_UI8 || leftvt == VT_INT ||
+        leftvt == VT_UINT || leftvt == VT_EMPTY ||
+        leftvt == VT_NULL || leftvt == VT_DATE ||
+        leftvt == VT_DECIMAL)
+        &&
+        (rightvt == VT_I2 || rightvt == VT_I4 ||
+        rightvt == VT_R4 || rightvt == VT_R8 ||
+        rightvt == VT_CY || rightvt == VT_BOOL ||
+        rightvt == VT_BSTR || rightvt == VT_I1 ||
+        rightvt == VT_UI1 || rightvt == VT_UI2 ||
+        rightvt == VT_UI4 || rightvt == VT_I8 ||
+        rightvt == VT_UI8 || rightvt == VT_INT ||
+        rightvt == VT_UINT || rightvt == VT_EMPTY ||
+        rightvt == VT_NULL || rightvt == VT_DATE ||
+        rightvt == VT_DECIMAL))
+    {
+        VARIANT bstrvar_left, bstrvar_right;
         V_VT(out) = VT_BSTR;
-        VariantInit(&bstrvar);
-        hres = VariantChangeTypeEx(&bstrvar,right,0,0,VT_BSTR);
-	if (hres) {
-	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
-	    return hres;
-        }
-        VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar), &V_BSTR(out));
-        return S_OK;
-    }
-    if (V_VT(right) == VT_BSTR) {
-        VARIANT bstrvar;
-	HRESULT hres;
 
-        V_VT(out) = VT_BSTR;
-        VariantInit(&bstrvar);
-        hres = VariantChangeTypeEx(&bstrvar,left,0,0,VT_BSTR);
-	if (hres) {
-	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
-	    return hres;
+        /* Convert left side variant to string */
+        if (leftvt != VT_BSTR)
+        {
+            VariantInit(&bstrvar_left);
+            if (leftvt == VT_BOOL)
+            {
+                /* Bools are handled as True/False strings instead of 0/-1 as in MSDN */
+                V_VT(&bstrvar_left) = VT_BSTR;
+                if (V_BOOL(left) == TRUE)
+                    V_BSTR(&bstrvar_left) = SysAllocString(str_true);
+                else
+                    V_BSTR(&bstrvar_left) = SysAllocString(str_false);
+            }
+            else
+            {
+                hres = VariantChangeTypeEx(&bstrvar_left,left,0,0,VT_BSTR);
+                if (hres != S_OK) {
+                    VariantClear(&bstrvar_left);
+                    VariantClear(&bstrvar_right);
+                    if (leftvt == VT_NULL && (rightvt == VT_EMPTY ||
+                        rightvt == VT_NULL || rightvt ==  VT_I2 ||
+                        rightvt == VT_I4 || rightvt == VT_R4 ||
+                        rightvt == VT_R8 || rightvt == VT_CY ||
+                        rightvt == VT_DATE || rightvt == VT_BSTR ||
+                        rightvt == VT_BOOL ||  rightvt == VT_DECIMAL ||
+                        rightvt == VT_I1 || rightvt == VT_UI1 ||
+                        rightvt == VT_UI2 || rightvt == VT_UI4 ||
+                        rightvt == VT_I8 || rightvt == VT_UI8 ||
+                        rightvt == VT_INT || rightvt == VT_UINT))
+                        return DISP_E_BADVARTYPE;
+                    return hres;
+                }
+            }
         }
-        VarBstrCat (V_BSTR(&bstrvar), V_BSTR(right), &V_BSTR(out));
+
+        /* convert right side variant to string */
+        if (rightvt != VT_BSTR)
+        {
+            VariantInit(&bstrvar_right);
+            if (rightvt == VT_BOOL)
+            {
+                /* Bools are handled as True/False strings instead of 0/-1 as in MSDN */
+                V_VT(&bstrvar_right) = VT_BSTR;
+                if (V_BOOL(right) == TRUE)
+                    V_BSTR(&bstrvar_right) = SysAllocString(str_true);
+                else
+                    V_BSTR(&bstrvar_right) = SysAllocString(str_false);
+            }
+            else
+            {
+                hres = VariantChangeTypeEx(&bstrvar_right,right,0,0,VT_BSTR);
+                if (hres != S_OK) {
+                    VariantClear(&bstrvar_left);
+                    VariantClear(&bstrvar_right);
+                    if (rightvt == VT_NULL && (leftvt == VT_EMPTY ||
+                        leftvt == VT_NULL || leftvt ==  VT_I2 ||
+                        leftvt == VT_I4 || leftvt == VT_R4 ||
+                        leftvt == VT_R8 || leftvt == VT_CY ||
+                        leftvt == VT_DATE || leftvt == VT_BSTR ||
+                        leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
+                        leftvt == VT_I1 || leftvt == VT_UI1 ||
+                        leftvt == VT_UI2 || leftvt == VT_UI4 ||
+                        leftvt == VT_I8 || leftvt == VT_UI8 ||
+                        leftvt == VT_INT || leftvt == VT_UINT))
+                        return DISP_E_BADVARTYPE;
+                    return hres;
+                }
+            }
+        }
+
+        /* Concat the resulting strings together */
+        if (leftvt == VT_BSTR && rightvt == VT_BSTR)
+            VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
+        else if (leftvt != VT_BSTR && rightvt != VT_BSTR)
+            VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(&bstrvar_right), &V_BSTR(out));
+        else if (leftvt != VT_BSTR && rightvt == VT_BSTR)
+            VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(right), &V_BSTR(out));
+        else if (leftvt == VT_BSTR && rightvt != VT_BSTR)
+            VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar_right), &V_BSTR(out));
+
+        VariantClear(&bstrvar_left);
+        VariantClear(&bstrvar_right);
         return S_OK;
     }
-    FIXME ("types %d / %d not supported\n",V_VT(left)&VT_TYPEMASK, V_VT(right)&VT_TYPEMASK);
+
+    V_VT(out) = VT_EMPTY;
     return S_OK;
 }
 

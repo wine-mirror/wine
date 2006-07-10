@@ -2,6 +2,7 @@
  * VARIANT test program
  *
  * Copyright 1998 Jean-Claude Cote
+ * Copyright 2006 Google (Benjamin Arai)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5093,6 +5094,323 @@ static void test_VarAdd(void)
     SysFreeString(rbstr);
 }
 
+static void test_VarCat(void)
+{
+    LCID lcid;
+    VARIANT left, right, result, expected;
+    static const WCHAR sz12[] = {'1','2','\0'};
+    static const WCHAR sz34[] = {'3','4','\0'};
+    static const WCHAR sz1234[] = {'1','2','3','4','\0'};
+    static const WCHAR date_sz12[] = {'9','/','3','0','/','1','9','8','0','1','2','\0'};
+    static const WCHAR sz12_date[] = {'1','2','9','/','3','0','/','1','9','8','0','\0'};
+    static const WCHAR sz_empty[] = {'\0'};
+    static const WCHAR sz12_true[] = {'1','2','T','r','u','e','\0'};
+    static const WCHAR sz12_false[] = {'1','2','F','a','l','s','e','\0'};
+    TCHAR orig_date_format[128];
+    VARTYPE leftvt, rightvt, resultvt;
+    HRESULT hres;
+
+    /* Set date format for testing */
+    lcid = LOCALE_USER_DEFAULT;
+    GetLocaleInfo(lcid,LOCALE_SSHORTDATE,orig_date_format,128);
+    SetLocaleInfo(lcid,LOCALE_SSHORTDATE,"M/d/yyyy");
+
+    VariantInit(&left);
+    VariantInit(&right);
+    VariantInit(&result);
+    VariantInit(&expected);
+
+    /* Check expected types for all combinations */
+    for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+    {
+
+        SKIPTESTS(leftvt);
+
+        for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+        {
+            BOOL bFail = FALSE;
+            SKIPTESTS(rightvt);
+
+            if (leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN  ||
+                leftvt == VT_RECORD || rightvt == VT_RECORD  ||
+                leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                leftvt == VT_BSTR_BLOB || rightvt == VT_BSTR_BLOB
+                )
+                    continue;
+
+            if (leftvt == VT_ERROR || rightvt == VT_ERROR)
+                resultvt = VT_EMPTY;
+            else if (leftvt == VT_NULL && rightvt == VT_NULL)
+                resultvt = VT_NULL;
+            else if ((leftvt == VT_I2 || leftvt == VT_I4 ||
+                leftvt == VT_R4 || leftvt == VT_R8 ||
+                leftvt == VT_CY || leftvt == VT_BOOL ||
+                leftvt == VT_BSTR || leftvt == VT_I1 ||
+                leftvt == VT_UI1 || leftvt == VT_UI2 ||
+                leftvt == VT_UI4 || leftvt == VT_I8 ||
+                leftvt == VT_UI8 || leftvt == VT_INT ||
+                leftvt == VT_UINT || leftvt == VT_EMPTY ||
+                leftvt == VT_NULL || leftvt == VT_DECIMAL ||
+                leftvt == VT_DATE)
+                &&
+                (rightvt == VT_I2 || rightvt == VT_I4 ||
+                rightvt == VT_R4 || rightvt == VT_R8 ||
+                rightvt == VT_CY || rightvt == VT_BOOL ||
+                rightvt == VT_BSTR || rightvt == VT_I1 ||
+                rightvt == VT_UI1 || rightvt == VT_UI2 ||
+                rightvt == VT_UI4 || rightvt == VT_I8 ||
+                rightvt == VT_UI8 || rightvt == VT_INT ||
+                rightvt == VT_UINT || rightvt == VT_EMPTY ||
+                rightvt == VT_NULL || rightvt == VT_DECIMAL ||
+                rightvt == VT_DATE))
+            {
+                resultvt = VT_BSTR;
+            }
+            else
+                resultvt = VT_EMPTY;
+
+            if (leftvt == VT_ERROR || rightvt == VT_ERROR)
+            {
+                bFail = TRUE;
+            }
+
+            V_VT(&left) = leftvt;
+            V_VT(&right) = rightvt;
+
+            if (leftvt == VT_BSTR)
+                V_BSTR(&left) = SysAllocString(sz_empty);
+            if (rightvt == VT_BSTR)
+                V_BSTR(&right) = SysAllocString(sz_empty);
+            if (leftvt == VT_DATE)
+                V_DATE(&left) = 0.0;
+            if (rightvt == VT_DATE)
+                V_DATE(&right) = 0.0;
+            if (leftvt == VT_DECIMAL)
+                VarDecFromR8(0.0, &V_DECIMAL(&left));
+            if (rightvt == VT_DECIMAL)
+                VarDecFromR8(0.0, &V_DECIMAL(&right));
+
+            hres = VarCat(&left, &right, &result);
+            if (bFail) {
+                /* Determine the error code for the vt combination */
+                HRESULT expected_error_num = S_OK;
+                if (rightvt == VT_ERROR && leftvt <= VT_VOID)
+                    expected_error_num = DISP_E_TYPEMISMATCH;
+                else if (leftvt == VT_ERROR && (rightvt == VT_DATE ||
+                    rightvt == VT_ERROR || rightvt == VT_DECIMAL))
+                    expected_error_num = DISP_E_TYPEMISMATCH;
+                else if (rightvt == VT_DATE || rightvt == VT_ERROR ||
+                    rightvt == VT_DECIMAL)
+                    expected_error_num = DISP_E_BADVARTYPE;
+                else if (leftvt == VT_ERROR || rightvt == VT_ERROR)
+                    expected_error_num = DISP_E_TYPEMISMATCH;
+
+                ok(hres == DISP_E_BADVARTYPE || hres == E_INVALIDARG ||
+                    hres == DISP_E_TYPEMISMATCH,
+                    "VarCat: %d, %d: Expected failure 0x%lX, got 0x%lX\n",
+                    leftvt, rightvt, expected_error_num, hres);
+            }
+            else
+            {
+                ok(V_VT(&result) == resultvt,
+                    "VarCat: %d, %d: expected vt %d, got vt %d\n",
+                    leftvt, rightvt, resultvt, V_VT(&result));
+                if (hres != S_OK)
+                {
+                    HRESULT expected_error_num;
+                    if (leftvt == VT_VARIANT && rightvt == VT_ERROR)
+                        expected_error_num = DISP_E_BADVARTYPE;
+                    else if (leftvt == VT_VARIANT)
+                        expected_error_num = DISP_E_TYPEMISMATCH;
+                    else if (rightvt == VT_VARIANT && (leftvt == VT_EMPTY ||
+                        leftvt == VT_NULL || leftvt ==  VT_I2 ||
+                        leftvt == VT_I4 || leftvt == VT_R4 ||
+                        leftvt == VT_R8 || leftvt == VT_CY ||
+                        leftvt == VT_DATE || leftvt == VT_BSTR ||
+                        leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
+                        leftvt == VT_I1 || leftvt == VT_UI1 ||
+                        leftvt == VT_UI2 || leftvt == VT_UI4 ||
+                        leftvt == VT_I8 || leftvt == VT_UI8 ||
+                        leftvt == VT_INT || leftvt == VT_UINT
+                        ))
+                        expected_error_num = DISP_E_TYPEMISMATCH;
+                    else
+                        expected_error_num = DISP_E_BADVARTYPE;
+
+                    ok(hres == expected_error_num,
+                        "VarCat: %d, %d: Expected failure 0x%lX, got 0x%lX\n",
+                        leftvt, rightvt, expected_error_num, hres);
+                }
+            }
+
+            VariantClear(&left);
+            VariantClear(&right);
+            VariantClear(&result);
+        }
+    }
+
+    /* Runnning single comparison tests to compare outputs */
+
+    /* Test concat strings */
+    V_VT(&left) = VT_BSTR;
+    V_VT(&right) = VT_BSTR;
+    V_VT(&expected) = VT_BSTR;
+    V_BSTR(&left) = SysAllocString(sz12);
+    V_BSTR(&right) = SysAllocString(sz34);
+    V_BSTR(&expected) = SysAllocString(sz1234);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_BSTR concat with VT_BSTR failed to return correct result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+
+    /* Test if expression is VT_ERROR */
+    V_VT(&left) = VT_ERROR;
+    V_VT(&right) = VT_BSTR;
+    VarCat(&left,&right,&result);
+    ok(V_VT(&result) == VT_EMPTY,
+        "VarCat: VT_ERROR concat with VT_BSTR should have returned VT_EMPTY\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+
+    V_VT(&left) = VT_BSTR;
+    V_VT(&right) = VT_ERROR;
+    VarCat(&left,&right,&result);
+    ok(V_VT(&result) == VT_EMPTY,
+        "VarCat: VT_BSTR concat with VT_ERROR should have returned VT_EMPTY\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+
+    /* Test combining boolean with number */
+    V_VT(&left) = VT_INT;
+    V_VT(&right) = VT_BOOL;
+    V_VT(&expected) = VT_BSTR;
+    V_INT(&left) = 12;
+    V_BOOL(&right) = TRUE;
+    V_BSTR(&expected) = SysAllocString(sz12_true);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_INT concat with VT_BOOL (TRUE) returned inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+
+    V_VT(&left) = VT_INT;
+    V_VT(&right) = VT_BOOL;
+    V_VT(&expected) = VT_BSTR;
+    V_INT(&left) = 12;
+    V_BOOL(&right) = FALSE;
+    V_BSTR(&expected) = SysAllocString(sz12_false);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_INT concat with VT_BOOL (FALSE) returned inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+
+    /* Test when both expressions are numeric */
+    V_VT(&left) = VT_INT;
+    V_VT(&right) = VT_INT;
+    V_VT(&expected) = VT_BSTR;
+    V_INT(&left)  = 12;
+    V_INT(&right) = 34;
+    V_BSTR(&expected) = SysAllocString(sz1234);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: NUMBER concat with NUMBER returned inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+
+    /* Test if one expression is numeric and the other is a string */
+    V_VT(&left) = VT_INT;
+    V_VT(&right) = VT_BSTR;
+    V_INT(&left) = 12;
+    V_BSTR(&right) = SysAllocString(sz34);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: NUMBER concat with VT_BSTR, inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+
+    V_VT(&left) = VT_BSTR;
+    V_VT(&right) = VT_INT;
+    V_BSTR(&left) = SysAllocString(sz12);
+    V_INT(&right) = 34;
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_BSTR concat with NUMBER, inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+
+    /* Test concat dates with strings */
+    V_VT(&left) = VT_BSTR;
+    V_VT(&right) = VT_DATE;
+    V_VT(&expected) = VT_BSTR;
+    V_BSTR(&left) = SysAllocString(sz12);
+    V_DATE(&right) = 29494.0;
+    V_BSTR(&expected)= SysAllocString(sz12_date);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_BSTR concat with VT_DATE returned inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+
+    V_VT(&left) = VT_DATE;
+    V_VT(&right) = VT_BSTR;
+    V_VT(&expected) = VT_BSTR;
+    V_DATE(&left) = 29494.0;
+    V_BSTR(&right) = SysAllocString(sz12);
+    V_BSTR(&expected)= SysAllocString(date_sz12);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+        "VarCat: VT_DATE concat with VT_BSTR returned inncorrect result\n");
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+
+    /* Test of both expressions are empty */
+    V_VT(&left) = VT_BSTR;
+    V_VT(&right) = VT_BSTR;
+    V_VT(&expected) = VT_BSTR;
+    V_BSTR(&left) = SysAllocString(sz_empty);
+    V_BSTR(&right) = SysAllocString(sz_empty);
+    V_BSTR(&expected)= SysAllocString(sz_empty);
+    VarCat(&left,&right,&result);
+    ok(VarCmp(&result,&left,lcid,0) == VARCMP_EQ,
+        "VarCat: EMPTY concat with EMPTY did not return empty VT_BSTR\n");
+
+    /* Restore original date format settings */
+    SetLocaleInfo(lcid,LOCALE_SSHORTDATE,orig_date_format);
+
+    VariantClear(&left);
+    VariantClear(&right);
+    VariantClear(&result);
+    VariantClear(&expected);
+}
+
 static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
 
 /* ERROR from wingdi.h is interfering here */
@@ -5387,5 +5705,6 @@ START_TEST(vartest)
   test_VarEqv();
   test_VarMul();
   test_VarAdd();
+  test_VarCat();
   test_VarCmp();
 }
