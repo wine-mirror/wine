@@ -17,15 +17,32 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
+#include "winerror.h"
 #include "wingdi.h"
+#include "wine/exception.h"
+#include "excpt.h"
+
 #include "ddraw.h"
+#include "d3d.h"
+
 #include "ddraw_private.h"
-#include "ddcomimpl.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw);
 
 static HRESULT WINAPI
 IDirectDrawImpl_QueryInterface(LPDIRECTDRAW This, REFIID iid, LPVOID *ppObj)
@@ -56,51 +73,93 @@ IDirectDraw4Impl_QueryInterface(LPDIRECTDRAW4 This, REFIID iid, LPVOID *ppObj)
 }
 
 static ULONG WINAPI
-IDirectDrawImpl_AddRef(LPDIRECTDRAW This)
+IDirectDrawImpl_AddRef(LPDIRECTDRAW iface)
 {
-    return IDirectDraw7_AddRef(COM_INTERFACE_CAST(IDirectDrawImpl,
-						  IDirectDraw, IDirectDraw7,
-						  This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    ULONG ref = InterlockedIncrement(&This->ref1);
+
+    TRACE("(%p) : incrementing IDirectDraw refcount from %lu.\n", This, ref -1);
+
+    if(ref == 1) InterlockedIncrement(&This->numIfaces);
+
+    return ref;
 }
 
 static ULONG WINAPI
-IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 This)
+IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface)
 {
-    return IDirectDraw7_AddRef(COM_INTERFACE_CAST(IDirectDrawImpl,
-						  IDirectDraw2, IDirectDraw7,
-						  This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    ULONG ref = InterlockedIncrement(&This->ref2);
+
+    TRACE("(%p) : incrementing IDirectDraw2 refcount from %lu.\n", This, ref -1);
+
+    if(ref == 1) InterlockedIncrement(&This->numIfaces);
+
+    return ref;
 }
 
 static ULONG WINAPI
-IDirectDraw4Impl_AddRef(LPDIRECTDRAW4 This)
+IDirectDraw4Impl_AddRef(LPDIRECTDRAW4 iface)
 {
-    return IDirectDraw7_AddRef(COM_INTERFACE_CAST(IDirectDrawImpl,
-						  IDirectDraw4, IDirectDraw7,
-						  This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    ULONG ref = InterlockedIncrement(&This->ref4);
+
+    TRACE("(%p) : incrementing IDirectDraw4 refcount from %lu.\n", This, ref -1);
+
+    if(ref == 1) InterlockedIncrement(&This->numIfaces);
+
+    return ref;
 }
 
 static ULONG WINAPI
-IDirectDrawImpl_Release(LPDIRECTDRAW This)
+IDirectDrawImpl_Release(LPDIRECTDRAW iface)
 {
-    return IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
-						   IDirectDraw, IDirectDraw7,
-						   This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    ULONG ref = InterlockedDecrement(&This->ref1);
+
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw refcount from %lu.\n", This, ref +1);
+
+    if(ref == 0)
+    {
+        ULONG ifacecount = InterlockedDecrement(&This->numIfaces);
+        if(ifacecount == 0) IDirectDrawImpl_Destroy(This);
+    }
+
+    return ref;
 }
 
 static ULONG WINAPI
-IDirectDraw2Impl_Release(LPDIRECTDRAW2 This)
+IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface)
 {
-    return IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
-						   IDirectDraw2, IDirectDraw7,
-						   This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    ULONG ref = InterlockedDecrement(&This->ref2);
+
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw2 refcount from %lu.\n", This, ref +1);
+
+    if(ref == 0)
+    {
+        ULONG ifacecount = InterlockedDecrement(&This->numIfaces);
+        if(ifacecount == 0) IDirectDrawImpl_Destroy(This);
+    }
+
+    return ref;
 }
 
 static ULONG WINAPI
-IDirectDraw4Impl_Release(LPDIRECTDRAW4 This)
+IDirectDraw4Impl_Release(LPDIRECTDRAW4 iface)
 {
-    return IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
-						   IDirectDraw4, IDirectDraw7,
-						   This));
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    ULONG ref = InterlockedDecrement(&This->ref4);
+
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw4 refcount from %lu.\n", This, ref +1);
+
+    if(ref == 0)
+    {
+        ULONG ifacecount = InterlockedDecrement(&This->numIfaces);
+        if(ifacecount == 0) IDirectDrawImpl_Destroy(This);
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI
@@ -169,11 +228,20 @@ IDirectDrawImpl_CreatePalette(LPDIRECTDRAW This, DWORD dwFlags,
 			      LPDIRECTDRAWPALETTE *ppPalette,
 			      IUnknown *pUnkOuter)
 {
-    return IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
+    HRESULT hr;
+    hr = IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw,
 							 IDirectDraw7,
 							 This),
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
+    if(SUCCEEDED(hr) && *ppPalette)
+    {
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw,
+                             IDirectDraw7,
+                             This));
+    }
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -182,11 +250,19 @@ IDirectDraw2Impl_CreatePalette(LPDIRECTDRAW2 This, DWORD dwFlags,
 			       LPDIRECTDRAWPALETTE *ppPalette,
 			       IUnknown *pUnkOuter)
 {
+    HRESULT hr;
     return IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw2,
 							 IDirectDraw7,
 							 This),
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
+    if(SUCCEEDED(hr) && *ppPalette)
+    {
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw,
+                             IDirectDraw7,
+                             This));
+    }
 }
 
 static HRESULT WINAPI
@@ -195,11 +271,19 @@ IDirectDraw4Impl_CreatePalette(LPDIRECTDRAW4 This, DWORD dwFlags,
 			       LPDIRECTDRAWPALETTE *ppPalette,
 			       IUnknown *pUnkOuter)
 {
+    HRESULT hr;
     return IDirectDraw7_CreatePalette(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw4,
 							 IDirectDraw7,
 							 This),
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
+    if(SUCCEEDED(hr) && *ppPalette)
+    {
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw,
+                             IDirectDraw7,
+                             This));
+    }
 }
 
 static HRESULT WINAPI
@@ -226,9 +310,15 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
 				    pSurface7);
 
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
-    if(impl)
+    if(SUCCEEDED(hr) && impl)
     {
         impl->version = 1;
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw,
+                             IDirectDraw7,
+                             This));
+        IDirectDraw_AddRef(This);
+        impl->ifaceToRelease = (IUnknown *) This;
     }
 
     return hr;
@@ -256,9 +346,15 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
 				    pSurface7);
 
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
-    if(impl)
+    if(SUCCEEDED(hr) && impl)
     {
         impl->version = 2;
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw2,
+                             IDirectDraw7,
+                             This));
+        IDirectDraw2_AddRef(This);
+        impl->ifaceToRelease = (IUnknown *) This;
     }
 
     return hr;
@@ -280,9 +376,15 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
 				    (LPDIRECTDRAWSURFACE7 *)ppSurface,
 				    pUnkOuter);
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurface);
-    if(impl)
+    if(SUCCEEDED(hr) && impl)
     {
         impl->version = 4;
+        IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
+                             IDirectDraw4,
+                             IDirectDraw7,
+                             This));
+        IDirectDraw4_AddRef(This);
+        impl->ifaceToRelease = (IUnknown *) This;
     }
     return hr;
 }

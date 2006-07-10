@@ -135,7 +135,6 @@ DDRAW_Create(GUID *guid,
     ICOM_INIT_INTERFACE(This, IDirect3D2, IDirect3D2_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirect3D3, IDirect3D3_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirect3D7, IDirect3D7_Vtbl);
-    This->ref = 1;
 
     /* See comments in IDirectDrawImpl_CreateNewSurface for a description
      * of this member.
@@ -285,9 +284,10 @@ DDRAW_Create(GUID *guid,
     This->next = ddraw_list;
     ddraw_list = This;
 
-    /* Call QueryInterface to get the pointer to the requested interface */
+    /* Call QueryInterface to get the pointer to the requested interface. This also initializes
+     * The required refcount
+     */
     hr = IDirectDraw7_QueryInterface( ICOM_INTERFACE(This, IDirectDraw7), iid, DD);
-    IDirectDraw7_Release( ICOM_INTERFACE(This, IDirectDraw7) );
     if(SUCCEEDED(hr)) return DD_OK;
 
 err_out:
@@ -843,9 +843,13 @@ DllMain(HINSTANCE hInstDLL,
                     DDSURFACEDESC2 desc;
                     int i;
 
-                    WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref);
+                    WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
 
-                    ddraw->DoNotDestroy = TRUE; /* Avoid to destroy the object too early */
+                    /* Add references to each interface to avoid freeing them unexpectadely */
+                    IDirectDraw_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw));
+                    IDirectDraw2_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw2));
+                    IDirectDraw4_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw4));
+                    IDirectDraw7_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw7));
 
                     /* Does a D3D device exist? Destroy it
                      * TODO: Destroy all Vertex buffers, Lights, Materials
@@ -877,12 +881,13 @@ DllMain(HINSTANCE hInstDLL,
                     if(ddraw->surfaces > 0)
                         ERR("DDraw %p still has %ld surfaces attached\n", ddraw, ddraw->surfaces);
 
-                    /* Restore the cooperative level */
-                    IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(ddraw, IDirectDraw7),
-                                                      NULL,
-                                                      DDSCL_NORMAL);
-                    ddraw->DoNotDestroy = FALSE;
-                    IDirectDrawImpl_Destroy(ddraw);
+                    /* Release all hanging references to destroy the objects. This
+                     * restores the screen mode too
+                     */
+                    while(IDirectDraw_Release(ICOM_INTERFACE(ddraw, IDirectDraw)));
+                    while(IDirectDraw2_Release(ICOM_INTERFACE(ddraw, IDirectDraw2)));
+                    while(IDirectDraw4_Release(ICOM_INTERFACE(ddraw, IDirectDraw4)));
+                    while(IDirectDraw7_Release(ICOM_INTERFACE(ddraw, IDirectDraw7)));
                 }
             }
         }

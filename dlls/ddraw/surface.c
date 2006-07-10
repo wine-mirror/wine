@@ -291,6 +291,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
 
         IDirectDrawSurfaceImpl *surf;
         IDirectDrawImpl *ddraw;
+        IUnknown *ifaceToRelease = This->ifaceToRelease;
 
         /* Destroy all complex attached surfaces
          * Therefore, start with the first surface,
@@ -385,7 +386,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
         IDirectDrawSurfaceImpl_Destroy(This);
 
         /* Reduce the ddraw refcount */
-        IDirectDraw7_Release(ICOM_INTERFACE(ddraw, IDirectDraw7));
+        IUnknown_Release(ifaceToRelease);
     }
 
     return ref;
@@ -1627,13 +1628,32 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
 
-    TRACE("(%p)->(%p)\n",This,DD);
+    /* It is not quite correct to use the same lpVtable for the different
+     * IDirectDrawSurface versions because the GetDDInterface return different interfaces
+     */
+    FIXME("(%p)->(%p)\n",This,DD);
 
     if(!DD)
         return DDERR_INVALIDPARAMS;
 
-    *((IDirectDraw7 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw7);
-    IDirectDraw7_AddRef( (IDirectDraw7 *) *DD);
+    switch(This->version)
+    {
+        case 7:
+            *((IDirectDraw7 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw7);
+            IDirectDraw7_AddRef(*(IDirectDraw7 **) DD);
+            break;
+
+        case 4:
+            *((IDirectDraw4 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw4);
+            IDirectDraw4_AddRef(*(IDirectDraw4 **) DD);
+
+        case 2:
+        case 1:
+            *((IDirectDraw **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw);
+            IDirectDraw_AddRef( *(IDirectDraw **) DD);
+            break;
+
+    }
 
     return DD_OK;
 }

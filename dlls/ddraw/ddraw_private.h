@@ -90,7 +90,8 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirect3D2);
     ICOM_VFIELD_MULTI(IDirect3D);
 
-    LONG              ref;
+    /* See comment in IDirectDraw::AddRef */
+    LONG                    ref7, ref4, ref2, ref1, numIfaces;
 
     /* WineD3D linkage */
     IWineD3D                *wineD3D;
@@ -143,7 +144,6 @@ struct IDirectDrawImpl
 
     /* For the dll unload cleanup code */
     IDirectDrawImpl *next;
-    BOOL DoNotDestroy;
     LONG surfaces;
 };
 
@@ -202,6 +202,7 @@ struct IDirectDrawSurfaceImpl
     ICOM_VFIELD_MULTI(IDirect3DTexture);
 
     LONG                     ref;
+    IUnknown                *ifaceToRelease;
 
     int                     version;
 

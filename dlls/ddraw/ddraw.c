@@ -131,7 +131,13 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
         TRACE("(%p) Returning IDirectDraw interface at %p\n", This, *obj);
     }
 
-    /* Direct3D */
+    /* Direct3D
+     * The refcount unit test revealed that an IDirect3D7 interface can only be queried
+     * from a DirectDraw object that was created as an IDirectDraw7 interface. No idea
+     * who had this idea and why. The older interfaces can query and IDirect3D version
+     * because they are all created as IDirectDraw(1). This isn't really crucial behavior,
+     * and messy to implement with the common creation function, so it has been left out here.
+     */
     else if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ||
               IsEqualGUID( &IID_IDirect3D2 , refiid ) ||
               IsEqualGUID( &IID_IDirect3D3 , refiid ) ||
@@ -197,17 +203,30 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
 /*****************************************************************************
  * IDirectDraw7::AddRef
  *
- * Increases the interfaces refcount. Used for version 1, 2, 4 and 7
+ * Increases the interfaces refcount, basically
+ *
+ * DDraw refcounting is a bit tricky. The different DirectDraw interface
+ * versions have individual refcounts, but the IDirect3D interfaces do not.
+ * All interfaces are from one object, that means calling QueryInterface on an
+ * IDirectDraw7 interface for an IDirectDraw4 interface does not create a new
+ * IDirectDrawImpl object.
+ *
+ * That means all AddRef and Release implementations of IDirectDrawX work
+ * with their own counter, and IDirect3DX::AddRef thunk to IDirectDraw (1),
+ * except of IDirect3D7 which thunks to IDirectDraw7
  *
  * Returns: The new refcount
+ *
  *****************************************************************************/
 static ULONG WINAPI
 IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref7);
 
-    TRACE("(%p) : incrementing from %lu.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw7 refcount from %lu.\n", This, ref -1);
+
+    if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
     return ref;
 }
@@ -215,8 +234,8 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 /*****************************************************************************
  * IDirectDrawImpl_Destroy
  *
- * Destroys a ddraw object. This is to share code between normal Release
- * and the dll unload cleanup code
+ * Destroys a ddraw object if all refcounts are 0. This is to share code
+ * between the IDirectDrawX::Release functions
  *
  * Params:
  *  This: DirectDraw object to destroy
@@ -225,45 +244,49 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 void
 IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
 {
-        IDirectDrawImpl *prev;
+    IDirectDrawImpl *prev;
 
-        TRACE("(%p)\n", This);
+    /* Clear the cooplevel to restore window and display mode */
+    IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(This, IDirectDraw7),
+                                        NULL,
+                                        DDSCL_NORMAL);
 
-        /* Destroy the device window if we created one */
-        if(This->devicewindow != 0)
-        {
-            TRACE(" (%p) Destroying the device window %p\n", This, This->devicewindow);
-            DestroyWindow(This->devicewindow);
-            This->devicewindow = 0;
-        }
+    /* Destroy the device window if we created one */
+    if(This->devicewindow != 0)
+    {
+        TRACE(" (%p) Destroying the device window %p\n", This, This->devicewindow);
+        DestroyWindow(This->devicewindow);
+        This->devicewindow = 0;
+    }
 
-        /* Unregister the window class */
-        UnregisterClassA(This->classname, 0);
+    /* Unregister the window class */
+    UnregisterClassA(This->classname, 0);
 
-        /* Unchain it from the ddraw list */
-        if(ddraw_list == This)
-        {
-            ddraw_list = This->next;
-            /* No need to search for a predecessor here */
-        }
+    /* Unchain it from the ddraw list */
+    if(ddraw_list == This)
+    {
+        ddraw_list = This->next;
+        /* No need to search for a predecessor here */
+    }
+    else
+    {
+        for(prev = ddraw_list; prev; prev = prev->next)
+            if(prev->next == This) break;
+
+        if(prev)
+            prev->next = This->next;
         else
-        {
-            for(prev = ddraw_list; prev; prev = prev->next)
-                if(prev->next == This) break;
+            ERR("Didn't find the previous ddraw element in the list\n");
+    }
 
-            if(prev)
-                prev->next = This->next;
-            else
-                ERR("Didn't find the previous ddraw element in the list\n");
-        }
+    /* Release the attached WineD3D stuff */
+    IWineD3DDevice_Release(This->wineD3DDevice);
+    IWineD3D_Release(This->wineD3D);
 
-        /* Release the attached WineD3D stuff */
-        IWineD3DDevice_Release(This->wineD3DDevice);
-        IWineD3D_Release(This->wineD3D);
-
-        /* Now free the object */
-        HeapFree(GetProcessHeap(), 0, This);
+    /* Now free the object */
+    HeapFree(GetProcessHeap(), 0, This);
 }
+
 /*****************************************************************************
  * IDirectDraw7::Release
  *
@@ -275,21 +298,14 @@ static ULONG WINAPI
 IDirectDrawImpl_Release(IDirectDraw7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref7);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref +1);
+    TRACE("(%p)->() decrementing IDirectDraw7 refcount from %lu.\n", This, ref +1);
 
-    if (ref == 0)
+    if(ref == 0)
     {
-        /* No need to restore the display mode - it's done by SetCooperativeLevel */
-
-        IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(This, IDirectDraw7),
-                                         NULL,
-                                         DDSCL_NORMAL);
-
-        /* This is for the dll cleanup code in DllMain() */
-        if(!This->DoNotDestroy)
-            IDirectDrawImpl_Destroy(This);
+        ULONG ifacecount = InterlockedDecrement(&This->numIfaces);
+        if(ifacecount == 0) IDirectDrawImpl_Destroy(This);
     }
 
     return ref;
@@ -2337,6 +2353,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
 
     /* Addref the ddraw interface to keep an reference for each surface */
     IDirectDraw7_AddRef(iface);
+    object->ifaceToRelease = (IUnknown *) iface;
 
     /* If the implementation is OpenGL and there's no d3ddevice, attach a d3ddevice
      * But attach the d3ddevice only if the currently created surface was

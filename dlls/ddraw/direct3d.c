@@ -43,10 +43,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
 
 /*****************************************************************************
- * IUnknown Methods. Common for Version 1, 2, 3 and 7
+ * IDirect3D7::QueryInterface
  *
- * These are thunks which relay to IDirectDraw. See ddraw.c for
- * details
+ * QueryInterface implementation with thunks to IDirectDraw7
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -101,11 +100,30 @@ Thunk_IDirect3DImpl_1_QueryInterface(IDirect3D *iface,
                                        obj);
 }
 
+/*****************************************************************************
+ * IDirect3D7::AddRef
+ *
+ * DirectDraw refcounting is a bit odd. Every version of the ddraw interface
+ * has its own refcount, but IDirect3D 1/2/3 refcounts are linked to
+ * IDirectDraw, and IDirect3D7 is linked to IDirectDraw7
+ *
+ * IDirect3D7 -> IDirectDraw7
+ * IDirect3D3 -> IDirectDraw
+ * IDirect3D2 -> IDirectDraw
+ * IDirect3D  -> IDirectDraw
+ *
+ * So every AddRef implementation thunks to a different interface, and the
+ * IDirectDrawX::AddRef implementations have different counters...
+ *
+ * Returns
+ *  The new refcount
+ *
+ *****************************************************************************/
 static ULONG WINAPI
 Thunk_IDirect3DImpl_7_AddRef(IDirect3D7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7\n", This);
+    TRACE("(%p) : Thunking to IDirectDraw7.\n", This);
 
     return IDirectDraw7_AddRef(ICOM_INTERFACE(This, IDirectDraw7));
 }
@@ -114,34 +132,42 @@ static ULONG WINAPI
 Thunk_IDirect3DImpl_3_AddRef(IDirect3D3 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7\n", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_AddRef(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_AddRef(ICOM_INTERFACE(This, IDirectDraw));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DImpl_2_AddRef(IDirect3D2 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D2, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7\n", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_AddRef(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_AddRef(ICOM_INTERFACE(This, IDirectDraw));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DImpl_1_AddRef(IDirect3D *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7\n", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_AddRef(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_AddRef(ICOM_INTERFACE(This, IDirectDraw));
 }
 
+/*****************************************************************************
+ * IDirect3D7::Release
+ *
+ * Same story as IDirect3D7::AddRef
+ *
+ * Returns: The new refcount
+ *
+ *****************************************************************************/
 static ULONG WINAPI
 Thunk_IDirect3DImpl_7_Release(IDirect3D7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7", This);
+    TRACE("(%p) : Thunking to IDirectDraw7.\n", This);
 
     return IDirectDraw7_Release(ICOM_INTERFACE(This, IDirectDraw7));
 }
@@ -150,27 +176,27 @@ static ULONG WINAPI
 Thunk_IDirect3DImpl_3_Release(IDirect3D3 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_Release(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_Release(ICOM_INTERFACE(This, IDirectDraw));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DImpl_2_Release(IDirect3D2 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D2, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_Release(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_Release(ICOM_INTERFACE(This, IDirectDraw));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DImpl_1_Release(IDirect3D *iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D, iface);
-    TRACE("(%p) : Thunking to IDirectDraw7", This);
+    TRACE("(%p) : Thunking to IDirectDraw.\n", This);
 
-    return IDirectDraw7_Release(ICOM_INTERFACE(This, IDirectDraw7));
+    return IDirectDraw_Release(ICOM_INTERFACE(This, IDirectDraw));
 }
 
 /*****************************************************************************
