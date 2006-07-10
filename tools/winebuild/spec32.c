@@ -202,7 +202,7 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
-        if (!odp) fprintf( outfile, "\t.long 0\n" );
+        if (!odp) fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );
         else switch(odp->type)
         {
         case TYPE_EXTERN:
