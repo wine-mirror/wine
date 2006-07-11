@@ -75,6 +75,7 @@ BASEDIRS = \
 	imaadp32.acm \
 	imagehlp \
 	imm32 \
+	infosoft \
 	inseng \
 	iphlpapi \
 	itss \

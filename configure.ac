@@ -1625,10 +1625,11 @@ dlls/hlink/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
 dlls/ifsmgr.vxd/Makefile
-dlls/inseng/Makefile
 dlls/imaadp32.acm/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
+dlls/infosoft/Makefile
+dlls/inseng/Makefile
 dlls/iphlpapi/Makefile
 dlls/iphlpapi/tests/Makefile
 dlls/itss/Makefile
