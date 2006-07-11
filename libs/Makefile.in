@@ -6,18 +6,15 @@ MODULE    = none
 
 SUBDIRS = \
 	port \
-	unicode \
 	wine \
 	wpp
 
 INSTALLSUBDIRS = \
-	unicode \
 	wine
 
 SYMLINKS = \
 	libwine.$(LIBEXT) \
 	libwine_port.a \
-	libwine_unicode.$(LIBEXT) \
 	libwpp.a
 
 @MAKE_RULES@
@@ -37,9 +34,6 @@ clean::
 libwine.so libwine.so.1 libwine.dll libwine.dylib libwine.1.dylib libwine.a: wine/libwine.$(LIBEXT)
 	$(RM) $@ && $(LN_S) wine/$@ $@
 
-libwine_unicode.so libwine_unicode.so.1 libwine_unicode.dll libwine_unicode.dylib libwine_unicode.1.dylib libwine_unicode.a: unicode/libwine_unicode.$(LIBEXT)
-	$(RM) $@ && $(LN_S) unicode/$@ $@
-
 libwine_port.a: port/libwine_port.a
 	$(RM) $@ && $(LN_S) port/$@ $@
 
@@ -49,7 +43,6 @@ libwpp.a: wpp/libwpp.a
 # Directory dependencies
 
 wine/libwine.$(LIBEXT): wine
-unicode/libwine_unicode.$(LIBEXT): unicode
 port/libwine_port.a: port
 wpp/libwpp.a: wpp
 

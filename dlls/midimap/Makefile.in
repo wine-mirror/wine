@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = midimap.dll
 IMPORTS   = winmm user32 advapi32 kernel32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	midimap.c

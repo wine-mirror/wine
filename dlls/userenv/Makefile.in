@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = userenv.dll
 IMPORTS   = kernel32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	userenv_main.c

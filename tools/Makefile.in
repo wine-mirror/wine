@@ -64,7 +64,7 @@ relpath$(EXEEXT): relpath.o
 	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT) $(LDFLAGS)
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o
-	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
+	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
 
 bin2res$(EXEEXT): bin2res.o
 	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT) $(LDFLAGS)

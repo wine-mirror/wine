@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = mlang.dll
 IMPORTLIB = libmlang.$(IMPLIBEXT)
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE) -luuid
+EXTRALIBS = -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \

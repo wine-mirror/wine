@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = msvfw32.dll
 IMPORTLIB = libmsvfw32.$(IMPLIBEXT)
 IMPORTS   = winmm comctl32 version user32 gdi32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	mciwnd.c \

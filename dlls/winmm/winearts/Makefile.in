@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = winearts.drv
 IMPORTS   = winmm user32 kernel32 ntdll
 EXTRAINCL = @ARTSINCL@
-EXTRALIBS = @ARTSLIBS@ $(LIBUNICODE) -ldxguid -luuid
+EXTRALIBS = @ARTSLIBS@ -ldxguid -luuid
 
 C_SRCS = \
 	arts.c \

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll.dll
 IMPORTLIB = libntdll.$(IMPLIBEXT)
-EXTRALIBS = $(LIBUNICODE) @IOKITLIB@
+EXTRALIBS = @IOKITLIB@
 BASEADDRESS = 0x7bc00000
 
 C_SRCS = \

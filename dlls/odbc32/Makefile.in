@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = odbc32.dll
 IMPORTLIB = libodbc32.$(IMPLIBEXT)
 IMPORTS   = advapi32 kernel32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	proxyodbc.c

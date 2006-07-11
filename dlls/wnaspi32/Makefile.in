@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = wnaspi32.dll
 IMPORTLIB = libwnaspi32.$(IMPLIBEXT)
 IMPORTS   = advapi32 kernel32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	aspi.c \

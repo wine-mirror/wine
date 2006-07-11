@@ -7,7 +7,6 @@ MODULE    = user32.dll
 IMPORTLIB = libuser32.$(IMPLIBEXT)
 IMPORTS   = gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = imm32
-EXTRALIBS = $(LIBUNICODE)
 
 SPEC_SRCS16 = \
 	ddeml.spec \

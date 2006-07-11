@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = crtdll.dll
 IMPORTLIB = libcrtdll.$(IMPLIBEXT)
 IMPORTS   = msvcrt kernel32
-EXTRALIBS = $(LIBUNICODE)
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 

@@ -1204,11 +1204,11 @@ fi
 
 case $build_os in
   cygwin*|mingw32*)
-    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$PATH\"") ;;
+    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\"") ;;
   darwin*|macosx*)
-    AC_SUBST(LDPATH,"DYLD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$DYLD_LIBRARY_PATH\"") ;;
+    AC_SUBST(LDPATH,"DYLD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$DYLD_LIBRARY_PATH\"") ;;
   *)
-    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$LD_LIBRARY_PATH\"") ;;
+    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\"") ;;
 esac
 
 dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
@@ -1796,7 +1796,6 @@ fonts/Makefile
 include/Makefile
 libs/Makefile
 libs/port/Makefile
-libs/unicode/Makefile
 libs/wine/Makefile
 libs/wpp/Makefile
 loader/Makefile

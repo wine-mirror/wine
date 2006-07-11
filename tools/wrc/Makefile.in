@@ -27,7 +27,7 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBDIR)/wpp/libwpp.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) -L$(LIBDIR) -lwpp -lwine_unicode -lwine_port $(LEXLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) -L$(LIBDIR)/wpp -lwpp $(LIBWINE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
 parser.tab.c parser.tab.h: parser.y
 	$(BISON) -d -t $(SRCDIR)/parser.y -o parser.tab.c

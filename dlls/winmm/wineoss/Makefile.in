@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineoss.drv
 IMPORTS   = winmm user32 kernel32
-EXTRALIBS = $(LIBUNICODE) -ldxguid -luuid
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	audio.c \

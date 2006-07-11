@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = msvcrt20.dll
 IMPORTLIB = libmsvcrt20.$(IMPLIBEXT)
 IMPORTS   = msvcrt kernel32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = msvcrt20.c
 

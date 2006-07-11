@@ -7,7 +7,7 @@ MODULE    = shlwapi.dll
 IMPORTLIB = libshlwapi.$(IMPLIBEXT)
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = oleaut32
-EXTRALIBS = -luuid $(LIBUNICODE)
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	assoc.c \

@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = winedos.dll
 IMPORTLIB = libwinedos.$(IMPLIBEXT)
 IMPORTS   = user32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE)
 
 SPEC_SRCS16 = wprocs.spec
 

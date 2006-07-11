@@ -25,7 +25,7 @@ mcl.o: mcy.tab.h
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBUNICODE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
 mcy.tab.c mcy.tab.h: mcy.y
 	$(BISON) -d -t $(SRCDIR)/mcy.y -o mcy.tab.c

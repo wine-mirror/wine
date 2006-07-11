@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = urlmon.dll
 IMPORTLIB = liburlmon.$(IMPLIBEXT)
 IMPORTS   = cabinet ole32 shlwapi wininet user32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE) -luuid
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	binding.c \

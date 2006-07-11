@@ -7,7 +7,6 @@ MODULE    = msvcrt.dll
 IMPORTLIB = libmsvcrt.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = user32
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	console.c \

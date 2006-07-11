@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = itss.dll
 IMPORTS   = ole32 user32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE) -luuid
+EXTRALIBS = -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \

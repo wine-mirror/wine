@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = winmm.dll
 IMPORTLIB = libwinmm.$(IMPLIBEXT)
 IMPORTS   = user32 advapi32 kernel32 ntdll
-EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	driver.c \
