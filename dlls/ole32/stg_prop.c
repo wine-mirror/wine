@@ -118,25 +118,23 @@ typedef struct tagPROPERTYIDOFFSET
     DWORD dwOffset; /* from beginning of section */
 } PROPERTYIDOFFSET;
 
-struct tagPropertyStorage_impl;
+typedef struct tagPropertyStorage_impl PropertyStorage_impl;
 
 /* Initializes the property storage from the stream (and undoes any uncommitted
  * changes in the process.)  Returns an error if there is an error reading or
  * if the stream format doesn't match what's expected.
  */
-static HRESULT PropertyStorage_ReadFromStream(struct tagPropertyStorage_impl *);
+static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *);
 
-static HRESULT PropertyStorage_WriteToStream(struct tagPropertyStorage_impl *);
+static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *);
 
 /* Creates the dictionaries used by the property storage.  If successful, all
  * the dictionaries have been created.  If failed, none has been.  (This makes
  * it a bit easier to deal with destroying them.)
  */
-static HRESULT PropertyStorage_CreateDictionaries(
- struct tagPropertyStorage_impl *);
+static HRESULT PropertyStorage_CreateDictionaries(PropertyStorage_impl *);
 
-static void PropertyStorage_DestroyDictionaries(
- struct tagPropertyStorage_impl *);
+static void PropertyStorage_DestroyDictionaries(PropertyStorage_impl *);
 
 /* Copies from propvar to prop.  If propvar's type is VT_LPSTR, copies the
  * string using PropertyStorage_StringCopy.
@@ -161,7 +159,7 @@ static HRESULT create_EnumSTATPROPSETSTG(StorageImpl *, IEnumSTATPROPSETSTG**);
 /***********************************************************************
  * Implementation of IPropertyStorage
  */
-typedef struct tagPropertyStorage_impl
+struct tagPropertyStorage_impl
 {
     const IPropertyStorageVtbl *vtbl;
     LONG ref;
@@ -180,7 +178,7 @@ typedef struct tagPropertyStorage_impl
     struct dictionary *name_to_propid;
     struct dictionary *propid_to_name;
     struct dictionary *propid_to_prop;
-} PropertyStorage_impl;
+};
 
 /************************************************************************
  * IPropertyStorage_fnQueryInterface (IPropertyStorage)
