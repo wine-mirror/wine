@@ -820,11 +820,14 @@ static HRESULT  WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void
 
 static HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    FIXME_(d3d_caps)("(%p)->(Adptr:%d)\n", This, Adapter);
+    POINT pt = { -1, -1 };
+
     if (Adapter >= IWineD3DImpl_GetAdapterCount(iface)) {
         return NULL;
     }
-    return WINED3D_OK;
+
+    FIXME_(d3d_caps)("(%p): returning the primary monitor for adapter %d\n", This, Adapter);
+    return MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
