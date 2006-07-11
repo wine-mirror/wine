@@ -66,17 +66,17 @@ if [ "`uname -s`" = "Darwin" ]
 then
   if [ -n "$DYLD_LIBRARY_PATH" ]
   then
-    DYLD_LIBRARY_PATH="$topdir/libs:$DYLD_LIBRARY_PATH"
+    DYLD_LIBRARY_PATH="$topdir/libs/wine:$DYLD_LIBRARY_PATH"
   else
-    DYLD_LIBRARY_PATH="$topdir/libs"
+    DYLD_LIBRARY_PATH="$topdir/libs/wine"
   fi
   export DYLD_LIBRARY_PATH
 else
   if [ -n "$LD_LIBRARY_PATH" ]
   then
-    LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+    LD_LIBRARY_PATH="$topdir/libs/wine:$LD_LIBRARY_PATH"
   else
-    LD_LIBRARY_PATH="$topdir/libs"
+    LD_LIBRARY_PATH="$topdir/libs/wine"
   fi
   export LD_LIBRARY_PATH
 fi
