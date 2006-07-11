@@ -572,9 +572,14 @@ static struct regsvr_interface const interface_list[] = {
  *              register_inf
  */
 
-#define INF_SET_CLSID(clsid) \
-    pse[i].pszName = "CLSID_" #clsid; \
-    clsids[i++] = &CLSID_ ## clsid;
+#define INF_SET_CLSID(clsid)                  \
+    do                                        \
+    {                                         \
+        static CHAR name[] = "CLSID_" #clsid; \
+                                              \
+        pse[i].pszName = name;                \
+        clsids[i++] = &CLSID_ ## clsid;       \
+    } while (0)
 
 static HRESULT register_inf(BOOL doregister)
 {
@@ -587,7 +592,7 @@ static HRESULT register_inf(BOOL doregister)
     int i = 0;
 
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
-    
+
     INF_SET_CLSID(CdlProtocol);
     INF_SET_CLSID(FileProtocol);
     INF_SET_CLSID(FtpProtocol);
