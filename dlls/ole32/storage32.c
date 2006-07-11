@@ -5829,28 +5829,33 @@ HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgf
         return STG_E_INVALIDPARAMETER;  
     }
 
-    if (stgfmt == STGFMT_DOCFILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
+    switch (stgfmt)
     {
-        ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_DOCFILE\n");
-        return STG_E_INVALIDPARAMETER;  
-    }
-
-    if (stgfmt == STGFMT_FILE)
-    {
+    case STGFMT_FILE:
         ERR("Cannot use STGFMT_FILE - this is NTFS only\n");  
+        return STG_E_INVALIDPARAMETER;
+        
+    case STGFMT_STORAGE:
+        break;
+
+    case STGFMT_DOCFILE:
+        if (grfAttrs && grfAttrs != FILE_FLAG_NO_BUFFERING)
+        {
+            ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_DOCFILE\n");
+            return STG_E_INVALIDPARAMETER;  
+        }
+        FIXME("Stub: calling StgOpenStorage, but ignoring pStgOptions and grfAttrs\n");
+        break;
+
+    case STGFMT_ANY:
+        WARN("STGFMT_ANY assuming storage\n");
+        break;
+
+    default:
         return STG_E_INVALIDPARAMETER;
     }
 
-    if (stgfmt == STGFMT_STORAGE || stgfmt == STGFMT_DOCFILE || stgfmt == STGFMT_ANY)
-    {
-        if (stgfmt == STGFMT_ANY) 
-            WARN("STGFMT_ANY assuming storage\n");
-        FIXME("Stub: calling StgOpenStorage, but ignoring pStgOptions and grfAttrs\n");
-        return StgOpenStorage(pwcsName, NULL, grfMode, (SNB)NULL, 0, (IStorage **)ppObjectOpen); 
-    }
-
-    ERR("Invalid stgfmt argument\n");
-    return STG_E_INVALIDPARAMETER;
+    return StgOpenStorage(pwcsName, NULL, grfMode, (SNB)NULL, 0, (IStorage **)ppObjectOpen); 
 }
 
 
