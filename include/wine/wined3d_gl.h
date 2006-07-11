@@ -1537,6 +1537,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNCOMBINERPARAMETERFVNVPROC,                 glCombinerParameterfvNV); \
     USE_GL_FUNC(PGLFNCOMBINERPARAMETERINVPROC,                  glCombinerParameteriNV); \
     USE_GL_FUNC(PGLFNCOMBINERPARAMETERIVNVPROC,                 glCombinerParameterivNV); \
+    USE_GL_FUNC(PGLFNFINALCOMBINERINPUTNVPROC,                  glFinalCombinerInputNV); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
