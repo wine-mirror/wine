@@ -558,6 +558,132 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
+/* Acquires the private key using the key provider info, retrieving info from
+ * the certificate if info is NULL.  The acquired provider is returned in
+ * *phCryptProv, and the key spec for the provider is returned in *pdwKeySpec.
+ */
+static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert,
+ PCRYPT_KEY_PROV_INFO info, HCRYPTPROV *phCryptProv, DWORD *pdwKeySpec)
+{
+    DWORD size = 0;
+    BOOL allocated = FALSE, ret = TRUE;
+
+    if (!info)
+    {
+        ret = CertGetCertificateContextProperty(pCert,
+         CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
+        if (ret)
+        {
+            info = (PCRYPT_KEY_PROV_INFO)HeapAlloc(GetProcessHeap(), 0, size);
+            if (info)
+            {
+                ret = CertGetCertificateContextProperty(pCert,
+                 CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+                allocated = TRUE;
+            }
+        }
+        else
+            SetLastError(CRYPT_E_NO_KEY_PROPERTY);
+    }
+    if (ret)
+    {
+        ret = CryptAcquireContextW(phCryptProv, info->pwszContainerName,
+         info->pwszProvName, info->dwProvType, 0);
+        if (ret)
+        {
+            DWORD i;
+
+            for (i = 0; i < info->cProvParam; i++)
+            {
+                CryptSetProvParam(*phCryptProv,
+                 info->rgProvParam[i].dwParam, info->rgProvParam[i].pbData,
+                 info->rgProvParam[i].dwFlags);
+            }
+            *pdwKeySpec = info->dwKeySpec;
+        }
+        else
+            SetLastError(CRYPT_E_NO_KEY_PROPERTY);
+    }
+    if (allocated)
+        HeapFree(GetProcessHeap(), 0, info);
+    return ret;
+}
+
+BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
+ DWORD dwFlags, void *pvReserved, HCRYPTPROV *phCryptProv, DWORD *pdwKeySpec,
+ BOOL *pfCallerFreeProv)
+{
+    BOOL ret = FALSE, cache = FALSE;
+    PCRYPT_KEY_PROV_INFO info = NULL;
+    CERT_KEY_CONTEXT keyContext;
+    DWORD size;
+
+    TRACE("(%p, %08lx, %p, %p, %p, %p)\n", pCert, dwFlags, pvReserved,
+     phCryptProv, pdwKeySpec, pfCallerFreeProv);
+
+    if (dwFlags & CRYPT_ACQUIRE_USE_PROV_INFO_FLAG)
+    {
+        DWORD size = 0;
+
+        ret = CertGetCertificateContextProperty(pCert,
+         CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
+        if (ret)
+        {
+            info = (PCRYPT_KEY_PROV_INFO)HeapAlloc(
+             GetProcessHeap(), 0, size);
+            ret = CertGetCertificateContextProperty(pCert,
+             CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+            if (ret)
+                cache = info->dwFlags & CERT_SET_KEY_CONTEXT_PROP_ID;
+        }
+    }
+    else if (dwFlags & CRYPT_ACQUIRE_CACHE_FLAG)
+        cache = TRUE;
+    *phCryptProv = 0;
+    if (cache)
+    {
+        size = sizeof(keyContext);
+        ret = CertGetCertificateContextProperty(pCert, CERT_KEY_CONTEXT_PROP_ID,
+         &keyContext, &size);
+        if (ret)
+        {
+            *phCryptProv = keyContext.hCryptProv;
+            if (pdwKeySpec)
+                *pdwKeySpec = keyContext.dwKeySpec;
+            if (pfCallerFreeProv)
+                *pfCallerFreeProv = !cache;
+        }
+    }
+    if (!*phCryptProv)
+    {
+        ret = CRYPT_AcquirePrivateKeyFromProvInfo(pCert, info,
+         &keyContext.hCryptProv, &keyContext.dwKeySpec);
+        if (ret)
+        {
+            *phCryptProv = keyContext.hCryptProv;
+            if (pdwKeySpec)
+                *pdwKeySpec = keyContext.dwKeySpec;
+            if (cache)
+            {
+                keyContext.cbSize = sizeof(keyContext);
+                if (CertSetCertificateContextProperty(pCert,
+                 CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext))
+                {
+                    if (pfCallerFreeProv)
+                        *pfCallerFreeProv = FALSE;
+                }
+            }
+            else
+            {
+                if (pfCallerFreeProv)
+                    *pfCallerFreeProv = TRUE;
+            }
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, info);
+    return ret;
+}
+
 BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,
  PCERT_INFO pCertId1, PCERT_INFO pCertId2)
 {
@@ -1743,7 +1869,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info,
     else
         GetSystemTimeAsFileTime(&info->NotBefore);
     if (pEndTime)
-        SystemTimeToFileTime(pStartTime, &info->NotAfter);
+        SystemTimeToFileTime(pEndTime, &info->NotAfter);
     else
     {
         SYSTEMTIME endTime;
