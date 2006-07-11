@@ -198,8 +198,8 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             /* If any data that needs conversion has changed we have to reload the whole buffer */
             if( ( (This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
                   This->strided.u.s.position.lpData != strided.u.s.position.lpData) ||
-                !(This->strided.u.s.diffuse.lpData == strided.u.s.diffuse.lpData || strided.u.s.diffuse.VBO != This->vbo)   ||
-                !(This->strided.u.s.specular.lpData == strided.u.s.specular.lpData || strided.u.s.specular.VBO != This->vbo) ) {
+                !((This->strided.u.s.diffuse.lpData == strided.u.s.diffuse.lpData && This->strided.u.s.diffuse.dwType == strided.u.s.diffuse.dwType) || strided.u.s.diffuse.VBO != This->vbo)   ||
+                !((This->strided.u.s.specular.lpData == strided.u.s.specular.lpData && This->strided.u.s.specular.dwType == strided.u.s.specular.dwType)|| strided.u.s.specular.VBO != This->vbo) ) {
 
                 start = 0;
                 end = This->resource.size;
