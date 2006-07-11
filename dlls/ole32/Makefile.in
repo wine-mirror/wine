@@ -18,6 +18,7 @@ C_SRCS = \
 	datacache.c \
 	defaulthandler.c \
 	dictionary.c \
+	enumx.c \
 	errorinfo.c \
 	filemoniker.c \
 	ftmarshal.c \
