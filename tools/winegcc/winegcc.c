@@ -157,7 +157,7 @@ struct options
     int gui_app;
     int unicode_app;
     int compile_only;
-    int wine_mode;
+    const char* wine_objdir;
     const char* output_name;
     const char* image_base;
     strarray* prefix;
@@ -260,7 +260,7 @@ static void compile(struct options* opts, const char* lang)
     if (opts->processor != proc_cpp)
     {
 #ifdef CC_FLAG_SHORT_WCHAR
-	if (!opts->wine_mode && !opts->noshortwchar)
+	if (!opts->wine_objdir && !opts->noshortwchar)
 	{
             strarray_add(comp_args, CC_FLAG_SHORT_WCHAR);
             strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
@@ -346,7 +346,7 @@ static void compile(struct options* opts, const char* lang)
 #else
 #define SYS_INCLUDE "-I"
 #endif
-    if (!opts->wine_mode && !opts->nostdinc)
+    if (!opts->wine_objdir && !opts->nostdinc)
     {
         if (opts->use_msvcrt)
         {
@@ -472,10 +472,15 @@ static void build(struct options* opts)
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
-    if (!opts->wine_mode)
+    if (!opts->wine_objdir)
     {
 	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]); j++ )
 	    strarray_add(lib_dirs, stdlibpath[j]);
+    }
+    else
+    {
+        strarray_add(lib_dirs, strmake("%s/dlls", opts->wine_objdir));
+        strarray_add(lib_dirs, strmake("%s/libs/wine", opts->wine_objdir));
     }
 
     /* mark the files with their appropriate type */
@@ -530,7 +535,7 @@ static void build(struct options* opts)
     /* add the default libraries, if needed */
     if (!opts->nostdlib && opts->use_msvcrt) add_library(lib_dirs, files, "msvcrt");
 
-    if (!opts->wine_mode && !opts->nodefaultlibs) 
+    if (!opts->wine_objdir && !opts->nodefaultlibs) 
     {
         if (opts->gui_app) 
 	{
@@ -870,7 +875,9 @@ int main(int argc, char **argv)
 		    str = strdup(option_arg);
 		    if (strendswith(str, "/tools/winebuild"))
                     {
-                        opts.wine_mode = 1;
+                        char *objdir = strdup(str);
+                        objdir[strlen(objdir) - sizeof("/tools/winebuild") + 1] = 0;
+                        opts.wine_objdir = objdir;
                         /* don't pass it to the compiler, this generates warnings */
                         raw_compiler_arg = raw_linker_arg = 0;
                     }

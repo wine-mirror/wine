@@ -19,7 +19,7 @@ MAINSPEC    = $(BASEMODULE).spec
 SPEC_DEF    = lib$(BASEMODULE).def
 WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(RC_SRCS:.rc=.res)
-ALL_LIBS    = -L$(LIBDIR) -lwine $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
+ALL_LIBS    = $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 STATICIMPLIB= $(IMPORTLIB:.def=.def.a)
@@ -32,12 +32,12 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) $(BASEADDRESS:%=-Wl,--image-base,%) $(LDRPATH) -o $@ -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) $(BASEADDRESS:%=-Wl,--image-base,%) $(LDRPATH) -o $@ $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(ALL_LIBS)
+	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(LIBWINE) $(ALL_LIBS)
 
 # Rules for import libraries
 
