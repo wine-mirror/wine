@@ -25,8 +25,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&File" {
-  MENUITEM "&New...\tCtrl+N",           CMD_NEW
-  MENUITEM "&Open\tCtrl+O",     CMD_OPEN
+  MENUITEM "&New\tCtrl+N",      CMD_NEW
+  MENUITEM "&Open...\tCtrl+O",  CMD_OPEN
   MENUITEM "&Save\tCtrl+S",     CMD_SAVE
   MENUITEM "Save &as...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
