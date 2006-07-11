@@ -421,7 +421,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 
             SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
 
-            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
+            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*xdi));
             HKEY key;
             BOOL useDefault = TRUE;
             LONG ret;
