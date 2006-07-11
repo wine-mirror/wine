@@ -110,7 +110,7 @@ interface IWordBreaker: IUnknown
               [in] ULONG ulMaxTokenSize,
               [out] BOOL *pfLicense);
     HRESULT BreakText(
-              [in] TEXT_SOURCE pTextSource,
+              [in] TEXT_SOURCE *pTextSource,
               [in] IWordSink *pWordSink,
               [in] IPhraseSink *pPhraseSink);
     HRESULT ComposePhrase(
