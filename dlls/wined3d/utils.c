@@ -653,6 +653,17 @@ typedef struct {
     GLenum component_usage[3];
 } tex_op_args;
 
+static BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) {
+    if (op == D3DTOP_DISABLE) return FALSE;
+    if (This->stateBlock->textures[stage]) return FALSE;
+
+    if (arg1 == D3DTA_TEXTURE && op != D3DTOP_SELECTARG2) return TRUE;
+    if (arg2 == D3DTA_TEXTURE && op != D3DTOP_SELECTARG1) return TRUE;
+    if (arg3 == D3DTA_TEXTURE && (op == D3DTOP_MULTIPLYADD || op == D3DTOP_LERP)) return TRUE;
+
+    return FALSE;
+}
+
 void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl*)iface;
     tex_op_args tex_op_args = {{0}, {0}, {0}};
@@ -661,6 +672,13 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
 
     TRACE("stage %d, is_alpha %d, op %s, arg1 %#lx, arg2 %#lx, arg3 %#lx, texture_idx %d\n",
             stage, is_alpha, debug_d3dtop(op), arg1, arg2, arg3, texture_idx);
+
+    /* If a texture stage references an invalid texture unit the stage just
+     * passes through the result from the previous stage */
+    if (is_invalid_op(This, stage, op, arg1, arg2, arg3)) {
+        arg1 = D3DTA_CURRENT;
+        op = D3DTOP_SELECTARG1;
+    }
 
     get_src_and_opr_nvrc(stage, arg1, is_alpha, &tex_op_args.input[0],
             &tex_op_args.mapping[0], &tex_op_args.component_usage[0], texture_idx);
@@ -1051,6 +1069,13 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 opr1_target = useext(GL_OPERAND1_RGB);
                 opr2_target = useext(GL_OPERAND2_RGB);
                 scal_target = useext(GL_RGB_SCALE);
+        }
+
+        /* If a texture stage references an invalid texture unit the stage just
+         * passes through the result from the previous stage */
+        if (is_invalid_op(This, Stage, op, arg1, arg2, arg3)) {
+            arg1 = D3DTA_CURRENT;
+            op = D3DTOP_SELECTARG1;
         }
 
         /* From MSDN (WINED3DTSS_ALPHAARG1) :
