@@ -29,9 +29,6 @@
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
-#ifdef HAVE_SYS_REG_H
-#include <sys/reg.h>
-#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -468,44 +465,38 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 #endif
 
 /* debug register offset in struct user */
-#define DR_OFFSET(dr) ((int)((((struct user *)0)->u_debugreg) + (dr)))
-
-/* retrieve a debug register */
-static inline int get_debug_reg( int pid, int num, DWORD *data )
-{
-    int res;
-    errno = 0;
-    res = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(num), 0 );
-    if ((res == -1) && errno)
-    {
-        file_set_error();
-        return -1;
-    }
-    *data = res;
-    return 0;
-}
+#define DR_OFFSET(dr) ((((struct user *)0)->u_debugreg) + (dr))
 
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    int pid = get_ptrace_pid(thread);
+    int i, pid = get_ptrace_pid(thread);
+    long data[8];
 
     /* all other regs are handled on the client side */
     assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
 
     if (!suspend_for_ptrace( thread )) return;
 
-    if (get_debug_reg( pid, 0, &context->Dr0 ) == -1) goto error;
-    if (get_debug_reg( pid, 1, &context->Dr1 ) == -1) goto error;
-    if (get_debug_reg( pid, 2, &context->Dr2 ) == -1) goto error;
-    if (get_debug_reg( pid, 3, &context->Dr3 ) == -1) goto error;
-    if (get_debug_reg( pid, 6, &context->Dr6 ) == -1) goto error;
-    if (get_debug_reg( pid, 7, &context->Dr7 ) == -1) goto error;
+    for (i = 0; i < 8; i++)
+    {
+        if (i == 4 || i == 5) continue;
+        errno = 0;
+        data[i] = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(i), 0 );
+        if ((data[i] == -1) && errno)
+        {
+            file_set_error();
+            goto done;
+        }
+    }
+    context->Dr0 = data[0];
+    context->Dr1 = data[1];
+    context->Dr2 = data[2];
+    context->Dr3 = data[3];
+    context->Dr6 = data[6];
+    context->Dr7 = data[7];
     context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-    resume_after_ptrace( thread );
-    return;
- error:
-    file_set_error();
+done:
     resume_after_ptrace( thread );
 }
 
