@@ -303,7 +303,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     PROPVARIANT rgpropvar[])
 {
     PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
-    HRESULT hr = S_FALSE;
+    HRESULT hr = S_OK;
     ULONG i;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
@@ -344,6 +344,8 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
                     if (prop)
                         PropertyStorage_PropVariantCopy(&rgpropvar[i], prop,
                          GetACP(), This->codePage);
+                    else
+                        hr = S_FALSE;
                 }
             }
         }
