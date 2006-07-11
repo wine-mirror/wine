@@ -1240,8 +1240,7 @@ BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
     BOOL bSuccess;
 
     bSuccess = SHGetPathFromIDListW(pidl, wszPath);
-    if (bSuccess) 
-        WideCharToMultiByte(CP_ACP, 0, wszPath, -1, pszPath, MAX_PATH, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, wszPath, -1, pszPath, MAX_PATH, NULL, NULL);
 
     return bSuccess;
 }
@@ -1262,6 +1261,7 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
     TRACE_(shell)("(pidl=%p,%p)\n", pidl, pszPath);
     pdump(pidl);
 
+    *pszPath = '\0';
     if (!pidl)
         return FALSE;
 

@@ -771,6 +771,13 @@ static void test_SHGetPathFromIDList(void)
 
     if(!pSHGetSpecialFolderPathW) return;
 
+    /* Calling SHGetPathFromIDList with no pidl should return the empty string */
+    wszPath[0] = 'a';
+    wszPath[1] = '\0';
+    result = SHGetPathFromIDListW(NULL, wszPath);
+    ok(!result, "Expected failure\n");
+    ok(!wszPath[0], "Expected empty string\n");
+
     /* Calling SHGetPathFromIDList with an empty pidl should return the desktop folder's path. */
     result = pSHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
     ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %08lx\n", GetLastError());
@@ -794,9 +801,12 @@ static void test_SHGetPathFromIDList(void)
     }
 
     SetLastError(0xdeadbeef);
+    wszPath[0] = 'a';
+    wszPath[1] = '\0';
     result = SHGetPathFromIDListW(pidlMyComputer, wszPath);
     ok (!result, "SHGetPathFromIDList succeeded where it shouldn't!\n");
     ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %08lx\n", GetLastError());
+    ok (!wszPath[0], "Expected empty path\n");
     if (result) {
         IShellFolder_Release(psfDesktop);
         return;
