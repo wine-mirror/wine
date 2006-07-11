@@ -13,9 +13,7 @@ INSTALLSUBDIRS = \
 	wine
 
 SYMLINKS = \
-	libwine.$(LIBEXT) \
-	libwine_port.a \
-	libwpp.a
+	libwine.$(LIBEXT)
 
 @MAKE_RULES@
 
@@ -34,18 +32,9 @@ clean::
 libwine.so libwine.so.1 libwine.dll libwine.dylib libwine.1.dylib libwine.a: wine/libwine.$(LIBEXT)
 	$(RM) $@ && $(LN_S) wine/$@ $@
 
-libwine_port.a: port/libwine_port.a
-	$(RM) $@ && $(LN_S) port/$@ $@
-
-libwpp.a: wpp/libwpp.a
-	$(RM) $@ && $(LN_S) wpp/$@ $@
-
 # Directory dependencies
 
 wine/libwine.$(LIBEXT): wine
-port/libwine_port.a: port
-wpp/libwpp.a: wpp
-
-wine wine/__install__ wine/__install-lib__: libwine_port.a
+wine wine/__install__ wine/__install-lib__: port
 
 ### Dependencies:
