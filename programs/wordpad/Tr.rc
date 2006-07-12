@@ -24,9 +24,9 @@ MAINMENU MENU DISCARDABLE
 BEGIN
     POPUP "&Dosya"
     BEGIN
-        MENUITEM "&Yeni",         ID_FILE_NEW
-        MENUITEM "&Aç",           ID_FILE_OPEN
-        MENUITEM "&Kaydet",       ID_FILE_SAVE
+        MENUITEM "&Yeni\tCtrl+N",         ID_FILE_NEW
+        MENUITEM "&Aç\tCtrl+O",           ID_FILE_OPEN
+        MENUITEM "&Kaydet\tCtrl+S",       ID_FILE_SAVE
         MENUITEM SEPARATOR
         MENUITEM "&Çýk",          ID_FILE_EXIT
     END

@@ -22,9 +22,9 @@ MAINMENU MENU DISCARDABLE
 BEGIN
     POPUP "&Fil"
     BEGIN
-        MENUITEM "&Ny",          ID_FILE_NEW
-        MENUITEM "&Åpne",         ID_FILE_OPEN
-        MENUITEM "&Lagre",         ID_FILE_SAVE
+        MENUITEM "&Ny\tCtrl+N",          ID_FILE_NEW
+        MENUITEM "&Åpne\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Lagre\tCtrl+S",         ID_FILE_SAVE
         MENUITEM SEPARATOR
         MENUITEM "&Avslutt",         ID_FILE_EXIT
     END
