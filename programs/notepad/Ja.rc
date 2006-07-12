@@ -25,12 +25,12 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "ファイル(&F)" {
-  MENUITEM "新規作成(&N)...",           CMD_NEW
-  MENUITEM "開く(&O)\tCtrl+O",     CMD_OPEN
+  MENUITEM "新規作成(&N)\tCtrl+N",           CMD_NEW
+  MENUITEM "開く(&O)...\tCtrl+O",     CMD_OPEN
   MENUITEM "保存(&S)\tCtrl+S",     CMD_SAVE
   MENUITEM "名前を付けて保存(&a)...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "印刷(&P)",            CMD_PRINT
+  MENUITEM "印刷(&P)\tCtrl+P",            CMD_PRINT
   MENUITEM "ページ設定(&t)...",    CMD_PAGE_SETUP
   MENUITEM "プリンタの設定(&r)...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

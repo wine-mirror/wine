@@ -24,11 +24,11 @@ LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Filef" {
-  MENUITEM "&Ny...",            CMD_NEW
-  MENUITEM "Å&bn\tEnter",       CMD_OPEN
-  MENUITEM "&Gem",              CMD_SAVE
+  MENUITEM "&Ny\tCtrl+N",            CMD_NEW
+  MENUITEM "Å&bn...\tCtrl+O",       CMD_OPEN
+  MENUITEM "&Gem\tCtrl+S",              CMD_SAVE
   MENUITEM "Gem so&m...",       CMD_SAVE_AS
-  MENUITEM "&Udskriv",          CMD_PRINT
+  MENUITEM "&Udskriv\tCtrl+P",          CMD_PRINT
   MENUITEM "Side&opsætning...", CMD_PAGE_SETUP
   MENUITEM "&Indstil printer...",       CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

@@ -29,12 +29,12 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Soubor" {
-  MENUITEM "&Nový...",           CMD_NEW
-  MENUITEM "&Otevøít\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Nový\tCtrl+N",           CMD_NEW
+  MENUITEM "&Otevøít...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Uložit\tCtrl+S",     CMD_SAVE
   MENUITEM "Uložit j&ako...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Tisk",            CMD_PRINT
+  MENUITEM "&Tisk\tCtrl+P",            CMD_PRINT
   MENUITEM "Nas&tavení stránky...",    CMD_PAGE_SETUP
   MENUITEM "Nastavení tiská&rny...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

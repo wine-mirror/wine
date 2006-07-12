@@ -25,7 +25,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Datei" {
-  MENUITEM "&Neu...\tStrg+N",           CMD_NEW
+  MENUITEM "&Neu\tStrg+N",           CMD_NEW
   MENUITEM "Ö&ffnen...\tStrg+O",        CMD_OPEN
   MENUITEM "&Speichern\tStrg+S",        CMD_SAVE
   MENUITEM "Speichern &unter...",       CMD_SAVE_AS

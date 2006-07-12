@@ -24,11 +24,11 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Tiedosto" {
-  MENUITEM "&Uusi...",		CMD_NEW
-  MENUITEM "&Avaa",		CMD_OPEN
-  MENUITEM "Ta&lleta",		CMD_SAVE
+  MENUITEM "&Uusi\tCtrl+N",		CMD_NEW
+  MENUITEM "&Avaa...\tCtrl+O",		CMD_OPEN
+  MENUITEM "Ta&lleta\tCtrl+S",		CMD_SAVE
   MENUITEM "Talleta &nimellä...",	CMD_SAVE_AS
-  MENUITEM "T&ulosta",		CMD_PRINT
+  MENUITEM "T&ulosta\tCtrl+P",		CMD_PRINT
   MENUITEM "&Sivun asetukset...",	CMD_PAGE_SETUP
   MENUITEM "&Kirjoittimen asetukset...",	CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

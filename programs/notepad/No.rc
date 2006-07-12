@@ -23,8 +23,8 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 MAIN_MENU MENU
 {
  POPUP "&Fil" {
-  MENUITEM "&Ny . . .\tCtrl+N",           CMD_NEW
-  MENUITEM "&Åpne\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Ny\tCtrl+N",           CMD_NEW
+  MENUITEM "&Åpne . . .\tCtrl+O",     CMD_OPEN
   MENUITEM "&Lagre\tCtrl+S",     CMD_SAVE
   MENUITEM "Lagr&e som . . .",       CMD_SAVE_AS
   MENUITEM SEPARATOR

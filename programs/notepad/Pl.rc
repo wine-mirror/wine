@@ -26,12 +26,12 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Plik" {
-  MENUITEM "&Nowy",           CMD_NEW
+  MENUITEM "&Nowy\tCtrl+N",           CMD_NEW
   MENUITEM "&Otwórz...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Zapisz\tCtrl+S",     CMD_SAVE
   MENUITEM "Z&apisz jako...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Drukuj",            CMD_PRINT
+  MENUITEM "&Drukuj\tCtrl+P",            CMD_PRINT
   MENUITEM "&Ustawienia strony...",    CMD_PAGE_SETUP
   MENUITEM "Ustawienia &drukarki...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

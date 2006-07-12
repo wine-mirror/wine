@@ -23,8 +23,8 @@ LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Файл" {
-  MENUITEM "&Нов...\tCtrl+N",           CMD_NEW
-  MENUITEM "&Отвори\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Нов\tCtrl+N",           CMD_NEW
+  MENUITEM "&Отвори...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Съхрани\tCtrl+S",     CMD_SAVE
   MENUITEM "Съхрани &като...",       CMD_SAVE_AS
   MENUITEM SEPARATOR

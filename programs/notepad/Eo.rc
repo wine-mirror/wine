@@ -23,12 +23,12 @@ LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "Dosiero" {
-  MENUITEM "&Nova",           CMD_NEW
+  MENUITEM "&Nova\tCtrl+N",           CMD_NEW
   MENUITEM "Malfermu\tCtrl+O",     CMD_OPEN
   MENUITEM "Kon&servu\tCtrl+S",     CMD_SAVE
   MENUITEM "Konservu &kiel",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "Presu",            CMD_PRINT
+  MENUITEM "Presu\tCtrl+P",            CMD_PRINT
   MENUITEM "Impozu paøon",    CMD_PAGE_SETUP
   MENUITEM "Impozu Printilon", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

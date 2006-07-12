@@ -27,11 +27,11 @@ LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Fitchî" {
-  MENUITEM "&Novea...",         CMD_NEW
-  MENUITEM "&Drovî",            CMD_OPEN
-  MENUITEM "&Schaper",          CMD_SAVE
+  MENUITEM "&Novea\tCtrl+N",         CMD_NEW
+  MENUITEM "&Drovî...\tCtrl+O",            CMD_OPEN
+  MENUITEM "&Schaper\tCtrl+S",          CMD_SAVE
   MENUITEM "Schaper èt r&lomer...",     CMD_SAVE_AS
-  MENUITEM "&Rexhe",            CMD_PRINT
+  MENUITEM "&Rexhe\tCtrl+P",            CMD_PRINT
   MENUITEM "Arrandjmint del &Pådje...", CMD_PAGE_SETUP
   MENUITEM "&Apontiaedje del scrirece...",      CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

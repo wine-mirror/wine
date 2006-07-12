@@ -26,8 +26,8 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "파일(&F)" {
-  MENUITEM "새 파일(&N)...\tCtrl+N",           CMD_NEW
-  MENUITEM "열기(&O)\tCtrl+O",     CMD_OPEN
+  MENUITEM "새 파일(&N)\tCtrl+N",           CMD_NEW
+  MENUITEM "열기(&O)...\tCtrl+O",     CMD_OPEN
   MENUITEM " 저장(&S)\tCtrl+S",     CMD_SAVE
   MENUITEM "다른 이름으로 저장(&A)...",       CMD_SAVE_AS
   MENUITEM SEPARATOR

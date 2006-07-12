@@ -23,12 +23,12 @@ LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Bestand" {
-  MENUITEM "&Nieuw...",		     CMD_NEW
-  MENUITEM "&Openen\tCtrl+O",	     CMD_OPEN
-  MENUITEM "O&pslaan\tCtrl+p",	     CMD_SAVE
+  MENUITEM "&Nieuw",		     CMD_NEW
+  MENUITEM "&Openen...\tCtrl+O",	     CMD_OPEN
+  MENUITEM "O&pslaan\tCtrl+S",	     CMD_SAVE
   MENUITEM "Ops&laan als...",	     CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Afdrukken",	     CMD_PRINT
+  MENUITEM "&Afdrukken\tCtrl+P",	     CMD_PRINT
   MENUITEM "Pagina-in&stelling...",  CMD_PAGE_SETUP
   MENUITEM "Printerinstellingen...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

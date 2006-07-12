@@ -25,11 +25,11 @@ LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Arkiv" {
-  MENUITEM "&Ny...",            CMD_NEW
-  MENUITEM "Ö&ppna",            CMD_OPEN
-  MENUITEM "&Spara",            CMD_SAVE
+  MENUITEM "&Ny\tCtrl+N",            CMD_NEW
+  MENUITEM "Ö&ppna...\tCtrl+O",            CMD_OPEN
+  MENUITEM "&Spara\tCtrl+S",            CMD_SAVE
   MENUITEM "Spara &som...",     CMD_SAVE_AS
-  MENUITEM "&Skriv ut",         CMD_PRINT
+  MENUITEM "&Skriv ut\tCtrl+P",         CMD_PRINT
   MENUITEM "Sid La&yout...",    CMD_PAGE_SETUP
   MENUITEM "Skrivar &inställningar...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

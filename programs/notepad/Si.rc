@@ -23,12 +23,12 @@ LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Datoteka" {
-  MENUITEM "&Nova",           CMD_NEW
-  MENUITEM "&Odpri ...",             CMD_OPEN
-  MENUITEM "&Shrani",             CMD_SAVE
+  MENUITEM "&Nova\tCtrl+N",           CMD_NEW
+  MENUITEM "&Odpri ...\tCtrl+O",             CMD_OPEN
+  MENUITEM "&Shrani\tCtrl+S",             CMD_SAVE
   MENUITEM "Shrani &kot ...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "Na&tisni",            CMD_PRINT
+  MENUITEM "Na&tisni\tCtrl+P",            CMD_PRINT
   MENUITEM "P&riprava strani ...",    CMD_PAGE_SETUP
   MENUITEM "&Tiskalnik ...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

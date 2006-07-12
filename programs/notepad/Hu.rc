@@ -24,13 +24,13 @@
 MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 {
  POPUP "&Fájl" {
-  MENUITEM "Ú&j",           CMD_NEW
-  MENUITEM "Meg&nyitás...",             CMD_OPEN
-  MENUITEM "&Mentés",             CMD_SAVE
+  MENUITEM "Ú&j\tCtrl+N",           CMD_NEW
+  MENUITEM "Meg&nyitás...\tCtrl+O",             CMD_OPEN
+  MENUITEM "&Mentés\tCtrl+S",             CMD_SAVE
   MENUITEM "Mentés má&sként...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Oldalbeállítás...",    CMD_PAGE_SETUP
-  MENUITEM "Nyom&tatás...",            CMD_PRINT
+  MENUITEM "Nyom&tatás\tCtrl+P",            CMD_PRINT
   MENUITEM "Nyomtató &beállítás...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Kilépés",             CMD_EXIT

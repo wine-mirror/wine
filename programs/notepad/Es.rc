@@ -27,12 +27,12 @@ LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 MAIN_MENU MENU
 {
  POPUP "&Archivo" {
-  MENUITEM "&Nuevo...",                   CMD_NEW
-  MENUITEM "&Abrir\tCtrl+O",              CMD_OPEN
+  MENUITEM "&Nuevo\tCtrl+N",                   CMD_NEW
+  MENUITEM "&Abrir...\tCtrl+O",              CMD_OPEN
   MENUITEM "&Guardar\tCtrl+S",            CMD_SAVE
   MENUITEM "Guardar &como...",            CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Imprimir",                   CMD_PRINT
+  MENUITEM "&Imprimir\tCtrl+P",                   CMD_PRINT
   MENUITEM "Configurar &página...",       CMD_PAGE_SETUP
   MENUITEM "Configuración &impresora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

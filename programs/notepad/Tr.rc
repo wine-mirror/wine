@@ -23,8 +23,8 @@ LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Dosya" {
-  MENUITEM "&Yeni...\tCtrl+N",    CMD_NEW
-  MENUITEM "&Aç\tCtrl+O",         CMD_OPEN
+  MENUITEM "&Yeni\tCtrl+N",    CMD_NEW
+  MENUITEM "&Aç...\tCtrl+O",         CMD_OPEN
   MENUITEM "&Kaydet\tCtrl+S",     CMD_SAVE
   MENUITEM "&Farklý Kaydet...",   CMD_SAVE_AS
   MENUITEM SEPARATOR

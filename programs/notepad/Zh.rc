@@ -21,11 +21,11 @@
 MAIN_MENU MENU LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 {
  POPUP "文件（&F）" {
-  MENUITEM "新建（&N）...",           CMD_NEW
-  MENUITEM "打开（&O）",             CMD_OPEN
-  MENUITEM "保存（&S）",             CMD_SAVE
+  MENUITEM "新建（&N）\tCtrl+N",           CMD_NEW
+  MENUITEM "打开（&O）...\tCtrl+O",             CMD_OPEN
+  MENUITEM "保存（&S）\tCtrl+S",             CMD_SAVE
   MENUITEM "另存为(&A)...",       CMD_SAVE_AS
-  MENUITEM "打印（&P）",            CMD_PRINT
+  MENUITEM "打印（&P）\tCtrl+P",            CMD_PRINT
   MENUITEM "页面设置（&T）...",    CMD_PAGE_SETUP
   MENUITEM "打印设置（&R）...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

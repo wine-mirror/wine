@@ -28,12 +28,12 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&File" {
-  MENUITEM "&Nuovo",           CMD_NEW
+  MENUITEM "&Nuovo\tCtrl+N",           CMD_NEW
   MENUITEM "&Apri...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Salva\tCtrl+S",     CMD_SAVE
   MENUITEM "Salva &con nome...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Stampa",            CMD_PRINT
+  MENUITEM "&Stampa\tCtrl+P",            CMD_PRINT
   MENUITEM "&Imposta pagina...",    CMD_PAGE_SETUP
   MENUITEM "&Configurazione stampante...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

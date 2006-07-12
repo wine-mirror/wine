@@ -25,12 +25,12 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 MAIN_MENU MENU
 {
  POPUP "&Fichier" {
-  MENUITEM "&Nouveau...",       CMD_NEW
-  MENUITEM "&Ouvrir\tCtrl+O",   CMD_OPEN
+  MENUITEM "&Nouveau\tCtrl+N",       CMD_NEW
+  MENUITEM "&Ouvrir...\tCtrl+O",   CMD_OPEN
   MENUITEM "&Enregistrer\tCtrl+S", CMD_SAVE
   MENUITEM "Enregistrer &sous...", CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "Im&primer",         CMD_PRINT
+  MENUITEM "Im&primer\tCtrl+P",         CMD_PRINT
   MENUITEM "&Mise en page...",  CMD_PAGE_SETUP
   MENUITEM "&Configuration de l'imprimante...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

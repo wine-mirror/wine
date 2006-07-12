@@ -23,12 +23,12 @@ LANGUAGE LANG_THAI, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "แฟ้ม" {
-  MENUITEM "สร้างใหม่...",        CMD_NEW
+  MENUITEM "สร้างใหม่\tCtrl+N",        CMD_NEW
   MENUITEM "เปิด...\tCtrl+O",   CMD_OPEN
   MENUITEM "บันทืก\tCtrl+S",     CMD_SAVE
   MENUITEM "บันทืกเป็น...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "พิมพ์",            CMD_PRINT
+  MENUITEM "พิมพ์\tCtrl+P",            CMD_PRINT
   MENUITEM "ปรับแต่งหน้า...",    CMD_PAGE_SETUP
   MENUITEM "ปรับแต่งเครื่องพิมพ์...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR

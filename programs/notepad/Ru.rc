@@ -21,14 +21,14 @@
 MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 {
  POPUP "&Файл" {
-  MENUITEM "Созд&ать",           CMD_NEW
-  MENUITEM "&Открыть...",             CMD_OPEN
-  MENUITEM "&Сохранить",             CMD_SAVE
+  MENUITEM "Созд&ать\tCtrl+N",           CMD_NEW
+  MENUITEM "&Открыть...\tCtrl+O",             CMD_OPEN
+  MENUITEM "&Сохранить\tCtrl+S",             CMD_SAVE
   MENUITEM "Сохранить &как...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "Пара&метры страницы...",    CMD_PAGE_SETUP
   MENUITEM "&Настройка принтера...", CMD_PRINTER_SETUP
-  MENUITEM "&Печатать",            CMD_PRINT
+  MENUITEM "&Печатать\tCtrl+P",            CMD_PRINT
   MENUITEM SEPARATOR
   MENUITEM "В&ыход",             CMD_EXIT
  }
