@@ -104,7 +104,7 @@ static int AlertFileNotSaved(LPCWSTR szFileName)
    wsprintf(szMessage, szResource, szFileName[0] ? szFileName : szUntitled);
 
    /* Load Caption */
-   LoadString(Globals.hInstance, STRING_ERROR, szResource, SIZEOF(szResource));
+   LoadString(Globals.hInstance, STRING_NOTEPAD, szResource, SIZEOF(szResource));
 
    /* Display modal */
    return MessageBox(Globals.hMainWnd, szMessage, szResource, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
