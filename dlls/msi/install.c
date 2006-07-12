@@ -331,6 +331,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     LPWSTR path = NULL;
     LPWSTR path2 = NULL;
     MSIFOLDER *folder;
+    MSIFILE *file;
 
     TRACE("(%p %s %s)\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
 
@@ -373,6 +374,21 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
         {
             path2 = resolve_folder(package, f->Directory, FALSE, TRUE, NULL);
             msi_free(path2);
+        }
+
+        LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+        {
+            MSICOMPONENT *comp = file->Component;
+            LPWSTR p;
+
+            if (!comp)
+                continue;
+
+            p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+            msi_free(file->TargetPath);
+
+            file->TargetPath = build_directory_name(2, p, file->FileName);
+            msi_free(p);
         }
     }
     msi_free(path);

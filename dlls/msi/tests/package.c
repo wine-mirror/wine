@@ -499,11 +499,8 @@ static void test_settargetpath(void)
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     query_file_path( hpkg, "[#TestFile]", buffer );
-    todo_wine
-    {
-        ok( !lstrcmp(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
-            "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
-    }
+    ok( !lstrcmp(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
+        "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
     
     MsiCloseHandle( hpkg );
 }
