@@ -240,7 +240,8 @@ typedef struct tagX11DRV_CP
                        int x, int y, XTextItem16* pitems, int count );
     void (*pTextExtents)( fontObject* pfo, XChar2b* pstr, int count,
                           int* pdir, int* pascent, int* pdescent,
-                          int* pwidth );
+                          int* pwidth, int max_extent, int *pfit,
+                          int* partial_extents );
     void (*pGetTextMetricsW)( fontObject* pfo, LPTEXTMETRICW pTM );
 } X11DRV_CP;
 

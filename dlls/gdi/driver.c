@@ -121,7 +121,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(GetPixel);
         GET_FUNC(GetPixelFormat);
         GET_FUNC(GetSystemPaletteEntries);
-        GET_FUNC(GetTextExtentPoint);
+        GET_FUNC(GetTextExtentExPoint);
         GET_FUNC(GetTextMetrics);
         GET_FUNC(IntersectClipRect);
         GET_FUNC(InvertRgn);

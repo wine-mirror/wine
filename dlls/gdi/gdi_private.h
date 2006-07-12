@@ -107,7 +107,7 @@ typedef struct tagDC_FUNCS
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);
     UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
-    BOOL     (*pGetTextExtentPoint)(PHYSDEV,LPCWSTR,INT,LPSIZE);
+    BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,INT,LPINT,LPINT,LPSIZE);
     BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
     INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
@@ -379,7 +379,7 @@ extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph);
 extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
 extern UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags);
-extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
+extern BOOL WineEngGetTextExtentExPoint(GdiFont, LPCWSTR, INT, INT, LPINT, LPINT, LPSIZE);
 extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
 extern INT  WineEngGetTextFace(GdiFont, INT, LPWSTR);
 extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);

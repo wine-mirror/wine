@@ -14,7 +14,7 @@
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) PSDRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) PSDRV_GetCharWidth
 @ cdecl GetDeviceCaps(ptr long) PSDRV_GetDeviceCaps
-@ cdecl GetTextExtentPoint(ptr ptr long ptr) PSDRV_GetTextExtentPoint
+@ cdecl GetTextExtentExPoint(ptr ptr long long ptr ptr ptr) PSDRV_GetTextExtentExPoint
 @ cdecl GetTextMetrics(ptr ptr) PSDRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) PSDRV_LineTo
 @ cdecl PaintRgn(ptr long) PSDRV_PaintRgn

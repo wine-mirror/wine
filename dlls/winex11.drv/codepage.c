@@ -432,14 +432,32 @@ static void X11DRV_DrawText_normal( fontObject* pfo, Display* pdisp, Drawable d,
 
 static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count,
                                        int* pdir, int* pascent, int* pdescent,
-                                       int* pwidth )
+                                       int* pwidth, int max_extent, int* pfit,
+                                       int* partial_extents )
 {
     XCharStruct info;
+    int ascent, descent, width;
+    int i, fit;
 
+    width = 0;
+    fit = 0;
+    *pascent = 0;
+    *pdescent = 0;
     wine_tsx11_lock();
-    XTextExtents16( pfo->fs, pstr, count, pdir, pascent, pdescent, &info );
+    for ( i = 0; i < count; i++ )
+    {
+	XTextExtents16( pfo->fs, pstr, 1, pdir, &ascent, &descent, &info );
+	if ( *pascent < ascent ) *pascent = ascent;
+	if ( *pdescent < descent ) *pdescent = descent;
+	width += info.width;
+	if ( partial_extents ) partial_extents[i] = width;
+	if ( width < max_extent ) fit++;
+
+	pstr++;
+    }
     wine_tsx11_unlock();
-    *pwidth = info.width;
+    *pwidth = width;
+    if ( pfit ) *pfit = fit;
 }
 
 static void X11DRV_GetTextMetricsW_normal( fontObject* pfo, LPTEXTMETRICW pTM )
@@ -594,11 +612,13 @@ void X11DRV_DrawText_dbcs_2fonts( fontObject* pfo, Display* pdisp, Drawable d,
 static
 void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
                                      int* pdir, int* pascent, int* pdescent,
-                                     int* pwidth )
+                                     int* pwidth, int max_extent, int* pfit,
+                                     int* partial_extents )
 {
     XCharStruct info;
     int ascent, descent, width;
     int i;
+    int fit;
     int curfont;
     fontObject* pfos[X11FONT_REFOBJS_MAX+1];
 
@@ -607,6 +627,7 @@ void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
     if ( pfos[0] == NULL ) pfos[0] = pfo;
 
     width = 0;
+    fit = 0;
     *pascent = 0;
     *pdescent = 0;
     wine_tsx11_lock();
@@ -617,11 +638,14 @@ void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
 	if ( *pascent < ascent ) *pascent = ascent;
 	if ( *pdescent < descent ) *pdescent = descent;
 	width += info.width;
+	if ( partial_extents ) partial_extents[i] = width;
+	if ( width <= max_extent ) fit++;
 
 	pstr ++;
     }
     wine_tsx11_unlock();
     *pwidth = width;
+    if ( pfit ) *pfit = fit;
 }
 
 static void X11DRV_GetTextMetricsW_cp932( fontObject* pfo, LPTEXTMETRICW pTM )

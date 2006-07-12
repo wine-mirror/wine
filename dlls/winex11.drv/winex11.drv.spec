@@ -27,7 +27,7 @@
 @ cdecl GetPixel(ptr long long) X11DRV_GetPixel
 @ cdecl GetPixelFormat(ptr) X11DRV_GetPixelFormat
 @ cdecl GetSystemPaletteEntries(ptr long long ptr) X11DRV_GetSystemPaletteEntries
-@ cdecl GetTextExtentPoint(ptr ptr long ptr) X11DRV_GetTextExtentPoint
+@ cdecl GetTextExtentExPoint(ptr ptr long long ptr ptr ptr) X11DRV_GetTextExtentExPoint
 @ cdecl GetTextMetrics(ptr ptr) X11DRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) X11DRV_LineTo
 @ cdecl PaintRgn(ptr long) X11DRV_PaintRgn

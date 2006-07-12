@@ -1053,27 +1053,7 @@ BOOL WINAPI GetTextExtentPoint32W(
     INT count,   /* [in]  Number of characters in string */
     LPSIZE size) /* [out] Address of structure for string size */
 {
-    BOOL ret = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
-    if (!dc) return FALSE;
-
-    if(dc->gdiFont)
-        ret = WineEngGetTextExtentPoint(dc->gdiFont, str, count, size);
-    else if(dc->funcs->pGetTextExtentPoint)
-        ret = dc->funcs->pGetTextExtentPoint( dc->physDev, str, count, size );
-
-    if (ret)
-    {
-	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-        size->cx += count * dc->charExtra + dc->breakRem;
-    }
-
-    GDI_ReleaseObj( hdc );
-
-    TRACE("(%p %s %d %p): returning %ld x %ld\n",
-          hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
-    return ret;
+    return GetTextExtentExPointW(hdc, str, count, 0, NULL, NULL, size);
 }
 
 /***********************************************************************
@@ -1101,9 +1081,10 @@ BOOL WINAPI GetTextExtentPointI(
 	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
         size->cx += count * dc->charExtra;
     }
-    else if(dc->funcs->pGetTextExtentPoint) {
-        FIXME("calling GetTextExtentPoint\n");
-        ret = dc->funcs->pGetTextExtentPoint( dc->physDev, (LPCWSTR)indices, count, size );
+    else if(dc->funcs->pGetTextExtentExPoint) {
+        FIXME("calling GetTextExtentExPoint\n");
+        ret = dc->funcs->pGetTextExtentExPoint( dc->physDev, (LPCWSTR)indices,
+                                                count, 0, NULL, NULL, size );
     }
 
     GDI_ReleaseObj( hdc );
@@ -1205,36 +1186,69 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 				   INT maxExt, LPINT lpnFit,
 				   LPINT alpDx, LPSIZE size )
 {
-    int index, nFit, extent;
-    SIZE tSize;
+    INT nFit = 0;
+    LPINT dxs = NULL;
+    DC *dc;
     BOOL ret = FALSE;
 
     TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
 
-    size->cx = size->cy = nFit = extent = 0;
-    for(index = 0; index < count; index++)
+    dc = DC_GetDCPtr(hdc);
+    if (! dc)
+        return FALSE;
+
+    /* If we need to calculate nFit, then we need the partial extents even if
+       the user hasn't provided us with an array.  */
+    if (lpnFit)
     {
- 	if(!GetTextExtentPoint32W( hdc, str, index + 1, &tSize )) goto done;
-        /* GetTextExtentPoint includes intercharacter spacing. */
-        /* FIXME - justification needs doing yet.  Remember that the base
-         * data will not be in logical coordinates.
-         */
-	extent = tSize.cx;
-	if( !lpnFit || extent <= maxExt )
-        /* It is allowed to be equal. */
-        {
-	    nFit++;
-	    if( alpDx ) alpDx[index] = extent;
-        }
-	if( tSize.cy > size->cy ) size->cy = tSize.cy;
+	dxs = alpDx ? alpDx : HeapAlloc(GetProcessHeap(), 0, count * sizeof alpDx[0]);
+	if (! dxs)
+	{
+	    GDI_ReleaseObj(hdc);
+	    SetLastError(ERROR_OUTOFMEMORY);
+	    return FALSE;
+	}
     }
-    size->cx = extent;
-    if(lpnFit) *lpnFit = nFit;
-    ret = TRUE;
+    else
+	dxs = alpDx;
+
+    if (dc->gdiFont)
+	ret = WineEngGetTextExtentExPoint(dc->gdiFont, str, count,
+					  0, NULL, dxs, size);
+    else if (dc->funcs->pGetTextExtentExPoint)
+	ret = dc->funcs->pGetTextExtentExPoint(dc->physDev, str, count,
+					       0, NULL, dxs, size);
+
+    /* Perform device size to world size transformations.  */
+    if (ret)
+    {
+	INT extra = dc->charExtra, breakRem = dc->breakRem;
+
+	if (dxs)
+	{
+	    INT i;
+	    for (i = 0; i < count; ++i)
+	    {
+		dxs[i] = abs(INTERNAL_XDSTOWS(dc, dxs[i]));
+		dxs[i] += (i+1) * extra + breakRem;
+		if (dxs[i] <= maxExt)
+		    ++nFit;
+	    }
+	}
+	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
+	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+	size->cx += count * extra + breakRem;
+    }
+
+    if (lpnFit)
+	*lpnFit = nFit;
+
+    if (dxs && ! alpDx)
+        HeapFree(GetProcessHeap(), 0, dxs);
+
+    GDI_ReleaseObj( hdc );
 
     TRACE("returning %d %ld x %ld\n",nFit,size->cx,size->cy);
-
-done:
     return ret;
 }
 

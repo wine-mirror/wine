@@ -480,8 +480,8 @@ extern BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const INT *lpDx );
 extern BOOL PSDRV_GetCharWidth( PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar,
 				  LPINT buffer );
-extern BOOL PSDRV_GetTextExtentPoint( PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
-					LPSIZE size );
+extern BOOL PSDRV_GetTextExtentExPoint( PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
+					INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
 extern BOOL PSDRV_GetTextMetrics( PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics );
 extern BOOL PSDRV_LineTo( PSDRV_PDEVICE *physDev, INT x, INT y );
 extern BOOL PSDRV_PatBlt( PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD

@@ -304,22 +304,37 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 }
 
 /***********************************************************************
- *           PSDRV_GetTextExtentPoint
+ *           PSDRV_GetTextExtentExPoint
  */
-BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LPSIZE size)
+BOOL PSDRV_GetTextExtentExPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size)
 {
+    int     	    nfit = 0;
     int     	    i;
     float   	    width = 0.0;
+    float   	    scale;
 
     assert(physDev->font.fontloc == Builtin);
 
     TRACE("%s %i\n", debugstr_wn(str, count), count);
 
+    scale = physDev->font.fontinfo.Builtin.scale;
     for (i = 0; i < count && str[i] != '\0'; ++i)
+    {
+	float scaled_width;
 	width += PSDRV_UVMetrics(str[i], physDev->font.fontinfo.Builtin.afm)->WX;
+	scaled_width = width * scale;
+	if (alpDx)
+	    alpDx[i] = scaled_width;
+	if (scaled_width <= maxExt)
+	    ++nfit;
+    }
 
     size->cx = width * physDev->font.fontinfo.Builtin.scale;
     size->cy = physDev->font.fontinfo.Builtin.tm.tmHeight;
+
+    if (lpnFit)
+	*lpnFit = nfit;
 
     TRACE("cx=%li cy=%li\n", size->cx, size->cy);
 

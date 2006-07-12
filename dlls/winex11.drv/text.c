@@ -201,10 +201,10 @@ END:
 
 
 /***********************************************************************
- *           X11DRV_GetTextExtentPoint
+ *           X11DRV_GetTextExtentExPoint
  */
-BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
-                                  LPSIZE size )
+BOOL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                  INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size )
 {
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
@@ -216,23 +216,33 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 	    int dir, ascent, descent;
 	    int info_width;
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
-				count, &dir, &ascent, &descent, &info_width );
+				count, &dir, &ascent, &descent, &info_width,
+				maxExt, lpnFit, alpDx );
 
           size->cx = info_width;
           size->cy = pfo->fs->ascent + pfo->fs->descent;
 	} else {
 	    INT i;
+	    INT nfit = 0;
 	    float x = 0.0, y = 0.0;
+	    float scaled_x = 0.0, pixsize = pfo->lpX11Trans->pixelsize;
 	    /* FIXME: Deal with *_char_or_byte2 != 0 situations */
 	    for(i = 0; i < count; i++) {
 	        x += pfo->fs->per_char ?
 	   pfo->fs->per_char[p[i].byte2 - pfo->fs->min_char_or_byte2].attributes :
 	   pfo->fs->min_bounds.attributes;
+	        scaled_x = x * pixsize / 1000.0;
+	        if (alpDx)
+	            alpDx[i] = scaled_x;
+	        if (scaled_x <= maxExt)
+	            ++nfit;
 	    }
 	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
 	    TRACE("x = %f y = %f\n", x, y);
 	    size->cx = x * pfo->lpX11Trans->pixelsize / 1000.0;
 	    size->cy = y * pfo->lpX11Trans->pixelsize / 1000.0;
+	    if (lpnFit)
+	        *lpnFit = nfit;
 	}
 	size->cx *= pfo->rescale;
 	size->cy *= pfo->rescale;

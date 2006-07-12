@@ -3849,20 +3849,21 @@ BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD p
 }
 
 /*************************************************************
- * WineEngGetTextExtentPoint
+ * WineEngGetTextExtentExPoint
  *
  */
-BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
-			       LPSIZE size)
+BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
+                                 INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
 {
     INT idx;
+    INT nfit = 0, ext;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
     FT_UInt glyph_index;
     GdiFont linked_font;
 
-    TRACE("%p, %s, %d, %p\n", font, debugstr_wn(wstr, count), count,
-	  size);
+    TRACE("%p, %s, %d, %d, %p\n", font, debugstr_wn(wstr, count), count,
+	  max_ext, size);
 
     size->cx = 0;
     WineEngGetTextMetrics(font, &tm);
@@ -3873,8 +3874,18 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
         WineEngGetGlyphOutline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
                                &gm, 0, NULL, NULL);
 	size->cx += linked_font->gm[glyph_index].adv;
+        ext = size->cx;
+        if (! pnfit || ext <= max_ext) {
+            ++nfit;
+            if (dxs)
+                dxs[idx] = ext;
+        }
     }
-    TRACE("return %ld,%ld\n", size->cx, size->cy);
+
+    if (pnfit)
+        *pnfit = nfit;
+
+    TRACE("return %ld, %ld, %d\n", size->cx, size->cy, nfit);
     return TRUE;
 }
 
@@ -4149,8 +4160,8 @@ BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD p
     return FALSE;
 }
 
-BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
-			       LPSIZE size)
+BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
+                                 INT max_ext, LPINT nfit, LPINT dx, LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;

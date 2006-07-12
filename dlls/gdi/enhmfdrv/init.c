@@ -80,7 +80,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetSystemPaletteEntries */
-    NULL,                            /* pGetTextExtentPoint */
+    NULL,                            /* pGetTextExtentExPoint */
     NULL,                            /* pGetTextMetrics */
     EMFDRV_IntersectClipRect,        /* pIntersectClipRect */
     EMFDRV_InvertRgn,                /* pInvertRgn */
