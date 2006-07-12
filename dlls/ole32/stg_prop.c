@@ -307,7 +307,9 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
 
-    if (cpspec && (!rgpspec || !rgpropvar))
+    if (!cpspec)
+        return S_FALSE;
+    if (!rgpspec || !rgpropvar)
         return E_INVALIDARG;
     EnterCriticalSection(&This->cs);
     for (i = 0; i < cpspec; i++)

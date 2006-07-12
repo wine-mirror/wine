@@ -65,7 +65,7 @@ static void testProps(void)
 
     hr = StgCreateDocfile(filename,
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
-    ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreateDocfile failed: 0x%08lx\n", hr);
 
     if(!pStgCreatePropSetStg)
     {
@@ -74,16 +74,16 @@ static void testProps(void)
         return;
     }
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
-    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
      &FMTID_SummaryInformation, NULL, PROPSETFLAG_ANSI,
      STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
      &propertyStorage);
-    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
 
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 0, NULL, NULL, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple with 0 args failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple with 0 args failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, NULL, NULL, 0);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
 
@@ -118,7 +118,7 @@ static void testProps(void)
     U(spec).propid = PID_FIRST_USABLE;
     U(var).lVal = 1;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
 
     /* set one by name */
     spec.ulKind = PRSPEC_LPWSTR;
@@ -126,7 +126,7 @@ static void testProps(void)
     U(var).lVal = 2;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var,
      PID_FIRST_USABLE);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
 
     /* set a string value */
     spec.ulKind = PRSPEC_PROPID;
@@ -134,7 +134,7 @@ static void testProps(void)
     var.vt = VT_LPSTR;
     U(var).pszVal = (LPSTR)val;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
 
     /* set a clipboard value */
     spec.ulKind = PRSPEC_PROPID;
@@ -145,19 +145,19 @@ static void testProps(void)
     clipdata.pClipData = clipcontent;
     U(var).pclipdata = &clipdata;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
 
 
     /* check reading */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 0, NULL, NULL);
-    ok(SUCCEEDED(hr), "ReadMultiple with 0 args failed: 0x%08lx\n", hr);
+    ok(hr == S_FALSE, "ReadMultiple with 0 args failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, NULL, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     /* read by propid */
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PID_FIRST_USABLE;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I4 && U(var).lVal == 1,
      "Didn't get expected type or value for property (got type %d, value %ld)\n",
      var.vt, U(var).lVal);
@@ -165,7 +165,7 @@ static void testProps(void)
     spec.ulKind = PRSPEC_LPWSTR;
     U(spec).lpwstr = (LPOLESTR)propName;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I4 && U(var).lVal == 2,
      "Didn't get expected type or value for property (got type %d, value %ld)\n",
      var.vt, U(var).lVal);
@@ -173,7 +173,7 @@ static void testProps(void)
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PIDSI_AUTHOR;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !lstrcmpA(U(var).pszVal, val),
      "Didn't get expected type or value for property (got type %d, value %s)\n",
      var.vt, U(var).pszVal);
@@ -182,7 +182,7 @@ static void testProps(void)
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PIDSI_THUMBNAIL;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_CF, "variant type wrong\n");
     ok(U(var).pclipdata->ulClipFmt == CF_ENHMETAFILE,
         "clipboard type wrong\n");
@@ -194,7 +194,7 @@ static void testProps(void)
 
     /* check deleting */
     hr = IPropertyStorage_DeleteMultiple(propertyStorage, 0, NULL);
-    ok(SUCCEEDED(hr), "DeleteMultiple with 0 args failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "DeleteMultiple with 0 args failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_DeleteMultiple(propertyStorage, 1, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     /* contrary to what the docs say, you can't delete the dictionary */
@@ -206,21 +206,21 @@ static void testProps(void)
     /* now delete the first value.. */
     U(spec).propid = PID_FIRST_USABLE;
     hr = IPropertyStorage_DeleteMultiple(propertyStorage, 1, &spec);
-    ok(SUCCEEDED(hr), "DeleteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "DeleteMultiple failed: 0x%08lx\n", hr);
     /* and check that it's no longer readable */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
     ok(hr == S_FALSE, "Expected S_FALSE, got 0x%08lx\n", hr);
 
     hr = IPropertyStorage_Commit(propertyStorage, STGC_DEFAULT);
-    ok(SUCCEEDED(hr), "Commit failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Commit failed: 0x%08lx\n", hr);
 
     /* check reverting */
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PID_FIRST_USABLE;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_Revert(propertyStorage);
-    ok(SUCCEEDED(hr), "Revert failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Revert failed: 0x%08lx\n", hr);
     /* now check that it's still not there */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
     ok(hr == S_FALSE, "Expected S_FALSE, got 0x%08lx\n", hr);
@@ -230,18 +230,18 @@ static void testProps(void)
     var.vt = VT_I4;
     U(var).lVal = 1;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* commit it */
     hr = IPropertyStorage_Commit(propertyStorage, STGC_DEFAULT);
-    ok(SUCCEEDED(hr), "Commit failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Commit failed: 0x%08lx\n", hr);
     /* set it to a string value */
     var.vt = VT_LPSTR;
     U(var).pszVal = (LPSTR)val;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* revert it */
     hr = IPropertyStorage_Revert(propertyStorage);
-    ok(SUCCEEDED(hr), "Revert failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Revert failed: 0x%08lx\n", hr);
     /* Oddly enough, there's no guarantee that a successful revert actually
      * implies the value wasn't saved.  Maybe transactional mode needs to be
      * used for that?
@@ -257,27 +257,27 @@ static void testProps(void)
     /* now open it again */
     hr = StgOpenStorage(filename, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
      NULL, 0, &storage);
-    ok(SUCCEEDED(hr), "StgOpenStorage failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgOpenStorage failed: 0x%08lx\n", hr);
 
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
-    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Open(propSetStorage, &FMTID_SummaryInformation,
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &propertyStorage);
-    ok(SUCCEEDED(hr), "IPropertySetStorage_Open failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "IPropertySetStorage_Open failed: 0x%08lx\n", hr);
 
     /* check properties again */
     spec.ulKind = PRSPEC_LPWSTR;
     U(spec).lpwstr = (LPOLESTR)propName;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I4 && U(var).lVal == 2,
      "Didn't get expected type or value for property (got type %d, value %ld)\n",
      var.vt, U(var).lVal);
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PIDSI_AUTHOR;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !lstrcmpA(U(var).pszVal, val),
      "Didn't get expected type or value for property (got type %d, value %s)\n",
      var.vt, U(var).pszVal);
@@ -308,7 +308,7 @@ static void testCodepage(void)
 
     hr = StgCreateDocfile(fileName,
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
-    ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreateDocfile failed: 0x%08lx\n", hr);
 
     if(!pStgCreatePropSetStg)
     {
@@ -317,39 +317,39 @@ static void testCodepage(void)
         return;
     }
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
-    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
      &FMTID_SummaryInformation, NULL, PROPSETFLAG_DEFAULT,
      STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
      &propertyStorage);
-    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
 
     PropVariantInit(&var);
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PID_CODEPAGE;
     /* check code page before it's been explicitly set */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I2 && U(var).iVal == 1200,
      "Didn't get expected type or value for property\n");
     /* Set the code page to ascii */
     var.vt = VT_I2;
     U(var).iVal = 1252;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* check code page */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I2 && U(var).iVal == 1252,
      "Didn't get expected type or value for property\n");
     /* Set code page to Unicode */
     U(var).iVal = 1200;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* check code page */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I2 && U(var).iVal == 1200,
      "Didn't get expected type or value for property\n");
     /* Set a string value */
@@ -358,9 +358,9 @@ static void testCodepage(void)
     var.vt = VT_LPSTR;
     U(var).pszVal = aval;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, "hi"),
      "Didn't get expected type or value for property\n");
     /* This seemingly non-sensical test is to show that the string is indeed
@@ -370,9 +370,9 @@ static void testCodepage(void)
      */
     U(var).pszVal = (LPSTR)wval;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, "h"),
      "Didn't get expected type or value for property\n");
     /* now that a property's been set, you can't change the code page */
@@ -393,29 +393,29 @@ static void testCodepage(void)
     /* same tests, but with PROPSETFLAG_ANSI */
     hr = StgCreateDocfile(fileName,
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
-    ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreateDocfile failed: 0x%08lx\n", hr);
 
     hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
-    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
      &FMTID_SummaryInformation, NULL, PROPSETFLAG_ANSI,
      STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
      &propertyStorage);
-    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
 
     /* check code page before it's been explicitly set */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I2 && U(var).iVal == 1252,
      "Didn't get expected type or value for property\n");
     /* Set code page to Unicode */
     U(var).iVal = 1200;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* check code page */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_I2 && U(var).iVal == 1200,
      "Didn't get expected type or value for property\n");
     /* This test is commented out for documentation.  It fails under Wine,
@@ -427,7 +427,7 @@ static void testCodepage(void)
     /* Set code page to 950 (Traditional Chinese) */
     U(var).iVal = 950;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* Try writing an invalid string: lead byte 0x81 is unused in Traditional
      * Chinese.
      */
@@ -436,10 +436,10 @@ static void testCodepage(void)
     var.vt = VT_LPSTR;
     U(var).pszVal = (LPSTR)strVal;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
-    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
     /* Check returned string */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, (LPCSTR)strVal),
      "Didn't get expected type or value for property\n");
     }
@@ -471,19 +471,19 @@ static void testFmtId(void)
     hr = pFmtIdToPropStgName(&FMTID_SummaryInformation, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     hr = pFmtIdToPropStgName(&FMTID_SummaryInformation, name);
-    ok(SUCCEEDED(hr), "FmtIdToPropStgName failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", hr);
     ok(!memcmp(name, szSummaryInfo, (lstrlenW(szSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_SummaryInformation\n");
     hr = pFmtIdToPropStgName(&FMTID_DocSummaryInformation, name);
-    ok(SUCCEEDED(hr), "FmtIdToPropStgName failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", hr);
     ok(!memcmp(name, szDocSummaryInfo, (lstrlenW(szDocSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_DocSummaryInformation\n");
     hr = pFmtIdToPropStgName(&FMTID_UserDefinedProperties, name);
-    ok(SUCCEEDED(hr), "FmtIdToPropStgName failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", hr);
     ok(!memcmp(name, szDocSummaryInfo, (lstrlenW(szDocSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_DocSummaryInformation\n");
     hr = pFmtIdToPropStgName(&IID_IPropertySetStorage, name);
-    ok(SUCCEEDED(hr), "FmtIdToPropStgName failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", hr);
     ok(!memcmp(name, szIID_IPropSetStg, (lstrlenW(szIID_IPropSetStg) + 1) *
      sizeof(WCHAR)), "Got wrong name for IID_IPropertySetStorage\n");
     }
@@ -499,27 +499,27 @@ static void testFmtId(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     /* test the known format IDs */
     hr = pPropStgNameToFmtId(szSummaryInfo, &fmtid);
-    ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &FMTID_SummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_SummaryInformation\n");
     hr = pPropStgNameToFmtId(szDocSummaryInfo, &fmtid);
-    ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &FMTID_DocSummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_DocSummaryInformation\n");
     /* test another GUID */
     hr = pPropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
-    ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &IID_IPropertySetStorage, sizeof(fmtid)),
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
     /* now check case matching */
     CharUpperW(szDocSummaryInfo + 1);
     hr = pPropStgNameToFmtId(szDocSummaryInfo, &fmtid);
-    ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &FMTID_DocSummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_DocSummaryInformation\n");
     CharUpperW(szIID_IPropSetStg + 1);
     hr = pPropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
-    ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &IID_IPropertySetStorage, sizeof(fmtid)),
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
     }
