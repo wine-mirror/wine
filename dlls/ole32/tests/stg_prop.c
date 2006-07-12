@@ -20,6 +20,10 @@
 #include "objbase.h"
 #include "wine/test.h"
 
+#ifndef PID_BEHAVIOR
+#define PID_BEHAVIOR 0x80000003
+#endif
+
 static HRESULT (WINAPI *pFmtIdToPropStgName)(const FMTID *, LPOLESTR);
 static HRESULT (WINAPI *pPropStgNameToFmtId)(const LPOLESTR, FMTID *);
 static HRESULT (WINAPI *pStgCreatePropSetStg)(IStorage *, DWORD, IPropertySetStorage **);
@@ -391,7 +395,7 @@ static void testCodepage(void)
      * obviously something about string conversion I don't understand.
      */
     if(0) {
-    static const char strVal[] = { 0x81, 0xff, 0x04, 0 };
+    static const unsigned char strVal[] = { 0x81, 0xff, 0x04, 0 };
     /* Set code page to 950 (Traditional Chinese) */
     U(var).iVal = 950;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
@@ -408,7 +412,7 @@ static void testCodepage(void)
     /* Check returned string */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
     ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
-    ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, strVal),
+    ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, (LPCSTR)strVal),
      "Didn't get expected type or value for property\n");
     }
 

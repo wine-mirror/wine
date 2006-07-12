@@ -22,10 +22,9 @@
 
 #define COBJMACROS
 
+#include <windows.h>
 #include "wine/test.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winerror.h"
+
 #include "ole2.h"
 #include "objidl.h"
 #include "initguid.h"
