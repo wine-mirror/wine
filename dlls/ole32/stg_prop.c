@@ -307,8 +307,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     ULONG i;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpspec && (!rgpspec || !rgpropvar))
         return E_INVALIDARG;
     EnterCriticalSection(&This->cs);
@@ -562,8 +561,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
     ULONG i;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpspec && (!rgpspec || !rgpropvar))
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
@@ -662,8 +660,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
     HRESULT hr;
 
     TRACE("(%p, %ld, %p)\n", iface, cpspec, rgpspec);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpspec && !rgpspec)
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
@@ -711,8 +708,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
     HRESULT hr = S_FALSE;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpropid, rgpropid, rglpwstrName);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpropid && (!rgpropid || !rglpwstrName))
         return E_INVALIDARG;
     EnterCriticalSection(&This->cs);
@@ -752,8 +748,7 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     HRESULT hr;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpropid, rgpropid, rglpwstrName);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpropid && (!rgpropid || !rglpwstrName))
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
@@ -786,8 +781,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeletePropertyNames(
     HRESULT hr;
 
     TRACE("(%p, %ld, %p)\n", iface, cpropid, rgpropid);
-    if (!This)
-        return E_INVALIDARG;
+
     if (cpropid && !rgpropid)
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
@@ -823,8 +817,7 @@ static HRESULT WINAPI IPropertyStorage_fnCommit(
     HRESULT hr;
 
     TRACE("(%p, 0x%08lx)\n", iface, grfCommitFlags);
-    if (!This)
-        return E_INVALIDARG;
+
     if (!(This->grfMode & STGM_READWRITE))
         return STG_E_ACCESSDENIED;
     EnterCriticalSection(&This->cs);
@@ -846,8 +839,6 @@ static HRESULT WINAPI IPropertyStorage_fnRevert(
     PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
 
     TRACE("%p\n", iface);
-    if (!This)
-        return E_INVALIDARG;
 
     EnterCriticalSection(&This->cs);
     if (This->dirty)
@@ -897,7 +888,8 @@ static HRESULT WINAPI IPropertyStorage_fnSetClass(
     PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
 
     TRACE("%p, %s\n", iface, debugstr_guid(clsid));
-    if (!This || !clsid)
+
+    if (!clsid)
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
         return STG_E_ACCESSDENIED;
@@ -920,7 +912,8 @@ static HRESULT WINAPI IPropertyStorage_fnStat(
     HRESULT hr;
 
     TRACE("%p, %p\n", iface, statpsstg);
-    if (!This || !statpsstg)
+
+    if (!statpsstg)
         return E_INVALIDARG;
 
     hr = IStream_Stat(This->stm, &stat, STATFLAG_NONAME);
