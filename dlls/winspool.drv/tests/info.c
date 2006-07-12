@@ -176,6 +176,9 @@ static void test_AddMonitor(void)
 {
     MONITOR_INFO_2A mi2a; 
     struct  monitor_entry * entry = NULL;
+    static CHAR empty[]              = "",
+                does_not_exist_dll[] = "does_not_exists.dll",
+                version_dll[]        = "version.dll";
     DWORD   res;
 
     entry = find_installed_monitor();
@@ -238,7 +241,7 @@ static void test_AddMonitor(void)
 #endif
 
     mi2a.pEnvironment = entry->env;
-    mi2a.pName = "";
+    mi2a.pName = empty;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
@@ -260,15 +263,14 @@ static void test_AddMonitor(void)
         "ERROR_PRIVILEGE_NOT_HELD)\n",
         res, GetLastError());
 
-    mi2a.pDLLName = "";
+    mi2a.pDLLName = empty;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %ld with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
 
-
-    mi2a.pDLLName = "does_not_exists.dll";
+    mi2a.pDLLName = does_not_exist_dll;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_MOD_NOT_FOUND,  9x: ERROR_INVALID_PARAMETER */
@@ -278,7 +280,7 @@ static void test_AddMonitor(void)
         "returned %ld with %ld (expected '0' with: ERROR_MOD_NOT_FOUND or " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
-    mi2a.pDLLName = "version.dll";
+    mi2a.pDLLName = version_dll;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_PROC_NOT_FOUND,  9x: ERROR_INVALID_PARAMETER */
@@ -296,7 +298,7 @@ static void test_AddMonitor(void)
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
-    
+
     /* add a monitor twice */
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
@@ -975,6 +977,7 @@ static void test_OpenPrinter(void)
     DWORD   res;
     DWORD   size;
     CHAR    buffer[DEFAULT_PRINTER_SIZE];
+    static CHAR empty[] = "";
     LPSTR   ptr;
 
     SetLastError(MAGIC_DEAD);
@@ -1095,7 +1098,7 @@ static void test_OpenPrinter(void)
             "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
-        defaults.pDatatype="";
+        defaults.pDatatype = empty;
 
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
