@@ -55,6 +55,8 @@ static void testProps(void)
     IPropertyStorage *propertyStorage = NULL;
     PROPSPEC spec;
     PROPVARIANT var;
+    CLIPDATA clipdata;
+    unsigned char clipcontent[] = "foobar";
 
     if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
         return;
@@ -134,6 +136,18 @@ static void testProps(void)
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
 
+    /* set a clipboard value */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PIDSI_THUMBNAIL;
+    var.vt = VT_CF;
+    clipdata.cbSize = sizeof clipcontent + sizeof (ULONG);
+    clipdata.ulClipFmt = CF_ENHMETAFILE;
+    clipdata.pClipData = clipcontent;
+    U(var).pclipdata = &clipdata;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+
+
     /* check reading */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 0, NULL, NULL);
     ok(SUCCEEDED(hr), "ReadMultiple with 0 args failed: 0x%08lx\n", hr);
@@ -163,6 +177,20 @@ static void testProps(void)
     ok(var.vt == VT_LPSTR && !lstrcmpA(U(var).pszVal, val),
      "Didn't get expected type or value for property (got type %d, value %s)\n",
      var.vt, U(var).pszVal);
+
+    /* read clipboard format */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PIDSI_THUMBNAIL;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_CF, "variant type wrong\n");
+    ok(U(var).pclipdata->ulClipFmt == CF_ENHMETAFILE,
+        "clipboard type wrong\n");
+    ok(U(var).pclipdata->cbSize == sizeof clipcontent + sizeof (ULONG),
+        "clipboard size wrong\n");
+    ok(!memcmp(U(var).pclipdata->pClipData, clipcontent, sizeof clipcontent),
+        "clipboard contents wrong\n");
+    ok(S_OK == PropVariantClear(&var), "failed to clear variant\n");
 
     /* check deleting */
     hr = IPropertyStorage_DeleteMultiple(propertyStorage, 0, NULL);

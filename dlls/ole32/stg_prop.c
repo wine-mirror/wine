@@ -1142,19 +1142,18 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
         break;
     case VT_CF:
         {
-            DWORD len = 0, type = 0, tag = 0;
+            DWORD len = 0, tag = 0;
 
             StorageUtl_ReadDWord(data, 0, &len);
             StorageUtl_ReadDWord(data, 4, &tag);
-            StorageUtl_ReadDWord(data, 8, &type);
-            if (tag == CFTAG_WINDOWS && len > 12)
+            if (len > 8)
             {
+                len -= 8;
                 prop->u.pclipdata = CoTaskMemAlloc(sizeof (CLIPDATA));
                 prop->u.pclipdata->cbSize = len;
-                prop->u.pclipdata->ulClipFmt = type;
+                prop->u.pclipdata->ulClipFmt = tag;
                 prop->u.pclipdata->pClipData = CoTaskMemAlloc(len);
-                memcpy(prop->u.pclipdata->pClipData, data+12, len - 12);
-                TRACE("returning %p, len %ld\n", prop->u.pclipdata->pClipData, len - 12);
+                memcpy(prop->u.pclipdata->pClipData, data+8, len);
             }
             else
                 hr = STG_E_INVALIDPARAMETER;
@@ -1725,6 +1724,22 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
          (ULARGE_INTEGER *)&var->u.filetime);
         hr = IStream_Write(This->stm, &temp, sizeof(FILETIME), &count);
         bytesWritten = count;
+        break;
+    }
+    case VT_CF:
+    {
+        DWORD cf_hdr[2], len;
+
+        len = var->u.pclipdata->cbSize;
+        StorageUtl_WriteDWord((LPBYTE)&cf_hdr[0], 0, len + 8);
+        StorageUtl_WriteDWord((LPBYTE)&cf_hdr[1], 0, var->u.pclipdata->ulClipFmt);
+        hr = IStream_Write(This->stm, &cf_hdr, sizeof(cf_hdr), &count);
+        if (FAILED(hr))
+            goto end;
+        hr = IStream_Write(This->stm, &var->u.pclipdata->pClipData, len, &count);
+        if (FAILED(hr))
+            goto end;
+        bytesWritten = count + sizeof cf_hdr;
         break;
     }
     default:
