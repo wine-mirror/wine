@@ -232,7 +232,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         TRACE("extracting %s\n", debugstr_w(f->TargetPath) );
 
         handle = CreateFileW( f->TargetPath, GENERIC_READ | GENERIC_WRITE, 0,
-                              NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
+                              NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
         if ( handle == INVALID_HANDLE_VALUE )
         {
             ERR("failed to create %s (error %ld)\n",
