@@ -236,6 +236,54 @@ end:
     return rc;
 }
 
+static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
+ LPWSTR *appValue)
+{
+    static const WCHAR dwordFmt[] = { '#','%','d','\0' };
+    static const WCHAR expandSzFmt[] = { '#','%','%','%','s','\0' };
+    static const WCHAR binFmt[] = { '#','x','%','x','\0' };
+    DWORD i;
+
+    switch (regType)
+    {
+        case REG_SZ:
+            if (*(LPWSTR)value == '#')
+            {
+                /* escape leading pound with another */
+                *appValue = msi_alloc(sz + sizeof(WCHAR));
+                (*appValue)[0] = '#';
+                strcpyW(*appValue + 1, (LPCWSTR)value);
+            }
+            else
+            {
+                *appValue = msi_alloc(sz);
+                strcpyW(*appValue, (LPCWSTR)value);
+            }
+            break;
+        case REG_DWORD:
+            /* 7 chars for digits, 1 for NULL, 1 for #, and 1 for sign
+             * char if needed
+             */
+            *appValue = msi_alloc(10 * sizeof(WCHAR));
+            sprintfW(*appValue, dwordFmt, *(const DWORD *)value);
+            break;
+        case REG_EXPAND_SZ:
+            /* space for extra #% characters in front */
+            *appValue = msi_alloc(sz + 2 * sizeof(WCHAR));
+            sprintfW(*appValue, expandSzFmt, (LPCWSTR)value);
+            break;
+        case REG_BINARY:
+            /* 3 == length of "#x<nibble>" */
+            *appValue = msi_alloc((sz * 3 + 1) * sizeof(WCHAR));
+            for (i = 0; i < sz; i++)
+                sprintfW(*appValue + i * 3, binFmt, value[i]);
+            break;
+        default:
+            WARN("unimplemented for values of type %ld\n", regType);
+            *appValue = NULL;
+    }
+}
+
 static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
  MSISIGNATURE *sig)
 {
@@ -247,9 +295,6 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
    'R','e','g','L','o','c','a','t','o','r',' ',
    'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
    '\'','%','s','\'',0};
-    static const WCHAR dwordFmt[] = { '#','%','d','\0' };
-    static const WCHAR expandSzFmt[] = { '#','%','%','%','s','\0' };
-    static const WCHAR binFmt[] = { '#','x','%','x','\0' };
 
     TRACE("(package %p, appFound %p, sig %p)\n", package, appFound, sig);
     *appFound = FALSE;
@@ -260,7 +305,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
         LPWSTR keyPath = NULL, valueName = NULL, propertyValue = NULL;
         int root, type;
         HKEY rootKey, key = NULL;
-        DWORD sz = 0, regType, i;
+        DWORD sz = 0, regType;
         LPBYTE value = NULL;
 
         rc = MSI_ViewExecute(view, 0);
@@ -342,45 +387,8 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
             rc = ERROR_SUCCESS;
             goto end;
         }
-        
-        switch (regType)
-        {
-            case REG_SZ:
-                if (*(LPWSTR)value == '#')
-                {
-                    /* escape leading pound with another */
-                    propertyValue = msi_alloc( sz + sizeof(WCHAR));
-                    propertyValue[0] = '#';
-                    strcpyW(propertyValue + 1, (LPWSTR)value);
-                }
-                else
-                {
-                    propertyValue = msi_alloc( sz);
-                    strcpyW(propertyValue, (LPWSTR)value);
-                }
-                break;
-            case REG_DWORD:
-                /* 7 chars for digits, 1 for NULL, 1 for #, and 1 for sign
-                 * char if needed
-                 */
-                propertyValue = msi_alloc( 10 * sizeof(WCHAR));
-                sprintfW(propertyValue, dwordFmt, *(DWORD *)value);
-                break;
-            case REG_EXPAND_SZ:
-                /* space for extra #% characters in front */
-                propertyValue = msi_alloc( sz + 2 * sizeof(WCHAR));
-                sprintfW(propertyValue, expandSzFmt, (LPWSTR)value);
-                break;
-            case REG_BINARY:
-                /* 3 == length of "#x<nibble>" */
-                propertyValue = msi_alloc( (sz * 3 + 1) * sizeof(WCHAR));
-                for (i = 0; i < sz; i++)
-                    sprintfW(propertyValue + i * 3, binFmt, value[i]);
-                break;
-            default:
-                WARN("unimplemented for values of type %ld\n", regType);
-                goto end;
-        }
+
+        ACTION_ConvertRegValue(regType, value, sz, &propertyValue);
 
         TRACE("found registry value, setting %s to %s\n",
          debugstr_w(sig->Property), debugstr_w(propertyValue));
