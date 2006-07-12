@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "ntquery.h"
+#include "cierror.h"
 #include "initguid.h"
 
 #include "wine/debug.h"
@@ -73,5 +74,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI CIState( WCHAR const *pwcsCat, WCHAR const *pwcsMachine, CI_STATE *pCiState)
 {
     FIXME("%s %s %p\n", debugstr_w(pwcsCat), debugstr_w(pwcsMachine), pCiState);
-    return E_FAIL;
+    return CI_E_NOT_RUNNING;
 }
