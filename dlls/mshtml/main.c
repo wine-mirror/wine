@@ -252,9 +252,14 @@ DEFINE_GUID(CLSID_MHTMLDocument, 0x3050F3D9, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xA
 DEFINE_GUID(CLSID_Scriptlet, 0xAE24FDAE, 0x03C6, 0x11D1, 0x8B,0x76, 0x00,0x80,0xC7,0x44,0xF3,0x89);
 DEFINE_GUID(CLSID_TridentAPI, 0x429AF92C, 0xA51F, 0x11D2, 0x86,0x1E, 0x00,0xC0,0x4F,0xA3,0x5C,0x89);
 
-#define INF_SET_ID(id) \
-    pse[i].pszName = #id; \
-    clsids[i++] = &id;
+#define INF_SET_ID(id)            \
+    do                            \
+    {                             \
+        static CHAR name[] = #id; \
+                                  \
+        pse[i].pszName = name;    \
+        clsids[i++] = &id;        \
+    } while (0)
 
 #define INF_SET_CLSID(clsid) INF_SET_ID(CLSID_ ## clsid)
 
@@ -267,11 +272,11 @@ static HRESULT register_server(BOOL do_register)
     STRENTRYA pse[35];
     static CLSID const *clsids[35];
     int i = 0;
-    
+
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
 
     TRACE("(%x)\n", do_register);
-    
+
     INF_SET_CLSID(AboutProtocol);
     INF_SET_CLSID(CAnchorBrowsePropertyPage);
     INF_SET_CLSID(CBackgroundPropertyPage);
@@ -331,6 +336,7 @@ static HRESULT register_server(BOOL do_register)
 }
 
 #undef INF_SET_CLSID
+#undef INF_SET_ID
 
 /***********************************************************************
  *          DllRegisterServer (MSHTML.@)
