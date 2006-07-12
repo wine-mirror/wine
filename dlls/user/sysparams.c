@@ -2496,6 +2496,14 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
     }
 
+    case SPI_GETDESKWALLPAPER:                  /*     115 */
+    {
+        WCHAR buffer[MAX_PATH];
+        ret = (SystemParametersInfoW( SPI_GETDESKWALLPAPER, uiParam, buffer, fuWinIni ) &&
+               WideCharToMultiByte(CP_ACP, 0, buffer, -1, pvParam, uiParam, NULL, NULL));
+        break;
+    }
+
     default:
         ret = SystemParametersInfoW( uiAction, uiParam, pvParam, fuWinIni );
         break;
