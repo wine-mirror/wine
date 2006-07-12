@@ -245,7 +245,6 @@ static PROPVARIANT *PropertyStorage_FindProperty(PropertyStorage_impl *This,
 {
     PROPVARIANT *ret = NULL;
 
-    assert(This);
     dictionary_find(This->propid_to_prop, (void *)propid, (void **)&ret);
     TRACE("returning %p\n", ret);
     return ret;
@@ -258,7 +257,6 @@ static PROPVARIANT *PropertyStorage_FindPropertyByName(
     PROPVARIANT *ret = NULL;
     PROPID propid;
 
-    assert(This);
     if (!name)
         return NULL;
     if (This->codePage == CP_UNICODE)
@@ -289,7 +287,6 @@ static LPWSTR PropertyStorage_FindPropertyNameById(PropertyStorage_impl *This,
 {
     LPWSTR ret = NULL;
 
-    assert(This);
     dictionary_find(This->propid_to_name, (void *)propid, (void **)&ret);
     TRACE("returning %p\n", ret);
     return ret;
@@ -468,7 +465,6 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
     HRESULT hr = S_OK;
     PROPVARIANT *prop = PropertyStorage_FindProperty(This, propid);
 
-    assert(This);
     assert(propvar);
     if (propvar->vt & VT_BYREF || propvar->vt & VT_ARRAY)
         This->format = 1;
@@ -1002,7 +998,6 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
     DWORD numEntries, i;
     HRESULT hr = S_OK;
 
-    assert(This);
     assert(This->name_to_propid);
     assert(This->propid_to_name);
 
@@ -1272,7 +1267,6 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     ULONG count = 0;
     DWORD dictOffset = 0;
 
-    assert(This);
     This->dirty = FALSE;
     This->highestProp = 0;
     hr = IStream_Stat(This->stm, &stat, STATFLAG_NONAME);
@@ -1389,6 +1383,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
             {
                 PROPVARIANT prop;
 
+                memset(&prop, 0, sizeof prop);
                 if (SUCCEEDED(PropertyStorage_ReadProperty(This, &prop,
                  buf + idOffset->dwOffset - sizeof(PROPERTYSECTIONHEADER))))
                 {
@@ -1452,7 +1447,6 @@ end:
 static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
  PROPERTYSETHEADER *hdr)
 {
-    assert(This);
     assert(hdr);
     StorageUtl_WriteWord((BYTE *)&hdr->wByteOrder, 0,
      PROPSETHDR_BYTEORDER_MAGIC);
@@ -1465,7 +1459,6 @@ static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
 static void PropertyStorage_MakeFmtIdOffset(PropertyStorage_impl *This,
  FORMATIDOFFSET *fmtOffset)
 {
-    assert(This);
     assert(fmtOffset);
     StorageUtl_WriteGUID((BYTE *)fmtOffset, 0, &This->fmtid);
     StorageUtl_WriteDWord((BYTE *)fmtOffset, offsetof(FORMATIDOFFSET, dwOffset),
@@ -1505,7 +1498,6 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
     ULONG count;
 
     assert(key);
-    assert(This);
     assert(closure);
     StorageUtl_WriteDWord((LPBYTE)&propid, 0, (DWORD)value);
     c->hr = IStream_Write(This->stm, &propid, sizeof(propid), &count);
@@ -1573,7 +1565,6 @@ static HRESULT PropertyStorage_WriteDictionaryToStream(
     DWORD dwTemp;
     struct DictionaryClosure closure;
 
-    assert(This);
     assert(sectionOffset);
 
     /* The dictionary's always the first property written, so seek to its
@@ -1628,7 +1619,6 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     ULONG count;
     DWORD dwType, bytesWritten;
 
-    assert(This);
     assert(var);
     assert(sectionOffset);
 
@@ -1789,7 +1779,6 @@ static HRESULT PropertyStorage_WritePropertiesToStream(
 {
     struct PropertyClosure closure;
 
-    assert(This);
     assert(sectionOffset);
     closure.hr = S_OK;
     closure.propNum = startingPropNum;
@@ -1807,7 +1796,6 @@ static HRESULT PropertyStorage_WriteHeadersToStream(PropertyStorage_impl *This)
     PROPERTYSETHEADER hdr;
     FORMATIDOFFSET fmtOffset;
 
-    assert(This);
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
         goto end;
@@ -1844,8 +1832,6 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
     LARGE_INTEGER seek;
     DWORD numProps, prop, sectionOffset, dwTemp;
     PROPVARIANT var;
-
-    assert(This);
 
     PropertyStorage_WriteHeadersToStream(This);
 
@@ -1933,7 +1919,6 @@ end:
  */
 static void PropertyStorage_DestroyDictionaries(PropertyStorage_impl *This)
 {
-    assert(This);
     dictionary_destroy(This->name_to_propid);
     This->name_to_propid = NULL;
     dictionary_destroy(This->propid_to_name);
@@ -1946,7 +1931,6 @@ static HRESULT PropertyStorage_CreateDictionaries(PropertyStorage_impl *This)
 {
     HRESULT hr = S_OK;
 
-    assert(This);
     This->name_to_propid = dictionary_create(
      PropertyStorage_PropNameCompare, PropertyStorage_PropNameDestroy,
      This);
