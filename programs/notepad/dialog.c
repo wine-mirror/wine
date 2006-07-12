@@ -54,30 +54,23 @@ VOID ShowLastError(void)
 
 /**
  * Sets the caption of the main window according to Globals.szFileTitle:
- *    Notepad - (untitled)      if no file is open
- *    Notepad - [filename]      if a file is given
+ *    Untitled - Notepad        if no file is open
+ *    filename - Notepad        if a file is given
  */
 static void UpdateWindowCaption(void)
 {
   WCHAR szCaption[MAX_STRING_LEN];
-  WCHAR szUntitled[MAX_STRING_LEN];
+  WCHAR szNotepad[MAX_STRING_LEN];
+  static const WCHAR hyphenW[] = { ' ','-',' ',0 };
 
-  LoadString(Globals.hInstance, STRING_NOTEPAD, szCaption, SIZEOF(szCaption));
-
-  if (Globals.szFileTitle[0] != '\0') {
-      static const WCHAR bracket_lW[] = { ' ','-',' ','[',0 };
-      static const WCHAR bracket_rW[] = { ']',0 };
-      lstrcat(szCaption, bracket_lW);
-      lstrcat(szCaption, Globals.szFileTitle);
-      lstrcat(szCaption, bracket_rW);
-  }
+  if (Globals.szFileTitle[0] != '\0')
+      lstrcpy(szCaption, Globals.szFileTitle);
   else
-  {
-      static const WCHAR hyphenW[] = { ' ','-',' ',0 };
-      LoadString(Globals.hInstance, STRING_UNTITLED, szUntitled, SIZEOF(szUntitled));
-      lstrcat(szCaption, hyphenW);
-      lstrcat(szCaption, szUntitled);
-  }
+      LoadString(Globals.hInstance, STRING_UNTITLED, szCaption, SIZEOF(szCaption));
+
+  LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
+  lstrcat(szCaption, hyphenW);
+  lstrcat(szCaption, szNotepad);
 
   SetWindowText(Globals.hMainWnd, szCaption);
 }
