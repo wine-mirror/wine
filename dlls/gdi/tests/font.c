@@ -336,11 +336,15 @@ static void test_GetCharABCWidthsW(void)
 
 static void test_text_extents(void)
 {
+    const static WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
+    LPINT extents;
+    INT i, len, fit1, fit2;
     LOGFONTA lf;
     TEXTMETRICA tm;
     HDC hdc;
     HFONT hfont;
     SIZE sz;
+    SIZE sz1, sz2;
 
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Arial");
@@ -352,6 +356,35 @@ static void test_text_extents(void)
     GetTextMetricsA(hdc, &tm);
     GetTextExtentPointA(hdc, "o", 1, &sz);
     ok(sz.cy == tm.tmHeight, "cy %ld tmHeight %ld\n", sz.cy, tm.tmHeight);
+
+    len = lstrlenW(wt);
+    extents = HeapAlloc(GetProcessHeap(), 0, len * sizeof extents[0]);
+    memset(extents, 0, len * sizeof extents[0]);
+    extents[0] = 1;         /* So that the increasing sequence test will fail
+                               if the extents array is untouched.  */
+    GetTextExtentExPointW(hdc, wt, len, 32767, &fit1, extents, &sz1);
+    GetTextExtentPointW(hdc, wt, len, &sz2);
+    ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy,
+       "results from GetTextExtentExPointW and GetTextExtentPointW differ\n");
+    for (i = 1; i < len; ++i)
+        ok(extents[i-1] <= extents[i],
+           "GetTextExtentExPointW generated a non-increasing sequence of partial extents (at position %d)\n",
+           i);
+    ok(extents[len-1] == sz1.cx, "GetTextExtentExPointW extents and size don't match\n");
+    ok(0 <= fit1 && fit1 <= len, "GetTextExtentExPointW generated illegal value %d for fit\n", fit1);
+    ok(0 < fit1, "GetTextExtentExPointW says we can't even fit one letter in 32767 logical units\n");
+    GetTextExtentExPointW(hdc, wt, len, extents[2], &fit2, NULL, &sz2);
+    ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy, "GetTextExtentExPointW returned different sizes for the same string\n");
+    ok(fit2 == 3, "GetTextExtentExPointW extents isn't consistent with fit\n");
+    GetTextExtentExPointW(hdc, wt, len, extents[2]-1, &fit2, NULL, &sz2);
+    ok(fit2 == 2, "GetTextExtentExPointW extents isn't consistent with fit\n");
+    GetTextExtentExPointW(hdc, wt, 2, 0, NULL, extents + 2, &sz2);
+    ok(extents[0] == extents[2] && extents[1] == extents[3],
+       "GetTextExtentExPointW with lpnFit == NULL returns incorrect results\n");
+    GetTextExtentExPointW(hdc, wt, 2, 0, NULL, NULL, &sz1);
+    ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy,
+       "GetTextExtentExPointW with lpnFit and alpDx both NULL returns incorrect results\n");
+    HeapFree(GetProcessHeap(), 0, extents);
 
     SelectObject(hdc, hfont);
     DeleteObject(hfont);
