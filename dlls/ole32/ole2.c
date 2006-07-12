@@ -2572,6 +2572,23 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
 
     switch(pvar->vt)
     {
+    case VT_EMPTY:
+    case VT_NULL:
+    case VT_I2:
+    case VT_I4:
+    case VT_R4:
+    case VT_R8:
+    case VT_CY:
+    case VT_DATE:
+    case VT_ERROR:
+    case VT_BOOL:
+    case VT_UI1:
+    case VT_UI2:
+    case VT_UI4:
+    case VT_I8:
+    case VT_UI8:
+    case VT_FILETIME:
+        break;
     case VT_STREAM:
     case VT_STREAMED_OBJECT:
     case VT_STORAGE:
@@ -2594,7 +2611,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
         if (pvar->u.bstrVal)
             PropSysFreeString(pvar->u.bstrVal);
         break;
-   case VT_CF:
+    case VT_CF:
         if (pvar->u.pclipdata)
         {
             OLE_FreeClipDataArray(1, pvar->u.pclipdata);
