@@ -464,6 +464,9 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     pStubMsg->StubDesc->apfnExprEval[ofs](pStubMsg);
 
     pStubMsg->StackTop = old_stack_top;
+
+    /* the callback function always stores the computed value in MaxCount */
+    *pCount = pStubMsg->MaxCount;
     goto finish_conf;
   }
   default:
