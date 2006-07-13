@@ -1156,11 +1156,9 @@ static inline void virtual_init(void)
  */
 NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
 {
-    void *ptr;
     NTSTATUS status;
     struct file_view *view;
     size_t align_size;
-    BYTE vprot = VPROT_READ | VPROT_WRITE | VPROT_COMMITTED;
 
     if (first) virtual_init();
 
@@ -1169,31 +1167,15 @@ NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
     align_size = page_size;
     while (align_size < size) align_size *= 2;
 
-    for (;;)
-    {
-        if ((ptr = wine_anon_mmap( NULL, 2 * align_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
-        {
-            if (errno == ENOMEM) return STATUS_NO_MEMORY;
-            return STATUS_INVALID_PARAMETER;
-        }
-        if (!is_beyond_limit( ptr, 2 * align_size, user_space_limit ))
-        {
-            ptr = unmap_extra_space( ptr, 2 * align_size, align_size, align_size - 1 );
-            break;
-        }
-        /* if we got something beyond the user limit, unmap it and retry */
-        add_reserved_area( ptr, 2 * align_size );
-    }
-
     if (!first) RtlEnterCriticalSection( &csVirtual );
 
-    status = create_view( &view, ptr, size, vprot );
+    status = map_view( &view, NULL, align_size, align_size - 1,
+                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     if (status == STATUS_SUCCESS)
     {
         view->flags |= VFLAG_VALLOC;
-        *ret = ptr;
+        *ret = view->base;
     }
-    else unmap_area( ptr, size );
 
     if (!first) RtlLeaveCriticalSection( &csVirtual );
 
