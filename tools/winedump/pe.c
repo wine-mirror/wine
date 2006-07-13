@@ -139,7 +139,7 @@ static const char * const DirectoryNames[16] = {
     "IAT", 		"Delay IAT",	"COM Descript", ""
 };
 
-static char *get_magic_type(WORD magic)
+static const char *get_magic_type(WORD magic)
 {
     switch(magic) {
         case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
