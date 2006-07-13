@@ -159,7 +159,7 @@ static void *get_current_teb(void)
 static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info )
 {
     wine_ldt_free_fs( info->teb_sel );
-    munmap( info->teb_base, info->teb_size );
+    if (info->teb_size) munmap( info->teb_base, info->teb_size );
     pthread_exit( (void *)info->exit_status );
 }
 

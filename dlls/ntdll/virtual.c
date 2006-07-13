@@ -1386,7 +1386,8 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     {
         /* return the values that the caller should use to unmap the area */
         *addr_ptr = view->base;
-        *size_ptr = view->size;
+        if (!wine_mmap_is_in_reserved_area( view->base, view->size )) *size_ptr = view->size;
+        else *size_ptr = 0;  /* make sure we don't munmap anything from a reserved area */
         view->flags |= VFLAG_SYSTEM;
         delete_view( view );
     }
