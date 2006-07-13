@@ -129,7 +129,6 @@ static UINT_PTR page_mask;
 # define ADDRESS_SPACE_LIMIT  0   /* no limit needed on other platforms */
 # define USER_SPACE_LIMIT     0   /* no limit needed on other platforms */
 #endif  /* __i386__ */
-static const UINT_PTR granularity_mask = 0xffff;  /* Allocation granularity (usually 64k) */
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -234,6 +233,17 @@ static struct file_view *VIRTUAL_FindView( const void *addr )
         if ((const char*)view->base + view->size > (const char*)addr) return view;
     }
     return NULL;
+}
+
+
+/***********************************************************************
+ *           get_mask
+ */
+static inline UINT_PTR get_mask( ULONG zero_bits )
+{
+    if (!zero_bits) return 0xffff;  /* allocations are aligned to 64K by default */
+    if (zero_bits < page_shift) zero_bits = page_shift;
+    return (1 << zero_bits) - 1;
 }
 
 
@@ -574,7 +584,8 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
  * Create a view and mmap the corresponding memory area.
  * The csVirtual section must be held by caller.
  */
-static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, BYTE vprot )
+static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t mask,
+                          BYTE vprot )
 {
     void *ptr;
     NTSTATUS status;
@@ -615,7 +626,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
     }
     else
     {
-        size_t view_size = size + granularity_mask + 1;
+        size_t view_size = size + mask + 1;
 
         for (;;)
         {
@@ -628,7 +639,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
             if (is_beyond_limit( ptr, view_size, user_space_limit )) add_reserved_area( ptr, view_size );
             else break;
         }
-        ptr = unmap_extra_space( ptr, view_size, size, granularity_mask );
+        ptr = unmap_extra_space( ptr, view_size, size, mask );
     }
 
     status = create_view( view_ret, ptr, size, vprot );
@@ -831,7 +842,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size,
+static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size, SIZE_T mask,
                            SIZE_T header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
@@ -850,11 +861,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     RtlEnterCriticalSection( &csVirtual );
 
     if (base >= (char *)0x110000)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size,
+        status = map_view( &view, base, total_size, mask,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
     if (status == STATUS_CONFLICTING_ADDRESSES)
-        status = map_view( &view, NULL, total_size,
+        status = map_view( &view, NULL, total_size, mask,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
     if (status != STATUS_SUCCESS) goto error;
@@ -1258,6 +1269,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     void *base;
     BYTE vprot;
     SIZE_T size = *size_ptr;
+    SIZE_T mask = get_mask( zero_bits );
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
 
@@ -1278,13 +1290,13 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     if (*ret)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ROUND_ADDR( *ret, granularity_mask );
+            base = ROUND_ADDR( *ret, mask );
         else
             base = ROUND_ADDR( *ret, page_mask );
         size = (((UINT_PTR)*ret + size + page_mask) & ~page_mask) - (UINT_PTR)base;
 
         /* disallow low 64k, wrap-around and kernel space */
-        if (((char *)base <= (char *)granularity_mask) ||
+        if (((char *)base < (char *)0x10000) ||
             ((char *)base + size < (char *)base) ||
             is_beyond_limit( base, size, ADDRESS_SPACE_LIMIT ))
             return STATUS_INVALID_PARAMETER;
@@ -1300,9 +1312,6 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         WARN("MEM_TOP_DOWN ignored\n");
         type &= ~MEM_TOP_DOWN;
     }
-
-    if (zero_bits)
-        WARN("zero_bits %lu ignored\n", zero_bits);
 
     /* Compute the alloc type flags */
 
@@ -1333,7 +1342,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     }
     else if ((type & MEM_RESERVE) || !base)
     {
-        status = map_view( &view, base, size, vprot );
+        status = map_view( &view, base, size, mask, vprot );
         if (status == STATUS_SUCCESS)
         {
             view->flags |= VFLAG_VALLOC;
@@ -1722,6 +1731,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
     SIZE_T size = 0;
+    SIZE_T mask = get_mask( zero_bits );
     int unix_handle = -1;
     int prot;
     void *base;
@@ -1744,8 +1754,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Check parameters */
 
-    if ((offset.u.LowPart & granularity_mask) ||
-        (*addr_ptr && ((UINT_PTR)*addr_ptr & granularity_mask)))
+    if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_INVALID_PARAMETER;
 
     SERVER_START_REQ( get_mapping_info )
@@ -1776,14 +1785,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
             if ((res = wine_server_handle_to_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                                  &shared_fd, NULL ))) goto done;
-            res = map_image( handle, unix_handle, base, size_low, header_size,
+            res = map_image( handle, unix_handle, base, size_low, mask, header_size,
                              shared_fd, removable, addr_ptr );
             wine_server_release_fd( shared_file, shared_fd );
             NtClose( shared_file );
         }
         else
         {
-            res = map_image( handle, unix_handle, base, size_low, header_size,
+            res = map_image( handle, unix_handle, base, size_low, mask, header_size,
                              -1, removable, addr_ptr );
         }
         wine_server_release_fd( handle, unix_handle );
@@ -1840,7 +1849,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     RtlEnterCriticalSection( &csVirtual );
 
-    res = map_view( &view, *addr_ptr, size, prot );
+    res = map_view( &view, *addr_ptr, size, mask, prot );
     if (res)
     {
         RtlLeaveCriticalSection( &csVirtual );
