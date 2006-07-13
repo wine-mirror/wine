@@ -53,6 +53,8 @@ typedef struct WS(addrinfoW)
     struct WS(addrinfoW)*   ai_next;
 } ADDRINFOW, *PADDRINFOW;
 
+typedef int WS(socklen_t);
+
 typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 
 /*
@@ -202,6 +204,21 @@ typedef struct _INTERFACE_INFO
 # define WS_EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
 #endif
 
+/* Possible Windows flags for getnameinfo() */
+#ifndef USE_WS_PREFIX
+# define NI_NOFQDN          0x01
+# define NI_NUMERICHOST     0x02
+# define NI_NAMEREQD        0x04
+# define NI_NUMERICSERV     0x08
+# define NI_DGRAM           0x10
+#else
+# define WS_NI_NOFQDN       0x01
+# define WS_NI_NUMERICHOST  0x02
+# define WS_NI_NAMEREQD     0x04
+# define WS_NI_NUMERICSERV  0x08
+# define WS_NI_DGRAM        0x10
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -215,9 +232,9 @@ int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,s
 #define     GetAddrInfoA WS(getaddrinfo)
 int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
 #define     GetAddrInfo WINELIB_NAME_AW(GetAddrInfo)
-int WINAPI  WS(getnameinfo)(const SOCKADDR*,socklen_t,PCHAR,DWORD,PCHAR,DWORD,INT);
+int WINAPI  WS(getnameinfo)(const SOCKADDR*,WS(socklen_t),PCHAR,DWORD,PCHAR,DWORD,INT);
 #define     GetNameInfoA WS(getnameinfo)
-INT WINAPI  GetNameInfoW(const SOCKADDR*,socklen_t,PWCHAR,DWORD,PWCHAR,DWORD,INT);
+INT WINAPI  GetNameInfoW(const SOCKADDR*,WS(socklen_t),PWCHAR,DWORD,PWCHAR,DWORD,INT);
 #define     GetNameInfo WINELIB_NAME_AW(GetNameInfo)
 
 /*
