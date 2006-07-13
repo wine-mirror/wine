@@ -134,6 +134,7 @@ static const WCHAR szRadioButtonGroup[] = {
 static const WCHAR szIcon[] = { 'I','c','o','n',0 };
 static const WCHAR szSelectionTree[] = {
     'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
+static const WCHAR szGroupBox[] = { 'G','r','o','u','p','B','o','x',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1689,6 +1690,21 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** Group Box ***************************************/
+
+static UINT msi_dialog_group_box( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    DWORD style;
+
+    style = BS_GROUPBOX | WS_CHILD | WS_GROUP;
+    control = msi_dialog_add_control( dialog, rec, WC_BUTTONW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -1705,6 +1721,7 @@ static const struct control_handler msi_dialog_handler[] =
     { szRadioButtonGroup, msi_dialog_radiogroup_control },
     { szIcon, msi_dialog_icon_control },
     { szSelectionTree, msi_dialog_selection_tree },
+    { szGroupBox, msi_dialog_group_box },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
