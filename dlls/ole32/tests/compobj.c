@@ -100,6 +100,17 @@ static void test_CoCreateInstance(void)
     ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
 }
 
+static void test_CoGetClassObject(void)
+{
+    IUnknown *pUnk = (IUnknown *)0xdeadbeef;
+    HRESULT hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == CO_E_NOTINITIALIZED, "CoGetClassObject should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+    ok(pUnk == NULL, "CoGetClassObject should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
+
+    hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, NULL);
+    ok(hr == E_INVALIDARG, "CoGetClassObject should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+}
+
 static ATOM register_dummy_class(void)
 {
     WNDCLASS wc =
@@ -138,4 +149,5 @@ START_TEST(compobj)
     test_CLSIDFromString();
     test_CoCreateInstance();
     test_ole_menu();
+    test_CoGetClassObject();
 }

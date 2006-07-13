@@ -1618,6 +1618,17 @@ HRESULT WINAPI CoGetClassObject(
 
     TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 
+    if (!ppv)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
+
+    if (!COM_CurrentApt())
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
     if (pServerInfo) {
 	FIXME("\tpServerInfo: name=%s\n",debugstr_w(pServerInfo->pwszName));
 	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
