@@ -59,7 +59,7 @@
 @ stub I_RpcIfInqTransferSyntaxes
 @ stub I_RpcLaunchDatagramReceiveThread # win9x
 @ stub I_RpcLogEvent
-@ stub I_RpcMapWin32Status
+@ stdcall I_RpcMapWin32Status(long)
 @ stub I_RpcMonitorAssociation
 @ stub I_RpcNegotiateTransferSyntax # wxp
 @ stub I_RpcNsBindingSetEntryName

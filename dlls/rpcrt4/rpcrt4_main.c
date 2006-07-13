@@ -816,3 +816,12 @@ void WINAPI I_RpcFree(void *Object)
 {
     HeapFree(GetProcessHeap(), 0, Object);
 }
+
+/******************************************************************************
+ * I_RpcMapWin32Status   (rpcrt4.@)
+ */
+DWORD WINAPI I_RpcMapWin32Status(RPC_STATUS status)
+{
+    FIXME("(%ld): stub\n", status);
+    return 0;
+}
