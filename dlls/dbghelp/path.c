@@ -309,7 +309,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
                     WARN("Found %s, but wrong PDB version\n", buffer);
                     return FALSE;
                 }
-                if (!(memcmp(&pdb_lookup.u.ds.guid, (GUID*)s->id, sizeof(GUID))))
+                if (memcmp(&pdb_lookup.u.ds.guid, (GUID*)s->id, sizeof(GUID)))
                 {
                     WARN("Found %s, but wrong GUID: %s %s\n",
                          buffer, debugstr_guid(&pdb_lookup.u.ds.guid),
