@@ -5223,7 +5223,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     /* we do this instead of using GetFuncDesc since it will return a fake
      * FUNCDESC for dispinterfaces and we want the real function description */
     for (pFuncInfo = This->funclist; pFuncInfo; pFuncInfo=pFuncInfo->next)
-        if (memid == pFuncInfo->funcdesc.memid && (wFlags & pFuncInfo->funcdesc.invkind))
+        if ((memid == pFuncInfo->funcdesc.memid) &&
+            (wFlags & pFuncInfo->funcdesc.invkind) &&
+            !(pFuncInfo->funcdesc.wFuncFlags & FUNCFLAG_FRESTRICTED))
             break;
 
     if (pFuncInfo) {

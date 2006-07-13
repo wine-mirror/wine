@@ -425,17 +425,20 @@ static void test_TypeInfo(void)
     ITypeLib *pTypeLib;
     ITypeInfo *pTypeInfo;
     HRESULT hr;
-    static WCHAR szBogus[] = { 'b','o','g','u','s',0 };
-    OLECHAR* bogus = szBogus;
+    static WCHAR wszBogus[] = { 'b','o','g','u','s',0 };
+    static WCHAR wszGetTypeInfo[] = { 'G','e','t','T','y','p','e','I','n','f','o',0 };
+    static WCHAR wszClone[] = {'C','l','o','n','e',0};
+    OLECHAR* bogus = wszBogus;
+    OLECHAR* pwszGetTypeInfo = wszGetTypeInfo;
+    OLECHAR* pwszClone = wszClone;
     DISPID dispidMember;
     DISPPARAMS dispparams;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
 
-    hr = ITypeLib_GetTypeInfo(pTypeLib, 1, &pTypeInfo);
-    ok_ole_success(hr, ITypeLib_GetTypeInfo); 
-    ITypeLib_Release(pTypeLib);
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IFont, &pTypeInfo);
+    ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid); 
 
     /* test nonexistent method name */
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &bogus, 1, &dispidMember);
@@ -448,10 +451,30 @@ static void test_TypeInfo(void)
     dispparams.cArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = NULL;
-    hr = ITypeInfo_Invoke(pTypeInfo, NULL, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &pwszClone, 1, &dispidMember);
+    ok_ole_success(hr, ITypeInfo_GetIDsOfNames);
+
+    /* test correct memberid, but wrong flags */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
 
     ITypeInfo_Release(pTypeInfo);
+
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IDispatch, &pTypeInfo);
+    ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid); 
+
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &pwszGetTypeInfo, 1, &dispidMember);
+    ok_ole_success(hr, ITypeInfo_GetIDsOfNames);
+
+    /* test invoking a method with a [restricted] keyword */
+    hr = ITypeInfo_Invoke(pTypeInfo, NULL, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+
+    ITypeInfo_Release(pTypeInfo);
+    ITypeLib_Release(pTypeLib);
 }
 
 START_TEST(typelib)
