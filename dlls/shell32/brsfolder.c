@@ -588,7 +588,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
     while (item.hItem && !_ILIsEmpty(pidlCurrent)) {
         LPTV_ITEMDATA pItemData;
 
-        TreeView_GetItemW(info->hwndTreeView, &item);
+        SendMessageW(info->hwndTreeView, TVM_GETITEMW, 0, (LPARAM)&item);
         pItemData = (LPTV_ITEMDATA)item.lParam;
 
         if (_ILIsEqualSimple(pItemData->lpi, pidlCurrent)) {
@@ -596,7 +596,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
             if (!_ILIsEmpty(pidlCurrent)) {
                 /* Only expand current node and move on to it's first child,
                  * if we didn't already reach the last SHITEMID */
-                TreeView_Expand(info->hwndTreeView, item.hItem, TVE_EXPAND);
+                SendMessageW(info->hwndTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
                 item.hItem = TreeView_GetChild(info->hwndTreeView, item.hItem);
             }
         } else {
@@ -623,7 +623,7 @@ static BOOL BrsFolder_OnSetSelectionW(browse_info *info, LPVOID selection, BOOL 
 
     bResult = BrsFolder_OnSetExpanded(info, selection, is_str, &hItem);
     if (bResult)
-        TreeView_Select(info->hwndTreeView, hItem, TVGN_CARET);
+        SendMessageW(info->hwndTreeView, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hItem );
     return bResult;
 }
 
