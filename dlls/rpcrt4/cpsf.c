@@ -230,9 +230,11 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
     TRACE("registering CLSID %s => %s\n", clsid, module);
     if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                         KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
+      RegSetValueExA(subkey, NULL, 0, REG_SZ, (LPBYTE)"PSFactoryBuffer", strlen("PSFactoryBuffer"));
       if (RegCreateKeyExA(key, "InProcServer32", 0, NULL, 0,
                           KEY_WRITE, NULL, &subkey, NULL) == ERROR_SUCCESS) {
         RegSetValueExA(subkey, NULL, 0, REG_SZ, (LPBYTE)module, strlen(module));
+        RegSetValueExA(subkey, "ThreadingModel", 0, REG_SZ, (LPBYTE)"Both", strlen("Both"));
         RegCloseKey(subkey);
       }
       RegCloseKey(key);
