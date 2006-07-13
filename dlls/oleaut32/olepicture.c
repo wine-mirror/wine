@@ -921,9 +921,9 @@ static ULONG WINAPI OLEPictureImpl_IPersistStream_Release(
 static HRESULT WINAPI OLEPictureImpl_GetClassID(
   IPersistStream* iface,CLSID* pClassID)
 {
-  OLEPictureImpl *This = impl_from_IPersistStream(iface);
-  FIXME("(%p),stub!\n",This);
-  return E_FAIL;
+  TRACE("(%p)\n", pClassID);
+  memcpy(pClassID, &CLSID_StdPicture, sizeof(*pClassID));
+  return S_OK;
 }
 
 /************************************************************************
