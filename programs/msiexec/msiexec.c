@@ -229,6 +229,16 @@ static BOOL msi_strequal(LPCWSTR str1, LPCSTR str2)
 	return (ret != CSTR_EQUAL);
 }
 
+/* prefix is hyphen or dash, and str1 is the same as str2, ignoring case */
+static BOOL msi_option_equal(LPCWSTR str1, LPCSTR str2)
+{
+    if (str1[0] != '/' && str1[0] != '-')
+        return TRUE;
+
+    /* skip over the hyphen or slash */
+    return msi_strequal(str1 + 1, str2);
+}
+
 /* str2 is at the beginning of str1, ignoring case */
 static BOOL msi_strprefix(LPCWSTR str1, LPCSTR str2)
 {
@@ -245,6 +255,16 @@ static BOOL msi_strprefix(LPCWSTR str1, LPCSTR str2)
 	ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, len-1, strW, len-1);
 	HeapFree(GetProcessHeap(), 0, strW);
 	return (ret != CSTR_EQUAL);
+}
+
+/* prefix is hyphen or dash, and str2 is at the beginning of str1, ignoring case */
+static BOOL msi_option_prefix(LPCWSTR str1, LPCSTR str2)
+{
+    if (str1[0] != '/' && str1[0] != '-')
+        return TRUE;
+
+    /* skip over the hyphen or slash */
+    return msi_strprefix(str1 + 1, str2);
 }
 
 static VOID *LoadProc(LPCWSTR DllName, LPCSTR ProcName, HMODULE* DllHandle)
@@ -381,7 +401,7 @@ int main(int argc, char **argv)
 	 *  We do that before starting to process the real commandline,
 	 * then overwrite the commandline again.
 	 */
-	if(!msi_strequal(argvW[1], "/@"))
+	if(!msi_option_equal(argvW[1], "@"))
 	{
 		if(!process_args_from_reg( argvW[2], &argc, &argvW ))
 			return 1;
@@ -391,15 +411,15 @@ int main(int argc, char **argv)
 	{
 		WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 
-		if (!msi_strequal(argvW[i], "/regserver"))
+		if (!msi_option_equal(argvW[i], "regserver"))
 		{
 			FunctionRegServer = TRUE;
 		}
-		else if (!msi_strequal(argvW[i], "/unregserver") || !msi_strequal(argvW[i], "/unregister"))
+		else if (!msi_option_equal(argvW[i], "unregserver") || !msi_option_equal(argvW[i], "unregister"))
 		{
 			FunctionUnregServer = TRUE;
 		}
-		else if(!msi_strprefix(argvW[i], "/i"))
+		else if(!msi_option_prefix(argvW[i], "i"))
 		{
 			LPWSTR argvWi = argvW[i];
 			FunctionInstall = TRUE;
@@ -415,7 +435,7 @@ int main(int argc, char **argv)
 			}
 			PackageName = argvWi;
 		}
-		else if(!msi_strequal(argvW[i], "/a"))
+		else if(!msi_option_equal(argvW[i], "a"))
 		{
 			FunctionInstall = TRUE;
 			FunctionInstallAdmin = TRUE;
@@ -427,7 +447,7 @@ int main(int argc, char **argv)
 			PackageName = argvW[i];
 			StringListAppend(&property_list, ActionAdmin);
 		}
-		else if(!msi_strprefix(argvW[i], "/f"))
+		else if(!msi_option_prefix(argvW[i], "f"))
 		{
 			int j;
 			int len = lstrlenW(argvW[i]);
@@ -495,7 +515,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PackageName = argvW[i];
 		}
-		else if(!msi_strequal(argvW[i], "/x"))
+		else if(!msi_option_equal(argvW[i], "x"))
 		{
 			FunctionInstall = TRUE;
 			i++;
@@ -505,7 +525,7 @@ int main(int argc, char **argv)
 			PackageName = argvW[i];
 			StringListAppend(&property_list, RemoveAll);
 		}
-		else if(!msi_strprefix(argvW[i], "/j"))
+		else if(!msi_option_prefix(argvW[i], "j"))
 		{
 			int j;
 			int len = lstrlenW(argvW[i]);
@@ -553,7 +573,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PackageName = argvW[i];
 		}
-		else if(!msi_strequal(argvW[i], "/t"))
+		else if(!msi_option_equal(argvW[i], "t"))
 		{
 			i++;
 			if(i >= argc)
@@ -561,7 +581,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			StringListAppend(&transform_list, argvW[i]);
 		}
-		else if(!msi_strequal(argvW[i], "/g"))
+		else if(!msi_option_equal(argvW[i], "g"))
 		{
 			i++;
 			if(i >= argc)
@@ -569,7 +589,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			Language = msi_atou(argvW[i]);
 		}
-		else if(!msi_strprefix(argvW[i], "/l"))
+		else if(!msi_option_prefix(argvW[i], "l"))
 		{
 			int j;
 			int len = lstrlenW(argvW[i]);
@@ -660,7 +680,7 @@ int main(int argc, char **argv)
 				ExitProcess(1);
 			}
 		}
-		else if(!msi_strequal(argvW[i], "/p"))
+		else if(!msi_option_equal(argvW[i], "p"))
 		{
 			FunctionPatch = TRUE;
 			i++;
@@ -669,7 +689,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PatchFileName = argvW[i];
 		}
-		else if(!msi_strprefix(argvW[i], "/q"))
+		else if(!msi_option_prefix(argvW[i], "q"))
 		{
 			if(lstrlenW(argvW[i]) == 2 || !msi_strequal(argvW[i]+2, "n"))
 			{
@@ -710,7 +730,7 @@ int main(int argc, char **argv)
 					 wine_dbgstr_w(argvW[i]+2));
 			}
 		}
-		else if(!msi_strequal(argvW[i], "/y"))
+		else if(!msi_option_equal(argvW[i], "y"))
 		{
 			FunctionDllRegisterServer = TRUE;
 			i++;
@@ -719,7 +739,7 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			DllName = argvW[i];
 		}
-		else if(!msi_strequal(argvW[i], "/z"))
+		else if(!msi_option_equal(argvW[i], "z"))
 		{
 			FunctionDllUnregisterServer = TRUE;
 			i++;
@@ -728,16 +748,16 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			DllName = argvW[i];
 		}
-		else if(!msi_strequal(argvW[i], "/h") || !msi_strequal(argvW[i], "/?"))
+		else if(!msi_option_equal(argvW[i], "h") || !msi_option_equal(argvW[i], "?"))
 		{
 			ShowUsage(0);
 		}
-		else if(!msi_strequal(argvW[i], "/m"))
+		else if(!msi_option_equal(argvW[i], "m"))
 		{
 			FunctionUnknown = TRUE;
 			WINE_FIXME("Unknown parameter /m\n");
 		}
-		else if(!msi_strequal(argvW[i], "/D"))
+		else if(!msi_option_equal(argvW[i], "D"))
 		{
 			FunctionUnknown = TRUE;
 			WINE_FIXME("Unknown parameter /D\n");
