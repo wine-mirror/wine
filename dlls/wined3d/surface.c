@@ -1021,17 +1021,18 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         if( (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
             b_info->bmiHeader.biWidth = This->currentDesc.Width;
             b_info->bmiHeader.biHeight = -This->currentDesc.Height;
+            b_info->bmiHeader.biSizeImage = This->currentDesc.Width * This->currentDesc.Height * This->bytesPerPixel;
             /* Use the full pow2 image size(assigned below) because LockRect
              * will need it for a full glGetTexImage call
              */
         } else {
             b_info->bmiHeader.biWidth = This->pow2Width;
             b_info->bmiHeader.biHeight = -This->pow2Height;
+            b_info->bmiHeader.biSizeImage = This->resource.size;
         }
         b_info->bmiHeader.biPlanes = 1;
         b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
 
-        b_info->bmiHeader.biSizeImage = This->resource.size;
 
         b_info->bmiHeader.biXPelsPerMeter = 0;
         b_info->bmiHeader.biYPelsPerMeter = 0;
@@ -1092,7 +1093,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
         /* copy the existing surface to the dib section */
         if(This->resource.allocatedMemory) {
-            memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->resource.size);
+            memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
             /* We won't need that any more */
             HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
         } else {

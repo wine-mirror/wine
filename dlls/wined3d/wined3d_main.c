@@ -191,7 +191,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 }
                 else if (!strcmp(buffer,"repack"))
                 {
-                    TRACE("Repacking non-power2 textre\n");
+                    TRACE("Repacking non-power2 textures\n");
                     wined3d_settings.nonpower2_mode = NP2_REPACK;
                 }
                 /* There will be a couple of other choices for nonpow2, they are: TextureRecrangle and OpenGL 2 */
