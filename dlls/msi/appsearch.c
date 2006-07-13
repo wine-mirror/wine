@@ -38,7 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 typedef struct tagMSISIGNATURE
 {
     LPWSTR   Name;     /* NOT owned by this structure */
-    LPWSTR   Property; /* NOT owned by this structure */
     LPWSTR   File;
     DWORD    MinVersionMS;
     DWORD    MinVersionLS;
@@ -173,7 +172,7 @@ end:
     return rc;
 }
 
-static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, BOOL *appFound,
+static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig)
 {
     MSIQUERY *view;
@@ -185,8 +184,8 @@ static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, BOOL *appFound,
    'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
    '\'','%','s','\'',0};
 
-    TRACE("(package %p, appFound %p, sig %p)\n", package, appFound, sig);
-    *appFound = FALSE;
+    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    *appValue = NULL;
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
     if (rc == ERROR_SUCCESS)
     {
@@ -284,7 +283,7 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
     }
 }
 
-static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
+static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig)
 {
     MSIQUERY *view;
@@ -296,13 +295,13 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
    'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
    '\'','%','s','\'',0};
 
-    TRACE("(package %p, appFound %p, sig %p)\n", package, appFound, sig);
-    *appFound = FALSE;
+    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    *appValue = NULL;
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
     if (rc == ERROR_SUCCESS)
     {
         MSIRECORD *row = 0;
-        LPWSTR keyPath = NULL, valueName = NULL, propertyValue = NULL;
+        LPWSTR keyPath = NULL, valueName = NULL;
         int root, type;
         HKEY rootKey, key = NULL;
         DWORD sz = 0, regType;
@@ -388,15 +387,9 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, BOOL *appFound,
             goto end;
         }
 
-        ACTION_ConvertRegValue(regType, value, sz, &propertyValue);
-
-        TRACE("found registry value, setting %s to %s\n",
-         debugstr_w(sig->Property), debugstr_w(propertyValue));
-        rc = MSI_SetPropertyW(package, sig->Property, propertyValue);
-        *appFound = TRUE;
+        ACTION_ConvertRegValue(regType, value, sz, appValue);
 
 end:
-        msi_free( propertyValue);
         msi_free( value);
         RegCloseKey(key);
 
@@ -418,7 +411,7 @@ end:
     return rc;
 }
 
-static UINT ACTION_AppSearchIni(MSIPACKAGE *package, BOOL *appFound,
+static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig)
 {
     MSIQUERY *view;
@@ -430,8 +423,8 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, BOOL *appFound,
    'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
    '\'','%','s','\'',0};
 
-    TRACE("(package %p, appFound %p, sig %p)\n", package, appFound, sig);
-    *appFound = FALSE;
+    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    *appValue = NULL;
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
     if (rc == ERROR_SUCCESS)
     {
@@ -660,7 +653,7 @@ static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
  * Returns ERROR_SUCCESS on success (which may include non-critical errors),
  * something else on failures which should halt the install.
  */
-static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
+static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig, LPCWSTR dir, int depth)
 {
     static const WCHAR starDotStarW[] = { '*','.','*',0 };
@@ -674,7 +667,7 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     if (depth < 0)
         return ERROR_INVALID_PARAMETER;
 
-    *appFound = FALSE;
+    *appValue = NULL;
     /* We need the buffer in both paths below, so go ahead and allocate it
      * here.  Add two because we might need to add a backslash if the dir name
      * isn't backslash-terminated.
@@ -701,14 +694,12 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
             if (!(rc = ACTION_FileMatchesSig(sig, &findData, buf, &matches))
              && matches)
             {
-                TRACE("found file, setting %s to %s\n",
-                 debugstr_w(sig->Property), debugstr_w(buf));
-                rc = MSI_SetPropertyW(package, sig->Property, buf);
-                *appFound = TRUE;
+                TRACE("found file, returning %s\n", debugstr_w(buf));
+                *appValue = buf;
             }
             FindClose(hFind);
         }
-        if (rc == ERROR_SUCCESS && !*appFound && depth > 0)
+        if (rc == ERROR_SUCCESS && !*appValue && depth > 0)
         {
             HANDLE hFind;
             WIN32_FIND_DATAW findData;
@@ -721,19 +712,20 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
             if (hFind != INVALID_HANDLE_VALUE)
             {
                 if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                    rc = ACTION_RecurseSearchDirectory(package, appFound,
-                     sig, findData.cFileName, depth - 1);
-                while (rc == ERROR_SUCCESS && !*appFound &&
+                    rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
+                     findData.cFileName, depth - 1);
+                while (rc == ERROR_SUCCESS && !*appValue &&
                  FindNextFileW(hFind, &findData) != 0)
                 {
                     if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                        rc = ACTION_RecurseSearchDirectory(package, appFound,
+                        rc = ACTION_RecurseSearchDirectory(package, appValue,
                          sig, findData.cFileName, depth - 1);
                 }
                 FindClose(hFind);
             }
         }
-        msi_free(buf);
+        if (!*appValue)
+            msi_free(buf);
     }
     else
         rc = ERROR_OUTOFMEMORY;
@@ -741,17 +733,18 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     return rc;
 }
 
-static UINT ACTION_CheckDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
- LPCWSTR dir)
+static UINT ACTION_CheckDirectory(MSIPACKAGE *package, LPCWSTR dir,
+ LPWSTR *appValue)
 {
     UINT rc = ERROR_SUCCESS;
 
     if (GetFileAttributesW(dir) & FILE_ATTRIBUTE_DIRECTORY)
     {
-        TRACE("directory exists, setting %s to %s\n",
-         debugstr_w(sig->Property), debugstr_w(dir));
-        rc = MSI_SetPropertyW(package, sig->Property, dir);
+        TRACE("directory exists, returning %s\n", debugstr_w(dir));
+        *appValue = strdupW(dir);
     }
+    else
+        *appValue = NULL;
     return rc;
 }
 
@@ -770,23 +763,23 @@ static BOOL ACTION_IsFullPath(LPCWSTR path)
 }
 
 static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
- LPCWSTR expanded, int depth)
+ LPCWSTR path, int depth, LPWSTR *appValue)
 {
     UINT rc;
-    BOOL found;
 
-    TRACE("%p, %p, %s, %d\n", package, sig, debugstr_w(expanded), depth);
-    if (ACTION_IsFullPath(expanded))
+    TRACE("%p, %p, %s, %d, %p\n", package, sig, debugstr_w(path), depth,
+     appValue);
+    if (ACTION_IsFullPath(path))
     {
         if (sig->File)
-            rc = ACTION_RecurseSearchDirectory(package, &found, sig,
-             expanded, depth);
+            rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
+             path, depth);
         else
         {
             /* Recursively searching a directory makes no sense when the
              * directory to search is the thing you're trying to find.
              */
-            rc = ACTION_CheckDirectory(package, sig, expanded);
+            rc = ACTION_CheckDirectory(package, path, appValue);
         }
     }
     else
@@ -796,20 +789,21 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
         int i;
 
         rc = ERROR_SUCCESS;
-        found = FALSE;
-        for (i = 0; rc == ERROR_SUCCESS && !found && i < 26; i++)
+        *appValue = NULL;
+        for (i = 0; rc == ERROR_SUCCESS && !*appValue && i < 26; i++)
             if (drives & (1 << drives))
             {
                 pathWithDrive[0] = 'A' + i;
                 if (GetDriveTypeW(pathWithDrive) == DRIVE_FIXED)
                 {
-                    lstrcpynW(pathWithDrive + 3, expanded,
+                    lstrcpynW(pathWithDrive + 3, path,
                               sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
                     if (sig->File)
-                        rc = ACTION_RecurseSearchDirectory(package, &found, sig,
-                         pathWithDrive, depth);
+                        rc = ACTION_RecurseSearchDirectory(package, appValue,
+                         sig, pathWithDrive, depth);
                     else
-                        rc = ACTION_CheckDirectory(package, sig, pathWithDrive);
+                        rc = ACTION_CheckDirectory(package, pathWithDrive,
+                         appValue);
                 }
             }
     }
@@ -817,7 +811,8 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
     return rc;
 }
 
-static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
+static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue,
+ MSISIGNATURE *sig)
 {
     MSIQUERY *view;
     UINT rc;
@@ -881,7 +876,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
             depth = MSI_RecordGetInteger(row,4);
         ACTION_ExpandAnyPath(package, buffer, expanded,
          sizeof(expanded) / sizeof(expanded[0]));
-        rc = ACTION_SearchDirectory(package, sig, expanded, depth);
+        rc = ACTION_SearchDirectory(package, sig, expanded, depth, appValue);
 
 end:
         if (row)
@@ -918,8 +913,6 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
         MSIRECORD *row = 0;
         WCHAR propBuf[0x100], sigBuf[0x100];
         DWORD sz;
-        MSISIGNATURE sig;
-        BOOL appFound = FALSE;
 
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
@@ -927,6 +920,9 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
 
         while (!rc)
         {
+            MSISIGNATURE sig;
+            LPWSTR value;
+
             rc = MSI_ViewFetch(view,&row);
             if (rc != ERROR_SUCCESS)
             {
@@ -958,20 +954,24 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
             /* This clears all the fields, so set Name and Property afterward */
             rc = ACTION_AppSearchGetSignature(package, &sig, sigBuf);
             sig.Name = sigBuf;
-            sig.Property = propBuf;
             if (rc == ERROR_SUCCESS)
             {
-                rc = ACTION_AppSearchComponents(package, &appFound, &sig);
-                if (rc == ERROR_SUCCESS && !appFound)
+                rc = ACTION_AppSearchComponents(package, &value, &sig);
+                if (rc == ERROR_SUCCESS && !*value)
                 {
-                    rc = ACTION_AppSearchReg(package, &appFound, &sig);
-                    if (rc == ERROR_SUCCESS && !appFound)
+                    rc = ACTION_AppSearchReg(package, &value, &sig);
+                    if (rc == ERROR_SUCCESS && !*value)
                     {
-                        rc = ACTION_AppSearchIni(package, &appFound, &sig);
-                        if (rc == ERROR_SUCCESS && !appFound)
-                            rc = ACTION_AppSearchDr(package, &sig);
+                        rc = ACTION_AppSearchIni(package, &value, &sig);
+                        if (rc == ERROR_SUCCESS && !*value)
+                            rc = ACTION_AppSearchDr(package, &value, &sig);
                     }
                 }
+            }
+            if (value)
+            {
+                MSI_SetPropertyW(package, propBuf, value);
+                msi_free(value);
             }
             msi_free( sig.File);
             msi_free( sig.Languages);
