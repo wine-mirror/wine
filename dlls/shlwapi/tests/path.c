@@ -1485,6 +1485,60 @@ static void test_PathFindExtensionA(void)
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 }
 
+static void test_PathBuildRootA(void)
+{
+    LPSTR root;
+    char path[10];
+    char root_expected[26][4];
+    char drive;
+    int j;
+
+    /* set up the expected paths */
+    for (drive = 'A'; drive <= 'Z'; drive++)
+        sprintf(root_expected[drive - 'A'], "%c:\\", drive);
+
+    /* test the expected values */
+    for (j = 0; j < 26; j++)
+    {
+        SetLastError(0xdeadbeef);
+        lstrcpy(path, "aaaaaaaaa");
+        root = PathBuildRootA(path, j);
+        ok(root == path, "Expected root == path, got %p\n", root);
+        ok(!lstrcmp(root, root_expected[j]), "Expected %s, got %s\n", root_expected[j], root);
+        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    }
+
+    /* test a negative drive number */
+    SetLastError(0xdeadbeef);
+    lstrcpy(path, "aaaaaaaaa");
+    root = PathBuildRootA(path, -1);
+    ok(root == path, "Expected root == path, got %p\n", root);
+    ok(!lstrcmp(path, "aaaaaaaaa"), "Expected aaaaaaaaa, got %s\n", path);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* test a drive number greater than 25 */
+    SetLastError(0xdeadbeef);
+    lstrcpy(path, "aaaaaaaaa");
+    root = PathBuildRootA(path, 26);
+    ok(root == path, "Expected root == path, got %p\n", root);
+    ok(!lstrcmp(path, "aaaaaaaaa"), "Expected aaaaaaaaa, got %s\n", path);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* length of path is less than 4 */
+    SetLastError(0xdeadbeef);
+    lstrcpy(path, "aa");
+    root = PathBuildRootA(path, 0);
+    ok(root == path, "Expected root == path, got %p\n", root);
+    ok(!lstrcmp(path, "A:\\"), "Expected A:\\, got %s\n", path);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+
+    /* path is NULL */
+    SetLastError(0xdeadbeef);
+    root = PathBuildRootA(NULL, 0);
+    ok(root == NULL, "Expected root == NULL, got %p\n", root);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -1527,4 +1581,5 @@ START_TEST(path)
   test_PathAppendA();
   test_PathCanonicalizeA();
   test_PathFindExtensionA();
+  test_PathBuildRootA();
 }
