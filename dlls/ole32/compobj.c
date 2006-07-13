@@ -2875,7 +2875,12 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
                 MSG msg;
-                while (COM_PeekMessage(apt, &msg))
+
+                /* note: using "if" here instead of "while" might seem less
+                 * efficient, but only if we are optimising for quick delivery
+                 * of pending messages, rather than quick completion of the
+                 * COM call */
+                if (COM_PeekMessage(apt, &msg))
                 {
                     /* FIXME: filter the messages here */
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
@@ -2887,7 +2892,6 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                         PostQuitMessage(msg.wParam);
                         /* no longer need to process messages */
                         message_loop = FALSE;
-                        break;
                     }
                 }
                 continue;
