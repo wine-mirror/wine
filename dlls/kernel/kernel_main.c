@@ -97,6 +97,7 @@ static void thread_detach(void)
 static BOOL process_attach(void)
 {
     SYSTEM_INFO si;
+    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
 
     /* FIXME: should probably be done in ntdll */
     GetSystemInfo( &si );
@@ -107,6 +108,25 @@ static BOOL process_attach(void)
 
     /* Setup computer name */
     COMPUTERNAME_Init();
+
+    /* convert value from server:
+     * + 0 => INVALID_HANDLE_VALUE
+     * + console handle needs to be mapped
+     */
+    if (!params->hStdInput)
+        params->hStdInput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
+        params->hStdInput = console_handle_map(params->hStdInput);
+
+    if (!params->hStdOutput)
+        params->hStdOutput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdOutput)))
+        params->hStdOutput = console_handle_map(params->hStdOutput);
+
+    if (!params->hStdError)
+        params->hStdError = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdError)))
+        params->hStdError = console_handle_map(params->hStdError);
 
     /* copy process information from ntdll */
     ENV_CopyStartupInformation();
@@ -127,7 +147,7 @@ static BOOL process_attach(void)
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
 
-    if (NtCurrentTeb()->Peb->ProcessParameters->ConsoleHandle == (HANDLE)1)  /* FIXME */
+    if (params->ConsoleHandle == (HANDLE)1)  /* FIXME */
     {
         HMODULE mod = GetModuleHandleA(0);
         if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
