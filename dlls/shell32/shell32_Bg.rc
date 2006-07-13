@@ -164,6 +164,7 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Потвърдете изтриването на папката"
 	IDS_DELETEITEM_TEXT "Наистина ли искате да изтриете '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Наистина ли искате да изтриете тези %1 елемента?"
+	IDS_DELETESELECTED_TEXT "Наистина ли искате да изтриете избраните елементи?"
 	IDS_OVERWRITEFILE_TEXT "Наистина ли искате да презапишете %1?"
 	IDS_OVERWRITEFILE_CAPTION "Потвърдете презаписа на файла"
 
