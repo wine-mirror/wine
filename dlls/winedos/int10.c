@@ -299,7 +299,7 @@ static void INT10_FillControllerInformation( BYTE *buffer )
     *(SEGPTR*)(buffer + 36) = 0;
 
     /* 40 - BYTE[216]: reserved for VBE implementation, set to zero */
-    memset( buffer + 40, 216, 0 );
+    memset( buffer + 40, 0, 216 );
 
     /* 
      * 256 - BYTE[256]: reserved for VBE3.0 implementation, 
@@ -548,7 +548,7 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
     mib->MaxPixelClock = 0; /* FIXME */
 
     /* 66 - BYTE[190]: reserved, set to zero */
-    memset( &mib->Reserved4, 190, 0 );
+    memset( &mib->Reserved4, 0, 190 );
 
     return TRUE;
 }
@@ -636,7 +636,7 @@ static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
      buffer[46] = 0; /* FIXME: correct value? */
 
      /* 47 - BYTE[2]: reserved, set to zero */
-     memset( buffer + 47, 2, 0 );
+     memset( buffer + 47, 0, 2 );
 
      /*
       * 49 - BYTE: video memory available
@@ -673,7 +673,7 @@ static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
      buffer[51] = 4; /* FIXME: correct value? */
 
      /* 52 - BYTE[12]: reserved, set to zero */
-     memset( buffer + 52, 12, 0 );
+     memset( buffer + 52, 0, 12 );
 }
 
 

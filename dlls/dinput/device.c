@@ -271,7 +271,7 @@ void fill_DataFormat(void *out, const void *in, DataFormat *df) {
 			break;
 			
 		    default:
-			memset((out_c + df->dt[i].offset_out), df->dt[i].size, 0);
+			memset((out_c + df->dt[i].offset_out), 0, df->dt[i].size);
 			break;
 		}
 	    }

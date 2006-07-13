@@ -163,8 +163,8 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
                         HeapAlloc(GetProcessHeap(), 0, dwCompStringSize +
                                     byte_expansion);
 
-                memset(&(CompositionString[dwCompStringSize]), byte_expansion,
-                        0);
+                memset(&(CompositionString[dwCompStringSize]), 0,
+                        byte_expansion);
 
                 dwCompStringSize += byte_expansion;
             }

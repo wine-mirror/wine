@@ -56,7 +56,7 @@ static void test_solidbrush(void)
         }
         else
             stockBrush = NULL;
-        memset(&br, sizeof(br), 0);
+        memset(&br, 0, sizeof(br));
         ret = GetObject(solidBrush, sizeof(br), &br);
         ok( ret !=0, "GetObject on solid %s brush failed, error=%ld\n", stock[i].name, GetLastError());
         ok(br.lbStyle==BS_SOLID, "%s brush has wrong style, got %d expected %d\n", stock[i].name, br.lbStyle, BS_SOLID);
