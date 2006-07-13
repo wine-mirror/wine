@@ -5363,9 +5363,16 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 goto func_fail; /* FIXME: we don't free changed types here */
             }
 
-            V_VT(&varresult) = 0;
-            hres = typedescvt_to_variantvt((ITypeInfo *)iface, &func_desc->elemdescFunc.tdesc, &V_VT(&varresult));
-            if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
+            /* VT_VOID is a special case for return types, so it is not
+             * handled in the general function */
+            if (func_desc->elemdescFunc.tdesc.vt == VT_VOID)
+                V_VT(&varresult) = VT_EMPTY;
+            else
+            {
+                V_VT(&varresult) = 0;
+                hres = typedescvt_to_variantvt((ITypeInfo *)iface, &func_desc->elemdescFunc.tdesc, &V_VT(&varresult));
+                if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
+            }
 
             hres = DispCallFunc(pIUnk, func_desc->oVft, func_desc->callconv,
                                 V_VT(&varresult), func_desc->cParams, rgvt,
