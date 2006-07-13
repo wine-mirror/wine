@@ -1566,6 +1566,7 @@ dlls/capi2032/Makefile
 dlls/cards/Makefile
 dlls/cfgmgr32/Makefile
 dlls/comcat/Makefile
+dlls/comcat/tests/Makefile
 dlls/comctl32/Makefile
 dlls/comctl32/tests/Makefile
 dlls/comdlg32/Makefile
