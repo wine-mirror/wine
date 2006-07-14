@@ -286,6 +286,25 @@ ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, ME_Style *s, int nZoomNumerator, int 
   lf->lfCharSet = s->fmt.bCharSet;
 }
 
+void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt)
+{
+  int rx, ry;
+  
+  ME_InitCharFormat2W(fmt);
+  rx = GetDeviceCaps(hDC, LOGPIXELSX);
+  ry = GetDeviceCaps(hDC, LOGPIXELSY);
+  lstrcpyW(fmt->szFaceName, lf->lfFaceName);
+  fmt->dwEffects = 0;
+  fmt->dwMask = CFM_WEIGHT|CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE|CFM_STRIKEOUT|CFM_SIZE|CFM_FACE|CFM_CHARSET;
+  fmt->wWeight = lf->lfWeight;
+  fmt->yHeight = -lf->lfHeight*1440/ry;
+  if (lf->lfWeight>400) fmt->dwEffects |= CFM_BOLD;
+  if (lf->lfItalic) fmt->dwEffects |= CFM_ITALIC;
+  if (lf->lfUnderline) fmt->dwEffects |= CFM_UNDERLINE;
+  if (lf->lfStrikeOut) fmt->dwEffects |= CFM_STRIKEOUT;
+  fmt->bPitchAndFamily = lf->lfPitchAndFamily;
+  fmt->bCharSet = lf->lfCharSet;  
+}
 
 BOOL ME_IsFontEqual(LOGFONTW *p1, LOGFONTW *p2)
 {

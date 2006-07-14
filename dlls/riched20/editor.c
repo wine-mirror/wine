@@ -92,7 +92,7 @@
   - EM_SELECTIONTYPE
   - EM_SETBIDIOPTIONS 3.0
   + EM_SETBKGNDCOLOR
-  - EM_SETCHARFORMAT (partly done, no ANSI)
+  + EM_SETCHARFORMAT (partly done, no ANSI)
   - EM_SETEDITSTYLE
   + EM_SETEVENTMASK (few notifications supported)
   - EM_SETFONTSIZE
@@ -135,7 +135,7 @@
   + WM_GETTEXT (ANSI&Unicode)
   + WM_GETTEXTLENGTH (ANSI version sucks)
   + WM_PASTE
-  - WM_SETFONT
+  + WM_SETFONT
   + WM_SETTEXT (resets undo stack !) (proper style?) ANSI&Unicode
   - WM_STYLECHANGING
   - WM_STYLECHANGED (things like read-only flag)
@@ -1434,7 +1434,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_SHOWSCROLLBAR)
-  UNSUPPORTED_MSG(WM_SETFONT)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
   UNSUPPORTED_MSG(WM_STYLECHANGED)
 /*  UNSUPPORTED_MSG(WM_UNICHAR) FIXME missing in Wine headers */
@@ -1834,6 +1833,27 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       }
     }
 
+    return 0;
+  }
+  case WM_SETFONT:
+  {
+    LOGFONTW lf;
+    CHARFORMAT2W fmt;
+    HDC hDC;
+    BOOL bRepaint = LOWORD(lParam);
+    
+    if (!wParam)
+      wParam = (WPARAM)GetStockObject(DEFAULT_GUI_FONT); 
+    GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
+    hDC = GetDC(hWnd);
+    ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
+    ReleaseDC(hWnd, hDC);   
+    ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), &fmt);
+    ME_SetDefaultCharFormat(editor, &fmt);
+
+    ME_CommitUndo(editor);
+    if (bRepaint)
+      ME_UpdateRepaint(editor);
     return 0;
   }
   case WM_SETTEXT:

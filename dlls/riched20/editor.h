@@ -55,6 +55,7 @@ void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
 CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyCharFormat(CHARFORMAT2W *pDest, CHARFORMAT2W *pSrc); /* only works with 2W structs */
+void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt); /* ditto */
 
 /* list.c */
 void ME_InsertBefore(ME_DisplayItem *diWhere, ME_DisplayItem *diWhat);
