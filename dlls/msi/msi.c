@@ -512,15 +512,20 @@ end:
 UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
                 LPWSTR szBuffer, DWORD *pcchValueBuf)
 {
-    MSIHANDLE hProduct;
     UINT r;
-    static const WCHAR szProductVersion[] =
-        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szProductLanguage[] =
-        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
+    HKEY hkey;
+    LPWSTR val = NULL;
 
     FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szAttribute),
           szBuffer, pcchValueBuf);
+
+    /* 
+     * FIXME:
+     *
+     * We should use msi_strcpy_to_awstring to return strings.
+     *
+     * The values seem scattered/dupicated in the registry.  Is there a system?
+     */
 
     if (NULL != szBuffer && NULL == pcchValueBuf)
         return ERROR_INVALID_PARAMETER;
@@ -528,79 +533,93 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         return ERROR_INVALID_PARAMETER;
     
     /* check for special properties */
-    if (strcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW)==0)
+    if (!lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW))
     {
-        HKEY hkey;
-        WCHAR squished[GUID_SIZE];
-        WCHAR package[200];
-        DWORD sz = sizeof(squished);
+        LPWSTR regval;
+        WCHAR packagecode[35];
 
         r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
         if (r != ERROR_SUCCESS)
             return ERROR_UNKNOWN_PRODUCT;
 
-        r = RegQueryValueExW(hkey, INSTALLPROPERTY_PACKAGECODEW, NULL, NULL, 
-                        (LPBYTE)squished, &sz);
-        if (r != ERROR_SUCCESS)
+        regval = msi_reg_get_val_str( hkey, szAttribute );
+        if (regval)
         {
-            RegCloseKey(hkey);
-            return ERROR_UNKNOWN_PRODUCT;
+            if (unsquash_guid(regval, packagecode))
+                val = strdupW(packagecode);
+            msi_free(regval);
         }
-
-        unsquash_guid(squished, package);
-        *pcchValueBuf = strlenW(package);
-        if (strlenW(package) > *pcchValueBuf)
-        {
-            RegCloseKey(hkey);
-            return ERROR_MORE_DATA;
-        }
-        else
-            strcpyW(szBuffer, package);
 
         RegCloseKey(hkey);
-        r = ERROR_SUCCESS;
     }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW)==0)
+    else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW))
     {
-        r = MsiOpenProductW(szProduct, &hProduct);
-        if (ERROR_SUCCESS != r)
-            return r;
+        static const WCHAR one[] = { '1',0 };
+        /*
+         * FIXME: should be in the Product key (user or system?)
+         *        but isn't written yet...
+         */
+        val = strdupW( one );
+    }
+    else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_LANGUAGEW) ||
+             !lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONW))
+    {
+        static const WCHAR fmt[] = { '%','u',0 };
+        WCHAR szVal[16];
+        DWORD regval;
 
-        r = MsiGetPropertyW(hProduct, szProductVersion, szBuffer, pcchValueBuf);
-        MsiCloseHandle(hProduct);
-    }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW)==0)
-    {
-        FIXME("0 (zero) if advertised or per user , 1(one) if per machine.\n");
-        if (szBuffer)
+        r = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
+
+        if (msi_reg_get_val_dword( hkey, szAttribute, &regval))
         {
-            szBuffer[0] = '1';
-            szBuffer[1] = 0;
+            sprintfW(szVal, fmt, regval);
+            val = strdupW( szVal );
         }
-        if (pcchValueBuf)
-            *pcchValueBuf = 1;
-        r = ERROR_SUCCESS;
-    }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_LANGUAGEW)==0)
-    {
-        r = MsiOpenProductW(szProduct, &hProduct);
-        if (ERROR_SUCCESS != r)
-            return r;
 
-        r = MsiGetPropertyW(hProduct, szProductLanguage, szBuffer, pcchValueBuf);
-        MsiCloseHandle(hProduct);
+        RegCloseKey(hkey);
+    }
+    else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_PRODUCTNAMEW))
+    {
+        r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
+
+        val = msi_reg_get_val_str( hkey, szAttribute );
+
+        RegCloseKey(hkey);
     }
     else
     {
-        r = MsiOpenProductW(szProduct, &hProduct);
-        if (ERROR_SUCCESS != r)
-            return r;
+        static const WCHAR szDisplayVersion[] = {
+            'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0 };
 
-        r = MsiGetPropertyW(hProduct, szAttribute, szBuffer, pcchValueBuf);
-        MsiCloseHandle(hProduct);
+        if (!lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW))
+            szAttribute = szDisplayVersion;
+
+        r = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
+
+        val = msi_reg_get_val_str( hkey, szAttribute );
+
+        RegCloseKey(hkey);
     }
 
-    return r;
+    TRACE("returning %s\n", debugstr_w(val));
+
+    if (!val)
+        return ERROR_UNKNOWN_PROPERTY;
+
+    if (lstrlenW(val) > *pcchValueBuf)
+        return ERROR_MORE_DATA;
+
+    lstrcpyW(szBuffer, val);
+
+    HeapFree(GetProcessHeap(), 0, val);
+
+    return ERROR_SUCCESS;
 }
 
 UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
