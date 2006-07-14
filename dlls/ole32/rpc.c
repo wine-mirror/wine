@@ -976,8 +976,6 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         hres = IStream_Stat(pStm,&ststg,0);
         if (hres) return hres;
 
-        buflen = ststg.cbSize.u.LowPart;
-        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
         seekto.u.LowPart = 0;
         seekto.u.HighPart = 0;
         hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
@@ -985,14 +983,20 @@ static DWORD WINAPI local_server_thread(LPVOID param)
             FIXME("IStream_Seek failed, %lx\n",hres);
             return hres;
         }
+
+        buflen = ststg.cbSize.u.LowPart;
+        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
         
         hres = IStream_Read(pStm,buffer,buflen,&res);
         if (hres) {
             FIXME("Stream Read failed, %lx\n",hres);
+            HeapFree(GetProcessHeap(),0,buffer);
             return hres;
         }
         
         WriteFile(hPipe,buffer,buflen,&res,NULL);
+        HeapFree(GetProcessHeap(),0,buffer);
+
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
 
