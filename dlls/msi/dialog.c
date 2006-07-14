@@ -135,6 +135,7 @@ static const WCHAR szIcon[] = { 'I','c','o','n',0 };
 static const WCHAR szSelectionTree[] = {
     'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
 static const WCHAR szGroupBox[] = { 'G','r','o','u','p','B','o','x',0 };
+static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1705,6 +1706,151 @@ static UINT msi_dialog_group_box( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** List Box ***************************************/
+
+struct msi_listbox_item
+{
+    LPWSTR property;
+    LPWSTR value;
+};
+
+struct msi_listbox_info
+{
+    msi_dialog *dialog;
+    HWND hwnd;
+    WNDPROC oldproc;
+    DWORD num_items;
+    struct msi_listbox_item *items;
+};
+
+static LRESULT WINAPI MSIListBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_listbox_info *info;
+    LRESULT r;
+    DWORD j;
+
+    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+
+    info = GetPropW( hWnd, szButtonData );
+    if (!info)
+        return 0;
+
+    r = CallWindowProcW( info->oldproc, hWnd, msg, wParam, lParam );
+
+    switch( msg )
+    {
+    case WM_NCDESTROY:
+        for (j = 0; j < info->num_items; j++)
+        {
+            msi_free( info->items[j].property );
+            msi_free( info->items[j].value );
+        }
+        msi_free( info->items );
+        msi_free( info );
+        RemovePropW( hWnd, szButtonData );
+        break;
+    }
+
+    return r;
+}
+
+static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
+{
+    struct msi_listbox_info *info = param;
+    struct msi_listbox_item *item;
+    LPCWSTR property, value, text;
+    static int index = 0;
+
+    item = &info->items[index++];
+    property = MSI_RecordGetString( rec, 1 );
+    value = MSI_RecordGetString( rec, 3 );
+    text = MSI_RecordGetString( rec, 4 );
+
+    item->property = strdupW( property );
+    item->value = strdupW( value );
+
+    SendMessageW( info->hwnd, LB_ADDSTRING, 0, (LPARAM)text );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_listbox_add_items( struct msi_listbox_info *info )
+{
+    UINT r;
+    MSIQUERY *view = NULL;
+    DWORD count;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','L','i','s','t','B','o','x','`',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0
+    };
+
+    r = MSI_OpenQuery( info->dialog->package->db, &view, query );
+    if ( r != ERROR_SUCCESS )
+        return r;
+
+    /* just get the number of records */
+    r = MSI_IterateRecords( view, &count, NULL, NULL );
+
+    info->num_items = count;
+    info->items = msi_alloc( sizeof(*info->items) * count );
+
+    r = MSI_IterateRecords( view, NULL, msi_listbox_add_item, info );
+    msiobj_release( &view->hdr );
+
+    return r;
+}
+
+static UINT msi_dialog_listbox_handler( msi_dialog *dialog,
+                                        msi_control *control, WPARAM param )
+{
+    struct msi_listbox_info *info;
+    int index;
+
+    if( HIWORD(param) != LBN_SELCHANGE )
+        return ERROR_SUCCESS;
+
+    info = GetPropW( control->hwnd, szButtonData );
+    index = SendMessageW( control->hwnd, LB_GETCURSEL, 0, 0 );
+
+    MSI_SetPropertyW( info->dialog->package,
+                      info->items[index].property, info->items[index].value );
+    msi_dialog_evaluate_control_conditions( info->dialog );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
+{
+    struct msi_listbox_info *info;
+    msi_control *control;
+    DWORD style;
+
+    info = msi_alloc( sizeof *info );
+    if (!info)
+        return ERROR_FUNCTION_FAILED;
+
+    style = WS_TABSTOP | WS_GROUP | WS_CHILD | LBS_STANDARD;
+    control = msi_dialog_add_control( dialog, rec, WC_LISTBOXW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    control->handler = msi_dialog_listbox_handler;
+
+    /* subclass */
+    info->dialog = dialog;
+    info->hwnd = control->hwnd;
+    info->items = NULL;
+    info->oldproc = (WNDPROC)SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                                (LONG_PTR)MSIListBox_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
+
+    msi_listbox_add_items( info );
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -1722,6 +1868,7 @@ static const struct control_handler msi_dialog_handler[] =
     { szIcon, msi_dialog_icon_control },
     { szSelectionTree, msi_dialog_selection_tree },
     { szGroupBox, msi_dialog_group_box },
+    { szListBox, msi_dialog_list_box },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
