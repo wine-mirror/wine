@@ -457,81 +457,23 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
-                 LPSTR szBuffer, DWORD *pcchValueBuf)
-{
-    LPWSTR szwProduct = NULL, szwAttribute = NULL, szwBuffer = NULL;
-    UINT r = ERROR_OUTOFMEMORY;
-    DWORD pcchwValueBuf = 0;
-
-    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szAttribute),
-          szBuffer, pcchValueBuf);
-
-    if( szProduct )
-    {
-        szwProduct = strdupAtoW( szProduct );
-        if( !szwProduct )
-            goto end;
-    }
-    
-    if( szAttribute )
-    {
-        szwAttribute = strdupAtoW( szAttribute );
-        if( !szwAttribute )
-            goto end;
-    }
-
-    if( szBuffer )
-    {
-        szwBuffer = msi_alloc( (*pcchValueBuf) * sizeof(WCHAR) );
-        pcchwValueBuf = *pcchValueBuf;
-        if( !szwBuffer )     
-            goto end;
-    }
-
-    r = MsiGetProductInfoW( szwProduct, szwAttribute, szwBuffer, 
-                            &pcchwValueBuf );
-
-    if( ERROR_SUCCESS == r )
-    {
-        INT old_len = *pcchValueBuf;
-        *pcchValueBuf = WideCharToMultiByte(CP_ACP, 0, szwBuffer, pcchwValueBuf,
-                        szBuffer, *pcchValueBuf, NULL, NULL);
-        if (old_len > *pcchValueBuf)
-            szBuffer[*pcchValueBuf]=0;
-    }
-
-end:
-    msi_free( szwProduct );
-    msi_free( szwAttribute );
-    msi_free( szwBuffer );
-
-    return r;
-}
-
-UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
-                LPWSTR szBuffer, DWORD *pcchValueBuf)
+UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
+                               awstring *szValue, DWORD *pcchValueBuf)
 {
     UINT r;
     HKEY hkey;
     LPWSTR val = NULL;
 
-    FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szAttribute),
-          szBuffer, pcchValueBuf);
+    TRACE("%s %s %p %p\n", debugstr_w(szProduct),
+          debugstr_w(szAttribute), szValue, pcchValueBuf);
 
-    /* 
-     * FIXME:
-     *
-     * We should use msi_strcpy_to_awstring to return strings.
-     *
-     * The values seem scattered/dupicated in the registry.  Is there a system?
+    /*
+     * FIXME: Values seem scattered/duplicated in the registry. Is there a system?
      */
 
-    if (NULL != szBuffer && NULL == pcchValueBuf)
+    if ((szValue && !pcchValueBuf) || !szProduct || !szAttribute)
         return ERROR_INVALID_PARAMETER;
-    if (NULL == szProduct || NULL == szAttribute)
-        return ERROR_INVALID_PARAMETER;
-    
+
     /* check for special properties */
     if (!lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW))
     {
@@ -595,10 +537,13 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         static const WCHAR szDisplayVersion[] = {
             'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0 };
 
-        if (!lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW))
+        FIXME("%s\n", debugstr_w(szAttribute));
+        /* FIXME: some attribute values not tested... */
+
+        if (!lstrcmpW( szAttribute, INSTALLPROPERTY_VERSIONSTRINGW ))
             szAttribute = szDisplayVersion;
 
-        r = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
+        r = MSIREG_OpenUninstallKey( szProduct, &hkey, FALSE );
         if (r != ERROR_SUCCESS)
             return ERROR_UNKNOWN_PRODUCT;
 
@@ -612,14 +557,57 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
     if (!val)
         return ERROR_UNKNOWN_PROPERTY;
 
-    if (lstrlenW(val) > *pcchValueBuf)
-        return ERROR_MORE_DATA;
-
-    lstrcpyW(szBuffer, val);
+    r = msi_strcpy_to_awstring( val, szValue, pcchValueBuf );
 
     HeapFree(GetProcessHeap(), 0, val);
 
-    return ERROR_SUCCESS;
+    return r;
+}
+
+UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
+                               LPSTR szBuffer, DWORD *pcchValueBuf)
+{
+    LPWSTR szwProduct, szwAttribute = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+    awstring buffer;
+
+    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szAttribute),
+          szBuffer, pcchValueBuf);
+
+    szwProduct = strdupAtoW( szProduct );
+    if( szProduct && !szwProduct )
+        goto end;
+
+    szwAttribute = strdupAtoW( szAttribute );
+    if( szAttribute && !szwAttribute )
+        goto end;
+
+    buffer.unicode = FALSE;
+    buffer.str.a = szBuffer;
+
+    r = MSI_GetProductInfo( szwProduct, szwAttribute,
+                            &buffer, pcchValueBuf );
+
+end:
+    msi_free( szwProduct );
+    msi_free( szwAttribute );
+
+    return r;
+}
+
+UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
+                               LPWSTR szBuffer, DWORD *pcchValueBuf)
+{
+    awstring buffer;
+
+    TRACE("%s %s %p %p\n", debugstr_w(szProduct), debugstr_w(szAttribute),
+          szBuffer, pcchValueBuf);
+
+    buffer.unicode = TRUE;
+    buffer.str.w = szBuffer;
+
+    return MSI_GetProductInfo( szProduct, szAttribute,
+                               &buffer, pcchValueBuf );
 }
 
 UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
@@ -1567,7 +1555,7 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     TRACE("%s %s %li %s %li %li %p %p\n", debugstr_w(szComponent),
           debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
           Unused1, Unused2, lpPathBuf, pcchPathBuf);
-   
+
     rc = MSIREG_OpenUserComponentsKey(szComponent, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
         return ERROR_INDEX_ABSENT;
@@ -1590,18 +1578,18 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     }
 
     MsiDecomposeDescriptorW(info, product, feature, component, &sz);
-    
+
     if (!szProduct)
         rc = MsiGetComponentPathW(product, component, lpPathBuf, pcchPathBuf);
     else
         rc = MsiGetComponentPathW(szProduct, component, lpPathBuf, pcchPathBuf);
-   
+
     RegCloseKey(hkey);
     msi_free(info);
 
     if (rc == INSTALLSTATE_LOCAL)
         return ERROR_SUCCESS;
-    else 
+    else
         return ERROR_FILE_NOT_FOUND;
 }
 
@@ -1721,7 +1709,7 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     }
     if (pcchSerialBuf)
         *pcchSerialBuf = sz / sizeof(WCHAR);
-    
+
     RegCloseKey(hkey);
     return USERINFOSTATE_PRESENT;
 }
@@ -1969,7 +1957,7 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
         return r;
 
     MSI_SetPropertyW(package,REINSTALLMODE,reinstallmode);
-    
+
     sz = lstrlenW(szInstalled);
     sz += lstrlenW(fmt);
     sz += lstrlenW(szFeature);
@@ -2002,7 +1990,7 @@ UINT WINAPI MsiReinstallFeatureA( LPCSTR szProduct, LPCSTR szFeature,
     wszFeature = strdupAtoW(szFeature);
 
     rc = MsiReinstallFeatureW(wszProduct, wszFeature, dwReinstallMode);
-    
+
     msi_free(wszProduct);
     msi_free(wszFeature);
     return rc;
