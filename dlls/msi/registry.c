@@ -369,6 +369,32 @@ LONG msi_reg_set_subkey_val( HKEY hkey, LPCWSTR path, LPCWSTR name, LPCWSTR val 
     return r;
 }
 
+LPWSTR msi_reg_get_val_str( HKEY hkey, LPCWSTR name )
+{
+    DWORD len = 0;
+    LPWSTR val;
+    LONG r;
+
+    r = RegQueryValueExW(hkey, name, NULL, NULL, NULL, &len);
+    if (r != ERROR_SUCCESS)
+        return NULL;
+
+    len += sizeof (WCHAR);
+    val = msi_alloc( len );
+    if (!val)
+        return NULL;
+    val[0] = 0;
+    RegQueryValueExW(hkey, name, NULL, NULL, (LPBYTE) val, &len);
+    return val;
+}
+
+BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val)
+{
+    DWORD type, len = sizeof (DWORD);
+    LONG r = RegQueryValueExW(hkey, name, NULL, &type, (LPBYTE) val, &len);
+    return r == ERROR_SUCCESS && type == REG_DWORD;
+}
+
 UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;

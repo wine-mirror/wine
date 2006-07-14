@@ -415,6 +415,9 @@ extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL cr
 extern UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 
+extern LPWSTR msi_reg_get_val_str( HKEY hkey, LPCWSTR name );
+extern BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val);
+
 extern DWORD msi_version_str_to_dword(LPCWSTR p);
 extern LPWSTR msi_version_dword_to_str(DWORD version);
 
