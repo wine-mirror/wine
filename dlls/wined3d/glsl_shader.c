@@ -987,20 +987,19 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
 /** Process CMP instruction in GLSL (dst = src0.x > 0.0 ? src1.x : src2.x), per channel */
 void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
 
+    char tmpLine[256];
     char dst_str[100], src0_str[100], src1_str[100], src2_str[100];
     char dst_reg[50], src0_reg[50], src1_reg[50], src2_reg[50];
     char dst_mask[6], src0_mask[6], src1_mask[6], src2_mask[6];
-    
+   
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
     shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
     shader_glsl_add_param(arg, arg->src[2], arg->src_addr[2], TRUE, src2_reg, src2_mask, src2_str);
 
-    /* FIXME: This isn't correct - doesn't take the dst's swizzle into account. */
-    shader_addline(arg->buffer, "%s.x = (%s.x > 0.0) ? %s.x : %s.x;\n", dst_reg, src0_reg, src1_reg, src2_reg);
-    shader_addline(arg->buffer, "%s.y = (%s.y > 0.0) ? %s.y : %s.y;\n", dst_reg, src0_reg, src1_reg, src2_reg);
-    shader_addline(arg->buffer, "%s.z = (%s.z > 0.0) ? %s.z : %s.z;\n", dst_reg, src0_reg, src1_reg, src2_reg);
-    shader_addline(arg->buffer, "%s.w = (%s.w > 0.0) ? %s.w : %s.w;\n", dst_reg, src0_reg, src1_reg, src2_reg);
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_addline(arg->buffer, "%smix(vec4(%s), vec4(%s), vec4(lessThan(vec4(%s), vec4(0.0)))))%s;\n",
+        tmpLine, src1_str, src2_str, src0_str, dst_mask);
 }
 
 /** Process the CND opcode in GLSL (dst = (src0 < 0.5) ? src1 : src2) */
