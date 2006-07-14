@@ -3088,7 +3088,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     buffer = msi_dup_property( package, szProductVersion );
     if (buffer)
     {
-        DWORD verdword = build_version_dword(buffer);
+        DWORD verdword = msi_version_str_to_dword(buffer);
         msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
     }
     msi_free(buffer);
@@ -3588,7 +3588,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     buffer = msi_dup_property( package, szProductVersion );
     if (buffer)
     {
-        DWORD verdword = build_version_dword(buffer);
+        DWORD verdword = msi_version_str_to_dword(buffer);
 
         msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
         msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONMAJORW, verdword>>24 );

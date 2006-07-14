@@ -266,7 +266,6 @@ extern MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir );
 extern int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
 extern UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 extern LPWSTR build_icon_path(MSIPACKAGE *, LPCWSTR);
-extern DWORD build_version_dword(LPCWSTR);
 extern LPWSTR build_directory_name(DWORD , ...);
 extern BOOL create_full_pathW(const WCHAR *path);
 extern BOOL ACTION_VerifyComponentForAction(MSICOMPONENT*, INSTALLSTATE);

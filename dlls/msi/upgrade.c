@@ -151,7 +151,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
                     (LPBYTE)&check, &sz);
             /* check min */
             ver = MSI_RecordGetString(rec,2);
-            comp_ver = build_version_dword(ver);
+            comp_ver = msi_version_str_to_dword(ver);
             r = check - comp_ver; 
             if (r < 0 || (r == 0 && !(attributes &
                                     msidbUpgradeAttributesVersionMinInclusive)))
@@ -163,7 +163,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
 
             /* check max */
             ver = MSI_RecordGetString(rec,3);
-            comp_ver = build_version_dword(ver);
+            comp_ver = msi_version_str_to_dword(ver);
             r = check - comp_ver;
             if (r > 0 || (r == 0 && !(attributes & 
                                     msidbUpgradeAttributesVersionMaxInclusive)))

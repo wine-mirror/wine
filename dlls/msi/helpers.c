@@ -43,47 +43,6 @@ const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
 const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 const WCHAR cszbs[]={'\\',0};
 
-DWORD build_version_dword(LPCWSTR version_string)
-{
-    SHORT major,minor;
-    WORD build;
-    DWORD rc = 0x00000000;
-    LPCWSTR ptr1;
-
-    ptr1 = version_string;
-
-    if (!ptr1)
-        return rc;
-    else
-        major = atoiW(ptr1);
-
-
-    if(ptr1)
-        ptr1 = strchrW(ptr1,'.');
-    if (ptr1)
-    {
-        ptr1++;
-        minor = atoiW(ptr1);
-    }
-    else
-        minor = 0;
-
-    if (ptr1)
-        ptr1 = strchrW(ptr1,'.');
-
-    if (ptr1)
-    {
-        ptr1++;
-        build = atoiW(ptr1);
-    }
-    else
-        build = 0;
-
-    rc = MAKELONG(build,MAKEWORD(minor,major));
-    TRACE("%s -> 0x%lx\n",debugstr_w(version_string),rc);
-    return rc;
-}
-
 LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
 {
     LPWSTR SystemFolder, dest, FilePath;

@@ -305,6 +305,38 @@ BOOL encode_base85_guid( GUID *guid, LPWSTR str )
     return TRUE;
 }
 
+DWORD msi_version_str_to_dword(LPCWSTR p)
+{
+    DWORD major, minor = 0, build = 0, version = 0;
+
+    if (!p)
+        return version;
+
+    major = atoiW(p);
+
+    p = strchrW(p, '.');
+    if (p)
+    {
+        minor = atoiW(p+1);
+        p = strchrW(p+1, '.');
+        if (p)
+            build = atoiW(p+1);
+    }
+
+    return MAKELONG(build, MAKEWORD(minor, major));
+}
+
+LPWSTR msi_version_dword_to_str(DWORD version)
+{
+    const WCHAR fmt[] = { '%','u','.','%','u','.','%','u',0 };
+    LPWSTR str = msi_alloc(20);
+    sprintfW(str, fmt,
+             (version&0xff000000)>>24,
+             (version&0x00ff0000)>>16,
+              version&0x0000ffff);
+    return str;
+}
+
 LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
 {
     DWORD len = value ? (lstrlenW(value) + 1) * sizeof (WCHAR) : 0;
