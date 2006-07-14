@@ -1703,3 +1703,13 @@ HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryR
 
     return S_OK;
 }
+
+/*************************************************************************
+ *              SHSetLocalizedName (SHELL32.@)
+ */
+HRESULT WINAPI SHSetLocalizedName(LPWSTR pszPath, LPCWSTR pszResModule, int idsRes)
+{
+    FIXME("%p, %s, %d - stub\n", pszPath, debugstr_w(pszResModule), idsRes);
+
+    return S_OK;
+}
