@@ -25959,7 +25959,6 @@ if test "$no_create" != yes; then
 fi
 
 
-exitcode=0
 if test "$have_x" = "no"
 then
   echo >&2
@@ -25971,7 +25970,6 @@ echo "$as_me: WARNING: X support, which currently does not work, and probably" >
 echo "$as_me: WARNING: isn't what you want anyway. You will need to install devel" >&2;}
   { echo "$as_me:$LINENO: WARNING:  packages of Xlib/Xfree86 at the very least." >&5
 echo "$as_me: WARNING:  packages of Xlib/Xfree86 at the very least." >&2;}
-  exitcode=1
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
@@ -25981,7 +25979,6 @@ then
 echo "$as_me: WARNING: Old Mesa headers detected. Wine will be built without Direct3D" >&2;}
   { echo "$as_me:$LINENO: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&5
 echo "$as_me: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&2;}
-  exitcode=1
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
@@ -25995,7 +25992,6 @@ echo "$as_me: WARNING: installed, but 'freetype-config' is not in your PATH. Ins
 echo "$as_me: WARNING: the freetype-devel package (or its equivalent on your distribution)" >&2;}
   { echo "$as_me:$LINENO: WARNING: to enable Wine to use TrueType fonts." >&5
 echo "$as_me: WARNING: to enable Wine to use TrueType fonts." >&2;}
-  exitcode=1
 fi
 
 if test -z "$FONTSSUBDIRS"
@@ -26011,7 +26007,6 @@ echo "$as_me: WARNING: FreeType is missing." >&2;}
   fi
   { echo "$as_me:$LINENO: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&5
 echo "$as_me: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&2;}
-  exitcode=1
 fi
 
 if test -z "$ALSALIBS" -a \
@@ -26031,12 +26026,9 @@ echo "$as_me: WARNING: No sound system was found. Windows applications will be s
 echo "$as_me: WARNING: The currently supported sound systems are:" >&2;}
   { echo "$as_me:$LINENO: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&5
 echo "$as_me: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&2;}
-  exitcode=1
 fi
 
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
 echo
-
-exit $exitcode
 

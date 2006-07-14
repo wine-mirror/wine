@@ -1848,7 +1848,6 @@ tools/wrc/Makefile])
 
 AC_OUTPUT
 
-exitcode=0
 if test "$have_x" = "no"
 then
   echo >&2
@@ -1856,7 +1855,6 @@ then
   AC_MSG_WARN([X support, which currently does not work, and probably])
   AC_MSG_WARN([isn't what you want anyway. You will need to install devel])
   AC_MSG_WARN([ packages of Xlib/Xfree86 at the very least.])
-  exitcode=1
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
@@ -1864,7 +1862,6 @@ then
   echo >&2
   AC_MSG_WARN([Old Mesa headers detected. Wine will be built without Direct3D])
   AC_MSG_WARN([support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
-  exitcode=1
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
@@ -1874,7 +1871,6 @@ then
   AC_MSG_WARN([installed, but 'freetype-config' is not in your PATH. Install])
   AC_MSG_WARN([the freetype-devel package (or its equivalent on your distribution)])
   AC_MSG_WARN([to enable Wine to use TrueType fonts.])
-  exitcode=1
 fi
 
 if test -z "$FONTSSUBDIRS"
@@ -1887,7 +1883,6 @@ then
     AC_MSG_WARN([FreeType is missing.])
   fi
   AC_MSG_WARN([Fonts will not be built. Dialog text may be invisible or unaligned.])
-  exitcode=1
 fi
 
 if test -z "$ALSALIBS" -a \
@@ -1904,14 +1899,11 @@ then
   AC_MSG_WARN([No sound system was found. Windows applications will be silent.])
   AC_MSG_WARN([The currently supported sound systems are:])
   AC_MSG_WARN([ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS])
-  exitcode=1
 fi
 
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
 echo
-
-exit $exitcode
 
 dnl Local Variables:
 dnl comment-start: "dnl "
