@@ -2410,15 +2410,53 @@ DWORD WINAPI CoGetCurrentProcess(void)
  * RETURNS
  *  Success: S_OK.
  *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  Both lpMessageFilter and lplpMessageFilter are optional. Passing in a NULL
+ *  lpMessageFilter removes the message filter.
+ *
+ *  If lplpMessageFilter is not NULL the previous message filter will be
+ *  returned in the memory pointer to this parameter and the caller is
+ *  responsible for releasing the object.
+ *
+ *  The current thread be in an apartment otherwise the function will crash.
  */
 HRESULT WINAPI CoRegisterMessageFilter(
     LPMESSAGEFILTER lpMessageFilter,
     LPMESSAGEFILTER *lplpMessageFilter)
 {
-    FIXME("stub\n");
-    if (lplpMessageFilter) {
-        *lplpMessageFilter = NULL;
+    struct apartment *apt;
+    IMessageFilter *lpOldMessageFilter;
+
+    TRACE("(%p, %p)\n", lpMessageFilter, lplpMessageFilter);
+
+    apt = COM_CurrentApt();
+
+    /* can't set a message filter in a multi-threaded apartment */
+    if (apt->multi_threaded)
+    {
+        ERR("can't set message filter in MTA\n");
+        return CO_E_NOT_SUPPORTED;
     }
+
+    if (lpMessageFilter)
+        IMessageFilter_AddRef(lpMessageFilter);
+
+    EnterCriticalSection(&apt->cs);
+
+    lpOldMessageFilter = apt->filter;
+    apt->filter = lpMessageFilter;
+
+    LeaveCriticalSection(&apt->cs);
+
+    if (lplpMessageFilter)
+        *lplpMessageFilter = lpOldMessageFilter;
+    else if (lpOldMessageFilter)
+        IMessageFilter_Release(lpOldMessageFilter);
+
+    if (lpMessageFilter)
+        FIXME("message filter has been registered, but will not be used\n");
+
     return S_OK;
 }
 

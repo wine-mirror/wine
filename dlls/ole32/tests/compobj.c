@@ -29,6 +29,9 @@
 
 #include "wine/test.h"
 
+/* functions that are not present on all versions of Windows */
+HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
+
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
 
 static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
@@ -142,12 +145,128 @@ static void test_ole_menu(void)
 	DestroyWindow(hwndFrame);
 }
 
+
+static HRESULT WINAPI MessageFilter_QueryInterface(IMessageFilter *iface, REFIID riid, void ** ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IMessageFilter_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MessageFilter_AddRef(IMessageFilter *iface)
+{
+    return 2; /* non-heap object */
+}
+
+static ULONG WINAPI MessageFilter_Release(IMessageFilter *iface)
+{
+    return 1; /* non-heap object */
+}
+
+static DWORD WINAPI MessageFilter_HandleInComingCall(
+  IMessageFilter *iface,
+  DWORD dwCallType,
+  HTASK threadIDCaller,
+  DWORD dwTickCount,
+  LPINTERFACEINFO lpInterfaceInfo)
+{
+    trace("HandleInComingCall\n");
+    return SERVERCALL_ISHANDLED;
+}
+
+static DWORD WINAPI MessageFilter_RetryRejectedCall(
+  IMessageFilter *iface,
+  HTASK threadIDCallee,
+  DWORD dwTickCount,
+  DWORD dwRejectType)
+{
+    trace("RetryRejectedCall\n");
+    return 0;
+}
+
+static DWORD WINAPI MessageFilter_MessagePending(
+  IMessageFilter *iface,
+  HTASK threadIDCallee,
+  DWORD dwTickCount,
+  DWORD dwPendingType)
+{
+    trace("MessagePending\n");
+    return PENDINGMSG_WAITNOPROCESS;
+}
+
+static const IMessageFilterVtbl MessageFilter_Vtbl =
+{
+    MessageFilter_QueryInterface,
+    MessageFilter_AddRef,
+    MessageFilter_Release,
+    MessageFilter_HandleInComingCall,
+    MessageFilter_RetryRejectedCall,
+    MessageFilter_MessagePending
+};
+
+static IMessageFilter MessageFilter = { &MessageFilter_Vtbl };
+
+static void test_CoRegisterMessageFilter(void)
+{
+    HRESULT hr;
+    IMessageFilter *prev_filter;
+
+#if 0 /* crashes without an apartment! */
+    hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
+#endif
+
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    prev_filter = (IMessageFilter *)0xdeadbeef;
+    hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
+    ok(hr == CO_E_NOT_SUPPORTED,
+        "CoRegisterMessageFilter should have failed with CO_E_NOT_SUPPORTED instead of 0x%08lx\n",
+        hr);
+    ok(prev_filter == (IMessageFilter *)0xdeadbeef,
+        "prev_filter should have been set to %p\n", prev_filter);
+    CoUninitialize();
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoRegisterMessageFilter(NULL, NULL);
+    ok_ole_success(hr, "CoRegisterMessageFilter");
+
+    prev_filter = (IMessageFilter *)0xdeadbeef;
+    hr = CoRegisterMessageFilter(NULL, &prev_filter);
+    ok_ole_success(hr, "CoRegisterMessageFilter");
+    ok(prev_filter == NULL, "prev_filter should have been set to NULL instead of %p\n", prev_filter);
+
+    hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
+    ok_ole_success(hr, "CoRegisterMessageFilter");
+    ok(prev_filter == NULL, "prev_filter should have been set to NULL instead of %p\n", prev_filter);
+
+    hr = CoRegisterMessageFilter(NULL, NULL);
+    ok_ole_success(hr, "CoRegisterMessageFilter");
+
+    CoUninitialize();
+}
+
 START_TEST(compobj)
 {
+    HMODULE hOle32 = GetModuleHandle("ole32");
+    if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
+    {
+        trace("You need DCOM95 installed to run this test\n");
+        return;
+    }
+
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
     test_CoCreateInstance();
     test_ole_menu();
     test_CoGetClassObject();
+    test_CoRegisterMessageFilter();
 }
