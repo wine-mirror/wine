@@ -251,7 +251,7 @@ gbl_statements:					{ $$ = NULL; }
 imp_statements:					{}
 	| imp_statements interfacedec		{ if (!parse_only) add_interface($2); }
 	| imp_statements interfacedef		{ if (!parse_only) add_interface($2); }
-	| imp_statements coclass ';'	{}
+	| imp_statements coclass ';'	{ reg_type(NULL, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
 	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2); }
 	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}
