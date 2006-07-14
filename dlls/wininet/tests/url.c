@@ -208,6 +208,24 @@ static void InternetCrackUrl_test(void)
   ok(!strcmp(urlComponents.lpszScheme, "about"), "lpszScheme was \"%s\" instead of \"about\"\n", urlComponents.lpszScheme);
   ok(!strcmp(urlComponents.lpszHostName, "host"), "lpszHostName was \"%s\" instead of \"host\"\n", urlComponents.lpszHostName);
   ok(!strcmp(urlComponents.lpszUrlPath, "/blank"), "lpszUrlPath was \"%s\" instead of \"/blank\"\n", urlComponents.lpszUrlPath);
+
+  /* try a NULL lpszUrl */
+  SetLastError(0xdeadbeef);
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
+  ret = InternetCrackUrl(NULL, 0, 0, &urlComponents);
+  GLE = GetLastError();
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GLE);
+
+  /* try an empty lpszUrl, GetLastError returns 12006, whatever that means
+   * we just need to fail and not return success
+   */
+  SetLastError(0xdeadbeef);
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
+  ret = InternetCrackUrl("", 0, 0, &urlComponents);
+  GLE = GetLastError();
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
 }
 
 static void InternetCrackUrlW_test(void)
