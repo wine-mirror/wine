@@ -27,7 +27,7 @@ BEGIN
         MENUITEM "열기(&O)\tCtrl+O",         ID_FILE_OPEN
         MENUITEM "저장(&S)\tCtrl+S",         ID_FILE_SAVE
         MENUITEM SEPARATOR
-        MENUITEM "나가기(&E)",         ID_FILE_EXIT
+        MENUITEM "나가기(&X)",         ID_FILE_EXIT
     END
     POPUP "편집(&E)"
     BEGIN
