@@ -3160,6 +3160,7 @@ typedef struct _SID {
 #define	SID_MAX_SUB_AUTHORITIES		(15)	/* current max subauths */
 #define	SID_RECOMMENDED_SUB_AUTHORITIES	(1)	/* recommended subauths */
 
+#define SECURITY_MAX_SID_SIZE (sizeof(SID) - sizeof(DWORD) + (SID_MAX_SUB_AUTHORITIES * sizeof(DWORD)))
 
 /*
  * ACL
@@ -3337,11 +3338,16 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define SECURITY_ANONYMOUS_LOGON_RID            0x00000007L
 #define SECURITY_PROXY_RID                      0x00000008L
 #define SECURITY_ENTERPRISE_CONTROLLERS_RID     0x00000009L
+#define SECURITY_SERVER_LOGON_RID               SECURITY_ENTERPRISE_CONTROLLERS_RID
 #define SECURITY_PRINCIPAL_SELF_RID             0x0000000AL
 #define SECURITY_AUTHENTICATED_USER_RID         0x0000000BL
 #define SECURITY_RESTRICTED_CODE_RID            0x0000000CL
 #define SECURITY_TERMINAL_SERVER_RID            0x0000000DL
+#define SECURITY_REMOTE_LOGON_RID               0x0000000EL
+#define SECURITY_THIS_ORGANIZATION_RID          0x0000000FL
 #define SECURITY_LOCAL_SYSTEM_RID               0x00000012L
+#define SECURITY_LOCAL_SERVICE_RID              0x00000013L
+#define SECURITY_NETWORK_SERVICE_RID            0x00000014L
 #define SECURITY_NT_NON_UNIQUE                  0x00000015L
 #define SECURITY_BUILTIN_DOMAIN_RID             0x00000020L
 
@@ -3352,10 +3358,93 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define DOMAIN_ALIAS_RID_ADMINS                 0x00000220L
 #define DOMAIN_ALIAS_RID_USERS                  0x00000221L
 #define DOMAIN_ALIAS_RID_GUESTS                 0x00000222L
+#define DOMAIN_ALIAS_RID_POWER_USERS            0x00000223L
+
+#define DOMAIN_ALIAS_RID_ACCOUNT_OPS            0x00000224L
+#define DOMAIN_ALIAS_RID_SYSTEM_OPS             0x00000225L
+#define DOMAIN_ALIAS_RID_PRINT_OPS              0x00000226L
+#define DOMAIN_ALIAS_RID_BACKUP_OPS             0x00000227L
+
+#define DOMAIN_ALIAS_RID_REPLICATOR             0x00000228L
+#define DOMAIN_ALIAS_RID_RAS_SERVERS            0x00000229L
+#define DOMAIN_ALIAS_RID_PREW2KCOMPACCESS       0x0000022AL
+#define DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS   0x0000022BL
+#define DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS 0x0000022CL
+#define DOMAIN_ALIAS_RID_INCOMING_FOREST_TRUST_BUILDERS 0x0000022DL
+
+#define DOMAIN_ALIAS_RID_MONITORING_USERS       0x0000022EL
+#define DOMAIN_ALIAS_RID_LOGGING_USERS          0x0000022FL
+#define DOMAIN_ALIAS_RID_AUTHORIZATIONACCESS    0x00000230L
+#define DOMAIN_ALIAS_RID_TS_LICENSE_SERVERS     0x00000231L
+#define DOMAIN_ALIAS_RID_DCOM_USERS             0x00000232L
 
 #define SECURITY_SERVER_LOGON_RID		SECURITY_ENTERPRISE_CONTROLLERS_RID
 
 #define SECURITY_LOGON_IDS_RID_COUNT		(3L)
+
+typedef enum {
+    WinNullSid                                  = 0,
+    WinWorldSid                                 = 1,
+    WinLocalSid                                 = 2,
+    WinCreatorOwnerSid                          = 3,
+    WinCreatorGroupSid                          = 4,
+    WinCreatorOwnerServerSid                    = 5,
+    WinCreatorGroupServerSid                    = 6,
+    WinNtAuthoritySid                           = 7,
+    WinDialupSid                                = 8,
+    WinNetworkSid                               = 9,
+    WinBatchSid                                 = 10,
+    WinInteractiveSid                           = 11,
+    WinServiceSid                               = 12,
+    WinAnonymousSid                             = 13,
+    WinProxySid                                 = 14,
+    WinEnterpriseControllersSid                 = 15,
+    WinSelfSid                                  = 16,
+    WinAuthenticatedUserSid                     = 17,
+    WinRestrictedCodeSid                        = 18,
+    WinTerminalServerSid                        = 19,
+    WinRemoteLogonIdSid                         = 20,
+    WinLogonIdsSid                              = 21,
+    WinLocalSystemSid                           = 22,
+    WinLocalServiceSid                          = 23,
+    WinNetworkServiceSid                        = 24,
+    WinBuiltinDomainSid                         = 25,
+    WinBuiltinAdministratorsSid                 = 26,
+    WinBuiltinUsersSid                          = 27,
+    WinBuiltinGuestsSid                         = 28,
+    WinBuiltinPowerUsersSid                     = 29,
+    WinBuiltinAccountOperatorsSid               = 30,
+    WinBuiltinSystemOperatorsSid                = 31,
+    WinBuiltinPrintOperatorsSid                 = 32,
+    WinBuiltinBackupOperatorsSid                = 33,
+    WinBuiltinReplicatorSid                     = 34,
+    WinBuiltinPreWindows2000CompatibleAccessSid = 35,
+    WinBuiltinRemoteDesktopUsersSid             = 36,
+    WinBuiltinNetworkConfigurationOperatorsSid  = 37,
+    WinAccountAdministratorSid                  = 38,
+    WinAccountGuestSid                          = 39,
+    WinAccountKrbtgtSid                         = 40,
+    WinAccountDomainAdminsSid                   = 41,
+    WinAccountDomainUsersSid                    = 42,
+    WinAccountDomainGuestsSid                   = 43,
+    WinAccountComputersSid                      = 44,
+    WinAccountControllersSid                    = 45,
+    WinAccountCertAdminsSid                     = 46,
+    WinAccountSchemaAdminsSid                   = 47,
+    WinAccountEnterpriseAdminsSid               = 48,
+    WinAccountPolicyAdminsSid                   = 49,
+    WinAccountRasAndIasServersSid               = 50,
+    WinNTLMAuthenticationSid                    = 51,
+    WinDigestAuthenticationSid                  = 52,
+    WinSChannelAuthenticationSid                = 53,
+    WinThisOrganizationSid                      = 54,
+    WinOtherOrganizationSid                     = 55,
+    WinBuiltinIncomingForestTrustBuildersSid    = 56,
+    WinBuiltinPerfMonitoringUsersSid            = 57,
+    WinBuiltinPerfLoggingUsersSid               = 58,
+    WinBuiltinAuthorizationAccessSid            = 59,
+    WinBuiltinTerminalServerLicenseServersSid   = 60
+} WELL_KNOWN_SID_TYPE;
 
 /*
  * TOKEN_USER
@@ -3699,6 +3788,35 @@ typedef enum tagSID_NAME_USE {
 #define THREAD_BASE_PRIORITY_MAX    2
 #define THREAD_BASE_PRIORITY_MIN   -2
 #define THREAD_BASE_PRIORITY_IDLE  -15
+
+typedef struct _QUOTA_LIMITS {
+    SIZE_T PagedPoolLimit;
+    SIZE_T NonPagedPoolLimit;
+    SIZE_T MinimumWorkingSetSize;
+    SIZE_T MaximumWorkingSetSize;
+    SIZE_T PagefileLimit;
+    LARGE_INTEGER TimeLimit;
+} QUOTA_LIMITS, *PQUOTA_LIMITS;
+
+#define QUOTA_LIMITS_HARDWS_MIN_ENABLE  0x00000001
+#define QUOTA_LIMITS_HARDWS_MIN_DISABLE 0x00000002
+#define QUOTA_LIMITS_HARDWS_MAX_ENABLE  0x00000004
+#define QUOTA_LIMITS_HARDWS_MAX_DISABLE 0x00000008
+
+typedef struct _QUOTA_LIMITS_EX {
+    SIZE_T PagedPoolLimit;
+    SIZE_T NonPagedPoolLimit;
+    SIZE_T MinimumWorkingSetSize;
+    SIZE_T MaximumWorkingSetSize;
+    SIZE_T PagefileLimit;
+    LARGE_INTEGER TimeLimit;
+    SIZE_T Reserved1;
+    SIZE_T Reserved2;
+    SIZE_T Reserved3;
+    SIZE_T Reserved4;
+    DWORD Flags;
+    DWORD Reserved5;
+} QUOTA_LIMITS_EX, *PQUOTA_LIMITS_EX;
 
 #define SECTION_QUERY              0x0001
 #define SECTION_MAP_WRITE          0x0002
