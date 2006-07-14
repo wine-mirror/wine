@@ -1826,6 +1826,7 @@ static PCCERT_CONTEXT CRYPT_CreateSignedCert(PCRYPT_DER_BLOB blob,
 }
 
 /* Copies data from the parameters into info, where:
+ * pSerialNumber: The serial number.  Must not be NULL.
  * pSubjectIssuerBlob: Specifies both the subject and issuer for info.
  *                     Must not be NULL
  * pSignatureAlgorithm: Optional.
@@ -1836,23 +1837,22 @@ static PCCERT_CONTEXT CRYPT_CreateSignedCert(PCRYPT_DER_BLOB blob,
  * pubKey: The public key of the certificate.  Must not be NULL.
  * pExtensions: Extensions to be included with the certificate.  Optional.
  */
-static void CRYPT_MakeCertInfo(PCERT_INFO info,
+static void CRYPT_MakeCertInfo(PCERT_INFO info, PCRYPT_DATA_BLOB pSerialNumber,
  PCERT_NAME_BLOB pSubjectIssuerBlob,
  PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm, PSYSTEMTIME pStartTime,
  PSYSTEMTIME pEndTime, PCERT_PUBLIC_KEY_INFO pubKey,
  PCERT_EXTENSIONS pExtensions)
 {
-    /* FIXME: what serial number to use? */
-    static const BYTE serialNum[] = { 1 };
     static CHAR oid[] = szOID_RSA_SHA1RSA;
 
     assert(info);
+    assert(pSerialNumber);
     assert(pSubjectIssuerBlob);
     assert(pubKey);
 
     info->dwVersion = CERT_V3;
-    info->SerialNumber.cbData = sizeof(serialNum);
-    info->SerialNumber.pbData = (LPBYTE)serialNum;
+    info->SerialNumber.cbData = pSerialNumber->cbData;
+    info->SerialNumber.pbData = pSerialNumber->pbData;
     if (pSignatureAlgorithm)
         memcpy(&info->SignatureAlgorithm, pSignatureAlgorithm,
          sizeof(info->SignatureAlgorithm));
@@ -1910,9 +1910,9 @@ static HCRYPTPROV CRYPT_CreateKeyProv(void)
         UuidCreateFunc uuidCreate = (UuidCreateFunc)GetProcAddress(rpcrt,
          "UuidCreate");
         UuidToStringFunc uuidToString = (UuidToStringFunc)GetProcAddress(rpcrt,
-         "UuidToString");
+         "UuidToStringA");
         RpcStringFreeFunc rpcStringFree = (RpcStringFreeFunc)GetProcAddress(
-         rpcrt, "RpcStringFree");
+         rpcrt, "RpcStringFreeA");
 
         if (uuidCreate && uuidToString && rpcStringFree)
         {
@@ -1978,10 +1978,12 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
         {
             CERT_INFO info = { 0 };
             CRYPT_DER_BLOB blob = { 0, NULL };
-            BOOL ret;
+            BYTE serial[16];
+            CRYPT_DATA_BLOB serialBlob = { sizeof(serial), serial };
 
-            CRYPT_MakeCertInfo(&info, pSubjectIssuerBlob, pSignatureAlgorithm,
-             pStartTime, pEndTime, pubKey, pExtensions);
+            CryptGenRandom(hProv, sizeof(serial), serial);
+            CRYPT_MakeCertInfo(&info, &serialBlob, pSubjectIssuerBlob,
+             pSignatureAlgorithm, pStartTime, pEndTime, pubKey, pExtensions);
             ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
              &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&blob.pbData,
              &blob.cbData);
