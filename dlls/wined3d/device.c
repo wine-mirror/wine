@@ -2832,6 +2832,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : Idx(%ld), enable? %d\n", This, Index, Enable);
 
+    /* Tests show true = 128...not clear why */
+
+    Enable = Enable? 128: 0;
+
     /* If recording state block, just add to end of lights chain with changedEnable set to true */
     if (This->isRecordingState) {
         lightInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
@@ -2841,6 +2845,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         lightInfo->OriginalIndex = Index;
         lightInfo->glIndex = -1;
         lightInfo->enabledChanged = TRUE;
+        lightInfo->lightEnabled = Enable;
 
         /* Add to the END of the chain of lights changes to be replayed */
         if (This->updateStateBlock->lights == NULL) {
@@ -2887,7 +2892,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         } else {
             TRACE("Nothing to do as light was not enabled\n");
         }
-        lightInfo->lightEnabled = FALSE;
+        lightInfo->lightEnabled = Enable;
     } else {
 
         /* We are enabling it. If it is enabled, it's really simple */
@@ -2898,7 +2903,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         /* If it already has a glIndex, it's still simple */
         } else if (lightInfo->glIndex != -1) {
             TRACE("Reusing light as already set up at gl idx %ld\n", lightInfo->glIndex);
-            lightInfo->lightEnabled = TRUE;
+            lightInfo->lightEnabled = Enable;
             ENTER_GL();
             glEnable(GL_LIGHT0 + lightInfo->glIndex);
             checkGLcall("glEnable GL_LIGHT0+Index already setup");
@@ -2969,7 +2974,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                 glIndex = bsf->glIndex;
                 bsf->glIndex = -1;
                 lightInfo->glIndex = glIndex;
-                lightInfo->lightEnabled = TRUE;
+                lightInfo->lightEnabled = Enable;
 
                 /* Finally set up the light in gl itself */
                 TRACE("Replacing light which was set up at gl idx %ld\n", lightInfo->glIndex);
@@ -2987,7 +2992,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                     know the index of the next one!                          */
                 glIndex = Index;
                 lightInfo->glIndex = glIndex;
-                lightInfo->lightEnabled = TRUE;
+                lightInfo->lightEnabled = Enable;
 
                 /* In an ideal world, it's already in the right place */
                 if (lightInfo->prev == NULL || lightInfo->prev->glIndex!=-1) {
