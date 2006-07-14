@@ -418,6 +418,7 @@ extern UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL cr
 extern LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value );
 extern LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value );
 extern LONG msi_reg_set_val_dword( HKEY hkey, LPCWSTR name, DWORD val );
+extern LONG msi_reg_set_subkey_val( HKEY hkey, LPCWSTR path, LPCWSTR name, LPCWSTR val );
 
 /* msi dialog interface */
 typedef UINT (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, msi_dialog* );

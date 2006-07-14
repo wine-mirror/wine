@@ -736,38 +736,6 @@ static void mark_mime_for_install( MSIMIME *mime )
     mime->InstallMe = TRUE;
 }
 
-LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
-{
-    DWORD len = value ? (lstrlenW(value) + 1) * sizeof (WCHAR) : 0;
-    return RegSetValueExW( hkey, name, 0, REG_SZ, (LPBYTE)value, len );
-}
-
-LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
-{
-    LPCWSTR p = value;
-    while (*p) p += lstrlenW(p) + 1;
-    return RegSetValueExW( hkey, name, 0, REG_MULTI_SZ,
-                           (LPBYTE)value, (p + 1 - value) * sizeof(WCHAR) );
-}
-
-LONG msi_reg_set_val_dword( HKEY hkey, LPCWSTR name, DWORD val )
-{
-    return RegSetValueExW( hkey, name, 0, REG_DWORD, (LPBYTE)&val, sizeof (DWORD) );
-}
-
-LONG msi_reg_set_subkey_val( HKEY hkey, LPCWSTR path, LPCWSTR name, LPCWSTR val )
-{
-    HKEY hsubkey = 0;
-    LONG r;
-
-    r = RegCreateKeyW( hkey, path, &hsubkey );
-    if (r != ERROR_SUCCESS)
-        return r;
-    r = msi_reg_set_val_str( hsubkey, name, val );
-    RegCloseKey( hsubkey );
-    return r;
-}
-
 static UINT register_appid(MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
