@@ -29,8 +29,6 @@
 #include "msi.h"
 #include "msidefs.h"
 #include "msipriv.h"
-#include "winuser.h"
-#include "wine/unicode.h"
 #include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -333,18 +331,18 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     MSIFOLDER *folder;
     MSIFILE *file;
 
-    TRACE("(%p %s %s)\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
+    TRACE("%p %s %s\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
 
     attrib = GetFileAttributesW(szFolderPath);
+    /* native MSI tests writeability by making temporary files at each drive */
     if ( attrib != INVALID_FILE_ATTRIBUTES &&
           (attrib & FILE_ATTRIBUTE_OFFLINE ||
-           attrib & FILE_ATTRIBUTE_READONLY)) /* actually native MSI tests writeability by making temporary files at each drive */
+           attrib & FILE_ATTRIBUTE_READONLY))
         return ERROR_FUNCTION_FAILED;
 
     path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
     if (!path)
         return ERROR_DIRECTORY;
-
 
     msi_free(folder->Property);
     folder->Property = build_directory_name(2, szFolderPath, NULL);
@@ -405,7 +403,7 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
     MSIPACKAGE *package;
     UINT ret;
 
-    TRACE("(%s %s)\n",debugstr_w(szFolder),debugstr_w(szFolderPath));
+    TRACE("%s %s\n",debugstr_w(szFolder),debugstr_w(szFolderPath));
 
     if ( !szFolder || !szFolderPath )
         return ERROR_INVALID_PARAMETER;
@@ -452,7 +450,6 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
  *    Not in the state: FALSE
  *
  */
-
 BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 {
     BOOL r = FALSE;
@@ -532,7 +529,7 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
     UINT rc = ERROR_SUCCESS;
     MSIFEATURE *feature, *child;
 
-    TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
+    TRACE("%s %i\n", debugstr_w(szFeature), iState);
 
     feature = get_loaded_feature(package,szFeature);
     if (!feature)
@@ -566,7 +563,7 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
     MSIPACKAGE* package;
     UINT rc = ERROR_SUCCESS;
 
-    TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
+    TRACE("%s %i\n",debugstr_w(szFeature), iState);
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
@@ -625,8 +622,7 @@ UINT WINAPI MsiGetFeatureStateW(MSIHANDLE hInstall, LPWSTR szFeature,
     MSIPACKAGE* package;
     UINT ret;
 
-    TRACE("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled,
-piAction);
+    TRACE("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled, piAction);
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
@@ -753,7 +749,6 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
 {
     MSIPACKAGE* package;
     LANGID langid;
-    LPWSTR buffer;
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     
@@ -761,10 +756,7 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    buffer = msi_dup_property( package, szProductLanguage );
-    langid = atoiW(buffer);
-
-    msi_free(buffer);
-    msiobj_release (&package->hdr);
+    langid = msi_get_property_int( package, szProductLanguage, 0 );
+    msiobj_release( &package->hdr );
     return langid;
 }
