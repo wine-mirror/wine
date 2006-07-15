@@ -1117,10 +1117,12 @@ end:
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
-    WCHAR squishProduct[GUID_SIZE], buffer[MAX_FEATURE_CHARS+2];
+    WCHAR squishProduct[GUID_SIZE], comp[39];
+    GUID guid;
+    LPWSTR components, p, parent_feature;
     UINT rc;
-    DWORD sz, type;
     HKEY hkey;
+    INSTALLSTATE r;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
@@ -1130,30 +1132,62 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (!squash_guid( szProduct, squishProduct ))
         return INSTALLSTATE_INVALIDARG;
 
+    /* check that it's installed at all */
     rc = MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
         return INSTALLSTATE_UNKNOWN;
 
-    buffer[0] = 0;
-    sz = sizeof buffer;
-    type = 0;
-    rc = RegQueryValueExW(hkey, szFeature, NULL, &type, (LPBYTE) buffer, &sz);
+    parent_feature = msi_reg_get_val_str( hkey, szFeature );
     RegCloseKey(hkey);
 
-    TRACE("rc = %d buffer = %s\n", rc, debugstr_w(buffer));
-
-    if (rc != ERROR_SUCCESS || sz == 0 || type != REG_SZ)
+    if (!parent_feature)
         return INSTALLSTATE_UNKNOWN;
 
-    if (buffer[0] == 6)
-        return INSTALLSTATE_ABSENT;
+    r = (parent_feature[0] == 6) ? INSTALLSTATE_ABSENT : INSTALLSTATE_LOCAL;
+    msi_free(parent_feature);
+    if (r == INSTALLSTATE_ABSENT)
+        return r;
 
-    /* FIXME:
-     * Return INSTALLSTATE_ADVERTISED when
-     * the components exist in the registry, but not on the disk.
-     */
+    /* now check if it's complete or advertised */
+    rc = MSIREG_OpenFeaturesKey(szProduct, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return INSTALLSTATE_UNKNOWN;
 
-    return INSTALLSTATE_LOCAL;
+    components = msi_reg_get_val_str( hkey, szFeature );
+    RegCloseKey(hkey);
+
+    TRACE("rc = %d buffer = %s\n", rc, debugstr_w(components));
+
+    if (!components)
+    {
+        ERR("components missing %s %s\n",
+            debugstr_w(szProduct), debugstr_w(szFeature));
+        return INSTALLSTATE_UNKNOWN;
+    }
+
+    r = INSTALLSTATE_LOCAL;
+    for( p = components; (*p != 2) && (lstrlenW(p) > GUID_SIZE); p += GUID_SIZE)
+    {
+        if (!decode_base85_guid( p, &guid ))
+        {
+            ERR("%s\n", debugstr_w(p));
+            break;
+        }
+        StringFromGUID2(&guid, comp, 39);
+        r = MsiGetComponentPathW(szProduct, comp, NULL, 0);
+        if (r != INSTALLSTATE_LOCAL && r != INSTALLSTATE_SOURCE)
+        {
+            TRACE("component %s state %d\n", debugstr_guid(&guid), r);
+            r = INSTALLSTATE_ADVERTISED;
+        }
+    }
+
+    if (r == INSTALLSTATE_LOCAL && *p != 2)
+        ERR("%s -> %s\n", debugstr_w(szFeature), debugstr_w(components));
+
+    msi_free(components);
+
+    return r;
 }
 
 /******************************************************************
