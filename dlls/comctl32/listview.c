@@ -5618,9 +5618,11 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
 {
     POINT Position;
     LVITEMW lvItem;
-    INT nColumn = lprc->top;
+    INT nColumn;
     
     if (!lprc) return FALSE;
+
+    nColumn = lprc->top;
 
     TRACE("(nItem=%d, nSubItem=%ld)\n", nItem, lprc->top);
     /* On WinNT, a subitem of '0' calls LISTVIEW_GetItemRect */
