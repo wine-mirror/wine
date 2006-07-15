@@ -986,10 +986,8 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 {
     WCHAR squished_pc[GUID_SIZE], squished_comp[GUID_SIZE];
     UINT rc;
-    INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
     HKEY hkey = 0;
     LPWSTR path = NULL;
-    DWORD sz, type;
 
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf, pcchBuf);
@@ -1013,24 +1011,7 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if( rc != ERROR_SUCCESS )
         return INSTALLSTATE_UNKNOWN;
 
-    sz = 0;
-    type = 0;
-    rc = RegQueryValueExW( hkey, squished_pc, NULL, &type, NULL, &sz );
-    if( rc == ERROR_SUCCESS && type == REG_SZ )
-    {
-        sz += sizeof(WCHAR);
-        path = msi_alloc( sz );
-        if( path )
-        {
-            path[0] = 0;
-            rc = RegQueryValueExW( hkey, squished_pc, NULL, NULL, (LPVOID) path, &sz );
-            if( rc != ERROR_SUCCESS )
-            {
-                msi_free( path );
-                path = NULL;
-            }
-        }
-    }
+    path = msi_reg_get_val_str( hkey, squished_pc );
     RegCloseKey(hkey);
 
     TRACE("found path of (%s:%s)(%s)\n", debugstr_w(szComponent),
@@ -1040,22 +1021,12 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
         return INSTALLSTATE_UNKNOWN;
 
     if (path[0]=='0')
-    {
         FIXME("Registry entry.. check entry\n");
-        rrc = INSTALLSTATE_LOCAL;
-    }
-    else
-    {
-        if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
-            rrc = INSTALLSTATE_LOCAL;
-        else
-            rrc = INSTALLSTATE_ABSENT;
-    }
 
     msi_strcpy_to_awstring( path, lpPathBuf, pcchBuf );
 
     msi_free( path );
-    return rrc;
+    return INSTALLSTATE_LOCAL;
 }
 
 /******************************************************************
