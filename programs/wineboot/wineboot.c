@@ -525,6 +525,88 @@ end:
     return res==ERROR_SUCCESS?TRUE:FALSE;
 }
 
+/*
+ * WFP is Windows File Protection, in NT5 and Windows 2000 it maintains a cache
+ * of known good dlls and scans through and replaces corrupted DLLs with these
+ * known good versions. The only programs that should install into this dll
+ * cache are Windows Updates and IE (which is treated like a Windows Update)
+ *
+ * Implementing this allows installing ie in win2k mode to actaully install the
+ * system dlls that we expect and need
+ */
+static int ProcessWindowsFileProtection(void)
+{
+    WIN32_FIND_DATA finddata;
+    LPSTR custom_dllcache = NULL;
+    static const CHAR default_dllcache[] = "C:\\Windows\\System32\\dllcache";
+    HANDLE find_handle;
+    BOOL find_rc;
+    DWORD rc;
+    HKEY hkey;
+    LPCSTR dllcache;
+    CHAR find_string[MAX_PATH];
+    CHAR windowsdir[MAX_PATH];
+
+    rc = RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon", &hkey );
+    if (rc == ERROR_SUCCESS)
+    {
+        DWORD sz = 0;
+        rc = RegQueryValueEx( hkey, "SFCDllCacheDir", 0, NULL, NULL, &sz);
+        if (rc == ERROR_MORE_DATA)
+        {
+            sz++;
+            custom_dllcache = HeapAlloc(GetProcessHeap(),0,sz);
+            RegQueryValueEx( hkey, "SFCDllCacheDir", 0, NULL, (LPBYTE)custom_dllcache, &sz);
+        }
+    }
+    RegCloseKey(hkey);
+
+    if (custom_dllcache)
+        dllcache = custom_dllcache;
+    else
+        dllcache = default_dllcache;
+               
+    strcpy(find_string,dllcache);
+    strcat(find_string,"\\*.*");
+
+    GetWindowsDirectory(windowsdir,MAX_PATH);
+
+    find_handle = FindFirstFile(find_string,&finddata);
+    find_rc = find_handle != INVALID_HANDLE_VALUE;
+    while (find_rc)
+    {
+        CHAR targetpath[MAX_PATH];
+        CHAR currentpath[MAX_PATH];
+        UINT sz;
+        UINT sz2;
+        CHAR tempfile[MAX_PATH];
+
+        if (strcmp(finddata.cFileName,".") == 0 ||
+            strcmp(finddata.cFileName,"..") == 0)
+        {
+            find_rc = FindNextFile(find_handle,&finddata);
+            continue;
+        }
+
+        sz = MAX_PATH;
+        sz2 = MAX_PATH;
+        VerFindFile(VFFF_ISSHAREDFILE, finddata.cFileName, windowsdir, 
+                windowsdir, currentpath, &sz, targetpath,&sz2);
+        sz = MAX_PATH;
+        rc = VerInstallFile(0, finddata.cFileName, finddata.cFileName,
+                    (LPSTR) dllcache, targetpath, currentpath, tempfile,&sz);
+        if (rc != ERROR_SUCCESS)
+        {
+            WINE_ERR("WFP: %s error 0x%lx\n",finddata.cFileName,rc);
+            DeleteFile(tempfile);
+        }
+        find_rc = FindNextFile(find_handle,&finddata);
+    }
+    FindClose(find_handle);
+    HeapFree(GetProcessHeap(),0,custom_dllcache);
+    return 1;
+}
+
 struct op_mask {
     BOOL w9xonly; /* Perform only operations done on Windows 9x */
     BOOL ntonly; /* Perform only operations done on Windows NT */
@@ -593,6 +675,8 @@ int main( int argc, char *argv[] )
         (ops.ntonly || !ops.prelogin ||
          ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE],
                 TRUE, FALSE )) &&
+        (ops.ntonly || !ops.prelogin ||
+         ProcessWindowsFileProtection()) &&
         (ops.ntonly || !ops.prelogin || !ops.startup ||
          ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES],
                 FALSE, FALSE )) &&
