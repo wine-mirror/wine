@@ -502,6 +502,10 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
     return res;
 }
 
+
+static const GUID CLSID_MicrosoftBrowserArchitecture =
+{0xa5e46e3a, 0x8849, 0x11d1, {0x9d, 0x8c, 0x00, 0xc0, 0x4f, 0xc9, 0x9d, 0x61}};
+
 /***********************************************************************
  *		coclass list
  */
@@ -577,6 +581,15 @@ static struct regsvr_coclass const coclass_list[] = {
         "Apartment",
         "SearchAssistantOC.SearchAssistantOC.1",
         "SearchAssistantOC.SearchAssistantOC"
+    },
+    {
+        &CLSID_MicrosoftBrowserArchitecture,
+        "Microsoft Browser Architecture",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        NULL,
+        NULL
     },
     { NULL }			/* list terminator */
 };
