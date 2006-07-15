@@ -92,6 +92,14 @@ LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
     return str;
 }
 
+int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def )
+{
+    LPWSTR str = msi_dup_property( package, prop );
+    int val = str ? atoiW( str ) : def;
+    msi_free( str );
+    return val;
+}
+
 MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 {
     MSICOMPONENT *comp;

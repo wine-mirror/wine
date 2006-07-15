@@ -292,14 +292,6 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
-static int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def )
-{
-    LPWSTR str = msi_dup_property( package, prop );
-    int val = str ? atoiW( str ) : def;
-    msi_free( str );
-    return val;
-}
-
 static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
 {
     LPCWSTR ptr,ptr2;

@@ -257,6 +257,7 @@ extern UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
 extern DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
 extern LPWSTR msi_dup_record_field(MSIRECORD *row, INT index);
 extern LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop);
+extern int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def );
 extern LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
                       BOOL set_prop, MSIFOLDER **folder);
 extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
