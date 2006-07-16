@@ -587,6 +587,9 @@
 /* Define to 1 if you have the `sendmsg' function. */
 #undef HAVE_SENDMSG
 
+/* Define to 1 if you have the `setrlimit' function. */
+#undef HAVE_SETRLIMIT
+
 /* Define to 1 if you have the `settimeofday' function. */
 #undef HAVE_SETTIMEOFDAY
 

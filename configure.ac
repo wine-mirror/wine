@@ -1309,6 +1309,7 @@ AC_CHECK_FUNCS(\
 	sched_yield \
 	select \
 	sendmsg \
+	setrlimit \
 	settimeofday \
 	sigaltstack \
 	sigprocmask \

@@ -19379,6 +19379,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -19428,6 +19429,7 @@ for ac_func in \
 	sched_yield \
 	select \
 	sendmsg \
+	setrlimit \
 	settimeofday \
 	sigaltstack \
 	sigprocmask \

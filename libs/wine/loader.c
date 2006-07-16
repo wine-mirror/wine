@@ -608,6 +608,7 @@ int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
  */
 static void set_max_limit( int limit )
 {
+#ifdef HAVE_SETRLIMIT
     struct rlimit rlimit;
 
     if (!getrlimit( limit, &rlimit ))
@@ -615,6 +616,7 @@ static void set_max_limit( int limit )
         rlimit.rlim_cur = rlimit.rlim_max;
         setrlimit( limit, &rlimit );
     }
+#endif
 }
 
 
@@ -631,8 +633,12 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     void (*init_func)(void);
 
     /* force a few limits that are set too low on some platforms */
+#ifdef RLIMIT_NOFILE
     set_max_limit( RLIMIT_NOFILE );
+#endif
+#ifdef RLIMIT_AS
     set_max_limit( RLIMIT_AS );
+#endif
 
     wine_init_argv0_path( argv[0] );
     build_dll_path();
