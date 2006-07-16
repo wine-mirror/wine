@@ -97,7 +97,8 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 
     /** returns now if key event already known */
     new_diks = (down ? 0x80 : 0);
-    /*if (new_diks != DInputKeyState[dik_code]) return CallNextHookEx(keyboard_hook, code, wparam, lparam); TO BE FIXED */
+    if (new_diks == DInputKeyState[dik_code])
+        return CallNextHookEx(0, code, wparam, lparam);
 
     DInputKeyState[dik_code] = new_diks;
     TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
