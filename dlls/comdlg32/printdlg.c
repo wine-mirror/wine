@@ -397,7 +397,10 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 	    }
 	    lppd->nFromPage = nFromPage;
 	    lppd->nToPage   = nToPage;
+	    lppd->Flags |= PD_PAGENUMS;
 	}
+	else
+	    lppd->Flags &= ~PD_PAGENUMS;
 
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
 	    static WCHAR file[] = {'F','I','L','E',':',0};
