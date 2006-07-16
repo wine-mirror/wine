@@ -1074,8 +1074,8 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
     This->URLName = HeapAlloc(GetProcessHeap(), 0, sizeStr*sizeof(WCHAR));
 
     if(lpszLeftURLName) {
-        hres = CoInternetCombineUrl(lpszLeftURLName, lpszURLName, 0, This->URLName, sizeStr,
-                                    &sizeStr, 0);
+        hres = CoInternetCombineUrl(lpszLeftURLName, lpszURLName, URL_FILE_USE_PATHURL,
+                                    This->URLName, sizeStr, &sizeStr, 0);
         if(FAILED(hres)) {
             HeapFree(GetProcessHeap(), 0, This->URLName);
             return hres;
