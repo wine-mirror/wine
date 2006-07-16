@@ -116,6 +116,13 @@ interface IBindStatusCallback : IUnknown
         BINDF_ENFORCERESTRICTED = 0x00800000
     } BINDF;
 
+    typedef enum
+    {
+        URL_ENCODING_NONE         = 0x00000000,
+        URL_ENCODING_ENABLE_UTF8  = 0x10000000,
+        URL_ENCODING_DISABLE_UTF8 = 0x20000000
+    } URL_ENCODING;
+
     typedef struct _tagBINDINFO
     {
         ULONG cbSize;
@@ -1201,6 +1208,9 @@ cpp_quote("DEFINE_GUID(CLSID_HttpProtocol, 0x79EAC9E2, 0xBAF9, 0x11CE, 0x8C,0x82
 cpp_quote("DEFINE_GUID(CLSID_HttpSProtocol, 0x79EAC9E5, 0xBAF9, 0x11CE, 0x8C,0x82, 0x00,0xAA,0x00,0x4B,0xA9,0x0B);")
 cpp_quote("DEFINE_GUID(CLSID_MkProtocol, 0x79EAC9E6, 0xBAF9, 0x11CE, 0x8C,0x82, 0x00,0xAA,0x00,0x4B,0xA9,0x0B);")
 
+cpp_quote("#define URLMON_OPTION_USERAGENT          0x10000001")
+cpp_quote("#define URLMON_OPTION_USERAGENT_REFRESH  0x10000002")
+cpp_quote("#define URLMON_OPTION_URL_ENCODING       0x10000004")
 
 cpp_quote("#define MK_S_ASYNCHRONOUS                0x000401E8")
 cpp_quote("#ifndef S_ASYNCHRONOUS")
