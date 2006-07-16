@@ -62,10 +62,55 @@ typedef struct _ACEFLAG
 typedef struct WELLKNOWNSID
 {
     WCHAR wstr[2];
-    SID_IDENTIFIER_AUTHORITY auth;
-    BYTE nSubAuthorityCount;
-    DWORD SubAuthority[8];
+    WELL_KNOWN_SID_TYPE Type;
+
+    /* same fields as struct _SID */
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[SID_MAX_SUB_AUTHORITIES];
 } WELLKNOWNSID;
+
+static const WELLKNOWNSID WellKnownSids[] =
+{
+    { {0,0}, WinNullSid, SID_REVISION, 1, { SECURITY_NULL_SID_AUTHORITY }, { SECURITY_NULL_RID } },
+    { {'W','D'}, WinWorldSid, SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY }, { SECURITY_WORLD_RID } },
+    { {0,0}, WinLocalSid, SID_REVISION, 1, { SECURITY_LOCAL_SID_AUTHORITY }, { SECURITY_LOCAL_RID } },
+    { {'C','O'}, WinCreatorOwnerSid, SID_REVISION, 1, { SECURITY_CREATOR_SID_AUTHORITY }, { SECURITY_CREATOR_OWNER_RID } },
+    { {'C','G'}, WinCreatorGroupSid, SID_REVISION, 1, { SECURITY_CREATOR_SID_AUTHORITY }, { SECURITY_CREATOR_GROUP_RID } },
+    { {0,0}, WinCreatorOwnerServerSid, SID_REVISION, 1, { SECURITY_CREATOR_SID_AUTHORITY }, { SECURITY_CREATOR_OWNER_SERVER_RID } },
+    { {0,0}, WinCreatorGroupServerSid, SID_REVISION, 1, { SECURITY_CREATOR_SID_AUTHORITY }, { SECURITY_CREATOR_GROUP_SERVER_RID } },
+    { {0,0}, WinNtAuthoritySid, SID_REVISION, 0, { SECURITY_NT_AUTHORITY }, { } },
+    { {0,0}, WinDialupSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_DIALUP_RID } },
+    { {'N','U'}, WinNetworkSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_NETWORK_RID } },
+    { {0,0}, WinBatchSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_BATCH_RID } },
+    { {'I','U'}, WinInteractiveSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_INTERACTIVE_RID } },
+    { {'S','U'}, WinServiceSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_SERVICE_RID } },
+    { {'A','N'}, WinAnonymousSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ANONYMOUS_LOGON_RID } },
+    { {0,0}, WinProxySid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_PROXY_RID } },
+    { {'E','D'}, WinEnterpriseControllersSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ENTERPRISE_CONTROLLERS_RID } },
+    { {'P','S'}, WinSelfSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_PRINCIPAL_SELF_RID } },
+    { {'A','U'}, WinAuthenticatedUserSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } },
+    { {'R','C'}, WinRestrictedCodeSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_RESTRICTED_CODE_RID } },
+    { {0,0}, WinTerminalServerSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_TERMINAL_SERVER_RID } },
+    { {0,0}, WinRemoteLogonIdSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_REMOTE_LOGON_RID } },
+    { {'S','Y'}, WinLocalSystemSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } },
+    { {'L','S'}, WinLocalServiceSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SERVICE_RID } },
+    { {'N','S'}, WinNetworkServiceSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_NETWORK_SERVICE_RID } },
+    { {0,0}, WinBuiltinDomainSid, SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID } },
+    { {'B','A'}, WinBuiltinAdministratorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } },
+    { {'B','U'}, WinBuiltinUsersSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } },
+    { {'B','G'}, WinBuiltinGuestsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_GUESTS } },
+    { {'P','U'}, WinBuiltinPowerUsersSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS } },
+    { {'A','O'}, WinBuiltinAccountOperatorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ACCOUNT_OPS } },
+    { {'S','O'}, WinBuiltinSystemOperatorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_SYSTEM_OPS } },
+    { {'P','O'}, WinBuiltinPrintOperatorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_PRINT_OPS } },
+    { {'B','O'}, WinBuiltinBackupOperatorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_BACKUP_OPS } },
+    { {'R','E'}, WinBuiltinReplicatorSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_REPLICATOR } },
+    { {'R','U'}, WinBuiltinPreWindows2000CompatibleAccessSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_PREW2KCOMPACCESS } },
+    { {'R','D'}, WinBuiltinRemoteDesktopUsersSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS } },
+    { {'N','O'}, WinBuiltinNetworkConfigurationOperatorsSid, SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS } },
+};
 
 static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
 
@@ -455,6 +500,65 @@ BOOL WINAPI
 CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 {
 	return RtlCopySid(nDestinationSidLength, pDestinationSid, pSourceSid);
+}
+
+/******************************************************************************
+ * CreateWellKnownSid [ADVAPI32.@]
+ */
+BOOL WINAPI
+CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
+                    PSID DomainSid,
+                    PSID pSid,
+                    DWORD* cbSid)
+{
+    int i;
+    TRACE("(%d, %p, %p, %p)\n", WellKnownSidType, DomainSid, pSid, cbSid);
+
+    if (DomainSid != NULL) {
+        FIXME("Only local computer supported!\n");
+        SetLastError(ERROR_INVALID_PARAMETER);	/* FIXME */
+        return FALSE;
+    }
+
+    if (cbSid == NULL || pSid == NULL) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++) {
+        if (WellKnownSids[i].Type == WellKnownSidType) {
+            DWORD length = GetSidLengthRequired(WellKnownSids[i].SubAuthorityCount);
+
+            if (*cbSid < length) {
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return FALSE;
+            }
+
+            CopyMemory(pSid, &WellKnownSids[i].Revision, length);
+            *cbSid = length;
+            return TRUE;
+        }
+    }
+
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+}
+
+/******************************************************************************
+ * IsWellKnownSid [ADVAPI32.@]
+ */
+BOOL WINAPI
+IsWellKnownSid( PSID pSid, WELL_KNOWN_SID_TYPE WellKnownSidType )
+{
+    int i;
+    TRACE("(%p, %d)\n", pSid, WellKnownSidType);
+
+    for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+        if (WellKnownSids[i].Type == WellKnownSidType)
+            if (EqualSid(pSid, (PSID)&(WellKnownSids[i].Revision)))
+                return TRUE;
+
+    return FALSE;
 }
 
 BOOL WINAPI
@@ -3293,17 +3397,6 @@ BOOL WINAPI EnumDependentServicesW(
     return FALSE;
 }
 
-static const WELLKNOWNSID WellKnownSids[] =
-{
-    { {'W','D'}, { SECURITY_WORLD_SID_AUTHORITY }, 1, { SECURITY_WORLD_RID } },
-    { {'B','A'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_ADMINS } },
-    { {'B','G'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_GUESTS } },
-    { {'B','U'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_USERS } },
-    { {'I','U'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_INTERACTIVE_RID } },
-    { {'L','S'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_SERVICE_RID } },
-    { {'S','Y'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_LOCAL_SYSTEM_RID } },
-};
-
 /******************************************************************************
  * ComputeStringSidSize
  */
@@ -3330,7 +3423,7 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
 
         for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
-                size += (WellKnownSids[i].nSubAuthorityCount - 1) * sizeof(DWORD);
+                size += (WellKnownSids[i].SubAuthorityCount - 1) * sizeof(DWORD);
     }
 
     return size;
@@ -3427,9 +3520,9 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
             {
                 DWORD j;
-                pisid->SubAuthorityCount = WellKnownSids[i].nSubAuthorityCount;
-                pisid->IdentifierAuthority = WellKnownSids[i].auth;
-                for (j = 0; j < WellKnownSids[i].nSubAuthorityCount; j++)
+                pisid->SubAuthorityCount = WellKnownSids[i].SubAuthorityCount;
+                pisid->IdentifierAuthority = WellKnownSids[i].IdentifierAuthority;
+                for (j = 0; j < WellKnownSids[i].SubAuthorityCount; j++)
                     pisid->SubAuthority[j] = WellKnownSids[i].SubAuthority[j];
                 bret = TRUE;
             }

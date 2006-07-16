@@ -101,7 +101,7 @@
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 # @ stub CreateTraceInstanceId
-# @ stub CreateWellKnownSid
+@ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CredDeleteA
 # @ stub CredDeleteW
 # @ stub CredEnumerateA
@@ -323,7 +323,7 @@
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
-# @ stub IsWellKnownSid
+@ stdcall IsWellKnownSid(ptr long)
 @ stdcall LockServiceDatabase(ptr)
 @ stdcall LogonUserA(str str str long long ptr)
 # @ stub LogonUserExA

@@ -1346,6 +1346,7 @@ BOOL        WINAPI CreateTimerQueueTimer(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOI
 HANDLE      WINAPI CreateWaitableTimerA(LPSECURITY_ATTRIBUTES,BOOL,LPCSTR);
 HANDLE      WINAPI CreateWaitableTimerW(LPSECURITY_ATTRIBUTES,BOOL,LPCWSTR);
 #define     CreateWaitableTimer WINELIB_NAME_AW(CreateWaitableTimer)
+BOOL        WINAPI CreateWellKnownSid(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 BOOL        WINAPI DeactivateActCtx(DWORD,ULONG_PTR);
 BOOL        WINAPI DebugActiveProcess(DWORD);
 BOOL        WINAPI DebugActiveProcessStop(DWORD);
@@ -1745,6 +1746,7 @@ BOOL        WINAPI IsTokenRestricted(HANDLE);
 BOOL        WINAPI IsValidAcl(PACL);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
+BOOL        WINAPI IsWellKnownSid(PSID,WELL_KNOWN_SID_TYPE);
 BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);
 BOOL        WINAPI ImpersonateNamedPipeClient(HANDLE);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
