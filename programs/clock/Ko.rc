@@ -24,27 +24,51 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 MAIN_MENU MENU 
 {
- POPUP "등록 정보 &P" {
-  MENUITEM "아날로그 &L", IDM_ANALOG
-  MENUITEM "디지털 &T", IDM_DIGITAL
+ POPUP "등록 정보(&P)" {
+  MENUITEM "아날로그(&L)", IDM_ANALOG
+  MENUITEM "디지털(&T)", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "글꼴 &F...", IDM_FONT
+  MENUITEM "글꼴(&F)...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "제목 막대기 없이 &W", IDM_NOTITLE
+  MENUITEM "제목 표시 안함 (&W)", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "초 &S", IDM_SECONDS
-  MENUITEM "날짜 &D", IDM_DATE
+  MENUITEM "초(&S)", IDM_SECONDS
+  MENUITEM "날짜(&D)", IDM_DATE
   MENUITEM SEPARATOR
-  MENUITEM "항상 정상에 &A", IDM_ONTOP
+  MENUITEM "항상  앞에 (&A)", IDM_ONTOP
  }
- POPUP "정보 &o" {
-  MENUITEM "면허 &L...", IDM_LICENSE
-  MENUITEM "보장 없이 &N...", IDM_NOWARRANTY
-  MENUITEM "시계에 관하여 &A...", IDM_ABOUT
+ POPUP "정보(&O)" {
+  MENUITEM "라이센스(&L)...", IDM_LICENSE
+  MENUITEM "무 보증 (&N)...", IDM_NOWARRANTY
+  MENUITEM "시계 정보(&A)...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "시계"
+}
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+{
+IDS_LICENSE_CAPTION,            "라이센스"
+IDS_LICENSE,
+"This library is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\
+This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+
+IDS_WARRANTY_CAPTION, "무 보증"
+IDS_WARRANTY,
+"This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details."
 }
