@@ -953,6 +953,46 @@ static void test_ReleaseBindInfo(void)
     ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
 }
 
+static void test_UrlMkGetSessionOption(void)
+{
+    DWORD encoding, size;
+    HRESULT hres;
+
+    size = encoding = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+                                 sizeof(encoding), &size, 0);
+    ok(hres == S_OK, "UrlMkGetSessionOption failed: %08lx\n", hres);
+    ok(encoding != 0xdeadbeef, "encoding not changed\n");
+    ok(size == sizeof(encoding), "size=%ld\n", size);
+
+    size = encoding = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+                                 sizeof(encoding)+1, &size, 0);
+    ok(hres == S_OK, "UrlMkGetSessionOption failed: %08lx\n", hres);
+    ok(encoding != 0xdeadbeef, "encoding not changed\n");
+    ok(size == sizeof(encoding), "size=%ld\n", size);
+
+    size = encoding = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+                                 sizeof(encoding)-1, &size, 0);
+    ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08lx\n", hres);
+    ok(encoding == 0xdeadbeef, "encoding = %08lx, exepcted 0xdeadbeef\n", encoding);
+    ok(size == 0xdeadbeef, "size=%ld\n", size);
+
+    size = encoding = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, NULL,
+                                 sizeof(encoding)-1, &size, 0);
+    ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08lx\n", hres);
+    ok(encoding == 0xdeadbeef, "encoding = %08lx, exepcted 0xdeadbeef\n", encoding);
+    ok(size == 0xdeadbeef, "size=%ld\n", size);
+
+    encoding = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+                                 sizeof(encoding)-1, NULL, 0);
+    ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08lx\n", hres);
+    ok(encoding == 0xdeadbeef, "encoding = %08lx, exepcted 0xdeadbeef\n", encoding);
+}
+
 START_TEST(misc)
 {
     OleInitialize(NULL);
@@ -967,6 +1007,7 @@ START_TEST(misc)
     test_ZoneManager();
     test_NameSpace();
     test_ReleaseBindInfo();
+    test_UrlMkGetSessionOption();
 
     OleUninitialize();
 }

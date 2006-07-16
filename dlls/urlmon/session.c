@@ -323,3 +323,58 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, IInternetSession **ppII
     *ppIInternetSession = &InternetSession;
     return S_OK;
 }
+
+/**************************************************************************
+ *                 UrlMkGetSessionOption (URLMON.@)
+ */
+static BOOL get_url_encoding(HKEY root, DWORD *encoding)
+{
+    DWORD size = sizeof(DWORD), res, type;
+    HKEY hkey;
+
+    static const WCHAR wszKeyName[] = 
+        {'S','O','F','T','W','A','R','E',
+         '\\','M','i','c','r','o','s','o','f','t',
+         '\\','W','i','n','d','o','w','s',
+         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+         '\\','I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
+    static const WCHAR wszUrlEncoding[] = {'U','r','l','E','n','c','o','d','i','n','g',0};
+
+    res = RegOpenKeyW(root, wszKeyName, &hkey);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    res = RegQueryValueExW(hkey, wszUrlEncoding, NULL, &type, (LPBYTE)encoding, &size);
+    RegCloseKey(hkey);
+
+    return res == ERROR_SUCCESS;
+}
+
+HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
+                                     DWORD* pdwBufferLength, DWORD dwReserved)
+{
+    TRACE("(%lx, %p, %ld, %p)\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
+
+    if(dwReserved)
+        WARN("dwReserved = %ld\n", dwReserved);
+
+    switch(dwOption) {
+    case URLMON_OPTION_URL_ENCODING: {
+        DWORD encoding = 0;
+
+        if(!pBuffer || dwBufferLength < sizeof(DWORD) || !pdwBufferLength)
+            return E_INVALIDARG;
+
+        if(!get_url_encoding(HKEY_CURRENT_USER, &encoding))
+            get_url_encoding(HKEY_LOCAL_MACHINE, &encoding);
+
+        *pdwBufferLength = sizeof(DWORD);
+        *(DWORD*)pBuffer = encoding ? URL_ENCODING_DISABLE_UTF8 : URL_ENCODING_ENABLE_UTF8;
+        return S_OK;
+    }
+    default:
+        FIXME("unsupported option %lx\n", dwOption);
+    }
+
+    return E_INVALIDARG;
+}

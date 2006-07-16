@@ -283,17 +283,6 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
     return S_OK;
 }
 
-/**************************************************************************
- *                 UrlMkGetSessionOption (URLMON.@)
- */
-HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
-                                        DWORD* pdwBufferLength, DWORD dwReserved)
-{
-    FIXME("(%#lx, %p, %#lx, %p): stub\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
-
-    return S_OK;
-}
-
 static const CHAR Agent[] = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)";
 
 /**************************************************************************
