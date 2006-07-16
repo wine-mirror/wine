@@ -30,6 +30,9 @@
 #include "main.h"
 #include "dialog.h"
 
+#define SPACES_IN_TAB 8
+#define PRINT_LEN_MAX 120
+
 static const WCHAR helpfileW[] = { 'n','o','t','e','p','a','d','.','h','l','p',0 };
 
 static INT_PTR WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -375,10 +378,12 @@ VOID DIALOG_FilePrint(VOID)
     HFONT font, old_font=0;
     DWORD size;
     LPWSTR pTemp;
-    static const WCHAR times_new_romanW[] = { 'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0 };
+    WCHAR cTemp[PRINT_LEN_MAX];
+    static const WCHAR print_fontW[] = { 'C','o','u','r','i','e','r',0 };
+    static const WCHAR letterM[] = { 'M',0 };
 
     /* Get a small font and print some header info on each page */
-    hdrFont.lfHeight = 100;
+    hdrFont.lfHeight = -35;
     hdrFont.lfWidth = 0;
     hdrFont.lfEscapement = 0;
     hdrFont.lfOrientation = 0;
@@ -391,7 +396,7 @@ VOID DIALOG_FilePrint(VOID)
     hdrFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     hdrFont.lfQuality = PROOF_QUALITY;
     hdrFont.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
-    lstrcpy(hdrFont.lfFaceName, times_new_romanW);
+    lstrcpy(hdrFont.lfFaceName, print_fontW);
     
     font = CreateFontIndirect(&hdrFont);
     
@@ -404,13 +409,12 @@ VOID DIALOG_FilePrint(VOID)
     printer.hInstance             = Globals.hInstance;
     
     /* Set some default flags */
-    printer.Flags                 = PD_RETURNDC;
+    printer.Flags                 = PD_RETURNDC | PD_NOSELECTION;
     printer.nFromPage             = 0;
     printer.nMinPage              = 1;
     /* we really need to calculate number of pages to set nMaxPage and nToPage */
     printer.nToPage               = 0;
     printer.nMaxPage              = -1;
-
     /* Let commdlg manage copy settings */
     printer.nCopies               = (WORD)PD_USEDEVMODECOPIES;
 
@@ -445,21 +449,25 @@ VOID DIALOG_FilePrint(VOID)
     size = GetWindowText(Globals.hEdit, pTemp, size);
     
     border = 150;
+    old_font = SelectObject(printer.hDC, Globals.hFont);
+    GetTextExtentPoint32(printer.hDC, letterM, 1, &szMetric);
     for (copycount=1; copycount <= printer.nCopies; copycount++) {
         i = 0;
         pagecount = 1;
         do {
-            static const WCHAR letterM[] = { 'M',0 };
-
-            if (pagecount >= printer.nFromPage &&
-    /*          ((printer.Flags & PD_PAGENUMS) == 0 ||  pagecount <= printer.nToPage))*/
-            pagecount <= printer.nToPage)
-                dopage = 1;
+            if (printer.Flags & PD_PAGENUMS) {
+                /* a specific range of pages is selected, so
+                 * skip pages that are not to be printed 
+                 */
+                if (pagecount > printer.nToPage)
+                    break;
+                else if (pagecount >= printer.nFromPage)
+                    dopage = 1;
+                else
+                    dopage = 0;
+            }
             else
-                dopage = 0;
-            
-            old_font = SelectObject(printer.hDC, font);
-            GetTextExtentPoint32(printer.hDC, letterM, 1, &szMetric);
+                dopage = 1;
                 
             if (dopage) {
                 if (StartPage(printer.hDC) <= 0) {
@@ -469,40 +477,47 @@ VOID DIALOG_FilePrint(VOID)
                     return;
                 }
                 /* Write a rectangle and header at the top of each page */
+                SelectObject(printer.hDC, font);
                 Rectangle(printer.hDC, border, border, cWidthPels-border, border+szMetric.cy*2);
-                /* I don't know what's up with this TextOut command. This comes out
-                kind of mangled.
-                */
                 TextOut(printer.hDC, border*2, border+szMetric.cy/2, Globals.szFileTitle, lstrlen(Globals.szFileTitle));
             }
             
+            SelectObject(printer.hDC, Globals.hFont);
             /* The starting point for the main text */
-            xLeft = border*2;
+            xLeft = border;
             yTop = border+szMetric.cy*4;
             
-            SelectObject(printer.hDC, old_font);
-            GetTextExtentPoint32(printer.hDC, letterM, 1, &szMetric); 
-            
-            /* Since outputting strings is giving me problems, output the main
-            text one character at a time.
-            */
             do {
-                if (pTemp[i] == '\n') {
-                    xLeft = border*2;
-                    yTop += szMetric.cy;
+                int k=0, m;
+                /* find the end of the line */
+                while (i < size && pTemp[i] != '\n' && pTemp[i] != '\r') {
+                    if (pTemp[i] == '\t') {
+                        /* replace tabs with spaces */
+                        for (m=0; m<SPACES_IN_TAB; m++) {
+                            if (k <  PRINT_LEN_MAX)
+                                cTemp[k++] = ' ';
+                        }
+                    }
+                    else if (k <  PRINT_LEN_MAX)
+                        cTemp[k++] = pTemp[i];
+                    i++;
                 }
-                else if (pTemp[i] != '\r') {
-                    if (dopage)
-                        TextOut(printer.hDC, xLeft, yTop, &pTemp[i], 1);
-                    xLeft += szMetric.cx;
+                if (dopage)
+                    TextOut(printer.hDC, xLeft, yTop, cTemp, k);
+                /* find the next line */
+                while (i < size && (pTemp[i] == '\n' || pTemp[i] == '\r')) {
+                    if (pTemp[i] == '\n')
+                        yTop += szMetric.cy;
+                    i++;
                 }
-            } while (i++<size && yTop<(cHeightPels-border*2));
-            
+            } while (i<size && yTop<(cHeightPels-border*2));
+                
             if (dopage)
                 EndPage(printer.hDC);
             pagecount++;
         } while (i<size);
     }
+    SelectObject(printer.hDC, old_font);
 
     EndDoc(printer.hDC);
     DeleteDC(printer.hDC);
