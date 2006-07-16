@@ -781,6 +781,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             GLint  prev_store;
             GLint  prev_depth_test;
             GLint  prev_rasterpos[4];
+            int tex;
 
             /* Some drivers(radeon dri, others?) don't like exceptions during
              * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
@@ -827,6 +828,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
             glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
+            /* Disable all textures before calling glDrawPixels */
+            for(tex = 0; tex < GL_LIMITS(sampler_stages); tex++) {
+                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
+                    checkGLcall("glActiveTextureARB");
+                }
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable GL_TEXTURE_2D");
+                glDisable(GL_TEXTURE_1D);
+                checkGLcall("glDisable GL_TEXTURE_1D");
+            }
             /* And back buffers are not blended */
             glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
@@ -993,6 +1005,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
     /* Create a DIB section if there isn't a hdc yet */
     if(!This->hDC) {
+        int extraline = 0;
+        SYSTEM_INFO sysInfo;
+
         if(This->Flags & SFLAG_ACTIVELOCK) {
             ERR("Creating a DIB section while a lock is active. Uncertain consequences\n");
         }
@@ -1017,17 +1032,28 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                 break;
         }
 
+        /* Some apps access the surface in via DWORDs, and do not take the necessary care at the end of the
+         * surface. So we need at least extra 4 bytes at the end of the surface. Check against the page size,
+         * if the last page used for the surface has at least 4 spare bytes we're safe, otherwise
+         * add an extra line to the dib section
+         */
+        GetSystemInfo(&sysInfo);
+        if( ((This->resource.size + 3) % sysInfo.dwPageSize) < 4) {
+            extraline = 1;
+            TRACE("Adding an extra line to the dib section\n");
+        }
+
         b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
         if( (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
             b_info->bmiHeader.biWidth = This->currentDesc.Width;
-            b_info->bmiHeader.biHeight = -This->currentDesc.Height;
+            b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
             b_info->bmiHeader.biSizeImage = This->currentDesc.Width * This->currentDesc.Height * This->bytesPerPixel;
             /* Use the full pow2 image size(assigned below) because LockRect
              * will need it for a full glGetTexImage call
              */
         } else {
             b_info->bmiHeader.biWidth = This->pow2Width;
-            b_info->bmiHeader.biHeight = -This->pow2Height;
+            b_info->bmiHeader.biHeight = -This->pow2Height -extraline;
             b_info->bmiHeader.biSizeImage = This->resource.size;
         }
         b_info->bmiHeader.biPlanes = 1;
