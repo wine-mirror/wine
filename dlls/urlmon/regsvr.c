@@ -557,6 +557,18 @@ static struct regsvr_coclass const coclass_list[] = {
         "urlmon.dll",
         "Apartment"
     },
+    {   &CLSID_InternetSecurityManager,
+        "Security Manager",
+        NULL,
+        "urlmon.dll",
+        "Both"
+    },
+    {   &CLSID_InternetZoneManager,
+        "URL Zone Manager",
+        NULL,
+        "urlmon.dll",
+        "Both"
+    },
     { NULL }			/* list terminator */
 };
 
