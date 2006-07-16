@@ -209,8 +209,26 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 
 static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+    IHTMLElement *doc;
+    IDispatch *disp;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = IHTMLDocument3_get_documentElement(HTMLDOC3(This), &doc);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLElement_get_all(doc, &disp);
+    IHTMLElement_Release(doc);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)p);
+    IDispatch_Release(disp);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
