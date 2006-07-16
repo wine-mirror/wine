@@ -338,4 +338,21 @@ extern LONG module_ref;
 #define LOCK_MODULE()   InterlockedIncrement(&module_ref)
 #define UNLOCK_MODULE() InterlockedDecrement(&module_ref)
 
+/* memory allocation functions */
+
+static inline void *mshtml_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *mshtml_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL mshtml_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 extern HINSTANCE hInst;

@@ -100,7 +100,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
         UNLOCK_MODULE();
     }
 
@@ -136,7 +136,7 @@ static const IClassFactoryVtbl HTMLClassFactoryVtbl = {
 
 static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc fnCreateInstance)
 {
-    ClassFactory *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ClassFactory));
+    ClassFactory *ret = mshtml_alloc(sizeof(ClassFactory));
     HRESULT hres;
 
     ret->lpVtbl = &HTMLClassFactoryVtbl;
@@ -147,7 +147,7 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
     if(SUCCEEDED(hres)) {
         LOCK_MODULE();
     }else {
-        HeapFree(GetProcessHeap(), 0, ret);
+        mshtml_free(ret);
         *ppv = NULL;
     }
     return hres;
@@ -314,7 +314,7 @@ static HRESULT register_server(BOOL do_register)
     INF_SET_ID(LIBID_MSHTML);
 
     for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++) {
-        pse[i].pszValue = HeapAlloc(GetProcessHeap(), 0, 39);
+        pse[i].pszValue = mshtml_alloc(39);
         sprintf(pse[i].pszValue, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
                 clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
@@ -330,7 +330,7 @@ static HRESULT register_server(BOOL do_register)
     hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
 
     for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
-        HeapFree(GetProcessHeap(), 0, pse[i].pszValue);
+        mshtml_free(pse[i].pszValue);
 
     return hres;
 }
