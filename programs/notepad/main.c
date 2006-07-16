@@ -58,11 +58,11 @@ static VOID NOTEPAD_InitFont(void)
     LOGFONT *lf = &Globals.lfFont;
     static const WCHAR systemW[] = { 'S','y','s','t','e','m',0 };
 
-    lf->lfHeight        = -10;
+    lf->lfHeight        = -40;
     lf->lfWidth         = 0;
     lf->lfEscapement    = 0;
     lf->lfOrientation   = 0;
-    lf->lfWeight        = FW_BOLD;
+    lf->lfWeight        = FW_REGULAR;
     lf->lfItalic        = FALSE;
     lf->lfUnderline     = FALSE;
     lf->lfStrikeOut     = FALSE;
