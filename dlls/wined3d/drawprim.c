@@ -1357,15 +1357,18 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
+                    ++texture_idx;
                     continue;
                 } else if (coordIdx < 0) {
                     FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
+                    ++texture_idx;
                     continue;
                 }
 
                 ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
+                    ++texture_idx;
                     continue;
                 } else {
 
