@@ -957,13 +957,13 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
             if (rc == ERROR_SUCCESS)
             {
                 rc = ACTION_AppSearchComponents(package, &value, &sig);
-                if (rc == ERROR_SUCCESS && !*value)
+                if (rc == ERROR_SUCCESS && !value)
                 {
                     rc = ACTION_AppSearchReg(package, &value, &sig);
-                    if (rc == ERROR_SUCCESS && !*value)
+                    if (rc == ERROR_SUCCESS && !value)
                     {
                         rc = ACTION_AppSearchIni(package, &value, &sig);
-                        if (rc == ERROR_SUCCESS && !*value)
+                        if (rc == ERROR_SUCCESS && !value)
                             rc = ACTION_AppSearchDr(package, &value, &sig);
                     }
                 }
