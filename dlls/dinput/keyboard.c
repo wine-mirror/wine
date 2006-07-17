@@ -518,7 +518,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
         if (current_lock != NULL) {
 	  FIXME("Not more than one keyboard can be acquired at the same time.\n");
-	  SysKeyboardAImpl_Unacquire(iface);
+	  SysKeyboardAImpl_Unacquire((LPDIRECTINPUTDEVICE8A)current_lock);
 	}
 	
         current_lock = This;
