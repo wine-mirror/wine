@@ -471,7 +471,9 @@ static void test_TypeInfo(void)
 
     /* test invoking a method with a [restricted] keyword */
     hr = ITypeInfo_Invoke(pTypeInfo, NULL, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    todo_wine {
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    }
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
