@@ -120,7 +120,7 @@ void shader_arb_load_constants(
 
     if (usePixelShader) {
 
-        IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+        IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
         /* Load DirectX 9 float constants for pixel shader */
         shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, WINED3D_PSHADER_MAX_CONSTANTS,
