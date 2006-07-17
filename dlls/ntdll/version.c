@@ -581,7 +581,7 @@ static inline NTSTATUS version_compare_values(ULONG left, ULONG right, UCHAR con
             if (left > right) return STATUS_REVISION_MISMATCH;
             break;
         default:
-            return STATUS_INVALID_PARAMETER;
+            return STATUS_REVISION_MISMATCH;
     }
     return STATUS_SUCCESS;
 }
@@ -595,15 +595,7 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
     RTL_OSVERSIONINFOEXW ver;
     NTSTATUS status;
 
-    FIXME("(%p,%lu,%llx): Not all cases correctly implemented yet\n",
-          info, dwTypeMask, dwlConditionMask);
-
-    /* FIXME:
-        - Check the following special case on Windows (various versions):
-          o lp->wSuiteMask == 0 and ver.wSuiteMask != 0 and VER_AND/VER_OR
-          o lp->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW)
-        - MSDN talks about some tests being impossible. Check what really happens.
-     */
+    TRACE("(%p,0x%lx,0x%llx)\n", info, dwTypeMask, dwlConditionMask);
 
     ver.dwOSVersionInfoSize = sizeof(ver);
     if ((status = RtlGetVersion( &ver )) != STATUS_SUCCESS) return status;

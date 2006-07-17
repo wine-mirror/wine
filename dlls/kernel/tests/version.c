@@ -59,7 +59,7 @@ START_TEST(version)
         VER_MINORVERSION/* | VER_PLATFORMID | VER_SERVICEPACKMAJOR |
         VER_SERVICEPACKMINOR | VER_SUITENAME | VER_PRODUCT_TYPE */,
         pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+    ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
 
     /* tests special handling of VER_SUITENAME */
@@ -155,7 +155,7 @@ START_TEST(version)
     info.dwMajorVersion++;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+    ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
 
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -167,7 +167,7 @@ START_TEST(version)
     info.dwBuildNumber++;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+    ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
 
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
