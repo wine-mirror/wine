@@ -646,6 +646,7 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
     if(dwTypeMask & (VER_MAJORVERSION|VER_MINORVERSION|VER_SERVICEPACKMAJOR|VER_SERVICEPACKMINOR))
     {
         unsigned char condition = 0;
+        BOOLEAN do_next_check = TRUE;
 
         if(dwTypeMask & VER_MAJORVERSION)
             condition = dwlConditionMask >> 1*3 & 0x07;
@@ -659,27 +660,28 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
         if(dwTypeMask & VER_MAJORVERSION)
         {
             status = version_compare_values(ver.dwMajorVersion, info->dwMajorVersion, condition);
-            if (status != STATUS_SUCCESS)
-                return status;
+            do_next_check = (ver.dwMajorVersion == info->dwMajorVersion) &&
+                ((condition != VER_EQUAL) || (status == STATUS_SUCCESS));
         }
-        if(dwTypeMask & VER_MINORVERSION)
+        if((dwTypeMask & VER_MINORVERSION) && do_next_check)
         {
             status = version_compare_values(ver.dwMinorVersion, info->dwMinorVersion, condition);
-            if (status != STATUS_SUCCESS)
-                return status;
+            do_next_check = (ver.dwMinorVersion == info->dwMinorVersion) &&
+                ((condition != VER_EQUAL) || (status == STATUS_SUCCESS));
         }
-        if(dwTypeMask & VER_SERVICEPACKMAJOR)
+        if((dwTypeMask & VER_SERVICEPACKMAJOR) && do_next_check)
         {
             status = version_compare_values(ver.wServicePackMajor, info->wServicePackMajor, condition);
-            if (status != STATUS_SUCCESS)
-                return status;
+            do_next_check = (ver.wServicePackMajor == info->wServicePackMajor) &&
+                ((condition != VER_EQUAL) || (status == STATUS_SUCCESS));
         }
-        if(dwTypeMask & VER_SERVICEPACKMINOR)
+        if((dwTypeMask & VER_SERVICEPACKMINOR) && do_next_check)
         {
             status = version_compare_values(ver.wServicePackMinor, info->wServicePackMinor, condition);
-            if (status != STATUS_SUCCESS)
-                return status;
         }
+
+        if (status != STATUS_SUCCESS)
+            return status;
     }
 
     return STATUS_SUCCESS;
