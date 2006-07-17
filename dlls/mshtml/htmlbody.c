@@ -385,7 +385,7 @@ static void HTMLBodyElement_destructor(IUnknown *iface)
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
 
     nsIDOMHTMLBodyElement_Release(This->nsbody);
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This);
 }
 
 static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
@@ -435,7 +435,7 @@ static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
 
 void HTMLBodyElement_Create(HTMLElement *element)
 {
-    HTMLBodyElement *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLBodyElement));
+    HTMLBodyElement *ret = mshtml_alloc(sizeof(HTMLBodyElement));
     nsresult nsres;
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;

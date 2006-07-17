@@ -162,7 +162,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->nscontainer)
             NSContainer_Release(This->nscontainer);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
 
         UNLOCK_MODULE();
     }
@@ -1066,7 +1066,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLDocument));
+    ret = mshtml_alloc(sizeof(HTMLDocument));
     ret->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     ret->ref = 0;
     ret->nscontainer = NULL;
@@ -1074,7 +1074,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {
-        HeapFree(GetProcessHeap(), 0, ret);
+        mshtml_free(ret);
         return hres;
     }
 

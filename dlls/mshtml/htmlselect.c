@@ -342,7 +342,7 @@ static void HTMLSelectElement_destructor(IUnknown *iface)
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
 
     nsIDOMHTMLSelectElement_Release(This->nsselect);
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This);
 }
 
 static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
@@ -381,7 +381,7 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
 
 void HTMLSelectElement_Create(HTMLElement *element)
 {
-    HTMLSelectElement *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLSelectElement));
+    HTMLSelectElement *ret = mshtml_alloc(sizeof(HTMLSelectElement));
     nsresult nsres;
 
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;

@@ -657,7 +657,7 @@ static void HTMLInputElement_destructor(IUnknown *iface)
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
 
     nsIDOMHTMLInputElement_Release(This->nsinput);
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This);
 }
 
 #undef HTMLINPUT_THIS
@@ -739,7 +739,7 @@ static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
 
 void HTMLInputElement_Create(HTMLElement *element)
 {
-    HTMLInputElement *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLInputElement));
+    HTMLInputElement *ret = mshtml_alloc(sizeof(HTMLInputElement));
     nsresult nsres;
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;

@@ -333,7 +333,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
     if(iter)
         return iter;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLDOMNode));
+    ret = mshtml_alloc(sizeof(HTMLDOMNode));
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
     ret->node_type = NT_UNKNOWN;
     ret->impl.unk = NULL;
@@ -367,6 +367,6 @@ void release_nodes(HTMLDocument *This)
         if(iter->destructor)
             iter->destructor(iter->impl.unk);
         nsIDOMNode_Release(iter->nsnode);
-        HeapFree(GetProcessHeap(), 0, iter);
+        mshtml_free(iter);
     }
 }

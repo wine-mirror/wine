@@ -48,7 +48,7 @@ static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
 {
     if(buf->len == buf->size) {
         buf->size <<= 1;
-        buf->buf = HeapReAlloc(GetProcessHeap(), 0, buf->buf, buf->size*sizeof(HTMLElement**));
+        buf->buf = mshtml_realloc(buf->buf, buf->size*sizeof(HTMLElement**));
     }
 
     buf->buf[buf->len++] = elem;
@@ -158,7 +158,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&value_str, &value, NULL);
         V_VT(AttributeValue) = VT_BSTR;
-        V_BSTR(AttributeValue) = SysAllocString(value);;
+        V_BSTR(AttributeValue) = SysAllocString(value);
         TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
     }else {
         ERR("GetAttribute failed: %08lx\n", nsres);
@@ -804,15 +804,15 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    buf.buf = HeapAlloc(GetProcessHeap(), 0, buf.size*sizeof(HTMLElement**));
+    buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement**));
 
     create_all_list(This->node->doc, This, &buf);
 
     if(!buf.len) {
-        HeapFree(GetProcessHeap(), 0, buf.buf);
+        mshtml_free(buf.buf);
         buf.buf = NULL;
     }else if(buf.size > buf.len) {
-        buf.buf = HeapReAlloc(GetProcessHeap(), 0, buf.buf, buf.len*sizeof(HTMLElement**));
+        buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement**));
     }
 
     return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
@@ -828,7 +828,7 @@ static void HTMLElement_destructor(IUnknown *iface)
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);
 
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This);
 }
 
 #undef HTMLELEM_THIS
@@ -968,7 +968,7 @@ void HTMLElement_Create(HTMLDOMNode *node)
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLElement));
+    ret = mshtml_alloc(sizeof(HTMLElement));
     ret->lpHTMLElementVtbl = &HTMLElementVtbl;
     ret->node = node;
     ret->impl = NULL;
@@ -1061,8 +1061,8 @@ static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
 
     if(!ref) {
         IUnknown_Release(This->ref_unk);
-        HeapFree(GetProcessHeap(), 0, This->elems);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This->elems);
+        mshtml_free(This);
     }
 
     return ref;
@@ -1177,7 +1177,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(V_BSTR(&tagName)), pdisp);
 
-    buf.buf = HeapAlloc(GetProcessHeap(), 0, buf.size*sizeof(HTMLElement*));
+    buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement*));
 
     nsAString_Init(&tag_str, NULL);
 
@@ -1198,10 +1198,10 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     TRACE("fount %ld tags\n", buf.len);
 
     if(!buf.len) {
-        HeapFree(GetProcessHeap(), 0, buf.buf);
+        mshtml_free(buf.buf);
         buf.buf = NULL;
     }else if(buf.size > buf.len) {
-        buf.buf = HeapReAlloc(GetProcessHeap(), 0, buf.buf, buf.len);
+        buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement*));
     }
 
     return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
@@ -1228,7 +1228,7 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
 static HRESULT HTMLElementCollection_Create(IUnknown *ref_unk, HTMLElement **elems, DWORD len,
                                             IDispatch **p)
 {
-    HTMLElementCollection *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLElementCollection));
+    HTMLElementCollection *ret = mshtml_alloc(sizeof(HTMLElementCollection));
 
     ret->lpHTMLElementCollectionVtbl = &HTMLElementCollectionVtbl;
     ret->ref = 1;

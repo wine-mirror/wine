@@ -354,7 +354,7 @@ static void HTMLTextAreaElement_destructor(IUnknown *iface)
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
 
     nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This);
 }
 
 #undef HTMLTXTAREA_THIS
@@ -397,7 +397,7 @@ static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
 
 void HTMLTextAreaElement_Create(HTMLElement *element)
 {
-    HTMLTextAreaElement *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLTextAreaElement));
+    HTMLTextAreaElement *ret = mshtml_alloc(sizeof(HTMLTextAreaElement));
     nsresult nsres;
 
     ret->lpHTMLTextAreaElementVtbl = &HTMLTextAreaElementVtbl;
