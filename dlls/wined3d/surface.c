@@ -1091,6 +1091,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                that helps performance */
             glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
+            glDisable(GL_FOG);
 
             switch(wined3d_settings.rendertargetlock_mode) {
                 case RTL_AUTO:
@@ -1122,6 +1123,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             if(myDevice->stateBlock->renderState[D3DRS_ZENABLE] == D3DZB_TRUE ||
                myDevice->stateBlock->renderState[D3DRS_ZENABLE] == D3DZB_USEW) glEnable(GL_DEPTH_TEST);
             if (myDevice->stateBlock->renderState[D3DRS_ALPHABLENDENABLE]) glEnable(GL_BLEND);
+            if (myDevice->stateBlock->renderState[D3DRS_FOGENABLE]) glEnable(GL_FOG);
 
             LEAVE_GL();
 
