@@ -143,7 +143,7 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
     unsigned pgsz = getpagesize();
     unsigned ofst, size;
 
-    if (sidx >= fmap->elfhdr.e_shnum ||
+    if (sidx < 0 || sidx >= fmap->elfhdr.e_shnum ||
         fmap->sect[sidx].shdr.sh_type == SHT_NOBITS)
         return NO_MAP;
     /* align required information on page size (we assume pagesize is a power of 2) */
