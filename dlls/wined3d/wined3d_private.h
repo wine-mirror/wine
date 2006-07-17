@@ -1314,6 +1314,9 @@ typedef struct shader_reg_maps {
     /* Whether or not a loop is used in this shader */
     char loop;
 
+    /* Whether or not this shader uses fog */
+    char fog;
+
 } shader_reg_maps;
 
 #define SHADER_PGMSIZE 65535
@@ -1608,7 +1611,8 @@ typedef struct IWineD3DVertexShaderImpl {
     IUnknown                    *parent;
     IWineD3DDeviceImpl          *wineD3DDevice;
 
-    DWORD usage;
+    char                        usesFog;
+    DWORD                       usage;
 
     /* Vertex shader input and output semantics */
     semantic semantics_in [MAX_ATTRIBS];

@@ -327,8 +327,17 @@ static void primitiveInitState(
         }
         This->last_was_rhw = FALSE;
 
-        /* Restore fogging */
-        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+        /* Setup fogging */
+        if (useVS && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->usesFog) {
+            /* In D3D vertex shader return the 'final' fog value, while in OpenGL it is the 'input' fog value.
+             * The code below 'disables' the OpenGL postprocessing by setting the formula to '1'. */
+            glFogi(GL_FOG_MODE, GL_LINEAR);
+            glFogf(GL_FOG_START, 1.0f);
+            glFogf(GL_FOG_END, 0.0f);
+
+        } else if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] 
+                  && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+            
             if(GL_SUPPORT(EXT_FOG_COORD)) {
                 glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
                 checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)\n");

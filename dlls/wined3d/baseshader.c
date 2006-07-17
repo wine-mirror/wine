@@ -343,6 +343,9 @@ HRESULT shader_get_registers_used(
 
                 else if (D3DSPR_INPUT == regtype && !pshader)
                     reg_maps->attributes[reg] = 1;
+
+                else if (D3DSPR_RASTOUT == regtype && reg == 1)
+                    reg_maps->fog = 1;
              }
         }
     }

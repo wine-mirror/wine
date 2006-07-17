@@ -339,7 +339,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) arg->shader;
 
   /* oPos, oFog and oPts in D3D */
-  static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
+  static const char* hwrastout_reg_names[] = { "result.position", "TMP_FOG", "result.pointsize" };
 
   DWORD reg = param & D3DSP_REGNUM_MASK;
   DWORD regtype = shader_get_regtype(param);

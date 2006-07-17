@@ -712,6 +712,12 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         if (This->baseShader.hex_version >= D3DVS_VERSION(3,0))
             vshader_glsl_output_unpack(&buffer, This->semantics_out);
 
+        /* Clamp the fog from 0 to 1 if it's used */
+        if (reg_maps->fog) {
+            This->usesFog = 1;
+            shader_addline(&buffer, "gl_FogFragCoord = clamp(gl_FogFragCoord, 0.0, 1.0);\n");
+        }
+
         shader_addline(&buffer, "}\n\0");
 
         TRACE("Compiling shader object %u\n", shader_obj);
@@ -735,8 +741,17 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Base Declarations */
         shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
 
+        if (reg_maps->fog) {
+            This->usesFog = 1;
+            shader_addline(&buffer, "TEMP TMP_FOG;\n");
+        }
+
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
+
+        /* Make sure the fog value is positive - values above 1.0 are ignored */
+        if (reg_maps->fog)
+            shader_addline(&buffer, "MAX result.fogcoord, TMP_FOG, 0.0;\n");
 
         shader_addline(&buffer, "END\n\0"); 
 
