@@ -138,6 +138,13 @@ static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
 #define SHADER_GLSL 2
 #define SHADER_NONE 3
 
+#define RTL_DISABLE   -1
+#define RTL_AUTO       0
+#define RTL_READDRAW   1
+#define RTL_READTEX    2
+#define RTL_TEXDRAW    3
+#define RTL_TEXTEX     4
+
 typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
   int vs_mode;
@@ -151,6 +158,7 @@ typedef struct wined3d_settings_s {
   int ps_selected_mode;
 /* nonpower 2 function */
   int nonpower2_mode;
+  int rendertargetlock_mode;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings;

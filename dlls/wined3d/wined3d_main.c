@@ -36,8 +36,9 @@ wined3d_settings_t wined3d_settings =
 {
   VS_HW,   /* Hardware by default */
   PS_NONE, /* Disabled by default */
-  VBO_HW,   /* Hardware by default */
-  FALSE    /* Use of GLSL disabled by default */
+  VBO_HW,  /* Hardware by default */
+  FALSE,   /* Use of GLSL disabled by default */
+  RTL_AUTO /* Automatically determine best locking method */
 };
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
@@ -195,6 +196,34 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     wined3d_settings.nonpower2_mode = NP2_REPACK;
                 }
                 /* There will be a couple of other choices for nonpow2, they are: TextureRecrangle and OpenGL 2 */
+            }
+            if ( !get_config_key( hkey, appkey, "RenderTargetLockMode", buffer, size) )
+            {
+                if (!strcmp(buffer,"disabled"))
+                {
+                    TRACE("Disabling render target locking\n");
+                    wined3d_settings.rendertargetlock_mode = RTL_DISABLE;
+                }
+                else if (!strcmp(buffer,"readdraw"))
+                {
+                    TRACE("Using glReadPixels for render target reading and glDrawPixels for writing\n");
+                    wined3d_settings.rendertargetlock_mode = RTL_READDRAW;
+                }
+                else if (!strcmp(buffer,"readtex"))
+                {
+                    TRACE("Using glReadPixels for render target reading and textures for writing\n");
+                    wined3d_settings.rendertargetlock_mode = RTL_READTEX;
+                }
+                else if (!strcmp(buffer,"texdraw"))
+                {
+                    TRACE("Using textures for render target reading and glDrawPixels for writing\n");
+                    wined3d_settings.rendertargetlock_mode = RTL_TEXDRAW;
+                }
+                else if (!strcmp(buffer,"textex"))
+                {
+                    TRACE("Reading render targets via textures and writing via textures\n");
+                    wined3d_settings.rendertargetlock_mode = RTL_TEXTEX;
+                }
             }
        }
        if (wined3d_settings.vs_mode == VS_HW)

@@ -727,7 +727,28 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
                 *****************************************/
             if (!notInContext) { /* Only read the buffer if it's in the current context */
-                read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
+                switch(wined3d_settings.rendertargetlock_mode) {
+                    case RTL_AUTO:
+                    case RTL_READDRAW:
+                    case RTL_READTEX:
+                        read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
+                        break;
+
+                    case RTL_TEXDRAW:
+                    case RTL_TEXTEX:
+                        ERR("Reading from render target with a texture isn't implemented yet\n");
+                        break;
+
+                    case RTL_DISABLE:
+                    {
+                        static BOOL warned = FALSE;
+                        if(!warned) {
+                            ERR("Application tries to lock the render target, but render target locking is disabled\n");
+                            warned = TRUE;
+                        }
+                    }
+                    break;
+                }
             }
             TRACE("Resetting buffer\n");
 
@@ -1071,7 +1092,28 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
 
-            flush_to_framebuffer_drawpixels(This);
+            switch(wined3d_settings.rendertargetlock_mode) {
+                case RTL_AUTO:
+                case RTL_READDRAW:
+                case RTL_TEXDRAW:
+                    flush_to_framebuffer_drawpixels(This);
+                    break;
+
+                case RTL_READTEX:
+                case RTL_TEXTEX:
+                    ERR("Writing to the render target with textures is not implemented yet\n");
+                    break;
+
+                case RTL_DISABLE:
+                {
+                    static BOOL warned = FALSE;
+                    if(!warned) {
+                        ERR("The application tries to write to the render target, but render target locking is disabled\n");
+                        warned = TRUE;
+                    }
+                }
+                break;
+            }
 
             if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
                 glDrawBuffer(GL_BACK);
