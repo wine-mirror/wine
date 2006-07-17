@@ -1213,7 +1213,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             WARN("Bad stabs string %p\n", ptr);
             continue;
         }
-        if (ptr[strlen(ptr) - 1] == '\\')
+        if (*ptr != '\0' && (ptr[strlen(ptr) - 1] == '\\'))
         {
             /*
              * Indicates continuation.  Append this to the buffer, and go onto the
