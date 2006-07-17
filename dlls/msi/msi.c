@@ -1810,26 +1810,32 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ * MsiCreateAndVerifyInstallerDirectory [MSI.@]
+ *
+ * Notes: undocumented
+ */
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 {
     WCHAR path[MAX_PATH];
 
-    if(dwReserved) {
-        FIXME("Don't know how to handle argument %ld\n", dwReserved);
-        return ERROR_CALL_NOT_IMPLEMENTED;
+    TRACE("%ld\n", dwReserved);
+
+    if (dwReserved)
+    {
+        FIXME("dwReserved=%ld\n", dwReserved);
+        return ERROR_INVALID_PARAMETER;
     }
 
-   if(!GetWindowsDirectoryW(path, MAX_PATH)) {
-        FIXME("GetWindowsDirectory failed unexpected! Error %ld\n",
-              GetLastError());
-        return ERROR_CALL_NOT_IMPLEMENTED;
-   }
+    if (!GetWindowsDirectoryW(path, MAX_PATH))
+        return ERROR_FUNCTION_FAILED;
 
-   strcatW(path, installerW);
+    lstrcatW(path, installerW);
 
-   CreateDirectoryW(path, NULL);
+    if (!CreateDirectoryW(path, NULL))
+        return ERROR_FUNCTION_FAILED;
 
-   return 0;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
