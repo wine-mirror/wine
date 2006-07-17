@@ -1617,7 +1617,7 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
                 DWORD* pcchPathBuf)
 {
     LPWSTR szwComponent, szwQualifier, lpwPathBuf;
-    DWORD pcchwPathBuf;
+    DWORD cchwPathBuf;
     UINT rc;
 
     TRACE("%s %s %li %p %p\n",szComponent, szQualifier,
@@ -1628,16 +1628,16 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
 
     lpwPathBuf = msi_alloc(*pcchPathBuf * sizeof(WCHAR));
 
-    pcchwPathBuf = *pcchPathBuf;
+    cchwPathBuf = *pcchPathBuf;
 
     rc = MsiProvideQualifiedComponentW(szwComponent, szwQualifier, 
-                    dwInstallMode, lpwPathBuf, &pcchwPathBuf);
+                    dwInstallMode, lpwPathBuf, &cchwPathBuf);
 
     msi_free(szwComponent);
     msi_free(szwQualifier);
 
     if (rc == ERROR_SUCCESS)
-        *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, pcchwPathBuf,
+        *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, cchwPathBuf + 1,
                                            lpPathBuf, *pcchPathBuf, NULL, NULL);
 
     msi_free(lpwPathBuf);
