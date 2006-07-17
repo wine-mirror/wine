@@ -163,7 +163,6 @@ START_TEST(version)
     ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 
 
-    /* shows that build number fits into the hierarchy after major version, but before minor version */
     GetVersionEx((OSVERSIONINFO *)&info);
     info.dwBuildNumber++;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -179,7 +178,6 @@ START_TEST(version)
     GetVersionEx((OSVERSIONINFO *)&info);
     info.dwOSVersionInfoSize = 0;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
-        "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
+        pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
+    ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 }
