@@ -132,6 +132,57 @@ static void test_fileops( void )
     unlink ("fdopen.tst");
 }
 
+static void test_asciifileops( void )
+{
+    static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9\r\n\r\nA,B,C,D,E\r\nX,Y,Z";
+    char buffer[256];
+    int fd;
+    FILE *file;
+    int i;
+    long l;
+
+    fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
+    write (fd, outbuffer, sizeof (outbuffer));
+    close (fd);
+    
+    /* Open file in ascii mode */
+    fd = open ("fdopen.tst", O_RDONLY);
+    file = fdopen (fd, "rb");
+    ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error\n");
+    ok(ftell(file) == 0,"Did not start at beginning of file\n");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 1 fgets failed unexpected\n");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 2 fgets failed unexpected\n");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 3 fgets failed unexpected\n");
+    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 4 fgets failed unexpected\n");
+    ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF\n");
+    ok(feof(file) !=0,"feof doesn't signal EOF\n");
+    rewind(file);
+    ok(ftell(file) == 0,"Did not rewind to beginning of file\n");
+    for (i=0; i<strlen(outbuffer); i++)
+        if (outbuffer[i] == '\n') break;
+    i++;
+    ok(fgets(buffer,strlen(outbuffer),file) !=0,"line 1 fgets failed unexpected\n");
+    l = ftell(file);
+    todo_wine ok(l == i,"line 1 ftell got %ld should be %d\n", l, i);
+    ok(lstrlenA(buffer) == i-1,"line 1 fgets got size %d should be %d\n", lstrlenA(buffer), i-1);
+    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"line 2 fgets failed unexpected\n");
+    i += 2;
+    l = ftell(file);
+    todo_wine ok(l == i,"line 2 ftell got %ld should be %d\n", l, i);
+    ok(lstrlenA(buffer) == 1,"line 2 fgets got size %d should be %d\n", lstrlenA(buffer), 1);
+    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"line 3 fgets failed unexpected\n");
+    for (; i<strlen(outbuffer); i++)
+        if (outbuffer[i] == '\n') break;
+    i++;
+    l = ftell(file);
+    ok(l == i,"line 3 ftell got %ld should be %d\n", l, i);
+    
+    fclose (file);
+
+    unlink ("fdopen.tst");
+}
+
+
 static WCHAR* AtoW( char* p )
 {
     WCHAR* buffer;
@@ -505,6 +556,7 @@ START_TEST(file)
     test_fdopen();
     test_fopen_fclose_fcloseall();
     test_fileops();
+    test_asciifileops();
     test_fgetwc();
     test_file_put_get();
     test_tmpnam();
