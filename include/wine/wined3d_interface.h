@@ -261,10 +261,6 @@ typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                struct IWineD3DSwapChain **pSwapChain
                                                );
 
-typedef HRESULT WINAPI (*D3DCB_ENUMPIXELFORMATS) (struct IUnknown *pDevice,
-                                                  WINED3DFORMAT fmt,
-                                                  void *Context);
-
 typedef HRESULT WINAPI (*D3DCB_ENUMDISPLAYMODESCALLBACK) (IUnknown *pDevice,
                                                           UINT Width,
                                                           UINT Height,
@@ -405,8 +401,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(void, SetCursorPosition)(THIS_ int XScreenSpace, int YScreenSpace, DWORD Flags) PURE;
     STDMETHOD_(BOOL, ShowCursor)(THIS_ BOOL bShow) PURE;
     STDMETHOD(TestCooperativeLevel)(THIS) PURE;
-    STDMETHOD(EnumZBufferFormats)(THIS_ D3DCB_ENUMPIXELFORMATS Callback, void *Context) PURE;
-    STDMETHOD(EnumTextureFormats)(THIS_ D3DCB_ENUMPIXELFORMATS Callback, void *Context) PURE;
     STDMETHOD(SetClipPlane)(THIS_ DWORD  Index,CONST float * pPlane) PURE;
     STDMETHOD(GetClipPlane)(THIS_ DWORD  Index,float * pPlane) PURE;
     STDMETHOD(SetClipStatus)(THIS_ CONST WINED3DCLIPSTATUS * pClipStatus) PURE;
@@ -547,8 +541,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_TestCooperativeLevel(p)                  (p)->lpVtbl->TestCooperativeLevel(p)
 #define IWineD3DDevice_SetFVF(p,a)                              (p)->lpVtbl->SetFVF(p,a)
 #define IWineD3DDevice_GetFVF(p,a)                              (p)->lpVtbl->GetFVF(p,a)
-#define IWineD3DDevice_EnumZBufferFormats(p, a, b)              (p)->lpVtbl->EnumZBufferFormats(p, a, b)
-#define IWineD3DDevice_EnumTextureFormats(p, a, b)              (p)->lpVtbl->EnumTextureFormats(p, a, b)
 #define IWineD3DDevice_SetClipPlane(p,a,b)                      (p)->lpVtbl->SetClipPlane(p,a,b)
 #define IWineD3DDevice_GetClipPlane(p,a,b)                      (p)->lpVtbl->GetClipPlane(p,a,b)
 #define IWineD3DDevice_SetClipStatus(p,a)                       (p)->lpVtbl->SetClipStatus(p,a)

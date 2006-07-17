@@ -1041,79 +1041,11 @@ IDirect3DDeviceImpl_1_GetPickRecords(IDirect3DDevice *iface,
 }
 
 /*****************************************************************************
- * EnumTextureFormatsCB
- *
- * Callback called by WineD3D for each enumerated Texture format. It
- * translates the WineD3DFormat into a ddraw pixel format and calls
- * the application callback
- *
- * Params:
- *  Device: The WineD3DDevice's parents = The IDirect3DDevice7 interface
- *          of our device
- *  fmt: An enumerated pixel format
- *  Context: Data pointer passed to WineD3D by
- *           IDirect3DDevice7::EnumTexureformats
- *
- * Returns:
- *  The return value of the application-provided callback
- *
- *****************************************************************************/
-static HRESULT WINAPI
-EnumTextureFormatsCB(IUnknown *Device,
-                     WINED3DFORMAT fmt,
-                     void *Context)
-{
-    struct EnumTextureFormatsCBS *cbs = (struct EnumTextureFormatsCBS *) Context;
-
-    DDSURFACEDESC sdesc;
-    DDPIXELFORMAT *pformat;
-
-    memset(&sdesc, 0, sizeof(DDSURFACEDESC));
-    sdesc.dwSize = sizeof(DDSURFACEDESC);
-    sdesc.dwFlags = DDSD_PIXELFORMAT | DDSD_CAPS;
-    sdesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
-    pformat = &(sdesc.ddpfPixelFormat);
-    pformat->dwSize = sizeof(DDPIXELFORMAT);
-
-    PixelFormat_WineD3DtoDD(pformat, fmt);
-
-    if( ( fmt == WINED3DFMT_UYVY)        ||
-        ( fmt == WINED3DFMT_YUY2)        ||
-        ( fmt == WINED3DFMT_DXT1)        ||
-        ( fmt == WINED3DFMT_DXT2)        ||
-        ( fmt == WINED3DFMT_DXT3)        ||
-        ( fmt == WINED3DFMT_DXT4)        ||
-        ( fmt == WINED3DFMT_DXT5)        ||
-        ( fmt == WINED3DFMT_MULTI2_ARGB) ||
-        ( fmt == WINED3DFMT_G8R8_G8B8)   ||
-        ( fmt == WINED3DFMT_R8G8_B8G8)   ||
-        ( fmt == WINED3DFMT_L8)          ||
-        ( fmt == WINED3DFMT_A8L8)        ||
-        ( fmt == WINED3DFMT_A4L4)        ||
-        ( fmt == WINED3DFMT_V8U8)        ||
-        ( fmt == WINED3DFMT_L6V5U5)      )
-    {
-        /* These formats exist in D3D3 and D3D7 only,
-         * so do not call the older callback
-         */
-        if(cbs->cbv7) return cbs->cbv7(pformat, cbs->Context);
-    }
-    else
-    {
-        /* Only one of these should be passed */
-        if(cbs->cbv2) return cbs->cbv2(&sdesc, cbs->Context);
-        if(cbs->cbv7) return cbs->cbv7(pformat, cbs->Context);
-    }
-
-    return DDENUMRET_OK;
-}
-
-/*****************************************************************************
  * IDirect3DDevice7::EnumTextureformats
  *
- * Enumerates the supported texture formats. This is relayed to WineD3D,
- * and a EnumTextureFormatsCB translated the WineD3DFormats to DDraw
- * formats and calls the application callback.
+ * Enumerates the supported texture formats. It has a list of all possible
+ * formats and calls IWineD3D::CheckDeviceFormat for each format to see if
+ * WineD3D supports it. If so, then it is passed to the app.
  *
  * This is for Version 7 and 3, older versions have a different
  * callback function and their own implementation
@@ -1134,16 +1066,61 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     HRESULT hr;
-    struct EnumTextureFormatsCBS cbs = { NULL, Callback, Arg };
+    int i;
+
+    WINED3DFORMAT FormatList[] = {
+        /* 32 bit */
+        WINED3DFMT_A8R8G8B8,
+        WINED3DFMT_X8R8G8B8,
+        /* 24 bit */
+        WINED3DFMT_R8G8B8,
+        /* 16 Bit */
+        WINED3DFMT_A1R5G5B5,
+        WINED3DFMT_A4R4G4B4,
+        WINED3DFMT_R5G6B5,
+        WINED3DFMT_X1R5G5B5,
+        /* 8 Bit */
+        WINED3DFMT_R3G3B2,
+        WINED3DFMT_P8,
+        /* FOURCC codes */
+        WINED3DFMT_DXT1,
+        WINED3DFMT_DXT3,
+        WINED3DFMT_DXT5,
+    };
+
     TRACE("(%p)->(%p,%p): Relay\n", This, Callback, Arg);
 
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
-    hr = IWineD3DDevice_EnumTextureFormats(This->wineD3DDevice,
-                                           EnumTextureFormatsCB,
-                                           &cbs);
-    return hr_ddraw_from_wined3d(hr);
+    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    {
+        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
+                                        0 /* Adapter */,
+                                        0 /* DeviceType */,
+                                        0 /* AdapterFormat */,
+                                        0 /* Usage */,
+                                        0 /* ResourceType */,
+                                        FormatList[i]);
+        if(hr == D3D_OK)
+        {
+            DDPIXELFORMAT pformat;
+
+            memset(&pformat, 0, sizeof(pformat));
+            pformat.dwSize = sizeof(pformat);
+            PixelFormat_WineD3DtoDD(&pformat, FormatList[i]);
+
+            TRACE("Enumerating WineD3DFormat %d\n", FormatList[i]);
+            hr = Callback(&pformat, Arg);
+            if(hr != DDENUMRET_OK)
+            {
+                TRACE("Format enumeration cancelled by application\n");
+                return D3D_OK;
+            }
+        }
+    }
+    TRACE("End of enumeration\n");
+    return D3D_OK;
 }
 
 static HRESULT WINAPI
@@ -1162,7 +1139,10 @@ Thunk_IDirect3DDeviceImpl_3_EnumTextureFormats(IDirect3DDevice3 *iface,
  * IDirect3DDevice2::EnumTextureformats
  *
  * EnumTextureFormats for Version 1 and 2, see
- * IDirect3DDevice7::EnumTexureFormats for a more detailed description
+ * IDirect3DDevice7::EnumTexureFormats for a more detailed description.
+ *
+ * This version has a different callback and does not enumerate FourCC
+ * formats
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -1172,13 +1152,61 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
     HRESULT hr;
-    struct EnumTextureFormatsCBS cbs = { Callback, NULL, Arg };
+    int i;
+
+    WINED3DFORMAT FormatList[] = {
+        /* 32 bit */
+        WINED3DFMT_A8R8G8B8,
+        WINED3DFMT_X8R8G8B8,
+        /* 24 bit */
+        WINED3DFMT_R8G8B8,
+        /* 16 Bit */
+        WINED3DFMT_A1R5G5B5,
+        WINED3DFMT_A4R4G4B4,
+        WINED3DFMT_R5G6B5,
+        WINED3DFMT_X1R5G5B5,
+        /* 8 Bit */
+        WINED3DFMT_R3G3B2,
+        WINED3DFMT_P8,
+        /* FOURCC codes - Not in this version*/
+    };
+
     TRACE("(%p)->(%p,%p): Relay\n", This, Callback, Arg);
 
-    hr = IWineD3DDevice_EnumTextureFormats(This->wineD3DDevice,
-                                           EnumTextureFormatsCB,
-                                           &cbs);
-    return hr_ddraw_from_wined3d(hr);
+    if(!Callback)
+        return DDERR_INVALIDPARAMS;
+
+    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    {
+        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
+                                        0 /* Adapter */,
+                                        0 /* DeviceType */,
+                                        0 /* AdapterFormat */,
+                                        0 /* Usage */,
+                                        0 /* ResourceType */,
+                                        FormatList[i]);
+        if(hr == D3D_OK)
+        {
+            DDSURFACEDESC sdesc;
+
+            memset(&sdesc, 0, sizeof(sdesc));
+            sdesc.dwSize = sizeof(sdesc);
+            sdesc.dwFlags = DDSD_PIXELFORMAT | DDSD_CAPS;
+            sdesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+            sdesc.ddpfPixelFormat.dwSize = sizeof(sdesc.ddpfPixelFormat.dwSize);
+            PixelFormat_WineD3DtoDD(&sdesc.ddpfPixelFormat, FormatList[i]);
+
+            TRACE("Enumerating WineD3DFormat %d\n", FormatList[i]);
+            hr = Callback(&sdesc, Arg);
+            if(hr != DDENUMRET_OK)
+            {
+                TRACE("Format enumeration cancelled by application\n");
+                return D3D_OK;
+            }
+        }
+    }
+    TRACE("End of enumeration\n");
+    return D3D_OK;
 }
 
 static HRESULT WINAPI

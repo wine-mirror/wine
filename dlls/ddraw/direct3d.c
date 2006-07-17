@@ -1024,37 +1024,6 @@ Thunk_IDirect3DImpl_3_CreateVertexBuffer(IDirect3D3 *iface,
     return hr;
 }
 
-/*****************************************************************************
- * EnumZBufferFormatsCB
- *
- * Helper function for IDirect3D7::EnumZBufferFormats. Converts
- * the WINED3DFORMAT into a DirectDraw pixelformat and calls the application
- * callback
- *
- * Version 3 and 7
- *
- * Parameters:
- *  Device: Parent of the IWineD3DDevice, our IDirectDraw7 interface
- *  fmt: The enumerated pixel format
- *  Context: Context passed to IWineD3DDevice::EnumZBufferFormat
- *
- * Returns:
- *  The return value of the application-provided callback
- *
- *****************************************************************************/
-static HRESULT WINAPI
-EnumZBufferFormatsCB(IUnknown *Device,
-                     WINED3DFORMAT fmt,
-                     void *Context)
-{
-     struct EnumZBufferFormatsData *cbdata = (struct EnumZBufferFormatsData *) Context;
-     DDPIXELFORMAT pformat;
-
-     memset(&pformat, 0, sizeof(DDPIXELFORMAT));
-     pformat.dwSize=sizeof(DDPIXELFORMAT);
-     PixelFormat_WineD3DtoDD(&pformat, fmt);
-     return cbdata->Callback(&pformat, cbdata->Context);
-}
 
 /*****************************************************************************
  * IDirect3D7::EnumZBufferFormats
@@ -1081,13 +1050,51 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
                                    void *Context)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
-    struct EnumZBufferFormatsData cbdata = { Callback, Context };
+    HRESULT hr;
+    int i;
+
+    WINED3DFORMAT FormatList[] = {
+        WINED3DFMT_D32,
+        WINED3DFMT_D15S1,
+        WINED3DFMT_D24S8,
+        WINED3DFMT_D24X8,
+        WINED3DFMT_D24X4S4,
+        WINED3DFMT_D16
+    };
+
     TRACE("(%p)->(%s,%p,%p): Relay\n", iface, debugstr_guid(refiidDevice), Callback, Context);
 
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
-    return IWineD3DDevice_EnumZBufferFormats(This->wineD3DDevice, EnumZBufferFormatsCB, &cbdata);
+    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    {
+        hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
+                                        0 /* Adapter */,
+                                        0 /* DeviceType */,
+                                        0 /* AdapterFormat */,
+                                        WINED3DUSAGE_DEPTHSTENCIL /* Usage */,
+                                        0 /* ResourceType */,
+                                        FormatList[i]);
+        if(hr == D3D_OK)
+        {
+            DDPIXELFORMAT pformat;
+
+            memset(&pformat, 0, sizeof(pformat));
+            pformat.dwSize = sizeof(pformat);
+            PixelFormat_WineD3DtoDD(&pformat, FormatList[i]);
+
+            TRACE("Enumerating WineD3DFormat %d\n", FormatList[i]);
+            hr = Callback(&pformat, Context);
+            if(hr != DDENUMRET_OK)
+            {
+                TRACE("Format enumeration cancelled by application\n");
+                return D3D_OK;
+            }
+        }
+    }
+    TRACE("End of enumeration\n");
+    return D3D_OK;
 }
 
 static HRESULT WINAPI
