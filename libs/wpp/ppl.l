@@ -661,6 +661,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 				pp_internal_error(__FILE__, __LINE__, "Invalid define type %d\n", ppp->type);
 			}
 		}
+		else put_buffer(pptext, ppleng);
 	}
 
 	/*
