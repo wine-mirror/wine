@@ -76,6 +76,18 @@ static const BYTE signedCRL[] = { 0x30, 0x45, 0x30, 0x2c, 0x30, 0x02, 0x06,
  0x30, 0x5a, 0x30, 0x02, 0x06, 0x00, 0x03, 0x11, 0x00, 0x0f, 0x0e, 0x0d, 0x0c,
  0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
 
+static BOOL (WINAPI *pCertIsValidCRLForCertificate)(PCCERT_CONTEXT, PCCRL_CONTEXT, DWORD, void*);
+
+static void init_function_pointers(void)
+{
+    HMODULE hdll = GetModuleHandleA("crypt32.dll");
+
+    if(hdll)
+    {
+        pCertIsValidCRLForCertificate = (void*)GetProcAddress(hdll, "CertIsValidCRLForCertificate");
+    }
+}
+
 static void testCreateCRL(void)
 {
     PCCRL_CONTEXT context;
@@ -489,6 +501,8 @@ static void testIsValidCRLForCert(void)
     PCCRL_CONTEXT crl;
     HCERTSTORE store;
 
+    if(!pCertIsValidCRLForCertificate) return;
+
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
     ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
@@ -503,11 +517,11 @@ static void testIsValidCRLForCert(void)
      */
 
     /* Curiously, any CRL is valid for the NULL certificate */
-    ret = CertIsValidCRLForCertificate(NULL, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(NULL, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     /* Same issuer for both cert and CRL, this CRL is valid for that cert */
-    ret = CertIsValidCRLForCertificate(cert1, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     cert2 = CertCreateCertificateContext(X509_ASN_ENCODING,
@@ -519,7 +533,7 @@ static void testIsValidCRLForCert(void)
      * that cert.  According to MSDN, the relevant bit to check is whether the
      * CRL has a CRL_ISSUING_DIST_POINT extension.
      */
-    ret = CertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     CertFreeCRLContext(crl);
@@ -531,9 +545,9 @@ static void testIsValidCRLForCert(void)
      sizeof(v2CRLWithIssuingDistPoint));
     ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
 
-    ret = CertIsValidCRLForCertificate(cert1, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
-    ret = CertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     CertFreeCRLContext(crl);
@@ -543,9 +557,9 @@ static void testIsValidCRLForCert(void)
      sizeof(verisignCRL));
     ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
 
-    ret = CertIsValidCRLForCertificate(cert1, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
-    ret = CertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     CertFreeCRLContext(crl);
@@ -561,9 +575,9 @@ static void testIsValidCRLForCert(void)
      sizeof(verisignCRL), CERT_STORE_ADD_ALWAYS, &crl);
     ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
 
-    ret = CertIsValidCRLForCertificate(cert1, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
-    ret = CertIsValidCRLForCertificate(cert2, crl, 0, NULL);
+    ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
     ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
 
     CertFreeCRLContext(crl);
@@ -684,6 +698,8 @@ static void testVerifyCRLRevocation(void)
 
 START_TEST(crl)
 {
+    init_function_pointers();
+
     testCreateCRL();
     testAddCRL();
     testFindCRL();
