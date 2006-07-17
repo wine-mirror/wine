@@ -9,7 +9,7 @@
 @ stub PrintHTML
 @ stdcall RNIGetCompatibleVersion()
 @ stdcall RunHTMLApplication(long long str long)
-@ stub ShowHTMLDialog
+@ stdcall ShowHTMLDialog(ptr ptr ptr wstr ptr)
 @ stub ShowModalDialog
 @ stub ShowModelessHTMLDialog
 @ stub SvrTri_ClearCache
