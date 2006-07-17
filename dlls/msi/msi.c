@@ -1779,8 +1779,26 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
  */
 UINT WINAPI MsiConfigureFeatureA(LPCSTR szProduct, LPCSTR szFeature, INSTALLSTATE eInstallState)
 {
-    FIXME("%s %s %i\n", debugstr_a(szProduct), debugstr_a(szFeature), eInstallState);
-    return ERROR_SUCCESS;
+    LPWSTR prod, feat = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+
+    TRACE("%s %s %i\n", debugstr_a(szProduct), debugstr_a(szFeature), eInstallState);
+
+    prod = strdupAtoW( szProduct );
+    if (szProduct && !prod)
+        goto end;
+
+    feat = strdupAtoW( szFeature );
+    if (szFeature && !feat)
+        goto end;
+
+    r = MsiConfigureFeatureW(prod, feat, eInstallState);
+
+end:
+    msi_free(feat);
+    msi_free(prod);
+
+    return r;
 }
 
 /***********************************************************************
