@@ -314,10 +314,10 @@ static void test_SystemFunction005(void)
     char output[0x40], result[0x40];
     int r;
     struct ustring in, key, out, res;
-    char *datastr = "twinkle twinkle little star";
-    char *keystr = "byolnim";
+    static char datastr[] = "twinkle twinkle little star";
+    static char keystr[]  = "byolnim";
 
-    in.Buffer = (unsigned char *) datastr;
+    in.Buffer = (unsigned char *)datastr;
     in.Length = strlen(datastr);
     in.MaximumLength = 0;
 
