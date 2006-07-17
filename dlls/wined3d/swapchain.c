@@ -332,8 +332,55 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER, 0x00, 1.0, 0);
     }
 
-    ((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags |= SFLAG_GLDIRTY;
-    ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags |= SFLAG_GLDIRTY;
+    if(!(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_GLDIRTY) ||
+       !(((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_GLDIRTY) ) {
+        /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying */
+        IWineD3DSurfaceImpl *front = (IWineD3DSurfaceImpl *) This->frontBuffer;
+        IWineD3DSurfaceImpl *back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
+        BOOL frontdirty = front->Flags & SFLAG_GLDIRTY;
+        BOOL backdirty = back->Flags & SFLAG_GLDIRTY;
+
+        /* Flip the DC */
+        {
+            HDC tmp;
+            tmp = front->hDC;
+            front->hDC = back->hDC;
+            back->hDC = tmp;
+        }
+
+        /* Flip the DIBsection */
+        {
+            HBITMAP tmp;
+            tmp = front->dib.DIBsection;
+            front->dib.DIBsection = back->dib.DIBsection;
+            back->dib.DIBsection = tmp;
+        }
+
+        /* Flip the surface data */
+        {
+            void* tmp;
+
+            tmp = front->dib.bitmap_data;
+            front->dib.bitmap_data = back->dib.bitmap_data;
+            back->dib.bitmap_data = tmp;
+
+            tmp = front->resource.allocatedMemory;
+            front->resource.allocatedMemory = back->resource.allocatedMemory;
+            back->resource.allocatedMemory = tmp;
+        }
+
+        /* client_memory should not be different, but just in case */
+        {
+            BOOL tmp;
+            tmp = front->dib.client_memory;
+            front->dib.client_memory = back->dib.client_memory;
+            back->dib.client_memory = tmp;
+        }
+        if(frontdirty) back->Flags |= SFLAG_GLDIRTY;
+        else back->Flags &= ~SFLAG_GLDIRTY;
+        if(backdirty) front->Flags |= SFLAG_GLDIRTY;
+        else front->Flags &= ~SFLAG_GLDIRTY;
+    }
 
     TRACE("returning\n");
     return WINED3D_OK;
