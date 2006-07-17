@@ -642,29 +642,44 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
         if (status != STATUS_SUCCESS)
             return status;
     }
-    if(dwTypeMask & VER_MAJORVERSION)
+
+    if(dwTypeMask & (VER_MAJORVERSION|VER_MINORVERSION|VER_SERVICEPACKMAJOR|VER_SERVICEPACKMINOR))
     {
-        status = version_compare_values(ver.dwMajorVersion, info->dwMajorVersion, dwlConditionMask >> 1*3 & 0x07);
-        if (status != STATUS_SUCCESS)
-            return status;
-    }
-    if(dwTypeMask & VER_MINORVERSION)
-    {
-        status = version_compare_values(ver.dwMinorVersion, info->dwMinorVersion, dwlConditionMask >> 0*3 & 0x07);
-        if (status != STATUS_SUCCESS)
-            return status;
-    }
-    if(dwTypeMask & VER_SERVICEPACKMAJOR)
-    {
-        status = version_compare_values(ver.wServicePackMajor, info->wServicePackMajor, dwlConditionMask >> 5*3 & 0x07);
-        if (status != STATUS_SUCCESS)
-            return status;
-    }
-    if(dwTypeMask & VER_SERVICEPACKMINOR)
-    {
-        status = version_compare_values(ver.wServicePackMinor, info->wServicePackMinor, dwlConditionMask >> 4*3 & 0x07);
-        if (status != STATUS_SUCCESS)
-            return status;
+        unsigned char condition = 0;
+
+        if(dwTypeMask & VER_MAJORVERSION)
+            condition = dwlConditionMask >> 1*3 & 0x07;
+        else if(dwTypeMask & VER_MINORVERSION)
+            condition = dwlConditionMask >> 0*3 & 0x07;
+        else if(dwTypeMask & VER_SERVICEPACKMAJOR)
+            condition = dwlConditionMask >> 5*3 & 0x07;
+        else if(dwTypeMask & VER_SERVICEPACKMINOR)
+            condition = dwlConditionMask >> 4*3 & 0x07;
+
+        if(dwTypeMask & VER_MAJORVERSION)
+        {
+            status = version_compare_values(ver.dwMajorVersion, info->dwMajorVersion, condition);
+            if (status != STATUS_SUCCESS)
+                return status;
+        }
+        if(dwTypeMask & VER_MINORVERSION)
+        {
+            status = version_compare_values(ver.dwMinorVersion, info->dwMinorVersion, condition);
+            if (status != STATUS_SUCCESS)
+                return status;
+        }
+        if(dwTypeMask & VER_SERVICEPACKMAJOR)
+        {
+            status = version_compare_values(ver.wServicePackMajor, info->wServicePackMajor, condition);
+            if (status != STATUS_SUCCESS)
+                return status;
+        }
+        if(dwTypeMask & VER_SERVICEPACKMINOR)
+        {
+            status = version_compare_values(ver.wServicePackMinor, info->wServicePackMinor, condition);
+            if (status != STATUS_SUCCESS)
+                return status;
+        }
     }
 
     return STATUS_SUCCESS;

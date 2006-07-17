@@ -53,7 +53,7 @@ START_TEST(version)
 
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION,
         pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
+    ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 
     ret = pVerifyVersionInfoA(&info, VER_BUILDNUMBER | VER_MAJORVERSION |
         VER_MINORVERSION/* | VER_PLATFORMID | VER_SERVICEPACKMAJOR |
@@ -101,7 +101,7 @@ START_TEST(version)
     info.wServicePackMinor++;
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+    ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
 
     /* test the failure hierarchy for the four version fields */
@@ -110,7 +110,7 @@ START_TEST(version)
     info.wServicePackMajor++;
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+    ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
 
     GetVersionEx((OSVERSIONINFO *)&info);
@@ -129,10 +129,9 @@ START_TEST(version)
 
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
+    ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 
 
-    /* shows that build number fits into the hierarchy after major version, but before minor version */
     GetVersionEx((OSVERSIONINFO *)&info);
     info.dwBuildNumber++;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -142,13 +141,12 @@ START_TEST(version)
 
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
+    ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 
     /* test bad dwOSVersionInfoSize */
     GetVersionEx((OSVERSIONINFO *)&info);
     info.dwOSVersionInfoSize = 0;
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    todo_wine ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
-        "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %ld\n", GetLastError());
+        pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
+    ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 }
