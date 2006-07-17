@@ -6277,7 +6277,13 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
         memcpy(&item, lpLVItem, offsetof( LVITEMW, iIndent ));
     }
     item.iItem = nItem;
-    if (infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) item.state &= ~LVIS_STATEIMAGEMASK;
+    if (infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES)
+    {
+        item.mask |= LVIF_STATE;
+        item.stateMask |= LVIS_STATEIMAGEMASK;
+        item.state &= ~LVIS_STATEIMAGEMASK;
+        item.state |= INDEXTOSTATEIMAGEMASK(1);
+    }
     if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
 
     /* if we're sorted, sort the list, and update the index */
@@ -6875,7 +6881,15 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
     {
         HIMAGELIST himl = 0;
         if(infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES)
+        {
+            LVITEMW item;
+            item.mask = LVIF_STATE;
+            item.stateMask = LVIS_STATEIMAGEMASK;
+            item.state = INDEXTOSTATEIMAGEMASK(1);
+            LISTVIEW_SetItemState(infoPtr, -1, &item);
+
             himl = LISTVIEW_CreateCheckBoxIL(infoPtr);
+        }
         LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
     }
     
