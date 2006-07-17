@@ -86,14 +86,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
     PNegoHelper helper = NULL;
-    
+    static CHAR ntlm_auth[] = "ntlm_auth",
+                helper_protocol[] = "--helper-protocol=squid-2.5-ntlmssp";
+
     SEC_CHAR *client_user_arg = NULL;
     SEC_CHAR *client_domain_arg = NULL;
     SEC_WCHAR *username = NULL, *domain = NULL;
-    
+
     SEC_CHAR *client_argv[5];
-    SEC_CHAR *server_argv[] = { "ntlm_auth",
-        "--helper-protocol=squid-2.5-ntlmssp",
+    SEC_CHAR *server_argv[] = { ntlm_auth,
+        helper_protocol,
         NULL };
 
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
@@ -1216,13 +1218,15 @@ static const SecPkgInfoA infoA = {
 };
 
 void SECUR32_initNTLMSP(void)
-{   
+{
     SECURITY_STATUS ret;
     PNegoHelper helper;
+    static CHAR ntlm_auth[] = "ntlm_auth",
+                version[]   = "--version";
 
     SEC_CHAR *args[] = {
-        "ntlm_auth",
-        "--version",
+        ntlm_auth,
+        version,
         NULL };
 
     if((ret = fork_helper(&helper, "ntlm_auth", args)) != SEC_E_OK)
