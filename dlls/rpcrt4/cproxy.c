@@ -344,6 +344,19 @@ HRESULT WINAPI
 CreateProxyFromTypeInfo( LPTYPEINFO pTypeInfo, LPUNKNOWN pUnkOuter, REFIID riid,
                          LPRPCPROXYBUFFER *ppProxy, LPVOID *ppv )
 {
+    typedef INT (WINAPI *MessageBoxA)(HWND,LPCSTR,LPCSTR,UINT);
+    HMODULE hUser32 = LoadLibraryA("user32");
+    MessageBoxA pMessageBoxA = GetProcAddress(hUser32, "MessageBoxA");
+
     FIXME("%p %p %s %p %p\n", pTypeInfo, pUnkOuter, debugstr_guid(riid), ppProxy, ppv);
+    if (pMessageBoxA)
+    {
+        pMessageBoxA(NULL,
+            "The native implementation of OLEAUT32.DLL cannot be used "
+            "with Wine's RPCRT4.DLL. Remove OLEAUT32.DLL and try again.\n",
+            "Wine: Unimplemented CreateProxyFromTypeInfo",
+            0x10);
+        ExitProcess(1);
+    }
     return E_NOTIMPL;
 }
