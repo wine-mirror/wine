@@ -1098,7 +1098,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         b_info->bmiHeader.biPlanes = 1;
         b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
 
-
         b_info->bmiHeader.biXPelsPerMeter = 0;
         b_info->bmiHeader.biYPelsPerMeter = 0;
         b_info->bmiHeader.biClrUsed = 0;

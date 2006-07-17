@@ -3,6 +3,7 @@
  *
  * Copyright 2002-2003 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  *
