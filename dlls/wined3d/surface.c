@@ -282,6 +282,121 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
+static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
+    long j;
+    void *mem;
+    GLint fmt;
+    GLint type;
+
+    switch(This->resource.format)
+    {
+        case WINED3DFMT_P8:
+        {
+            /* GL can't return palettized data, so read ARGB pixels into a
+             * seperate block of memory and convert them into palettized format
+             * in software. Slow, but if the app means to use palettized render
+             * targets and lock it...
+             *
+             * Use GL_RGB, GL_UNSIGNED_BYTE to read the surface for performance reasons
+             * Don't use GL_BGR as in the WINED3DFMT_R8G8B8 case, instead watch out
+             * for the color channels when palettizing the colors.
+             */
+            fmt = GL_RGB;
+            type = GL_UNSIGNED_BYTE;
+            pitch *= 3;
+            mem = HeapAlloc(GetProcessHeap(), 0, (rect->bottom - rect->top) * pitch);
+            if(!mem) {
+                ERR("Out of memory\n");
+                return;
+            }
+        }
+        break;
+
+        default:
+            mem = dest;
+            fmt = This->glDescription.glFormat;
+            type = This->glDescription.glType;
+    }
+
+    if (rect->left == 0 &&
+        rect->right == This->currentDesc.Width ) {
+        BYTE *row, *top, *bottom;
+        int i;
+
+        glReadPixels(0, rect->top,
+                     This->currentDesc.Width,
+                     rect->bottom - rect->top,
+                     fmt,
+                     type,
+                     mem);
+
+       /* glReadPixels returns the image upside down, and there is no way to prevent this.
+          Flip the lines in software */
+        row = HeapAlloc(GetProcessHeap(), 0, pitch);
+        if(!row) {
+            ERR("Out of memory\n");
+            return;
+        }
+        top = mem;
+        bottom = ((BYTE *) mem) + pitch * ( rect->bottom - rect->top - 1);
+        for(i = 0; i < (rect->bottom - rect->top) / 2; i++) {
+            memcpy(row, top, pitch);
+            memcpy(top, bottom, pitch);
+            memcpy(bottom, row, pitch);
+            top += pitch;
+            bottom -= pitch;
+        }
+        HeapFree(GetProcessHeap(), 0, row);
+
+        if(This->lockedRect.top == 0 && This->lockedRect.bottom ==  This->currentDesc.Height) {
+            This->Flags &= ~SFLAG_GLDIRTY;
+        }
+    } else {
+        for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+            glReadPixels(rect->left,
+                         rect->bottom - j - 1,
+                         rect->right - rect->left,
+                         1,
+                         fmt,
+                         type,
+                         (char *)mem + (pitch * (j-rect->top)));
+        }
+    }
+
+    vcheckGLcall("glReadPixels");
+
+    if(This->resource.format == WINED3DFMT_P8) {
+        PALETTEENTRY *pal;
+        DWORD width = pitch / 3;
+        int x, y, c;
+        if(This->palette) {
+            pal = This->palette->palents;
+        } else {
+            pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
+        }
+
+        for(y = rect->top; y < rect->bottom; y++) {
+            for(x = rect->left; x < rect->right; x++) {
+                /*                      start              lines            pixels      */
+                BYTE *blue =  (BYTE *) ((BYTE *) mem) + y * pitch + x * (sizeof(BYTE) * 3);
+                BYTE *green = blue  + 1;
+                BYTE *red =   green + 1;
+
+                for(c = 0; c < 256; c++) {
+                    if(*red   == pal[c].peRed   &&
+                       *green == pal[c].peGreen &&
+                       *blue  == pal[c].peBlue)
+                    {
+                        *((BYTE *) dest + y * width + x) = c;
+                        break;
+                    }
+                }
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
@@ -594,77 +709,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
                 *****************************************/
             if (!notInContext) { /* Only read the buffer if it's in the current context */
-                long j;
-
-#if 0
-                /* Bizarly it takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
-                *  This is on an ATI9600, and may be format dependent, anyhow this hack makes this demo dx9_2d_demo_game
-                *  run ten times faster!
-                * ************************************/
-                BOOL ati_performance_hack = FALSE;
-                ati_performance_hack = (This->lockedRect.bottom - This->lockedRect.top > 10) || (This->lockedRect.right - This->lockedRect.left > 10)? TRUE: FALSE;
-#endif
-                if ((This->lockedRect.left == 0 &&  This->lockedRect.top == 0 &&
-                    This->lockedRect.right == This->currentDesc.Width
-                    && This->lockedRect.bottom ==  This->currentDesc.Height)) {
-                        BYTE *row, *top, *bottom;
-                        int i;
-
-                        glReadPixels(0, 0,
-                        This->currentDesc.Width,
-                        This->currentDesc.Height,
-                        This->glDescription.glFormat,
-                        This->glDescription.glType,
-                        (char *)pLockedRect->pBits);
-
-                        /* glReadPixels returns the image upside down, and there is no way to prevent this.
-                          Flip the lines in software*/
-                        row = HeapAlloc(GetProcessHeap(), 0, pLockedRect->Pitch);
-                        if(!row) {
-                            ERR("Out of memory\n");
-                            return E_OUTOFMEMORY;
-                        }
-                        top = This->resource.allocatedMemory;
-                        bottom = ( (BYTE *) This->resource.allocatedMemory) + pLockedRect->Pitch * ( This->currentDesc.Height - 1);
-                        for(i = 0; i < This->currentDesc.Height / 2; i++) {
-                            memcpy(row, top, pLockedRect->Pitch);
-                            memcpy(top, bottom, pLockedRect->Pitch);
-                            memcpy(bottom, row, pLockedRect->Pitch);
-                            top += pLockedRect->Pitch;
-                            bottom -= pLockedRect->Pitch;
-                        }
-                        HeapFree(GetProcessHeap(), 0, row);
-
-                        This->Flags &= ~SFLAG_GLDIRTY;
-
-                } else if (This->lockedRect.left == 0 &&  This->lockedRect.right == This->currentDesc.Width) {
-                        glReadPixels(0,
-                        This->lockedRect.top,
-                        This->currentDesc.Width,
-                        This->currentDesc.Height,
-                        This->glDescription.glFormat,
-                        This->glDescription.glType,
-                        (char *)pLockedRect->pBits);
-                } else{
-
-                    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-                        glReadPixels(This->lockedRect.left, 
-                                    This->lockedRect.bottom - j - 1, 
-                                    This->lockedRect.right - This->lockedRect.left, 
-                                    1,
-                                    This->glDescription.glFormat,
-                                    This->glDescription.glType,
-                                    (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
-
-                    }
-                }
-
-                vcheckGLcall("glReadPixels");
-                TRACE("Resetting buffer\n");
-
-                glReadBuffer(prev_read);
-                vcheckGLcall("glReadBuffer");
+                read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
             }
+            TRACE("Resetting buffer\n");
+
+            glReadBuffer(prev_read);
+            vcheckGLcall("glReadBuffer");
+
             LEAVE_GL();
         }
     } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
@@ -781,7 +832,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             GLint  prev_store;
             GLint  prev_depth_test;
             GLint  prev_rasterpos[4];
-            int tex;
 
             /* Some drivers(radeon dri, others?) don't like exceptions during
              * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
@@ -828,17 +878,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
             glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
-            /* Disable all textures before calling glDrawPixels */
-            for(tex = 0; tex < GL_LIMITS(sampler_stages); tex++) {
-                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
-                    checkGLcall("glActiveTextureARB");
-                }
-                glDisable(GL_TEXTURE_2D);
-                checkGLcall("glDisable GL_TEXTURE_2D");
-                glDisable(GL_TEXTURE_1D);
-                checkGLcall("glDisable GL_TEXTURE_1D");
-            }
             /* And back buffers are not blended */
             glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
