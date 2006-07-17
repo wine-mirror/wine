@@ -1509,6 +1509,7 @@ static LRESULT
 msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
 {
     MSIFEATURE *feature;
+    ComponentList *cl;
     union {
         RECT rc;
         POINT pt[2];
@@ -1544,6 +1545,13 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
 
     /* update */
     msi_seltree_sync_item_state( hwnd, feature, hItem );
+
+    /* update the feature's components */
+    LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
+    {
+        cl->component->Action = feature->Action;
+        cl->component->ActionRequest = feature->ActionRequest;
+    }
 
     return 0;
 }
