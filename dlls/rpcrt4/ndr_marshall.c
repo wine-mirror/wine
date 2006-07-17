@@ -1734,8 +1734,14 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 8);
       break;
+    case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
-      pMemory += 2;
+    case RPC_FC_STRUCTPAD3:
+    case RPC_FC_STRUCTPAD4:
+    case RPC_FC_STRUCTPAD5:
+    case RPC_FC_STRUCTPAD6:
+    case RPC_FC_STRUCTPAD7:
+      pMemory += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
@@ -1808,8 +1814,14 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 8);
       break;
+    case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
-      pMemory += 2;
+    case RPC_FC_STRUCTPAD3:
+    case RPC_FC_STRUCTPAD4:
+    case RPC_FC_STRUCTPAD5:
+    case RPC_FC_STRUCTPAD6:
+    case RPC_FC_STRUCTPAD7:
+      pMemory += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
@@ -1876,8 +1888,14 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 8);
       break;
+    case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
-      pMemory += 2;
+    case RPC_FC_STRUCTPAD3:
+    case RPC_FC_STRUCTPAD4:
+    case RPC_FC_STRUCTPAD5:
+    case RPC_FC_STRUCTPAD6:
+    case RPC_FC_STRUCTPAD7:
+      pMemory += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
@@ -1939,8 +1957,14 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ALIGNM8:
       ALIGN_POINTER(pMemory, 8);
       break;
+    case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
-      pMemory += 2;
+    case RPC_FC_STRUCTPAD3:
+    case RPC_FC_STRUCTPAD4:
+    case RPC_FC_STRUCTPAD5:
+    case RPC_FC_STRUCTPAD6:
+    case RPC_FC_STRUCTPAD7:
+      pMemory += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       pMemory += pFormat[1];
@@ -2003,8 +2027,14 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       ALIGN_LENGTH(size, 8);
       ALIGN_POINTER(pStubMsg->Buffer, 8);
       break;
+    case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
-      size += 2;
+    case RPC_FC_STRUCTPAD3:
+    case RPC_FC_STRUCTPAD4:
+    case RPC_FC_STRUCTPAD5:
+    case RPC_FC_STRUCTPAD6:
+    case RPC_FC_STRUCTPAD7:
+      size += *pFormat - RPC_FC_STRUCTPAD1 + 1;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       size += pFormat[1];
