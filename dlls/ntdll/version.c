@@ -562,6 +562,30 @@ BOOLEAN WINAPI RtlGetNtProductType( LPDWORD type )
 }
 
 
+static inline NTSTATUS version_compare_values(ULONG left, ULONG right, UCHAR condition)
+{
+    switch (condition) {
+        case VER_EQUAL:
+            if (left != right) return STATUS_REVISION_MISMATCH;
+            break;
+        case VER_GREATER:
+            if (left <= right) return STATUS_REVISION_MISMATCH;
+            break;
+        case VER_GREATER_EQUAL:
+            if (left < right) return STATUS_REVISION_MISMATCH;
+            break;
+        case VER_LESS:
+            if (left >= right) return STATUS_REVISION_MISMATCH;
+            break;
+        case VER_LESS_EQUAL:
+            if (left > right) return STATUS_REVISION_MISMATCH;
+            break;
+        default:
+            return STATUS_INVALID_PARAMETER;
+    }
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************************
  *        RtlVerifyVersionInfo   (NTDLL.@)
  */
@@ -587,25 +611,11 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
     if(!(dwTypeMask && dwlConditionMask)) return STATUS_INVALID_PARAMETER;
 
     if(dwTypeMask & VER_PRODUCT_TYPE)
-        switch(dwlConditionMask >> 7*3 & 0x07) {
-            case VER_EQUAL:
-                if(ver.wProductType != info->wProductType) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.wProductType <= info->wProductType) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.wProductType < info->wProductType) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.wProductType >= info->wProductType) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.wProductType > info->wProductType) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.wProductType, info->wProductType, dwlConditionMask >> 7*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_SUITENAME)
         switch(dwlConditionMask >> 6*3 & 0x07)
         {
@@ -621,131 +631,41 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
                 return STATUS_INVALID_PARAMETER;
         }
     if(dwTypeMask & VER_PLATFORMID)
-        switch(dwlConditionMask >> 3*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.dwPlatformId != info->dwPlatformId) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.dwPlatformId <= info->dwPlatformId) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.dwPlatformId < info->dwPlatformId) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.dwPlatformId >= info->dwPlatformId) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.dwPlatformId > info->dwPlatformId) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.dwPlatformId, info->dwPlatformId, dwlConditionMask >> 3*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_BUILDNUMBER)
-        switch(dwlConditionMask >> 2*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.dwBuildNumber != info->dwBuildNumber) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.dwBuildNumber <= info->dwBuildNumber) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.dwBuildNumber < info->dwBuildNumber) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.dwBuildNumber >= info->dwBuildNumber) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.dwBuildNumber > info->dwBuildNumber) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.dwBuildNumber, info->dwBuildNumber, dwlConditionMask >> 2*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_MAJORVERSION)
-        switch(dwlConditionMask >> 1*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.dwMajorVersion != info->dwMajorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.dwMajorVersion <= info->dwMajorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.dwMajorVersion < info->dwMajorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.dwMajorVersion >= info->dwMajorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.dwMajorVersion > info->dwMajorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.dwMajorVersion, info->dwMajorVersion, dwlConditionMask >> 1*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_MINORVERSION)
-        switch(dwlConditionMask >> 0*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.dwMinorVersion != info->dwMinorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.dwMinorVersion <= info->dwMinorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.dwMinorVersion < info->dwMinorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.dwMinorVersion >= info->dwMinorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.dwMinorVersion > info->dwMinorVersion) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.dwMinorVersion, info->dwMinorVersion, dwlConditionMask >> 0*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_SERVICEPACKMAJOR)
-        switch(dwlConditionMask >> 5*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.wServicePackMajor != info->wServicePackMajor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.wServicePackMajor <= info->wServicePackMajor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.wServicePackMajor < info->wServicePackMajor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.wServicePackMajor >= info->wServicePackMajor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.wServicePackMajor > info->wServicePackMajor) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.wServicePackMajor, info->wServicePackMajor, dwlConditionMask >> 5*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
     if(dwTypeMask & VER_SERVICEPACKMINOR)
-        switch(dwlConditionMask >> 4*3 & 0x07)
-        {
-            case VER_EQUAL:
-                if(ver.wServicePackMinor != info->wServicePackMinor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER:
-                if(ver.wServicePackMinor <= info->wServicePackMinor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_GREATER_EQUAL:
-                if(ver.wServicePackMinor < info->wServicePackMinor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS:
-                if(ver.wServicePackMinor >= info->wServicePackMinor) return STATUS_REVISION_MISMATCH;
-                break;
-            case VER_LESS_EQUAL:
-                if(ver.wServicePackMinor > info->wServicePackMinor) return STATUS_REVISION_MISMATCH;
-                break;
-            default:
-                return STATUS_INVALID_PARAMETER;
-        }
+    {
+        status = version_compare_values(ver.wServicePackMinor, info->wServicePackMinor, dwlConditionMask >> 4*3 & 0x07);
+        if (status != STATUS_SUCCESS)
+            return status;
+    }
 
     return STATUS_SUCCESS;
 }
