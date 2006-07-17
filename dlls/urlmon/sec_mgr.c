@@ -97,6 +97,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone)
 
     size = sizeof(DWORD);
     res = RegQueryValueExW(hkey, schema, NULL, NULL, (PBYTE)zone, &size);
+    RegCloseKey(hkey);
     if(res == ERROR_SUCCESS)
         return S_OK;
 
@@ -108,6 +109,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone)
 
     size = sizeof(DWORD);
     res = RegQueryValueExW(hkey, schema, NULL, NULL, (PBYTE)zone, &size);
+    RegCloseKey(hkey);
     if(res == ERROR_SUCCESS)
         return S_OK;
 
