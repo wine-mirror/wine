@@ -2615,7 +2615,7 @@ static HRESULT _VarChangeTypeExWrap (VARIANTARG* pvargDest,
  * RETURNS
  *  VARCMP_LT:   left variant is less than right variant.
  *  VARCMP_EQ:   input variants are equal.
- *  VARCMP_LT:   left variant is greater than right variant.
+ *  VARCMP_GT:   left variant is greater than right variant.
  *  VARCMP_NULL: either one of the input variants is NULL.
  *  Failure:     An HRESULT error code indicating the error.
  *
