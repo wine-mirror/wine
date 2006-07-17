@@ -40,12 +40,14 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "excpt.h"
 
 #include "ole2.h"
 #include "propidl.h" /* for LPSAFEARRAY_User* functions */
 #include "typelib.h"
 #include "variant.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 static const WCHAR IDispatchW[] = { 'I','D','i','s','p','a','t','c','h',0};
 
@@ -1785,12 +1787,30 @@ TMStubImpl_Invoke(
     }
 
     args[0] = (DWORD)This->pUnk;
-    res = _invoke(
-	(*((FARPROC**)args[0]))[fdesc->oVft/4],
-	fdesc->callconv,
-	(xargs-args),
-	args
-    );
+
+    __TRY
+    {
+        res = _invoke(
+            (*((FARPROC**)args[0]))[fdesc->oVft/4],
+            fdesc->callconv,
+            (xargs-args),
+            args
+        );
+    }
+    __EXCEPT(NULL)
+    {
+        DWORD dwExceptionCode = GetExceptionCode();
+        ERR("invoke call failed with exception 0x%08lx (%ld)\n", dwExceptionCode, dwExceptionCode);
+        if (FAILED(dwExceptionCode))
+            hres = dwExceptionCode;
+        else
+            hres = HRESULT_FROM_WIN32(dwExceptionCode);
+    }
+    __ENDTRY
+
+    if (hres != S_OK)
+        return hres;
+
     buf.curoff = 0;
 
     xargs = args+1;
