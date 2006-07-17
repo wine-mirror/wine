@@ -31,6 +31,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
 
+typedef enum {
+    NO_CONVERSION,
+    CONVERT_PALETTED,
+    CONVERT_PALETTED_CK,
+    CONVERT_CK_565,
+    CONVERT_CK_5551,
+    CONVERT_CK_4444,
+    CONVERT_CK_4444_ARGB,
+    CONVERT_CK_1555,
+    CONVERT_555,
+    CONVERT_CK_RGB24,
+    CONVERT_CK_8888,
+    CONVERT_CK_8888_ARGB,
+    CONVERT_RGB32_888
+} CONVERT_TYPES;
+
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
+
 /* *******************************************
    IWineD3DSurface IUnknown parts follow
    ******************************************* */
@@ -764,8 +782,193 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
+static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
+    GLint  prev_store;
+    GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
+    BOOL storechanged = FALSE;
+    GLint fmt, type;
+    void *mem;
+
+    glDisable(GL_TEXTURE_2D);
+    vcheckGLcall("glDisable(GL_TEXTURE_2D)");
+    glDisable(GL_TEXTURE_1D);
+    vcheckGLcall("glDisable(GL_TEXTURE_1D)");
+
+    glFlush();
+    vcheckGLcall("glFlush");
+    glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
+    vcheckGLcall("glIntegerv");
+    glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
+    vcheckGLcall("glIntegerv");
+    glPixelZoom(1.0, -1.0);
+    vcheckGLcall("glPixelZoom");
+
+    /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
+    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
+
+    glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
+    vcheckGLcall("glRasterPos2f");
+
+    /* Some drivers(radeon dri, others?) don't like exceptions during
+     * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
+     * after ReleaseDC. Reading it will cause an exception, which x11drv will
+     * catch to put the dib section in InSync mode, which leads to a crash
+     * and a blocked x server on my radeon card.
+     *
+     * The following lines read the dib section so it is put in inSync mode
+     * before glDrawPixels is called and the crash is prevented. There won't
+     * be any interfering gdi accesses, because UnlockRect is called from
+     * ReleaseDC, and the app won't use the dc any more afterwards.
+     */
+    if(This->Flags & SFLAG_DIBSECTION) {
+        volatile BYTE read;
+        read = This->resource.allocatedMemory[0];
+    }
+
+    switch (This->resource.format) {
+        /* No special care needed */
+        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_R8G8B8:
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+            break;
+
+        case WINED3DFMT_X4R4G4B4:
+        {
+#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
+            int size;
+            unsigned short *data;
+            data = (unsigned short *)This->resource.allocatedMemory;
+            size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+            while(size > 0) {
+                *data |= 0xF000;
+                data++;
+                size--;
+            }
+#endif
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+        }
+        break;
+
+        case WINED3DFMT_X1R5G5B5:
+        {
+#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
+            int size;
+            unsigned short *data;
+            data = (unsigned short *)This->resource.allocatedMemory;
+            size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+            while(size > 0) {
+                *data |= 0x8000;
+                data++;
+                size--;
+            }
+#endif
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+        }
+        break;
+
+        case WINED3DFMT_X8R8G8B8:
+        {
+#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
+            /* make sure the X byte is set to alpha on, since it 
+               could be any random value this fixes the intro move in Pirates! */
+            int size;
+            unsigned int *data;
+            data = (unsigned int *)This->resource.allocatedMemory;
+            size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
+            while(size > 0) {
+                *data |= 0xFF000000;
+                data++;
+                size--;
+            }
+#endif
+        }
+
+        case WINED3DFMT_A8R8G8B8:
+        {
+            glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+            vcheckGLcall("glPixelStorei");
+            storechanged = TRUE;
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+        }
+        break;
+
+        case WINED3DFMT_A2R10G10B10:
+        {
+            glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+            vcheckGLcall("glPixelStorei");
+            storechanged = TRUE;
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+        }
+        break;
+
+        case WINED3DFMT_P8:
+        {
+            UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
+            int row;
+            type = GL_UNSIGNED_BYTE;
+            fmt = GL_RGBA;
+
+            mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * sizeof(DWORD));
+            if(!mem) {
+                ERR("Out of memory\n");
+                return;
+            }
+            for(row = This->dirtyRect.top; row < This->dirtyRect.bottom; row++) {
+                d3dfmt_convert_surface(This->resource.allocatedMemory + row * pitch + This->lockedRect.left,
+                                       (BYTE *) mem + row * pitch * 4 + This->lockedRect.left * 4,
+                                       This->lockedRect.right - This->lockedRect.left,
+                                       CONVERT_PALETTED, This);
+            }
+        }
+        break;
+
+        default:
+            FIXME("Unsupported Format %u in locking func\n", This->resource.format);
+
+            /* Give it a try */
+            type = This->glDescription.glType;
+            fmt = This->glDescription.glFormat;
+            mem = This->resource.allocatedMemory;
+    }
+
+    glDrawPixels(This->lockedRect.right - This->lockedRect.left,
+                 (This->lockedRect.bottom - This->lockedRect.top)-1,
+                 fmt, type,
+                 mem);
+    checkGLcall("glDrawPixels");
+    glPixelZoom(1.0,1.0);
+    vcheckGLcall("glPixelZoom");
+
+    glRasterPos3iv(&prev_rasterpos[0]);
+    vcheckGLcall("glRasterPos3iv");
+
+    /* Reset to previous pack row length */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
+    vcheckGLcall("glPixelStorei GL_UNPACK_ROW_LENGTH");
+    if(storechanged) {
+        glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
+        vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
+    }
+
+    if(mem != This->resource.allocatedMemory) HeapFree(GetProcessHeap(), 0, mem);
+    return;
+}
+
+static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     const char *buffername = "";
@@ -829,37 +1032,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
 
         if (backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
-            GLint  prev_store;
-            GLint  prev_depth_test;
-            GLint  prev_rasterpos[4];
-
-            /* Some drivers(radeon dri, others?) don't like exceptions during
-             * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
-             * after ReleaseDC. Reading it will cause an exception, which x11drv will
-             * catch to put the dib section in InSync mode, which leads to a crash
-             * and a blocked x server on my radeon card.
-             *
-             * The following lines read the dib section so it is put in inSync mode
-             * before glDrawPixels is called and the crash is prevented. There won't
-             * be any interfering gdi accesses, because UnlockRect is called from
-             * ReleaseDC, and the app won't use the dc any more afterwards.
-             */
-            if(This->Flags & SFLAG_DIBSECTION) {
-                volatile BYTE read;
-                read = This->resource.allocatedMemory[0];
-            }
+            int tex;
 
             ENTER_GL();
-
-            glFlush();
-            vcheckGLcall("glFlush");
-            glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-            vcheckGLcall("glIntegerv");
-            glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
-            vcheckGLcall("glIntegerv");
-            glPixelZoom(1.0, -1.0);
-            vcheckGLcall("glPixelZoom");
-            prev_depth_test = glIsEnabled(GL_DEPTH_TEST);
 
             /* glDrawPixels transforms the raster position as though it was a vertex -
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
@@ -874,121 +1049,36 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 checkGLcall("glDrawBuffer GL_BACK");
             }
 
-            /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
-            glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
+            /* Disable higher textures before calling glDrawPixels */
+            for(tex = 1; tex < GL_LIMITS(sampler_stages); tex++) {
+                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
+                    checkGLcall("glActiveTextureARB");
+                }
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable GL_TEXTURE_2D");
+                glDisable(GL_TEXTURE_1D);
+                checkGLcall("glDisable GL_TEXTURE_1D");
+            }
+            /* Activate texture 0, but don't disable it necessarilly */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                checkGLcall("glActiveTextureARB");
+            }
 
-            /* And back buffers are not blended */
+            /* And back buffers are not blended. Disable the depth test, 
+               that helps performance */
             glDisable(GL_BLEND);
             glDisable(GL_DEPTH_TEST);
 
-            glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
-            vcheckGLcall("glRasterPos2f");
+            flush_to_framebuffer_drawpixels(This);
 
-            switch (This->resource.format) {
-	    case WINED3DFMT_X4R4G4B4:
-	        {
-		    int size;
-                    unsigned short *data;
-                    data = (unsigned short *)This->resource.allocatedMemory;
-                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
-                    while(size > 0) {
-                            *data |= 0xF000;
-                            data++;
-                            size--;
-                    }
-		}
-	    case WINED3DFMT_A4R4G4B4:
-	        {
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-	        }
-		break;
-            case WINED3DFMT_R5G6B5:
-                {
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-                }
-                break;
-            case WINED3DFMT_X1R5G5B5:
-                {
-                    int size;
-                    unsigned short *data;
-                    data = (unsigned short *)This->resource.allocatedMemory;
-                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
-                    while(size > 0) {
-                            *data |= 0x8000;
-                            data++;
-                            size--;
-                    }
-                }
-            case WINED3DFMT_A1R5G5B5:
-                {
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-                }
-                break;
-            case WINED3DFMT_R8G8B8:
-                {
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_BGR, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-                }
-                break;
-            case WINED3DFMT_X8R8G8B8: /* make sure the X byte is set to alpha on, since it 
-                                        could be any random value this fixes the intro move in Pirates! */
-                {
-                    int size;
-                    unsigned int *data;
-                    data = (unsigned int *)This->resource.allocatedMemory;
-                    size = (This->lockedRect.bottom - This->lockedRect.top) * (This->lockedRect.right - This->lockedRect.left);
-                    while(size > 0) {
-                            *data |= 0xFF000000;
-                            data++;
-                            size--;
-                    }
-                }
-            case WINED3DFMT_A8R8G8B8:
-                {
-                    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-                    vcheckGLcall("glPixelStorei");
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_BGRA, GL_UNSIGNED_BYTE, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-                    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
-                    vcheckGLcall("glPixelStorei");
-                }
-                break;
-            case WINED3DFMT_A2R10G10B10:
-                {
-                    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
-                    vcheckGLcall("glPixelStorei");
-                    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
-                                 GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, This->resource.allocatedMemory);
-                    vcheckGLcall("glDrawPixels");
-                    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
-                    vcheckGLcall("glPixelStorei");
-                }
-                break;
-            default:
-                FIXME("Unsupported Format %u in locking func\n", This->resource.format);
-            }
-
-            glPixelZoom(1.0,1.0);
-            vcheckGLcall("glPixelZoom");
             if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
                 glDrawBuffer(GL_BACK);
                 vcheckGLcall("glDrawBuffer");
             }
-            glRasterPos3iv(&prev_rasterpos[0]);
-            vcheckGLcall("glRasterPos3iv");
-            if(prev_depth_test) glEnable(GL_DEPTH_TEST);
-
-            /* Reset to previous pack row length / blending state */
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
+            if(myDevice->stateBlock->renderState[D3DRS_ZENABLE] == D3DZB_TRUE ||
+               myDevice->stateBlock->renderState[D3DRS_ZENABLE] == D3DZB_USEW) glEnable(GL_DEPTH_TEST);
             if (myDevice->stateBlock->renderState[D3DRS_ALPHABLENDENABLE]) glEnable(GL_BLEND);
 
             LEAVE_GL();
@@ -1243,22 +1333,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 /* ******************************************************
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
-
-typedef enum {
-    NO_CONVERSION,
-    CONVERT_PALETTED,
-    CONVERT_PALETTED_CK,
-    CONVERT_CK_565,
-    CONVERT_CK_5551,
-    CONVERT_CK_4444,
-    CONVERT_CK_4444_ARGB,
-    CONVERT_CK_1555,
-    CONVERT_555,
-    CONVERT_CK_RGB24,
-    CONVERT_CK_8888,
-    CONVERT_CK_8888_ARGB,
-    CONVERT_RGB32_888
-} CONVERT_TYPES;
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & DDSD_CKSRCBLT);
