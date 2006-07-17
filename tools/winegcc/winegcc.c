@@ -471,16 +471,18 @@ static void build(struct options* opts)
     else output_name = output_file;
 
     /* prepare the linking path */
-    lib_dirs = strarray_dup(opts->lib_dirs);
     if (!opts->wine_objdir)
     {
+        lib_dirs = strarray_dup(opts->lib_dirs);
 	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]); j++ )
 	    strarray_add(lib_dirs, stdlibpath[j]);
     }
     else
     {
+        lib_dirs = strarray_alloc();
         strarray_add(lib_dirs, strmake("%s/dlls", opts->wine_objdir));
         strarray_add(lib_dirs, strmake("%s/libs/wine", opts->wine_objdir));
+        strarray_addall(lib_dirs, opts->lib_dirs);
     }
 
     /* mark the files with their appropriate type */
