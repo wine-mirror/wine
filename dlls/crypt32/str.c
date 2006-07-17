@@ -109,6 +109,30 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     return ret;
 }
 
+/* Adds the prefix prefix to the string pointed to by psz, followed by the
+ * character '='.  Copies no more than csz characters.  Returns the number of
+ * characters copied.  If psz is NULL, returns the number of characters that
+ * would be copied.
+ */
+static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
+{
+    DWORD chars = min(lstrlenA(prefix), csz);
+
+    TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
+
+    if (psz && chars)
+        memcpy(psz, prefix, chars);
+    csz -= chars;
+    if (csz > 1)
+    {
+        if (psz)
+            *(psz + chars) = '=';
+        chars++;
+        csz--;
+    }
+    return chars;
+}
+
 DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
  DWORD dwStrType, LPSTR psz, DWORD csz)
 {
@@ -152,25 +176,33 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
             for (j = 0; ret < csz && j < info->rgRDN[i].cRDNAttr; j++)
             {
                 DWORD chars;
+                char prefixBuf[10]; /* big enough for GivenName */
+                LPCSTR prefix = NULL;
 
                 if ((dwStrType & 0x000000ff) == CERT_OID_NAME_STR)
+                    prefix = info->rgRDN[i].rgRDNAttr[j].pszObjId;
+                else if ((dwStrType & 0x000000ff) == CERT_X500_NAME_STR)
+                {
+                    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(
+                     CRYPT_OID_INFO_OID_KEY,
+                     info->rgRDN[i].rgRDNAttr[j].pszObjId,
+                     CRYPT_RDN_ATTR_OID_GROUP_ID);
+
+                    if (oidInfo)
+                    {
+                        WideCharToMultiByte(CP_ACP, 0, oidInfo->pwszName, -1,
+                         prefixBuf, sizeof(prefixBuf), NULL, NULL);
+                        prefix = prefixBuf;
+                    }
+                    else
+                        prefix = info->rgRDN[i].rgRDNAttr[j].pszObjId;
+                }
+                if (prefix)
                 {
                     /* - 1 is needed to account for the NULL terminator. */
-                    chars = min(
-                     lstrlenA(info->rgRDN[i].rgRDNAttr[j].pszObjId),
-                     csz - ret - 1);
-                    if (psz && chars)
-                        memcpy(psz + ret, info->rgRDN[i].rgRDNAttr[j].pszObjId,
-                         chars);
+                    chars = CRYPT_AddPrefixA(prefix, psz + ret, csz - ret - 1);
                     ret += chars;
                     csz -= chars;
-                    if (csz > 1)
-                    {
-                        if (psz)
-                            *(psz + ret) = '=';
-                        ret++;
-                        csz--;
-                    }
                 }
                 /* FIXME: handle quoting */
                 chars = CertRDNValueToStrA(
@@ -204,6 +236,60 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     else
         ret++;
     return ret;
+}
+
+/* Adds the prefix prefix to the wide-character string pointed to by psz,
+ * followed by the character '='.  Copies no more than csz characters.  Returns
+ * the number of characters copied.  If psz is NULL, returns the number of
+ * characters that would be copied.
+ * Assumes the characters in prefix are ASCII (not multibyte characters.)
+ */
+static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
+{
+    DWORD chars = min(lstrlenA(prefix), csz);
+
+    TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
+
+    if (psz && chars)
+    {
+        DWORD i;
+
+        for (i = 0; i < chars; i++)
+            *(psz + i) = prefix[i];
+    }
+    csz -= chars;
+    if (csz > 1)
+    {
+        if (psz)
+            *(psz + chars) = '=';
+        chars++;
+        csz--;
+    }
+    return chars;
+}
+
+/* Adds the prefix prefix to the string pointed to by psz, followed by the
+ * character '='.  Copies no more than csz characters.  Returns the number of
+ * characters copied.  If psz is NULL, returns the number of characters that
+ * would be copied.
+ */
+static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
+{
+    DWORD chars = min(lstrlenW(prefix), csz);
+
+    TRACE("(%s, %p, %ld)\n", debugstr_w(prefix), psz, csz);
+
+    if (psz && chars)
+        memcpy(psz, prefix, chars * sizeof(WCHAR));
+    csz -= chars;
+    if (csz > 1)
+    {
+        if (psz)
+            *(psz + chars) = '=';
+        chars++;
+        csz--;
+    }
+    return chars;
 }
 
 DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
@@ -249,30 +335,37 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
             for (j = 0; ret < csz && j < info->rgRDN[i].cRDNAttr; j++)
             {
                 DWORD chars;
+                LPCSTR prefixA = NULL;
+                LPCWSTR prefixW = NULL;
 
                 if ((dwStrType & 0x000000ff) == CERT_OID_NAME_STR)
+                    prefixA = info->rgRDN[i].rgRDNAttr[j].pszObjId;
+                else if ((dwStrType & 0x000000ff) == CERT_X500_NAME_STR)
+                {
+                    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(
+                     CRYPT_OID_INFO_OID_KEY,
+                     info->rgRDN[i].rgRDNAttr[j].pszObjId,
+                     CRYPT_RDN_ATTR_OID_GROUP_ID);
+
+                    if (oidInfo)
+                        prefixW = oidInfo->pwszName;
+                    else
+                        prefixA = info->rgRDN[i].rgRDNAttr[j].pszObjId;
+                }
+                if (prefixW)
                 {
                     /* - 1 is needed to account for the NULL terminator. */
-                    chars = min(
-                     lstrlenA(info->rgRDN[i].rgRDNAttr[j].pszObjId),
-                     csz - ret - 1);
-                    if (psz && chars)
-                    {
-                        DWORD k;
-
-                        for (k = 0; k < chars; k++)
-                            *(psz + ret + k) =
-                             info->rgRDN[i].rgRDNAttr[j].pszObjId[k];
-                    }
+                    chars = CRYPT_AddPrefixW(prefixW, psz + ret, csz - ret - 1);
                     ret += chars;
                     csz -= chars;
-                    if (csz > 1)
-                    {
-                        if (psz)
-                            *(psz + ret) = '=';
-                        ret++;
-                        csz--;
-                    }
+                }
+                else if (prefixA)
+                {
+                    /* - 1 is needed to account for the NULL terminator. */
+                    chars = CRYPT_AddPrefixAToW(prefixA, psz + ret,
+                     csz - ret - 1);
+                    ret += chars;
+                    csz -= chars;
                 }
                 /* FIXME: handle quoting */
                 chars = CertRDNValueToStrW(

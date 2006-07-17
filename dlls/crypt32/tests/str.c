@@ -118,6 +118,7 @@ static char subjectStrSemicolon[] =
  "2.5.4.6=US; 2.5.4.8=Minnesota; 2.5.4.7=Minneapolis; 2.5.4.10=CodeWeavers; 2.5.4.11=Wine Development; 2.5.4.3=localhost; 1.2.840.113549.1.9.1=aric@codeweavers.com";
 static char subjectStrCRLF[] =
  "2.5.4.6=US\r\n2.5.4.8=Minnesota\r\n2.5.4.7=Minneapolis\r\n2.5.4.10=CodeWeavers\r\n2.5.4.11=Wine Development\r\n2.5.4.3=localhost\r\n1.2.840.113549.1.9.1=aric@codeweavers.com";
+static char x500SubjectStr[] = "C=US, S=Minnesota, L=Minneapolis, O=CodeWeavers, OU=Wine Development, CN=localhost, E=aric@codeweavers.com";
 static WCHAR issuerStrW[] = {
  'U','S',',',' ','M','i','n','n','e','s','o','t','a',',',' ','M','i','n','n',
  'e','a','p','o','l','i','s',',',' ','C','o','d','e','W','e','a','v','e','r',
@@ -349,6 +350,8 @@ static void test_CertNameToStrA(void)
         test_NameToStrConversionA(&context->pCertInfo->Subject,
          CERT_OID_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
          subjectStrCRLF);
+        test_NameToStrConversionA(&context->pCertInfo->Subject,
+         CERT_X500_NAME_STR, x500SubjectStr);
 
         CertFreeCertificateContext(context);
     }
