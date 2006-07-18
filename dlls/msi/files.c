@@ -210,6 +210,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         HANDLE handle;
         LPWSTR file;
         MSIFILE *f;
+        DWORD attrs;
 
         file = strdupAtoW(pfdin->psz1);
         f = get_loaded_file(data->package, file);
@@ -231,8 +232,11 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         TRACE("extracting %s\n", debugstr_w(f->TargetPath) );
 
+        attrs = f->Attributes & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+        if (!attrs) attrs = FILE_ATTRIBUTE_NORMAL;
+
         handle = CreateFileW( f->TargetPath, GENERIC_READ | GENERIC_WRITE, 0,
-                              NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+                              NULL, CREATE_ALWAYS, attrs, NULL );
         if ( handle == INVALID_HANDLE_VALUE )
         {
             ERR("failed to create %s (error %ld)\n",
