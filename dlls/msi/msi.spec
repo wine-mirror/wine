@@ -201,8 +201,8 @@
 205 stdcall MsiEnumRelatedProductsW(wstr long long ptr)
 206 stub MsiSetFeatureAttributesA
 207 stub MsiSetFeatureAttributesW
-208 stub MsiSourceListClearAllA
-209 stub MsiSourceListClearAllW
+208 stdcall MsiSourceListClearAllA(str str long)
+209 stdcall MsiSourceListClearAllW(wstr wstr long)
 210 stdcall MsiSourceListAddSourceA(str str long str)
 211 stdcall MsiSourceListAddSourceW(wstr wstr long wstr)
 212 stub MsiSourceListForceResolutionA

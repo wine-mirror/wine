@@ -617,3 +617,21 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
 
     return ERROR_SUCCESS;
 }
+
+/******************************************************************
+ *  MsiSourceListAddSourceExA (MSI.@)
+ */
+UINT WINAPI MsiSourceListClearAllA( LPCSTR szProduct, LPCSTR szUserName, DWORD dwReserved )
+{
+    FIXME("(%s %s %ld) stub\n", debugstr_a(szProduct), debugstr_a(szUserName), dwReserved);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************
+ *  MsiSourceListAddSourceExW (MSI.@)
+ */
+UINT WINAPI MsiSourceListClearAllW( LPCWSTR szProduct, LPCWSTR szUserName, DWORD dwReserved )
+{
+    FIXME("(%s %s %ld) stub\n", debugstr_w(szProduct), debugstr_w(szUserName), dwReserved);
+    return ERROR_SUCCESS;
+}
