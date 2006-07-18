@@ -511,8 +511,10 @@ todo_wine
     else
         ok( FALSE, "no element\n");
 
+    node = (void*)0xdeadbeef;
     r = IXMLDOMNode_selectSingleNode( element, (BSTR)szdl, &node );
     ok( r == S_FALSE, "ret %08lx\n", r );
+    ok( node == NULL, "node %p\n", node );
     r = IXMLDOMNode_selectSingleNode( element, (BSTR)szbs, &node );
     ok( r == S_OK, "ret %08lx\n", r );
     r = IXMLDOMNode_Release( node );
