@@ -126,7 +126,7 @@ AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 
 case $host_cpu in
   *i[[3456789]]86*)
-    AC_CHECK_PROGS(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
+    AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
     ;;
 esac
 
