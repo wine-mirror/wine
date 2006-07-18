@@ -471,7 +471,7 @@ UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
      * FIXME: Values seem scattered/duplicated in the registry. Is there a system?
      */
 
-    if ((szValue && !pcchValueBuf) || !szProduct || !szAttribute)
+    if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szAttribute)
         return ERROR_INVALID_PARAMETER;
 
     /* check for special properties */
@@ -990,11 +990,11 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     LPWSTR path = NULL;
 
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
-           debugstr_w(szComponent), lpPathBuf, pcchBuf);
+           debugstr_w(szComponent), lpPathBuf->str.w, pcchBuf);
 
-    if( !szComponent )
+    if( !szProduct || !szComponent )
         return INSTALLSTATE_INVALIDARG;
-    if( lpPathBuf && !pcchBuf )
+    if( lpPathBuf->str.w && !pcchBuf )
         return INSTALLSTATE_INVALIDARG;
 
     if (!squash_guid( szProduct, squished_pc ) ||
