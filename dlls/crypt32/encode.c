@@ -945,32 +945,37 @@ static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
         case CERT_RDN_ANY_TYPE:
             /* explicitly disallowed */
             SetLastError(E_INVALIDARG);
-            return FALSE;
+            ret = FALSE;
+            break;
         default:
             FIXME("String type %ld unimplemented\n", value->dwValueType);
-            return FALSE;
+            ret = FALSE;
         }
-        CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
-        bytesNeeded = 1 + lenBytes + encodedLen;
-        if (!pbEncoded)
-            *pcbEncoded = bytesNeeded;
-        else
+        if (ret)
         {
-            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
-             pcbEncoded, bytesNeeded)))
+            CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
+            bytesNeeded = 1 + lenBytes + encodedLen;
+            if (!pbEncoded)
+                *pcbEncoded = bytesNeeded;
+            else
             {
-                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                    pbEncoded = *(BYTE **)pbEncoded;
-                *pbEncoded++ = tag;
-                CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
-                pbEncoded += lenBytes;
-                switch (value->dwValueType)
+                if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pbEncoded, pcbEncoded, bytesNeeded)))
                 {
-                case CERT_RDN_NUMERIC_STRING:
-                case CERT_RDN_PRINTABLE_STRING:
-                case CERT_RDN_T61_STRING:
-                case CERT_RDN_IA5_STRING:
-                    memcpy(pbEncoded, value->Value.pbData, value->Value.cbData);
+                    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                        pbEncoded = *(BYTE **)pbEncoded;
+                    *pbEncoded++ = tag;
+                    CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
+                    pbEncoded += lenBytes;
+                    switch (value->dwValueType)
+                    {
+                    case CERT_RDN_NUMERIC_STRING:
+                    case CERT_RDN_PRINTABLE_STRING:
+                    case CERT_RDN_T61_STRING:
+                    case CERT_RDN_IA5_STRING:
+                        memcpy(pbEncoded, value->Value.pbData,
+                         value->Value.cbData);
+                    }
                 }
             }
         }
