@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 typedef struct tagMSISIGNATURE
 {
-    LPWSTR   Name;     /* NOT owned by this structure */
+    LPCWSTR  Name;     /* NOT owned by this structure */
     LPWSTR   File;
     DWORD    MinVersionMS;
     DWORD    MinVersionLS;
@@ -95,6 +95,7 @@ static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig,
 
     TRACE("(package %p, sig %p)\n", package, sig);
     memset(sig, 0, sizeof(*sig));
+    sig->Name = name;
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, name);
     if (rc == ERROR_SUCCESS)
     {
@@ -951,9 +952,7 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
             }
             TRACE("Searching for Property %s, Signature_ %s\n",
              debugstr_w(propBuf), debugstr_w(sigBuf));
-            /* This clears all the fields, so set Name and Property afterward */
             rc = ACTION_AppSearchGetSignature(package, &sig, sigBuf);
-            sig.Name = sigBuf;
             if (rc == ERROR_SUCCESS)
             {
                 rc = ACTION_AppSearchComponents(package, &value, &sig);
