@@ -39,6 +39,7 @@
 #define STATUS_WINDOW 2000
 #define TREE_WINDOW 2001
 #define TAB_WINDOW 2002
+#define TYPELIB_TREE 2003
 
 /*ItemInfo flags */
 #define REGTOP 1
@@ -111,6 +112,12 @@ typedef struct
     WCHAR wszFileName[MAX_LOAD_STRING];
 }TYPELIB;
 
+typedef struct
+{
+    WCHAR *idl;
+    INT idlLen;
+}TYPELIB_DATA;
+
 extern GLOBALS globals;
 extern TREE tree;
 extern TYPELIB typelib;
@@ -141,6 +148,7 @@ void ReleaseInst(HTREEITEM item);
 /* typelib.c */
 BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName);
 BOOL TypeLibRegisterClass(void);
+void UpdateData(HTREEITEM item);
 
 /* interface.c */
 BOOL IsInterface(HTREEITEM item);

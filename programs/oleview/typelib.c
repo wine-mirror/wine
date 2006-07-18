@@ -30,6 +30,15 @@ static const WCHAR wszTypeLib[] = { 'T','Y','P','E','L','I','B','\0' };
 static const WCHAR wszFailed[] = { '<','f','a','i','l','e','d','>','\0' };
 static const WCHAR wszSpace[] = { ' ','\0' };
 static const WCHAR wszAsterix[] = { '*','\0' };
+static const WCHAR wszComa[] = { ',','\0' };
+static const WCHAR wszSemicolon[] = { ';','\0' };
+static const WCHAR wszNewLine[] = { '\n','\0' };
+static const WCHAR wszOpenBrackets1[] = { '[','\0' };
+static const WCHAR wszCloseBrackets1[] = { ']','\0' };
+static const WCHAR wszOpenBrackets2[] = { '(','\0' };
+static const WCHAR wszCloseBrackets2[] = { ')','\0' };
+
+static const WCHAR wszUUID[] = { 'u','u','i','d','\0' };
 
 static const WCHAR wszVT_BOOL[]
     = { 'V','A','R','I','A','N','T','_','B','O','O','L','\0' };
@@ -59,6 +68,29 @@ static const WCHAR wszVT_LPWSTR[] = { 'L','P','W','S','T','R','\0' };
 void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 {
     lstrcpyW(&wszDest[lstrlenW(wszDest)], wszSource);
+}
+
+void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
+{
+    int SourceLen = lstrlenW(wszSource);
+
+    pTLData->idl = HeapReAlloc(GetProcessHeap(), 0, pTLData->idl,
+            sizeof(WCHAR)*(pTLData->idlLen+SourceLen+1));
+    
+    memcpy(&pTLData->idl[pTLData->idlLen], wszSource, sizeof(WCHAR)*(SourceLen+1));
+    pTLData->idlLen += SourceLen;
+}
+
+LPARAM InitializeTLData(void)
+{
+    TYPELIB_DATA *pTLData;
+
+    pTLData = HeapAlloc(GetProcessHeap(), 0, sizeof(TYPELIB_DATA));
+
+    memset(pTLData, 0, sizeof(TYPELIB_DATA));
+    pTLData->idl = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
+
+    return (LPARAM)pTLData;
 }
 
 void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
@@ -241,6 +273,7 @@ int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
     ITypeLib *pTypeLib;
+    TLIBATTR *pTLibAttr;
     ITypeInfo *pTypeInfo, *pRefTypeInfo;
     HREFTYPE hRefType;
     TYPEATTR *pTypeAttr;
@@ -252,7 +285,15 @@ int PopulateTree(void)
     HRESULT hRes;
     HTREEITEM hParent;
 
+    const WCHAR wszGeneratedInfo[] = { '/','/',' ','G','e','n','e','r','a','t','e','d',
+        ' ','.','I','D','L',' ','f','i','l','e',' ','(','b','y',' ','t','h','e',' ',
+        'O','L','E','/','C','O','M',' ','O','b','j','e','c','t',' ',
+        'V','i','e','w','e','r',')','\n','/','/','\n','/','/',' ',
+        't','y','p','e','l','i','b',' ','f','i','l','e','n','a','m','e',':',' ','\0'};
+
     const WCHAR wszFormat[] = { '%','s',' ','(','%','s',')','\0' };
+    const WCHAR wszFormat2[] = { 'v','e','r','s','i','o','n',
+        '(','%','l','d','.','%','l','d',')','\0' };
 
     const WCHAR wszTKIND_ENUM[] = { 't','y','p','e','d','e','f',' ','e','n','u','m',' ','\0' };
     const WCHAR wszTKIND_RECORD[]
@@ -266,7 +307,10 @@ int PopulateTree(void)
     const WCHAR wszTKIND_UNION[]
         = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
 
-    U(tvis).item.mask = TVIF_TEXT;
+    const WCHAR wszHelpString[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
+    const WCHAR wszLibrary[] = { 'l','i','b','r','a','r','y',' ','\0' };
+
+    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
@@ -286,6 +330,38 @@ int PopulateTree(void)
     count = ITypeLib_GetTypeInfoCount(pTypeLib);
 
     ITypeLib_GetDocumentation(pTypeLib, -1, &bstrName, &bstrData, NULL, NULL);
+    ITypeLib_GetLibAttr(pTypeLib, &pTLibAttr);
+    
+    U(tvis).item.lParam = InitializeTLData();
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszGeneratedInfo);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), typelib.wszFileName);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets1);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszUUID);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets2);
+    StringFromGUID2(&(pTLibAttr->guid), wszText, MAX_LOAD_STRING);
+    wszText[lstrlenW(wszText)-1] = '\0';
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), &wszText[1]);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszCloseBrackets2);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszComa);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    wsprintfW(wszText, wszFormat2, pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszText);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszComa);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszHelpString);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets2);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), bstrData);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszCloseBrackets2);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszCloseBrackets1);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszLibrary);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), bstrName);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+
     wsprintfW(wszText, wszFormat, bstrName, bstrData);
     SysFreeString(bstrName);
     SysFreeString(bstrData);
@@ -358,6 +434,20 @@ int PopulateTree(void)
     return 0;
 }
 
+void UpdateData(HTREEITEM item)
+{
+    TVITEM tvi;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_PARAM;
+    tvi.hItem = item;
+
+    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    if(!tvi.lParam || !((TYPELIB_DATA*)tvi.lParam)->idlLen) return;
+
+    SetWindowText(typelib.hEdit, ((TYPELIB_DATA*)tvi.lParam)->idl);
+}
+
 void TypeLibResizeChild(void)
 {
     RECT client, stat;
@@ -412,7 +502,8 @@ LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(hWnd);
             typelib.hTree = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, NULL,
                     WS_CHILD|WS_VISIBLE|TVS_HASLINES|TVS_HASBUTTONS|TVS_LINESATROOT,
-                    0, 0, 0, 0, typelib.hPaneWnd, NULL, globals.hMainInst, NULL);
+                    0, 0, 0, 0, typelib.hPaneWnd, (HMENU)TYPELIB_TREE,
+                    globals.hMainInst, NULL);
             typelib.hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, NULL,
                     WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|WS_HSCROLL|WS_VSCROLL,
                     0, 0, 0, 0, typelib.hPaneWnd, NULL, globals.hMainInst, NULL);

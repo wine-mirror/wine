@@ -99,6 +99,15 @@ LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if(GetCapture() == hWnd)
                 DrawSplitMoving(hWnd, LOWORD(lParam));
             break;
+        case WM_NOTIFY:
+            if((int)wParam != TYPELIB_TREE) break;
+            switch(((LPNMHDR)lParam)->code)
+            {
+                case TVN_SELCHANGED:
+                    UpdateData(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                    break;
+            }
+            break;
         case WM_SIZE:
             if(wParam == SIZE_MINIMIZED) break;
             pane->width = LOWORD(lParam);
