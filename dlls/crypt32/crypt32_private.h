@@ -97,6 +97,14 @@ extern PCWINE_CONTEXT_INTERFACE pCTLInterface;
 const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
+/* Fixes up the the pointers in info, where info is assumed to be a
+ * CRYPT_KEY_PROV_INFO, followed by its container name, provider name, and any
+ * provider parameters, in a contiguous buffer, but where info's pointers are
+ * assumed to be invalid.  Upon return, info's pointers point to the
+ * appropriate memory locations.
+ */
+void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info);
+
 DWORD CertStore_GetAccessState(HCERTSTORE hCertStore);
 
 /**

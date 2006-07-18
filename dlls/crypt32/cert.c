@@ -244,12 +244,7 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
     return ret;
 }
 
-/* info is assumed to be a CRYPT_KEY_PROV_INFO, followed by its container name,
- * provider name, and any provider parameters, in a contiguous buffer, but
- * where info's pointers are assumed to be invalid.  Upon return, info's
- * pointers point to the appropriate memory locations.
- */
-static void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
+void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
 {
     DWORD i, containerLen, provNameLen;
     LPBYTE data = (LPBYTE)info + sizeof(CRYPT_KEY_PROV_INFO);
