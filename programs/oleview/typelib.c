@@ -37,6 +37,8 @@ static const WCHAR wszOpenBrackets1[] = { '[','\0' };
 static const WCHAR wszCloseBrackets1[] = { ']','\0' };
 static const WCHAR wszOpenBrackets2[] = { '(','\0' };
 static const WCHAR wszCloseBrackets2[] = { ')','\0' };
+static const WCHAR wszOpenBrackets3[] = { '{','\0' };
+static const WCHAR wszCloseBrackets3[] = { '}','\0' };
 
 static const WCHAR wszUUID[] = { 'u','u','i','d','\0' };
 
@@ -91,6 +93,25 @@ LPARAM InitializeTLData(void)
     pTLData->idl = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
 
     return (LPARAM)pTLData;
+}
+
+void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
+{
+    HTREEITEM hCur;
+    TVITEM tvi;
+
+    memset(&tvi, 0, sizeof(&tvi));
+
+    hCur = TreeView_GetChild(typelib.hTree, hParent);
+    do
+    {
+        tvi.hItem = hCur;
+        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        if(tvi.lParam && ((TYPELIB_DATA *)(tvi.lParam))->idlLen)
+            AddToTLDataStrW(pData, ((TYPELIB_DATA *)(tvi.lParam))->idl);
+    }while((hCur = TreeView_GetNextSibling(typelib.hTree, hCur)));
+
+    AddToTLDataStrW(pData, pData->wszInsertAfter);
 }
 
 void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
@@ -166,7 +187,7 @@ int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     WCHAR wszText[MAX_LOAD_STRING];
     WCHAR wszAfter[MAX_LOAD_STRING];
 
-    U(tvis).item.mask = TVIF_TEXT;
+    U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
@@ -184,6 +205,10 @@ int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         AddToStrW(wszText, wszSpace);
         AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
+        U(tvis).item.lParam = InitializeTLData();
+        AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszText);
+        AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszSemicolon);
+        AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
 
         SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
         SysFreeString(bstrName);
@@ -309,6 +334,7 @@ int PopulateTree(void)
 
     const WCHAR wszHelpString[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
     const WCHAR wszLibrary[] = { 'l','i','b','r','a','r','y',' ','\0' };
+    const WCHAR wszTag[] = { 't','a','g','\0' };
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
@@ -361,6 +387,10 @@ int PopulateTree(void)
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszLibrary);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), bstrName);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets3);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+    AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter, wszCloseBrackets3);
+    AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter, wszSemicolon);
 
     wsprintfW(wszText, wszFormat, bstrName, bstrData);
     SysFreeString(bstrName);
@@ -377,18 +407,49 @@ int PopulateTree(void)
 
         memset(wszText, 0, sizeof(wszText));
         memset(wszAfter, 0, sizeof(wszAfter));
+        U(tvis).item.lParam = InitializeTLData();
         switch(pTypeAttr->typekind)
         {
-#define TKINDADDTOSTR(x) case x:\
-    AddToStrW(wszText, wsz##x);\
-    AddToStrW(wszText, bstrName);\
-    break
-            TKINDADDTOSTR(TKIND_ENUM);
-            TKINDADDTOSTR(TKIND_RECORD);
-            TKINDADDTOSTR(TKIND_MODULE);
-            TKINDADDTOSTR(TKIND_INTERFACE);
-            TKINDADDTOSTR(TKIND_COCLASS);
-            TKINDADDTOSTR(TKIND_UNION);
+            case TKIND_ENUM:
+                AddToStrW(wszText, wszTKIND_ENUM);
+                AddToStrW(wszText, bstrName);
+                break;
+            case TKIND_RECORD:
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszTKIND_RECORD);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszTag);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), bstrName);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszSpace);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets3);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszCloseBrackets3);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszSpace);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        bstrName);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszSemicolon);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszNewLine);
+                AddToStrW(wszText, wszTKIND_RECORD);
+                AddToStrW(wszText, bstrName);
+                break;
+            case TKIND_MODULE:
+                AddToStrW(wszText, wszTKIND_MODULE);
+                AddToStrW(wszText, bstrName);
+                break;
+            case TKIND_INTERFACE:
+                AddToStrW(wszText, wszTKIND_INTERFACE);
+                AddToStrW(wszText, bstrName);
+                break;
+            case TKIND_COCLASS:
+                AddToStrW(wszText, wszTKIND_COCLASS);
+                AddToStrW(wszText, bstrName);
+                break;
+            case TKIND_UNION:
+                AddToStrW(wszText, wszTKIND_UNION);
+                AddToStrW(wszText, bstrName);
+                break;
             case TKIND_DISPATCH:
                 AddToStrW(wszText, wszTKIND_DISPATCH);
                 AddToStrW(wszText, bstrName);
@@ -397,6 +458,7 @@ int PopulateTree(void)
                     hParent = TreeView_InsertItem(typelib.hTree, &tvis);
                     EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
                     memset(wszText, 0, sizeof(wszText));
+                    U(tvis).item.lParam = InitializeTLData();
 
                     ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo);
                     ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
@@ -424,6 +486,8 @@ int PopulateTree(void)
         EnumFuncs(pTypeInfo, pTypeAttr->cFuncs, hParent);
         EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
 
+        AddChildrenData(hParent, (TYPELIB_DATA*)(U(tvis).item.lParam));
+
         ITypeInfo_ReleaseTypeAttr(pTypeInfo, pTypeAttr);
         ITypeInfo_Release(pTypeInfo);
         SysFreeString(bstrName);
@@ -443,7 +507,11 @@ void UpdateData(HTREEITEM item)
     tvi.hItem = item;
 
     SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-    if(!tvi.lParam || !((TYPELIB_DATA*)tvi.lParam)->idlLen) return;
+    if(!tvi.lParam)
+    {
+        SetWindowText(typelib.hEdit, wszSpace);
+        return;
+    }
 
     SetWindowText(typelib.hEdit, ((TYPELIB_DATA*)tvi.lParam)->idl);
 }

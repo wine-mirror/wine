@@ -115,6 +115,7 @@ typedef struct
 typedef struct
 {
     WCHAR *idl;
+    WCHAR wszInsertAfter[MAX_LOAD_STRING];
     INT idlLen;
 }TYPELIB_DATA;
 
