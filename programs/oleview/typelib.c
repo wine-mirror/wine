@@ -560,6 +560,36 @@ void UpdateTypeLibStatusBar(int itemID)
     SendMessage(typelib.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
 }
 
+void EmptyTLTree(void)
+{
+    HTREEITEM cur, del;
+    TVITEM tvi;
+
+    tvi.mask = TVIF_PARAM;
+    cur = TreeView_GetChild(typelib.hTree, TVI_ROOT);
+
+    while(TRUE)
+    {
+        del = cur;
+        cur = TreeView_GetChild(typelib.hTree, del);
+
+        if(!cur) cur = TreeView_GetNextSibling(typelib.hTree, del);
+        if(!cur) cur = TreeView_GetParent(typelib.hTree, del);
+
+        tvi.hItem = del;
+        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        if(tvi.lParam)
+        {
+            HeapFree(GetProcessHeap(), 0, ((TYPELIB_DATA *)tvi.lParam)->idl);
+            HeapFree(GetProcessHeap(), 0, (TYPELIB_DATA *)tvi.lParam);
+        }
+
+        SendMessage(typelib.hTree, TVM_DELETEITEM, 0, (LPARAM)del);
+
+        if(!cur) break;
+    }
+}
+
 LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -596,6 +626,7 @@ LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             TypeLibResizeChild();
             break;
         case WM_DESTROY:
+            EmptyTLTree();
             break;
         default:
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
