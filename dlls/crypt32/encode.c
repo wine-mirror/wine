@@ -163,6 +163,8 @@ static BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags,
         SetLastError(ERROR_MORE_DATA);
         ret = FALSE;
     }
+    else
+        *pcbEncoded = bytesNeeded;
     return ret;
 }
 
