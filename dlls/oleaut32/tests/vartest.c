@@ -2456,7 +2456,7 @@ static void test_VarMod(void)
 	hexpected = DISP_E_TYPEMISMATCH;
       } else if((l == VT_NULL) && (r == VT_DECIMAL))
       {
-	hexpected = DISP_E_OVERFLOW;
+	hexpected = E_INVALIDARG;
       } else if((l == VT_UNKNOWN) || ((r == VT_UNKNOWN) && lFound && lValid))
       {
 	hexpected = DISP_E_TYPEMISMATCH;
@@ -2465,7 +2465,7 @@ static void test_VarMod(void)
 	hexpected = S_OK;
       } else if((l == VT_DECIMAL) || ((r == VT_DECIMAL) && lFound && lValid))
       {
-	hexpected = DISP_E_OVERFLOW;
+	hexpected = E_INVALIDARG;
       } else if(l == VT_RECORD)
       {
 	hexpected = DISP_E_TYPEMISMATCH;

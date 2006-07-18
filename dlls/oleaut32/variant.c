@@ -4600,7 +4600,7 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       return DISP_E_TYPEMISMATCH;
     case VT_DECIMAL:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_OVERFLOW;
+      return E_INVALIDARG;
     case VT_ERROR:
       return DISP_E_TYPEMISMATCH;
     case VT_RECORD:
@@ -4685,7 +4685,7 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       } else
       {
 	V_VT(result) = VT_EMPTY;
-        return DISP_E_OVERFLOW;
+        return E_INVALIDARG;
       }
     case VT_ERROR:
       return DISP_E_TYPEMISMATCH;
