@@ -18,13 +18,13 @@
 @ stdcall ScriptRecordDigitSubstitution(ptr ptr)
 @ stdcall ScriptShape(ptr ptr ptr long long ptr ptr ptr ptr ptr)
 @ stdcall ScriptStringAnalyse(ptr ptr long long long long long ptr ptr ptr ptr ptr ptr)
-@ stub ScriptStringCPtoX
+@ stdcall ScriptStringCPtoX(ptr long long ptr)
 @ stdcall ScriptStringFree(ptr)
 @ stub ScriptStringGetLogicalWidths
 @ stub ScriptStringGetOrder
 @ stdcall ScriptStringOut(ptr long long long ptr long long long)
 @ stub ScriptStringValidate
-@ stub ScriptStringXtoCP
+@ stdcall ScriptStringXtoCP(ptr long ptr ptr)
 @ stub ScriptString_pLogAttr
 @ stub ScriptString_pSize
 @ stub ScriptString_pcOutChars

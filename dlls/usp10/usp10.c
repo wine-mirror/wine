@@ -317,6 +317,29 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
 }
 
 /***********************************************************************
+ *      ScriptStringCPtoX (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrailing, int* pX)
+{
+    FIXME("(%p), %d, %d, (%p): stub\n", ssa, icp, fTrailing, pX);
+    *pX = 0;                             /* Set a reasonable value */
+    return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptStringXtoCP (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, int* piTrailing) 
+{
+    FIXME("(%p), %d, (%p), (%p): stub\n", ssa, iX, piCh, piTrailing);
+    *piCh = 0;                          /* Set a reasonable value */
+    *piTrailing = 0;
+    return S_OK;
+}
+
+/***********************************************************************
  *      ScriptStringFree (USP10.@)
  *
  */
