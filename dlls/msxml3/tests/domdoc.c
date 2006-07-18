@@ -1054,6 +1054,9 @@ static void test_removeChild(void)
     r = IXMLDOMNodeList_get_item( node_list, 0, &node4 );
     ok( r == S_OK, "ret %08lx\n", r);
 
+    r = IXMLDOMElement_removeChild( element, NULL, &node2 );
+    ok( r == E_INVALIDARG, "ret %08lx\n", r );
+
     r = IXMLDOMElement_removeChild( element, node4, &node2 );
     ok( r == S_OK, "ret %08lx\n", r);
     ok( node4 == node2, "node %p node2 %p\n", node4, node2 );
