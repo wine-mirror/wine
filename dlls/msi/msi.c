@@ -1928,16 +1928,17 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
 {
     MSIPACKAGE* package = NULL;
     UINT r;
-    DWORD sz;
     WCHAR sourcepath[MAX_PATH];
     WCHAR filename[MAX_PATH];
-    static const WCHAR szInstalled[] = {
-        ' ','L','O','G','V','E','R','B','O','S','E','=','1',' ','I','n','s','t','a','l','l','e','d','=','1',0};
-    static const WCHAR fmt[] = {'R','E','I','N','S','T','A','L','L','=','%','s',0};
-    static const WCHAR REINSTALLMODE[] = {'R','E','I','N','S','T','A','L','L','M','O','D','E',0};
+    static const WCHAR szLogVerbose[] = {
+        ' ','L','O','G','V','E','R','B','O','S','E',0 };
+    static const WCHAR szInstalled[] = { 'I','n','s','t','a','l','l','e','d',0};
+    static const WCHAR szReinstall[] = {'R','E','I','N','S','T','A','L','L',0};
+    static const WCHAR szReinstallMode[] = {'R','E','I','N','S','T','A','L','L','M','O','D','E',0};
+    static const WCHAR szOne[] = {'1',0};
     WCHAR reinstallmode[11];
     LPWSTR ptr;
-    LPWSTR commandline;
+    DWORD sz;
 
     FIXME("%s %s %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
                            dwReinstallMode);
@@ -1968,14 +1969,13 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     
     sz = sizeof(sourcepath);
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
-            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath,
-            &sz);
+            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
 
     sz = sizeof(filename);
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
             MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
 
-    strcatW(sourcepath,filename);
+    lstrcatW( sourcepath, filename );
 
     if (dwReinstallMode & REINSTALLMODE_PACKAGE)
         r = MSI_OpenPackageW( sourcepath, &package );
@@ -1985,22 +1985,14 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     if (r != ERROR_SUCCESS)
         return r;
 
-    MSI_SetPropertyW(package,REINSTALLMODE,reinstallmode);
+    MSI_SetPropertyW( package, szReinstallMode, reinstallmode );
+    MSI_SetPropertyW( package, szInstalled, szOne );
+    MSI_SetPropertyW( package, szLogVerbose, szOne );
+    MSI_SetPropertyW( package, szReinstall, szFeature );
 
-    sz = lstrlenW(szInstalled);
-    sz += lstrlenW(fmt);
-    sz += lstrlenW(szFeature);
-
-    commandline = msi_alloc(sz * sizeof(WCHAR));
-
-    sprintfW(commandline,fmt,szFeature);
-    lstrcatW(commandline,szInstalled);
-
-    r = MSI_InstallPackage( package, sourcepath, commandline );
+    r = MSI_InstallPackage( package, sourcepath, NULL );
 
     msiobj_release( &package->hdr );
-
-    msi_free(commandline);
 
     return r;
 }
