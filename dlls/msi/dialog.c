@@ -1610,7 +1610,7 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
 
         memset( &tvis, 0, sizeof tvis );
         tvis.hParent = hParent;
-        tvis.hInsertAfter = TVI_SORT;
+        tvis.hInsertAfter = TVI_LAST;
         tvis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
         tvis.u.item.pszText = feature->Title;
         tvis.u.item.lParam = (LPARAM) feature;

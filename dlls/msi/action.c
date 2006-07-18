@@ -1345,7 +1345,8 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     UINT rc;
     static const WCHAR Query_all[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','F','e','a','t','u','r','e','`',0};
+         '`','F','e','a','t','u','r','e','`',' ','O','R','D','E','R',
+         ' ','B','Y',' ','`','D','i','s','p','l','a','y','`',0};
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
