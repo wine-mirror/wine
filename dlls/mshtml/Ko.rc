@@ -24,7 +24,23 @@ STRINGTABLE DISCARDABLE
 {
     IDS_HTMLDISABLED    "HTML 렌더링은 현재 가능하지 않음."
     IDS_HTMLDOCUMENT    "HTML 문서"
+   IDS_DOWNLOADING     "다운로드 중..."
+   IDS_INSTALLING      "설치 중..."
 }
+
+ID_DWL_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 260, 85
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine Gecko 설치 풀그림"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "이 어플리케이션은 HTML 페이지를 보여주려고 합니다. Wine은 이 페이지를 보여주기 위해를  " \
+    "Gecko (Mozilla HTML 엔진)를 설치할 것입니다. Wine이 자동으로 Gecko를 다운로드하고 설치하기를 원한다면 " \
+   "[설치]버튼을 클릭하십시오", ID_DWL_STATUS, 10, 10, 240, 30, SS_CENTER
+   CONTROL "Progress", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
+   PUSHBUTTON "취소", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
+   PUSHBUTTON "설치", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
+}
+
 
 /* FIXME: This should be in shdoclc.dll */
 
@@ -33,23 +49,23 @@ IDR_BROWSE_CONTEXT_MENU MENU
     POPUP "기본"
     {
         MENUITEM "뒤로(&B)",                IDM_BACK
-        MENUITEM "앞으로(&o)",               IDM_FORWARD
+        MENUITEM "앞으로(&O)",               IDM_FORWARD
         MENUITEM SEPARATOR
         MENUITEM "배경으로 저장(&S)...", IDM_SAVEBACKGROUNDAS
-        MENUITEM "배경으로 설정(&g)",     IDM_SETASBACKGROUND
+        MENUITEM "배경으로 설정(&G)",     IDM_SETASBACKGROUND
         MENUITEM "배경으로 복사(&C)",       IDM_COPYBACKGROUND
         MENUITEM "데스크탑 아이템으로 설정(&D)",   IDM_SETASDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "모두 선택(&A)",            IDM_SELECTALL
         MENUITEM "붙여넣기(&P)",                 IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "바로가기 만들기(&t)",       IDM_CREATESHORTCUT
+        MENUITEM "바로가기 만들기(&T)",       IDM_CREATESHORTCUT
         MENUITEM "즐겨찾기에 더하기(&F)",     IDM_ADDTOFAVOURITES
         MENUITEM "소스 보기(&V)",           IDM_VIEWSOURCE
         MENUITEM SEPARATOR
         MENUITEM "인코딩(&E)",              IDM_ENCODING 
         MENUITEM SEPARATOR
-        MENUITEM "인쇄(&i)",                 IDM_PRINT
+        MENUITEM "인쇄(&I)",                 IDM_PRINT
         MENUITEM "다시 읽기(&R)",               IDM_REFRESH 
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -63,23 +79,23 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "다른 이름으로 저장(&A)...",       IDM_SAVETARGETAS
         MENUITEM "타겟 저장(&P)",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
-        MENUITEM "그림 보기(&h)",            IDM_SHOWPICTURE
+        MENUITEM "그림 보기(&H)",            IDM_SHOWPICTURE
         MENUITEM "그림 다른 이름으로 저장(&S)...",      IDM_SAVEPICTUREAS
         MENUITEM "그림을 이메일로(&E)...",       IDM_EMAILPICTURE
-        MENUITEM "그림 인쇄(&i)...",        IDM_PRINTPICTURE
+        MENUITEM "그림 인쇄(&I)...",        IDM_PRINTPICTURE
         MENUITEM "내 그림으로 가기(&G)",       IDM_GOTOMYPICTURES
-        MENUITEM "배경으로 설정(&g)",       IDM_SETASBACKGROUND
+        MENUITEM "배경으로 설정(&G)",       IDM_SETASBACKGROUND
         MENUITEM "데스크탑 아이템으로 설정(&D)...",  IDM_SETASDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "잘라내기(&T)",                     IDM_CUT
         MENUITEM "복사(&C)",                    IDM_COPY
-        MENUITEM "바로 가기 복사(&t)",           IDM_COPYSHORTCUT
+        MENUITEM "바로 가기 복사(&T)",           IDM_COPYSHORTCUT
         MENUITEM "붙여넣기(&P)",                   IDM_PASTE 
         MENUITEM SEPARATOR
         MENUITEM "즐겨 찾기에 추가(&F)...",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
-        MENUITEM "속성(&r)",              IDM_PROPERTIES
+        MENUITEM "속성(&R)",              IDM_PROPERTIES
     }
 
     POPUP "제어"
@@ -112,7 +128,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
 
     POPUP "1DSite 선택"
     {
-        MENUITEM "잘라내기(&t)",        IDM_CUT
+        MENUITEM "잘라내기(&T)",        IDM_CUT
         MENUITEM "복사(&C)",       IDM_COPY
         MENUITEM "붙여넣기",       IDM_PASTE
         MENUITEM "모두 선택(&A)", IDM_SELECTALL 
@@ -129,13 +145,13 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "잘라내기",                  IDM_CUT
         MENUITEM "복사(&C)",                IDM_COPY
-        MENUITEM "바로가기 복사(&t)",       IDM_COPYSHORTCUT
+        MENUITEM "바로가기 복사(&T)",       IDM_COPYSHORTCUT
         MENUITEM "붙여넣기(&P)",               IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "즐겨찾기에 더하기(&F)...", IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
-        MENUITEM "속성(&r)",          IDM_PROPERTIES
+        MENUITEM "속성(&R)",          IDM_PROPERTIES
     }
 
     POPUP "알수 없는 콘택스트"
@@ -150,14 +166,14 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "다른 이름으로 저장(&A)...",       IDM_SAVETARGETAS
         MENUITEM "대상 인쇄(&P)",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
-        MENUITEM "그림 보기(&h)",            IDM_SHOWPICTURE
+        MENUITEM "그림 보기(&H)",            IDM_SHOWPICTURE
         MENUITEM "비디오 다른 이름으로 저장(&S)...",        IDM_SAVEPICTUREAS
         MENUITEM "배경으로 설정(&g)",       IDM_SETASBACKGROUND
         MENUITEM "데스크탑 아이템으로 설정(&D)...",  IDM_SETASDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "잘라내기(&T)",                     IDM_CUT
         MENUITEM "복사(&C)",                    IDM_COPY
-        MENUITEM "바로 가기 복사(&t)",           IDM_COPYSHORTCUT
+        MENUITEM "바로 가기 복사(&T)",           IDM_COPYSHORTCUT
         MENUITEM "붙여넣기(&P)",                   IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "즐겨찾기에 더하기(&F)...",     IDM_ADDTOFAVOURITES
@@ -165,7 +181,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "재생",                     IDM_PLAY
         MENUITEM "정지",                     IDM_STOP
-        MENUITEM "속성(&r)",              IDM_PROPERTIES
+        MENUITEM "속성(&R)",              IDM_PROPERTIES
     }
 
     POPUP "ART 그림"
@@ -175,14 +191,14 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "다른 이름으로 저장(&A)...",       IDM_SAVETARGETAS
         MENUITEM "타겟 인쇄(&P)",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
-        MENUITEM "그림 보기(&h)",            IDM_SHOWPICTURE
+        MENUITEM "그림 보기(&H)",            IDM_SHOWPICTURE
         MENUITEM "그림 다른 이름으로 저장(&S)...",      IDM_SAVEPICTUREAS
         MENUITEM "배경으로 설정(&g)",       IDM_SETASBACKGROUND
         MENUITEM "데스크탑 아이템으로 설정(&D)...",  IDM_SETASDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "잘라내기(&T)",                     IDM_CUT
         MENUITEM "복사(&C)",                    IDM_COPY
-        MENUITEM "바로가기 복사(&t)",           IDM_COPYSHORTCUT
+        MENUITEM "바로가기 복사(&T)",           IDM_COPYSHORTCUT
         MENUITEM "붙여놓기(&P)",                   IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "즐겨찾기에 더하기(&F)...",     IDM_ADDTOFAVOURITES
@@ -192,7 +208,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "다시 감기",                   IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
-        MENUITEM "속성(&r)",              IDM_PROPERTIES
+        MENUITEM "속성(&R)",              IDM_PROPERTIES
     }
 
     POPUP "디버그"
