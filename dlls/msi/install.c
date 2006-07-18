@@ -30,6 +30,7 @@
 #include "msidefs.h"
 #include "msipriv.h"
 #include "action.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -759,4 +760,31 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
     langid = msi_get_property_int( package, szProductLanguage, 0 );
     msiobj_release( &package->hdr );
     return langid;
+}
+
+/***********************************************************************
+ * MsiGetLanguage (MSI.@)
+ */
+UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
+{
+    static const WCHAR szInstallLevel[] = {
+        'I','N','S','T','A','L','L','L','E','V','E','L',0 };
+    static const WCHAR fmt[] = { '%','d',0 };
+    MSIPACKAGE* package;
+    WCHAR level[6];
+    UINT r;
+
+    TRACE("%ld %i\n", hInstall, iInstallLevel);
+
+    if (iInstallLevel<1 || iInstallLevel>32767)
+        return ERROR_INVALID_PARAMETER;
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if ( !package )
+        return ERROR_INVALID_HANDLE;
+
+    sprintfW( level, fmt, iInstallLevel );
+    r = MSI_SetPropertyW( package, szInstallLevel, level );
+    msiobj_release( &package->hdr );
+    return r;
 }

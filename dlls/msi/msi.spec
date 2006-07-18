@@ -133,7 +133,7 @@
 137 stdcall MsiSetExternalUIW(ptr long ptr)
 138 stdcall MsiSetFeatureStateA(long str long)
 139 stdcall MsiSetFeatureStateW(long wstr long)
-140 stub MsiSetInstallLevel
+140 stdcall MsiSetInstallLevel(long long)
 141 stdcall MsiSetInternalUI(long ptr)
 142 stub MsiVerifyDiskSpace
 143 stdcall MsiSetMode(long long long)
