@@ -1566,7 +1566,7 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     }
     else
     {
-        r = FTP_FtpRenameFileW(hFtpSession, lpszSrc, lpszDest);
+        r = FTP_FtpRenameFileW(lpwfs, lpszSrc, lpszDest);
     }
 
 lend:
