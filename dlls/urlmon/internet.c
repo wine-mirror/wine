@@ -61,6 +61,31 @@ static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     return S_OK;
 }
 
+static HRESULT parse_canonicalize_url(LPCWSTR url, DWORD flags, LPWSTR result,
+        DWORD size, DWORD *rsize)
+{
+    IInternetProtocolInfo *protocol_info;
+    DWORD prsize = size;
+    HRESULT hres;
+
+    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+
+    protocol_info = get_protocol_info(url);
+
+    if(protocol_info) {
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_CANONICALIZE,
+                flags, result, size, rsize, 0);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    hres = UrlCanonicalizeW(url, result, &prsize, flags);
+
+    if(rsize)
+        *rsize = prsize;
+    return hres;
+}
+
 static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size, DWORD *rsize)
 {
     IInternetProtocolInfo *protocol_info;
@@ -160,6 +185,8 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
         WARN("dwReserved = %ld\n", dwReserved);
 
     switch(ParseAction) {
+    case PARSE_CANONICALIZE:
+        return parse_canonicalize_url(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_SECURITY_URL:
         return parse_security_url(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_ENCODE:
