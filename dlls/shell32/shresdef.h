@@ -89,6 +89,7 @@
 #define IDS_TRASHFOLDER_TEXT        137
 #define IDS_TRASHITEM_TEXT          138
 #define IDS_TRASHMULTIPLE_TEXT      139
+#define IDS_CANTTRASH_TEXT          140
 
 /* browse for folder dialog box */
 #define IDD_STATUS		0x3743

@@ -1810,6 +1810,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, LPCITEMI
     op.hwnd = GetActiveWindow();
     op.wFunc = FO_DELETE;
     op.pFrom = wszPathsList;
+    op.fFlags = FOF_ALLOWUNDO;
     if (!SHFileOperationW(&op))
     {
         WARN("SHFileOperationW failed\n");

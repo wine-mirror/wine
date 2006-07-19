@@ -168,6 +168,7 @@ STRINGTABLE DISCARDABLE
 	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
 	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all it's content to the Trash?"
 	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
+	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 	IDS_OVERWRITEFILE_TEXT "OverWrite File %1?"
 	IDS_OVERWRITEFILE_CAPTION "Confirm File OverWrite"
 

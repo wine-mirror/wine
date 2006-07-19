@@ -1214,7 +1214,7 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
     op.hwnd = GetActiveWindow();
     op.wFunc = FO_DELETE;
     op.pFrom = wszPathsList;
-    op.fFlags = 0;
+    op.fFlags = FOF_ALLOWUNDO;
     if (SHFileOperationW(&op))
     {
         WARN("SHFileOperation failed\n");

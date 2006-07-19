@@ -42,6 +42,7 @@
 #include "undocshell.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "xdg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -105,6 +106,11 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
             ids->icon_resource_id = IDI_SHELL_TRASH_FILE;
             ids->caption_resource_id = IDS_DELETEITEM_CAPTION;
             ids->text_resource_id = IDS_TRASHMULTIPLE_TEXT;
+            return TRUE;
+          case ASK_CANT_TRASH_ITEM:
+            ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
+            ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
+            ids->text_resource_id  = IDS_CANTTRASH_TEXT;
             return TRUE;
 	  case ASK_DELETE_SELECTED:
             ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
@@ -1104,12 +1110,17 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
     FILE_ENTRY *fileEntry;
     DWORD i;
     BOOL bPathExists;
+    BOOL bTrash;
 
     if (!flFrom->dwNumFiles)
         return ERROR_SUCCESS;
 
-    if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
-        if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, FALSE, flFrom))
+    /* Windows also checks only the first item */
+    bTrash = (lpFileOp->fFlags & FOF_ALLOWUNDO)
+        && TRASH_CanTrashFile(flFrom->feFiles[0].szFullPath);
+
+    if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (!bTrash && lpFileOp->fFlags & FOF_WANTNUKEWARNING))
+        if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, bTrash, flFrom))
         {
             lpFileOp->fAnyOperationsAborted = TRUE;
             return 0;
@@ -1120,10 +1131,33 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         bPathExists = TRUE;
         fileEntry = &flFrom->feFiles[i];
 
+        if (!IsAttribFile(fileEntry->attributes) &&
+            (lpFileOp->fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
+            continue;
+
+        if (bTrash)
+        {
+            BOOL bDelete;
+            if (TRASH_TrashFile(fileEntry->szFullPath))
+                continue;
+
+            /* Note: Windows silently deletes the file in such a situation, we show a dialog */
+            if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
+                bDelete = SHELL_ConfirmDialogW(lpFileOp->hwnd, ASK_CANT_TRASH_ITEM, fileEntry->szFullPath);
+            else
+                bDelete = TRUE;
+
+            if (!bDelete)
+            {
+                lpFileOp->fAnyOperationsAborted = TRUE;
+                break;
+            }
+        }
+        
         /* delete the file or directory */
         if (IsAttribFile(fileEntry->attributes))
             bPathExists = DeleteFileW(fileEntry->szFullPath);
-        else if (!(lpFileOp->fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
+        else
             bPathExists = SHELL_DeleteDirectoryW(lpFileOp->hwnd, fileEntry->szFullPath, FALSE);
 
         if (!bPathExists)
@@ -1252,7 +1286,7 @@ static HRESULT rename_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_
 /* alert the user if an unsupported flag is used */
 static void check_flags(FILEOP_FLAGS fFlags)
 {
-    WORD wUnsupportedFlags = FOF_ALLOWUNDO | FOF_NO_CONNECTED_ELEMENTS |
+    WORD wUnsupportedFlags = FOF_NO_CONNECTED_ELEMENTS |
         FOF_NOCOPYSECURITYATTRIBS | FOF_NORECURSEREPARSE |
         FOF_RENAMEONCOLLISION | FOF_WANTMAPPINGHANDLE;
 
