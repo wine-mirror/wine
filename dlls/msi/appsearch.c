@@ -444,7 +444,9 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
     if (rc == ERROR_SUCCESS)
     {
         MSIRECORD *row = 0;
-        LPWSTR fileName;
+        LPWSTR fileName, section, key;
+        int field, type;
+        WCHAR buf[MAX_PATH];
 
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
@@ -460,11 +462,37 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
             goto end;
         }
 
-        /* get file name */
-        fileName = msi_dup_record_field(row,2);
-        FIXME("AppSearch unimplemented for IniLocator (ini file name %s)\n",
-         debugstr_w(fileName));
-        msi_free( fileName);
+        fileName = msi_dup_record_field(row, 2);
+        section = msi_dup_record_field(row, 3);
+        key = msi_dup_record_field(row, 4);
+        if ((field = MSI_RecordGetInteger(row, 5)) == MSI_NULL_INTEGER)
+            field = 0;
+        if ((type = MSI_RecordGetInteger(row, 6)) == MSI_NULL_INTEGER)
+            type = 0;
+
+        GetPrivateProfileStringW(section, key, NULL, buf,
+         sizeof(buf) / sizeof(WCHAR), fileName);
+        if (buf[0])
+        {
+            switch (type & 0x0f)
+            {
+            case msidbLocatorTypeDirectory:
+                FIXME("unimplemented for type Directory (dir: %s)\n",
+                 debugstr_w(buf));
+                break;
+            case msidbLocatorTypeFileName:
+                FIXME("unimplemented for type File (file: %s)\n",
+                 debugstr_w(buf));
+                break;
+            case msidbLocatorTypeRawValue:
+                *appValue = strdupW(buf);
+                break;
+            }
+        }
+
+        msi_free(fileName);
+        msi_free(section);
+        msi_free(key);
 
 end:
         if (row)
