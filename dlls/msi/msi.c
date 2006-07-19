@@ -1806,8 +1806,51 @@ end:
  */
 UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLSTATE eInstallState)
 {
-    FIXME("%s %s %i\n", debugstr_w(szProduct), debugstr_w(szFeature), eInstallState);
-    return ERROR_SUCCESS;
+    static const WCHAR szCostInit[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
+    MSIPACKAGE *package = NULL;
+    UINT r;
+    WCHAR sourcepath[MAX_PATH], filename[MAX_PATH];
+    DWORD sz;
+
+    TRACE("%s %s %i\n", debugstr_w(szProduct), debugstr_w(szFeature), eInstallState);
+
+    if (!szProduct || !szFeature)
+        return ERROR_INVALID_PARAMETER;
+
+    r = MSI_OpenProductW( szProduct, &package );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    sz = sizeof(sourcepath);
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
+                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
+
+    sz = sizeof(filename);
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
+                MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+
+    lstrcatW( sourcepath, filename );
+
+    MsiSetInternalUI( INSTALLUILEVEL_BASIC, NULL );
+
+    /* FIXME: how do we figure out the default location? */
+    if (eInstallState == INSTALLSTATE_DEFAULT)
+        eInstallState = INSTALLSTATE_LOCAL;
+
+    r = ACTION_PerformUIAction( package, szCostInit );
+    if (r != ERROR_SUCCESS)
+        goto end;
+
+    r = MSI_SetFeatureStateW( package, szFeature, eInstallState);
+    if (r != ERROR_SUCCESS)
+        goto end;
+
+    r = MSI_InstallPackage( package, sourcepath, NULL );
+
+end:
+    msiobj_release( &package->hdr );
+
+    return r;
 }
 
 /***********************************************************************
