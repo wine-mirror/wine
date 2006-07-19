@@ -3,7 +3,7 @@
 @ stub ScriptApplyLogicalWidth
 @ stdcall ScriptBreak(ptr long ptr ptr)
 @ stdcall ScriptCPtoX(long long long long ptr ptr ptr ptr ptr)
-@ stub ScriptCacheGetHeight
+@ stdcall ScriptCacheGetHeight(ptr ptr ptr)
 @ stdcall ScriptFreeCache(ptr)
 @ stdcall ScriptGetCMap(ptr ptr ptr long long ptr)
 @ stdcall ScriptGetFontProperties(long ptr ptr)

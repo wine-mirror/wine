@@ -652,3 +652,48 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         return hr;
     }
 }
+
+/***********************************************************************
+ *      ScriptCacheGetHeight (USP10.@)
+ *
+ * Retrieve the height of the font in the cache.
+ *
+ * PARAMS
+ *  hdc    [I]    Device context.
+ *  psc    [I/O]  Opaque pointer to a script cache.
+ *  height [O]    Receives font height.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, long *height)
+{
+    HDC phdc;
+    Scriptcache *pScriptcache;
+    TEXTMETRICW metric;
+
+    TRACE("(%p, %p, %p)\n", hdc, psc, height);
+
+    if  (!psc || !height)
+        return E_INVALIDARG;
+
+    if (!hdc) return E_PENDING;
+
+    if  (!*psc) {
+        pScriptcache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache));
+        pScriptcache->hdc = hdc;
+        phdc = hdc;
+        *psc = pScriptcache;
+    } else {
+        pScriptcache = *psc;
+        phdc = pScriptcache->hdc;
+    }
+
+    /* FIXME: get this from the cache */
+    if (!GetTextMetricsW(phdc, &metric))
+        return E_INVALIDARG;
+
+    *height = metric.tmHeight;
+    return S_OK;
+}
