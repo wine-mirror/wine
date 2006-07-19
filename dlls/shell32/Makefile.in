@@ -68,7 +68,8 @@ RC_BINARIES = \
 	printer.ico \
 	ramdisk.ico \
 	searching.avi \
-	shortcut.ico
+	shortcut.ico \
+	trash_file.ico
 
 C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc

@@ -148,6 +148,9 @@ void FreeChangeNotifications(void);
 #define ASK_CREATE_FOLDER         4
 #define ASK_OVERWRITE_FILE        5
 #define ASK_DELETE_SELECTED       6
+#define ASK_TRASH_FILE            7
+#define ASK_TRASH_FOLDER          8
+#define ASK_TRASH_MULTIPLE_ITEM   9
 
 BOOL SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pwszDir, BOOL bShowUI);
 BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir);

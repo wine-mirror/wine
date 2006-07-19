@@ -91,6 +91,21 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
 	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
 	    ids->text_resource_id  = IDS_DELETEMULTIPLE_TEXT;
 	    return TRUE;
+          case ASK_TRASH_FILE:
+            ids->icon_resource_id = IDI_SHELL_TRASH_FILE;
+            ids->caption_resource_id = IDS_DELETEITEM_CAPTION;
+            ids->text_resource_id = IDS_TRASHITEM_TEXT;
+            return TRUE;
+          case ASK_TRASH_FOLDER:
+            ids->icon_resource_id = IDI_SHELL_TRASH_FILE;
+            ids->caption_resource_id = IDS_DELETEFOLDER_CAPTION;
+            ids->text_resource_id = IDS_TRASHFOLDER_TEXT;
+            return TRUE;
+          case ASK_TRASH_MULTIPLE_ITEM:
+            ids->icon_resource_id = IDI_SHELL_TRASH_FILE;
+            ids->caption_resource_id = IDS_DELETEITEM_CAPTION;
+            ids->text_resource_id = IDS_TRASHMULTIPLE_TEXT;
+            return TRUE;
 	  case ASK_DELETE_SELECTED:
             ids->icon_resource_id = IDI_SHELL_CONFIRM_DELETE;
             ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
@@ -1061,7 +1076,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     return ERROR_SUCCESS;
 }
 
-static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, FILE_LIST *flFrom)
+static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, BOOL fTrash, FILE_LIST *flFrom)
 {
     if (flFrom->dwNumFiles > 1)
     {
@@ -1069,16 +1084,16 @@ static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, FILE_LIST *flFrom)
         const WCHAR format[] = {'%','d',0};
 
         wnsprintfW(tmp, sizeof(tmp)/sizeof(tmp[0]), format, flFrom->dwNumFiles);
-        return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_MULTIPLE_ITEM, tmp);
+        return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_MULTIPLE_ITEM:ASK_DELETE_MULTIPLE_ITEM), tmp);
     }
     else
     {
         FILE_ENTRY *fileEntry = &flFrom->feFiles[0];
 
         if (IsAttribFile(fileEntry->attributes))
-            return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_FILE, fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FILE:ASK_DELETE_FILE), fileEntry->szFullPath);
         else if (!(fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
-            return SHELL_ConfirmDialogW(hWnd, ASK_DELETE_FOLDER, fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FOLDER:ASK_DELETE_FOLDER), fileEntry->szFullPath);
     }
     return TRUE;
 }
@@ -1094,7 +1109,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         return ERROR_SUCCESS;
 
     if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
-        if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, flFrom))
+        if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, FALSE, flFrom))
         {
             lpFileOp->fAnyOperationsAborted = TRUE;
             return 0;
