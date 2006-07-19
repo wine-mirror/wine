@@ -44,7 +44,7 @@ static BOOL init_function_ptrs( void )
 
 static const struct
 {
-    LPSTR name;
+    LPCSTR name;
     DNS_NAME_FORMAT format;
     DNS_STATUS status;
 }
