@@ -165,6 +165,11 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "PotwierdŸ usuniêcie katalogu"
 	IDS_DELETEITEM_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ te %1 pliki?"
+	IDS_DELETESELECTED_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ wybrane elementy?"
+	IDS_TRASHITEM_TEXT "Czy jesteœ pewien, ¿e chcesz umieœciæ plik '%1' w Koszu?"
+	IDS_TRASHFOLDER_TEXT "Czy jesteœ pewien, ¿e chcesz umieœciæ folder '%1' i ca³¹ jego zawartoœæ w koszu"
+	IDS_TRASHMULTIPLE_TEXT "Elementów: %1 - czy na pewno chcesz je umieœciæ w Koszu?"
+	IDS_CANTTRASH_TEXT "Nie mogê przenieœæ elementu '%1' do Kosza. Czy chcesz go zamiast tego usun¹æ?"
 	IDS_OVERWRITEFILE_TEXT "Zast¹piæ plik %1?"
 	IDS_OVERWRITEFILE_CAPTION "PotwierdŸ zast¹pienie pliku"
 
