@@ -762,26 +762,18 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
     return langid;
 }
 
-/***********************************************************************
- * MsiGetLanguage (MSI.@)
- */
-UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
+UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel )
 {
     static const WCHAR szInstallLevel[] = {
         'I','N','S','T','A','L','L','L','E','V','E','L',0 };
     static const WCHAR fmt[] = { '%','d',0 };
-    MSIPACKAGE* package;
     WCHAR level[6];
     UINT r;
 
-    TRACE("%ld %i\n", hInstall, iInstallLevel);
+    TRACE("%p %i\n", package, iInstallLevel);
 
     if (iInstallLevel<1 || iInstallLevel>32767)
         return ERROR_INVALID_PARAMETER;
-
-    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
-    if ( !package )
-        return ERROR_INVALID_HANDLE;
 
     sprintfW( level, fmt, iInstallLevel );
     r = MSI_SetPropertyW( package, szInstallLevel, level );
@@ -789,6 +781,25 @@ UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
     {
         r = MSI_SetFeatureStates( package );
     }
+
+    return r;
+}
+
+/***********************************************************************
+ * MsiSetInstallLevel (MSI.@)
+ */
+UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
+{
+    MSIPACKAGE* package;
+    UINT r;
+
+    TRACE("%ld %i\n", hInstall, iInstallLevel);
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if ( !package )
+        return ERROR_INVALID_HANDLE;
+
+    r = MSI_SetInstallLevel( package, iInstallLevel );
 
     msiobj_release( &package->hdr );
 

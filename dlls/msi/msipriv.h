@@ -381,6 +381,9 @@ extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
 extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
 extern UINT MSI_ViewClose( MSIQUERY* );
 
+/* install internals */
+extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );
+
 /* package internals */
 extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE * );
 extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE ** );
