@@ -962,13 +962,7 @@ int main(void) {
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_builtin_wchar_ctype" = "yes"
   then
-    BUILTINFLAG=""
-    for builtin in \
-      iswalnum iswalpha iswcntrl iswdigit iswgraph iswlower \
-      iswprint iswpunct iswspace iswupper iswxdigit towlower towupper
-    do
-      BUILTINFLAG="$BUILTINFLAG -fno-builtin-$builtin"
-    done
+    BUILTINFLAG="-fno-builtin"
   fi
 fi
 
