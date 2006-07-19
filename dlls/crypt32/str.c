@@ -62,6 +62,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     }
     else
         ret++;
+    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
     return ret;
 }
 
@@ -106,6 +107,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     }
     else
         ret++;
+    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
 
@@ -116,20 +118,21 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
  */
 static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
 {
-    DWORD chars = min(lstrlenA(prefix), csz);
+    DWORD chars;
 
     TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
 
-    if (psz && chars)
-        memcpy(psz, prefix, chars);
-    csz -= chars;
-    if (csz > 1)
+    if (psz)
     {
-        if (psz)
-            *(psz + chars) = '=';
+        chars = min(lstrlenA(prefix), csz);
+        memcpy(psz, prefix, chars);
+        csz -= chars;
+        *(psz + chars) = '=';
         chars++;
         csz--;
     }
+    else
+        chars = lstrlenA(prefix) + 1;
     return chars;
 }
 
@@ -171,9 +174,9 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
         else
             rdnSep = plusSep;
         rdnSepLen = strlen(rdnSep);
-        for (i = 0; ret < csz && i < info->cRDN; i++)
+        for (i = 0; (!psz || ret < csz) && i < info->cRDN; i++)
         {
-            for (j = 0; ret < csz && j < info->rgRDN[i].cRDNAttr; j++)
+            for (j = 0; (!psz || ret < csz) && j < info->rgRDN[i].cRDNAttr; j++)
             {
                 DWORD chars;
                 char prefixBuf[10]; /* big enough for GivenName */
@@ -200,7 +203,8 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                 if (prefix)
                 {
                     /* - 1 is needed to account for the NULL terminator. */
-                    chars = CRYPT_AddPrefixA(prefix, psz + ret, csz - ret - 1);
+                    chars = CRYPT_AddPrefixA(prefix,
+                     psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                     csz -= chars;
                 }
@@ -208,7 +212,7 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                 chars = CertRDNValueToStrA(
                  info->rgRDN[i].rgRDNAttr[j].dwValueType, 
                  &info->rgRDN[i].rgRDNAttr[j].Value, psz ? psz + ret : NULL,
-                 csz - ret - 1);
+                 psz ? csz - ret : 0);
                 if (chars)
                     ret += chars - 1;
                 if (j < info->rgRDN[i].cRDNAttr - 1)
@@ -235,6 +239,7 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     }
     else
         ret++;
+    TRACE("Returning %s\n", debugstr_a(psz));
     return ret;
 }
 
@@ -246,25 +251,24 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
  */
 static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
 {
-    DWORD chars = min(lstrlenA(prefix), csz);
+    DWORD chars;
 
     TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
 
-    if (psz && chars)
+    if (psz)
     {
         DWORD i;
 
+        chars = min(lstrlenA(prefix), csz);
         for (i = 0; i < chars; i++)
             *(psz + i) = prefix[i];
-    }
-    csz -= chars;
-    if (csz > 1)
-    {
-        if (psz)
-            *(psz + chars) = '=';
+        csz -= chars;
+        *(psz + chars) = '=';
         chars++;
         csz--;
     }
+    else
+        chars = lstrlenA(prefix) + 1;
     return chars;
 }
 
@@ -275,20 +279,21 @@ static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
  */
 static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
 {
-    DWORD chars = min(lstrlenW(prefix), csz);
+    DWORD chars;
 
     TRACE("(%s, %p, %ld)\n", debugstr_w(prefix), psz, csz);
 
-    if (psz && chars)
-        memcpy(psz, prefix, chars * sizeof(WCHAR));
-    csz -= chars;
-    if (csz > 1)
+    if (psz)
     {
-        if (psz)
-            *(psz + chars) = '=';
+        chars = min(lstrlenW(prefix), csz);
+        memcpy(psz, prefix, chars * sizeof(WCHAR));
+        csz -= chars;
+        *(psz + chars) = '=';
         chars++;
         csz--;
     }
+    else
+        chars = lstrlenW(prefix) + 1;
     return chars;
 }
 
@@ -330,9 +335,9 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
         else
             rdnSep = plusSep;
         rdnSepLen = lstrlenW(rdnSep);
-        for (i = 0; ret < csz && i < info->cRDN; i++)
+        for (i = 0; (!psz || ret < csz) && i < info->cRDN; i++)
         {
-            for (j = 0; ret < csz && j < info->rgRDN[i].cRDNAttr; j++)
+            for (j = 0; (!psz || ret < csz) && j < info->rgRDN[i].cRDNAttr; j++)
             {
                 DWORD chars;
                 LPCSTR prefixA = NULL;
@@ -355,15 +360,16 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                 if (prefixW)
                 {
                     /* - 1 is needed to account for the NULL terminator. */
-                    chars = CRYPT_AddPrefixW(prefixW, psz + ret, csz - ret - 1);
+                    chars = CRYPT_AddPrefixW(prefixW,
+                     psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                     csz -= chars;
                 }
                 else if (prefixA)
                 {
                     /* - 1 is needed to account for the NULL terminator. */
-                    chars = CRYPT_AddPrefixAToW(prefixA, psz + ret,
-                     csz - ret - 1);
+                    chars = CRYPT_AddPrefixAToW(prefixA,
+                     psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                     csz -= chars;
                 }
@@ -371,7 +377,7 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                 chars = CertRDNValueToStrW(
                  info->rgRDN[i].rgRDNAttr[j].dwValueType, 
                  &info->rgRDN[i].rgRDNAttr[j].Value, psz ? psz + ret : NULL,
-                 csz - ret - 1);
+                 psz ? csz - ret : 0);
                 if (chars)
                     ret += chars - 1;
                 if (j < info->rgRDN[i].cRDNAttr - 1)
@@ -398,6 +404,7 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     }
     else
         ret++;
+    TRACE("Returning %s\n", debugstr_w(psz));
     return ret;
 }
 

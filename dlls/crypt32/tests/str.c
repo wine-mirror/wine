@@ -297,6 +297,9 @@ static void test_NameToStrConversionA(PCERT_NAME_BLOB pName, DWORD dwStrType,
     char buffer[2000] = { 0 };
     DWORD i;
 
+    i = pCertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, NULL, 0);
+    ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
+     lstrlenA(expected) + 1, i);
     i = pCertNameToStrA(X509_ASN_ENCODING,pName, dwStrType, buffer,
      sizeof(buffer));
     ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
@@ -363,6 +366,9 @@ static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
     WCHAR buffer[2000] = { 0 };
     DWORD i;
 
+    i = pCertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, NULL, 0);
+    ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
+     lstrlenW(expected) + 1, i);
     i = pCertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, buffer,
      sizeof(buffer) / sizeof(buffer[0]));
     ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
