@@ -1053,12 +1053,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
-            if (nt->OptionalHeader.ImageBase == 0x400000) {
-                ERR("Image was mapped at %p: standard load address for a Win32 program (0x00400000) not available\n", ptr);
-                ERR("Do you have exec-shield or prelink active?\n");
-            } else
-                ERR( "FATAL: Need to relocate module from addr %lx, but there are no relocation records\n",
-                     nt->OptionalHeader.ImageBase );
+            WARN( "Need to relocate module from addr %lx, but there are no relocation records\n",
+                  nt->OptionalHeader.ImageBase );
+            status = STATUS_CONFLICTING_ADDRESSES;
             goto error;
         }
 
