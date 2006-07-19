@@ -390,8 +390,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
-BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info,
-                             Display* display);
+BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
 
 /*****************************************************************************
  * Internal representation of a light

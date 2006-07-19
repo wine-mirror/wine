@@ -690,6 +690,7 @@ typedef unsigned int GLhandleARB;
 #ifndef GL_ARB_vertex_shader
 #define GL_ARB_vertex_shader 1
 #define GL_VERTEX_SHADER_ARB              0x8B31
+#define GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB 0x8B4A
 #define GL_PROGRAM_OBJECT_ARB             0x8B40
 #define GL_SHADER_OBJECT_ARB              0x8B48
 #define GL_OBJECT_TYPE_ARB                0x8B4E
@@ -1474,7 +1475,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC,       glSecondaryColor3fEXT); \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,      glSecondaryColor3fvEXT); \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC,  glSecondaryColorPointerEXT); \
-    /* GL_EXT_secondary_color */ \
+    /* GL_ARB_vertex_program */ \
     USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC,              glGenProgramsARB); \
     USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC,              glBindProgramARB); \
     USE_GL_FUNC(PGLFNPROGRAMSTRINGARBPROC,            glProgramStringARB); \
@@ -1483,6 +1484,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC,      glVertexAttribPointerARB); \
     USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC,  glEnableVertexAttribArrayARB); \
     USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
+    USE_GL_FUNC(PGLFNGETPROGRAMIVARBPROC,             glGetProgramivARB); \
     /* GL_ARB_shader_objects */ \
     USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERIVARBPROC,     glGetObjectParameterivARB); \
     USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERFVARBPROC,     glGetObjectParameterfvARB); \

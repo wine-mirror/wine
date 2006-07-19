@@ -253,7 +253,10 @@ static void select_shader_mode(
  * IWineD3D parts follows
  **********************************************************/
 
-BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
+BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    WineD3D_GL_Info *gl_info = &This->gl_info;
+
     const char *GL_Extensions    = NULL;
     const char *GLX_Extensions   = NULL;
     const char *gl_string        = NULL;
@@ -492,8 +495,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     gl_info->vs_ati_version = VS_VERSION_NOT_SUPPORTED;
 
     /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = NULL;
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
     GL_EXT_FUNCS_GEN;
+    GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
     /* Retrieve opengl defaults */
@@ -541,7 +545,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
                 gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
-                glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max);
+                GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
                 gl_info->ps_arb_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_imaging") == 0) {
@@ -602,7 +606,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->vs_arb_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", gl_info->vs_arb_version);
                 gl_info->supported[ARB_VERTEX_PROGRAM] = TRUE;
-                glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max);
+                GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max float constants=%u\n", gl_max);
                 gl_info->vs_arb_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
@@ -783,11 +787,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
 
 /* TODO: config lookups */
 
-
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
-    GL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
     if (display != NULL) {
         GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
         TRACE_(d3d_caps)("GLX_Extensions reported:\n");
@@ -809,10 +808,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
             }
         }
     }
-
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
-    GLX_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
 
     /* If we created a dummy context, throw it away */
     if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
@@ -1095,7 +1090,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
             WineD3D_Context *fake_ctx = NULL;
             if (glXGetCurrentContext() == NULL) fake_ctx = WineD3D_CreateFakeGLContext();
             /* If we don't know the device settings, go query them now */
-            isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
+            isGLInfoValid = IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
             if (fake_ctx != NULL) WineD3D_ReleaseFakeGLContext(fake_ctx);
         }
 
@@ -1526,7 +1521,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     /* If we don't know the device settings, go query them now */
     if (This->isGLInfoValid == FALSE) {
         /* use the desktop window to fill gl caps */
-        BOOL rc = IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
+        BOOL rc = IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
 
         /* We are running off a real context, save the values */
         if (rc) This->isGLInfoValid = TRUE;
@@ -1915,7 +1910,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     /* Setup some defaults for creating the implicit swapchain */
     ENTER_GL();
     /* FIXME: both of those should be made per adapter */
-    IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
+    IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
     LEAVE_GL();
     select_shader_mode(&This->gl_info, DeviceType,
         &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
