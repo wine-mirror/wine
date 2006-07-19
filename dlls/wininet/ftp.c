@@ -1323,7 +1323,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     }
     else
     {
-        r = FTP_FtpDeleteFileW(hFtpSession, lpszFileName);
+        r = FTP_FtpDeleteFileW(lpwfs, lpszFileName);
     }
 
 lend:
