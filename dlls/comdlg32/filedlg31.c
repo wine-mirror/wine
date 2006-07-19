@@ -33,11 +33,7 @@
 #include "cderr.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "winuser.h"
 #include "commdlg.h"
-#include "cderr.h"
-#include "winreg.h"
-#include "winternl.h"
 #include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
