@@ -847,6 +847,12 @@ static void preload_reserve( const char *str )
         start = end = NULL;
     }
 
+    /* check for overlap with low memory area */
+    if ((char *)end <= (char *)preload_info[0].addr + preload_info[0].size)
+        start = end = NULL;
+    else if ((char *)start < (char *)preload_info[0].addr + preload_info[0].size)
+        start = (char *)preload_info[0].addr + preload_info[0].size;
+
     /* entry 2 is for the PE exe */
     preload_info[2].addr = start;
     preload_info[2].size = (char *)end - (char *)start;
