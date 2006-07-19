@@ -35,6 +35,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/contr
 #include "action.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -368,6 +369,16 @@ UINT ACTION_DialogBox( MSIPACKAGE* package, LPCWSTR szDialogName )
     return r;
 }
 
+static UINT ControlEvent_SetInstallLevel(MSIPACKAGE* package, LPCWSTR argument,
+                                          msi_dialog* dialog)
+{
+    int iInstallLevel = atolW(argument);
+
+    TRACE("Setting install level: %i\n", iInstallLevel);
+
+    return MSI_SetInstallLevel( package, iInstallLevel );
+}
+
 static const struct _events Events[] = {
     { "EndDialog",ControlEvent_EndDialog },
     { "NewDialog",ControlEvent_NewDialog },
@@ -379,6 +390,7 @@ static const struct _events Events[] = {
     { "AddSource",ControlEvent_AddSource },
     { "SetTargetPath",ControlEvent_SetTargetPath },
     { "Reset",ControlEvent_Reset },
+    { "SetInstallLevel",ControlEvent_SetInstallLevel },
     { NULL,NULL },
 };
 
