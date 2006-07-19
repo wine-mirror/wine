@@ -1117,7 +1117,7 @@ end:
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
-    WCHAR squishProduct[GUID_SIZE], comp[39];
+    WCHAR squishProduct[33], comp[GUID_SIZE];
     GUID guid;
     LPWSTR components, p, parent_feature;
     UINT rc;
@@ -1166,14 +1166,14 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     }
 
     r = INSTALLSTATE_LOCAL;
-    for( p = components; (*p != 2) && (lstrlenW(p) > GUID_SIZE); p += GUID_SIZE)
+    for( p = components; (*p != 2) && (lstrlenW(p) > 20); p += 20)
     {
         if (!decode_base85_guid( p, &guid ))
         {
             ERR("%s\n", debugstr_w(p));
             break;
         }
-        StringFromGUID2(&guid, comp, 39);
+        StringFromGUID2(&guid, comp, GUID_SIZE);
         r = MsiGetComponentPathW(szProduct, comp, NULL, 0);
         if (r != INSTALLSTATE_LOCAL && r != INSTALLSTATE_SOURCE)
         {
