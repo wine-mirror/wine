@@ -339,6 +339,7 @@ extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
 extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode );
+extern UINT MSI_SetFeatureStates( MSIPACKAGE *package );
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);

@@ -1590,7 +1590,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
     return TRUE;
 }
 
-static UINT MSI_SetFeatureStates(MSIPACKAGE *package)
+UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 {
     int install_level;
     static const WCHAR szlevel[] =

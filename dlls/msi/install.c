@@ -785,6 +785,12 @@ UINT WINAPI MsiSetInstallLevel(MSIHANDLE hInstall, int iInstallLevel)
 
     sprintfW( level, fmt, iInstallLevel );
     r = MSI_SetPropertyW( package, szInstallLevel, level );
+    if ( r == ERROR_SUCCESS )
+    {
+        r = MSI_SetFeatureStates( package );
+    }
+
     msiobj_release( &package->hdr );
+
     return r;
 }
