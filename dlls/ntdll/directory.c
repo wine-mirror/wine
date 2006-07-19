@@ -911,6 +911,9 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         while (res != -1)
         {
             if (!de[0].d_reclen) break;
+            /* make sure names are null-terminated to work around an x86-64 kernel bug */
+            if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
+            if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
             if (de[1].d_name[0])
                 info = append_entry( buffer, &io->Information, length,
                                      de[1].d_name, de[0].d_name, mask );
@@ -942,6 +945,9 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         while (res != -1)
         {
             if (!de[0].d_reclen) break;
+            /* make sure names are null-terminated to work around an x86-64 kernel bug */
+            if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
+            if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
             if (de[1].d_name[0])
                 info = append_entry( buffer, &io->Information, length,
                                      de[1].d_name, de[0].d_name, mask );
@@ -1247,6 +1253,9 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                 for (;;)
                 {
                     if (!de[0].d_reclen) break;
+                    /* make sure names are null-terminated to work around an x86-64 kernel bug */
+                    if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
+                    if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
 
                     if (de[1].d_name[0])
                     {
