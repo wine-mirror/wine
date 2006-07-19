@@ -97,6 +97,9 @@ static void test_checkboxes(void)
     HWND hwnd, hwndparent = 0;
     LVITEMA item;
     DWORD r;
+    static CHAR text[]  = "Text",
+                text2[] = "Text2",
+                text3[] = "Text3";
 
     hwnd = CreateWindowEx(0, "SysListView32", "foo", LVS_REPORT, 
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
@@ -108,7 +111,7 @@ static void test_checkboxes(void)
     item.state = 0xfccc;
     item.iItem = 0;
     item.iSubItem = 0;
-    item.pszText = "Text";
+    item.pszText = text;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 0, "ret %ld\n", r);
 
@@ -124,7 +127,7 @@ static void test_checkboxes(void)
     item.state = 0xfccc;
     item.iItem = 1;
     item.iSubItem = 0;
-    item.pszText = "Text";
+    item.pszText = text;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 1, "ret %ld\n", r);
 
@@ -136,7 +139,7 @@ static void test_checkboxes(void)
 
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
     ok(r == 0, "should return zero\n");
-    
+
     /* Having turned on checkboxes, check that all existing items are set to 0x1000 (unchecked) */
     item.iItem = 0;
     item.mask = LVIF_STATE;
@@ -148,7 +151,7 @@ static void test_checkboxes(void)
     item.iItem = 2;
     item.mask = LVIF_TEXT;
     item.state = 0;
-    item.pszText = "Text2";
+    item.pszText = text2;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 2, "ret %ld\n", r);
 
@@ -163,7 +166,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_TEXT | LVIF_STATE;
     item.stateMask = 0xffff;
     item.state = 0x2aaa;
-    item.pszText = "Text3";
+    item.pszText = text3;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 3, "ret %ld\n", r);
 
@@ -189,7 +192,7 @@ static void test_checkboxes(void)
     /* Set the style again and check that doesn't change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
     ok(r == LVS_EX_CHECKBOXES, "ret %lx\n", r);
-   
+
     item.iItem = 3;
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
@@ -209,13 +212,12 @@ static void test_checkboxes(void)
     /* Now setting the style again will change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
     ok(r == 0, "ret %lx\n", r);
-   
+
     item.iItem = 3;
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(item.state == 0x1aaa, "state %x\n", item.state);
-
 
     DestroyWindow(hwnd);
 }
