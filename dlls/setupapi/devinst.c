@@ -148,8 +148,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExA(
                                            ClassGuidListSize, RequiredSize,
                                            MachineNameW, Reserved);
 
-    if (MachineNameW)
-        MyFree(MachineNameW);
+    MyFree(MachineNameW);
 
     return bResult;
 }
@@ -366,9 +365,7 @@ BOOL WINAPI SetupDiClassGuidsFromNameExA(
                                            ClassGuidListSize, RequiredSize,
                                            MachineNameW, Reserved);
 
-    if (MachineNameW)
-        MyFree(MachineNameW);
-
+    MyFree(MachineNameW);
     MyFree(ClassNameW);
 
     return bResult;
@@ -636,8 +633,7 @@ SetupDiCreateDeviceInfoListExA(const GUID *ClassGuid,
     hDevInfo = SetupDiCreateDeviceInfoListExW(ClassGuid, hwndParent,
                                               MachineNameW, Reserved);
 
-    if (MachineNameW)
-        MyFree(MachineNameW);
+    MyFree(MachineNameW);
 
     return hDevInfo;
 }
@@ -1303,8 +1299,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExA(
     hKey = SetupDiOpenClassRegKeyExW(ClassGuid, samDesired,
                                      Flags, MachineNameW, Reserved);
 
-    if (MachineNameW)
-        MyFree(MachineNameW);
+    MyFree(MachineNameW);
 
     return hKey;
 }
