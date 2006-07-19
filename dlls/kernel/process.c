@@ -463,6 +463,7 @@ static void set_library_wargv( char **argv )
     }
     argv[argc] = NULL;
 
+    __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_wargv = wargv;
 }
@@ -816,59 +817,33 @@ static void start_process( void *arg )
  *
  * Change the process name in the ps output.
  */
-static void set_process_name( int *argc, char *argv[], char *name )
+static void set_process_name( int argc, char *argv[] )
 {
 #ifdef HAVE_PRCTL
     int i, offset;
-    char *prctl_name = NULL;
-    char *end = argv[*argc-1] + strlen(argv[*argc-1]) + 1;
+    char *p, *prctl_name = argv[1];
+    char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
 
 #ifndef PR_SET_NAME
 # define PR_SET_NAME 15
 #endif
 
-    if (!name)
-    {
-        char *p;
-        prctl_name = argv[1];
-        if ((p = strrchr( prctl_name, '\\' ))) prctl_name = p + 1;
-        if ((p = strrchr( prctl_name, '/' ))) prctl_name = p + 1;
-    }
-    else
-    {
-        if (strlen(name) <= strlen(argv[0])) prctl_name = name;
-    }
+    if ((p = strrchr( prctl_name, '\\' ))) prctl_name = p + 1;
+    if ((p = strrchr( prctl_name, '/' ))) prctl_name = p + 1;
 
-    if (prctl_name && prctl( PR_SET_NAME, prctl_name ) != -1)
+    if (prctl( PR_SET_NAME, prctl_name ) != -1)
     {
-        if (name)
-        {
-            strcpy( argv[0], name );
-            offset = argv[1] - (argv[0] + strlen(name) + 1);
-            memmove( argv[1] - offset, argv[1], end - argv[1] );
-            memset( end - offset, 0, offset );
-            for (i = 1; i < *argc; i++) argv[i] -= offset;
-        }
-        else
-        {
-            offset = argv[1] - argv[0];
-            memmove( argv[1] - offset, argv[1], end - argv[1] );
-            memset( end - offset, 0, offset );
-            for (i = 1; i < *argc; i++) argv[i-1] = argv[i] - offset;
-            argv[i-1] = NULL;
-            (*argc)--;
-        }
+        offset = argv[1] - argv[0];
+        memmove( argv[1] - offset, argv[1], end - argv[1] );
+        memset( end - offset, 0, offset );
+        for (i = 1; i < argc; i++) argv[i-1] = argv[i] - offset;
+        argv[i-1] = NULL;
     }
     else
 #endif  /* HAVE_PRCTL */
     {
-        if (name) argv[0] = name;
-        else
-        {
-            /* remove argv[0] */
-            memmove( argv, argv + 1, *argc * sizeof(argv[0]) );
-            (*argc)--;
-        }
+        /* remove argv[0] */
+        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
     }
 }
 
@@ -888,7 +863,7 @@ void __wine_kernel_init(void)
 
     /* Initialize everything */
     if (!process_init()) exit(1);
-    set_process_name( &__wine_main_argc, __wine_main_argv, NULL );
+    set_process_name( __wine_main_argc, __wine_main_argv );
     set_library_wargv( __wine_main_argv );
 
     if (peb->ProcessParameters->ImagePathName.Buffer)
