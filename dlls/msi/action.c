@@ -1315,6 +1315,9 @@ static UINT load_all_files(MSIPACKAGE *package)
          '`','F','i','l','e','`',' ', 'O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`', 0};
 
+    if (!list_empty(&package->files))
+        return ERROR_SUCCESS;
+
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -1327,16 +1330,16 @@ static UINT load_all_files(MSIPACKAGE *package)
 
 
 /*
- * I am not doing any of the costing functionality yet. 
+ * I am not doing any of the costing functionality yet.
  * Mostly looking at doing the Component and Feature loading
  *
  * The native MSI does A LOT of modification to tables here. Mostly adding
- * a lot of temporary columns to the Feature and Component tables. 
+ * a lot of temporary columns to the Feature and Component tables.
  *
  *    note: Native msi also tracks the short filename. But I am only going to
  *          track the long ones.  Also looking at this directory table
  *          it appears that the directory table does not get the parents
- *          resolved base on property only based on their entries in the 
+ *          resolved base on property only based on their entries in the
  *          directory table.
  */
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
@@ -1353,7 +1356,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 
     if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
         return ERROR_SUCCESS;
-    
+
     MSI_SetPropertyW(package, szCosting, szZero);
     MSI_SetPropertyW(package, cszRootDrive , c_colon);
 
@@ -1361,8 +1364,11 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MSI_IterateRecords(view, NULL, load_feature, package);
-    msiobj_release(&view->hdr);
+    if (list_empty(&package->features))
+    {
+        rc = MSI_IterateRecords(view, NULL, load_feature, package);
+        msiobj_release(&view->hdr);
+    }
 
     load_all_files(package);
 
