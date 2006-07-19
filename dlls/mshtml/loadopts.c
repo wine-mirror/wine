@@ -106,11 +106,11 @@ static ULONG WINAPI HtmlLoadOptions_Release(IHtmlLoadOptions *iface)
             last = iter;
             iter = iter->next;
 
-            HeapFree(GetProcessHeap(), 0, last->buffer);
-            HeapFree(GetProcessHeap(), 0, last);
+            mshtml_free(last->buffer);
+            mshtml_free(last);
         }
 
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
     }
 
     return ref;
@@ -159,13 +159,13 @@ static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD d
     }
 
     if(!iter) {
-        iter = HeapAlloc(GetProcessHeap(), 0, sizeof(load_opt));
+        iter = mshtml_alloc(sizeof(load_opt));
         iter->next = This->opts;
         This->opts = iter;
 
         iter->option = dwOption;
     }else {
-        HeapFree(GetProcessHeap(), 0, iter->buffer);
+        mshtml_free(iter->buffer);
     }
 
     if(!cbBuf) {
@@ -176,7 +176,7 @@ static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD d
     }
 
     iter->size = cbBuf;
-    iter->buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf);
+    iter->buffer = mshtml_alloc(cbBuf);
     memcpy(iter->buffer, pBuffer, iter->size);
 
     return S_OK;
@@ -199,7 +199,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown *pUnkOuter, REFIID riid, void** ppv)
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLLoadOptions));
+    ret = mshtml_alloc(sizeof(HTMLLoadOptions));
 
     ret->lpHtmlLoadOptionsVtbl = &HtmlLoadOptionsVtbl;
     ret->ref = 1;

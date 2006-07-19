@@ -52,7 +52,7 @@ static void clean_up(void)
 
     if(tmp_file_name) {
         DeleteFileW(tmp_file_name);
-        HeapFree(GetProcessHeap(), 0, tmp_file_name);
+        mshtml_free(tmp_file_name);
         tmp_file_name = NULL;
     }
 
@@ -94,7 +94,7 @@ static void set_registry(LPCSTR install_dir)
     }
 
     len = MultiByteToWideChar(CP_ACP, 0, install_dir, -1, NULL, 0)-1;
-    gecko_path = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
+    gecko_path = mshtml_alloc((len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
     MultiByteToWideChar(CP_ACP, 0, install_dir, -1, gecko_path, (len+1)*sizeof(WCHAR));
 
     if (len && gecko_path[len-1] != '\\')
@@ -105,7 +105,7 @@ static void set_registry(LPCSTR install_dir)
     size = len*sizeof(WCHAR)+sizeof(wszWineGecko);
     res = RegSetValueExW(hkey, wszGeckoPath, 0, REG_SZ, (LPVOID)gecko_path,
                        len*sizeof(WCHAR)+sizeof(wszWineGecko));
-    HeapFree(GetProcessHeap(), 0, gecko_path);
+    mshtml_free(gecko_path);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
         ERR("Failed to set GeckoPath value: %08lx\n", res);
@@ -141,7 +141,7 @@ static HRESULT WINAPI InstallCallback_OnStartBinding(IBindStatusCallback *iface,
 
     GetTempPathW(sizeof(tmp_dir)/sizeof(WCHAR), tmp_dir);
 
-    tmp_file_name = HeapAlloc(GetProcessHeap(), 0, MAX_PATH*sizeof(WCHAR));
+    tmp_file_name = mshtml_alloc(MAX_PATH*sizeof(WCHAR));
     GetTempFileNameW(tmp_dir, NULL, 0, tmp_file_name);
 
     TRACE("creating temp file %s\n", debugstr_w(tmp_file_name));
@@ -210,7 +210,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     pExtractFilesA = (typeof(ExtractFilesA)*)GetProcAddress(advpack, "ExtractFiles");
 
     len = WideCharToMultiByte(CP_ACP, 0, tmp_file_name, -1, NULL, 0, NULL, NULL);
-    file_name = HeapAlloc(GetProcessHeap(), 0, len);
+    file_name = mshtml_alloc(len);
     WideCharToMultiByte(CP_ACP, 0, tmp_file_name, -1, file_name, -1, NULL, NULL);
 
     GetEnvironmentVariableA("ProgramFiles", program_files, sizeof(program_files));
@@ -218,7 +218,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     /* FIXME: Use unicode version (not yet implemented) */
     hres = pExtractFilesA(file_name, program_files, 0, NULL, NULL, 0);
     FreeLibrary(advpack);
-    HeapFree(GetProcessHeap(), 0, file_name);
+    mshtml_free(file_name);
     if(FAILED(hres)) {
         ERR("Could not extract package: %08lx\n", hres);
         clean_up();
@@ -296,12 +296,12 @@ static LPWSTR get_url(void)
     if(res != ERROR_SUCCESS)
         return NULL;
 
-    url = HeapAlloc(GetProcessHeap(), 0, size);
+    url = mshtml_alloc(size);
 
     res = RegQueryValueExW(hkey, wszGeckoUrl, NULL, &type, (LPBYTE)url, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
-        HeapFree(GetProcessHeap(), 0, url);
+        mshtml_free(url);
         return NULL;
     }
 
@@ -316,7 +316,7 @@ static DWORD WINAPI download_proc(PVOID arg)
     HRESULT hres;
 
     CreateURLMoniker(NULL, url, &mon);
-    HeapFree(GetProcessHeap(), 0, url);
+    mshtml_free(url);
     url = NULL;
 
     CreateAsyncBindCtx(0, &InstallCallback, 0, &bctx);

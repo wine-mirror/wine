@@ -125,7 +125,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
         static const char content_length[] = "Content-Length: %lu\r\n\r\n";
 
-        data = HeapAlloc(GetProcessHeap(), 0, headers_len+post_len+sizeof(content_length)+8);
+        data = mshtml_alloc(headers_len+post_len+sizeof(content_length)+8);
 
         if(headers_len) {
             WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);

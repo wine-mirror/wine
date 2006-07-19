@@ -141,10 +141,9 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
         }
 
         if(i == This->sinks_size)
-            This->sinks = HeapReAlloc(GetProcessHeap(), 0, This->sinks,
-                    (++This->sinks_size)*sizeof(*This->sinks));
+            This->sinks = mshtml_realloc(This->sinks,(++This->sinks_size)*sizeof(*This->sinks));
     }else {
-        This->sinks = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->sinks));
+        This->sinks = mshtml_alloc(sizeof(*This->sinks));
         This->sinks_size = 1;
         i = 0;
     }
@@ -193,7 +192,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
 
 static void ConnectionPoint_Create(HTMLDocument *doc, REFIID riid, ConnectionPoint **cp)
 {
-    ConnectionPoint *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ConnectionPoint));
+    ConnectionPoint *ret = mshtml_alloc(sizeof(ConnectionPoint));
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
     ret->doc = doc;
@@ -213,8 +212,8 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
             IUnknown_Release(This->sinks[i].unk);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->sinks);
-    HeapFree(GetProcessHeap(), 0, This);
+    mshtml_free(This->sinks);
+    mshtml_free(This);
 }
 
 #define CONPTCONT_THIS(iface) DEFINE_THIS(HTMLDocument, ConnectionPointContainer, iface)

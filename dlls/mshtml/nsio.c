@@ -136,13 +136,13 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     nsIWineURI_GetSpec(channel->uri, &uri_str);
     nsACString_GetData(&uri_str, &uria, NULL);
     len = MultiByteToWideChar(CP_ACP, 0, uria, -1, NULL, 0);
-    uri = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    uri = mshtml_alloc(len*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
     nsACString_Finish(&uri_str);
 
     ret = handle_uri(container, channel, uri);
 
-    HeapFree(GetProcessHeap(), 0, uri);
+    mshtml_free(uri);
 
     return ret;
 }
@@ -213,8 +213,8 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
-        HeapFree(GetProcessHeap(), 0, This->content);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This->content);
+        mshtml_free(This);
     }
 
     return ref;
@@ -1046,7 +1046,7 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->uri)
             nsIURI_Release(This->uri);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
     }
 
     return ref;
@@ -1471,7 +1471,7 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
 
 static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)
 {
-    nsURI *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsURI));
+    nsURI *ret = mshtml_alloc(sizeof(nsURI));
 
     ret->lpWineURIVtbl = &nsWineURIVtbl;
     ret->ref = 1;
@@ -1627,7 +1627,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
         return channel ? NS_OK : NS_ERROR_UNEXPECTED;
     }
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsChannel));
+    ret = mshtml_alloc(sizeof(nsChannel));
 
     ret->lpHttpChannelVtbl = &nsChannelVtbl;
     ret->lpUploadChannelVtbl = &nsUploadChannelVtbl;
@@ -1796,7 +1796,7 @@ nsIURI *get_nsIURI(LPCWSTR url)
     int len;
 
     len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, -1, NULL, NULL);
-    urla = HeapAlloc(GetProcessHeap(), 0, len);
+    urla = mshtml_alloc(len);
     WideCharToMultiByte(CP_ACP, 0, url, -1, urla, -1, NULL, NULL);
 
     nsACString_Init(&acstr, urla);
@@ -1806,7 +1806,7 @@ nsIURI *get_nsIURI(LPCWSTR url)
         FIXME("NewURI failed: %08lx\n", nsres);
 
     nsACString_Finish(&acstr);
-    HeapFree(GetProcessHeap(), 0, urla);
+    mshtml_free(urla);
 
     return ret;
 }

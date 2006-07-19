@@ -85,7 +85,7 @@ static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
 
     return ref;
 }
@@ -161,7 +161,7 @@ static const nsIInputStreamVtbl nsInputStreamVtbl = {
 
 static nsProtocolStream *create_nsprotocol_stream(IStream *stream)
 {
-    nsProtocolStream *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsProtocolStream));
+    nsProtocolStream *ret = mshtml_alloc(sizeof(nsProtocolStream));
 
     ret->lpInputStreamVtbl = &nsInputStreamVtbl;
     ret->ref = 1;
@@ -235,8 +235,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             nsISupports_Release(This->nscontext);
         if(This->nsstream)
             nsIInputStream_Release(NSINSTREAM(This->nsstream));
-        HeapFree(GetProcessHeap(), 0, This->headers);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This->headers);
+        mshtml_free(This);
     }
 
     return ref;
@@ -278,10 +278,10 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
 
         if(!This->nschannel)
             return S_OK;
-        HeapFree(GetProcessHeap(), 0, This->nschannel->content);
+        mshtml_free(This->nschannel->content);
 
         len = WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, NULL, 0, NULL, NULL);
-        This->nschannel->content = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        This->nschannel->content = mshtml_alloc(len*sizeof(WCHAR));
         WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, This->nschannel->content, -1, NULL, NULL);
     }
     }
@@ -554,7 +554,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
 {
-    BSCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BSCallback));
+    BSCallback *ret = mshtml_alloc(sizeof(BSCallback));
 
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->lpServiceProviderVtbl    = &ServiceProviderVtbl;
@@ -612,10 +612,9 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
         len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, NULL, 0);
 
         if(headers)
-            headers = HeapReAlloc(GetProcessHeap(), 0, headers,
-                                  (headers_len+len+1)*sizeof(WCHAR));
+            headers = mshtml_realloc(headers,(headers_len+len+1)*sizeof(WCHAR));
         else
-            headers = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            headers = mshtml_alloc((len+1)*sizeof(WCHAR));
 
         len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, headers+headers_len, -1);
         headers_len += len;

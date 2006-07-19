@@ -174,8 +174,8 @@ static ULONG WINAPI Hlink_Release(IHlink *iface)
     if(!ref) {
         if(This->mon)
             IMoniker_Release(This->mon);
-        HeapFree(GetProcessHeap(), 0, This->location);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This->location);
+        mshtml_free(This);
     }
 
     return ref;
@@ -211,7 +211,7 @@ static HRESULT WINAPI Hlink_SetMonikerReference(IHlink *iface, DWORD grfHLSETF,
 
     if(This->mon)
         IMoniker_Release(This->mon);
-    HeapFree(GetProcessHeap(), 0, This->location);
+    mshtml_free(This->location);
 
     if(pimkTarget)
         IMoniker_AddRef(pimkTarget);
@@ -220,7 +220,7 @@ static HRESULT WINAPI Hlink_SetMonikerReference(IHlink *iface, DWORD grfHLSETF,
     if(pwzLocation) {
         DWORD len = strlenW(pwzLocation)+1;
 
-        This->location = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        This->location = mshtml_alloc(len*sizeof(WCHAR));
         memcpy(This->location, pwzLocation, len*sizeof(WCHAR));
     }else {
         This->location = NULL;
@@ -360,7 +360,7 @@ static const IHlinkVtbl HlinkVtbl = {
 
 IHlink *Hlink_Create(void)
 {
-    Hlink *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Hlink));
+    Hlink *ret = mshtml_alloc(sizeof(Hlink));
 
     ret->lpHlinkVtbl = &HlinkVtbl;
     ret->ref = 1;

@@ -94,7 +94,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
     if(!ref) {
         if(This->nsselection)
             nsISelection_Release(This->nsselection);
-        HeapFree(GetProcessHeap(), 0, This);
+        mshtml_free(This);
     }
 
     return ref;
@@ -424,7 +424,7 @@ static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
 
 IHTMLTxtRange *HTMLTxtRange_Create(nsISelection *nsselection)
 {
-    HTMLTxtRange *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLTxtRange));
+    HTMLTxtRange *ret = mshtml_alloc(sizeof(HTMLTxtRange));
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
     ret->ref = 1;
