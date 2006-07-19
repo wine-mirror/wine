@@ -108,13 +108,13 @@ void shader_arb_load_constants(
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants for vertex shader */
             shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                                       WINED3D_VSHADER_MAX_CONSTANTS,
+                                       GL_LIMITS(vshader_constantsF),
                                        vertexDeclaration->constants, NULL);
         }
 
         /* Load DirectX 9 float constants for vertex shader */
         shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                                   WINED3D_VSHADER_MAX_CONSTANTS,
+                                   GL_LIMITS(vshader_constantsF),
                                    stateBlock->vertexShaderConstantF,
                                    stateBlock->set.vertexShaderConstantsF);
     }
@@ -124,7 +124,8 @@ void shader_arb_load_constants(
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
         /* Load DirectX 9 float constants for pixel shader */
-        shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, WINED3D_PSHADER_MAX_CONSTANTS,
+        shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, 
+                                   GL_LIMITS(pshader_constantsF),
                                    stateBlock->pixelShaderConstantF,
                                    stateBlock->set.pixelShaderConstantsF);
     }
@@ -134,10 +135,14 @@ void shader_arb_load_constants(
 void shader_generate_arb_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer) {
+    SHADER_BUFFER* buffer,
+    WineD3D_GL_Info* gl_info) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     DWORD i;
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
+            (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
         if (reg_maps->temporary[i])
@@ -162,8 +167,7 @@ void shader_generate_arb_declarations(
 
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
     shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
-                   This->baseShader.limits.constant_float,
-                   This->baseShader.limits.constant_float - 1);
+                   max_constantsF, max_constantsF - 1);
 }
 
 static const char* shift_tab[] = {

@@ -53,8 +53,8 @@
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
 
-#define MAX_VSHADER_CONSTANTS 96
-#define MAX_PSHADER_CONSTANTS 32
+#define MAX_CONST_I 16
+#define MAX_CONST_B 16
 
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
@@ -1021,13 +1021,13 @@ typedef struct SAVEDSTATES {
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
-        BOOL                      pixelShaderConstantsB[MAX_PSHADER_CONSTANTS];
-        BOOL                      pixelShaderConstantsI[MAX_PSHADER_CONSTANTS];
-        BOOL                      pixelShaderConstantsF[MAX_PSHADER_CONSTANTS];
+        BOOL                      pixelShaderConstantsB[MAX_CONST_B];
+        BOOL                      pixelShaderConstantsI[MAX_CONST_I];
+        BOOL                     *pixelShaderConstantsF;
         BOOL                      vertexShader;
-        BOOL                      vertexShaderConstantsB[MAX_VSHADER_CONSTANTS];
-        BOOL                      vertexShaderConstantsI[MAX_VSHADER_CONSTANTS];
-        BOOL                      vertexShaderConstantsF[MAX_VSHADER_CONSTANTS];
+        BOOL                      vertexShaderConstantsB[MAX_CONST_B];
+        BOOL                      vertexShaderConstantsI[MAX_CONST_I];
+        BOOL                     *vertexShaderConstantsF;
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -1053,9 +1053,9 @@ struct IWineD3DStateBlockImpl
     IWineD3DVertexShader      *vertexShader;
 
     /* Vertex Shader Constants */
-    BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
-    INT                        vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
-    float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
+    BOOL                       vertexShaderConstantB[MAX_CONST_B];
+    INT                        vertexShaderConstantI[MAX_CONST_I * 4];
+    float                     *vertexShaderConstantF;
 
     /* Stream Source */
     BOOL                      streamIsUP;
@@ -1089,9 +1089,9 @@ struct IWineD3DStateBlockImpl
     IWineD3DPixelShader      *pixelShader;
 
     /* Pixel Shader Constants */
-    BOOL                       pixelShaderConstantB[MAX_PSHADER_CONSTANTS];
-    INT                        pixelShaderConstantI[MAX_PSHADER_CONSTANTS * 4];
-    float                      pixelShaderConstantF[MAX_PSHADER_CONSTANTS * 4];
+    BOOL                       pixelShaderConstantB[MAX_CONST_B];
+    INT                        pixelShaderConstantI[MAX_CONST_I * 4];
+    float                     *pixelShaderConstantF;
 
     /* Indexed Vertex Blending */
     D3DVERTEXBLENDFLAGS       vertex_blend;
@@ -1417,6 +1417,8 @@ extern BOOL vshader_input_is_color(
     IWineD3DVertexShader* iface,
     unsigned int regnum);
 
+extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
+
 /* ARB_[vertex/fragment]_program helper functions */
 extern void shader_arb_load_constants(
     IWineD3DStateBlock* iface,
@@ -1545,12 +1547,14 @@ extern HRESULT shader_get_registers_used(
 extern void shader_generate_glsl_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer);
+    SHADER_BUFFER* buffer,
+    WineD3D_GL_Info* gl_info);
 
 extern void shader_generate_arb_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer);
+    SHADER_BUFFER* buffer,
+    WineD3D_GL_Info* gl_info);
 
 extern void shader_generate_main(
     IWineD3DBaseShader *iface,

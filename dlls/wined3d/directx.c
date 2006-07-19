@@ -208,32 +208,45 @@ static void select_shader_mode(
     int* ps_selected,
     int* vs_selected) {
 
+    /* Default # of constants to 0 */
+    gl_info->max_vshader_constantsF = 0;
+    gl_info->max_pshader_constantsF = 0;
+
     /* Give priority to user disable/emulation request.
      * Then respect REF device for software.
      * Then check capabilities for hardware, and fallback to software */
 
-    if (wined3d_settings.vs_mode == VS_NONE)
+    if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
-    else if (DeviceType == WINED3DDEVTYPE_REF || wined3d_settings.vs_mode == VS_SW)
+    } else if (DeviceType == WINED3DDEVTYPE_REF || wined3d_settings.vs_mode == VS_SW) {
         *vs_selected = SHADER_SW;
-    else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested)
+    } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
         *vs_selected = SHADER_GLSL;
-    else if (gl_info->supported[ARB_VERTEX_PROGRAM])
+        /* Subtract the other potential uniforms from the max available (bools & ints) */
+        gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+    } else if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
         *vs_selected = SHADER_ARB;
-    else
+        /* ARB shaders seem to have an implicit PARAM when fog is used, so we need to subtract 1 from the total available */
+        gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 1;
+    } else {
         *vs_selected = SHADER_SW;
+    }
 
     /* Fallback to SHADER_NONE where software pixel shaders should be used */
-    if (wined3d_settings.ps_mode == PS_NONE)
+    if (wined3d_settings.ps_mode == PS_NONE) {
         *ps_selected = SHADER_NONE;
-    else if (DeviceType == WINED3DDEVTYPE_REF)
+    } else if (DeviceType == WINED3DDEVTYPE_REF) {
         *ps_selected = SHADER_NONE;
-    else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested)
+    } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
         *ps_selected = SHADER_GLSL;
-    else if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        /* Subtract the other potential uniforms from the max available (bools & ints) */
+        gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+    } else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
         *ps_selected = SHADER_ARB;
-    else
+        gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
+    } else {
         *ps_selected = SHADER_NONE;
+    }
 }
 
 /**********************************************************
@@ -528,12 +541,21 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
                 gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
+                glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
+                gl_info->ps_arb_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_imaging") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB imaging support\n");
                 gl_info->supported[ARB_IMAGING] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ARB_shading_language_100") == 0) {
                 TRACE_(d3d_caps)(" FOUND: GL Shading Language v100 support\n");
                 gl_info->supported[ARB_SHADING_LANGUAGE_100] = TRUE;
+                glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: GL Shading Language support - max float vs constants=%u\n", gl_max);
+                gl_info->vs_glsl_constantsF = gl_max;
+                glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: GL Shading Language support - max float ps constants=%u\n", gl_max);
+                gl_info->ps_glsl_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -580,6 +602,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->vs_arb_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", gl_info->vs_arb_version);
                 gl_info->supported[ARB_VERTEX_PROGRAM] = TRUE;
+                glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max float constants=%u\n", gl_max);
+                gl_info->vs_arb_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
                 glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support GL_MAX_VERTEX_UNITS_ARB %d\n", gl_max);
@@ -1765,11 +1790,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         TRACE_(d3d_caps)("Vertex shader functionality not available\n");
     }
 
-    if (This->gl_info.gl_vendor == VENDOR_MESA || This->gl_info.gl_vendor == VENDOR_WINE) {
-        *pCaps->MaxVertexShaderConst = 95;
-    } else {
-        *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
-    }
+    *pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
 
     /* FIXME: the shader ode should be per adapter */
     if (wined3d_settings.ps_selected_mode == SHADER_GLSL) {
@@ -1839,6 +1860,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
     HDC hDC;
+    HRESULT temp_result;
 
     /* Validate the adapter number */
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -1897,6 +1919,10 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     LEAVE_GL();
     select_shader_mode(&This->gl_info, DeviceType,
         &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
+
+    temp_result = allocate_shader_constants(object->updateStateBlock);
+    if (WINED3D_OK != temp_result)
+        return temp_result;
 
     /* set the state of the device to valid */
     object->state = WINED3D_OK;

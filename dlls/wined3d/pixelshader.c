@@ -843,7 +843,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
         /* Base Declarations */
-        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Pack 3.0 inputs */
         if (This->baseShader.hex_version >= D3DPS_VERSION(3,0))
@@ -879,7 +879,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
 
         /* Base Declarations */
-        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);

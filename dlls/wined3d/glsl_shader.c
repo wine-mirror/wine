@@ -274,12 +274,12 @@ void shader_glsl_load_constants(
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants/uniforms for vertex shader */
-            shader_glsl_load_constantsF(vshader, gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+            shader_glsl_load_constantsF(vshader, gl_info, programId, GL_LIMITS(vshader_constantsF),
                                         vertexDeclaration->constants, NULL);
         }
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(vshader, gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+        shader_glsl_load_constantsF(vshader, gl_info, programId, GL_LIMITS(vshader_constantsF),
                                     stateBlock->vertexShaderConstantF, 
                                     stateBlock->set.vertexShaderConstantsF);
 
@@ -302,7 +302,7 @@ void shader_glsl_load_constants(
         shader_glsl_load_psamplers(gl_info, iface);
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(pshader, gl_info, programId, WINED3D_PSHADER_MAX_CONSTANTS,
+        shader_glsl_load_constantsF(pshader, gl_info, programId, GL_LIMITS(pshader_constantsF),
                                     stateBlock->pixelShaderConstantF,
                                     stateBlock->set.pixelShaderConstantsF);
 
@@ -322,7 +322,8 @@ void shader_glsl_load_constants(
 void shader_generate_glsl_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer) {
+    SHADER_BUFFER* buffer,
+    WineD3D_GL_Info* gl_info) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     int i;
@@ -338,8 +339,11 @@ void shader_generate_glsl_declarations(
     }
 
     /* Declare the constants (aka uniforms) */
-    if (This->baseShader.limits.constant_float > 0)
-        shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, This->baseShader.limits.constant_float);
+    if (This->baseShader.limits.constant_float > 0) {
+        unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
+                (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
+        shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, max_constantsF);
+    }
 
     if (This->baseShader.limits.constant_int > 0)
         shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);

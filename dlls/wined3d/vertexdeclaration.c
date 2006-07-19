@@ -308,7 +308,8 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
             DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
             if (This->constants == NULL ) {
-                This->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_VSHADER_CONSTANTS * 4 * sizeof(float));
+                This->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                        ((IWineD3DImpl*)This->wineD3DDevice->wineD3D)->gl_info.max_vshader_constantsF * 4 * sizeof(float));
             }
             TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
             for (i = 0; i < count; ++i) {

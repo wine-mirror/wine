@@ -26,6 +26,38 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
 
+/***************************************
+ * Stateblock helper functions follow
+ **************************************/
+
+/** Allocates the correct amount of space for pixel and vertex shader constants, 
+ * along with their set/changed flags on the given stateblock object
+ */
+HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
+    
+    IWineD3DStateBlockImpl *This = object;
+
+#define WINED3D_MEMCHECK(_object) if (NULL == _object) { FIXME("Out of memory!\n"); return E_OUTOFMEMORY; }
+
+    /* Allocate space for floating point constants */
+    object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
+    WINED3D_MEMCHECK(object->pixelShaderConstantF);
+    object->set.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF) );
+    WINED3D_MEMCHECK(object->set.pixelShaderConstantsF);
+    object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF));
+    WINED3D_MEMCHECK(object->changed.pixelShaderConstantsF);
+    object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
+    WINED3D_MEMCHECK(object->vertexShaderConstantF);
+    object->set.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
+    WINED3D_MEMCHECK(object->set.vertexShaderConstantsF);
+    object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
+    WINED3D_MEMCHECK(object->changed.vertexShaderConstantsF);
+
+#undef WINED3D_MEMCHECK
+
+    return WINED3D_OK;
+}
+
 /**********************************************************
  * IWineD3DStateBlockImpl IUnknown parts follows
  **********************************************************/
@@ -88,7 +120,14 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             if (NULL != This->vertexDecl) {
                 IWineD3DVertexDeclaration_Release(This->vertexDecl);
             }
-
+            
+            HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
+            HeapFree(GetProcessHeap(), 0, This->set.vertexShaderConstantsF);
+            HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
+            HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
+            HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
+            HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
+ 
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                 if (This->textures[counter]) {
@@ -166,9 +205,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             This->vertexShader = targetStateBlock->vertexShader;
         }
 
-        /* Vertex Shader Constants */
-        for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
-
+        /* Vertex Shader Float Constants */
+        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
             if (This->set.vertexShaderConstantsF[i]) {
                 TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantF[i * 4],
@@ -181,7 +219,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->vertexShaderConstantF[i * 4 + 2]  = targetStateBlock->vertexShaderConstantF[i * 4 + 2];
                 This->vertexShaderConstantF[i * 4 + 3]  = targetStateBlock->vertexShaderConstantF[i * 4 + 3];
             }
-
+        }
+        
+        /* Vertex Shader Integer Constants */
+        for (i = 0; i < MAX_CONST_I; ++i) {
             if (This->set.vertexShaderConstantsI[i]) {
                 TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantI[i * 4],
@@ -194,7 +235,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->vertexShaderConstantI[i * 4 + 2]  = targetStateBlock->vertexShaderConstantI[i * 4 + 2];
                 This->vertexShaderConstantI[i * 4 + 3]  = targetStateBlock->vertexShaderConstantI[i * 4 + 3];
             }
-
+        }
+        
+        /* Vertex Shader Boolean Constants */
+        for (i = 0; i < MAX_CONST_B; ++i) {
             if (This->set.vertexShaderConstantsB[i]) {
                 TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantB[i]? "TRUE":"FALSE");
@@ -202,7 +246,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->vertexShaderConstantB[i] =  targetStateBlock->vertexShaderConstantB[i];
             }
         }
-
+        
         /* Lights... For a recorded state block, we just had a chain of actions to perform,
              so we need to walk that chain and update any actions which differ */
         src = This->lights;
@@ -249,8 +293,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             This->pixelShader = targetStateBlock->pixelShader;
         }
 
-        for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
-
+        /* Pixel Shader Float Constants */
+        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
             if (This->set.pixelShaderConstantsF[i]) {
                 TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantF[i * 4],
@@ -263,7 +307,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->pixelShaderConstantF[i * 4 + 2]  = targetStateBlock->pixelShaderConstantF[i * 4 + 2];
                 This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
             }
-
+        }
+        
+        /* Pixel Shader Integer Constants */
+        for (i = 0; i < MAX_CONST_I; ++i) {
             if (This->set.pixelShaderConstantsI[i]) {
                 TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantI[i * 4],
@@ -276,7 +323,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->pixelShaderConstantI[i * 4 + 2]  = targetStateBlock->pixelShaderConstantI[i * 4 + 2];
                 This->pixelShaderConstantI[i * 4 + 3]  = targetStateBlock->pixelShaderConstantI[i * 4 + 3];
             }
-
+        }
+        
+        /* Pixel Shader Boolean Constants */
+        for (i = 0; i < MAX_CONST_B; ++i) {
             if (This->set.pixelShaderConstantsB[i]) {
                 TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantB[i]? "TRUE":"FALSE");
@@ -442,13 +492,17 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Vertex Shader Constants */
-        for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
+        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
             if (This->set.vertexShaderConstantsF[i] && This->changed.vertexShaderConstantsF[i])
                 IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
-
+        }
+        
+        for (i = 0; i < MAX_CONST_I; i++) {
             if (This->set.vertexShaderConstantsI[i] && This->changed.vertexShaderConstantsI[i])
                 IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
-
+        }
+        
+        for (i = 0; i < MAX_CONST_B; i++) {
             if (This->set.vertexShaderConstantsB[i] && This->changed.vertexShaderConstantsB[i])
                 IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
         }
@@ -462,13 +516,17 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Pixel Shader Constants */
-        for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
+        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
             if (This->set.pixelShaderConstantsF[i] && This->changed.pixelShaderConstantsF[i])
                 IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
+        }
 
+        for (i = 0; i < MAX_CONST_I; ++i) {
             if (This->set.pixelShaderConstantsI[i] && This->changed.pixelShaderConstantsI[i])
                 IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
-
+        }
+        
+        for (i = 0; i < MAX_CONST_B; ++i) {
             if (This->set.pixelShaderConstantsB[i] && This->changed.pixelShaderConstantsB[i])
                 IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
         }

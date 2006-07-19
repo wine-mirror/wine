@@ -775,6 +775,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
     int i, j;
+    HRESULT temp_result;
 
     D3DCREATEOBJECTINSTANCE(object, StateBlock)
     object->blockType     = Type;
@@ -786,6 +787,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
            be freed due to circular dependencies                                   */
         return WINED3D_OK;
     }
+    
+    temp_result = allocate_shader_constants(object);
+    if (WINED3D_OK != temp_result)
+        return temp_result;
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
     if ( This->stateBlock != NULL) {
@@ -813,11 +818,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->changed.pixelShader = TRUE;
 
         /* Pixel Shader Constants */
-        for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
+        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i)
             object->changed.pixelShaderConstantsF[i] = TRUE;
+        for (i = 0; i < MAX_CONST_B; ++i)
             object->changed.pixelShaderConstantsB[i] = TRUE;
+        for (i = 0; i < MAX_CONST_I; ++i)
             object->changed.pixelShaderConstantsI[i] = TRUE;
-        }
+        
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
         }
@@ -841,11 +848,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->changed.vertexShader = TRUE;
 
         /* Vertex Shader Constants */
-        for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
+        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i)
             object->changed.vertexShaderConstantsF[i] = TRUE;
+        for (i = 0; i < MAX_CONST_B; ++i)
             object->changed.vertexShaderConstantsB[i] = TRUE;
+        for (i = 0; i < MAX_CONST_I; ++i)
             object->changed.vertexShaderConstantsI[i] = TRUE;
-        }
+ 
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
         }
@@ -4606,7 +4615,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int i, cnt = min(count, MAX_CONST_B - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4633,7 +4642,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int cnt = min(count, MAX_CONST_B - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4652,7 +4661,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int i, cnt = min(count, MAX_CONST_I - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4680,7 +4689,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int cnt = min(count, MAX_CONST_I - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4699,7 +4708,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int i, cnt = min(count, GL_LIMITS(vshader_constantsF) - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4727,7 +4736,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_VSHADER_CONSTANTS - start);
+    int cnt = min(count, GL_LIMITS(vshader_constantsF) - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4788,7 +4797,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int i, cnt = min(count, MAX_CONST_B - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4798,7 +4807,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
 
     memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
-        TRACE("Set BOOL constant %u to %s\n", i, srcData[i]? "true":"false");
+        TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsB[i] = TRUE;
@@ -4815,7 +4824,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int cnt = min(count, MAX_CONST_B - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4834,7 +4843,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int i, cnt = min(count, MAX_CONST_I - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4844,7 +4853,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
 
     memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
-        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", i,
+        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
@@ -4862,7 +4871,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int cnt = min(count, MAX_CONST_I - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4881,7 +4890,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int i, cnt = min(count, GL_LIMITS(pshader_constantsF) - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4891,7 +4900,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
 
     memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
     for (i = 0; i < cnt; i++)
-        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", i,
+        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
@@ -4909,7 +4918,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, MAX_PSHADER_CONSTANTS - start);
+    int cnt = min(count, GL_LIMITS(pshader_constantsF) - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -5746,6 +5755,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetHWND(IWineD3DDevice *iface, HWND *hW
 static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
+    HRESULT temp_result;
+    
     TRACE("(%p)", This);
     
     if (This->isRecordingState) {
@@ -5757,13 +5768,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
         FIXME("(%p)Error allocating memory for stateblock\n", This);
         return E_OUTOFMEMORY;
     }
-    TRACE("(%p) creted object %p\n", This, object);
+    TRACE("(%p) created object %p\n", This, object);
     object->wineD3DDevice= This;
     /** FIXME: object->parent       = parent; **/
     object->parent       = NULL;
     object->blockType    = WINED3DSBT_ALL;
     object->ref          = 1;
     object->lpVtbl       = &IWineD3DStateBlock_Vtbl;
+    
+    temp_result = allocate_shader_constants(object);
+    if (WINED3D_OK != temp_result)
+        return temp_result;
 
     IWineD3DStateBlock_Release((IWineD3DStateBlock*)This->updateStateBlock);
     This->updateStateBlock = object;

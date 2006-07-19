@@ -1680,6 +1680,14 @@ typedef struct _WineD3D_GL_Info {
   UINT   max_blends;
   UINT   max_anisotropy;
 
+  unsigned max_vshader_constantsF;
+  unsigned max_pshader_constantsF;
+
+  unsigned vs_arb_constantsF;
+  unsigned ps_arb_constantsF;
+  unsigned vs_glsl_constantsF;
+  unsigned ps_glsl_constantsF;
+
   GL_PSVersion ps_arb_version;
   GL_PSVersion ps_nv_version;
 

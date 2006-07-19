@@ -567,7 +567,7 @@ static void vshader_set_limits(
       This->baseShader.limits.packed_input = 0;
 
       /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
-      This->baseShader.limits.constant_float = WINED3D_VSHADER_MAX_CONSTANTS;
+      This->baseShader.limits.constant_float = GL_LIMITS(vshader_constantsF);
 
       switch (This->baseShader.hex_version) {
           case D3DVS_VERSION(1,0):
@@ -704,7 +704,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
         /* Base Declarations */
-        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
@@ -740,7 +740,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
                 min(95, This->baseShader.limits.constant_float);
 
         /* Base Declarations */
-        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer);
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         if (reg_maps->fog) {
             This->usesFog = 1;
