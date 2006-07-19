@@ -1272,33 +1272,75 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValueInternal(DWORD dwCertEncodingType,
     if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
     {
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+        DWORD bytesNeeded = sizeof(CERT_NAME_VALUE), valueType;
 
         switch (pbEncoded[0])
         {
+        case ASN_OCTETSTRING:
+            valueType = CERT_RDN_OCTET_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
         case ASN_NUMERICSTRING:
+            valueType = CERT_RDN_NUMERIC_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
         case ASN_PRINTABLESTRING:
+            valueType = CERT_RDN_PRINTABLE_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
         case ASN_IA5STRING:
+            valueType = CERT_RDN_IA5_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
         case ASN_T61STRING:
+            valueType = CERT_RDN_T61_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
+        case ASN_VIDEOTEXSTRING:
+            valueType = CERT_RDN_VIDEOTEX_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
+        case ASN_GRAPHICSTRING:
+            valueType = CERT_RDN_GRAPHIC_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
+        case ASN_VISIBLESTRING:
+            valueType = CERT_RDN_VISIBLE_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
+        case ASN_GENERALSTRING:
+            valueType = CERT_RDN_GENERAL_STRING;
+            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                bytesNeeded += dataLen;
+            break;
+        case ASN_UNIVERSALSTRING:
+            FIXME("ASN_UNIVERSALSTRING: unimplemented\n");
+            SetLastError(CRYPT_E_ASN1_BADTAG);
+            ret = FALSE;
+            break;
+        case ASN_BMPSTRING:
+            valueType = CERT_RDN_BMP_STRING;
+            bytesNeeded += dataLen;
+            break;
+        case ASN_UTF8STRING:
+            valueType = CERT_RDN_UTF8_STRING;
+            bytesNeeded += MultiByteToWideChar(CP_UTF8, 0,
+             (LPSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
             break;
         default:
-            FIXME("Unimplemented string type %02x\n", pbEncoded[0]);
-            SetLastError(OSS_UNIMPLEMENTED);
+            SetLastError(CRYPT_E_ASN1_BADTAG);
             ret = FALSE;
         }
         if (ret)
         {
-            DWORD bytesNeeded = sizeof(CERT_NAME_VALUE);
-
-            switch (pbEncoded[0])
-            {
-            case ASN_NUMERICSTRING:
-            case ASN_PRINTABLESTRING:
-            case ASN_IA5STRING:
-            case ASN_T61STRING:
-                if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
-                    bytesNeeded += dataLen;
-                break;
-            }
             if (!value)
                 *pcbStructInfo = bytesNeeded;
             else if (*pcbStructInfo < bytesNeeded)
@@ -1310,40 +1352,53 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValueInternal(DWORD dwCertEncodingType,
             else
             {
                 *pcbStructInfo = bytesNeeded;
-                switch (pbEncoded[0])
-                {
-                case ASN_NUMERICSTRING:
-                    value->dwValueType = CERT_RDN_NUMERIC_STRING;
-                    break;
-                case ASN_PRINTABLESTRING:
-                    value->dwValueType = CERT_RDN_PRINTABLE_STRING;
-                    break;
-                case ASN_IA5STRING:
-                    value->dwValueType = CERT_RDN_IA5_STRING;
-                    break;
-                case ASN_T61STRING:
-                    value->dwValueType = CERT_RDN_T61_STRING;
-                    break;
-                }
+                value->dwValueType = valueType;
                 if (dataLen)
                 {
+                    DWORD i;
+
+                    assert(value->Value.pbData);
                     switch (pbEncoded[0])
                     {
+                    case ASN_OCTETSTRING:
                     case ASN_NUMERICSTRING:
                     case ASN_PRINTABLESTRING:
                     case ASN_IA5STRING:
                     case ASN_T61STRING:
+                    case ASN_VIDEOTEXSTRING:
+                    case ASN_GRAPHICSTRING:
+                    case ASN_VISIBLESTRING:
+                    case ASN_GENERALSTRING:
                         value->Value.cbData = dataLen;
-                        if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
-                            value->Value.pbData = (BYTE *)pbEncoded + 1 +
-                             lenBytes;
-                        else
+                        if (dataLen)
                         {
-                            assert(value->Value.pbData);
-                            memcpy(value->Value.pbData,
-                             pbEncoded + 1 + lenBytes, dataLen);
+                            if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                                memcpy(value->Value.pbData,
+                                 pbEncoded + 1 + lenBytes, dataLen);
+                            else
+                                value->Value.pbData = (LPBYTE)pbEncoded + 1 +
+                                 lenBytes;
                         }
                         break;
+                    case ASN_BMPSTRING:
+                    {
+                        LPWSTR str = (LPWSTR)value->Value.pbData;
+
+                        value->Value.cbData = dataLen;
+                        for (i = 0; i < dataLen / 2; i++)
+                            str[i] = (pbEncoded[1 + lenBytes + 2 * i] << 8) |
+                             pbEncoded[1 + lenBytes + 2 * i + 1];
+                        break;
+                    }
+                    case ASN_UTF8STRING:
+                    {
+                        LPWSTR str = (LPWSTR)value->Value.pbData;
+
+                        value->Value.cbData = MultiByteToWideChar(CP_UTF8, 0,
+                         (LPSTR)pbEncoded + 1 + lenBytes, dataLen, 
+                         str, bytesNeeded - sizeof(CERT_NAME_VALUE)) * 2;
+                        break;
+                    }
                     }
                 }
                 else

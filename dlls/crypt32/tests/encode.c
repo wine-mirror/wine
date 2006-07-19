@@ -605,6 +605,12 @@ static const BYTE twoRDNs[] = {
     0x30,0x23,0x31,0x21,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,
     0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
     0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0};
+static const BYTE encodedTwoRDNs[] = {
+0x30,0x2e,0x31,0x2c,0x30,0x2a,0x06,0x03,0x55,0x04,0x03,0x30,0x23,0x31,0x21,
+0x30,0x0c,0x06,0x03,0x55,0x04,0x04,0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,
+0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,
+0x6e,0x67,0x00,
+};
 
 static const BYTE us[] = { 0x55, 0x53 };
 static const BYTE minnesota[] = { 0x4d, 0x69, 0x6e, 0x6e, 0x65, 0x73, 0x6f,
@@ -742,6 +748,21 @@ static void test_encodeName(DWORD dwEncoding)
          "Got unexpected encoding for two RDN array\n");
         LocalFree(buf);
     }
+    /* A name can be "encoded" with previously encoded RDN attrs. */
+    attrs[0].dwValueType = CERT_RDN_ENCODED_BLOB;
+    attrs[0].Value.pbData = (LPBYTE)twoRDNs;
+    attrs[0].Value.cbData = sizeof(twoRDNs);
+    rdn.cRDNAttr = 1;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(encodedTwoRDNs), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, encodedTwoRDNs, size),
+         "Unexpected value for re-endoded two RDN array\n");
+        LocalFree(buf);
+    }
     /* CERT_RDN_ANY_TYPE is too vague for X509_NAMEs, check the return */
     rdn.cRDNAttr = 1;
     attrs[0].dwValueType = CERT_RDN_ANY_TYPE;
@@ -774,11 +795,12 @@ static void compareNameValues(const CERT_NAME_VALUE *expected,
      "Expected string type %ld, got %ld\n", expected->dwValueType,
      got->dwValueType);
     ok(got->Value.cbData == expected->Value.cbData,
-     "Unexpected data size, got %ld, expected %ld\n", got->Value.cbData,
-     expected->Value.cbData);
+     "String type %ld: unexpected data size, got %ld, expected %ld\n",
+     expected->dwValueType, got->Value.cbData, expected->Value.cbData);
     if (got->Value.cbData && got->Value.pbData)
         ok(!memcmp(got->Value.pbData, expected->Value.pbData,
-         min(got->Value.cbData, expected->Value.cbData)), "Unexpected value\n");
+         min(got->Value.cbData, expected->Value.cbData)),
+         "String type %ld: unexpected value\n", expected->dwValueType);
 }
 
 static void compareRDNAttrs(const CERT_RDN_ATTR *expected,
@@ -908,56 +930,112 @@ struct EncodedNameValue
 {
     CERT_NAME_VALUE value;
     const BYTE *encoded;
+    DWORD encodedSize;
 };
 
 static const char bogusIA5[] = "\x80";
 static const char bogusPrintable[] = "~";
 static const char bogusNumeric[] = "A";
-static const char bogusT61[] = "\xff";
-static const BYTE bin39[] = { 0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
- 0x67,0x00 };
-static const BYTE bin40[] = { 0x16,0x05,0x4c,0x61,0x6e,0x67,0x00 };
-static const BYTE bin41[] = { 0x14,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
- 0x67,0x00 };
+static WCHAR commonNameW[] = { 'J','u','a','n',' ','L','a','n','g',0 };
 static const BYTE bin42[] = { 0x16,0x02,0x80,0x00 };
 static const BYTE bin43[] = { 0x13,0x02,0x7e,0x00 };
 static const BYTE bin44[] = { 0x12,0x02,0x41,0x00 };
-static const BYTE bin45[] = { 0x14,0x02,0xff,0x00 };
+static BYTE octetCommonNameValue[] = {
+ 0x04,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE numericCommonNameValue[] = {
+ 0x12,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE printableCommonNameValue[] = {
+ 0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE t61CommonNameValue[] = {
+ 0x14,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE videotexCommonNameValue[] = {
+ 0x15,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE ia5CommonNameValue[] = {
+ 0x16,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE graphicCommonNameValue[] = {
+ 0x19,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE visibleCommonNameValue[] = {
+ 0x1a,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE generalCommonNameValue[] = {
+ 0x1b,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+static BYTE bmpCommonNameValue[] = {
+ 0x1e,0x14,0x00,0x4a,0x00,0x75,0x00,0x61,0x00,0x6e,0x00,0x20,0x00,0x4c,0x00,
+ 0x61,0x00,0x6e,0x00,0x67,0x00,0x00 };
+static BYTE utf8CommonNameValue[] = {
+ 0x0c,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
 
-struct EncodedNameValue nameValues[] = {
+static struct EncodedNameValue nameValues[] = {
+ { { CERT_RDN_OCTET_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     octetCommonNameValue, sizeof(octetCommonNameValue) },
+ { { CERT_RDN_NUMERIC_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     numericCommonNameValue, sizeof(numericCommonNameValue) },
  { { CERT_RDN_PRINTABLE_STRING, { sizeof(commonName), (BYTE *)commonName } },
-     bin39 },
- { { CERT_RDN_IA5_STRING, { sizeof(surName), (BYTE *)surName } }, bin40 },
- { { CERT_RDN_T61_STRING, { sizeof(commonName), (BYTE *)commonName } }, bin41 },
+     printableCommonNameValue, sizeof(printableCommonNameValue) },
+ { { CERT_RDN_T61_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     t61CommonNameValue, sizeof(t61CommonNameValue) },
+ { { CERT_RDN_VIDEOTEX_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     videotexCommonNameValue, sizeof(videotexCommonNameValue) },
+ { { CERT_RDN_IA5_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     ia5CommonNameValue, sizeof(ia5CommonNameValue) },
+ { { CERT_RDN_GRAPHIC_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     graphicCommonNameValue, sizeof(graphicCommonNameValue) },
+ { { CERT_RDN_VISIBLE_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     visibleCommonNameValue, sizeof(visibleCommonNameValue) },
+ { { CERT_RDN_GENERAL_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     generalCommonNameValue, sizeof(generalCommonNameValue) },
+ { { CERT_RDN_BMP_STRING, { sizeof(commonNameW), (BYTE *)commonNameW } },
+     bmpCommonNameValue, sizeof(bmpCommonNameValue) },
+ { { CERT_RDN_UTF8_STRING, { sizeof(commonNameW), (BYTE *)commonNameW } },
+     utf8CommonNameValue, sizeof(utf8CommonNameValue) },
  /* The following tests succeed under Windows, but really should fail,
   * they contain characters that are illegal for the encoding.  I'm
   * including them to justify my lazy encoding.
   */
- { { CERT_RDN_IA5_STRING, { sizeof(bogusIA5), (BYTE *)bogusIA5 } }, bin42 },
+ { { CERT_RDN_IA5_STRING, { sizeof(bogusIA5), (BYTE *)bogusIA5 } }, bin42,
+     sizeof(bin42) },
  { { CERT_RDN_PRINTABLE_STRING, { sizeof(bogusPrintable),
-     (BYTE *)bogusPrintable } }, bin43 },
+     (BYTE *)bogusPrintable } }, bin43, sizeof(bin43) },
  { { CERT_RDN_NUMERIC_STRING, { sizeof(bogusNumeric), (BYTE *)bogusNumeric } },
-     bin44 },
- { { CERT_RDN_T61_STRING, { sizeof(bogusT61), (BYTE *)bogusT61 } }, bin45 },
+     bin44, sizeof(bin44) },
 };
-
 
 static void test_encodeNameValue(DWORD dwEncoding)
 {
     BYTE *buf = NULL;
     DWORD size = 0, i;
     BOOL ret;
+    CERT_NAME_VALUE value = { 0, { 0, NULL } };
 
+    value.dwValueType = 14;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CHOICE,
+     "Expected CRYPT_E_ASN1_CHOICE, got %08lx\n", GetLastError());
+    value.dwValueType = CERT_RDN_ENCODED_BLOB;
+    value.Value.pbData = printableCommonNameValue;
+    value.Value.cbData = sizeof(printableCommonNameValue);
+    ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(printableCommonNameValue), "Unexpected size %ld\n",
+         size);
+        ok(!memcmp(buf, printableCommonNameValue, size),
+         "Unexpected encoding\n");
+        LocalFree(buf);
+    }
     for (i = 0; i < sizeof(nameValues) / sizeof(nameValues[0]); i++)
     {
         ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE,
          &nameValues[i].value, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
          &size);
-        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        ok(ret, "Type %ld: CryptEncodeObjectEx failed: %08lx\n",
+         nameValues[i].value.dwValueType, GetLastError());
         if (buf)
         {
-            ok(size == nameValues[i].encoded[1] + 2,
-             "Expected size %d, got %ld\n", nameValues[i].encoded[1] + 2, size);
+            ok(size == nameValues[i].encodedSize,
+             "Expected size %ld, got %ld\n", nameValues[i].encodedSize, size);
             ok(!memcmp(buf, nameValues[i].encoded, size),
              "Got unexpected encoding\n");
             LocalFree(buf);
@@ -978,7 +1056,8 @@ static void test_decodeNameValue(DWORD dwEncoding)
          nameValues[i].encoded, nameValues[i].encoded[1] + 2,
          CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
          (BYTE *)&buf, &bufSize);
-        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        ok(ret, "Value type %ld: CryptDecodeObjectEx failed: %08lx\n",
+         nameValues[i].value.dwValueType, GetLastError());
         if (buf)
         {
             compareNameValues(&nameValues[i].value,
