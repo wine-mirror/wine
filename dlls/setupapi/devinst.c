@@ -697,6 +697,27 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
 }
 
 /***********************************************************************
+ *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiCreateDeviceInfoW(
+       HDEVINFO DeviceInfoSet,
+       PCWSTR DeviceName,
+       CONST GUID *ClassGuid,
+       PCWSTR DeviceDescription,
+       HWND hwndParent,
+       DWORD CreationFlags,
+       PSP_DEVINFO_DATA DeviceInfoData)
+{
+    TRACE("%p %s %s %s %p %lx %p\n", DeviceInfoSet, debugstr_w(DeviceName),
+        debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
+        hwndParent, CreationFlags, DeviceInfoData);
+
+    FIXME("stub");
+
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInfo (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInfo(
