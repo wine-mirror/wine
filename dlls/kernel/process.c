@@ -31,6 +31,12 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_PRCTL_H
 # include <sys/prctl.h>
 #endif
@@ -1104,6 +1110,7 @@ static char **build_envp( const WCHAR *envW )
         {
             if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
             if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
+            if (!strncmp( p, "WINESERVERSOCKET=", sizeof("WINESERVERSOCKET=")-1 )) continue;
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
                 *envptr++ = alloc_env_string( "WINE", p );
             else
@@ -1210,9 +1217,18 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
     if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = (HANDLE)1;  /* FIXME: cf. kernel_main.c */
 
-    params->hStdInput       = startup->hStdInput;
-    params->hStdOutput      = startup->hStdOutput;
-    params->hStdError       = startup->hStdError;
+    if (startup->dwFlags & STARTF_USESTDHANDLES)
+    {
+        params->hStdInput  = startup->hStdInput;
+        params->hStdOutput = startup->hStdOutput;
+        params->hStdError  = startup->hStdError;
+    }
+    else
+    {
+        params->hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
+        params->hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+        params->hStdError  = GetStdHandle( STD_ERROR_HANDLE );
+    }
     params->dwX             = startup->dwX;
     params->dwY             = startup->dwY;
     params->dwXSize         = startup->dwXSize;
@@ -1243,12 +1259,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     WCHAR *env_end;
     char *winedebug = NULL;
     RTL_USER_PROCESS_PARAMETERS *params;
-    int startfd[2];
-    int execfd[2];
+    int socketfd[2];
     pid_t pid;
     int err;
-    char dummy = 0;
-    char preloader_reserve[64];
 
     if (!env) RtlAcquirePebLock();
 
@@ -1271,96 +1284,34 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     }
     env_end++;
 
-    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx%c",
-             (unsigned long)res_start, (unsigned long)res_end, 0 );
+    /* create the socket for the new process */
 
-    /* create the synchronization pipes */
-
-    if (pipe( startfd ) == -1)
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
     {
         if (!env) RtlReleasePebLock();
         HeapFree( GetProcessHeap(), 0, winedebug );
+        RtlDestroyProcessParameters( params );
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        RtlDestroyProcessParameters( params );
         return FALSE;
     }
-    if (pipe( execfd ) == -1)
-    {
-        if (!env) RtlReleasePebLock();
-        HeapFree( GetProcessHeap(), 0, winedebug );
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        close( startfd[0] );
-        close( startfd[1] );
-        RtlDestroyProcessParameters( params );
-        return FALSE;
-    }
-    fcntl( execfd[1], F_SETFD, 1 );  /* set close on exec */
-
-    /* create the child process */
-
-    if (!(pid = fork()))  /* child */
-    {
-        char **argv = build_argv( cmd_line, 1 );
-
-        close( startfd[1] );
-        close( execfd[0] );
-
-        /* wait for parent to tell us to start */
-        if (read( startfd[0], &dummy, 1 ) != 1) _exit(1);
-
-        close( startfd[0] );
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
-
-        /* Reset signals that we previously set to SIG_IGN */
-        signal( SIGPIPE, SIG_DFL );
-        signal( SIGCHLD, SIG_DFL );
-
-        putenv( preloader_reserve );
-        if (winedebug) putenv( winedebug );
-        if (unixdir) chdir(unixdir);
-
-        if (argv) wine_exec_wine_binary( NULL, argv, getenv("WINELOADER") );
-
-        err = errno;
-        write( execfd[1], &err, sizeof(err) );
-        _exit(1);
-    }
-
-    /* this is the parent */
-
-    close( startfd[0] );
-    close( execfd[1] );
-    HeapFree( GetProcessHeap(), 0, winedebug );
-    if (pid == -1)
-    {
-        if (!env) RtlReleasePebLock();
-        close( startfd[1] );
-        close( execfd[0] );
-        FILE_SetDosError();
-        RtlDestroyProcessParameters( params );
-        return FALSE;
-    }
+    wine_server_send_fd( socketfd[1] );
+    close( socketfd[1] );
 
     /* create the process on the server side */
 
     SERVER_START_REQ( new_process )
     {
-        req->inherit_all  = inherit;
-        req->create_flags = flags;
-        req->unix_pid     = pid;
-        req->exe_file     = hFile;
-        if (startup->dwFlags & STARTF_USESTDHANDLES)
-        {
-            req->hstdin  = startup->hStdInput;
-            req->hstdout = startup->hStdOutput;
-            req->hstderr = startup->hStdError;
-        }
-        else
-        {
-            req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
-            req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
-            req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
-        }
+        req->inherit_all    = inherit;
+        req->create_flags   = flags;
+        req->socket_fd      = socketfd[1];
+        req->exe_file       = hFile;
+        req->process_access = PROCESS_ALL_ACCESS;
+        req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->thread_access  = THREAD_ALL_ACCESS;
+        req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->hstdin         = params->hStdInput;
+        req->hstdout        = params->hStdOutput;
+        req->hstderr        = params->hStdError;
 
         if ((flags & (CREATE_NEW_CONSOLE | DETACHED_PROCESS)) != 0)
         {
@@ -1378,7 +1329,13 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
         wine_server_add_data( req, params, params->Size );
         wine_server_add_data( req, params->Environment, (env_end-params->Environment)*sizeof(WCHAR) );
-        ret = !wine_server_call_err( req );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            info->dwProcessId = (DWORD)reply->pid;
+            info->dwThreadId  = (DWORD)reply->tid;
+            info->hProcess    = reply->phandle;
+            info->hThread     = reply->thandle;
+        }
         process_info = reply->info;
     }
     SERVER_END_REQ;
@@ -1387,57 +1344,74 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     RtlDestroyProcessParameters( params );
     if (!ret)
     {
-        close( startfd[1] );
-        close( execfd[0] );
+        close( socketfd[0] );
+        HeapFree( GetProcessHeap(), 0, winedebug );
         return FALSE;
     }
 
-    /* tell child to start and wait for it to exec */
+    /* create the child process */
 
-    write( startfd[1], &dummy, 1 );
-    close( startfd[1] );
-
-    if (read( execfd[0], &err, sizeof(err) ) > 0) /* exec failed */
+    if (!(pid = fork()))  /* child */
     {
-        errno = err;
-        FILE_SetDosError();
-        close( execfd[0] );
-        CloseHandle( process_info );
-        return FALSE;
+        char preloader_reserve[64], socket_env[64];
+        char **argv = build_argv( cmd_line, 1 );
+
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
+
+        /* Reset signals that we previously set to SIG_IGN */
+        signal( SIGPIPE, SIG_DFL );
+        signal( SIGCHLD, SIG_DFL );
+
+        sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd[0] );
+        sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
+                 (unsigned long)res_start, (unsigned long)res_end );
+
+        putenv( preloader_reserve );
+        putenv( socket_env );
+        if (winedebug) putenv( winedebug );
+        if (unixdir) chdir(unixdir);
+
+        if (argv) wine_exec_wine_binary( NULL, argv, getenv("WINELOADER") );
+        _exit(1);
     }
-    close( execfd[0] );
+
+    /* this is the parent */
+
+    close( socketfd[0] );
+    HeapFree( GetProcessHeap(), 0, winedebug );
+    if (pid == -1)
+    {
+        FILE_SetDosError();
+        goto error;
+    }
 
     /* wait for the new process info to be ready */
 
     WaitForSingleObject( process_info, INFINITE );
     SERVER_START_REQ( get_new_process_info )
     {
-        req->info           = process_info;
-        req->process_access = PROCESS_ALL_ACCESS;
-        req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
-        req->thread_access  = THREAD_ALL_ACCESS;
-        req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            info->dwProcessId = (DWORD)reply->pid;
-            info->dwThreadId  = (DWORD)reply->tid;
-            info->hProcess    = reply->phandle;
-            info->hThread     = reply->thandle;
-            success           = reply->success;
-        }
+        req->info = process_info;
+        wine_server_call( req );
+        success = reply->success;
+        err = reply->exit_code;
     }
     SERVER_END_REQ;
 
-    if (ret && !success)  /* new process failed to start */
+    if (!success)
     {
-        DWORD exitcode;
-        if (GetExitCodeProcess( info->hProcess, &exitcode )) SetLastError( exitcode );
-        CloseHandle( info->hThread );
-        CloseHandle( info->hProcess );
-        ret = FALSE;
+        SetLastError( err ? err : ERROR_INTERNAL_ERROR );
+        goto error;
     }
     CloseHandle( process_info );
-    return ret;
+    return success;
+
+error:
+    CloseHandle( process_info );
+    CloseHandle( info->hProcess );
+    CloseHandle( info->hThread );
+    info->hProcess = info->hThread = 0;
+    info->dwProcessId = info->dwThreadId = 0;
+    return FALSE;
 }
 
 

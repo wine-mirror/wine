@@ -94,17 +94,11 @@ static const struct fd_ops process_fd_ops =
 struct startup_info
 {
     struct object       obj;          /* object header */
-    struct list         entry;        /* entry in list of startup infos */
-    int                 inherit_all;  /* inherit all handles from parent */
-    unsigned int        create_flags; /* creation flags */
-    int                 unix_pid;     /* Unix pid of new process */
     obj_handle_t        hstdin;       /* handle for stdin */
     obj_handle_t        hstdout;      /* handle for stdout */
     obj_handle_t        hstderr;      /* handle for stderr */
     struct file        *exe_file;     /* file handle for main exe */
-    struct thread      *owner;        /* owner thread (the one that created the new process) */
     struct process     *process;      /* created process */
-    struct thread      *thread;       /* created thread */
     size_t              data_size;    /* size of startup data */
     void               *data;         /* data for startup info */
 };
@@ -129,8 +123,6 @@ static const struct object_ops startup_info_ops =
     startup_info_destroy           /* destroy */
 };
 
-
-static struct list startup_info_list = LIST_INIT(startup_info_list);
 
 struct ptid_entry
 {
@@ -226,13 +218,18 @@ static void set_process_startup_state( struct process *process, enum startup_sta
 }
 
 /* create a new process and its main thread */
-struct thread *create_process( int fd )
+/* if the function fails the fd is closed */
+struct thread *create_process( int fd, struct thread *parent_thread, int inherit_all )
 {
     struct process *process;
     struct thread *thread = NULL;
     int request_pipe[2];
 
-    if (!(process = alloc_object( &process_ops ))) goto error;
+    if (!(process = alloc_object( &process_ops )))
+    {
+        close( fd );
+        goto error;
+    }
     process->parent          = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
@@ -261,8 +258,23 @@ struct thread *create_process( int fd )
     gettimeofday( &process->start_time, NULL );
     list_add_head( &process_list, &process->entry );
 
-    if (!(process->id = process->group_id = alloc_ptid( process ))) goto error;
+    if (!(process->id = process->group_id = alloc_ptid( process )))
+    {
+        close( fd );
+        goto error;
+    }
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj ))) goto error;
+
+    /* create the handle table */
+    if (!parent_thread) process->handles = alloc_handle_table( process, 0 );
+    else
+    {
+        struct process *parent = parent_thread->process;
+        process->parent = (struct process *)grab_object( parent );
+        process->handles = inherit_all ? copy_handle_table( process, parent )
+                                       : alloc_handle_table( process, 0 );
+    }
+    if (!process->handles) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)
@@ -290,82 +302,13 @@ struct thread *create_process( int fd )
     return NULL;
 }
 
-/* find the startup info for a given Unix process */
-inline static struct startup_info *find_startup_info( int unix_pid )
-{
-    struct list *ptr;
-
-    LIST_FOR_EACH( ptr, &startup_info_list )
-    {
-        struct startup_info *info = LIST_ENTRY( ptr, struct startup_info, entry );
-        if (info->unix_pid == unix_pid) return info;
-    }
-    return NULL;
-}
-
 /* initialize the current process and fill in the request */
 size_t init_process( struct thread *thread )
 {
     struct process *process = thread->process;
-    struct thread *parent_thread = NULL;
-    struct process *parent = NULL;
-    struct startup_info *info;
-
-    if (process->startup_info) return process->startup_info->data_size;  /* already initialized */
-
-    if ((info = find_startup_info( thread->unix_pid )))
-    {
-        if (info->thread) return info->data_size;  /* already initialized */
-
-        info->thread  = (struct thread *)grab_object( thread );
-        info->process = (struct process *)grab_object( process );
-        process->startup_info = (struct startup_info *)grab_object( info );
-
-        parent_thread = info->owner;
-        parent = parent_thread->process;
-        process->parent = (struct process *)grab_object( parent );
-
-        /* set the process flags */
-        process->create_flags = info->create_flags;
-
-        if (info->inherit_all) process->handles = copy_handle_table( process, parent );
-    }
-
-    /* create the handle table */
-    if (!process->handles) process->handles = alloc_handle_table( process, 0 );
-    if (!process->handles)
-    {
-        set_error( STATUS_NO_MEMORY );
-        return 0;
-    }
-
-    /* connect to the window station */
-    connect_process_winstation( process, parent_thread );
+    struct startup_info *info = process->startup_info;
 
     if (!info) return 0;
-
-    /* thread will be actually suspended in init_done */
-    if (info->create_flags & CREATE_SUSPENDED) thread->suspend++;
-
-    /* set the process console */
-    if (!(info->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
-    {
-        /* FIXME: some better error checking should be done...
-         * like if hConOut and hConIn are console handles, then they should be on the same
-         * physical console
-         */
-        inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
-    }
-
-    /* attach to the debugger if requested */
-    if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
-        set_process_debugger( process, parent_thread );
-    else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
-        set_process_debugger( process, parent->debugger );
-
-    if (!(process->create_flags & CREATE_NEW_PROCESS_GROUP))
-        process->group_id = parent->group_id;
-
     return info->data_size;
 }
 
@@ -426,12 +369,9 @@ static void startup_info_destroy( struct object *obj )
 {
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
-    list_remove( &info->entry );
     if (info->data) free( info->data );
     if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
-    if (info->thread) release_object( info->thread );
-    if (info->owner) release_object( info->owner );
 }
 
 static void startup_info_dump( struct object *obj, int verbose )
@@ -439,8 +379,8 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%p out=%p err=%p\n",
-             info->create_flags, info->hstdin, info->hstdout, info->hstderr );
+    fprintf( stderr, "Startup info in=%p out=%p err=%p\n",
+             info->hstdin, info->hstdout, info->hstderr );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
@@ -792,20 +732,30 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 DECL_HANDLER(new_process)
 {
     struct startup_info *info;
+    struct thread *thread;
+    struct process *process;
+    struct process *parent = current->process;
+    int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
+
+    if (socket_fd == -1)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        close( socket_fd );
+        return;
+    }
 
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops ))) return;
-    list_add_head( &startup_info_list, &info->entry );
-    info->inherit_all  = req->inherit_all;
-    info->create_flags = req->create_flags;
-    info->unix_pid     = req->unix_pid;
     info->hstdin       = req->hstdin;
     info->hstdout      = req->hstdout;
     info->hstderr      = req->hstderr;
     info->exe_file     = NULL;
-    info->owner        = (struct thread *)grab_object( current );
     info->process      = NULL;
-    info->thread       = NULL;
     info->data_size    = get_req_data_size();
     info->data         = NULL;
 
@@ -814,7 +764,56 @@ DECL_HANDLER(new_process)
         goto done;
 
     if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
+
+    if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
+    process = thread->process;
+    process->create_flags = req->create_flags;
+    process->startup_info = (struct startup_info *)grab_object( info );
+
+    /* connect to the window station */
+    connect_process_winstation( process, current );
+
+    /* thread will be actually suspended in init_done */
+    if (req->create_flags & CREATE_SUSPENDED) thread->suspend++;
+
+    /* set the process console */
+    if (!(req->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
+    {
+        /* FIXME: some better error checking should be done...
+         * like if hConOut and hConIn are console handles, then they should be on the same
+         * physical console
+         */
+        inherit_console( current, process, req->inherit_all ? req->hstdin : 0 );
+    }
+
+    if (!req->inherit_all && !(req->create_flags & CREATE_NEW_CONSOLE))
+    {
+        info->hstdin  = duplicate_handle( parent, req->hstdin, process,
+                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        info->hstdout = duplicate_handle( parent, req->hstdout, process,
+                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        info->hstderr = duplicate_handle( parent, req->hstderr, process,
+                                          0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+        /* some handles above may have been invalid; this is not an error */
+        if (get_error() == STATUS_INVALID_HANDLE ||
+            get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
+    }
+
+    /* attach to the debugger if requested */
+    if (req->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
+        set_process_debugger( process, current );
+    else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
+        set_process_debugger( process, parent->debugger );
+
+    if (!(req->create_flags & CREATE_NEW_PROCESS_GROUP))
+        process->group_id = parent->group_id;
+
+    info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
+    reply->pid = get_process_id( process );
+    reply->tid = get_thread_id( thread );
+    reply->phandle = alloc_handle( parent, process, req->process_access, req->process_attr );
+    reply->thandle = alloc_handle( parent, thread, req->thread_access, req->thread_attr );
 
  done:
     release_object( info );
@@ -828,22 +827,9 @@ DECL_HANDLER(get_new_process_info)
     if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
                                                        0, &startup_info_ops )))
     {
-        reply->pid = get_process_id( info->process );
-        reply->tid = get_thread_id( info->thread );
-        reply->phandle = alloc_handle( current->process, info->process,
-                                       req->process_access, req->process_attr );
-        reply->thandle = alloc_handle( current->process, info->thread,
-                                       req->thread_access, req->thread_attr );
         reply->success = is_process_init_done( info->process );
+        reply->exit_code = info->process->exit_code;
         release_object( info );
-    }
-    else
-    {
-        reply->pid     = 0;
-        reply->tid     = 0;
-        reply->phandle = 0;
-        reply->thandle = 0;
-        reply->success = 0;
     }
 }
 
@@ -859,25 +845,9 @@ DECL_HANDLER(get_startup_info)
     if (info->exe_file &&
         !(reply->exe_file = alloc_handle( process, info->exe_file, GENERIC_READ, 0 ))) return;
 
-    if (!info->inherit_all && !(info->create_flags & CREATE_NEW_CONSOLE))
-    {
-        struct process *parent_process = info->owner->process;
-        reply->hstdin  = duplicate_handle( parent_process, info->hstdin, process,
-                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
-        reply->hstdout = duplicate_handle( parent_process, info->hstdout, process,
-                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
-        reply->hstderr = duplicate_handle( parent_process, info->hstderr, process,
-                                           0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
-        /* some handles above may have been invalid; this is not an error */
-        if (get_error() == STATUS_INVALID_HANDLE ||
-            get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
-    }
-    else
-    {
-        reply->hstdin  = info->hstdin;
-        reply->hstdout = info->hstdout;
-        reply->hstderr = info->hstderr;
-    }
+    reply->hstdin  = info->hstdin;
+    reply->hstdout = info->hstdout;
+    reply->hstderr = info->hstderr;
 
     /* we return the data directly without making a copy so this can only be called once */
     size = info->data_size;

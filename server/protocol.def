@@ -205,33 +205,34 @@ struct token_groups
 
 /* Create a new process from the context of the parent */
 @REQ(new_process)
-    int          inherit_all;  /* inherit all handles from parent */
-    unsigned int create_flags; /* creation flags */
-    int          unix_pid;     /* Unix pid of new process */
-    obj_handle_t exe_file;     /* file handle for main exe */
-    obj_handle_t hstdin;       /* handle for stdin */
-    obj_handle_t hstdout;      /* handle for stdout */
-    obj_handle_t hstderr;      /* handle for stderr */
-    VARARG(info,startup_info); /* startup information */
-    VARARG(env,unicode_str);   /* environment for new process */
+    int          inherit_all;    /* inherit all handles from parent */
+    unsigned int create_flags;   /* creation flags */
+    int          socket_fd;      /* file descriptor for process socket */
+    obj_handle_t exe_file;       /* file handle for main exe */
+    obj_handle_t hstdin;         /* handle for stdin */
+    obj_handle_t hstdout;        /* handle for stdout */
+    obj_handle_t hstderr;        /* handle for stderr */
+    unsigned int process_access; /* access rights for process object */
+    unsigned int process_attr;   /* attributes for process object */
+    unsigned int thread_access;  /* access rights for thread object */
+    unsigned int thread_attr;    /* attributes for thread object */
+    VARARG(info,startup_info);   /* startup information */
+    VARARG(env,unicode_str);     /* environment for new process */
 @REPLY
-    obj_handle_t info;         /* new process info handle */
+    obj_handle_t info;           /* new process info handle */
+    process_id_t pid;            /* process id */
+    obj_handle_t phandle;        /* process handle (in the current process) */
+    thread_id_t  tid;            /* thread id */
+    obj_handle_t thandle;        /* thread handle (in the current process) */
 @END
 
 
 /* Retrieve information about a newly started process */
 @REQ(get_new_process_info)
     obj_handle_t info;           /* info handle returned from new_process_request */
-    unsigned int process_access; /* access rights for process object */
-    unsigned int process_attr;   /* attributes for process object */
-    unsigned int thread_access;  /* access rights for thread object */
-    unsigned int thread_attr;    /* attributes for thread object */
 @REPLY
-    process_id_t pid;          /* process id */
-    obj_handle_t phandle;      /* process handle (in the current process) */
-    thread_id_t  tid;          /* thread id */
-    obj_handle_t thandle;      /* thread handle (in the current process) */
     int          success;      /* did the process start successfully? */
+    int          exit_code;    /* process exit code if failed */
 @END
 
 

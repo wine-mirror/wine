@@ -606,11 +606,15 @@ static void dump_new_process_request( const struct new_process_request *req )
 {
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
     fprintf( stderr, " create_flags=%08x,", req->create_flags );
-    fprintf( stderr, " unix_pid=%d,", req->unix_pid );
+    fprintf( stderr, " socket_fd=%d,", req->socket_fd );
     fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " hstdin=%p,", req->hstdin );
     fprintf( stderr, " hstdout=%p,", req->hstdout );
     fprintf( stderr, " hstderr=%p,", req->hstderr );
+    fprintf( stderr, " process_access=%08x,", req->process_access );
+    fprintf( stderr, " process_attr=%08x,", req->process_attr );
+    fprintf( stderr, " thread_access=%08x,", req->thread_access );
+    fprintf( stderr, " thread_attr=%08x,", req->thread_attr );
     fprintf( stderr, " info=" );
     dump_varargs_startup_info( cur_size );
     fputc( ',', stderr );
@@ -620,25 +624,22 @@ static void dump_new_process_request( const struct new_process_request *req )
 
 static void dump_new_process_reply( const struct new_process_reply *req )
 {
-    fprintf( stderr, " info=%p", req->info );
+    fprintf( stderr, " info=%p,", req->info );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " phandle=%p,", req->phandle );
+    fprintf( stderr, " tid=%04x,", req->tid );
+    fprintf( stderr, " thandle=%p", req->thandle );
 }
 
 static void dump_get_new_process_info_request( const struct get_new_process_info_request *req )
 {
-    fprintf( stderr, " info=%p,", req->info );
-    fprintf( stderr, " process_access=%08x,", req->process_access );
-    fprintf( stderr, " process_attr=%08x,", req->process_attr );
-    fprintf( stderr, " thread_access=%08x,", req->thread_access );
-    fprintf( stderr, " thread_attr=%08x", req->thread_attr );
+    fprintf( stderr, " info=%p", req->info );
 }
 
 static void dump_get_new_process_info_reply( const struct get_new_process_info_reply *req )
 {
-    fprintf( stderr, " pid=%04x,", req->pid );
-    fprintf( stderr, " phandle=%p,", req->phandle );
-    fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " thandle=%p,", req->thandle );
-    fprintf( stderr, " success=%d", req->success );
+    fprintf( stderr, " success=%d,", req->success );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
 }
 
 static void dump_new_thread_request( const struct new_thread_request *req )

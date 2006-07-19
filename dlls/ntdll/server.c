@@ -843,16 +843,27 @@ static void create_config_dir(void)
 void server_init_process(void)
 {
     obj_handle_t dummy_handle;
-    const char *server_dir = wine_get_server_dir();
+    const char *env_socket = getenv( "WINESERVERSOCKET" );
 
-    if (!server_dir)  /* this means the config dir doesn't exist */
+    if (env_socket)
     {
-        create_config_dir();
-        server_dir = wine_get_server_dir();
+        fd_socket = atoi( env_socket );
+        if (fcntl( fd_socket, F_SETFD, 1 ) == -1)
+            fatal_perror( "Bad server socket %d", fd_socket );
     }
+    else
+    {
+        const char *server_dir = wine_get_server_dir();
 
-    /* connect to the server */
-    fd_socket = server_connect( server_dir );
+        if (!server_dir)  /* this means the config dir doesn't exist */
+        {
+            create_config_dir();
+            server_dir = wine_get_server_dir();
+        }
+
+        /* connect to the server */
+        fd_socket = server_connect( server_dir );
+    }
 
     /* setup the signal mask */
     sigemptyset( &block_set );

@@ -193,11 +193,15 @@ struct new_process_request
     struct request_header __header;
     int          inherit_all;
     unsigned int create_flags;
-    int          unix_pid;
+    int          socket_fd;
     obj_handle_t exe_file;
     obj_handle_t hstdin;
     obj_handle_t hstdout;
     obj_handle_t hstderr;
+    unsigned int process_access;
+    unsigned int process_attr;
+    unsigned int thread_access;
+    unsigned int thread_attr;
     /* VARARG(info,startup_info); */
     /* VARARG(env,unicode_str); */
 };
@@ -205,6 +209,10 @@ struct new_process_reply
 {
     struct reply_header __header;
     obj_handle_t info;
+    process_id_t pid;
+    obj_handle_t phandle;
+    thread_id_t  tid;
+    obj_handle_t thandle;
 };
 
 
@@ -213,19 +221,12 @@ struct get_new_process_info_request
 {
     struct request_header __header;
     obj_handle_t info;
-    unsigned int process_access;
-    unsigned int process_attr;
-    unsigned int thread_access;
-    unsigned int thread_attr;
 };
 struct get_new_process_info_reply
 {
     struct reply_header __header;
-    process_id_t pid;
-    obj_handle_t phandle;
-    thread_id_t  tid;
-    obj_handle_t thandle;
     int          success;
+    int          exit_code;
 };
 
 
@@ -4382,6 +4383,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 237
+#define SERVER_PROTOCOL_VERSION 238
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
