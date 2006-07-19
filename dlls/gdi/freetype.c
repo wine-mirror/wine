@@ -814,7 +814,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                 CHARSETINFO csi;
                 TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
                       winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
-                if(TranslateCharsetInfo((DWORD*)(UINT)winfnt_header.charset, &csi, TCI_SRCCHARSET))
+                if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
                     memcpy(&fs, &csi.fs, sizeof(csi.fs));
                 internal_leading = winfnt_header.internal_leading;
             }
@@ -1901,7 +1901,7 @@ static int get_nearest_charset(Face *face, int *cp)
     DWORD fs0;
 
     *cp = acp;
-    if(TranslateCharsetInfo((DWORD*)acp, &csi, TCI_SRCCODEPAGE))
+    if(TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE))
         if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
 	    return csi.ciCharset;
 
@@ -2305,7 +2305,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     if(!strcmpiW(lf.lfFaceName, SymbolW))
         lf.lfCharSet = SYMBOL_CHARSET;
 
-    if(!TranslateCharsetInfo((DWORD*)(INT)lf.lfCharSet, &csi, TCI_SRCCHARSET)) {
+    if(!TranslateCharsetInfo((DWORD*)(INT_PTR)lf.lfCharSet, &csi, TCI_SRCCHARSET)) {
         switch(lf.lfCharSet) {
 	case DEFAULT_CHARSET:
 	    csi.fs.fsCsb[0] = 0;
@@ -2351,7 +2351,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
        corresponding to the current ansi codepage */
     if(!csi.fs.fsCsb[0]) {
         INT acp = GetACP();
-        if(!TranslateCharsetInfo((DWORD*)acp, &csi, TCI_SRCCODEPAGE)) {
+        if(!TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE)) {
             FIXME("TCI failed on codepage %d\n", acp);
             csi.fs.fsCsb[0] = 0;
         } else
@@ -3924,7 +3924,7 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
 			 DWORD cbData)
 {
     FT_Face ft_face = font->ft_face;
-    DWORD len;
+    FT_ULong len;
     FT_Error err;
 
     TRACE("font=%p, table=%08lx, offset=%08lx, buf=%p, cbData=%lx\n",
@@ -3947,7 +3947,7 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
     if(pFT_Load_Sfnt_Table) {
         /* make sure value of len is the value freetype says it needs */ 
         if( buf && len) {
-            DWORD needed = 0;
+            FT_ULong needed = 0;
             err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
             if( !err && needed < len) len = needed;
         }
@@ -3969,7 +3969,7 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
         }
         /* make sure value of len is the value freetype says it needs */ 
         if( buf && len) {
-            DWORD needed = 0;
+            FT_ULong needed = 0;
             err = sfnt->load_any(tt_face, table, offset, NULL, &needed);
             if( !err && needed < len) len = needed;
         }
