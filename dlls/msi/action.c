@@ -1590,7 +1590,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
     return TRUE;
 }
 
-static UINT SetFeatureStates(MSIPACKAGE *package)
+static UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 {
     int install_level;
     static const WCHAR szlevel[] =
@@ -1935,7 +1935,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     ACTION_UpdateInstallStates(package);
 
-    return SetFeatureStates(package);
+    return MSI_SetFeatureStates(package);
 }
 
 /* OK this value is "interpreted" and then formatted based on the 
