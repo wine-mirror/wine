@@ -1199,6 +1199,205 @@ static void test_decodeAltName(DWORD dwEncoding)
     }
 }
 
+struct UnicodeExpectedError
+{
+    DWORD   valueType;
+    LPCWSTR str;
+    DWORD   errorIndex;
+    DWORD   error;
+};
+
+static const WCHAR oneW[] = { '1',0 };
+static const WCHAR aW[] = { 'a',0 };
+static const WCHAR quoteW[] = { '"', 0 };
+
+static struct UnicodeExpectedError unicodeErrors[] = {
+ { CERT_RDN_ANY_TYPE,         oneW,       0, CRYPT_E_NOT_CHAR_STRING },
+ { CERT_RDN_ENCODED_BLOB,     oneW,       0, CRYPT_E_NOT_CHAR_STRING },
+ { CERT_RDN_OCTET_STRING,     oneW,       0, CRYPT_E_NOT_CHAR_STRING },
+ { 14,                        oneW,       0, CRYPT_E_ASN1_CHOICE },
+ { CERT_RDN_NUMERIC_STRING,   aW,         0, CRYPT_E_INVALID_NUMERIC_STRING },
+ { CERT_RDN_PRINTABLE_STRING, quoteW,     0, CRYPT_E_INVALID_PRINTABLE_STRING },
+ { CERT_RDN_IA5_STRING,       nihongoURL, 7, CRYPT_E_INVALID_IA5_STRING },
+};
+
+struct UnicodeExpectedResult
+{
+    DWORD           valueType;
+    LPCWSTR         str;
+    CRYPT_DATA_BLOB encoded;
+};
+
+static BYTE oneNumeric[] = { 0x12, 0x01, 0x31 };
+static BYTE onePrintable[] = { 0x13, 0x01, 0x31 };
+static BYTE oneTeletex[] = { 0x14, 0x01, 0x31 };
+static BYTE oneVideotex[] = { 0x15, 0x01, 0x31 };
+static BYTE oneIA5[] = { 0x16, 0x01, 0x31 };
+static BYTE oneGraphic[] = { 0x19, 0x01, 0x31 };
+static BYTE oneVisible[] = { 0x1a, 0x01, 0x31 };
+static BYTE oneUniversal[] = { 0x1c, 0x04, 0x00, 0x00, 0x00, 0x31 };
+static BYTE oneGeneral[] = { 0x1b, 0x01, 0x31 };
+static BYTE oneBMP[] = { 0x1e, 0x02, 0x00, 0x31 };
+static BYTE oneUTF8[] = { 0x0c, 0x01, 0x31 };
+static BYTE nihongoT61[] = { 0x14,0x09,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,0x6f,
+ 0x5b };
+static BYTE nihongoGeneral[] = { 0x1b,0x09,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,
+ 0x6f,0x5b };
+static BYTE nihongoBMP[] = { 0x1e,0x12,0x00,0x68,0x00,0x74,0x00,0x74,0x00,0x70,
+ 0x00,0x3a,0x00,0x2f,0x00,0x2f,0x22,0x6f,0x57,0x5b };
+static BYTE nihongoUTF8[] = { 0x0c,0x0d,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,
+ 0xe2,0x89,0xaf,0xe5,0x9d,0x9b };
+
+static struct UnicodeExpectedResult unicodeResults[] = {
+ { CERT_RDN_NUMERIC_STRING,   oneW, { sizeof(oneNumeric), oneNumeric } },
+ { CERT_RDN_PRINTABLE_STRING, oneW, { sizeof(onePrintable), onePrintable } },
+ { CERT_RDN_TELETEX_STRING,   oneW, { sizeof(oneTeletex), oneTeletex } },
+ { CERT_RDN_VIDEOTEX_STRING,  oneW, { sizeof(oneVideotex), oneVideotex } },
+ { CERT_RDN_IA5_STRING,       oneW, { sizeof(oneIA5), oneIA5 } },
+ { CERT_RDN_GRAPHIC_STRING,   oneW, { sizeof(oneGraphic), oneGraphic } },
+ { CERT_RDN_VISIBLE_STRING,   oneW, { sizeof(oneVisible), oneVisible } },
+ { CERT_RDN_UNIVERSAL_STRING, oneW, { sizeof(oneUniversal), oneUniversal } },
+ { CERT_RDN_GENERAL_STRING,   oneW, { sizeof(oneGeneral), oneGeneral } },
+ { CERT_RDN_BMP_STRING,       oneW, { sizeof(oneBMP), oneBMP } },
+ { CERT_RDN_UTF8_STRING,      oneW, { sizeof(oneUTF8), oneUTF8 } },
+ { CERT_RDN_BMP_STRING,     nihongoURL, { sizeof(nihongoBMP), nihongoBMP } },
+ { CERT_RDN_UTF8_STRING,    nihongoURL, { sizeof(nihongoUTF8), nihongoUTF8 } },
+};
+
+static struct UnicodeExpectedResult unicodeWeirdness[] = {
+ { CERT_RDN_TELETEX_STRING, nihongoURL, { sizeof(nihongoT61), nihongoT61 } },
+ { CERT_RDN_GENERAL_STRING, nihongoURL, { sizeof(nihongoGeneral), nihongoGeneral } },
+};
+
+static void test_encodeUnicodeNameValue(DWORD dwEncoding)
+{
+    BYTE *buf = NULL;
+    DWORD size = 0, i;
+    BOOL ret;
+    CERT_NAME_VALUE value;
+
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    /* Have to have a string of some sort */
+    value.dwValueType = 0; /* aka CERT_RDN_ANY_TYPE */
+    value.Value.pbData = NULL;
+    value.Value.cbData = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
+     "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
+    value.dwValueType = CERT_RDN_ENCODED_BLOB;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
+     "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
+    value.dwValueType = CERT_RDN_ANY_TYPE;
+    value.Value.pbData = (LPBYTE)oneW;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
+     "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
+    value.Value.cbData = sizeof(oneW);
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
+     "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
+    /* An encoded string with specified length isn't good enough either */
+    value.dwValueType = CERT_RDN_ENCODED_BLOB;
+    value.Value.pbData = oneUniversal;
+    value.Value.cbData = sizeof(oneUniversal);
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
+     "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
+    /* More failure checking */
+    value.Value.cbData = 0;
+    for (i = 0; i < sizeof(unicodeErrors) / sizeof(unicodeErrors[0]); i++)
+    {
+        value.Value.pbData = (LPBYTE)unicodeErrors[i].str;
+        value.dwValueType = unicodeErrors[i].valueType;
+        ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == unicodeErrors[i].error,
+         "Value type %ld: expected %08lx, got %08lx\n", value.dwValueType,
+         unicodeErrors[i].error, GetLastError());
+        ok(size == unicodeErrors[i].errorIndex,
+         "Expected error index %ld, got %ld\n", unicodeErrors[i].errorIndex,
+         size);
+    }
+    /* cbData can be zero if the string is NULL-terminated */
+    value.Value.cbData = 0;
+    for (i = 0; i < sizeof(unicodeResults) / sizeof(unicodeResults[0]); i++)
+    {
+        value.Value.pbData = (LPBYTE)unicodeResults[i].str;
+        value.dwValueType = unicodeResults[i].valueType;
+        ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(size == unicodeResults[i].encoded.cbData,
+             "Value type %ld: expected size %ld, got %ld\n",
+             value.dwValueType, unicodeResults[i].encoded.cbData, size);
+            ok(!memcmp(unicodeResults[i].encoded.pbData, buf, size),
+             "Value type %ld: unexpected value\n", value.dwValueType);
+            LocalFree(buf);
+        }
+    }
+    /* These "encode," but they do so by truncating each unicode character
+     * rather than properly encoding it.  Kept separate from the proper results,
+     * because the encoded forms won't decode to their original strings.
+     */
+    for (i = 0; i < sizeof(unicodeWeirdness) / sizeof(unicodeWeirdness[0]); i++)
+    {
+        value.Value.pbData = (LPBYTE)unicodeWeirdness[i].str;
+        value.dwValueType = unicodeWeirdness[i].valueType;
+        ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(size == unicodeWeirdness[i].encoded.cbData,
+             "Value type %ld: expected size %ld, got %ld\n",
+             value.dwValueType, unicodeWeirdness[i].encoded.cbData, size);
+            ok(!memcmp(unicodeWeirdness[i].encoded.pbData, buf, size),
+             "Value type %ld: unexpected value\n", value.dwValueType);
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodeUnicodeNameValue(DWORD dwEncoding)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(unicodeResults) / sizeof(unicodeResults[0]); i++)
+    {
+        BYTE *buf = NULL;
+        BOOL ret;
+        DWORD size = 0;
+
+        ret = CryptDecodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE,
+         unicodeResults[i].encoded.pbData, unicodeResults[i].encoded.cbData,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (ret && buf)
+        {
+            PCERT_NAME_VALUE value = (PCERT_NAME_VALUE)buf;
+
+            ok(value->dwValueType == unicodeResults[i].valueType,
+             "Expected value type %ld, got %ld\n", unicodeResults[i].valueType,
+             value->dwValueType);
+            ok(!lstrcmpW((LPWSTR)value->Value.pbData, unicodeResults[i].str),
+             "Unexpected decoded value for index %ld (value type %ld)\n", i,
+             unicodeResults[i].valueType);
+            LocalFree(buf);
+        }
+    }
+}
+
 struct encodedOctets
 {
     const BYTE *val;
@@ -3392,6 +3591,8 @@ START_TEST(encode)
         test_decodeName(encodings[i]);
         test_encodeNameValue(encodings[i]);
         test_decodeNameValue(encodings[i]);
+        test_encodeUnicodeNameValue(encodings[i]);
+        test_decodeUnicodeNameValue(encodings[i]);
         test_encodeAltName(encodings[i]);
         test_decodeAltName(encodings[i]);
         test_encodeOctets(encodings[i]);
