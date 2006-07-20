@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-cpp_quote("#if 0");  /* FIXME: these files are not included on Windows */
+cpp_quote("#if 0")  /* FIXME: these files are not included on Windows */
 import "shldisp.idl";
 import "strmif.idl";
-cpp_quote("#endif");
+cpp_quote("#endif")
 
 interface IMediaControl;
 interface IBasicAudio;

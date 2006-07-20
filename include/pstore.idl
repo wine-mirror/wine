@@ -18,15 +18,15 @@
 
 import "oaidl.idl";
 
-cpp_quote("#define PST_KEY_CURRENT_USER    0");
-cpp_quote("#define PST_KEY_LOCAL_MACHINE   1");
+cpp_quote("#define PST_KEY_CURRENT_USER    0")
+cpp_quote("#define PST_KEY_LOCAL_MACHINE   1")
 
-cpp_quote("#define PST_E_OK          0x00000000L");
-cpp_quote("#define PST_E_TYPE_EXISTS 0x800C0004L");
+cpp_quote("#define PST_E_OK          0x00000000L")
+cpp_quote("#define PST_E_TYPE_EXISTS 0x800C0004L")
 
-cpp_quote("#define PST_AUTHENTICODE        1");
-cpp_quote("#define PST_BINARY_CHECK        2");
-cpp_quote("#define PST_SECURITY_DESCRIPTOR 4");
+cpp_quote("#define PST_AUTHENTICODE        1")
+cpp_quote("#define PST_BINARY_CHECK        2")
+cpp_quote("#define PST_SECURITY_DESCRIPTOR 4")
 
 typedef DWORD PST_ACCESSMODE;
 typedef DWORD PST_ACCESSCLAUSETYPE;

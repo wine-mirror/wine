@@ -29,17 +29,17 @@ import "oaidl.idl";
  * PID_SECURITY is defined in msidefs.h with a different value!
  * So these need to be undefined first.
  */
-cpp_quote("#ifdef PID_DICTIONARY");
-cpp_quote("#undef PID_DICTIONARY");
-cpp_quote("#endif");
+cpp_quote("#ifdef PID_DICTIONARY")
+cpp_quote("#undef PID_DICTIONARY")
+cpp_quote("#endif")
 
-cpp_quote("#ifdef PID_CODEPAGE");
-cpp_quote("#undef PID_CODEPAGE");
-cpp_quote("#endif");
+cpp_quote("#ifdef PID_CODEPAGE")
+cpp_quote("#undef PID_CODEPAGE")
+cpp_quote("#endif")
 
-cpp_quote("#ifdef PID_SECURITY");
-cpp_quote("#undef PID_SECURITY");
-cpp_quote("#endif");
+cpp_quote("#ifdef PID_SECURITY")
+cpp_quote("#undef PID_SECURITY")
+cpp_quote("#endif")
 
 /******************** Property Storage ********************/
 
@@ -419,20 +419,20 @@ interface IEnumSTATPROPSETSTG : IUnknown
 }
 
 
-cpp_quote("HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);");
-cpp_quote("HRESULT WINAPI PropVariantClear(PROPVARIANT*);");
-cpp_quote("HRESULT WINAPI PropVariantCopy(PROPVARIANT*,const PROPVARIANT*);");
+cpp_quote("HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);")
+cpp_quote("HRESULT WINAPI PropVariantClear(PROPVARIANT*);")
+cpp_quote("HRESULT WINAPI PropVariantCopy(PROPVARIANT*,const PROPVARIANT*);")
 cpp_quote("")
 cpp_quote("#define _PROPVARIANT_INIT_DEFINED_")
 cpp_quote("#define PropVariantInit(p) memset((p), 0, sizeof(PROPVARIANT))")
 cpp_quote("")
 cpp_quote("#ifndef _STGCREATEPROPSTG_DEFINED_")
 cpp_quote("#define _STGCREATEPROPSTG_DEFINED_")
-cpp_quote("HRESULT WINAPI StgCreatePropStg(IUnknown *, REFFMTID, const CLSID *, DWORD, DWORD, IPropertyStorage **);");
-cpp_quote("HRESULT WINAPI StgOpenPropStg(IUnknown *, REFFMTID, DWORD, DWORD, IPropertyStorage **);");
-cpp_quote("HRESULT WINAPI StgCreatePropSetStg(IStorage *, DWORD, IPropertySetStorage **);");
-cpp_quote("#define CCH_MAX_PROPSTG_NAME 31");
-cpp_quote("HRESULT WINAPI FmtIdToPropStgName(const FMTID *, LPOLESTR);");
-cpp_quote("HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR, FMTID *);");
-cpp_quote("#endif /* _STGCREATEPROPSTG_DEFINED_ */");
+cpp_quote("HRESULT WINAPI StgCreatePropStg(IUnknown *, REFFMTID, const CLSID *, DWORD, DWORD, IPropertyStorage **);")
+cpp_quote("HRESULT WINAPI StgOpenPropStg(IUnknown *, REFFMTID, DWORD, DWORD, IPropertyStorage **);")
+cpp_quote("HRESULT WINAPI StgCreatePropSetStg(IStorage *, DWORD, IPropertySetStorage **);")
+cpp_quote("#define CCH_MAX_PROPSTG_NAME 31")
+cpp_quote("HRESULT WINAPI FmtIdToPropStgName(const FMTID *, LPOLESTR);")
+cpp_quote("HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR, FMTID *);")
+cpp_quote("#endif /* _STGCREATEPROPSTG_DEFINED_ */")
 cpp_quote("")

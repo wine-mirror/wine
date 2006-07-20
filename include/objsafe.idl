@@ -18,13 +18,13 @@
 
 import "unknwn.idl";
 
-cpp_quote("#define INTERFACESAFE_FOR_UNTRUSTED_CALLER 1");
-cpp_quote("#define INTERFACESAFE_FOR_UNTRUSTED_DATA 2");
-cpp_quote("#define INTERFACE_USES_DISPEX 4");
-cpp_quote("#define INTERFACE_USES_SECURITY_MANAGER 8");
+cpp_quote("#define INTERFACESAFE_FOR_UNTRUSTED_CALLER 1")
+cpp_quote("#define INTERFACESAFE_FOR_UNTRUSTED_DATA 2")
+cpp_quote("#define INTERFACE_USES_DISPEX 4")
+cpp_quote("#define INTERFACE_USES_SECURITY_MANAGER 8")
 
-cpp_quote("DEFINE_GUID(CATID_SafeForScripting, 0x7dd95801,0x9882,0x11cf,0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4);");
-cpp_quote("DEFINE_GUID(CATID_SafeForInitializing, 0x7dd95802,0x9882,0x11cf,0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4);");
+cpp_quote("DEFINE_GUID(CATID_SafeForScripting, 0x7dd95801,0x9882,0x11cf,0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4);")
+cpp_quote("DEFINE_GUID(CATID_SafeForInitializing, 0x7dd95802,0x9882,0x11cf,0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4);")
 
 [
     object,

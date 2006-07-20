@@ -22,11 +22,11 @@ import "unknwn.idl";
  * widl doesn't like the declaration of PFNFILLTEXTBUFFER, so work around it...
  * Not sure that function pointers are even legal in idl.
  */
-cpp_quote("struct tagTEXT_SOURCE;");
-cpp_quote("typedef HRESULT (WINAPI *PFNFILLTEXTBUFFER)(struct tagTEXT_SOURCE *pTextSource);");
-cpp_quote("#if 0");
+cpp_quote("struct tagTEXT_SOURCE;")
+cpp_quote("typedef HRESULT (WINAPI *PFNFILLTEXTBUFFER)(struct tagTEXT_SOURCE *pTextSource);")
+cpp_quote("#if 0")
 typedef void* PFNFILLTEXTBUFFER;
-cpp_quote("#endif");
+cpp_quote("#endif")
 
 typedef struct tagTEXT_SOURCE
 {

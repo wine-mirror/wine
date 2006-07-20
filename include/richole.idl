@@ -17,42 +17,42 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-cpp_quote("#if 0");  /* not included on Windows */
+cpp_quote("#if 0")  /* not included on Windows */
 import "oleidl.idl";
-cpp_quote("#endif");
+cpp_quote("#endif")
 
 /* REOBJECT structure flags */
-cpp_quote("#define REO_GETOBJ_NO_INTERFACES        0x00000000");
-cpp_quote("#define REO_GETOBJ_POLEOBJ              0x00000001");
-cpp_quote("#define REO_GETOBJ_PSTG                 0x00000002");
-cpp_quote("#define REO_GETOBJ_POLESITE             0x00000004");
-cpp_quote("#define REO_GETOBJ_ALL_INTERFACES       0x00000007");
-cpp_quote("#define REO_CP_SELECTION                0xFFFFFFFF");
-cpp_quote("#define REO_IOB_SELECTION               0xFFFFFFFF");
-cpp_quote("#define REO_IOB_USE_CP                  0xFFFFFFFE");
-cpp_quote("#define REO_NULL                        0x00000000");
-cpp_quote("#define REO_READWRITEMASK               0x0000003F");
-cpp_quote("#define REO_DONTNEEDPALETTE             0x00000020");
-cpp_quote("#define REO_BLANK                       0x00000010");
-cpp_quote("#define REO_DYNAMICSIZE                 0x00000008");
-cpp_quote("#define REO_INVERTEDSELECT              0x00000004");
-cpp_quote("#define REO_BELOWBASELINE               0x00000002");
-cpp_quote("#define REO_RESIZABLE                   0x00000001");
-cpp_quote("#define REO_LINK                        0x80000000");
-cpp_quote("#define REO_STATIC                      0x40000000");
-cpp_quote("#define REO_SELECTED                    0x08000000");
-cpp_quote("#define REO_OPEN                        0x04000000");
-cpp_quote("#define REO_INPLACEACTIVE               0x02000000");
-cpp_quote("#define REO_HILITED                     0x01000000");
-cpp_quote("#define REO_LINKAVAILABLE               0x00800000");
-cpp_quote("#define REO_GETMETAFILE                 0x00400000");
+cpp_quote("#define REO_GETOBJ_NO_INTERFACES        0x00000000")
+cpp_quote("#define REO_GETOBJ_POLEOBJ              0x00000001")
+cpp_quote("#define REO_GETOBJ_PSTG                 0x00000002")
+cpp_quote("#define REO_GETOBJ_POLESITE             0x00000004")
+cpp_quote("#define REO_GETOBJ_ALL_INTERFACES       0x00000007")
+cpp_quote("#define REO_CP_SELECTION                0xFFFFFFFF")
+cpp_quote("#define REO_IOB_SELECTION               0xFFFFFFFF")
+cpp_quote("#define REO_IOB_USE_CP                  0xFFFFFFFE")
+cpp_quote("#define REO_NULL                        0x00000000")
+cpp_quote("#define REO_READWRITEMASK               0x0000003F")
+cpp_quote("#define REO_DONTNEEDPALETTE             0x00000020")
+cpp_quote("#define REO_BLANK                       0x00000010")
+cpp_quote("#define REO_DYNAMICSIZE                 0x00000008")
+cpp_quote("#define REO_INVERTEDSELECT              0x00000004")
+cpp_quote("#define REO_BELOWBASELINE               0x00000002")
+cpp_quote("#define REO_RESIZABLE                   0x00000001")
+cpp_quote("#define REO_LINK                        0x80000000")
+cpp_quote("#define REO_STATIC                      0x40000000")
+cpp_quote("#define REO_SELECTED                    0x08000000")
+cpp_quote("#define REO_OPEN                        0x04000000")
+cpp_quote("#define REO_INPLACEACTIVE               0x02000000")
+cpp_quote("#define REO_HILITED                     0x01000000")
+cpp_quote("#define REO_LINKAVAILABLE               0x00800000")
+cpp_quote("#define REO_GETMETAFILE                 0x00400000")
 
 /* clipboard operation flags */
-cpp_quote("#define RECO_PASTE            0x00000000");
-cpp_quote("#define RECO_DROP             0x00000001");
-cpp_quote("#define RECO_COPY             0x00000002");
-cpp_quote("#define RECO_CUT              0x00000003");
-cpp_quote("#define RECO_DRAG             0x00000004");
+cpp_quote("#define RECO_PASTE            0x00000000")
+cpp_quote("#define RECO_DROP             0x00000001")
+cpp_quote("#define RECO_COPY             0x00000002")
+cpp_quote("#define RECO_CUT              0x00000003")
+cpp_quote("#define RECO_DRAG             0x00000004")
 
 typedef struct _reobject {
     DWORD cbStruct;
@@ -67,8 +67,8 @@ typedef struct _reobject {
     DWORD dwUser;
 } REOBJECT;
 
-cpp_quote("#ifndef __RICHEDIT_CHARRANGE_DEFINED");
-cpp_quote("#define __RICHEDIT_CHARRANGE_DEFINED");
+cpp_quote("#ifndef __RICHEDIT_CHARRANGE_DEFINED")
+cpp_quote("#define __RICHEDIT_CHARRANGE_DEFINED")
 
 typedef struct _charrange
 {
@@ -76,7 +76,7 @@ typedef struct _charrange
     LONG cpMax;
 } CHARRANGE;
 
-cpp_quote("#endif /* __RICHEDIT_CHARRANGE_DEFINED */");
+cpp_quote("#endif /* __RICHEDIT_CHARRANGE_DEFINED */")
 
 /*****************************************************************************
  * IRichEditOle

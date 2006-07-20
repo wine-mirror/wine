@@ -1090,7 +1090,7 @@ interface IContextMenu3 : IContextMenu2
 ]
 interface IShellExecuteHookA : IUnknown
 {
-    cpp_quote("struct _SHELLEXECUTEINFOA;");
+    cpp_quote("struct _SHELLEXECUTEINFOA;")
     HRESULT Execute(
         [in, out] struct _SHELLEXECUTEINFOA* pei);
 }
@@ -1106,7 +1106,7 @@ interface IShellExecuteHookA : IUnknown
 ]
 interface IShellExecuteHookW : IUnknown
 {
-    cpp_quote("struct _SHELLEXECUTEINFOW;");
+    cpp_quote("struct _SHELLEXECUTEINFOW;")
     HRESULT Execute(
 		[in, out] struct _SHELLEXECUTEINFOW* pei);
 }
