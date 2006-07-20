@@ -5,6 +5,7 @@
  * interface and the OleCreateFontIndirect API call.
  *
  * Copyright 1999 Francis Beaudet
+ * Copyright 2006 (Google) Benjamin Arai
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1347,11 +1348,35 @@ static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(
   LCID        lcid,
   DISPID*     rgDispId)
 {
+  ITypeInfo * pTInfo;
+  HRESULT hres;
+
   OLEFontImpl *this = impl_from_IDispatch(iface);
-  FIXME("(%p,%s,%p,%d,%04x,%p), stub!\n", this, debugstr_guid(riid), rgszNames,
-	cNames, (int)lcid, rgDispId
-  );
-  return E_NOTIMPL;
+
+  TRACE("(%p,%s,%p,cNames=%d,lcid=%04x,%p)\n", this, debugstr_guid(riid),
+        rgszNames, cNames, (int)lcid, rgDispId);
+
+  if (cNames == 0)
+  {
+    return E_INVALIDARG;
+  }
+  else
+  {
+    /* retrieve type information */
+    hres = OLEFontImpl_GetTypeInfo(iface, 0, lcid, &pTInfo);
+
+    if (FAILED(hres))
+    {
+      ERR("GetTypeInfo failed.\n");
+      return hres;
+    }
+
+    /* convert names to DISPIDs */
+    hres = DispGetIDsOfNames (pTInfo, rgszNames, cNames, rgDispId);
+    ITypeInfo_Release(pTInfo);
+
+    return hres;
+  }
 }
 
 /************************************************************************
