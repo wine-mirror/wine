@@ -145,7 +145,7 @@ interface IAMMediaStream : IMediaStream
 
 	HRESULT JoinFilterGraph(
 		[in] IFilterGraph *pFilterGraph);
-};
+}
 
 
 [
@@ -183,7 +183,7 @@ interface IMediaStreamFilter : IBaseFilter
 		[in] BOOL bCancelEOS);
 
 	HRESULT EndOfStream();
-};
+}
 
 
 [
@@ -195,7 +195,7 @@ pointer_default(unique)
 interface IDirectDrawMediaSampleAllocator : IUnknown
 {
 	HRESULT GetDirectDraw(IDirectDraw **ppDirectDraw);
-};
+}
 
 
 [
@@ -211,7 +211,7 @@ interface IDirectDrawMediaSample : IUnknown
 		[out] RECT * pRect);
 
 	HRESULT LockMediaSamplePointer(void);
-};
+}
 
 
 [
@@ -243,7 +243,7 @@ interface IAMMediaTypeStream : IMediaStream
 
 	HRESULT SetStreamAllocatorRequirements(
 		[in] ALLOCATOR_PROPERTIES *pProps);
-};
+}
 
 
 [
@@ -303,7 +303,7 @@ interface IAMMediaTypeSample : IStreamSample
 	HRESULT SetMediaTime(
 		[in] LONGLONG * pTimeStart,
 		[in] LONGLONG * pTimeEnd);
-};
+}
 
 [
     uuid(49C47CE5-9BA4-11d0-8212-00C04FC32C45)
@@ -311,7 +311,7 @@ interface IAMMediaTypeSample : IStreamSample
 coclass AMMultiMediaStream
 {
     [default] dispinterface IDirectShowStream;
-};
+}
 
 cpp_quote("DEFINE_GUID(CLSID_AMDirectDrawStream,  0x49c47ce4, 0x9ba4, 0x11d0, 0x82, 0x12, 0x00, 0xc0, 0x4f, 0xc3, 0x2c, 0x45);")
 cpp_quote("DEFINE_GUID(CLSID_AMAudioStream,       0x8496e040, 0xaf4c, 0x11d0, 0x82, 0x12, 0x00, 0xc0, 0x4f, 0xc3, 0x2c, 0x45);")

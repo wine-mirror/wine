@@ -119,7 +119,7 @@ interface IDispatchEx : IDispatch
             [out] DISPID *pid);
 
     HRESULT GetNameSpaceParent([out] IUnknown **ppunk);
-};
+}
 
 [
 object,
@@ -147,7 +147,7 @@ interface IDispError : IUnknown
 
     HRESULT GetDescription(
             [out] BSTR *pbstrDescription);
-};
+}
 
 [
 object,
@@ -161,7 +161,7 @@ interface IVariantChangeType : IUnknown
             [in, unique] VARIANT *pvarSrc,
             [in] LCID lcid,
             [in] VARTYPE vtNew);
-};
+}
 
 
 [
@@ -173,4 +173,4 @@ interface IObjectIdentity : IUnknown
 {
     HRESULT IsEqualObject( 
             [in] IUnknown *punk);
-};
+}

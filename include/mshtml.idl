@@ -5135,6 +5135,6 @@ coclass HTMLDocument
     [default]         interface IHTMLDocument2;
     [source, default] dispinterface HTMLDocumentEvents;
     [source]          dispinterface HTMLDocumentEvents2;
-};
+}
 
 } /* library MSHTML */

@@ -217,7 +217,7 @@ interface ITextDocument : IDispatch
     HRESULT Redo([in]long Count, [retval, out]long *prop);
     HRESULT Range([in]long cp1, [in]long cp2, [retval, out]ITextRange**ppRange);
     HRESULT RangeFromPoint([in]long x, [in]long y, [retval, out]ITextRange**ppRange);
-};
+}
 
 interface ITextFont;
 interface ITextPara;
@@ -279,7 +279,7 @@ interface ITextRange : IDispatch
     HRESULT SetPoint([in]long x, [in]long y, [in]long Type, [in]long Extend);
     HRESULT ScrollIntoView([in]long Value);
     HRESULT GetEmbeddedObject([retval, out]IUnknown **ppv);
-};
+}
 
 [
   object,
@@ -297,7 +297,7 @@ interface ITextSelection : ITextRange
     HRESULT HomeKey([in]long Unit, [in]long Extend, [retval, out]long *pDelta);
     HRESULT EndKey([in]long Unit, [in]long Extend, [retval, out]long *pDelta);
     HRESULT TypeText([in]BSTR bstr);
-};
+}
 
 [
   object,
@@ -360,7 +360,7 @@ interface ITextFont : IDispatch
     HRESULT SetUnderline([in]long Value);
     HRESULT GetWeight([retval, out]long *pValue);
     HRESULT SetWeight([in]long Value);
-};
+}
 
 [
   object,
@@ -416,7 +416,7 @@ interface ITextPara : IDispatch
     HRESULT ClearAllTabs();
     HRESULT DeleteTab([in]float tbPos);
     HRESULT GetTab([in]long iTab, [out]float *ptbPos, [out]long *ptbAlign, [out]long *ptbLeader);
-};
+}
 
 [
   object,
@@ -427,4 +427,4 @@ interface ITextStoryRanges : IDispatch
     HRESULT _NewEnum([retval, out]IUnknown **ppUnkEnum);
     HRESULT Item([in]long Index, [retval, out]ITextRange **ppRange);
     HRESULT GetCount([retval, out]long *pCount);
-};
+}

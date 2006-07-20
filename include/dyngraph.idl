@@ -36,7 +36,7 @@ interface IPinConnection : IUnknown
     HRESULT IsEndPin();
 
     HRESULT DynamicDisconnect();
-};
+}
 
 [
     local,

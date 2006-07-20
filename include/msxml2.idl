@@ -199,7 +199,7 @@ interface IXMLDOMNode : IDispatch
     HRESULT transformNodeToObject(
         [in] IXMLDOMNode *domNode,
         [in] VARIANT var1);
-};
+}
 
 [
 local,
@@ -335,7 +335,7 @@ interface IXMLDOMDocument : IXMLDOMNode
 
     [propput, id(DISPID_XMLDOM_DOCUMENT_ONTRANSFORMNODE)]
     HRESULT ontransformnode([in] VARIANT var1);
-};
+}
 
 [
 local,
@@ -371,7 +371,7 @@ interface IXMLDOMSchemaCollection : IDispatch
 
     [propget, id(DISPID_NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **ppUnk);
-};
+}
 
 [
 local,
@@ -402,7 +402,7 @@ interface IXMLDOMDocument2 : IXMLDOMDocument
     HRESULT getProperty(
         [in] BSTR p,
         [retval, out] VARIANT *var);
-};
+}
 
 [
 local,
@@ -426,7 +426,7 @@ interface IXMLDOMNodeList : IDispatch
 
     [propget, id(DISPID_NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **ppUnk);
-};
+}
 
 [
 local,
@@ -476,7 +476,7 @@ interface IXMLDOMSelection : IXMLDOMNodeList
     HRESULT setProperty(
         [in] BSTR p,
         [in] VARIANT var);
-};
+}
 
 [
 local,
@@ -527,7 +527,7 @@ interface IXMLDOMNamedNodeMap : IDispatch
 
     [propget, id(DISPID_NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **ppUnk);
-};
+}
  
 [
 local,
@@ -536,7 +536,7 @@ uuid (3efaa413-272f-11d2-836f-0000f87a7782)
 ]
 interface IXMLDOMDocumentFragment : IXMLDOMNode 
 {
-};
+}
 
 [
 local,
@@ -579,7 +579,7 @@ interface IXMLDOMCharacterData : IXMLDOMNode
         [in] long offset,
         [in] long count,
         [in] BSTR p);
-};
+}
 
 [
 local,
@@ -596,7 +596,7 @@ interface IXMLDOMAttribute : IXMLDOMNode
 
     [propput, id(DISPID_DOM_ATTRIBUTE_VALUE)]
     HRESULT value([in] VARIANT var1);
-};
+}
 
 [
 local,
@@ -644,7 +644,7 @@ interface IXMLDOMElement : IXMLDOMNode
 
     [id(DISPID_DOM_ELEMENT_NORMALIZE)]
     HRESULT normalize();
-};
+}
 
 [
 local,
@@ -657,7 +657,7 @@ interface IXMLDOMText : IXMLDOMCharacterData
     HRESULT splitText(
         [in] long offset,
         [retval, out] IXMLDOMText **txtNode);
-};
+}
 
 [
 local,
@@ -666,7 +666,7 @@ uuid (2933BF88-7B36-11d2-B20E-00C04F983E60)
 ]
 interface IXMLDOMComment : IXMLDOMCharacterData 
 {
-};
+}
 
 [
 local,
@@ -683,7 +683,7 @@ interface IXMLDOMProcessingInstruction : IXMLDOMNode
 
     [propput, id(DISPID_DOM_PI_DATA)]
     HRESULT data([in] BSTR p);
-};
+}
 
 [
 local,
@@ -692,7 +692,7 @@ uuid (2933BF8A-7B36-11d2-B20E-00C04F983E60)
 ]
 interface IXMLDOMCDATASection : IXMLDOMText 
 {
-};
+}
 
 [
 local,
@@ -709,7 +709,7 @@ interface IXMLDOMDocumentType : IXMLDOMNode
 
     [propget, id(DISPID_DOM_DOCUMENTTYPE_NOTATIONS)]
     HRESULT notations([retval, out] IXMLDOMNamedNodeMap **notationMap);
-};
+}
 
 [
 local,
@@ -723,7 +723,7 @@ interface IXMLDOMNotation : IXMLDOMNode
 
     [propget, id(DISPID_DOM_NOTATION_SYSTEMID)]
     HRESULT systemId([retval, out] VARIANT *id);
-};
+}
 
 [
 local,
@@ -740,7 +740,7 @@ interface IXMLDOMEntity : IXMLDOMNode
 
     [propget, id(DISPID_DOM_ENTITY_NOTATIONNAME)]
     HRESULT notationName([retval, out] BSTR *p);
-};
+}
 
 [
 local,
@@ -749,7 +749,7 @@ uuid (2933BF8E-7B36-11d2-B20E-00C04F983E60)
 ]
 interface IXMLDOMEntityReference : IXMLDOMNode 
 {
-};
+}
 
 [
 local,
@@ -763,7 +763,7 @@ interface IXMLDOMImplementation : IDispatch
         [in] BSTR feature,
         [in] BSTR version,
         [retval, out] VARIANT_BOOL *pbool);
-};
+}
 
 [
 local,
@@ -824,7 +824,7 @@ interface IXTLRuntime : IXMLDOMNode
         [optional, in] VARIANT var2,
         [retval, out]BSTR *pbstr);
 
-};
+}
 
 [
     uuid(3efaa427-272f-11d2-836f-0000f87a7782)
@@ -838,7 +838,7 @@ dispinterface XMLDOMDocumentEvents
  
     [id (DISPID_XMLDOMEVENT_ONREADYSTATECHANGE)] 
     HRESULT onreadystatechange();
-};
+}
 
 [
 local,
@@ -896,7 +896,7 @@ interface IXSLProcessor : IDispatch
 
     [propget, id(DISPID_XMLDOM_PROCESSOR_STYLESHEET)]
     HRESULT stylesheet([retval, out] IXMLDOMNode **node);
-}; 
+} 
 
 [
 local,
@@ -914,7 +914,7 @@ interface IXSLTemplate : IDispatch
     [id(DISPID_XMLDOM_TEMPLATE_CREATEPROCESSOR)]
     HRESULT createProcessor(
         [retval, out] IXSLProcessor **ppProcessor);
-}; 
+} 
 
 [
 local,
@@ -943,7 +943,7 @@ interface IXMLDOMParseError : IDispatch
 
     [propget, id(DISPID_DOM_ERROR_FILEPOS)]
     HRESULT filepos([retval, out] long * filePos);
-};
+}
 
 [
     uuid(F6D90F11-9C73-11D3-B32E-00C04F990BB4)
@@ -952,7 +952,7 @@ coclass DOMDocument
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
     uuid(f5078f1b-c551-11d3-89b9-0000f81fe221)
@@ -961,7 +961,7 @@ coclass DOMDocument26
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
     uuid(f5078f32-c551-11d3-89b9-0000f81fe221)
@@ -970,7 +970,7 @@ coclass DOMDocument30
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 
 [
@@ -980,7 +980,7 @@ coclass FreeThreadedDOMDocument
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
     uuid(f5078f1c-c551-11d3-89b9-0000f81fe221)
@@ -989,7 +989,7 @@ coclass FreeThreadedDOMDocument26
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
     uuid(f5078f33-c551-11d3-89b9-0000f81fe221)
@@ -998,7 +998,7 @@ coclass FreeThreadedDOMDocument30
 {
     [default] interface IXMLDOMDocument2;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
     uuid(373984c9-b845-449b-91e7-45ac83036ade)
@@ -1006,7 +1006,7 @@ coclass FreeThreadedDOMDocument30
 coclass XMLSchemaCache
 {
     [default] interface IXMLDOMSchemaCollection;
-};
+}
 
 [
     uuid(f5078f1d-c551-11d3-89b9-0000f81fe221)
@@ -1014,7 +1014,7 @@ coclass XMLSchemaCache
 coclass XMLSchemaCache26
 {
     [default] interface IXMLDOMSchemaCollection;
-};
+}
 
 [
     uuid(f5078f34-c551-11d3-89b9-0000f81fe221)
@@ -1022,7 +1022,7 @@ coclass XMLSchemaCache26
 coclass XMLSchemaCache30
 {
     [default] interface IXMLDOMSchemaCollection;
-};
+}
 
 [
     uuid(2933BF94-7B36-11d2-B20E-00C04F983E60)
@@ -1030,7 +1030,7 @@ coclass XMLSchemaCache30
 coclass XSLTemplate
 {
     [default] interface IXSLTemplate;
-};
+}
 
 [
     uuid(f5078f21-c551-11d3-89b9-0000f81fe221)
@@ -1038,7 +1038,7 @@ coclass XSLTemplate
 coclass XSLTemplate26
 {
     [default] interface IXSLTemplate;
-};
+}
 
 [
     uuid(f5078f36-c551-11d3-89b9-0000f81fe221)
@@ -1046,4 +1046,4 @@ coclass XSLTemplate26
 coclass XSLTemplate30
 {
     [default] interface IXSLTemplate;
-};
+}

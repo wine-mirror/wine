@@ -187,7 +187,7 @@ interface IXMLDOMNode : IDispatch
     [id(DISPID_XMLDOM_NODE_TRANSFORMNODETOOBJECT)]
     HRESULT transformNodeToObject( [in] IXMLDOMNode *stylesheet,
                                    [in] VARIANT outputObject );
-};
+}
 
 [
 local,
@@ -315,7 +315,7 @@ interface IXMLDOMDocument : IXMLDOMNode
 
     [propput, id(DISPID_XMLDOM_DOCUMENT_ONTRANSFORMNODE)]
     HRESULT ontransformnode( [in] VARIANT ontransformnodeSink );
-};
+}
 
 [
 local,
@@ -344,7 +344,7 @@ interface IXMLDOMNodeList : IDispatch
 
     [id(DISPID_NEWENUM)]
     HRESULT _newEnum( [out,retval] IUnknown **ppUnk );
-};
+}
 
 [
 local,
@@ -395,7 +395,7 @@ interface IXMLDOMNamedNodeMap : IDispatch
 
     [id(DISPID_NEWENUM)]
     HRESULT _newEnum( [out,retval] IUnknown **ppUnk );
-};
+}
 
 [
 local,
@@ -410,7 +410,7 @@ pointer_default(unique)
 interface IXMLDOMDocumentFragment : IXMLDOMNode
 {
     /* empty */
-};
+}
 
 [
 local,
@@ -453,7 +453,7 @@ interface IXMLDOMCharacterData : IXMLDOMNode
     HRESULT replaceData( [in] long offset,
                          [in] long count,
                          [in] BSTR data );
-};
+}
 
 [
 local,
@@ -475,7 +475,7 @@ interface IXMLDOMAttribute : IXMLDOMNode
 
     [propput,id(DISPID_DOM_ATTRIBUTE_VALUE)]
     HRESULT value( [in] VARIANT attributeValue );
-};
+}
 
 [
 local,
@@ -521,7 +521,7 @@ interface IXMLDOMElement : IXMLDOMNode
 
     [id(DISPID_DOM_ELEMENT_NORMALIZE)]
     HRESULT normalize();
-};
+}
 
 [
 local,
@@ -538,7 +538,7 @@ interface IXMLDOMText : IXMLDOMCharacterData
     [id(DISPID_DOM_TEXT_SPLITTEXT)]
     HRESULT splitText( [in] long offset,
                        [out,retval] IXMLDOMText **rightHandTextNode );
-};
+}
 
 [
 local,
@@ -553,7 +553,7 @@ pointer_default(unique)
 interface IXMLDOMComment : IXMLDOMNode
 {
     /* empty */
-};
+}
 
 [
 local,
@@ -575,7 +575,7 @@ interface IXMLDOMProcessingInstruction : IXMLDOMNode
 
     [propput, id(DISPID_DOM_PI_DATA)]
     HRESULT data( [in] BSTR value );
-};
+}
 
 [
 local,
@@ -590,7 +590,7 @@ pointer_default(unique)
 interface IXMLDOMCDATASection : IXMLDOMText
 {
     /* empty */
-};
+}
 [
 local,
 object,
@@ -611,7 +611,7 @@ interface IXMLDOMDocumentType : IXMLDOMNode
 
     [propget, id(DISPID_DOM_DOCUMENTTYPE_NOTATIONS)]
     HRESULT notations( [out,retval] IXMLDOMNamedNodeMap **notationMap );
-};
+}
 
 [
 local,
@@ -646,7 +646,7 @@ interface IXMLDOMParseError : IDispatch
 
     [propget, id(DISPID_DOM_ERROR_FILEPOS)]
     HRESULT filepos([retval, out] long * filePos);
-};
+}
 
 
 [
@@ -656,7 +656,7 @@ coclass DOMDocument
 {
     [default] interface IXMLDOMDocument;
     [default, source] dispinterface XMLDOMDocumentEvents;
-};
+}
 
 [
 uuid(2933bf91-7b36-11d2-b20e-00c04f983e60)
@@ -720,7 +720,7 @@ interface IXMLHttpRequest : IDispatch
 
     [propput, id(14)]
     HRESULT onreadystatechange([in] IDispatch *pReadyStateSink);
-};
+}
 
 [
 uuid(ed8c108e-4349-11d2-91a4-00c04f7969e8)
@@ -728,4 +728,4 @@ uuid(ed8c108e-4349-11d2-91a4-00c04f7969e8)
 coclass XMLHTTPRequest
 {
     [default] interface IXMLHttpRequest;
-};
+}

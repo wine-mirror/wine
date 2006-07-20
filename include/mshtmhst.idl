@@ -93,7 +93,7 @@ interface IHostDialogHelper : IUnknown
 coclass HostDialogHelper
 {
     [default] interface IHostDialogHelper;
-};
+}
 
 /*****************************************************************************
  *    IDocHostUIHandler interface
@@ -284,7 +284,7 @@ interface IClassFactoryEx : IClassFactory
         IUnknown *punkOuter,
         REFIID riid,
         [out] void **ppv);
-};
+}
 
 cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGFN(HWND,IMoniker*,VARIANT*,WCHAR*,VARIANT*);")
 cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGEXFN(HWND,IMoniker*,DWORD,VARIANT*,WCHAR*,VARIANT*);")

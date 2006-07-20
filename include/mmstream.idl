@@ -118,7 +118,7 @@ interface IMultiMediaStream : IUnknown {
 
 	HRESULT GetEndOfStreamEventHandle(
 		[out] HANDLE *phEOS);
-};
+}
 
 
 [
@@ -149,7 +149,7 @@ interface IMediaStream : IUnknown {
 		[out] IStreamSample **ppNewSample);
 
 	HRESULT SendEndOfStream(DWORD dwFlags);
-};
+}
 
 
 [
@@ -181,4 +181,4 @@ interface IStreamSample : IUnknown {
 	HRESULT CompletionStatus(
 		[in] DWORD dwFlags,
 		[in, optional] DWORD dwMilliseconds);
-};
+}

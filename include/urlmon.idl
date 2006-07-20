@@ -923,7 +923,7 @@ interface IInternetSecurityMgrSite : IUnknown
 
     HRESULT EnableModeless(
         [in] BOOL fEnable);
-};
+}
 
 
 /*****************************************************************************
@@ -1000,7 +1000,7 @@ cpp_quote("#define MAX_SIZE_SECURITY_ID 512")
         [in] DWORD dwZone,
         [out] IEnumString **ppenumString,
         [in] DWORD dwFlags);
-};
+}
 
 /*****************************************************************************
  * IInternetZoneManager interface

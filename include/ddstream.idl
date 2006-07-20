@@ -67,7 +67,7 @@ interface IDirectDrawMediaStream : IMediaStream
 
 	HRESULT GetTimePerFrame(
 		[out] STREAM_TIME *pFrameTime);
-};
+}
 
 
 [
@@ -85,4 +85,4 @@ interface IDirectDrawStreamSample : IStreamSample
 	HRESULT SetRect(
 		[in] const RECT * pRect);
 
-};
+}

@@ -40,4 +40,4 @@ interface IDownloadManager : IUnknown
         [in] LPCOLESTR pszHeaders,
         [in] LPCOLESTR pszRedir,
         [in] UINT uiCP);
-};
+}

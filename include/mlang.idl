@@ -48,7 +48,7 @@ interface IMLangCodePages : IUnknown
         [in] DWORD dwCodePages,
         [in] UINT uDefaultCodePage,
         [out] UINT *puCodePage);
-};
+}
 
 [
   object,
@@ -72,7 +72,7 @@ interface IMLangFontLink : IMLangCodePages
         [in] HFONT hFont);
 
     HRESULT ResetFontMapping();
-};
+}
 
 [
   object,
@@ -170,7 +170,7 @@ interface IEnumScript : IUnknown
 
     HRESULT Skip(      
         [in] ULONG celt);
-};
+}
 
 [
   object,
@@ -231,7 +231,7 @@ interface IEnumCodePage : IUnknown
 
     HRESULT Skip(      
         [in] ULONG celt);
-};
+}
 
 [
   object,
@@ -270,7 +270,7 @@ interface IMLangConvertCharset : IUnknown
         [in,out] UINT *pcSrcSize,
         [in] CHAR *pDstStr,
         [in,out] UINT *pcDstSize);
-};
+}
 
 [
   object,
@@ -301,7 +301,7 @@ interface IEnumRfc1766 : IUnknown
 
     HRESULT Skip(      
         [in] ULONG celt);
-};
+}
 
 [
   object,
@@ -381,7 +381,7 @@ interface IMultiLanguage : IUnknown
         [in] DWORD dwProperty,
         [out] IMLangConvertCharset **ppMLangConvertCharset);
 
-};
+}
 
 [
   object,
@@ -545,7 +545,7 @@ interface IMultiLanguage2 : IUnknown
         [in] UINT uiCodePage,
         [in] HWND hwnd,
         [in] DWORD dwfIODControl);
-};
+}
 
 [
     uuid(275C23E2-3747-11d0-9FEA-00AA003f8646)
@@ -556,7 +556,7 @@ coclass CMultiLanguage
     interface IMLangCodePages;
     interface IMLangFontLink;
     /* interface IMLangLineBreakConsole; */
-};
+}
 
 cpp_quote("STDAPI LcidToRfc1766A(LCID, LPSTR, INT);")
 cpp_quote("STDAPI LcidToRfc1766W(LCID, LPWSTR, INT);")
