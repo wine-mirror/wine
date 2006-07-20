@@ -697,6 +697,46 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
 }
 
 /***********************************************************************
+ *              SetupDiCreateDeviceInfoA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiCreateDeviceInfoA(
+       HDEVINFO DeviceInfoSet,
+       PCSTR DeviceName,
+       CONST GUID *ClassGuid,
+       PCSTR DeviceDescription,
+       HWND hwndParent,
+       DWORD CreationFlags,
+       PSP_DEVINFO_DATA DeviceInfoData)
+{
+    BOOL ret = FALSE;
+    LPWSTR DeviceNameW = NULL;
+    LPWSTR DeviceDescriptionW = NULL;
+
+    if (DeviceName)
+    {
+        DeviceNameW = MultiByteToUnicode(DeviceName, CP_ACP);
+        if (DeviceNameW == NULL) return FALSE;
+    }
+    if (DeviceDescription)
+    {
+        DeviceDescriptionW = MultiByteToUnicode(DeviceDescription, CP_ACP);
+        if (DeviceDescriptionW == NULL)
+        {
+            MyFree(DeviceNameW);
+            return FALSE;
+        }
+    }
+
+    ret = SetupDiCreateDeviceInfoW(DeviceInfoSet, DeviceNameW, ClassGuid, DeviceDescriptionW,
+            hwndParent, CreationFlags, DeviceInfoData);
+
+    MyFree(DeviceNameW);
+    MyFree(DeviceDescriptionW);
+
+    return ret;
+}
+
+/***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiCreateDeviceInfoW(

@@ -744,6 +744,9 @@ HDEVINFO WINAPI SetupDiCreateDeviceInfoList(const GUID *, HWND);
 HDEVINFO WINAPI SetupDiCreateDeviceInfoListExA(const GUID *, HWND, PCSTR, PVOID);
 HDEVINFO WINAPI SetupDiCreateDeviceInfoListExW(const GUID *, HWND, PCWSTR, PVOID);
 #define         SetupDiCreateDeviceInfoListEx WINELIB_NAME_AW(SetupDiCreateDeviceInfoListEx)
+BOOL     WINAPI SetupDiCreateDeviceInfoA(HDEVINFO, PCSTR, CONST GUID*, PCSTR, HWND, DWORD,PSP_DEVINFO_DATA);
+BOOL     WINAPI SetupDiCreateDeviceInfoW(HDEVINFO, PCWSTR, CONST GUID*, PCWSTR, HWND, DWORD,PSP_DEVINFO_DATA);
+#define         SetupDiCreateDeviceInfo WINELIB_NAME_AW(SetupDiCreateDeviceInfo)
 BOOL     WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO);
 BOOL     WINAPI SetupDiEnumDeviceInfo(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 BOOL     WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);

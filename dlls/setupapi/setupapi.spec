@@ -282,7 +282,7 @@
 @ stdcall SetupDiClassNameFromGuidW(ptr wstr long ptr)
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
-@ stub SetupDiCreateDeviceInfoA
+@ stdcall SetupDiCreateDeviceInfoA(long str ptr str long long ptr)
 @ stdcall SetupDiCreateDeviceInfoList(ptr ptr)
 @ stdcall SetupDiCreateDeviceInfoListExA(ptr long str ptr)
 @ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)
