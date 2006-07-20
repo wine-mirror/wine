@@ -94,6 +94,13 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION csApartment = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+struct registered_psclsid
+{
+    struct list entry;
+    IID iid;
+    CLSID clsid;
+};
+
 /*
  * This lock count counts the number of times CoInitialize is called. It is
  * decreased every time CoUninitialize is called. When it hits 0, the COM
@@ -220,6 +227,7 @@ static APARTMENT *apartment_construct(DWORD model)
 
     list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
+    list_init(&apt->psclsids);
     apt->ipidc = 0;
     apt->refs = 1;
     apt->remunk_exported = FALSE;
@@ -341,6 +349,15 @@ DWORD apartment_release(struct apartment *apt)
              * must have a ref on the apartment and so it cannot be destroyed).
              */
             stub_manager_int_release(stubmgr);
+        }
+
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &apt->psclsids)
+        {
+            struct registered_psclsid *registered_psclsid =
+                LIST_ENTRY(cursor, struct registered_psclsid, entry);
+
+            HeapFree(GetProcessHeap(), 0, registered_psclsid);
+            list_remove(&registered_psclsid->entry);
         }
 
         /* if this assert fires, then another thread took a reference to a
@@ -1147,11 +1164,12 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
  *
  * BUGS
  *
- * We only search the registry, not ids registered with
- * CoRegisterPSClsid.
- * Also, native returns S_OK for interfaces with a key in HKCR\Interface, but
+ * Native returns S_OK for interfaces with a key in HKCR\Interface, but
  * without a ProxyStubClsid32 key and leaves garbage in pclsid. This should be
  * considered a bug in native unless an application depends on this (unlikely).
+ *
+ * SEE ALSO
+ *  CoRegisterPSClsid.
  */
 HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
 {
@@ -1161,8 +1179,28 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     WCHAR value[CHARS_IN_GUID];
     LONG len;
     HKEY hkey;
+    APARTMENT *apt = COM_CurrentApt();
+    struct registered_psclsid *registered_psclsid;
 
     TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
+
+    if (!apt)
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    EnterCriticalSection(&apt->cs);
+
+    LIST_FOR_EACH_ENTRY(registered_psclsid, &apt->psclsids, struct registered_psclsid, entry)
+        if (IsEqualIID(&registered_psclsid->iid, riid))
+        {
+            *pclsid = registered_psclsid->clsid;
+            LeaveCriticalSection(&apt->cs);
+            return S_OK;
+        }
+
+    LeaveCriticalSection(&apt->cs);
 
     /* Interface\\{string form of riid}\\ProxyStubClsid32 */
     strcpyW(path, wszInterface);
@@ -1193,6 +1231,67 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
         return REGDB_E_IIDNOTREG;
 
     TRACE ("() Returning CLSID=%s\n", debugstr_guid(pclsid));
+    return S_OK;
+}
+
+/*****************************************************************************
+ *             CoRegisterPSClsid [OLE32.@]
+ *
+ * Register a proxy/stub CLSID for the given interface in the current process
+ * only.
+ *
+ * PARAMS
+ *  riid   [I] Interface whose proxy/stub CLSID is to be registered.
+ *  rclsid [I] CLSID of the proxy/stub.
+ * 
+ * RETURNS
+ *   Success: S_OK
+ *   Failure: E_OUTOFMEMORY
+ *
+ * NOTES
+ *
+ * This function does not add anything to the registry and the effects are
+ * limited to the lifetime of the current process.
+ *
+ * SEE ALSO
+ *  CoGetPSClsid.
+ */
+HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
+{
+    APARTMENT *apt = COM_CurrentApt();
+    struct registered_psclsid *registered_psclsid;
+
+    TRACE("(%s, %s)\n", debugstr_guid(riid), debugstr_guid(rclsid));
+
+    if (!apt)
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    EnterCriticalSection(&apt->cs);
+
+    LIST_FOR_EACH_ENTRY(registered_psclsid, &apt->psclsids, struct registered_psclsid, entry)
+        if (IsEqualIID(&registered_psclsid->iid, riid))
+        {
+            registered_psclsid->clsid = *rclsid;
+            LeaveCriticalSection(&apt->cs);
+            return S_OK;
+        }
+
+    registered_psclsid = HeapAlloc(GetProcessHeap(), 0, sizeof(struct registered_psclsid));
+    if (!registered_psclsid)
+    {
+        LeaveCriticalSection(&apt->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    registered_psclsid->iid = *riid;
+    registered_psclsid->clsid = *rclsid;
+    list_add_head(&apt->psclsids, &registered_psclsid->entry);
+
+    LeaveCriticalSection(&apt->cs);
+
     return S_OK;
 }
 

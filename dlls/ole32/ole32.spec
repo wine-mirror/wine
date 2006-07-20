@@ -56,7 +56,7 @@
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterMallocSpy (ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr)
-@ stub CoRegisterPSClsid          #@ stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+@ stdcall CoRegisterPSClsid(ptr ptr)
 @ stub CoRegisterSurrogate
 @ stdcall CoReleaseMarshalData(ptr)
 @ stdcall CoReleaseServerProcess()

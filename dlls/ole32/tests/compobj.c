@@ -48,6 +48,15 @@ static const WCHAR wszCLSID_CDeviceMoniker[] =
     '}',0
 };
 
+static const IID IID_IWineTest =
+{
+    0x5201163f,
+    0x8164,
+    0x4fd0,
+    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+}; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+
+
 static void test_ProgIDFromCLSID(void)
 {
     LPWSTR progid;
@@ -253,6 +262,148 @@ static void test_CoRegisterMessageFilter(void)
     CoUninitialize();
 }
 
+static HRESULT WINAPI Test_IUnknown_QueryInterface(
+    LPUNKNOWN iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IWineTest))
+    {
+        *ppvObj = (LPVOID)iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IUnknown_AddRef(LPUNKNOWN iface)
+{
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
+{
+    return 1; /* non-heap-based object */
+}
+
+static const IUnknownVtbl TestUnknown_Vtbl =
+{
+    Test_IUnknown_QueryInterface,
+    Test_IUnknown_AddRef,
+    Test_IUnknown_Release,
+};
+
+static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+
+static HRESULT WINAPI PSFactoryBuffer_QueryInterface(
+    IPSFactoryBuffer * This,
+    /* [in] */ REFIID riid,
+    /* [iid_is][out] */ void **ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IPSFactoryBuffer))
+    {
+        *ppvObject = This;
+        IPSFactoryBuffer_AddRef(This);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+        
+static ULONG WINAPI PSFactoryBuffer_AddRef(
+    IPSFactoryBuffer * This)
+{
+    return 2;
+}
+
+static ULONG WINAPI PSFactoryBuffer_Release(
+    IPSFactoryBuffer * This)
+{
+    return 1;
+}
+
+static HRESULT WINAPI PSFactoryBuffer_CreateProxy(
+    IPSFactoryBuffer * This,
+    /* [in] */ IUnknown *pUnkOuter,
+    /* [in] */ REFIID riid,
+    /* [out] */ IRpcProxyBuffer **ppProxy,
+    /* [out] */ void **ppv)
+{
+    return E_NOTIMPL;
+}
+        
+static HRESULT WINAPI PSFactoryBuffer_CreateStub(
+    IPSFactoryBuffer * This,
+    /* [in] */ REFIID riid,
+    /* [unique][in] */ IUnknown *pUnkServer,
+    /* [out] */ IRpcStubBuffer **ppStub)
+{
+    return E_NOTIMPL;
+}
+
+static IPSFactoryBufferVtbl PSFactoryBufferVtbl =
+{
+    PSFactoryBuffer_QueryInterface,
+    PSFactoryBuffer_AddRef,
+    PSFactoryBuffer_Release,
+    PSFactoryBuffer_CreateProxy,
+    PSFactoryBuffer_CreateStub
+};
+
+static IPSFactoryBuffer PSFactoryBuffer = { &PSFactoryBufferVtbl };
+
+static const CLSID CLSID_WineTestPSFactoryBuffer =
+{
+    0x52011640,
+    0x8164,
+    0x4fd0,
+    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+}; /* 52011640-8164-4fd0-a1a2-5d5a3654d3bd */
+
+static void test_CoRegisterPSClsid(void)
+{
+    HRESULT hr;
+    DWORD dwRegistrationKey;
+    IStream *stream;
+    CLSID clsid;
+
+    hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
+    ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returened CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoRegisterClassObject(&CLSID_WineTestPSFactoryBuffer, (IUnknown *)&PSFactoryBuffer,
+        CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &dwRegistrationKey);
+    ok_ole_success(hr, "CoRegisterClassObject");
+
+    hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
+    ok_ole_success(hr, "CoRegisterPSClsid");
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+    hr = CoMarshalInterface(stream, &IID_IWineTest, (IUnknown *)&Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == E_NOTIMPL, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08lx\n", hr);
+    IStream_Release(stream);
+
+    hr = CoRevokeClassObject(dwRegistrationKey);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    CoUninitialize();
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoGetPSClsid(&IID_IWineTest, &clsid);
+    ok(hr == REGDB_E_IIDNOTREG, "CoGetPSClsid should have returned REGDB_E_IIDNOTREG instead of 0x%08lx\n", hr);
+
+    CoUninitialize();
+}
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -269,4 +420,5 @@ START_TEST(compobj)
     test_ole_menu();
     test_CoGetClassObject();
     test_CoRegisterMessageFilter();
+    test_CoRegisterPSClsid();
 }
