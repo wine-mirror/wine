@@ -47,6 +47,7 @@ typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
+typedef BOOL (WINAPI *fnCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 
 static HMODULE hmod;
 
@@ -59,6 +60,7 @@ fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
 fnRtlAdjustPrivilege pRtlAdjustPrivilege;
+fnCreateWellKnownSid pCreateWellKnownSid;
 
 struct sidRef
 {
@@ -737,7 +739,7 @@ static void test_token_attr(void)
         Domain[0] = '\0';
         ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
         ok(ret, "LookupAccountSid failed with error %ld\n", GetLastError());
-        trace("\t%s, %s\\%s attr: 0x%08lx\n", SidString, Domain, Name, Groups->Groups[i].Attributes);
+        trace("\t%s, %s\\%s use: %d attr: 0x%08lx\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
         LocalFree(SidString);
     }
 
@@ -780,6 +782,14 @@ static void test_LookupAccountSid(void)
     PSID pUsersSid = NULL;
     SID_NAME_USE use;
     BOOL ret;
+    DWORD size;
+    union u
+    {
+        SID sid;
+        char max[SECURITY_MAX_SID_SIZE];
+    } max_sid;
+    char *str_sid;
+    int i;
 
     /* native windows crashes if account size, domain size, or name use is NULL */
 
@@ -798,6 +808,30 @@ static void test_LookupAccountSid(void)
     dom_size = MAX_PATH;
     ret = LookupAccountSid(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
     ok(ret, "Expected TRUE, got FALSE\n");
+
+    pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
+
+    if (pCreateWellKnownSid && pConvertSidToStringSidA)
+    {
+        trace("Well Known SIDs:\n");
+        for (i = 0; i <= 60; i++)
+        {
+            size = SECURITY_MAX_SID_SIZE;
+            if (pCreateWellKnownSid(i, NULL, &max_sid.sid, &size))
+            {
+                if (pConvertSidToStringSidA(&max_sid.sid, &str_sid))
+                {
+                    acc_size = MAX_PATH;
+                    dom_size = MAX_PATH;
+                    if (LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use))
+                        trace(" %d: %s %s\\%s %d\n", i, str_sid, domain, account, use);
+                    LocalFree(str_sid); 
+                }
+            }
+            else
+                trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError()); 
+        }
+    }
 }
 
 START_TEST(security)

@@ -114,6 +114,92 @@ static const WELLKNOWNSID WellKnownSids[] =
 
 static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
 
+typedef struct _AccountSid {
+    WELL_KNOWN_SID_TYPE type;
+    LPCWSTR account;
+    LPCWSTR domain;
+    SID_NAME_USE name_use;
+} AccountSid;
+
+static const WCHAR Account_Operators[] = { 'A','c','c','o','u','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
+static const WCHAR Administrator[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r',0 };
+static const WCHAR Administrators[] = { 'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0 };
+static const WCHAR ANONYMOUS_LOGON[] = { 'A','N','O','N','Y','M','O','U','S',' ','L','O','G','O','N',0 };
+static const WCHAR Authenticated_Users[] = { 'A','u','t','h','e','n','t','i','c','a','t','e','d',' ','U','s','e','r','s',0 };
+static const WCHAR Backup_Operators[] = { 'B','a','c','k','u','p',' ','O','p','e','r','a','t','o','r','s',0 };
+static const WCHAR BATCH[] = { 'B','A','T','C','H',0 };
+static const WCHAR Blank[] = { 0 };
+static const WCHAR BUILTIN[] = { 'B','U','I','L','T','I','N',0 };
+static const WCHAR CREATOR_GROUP[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',0 };
+static const WCHAR CREATOR_GROUP_SERVER[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',' ','S','E','R','V','E','R',0 };
+static const WCHAR CREATOR_OWNER[] = { 'C','R','E','A','T','O','R',' ','O','W','N','E','R',0 };
+static const WCHAR CREATOR_OWNER_SERVER[] = { 'C','R','E','A','T','O','R',' ','O','W','N','E','R',' ','S','E','R','V','E','R',0 };
+static const WCHAR DIALUP[] = { 'D','I','A','L','U','P',0 };
+static const WCHAR DOMAIN[] = {'D','O','M','A','I','N',0};
+static const WCHAR ENTERPRISE_DOMAIN_CONTROLLERS[] = { 'E','N','T','E','R','P','R','I','S','E',' ','D','O','M','A','I','N',' ','C','O','N','T','R','O','L','L','E','R','S',0 };
+static const WCHAR Everyone[] = { 'E','v','e','r','y','o','n','e',0 };
+static const WCHAR Guests[] = { 'G','u','e','s','t','s',0 };
+static const WCHAR INTERACTIVE[] = { 'I','N','T','E','R','A','C','T','I','V','E',0 };
+static const WCHAR LOCAL[] = { 'L','O','C','A','L',0 };
+static const WCHAR LOCAL_SERVICE[] = { 'L','O','C','A','L',' ','S','E','R','V','I','C','E',0 };
+static const WCHAR NETWORK[] = { 'N','E','T','W','O','R','K',0 };
+static const WCHAR Network_Configuration_Operators[] = { 'N','e','t','w','o','r','k',' ','C','o','n','f','i','g','u','r','a','t','i','o','n',' ','O','p','e','r','a','t','o','r','s',0 };
+static const WCHAR NETWORK_SERVICE[] = { 'N','E','T','W','O','R','K',' ','S','E','R','V','I','C','E',0 };
+static const WCHAR NT_AUTHORITY[] = { 'N','T',' ','A','U','T','H','O','R','I','T','Y',0 };
+static const WCHAR NT_Pseudo_Domain[] = { 'N','T',' ','P','s','e','u','d','o',' ','D','o','m','a','i','n',0 };
+static const WCHAR NULL_SID[] = { 'N','U','L','L',' ','S','I','D',0 };
+static const WCHAR Power_Users[] = { 'P','o','w','e','r',' ','U','s','e','r','s',0 };
+static const WCHAR Print_Operators[] = { 'P','r','i','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
+static const WCHAR PROXY[] = { 'P','R','O','X','Y',0 };
+static const WCHAR Remote_Desktop_Users[] = { 'R','e','m','o','t','e',' ','D','e','s','k','t','o','p',' ','U','s','e','r','s',0 };
+static const WCHAR REMOTE_INTERACTIVE_LOGON[] = { 'R','E','M','O','T','E',' ','I','N','T','E','R','A','C','T','I','V','E',' ','L','O','G','O','N',0 };
+static const WCHAR Replicators[] = { 'R','e','p','l','i','c','a','t','o','r','s',0 };
+static const WCHAR RESTRICTED[] = { 'R','E','S','T','R','I','C','T','E','D',0 };
+static const WCHAR SELF[] = { 'S','E','L','F',0 };
+static const WCHAR Server_Operators[] = { 'S','e','r','v','e','r',' ','O','p','e','r','a','t','o','r','s',0 };
+static const WCHAR SERVICE[] = { 'S','E','R','V','I','C','E',0 };
+static const WCHAR SYSTEM[] = { 'S','Y','S','T','E','M',0 };
+static const WCHAR TERMINAL_SERVER_USER[] = { 'T','E','R','M','I','N','A','L',' ','S','E','R','V','E','R',' ','U','S','E','R',0 };
+static const WCHAR Users[] = { 'U','s','e','r','s',0 };
+
+static const AccountSid ACCOUNT_SIDS[] = {
+    { WinNullSid, NULL_SID, Blank, SidTypeWellKnownGroup },
+    { WinWorldSid, Everyone, Blank, SidTypeWellKnownGroup },
+    { WinLocalSid, LOCAL, Blank, SidTypeWellKnownGroup },
+    { WinCreatorOwnerSid, CREATOR_OWNER, Blank, SidTypeWellKnownGroup },
+    { WinCreatorGroupSid, CREATOR_GROUP, Blank, SidTypeWellKnownGroup },
+    { WinCreatorOwnerServerSid, CREATOR_OWNER_SERVER, Blank, SidTypeWellKnownGroup },
+    { WinCreatorGroupServerSid, CREATOR_GROUP_SERVER, Blank, SidTypeWellKnownGroup },
+    { WinNtAuthoritySid, NT_Pseudo_Domain, NT_Pseudo_Domain, SidTypeDomain },
+    { WinDialupSid, DIALUP, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinNetworkSid, NETWORK, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinBatchSid, BATCH, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinInteractiveSid, INTERACTIVE, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinServiceSid, SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinAnonymousSid, ANONYMOUS_LOGON, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinProxySid, PROXY, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinEnterpriseControllersSid, ENTERPRISE_DOMAIN_CONTROLLERS, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinSelfSid, SELF, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinAuthenticatedUserSid, Authenticated_Users, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinRestrictedCodeSid, RESTRICTED, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinTerminalServerSid, TERMINAL_SERVER_USER, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinRemoteLogonIdSid, REMOTE_INTERACTIVE_LOGON, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinLocalSystemSid, SYSTEM, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinLocalServiceSid, LOCAL_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinNetworkServiceSid, NETWORK_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinBuiltinDomainSid, BUILTIN, BUILTIN, SidTypeDomain },
+    { WinBuiltinAdministratorsSid, Administrators, BUILTIN, SidTypeAlias },
+    { WinBuiltinUsersSid, Users, BUILTIN, SidTypeAlias },
+    { WinBuiltinGuestsSid, Guests, BUILTIN, SidTypeAlias },
+    { WinBuiltinPowerUsersSid, Power_Users, BUILTIN, SidTypeAlias },
+    { WinBuiltinAccountOperatorsSid, Account_Operators, BUILTIN, SidTypeAlias },
+    { WinBuiltinSystemOperatorsSid, Server_Operators, BUILTIN, SidTypeAlias },
+    { WinBuiltinPrintOperatorsSid, Print_Operators, BUILTIN, SidTypeAlias },
+    { WinBuiltinBackupOperatorsSid, Backup_Operators, BUILTIN, SidTypeAlias },
+    { WinBuiltinReplicatorSid, Replicators, BUILTIN, SidTypeAlias },
+    { WinBuiltinRemoteDesktopUsersSid, Remote_Desktop_Users, BUILTIN, SidTypeAlias },
+    { WinBuiltinNetworkConfigurationOperatorsSid, Network_Configuration_Operators, BUILTIN, SidTypeAlias },
+};
 /*
  * ACE access rights
  */
@@ -148,6 +234,57 @@ static const WCHAR SDDL_INHERIT_ONLY[]       = {'I','O',0};
 static const WCHAR SDDL_INHERITED[]          = {'I','D',0};
 static const WCHAR SDDL_AUDIT_SUCCESS[]      = {'S','A',0};
 static const WCHAR SDDL_AUDIT_FAILURE[]      = {'F','A',0};
+
+static const char * debugstr_sid(PSID sid)
+{
+    int auth = 0;
+    SID * psid = (SID *)sid;
+
+    if (psid == NULL)
+        return "(null)";
+
+    auth = psid->IdentifierAuthority.Value[5] +
+           (psid->IdentifierAuthority.Value[4] << 8) +
+           (psid->IdentifierAuthority.Value[3] << 16) +
+           (psid->IdentifierAuthority.Value[2] << 24);
+
+    switch (psid->SubAuthorityCount) {
+    case 0:
+        return wine_dbg_sprintf("S-%d-%d", psid->Revision, auth);
+    case 1:
+        return wine_dbg_sprintf("S-%d-%d-%ld", psid->Revision, auth,
+            psid->SubAuthority[0]);
+    case 2:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1]);
+    case 3:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2]);
+    case 4:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3]);
+    case 5:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3], psid->SubAuthority[4]);
+    case 6:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
+    case 7:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
+            psid->SubAuthority[6]);
+    case 8:
+        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
+            psid->SubAuthority[6], psid->SubAuthority[7]);
+    }
+    return "(too-big)";
+}
 
 /* set last error code from NT status and get the proper boolean return value */
 /* used for functions that are a simple wrapper around the corresponding ntdll API */
@@ -512,7 +649,7 @@ CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
                     DWORD* cbSid)
 {
     int i;
-    TRACE("(%d, %p, %p, %p)\n", WellKnownSidType, DomainSid, pSid, cbSid);
+    TRACE("(%d, %s, %p, %p)\n", WellKnownSidType, debugstr_sid(DomainSid), pSid, cbSid);
 
     if (DomainSid != NULL) {
         FIXME("Only local computer supported!\n");
@@ -551,7 +688,7 @@ BOOL WINAPI
 IsWellKnownSid( PSID pSid, WELL_KNOWN_SID_TYPE WellKnownSidType )
 {
     int i;
-    TRACE("(%p, %d)\n", pSid, WellKnownSidType);
+    TRACE("(%s, %d)\n", debugstr_sid(pSid), WellKnownSidType);
 
     for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
         if (WellKnownSids[i].Type == WellKnownSidType)
@@ -1581,24 +1718,45 @@ LookupAccountSidA(
 	IN OUT LPDWORD domainSize,
 	OUT PSID_NAME_USE name_use )
 {
-	static const char ac[] = "Administrator";
-	static const char dm[] = "DOMAIN";
-	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
-	      debugstr_a(system),sid,
-	      account,accountSize,accountSize?*accountSize:0,
-	      domain,domainSize,domainSize?*domainSize:0,
-	      name_use);
+    DWORD len;
+    BOOL r;
+    LPWSTR systemW = NULL;
+    LPWSTR accountW = NULL;
+    LPWSTR domainW = NULL;
+    DWORD accountSizeW = *accountSize * sizeof(WCHAR);
+    DWORD domainSizeW = *domainSize * sizeof(WCHAR);
 
-	*accountSize = strlen(ac)+1;
-	if (account && (*accountSize > strlen(ac)))
-	  strcpy(account, ac);
+    TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
+          debugstr_a(system),debugstr_sid(sid),
+          account,accountSize,accountSize?*accountSize:0,
+          domain,domainSize,domainSize?*domainSize:0,
+          name_use);
 
-	*domainSize = strlen(dm)+1;
-	if (domain && (*domainSize > strlen(dm)))
-	  strcpy(domain,dm);
+    if (system) {
+        len = MultiByteToWideChar( CP_ACP, 0, system, -1, NULL, 0 );
+        systemW = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, system, -1, systemW, len );
+    }
+    accountW = HeapAlloc( GetProcessHeap(), 0, accountSizeW );
+    domainW = HeapAlloc( GetProcessHeap(), 0, domainSizeW );
 
-	*name_use = SidTypeUser;
-	return TRUE;
+    r = LookupAccountSidW(systemW, sid, accountW, &accountSizeW, domainW, &domainSizeW, name_use );
+
+    if (r) {
+        len = WideCharToMultiByte( CP_ACP, 0, accountW, -1, NULL, 0, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, accountW, -1, account, len, NULL, NULL );
+        *accountSize = len;
+
+        len = WideCharToMultiByte( CP_ACP, 0, domainW, -1, NULL, 0, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, domainW, -1, domain, len, NULL, NULL );
+        *domainSize = len;
+    }
+
+    HeapFree( GetProcessHeap(), 0, systemW );
+    HeapFree( GetProcessHeap(), 0, accountW );
+    HeapFree( GetProcessHeap(), 0, domainW );
+
+    return r;
 }
 
 /******************************************************************************
@@ -1613,6 +1771,7 @@ LookupAccountSidA(
  *   domainSize  []
  *   name_use    []
  */
+
 BOOL WINAPI
 LookupAccountSidW(
 	IN LPCWSTR system,
@@ -1623,24 +1782,46 @@ LookupAccountSidW(
 	IN OUT LPDWORD domainSize,
 	OUT PSID_NAME_USE name_use )
 {
-    static const WCHAR ac[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r',0};
-    static const WCHAR dm[] = {'D','O','M','A','I','N',0};
-	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
-	      debugstr_w(system),sid,
-	      account,accountSize,accountSize?*accountSize:0,
-	      domain,domainSize,domainSize?*domainSize:0,
-	      name_use);
+    int i, j;
+    const WCHAR * ac = Administrator;	/* FIXME */
+    const WCHAR * dm = DOMAIN;		/* FIXME */
+    SID_NAME_USE use = SidTypeUser;	/* FIXME */
 
-	*accountSize = strlenW(ac)+1;
-	if (account && (*accountSize > strlenW(ac)))
-            strcpyW(account, ac);
+    TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
+	  debugstr_w(system),debugstr_sid(sid),
+	  account,accountSize,accountSize?*accountSize:0,
+	  domain,domainSize,domainSize?*domainSize:0,
+	  name_use);
 
-	*domainSize = strlenW(dm)+1;
-	if (domain && (*domainSize > strlenW(dm)))
-            strcpyW(domain,dm);
+    if (!ADVAPI_IsLocalComputer(system)) {
+        FIXME("Only local computer supported!\n");
+        SetLastError(ERROR_NONE_MAPPED);
+        return FALSE;
+    }
+    
+    for (i = 0; i <= 60; i++) {
+        if (IsWellKnownSid(sid, i)) {
+            for (j = 0; j < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); j++) {
+                if (ACCOUNT_SIDS[j].type == i) {
+                    ac = ACCOUNT_SIDS[j].account;
+                    dm = ACCOUNT_SIDS[j].domain;
+                    use = ACCOUNT_SIDS[j].name_use;
+                }
+            }
+            break;
+        }
+    }
 
-	*name_use = SidTypeUser;
-	return TRUE;
+    *accountSize = strlenW(ac)+1;
+    if (account && (*accountSize > strlenW(ac)))
+        strcpyW(account, ac);
+
+    *domainSize = strlenW(dm)+1;
+    if (domain && (*domainSize > strlenW(dm)))
+        strcpyW(domain,dm);
+
+    *name_use = use;
+    return TRUE;
 }
 
 /******************************************************************************
