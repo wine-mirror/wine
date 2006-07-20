@@ -7618,6 +7618,159 @@ static void test_quit_message(void)
     ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
 }
 
+static const struct message WmMouseHoverSeq[] = {
+    { WM_SYSTIMER, sent },
+    { WM_MOUSEHOVER, sent|wparam, 0 },
+    { 0 }
+};
+
+static void test_TrackMouseEvent(void)
+{
+    MSG msg;
+    TRACKMOUSEEVENT tme;
+    BOOL ret;
+    HWND hwnd, hchild;
+    RECT rc_parent, rc_child;
+    UINT default_hover_time;
+    DWORD start_ticks, end_ticks;
+
+#define track_hover(track_hwnd, track_hover_time) \
+    tme.cbSize = sizeof(tme); \
+    tme.dwFlags = TME_HOVER; \
+    tme.hwndTrack = track_hwnd; \
+    tme.dwHoverTime = track_hover_time; \
+    SetLastError(0xdeadbeef); \
+    ret = TrackMouseEvent(&tme); \
+    ok(ret, "TrackMouseEvent(TME_HOVER) error %ld\n", GetLastError())
+
+#define track_query(expected_track_flags, expected_track_hwnd, expected_hover_time) \
+    tme.cbSize = sizeof(tme); \
+    tme.dwFlags = TME_QUERY; \
+    tme.hwndTrack = (HWND)0xdeadbeef; \
+    tme.dwHoverTime = 0xdeadbeef; \
+    SetLastError(0xdeadbeef); \
+    ret = TrackMouseEvent(&tme); \
+    ok(ret, "TrackMouseEvent(TME_QUERY) error %ld\n", GetLastError());\
+    ok(tme.dwFlags == (expected_track_flags), \
+       "wrong tme.dwFlags %08lx, expected %08x\n", tme.dwFlags, (expected_track_flags)); \
+    ok(tme.hwndTrack == (expected_track_hwnd), \
+       "wrong tme.hwndTrack %p, expected %p\n", tme.hwndTrack, (expected_track_hwnd)); \
+    ok(tme.dwHoverTime == (expected_hover_time), \
+       "wrong tme.dwHoverTime %lu, expected %u\n", tme.dwHoverTime, (expected_hover_time))
+
+#define track_hover_cancel(track_hwnd) \
+    tme.cbSize = sizeof(tme); \
+    tme.dwFlags = TME_HOVER | TME_CANCEL; \
+    tme.hwndTrack = track_hwnd; \
+    tme.dwHoverTime = 0xdeadbeef; \
+    SetLastError(0xdeadbeef); \
+    ret = TrackMouseEvent(&tme); \
+    ok(ret, "TrackMouseEvent(TME_HOVER | TME_CANCEL) error %ld\n", GetLastError())
+
+    default_hover_time = 0xdeadbeef;
+    ret = SystemParametersInfo(SPI_GETMOUSEHOVERTIME, 0, &default_hover_time, 0);
+    ok(ret, "SystemParametersInfo(SPI_GETMOUSEHOVERTIME) failed\n");
+    trace("SPI_GETMOUSEHOVERTIME returned %u ms\n", default_hover_time);
+
+    hwnd = CreateWindowEx(0, "TestWindowClass", NULL,
+			  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+			  CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+			  NULL, NULL, 0);
+    assert(hwnd);
+
+    hchild = CreateWindowEx(0, "TestWindowClass", NULL,
+			  WS_CHILD | WS_BORDER | WS_VISIBLE,
+			  50, 50, 200, 200, hwnd,
+			  NULL, NULL, 0);
+    assert(hchild);
+
+    flush_events();
+    flush_sequence();
+
+    tme.cbSize = 0;
+    tme.dwFlags = TME_QUERY;
+    tme.hwndTrack = (HWND)0xdeadbeef;
+    tme.dwHoverTime = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = TrackMouseEvent(&tme);
+    ok(!ret, "TrackMouseEvent should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %ld\n", GetLastError());
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_HOVER;
+    tme.hwndTrack = (HWND)0xdeadbeef;
+    tme.dwHoverTime = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = TrackMouseEvent(&tme);
+    ok(!ret, "TrackMouseEvent should fail\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %ld\n", GetLastError());
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_HOVER | TME_CANCEL;
+    tme.hwndTrack = (HWND)0xdeadbeef;
+    tme.dwHoverTime = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = TrackMouseEvent(&tme);
+    ok(!ret, "TrackMouseEvent should fail\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %ld\n", GetLastError());
+
+    GetWindowRect(hwnd, &rc_parent);
+    GetWindowRect(hchild, &rc_child);
+    SetCursorPos(rc_child.left - 10, rc_child.top - 10);
+
+    /* Process messages so that the system updates its internal current
+     * window and hittest, otherwise TrackMouseEvent calls don't have any
+     * effect.
+     */
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_sequence();
+
+    track_query(0, NULL, 0);
+    track_hover(hchild, 0);
+    track_query(0, NULL, 0);
+
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_sequence();
+
+    track_hover(hwnd, 0);
+    track_query(TME_HOVER, hwnd, default_hover_time);
+    start_ticks = GetTickCount();
+    do
+    {
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            /* Timer proc messages are not dispatched to the window proc,
+             * and therefore not logged.
+             */
+            if (msg.message == WM_TIMER || msg.message == WM_SYSTIMER)
+            {
+                struct message s_msg;
+
+                s_msg.message = msg.message;
+                s_msg.flags = sent|wparam|lparam;
+                s_msg.wParam = msg.wParam;
+                s_msg.lParam = msg.lParam;
+                add_message(&s_msg);
+            }
+            DispatchMessage(&msg);
+        }
+
+        end_ticks = GetTickCount();
+    } while (start_ticks + default_hover_time >= end_ticks);
+    ok_sequence(WmMouseHoverSeq, "WmMouseHoverSeq", FALSE);
+
+    track_query(0, NULL, 0);
+    track_hover(hwnd, HOVER_DEFAULT);
+    track_query(TME_HOVER, hwnd, default_hover_time);
+    track_hover_cancel(hwnd);
+
+    DestroyWindow(hwnd);
+
+#undef track_hover
+#undef track_query
+#undef track_hover_cancel
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -7681,6 +7834,7 @@ START_TEST(msg)
     test_SendMessageTimeout();
     test_edit_messages();
     test_quit_message();
+    test_TrackMouseEvent();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
