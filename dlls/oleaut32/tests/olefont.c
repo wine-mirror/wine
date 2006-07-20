@@ -2,6 +2,7 @@
  * OLEFONT test program
  *
  * Copyright 2003 Marcus Meissner
+ * Copyright 2006 (Google) Benjamin Arai
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -295,6 +296,115 @@ static void test_font_events_disp(void)
     IFont_Release(pFont2);
 }
 
+void test_names_ids(WCHAR* w_name_1, const char* a_name_1,
+                    WCHAR* w_name_2, const char* a_name_2,
+                    LCID lcid, DISPID id_1, DISPID id_2,
+                    HRESULT hres_expect, int numnames)
+{
+    LPVOID pvObj = NULL;
+    IFontDisp *fontdisp = NULL;
+    HRESULT hres;
+    DISPID rgDispId[2] = {0xdeadbeef, 0xdeadbeef};
+    LPOLESTR names[2] = {w_name_1, w_name_2};
+
+    pOleCreateFontIndirect(NULL, &IID_IFontDisp, &pvObj);
+    fontdisp = pvObj;
+
+    hres = IFontDisp_GetIDsOfNames(fontdisp, &IID_NULL, names, numnames,
+                                   lcid, rgDispId);
+
+    /* test hres */
+    ok(hres == hres_expect,
+        "GetIDsOfNames: \"%s\", \"%s\" returns 0x%08lx, expected 0x%08lx.\n",
+        a_name_1, a_name_2, hres, hres_expect);
+
+    /* test first DISPID */
+    ok(rgDispId[0]==id_1,
+        "GetIDsOfNames: \"%s\" gets DISPID 0x%08lx, expected 0x%08lx.\n",
+        a_name_1, rgDispId[0], id_1);
+
+    /* test second DISPID is present */
+    if (numnames == 2)
+    {
+        ok(rgDispId[1]==id_2,
+            "GetIDsOfNames: ..., \"%s\" gets DISPID 0x%08lx, expected 0x%08lx.\n",
+            a_name_2, rgDispId[1], id_2);
+    }
+
+   IFontDisp_Release(fontdisp);
+}
+
+void test_GetIDsOfNames(void)
+{
+    WCHAR name_Name[] = {'N','a','m','e',0};
+    WCHAR name_Italic[] = {'I','t','a','l','i','c',0};
+    WCHAR name_Size[] = {'S','i','z','e',0};
+    WCHAR name_Bold[] = {'B','o','l','d',0};
+    WCHAR name_Underline[] = {'U','n','d','e','r','l','i','n','e',0};
+    WCHAR name_Strikethrough[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
+    WCHAR name_Weight[] = {'W','e','i','g','h','t',0};
+    WCHAR name_Charset[] = {'C','h','a','r','s','e','t',0};
+    WCHAR name_Foo[] = {'F','o','o',0};
+    WCHAR name_nAmE[] = {'n','A','m','E',0};
+    WCHAR name_Nom[] = {'N','o','m',0};
+
+    LCID en_us = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),
+                          SORT_DEFAULT);
+    LCID fr_fr = MAKELCID(MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH),
+                          SORT_DEFAULT);
+
+    /* Test DISPID_FONTs for the various properties. */
+    test_names_ids(name_Name, "Name", NULL, "", en_us,
+                   DISPID_FONT_NAME, 0, S_OK,1);
+    test_names_ids(name_Size, "Size", NULL, "", en_us,
+                   DISPID_FONT_SIZE, 0, S_OK,1);
+    test_names_ids(name_Bold, "Bold", NULL, "", en_us,
+                   DISPID_FONT_BOLD, 0, S_OK,1);
+    test_names_ids(name_Italic, "Italic", NULL, "", en_us,
+                   DISPID_FONT_ITALIC, 0, S_OK,1);
+    test_names_ids(name_Underline, "Underline", NULL, "", en_us,
+                   DISPID_FONT_UNDER, 0, S_OK,1);
+    test_names_ids(name_Strikethrough, "Strikethrough", NULL, "", en_us,
+                   DISPID_FONT_STRIKE, 0, S_OK,1);
+    test_names_ids(name_Weight, "Weight", NULL, "", en_us,
+                   DISPID_FONT_WEIGHT, 0, S_OK,1);
+    test_names_ids(name_Charset, "Charset", NULL, "", en_us,
+                   DISPID_FONT_CHARSET, 0, S_OK,1);
+
+    /* Capitalization doesn't matter. */
+    test_names_ids(name_nAmE, "nAmE", NULL, "", en_us,
+                   DISPID_FONT_NAME, 0, S_OK,1);
+
+    /* Unknown name. */
+    test_names_ids(name_Foo, "Foo", NULL, "", en_us,
+                   DISPID_UNKNOWN, 0, DISP_E_UNKNOWNNAME,1);
+
+    /* Pass several names: first is processed,                */
+    /* second gets DISPID_UNKNOWN and doesn't affect retval.  */
+    test_names_ids(name_Italic, "Italic", name_Name, "Name", en_us,
+                   DISPID_FONT_ITALIC, DISPID_UNKNOWN, S_OK,2);
+    test_names_ids(name_Italic, "Italic", name_Foo, "Foo", en_us,
+                   DISPID_FONT_ITALIC, DISPID_UNKNOWN, S_OK,2);
+
+    /* Locale ID has no effect. */
+    test_names_ids(name_Name, "Name", NULL, "", fr_fr,
+                   DISPID_FONT_NAME, 0, S_OK,1);
+    test_names_ids(name_Nom, "This is not a font", NULL, "", fr_fr,
+                   DISPID_UNKNOWN, 0, DISP_E_UNKNOWNNAME,1);
+
+    /* One of the arguments are invalid */
+    test_names_ids(name_Name, "Name", NULL, "", en_us,
+                   0xdeadbeef, 0xdeadbeef, E_INVALIDARG,0);
+    test_names_ids(name_Italic, "Italic", NULL, "", en_us,
+                   0xdeadbeef, 0xdeadbeef, E_INVALIDARG,0);
+    test_names_ids(name_Foo, "Foo", NULL, "", en_us,
+                   0xdeadbeef, 0xdeadbeef, E_INVALIDARG,0);
+
+    /* Crazy locale ID? */
+    test_names_ids(name_Name, "Name", NULL, "", -1,
+                   DISPID_FONT_NAME, 0, S_OK,1);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");    
@@ -316,4 +426,5 @@ START_TEST(olefont)
 	/* test_ifont_sizes(186000, 0, 72, 2540, -19, "rounding"); */   /* test rounding */
 
 	test_font_events_disp();
+	test_GetIDsOfNames();
 }
