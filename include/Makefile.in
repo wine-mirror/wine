@@ -32,6 +32,7 @@ WINDOWS_IDL_SRCS = \
 	objidl.idl \
 	objsafe.idl \
 	ocidl.idl \
+	oledb.idl \
 	oleidl.idl \
 	optary.idl \
 	propidl.idl \
@@ -54,6 +55,9 @@ WINDOWS_IDL_INCLUDES = \
 	$(WINDOWS_IDL_SRCS) \
 	axcore.idl \
 	axextend.idl \
+	dbinit.idl \
+	dbprop.idl \
+	dbs.idl \
 	devenum.idl \
 	dyngraph.idl
 
