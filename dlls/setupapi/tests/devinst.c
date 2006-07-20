@@ -31,7 +31,7 @@
 #include "wine/test.h"
 
 
-static void test_Device_Info_List(void) 
+static void test_SetupDiCreateDeviceInfoListEx(void) 
 {
     HDEVINFO devlist;
     BOOL ret;
@@ -65,5 +65,5 @@ static void test_Device_Info_List(void)
 
 START_TEST(devinst)
 {
-    test_Device_Info_List();
+    test_SetupDiCreateDeviceInfoListEx();
 }
