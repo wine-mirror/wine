@@ -362,11 +362,20 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                            const SCRIPT_ANALYSIS *psa,
                            int *piX)
 {
-    FIXME("(%d,%d,%d,%d,%p,%p,%p,%p,%p): stub\n",
+    int  item;
+    int  iPosX;
+    float  fMaxPosX = 0;
+    TRACE("(%d,%d,%d,%d,%p,%p,%p,%p,%p)\n",
           iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance,
           psa, piX);
+    for (item=0; item < cGlyphs; item++)            /* total piAdvance           */
+        fMaxPosX += piAdvance[item];
+    iPosX = (fMaxPosX/cGlyphs)*(iCP+fTrailing);
+    if  (iPosX > fMaxPosX)
+        iPosX = fMaxPosX;
+    *piX = iPosX;                                    /* Return something in range */
 
-    *piX = 1;                    /* Return something in range */
+    TRACE("*piX=%d\n", *piX);
     return S_OK;
 }
 
@@ -384,12 +393,40 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                            int *piCP,
                            int *piTrailing)
 {
-    FIXME("(%d,%d,%d,%p,%p,%p,%p,%p,%p): stub\n",
+    int item;
+    int iPosX = 1;
+    float fMaxPosX = 1;
+    float fAvePosX;
+    TRACE("(%d,%d,%d,%p,%p,%p,%p,%p,%p)\n",
           iX, cChars, cGlyphs, pwLogClust, psva, piAdvance,
           psa, piCP, piTrailing);
+    if  (iX < 0)                                    /* iX is before start of run */
+    {
+        *piCP = -1;
+        *piTrailing = TRUE;
+        return S_OK;
+    }
 
-    *piCP = 1;                   /* Return something in range */
-    *piTrailing = 0;
+    for (item=0; item < cGlyphs; item++)            /* total piAdvance           */
+        fMaxPosX += piAdvance[item];
+
+    if  (iX >= fMaxPosX)                            /* iX too large              */
+    {
+        *piCP = cChars;
+        *piTrailing = FALSE;
+        return S_OK;
+    }        
+
+    fAvePosX = fMaxPosX / cGlyphs;
+    for (item = 0; item < cGlyphs  && iPosX < iX; item++)
+        iPosX = fAvePosX * (item +1);
+    if  (iPosX - iX > fAvePosX/2)
+        *piTrailing = 0;
+    else
+        *piTrailing = 1;                            /* yep we are over half way  */
+    
+    *piCP = item -1;                                /* Return character position */
+    TRACE("*piCP=%d iPposX=%d\n", *piCP, iPosX);
     return S_OK;
 }
 

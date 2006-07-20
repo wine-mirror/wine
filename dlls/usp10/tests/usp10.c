@@ -487,6 +487,96 @@ void test_ScriptTextOut(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ScriptXtoX(void)
+/****************************************************************************************
+ *  This routine tests the ScriptXtoCP and ScriptCPtoX functions using static variables *
+ ****************************************************************************************/
+{
+    int iX, iCP;
+    int cChars;
+    int cGlyphs;
+    WORD pwLogClust[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    SCRIPT_VISATTR psva[10];
+    int piAdvance[10] = {200, 190, 210, 180, 170, 204, 189, 195, 212, 203};
+    SCRIPT_ANALYSIS psa;
+    int piCP, piX;
+    int piTrailing;
+    BOOL fTrailing;
+    HRESULT hr;
+
+    iX = -1;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
+    ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
+    ok(piTrailing == TRUE, "Negative iX should return piTrailing=TRUE not %d", piTrailing);
+    iX = 1954;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
+    ok(piCP == 10, "Excessive iX should return piCP=10 not %d\n", piCP);
+    ok(piTrailing == FALSE, "Excessive iX should return piTrailing=FALSE not %d\n", piTrailing);
+    iX = 779;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
+    ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
+    ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+    iX = 780;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
+    ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
+    ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+    iX = 868;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
+    ok(piCP == 4, "iX=%d should return piCP=4 not %d\n", iX, piCP);
+
+    iCP=5;
+    fTrailing = FALSE;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %d\n", (unsigned int) hr);
+    ok(piX == 976, "iCP=%d should return piX=976 not %d\n", iCP, piX);
+    iCP=5;
+    fTrailing = TRUE;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %d\n", (unsigned int) hr);
+    ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);   
+    iCP=6;
+    fTrailing = FALSE;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %d\n", (unsigned int) hr);
+    ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);
+    iCP=11;
+    fTrailing = FALSE;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %d\n", (unsigned int) hr);
+    ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX);
+    iCP=11;
+    fTrailing = TRUE;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %d\n", (unsigned int) hr);
+    ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX); 
+
+}
+
 static void test_ScriptString(void)
 {
     HRESULT         hr;
@@ -569,5 +659,6 @@ START_TEST(usp10)
     test_ScriptGetCMap(pwOutGlyphs);
     test_ScriptGetFontProperties();
     test_ScriptTextOut();
+    test_ScriptXtoX();
     test_ScriptString();
 }
