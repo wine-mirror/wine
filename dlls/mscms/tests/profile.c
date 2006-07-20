@@ -446,7 +446,7 @@ static void test_GetCountColorProfileElements(void)
 
 typedef struct colorspace_description_struct {
     DWORD dwID;
-    char *szName;
+    const char *szName;
     BOOL registered;
     char filename[MAX_PATH];
 } colorspace_descr;
