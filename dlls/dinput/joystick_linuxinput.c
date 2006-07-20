@@ -333,7 +333,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   find_joydevs();
 
   if (id >= have_joydevs) {
-    return -1;
+    return FALSE;
   }
 
   if (!((dwDevType == 0) ||
