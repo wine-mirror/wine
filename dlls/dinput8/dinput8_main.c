@@ -51,8 +51,39 @@ static void UnlockModule(void)
  *	DirectInput8Create (DINPUT8.@)
  */
 HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI, LPUNKNOWN punkOuter) {
-    /* TODO: Create the interface using CoCreateInstance as that's what windows does too and check if the version number >= 0x800 */
-    return DirectInputCreateEx(hinst, dwVersion, riid, ppDI, punkOuter);
+    HRESULT hr;
+
+    TRACE("hInst (%p), dwVersion: %ld, riid (%s), punkOuter (%p))\n", hinst, dwVersion, debugstr_guid(riid), punkOuter);
+
+    /* The specified version needs to be dinput8 (0x800) or higher */
+    if(dwVersion < 0x800)
+        return DIERR_OLDDIRECTINPUTVERSION;
+
+    if( !(IsEqualGUID(&IID_IDirectInput8A, riid) || IsEqualGUID(&IID_IDirectInput8W, riid) || IsEqualGUID(&IID_IUnknown, riid)) )
+        return DIERR_INVALIDPARAM;
+
+    CoInitialize(NULL);
+    
+    hr = CoCreateInstance( &CLSID_DirectInput8, punkOuter, CLSCTX_INPROC_SERVER, riid, ppDI);
+    if(FAILED(hr)) {
+        ERR("CoCreateInstance failed with hr = %ld\n", hr);
+        return DIERR_INVALIDPARAM;
+    }
+
+    CoUninitialize();
+
+    /* When aggregation is used (punkOuter!=NULL) the application needs to manually call Initialize. */
+    if(punkOuter == NULL && IsEqualGUID(&IID_IDirectInput8A, riid)) {
+        LPDIRECTINPUTA DI = (LPDIRECTINPUTA)*ppDI;
+        IDirectInput8_Initialize(DI, hinst, dwVersion);
+    }
+
+    if(punkOuter == NULL && IsEqualGUID(&IID_IDirectInput8W, riid)) {
+        LPDIRECTINPUTW DI = (LPDIRECTINPUTW)*ppDI;
+        IDirectInput8_Initialize(DI, hinst, dwVersion);
+    }
+
+    return S_OK;
 }
 
 /*******************************************************************************
@@ -84,8 +115,8 @@ static HRESULT WINAPI DI8CF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-    if( IsEqualGUID( &IID_IDirectInput8A, riid ) || IsEqualGUID( &IID_IDirectInput8W, riid ) ) {
-        return DirectInput8Create(0, DIRECTINPUT_VERSION, riid, ppobj, pOuter);
+    if( IsEqualGUID( &IID_IDirectInput8A, riid ) || IsEqualGUID( &IID_IDirectInput8W, riid ) || IsEqualGUID( &IID_IUnknown, riid )) {
+        return DirectInputCreateEx(0, DIRECTINPUT_VERSION, riid, ppobj, pOuter);
     }
 
     ERR("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);    
