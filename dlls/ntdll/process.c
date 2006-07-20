@@ -228,8 +228,19 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     ret = STATUS_INVALID_HANDLE;
                 else
                 {
-                    /* FIXME : real data */
+                    /* FIXME : User- and KernelTime have to be implemented */
                     memset(&pti, 0, sizeof(KERNEL_USER_TIMES));
+
+                    SERVER_START_REQ(get_process_info)
+                    {
+                      req->handle = ProcessHandle;
+                      if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                      {
+                          NTDLL_from_server_timeout(&pti.CreateTime, &reply->start_time);
+                          NTDLL_from_server_timeout(&pti.ExitTime, &reply->end_time);
+                      }
+                    }
+                    SERVER_END_REQ;
 
                     memcpy(ProcessInformation, &pti, sizeof(KERNEL_USER_TIMES));
 

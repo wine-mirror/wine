@@ -575,16 +575,21 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
  *  Also, there is a need to separate times used by different applications.
  *
  * BUGS
- *  lpCreationTime and lpExitTime are not initialised in the Wine implementation.
+ *  KernelTime and UserTime are always for the current process
  */
 BOOL WINAPI GetProcessTimes( HANDLE hprocess, LPFILETIME lpCreationTime,
     LPFILETIME lpExitTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime )
 {
     struct tms tms;
+    KERNEL_USER_TIMES pti;
 
     times(&tms);
     TIME_ClockTimeToFileTime(tms.tms_utime,lpUserTime);
     TIME_ClockTimeToFileTime(tms.tms_stime,lpKernelTime);
+    if (NtQueryInformationProcess( hprocess, ProcessTimes, &pti, sizeof(pti), NULL))
+        return FALSE;
+    LL2FILETIME( pti.CreateTime.QuadPart, lpCreationTime);
+    LL2FILETIME( pti.ExitTime.QuadPart, lpExitTime);
     return TRUE;
 }
 

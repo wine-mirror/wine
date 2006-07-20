@@ -737,7 +737,12 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%d,", req->affinity );
-    fprintf( stderr, " peb=%p", req->peb );
+    fprintf( stderr, " peb=%p,", req->peb );
+    fprintf( stderr, " start_time=" );
+    dump_abs_time( &req->start_time );
+    fprintf( stderr, "," );
+    fprintf( stderr, " end_time=" );
+    dump_abs_time( &req->end_time );
 }
 
 static void dump_set_process_info_request( const struct set_process_info_request *req )

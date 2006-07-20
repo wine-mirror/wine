@@ -347,6 +347,8 @@ struct get_process_info_reply
     int          priority;
     int          affinity;
     void*        peb;
+    abs_time_t   start_time;
+    abs_time_t   end_time;
 };
 
 
@@ -4383,6 +4385,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 238
+#define SERVER_PROTOCOL_VERSION 239
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

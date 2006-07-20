@@ -317,6 +317,8 @@ struct token_groups
     int          priority;         /* priority class */
     int          affinity;         /* process affinity mask */
     void*        peb;              /* PEB address in process address space */
+    abs_time_t   start_time;       /* process start time */
+    abs_time_t   end_time;         /* process end time */
 @END
 
 

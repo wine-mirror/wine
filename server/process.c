@@ -924,6 +924,10 @@ DECL_HANDLER(get_process_info)
         reply->priority         = process->priority;
         reply->affinity         = process->affinity;
         reply->peb              = process->peb;
+        reply->start_time.sec   = process->start_time.tv_sec;
+        reply->start_time.usec  = process->start_time.tv_usec;
+        reply->end_time.sec     = process->end_time.tv_sec;
+        reply->end_time.usec    = process->end_time.tv_usec;
         release_object( process );
     }
 }
