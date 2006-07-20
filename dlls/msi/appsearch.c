@@ -872,9 +872,8 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue,
     if (rc == ERROR_SUCCESS)
     {
         MSIRECORD *row = 0;
-        WCHAR buffer[MAX_PATH], expanded[MAX_PATH];
-        LPWSTR path = NULL, parent = NULL;
-        DWORD sz;
+        WCHAR expanded[MAX_PATH];
+        LPWSTR parentName = NULL, path = NULL, parent = NULL;
         int depth;
 
         rc = MSI_ViewExecute(view, 0);
@@ -892,36 +891,25 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue,
         }
 
         /* check whether parent is set */
-        buffer[0] = 0;
-        sz=sizeof(buffer)/sizeof(buffer[0]);
-        rc = MSI_RecordGetStringW(row,2,buffer,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Error is %x\n",rc);
-            goto end;
-        }
-        else if (buffer[0])
+        parentName = msi_dup_record_field(row,2);
+        if (parentName)
         {
             MSISIGNATURE parentSig;
 
-            rc = ACTION_AppSearchSigName(package, buffer, &parentSig, &parent);
+            rc = ACTION_AppSearchSigName(package, parentName, &parentSig,
+             &parent);
             ACTION_FreeSignature(&parentSig);
+            msi_free(parentName);
         }
         /* now look for path */
-        buffer[0] = 0;
-        sz=sizeof(buffer)/sizeof(buffer[0]);
-        rc = MSI_RecordGetStringW(row,3,buffer,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Error is %x\n",rc);
-            goto end;
-        }
+        path = msi_dup_record_field(row,3);
         if (MSI_RecordIsNull(row,4))
             depth = 0;
         else
             depth = MSI_RecordGetInteger(row,4);
-        ACTION_ExpandAnyPath(package, buffer, expanded,
+        ACTION_ExpandAnyPath(package, path, expanded,
          sizeof(expanded) / sizeof(expanded[0]));
+        msi_free(path);
         if (parent)
         {
             path = HeapAlloc(GetProcessHeap(), 0, strlenW(parent) +
@@ -994,8 +982,7 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
     if (rc == ERROR_SUCCESS)
     {
         MSIRECORD *row = 0;
-        WCHAR propBuf[0x100], sigBuf[0x100];
-        DWORD sz;
+        LPWSTR propName, sigName;
 
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
@@ -1014,36 +1001,21 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
             }
 
             /* get property and signature */
-            propBuf[0] = 0;
-            sz=sizeof(propBuf)/sizeof(propBuf[0]);
-            rc = MSI_RecordGetStringW(row,1,propBuf,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Error is %x\n",rc);
-                msiobj_release(&row->hdr);
-                break;
-            }
-            sigBuf[0] = 0;
-            sz=sizeof(sigBuf)/sizeof(sigBuf[0]);
-            rc = MSI_RecordGetStringW(row,2,sigBuf,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Error is %x\n",rc);
-                msiobj_release(&row->hdr);
-                break;
-            }
+            propName = msi_dup_record_field(row,1);
+            sigName = msi_dup_record_field(row,2);
 
             TRACE("Searching for Property %s, Signature_ %s\n",
-             debugstr_w(propBuf), debugstr_w(sigBuf));
+             debugstr_w(propName), debugstr_w(sigName));
 
-            rc = ACTION_AppSearchSigName(package, sigBuf, &sig, &value);
+            rc = ACTION_AppSearchSigName(package, sigName, &sig, &value);
             if (value)
             {
-                MSI_SetPropertyW(package, propBuf, value);
+                MSI_SetPropertyW(package, propName, value);
                 msi_free(value);
             }
-
             ACTION_FreeSignature(&sig);
+            msi_free(propName);
+            msi_free(sigName);
             msiobj_release(&row->hdr);
         }
 
