@@ -1752,7 +1752,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
+    if (*(pPresentationParameters->EnableAutoDepthStencil) && hr == WINED3D_OK) {
         TRACE("Creating depth stencil buffer\n");
         if (This->depthStencilBuffer == NULL ) {
             hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
@@ -2127,12 +2127,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     TRACE("Setting rendertarget to NULL\n");
     This->renderTarget = NULL;
 
-    IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
-    IUnknown_Release(stencilBufferParent);          /* once for the get parent */
-    if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
-        FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+    if (This->depthStencilBuffer) {
+        IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
+        IUnknown_Release(stencilBufferParent);          /* once for the get parent */
+        if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
+            FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+        }
+        This->depthStencilBuffer = NULL;
     }
-    This->depthStencilBuffer = NULL;
 
     for(i=0; i < This->NumberOfSwapChains; i++) {
         TRACE("Releasing the implicit swapchain %d\n", i);
