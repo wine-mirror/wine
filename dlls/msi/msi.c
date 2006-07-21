@@ -986,6 +986,7 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     UINT rc;
     HKEY hkey = 0;
     LPWSTR path = NULL;
+    INSTALLSTATE r;
 
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf->str.w, pcchBuf);
@@ -1018,13 +1019,15 @@ INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if (!path)
         return INSTALLSTATE_UNKNOWN;
 
-    if (path[0]=='0')
-        FIXME("Registry entry.. check entry\n");
+    if (path[0])
+        r = INSTALLSTATE_LOCAL;
+    else
+        r = INSTALLSTATE_NOTUSED;
 
     msi_strcpy_to_awstring( path, lpPathBuf, pcchBuf );
 
     msi_free( path );
-    return INSTALLSTATE_LOCAL;
+    return r;
 }
 
 /******************************************************************
