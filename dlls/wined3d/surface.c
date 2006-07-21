@@ -861,7 +861,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
 
         case WINED3DFMT_X4R4G4B4:
         {
-#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
             int size;
             unsigned short *data;
             data = (unsigned short *)This->resource.allocatedMemory;
@@ -871,7 +870,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 data++;
                 size--;
             }
-#endif
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
@@ -880,7 +878,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
 
         case WINED3DFMT_X1R5G5B5:
         {
-#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
             int size;
             unsigned short *data;
             data = (unsigned short *)This->resource.allocatedMemory;
@@ -890,7 +887,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 data++;
                 size--;
             }
-#endif
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
@@ -899,7 +895,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
 
         case WINED3DFMT_X8R8G8B8:
         {
-#if 0       /* Do we still need that? Those pixel formats have no alpha channel in gl any more */
             /* make sure the X byte is set to alpha on, since it 
                could be any random value this fixes the intro move in Pirates! */
             int size;
@@ -911,8 +906,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 data++;
                 size--;
             }
-#endif
         }
+        /* Fall trough */
 
         case WINED3DFMT_A8R8G8B8:
         {
