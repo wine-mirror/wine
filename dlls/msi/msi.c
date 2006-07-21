@@ -1549,20 +1549,19 @@ INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
 }
 
 /***********************************************************************
- * MsiProvideQualifiedComponentExW [MSI.@]
+ * MSI_ProvideQualifiedComponentEx [internal]
  */
-UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
+UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
                 LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR szProduct,
-                DWORD Unused1, DWORD Unused2, LPWSTR lpPathBuf,
+                DWORD Unused1, DWORD Unused2, awstring *lpPathBuf,
                 DWORD* pcchPathBuf)
 {
-    HKEY hkey;
-    UINT rc;
+    WCHAR product[MAX_FEATURE_CHARS+1], component[MAX_FEATURE_CHARS+1],
+          feature[MAX_FEATURE_CHARS+1];
     LPWSTR info;
+    HKEY hkey;
     DWORD sz;
-    WCHAR product[MAX_FEATURE_CHARS+1];
-    WCHAR component[MAX_FEATURE_CHARS+1];
-    WCHAR feature[MAX_FEATURE_CHARS+1];
+    UINT rc;
 
     TRACE("%s %s %li %s %li %li %p %p\n", debugstr_w(szComponent),
           debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
@@ -1581,16 +1580,32 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     MsiDecomposeDescriptorW(info, product, feature, component, &sz);
 
     if (!szProduct)
-        rc = MsiGetComponentPathW(product, component, lpPathBuf, pcchPathBuf);
+        rc = MSI_GetComponentPath(product, component, lpPathBuf, pcchPathBuf);
     else
-        rc = MsiGetComponentPathW(szProduct, component, lpPathBuf, pcchPathBuf);
+        rc = MSI_GetComponentPath(szProduct, component, lpPathBuf, pcchPathBuf);
 
-    msi_free(info);
 
-    if (rc == INSTALLSTATE_LOCAL)
-        return ERROR_SUCCESS;
-    else
+    if (rc != INSTALLSTATE_LOCAL)
         return ERROR_FILE_NOT_FOUND;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * MsiProvideQualifiedComponentExW [MSI.@]
+ */
+UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
+                LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR szProduct,
+                DWORD Unused1, DWORD Unused2, LPWSTR lpPathBuf,
+                DWORD* pcchPathBuf)
+{
+    awstring path;
+
+    path.unicode = TRUE;
+    path.str.w = lpPathBuf;
+
+    return MSI_ProvideQualifiedComponentEx(szComponent, szQualifier,
+            dwInstallMode, szProduct, Unused1, Unused2, &path, pcchPathBuf);
 }
 
 /***********************************************************************
@@ -1601,11 +1616,38 @@ UINT WINAPI MsiProvideQualifiedComponentExA(LPCSTR szComponent,
                 DWORD Unused1, DWORD Unused2, LPSTR lpPathBuf,
                 DWORD* pcchPathBuf)
 {
-    FIXME("%s %s %li %s %li %li %p %p\n", debugstr_a(szComponent),
+    LPWSTR szwComponent, szwQualifier = NULL, szwProduct = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+    awstring path;
+
+    TRACE("%s %s %lu %s %lu %lu %p %p\n", debugstr_a(szComponent),
           debugstr_a(szQualifier), dwInstallMode, debugstr_a(szProduct),
           Unused1, Unused2, lpPathBuf, pcchPathBuf);
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    szwComponent = strdupAtoW( szComponent );
+    if (szComponent && !szwComponent)
+        goto end;
+
+    szwQualifier = strdupAtoW( szQualifier );
+    if (szQualifier && !szwQualifier)
+        goto end;
+
+    szwProduct = strdupAtoW( szProduct );
+    if (szProduct && !szwProduct)
+        goto end;
+
+    path.unicode = FALSE;
+    path.str.a = lpPathBuf;
+
+    r = MSI_ProvideQualifiedComponentEx(szwComponent, szwQualifier,
+                              dwInstallMode, szwProduct, Unused1,
+                              Unused2, &path, pcchPathBuf);
+end:
+    msi_free(szwProduct);
+    msi_free(szwComponent);
+    msi_free(szwQualifier);
+
+    return r;
 }
 
 /***********************************************************************
@@ -1626,32 +1668,8 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
                 LPCSTR szQualifier, DWORD dwInstallMode, LPSTR lpPathBuf,
                 DWORD* pcchPathBuf)
 {
-    LPWSTR szwComponent, szwQualifier, lpwPathBuf;
-    DWORD cchwPathBuf;
-    UINT rc;
-
-    TRACE("%s %s %li %p %p\n",szComponent, szQualifier,
-                    dwInstallMode, lpPathBuf, pcchPathBuf);
-
-    szwComponent= strdupAtoW( szComponent);
-    szwQualifier= strdupAtoW( szQualifier);
-
-    lpwPathBuf = msi_alloc(*pcchPathBuf * sizeof(WCHAR));
-
-    cchwPathBuf = *pcchPathBuf;
-
-    rc = MsiProvideQualifiedComponentW(szwComponent, szwQualifier, 
-                    dwInstallMode, lpwPathBuf, &cchwPathBuf);
-
-    msi_free(szwComponent);
-    msi_free(szwQualifier);
-
-    if (rc == ERROR_SUCCESS)
-        *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, cchwPathBuf + 1,
-                                           lpPathBuf, *pcchPathBuf, NULL, NULL);
-
-    msi_free(lpwPathBuf);
-    return rc;
+    return MsiProvideQualifiedComponentExA(szComponent, szQualifier,
+                              dwInstallMode, NULL, 0, 0, lpPathBuf, pcchPathBuf);
 }
 
 USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
