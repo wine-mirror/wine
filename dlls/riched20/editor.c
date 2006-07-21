@@ -769,7 +769,7 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
 
 
 static int
-ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CHARRANGE *chrgText)
+ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, const WCHAR *text, CHARRANGE *chrgText)
 {
   const int nLen = lstrlenW(text);
   const int nTextLen = ME_GetTextLength(editor);
@@ -2675,7 +2675,7 @@ LRESULT WINAPI REExtendedRegisterClass(void)
 int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar) 
 {
   struct prefix_s {
-    char *text;
+    const char *text;
     int length;
   } prefixes[12] = {
     {"http:", 5},

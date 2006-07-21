@@ -44,7 +44,7 @@ static const char haystack[] = "WINEWine wineWine wine WineWine";
 struct find_s {
   int start;
   int end;
-  char *needle;
+  const char *needle;
   int flags;
   int expected_loc;
   int _todo_wine;
@@ -565,7 +565,7 @@ static HWND new_static_wnd(HWND parent) {
 static void test_EM_AUTOURLDETECT(void)
 {
   struct urls_s {
-    char *text;
+    const char *text;
     int is_url;
   } urls[12] = {
     {"winehq.org", 0},

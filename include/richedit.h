@@ -434,25 +434,25 @@ typedef struct _ensaveclipboard {
 
 typedef struct _findtextA {
     CHARRANGE  chrg;
-    LPSTR      lpstrText;
+    LPCSTR     lpstrText;
 } FINDTEXTA;
 
 typedef struct _findtextW {
     CHARRANGE  chrg;
-    LPWSTR     lpstrText;
+    LPCWSTR    lpstrText;
 } FINDTEXTW;
 
 DECL_WINELIB_TYPE_AW(FINDTEXT)
 
 typedef struct _findtextexA {
     CHARRANGE  chrg;
-    LPSTR      lpstrText;
+    LPCSTR     lpstrText;
     CHARRANGE  chrgText;
 } FINDTEXTEXA;
 
 typedef struct _findtextexW {
     CHARRANGE  chrg;
-    LPWSTR     lpstrText;
+    LPCWSTR    lpstrText;
     CHARRANGE  chrgText;
 } FINDTEXTEXW;
 
