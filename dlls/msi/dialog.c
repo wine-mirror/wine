@@ -1608,6 +1608,9 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
         if ( !feature->Title )
             continue;
 
+        if ( !feature->Display )
+            continue;
+
         memset( &tvis, 0, sizeof tvis );
         tvis.hParent = hParent;
         tvis.hInsertAfter = TVI_LAST;
