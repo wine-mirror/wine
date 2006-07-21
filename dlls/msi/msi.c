@@ -1606,6 +1606,21 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
 }
 
 /***********************************************************************
+ * MsiProvideQualifiedComponentExA [MSI.@]
+ */
+UINT WINAPI MsiProvideQualifiedComponentExA(LPCSTR szComponent,
+                LPCSTR szQualifier, DWORD dwInstallMode, LPSTR szProduct,
+                DWORD Unused1, DWORD Unused2, LPSTR lpPathBuf,
+                DWORD* pcchPathBuf)
+{
+    FIXME("%s %s %li %s %li %li %p %p\n", debugstr_a(szComponent),
+          debugstr_a(szQualifier), dwInstallMode, debugstr_a(szProduct),
+          Unused1, Unused2, lpPathBuf, pcchPathBuf);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  * MsiProvideQualifiedComponentW [MSI.@]
  */
 UINT WINAPI MsiProvideQualifiedComponentW( LPCWSTR szComponent,
