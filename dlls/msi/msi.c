@@ -1124,6 +1124,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     UINT rc;
     HKEY hkey;
     INSTALLSTATE r;
+    BOOL missing = FALSE;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
@@ -1166,8 +1167,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         return INSTALLSTATE_UNKNOWN;
     }
 
-    r = INSTALLSTATE_LOCAL;
-    for( p = components; (*p != 2) && (lstrlenW(p) > 20); p += 20)
+    for( p = components; *p != 2 ; p += 20)
     {
         if (!decode_base85_guid( p, &guid ))
         {
@@ -1176,19 +1176,25 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         }
         StringFromGUID2(&guid, comp, GUID_SIZE);
         r = MsiGetComponentPathW(szProduct, comp, NULL, 0);
-        if (r != INSTALLSTATE_LOCAL && r != INSTALLSTATE_SOURCE)
+        TRACE("component %s state %d\n", debugstr_guid(&guid), r);
+        switch (r)
         {
-            TRACE("component %s state %d\n", debugstr_guid(&guid), r);
-            r = INSTALLSTATE_ADVERTISED;
+        case INSTALLSTATE_NOTUSED:
+        case INSTALLSTATE_LOCAL:
+        case INSTALLSTATE_SOURCE:
+            break;
+        default:
+            missing = TRUE;
         }
     }
 
-    if (r == INSTALLSTATE_LOCAL && *p != 2)
-        ERR("%s -> %s\n", debugstr_w(szFeature), debugstr_w(components));
-
+    TRACE("%s %s -> %d\n", debugstr_w(szProduct), debugstr_w(szFeature), r);
     msi_free(components);
 
-    return r;
+    if (missing)
+        return INSTALLSTATE_ADVERTISED;
+
+    return INSTALLSTATE_LOCAL;
 }
 
 /******************************************************************
