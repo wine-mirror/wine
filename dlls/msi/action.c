@@ -1115,8 +1115,25 @@ static MSICOMPONENT* load_component( MSIRECORD * row )
     comp->KeyPath = msi_dup_record_field( row, 6 );
 
     comp->Installed = INSTALLSTATE_ABSENT;
-    comp->Action = INSTALLSTATE_UNKNOWN;
-    comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+
+    switch (comp->Attributes)
+    {
+        case msidbComponentAttributesLocalOnly:
+            comp->Action = INSTALLSTATE_LOCAL;
+            comp->ActionRequest = INSTALLSTATE_LOCAL;
+            break;
+        case msidbComponentAttributesSourceOnly:
+            comp->Action = INSTALLSTATE_SOURCE;
+            comp->ActionRequest = INSTALLSTATE_SOURCE;
+            break;
+        case msidbComponentAttributesOptional:
+            comp->Action = INSTALLSTATE_LOCAL;
+            comp->ActionRequest = INSTALLSTATE_LOCAL;
+            break;
+        default:
+            comp->Action = INSTALLSTATE_UNKNOWN;
+            comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+    }
 
     comp->Enabled = TRUE;
 
