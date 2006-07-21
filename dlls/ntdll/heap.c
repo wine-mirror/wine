@@ -969,12 +969,6 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
     SUBHEAP *subheap;
     BOOL ret = TRUE;
 
-    if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
-    {
-        ERR("Invalid heap %p!\n", heapPtr );
-        return FALSE;
-    }
-
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     /* calling HeapLock may result in infinite recursion, so do the critsect directly */
@@ -1233,24 +1227,28 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
-    {
-        if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-        TRACE("(%p,%08lx,%p): returning FALSE\n", heap, flags, ptr );
-        return FALSE;
-    }
+
+    /* Some sanity checks */
+
+    pInUse  = (ARENA_INUSE *)ptr - 1;
+    if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse ))) goto error;
+    if ((char *)pInUse < (char *)subheap + subheap->headerSize) goto error;
+    if (!HEAP_ValidateInUseArena( subheap, pInUse, QUIET )) goto error;
 
     /* Turn the block into a free block */
 
-    pInUse  = (ARENA_INUSE *)ptr - 1;
-    subheap = HEAP_FindSubHeap( heapPtr, pInUse );
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%p,%08lx,%p): returning TRUE\n", heap, flags, ptr );
     return TRUE;
+
+error:
+    if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
+    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
+    TRACE("(%p,%08lx,%p): returning FALSE\n", heap, flags, ptr );
+    return FALSE;
 }
 
 
@@ -1292,18 +1290,14 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
-    {
-        if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-        TRACE("(%p,%08lx,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
-        return NULL;
-    }
+
+    pArena = (ARENA_INUSE *)ptr - 1;
+    if (!(subheap = HEAP_FindSubHeap( heapPtr, pArena ))) goto error;
+    if ((char *)pArena < (char *)subheap + subheap->headerSize) goto error;
+    if (!HEAP_ValidateInUseArena( subheap, pArena, QUIET )) goto error;
 
     /* Check if we need to grow the block */
 
-    pArena = (ARENA_INUSE *)ptr - 1;
-    subheap = HEAP_FindSubHeap( heapPtr, pArena );
     oldSize = (pArena->size & ARENA_SIZE_MASK);
     if (rounded_size > oldSize)
     {
@@ -1380,6 +1374,12 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     TRACE("(%p,%08lx,%p,%08lx): returning %p\n", heap, flags, ptr, size, pArena + 1 );
     return (LPVOID)(pArena + 1);
+
+error:
+    if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
+    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
+    TRACE("(%p,%08lx,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
+    return NULL;
 }
 
 
