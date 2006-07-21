@@ -88,13 +88,12 @@ typedef struct tagARENA_FREE
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 
-#define HEAP_NB_FREE_LISTS   4   /* Number of free lists */
-
 /* Max size of the blocks on the free lists */
-static const DWORD HEAP_freeListSizes[HEAP_NB_FREE_LISTS] =
+static const DWORD HEAP_freeListSizes[] =
 {
-    0x20, 0x80, 0x200, ~0UL
+    0x10, 0x20, 0x30, 0x40, 0x60, 0x80, 0x100, 0x200, 0x400, 0x1000, ~0UL
 };
+#define HEAP_NB_FREE_LISTS  (sizeof(HEAP_freeListSizes)/sizeof(HEAP_freeListSizes[0]))
 
 typedef struct
 {
