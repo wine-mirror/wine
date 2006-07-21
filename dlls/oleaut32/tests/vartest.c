@@ -5109,6 +5109,7 @@ static void test_VarCat(void)
     TCHAR orig_date_format[128];
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
+    HRESULT expected_error_num;
 
     /* Set date format for testing */
     lcid = LOCALE_USER_DEFAULT;
@@ -5128,21 +5129,22 @@ static void test_VarCat(void)
 
         for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
         {
-            BOOL bFail = FALSE;
+
             SKIPTESTS(rightvt);
+            expected_error_num = S_OK;
+            resultvt = VT_EMPTY;
 
             if (leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
                 leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN  ||
                 leftvt == VT_RECORD || rightvt == VT_RECORD  ||
-                leftvt == VT_CLSID || rightvt == VT_CLSID ||
-                leftvt == VT_BSTR_BLOB || rightvt == VT_BSTR_BLOB
-                )
-                    continue;
+                leftvt == 15 || rightvt == 15 /* Undefined type */)
+                continue;
 
-            if (leftvt == VT_ERROR || rightvt == VT_ERROR)
-                resultvt = VT_EMPTY;
-            else if (leftvt == VT_NULL && rightvt == VT_NULL)
+            if (leftvt == VT_NULL && rightvt == VT_NULL)
                 resultvt = VT_NULL;
+            else if (leftvt == VT_VARIANT && (rightvt == VT_ERROR ||
+                rightvt == VT_DATE || rightvt == VT_DECIMAL))
+                expected_error_num = DISP_E_TYPEMISMATCH;
             else if ((leftvt == VT_I2 || leftvt == VT_I4 ||
                 leftvt == VT_R4 || leftvt == VT_R8 ||
                 leftvt == VT_CY || leftvt == VT_BOOL ||
@@ -5164,16 +5166,33 @@ static void test_VarCat(void)
                 rightvt == VT_UINT || rightvt == VT_EMPTY ||
                 rightvt == VT_NULL || rightvt == VT_DECIMAL ||
                 rightvt == VT_DATE))
-            {
                 resultvt = VT_BSTR;
-            }
+            else if (rightvt == VT_ERROR && leftvt < VT_VOID)
+                expected_error_num = DISP_E_TYPEMISMATCH;
+            else if (leftvt == VT_ERROR && (rightvt == VT_DATE ||
+                rightvt == VT_ERROR || rightvt == VT_DECIMAL))
+                expected_error_num = DISP_E_TYPEMISMATCH;
+            else if (rightvt == VT_DATE || rightvt == VT_ERROR ||
+                rightvt == VT_DECIMAL)
+                expected_error_num = DISP_E_BADVARTYPE;
+            else if (leftvt == VT_ERROR || rightvt == VT_ERROR)
+                expected_error_num = DISP_E_TYPEMISMATCH;
+            else if (leftvt == VT_VARIANT)
+                expected_error_num = DISP_E_TYPEMISMATCH;
+            else if (rightvt == VT_VARIANT && (leftvt == VT_EMPTY ||
+                leftvt == VT_NULL || leftvt ==  VT_I2 ||
+                leftvt == VT_I4 || leftvt == VT_R4 ||
+                leftvt == VT_R8 || leftvt == VT_CY ||
+                leftvt == VT_DATE || leftvt == VT_BSTR ||
+                leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
+                leftvt == VT_I1 || leftvt == VT_UI1 ||
+                leftvt == VT_UI2 || leftvt == VT_UI4 ||
+                leftvt == VT_I8 || leftvt == VT_UI8 ||
+                leftvt == VT_INT || leftvt == VT_UINT
+                ))
+                expected_error_num = DISP_E_TYPEMISMATCH;
             else
-                resultvt = VT_EMPTY;
-
-            if (leftvt == VT_ERROR || rightvt == VT_ERROR)
-            {
-                bFail = TRUE;
-            }
+                expected_error_num = DISP_E_BADVARTYPE;
 
             V_VT(&left) = leftvt;
             V_VT(&right) = rightvt;
@@ -5192,57 +5211,16 @@ static void test_VarCat(void)
                 VarDecFromR8(0.0, &V_DECIMAL(&right));
 
             hres = VarCat(&left, &right, &result);
-            if (bFail) {
-                /* Determine the error code for the vt combination */
-                HRESULT expected_error_num = S_OK;
-                if (rightvt == VT_ERROR && leftvt <= VT_VOID)
-                    expected_error_num = DISP_E_TYPEMISMATCH;
-                else if (leftvt == VT_ERROR && (rightvt == VT_DATE ||
-                    rightvt == VT_ERROR || rightvt == VT_DECIMAL))
-                    expected_error_num = DISP_E_TYPEMISMATCH;
-                else if (rightvt == VT_DATE || rightvt == VT_ERROR ||
-                    rightvt == VT_DECIMAL)
-                    expected_error_num = DISP_E_BADVARTYPE;
-                else if (leftvt == VT_ERROR || rightvt == VT_ERROR)
-                    expected_error_num = DISP_E_TYPEMISMATCH;
 
-                ok(hres == DISP_E_BADVARTYPE || hres == E_INVALIDARG ||
-                    hres == DISP_E_TYPEMISMATCH,
-                    "VarCat: %d, %d: Expected failure 0x%lX, got 0x%lX\n",
-                    leftvt, rightvt, expected_error_num, hres);
-            }
-            else
-            {
-                ok(V_VT(&result) == resultvt,
-                    "VarCat: %d, %d: expected vt %d, got vt %d\n",
-                    leftvt, rightvt, resultvt, V_VT(&result));
-                if (hres != S_OK)
-                {
-                    HRESULT expected_error_num;
-                    if (leftvt == VT_VARIANT && rightvt == VT_ERROR)
-                        expected_error_num = DISP_E_BADVARTYPE;
-                    else if (leftvt == VT_VARIANT)
-                        expected_error_num = DISP_E_TYPEMISMATCH;
-                    else if (rightvt == VT_VARIANT && (leftvt == VT_EMPTY ||
-                        leftvt == VT_NULL || leftvt ==  VT_I2 ||
-                        leftvt == VT_I4 || leftvt == VT_R4 ||
-                        leftvt == VT_R8 || leftvt == VT_CY ||
-                        leftvt == VT_DATE || leftvt == VT_BSTR ||
-                        leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
-                        leftvt == VT_I1 || leftvt == VT_UI1 ||
-                        leftvt == VT_UI2 || leftvt == VT_UI4 ||
-                        leftvt == VT_I8 || leftvt == VT_UI8 ||
-                        leftvt == VT_INT || leftvt == VT_UINT
-                        ))
-                        expected_error_num = DISP_E_TYPEMISMATCH;
-                    else
-                        expected_error_num = DISP_E_BADVARTYPE;
+            /* Determine the error code for the vt combination */
+            ok(hres == expected_error_num,
+                "VarCat: %d, %d returned error, 0x%lX expected 0x%lX.\n",
+                leftvt, rightvt, expected_error_num, hres);
 
-                    ok(hres == expected_error_num,
-                        "VarCat: %d, %d: Expected failure 0x%lX, got 0x%lX\n",
-                        leftvt, rightvt, expected_error_num, hres);
-                }
-            }
+            /* Check types are correct */
+            ok(V_VT(&result) == resultvt,
+                "VarCat: %d, %d: expected vt %d, got vt %d\n",
+                leftvt, rightvt, resultvt, V_VT(&result));
 
             VariantClear(&left);
             VariantClear(&right);
@@ -5271,10 +5249,9 @@ static void test_VarCat(void)
     /* Test if expression is VT_ERROR */
     V_VT(&left) = VT_ERROR;
     V_VT(&right) = VT_BSTR;
+    V_BSTR(&right) = SysAllocString(sz1234);
     hres = VarCat(&left,&right,&result);
-    todo_wine {
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08lx\n", hres);
-    }
     ok(V_VT(&result) == VT_EMPTY,
         "VarCat: VT_ERROR concat with VT_BSTR should have returned VT_EMPTY\n");
 
@@ -5284,10 +5261,9 @@ static void test_VarCat(void)
 
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_ERROR;
+    V_BSTR(&left) = SysAllocString(sz1234);
     hres = VarCat(&left,&right,&result);
-    todo_wine {
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08lx\n", hres);
-    }
     ok(V_VT(&result) == VT_EMPTY,
         "VarCat: VT_BSTR concat with VT_ERROR should have returned VT_EMPTY\n");
 
