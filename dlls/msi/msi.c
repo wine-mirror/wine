@@ -1572,22 +1572,11 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     if (rc != ERROR_SUCCESS)
         return ERROR_INDEX_ABSENT;
 
-    sz = 0;
-    rc = RegQueryValueExW( hkey, szQualifier, NULL, NULL, NULL, &sz);
-    if (sz <= 0)
-    {
-        RegCloseKey(hkey);
-        return ERROR_INDEX_ABSENT;
-    }
+    info = msi_reg_get_val_str( hkey, szQualifier );
+    RegCloseKey(hkey);
 
-    info = msi_alloc(sz);
-    rc = RegQueryValueExW( hkey, szQualifier, NULL, NULL, (LPBYTE)info, &sz);
-    if (rc != ERROR_SUCCESS)
-    {
-        RegCloseKey(hkey);
-        msi_free(info);
+    if (!info)
         return ERROR_INDEX_ABSENT;
-    }
 
     MsiDecomposeDescriptorW(info, product, feature, component, &sz);
 
@@ -1596,7 +1585,6 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     else
         rc = MsiGetComponentPathW(szProduct, component, lpPathBuf, pcchPathBuf);
 
-    RegCloseKey(hkey);
     msi_free(info);
 
     if (rc == INSTALLSTATE_LOCAL)
