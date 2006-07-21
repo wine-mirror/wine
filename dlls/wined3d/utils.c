@@ -71,11 +71,11 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_A8          ,0x000000ff ,0x0        ,0x0        ,0x0        ,1      ,FALSE      ,GL_ALPHA8              ,GL_ALPHA           ,GL_ALPHA                       },
     {WINED3DFMT_A8R3G3B2    ,0x0000ff00 ,0x000000e0 ,0x0000001c ,0x00000003 ,2      ,FALSE      ,0                      ,0                  ,0                              },
     {WINED3DFMT_X4R4G4B4    ,0x0        ,0x00000f00 ,0x000000f0 ,0x0000000f ,2      ,FALSE      ,GL_RGB4                ,GL_BGRA            ,GL_UNSIGNED_SHORT_4_4_4_4_REV  },
-    {WINED3DFMT_A2B10G10R10 ,0xb0000000 ,0x000003ff ,0x000ffc00 ,0x3ff00000 ,4      ,FALSE      ,0                      ,0                  ,0                              },
+    {WINED3DFMT_A2B10G10R10 ,0xb0000000 ,0x000003ff ,0x000ffc00 ,0x3ff00000 ,4      ,FALSE      ,GL_RGB                 ,GL_RGBA            ,GL_UNSIGNED_INT_2_10_10_10_REV },
     {WINED3DFMT_A8B8G8R8    ,0xff000000 ,0x000000ff ,0x0000ff00 ,0x00ff0000 ,4      ,FALSE      ,GL_RGBA8               ,GL_RGBA            ,GL_UNSIGNED_INT_8_8_8_8_REV    },
     {WINED3DFMT_X8B8G8R8    ,0x0        ,0x000000ff ,0x0000ff00 ,0x00ff0000 ,4      ,FALSE      ,GL_RGB8                ,GL_RGBA            ,GL_UNSIGNED_INT_8_8_8_8_REV    },
     {WINED3DFMT_G16R16      ,0x0        ,0x0000ffff ,0xffff0000 ,0x0        ,4      ,FALSE      ,0                      ,0                  ,0                              },
-    {WINED3DFMT_A2R10G10B10 ,0xb0000000 ,0x3ff00000 ,0x000ffc00 ,0x000003ff ,4      ,FALSE      ,0                      ,0                  ,0                              },
+    {WINED3DFMT_A2R10G10B10 ,0xb0000000 ,0x3ff00000 ,0x000ffc00 ,0x000003ff ,4      ,FALSE      ,GL_RGBA                ,GL_BGRA            ,GL_UNSIGNED_INT_2_10_10_10_REV },
     {WINED3DFMT_A16B16G16R16,0x0        ,0x0000ffff ,0xffff0000 ,0x0        ,8      ,FALSE      ,GL_RGBA16_EXT          ,GL_RGBA            ,GL_UNSIGNED_SHORT              },
     /* Luminance */
     {WINED3DFMT_L8          ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,FALSE      ,GL_LUMINANCE8          ,GL_LUMINANCE       ,GL_UNSIGNED_BYTE               },

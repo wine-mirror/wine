@@ -1414,6 +1414,46 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_INVALIDCALL;
     }
 
+    if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
+        switch (CheckFormat) {
+            case WINED3DFMT_D16_LOCKABLE:
+            case WINED3DFMT_D32:
+            case WINED3DFMT_D15S1:
+            case WINED3DFMT_D24S8:
+            case WINED3DFMT_D24X8:
+            case WINED3DFMT_D24X4S4:
+            case WINED3DFMT_D16:
+            case WINED3DFMT_L16:
+            case WINED3DFMT_D32F_LOCKABLE:
+            case WINED3DFMT_D24FS8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return D3D_OK;
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+        }
+    } else if(Usage & WINED3DUSAGE_RENDERTARGET) {
+        switch (CheckFormat) {
+            case WINED3DFMT_R8G8B8:
+            case WINED3DFMT_A8R8G8B8:
+            case WINED3DFMT_X8R8G8B8:
+            case WINED3DFMT_R5G6B5:
+            case WINED3DFMT_X1R5G5B5:
+            case WINED3DFMT_A1R5G5B5:
+            case WINED3DFMT_A4R4G4B4:
+            case WINED3DFMT_R3G3B2:
+            case WINED3DFMT_X4R4G4B4:
+            case WINED3DFMT_A8B8G8R8:
+            case WINED3DFMT_X8B8G8R8:
+            case WINED3DFMT_P8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+        }
+    }
+
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (CheckFormat) {
         case D3DFMT_DXT1:
@@ -1429,65 +1469,106 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     }
 
     switch (CheckFormat) {
-    /*****
-     * check supported using GL_SUPPORT
-     */
-    case D3DFMT_DXT1:
-    case D3DFMT_DXT2:
-    case D3DFMT_DXT3:
-    case D3DFMT_DXT4:
-    case D3DFMT_DXT5:
 
-    /*****
-     *  supported
-     */
-      /*case D3DFMT_R5G6B5: */
-      /*case D3DFMT_X1R5G5B5:*/
-      /*case D3DFMT_A1R5G5B5: */
-      /*case D3DFMT_A4R4G4B4:*/
+        /*****
+         *  supported: RGB(A) formats
+         */
+        case WINED3DFMT_R8G8B8:
+        case WINED3DFMT_A8R8G8B8:
+        case WINED3DFMT_X8R8G8B8:
+        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_X1R5G5B5:
+        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_A8:
+        case WINED3DFMT_A8R3G3B2:
+        case WINED3DFMT_X4R4G4B4:
+        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_X8B8G8R8:
+        case WINED3DFMT_A2R10G10B10:
+        case WINED3DFMT_A2B10G10R10:
+            TRACE_(d3d_caps)("[OK]\n");
+            return WINED3D_OK;
 
-    /*****
-     * unsupported
-     */
+        /*****
+         *  supported: Palettized
+         */
+        case WINED3DFMT_P8:
+            TRACE_(d3d_caps)("[OK]\n");
+            return WINED3D_OK;
 
-      /* color buffer */
-      /*case D3DFMT_X8R8G8B8:*/
-    case D3DFMT_A8R3G3B2:
+        /*****
+         *  Supported: (Alpha)-Luminance
+         */
+        case WINED3DFMT_L8:
+        case WINED3DFMT_A8L8:
+        case WINED3DFMT_A4L4:
+            TRACE_(d3d_caps)("[OK]\n");
+            return WINED3D_OK;
 
-      /* Paletted */
-    case D3DFMT_P8:
-    case D3DFMT_A8P8:
+        /*****
+         *  Not supported for now: Bump mapping formats
+         *  Enable some because games often fail when they are not available
+         *  and are still playable even without bump mapping
+         */
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+            WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
+            return WINED3D_OK;
 
-      /* Luminance */
-    case D3DFMT_L8:
-    case D3DFMT_A8L8:
-    case D3DFMT_A4L4:
+        case WINED3DFMT_L6V5U5:
+        case WINED3DFMT_X8L8V8U8:
+        case WINED3DFMT_Q8W8V8U8:
+        case WINED3DFMT_W11V11U10:
+        case WINED3DFMT_A2W10V10U10:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return D3DERR_NOTAVAILABLE;
 
-      /* Bump */
-#if 0
-    case D3DFMT_V8U8:
-    case D3DFMT_V16U16:
-#endif
-    case D3DFMT_L6V5U5:
-    case D3DFMT_X8L8V8U8:
-    case D3DFMT_Q8W8V8U8:
-    case D3DFMT_W11V11U10:
+        /*****
+         *  DXTN Formats: Handled above
+         * WINED3DFMT_DXT1
+         * WINED3DFMT_DXT2
+         * WINED3DFMT_DXT3
+         * WINED3DFMT_DXT4
+         * WINED3DFMT_DXT5
+         */
 
-    /****
-     * currently hard to support
-     */
-    case D3DFMT_UYVY:
-    case D3DFMT_YUY2:
+        /*****
+         *  Odd formats - not supported
+         */
+        case WINED3DFMT_VERTEXDATA:
+        case WINED3DFMT_INDEX16:
+        case WINED3DFMT_INDEX32:
+        case WINED3DFMT_Q16W16V16U16:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return D3DERR_NOTAVAILABLE;
 
-      /* Since we do not support these formats right now, don't pretend to. */
-      TRACE_(d3d_caps)("[FAILED]\n");
-      return WINED3DERR_NOTAVAILABLE;
-    default:
-      break;
+        /*****
+         *  Float formats: Not supported right now
+         */
+        case WINED3DFMT_R16F:
+        case WINED3DFMT_G16R16F:
+        case WINED3DFMT_A16B16G16R16F:
+        case WINED3DFMT_R32F:
+        case WINED3DFMT_G32R32F:
+        case WINED3DFMT_A32B32G32R32F:
+        case WINED3DFMT_CxV8U8:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return D3DERR_NOTAVAILABLE;
+
+            /* Not supported */
+        case WINED3DFMT_G16R16:
+        case WINED3DFMT_A16B16G16R16:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return D3DERR_NOTAVAILABLE;
+
+        default:
+            break;
     }
 
-    TRACE_(d3d_caps)("[OK]\n");
-    return WINED3D_OK;
+    TRACE_(d3d_caps)("[FAILED]\n");
+    return D3DERR_NOTAVAILABLE;
 }
 
 static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
