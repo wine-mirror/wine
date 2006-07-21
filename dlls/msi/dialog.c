@@ -1625,6 +1625,10 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
         msi_seltree_sync_item_state( hwnd, feature, hitem );
         msi_seltree_add_child_features( package, hwnd,
                                         feature->Feature, hitem );
+
+        /* the node is expanded if Display is odd */
+        if ( feature->Display % 2 != 0 )
+            SendMessageW( hwnd, TVM_EXPAND, TVE_EXPAND, (LPARAM) hitem );
     }
 }
 
