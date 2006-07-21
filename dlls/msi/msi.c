@@ -224,7 +224,7 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     MSIPACKAGE *package = NULL;
     UINT r;
 
-    FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
+    TRACE("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
     r = MSI_OpenPackageW( szPackagePath, &package );
     if (r == ERROR_SUCCESS)
@@ -276,7 +276,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
     LPWSTR commandline;
 
-    FIXME("%s %d %d %s\n",debugstr_w(szProduct), iInstallLevel, eInstallState,
+    TRACE("%s %d %d %s\n",debugstr_w(szProduct), iInstallLevel, eInstallState,
           debugstr_w(szCommandLine));
 
     if (eInstallState != INSTALLSTATE_LOCAL &&
@@ -391,8 +391,6 @@ UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel,
 UINT WINAPI MsiConfigureProductW(LPCWSTR szProduct, int iInstallLevel,
                                  INSTALLSTATE eInstallState)
 {
-    FIXME("%s %d %d\n", debugstr_w(szProduct), iInstallLevel, eInstallState);
-
     return MsiConfigureProductExW(szProduct, iInstallLevel, eInstallState, NULL);
 }
 
