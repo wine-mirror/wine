@@ -98,8 +98,70 @@ static DWORD    WINAPI IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
+static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos, BOOL haspos, BYTE *diffuse, BOOL hasdiffuse, BYTE *specular, BOOL hasspecular) {
+    int i;
+    float x, y, z, w;
+
+    for(i = num - 1; i >= 0; i--) {
+        if(haspos) {
+            float *p = (float *) (((int) src + (int) pos) + i * stride);
+
+            /* rhw conversion like in drawStridedSlow */
+            if(p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps))) {
+                x = p[0];
+                y = p[1];
+                z = p[2];
+                w = 1.0;
+            } else {
+                w = 1.0 / p[3];
+                x = p[0] * w;
+                y = p[1] * w;
+                z = p[2] * w;
+            }
+            p = (float *) ((int) dst + i * stride + (int) pos);
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
+            p[3] = w;
+        }
+        if(hasdiffuse) {
+            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + (int) diffuse);
+            srcColor = * (DWORD *) ( ((int) src + (int) diffuse) + i * stride);
+
+            /* Color conversion like in drawStridedSlow. watch out for little endianity
+            * If we want that stuff to work on big endian machines too we have to consider more things
+            *
+            * 0xff000000: Alpha mask
+            * 0x00ff0000: Blue mask
+            * 0x0000ff00: Green mask
+            * 0x000000ff: Red mask
+            */
+
+            *dstColor = 0;
+            *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
+            *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
+            *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
+        }
+        if(hasspecular) {
+            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + (int) specular);
+            srcColor = * (DWORD *) ( ((int) src + (int) specular) + i * stride);
+
+            /* Simmilar to diffuse
+             * TODO: Write the alpha value out for fog coords
+             */
+            *dstColor = 0;
+            *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
+            *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
+            *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
+        }
+    }
+}
+
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
+    BYTE *data;
+    UINT start = 0, end = 0, stride = 0;
+    BOOL useVertexShaderFunction = FALSE, fixup = FALSE;
     TRACE("(%p)->()\n", This);
 
     if(This->Flags & VBFLAG_LOAD) {
@@ -114,10 +176,6 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     if(This->vbo) {
         WineDirect3DVertexStridedData strided;
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-        BOOL useVertexShaderFunction = FALSE, fixup = FALSE;
-        BYTE *data;
-        UINT i;
-        UINT start = 0, end = 0, stride = 0;
 
         if(This->Flags & VBFLAG_DIRTY) {
             /* Update the old buffer on unlock, use the old desc */
@@ -237,63 +295,10 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             }
             memcpy(data, This->resource.allocatedMemory + start, end - start);
 
-            for(i = 0; i < ( end - start) / stride; i++) {
-                if(strided.u.s.position_transformed) {
-                    float *p = (float *) (((int) This->resource.allocatedMemory + 
-                       (int) strided.u.s.position.lpData) + start + i * stride);
-                    float x, y, z, w;
-
-                    /* rhw conversion like in drawStridedSlow */
-                    if(p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps))) {
-                        x = p[0];
-                        y = p[1];
-                        z = p[2];
-                        w = 1.0;
-                    } else {
-                        w = 1.0 / p[3];
-                        x = p[0] * w;
-                        y = p[1] * w;
-                        z = p[2] * w;
-                    }
-                    p = (float *) ((int) data + i * stride + (int) strided.u.s.position.lpData);
-                    p[0] = x;
-                    p[1] = y;
-                    p[2] = z;
-                    p[3] = w;
-                }
-                if(strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR) {
-                    DWORD srcColor, *dstColor = (DWORD *) (data + i * stride + (int) strided.u.s.diffuse.lpData);
-                    srcColor = * (DWORD *) ( ((int) This->resource.allocatedMemory + (int) strided.u.s.diffuse.lpData) + start + i * stride);
-
-                    /* Color conversion like in drawStridedSlow. watch out for little endianity
-                     * If we want that stuff to work on big endian machines too we have to consider more things
-                     *
-                     * 0xff000000: Alpha mask
-                     * 0x00ff0000: Blue mask
-                     * 0x0000ff00: Green mask
-                     * 0x000000ff: Red mask
-                     */
-
-                    *dstColor = 0;
-                    *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
-                    *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
-                    *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
-                } else if (strided.u.s.diffuse.lpData != NULL) {
-                    FIXME("Type is %ld\n", strided.u.s.diffuse.dwType);
-                }
-                if(strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR) {
-                    DWORD srcColor, *dstColor = (DWORD *) (data + i * stride + (int) strided.u.s.specular.lpData);
-                    srcColor = * (DWORD *) ( ((int) This->resource.allocatedMemory + (int) strided.u.s.specular.lpData) + start + i * stride);
-
-                    /* Color conversion like in drawStridedSlow. watch out for little endianity
-                     * If we want that stuff to work on big endian machines too we have to consider more things
-                     */
-                    *dstColor = 0;
-                    *dstColor |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
-                    *dstColor |= (srcColor & 0x00ff0000) >> 16;   /* Red */
-                    *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
-                }
-            }
+            fixup_vertices(data, data, stride, ( end - start) / stride,
+                           strided.u.s.position.lpData, strided.u.s.position_transformed,
+                           strided.u.s.diffuse.lpData, strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR,
+                           strided.u.s.specular.lpData, strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
         } else {
             data = This->resource.allocatedMemory + start;
         }
