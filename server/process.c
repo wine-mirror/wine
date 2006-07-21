@@ -534,7 +534,7 @@ static void process_killed( struct process *process )
 /* add a thread to a process running threads list */
 void add_process_thread( struct process *process, struct thread *thread )
 {
-    list_add_head( &process->thread_list, &thread->proc_entry );
+    list_add_tail( &process->thread_list, &thread->proc_entry );
     if (!process->running_threads++) running_processes++;
     grab_object( thread );
 }
