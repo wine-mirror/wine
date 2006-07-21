@@ -297,6 +297,10 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         }
         else fprintf(h, "union %s", t->name);
         break;
+      case RPC_FC_FP:
+        if (t->ref) write_type(h, t->ref, NULL, t->name);
+        fprintf(h, "*");
+        break;
       default:
         fprintf(h, "(unknown-type:%d)", t->type);
       }
