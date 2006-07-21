@@ -84,7 +84,8 @@ typedef struct tagARENA_FREE
 #define NOISY                  0           /* Report all errors  */
 
 /* minimum data size (without arenas) of an allocated block */
-#define HEAP_MIN_DATA_SIZE    16
+/* make sure that it's larger than a free list entry */
+#define HEAP_MIN_DATA_SIZE    (2 * sizeof(struct list))
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 
