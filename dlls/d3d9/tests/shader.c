@@ -104,43 +104,6 @@ static void test_get_set_vertex_shader(IDirect3DDevice9 *device_ptr)
         "Expected hret 0x%lx, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
 }
 
-static void test_get_set_vertex_shader_constants(IDirect3DDevice9 *device_ptr)
-{
-    HRESULT hret;
-    int int_in[4] = {0xdead0000, 0xdead0001, 0xdead0002, 0xdead0003};
-    int int_out[4] = {0};
-    float float_in[4] = {0.14f, 0.15f, 0.92f, 0.65f};
-    float float_out[4] = {0};
-    BOOL bool_in[4] = {TRUE, FALSE, FALSE, TRUE};
-    BOOL bool_out[4] = {0};
-
-    hret = IDirect3DDevice9_SetVertexShaderConstantI(device_ptr, 0, int_in, 1);
-    ok(hret == D3D_OK, "SetVertexShaderConstantI returned %#lx.\n", hret);
-    hret = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, 0, float_in, 1);
-    ok(hret == D3D_OK, "SetVertexShaderConstantF returned %#lx.\n", hret);
-    hret = IDirect3DDevice9_SetVertexShaderConstantB(device_ptr, 0, bool_in, 4);
-    ok(hret == D3D_OK, "SetVertexShaderConstantB returned %#lx.\n", hret);
-
-    hret = IDirect3DDevice9_GetVertexShaderConstantI(device_ptr, 0, int_out, 1);
-    ok(hret == D3D_OK, "GetVertexShaderConstantI returned %#lx.\n", hret);
-    hret = IDirect3DDevice9_GetVertexShaderConstantF(device_ptr, 0, float_out, 1);
-    ok(hret == D3D_OK, "GetVertexShaderConstantF returned %#lx.\n", hret);
-    hret = IDirect3DDevice9_GetVertexShaderConstantB(device_ptr, 0, bool_out, 4);
-    ok(hret == D3D_OK, "GetVertexShaderConstantB returned %#lx.\n", hret);
-
-    /* The constant arrays aren't shared between I/F/B, so they shouldn't
-     * overwrite eachother's values */
-    ok(!memcmp(int_in, int_out, sizeof(int_in)),
-            "Int constant data doesn't match (%#x, %#x, %#x, %#x).\n",
-            int_out[0], int_out[1], int_out[2], int_out[3]);
-    ok(!memcmp(float_in, float_out, sizeof(float_in)),
-            "Float constant data doesn't match (%f, %f, %f, %f).\n",
-            float_out[0], float_out[1], float_out[2], float_out[3]);
-    ok(!memcmp(bool_in, bool_out, sizeof(bool_in)),
-            "Bool constant data doesn't match (%#x, %#x, %#x, %#x).\n",
-            bool_out[0], bool_out[1], bool_out[2], bool_out[3]);
-}
-
 static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
 {
     static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
@@ -198,7 +161,6 @@ START_TEST(shader)
     if (caps.VertexShaderVersion & 0xffff)
     {
         test_get_set_vertex_shader(device_ptr);
-        test_get_set_vertex_shader_constants(device_ptr);
     }
     else trace("No vertex shader support, skipping test\n");
 
