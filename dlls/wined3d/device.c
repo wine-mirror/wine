@@ -4631,7 +4631,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
 
     memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
-        TRACE("Set BOOL constant %u to %s\n", i, srcData[i]? "true":"false");
+        TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsB[i] = TRUE;
@@ -4677,7 +4677,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
 
     memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
-        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", i,
+        TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
@@ -4724,7 +4724,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
 
     memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
     for (i = 0; i < cnt; i++)
-        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", i,
+        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
