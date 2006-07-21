@@ -4650,7 +4650,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantB[start], cnt * sizeof(BOOL));
+    memcpy(dstData, &This->stateBlock->vertexShaderConstantB[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -4697,7 +4697,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantI[start * 4], cnt * sizeof(int) * 4);
+    memcpy(dstData, &This->stateBlock->vertexShaderConstantI[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -4744,7 +4744,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantF[start * 4], cnt * sizeof(float) * 4);
+    memcpy(dstData, &This->stateBlock->vertexShaderConstantF[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 
@@ -4832,7 +4832,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantB[start], cnt * sizeof(BOOL));
+    memcpy(dstData, &This->stateBlock->pixelShaderConstantB[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -4879,7 +4879,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantI[start * 4], cnt * sizeof(int) * 4);
+    memcpy(dstData, &This->stateBlock->pixelShaderConstantI[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -4926,7 +4926,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantF[start * 4], cnt * sizeof(float) * 4);
+    memcpy(dstData, &This->stateBlock->pixelShaderConstantF[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 
