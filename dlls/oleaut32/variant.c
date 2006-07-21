@@ -2444,32 +2444,32 @@ VarNumFromParseNum_DecOverflow:
  */
 HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
-    VARTYPE leftvt,rightvt;
+    VARTYPE leftvt,rightvt,resultvt;
     HRESULT hres;
     static const WCHAR str_true[] = {'T','r','u','e','\0'};
     static const WCHAR str_false[] = {'F','a','l','s','e','\0'};
+    static const WCHAR sz_empty[] = {'\0'};
     leftvt = V_VT(left);
     rightvt = V_VT(right);
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), out);
 
-    /* Null and Null simply return Null */
+    /* when both left and right are NULL the result is NULL */
     if (leftvt == VT_NULL && rightvt == VT_NULL)
     {
         V_VT(out) = VT_NULL;
         return S_OK;
     }
 
-    /* VT_ERROR with any other value should return VT_NULL */
-    else if (V_VT(left) == VT_ERROR || V_VT(right) == VT_ERROR)
-    {
-        V_VT(out) = VT_EMPTY;
-        return DISP_E_BADVARTYPE;
-    }
+    hres = S_OK;
+    resultvt = VT_EMPTY;
 
-   /* Concat all type that match conformance test */
-    if ((leftvt == VT_I2 || leftvt == VT_I4 ||
+    /* There are many special case for errors and return types */
+    if (leftvt == VT_VARIANT && (rightvt == VT_ERROR ||
+        rightvt == VT_DATE || rightvt == VT_DECIMAL))
+        hres = DISP_E_TYPEMISMATCH;
+    else if ((leftvt == VT_I2 || leftvt == VT_I4 ||
         leftvt == VT_R4 || leftvt == VT_R8 ||
         leftvt == VT_CY || leftvt == VT_BOOL ||
         leftvt == VT_BSTR || leftvt == VT_I1 ||
@@ -2490,14 +2490,51 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         rightvt == VT_UINT || rightvt == VT_EMPTY ||
         rightvt == VT_NULL || rightvt == VT_DATE ||
         rightvt == VT_DECIMAL))
+        resultvt = VT_BSTR;
+    else if (rightvt == VT_ERROR && leftvt < VT_VOID)
+        hres = DISP_E_TYPEMISMATCH;
+    else if (leftvt == VT_ERROR && (rightvt == VT_DATE ||
+        rightvt == VT_ERROR || rightvt == VT_DECIMAL))
+        hres = DISP_E_TYPEMISMATCH;
+    else if (rightvt == VT_DATE || rightvt == VT_ERROR ||
+        rightvt == VT_DECIMAL)
+        hres = DISP_E_BADVARTYPE;
+    else if (leftvt == VT_ERROR || rightvt == VT_ERROR)
+        hres = DISP_E_TYPEMISMATCH;
+    else if (leftvt == VT_VARIANT)
+        hres = DISP_E_TYPEMISMATCH;
+    else if (rightvt == VT_VARIANT && (leftvt == VT_EMPTY ||
+        leftvt == VT_NULL || leftvt ==  VT_I2 ||
+        leftvt == VT_I4 || leftvt == VT_R4 ||
+        leftvt == VT_R8 || leftvt == VT_CY ||
+        leftvt == VT_DATE || leftvt == VT_BSTR ||
+        leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
+        leftvt == VT_I1 || leftvt == VT_UI1 ||
+        leftvt == VT_UI2 || leftvt == VT_UI4 ||
+        leftvt == VT_I8 || leftvt == VT_UI8 ||
+        leftvt == VT_INT || leftvt == VT_UINT))
+        hres = DISP_E_TYPEMISMATCH;
+    else
+        hres = DISP_E_BADVARTYPE;
+
+    /* if resutl type is not S_OK, then no need to go further */
+    if (hres != S_OK)
+    {
+        V_VT(out) = resultvt;
+        return hres;
+    }
+    /* Else proceed with formatting inputs to strings */
+    else
     {
         VARIANT bstrvar_left, bstrvar_right;
         V_VT(out) = VT_BSTR;
 
+        VariantInit(&bstrvar_left);
+        VariantInit(&bstrvar_right);
+
         /* Convert left side variant to string */
         if (leftvt != VT_BSTR)
         {
-            VariantInit(&bstrvar_left);
             if (leftvt == VT_BOOL)
             {
                 /* Bools are handled as True/False strings instead of 0/-1 as in MSDN */
@@ -2506,6 +2543,12 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
                     V_BSTR(&bstrvar_left) = SysAllocString(str_true);
                 else
                     V_BSTR(&bstrvar_left) = SysAllocString(str_false);
+            }
+            /* Fill with empty string for later concat with right side */
+            else if (leftvt == VT_NULL)
+            {
+                V_VT(&bstrvar_left) = VT_BSTR;
+                V_BSTR(&bstrvar_left) = SysAllocString(sz_empty);
             }
             else
             {
@@ -2532,7 +2575,6 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         /* convert right side variant to string */
         if (rightvt != VT_BSTR)
         {
-            VariantInit(&bstrvar_right);
             if (rightvt == VT_BOOL)
             {
                 /* Bools are handled as True/False strings instead of 0/-1 as in MSDN */
@@ -2541,6 +2583,12 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
                     V_BSTR(&bstrvar_right) = SysAllocString(str_true);
                 else
                     V_BSTR(&bstrvar_right) = SysAllocString(str_false);
+            }
+            /* Fill with empty string for later concat with right side */
+            else if (rightvt == VT_NULL)
+            {
+                V_VT(&bstrvar_right) = VT_BSTR;
+                V_BSTR(&bstrvar_right) = SysAllocString(sz_empty);
             }
             else
             {
@@ -2578,10 +2626,8 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         VariantClear(&bstrvar_right);
         return S_OK;
     }
-
-    V_VT(out) = VT_EMPTY;
-    return S_OK;
 }
+
 
 /* Wrapper around VariantChangeTypeEx() which permits changing a
    variant with VT_RESERVED flag set. Needed by VarCmp. */
