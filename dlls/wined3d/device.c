@@ -7225,6 +7225,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IW
 static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                IWineD3DSurface *RenderSurface) {
     HRESULT ret =  WINED3DERR_INVALIDCALL;
+    BOOL oldRecording;
+    IWineD3DStateBlockImpl *oldUpdateStateBlock;
 
     /**
     * Currently only active for GLX >= 1.3
@@ -7444,23 +7446,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         }
     }
 
-#if 1 /* Apply the stateblock to the new context
-FIXME: This is a bit of a hack, each context should know it's own state,
-the directX current directX state should then be applied to the context */
-    {
-        BOOL oldRecording;
-        IWineD3DStateBlockImpl *oldUpdateStateBlock;
-        oldUpdateStateBlock = This->updateStateBlock;
-        oldRecording= This->isRecordingState;
-        This->isRecordingState = FALSE;
-        This->updateStateBlock = This->stateBlock;
-        IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
-
-        This->isRecordingState = oldRecording;
-        This->updateStateBlock = oldUpdateStateBlock;
-    }
-#endif
-
+    /* Disable recording, and apply the stateblock to the new context 
+     * FIXME: This is a bit of a hack, each context should know it's own state,
+     * the directX current directX state should then be applied to the context */
+    oldUpdateStateBlock = This->updateStateBlock;
+    oldRecording= This->isRecordingState;
+    This->isRecordingState = FALSE;
+    This->updateStateBlock = This->stateBlock;
+    IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
 
     /* clean up the current rendertargets swapchain (if it belonged to one) */
     if (currentSwapchain != NULL) {
@@ -7474,10 +7467,9 @@ the directX current directX state should then be applied to the context */
     IWineD3DSurface_AddRef(This->renderTarget);
     IWineD3DSurface_Release(tmp);
 
-
-
     {
         DWORD value;
+
         /* The surface must be rendered upside down to cancel the flip produce by glCopyTexImage */
         /* Check that the container is not a swapchain member */
 
@@ -7497,6 +7489,10 @@ the directX current directX state should then be applied to the context */
         This->last_was_rhw = FALSE;
         This->proj_valid = FALSE;
     }
+
+    /* Restore recording state */
+    This->isRecordingState = oldRecording;
+    This->updateStateBlock = oldUpdateStateBlock;
 
     ret = WINED3D_OK;
 
