@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -59,6 +60,7 @@ static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static LIST_ENTRY tls_links;
 static size_t sigstack_total_size;
+static ULONG sigstack_zero_bits;
 
 struct wine_pthread_functions pthread_functions = { NULL };
 
@@ -225,8 +227,10 @@ HANDLE thread_init(void)
     InitializeListHead( &tls_links );
 
     sigstack_total_size = get_signal_stack_total_size();
+    while (1 << sigstack_zero_bits < sigstack_total_size) sigstack_zero_bits++;
+    assert( 1 << sigstack_zero_bits == sigstack_total_size );  /* must be a power of 2 */
     thread_info.teb_size = sigstack_total_size;
-    VIRTUAL_alloc_teb( &addr, thread_info.teb_size, TRUE );
+    VIRTUAL_alloc_teb( &addr, thread_info.teb_size );
     teb = addr;
     init_teb( teb );
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
@@ -376,7 +380,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     DWORD tid = 0;
     int request_pipe[2];
     NTSTATUS status;
-    SIZE_T page_size = getpagesize();
+    SIZE_T size, page_size = getpagesize();
 
     if( ! is_current_process( process ) )
     {
@@ -411,9 +415,13 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         goto error;
     }
 
-    info->pthread_info.teb_size = sigstack_total_size;
-    if ((status = VIRTUAL_alloc_teb( &addr, info->pthread_info.teb_size, FALSE ))) goto error;
+    addr = NULL;
+    size = sigstack_total_size;
+    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, sigstack_zero_bits,
+                                           &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
+        goto error;
     teb = addr;
+    info->pthread_info.teb_size = size;
     if ((status = init_teb( teb ))) goto error;
 
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();

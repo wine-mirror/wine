@@ -1151,31 +1151,21 @@ static inline void virtual_init(void)
  *
  * Allocate a memory view for a new TEB, properly aligned to a multiple of the size.
  */
-NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first )
+NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size )
 {
     NTSTATUS status;
     struct file_view *view;
-    size_t align_size;
 
-    if (first) virtual_init();
+    virtual_init();
 
     *ret = NULL;
-    size = ROUND_SIZE( 0, size );
-    align_size = page_size;
-    while (align_size < size) align_size *= 2;
-
-    if (!first) RtlEnterCriticalSection( &csVirtual );
-
-    status = map_view( &view, NULL, align_size, align_size - 1,
+    status = map_view( &view, NULL, size, size - 1,
                        VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     if (status == STATUS_SUCCESS)
     {
         view->flags |= VFLAG_VALLOC;
         *ret = view->base;
     }
-
-    if (!first) RtlLeaveCriticalSection( &csVirtual );
-
     return status;
 }
 

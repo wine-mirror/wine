@@ -106,7 +106,7 @@ extern NTSTATUS DIR_unmount_device( HANDLE handle );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 
 /* virtual memory */
-extern NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size, BOOL first );
+extern NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size );
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
