@@ -654,6 +654,7 @@ extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 #define VBFLAG_DIRTY          0x04    /* Buffer data has been modified */
 #define VBFLAG_STREAM         0x08    /* The vertex buffer is in a stream */
 #define VBFLAG_HASDESC        0x10    /* A vertex description has been found */
+#define VBFLAG_VBOCREATEFAIL  0x20    /* An attempt to create a vbo has failed */
 
 /*****************************************************************************
  * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)

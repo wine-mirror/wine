@@ -611,6 +611,11 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
     IWineD3DDeviceImpl *This = object->resource.wineD3DDevice;  /* Needed for GL_EXTCALL */
     GLenum error, glUsage;
     DWORD vboUsage = object->resource.usage;
+    if(object->Flags & VBFLAG_VBOCREATEFAIL) {
+        WARN("Creating a vbo failed once, not trying again\n");
+        return;
+    }
+
     TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p\n", object);
 
     ENTER_GL();
@@ -694,6 +699,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
     FIXME("Failed to create a vertex buffer object. Continuing, but performance issues can occur\n");
     if(object->vbo) GL_EXTCALL(glDeleteBuffersARB(1, &object->vbo));
     object->vbo = 0;
+    object->Flags |= VBFLAG_VBOCREATEFAIL;
     LEAVE_GL();
     return;
 }
