@@ -148,7 +148,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
 {
     WebBrowser *This = PERSTRINIT_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pStg);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStg,
