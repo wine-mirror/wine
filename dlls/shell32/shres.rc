@@ -12037,6 +12037,9 @@ IDR_AVI_SEARCHING AVI searching.avi
 /* BINRES search.avi */
 IDR_AVI_SEARCH AVI searching.avi
 
+/* BINRES filemove.avi */
+IDR_AVI_FILEMOVE AVI searching.avi
+
 /* BINRES filecopy.avi */
 IDR_AVI_FILECOPY AVI searching.avi
 

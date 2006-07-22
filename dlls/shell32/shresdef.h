@@ -128,6 +128,7 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 */
 #define IDR_AVI_SEARCH             150
 #define IDR_AVI_SEARCHING          151
+#define IDR_AVI_FILEMOVE           160
 #define IDR_AVI_FILECOPY           161
 
 #endif
