@@ -475,8 +475,8 @@ static const char* testfiles[]=
 
 typedef struct
 {
-    char* verb;
-    char* basename;
+    const char* verb;
+    const char* basename;
     int rc;
     int todo;
 } filename_tests_t;
