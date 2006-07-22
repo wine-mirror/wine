@@ -6820,17 +6820,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST D3DRECT* pRect, D3DCOLOR color) {
-    /* I couldn't find a 'really' quick way of doing this in openGl so here goes
-    fill a surface with a block of color!  */
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /* TODO: get rid of the use of IWineD3DSurfaceImpl, move code into surface.c */
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)pSurface;
-    IWineD3DSwapChainImpl *container = NULL;
-    BOOL isRenderTarget = FALSE;
-    unsigned int width, height;
-    unsigned int top, left;
-    unsigned int u, v;
-    DWORD       *data;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
+    DDBLTFX BltFx;
     TRACE("(%p) Colour fill Surface: %p rect: %p color: %ld\n", This, pSurface, pRect, color);
 
     if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
@@ -6838,92 +6830,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* TODO: get rid of IWineD3DSwapChainImpl reference, a 'context' manager may help with this */
-    if (WINED3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DSwapChain, (void **)&container) || pSurface == This->renderTarget) {
-        if (WINED3DUSAGE_RENDERTARGET & surface->resource.usage) {
-            /* TODO: make sure we set everything back to the way it was, and context management!
-                glGetIntegerv(GL_READ_BUFFER, &prev_read);
-                vcheckGLcall("glIntegerv");
-                glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-                vcheckGLcall("glIntegerv");
-            */
-            TRACE("Color fill to render targets may cause some graphics issues\n");
-            if (pSurface == container->frontBuffer) {
-                glDrawBuffer(GL_FRONT);
-            } else {
-                glDrawBuffer(GL_BACK);
-            }
-        } else {
-            if (WINED3DUSAGE_DEPTHSTENCIL & surface->resource.usage) {
-                FIXME("colouring of depth_stencil? %p buffers is not yet supported? %ld\n", surface, surface->resource.usage);
-            } else {
-                FIXME("(%p) : Regression %ld %p %p\n", This, surface->resource.usage, pSurface, This->renderTarget);
-            }
-            if (container != NULL) {
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)container);
-            }
-            /* we can use GL_STENCIL_INDEX etc...*/
-            return WINED3D_OK;
-        }
-        if (container != NULL) {
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)container);
-        }
-        isRenderTarget = TRUE;
-    }
-    /* TODO: drawing to GL_FRONT and GL_BACK */
-    /* TODO: see if things can be speeded up by using the correct
-     * colour model of the target texture from the start (16 bit graphics on 32 X are slow anyway!) */
-    if (pRect == NULL) {
-        top    = 0;
-        left   = 0;
-        width  = surface->currentDesc.Width;
-        height = surface->currentDesc.Height;
-    } else {
-        left   = pRect->x1;
-        top    = pRect->y1;
-        width  = pRect->x2 - left;
-        height = pRect->y2 - top;
-    }
-
-    data = HeapAlloc(GetProcessHeap(), 0, 4 * width);
-    /* Create a 'line' of color color, in the correct format for the surface */
-    for (u = 0 ; u < width ; u ++) {
-            data[u] = color;
-    }
-
-    ENTER_GL();
-    if (isRenderTarget == FALSE) {
-        glDescriptor *glDesc;
-        IWineD3DSurface_PreLoad(pSurface);
-
-        /* draw a block of the coloured line on the sufrace */
-        IWineD3DSurface_GetGlDesc(pSurface, &glDesc);
-        for (v = 0 ; v< height;v++) {
-            glTexSubImage2D(glDesc->target
-                            ,glDesc->level /* level */
-                            ,left
-                            ,top + v
-                            ,width
-                            ,1 /* height */
-                            ,GL_RGBA
-                            ,GL_UNSIGNED_BYTE
-                            ,data
-                            );
-        }
-        checkGLcall("glTexSubImage2D");
-        /* clean up */
-        glDisable(glDesc->target);
-    } else {
-        /** FIXME: Using GLClear may be faster **/
-        glRasterPos2i(left, top);
-        glPixelZoom((float)width ,(float)height);
-        glDrawPixels(1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        checkGLcall("glDrawPixels");
-    }
-    HeapFree(GetProcessHeap(), 0, data);
-    LEAVE_GL();
-    return WINED3D_OK;
-
+    /* Just forward this to the DirectDraw blitting engine */
+    memset(&BltFx, 0, sizeof(BltFx));
+    BltFx.dwSize = sizeof(BltFx);
+    BltFx.u5.dwFillColor = color;
+    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, DDBLT_COLORFILL, &BltFx);
 }
 
 /* rendertarget and deptth stencil functions */
