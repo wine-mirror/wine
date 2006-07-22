@@ -64,8 +64,7 @@ extern HHOOK set_dinput_hook(int hook_id, LPVOID proc);
 	  (int) (data), (int) (offset),                           		\
 	  (int) (This->queue_head), (int) (This->queue_len));			\
 										\
-    nq = This->queue_head+1;							\
-    while (nq >= This->queue_len) nq -= This->queue_len;			\
+    nq = (This->queue_head+1) % This->queue_len;				\
     if ((offset >= 0) && (nq != This->queue_tail)) {				\
       This->data_queue[This->queue_head].dwOfs = offset;			\
       This->data_queue[This->queue_head].dwData = data;				\
