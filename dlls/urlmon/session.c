@@ -74,7 +74,7 @@ static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, IUnknown **r
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, wszKey, &hkey);
     HeapFree(GetProcessHeap(), 0, wszKey);
     if(res != ERROR_SUCCESS) {
-        TRACE("Could not open key %s\n", debugstr_w(wszKey));
+        TRACE("Could not open protocol handler key\n");
         return E_FAIL;
     }
     
