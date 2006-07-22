@@ -7435,24 +7435,39 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                                                         UINT YHotSpot, IWineD3DSurface *pCursorBitmap) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     /* TODO: the use of Impl is deprecated. */
-    /* some basic validation checks */
     IWineD3DSurfaceImpl * pSur = (IWineD3DSurfaceImpl *) pCursorBitmap;
 
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
-    if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
-      ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
-      return WINED3DERR_INVALIDCALL;
+    /* some basic validation checks */
+    if(pCursorBitmap) {
+        /* MSDN: Cursor must be A8R8G8B8 */
+        if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
+            ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        /* MSDN: Cursor must be smaller than the display mode */
+        if(pSur->currentDesc.Width > This->ddraw_width ||
+           pSur->currentDesc.Height > This->ddraw_height) {
+            ERR("(%p) : Surface(%p) is %dx%d pixels, but screen res is %ldx%ld\n", This, pSur, pSur->currentDesc.Width, pSur->currentDesc.Height, This->ddraw_width, This->ddraw_height);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        /* TODO: MSDN: Cursor sizes must be a power of 2 */
+        if(This->mouseCursor) {
+            ((IWineD3DSurfaceImpl *) This->mouseCursor)->Flags &= ~SFLAG_FORCELOAD;
+        }
+        /* This is to tell our texture code to load a SCRATCH surface. This allows us to use out
+         * Texture and Blitting code to draw the cursor
+         */
+        pSur->Flags |= SFLAG_FORCELOAD;
     }
-    if (32 != pSur->currentDesc.Height || 32 != pSur->currentDesc.Width) {
-      ERR("(%p) : surface(%p) has an invalid size\n", This, pCursorBitmap);
-      return WINED3DERR_INVALIDCALL;
-    }
-    /* TODO: make the cursor 'real' */
 
     This->xHotSpot = XHotSpot;
     This->yHotSpot = YHotSpot;
 
+    This->mouseCursor = pCursorBitmap;
     return WINED3D_OK;
 }
 

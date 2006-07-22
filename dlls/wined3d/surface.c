@@ -1638,7 +1638,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
     *  However, these resources can always be created, locked, and copied.
     */
-    if (This->resource.pool == WINED3DPOOL_SCRATCH)
+    if (This->resource.pool == WINED3DPOOL_SCRATCH && !(This->Flags & SFLAG_FORCELOAD) )
     {
         FIXME("(%p) Operation not supported for scratch textures\n",This);
         return WINED3DERR_INVALIDCALL;
@@ -2034,7 +2034,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
         This->dirtyRect.right  = This->currentDesc.Width;
         This->dirtyRect.bottom = This->currentDesc.Height;
     }
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY, This->dirtyRect.left,
+    TRACE("(%p) : Dirty?%ld, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {

@@ -540,6 +540,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                    yHotSpot;
     UINT                    xScreenSpace;
     UINT                    yScreenSpace;
+    IWineD3DSurface        *mouseCursor;
 
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];
@@ -853,7 +854,7 @@ struct IWineD3DSurfaceImpl
     UINT                      bytesPerPixel;
 
     /* TODO: move this off into a management class(maybe!) */
-    WORD                      Flags;
+    DWORD                      Flags;
 
     UINT                      pow2Width;
     UINT                      pow2Height;
@@ -930,22 +931,24 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
 
 /* Surface flags: */
-#define SFLAG_OVERSIZE    0x0001 /* Surface is bigger than gl size, blts only */
-#define SFLAG_CONVERTED   0x0002 /* Converted for color keying or Palettized */
-#define SFLAG_DIBSECTION  0x0004 /* Has a DIB section attached for getdc */
-#define SFLAG_DIRTY       0x0008 /* Surface was locked by the app */
-#define SFLAG_LOCKABLE    0x0010 /* Surface can be locked */
-#define SFLAG_DISCARD     0x0020 /* ??? */
-#define SFLAG_LOCKED      0x0040 /* Surface is locked atm */
-#define SFLAG_ACTIVELOCK  0x0080 /* Not locked, but surface memory is needed */
-#define SFLAG_INTEXTURE   0x0100 /* ??? */
-#define SFLAG_INPBUFFER   0x0200 /* ??? */
-#define SFLAG_NONPOW2     0x0400 /* Surface sizes are not a power of 2 */
-#define SFLAG_DYNLOCK     0x0800 /* Surface is often locked by the app */
-#define SFLAG_DYNCHANGE   0x1800 /* Surface contents are changed very often, implies DYNLOCK */
-#define SFLAG_DCINUSE     0x2000 /* Set between GetDC and ReleaseDC calls */
-#define SFLAG_GLDIRTY     0x4000 /* The opengl texture is more up to date than the surface mem */
-#define SFLAG_LOST        0x8000 /* Surface lost flag for DDraw */
+#define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
+#define SFLAG_CONVERTED   0x00000002 /* Converted for color keying or Palettized */
+#define SFLAG_DIBSECTION  0x00000004 /* Has a DIB section attached for getdc */
+#define SFLAG_DIRTY       0x00000008 /* Surface was locked by the app */
+#define SFLAG_LOCKABLE    0x00000010 /* Surface can be locked */
+#define SFLAG_DISCARD     0x00000020 /* ??? */
+#define SFLAG_LOCKED      0x00000040 /* Surface is locked atm */
+#define SFLAG_ACTIVELOCK  0x00000080 /* Not locked, but surface memory is needed */
+#define SFLAG_INTEXTURE   0x00000100 /* ??? */
+#define SFLAG_INPBUFFER   0x00000200 /* ??? */
+#define SFLAG_NONPOW2     0x00000400 /* Surface sizes are not a power of 2 */
+#define SFLAG_DYNLOCK     0x00000800 /* Surface is often locked by the app */
+#define SFLAG_DYNCHANGE   0x00001800 /* Surface contents are changed very often, implies DYNLOCK */
+#define SFLAG_DCINUSE     0x00002000 /* Set between GetDC and ReleaseDC calls */
+#define SFLAG_GLDIRTY     0x00004000 /* The opengl texture is more up to date than the surface mem */
+#define SFLAG_LOST        0x00008000 /* Surface lost flag for DDraw */
+#define SFLAG_FORCELOAD   0x00010000 /* To force PreLoading of a scratch cursor */
+
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

@@ -141,6 +141,20 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     ENTER_GL();
 
+    /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
+    if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->mouseCursor) {
+        IWineD3DSurfaceImpl *cursor = (IWineD3DSurfaceImpl *) This->wineD3DDevice->mouseCursor;
+        RECT destRect = {This->wineD3DDevice->xScreenSpace - This->wineD3DDevice->xHotSpot,
+                         This->wineD3DDevice->yScreenSpace - This->wineD3DDevice->yHotSpot,
+                         This->wineD3DDevice->xScreenSpace + cursor->currentDesc.Width - This->wineD3DDevice->xHotSpot,
+                         This->wineD3DDevice->yScreenSpace + cursor->currentDesc.Height - This->wineD3DDevice->yHotSpot};
+        TRACE("Rendering the cursor\n");
+        /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
+         * which is exactly what we want :-)
+         */
+        IWineD3DSurface_Blt(This->backBuffer[0], &destRect, This->wineD3DDevice->mouseCursor, NULL, DDBLT_KEYSRC, NULL);
+    }
+
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
     /* TODO: If only source rect or dest rect are supplied then clip the window to match */
     TRACE("preseting display %p, drawable %ld\n", This->display, This->drawable);
