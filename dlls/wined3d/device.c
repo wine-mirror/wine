@@ -6781,8 +6781,38 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
                 TRACE("Unlocked src and dst\n");
             }
         } else {
-            FIXME("Wanted to copy partial surfaces not implemented, returning WINED3DERR_INVALIDCALL\n");
-            hr = WINED3DERR_INVALIDCALL;
+		unsigned int i;
+		int bytesPerPixel = ((IWineD3DSurfaceImpl *) pSourceSurface)->bytesPerPixel;
+        	int copyperline;
+                int j;
+                WINED3DLOCKED_RECT lrSrc;
+                WINED3DLOCKED_RECT lrDst;
+                RECT dest_rect;
+										
+		for(i=0; i < cRects; i++) {
+		    CONST RECT*  r = &pSourceRectsArray[i];
+		    
+		    TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (0, 0)\n", i, r->left, r->top, r->right, r->bottom);
+            	    if (srcFormat == WINED3DFMT_DXT1) {
+		        copyperline = ((r->right - r->left) * bytesPerPixel) / 2; /* DXT1 is half byte per pixel */
+		    } else {
+			copyperline = ((r->right - r->left) * bytesPerPixel);
+		    }
+		    IWineD3DSurface_LockRect(pSourceSurface, &lrSrc, r, WINED3DLOCK_READONLY);
+		    dest_rect.left = 0;
+		    dest_rect.top = 0;
+		    dest_rect.right = r->right - r->left;
+		    dest_rect.bottom= r->bottom - r->top;
+		    IWineD3DSurface_LockRect(pDestinationSurface, &lrDst, &dest_rect, 0L);
+                    TRACE("Locked src and dst\n");
+                    /* Find where to start */
+                    for (j = 0; j < (r->bottom - r->top - 1); ++j) {
+                        memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
+    	            }
+                    IWineD3DSurface_UnlockRect(pSourceSurface);
+	            IWineD3DSurface_UnlockRect(pDestinationSurface);
+		    TRACE("Unlocked src and dst\n");
+		}
         }
     }
 
