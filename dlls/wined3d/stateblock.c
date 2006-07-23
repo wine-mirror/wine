@@ -58,6 +58,140 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     return WINED3D_OK;
 }
 
+/** Copy all members of one stateblock to another */
+void stateblock_savedstates_copy(
+    IWineD3DStateBlock* iface,
+    SAVEDSTATES* dest,
+    SAVEDSTATES* source) {
+    
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
+    unsigned bsize = sizeof(BOOL);
+
+    /* Single values */
+    dest->indices = source->indices;
+    dest->material = source->material;
+    dest->fvf = source->fvf;
+    dest->viewport = source->viewport;
+    dest->vertexDecl = source->vertexDecl;
+    dest->pixelShader = source->pixelShader;
+    dest->vertexShader = source->vertexShader;
+
+    /* Fixed size arrays */
+    memcpy(dest->streamSource, source->streamSource, bsize * MAX_STREAMS);
+    memcpy(dest->streamFreq, source->streamFreq, bsize * MAX_STREAMS);
+    memcpy(dest->textures, source->textures, bsize * MAX_SAMPLERS);
+    memcpy(dest->transform, source->transform, bsize * (HIGHEST_TRANSFORMSTATE + 1));
+    memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
+    memcpy(dest->textureState, source->textureState, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
+    memcpy(dest->samplerState, source->samplerState, bsize * MAX_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
+    memcpy(dest->clipplane, source->clipplane, bsize * MAX_CLIPPLANES);
+    memcpy(dest->pixelShaderConstantsB, source->pixelShaderConstantsB, bsize * MAX_CONST_B);
+    memcpy(dest->pixelShaderConstantsI, source->pixelShaderConstantsI, bsize * MAX_CONST_I);
+    memcpy(dest->vertexShaderConstantsB, source->vertexShaderConstantsB, bsize * MAX_CONST_B);
+    memcpy(dest->vertexShaderConstantsI, source->vertexShaderConstantsI, bsize * MAX_CONST_I);
+
+    /* Dynamically sized arrays */
+    memcpy(dest->pixelShaderConstantsF, source->pixelShaderConstantsF, bsize * GL_LIMITS(pshader_constantsF));
+    memcpy(dest->vertexShaderConstantsF, source->vertexShaderConstantsF, bsize * GL_LIMITS(vshader_constantsF));
+}
+
+/** Set all members of a stateblock savedstate to the given value */
+void stateblock_savedstates_set(
+    IWineD3DStateBlock* iface,
+    SAVEDSTATES* states,
+    BOOL value) {
+    
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
+    unsigned bsize = sizeof(BOOL);
+
+    /* Single values */
+    states->indices = value;
+    states->material = value;
+    states->fvf = value;
+    states->viewport = value;
+    states->vertexDecl = value;
+    states->pixelShader = value;
+    states->vertexShader = value;
+
+    /* Fixed size arrays */
+    memset(states->streamSource, value, bsize * MAX_STREAMS);
+    memset(states->streamFreq, value, bsize * MAX_STREAMS);
+    memset(states->textures, value, bsize * MAX_SAMPLERS);
+    memset(states->transform, value, bsize * (HIGHEST_TRANSFORMSTATE + 1));
+    memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
+    memset(states->textureState, value, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
+    memset(states->samplerState, value, bsize * MAX_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
+    memset(states->clipplane, value, bsize * MAX_CLIPPLANES);
+    memset(states->pixelShaderConstantsB, value, bsize * MAX_CONST_B);
+    memset(states->pixelShaderConstantsI, value, bsize * MAX_CONST_I);
+    memset(states->vertexShaderConstantsB, value, bsize * MAX_CONST_B);
+    memset(states->vertexShaderConstantsI, value, bsize * MAX_CONST_I);
+
+    /* Dynamically sized arrays */
+    memset(states->pixelShaderConstantsF, value, bsize * GL_LIMITS(pshader_constantsF));
+    memset(states->vertexShaderConstantsF, value, bsize * GL_LIMITS(vshader_constantsF));
+}
+
+void stateblock_copy(
+    IWineD3DStateBlock* destination,
+    IWineD3DStateBlock* source) {
+
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)source;
+    IWineD3DStateBlockImpl *Dest = (IWineD3DStateBlockImpl *)destination;
+
+    /* IUnknown fields */
+    Dest->lpVtbl                = This->lpVtbl;
+    Dest->ref                   = This->ref;
+
+    /* IWineD3DStateBlock information */
+    Dest->parent                = This->parent;
+    Dest->wineD3DDevice         = This->wineD3DDevice;
+    Dest->blockType             = This->blockType;
+
+    /* Saved states */
+    stateblock_savedstates_copy(source, &Dest->set, &This->set);
+    stateblock_savedstates_copy(source, &Dest->changed, &This->changed);
+
+    /* Single items */
+    Dest->fvf = This->fvf;
+    Dest->vertexDecl = This->vertexDecl;
+    Dest->vertexShader = This->vertexShader;
+    Dest->streamIsUP = This->streamIsUP;
+    Dest->pIndexData = This->pIndexData;
+    Dest->baseVertexIndex = This->baseVertexIndex;
+    Dest->lights = This->lights;
+    Dest->clip_status = This->clip_status;
+    Dest->viewport = This->viewport;
+    Dest->material = This->material;
+    Dest->pixelShader = This->pixelShader;
+    Dest->vertex_blend = This->vertex_blend;
+    Dest->tween_factor = This->tween_factor;
+    Dest->shaderPrgId = This->shaderPrgId;
+
+    /* Fixed size arrays */
+    memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
+    memcpy(Dest->vertexShaderConstantI, This->vertexShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
+    memcpy(Dest->pixelShaderConstantB, This->pixelShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
+    memcpy(Dest->pixelShaderConstantI, This->pixelShaderConstantI, sizeof(INT) * MAX_CONST_I * 4);
+    
+    memcpy(Dest->streamStride, This->streamStride, sizeof(UINT) * MAX_STREAMS);
+    memcpy(Dest->streamOffset, This->streamOffset, sizeof(UINT) * MAX_STREAMS);
+    memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DVertexBuffer*) * MAX_STREAMS);
+    memcpy(Dest->streamFreq,   This->streamFreq,   sizeof(UINT) * MAX_STREAMS);
+    memcpy(Dest->streamFlags,  This->streamFlags,  sizeof(UINT) * MAX_STREAMS);
+    memcpy(Dest->transforms,   This->transforms,   sizeof(D3DMATRIX) * (HIGHEST_TRANSFORMSTATE + 1));
+    memcpy(Dest->clipplane,    This->clipplane,    sizeof(double) * MAX_CLIPPLANES * 4);
+    memcpy(Dest->renderState,  This->renderState,  sizeof(DWORD) * (WINEHIGHEST_RENDER_STATE + 1));
+    memcpy(Dest->textures,     This->textures,     sizeof(IWineD3DBaseTexture*) * MAX_SAMPLERS);
+    memcpy(Dest->textureDimensions, This->textureDimensions, sizeof(int) * MAX_SAMPLERS);
+    memcpy(Dest->textureState, This->textureState, sizeof(DWORD) * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
+    memcpy(Dest->samplerState, This->samplerState, sizeof(DWORD) * MAX_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
+
+    /* Dynamically sized arrays */
+    memcpy(Dest->vertexShaderConstantF, This->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
+    memcpy(Dest->pixelShaderConstantF,  This->pixelShaderConstantF,  sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
+}
+
 /**********************************************************
  * IWineD3DStateBlockImpl IUnknown parts follows
  **********************************************************/
@@ -654,7 +788,7 @@ should really perform a delta so that only the changes get updated*/
     } else {
         FIXME("Unrecognized state block type %d\n", This->blockType);
     }
-    memcpy(&((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed, sizeof(((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed));
+    stateblock_savedstates_copy(iface, &((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed);
     TRACE("(%p) : Applied state block %p ------------------^\n", This, pDevice);
 
     return WINED3D_OK;

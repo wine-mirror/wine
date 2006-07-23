@@ -1113,6 +1113,20 @@ struct IWineD3DStateBlockImpl
     GLhandleARB               shaderPrgId;
 };
 
+extern void stateblock_savedstates_set(
+    IWineD3DStateBlock* iface,
+    SAVEDSTATES* states,
+    BOOL value);
+
+extern void stateblock_savedstates_copy(
+    IWineD3DStateBlock* iface,
+    SAVEDSTATES* dest,
+    SAVEDSTATES* source);
+
+extern void stateblock_copy(
+    IWineD3DStateBlock* destination,
+    IWineD3DStateBlock* source);
+
 extern const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
 
 /*****************************************************************************

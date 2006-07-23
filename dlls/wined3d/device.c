@@ -799,11 +799,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         return temp_result;
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
-    if ( This->stateBlock != NULL) {
-       memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
-    } else {
-       memset(object->streamFreq, 1, sizeof(object->streamFreq));
-    }
+    if (This->stateBlock != NULL)
+        stateblock_copy((IWineD3DStateBlock*) object, (IWineD3DStateBlock*) This->stateBlock);
+    else
+        memset(object->streamFreq, 1, sizeof(object->streamFreq));
 
     /* Reset the ref and type after kludging it */
     object->wineD3DDevice = This;
@@ -815,11 +814,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     if (Type == WINED3DSBT_ALL) {
 
         TRACE("ALL => Pretend everything has changed\n");
-        memset(&object->changed, TRUE, sizeof(This->stateBlock->changed));
+        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, TRUE);
+    
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
         TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
-        memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
+        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, FALSE);
 
         object->changed.pixelShader = TRUE;
 
@@ -849,7 +849,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     } else if (Type == WINED3DSBT_VERTEXSTATE) {
 
         TRACE("VERTEXSTATE => Pretend all vertex shates have changed\n");
-        memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
+        stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, FALSE);
 
         object->changed.vertexShader = TRUE;
 

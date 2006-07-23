@@ -208,10 +208,6 @@ static void select_shader_mode(
     int* ps_selected,
     int* vs_selected) {
 
-    /* Default # of constants to 0 */
-    gl_info->max_vshader_constantsF = 0;
-    gl_info->max_pshader_constantsF = 0;
-
     /* Give priority to user disable/emulation request.
      * Then respect REF device for software.
      * Then check capabilities for hardware, and fallback to software */
@@ -222,12 +218,8 @@ static void select_shader_mode(
         *vs_selected = SHADER_SW;
     } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
         *vs_selected = SHADER_GLSL;
-        /* Subtract the other potential uniforms from the max available (bools & ints) */
-        gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
     } else if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
         *vs_selected = SHADER_ARB;
-        /* ARB shaders seem to have an implicit PARAM when fog is used, so we need to subtract 1 from the total available */
-        gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 1;
     } else {
         *vs_selected = SHADER_SW;
     }
@@ -239,13 +231,47 @@ static void select_shader_mode(
         *ps_selected = SHADER_NONE;
     } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
         *ps_selected = SHADER_GLSL;
-        /* Subtract the other potential uniforms from the max available (bools & ints) */
-        gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
     } else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
         *ps_selected = SHADER_ARB;
-        gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
     } else {
         *ps_selected = SHADER_NONE;
+    }
+}
+
+/** Select the number of report maximum shader constants based on the selected shader modes */
+void select_shader_max_constants(WineD3D_GL_Info *gl_info) {
+
+    switch (wined3d_settings.vs_selected_mode) {
+        case SHADER_GLSL:
+            /* Subtract the other potential uniforms from the max available (bools & ints) */
+            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+            break;
+        case SHADER_ARB:
+            /* ARB shaders seem to have an implicit PARAM when fog is used, so we need to subtract 1 from the total available */
+            gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 1;
+            break;
+        case SHADER_SW:
+            gl_info->max_vshader_constantsF = 96;  /* TODO: Fixup software shaders */
+            break;
+        default:
+            gl_info->max_vshader_constantsF = 0;
+            break;
+    }
+
+    switch (wined3d_settings.ps_selected_mode) {
+        case SHADER_GLSL:
+            /* Subtract the other potential uniforms from the max available (bools & ints) */
+            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+            break;
+        case SHADER_ARB:
+            gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
+            break;
+        case SHADER_SW:
+            gl_info->max_pshader_constantsF = 96;  /* TODO: Fixup software shaders */
+            break;
+        default:
+            gl_info->max_pshader_constantsF = 0;
+            break;
     }
 }
 
@@ -1609,6 +1635,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     }
     select_shader_mode(&This->gl_info, DeviceType,
         &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
+    select_shader_max_constants(&This->gl_info);
 
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
@@ -1995,6 +2022,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     LEAVE_GL();
     select_shader_mode(&This->gl_info, DeviceType,
         &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
+    select_shader_max_constants(&This->gl_info);
 
     temp_result = allocate_shader_constants(object->updateStateBlock);
     if (WINED3D_OK != temp_result)
