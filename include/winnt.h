@@ -3351,6 +3351,20 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define SECURITY_NT_NON_UNIQUE                  0x00000015L
 #define SECURITY_BUILTIN_DOMAIN_RID             0x00000020L
 
+#define SECURITY_PACKAGE_BASE_RID               0x00000040L
+#define SECURITY_PACKAGE_NTLM_RID               0x0000000AL
+#define SECURITY_PACKAGE_SCHANNEL_RID           0x0000000EL
+#define SECURITY_PACKAGE_DIGEST_RID             0x00000015L
+#define SECURITY_MAX_ALWAYS_FILTERED            0x000003E7L
+#define SECURITY_MIN_NEVER_FILTERED             0x000003E8L
+#define SECURITY_OTHER_ORGANIZATION_RID         0x000003E8L
+
+#define FOREST_USER_RID_MAX                     0x000001F3L
+#define DOMAIN_USER_RID_ADMIN                   0x000001F4L
+#define DOMAIN_USER_RID_GUEST                   0x000001F5L
+#define DOMAIN_USER_RID_KRBTGT                  0x000001F6L
+#define DOMAIN_USER_RID_MAX                     0x000003E7L
+
 #define DOMAIN_GROUP_RID_ADMINS                 0x00000200L
 #define DOMAIN_GROUP_RID_USERS                  0x00000201L
 #define DOMAIN_GROUP_RID_GUESTS                 0x00000202L
@@ -3380,7 +3394,8 @@ typedef struct _SID_AND_ATTRIBUTES {
 
 #define SECURITY_SERVER_LOGON_RID		SECURITY_ENTERPRISE_CONTROLLERS_RID
 
-#define SECURITY_LOGON_IDS_RID_COUNT		(3L)
+#define SECURITY_PACKAGE_RID_COUNT              2L
+#define SECURITY_LOGON_IDS_RID_COUNT		3L
 
 typedef enum {
     WinNullSid                                  = 0,
