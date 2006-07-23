@@ -843,12 +843,6 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
   if (!psa || !rgIndices)
     return E_INVALIDARG;
 
-  if (!pvData)
-  {
-    ERR("Invalid pvData would crash under Win32!\n");
-    return E_INVALIDARG;
-  }
-
   hRet = SafeArrayLock(psa);
 
   if (SUCCEEDED(hRet))
