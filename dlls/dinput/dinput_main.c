@@ -345,7 +345,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	return ret_value;
 }
 
-static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7A iface, 
+static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7W iface, 
 						     REFGUID rguid, LPDIRECTINPUTDEVICEW* pdev, LPUNKNOWN punk) {
         IDirectInputImpl *This = (IDirectInputImpl *)iface;
 	HRESULT ret_value = DIERR_DEVICENOTREG;
