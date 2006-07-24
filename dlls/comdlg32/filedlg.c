@@ -261,7 +261,7 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
 
     /* Create the dialog from a template */
 
-    if(!(hRes = FindResourceA(COMDLG32_hInstance,MAKEINTRESOURCEA(NEWFILEOPENORD),(LPSTR)RT_DIALOG)))
+    if(!(hRes = FindResourceW(COMDLG32_hInstance,MAKEINTRESOURCEW(NEWFILEOPENORD),(LPCWSTR)RT_DIALOG)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -285,11 +285,18 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     /* Some shell namespace extensions depend on COM being initialized. */
     hr = OleInitialize(NULL);
 
-    lRes = DialogBoxIndirectParamA(COMDLG32_hInstance,
-                                  (LPDLGTEMPLATEA) template,
-                                  fodInfos->ofnInfos->hwndOwner,
-                                  FileOpenDlgProc95,
-                                  (LPARAM) fodInfos);
+    if (fodInfos->unicode)
+      lRes = DialogBoxIndirectParamW(COMDLG32_hInstance,
+                                     template,
+                                     fodInfos->ofnInfos->hwndOwner,
+                                     FileOpenDlgProc95,
+                                     (LPARAM) fodInfos);
+    else
+      lRes = DialogBoxIndirectParamA(COMDLG32_hInstance,
+                                     (LPDLGTEMPLATEA) template,
+                                     fodInfos->ofnInfos->hwndOwner,
+                                     FileOpenDlgProc95,
+                                     (LPARAM) fodInfos);
     if (SUCCEEDED(hr)) 
         OleUninitialize();
 
@@ -771,9 +778,14 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
           return NULL;
     	}
       }
-      hChildDlg = CreateDialogIndirectParamA(hinst, template, hwnd,
-                                             IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
-                                             (LPARAM)fodInfos->ofnInfos);
+      if (fodInfos->unicode)
+          hChildDlg = CreateDialogIndirectParamW(hinst, template, hwnd,
+              IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
+              (LPARAM)fodInfos->ofnInfos);
+      else
+          hChildDlg = CreateDialogIndirectParamA(hinst, template, hwnd,
+              IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
+              (LPARAM)fodInfos->ofnInfos);
       if(hChildDlg)
       {
         ShowWindow(hChildDlg,SW_SHOW);
@@ -1197,11 +1209,18 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   rectTB.left = rectlook.right;
   rectTB.top = rectlook.top-1;
 
-  fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
-        WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
-        rectTB.left, rectTB.top,
-        rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
-        hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
+  if (fodInfos->unicode)
+      fodInfos->DlgInfos.hwndTB = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
+          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
+          rectTB.left, rectTB.top,
+          rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
+          hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
+  else
+      fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
+          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
+          rectTB.left, rectTB.top,
+          rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
+          hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
 
   SendMessageA(fodInfos->DlgInfos.hwndTB, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
 
