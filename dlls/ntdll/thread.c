@@ -52,7 +52,6 @@ struct startup_info
     void                           *entry_arg;
 };
 
-static PEB peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
 static WCHAR current_dir[MAX_NT_PATH_LENGTH];
@@ -75,7 +74,6 @@ static inline NTSTATUS init_teb( TEB *teb )
     teb->Tib.ExceptionList = (void *)~0UL;
     teb->Tib.StackBase     = (void *)~0UL;
     teb->Tib.Self          = &teb->Tib;
-    teb->Peb               = &peb;
     teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
@@ -148,7 +146,7 @@ static NTSTATUS init_user_process_params( SIZE_T info_size, HANDLE *exe_file )
     if (status != STATUS_SUCCESS) return status;
 
     params->AllocationSize = info_size;
-    peb.ProcessParameters = params;
+    NtCurrentTeb()->Peb->ProcessParameters = params;
 
     SERVER_START_REQ( get_startup_info )
     {
@@ -201,37 +199,62 @@ static NTSTATUS init_user_process_params( SIZE_T info_size, HANDLE *exe_file )
  */
 HANDLE thread_init(void)
 {
+    PEB *peb;
     TEB *teb;
     void *addr;
-    SIZE_T info_size;
+    SIZE_T size, info_size;
     HANDLE exe_file = 0;
     struct ntdll_thread_data *thread_data;
     struct ntdll_thread_regs *thread_regs;
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
-    peb.NumberOfProcessors = 1;
-    peb.ProcessParameters  = &params;
-    peb.TlsBitmap          = &tls_bitmap;
-    peb.TlsExpansionBitmap = &tls_expansion_bitmap;
-    peb.LdrData            = &ldr;
+    virtual_init();
+
+    /* reserve space for shared user data */
+
+    addr = (void *)0x7ffe0000;
+    size = 0x10000;
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE, PAGE_READONLY );
+
+    /* allocate and initialize the PEB */
+
+    addr = NULL;
+    size = sizeof(*peb);
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 1, &size,
+                             MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE );
+    peb = addr;
+
+    peb->NumberOfProcessors = 1;
+    peb->ProcessParameters  = &params;
+    peb->TlsBitmap          = &tls_bitmap;
+    peb->TlsExpansionBitmap = &tls_expansion_bitmap;
+    peb->LdrData            = &ldr;
     params.CurrentDirectory.DosPath.Buffer = current_dir;
     params.CurrentDirectory.DosPath.MaximumLength = sizeof(current_dir);
     params.wShowWindow = 1; /* SW_SHOWNORMAL */
-    RtlInitializeBitMap( &tls_bitmap, peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
-    RtlInitializeBitMap( &tls_expansion_bitmap, peb.TlsExpansionBitmapBits,
-                         sizeof(peb.TlsExpansionBitmapBits) * 8 );
+    RtlInitializeBitMap( &tls_bitmap, peb->TlsBitmapBits, sizeof(peb->TlsBitmapBits) * 8 );
+    RtlInitializeBitMap( &tls_expansion_bitmap, peb->TlsExpansionBitmapBits,
+                         sizeof(peb->TlsExpansionBitmapBits) * 8 );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
     InitializeListHead( &tls_links );
 
+    /* allocate and initialize the initial TEB */
+
     sigstack_total_size = get_signal_stack_total_size();
     while (1 << sigstack_zero_bits < sigstack_total_size) sigstack_zero_bits++;
     assert( 1 << sigstack_zero_bits == sigstack_total_size );  /* must be a power of 2 */
     thread_info.teb_size = sigstack_total_size;
-    VIRTUAL_alloc_teb( &addr, thread_info.teb_size );
+
+    addr = NULL;
+    size = sigstack_total_size;
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, sigstack_zero_bits,
+                             &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE );
     teb = addr;
+    teb->Peb = peb;
+    thread_info.teb_size = size;
     init_teb( teb );
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
     thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
@@ -245,6 +268,7 @@ HANDLE thread_init(void)
     wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
     pthread_functions.init_current_teb( &thread_info );
     pthread_functions.init_thread( &thread_info );
+    virtual_init_threading();
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -255,7 +279,7 @@ HANDLE thread_init(void)
     info_size = server_init_thread( thread_info.pid, thread_info.tid, NULL );
 
     /* create the process heap */
-    if (!(peb.ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
+    if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
     {
         MESSAGE( "wine: failed to create the process heap\n" );
         exit(1);
@@ -421,6 +445,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                            &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
         goto error;
     teb = addr;
+    teb->Peb = NtCurrentTeb()->Peb;
     info->pthread_info.teb_size = size;
     if ((status = init_teb( teb ))) goto error;
 

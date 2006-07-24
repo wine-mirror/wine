@@ -142,6 +142,7 @@ static UINT_PTR page_mask;
 static void *user_space_limit = USER_SPACE_LIMIT;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
+static int use_locks;
 
 
 /***********************************************************************
@@ -1205,7 +1206,7 @@ BOOL is_current_process( HANDLE handle )
 /***********************************************************************
  *           virtual_init
  */
-static inline void virtual_init(void)
+void virtual_init(void)
 {
     const char *preload;
 #ifndef page_mask
@@ -1229,26 +1230,11 @@ static inline void virtual_init(void)
 
 
 /***********************************************************************
- *           VIRTUAL_alloc_teb
- *
- * Allocate a memory view for a new TEB, properly aligned to a multiple of the size.
+ *           virtual_init_threading
  */
-NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size )
+void virtual_init_threading(void)
 {
-    NTSTATUS status;
-    struct file_view *view;
-
-    virtual_init();
-
-    *ret = NULL;
-    status = map_view( &view, NULL, size, size - 1, TRUE,
-                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
-    if (status == STATUS_SUCCESS)
-    {
-        view->flags |= VFLAG_VALLOC;
-        *ret = view->base;
-    }
-    return status;
+    use_locks = 1;
 }
 
 
@@ -1369,7 +1355,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     /* Reserve the memory */
 
-    RtlEnterCriticalSection( &csVirtual );
+    if (use_locks) RtlEnterCriticalSection( &csVirtual );
 
     if (type & MEM_SYSTEM)
     {
@@ -1397,7 +1383,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
     }
 
-    RtlLeaveCriticalSection( &csVirtual );
+    if (use_locks) RtlLeaveCriticalSection( &csVirtual );
 
     if (status == STATUS_SUCCESS)
     {

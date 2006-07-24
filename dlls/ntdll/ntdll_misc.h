@@ -50,6 +50,8 @@ extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
 extern void debug_init(void);
 extern HANDLE thread_init(void);
+extern void virtual_init(void);
+extern void virtual_init_threading(void);
 
 /* server support */
 extern time_t server_start_time;
@@ -106,7 +108,6 @@ extern NTSTATUS DIR_unmount_device( HANDLE handle );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 
 /* virtual memory */
-extern NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size );
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
