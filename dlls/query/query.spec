@@ -36,8 +36,8 @@
 @ stub LoadIFilter
 @ stub LoadTextFilter
 @ stub LocateCatalogs
-@ stub LocateCatalogsA
-@ stub LocateCatalogsW
+@ stdcall LocateCatalogsA(str long ptr ptr ptr ptr)
+@ stdcall LocateCatalogsW(wstr long ptr ptr ptr ptr)
 @ stub SetCatalogState
 @ stub SetupCache
 @ stub SetupCacheEx

@@ -76,3 +76,23 @@ HRESULT WINAPI CIState( WCHAR const *pwcsCat, WCHAR const *pwcsMachine, CI_STATE
     FIXME("%s %s %p\n", debugstr_w(pwcsCat), debugstr_w(pwcsMachine), pCiState);
     return CI_E_NOT_RUNNING;
 }
+
+HRESULT WINAPI LocateCatalogsA(CHAR const *pwszScope, ULONG iBm,
+                               CHAR *pwszMachine, ULONG *pcMachine,
+                               CHAR *pwszCat, ULONG *pcCat)
+{
+
+    FIXME("%s %lu %p %p %p %p\n", debugstr_a(pwszScope),
+          iBm, pwszMachine, pcMachine, pwszCat, pcCat);
+    return CI_E_NOT_RUNNING;
+}
+
+HRESULT WINAPI LocateCatalogsW(WCHAR const *pwszScope, ULONG iBm,
+                               WCHAR *pwszMachine, ULONG *pcMachine,
+                               WCHAR *pwszCat, ULONG *pcCat)
+{
+
+    FIXME("%s %lu %p %p %p %p\n", debugstr_w(pwszScope),
+          iBm, pwszMachine, pcMachine, pwszCat, pcCat);
+    return CI_E_NOT_RUNNING;
+}
