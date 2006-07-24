@@ -90,6 +90,18 @@ static void test_null(void)
 
     r = MsiEnumFeaturesW(NULL,0,NULL,NULL);
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
+
+    r = MsiConfigureFeatureW(NULL, NULL, 0);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error\n");
+
+    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", NULL, 0);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error\n");
+
+    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", "foo", 0);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", "foo", INSTALLSTATE_DEFAULT);
+    ok( r == ERROR_UNKNOWN_PRODUCT, "wrong error %d\n", r);
 }
 
 static void test_getcomponentpath(void)

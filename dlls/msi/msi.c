@@ -1715,6 +1715,21 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
     if (!szProduct || !szFeature)
         return ERROR_INVALID_PARAMETER;
 
+    switch (eInstallState)
+    {
+    case INSTALLSTATE_DEFAULT:
+        /* FIXME: how do we figure out the default location? */
+        eInstallState = INSTALLSTATE_LOCAL;
+        break;
+    case INSTALLSTATE_LOCAL:
+    case INSTALLSTATE_SOURCE:
+    case INSTALLSTATE_ABSENT:
+    case INSTALLSTATE_ADVERTISED:
+        break;
+    default:
+        return ERROR_INVALID_PARAMETER;
+    }
+
     r = MSI_OpenProductW( szProduct, &package );
     if (r != ERROR_SUCCESS)
         return r;
@@ -1730,10 +1745,6 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
     lstrcatW( sourcepath, filename );
 
     MsiSetInternalUI( INSTALLUILEVEL_BASIC, NULL );
-
-    /* FIXME: how do we figure out the default location? */
-    if (eInstallState == INSTALLSTATE_DEFAULT)
-        eInstallState = INSTALLSTATE_LOCAL;
 
     r = ACTION_PerformUIAction( package, szCostInit );
     if (r != ERROR_SUCCESS)
