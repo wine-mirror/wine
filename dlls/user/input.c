@@ -894,6 +894,8 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     if (ptme->dwFlags & TME_QUERY )
     {
         *ptme = tracking_info.tme;
+        /* set cbSize in the case it's not initialized yet */
+        ptme->cbSize = sizeof(TRACKMOUSEEVENT);
 
         return TRUE; /* return here, TME_QUERY is retrieving information */
     }
