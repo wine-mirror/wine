@@ -25,6 +25,7 @@ C_SRCS = \
 	insert.c \
 	install.c \
 	msi.c \
+	msi_main.c \
 	msiquery.c \
 	order.c \
 	package.c \

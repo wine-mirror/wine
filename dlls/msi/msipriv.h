@@ -466,6 +466,7 @@ extern INSTALLUI_HANDLERW gUIHandlerW;
 extern DWORD gUIFilter;
 extern LPVOID gUIContext;
 extern WCHAR gszLogFile[MAX_PATH];
+extern HINSTANCE msi_hInstance;
 
 /* memory allocation macro functions */
 static inline void *msi_alloc( size_t len )
