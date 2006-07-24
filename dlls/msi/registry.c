@@ -189,39 +189,33 @@ BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 
 BOOL squash_guid(LPCWSTR in, LPWSTR out)
 {
-    DWORD i,n=0;
+    DWORD i,n=1;
+    GUID guid;
 
-    if(in[n++] != '{')
+    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
         return FALSE;
+
     for(i=0; i<8; i++)
         out[7-i] = in[n++];
-    if(in[n++] != '-')
-        return FALSE;
+    n++;
     for(i=0; i<4; i++)
         out[11-i] = in[n++];
-    if(in[n++] != '-')
-        return FALSE;
+    n++;
     for(i=0; i<4; i++)
         out[15-i] = in[n++];
-    if(in[n++] != '-')
-        return FALSE;
+    n++;
     for(i=0; i<2; i++)
     {
         out[17+i*2] = in[n++];
         out[16+i*2] = in[n++];
     }
-    if(in[n++] != '-')
-        return FALSE;
+    n++;
     for( ; i<8; i++)
     {
         out[17+i*2] = in[n++];
         out[16+i*2] = in[n++];
     }
     out[32]=0;
-    if(in[n++] != '}')
-        return FALSE;
-    if(in[n])
-        return FALSE;
     return TRUE;
 }
 
