@@ -542,6 +542,31 @@ const char* debug_d3dtop(D3DTEXTUREOP d3dtop) {
     }
 }
 
+const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) {
+    switch (tstype) {
+#define TSTYPE_TO_STR(tstype) case tstype: return #tstype
+    TSTYPE_TO_STR(WINED3DTS_VIEW);
+    TSTYPE_TO_STR(WINED3DTS_PROJECTION);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE0);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE1);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE2);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE3);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE4);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE5);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE6);
+    TSTYPE_TO_STR(WINED3DTS_TEXTURE7);
+    TSTYPE_TO_STR(WINED3DTS_WORLDMATRIX(0));
+#undef TSTYPE_TO_STR
+    default:
+        if (tstype > 256 && tstype < 512) {
+            FIXME("WINED3DTS_WORLDMATRIX(%u). 1..255 not currently supported\n", tstype);
+            return ("WINED3DTS_WORLDMATRIX > 0");
+        }
+        FIXME("Unrecognized %u WINED3DTS\n", tstype);
+        return "unrecognized";
+    }
+}
+
 const char* debug_d3dpool(WINED3DPOOL Pool) {
   switch (Pool) {
 #define POOL_TO_STR(p) case p: return #p;

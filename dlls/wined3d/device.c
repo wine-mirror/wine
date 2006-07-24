@@ -156,7 +156,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixf((float *)&This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf((float *)&This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
 
     /* Diffuse: */
     colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
@@ -2450,7 +2450,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
-    TRACE("(%p) : Transform State=%d\n", This, d3dts);
+    TRACE("(%p) : Transform State=%s\n", This, debug_d3dtstype(d3dts));
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -2485,27 +2485,27 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D
      */
 
     /* Capture the times we can just ignore the change for now */
-    if (d3dts == D3DTS_WORLDMATRIX(0)) {
+    if (d3dts == WINED3DTS_WORLDMATRIX(0)) {
         This->modelview_valid = FALSE;
         return WINED3D_OK;
 
-    } else if (d3dts == D3DTS_PROJECTION) {
+    } else if (d3dts == WINED3DTS_PROJECTION) {
         This->proj_valid = FALSE;
         return WINED3D_OK;
 
-    } else if (d3dts >= D3DTS_WORLDMATRIX(1) && d3dts <= D3DTS_WORLDMATRIX(255)) {
+    } else if (d3dts >= WINED3DTS_WORLDMATRIX(1) && d3dts <= WINED3DTS_WORLDMATRIX(255)) {
         /* Indexed Vertex Blending Matrices 256 -> 511  */
         /* Use arb_vertex_blend or NV_VERTEX_WEIGHTING? */
-        FIXME("D3DTS_WORLDMATRIX(1..255) not handled\n");
+        FIXME("WINED3DTS_WORLDMATRIX(1..255) not handled\n");
         return WINED3D_OK;
     }
 
     /* Now we really are going to have to change a matrix */
     ENTER_GL();
 
-    if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) { /* handle texture matrices */
+    if (d3dts >= WINED3DTS_TEXTURE0 && d3dts <= WINED3DTS_TEXTURE7) { /* handle texture matrices */
         /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
-    } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
+    } else if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
         unsigned int k;
 
         /* If we are changing the View matrix, reset the light and clipping planes to the new view
@@ -2552,7 +2552,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D
 }
 static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : for Transform State %d\n", This, State);
+    TRACE("(%p) : for Transform State %s\n", This, debug_d3dtstype(State));
     memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(D3DMATRIX));
     return WINED3D_OK;
 }
@@ -2567,7 +2567,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
      * If this is found to be wrong, change to StateBlock.
      */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : For state %u\n", This, State);
+    TRACE("(%p) : For state %s\n", This, debug_d3dtstype(State));
 
     if (State < HIGHEST_TRANSFORMSTATE)
     {
@@ -3016,7 +3016,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixf((float *) &This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
 
     TRACE("Clipplane [%f,%f,%f,%f]\n",
           This->updateStateBlock->clipplane[Index][0],
@@ -5024,13 +5024,13 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     }
 
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
-                                 D3DTS_VIEW,
+                                 WINED3DTS_VIEW,
                                  &view_mat);
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
-                                 D3DTS_PROJECTION,
+                                 WINED3DTS_PROJECTION,
                                  &proj_mat);
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
-                                 D3DTS_WORLDMATRIX(0),
+                                 WINED3DTS_WORLDMATRIX(0),
                                  &world_mat);
 
     TRACE("View mat:\n");
@@ -5520,7 +5520,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
 
         /* Unhandled */
     case WINED3DTSS_TEXTURETRANSFORMFLAGS :
-        set_texture_matrix((float *)&This->stateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
+        set_texture_matrix((float *)&This->stateBlock->transforms[WINED3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
         break;
 
     case WINED3DTSS_BUMPENVMAT00          :

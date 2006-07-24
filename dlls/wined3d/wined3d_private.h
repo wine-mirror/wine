@@ -1215,6 +1215,7 @@ const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
 const char* debug_d3dsamplerstate(DWORD state);
 const char* debug_d3dtexturestate(DWORD state);
+const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype);
 const char* debug_d3dpool(WINED3DPOOL pool);
 
 /* Routines for GL <-> D3D values */

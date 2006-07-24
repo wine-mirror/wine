@@ -816,10 +816,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     This->blockType = WINED3DSBT_INIT;
 
     /* Set some of the defaults for lights, transforms etc */
-    memcpy(&This->transforms[D3DTS_PROJECTION], &identity, sizeof(identity));
-    memcpy(&This->transforms[D3DTS_VIEW], &identity, sizeof(identity));
+    memcpy(&This->transforms[WINED3DTS_PROJECTION], &identity, sizeof(identity));
+    memcpy(&This->transforms[WINED3DTS_VIEW], &identity, sizeof(identity));
     for (i = 0; i < 256; ++i) {
-      memcpy(&This->transforms[D3DTS_WORLDMATRIX(i)], &identity, sizeof(identity));
+      memcpy(&This->transforms[WINED3DTS_WORLDMATRIX(i)], &identity, sizeof(identity));
     }
 
     TRACE("Render states\n");
@@ -970,7 +970,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < GL_LIMITS(texture_stages); i++) {
         TRACE("Setting up default texture states for texture Stage %d\n", i);
-        memcpy(&This->transforms[D3DTS_TEXTURE0 + i], &identity, sizeof(identity));
+        memcpy(&This->transforms[WINED3DTS_TEXTURE0 + i], &identity, sizeof(identity));
         This->textureState[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
         This->textureState[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
         This->textureState[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;

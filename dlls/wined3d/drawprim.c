@@ -267,12 +267,12 @@ static void primitiveInitState(
 
             /* In the general case, the view matrix is the identity matrix */
             if (This->view_ident) {
-                glLoadMatrixf((float *) &This->stateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
                 checkGLcall("glLoadMatrixf");
             } else {
-                glLoadMatrixf((float *) &This->stateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+                glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
                 checkGLcall("glLoadMatrixf");
-                glMultMatrixf((float *) &This->stateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                glMultMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
                 checkGLcall("glMultMatrixf");
             }
         }
@@ -299,7 +299,7 @@ static void primitiveInitState(
                 glMultMatrixf(invymat);
                 checkGLcall("glMultMatrixf(invymat)");
             }
-            glMultMatrixf((float *) &This->stateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
+            glMultMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
         }
 
