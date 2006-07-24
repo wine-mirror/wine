@@ -75,6 +75,8 @@ extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
 extern void wine_mmap_add_reserved_area( void *addr, size_t size );
 extern void wine_mmap_remove_reserved_area( void *addr, size_t size, int unmap );
 extern int wine_mmap_is_in_reserved_area( void *addr, size_t size );
+extern int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, void *arg),
+                                          void *arg, int top_down );
 
 /* LDT management */
 

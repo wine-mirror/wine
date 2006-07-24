@@ -539,3 +539,38 @@ int wine_mmap_is_in_reserved_area( void *addr, size_t size )
     }
     return 0;
 }
+
+
+/***********************************************************************
+ *           wine_mmap_enum_reserved_areas
+ *
+ * Enumerate the list of reserved areas, sorted by addresses.
+ * If enum_func returns a non-zero value, enumeration is stopped and the value is returned.
+ *
+ * Note: the reserved areas functions are not reentrant, caller is
+ * responsible for proper locking.
+ */
+int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, void *arg), void *arg,
+                                   int top_down )
+{
+    int ret = 0;
+    struct list *ptr;
+
+    if (top_down)
+    {
+        for (ptr = reserved_areas.prev; ptr != &reserved_areas; ptr = ptr->prev)
+        {
+            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+            if ((ret = enum_func( area->base, area->size, arg ))) break;
+        }
+    }
+    else
+    {
+        for (ptr = reserved_areas.next; ptr != &reserved_areas; ptr = ptr->next)
+        {
+            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+            if ((ret = enum_func( area->base, area->size, arg ))) break;
+        }
+    }
+    return ret;
+}

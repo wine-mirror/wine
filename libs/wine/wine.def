@@ -103,6 +103,7 @@ EXPORTS
     wine_ldt_realloc_entries
     wine_ldt_set_entry
     wine_mmap_add_reserved_area
+    wine_mmap_enum_reserved_areas
     wine_mmap_is_in_reserved_area
     wine_mmap_remove_reserved_area
     wine_pthread_get_functions
