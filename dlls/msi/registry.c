@@ -1070,3 +1070,25 @@ UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
     msi_free( szwUpgradeCode);
     return r;
 }
+
+/***********************************************************************
+ * MsiEnumPatchesA            [MSI.@]
+ */
+UINT WINAPI MsiEnumPatchesA( LPCSTR szProduct, DWORD iPatchIndex, 
+        LPSTR lpPatchBuf, LPSTR lpTransformsBuf, DWORD* pcchTransformsBuf)
+{
+    FIXME("%s %ld %p %p %p\n", debugstr_a(szProduct),
+          iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
+    return ERROR_NO_MORE_ITEMS;
+}
+
+/***********************************************************************
+ * MsiEnumPatchesW            [MSI.@]
+ */
+UINT WINAPI MsiEnumPatchesW( LPCWSTR szProduct, DWORD iPatchIndex, 
+        LPWSTR lpPatchBuf, LPWSTR lpTransformsBuf, DWORD* pcchTransformsBuf)
+{
+    FIXME("%s %ld %p %p %p\n", debugstr_w(szProduct),
+          iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
+    return ERROR_NO_MORE_ITEMS;
+}
