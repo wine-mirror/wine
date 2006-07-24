@@ -1026,6 +1026,22 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
 }
 
 /***********************************************************************
+ *              SetupDiGetClassDevsExW (SETUPAPI.@)
+ */
+HDEVINFO WINAPI SetupDiGetClassDevsExW(
+        CONST GUID *class,
+        PCWSTR enumstr,
+        HWND parent,
+        DWORD flags,
+        HDEVINFO deviceset,
+        PCWSTR machine,
+        PVOID reserved)
+{
+    FIXME("stub");
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInterfaces(

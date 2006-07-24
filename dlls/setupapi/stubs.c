@@ -80,17 +80,6 @@ HDEVINFO WINAPI SetupDiGetClassDevsExA(const GUID *class, PCSTR filter, HWND par
 }
 
 /***********************************************************************
- *		  (SETUPAPI.@)
- *
- * NO WINAPI in description given
- */
-HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR filter, HWND parent, DWORD flags, HDEVINFO deviceset, PCWSTR machine, PVOID reserved)
-{
-  FIXME("\n");
-  return FALSE;
-}
-
-/***********************************************************************
  *		CM_Connect_MachineW  (SETUPAPI.@)
  */
 DWORD WINAPI CM_Connect_MachineW(LPCWSTR name, void * machine)
