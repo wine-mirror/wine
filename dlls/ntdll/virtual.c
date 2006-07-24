@@ -140,6 +140,8 @@ static UINT_PTR page_mask;
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
 static void *user_space_limit = USER_SPACE_LIMIT;
+static void *preload_reserve_start;
+static void *preload_reserve_end;
 
 
 /***********************************************************************
@@ -267,6 +269,53 @@ static struct file_view *find_view_range( const void *addr, size_t size )
 
 
 /***********************************************************************
+ *           find_free_area
+ *
+ * Find a free area between views inside the specified range.
+ * The csVirtual section must be held by caller.
+ */
+static void *find_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
+{
+    struct list *ptr;
+    void *start;
+
+    if (top_down)
+    {
+        start = ROUND_ADDR( (char *)end - size, mask );
+        if (start >= end || start < base) return NULL;
+
+        for (ptr = views_list.prev; ptr != &views_list; ptr = ptr->prev)
+        {
+            struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+
+            if ((char *)view->base + view->size <= (char *)start) break;
+            if ((char *)view->base >= (char *)start + size) continue;
+            start = ROUND_ADDR( (char *)view->base - size, mask );
+            /* stop if remaining space is not large enough */
+            if (!start || start >= end || start < base) return NULL;
+        }
+    }
+    else
+    {
+        start = ROUND_ADDR( (char *)base + mask, mask );
+        if (start >= end || (char *)end - (char *)start < size) return NULL;
+
+        for (ptr = views_list.next; ptr != &views_list; ptr = ptr->next)
+        {
+            struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+
+            if ((char *)view->base >= (char *)start + size) break;
+            if ((char *)view->base + view->size <= (char *)start) continue;
+            start = ROUND_ADDR( (char *)view->base + view->size + mask, mask );
+            /* stop if remaining space is not large enough */
+            if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
+        }
+    }
+    return start;
+}
+
+
+/***********************************************************************
  *           add_reserved_area
  *
  * Add a reserved area to the list maintained by libwine.
@@ -287,46 +336,6 @@ static void add_reserved_area( void *addr, size_t size )
     /* blow away existing mappings */
     wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
     wine_mmap_add_reserved_area( addr, size );
-}
-
-
-/***********************************************************************
- *           remove_reserved_area
- *
- * Remove a reserved area from the list maintained by libwine.
- * The csVirtual section must be held by caller.
- */
-static void remove_reserved_area( void *addr, size_t size )
-{
-    struct file_view *view;
-
-    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
-    {
-        if ((char *)view->base >= (char *)addr + size) break;
-        if ((char *)view->base + view->size <= (char *)addr) continue;
-        /* now we have an overlapping view */
-        if (view->base > addr)
-        {
-            wine_mmap_remove_reserved_area( addr, (char *)view->base - (char *)addr, TRUE );
-            size -= (char *)view->base - (char *)addr;
-            addr = view->base;
-        }
-        if ((char *)view->base + view->size >= (char *)addr + size)
-        {
-            /* view covers all the remaining area */
-            wine_mmap_remove_reserved_area( addr, size, FALSE );
-            size = 0;
-            break;
-        }
-        else  /* view covers only part of the area */
-        {
-            wine_mmap_remove_reserved_area( addr, (char *)view->base + view->size - (char *)addr, FALSE );
-            size -= (char *)view->base + view->size - (char *)addr;
-            addr = (char *)view->base + view->size;
-        }
-    }
-    /* remove remaining space */
-    if (size) wine_mmap_remove_reserved_area( addr, size, TRUE );
 }
 
 
@@ -578,6 +587,55 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
 }
 
 
+struct alloc_area
+{
+    size_t size;
+    size_t mask;
+    int    top_down;
+    void  *result;
+};
+
+/***********************************************************************
+ *           alloc_reserved_area_callback
+ *
+ * Try to map some space inside a reserved area. Callback for wine_mmap_enum_reserved_areas.
+ */
+static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
+{
+    static void * const address_space_start = (void *)0x110000;
+    struct alloc_area *alloc = arg;
+    void *end = (char *)start + size;
+
+    if (start < address_space_start) start = address_space_start;
+    if (user_space_limit && end > user_space_limit) end = user_space_limit;
+    if (start >= end) return 0;
+
+    /* make sure we don't touch the preloader reserved range */
+    if (preload_reserve_end >= start)
+    {
+        if (preload_reserve_end >= end)
+        {
+            if (preload_reserve_start <= start) return 0;  /* no space in that area */
+            if (preload_reserve_start < end) end = preload_reserve_start;
+        }
+        else if (preload_reserve_start <= start) start = preload_reserve_end;
+        else
+        {
+            /* range is split in two by the preloader reservation, try first part */
+            if ((alloc->result = find_free_area( start, preload_reserve_start, alloc->size,
+                                                 alloc->mask, alloc->top_down )))
+                return 1;
+            /* then fall through to try second part */
+            start = preload_reserve_end;
+        }
+    }
+    if ((alloc->result = find_free_area( start, end, alloc->size, alloc->mask, alloc->top_down )))
+        return 1;
+
+    return 0;
+}
+
+
 /***********************************************************************
  *           map_view
  *
@@ -627,6 +685,19 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
     else
     {
         size_t view_size = size + mask + 1;
+        struct alloc_area alloc;
+
+        alloc.size = size;
+        alloc.mask = mask;
+        alloc.top_down = top_down;
+        if (wine_mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
+        {
+            ptr = alloc.result;
+            TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
+            if (wine_anon_mmap( ptr, size, VIRTUAL_GetUnixProt(vprot), MAP_FIXED ) != ptr)
+                return STATUS_INVALID_PARAMETER;
+            goto done;
+        }
 
         for (;;)
         {
@@ -635,13 +706,14 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
                 if (errno == ENOMEM) return STATUS_NO_MEMORY;
                 return STATUS_INVALID_PARAMETER;
             }
+            TRACE( "got mem with anon mmap %p-%p\n", ptr, (char *)ptr + size );
             /* if we got something beyond the user limit, unmap it and retry */
             if (is_beyond_limit( ptr, view_size, user_space_limit )) add_reserved_area( ptr, view_size );
             else break;
         }
         ptr = unmap_extra_space( ptr, view_size, size, mask );
     }
-
+done:
     status = create_view( view_ret, ptr, size, vprot );
     if (status != STATUS_SUCCESS) unmap_area( ptr, size );
     return status;
@@ -1135,6 +1207,7 @@ BOOL is_current_process( HANDLE handle )
  */
 static inline void virtual_init(void)
 {
+    const char *preload;
 #ifndef page_mask
     page_size = getpagesize();
     page_mask = page_size - 1;
@@ -1143,6 +1216,15 @@ static inline void virtual_init(void)
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
 #endif  /* page_mask */
+    if ((preload = getenv("WINEPRELOADRESERVE")))
+    {
+        unsigned long start, end;
+        if (sscanf( preload, "%lx-%lx", &start, &end ) == 2)
+        {
+            preload_reserve_start = (void *)start;
+            preload_reserve_end = (void *)end;
+        }
+    }
 }
 
 
@@ -1217,14 +1299,9 @@ BOOL VIRTUAL_HasMapping( LPCVOID addr )
  */
 void VIRTUAL_UseLargeAddressSpace(void)
 {
-    if (user_space_limit >= ADDRESS_SPACE_LIMIT) return;
     /* no large address space on win9x */
     if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
-
-    RtlEnterCriticalSection( &csVirtual );
-    remove_reserved_area( user_space_limit, (char *)ADDRESS_SPACE_LIMIT - (char *)user_space_limit );
     user_space_limit = ADDRESS_SPACE_LIMIT;
-    RtlLeaveCriticalSection( &csVirtual );
 }
 
 
