@@ -239,10 +239,19 @@ HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
         IHlinkFrame *pihlframe, DWORD grfHLNF, LPBC pibc,
         IBindStatusCallback *pibsc, IHlinkBrowseContext *pihlbc)
 {
+    HRESULT r;
+    IHlink *hlink = NULL;
+
     FIXME("%s %s %p %08lx %p %08lx %p %p %p\n",
           debugstr_w(pwzTarget), debugstr_w(pwzLocation), pihlsite,
           dwSiteData, pihlframe, grfHLNF, pibc, pibsc, pihlbc);
-    return E_NOTIMPL;
+
+    r = HlinkCreateFromString( pwzTarget, pwzLocation, NULL, pihlsite,
+                               dwSiteData, NULL, &IID_IHlink, (LPVOID*) &hlink );
+    if (SUCCEEDED(r))
+        r = HlinkNavigate(hlink, pihlframe, grfHLNF, pibc, pibsc, pihlbc);
+
+    return r;
 }
 
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
