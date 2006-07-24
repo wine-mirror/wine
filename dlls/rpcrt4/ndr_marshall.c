@@ -1651,6 +1651,7 @@ static unsigned long EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_PSTRUCT:
   case RPC_FC_CSTRUCT:
   case RPC_FC_BOGUS_STRUCT:
+  case RPC_FC_SMFARRAY:
     return *(const WORD*)&pFormat[2];
   case RPC_FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
