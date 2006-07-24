@@ -2102,14 +2102,66 @@ UINT WINAPI MsiReinstallFeatureA( LPCSTR szProduct, LPCSTR szFeature,
     return rc;
 }
 
+typedef struct
+{
+    unsigned int i[2];
+    unsigned int buf[4];
+    unsigned char in[64];
+    unsigned char digest[16];
+} MD5_CTX;
+
+extern VOID WINAPI MD5Init( MD5_CTX *);
+extern VOID WINAPI MD5Update( MD5_CTX *, const unsigned char *, unsigned int );
+extern VOID WINAPI MD5Final( MD5_CTX *);
+
 /***********************************************************************
  * MsiGetFileHashW            [MSI.@]
  */
 UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
                              PMSIFILEHASHINFO pHash )
 {
-    FIXME("%s %08lx %p\n", debugstr_w(szFilePath), dwOptions, pHash );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    HANDLE handle, mapping;
+    void *p;
+    DWORD length;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    TRACE("%s %08lx %p\n", debugstr_w(szFilePath), dwOptions, pHash );
+
+    if (dwOptions)
+        return ERROR_INVALID_PARAMETER;
+    if (!pHash)
+        return ERROR_INVALID_PARAMETER;
+    if (pHash->dwFileHashInfoSize < sizeof *pHash)
+        return ERROR_INVALID_PARAMETER;
+
+    handle = CreateFileW( szFilePath, GENERIC_READ,
+                          FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+        return ERROR_FILE_NOT_FOUND;
+
+    length = GetFileSize( handle, NULL );
+
+    mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
+    if (mapping)
+    {
+        p = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, length );
+        if (p)
+        {
+            MD5_CTX ctx;
+
+            MD5Init( &ctx );
+            MD5Update( &ctx, p, length );
+            MD5Final( &ctx );
+            UnmapViewOfFile( p );
+
+            memcpy( pHash->dwData, &ctx.digest, sizeof pHash->dwData );
+            r = ERROR_SUCCESS;
+        }
+        CloseHandle( mapping );
+    }
+    CloseHandle( handle );
+
+    return r;
 }
 
 /***********************************************************************
@@ -2118,8 +2170,18 @@ UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
 UINT WINAPI MsiGetFileHashA( LPCSTR szFilePath, DWORD dwOptions,
                              PMSIFILEHASHINFO pHash )
 {
-    FIXME("%s %08lx %p\n", debugstr_a(szFilePath), dwOptions, pHash );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR file;
+    UINT r;
+
+    TRACE("%s %08lx %p\n", debugstr_a(szFilePath), dwOptions, pHash );
+
+    file = strdupAtoW( szFilePath );
+    if (szFilePath && !file)
+        return ERROR_OUTOFMEMORY;
+
+    r = MsiGetFileHashW( file, dwOptions, pHash );
+    msi_free( file );
+    return r;
 }
 
 /***********************************************************************
