@@ -39,13 +39,14 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "wine/server.h"
-#include "user_private.h"
 #include "winternl.h"
-#include "wine/debug.h"
 #include "winerror.h"
+#include "win.h"
+#include "user_private.h"
+#include "wine/server.h"
+#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(key);
+WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
 
@@ -80,6 +81,38 @@ static WORD get_key_state(void)
  */
 UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 {
+    if (TRACE_ON(win))
+    {
+        UINT i;
+
+        for (i = 0; i < count; i++)
+        {
+            switch(inputs[i].type)
+            {
+            case INPUT_MOUSE:
+                TRACE("mouse: dx %ld, dy %ld, data %lx, flags %lx, time %lu, info %lx\n",
+                      inputs[i].u.mi.dx, inputs[i].u.mi.dy, inputs[i].u.mi.mouseData,
+                      inputs[i].u.mi.dwFlags, inputs[i].u.mi.time, inputs[i].u.mi.dwExtraInfo);
+                break;
+
+            case INPUT_KEYBOARD:
+                TRACE("keyboard: vk %x, scan %x, flags %lx, time %lu, info %lx\n",
+                      inputs[i].u.ki.wVk, inputs[i].u.ki.wScan, inputs[i].u.ki.dwFlags,
+                      inputs[i].u.ki.time, inputs[i].u.ki.dwExtraInfo);
+                break;
+
+            case INPUT_HARDWARE:
+                TRACE("hardware: msg %ld, wParamL %x, wParamH %x\n",
+                      inputs[i].u.hi.uMsg, inputs[i].u.hi.wParamL, inputs[i].u.hi.wParamH);
+                break;
+
+            default:
+                FIXME("unknown input type %lu\n", inputs[i].type);
+                break;
+            }
+        }
+    }
+
     return USER_Driver->pSendInput( count, inputs, size );
 }
 
