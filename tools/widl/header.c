@@ -248,7 +248,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         break;
       case RPC_FC_ENUM16:
       case RPC_FC_ENUM32:
-        if (t->defined && !t->written) {
+        if (t->defined && !t->written && !t->ignore) {
           if (t->name) fprintf(h, "enum %s {\n", t->name);
           else fprintf(h, "enum {\n");
           t->written = TRUE;
@@ -274,7 +274,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
       case RPC_FC_PSTRUCT:
       case RPC_FC_BOGUS_STRUCT:
       case RPC_FC_ENCAPSULATED_UNION:
-        if (t->defined && !t->written) {
+        if (t->defined && !t->written && !t->ignore) {
           if (t->name) fprintf(h, "struct %s {\n", t->name);
           else fprintf(h, "struct {\n");
           t->written = TRUE;
@@ -286,7 +286,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         else fprintf(h, "struct %s", t->name);
         break;
       case RPC_FC_NON_ENCAPSULATED_UNION:
-        if (t->defined && !t->written) {
+        if (t->defined && !t->written && !t->ignore) {
           if (t->name) fprintf(h, "union %s {\n", t->name);
           else fprintf(h, "union {\n");
           t->written = TRUE;
