@@ -3475,16 +3475,65 @@ static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
 {
     DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
     WCHAR root[] = {'A',':','\\',0};
+    const DWORD max_clusters = 0x3d83;
+    const DWORD max_sectors_per_cluster = 0x7f;
+    const DWORD max_bytes_per_sector = 0x200;
 
     root[0] += INT21_MapDrive(DL_reg(context));
     if (!GetDiskFreeSpaceW( root, &cluster_sectors, &sector_bytes,
                             &free_clusters, &total_clusters )) return 0;
-    /* make sure that the number of clusters fits in a 16 bits value */
-    while( total_clusters & 0xffff0000) {
+
+    /* Some old win31 apps (Lotus SmartSuite 5.1) crap out if there's too
+     * much disk space, so Windows XP seems to apply the following limits:
+     *  cluster_sectors <= 0x7f
+     *  sector size <= 0x200
+     *  clusters <= 0x3D83
+     * This means total reported space is limited to about 1GB.
+     */
+
+    /* Make sure bytes-per-sector is in [, max] */
+    while (sector_bytes > max_bytes_per_sector) {
+        sector_bytes >>= 1;
+        free_clusters <<= 1;
+        total_clusters <<= 1;
+    }
+    /* Then make sure sectors-per-cluster is in [max/2, max]. */
+    while (cluster_sectors <= max_sectors_per_cluster/2) {
         cluster_sectors <<= 1;
         free_clusters >>= 1;
         total_clusters >>= 1;
     }
+    while (cluster_sectors > max_sectors_per_cluster) {
+        cluster_sectors >>= 1;
+        free_clusters <<= 1;
+        total_clusters <<= 1;
+    }
+
+    /* scale up sectors_per_cluster to exactly max_sectors_per_cluster.
+     * We could skip this, but that would impose an artificially low
+     * limit on reported disk space.
+     * To avoid overflow, first apply a preliminary cap on sector count;
+     * this will not affect the correctness of the final result,
+     * because if the preliminary cap hits, the final one will, too.
+     */
+    if (total_clusters > 4 * max_clusters)
+        total_clusters = 4 * max_clusters;
+    if (free_clusters > 4 * max_clusters)
+        free_clusters = 4 * max_clusters;
+    if (cluster_sectors < max_sectors_per_cluster) {
+        free_clusters *= cluster_sectors;
+        free_clusters /= max_sectors_per_cluster;
+        total_clusters *= cluster_sectors;
+        total_clusters /= max_sectors_per_cluster;
+        cluster_sectors = max_sectors_per_cluster;
+    }
+
+    /* Finally, apply real cluster count cap. */
+    if (total_clusters > max_clusters)
+        total_clusters = max_clusters;
+    if (free_clusters > max_clusters)
+        free_clusters = max_clusters;
+
     SET_AX( context, cluster_sectors );
     SET_BX( context, free_clusters );
     SET_CX( context, sector_bytes );
@@ -4625,7 +4674,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
-	TRACE("GET FREE DISK SPACE FOR DRIVE %s\n",
+	TRACE("GET FREE DISK SPACE FOR DRIVE %s (limited to about 1GB)\n",
 	      INT21_DriveName( DL_reg(context) ));
         if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
