@@ -1160,7 +1160,7 @@ extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
 
 /* Datastructures for IWineD3DQueryImpl.extendedData */
 typedef struct  WineQueryOcclusionData {
-       unsigned int queryId;
+    GLuint  queryId;
 } WineQueryOcclusionData;
 
 

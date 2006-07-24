@@ -25,10 +25,15 @@
 #include "wined3d_private.h"
 
 /*
-http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/Queries.asp
-*/
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/Queries.asp
+ *
+ * Occlusion Queries:
+ * http://www.gris.uni-tuebingen.de/~bartz/Publications/paper/hww98.pdf
+ * http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
+ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
 
 /* *******************************************
    IWineD3DQuery IUnknown parts follow
@@ -89,6 +94,9 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3
 
 static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
+
+    TRACE("(%p) : type %#x, pData %p, dwSize %#lx, dwGetDataFlags %#lx\n", This, This->type, pData, dwSize, dwGetDataFlags);
+
     if(dwSize == 0){
         /*you can use this method to poll the resource for the query status*/
         /*We return success(S_OK) if we support a feature, and faikure(S_FALSE) if we don't, just return success and fluff it for now*/
@@ -148,12 +156,15 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_OCCLUSION:
     {
         DWORD* data = pData;
-        *data = 1;
-        /* TODO: opengl occlusion queries
-        http://www.gris.uni-tuebingen.de/~bartz/Publications/paper/hww98.pdf
-        http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
-        http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
-        */
+        if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
+            GLint samples;
+            GL_EXTCALL(glGetQueryObjectivARB(((WineQueryOcclusionData *)This->extendedData)->queryId, GL_QUERY_RESULT_ARB, &samples));
+            TRACE("(%p) : Returning %d samples.\n", This, samples);
+            *data = samples;
+        } else {
+            FIXME("(%p) : Occlusion queries not supported. Returning 1.\n", This);
+            *data = 1;
+        }
     }
     break;
     case WINED3DQUERYTYPE_TIMESTAMP:
@@ -263,11 +274,6 @@ static DWORD  WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
         break;
     case WINED3DQUERYTYPE_OCCLUSION:
         dataSize = sizeof(DWORD);
-        /*
-        http://www.gris.uni-tuebingen.de/~bartz/Publications/paper/hww98.pdf
-        http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
-        http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
-        */
         break;
     case WINED3DQUERYTYPE_TIMESTAMP:
         dataSize = sizeof(UINT64);
@@ -312,7 +318,28 @@ static WINED3DQUERYTYPE  WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
 
 static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
-    FIXME("(%p) : stub\n", This);
+
+    TRACE("(%p) : dwIssueFlags %#lx, type %#x\n", This, dwIssueFlags, This->type);
+
+    switch (This->type) {
+        case WINED3DQUERYTYPE_OCCLUSION:
+            if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
+                if (dwIssueFlags & D3DISSUE_BEGIN) {
+                    GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
+                }
+                if (dwIssueFlags & D3DISSUE_END) {
+                    GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
+                }
+            } else {
+                FIXME("(%p) : Occlusion queries not supported\n", This);
+            }
+            break;
+
+        default:
+            FIXME("(%p) : Unhandled query type %#x\n", This, This->type);
+            break;
+    }
+
     return WINED3D_OK; /* can be WINED3DERR_INVALIDCALL.    */
 }
 

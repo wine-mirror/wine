@@ -1417,6 +1417,12 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2FARBPROC,     glMultiTexCoord2fARB); \
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD3FARBPROC,     glMultiTexCoord3fARB); \
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4FARBPROC,     glMultiTexCoord4fARB); \
+    /* GL_ARB_occlusion_query */ \
+    USE_GL_FUNC(PGLFNGENQUERIESARBPROC,              glGenQueriesARB); \
+    USE_GL_FUNC(PGLFNDELETEQUERIESARBPROC,           glDeleteQueriesARB); \
+    USE_GL_FUNC(PGLFNBEGINQUERYARBPROC,              glBeginQueryARB); \
+    USE_GL_FUNC(PGLFNENDQUERYARBPROC,                glEndQueryARB); \
+    USE_GL_FUNC(PGLFNGETQUERYOBJECTIVARBPROC,        glGetQueryObjectivARB); \
     /* GL_ARB_point_parameters */ \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFARBPROC,       glPointParameterfARB); \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVARBPROC,      glPointParameterfvARB); \

@@ -1390,7 +1390,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         switch(Type) {
         case WINED3DQUERYTYPE_OCCLUSION:
             TRACE("(%p) occlusion query\n", This);
-            if (GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY))
+            if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
                 hr = WINED3D_OK;
             else
                 WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
@@ -1419,9 +1419,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     /* allocated the 'extended' data based on the type of query requested */
     switch(Type){
     case D3DQUERYTYPE_OCCLUSION:
-        if(GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY)) {
+        if(GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
             TRACE("(%p) Allocating data for an occlusion query\n", This);
             object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
+            GL_EXTCALL(glGenQueriesARB(1, &((WineQueryOcclusionData *)(object->extendedData))->queryId));
             break;
         }
     case D3DQUERYTYPE_VCACHE:
