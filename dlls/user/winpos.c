@@ -1331,6 +1331,10 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
     if (!pDWP) return FALSE;
     for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
     {
+        TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
+               winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
+               winpos->cx, winpos->cy, winpos->flags);
+
         if (!(res = USER_Driver->pSetWindowPos( winpos ))) break;
     }
     USER_HEAP_FREE( hdwp );
