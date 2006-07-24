@@ -59,33 +59,3 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     }
     return TRUE;
 }
-
-static HRESULT add_key_val( LPCSTR key, LPCSTR valname, LPCSTR value )
-{
-    HKEY hkey;
-
-    if (RegCreateKeyA( HKEY_CLASSES_ROOT, key, &hkey ) != ERROR_SUCCESS) return E_FAIL;
-    RegSetValueA( hkey, valname, REG_SZ, value, strlen( value ) + 1 );
-    RegCloseKey( hkey );
-    return S_OK;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    LONG r;
-
-    r = add_key_val( "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}",
-                     NULL,
-                     "XML DOM Document" );
-    r = add_key_val( "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}\\InProcServer32",
-                     NULL,
-                     "msxml3.dll" );
-    return r;
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    RegDeleteKeyA( HKEY_CLASSES_ROOT, "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}\\InProcServer32" );
-    RegDeleteKeyA( HKEY_CLASSES_ROOT, "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}" );
-    return S_OK;
-}
