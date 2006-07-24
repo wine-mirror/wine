@@ -13125,13 +13125,103 @@ FREETYPELIBS=""
 
 FREETYPEINCL=""
 
-{ echo "$as_me:$LINENO: checking for FT_Init_FreeType in -lfreetype" >&5
+# Extract the first word of "freetype-config", so it can be a program name with args.
+set dummy freetype-config; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_prog_ft_devel+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ft_devel"; then
+  ac_cv_prog_ft_devel="$ft_devel" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_ft_devel="freetype-config"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_ft_devel" && ac_cv_prog_ft_devel="no"
+fi
+fi
+ft_devel=$ac_cv_prog_ft_devel
+if test -n "$ft_devel"; then
+  { echo "$as_me:$LINENO: result: $ft_devel" >&5
+echo "${ECHO_T}$ft_devel" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+if test "$ft_devel" = "no"
+then
+    # Extract the first word of "freetype2-config", so it can be a program name with args.
+set dummy freetype2-config; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_prog_ft_devel2+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ft_devel2"; then
+  ac_cv_prog_ft_devel2="$ft_devel2" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_ft_devel2="freetype2-config"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_ft_devel2" && ac_cv_prog_ft_devel2="no"
+fi
+fi
+ft_devel2=$ac_cv_prog_ft_devel2
+if test -n "$ft_devel2"; then
+  { echo "$as_me:$LINENO: result: $ft_devel2" >&5
+echo "${ECHO_T}$ft_devel2" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+    if test "$ft_devel2" = "freetype2-config"
+    then
+	ft_devel=$ft_devel2
+    fi
+fi
+
+if test "$ft_devel" = "no"
+then
+    wine_cv_msg_freetype=yes
+else
+    FREETYPELIBS=`$ft_devel --libs`
+    FREETYPEINCL=`$ft_devel --cflags`
+    { echo "$as_me:$LINENO: checking for FT_Init_FreeType in -lfreetype" >&5
 echo $ECHO_N "checking for FT_Init_FreeType in -lfreetype... $ECHO_C" >&6; }
 if test "${ac_cv_lib_freetype_FT_Init_FreeType+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfreetype $X_LIBS $LIBS"
+LIBS="-lfreetype $FREETYPELIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -13208,99 +13298,12 @@ else
   ft_lib=no
 fi
 
-if test "$ft_lib" = "no"
-then
-    wine_cv_msg_freetype=no
-else
-    # Extract the first word of "freetype-config", so it can be a program name with args.
-set dummy freetype-config; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ft_devel+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ft_devel"; then
-  ac_cv_prog_ft_devel="$ft_devel" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ft_devel="freetype-config"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_ft_devel" && ac_cv_prog_ft_devel="no"
-fi
-fi
-ft_devel=$ac_cv_prog_ft_devel
-if test -n "$ft_devel"; then
-  { echo "$as_me:$LINENO: result: $ft_devel" >&5
-echo "${ECHO_T}$ft_devel" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-    if test "$ft_devel" = "no"
-    then
-        # Extract the first word of "freetype2-config", so it can be a program name with args.
-set dummy freetype2-config; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ft_devel2+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ft_devel2"; then
-  ac_cv_prog_ft_devel2="$ft_devel2" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ft_devel2="freetype2-config"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_ft_devel2" && ac_cv_prog_ft_devel2="no"
-fi
-fi
-ft_devel2=$ac_cv_prog_ft_devel2
-if test -n "$ft_devel2"; then
-  { echo "$as_me:$LINENO: result: $ft_devel2" >&5
-echo "${ECHO_T}$ft_devel2" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-        if test "$ft_devel2" = "freetype2-config"
-	then
-		ft_devel=$ft_devel2
-	fi
-    fi
-    if test "$ft_devel" = "no"
+    if test "$ft_lib" = "no"
     then
 	wine_cv_msg_freetype=yes
+	FREETYPELIBS=""
+	FREETYPEINCL=""
     else
-	FREETYPELIBS=`$ft_devel --libs`
-	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
 

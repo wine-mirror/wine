@@ -660,26 +660,29 @@ fi
 dnl **** Check for FreeType 2 ****
 AC_SUBST(FREETYPELIBS,"")
 AC_SUBST(FREETYPEINCL,"")
-AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
-if test "$ft_lib" = "no"
+AC_CHECK_PROG(ft_devel,freetype-config,freetype-config,no)
+if test "$ft_devel" = "no"
 then
-    wine_cv_msg_freetype=no
-else
-    AC_CHECK_PROG(ft_devel,freetype-config,freetype-config,no)
-    if test "$ft_devel" = "no"
+    AC_CHECK_PROG(ft_devel2,freetype2-config,freetype2-config,no)
+    if test "$ft_devel2" = "freetype2-config"
     then
-        AC_CHECK_PROG(ft_devel2,freetype2-config,freetype2-config,no)
-        if test "$ft_devel2" = "freetype2-config"
-	then
-		ft_devel=$ft_devel2
-	fi
+	ft_devel=$ft_devel2
     fi
-    if test "$ft_devel" = "no"
+fi
+
+if test "$ft_devel" = "no"
+then
+    wine_cv_msg_freetype=yes
+else
+    FREETYPELIBS=`$ft_devel --libs`
+    FREETYPEINCL=`$ft_devel --cflags`
+    AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$FREETYPELIBS)
+    if test "$ft_lib" = "no"
     then
 	wine_cv_msg_freetype=yes
+	FREETYPELIBS=""
+	FREETYPEINCL=""
     else
-	FREETYPELIBS=`$ft_devel --libs`
-	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
 	AC_CHECK_HEADERS(ft2build.h \
