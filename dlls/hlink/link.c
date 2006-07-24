@@ -444,7 +444,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
     if (mon)
     {
         IBindCtx *bcxt;
-        IHlinkTarget *target;
+        IHlinkTarget *target = NULL;
         HRESULT r = S_OK;
 
         CreateBindCtx(0, &bcxt);
@@ -458,12 +458,12 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
         {
             IHlinkTarget_SetBrowseContext(target, phbc);
             IHlinkTarget_Navigate(target, grfHLNF, This->Location);
+            IHlinkTarget_Release(target);
         }
 
         RevokeBindStatusCallback(bcxt, pbsc);
 
         IBindCtx_Release(bcxt);
-        IHlinkTarget_Release(target);
         IMoniker_Release(mon);
     }
 
