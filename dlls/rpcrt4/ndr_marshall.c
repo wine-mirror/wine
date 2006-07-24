@@ -1722,6 +1722,12 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pStubMsg->Buffer += 4;
       pMemory += 4;
       break;
+    case RPC_FC_HYPER:
+      TRACE("longlong=%s <= %p\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory), pMemory);
+      memcpy(pStubMsg->Buffer, pMemory, 8);
+      pStubMsg->Buffer += 8;
+      pMemory += 8;
+      break;
     case RPC_FC_POINTER:
       TRACE("pointer=%p <= %p\n", *(unsigned char**)pMemory, pMemory);
       NdrPointerMarshall(pStubMsg, *(unsigned char**)pMemory, pPointer);
@@ -1758,7 +1764,7 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_PAD:
       break;
     default:
-      FIXME("unhandled format %02x\n", *pFormat);
+      FIXME("unhandled format 0x%02x\n", *pFormat);
     }
     pFormat++;
   }
@@ -1801,6 +1807,12 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("long=%ld => %p\n", *(DWORD*)pMemory, pMemory);
       pStubMsg->Buffer += 4;
       pMemory += 4;
+      break;
+    case RPC_FC_HYPER:
+      memcpy(pMemory, pStubMsg->Buffer, 8);
+      TRACE("longlong=%s => %p\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory), pMemory);
+      pStubMsg->Buffer += 8;
+      pMemory += 8;
       break;
     case RPC_FC_POINTER:
       TRACE("pointer => %p\n", pMemory);
@@ -1877,6 +1889,10 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       pStubMsg->BufferLength += 4;
       pMemory += 4;
       break;
+    case RPC_FC_HYPER:
+      pStubMsg->BufferLength += 8;
+      pMemory += 8;
+      break;
     case RPC_FC_POINTER:
       NdrPointerBufferSize(pStubMsg, *(unsigned char**)pMemory, pPointer);
       pPointer += 4;
@@ -1911,7 +1927,7 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_PAD:
       break;
     default:
-      FIXME("unhandled format %d\n", *pFormat);
+      FIXME("unhandled format 0x%02x\n", *pFormat);
     }
     pFormat++;
   }
@@ -1945,6 +1961,9 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
       pMemory += 4;
+      break;
+    case RPC_FC_HYPER:
+      pMemory += 8;
       break;
     case RPC_FC_POINTER:
       NdrPointerFree(pStubMsg, *(unsigned char**)pMemory, pPointer);
@@ -1980,7 +1999,7 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_PAD:
       break;
     default:
-      FIXME("unhandled format %d\n", *pFormat);
+      FIXME("unhandled format 0x%02x\n", *pFormat);
     }
     pFormat++;
   }
@@ -2015,6 +2034,10 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       size += 4;
       pStubMsg->Buffer += 4;
       break;
+    case RPC_FC_HYPER:
+      size += 8;
+      pStubMsg->Buffer += 8;
+      break;
     case RPC_FC_POINTER:
       size += 4;
       pStubMsg->Buffer += 4;
@@ -2046,7 +2069,7 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_PAD:
       break;
     default:
-      FIXME("unhandled format %d\n", *pFormat);
+      FIXME("unhandled format 0x%02x\n", *pFormat);
     }
     pFormat++;
   }
