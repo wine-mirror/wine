@@ -585,7 +585,7 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
  * The csVirtual section must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t mask,
-                          BYTE vprot )
+                          int top_down, BYTE vprot )
 {
     void *ptr;
     NTSTATUS status;
@@ -861,11 +861,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     RtlEnterCriticalSection( &csVirtual );
 
     if (base >= (char *)0x110000)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, mask,
+        status = map_view( &view, base, total_size, mask, FALSE,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
     if (status == STATUS_CONFLICTING_ADDRESSES)
-        status = map_view( &view, NULL, total_size, mask,
+        status = map_view( &view, NULL, total_size, mask, FALSE,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
     if (status != STATUS_SUCCESS) goto error;
@@ -1159,7 +1159,7 @@ NTSTATUS VIRTUAL_alloc_teb( void **ret, size_t size )
     virtual_init();
 
     *ret = NULL;
-    status = map_view( &view, NULL, size, size - 1,
+    status = map_view( &view, NULL, size, size - 1, TRUE,
                        VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     if (status == STATUS_SUCCESS)
     {
@@ -1276,17 +1276,12 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         size = (size + page_mask) & ~page_mask;
     }
 
-    if (type & MEM_TOP_DOWN) {
-        /* FIXME: MEM_TOP_DOWN allocates the largest possible address. */
-        WARN("MEM_TOP_DOWN ignored\n");
-        type &= ~MEM_TOP_DOWN;
-    }
-
     /* Compute the alloc type flags */
 
     if (!(type & MEM_SYSTEM))
     {
-        if (!(type & (MEM_COMMIT | MEM_RESERVE)) || (type & ~(MEM_COMMIT | MEM_RESERVE)))
+        if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
+            (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN)))
         {
             WARN("called with wrong alloc type flags (%08lx) !\n", type);
             return STATUS_INVALID_PARAMETER;
@@ -1311,7 +1306,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     }
     else if ((type & MEM_RESERVE) || !base)
     {
-        status = map_view( &view, base, size, mask, vprot );
+        status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot );
         if (status == STATUS_SUCCESS)
         {
             view->flags |= VFLAG_VALLOC;
@@ -1819,7 +1814,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     RtlEnterCriticalSection( &csVirtual );
 
-    res = map_view( &view, *addr_ptr, size, mask, prot );
+    res = map_view( &view, *addr_ptr, size, mask, FALSE, prot );
     if (res)
     {
         RtlLeaveCriticalSection( &csVirtual );
