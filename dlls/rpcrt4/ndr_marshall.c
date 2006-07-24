@@ -3555,7 +3555,9 @@ unsigned char *  WINAPI NdrFixedArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         total_size = pLgFArrayFormat->total_size;
         pFormat = (unsigned char *)(pLgFArrayFormat + 1);
     }
+
     memcpy(pStubMsg->Buffer, pMemory, total_size);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
     pStubMsg->Buffer += total_size;
 
     pFormat = EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
@@ -3601,6 +3603,7 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (fMustAlloc || !*ppMemory)
         *ppMemory = NdrAllocate(pStubMsg, total_size);
     memcpy(*ppMemory, pStubMsg->Buffer, total_size);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
     pStubMsg->Buffer += total_size;
 
     pFormat = EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -3678,6 +3681,7 @@ unsigned long WINAPI NdrFixedArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
         total_size = pLgFArrayFormat->total_size;
         pFormat = (unsigned char *)(pLgFArrayFormat + 1);
     }
+    pStubMsg->BufferMark = pStubMsg->Buffer;
     pStubMsg->Buffer += total_size;
     pStubMsg->MemorySize += total_size;
 
