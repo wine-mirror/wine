@@ -5391,8 +5391,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     }
 
                     if (pVarResult)
+                    {
+                        VariantInit(pVarResult);
                         /* deref return value */
                         hres = VariantCopyInd(pVarResult, prgpvarg[i]);
+                    }
 
                     /* free data stored in varresult. Note that
                      * VariantClear doesn't do what we want because we are
