@@ -83,6 +83,7 @@ static ifref_t *make_ifref(type_t *iface);
 static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
 static class_t *make_class(char *name);
+static type_t *make_safearray(void);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
@@ -179,6 +180,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tREQUESTEDIT
 %token tRESTRICTED
 %token tRETVAL
+%token tSAFEARRAY
 %token tSHORT
 %token tSIGNED
 %token tSINGLE
@@ -777,6 +779,7 @@ type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }
 	| tSTRUCT aIDENTIFIER			{ $$ = make_tref(NULL, get_type(RPC_FC_STRUCT, $2, tsSTRUCT)); }
 	| uniondef				{ $$ = make_tref(NULL, $1); }
 	| tUNION aIDENTIFIER			{ $$ = make_tref(NULL, find_type2($2, tsUNION)); }
+	| tSAFEARRAY '(' type ')'		{ $$ = make_tref(NULL, make_safearray()); }
 	;
 
 typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3);
@@ -1137,6 +1140,11 @@ static class_t *make_class(char *name)
   c->ifaces = NULL;
   INIT_LINK(c);
   return c;
+}
+
+static type_t *make_safearray(void)
+{
+  return make_type(RPC_FC_FP, find_type("SAFEARRAY", 0));
 }
 
 #define HASHMAX 64

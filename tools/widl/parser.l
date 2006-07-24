@@ -145,6 +145,7 @@ static UUID* parse_uuid(const char*u)
 				yylval.num = strtoul(yytext, NULL, 0);
 				return aNUM;
 			}
+SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 {cident}		return kw_token(yytext);
 \n			line_number++;
 {ws}
