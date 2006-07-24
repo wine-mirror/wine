@@ -442,6 +442,7 @@ int main( int argc, char *argv[] )
     LoadLibrary16( "display.drv" );
     LoadLibrary16( "keyboard.drv" );
     LoadLibrary16( "mouse.drv" );
+    LoadLibrary16( "sound.drv" );
 
     if ((instance = LoadModule16( appname, &params )) < 32)
     {
