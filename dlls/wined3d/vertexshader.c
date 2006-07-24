@@ -1126,6 +1126,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     HRESULT hr;
     shader_reg_maps reg_maps;
 
+    TRACE("(%p) : pFunction %p\n", iface, pFunction);
+
     /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     vshader_set_limits(This);

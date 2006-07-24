@@ -919,6 +919,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     HRESULT hr;
     shader_reg_maps reg_maps;
 
+    TRACE("(%p) : pFunction %p\n", iface, pFunction);
+
     /* First pass: trace shader */
     shader_trace_init((IWineD3DBaseShader*) This, pFunction);
     pshader_set_limits(This);
