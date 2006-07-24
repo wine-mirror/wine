@@ -893,6 +893,7 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
 RPC_STATUS WINAPI RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle)
 {
     FIXME("(%p): stub\n", BindingHandle);
+    ImpersonateSelf(SecurityImpersonation);
     return RPC_S_OK;
 }
 
@@ -958,6 +959,7 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
 RPC_STATUS WINAPI RpcRevertToSelf(void)
 {
     FIXME("stub\n");
+    RevertToSelf();
     return RPC_S_OK;
 }
 
