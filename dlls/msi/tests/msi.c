@@ -25,6 +25,11 @@
 
 #include "wine/test.h"
 
+typedef struct test_MSIFILEHASHINFO {
+    ULONG dwFileHashInfoSize;
+    ULONG dwData[4];
+} test_MSIFILEHASHINFO, *test_PMSIFILEHASHINFO;
+
 typedef INSTALLSTATE (WINAPI *fnMsiUseFeatureExA)(LPCSTR, LPCSTR ,DWORD, DWORD );
 fnMsiUseFeatureExA pMsiUseFeatureExA;
 typedef UINT (WINAPI *fnMsiOpenPackageExA)(LPCSTR, DWORD, MSIHANDLE*);
@@ -33,6 +38,8 @@ typedef UINT (WINAPI *fnMsiOpenPackageExW)(LPCWSTR, DWORD, MSIHANDLE*);
 fnMsiOpenPackageExW pMsiOpenPackageExW;
 typedef INSTALLSTATE (WINAPI *fnMsiGetComponentPathA)(LPCSTR, LPCSTR, LPSTR, DWORD*);
 fnMsiGetComponentPathA pMsiGetComponentPathA;
+typedef UINT (WINAPI *fnMsiGetFileHashA)(LPCSTR, DWORD, test_PMSIFILEHASHINFO);
+fnMsiGetFileHashA pMsiGetFileHashA;
 
 static void test_usefeature(void)
 {
@@ -125,6 +132,60 @@ static void test_getcomponentpath(void)
     ok( r == INSTALLSTATE_UNKNOWN, "wrong return value\n");
 }
 
+static void test_filehash(void)
+{
+    const char name[] = "msitest.bin";
+    const char data[] = {'a','b','c'};
+    HANDLE handle;
+    UINT r;
+    test_MSIFILEHASHINFO hash;
+    DWORD count = 0;
+
+    if (!pMsiGetFileHashA)
+        return;
+
+    DeleteFile(name);
+
+    memset(&hash, 0, sizeof hash);
+    r = pMsiGetFileHashA(name, 0, &hash);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    r = pMsiGetFileHashA(name, 0, NULL);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    memset(&hash, 0, sizeof hash);
+    hash.dwFileHashInfoSize = sizeof hash;
+    r = pMsiGetFileHashA(name, 0, &hash);
+    ok( r == ERROR_FILE_NOT_FOUND, "wrong error %d\n", r);
+
+    handle = CreateFile(name, GENERIC_READ|GENERIC_WRITE, 0, NULL, 
+                CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
+    ok(handle != INVALID_HANDLE_VALUE, "failed to create file\n");
+
+    WriteFile(handle, data, sizeof data, &count, NULL);
+    CloseHandle(handle);
+
+    memset(&hash, 0, sizeof hash);
+    r = pMsiGetFileHashA(name, 0, &hash);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    memset(&hash, 0, sizeof hash);
+    hash.dwFileHashInfoSize = sizeof hash;
+    r = pMsiGetFileHashA(name, 1, &hash);
+    ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    r = pMsiGetFileHashA(name, 0, &hash);
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    ok(hash.dwFileHashInfoSize == sizeof hash, "hash size changed\n");
+    ok(hash.dwData[0] == 0x98500190 &&
+       hash.dwData[1] == 0xb04fd23c &&
+       hash.dwData[2] == 0x7d3f96d6 &&
+       hash.dwData[3] == 0x727fe128, "hash of abc incorrect\n");
+
+    DeleteFile(name);
+}
+
 START_TEST(msi)
 {
     HMODULE hmod = GetModuleHandle("msi.dll");
@@ -136,8 +197,11 @@ START_TEST(msi)
         GetProcAddress(hmod, "MsiOpenPackageExW");
     pMsiGetComponentPathA = (fnMsiGetComponentPathA)
         GetProcAddress(hmod, "MsiGetComponentPathA" );
+    pMsiGetFileHashA = (fnMsiGetFileHashA)
+        GetProcAddress(hmod, "MsiGetFileHashA" );
 
     test_usefeature();
     test_null();
     test_getcomponentpath();
+    test_filehash();
 }
