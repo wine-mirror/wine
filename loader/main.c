@@ -24,9 +24,9 @@
 #include "main.h"
 
 #ifdef __APPLE__
-asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x20000000");
-asm(".zerofill WINE_SHARED_HEAP, WINE_SHARED_HEAP, ___wine_shared_heap, 0x01020000");
-extern char __wine_dos[0x20000000], __wine_shared_heap[0x01020000];
+asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x60000000");
+asm(".zerofill WINE_SHARED_HEAP, WINE_SHARED_HEAP, ___wine_shared_heap, 0x02000000");
+extern char __wine_dos[0x60000000], __wine_shared_heap[0x02000000];
 
 static const struct wine_preload_info wine_main_preload_info[] =
 {
