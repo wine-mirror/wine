@@ -541,7 +541,7 @@ static HRESULT WINAPI WebBrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL
 
     TRACE("(%p)->(%x)\n", This, Value);
 
-    This->status_bar = Value;
+    This->status_bar = Value ? VARIANT_TRUE : VARIANT_FALSE;
 
     /* In opposition to InternetExplorer, all we should do here is
      * inform the embedder about the status bar change. */
@@ -615,7 +615,7 @@ static HRESULT WINAPI WebBrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL V
 
     TRACE("(%p)->(%x)\n", This, Value);
 
-    This->menu_bar = Value;
+    This->menu_bar = Value ? VARIANT_TRUE : VARIANT_FALSE;
 
     /* In opposition to InternetExplorer, all we should do here is
      * inform the embedder about the menu bar change. */
@@ -815,7 +815,7 @@ static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOO
 
     TRACE("(%p)->(%x)\n", This, Value);
 
-    This->address_bar = Value;
+    This->address_bar = Value ? VARIANT_TRUE : VARIANT_FALSE;
 
     /* In opposition to InternetExplorer, all we should do here is
      * inform the embedder about the address bar change. */

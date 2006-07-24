@@ -693,6 +693,122 @@ static void test_ClassInfo(IUnknown *unk)
     IProvideClassInfo2_Release(class_info);
 }
 
+static void test_ie_funcs(IUnknown *unk)
+{
+    IWebBrowser2 *wb;
+    VARIANT_BOOL b;
+    int i;
+    long hwnd;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    /* HWND */
+
+    hwnd = 0xdeadbeef;
+    hres = IWebBrowser2_get_HWND(wb, &hwnd);
+    ok(hres == E_FAIL, "get_HWND failed: %08lx, expected E_FAIL\n", hres);
+    ok(hwnd == 0, "unexpected hwnd %lx\n", hwnd);
+
+    /* MenuBar */
+
+    hres = IWebBrowser2_get_MenuBar(wb, &b);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_MenuBar(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_MenuBar(wb, &b);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_MenuBar(wb, 100);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_MenuBar(wb, &b);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    /* AddressBar */
+
+    hres = IWebBrowser2_get_AddressBar(wb, &b);
+    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_AddressBar(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_AddressBar(wb, &b);
+    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_AddressBar(wb, 100);
+    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_AddressBar(wb, &b);
+    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_AddressBar(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+
+    /* StatusBar */
+
+    hres = IWebBrowser2_get_StatusBar(wb, &b);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_StatusBar(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_StatusBar(wb, &b);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_StatusBar(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_StatusBar(wb, &b);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_StatusBar(wb, 100);
+    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_StatusBar(wb, &b);
+    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    /* ToolBar */
+
+    hres = IWebBrowser2_get_ToolBar(wb, &i);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(i == VARIANT_TRUE, "i=%x\n", i);
+
+    hres = IWebBrowser2_put_ToolBar(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_ToolBar(wb, &i);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(i == VARIANT_FALSE, "b=%x\n", i);
+
+    hres = IWebBrowser2_put_ToolBar(wb, 100);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+
+    hres = IWebBrowser2_get_ToolBar(wb, &i);
+    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(i == VARIANT_TRUE, "i=%x\n", i);
+
+    hres = IWebBrowser2_put_ToolBar(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+
+    IWebBrowser2_Release(wb);
+}
+
 static void test_WebBrowser(void)
 {
     IUnknown *unk = NULL;
@@ -709,6 +825,7 @@ static void test_WebBrowser(void)
     test_ClientSite(unk, &ClientSite);
     test_DoVerb(unk);
     test_ClientSite(unk, NULL);
+    test_ie_funcs(unk);
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
