@@ -423,7 +423,7 @@ void primitiveDeclarationConvertToStridedData(
     int reg;
 
     /* Locate the vertex declaration */
-    if (useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration) {
+    if (This->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration) {
         TRACE("Using vertex declaration from shader\n");
         vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration;
     } else {
@@ -2091,7 +2091,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         fixup = FALSE;
     }
 
-    else if (This->stateBlock->vertexDecl != NULL || useVertexShaderFunction) {
+    else if (This->stateBlock->vertexDecl || This->stateBlock->vertexShader) {
 
         /* Note: This is a fixed function or shader codepath.
          * This means it must handle both types of strided data.

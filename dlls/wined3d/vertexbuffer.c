@@ -222,7 +222,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
             /* Check against updated declarations */
             memset(&strided, 0, sizeof(strided));
 
-            if(device->stateBlock->vertexDecl != NULL) {
+            if(device->stateBlock->vertexDecl || device->stateBlock->vertexShader) {
                 /* Check against the stream offset and make sure it is 0 */
 
                 This->Flags |= VBFLAG_LOAD;
