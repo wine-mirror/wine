@@ -1672,90 +1672,104 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
                               dwInstallMode, NULL, 0, 0, lpPathBuf, pcchPathBuf);
 }
 
-USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
-                DWORD* pcchUserNameBuf, LPWSTR lpOrgNameBuf,
-                DWORD* pcchOrgNameBuf, LPWSTR lpSerialBuf, DWORD* pcchSerialBuf)
+/***********************************************************************
+ * MSI_GetUserInfo [internal]
+ */
+USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
+                awstring *lpUserNameBuf, DWORD* pcchUserNameBuf,
+                awstring *lpOrgNameBuf, DWORD* pcchOrgNameBuf,
+                awstring *lpSerialBuf, DWORD* pcchSerialBuf)
 {
     HKEY hkey;
-    DWORD sz;
-    UINT rc = ERROR_SUCCESS,rc2 = ERROR_SUCCESS;
+    LPWSTR user, org, serial;
+    UINT r;
+    USERINFOSTATE state;
 
     TRACE("%s %p %p %p %p %p %p\n",debugstr_w(szProduct), lpUserNameBuf,
           pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
           pcchSerialBuf);
 
-    rc = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
-    if (rc != ERROR_SUCCESS)
+    if (!szProduct)
+        return USERINFOSTATE_INVALIDARG;
+
+    r = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
+    if (r != ERROR_SUCCESS)
         return USERINFOSTATE_UNKNOWN;
 
-    if (lpUserNameBuf)
-    {
-        sz = *lpUserNameBuf * sizeof(WCHAR);
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERW, NULL,
-                NULL, (LPBYTE)lpUserNameBuf,
-                               &sz);
-    }
-    if (!lpUserNameBuf && pcchUserNameBuf)
-    {
-        sz = 0;
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERW, NULL,
-                NULL, NULL, &sz);
-    }
-
-    if (pcchUserNameBuf)
-        *pcchUserNameBuf = sz / sizeof(WCHAR);
-
-    if (lpOrgNameBuf)
-    {
-        sz = *pcchOrgNameBuf * sizeof(WCHAR);
-        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYW, NULL,
-                NULL, (LPBYTE)lpOrgNameBuf, &sz);
-    }
-    if (!lpOrgNameBuf && pcchOrgNameBuf)
-    {
-        sz = 0;
-        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYW, NULL,
-                NULL, NULL, &sz);
-    }
-
-    if (pcchOrgNameBuf)
-        *pcchOrgNameBuf = sz / sizeof(WCHAR);
-
-    if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA && 
-        rc2 != ERROR_SUCCESS && rc2 != ERROR_MORE_DATA)
-    {
-        RegCloseKey(hkey);
-        return USERINFOSTATE_ABSENT;
-    }
-
-    if (lpSerialBuf)
-    {
-        sz = *pcchSerialBuf * sizeof(WCHAR);
-        RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDW, NULL, NULL,
-                (LPBYTE)lpSerialBuf, &sz);
-    }
-    if (!lpSerialBuf && pcchSerialBuf)
-    {
-        sz = 0;
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDW, NULL,
-                NULL, NULL, &sz);
-    }
-    if (pcchSerialBuf)
-        *pcchSerialBuf = sz / sizeof(WCHAR);
+    user = msi_reg_get_val_str( hkey, INSTALLPROPERTY_REGOWNERW );
+    org = msi_reg_get_val_str( hkey, INSTALLPROPERTY_REGCOMPANYW );
+    serial = msi_reg_get_val_str( hkey, INSTALLPROPERTY_PRODUCTIDW );
 
     RegCloseKey(hkey);
-    return USERINFOSTATE_PRESENT;
+
+    state = USERINFOSTATE_PRESENT;
+
+    r = msi_strcpy_to_awstring( user, lpUserNameBuf, pcchUserNameBuf );
+    if (r == ERROR_MORE_DATA)
+        state = USERINFOSTATE_MOREDATA;
+    r = msi_strcpy_to_awstring( org, lpOrgNameBuf, pcchOrgNameBuf );
+    if (r == ERROR_MORE_DATA)
+        state = USERINFOSTATE_MOREDATA;
+    r = msi_strcpy_to_awstring( serial, lpSerialBuf, pcchSerialBuf );
+    if (r == ERROR_MORE_DATA)
+        state = USERINFOSTATE_MOREDATA;
+
+    msi_free( user );
+    msi_free( org );
+    msi_free( serial );
+
+    return state;
 }
 
-USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR szProduct, LPSTR lpUserNameBuf,
-                DWORD* pcchUserNameBuf, LPSTR lpOrgNameBuf,
-                DWORD* pcchOrgNameBuf, LPSTR lpSerialBuf, DWORD* pcchSerialBuf)
+/***********************************************************************
+ * MsiGetUserInfoW [MSI.@]
+ */
+USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct,
+                LPWSTR lpUserNameBuf, DWORD* pcchUserNameBuf,
+                LPWSTR lpOrgNameBuf, DWORD* pcchOrgNameBuf,
+                LPWSTR lpSerialBuf, DWORD* pcchSerialBuf)
 {
-    FIXME("%s %p %p %p %p %p %p\n",debugstr_a(szProduct), lpUserNameBuf,
-          pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
-          pcchSerialBuf);
+    awstring user, org, serial;
 
-    return USERINFOSTATE_UNKNOWN;
+    user.unicode = TRUE;
+    user.str.w = lpUserNameBuf;
+    org.unicode = TRUE;
+    org.str.w = lpOrgNameBuf;
+    serial.unicode = TRUE;
+    serial.str.w = lpSerialBuf;
+
+    return MSI_GetUserInfo( szProduct, &user, pcchUserNameBuf,
+                            &org, pcchOrgNameBuf,
+                            &serial, pcchSerialBuf );
+}
+
+USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR szProduct,
+                LPSTR lpUserNameBuf, DWORD* pcchUserNameBuf,
+                LPSTR lpOrgNameBuf, DWORD* pcchOrgNameBuf,
+                LPSTR lpSerialBuf, DWORD* pcchSerialBuf)
+{
+    awstring user, org, serial;
+    LPWSTR prod;
+    UINT r;
+
+    prod = strdupAtoW( szProduct );
+    if (szProduct && !prod)
+        return ERROR_OUTOFMEMORY;
+
+    user.unicode = FALSE;
+    user.str.a = lpUserNameBuf;
+    org.unicode = FALSE;
+    org.str.a = lpOrgNameBuf;
+    serial.unicode = FALSE;
+    serial.str.a = lpSerialBuf;
+
+    r = MSI_GetUserInfo( prod, &user, pcchUserNameBuf,
+                         &org, pcchOrgNameBuf,
+                         &serial, pcchSerialBuf );
+
+    msi_free( prod );
+
+    return r;
 }
 
 UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
