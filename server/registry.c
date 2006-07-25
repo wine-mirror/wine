@@ -669,8 +669,8 @@ static void enum_key( const struct key *key, int index, int info_class,
 {
     int i;
     data_size_t len, namelen, classlen;
-    int max_subkey = 0, max_class = 0;
-    int max_value = 0, max_data = 0;
+    data_size_t max_subkey = 0, max_class = 0;
+    data_size_t max_value = 0, max_data = 0;
     char *data;
 
     if (index != -1)  /* -1 means use the specified key directly */

@@ -419,7 +419,7 @@ static struct token *create_token( unsigned primary, const SID *user,
     struct token *token = alloc_object( &token_ops );
     if (token)
     {
-        int i;
+        unsigned int i;
 
         list_init( &token->privileges );
         list_init( &token->groups );
@@ -623,8 +623,7 @@ static unsigned int token_adjust_privileges( struct token *token, const LUID_AND
                                              unsigned int count, LUID_AND_ATTRIBUTES *mod_privs,
                                              unsigned int mod_privs_count )
 {
-    int i;
-    unsigned int modified_count = 0;
+    unsigned int i, modified_count = 0;
 
     for (i = 0; i < count; i++)
     {
@@ -669,8 +668,7 @@ int token_check_privileges( struct token *token, int all_required,
                             const LUID_AND_ATTRIBUTES *reqprivs,
                             unsigned int count, LUID_AND_ATTRIBUTES *usedprivs)
 {
-    int i;
-    unsigned int enabled_count = 0;
+    unsigned int i, enabled_count = 0;
 
     for (i = 0; i < count; i++)
     {
@@ -944,7 +942,7 @@ DECL_HANDLER(adjust_token_privileges)
 
         if (req->get_modified_state && !req->disable_all)
         {
-            int i;
+            unsigned int i;
             /* count modified privs */
             for (i = 0; i < priv_count; i++)
             {

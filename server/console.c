@@ -1021,7 +1021,7 @@ static int write_console_output( struct screen_buffer *screen_buffer, data_size_
                                  const void* data, enum char_info_mode mode,
                                  int x, int y, int wrap )
 {
-    int i;
+    unsigned int i;
     char_info_t *end, *dest = screen_buffer->data + y * screen_buffer->width + x;
 
     if (y >= screen_buffer->height) return 0;

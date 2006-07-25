@@ -1298,7 +1298,7 @@ static int check_hw_message_filter( user_handle_t win, unsigned int msg_code,
 
 
 /* find a hardware message for the given queue */
-static int get_hardware_message( struct thread *thread, int hw_id, user_handle_t filter_win,
+static int get_hardware_message( struct thread *thread, unsigned int hw_id, user_handle_t filter_win,
                                  unsigned int first, unsigned int last, struct get_message_reply *reply )
 {
     struct thread_input *input = thread->queue->input;

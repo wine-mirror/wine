@@ -288,7 +288,7 @@ static int read_thread_int( struct thread *thread, const int *addr, int *data )
 static int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask )
 {
     int res;
-    if (mask != ~0)
+    if (mask != ~0u)
     {
         if (read_thread_int( thread, addr, &res ) == -1) return -1;
         data = (data & mask) | (res & ~mask);
