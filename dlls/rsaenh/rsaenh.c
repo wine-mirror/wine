@@ -1889,6 +1889,12 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         }
 
         dwEncryptedLen = (*pdwDataLen/pCryptKey->dwBlockLen+(Final?1:0))*pCryptKey->dwBlockLen;
+
+        if (pbData == NULL) {
+            *pdwDataLen = dwEncryptedLen;
+            return TRUE;
+        }
+
         for (i=*pdwDataLen; i<dwEncryptedLen && i<dwBufLen; i++) pbData[i] = dwEncryptedLen - *pdwDataLen;
         *pdwDataLen = dwEncryptedLen; 
 
