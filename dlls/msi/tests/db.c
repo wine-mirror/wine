@@ -987,6 +987,58 @@ static void test_streamtable(void)
     DeleteFile(msifile);
 }
 
+static void test_where(void)
+{
+    MSIHANDLE hdb = 0, rec;
+    LPSTR query;
+    UINT r;
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    r = run_query( hdb,
+            "CREATE TABLE `Media` ("
+            "`DiskId` SHORT NOT NULL, "
+            "`LastSequence` LONG, "
+            "`DiskPrompt` CHAR(64) LOCALIZABLE, "
+            "`Cabinet` CHAR(255), "
+            "`VolumeLabel` CHAR(32), "
+            "`Source` CHAR(72) "
+            "PRIMARY KEY `DiskId`)" );
+    ok( r == S_OK, "cannot create Media table: %d\n", r );
+
+    r = run_query( hdb, "INSERT INTO `Media` "
+            "( `DiskId`, `LastSequence`, `DiskPrompt`, `Cabinet`, `VolumeLabel`, `Source` ) "
+            "VALUES ( 1, 0, '', 'zero.cab', '', '' )" );
+    ok( r == S_OK, "cannot add file to the Media table: %d\n", r );
+
+    r = run_query( hdb, "INSERT INTO `Media` "
+            "( `DiskId`, `LastSequence`, `DiskPrompt`, `Cabinet`, `VolumeLabel`, `Source` ) "
+            "VALUES ( 2, 1, '', 'one.cab', '', '' )" );
+    ok( r == S_OK, "cannot add file to the Media table: %d\n", r );
+
+    r = run_query( hdb, "INSERT INTO `Media` "
+            "( `DiskId`, `LastSequence`, `DiskPrompt`, `Cabinet`, `VolumeLabel`, `Source` ) "
+            "VALUES ( 3, 2, '', 'two.cab', '', '' )" );
+    ok( r == S_OK, "cannot add file to the Media table: %d\n", r );
+
+    query = "SELECT * FROM `Media`";
+    r = do_query(hdb, query, &rec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
+    ok( check_record( rec, 4, "zero.cab"), "wrong cabinet\n");
+
+    query = "SELECT * FROM `Media` WHERE `LastSequence` >= 1";
+    r = do_query(hdb, query, &rec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
+        ok( check_record( rec, 4, "one.cab"), "wrong cabinet\n");
+    }
+
+    MsiCloseHandle( hdb );
+    DeleteFile(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -999,4 +1051,5 @@ START_TEST(db)
     test_msiexport();
     test_longstrings();
     test_streamtable();
+    test_where();
 }
