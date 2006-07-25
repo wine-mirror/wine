@@ -885,6 +885,7 @@ struct IWineD3DSurfaceImpl
     DDCOLORKEY                SrcBltCKey;
     DWORD                     CKeyFlags;
 
+    DDCOLORKEY                glCKey;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
@@ -950,6 +951,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem);
 #define SFLAG_LOST        0x00008000 /* Surface lost flag for DDraw */
 #define SFLAG_FORCELOAD   0x00010000 /* To force PreLoading of a scratch cursor */
 #define SFLAG_USERPTR     0x00020000 /* The application allocated the memory for this surface */
+#define SFLAG_GLCKEY      0x00040000 /* The gl texture was created with a color key */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

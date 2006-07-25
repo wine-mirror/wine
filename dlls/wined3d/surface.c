@@ -1402,9 +1402,9 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *f
                 *type = GL_UNSIGNED_BYTE;
                 *target_bpp = 4;
                 if(colorkey_active) {
-                    *convert = CONVERT_PALETTED;
-                } else {
                     *convert = CONVERT_PALETTED_CK;
+                } else {
+                    *convert = CONVERT_PALETTED;
                 }
             }
 
@@ -1632,7 +1632,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         TRACE("Surface already in texture\n");
         return WINED3D_OK;
     }
-    if (!(This->Flags & SFLAG_DIRTY)) {
+    if (This->Flags & SFLAG_DIRTY) {
+        TRACE("Reloading because surface is dirty\n");
+    } else if(/* Reload: gl texture has ck, now no ckey is set OR */
+              (This->Flags & SFLAG_GLCKEY && !(This->CKeyFlags & DDSD_CKSRCBLT)) ||
+              /* Reload: vice versa  OR */
+              (!(This->Flags & SFLAG_GLCKEY) && !This->CKeyFlags & DDSD_CKSRCBLT) ||
+              /* Also reload: Color key is active AND the color key has changed */
+              (This->CKeyFlags & DDSD_CKSRCBLT) && (
+                This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue ||
+                This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)) {
+        TRACE("Reloading because of color keying\n");
+    } else {
         TRACE("surface isn't dirty\n");
         return WINED3D_OK;
     }
@@ -1731,6 +1742,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         int bpp;
         BYTE *mem;
 
+        if(This->CKeyFlags & DDSD_CKSRCBLT) { 
+            This->Flags |= SFLAG_GLCKEY;
+            This->glCKey = This->SrcBltCKey;
+        }
+        else This->Flags &= ~SFLAG_GLCKEY;
         d3dfmt_get_conv(This, TRUE /* We need color keying */, &format, &internal, &type, &convert, &bpp);
 
         if((convert != NO_CONVERSION) &&
@@ -2323,11 +2339,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             oldCKey = Src->CKeyFlags;
             if(!(Flags & DDBLT_KEYSRC) && 
                Src->CKeyFlags & DDSD_CKSRCBLT) {
-                /* Ok, the surface has a color key, but we shall not use it - 
-                 * Deactivate it for now and dirtify the surface to reload it
+                /* Ok, the surface has a color key, but we shall not use it -
+                 * Deactivate it for now, LoadTexture will catch this
                  */
                 Src->CKeyFlags &= ~DDSD_CKSRCBLT;
-                Src->Flags |= SFLAG_DIRTY;
             }
 
             /* Now load the surface */
@@ -2494,7 +2509,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* Restore the color key */
             if(oldCKey != Src->CKeyFlags) {
                 Src->CKeyFlags = oldCKey;
-                Src->Flags |= SFLAG_DIRTY;
             }
 
             LEAVE_GL();
@@ -2847,7 +2861,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    BOOL dirtify = FALSE;
     TRACE("(%p)->(%08lx,%p)\n", This, Flags, CKey);
 
     if ((Flags & DDCKEY_COLORSPACE) != 0) {
@@ -2859,41 +2872,21 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
     if(CKey) {
         switch (Flags & ~DDCKEY_COLORSPACE) {
             case DDCKEY_DESTBLT:
-                if(!(This->CKeyFlags & DDSD_CKDESTBLT)) {
-                    dirtify = TRUE;
-                } else {
-                    dirtify = memcmp(&This->DestBltCKey, CKey, sizeof(*CKey) ) != 0;
-                }
                 This->DestBltCKey = *CKey;
                 This->CKeyFlags |= DDSD_CKDESTBLT;
                 break;
 
             case DDCKEY_DESTOVERLAY:
-                if(!(This->CKeyFlags & DDSD_CKDESTOVERLAY)) {
-                    dirtify = TRUE;
-                } else {
-                    dirtify = memcmp(&This->DestOverlayCKey, CKey, sizeof(*CKey)) != 0;
-                }
                 This->DestOverlayCKey = *CKey;
                 This->CKeyFlags |= DDSD_CKDESTOVERLAY;
                 break;
 
             case DDCKEY_SRCOVERLAY:
-                if(!(This->CKeyFlags & DDSD_CKSRCOVERLAY)) {
-                    dirtify = TRUE;
-                } else {
-                    dirtify = memcmp(&This->SrcOverlayCKey, CKey, sizeof(*CKey)) != 0;
-                }
                 This->SrcOverlayCKey = *CKey;
                 This->CKeyFlags |= DDSD_CKSRCOVERLAY;
                 break;
 
             case DDCKEY_SRCBLT:
-                if(!(This->CKeyFlags & DDSD_CKSRCBLT)) {
-                    dirtify = TRUE;
-                } else {
-                    dirtify = memcmp(&This->SrcBltCKey, CKey, sizeof(*CKey)) != 0;
-                }
                 This->SrcBltCKey = *CKey;
                 This->CKeyFlags |= DDSD_CKSRCBLT;
                 break;
@@ -2902,30 +2895,21 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
     else {
         switch (Flags & ~DDCKEY_COLORSPACE) {
             case DDCKEY_DESTBLT:
-                dirtify = This->CKeyFlags & DDSD_CKDESTBLT;
                 This->CKeyFlags &= ~DDSD_CKDESTBLT;
                 break;
 
             case DDCKEY_DESTOVERLAY:
-                dirtify = This->CKeyFlags & DDSD_CKDESTOVERLAY;
                 This->CKeyFlags &= ~DDSD_CKDESTOVERLAY;
                 break;
 
             case DDCKEY_SRCOVERLAY:
-                dirtify = This->CKeyFlags & DDSD_CKSRCOVERLAY;
                 This->CKeyFlags &= ~DDSD_CKSRCOVERLAY;
                 break;
 
             case DDCKEY_SRCBLT:
-                dirtify = This->CKeyFlags & DDSD_CKSRCBLT;
                 This->CKeyFlags &= ~DDSD_CKSRCBLT;
                 break;
         }
-    }
-
-    if(dirtify) {
-        TRACE("Color key changed, dirtifying surface\n");
-        This->Flags |= SFLAG_DIRTY;
     }
 
     return WINED3D_OK;
