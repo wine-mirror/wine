@@ -880,6 +880,14 @@ then
     AC_CHECK_LIB(capi20,capi20_register,[AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])])
 fi
 
+dnl **** Check for gif header usability ****
+
+if test "$ac_cv_header_gif_lib_h" = "yes"
+then
+    AC_TRY_COMPILE([#include <gif_lib.h>],[static typeof(DGifOpen) * func;],
+        AC_DEFINE(HAVE_GIF, 1, [Define if you have usable GIF headers]))
+fi
+
 dnl **** Check for gcc specific options ****
 
 AC_SUBST(EXTRACFLAGS,"")

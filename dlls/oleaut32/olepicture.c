@@ -993,7 +993,7 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
 #endif /* HAVE_JPEGLIB_H */
 
-#ifdef HAVE_GIF_LIB_H
+#ifdef HAVE_GIF
 
 static void *libungif_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -1040,12 +1040,12 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     return len;
 }
 
-#endif  /* HAVE_GIF_LIB_H */
+#endif  /* HAVE_GIF */
 
 
 static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
 {
-#ifdef HAVE_GIF_LIB_H
+#ifdef HAVE_GIF
     struct gifdata 	gd;
     GifFileType 	*gif;
     BITMAPINFO		*bmi;
