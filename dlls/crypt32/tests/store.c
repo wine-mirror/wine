@@ -1003,6 +1003,361 @@ static void testSystemStore(void)
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
+static const BYTE serializedStoreWithCert[] = {
+ 0x00,0x00,0x00,0x00,0x43,0x45,0x52,0x54,0x20,0x00,0x00,0x00,0x01,0x00,0x00,
+ 0x00,0x7c,0x00,0x00,0x00,0x30,0x7a,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,
+ 0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,
+ 0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,0x30,0x31,
+ 0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,0x36,
+ 0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x15,
+ 0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,
+ 0x20,0x4c,0x61,0x6e,0x67,0x00,0x30,0x07,0x30,0x02,0x06,0x00,0x03,0x01,0x00,
+ 0xa3,0x16,0x30,0x14,0x30,0x12,0x06,0x03,0x55,0x1d,0x13,0x01,0x01,0xff,0x04,
+ 0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x00,
+ 0x00,0x00,0x00,0x00,0x00,0x00 };
+static const BYTE serializedStoreWithCertAndCRL[] = {
+ 0x00,0x00,0x00,0x00,0x43,0x45,0x52,0x54,0x20,0x00,0x00,0x00,0x01,0x00,0x00,
+ 0x00,0x7c,0x00,0x00,0x00,0x30,0x7a,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,
+ 0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,
+ 0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,0x30,0x31,
+ 0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,0x36,
+ 0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x15,
+ 0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,
+ 0x20,0x4c,0x61,0x6e,0x67,0x00,0x30,0x07,0x30,0x02,0x06,0x00,0x03,0x01,0x00,
+ 0xa3,0x16,0x30,0x14,0x30,0x12,0x06,0x03,0x55,0x1d,0x13,0x01,0x01,0xff,0x04,
+ 0x08,0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01,0x21,0x00,0x00,0x00,0x01,0x00,
+ 0x00,0x00,0x47,0x00,0x00,0x00,0x30,0x45,0x30,0x2c,0x30,0x02,0x06,0x00,0x30,
+ 0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,
+ 0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00,0x18,0x0f,0x31,0x36,0x30,0x31,0x30,0x31,
+ 0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x02,0x06,0x00,0x03,0x11,
+ 0x00,0x0f,0x0e,0x0d,0x0c,0x0b,0x0a,0x09,0x08,0x07,0x06,0x05,0x04,0x03,0x02,
+ 0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+
+static void compareFile(LPCWSTR filename, const BYTE *pb, DWORD cb)
+{
+    HANDLE h;
+    BYTE buf[200];
+    BOOL ret;
+    DWORD cbRead = 0, totalRead = 0;
+
+    h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+     FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE)
+        return;
+    do {
+        ret = ReadFile(h, buf, sizeof(buf), &cbRead, NULL);
+        if (ret && cbRead)
+        {
+            ok(totalRead + cbRead <= cb, "Expected total count %ld, see %ld\n",
+             cb, totalRead + cbRead);
+            ok(!memcmp(pb + totalRead, buf, cbRead),
+             "Unexpected data in file\n");
+            totalRead += cbRead;
+        }
+    } while (ret && cbRead);
+    CloseHandle(h);
+}
+
+static void testFileStore(void)
+{
+    static const WCHAR szPrefix[] = { 'c','e','r',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    HCERTSTORE store;
+    BOOL ret;
+    PCCERT_CONTEXT cert;
+    HANDLE file;
+ 
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0, 0, NULL);
+    ok(!store && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08lx\n", GetLastError());
+
+    if (!GetTempFileNameW(szDot, szPrefix, 0, filename))
+       return;
+ 
+    DeleteFileW(filename);
+    file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0, CERT_STORE_DELETE_FLAG,
+     file);
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_READONLY_FLAG, file);
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+
+    /* A "read-only" file store.. */
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_STORE_OPEN_EXISTING_FLAG | CERT_STORE_READONLY_FLAG, file);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        DWORD size;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        /* apparently allows adding certificates.. */
+        ok(ret, "CertAddEncodedCertificateToStore failed: %d\n", ret);
+        /* but not commits.. */
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+         "Expected ERROR_CALL_NOT_IMPLEMENTED, got %08lx\n", GetLastError());
+        /* It still has certs in memory.. */
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08lx\n",
+         GetLastError());
+        CertFreeCertificateContext(cert);
+        /* but the file size is still 0. */
+        size = GetFileSize(file, NULL);
+        ok(size == 0, "Expected size 0, got %ld\n", size);
+        CertCloseStore(store, 0);
+    }
+
+    /* The create new flag is allowed.. */
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, file);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        /* but without the commit enable flag, commits don't happen. */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %d\n", ret);
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+         "Expected ERROR_CALL_NOT_IMPLEMENTED, got %08lx\n", GetLastError());
+        CertCloseStore(store, 0);
+    }
+    /* as is the open existing flag. */
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_STORE_OPEN_EXISTING_FLAG, file);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        /* but without the commit enable flag, commits don't happen. */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %d\n", ret);
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+         "Expected ERROR_CALL_NOT_IMPLEMENTED, got %08lx\n", GetLastError());
+        CertCloseStore(store, 0);
+    }
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG, file);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        CloseHandle(file);
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        /* with commits enabled, commit is allowed */
+        ret = CertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
+        ok(ret, "CertControlStore failed: %d\n", ret);
+        compareFile(filename, serializedStoreWithCert,
+         sizeof(serializedStoreWithCert));
+        CertCloseStore(store, 0);
+    }
+    file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+    store = CertOpenStore(CERT_STORE_PROV_FILE, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG, file);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        CloseHandle(file);
+        ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
+         sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+        CertCloseStore(store, 0);
+        compareFile(filename, serializedStoreWithCertAndCRL,
+         sizeof(serializedStoreWithCertAndCRL));
+    }
+
+    DeleteFileW(filename);
+}
+
+static void checkFileStoreFailure(LPCWSTR filename, DWORD dwEncodingType,
+ DWORD dwFlags, DWORD expectedError)
+{
+    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_FILENAME_W,
+     dwEncodingType, 0, dwFlags, filename);
+
+    ok(!store && GetLastError() == expectedError,
+     "Expected %08lx, got %08lx\n", expectedError, GetLastError());
+}
+
+static BOOL initFileFromData(LPCWSTR filename, const BYTE *pb, DWORD cb)
+{
+    HANDLE file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    BOOL ret;
+
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        DWORD written;
+
+        ret = WriteFile(file, pb, cb, &written, NULL);
+        CloseHandle(file);
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+static void testFileNameStore(void)
+{
+    static const WCHAR szPrefix[] = { 'c','e','r',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    HCERTSTORE store;
+    BOOL ret;
+
+    checkFileStoreFailure(NULL, 0, 0, ERROR_PATH_NOT_FOUND);
+
+    if (!GetTempFileNameW(szDot, szPrefix, 0, filename))
+       return;
+    DeleteFileW(filename);
+
+    /* The two flags are mutually exclusive */
+    checkFileStoreFailure(filename, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_READONLY_FLAG,
+     E_INVALIDARG);
+    /* Without an encoding type, these all fail */
+    checkFileStoreFailure(filename, 0, 0, ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, 0, CERT_STORE_OPEN_EXISTING_FLAG,
+     ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, 0, CERT_STORE_CREATE_NEW_FLAG,
+     ERROR_FILE_NOT_FOUND);
+    /* Without a message encoding type, these still fail */
+    checkFileStoreFailure(filename, X509_ASN_ENCODING, 0, ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, X509_ASN_ENCODING,
+     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, X509_ASN_ENCODING,
+     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
+    /* Without a cert encoding type, they still fail */
+    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING, 0,
+     ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING,
+     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING,
+     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
+    /* With both a message and cert encoding type, but without commit enabled,
+     * they still fail
+     */
+    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0,
+     ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
+    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
+
+    /* In all of the following tests, the encoding type seems to be ignored */
+    if (initFileFromData(filename, bigCert, sizeof(bigCert)))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+         CERT_STORE_READONLY_FLAG, filename);
+        ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        todo_wine ok(cert != NULL, "CertEnumCertificatesInStore failed: %08lx\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        crl = CertEnumCRLsInStore(store, NULL);
+        ok(!crl, "Expected no CRLs\n");
+
+        CertCloseStore(store, 0);
+        DeleteFileW(filename);
+    }
+    if (initFileFromData(filename, serializedStoreWithCert,
+     sizeof(serializedStoreWithCert)))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+         CERT_STORE_READONLY_FLAG, filename);
+        ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08lx\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        crl = CertEnumCRLsInStore(store, NULL);
+        ok(!crl, "Expected no CRLs\n");
+
+        CertCloseStore(store, 0);
+        DeleteFileW(filename);
+    }
+    if (initFileFromData(filename, serializedStoreWithCertAndCRL,
+     sizeof(serializedStoreWithCertAndCRL)))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+         CERT_STORE_READONLY_FLAG, filename);
+        ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08lx\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        crl = CertEnumCRLsInStore(store, NULL);
+        ok(crl != NULL, "CertEnumCRLsInStore failed: %08lx\n", GetLastError());
+        crl = CertEnumCRLsInStore(store, crl);
+        ok(!crl, "Expected only one CRL\n");
+
+        CertCloseStore(store, 0);
+        /* Don't delete it this time, the next test uses it */
+    }
+    /* Now that the file exists, we can open it read-only */
+    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+     CERT_STORE_READONLY_FLAG, filename);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    CertCloseStore(store, 0);
+    DeleteFileW(filename);
+
+    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_CREATE_NEW_FLAG, filename);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        CertCloseStore(store, 0);
+        compareFile(filename, serializedStoreWithCert,
+         sizeof(serializedStoreWithCert));
+    }
+    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG, filename);
+    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (store)
+    {
+        ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING,
+         signedCRL, sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+        CertCloseStore(store, 0);
+        compareFile(filename, serializedStoreWithCertAndCRL,
+         sizeof(serializedStoreWithCertAndCRL));
+    }
+}
+
 static void testCertOpenSystemStore(void)
 {
     HCERTSTORE store;
@@ -1185,6 +1540,8 @@ START_TEST(store)
     testRegStore();
     testSystemRegStore();
     testSystemStore();
+    testFileStore();
+    testFileNameStore();
 
     testCertOpenSystemStore();
 

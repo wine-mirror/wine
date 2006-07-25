@@ -163,6 +163,15 @@ typedef struct _WINE_REGSTOREINFO
     struct list          crlsToDelete;
 } WINE_REGSTOREINFO, *PWINE_REGSTOREINFO;
 
+typedef struct _WINE_FILESTOREINFO
+{
+    DWORD                dwOpenFlags;
+    HCRYPTPROV           cryptProv;
+    PWINECRYPT_CERTSTORE memStore;
+    HANDLE               file;
+    BOOL                 dirty;
+} WINE_FILESTOREINFO, *PWINE_FILESTOREINFO;
+
 typedef struct _WINE_STORE_LIST_ENTRY
 {
     PWINECRYPT_CERTSTORE store;
@@ -695,21 +704,13 @@ static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
          (const void **)ppStoreContext);
     else
     {
-        if (ps->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
-        {
-            SetLastError(ERROR_ACCESS_DENIED);
-            ret = FALSE;
-        }
-        else
-        {
-            ret = TRUE;
-            if (ps->provWriteCert)
-                ret = ps->provWriteCert(ps->hStoreProv, (PCCERT_CONTEXT)cert,
-                 CERT_STORE_PROV_WRITE_ADD_FLAG);
-            if (ret)
-                ret = ps->memStore->certs.addContext(ps->memStore, cert, NULL,
-                 (const void **)ppStoreContext);
-        }
+        ret = TRUE;
+        if (ps->provWriteCert)
+            ret = ps->provWriteCert(ps->hStoreProv, (PCCERT_CONTEXT)cert,
+             CERT_STORE_PROV_WRITE_ADD_FLAG);
+        if (ret)
+            ret = ps->memStore->certs.addContext(ps->memStore, cert, NULL,
+             (const void **)ppStoreContext);
     }
     /* dirty trick: replace the returned context's hCertStore with
      * store.
@@ -1723,12 +1724,215 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
     return ret;
 }
 
+static void WINAPI CRYPT_FileCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+
+    TRACE("(%p, %08lx)\n", store, dwFlags);
+    if (store->dirty)
+        CRYPT_WriteSerializedFile(store->file, store->memStore);
+    CertCloseStore(store->memStore, dwFlags);
+    CloseHandle(store->file);
+    CryptMemFree(store);
+}
+
+static BOOL WINAPI CRYPT_FileWriteCert(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT cert, DWORD dwFlags)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+
+    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwFlags);
+    store->dirty = TRUE;
+    return TRUE;
+}
+
+static BOOL WINAPI CRYPT_FileDeleteCert(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwFlags)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+
+    TRACE("(%p, %p, %08lx)\n", hCertStore, pCertContext, dwFlags);
+    store->dirty = TRUE;
+    return TRUE;
+}
+
+static BOOL WINAPI CRYPT_FileWriteCRL(HCERTSTORE hCertStore,
+ PCCRL_CONTEXT crl, DWORD dwFlags)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+
+    TRACE("(%p, %p, %ld)\n", hCertStore, crl, dwFlags);
+    store->dirty = TRUE;
+    return TRUE;
+}
+
+static BOOL WINAPI CRYPT_FileDeleteCRL(HCERTSTORE hCertStore,
+ PCCRL_CONTEXT pCrlContext, DWORD dwFlags)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+
+    TRACE("(%p, %p, %08lx)\n", hCertStore, pCrlContext, dwFlags);
+    store->dirty = TRUE;
+    return TRUE;
+}
+
+static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
+    BOOL ret;
+
+    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+     pvCtrlPara);
+
+    switch (dwCtrlType)
+    {
+    case CERT_STORE_CTRL_RESYNC:
+        CRYPT_MemEmptyStore((PWINE_MEMSTORE)store->memStore);
+        CRYPT_ReadSerializedFile(store->file, store);
+        ret = TRUE;
+        break;
+    case CERT_STORE_CTRL_COMMIT:
+        if (!(store->dwOpenFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG))
+        {
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            ret = FALSE;
+        }
+        else if (store->dirty)
+            ret = CRYPT_WriteSerializedFile(store->file, store->memStore);
+        else
+            ret = TRUE;
+        break;
+    default:
+        FIXME("%ld: stub\n", dwCtrlType);
+        ret = FALSE;
+    }
+    return ret;
+}
+
+static void *fileProvFuncs[] = {
+    CRYPT_FileCloseStore,
+    NULL, /* CERT_STORE_PROV_READ_CERT_FUNC */
+    CRYPT_FileWriteCert,
+    CRYPT_FileDeleteCert,
+    NULL, /* CERT_STORE_PROV_SET_CERT_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CRL_FUNC */
+    CRYPT_FileWriteCRL,
+    CRYPT_FileDeleteCRL,
+    NULL, /* CERT_STORE_PROV_SET_CRL_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CTL_PROPERTY_FUNC */
+    CRYPT_FileControl,
+};
+
+static PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    PWINECRYPT_CERTSTORE store = NULL;
+    HANDLE file = (HANDLE)pvPara;
+
+    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+
+    if (!pvPara)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+    if (dwFlags & CERT_STORE_DELETE_FLAG)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if ((dwFlags & CERT_STORE_READONLY_FLAG) &&
+     (dwFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG))
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+
+    if (DuplicateHandle(GetCurrentProcess(), (HANDLE)pvPara,
+     GetCurrentProcess(), &file, dwFlags & CERT_STORE_READONLY_FLAG ?
+     GENERIC_READ : GENERIC_READ | GENERIC_WRITE, TRUE, 0))
+    {
+        PWINECRYPT_CERTSTORE memStore;
+
+        memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+        if (memStore)
+        {
+            if (CRYPT_ReadSerializedFile(file, memStore))
+            {
+                PWINE_FILESTOREINFO info = CryptMemAlloc(
+                 sizeof(WINE_FILESTOREINFO));
+
+                if (info)
+                {
+                    CERT_STORE_PROV_INFO provInfo = { 0 };
+
+                    info->dwOpenFlags = dwFlags;
+                    info->cryptProv = hCryptProv;
+                    info->memStore = memStore;
+                    info->file = file;
+                    info->dirty = FALSE;
+                    provInfo.cbSize = sizeof(provInfo);
+                    provInfo.cStoreProvFunc = sizeof(fileProvFuncs) /
+                     sizeof(fileProvFuncs[0]);
+                    provInfo.rgpvStoreProvFunc = fileProvFuncs;
+                    provInfo.hStoreProv = info;
+                    store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
+                     &provInfo);
+                }
+            }
+        }
+    }
+    TRACE("returning %p\n", store);
+    return store;
+}
+
 static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    FIXME("(%ld, %08lx, %s): stub\n", hCryptProv, dwFlags,
-     debugstr_w((LPCWSTR)pvPara));
-    return NULL;
+    HCERTSTORE store = 0;
+    LPCWSTR fileName = (LPCWSTR)pvPara;
+    DWORD access, create;
+    HANDLE file;
+
+    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags, debugstr_w(fileName));
+
+    if (!fileName)
+    {
+        SetLastError(ERROR_PATH_NOT_FOUND);
+        return NULL;
+    }
+    if (!(dwFlags & (CERT_FILE_STORE_COMMIT_ENABLE_FLAG |
+     CERT_STORE_READONLY_FLAG)))
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return NULL;
+    }
+
+    access = GENERIC_READ;
+    if (dwFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG)
+        access |= GENERIC_WRITE;
+    if (dwFlags & CERT_STORE_CREATE_NEW_FLAG)
+        create = CREATE_NEW;
+    else if (dwFlags & CERT_STORE_OPEN_EXISTING_FLAG)
+        create = OPEN_EXISTING;
+    else
+        create = OPEN_ALWAYS;
+    file = CreateFileW(fileName, access, FILE_SHARE_READ, NULL, create,
+     FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        /* FIXME: need to check whether it's a serialized store; if not, fall
+         * back to a PKCS#7 signed message, then to a single serialized cert.
+         */
+        store = CertOpenStore(CERT_STORE_PROV_FILE, 0, hCryptProv, dwFlags,
+         file);
+        CloseHandle(file);
+    }
+    return (PWINECRYPT_CERTSTORE)store;
 }
 
 static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
@@ -1788,6 +1992,9 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
         case (int)CERT_STORE_PROV_MEMORY:
             openFunc = CRYPT_MemOpenStore;
             break;
+        case (int)CERT_STORE_PROV_FILE:
+            openFunc = CRYPT_FileOpenStore;
+            break;
         case (int)CERT_STORE_PROV_REG:
             openFunc = CRYPT_RegOpenStore;
             break;
@@ -1822,6 +2029,8 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     }
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_MEMORY))
         openFunc = CRYPT_MemOpenStore;
+    else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_FILENAME_W))
+        openFunc = CRYPT_FileOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM))
         openFunc = CRYPT_SysOpenStoreW;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION))
