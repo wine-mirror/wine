@@ -298,18 +298,27 @@ static int write_thread_int( struct thread *thread, int *addr, int data, unsigne
     return res;
 }
 
+/* return a thread of the process suitable for ptracing */
+static struct thread *get_ptrace_thread( struct process *process )
+{
+    struct thread *thread;
+
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (thread->unix_pid != -1) return thread;
+    }
+    set_error( STATUS_ACCESS_DENIED );  /* process is dead */
+    return NULL;
+}
+
 /* read data from a process memory space */
 int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest )
 {
-    struct thread *thread = get_process_first_thread( process );
+    struct thread *thread = get_ptrace_thread( process );
     unsigned int first_offset, last_offset, len;
     int data, *addr;
 
-    if (!thread)  /* process is dead */
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
+    if (!thread) return 0;
 
     first_offset = (unsigned long)ptr % sizeof(int);
     last_offset = (size + first_offset) % sizeof(int);
@@ -366,17 +375,13 @@ static int check_process_write_access( struct thread *thread, int *addr, size_t 
 /* write data to a process memory space */
 int write_process_memory( struct process *process, void *ptr, size_t size, const char *src )
 {
-    struct thread *thread = get_process_first_thread( process );
+    struct thread *thread = get_ptrace_thread( process );
     int ret = 0, data = 0;
     size_t len;
     int *addr;
     unsigned int first_mask, first_offset, last_mask, last_offset;
 
-    if (!thread)  /* process is dead */
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
+    if (!thread) return 0;
 
     /* compute the mask for the first int */
     first_mask = ~0;
