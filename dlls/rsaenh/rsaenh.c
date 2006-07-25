@@ -2567,7 +2567,12 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 return tls1_prf(hProv, pCryptHash->hKey, &pCryptHash->tpPRFParams.blobLabel,
                                 &pCryptHash->tpPRFParams.blobSeed, pbData, *pdwDataLen);
             }
-            
+
+            if ( pbData == NULL ) {
+                *pdwDataLen = pCryptHash->dwHashSize;
+                return TRUE;
+            }
+
             if (pCryptHash->dwState == RSAENH_HASHSTATE_IDLE) {
                 SetLastError(NTE_BAD_HASH_STATE);
                 return FALSE;
