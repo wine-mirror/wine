@@ -74,6 +74,7 @@ char *WCMD_fgets (char *s, int n, HANDLE stream);
 char *WCMD_parameter (char *s, int n, char **where);
 char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
+void WCMD_opt_s_strip_quotes(char *cmd);
 
 /*	Data structure to hold context when executing batch files */
 

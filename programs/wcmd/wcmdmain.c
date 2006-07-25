@@ -37,6 +37,7 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 HINSTANCE hinst;
 DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0;
+static int opt_c, opt_k, opt_s;
 const char nyi[] = "Not Yet Implemented\n\n";
 const char newline[] = "\n";
 const char version_string[] = "WCMD Version " PACKAGE_VERSION "\n\n";
@@ -56,9 +57,9 @@ int main (int argc, char *argv[])
   char* cmd=NULL;
   DWORD count;
   HANDLE h;
-  int opt_c, opt_k, opt_q;
+  int opt_q;
 
-  opt_c=opt_k=opt_q=0;
+  opt_c=opt_k=opt_q=opt_s=0;
   while (*argv!=NULL)
   {
       char c;
@@ -74,6 +75,8 @@ int main (int argc, char *argv[])
           opt_q=1;
       } else if (tolower(c)=='k') {
           opt_k=1;
+      } else if (tolower(c)=='s') {
+          opt_s=1;
       } else if (tolower(c)=='t' || tolower(c)=='x' || tolower(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
@@ -92,12 +95,18 @@ int main (int argc, char *argv[])
   }
 
   if (opt_c || opt_k) {
-      int len;
+      int len,qcount;
       char** arg;
       char* p;
 
+      /* opt_s left unflagged if the command starts with and contains exactly
+       * one quoted string (exactly two quote characters). The quoted string
+       * must be an executable name that has whitespace and must not have the
+       * following characters: &<>()@^| */
+
       /* Build the command to execute */
       len = 0;
+      qcount = 0;
       for (arg = argv; *arg; arg++)
       {
           int has_space,bcount;
@@ -118,6 +127,7 @@ int main (int argc, char *argv[])
                        * plus escaping of said '"'
                        */
                       len+=2*bcount+1;
+                      qcount++;
                   }
                   bcount=0;
               }
@@ -125,7 +135,29 @@ int main (int argc, char *argv[])
           }
           len+=(a-*arg)+1 /* for the separating space */;
           if (has_space)
+          {
               len+=2; /* for the quotes */
+              qcount+=2;
+          }
+      }
+
+      if (qcount!=2)
+          opt_s=1;
+
+      /* check argv[0] for a space and invalid characters */
+      if (!opt_s) {
+          opt_s=1;
+          p=*argv;
+          while (*p!='\0') {
+              if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
+                  || *p=='@' || *p=='^' || *p=='|') {
+                  opt_s=1;
+                  break;
+              }
+              if (*p==' ')
+                  opt_s=0;
+              p++;
+          }
       }
 
       cmd = HeapAlloc(GetProcessHeap(), 0, len);
@@ -194,6 +226,11 @@ int main (int argc, char *argv[])
       if (p > cmd)
           p--;  /* remove last space */
       *p = '\0';
+
+      /* strip first and last quote characters if opt_s; check for invalid
+       * executable is done later */
+      if (opt_s && *cmd=='\"')
+          WCMD_opt_s_strip_quotes(cmd);
   }
 
   if (opt_c) {
@@ -614,6 +651,14 @@ char filetorun[MAX_PATH];
 
   status = CreateProcess (NULL, command, NULL, NULL, TRUE, 
                           0, NULL, NULL, &st, &pe);
+  if ((opt_c || opt_k) && !opt_s && !status
+      && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
+    /* strip first and last quote characters and try again */
+    WCMD_opt_s_strip_quotes(command);
+    opt_s=1;
+    WCMD_run_program(command, called);
+    return;
+  }
   if (!status) {
     WCMD_print_error ();
     return;
@@ -893,6 +938,26 @@ char *ptr;
   while ((*ptr == ' ') && (ptr >= string)) {
     *ptr = '\0';
     ptr--;
+  }
+}
+
+/*************************************************************************
+ * WCMD_opt_s_strip_quotes
+ *
+ *	Remove first and last quote characters, preserving all other text
+ */
+
+void WCMD_opt_s_strip_quotes(char *cmd) {
+  char *src = cmd + 1, *dest = cmd, *lastq = NULL;
+  while((*dest=*src) != '\0') {
+      if (*src=='\"')
+          lastq=dest;
+      dest++, src++;
+  }
+  if (lastq) {
+      dest=lastq++;
+      while ((*dest++=*lastq++) != 0)
+          ;
   }
 }
 
