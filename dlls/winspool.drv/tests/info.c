@@ -42,7 +42,7 @@ static FARPROC pSetDefaultPrinterA;
 
 struct monitor_entry {
     LPSTR  env;
-    LPSTR  dllname;
+    CHAR  dllname[32];
 };
 
 /* report common behavior only once */
