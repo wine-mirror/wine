@@ -99,7 +99,7 @@ static UINT WHERE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val
     return wv->table->ops->set_int( wv->table, row, col, val );
 }
 
-static UINT INT_evaluate( UINT lval, UINT op, UINT rval )
+static INT INT_evaluate( INT lval, UINT op, INT rval )
 {
     switch( op )
     {
@@ -156,7 +156,7 @@ static const WCHAR *STRING_evaluate( string_table *st,
 }
 
 static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val, MSIRECORD *record )
+                             struct expr *cond, INT *val, MSIRECORD *record )
 {
     int sr;
     const WCHAR *l_str, *r_str;
@@ -180,18 +180,25 @@ static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row,
 }
 
 static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val, MSIRECORD *record )
+                             struct expr *cond, INT *val, MSIRECORD *record )
 {
-    UINT r, lval, rval;
+    UINT r, tval;
+    INT lval, rval;
 
     if( !cond )
         return ERROR_SUCCESS;
 
     switch( cond->type )
     {
-    case EXPR_COL_NUMBER_STRING:
     case EXPR_COL_NUMBER:
-        return table->ops->fetch_int( table, row, cond->u.col_number, val );
+        r = table->ops->fetch_int( table, row, cond->u.col_number, &tval );
+        *val = tval - 0x8000;
+        return ERROR_SUCCESS;
+
+    case EXPR_COL_NUMBER32:
+        r = table->ops->fetch_int( table, row, cond->u.col_number, &tval );
+        *val = tval;
+        return r;
 
     case EXPR_UVAL:
         *val = cond->u.uval;
@@ -226,7 +233,8 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
 static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
-    UINT count = 0, r, val, i;
+    UINT count = 0, r, i;
+    INT val;
     MSIVIEW *table = wv->table;
 
     TRACE("%p %p\n", wv, record);
@@ -440,6 +448,8 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
             {
                 if (type&MSITYPE_STRING)
                     cond->type = EXPR_COL_NUMBER_STRING;
+                else if ((type&0xff) == 4)
+                    cond->type = EXPR_COL_NUMBER32;
                 else
                     cond->type = EXPR_COL_NUMBER;
                 cond->u.col_number = val;
@@ -490,7 +500,7 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
     case EXPR_IVAL:
         *valid = 1;
         cond->type = EXPR_UVAL;
-        cond->u.uval = cond->u.ival + (1<<15);
+        cond->u.uval = cond->u.ival;
         break;
     case EXPR_WILDCARD:
         *valid = 1;

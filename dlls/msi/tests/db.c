@@ -1029,11 +1029,8 @@ static void test_where(void)
 
     query = "SELECT * FROM `Media` WHERE `LastSequence` >= 1";
     r = do_query(hdb, query, &rec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
-        ok( check_record( rec, 4, "one.cab"), "wrong cabinet\n");
-    }
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
+    ok( check_record( rec, 4, "one.cab"), "wrong cabinet\n");
 
     MsiCloseHandle( hdb );
     DeleteFile(msifile);
