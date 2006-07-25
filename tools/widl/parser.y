@@ -343,16 +343,23 @@ m_attributes:					{ $$ = NULL; }
 	;
 
 attributes:
-	  '[' attrib_list ']'			{ $$ = $2; }
+	  '[' attrib_list ']'			{ $$ = $2;
+						  if (!$$)
+						    yyerror("empty attribute lists unsupported");
+						}
 	;
 
 attrib_list: attribute
-	| attrib_list ',' attribute		{ LINK($3, $1); $$ = $3; }
-	| attrib_list ']' '[' attribute		{ LINK($4, $1); $$ = $4; }
+	| attrib_list ',' attribute		{ if ($3) { LINK($3, $1); $$ = $3; }
+						  else { $$ = $1; }
+						}
+	| attrib_list ']' '[' attribute		{ if ($4) { LINK($4, $1); $$ = $4; }
+						  else { $$ = $1; }
+						}
 	;
 
-attribute:
-	  tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
+attribute:					{ $$ = NULL; }
+	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
 	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
 	| tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
 	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
