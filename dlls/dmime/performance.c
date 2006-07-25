@@ -170,6 +170,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSIC
 
   if (IsEqualIID (riid, &IID_IUnknown) || 
       IsEqualIID (riid, &IID_IDirectMusicPerformance) ||
+      IsEqualIID (riid, &IID_IDirectMusicPerformance2) ||
       IsEqualIID (riid, &IID_IDirectMusicPerformance8)) {
     IUnknown_AddRef(iface);
     *ppobj = This;
