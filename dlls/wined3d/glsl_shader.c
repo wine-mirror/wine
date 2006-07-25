@@ -1417,7 +1417,7 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
         case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
         case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
-            strcpy(dimensions, ""); break;
+            strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
             break;
     }
@@ -1447,7 +1447,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
         case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
         case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
-            strcpy(dimensions, ""); break;
+            strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
             break;
     }
@@ -1568,7 +1568,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
         case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
         case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
-            strcpy(dimensions, ""); break;
+            strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
             break;
     }
