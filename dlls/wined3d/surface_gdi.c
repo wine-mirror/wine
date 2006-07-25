@@ -178,6 +178,18 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
     TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n",
           This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
+    if(!This->resource.allocatedMemory) {
+        HDC hdc;
+        HRESULT hr;
+        /* This happens on gdi surfaces if the application set a user pointer and resets it.
+         * Recreate the DIB section
+         */
+        hr = IWineD3DSurface_GetDC(iface, &hdc);  /* will recursively call lockrect, do not set the LOCKED flag to this line */
+        if(hr != WINED3D_OK) return hr;
+        hr = IWineD3DSurface_ReleaseDC(iface, hdc);
+        if(hr != WINED3D_OK) return hr;
+    }
+
     pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
 
     if (NULL == pRect)
@@ -1570,6 +1582,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DSurfaceImpl_RealizePalette,
     IWineD3DSurfaceImpl_SetColorKey,
     IWineD3DSurfaceImpl_GetPitch,
+    IWineD3DSurfaceImpl_SetMem,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,

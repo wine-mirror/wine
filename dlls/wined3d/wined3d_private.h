@@ -929,6 +929,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC);
 HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC);
 DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem);
 
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
@@ -948,7 +949,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
 #define SFLAG_GLDIRTY     0x00004000 /* The opengl texture is more up to date than the surface mem */
 #define SFLAG_LOST        0x00008000 /* Surface lost flag for DDraw */
 #define SFLAG_FORCELOAD   0x00010000 /* To force PreLoading of a scratch cursor */
-
+#define SFLAG_USERPTR     0x00020000 /* The application allocated the memory for this surface */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -967,7 +968,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
                           SFLAG_LOCKED     | \
                           SFLAG_ACTIVELOCK | \
                           SFLAG_DYNLOCK    | \
-                          SFLAG_DYNCHANGE    )
+                          SFLAG_DYNCHANGE  | \
+                          SFLAG_USERPTR)
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 

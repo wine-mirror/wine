@@ -1130,6 +1130,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(RealizePalette)(THIS) PURE;
     STDMETHOD(SetColorKey)(THIS_ DWORD Flags, DDCOLORKEY *CKey) PURE;
     STDMETHOD_(DWORD,GetPitch)(THIS) PURE;
+    STDMETHOD(SetMem)(THIS_ void *mem) PURE;
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
@@ -1181,6 +1182,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_RealizePalette(p)            (p)->lpVtbl->RealizePalette(p)
 #define IWineD3DSurface_SetColorKey(p, a, b)         (p)->lpVtbl->SetColorKey(p, a, b)
 #define IWineD3DSurface_GetPitch(p)                  (p)->lpVtbl->GetPitch(p)
+#define IWineD3DSurface_SetMem(p, a)                 (p)->lpVtbl->SetMem(p, a)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)

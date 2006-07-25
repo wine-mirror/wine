@@ -1933,6 +1933,15 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
                                     DDCKEY_SRCBLT,
                                     &DDSD->ddckCKSrcBlt);
     }
+    if (DDSD->dwFlags & DDSD_LPSURFACE)
+    {
+        hr = IWineD3DSurface_SetMem(This->WineD3DSurface, DDSD->lpSurface);
+        if(hr != WINED3D_OK)
+        {
+            /* No need for a trace here, wined3d does that for us */
+            return hr;
+        }
+    }
 
     This->surface_desc = *DDSD;
 

@@ -102,6 +102,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             This->dib.bitmap_data = NULL;
             This->resource.allocatedMemory = NULL;
         }
+        IWineD3DSurface_SetMem(iface, NULL);
 
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         if(iface == device->ddraw_primary)
@@ -1161,6 +1162,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
     TRACE("(%p)->(%p)\n",This,pHDC);
 
+    if(This->Flags & SFLAG_USERPTR) {
+        ERR("Not supported on surfaces with an application-provided surfaces\n");
+        return DDERR_NODC;
+    }
+
     /* Give more detailed info for ddraw */
     if (This->Flags & SFLAG_DCINUSE)
         return DDERR_DCALREADYCREATED;
@@ -2104,6 +2110,49 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    /* Render targets depend on their hdc, and we can't create a hdc on a user pointer */
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        ERR("Not supported on render targets\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(This->Flags & (SFLAG_LOCKED | SFLAG_DCINUSE)) {
+        WARN("Surface is locked or the HDC is in use\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(Mem && Mem != This->resource.allocatedMemory) {
+
+        /* Do I have to copy the old surface content? */
+        if(This->Flags & SFLAG_DIBSECTION) {
+                /* Release the DC. No need to hold the critical section for the update
+                 * Thread because this thread runs only on front buffers, but this method
+                 * fails for render targets in the check above.
+                 */
+                SelectObject(This->hDC, This->dib.holdbitmap);
+                DeleteDC(This->hDC);
+                /* Release the DIB section */
+                DeleteObject(This->dib.DIBsection);
+                This->dib.bitmap_data = NULL;
+                This->resource.allocatedMemory = NULL;
+                This->hDC = NULL;
+                This->Flags &= ~SFLAG_DIBSECTION;
+        } else if(!(This->Flags & SFLAG_USERPTR)) {
+            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        }
+        This->resource.allocatedMemory = Mem;
+        This->Flags |= SFLAG_USERPTR;
+    } else if(This->Flags & SFLAG_USERPTR) {
+        /* Lockrect and GetDC will re-create the dib section and allocated memory */
+        This->resource.allocatedMemory = NULL;
+        This->Flags &= ~SFLAG_USERPTR;
+    }
+    return WINED3D_OK;
+}
+
 /* TODO: replace this function with context management routines */
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -2975,6 +3024,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_RealizePalette,
     IWineD3DSurfaceImpl_SetColorKey,
     IWineD3DSurfaceImpl_GetPitch,
+    IWineD3DSurfaceImpl_SetMem,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,

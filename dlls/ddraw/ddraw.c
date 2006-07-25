@@ -1790,13 +1790,6 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         }
     }
 
-    /* Get the surface parameters */
-    if ( pDDSD->dwFlags & DDSD_LPSURFACE)
-    {
-        ERR("(%p) Using a passed surface pointer is not yet supported\n", This);
-	assert(0);
-    }
-
     /* Get the correct wined3d usage */
     if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE |
                                  DDSCAPS_BACKBUFFER     |
@@ -1994,6 +1987,16 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
                                     DDCKEY_SRCBLT,
                                     &pDDSD->ddckCKSrcBlt);
+    }
+    if ( pDDSD->dwFlags & DDSD_LPSURFACE)
+    {
+        hr = IWineD3DSurface_SetMem((*ppSurf)->WineD3DSurface, pDDSD->lpSurface);
+        if(hr != WINED3D_OK)
+        {
+            /* No need for a trace here, wined3d does that for us */
+            IDirectDrawSurface7_Release(ICOM_INTERFACE((*ppSurf), IDirectDrawSurface7));
+            return hr;
+        }
     }
 
     return DD_OK;
