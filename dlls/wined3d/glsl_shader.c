@@ -1398,6 +1398,75 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.st);\n", reg, reg);
 }
 
+/** Process the D3DSIO_TEXM3X3TEX instruction in GLSL
+ * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculate coordinates */
+void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100];
+    char src0_name[50];
+    char src0_mask[6];
+    char dimensions[5];
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD stype = arg->reg_maps->samplers[src0_regnum] & D3DSP_TEXTURETYPE_MASK;
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
+    
+    switch (stype) {
+        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        default:
+            strcpy(dimensions, ""); break;
+            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            break;
+    }
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+    shader_addline(arg->buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
+            reg, dimensions, reg, (stype == D3DSTT_2D) ? "xy" : "xyz");
+    current_state->current_row = 0;
+}
+
+/** Process the D3DSIO_TEXM3X3SPEC instruction in GLSL 
+ * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
+void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    char dimensions[5];
+    char src0_str[100], src0_name[50], src0_mask[6];
+    char src1_str[100], src1_name[50], src1_mask[6];
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    DWORD stype = arg->reg_maps->samplers[reg] & D3DSP_TEXTURETYPE_MASK;
+
+    switch (stype) {
+        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        default:
+            strcpy(dimensions, ""); break;
+            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            break;
+    }
+
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_name, src1_mask, src1_str);
+
+    /* Perform the last matrix multiply operation */
+    shader_addline(buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+
+    /* Calculate reflection vector */
+    shader_addline(buffer, "tmp0.xyz = reflect(-vec3(%s), vec3(tmp0));\n", src1_str);
+
+    /* Sample the texture */
+    shader_addline(buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
+            reg, dimensions, reg, (stype == D3DSTT_2D) ? "xy" : "xyz");
+    current_state->current_row = 0;
+}
+
 /** Process the D3DSIO_TEXM3X3VSPEC instruction in GLSL 
  * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
@@ -1445,6 +1514,71 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     FIXME("Not applying the BUMPMAPENV matrix for pixel shader instruction texbem.\n");
     shader_addline(arg->buffer, "T%lu = texture2D(Psampler%lu, gl_TexCoord[%lu].xy + T%lu.xy);\n",
             reg1, reg1, reg1, reg2);
+}
+
+/** Process the D3DSIO_TEXREG2AR instruction in GLSL
+ * Sample 2D texture at dst using the alpha & red (wx) components of src as texture coordinates */
+void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
+    
+    char tmpLine[255];
+    char dst_str[100], src0_str[100];
+    char dst_reg[50], src0_reg[50];
+    char dst_mask[6], src0_mask[6];
+    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_addline(arg->buffer, "%stexture2D(Psampler%lu, %s.yz))%s;\n",
+            tmpLine, src0_regnum, dst_reg, dst_mask);
+}
+
+/** Process the D3DSIO_TEXREG2GB instruction in GLSL
+ * Sample 2D texture at dst using the green & blue (yz) components of src as texture coordinates */
+void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
+
+    char tmpLine[255];
+    char dst_str[100], src0_str[100];
+    char dst_reg[50], src0_reg[50];
+    char dst_mask[6], src0_mask[6];
+    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_addline(arg->buffer, "%stexture2D(Psampler%lu, %s.yz))%s;\n",
+            tmpLine, src0_regnum, dst_reg, dst_mask);
+}
+
+/** Process the D3DSIO_TEXREG2RGB instruction in GLSL
+ * Sample texture at dst using the rgb (xyz) components of src as texture coordinates */
+void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
+
+    char tmpLine[255];
+    char dst_str[100], src0_str[100];
+    char dst_reg[50], src0_reg[50];
+    char dst_mask[6], src0_mask[6];
+    char dimensions[5];
+    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD stype = arg->reg_maps->samplers[src0_regnum] & D3DSP_TEXTURETYPE_MASK;
+    switch (stype) {
+        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        default:
+            strcpy(dimensions, ""); break;
+            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            break;
+    }
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_addline(arg->buffer, "%stexture%s(Psampler%lu, %s.%s))%s;\n",
+            tmpLine, dimensions, src0_regnum, dst_reg, (stype == D3DSTT_2D) ? "xy" : "xyz", dst_mask);
 }
 
 /** Process the D3DSIO_TEXKILL instruction in GLSL.
