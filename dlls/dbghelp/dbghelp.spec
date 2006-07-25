@@ -99,7 +99,7 @@
 @ stub SymGetSourceVarFromToken
 @ stub SymGetSourceVarFromTokenW
 @ stdcall SymGetSymFromAddr(long long ptr ptr)
-@ stub SymGetSymFromAddr64
+@ stdcall SymGetSymFromAddr64(long long long ptr ptr)
 @ stdcall SymGetSymFromName(long str ptr)
 @ stub SymGetSymFromName64
 @ stdcall SymGetSymNext(long ptr)

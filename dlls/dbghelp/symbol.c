@@ -1046,6 +1046,34 @@ BOOL WINAPI SymGetSymFromAddr(HANDLE hProcess, DWORD Address,
     return TRUE;
 }
 
+/******************************************************************
+ *		SymGetSymFromAddr64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetSymFromAddr64(HANDLE hProcess, DWORD64 Address,
+                                PDWORD64 Displacement, PIMAGEHLP_SYMBOL64 Symbol)
+{
+    char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+    SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
+    size_t      len;
+    DWORD64     Displacement64;
+
+    if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = MAX_SYM_NAME;
+    if (!SymFromAddr(hProcess, Address, &Displacement64, si))
+        return FALSE;
+
+    if (Displacement)
+        *Displacement = Displacement64;
+    Symbol->Address = si->Address;
+    Symbol->Size    = si->Size;
+    Symbol->Flags   = si->Flags;
+    len = min(Symbol->MaxNameLength, si->MaxNameLen);
+    lstrcpynA(Symbol->Name, si->Name, len);
+    return TRUE;
+}
+
 static BOOL find_name(struct process* pcs, struct module* module, const char* name,
                       SYMBOL_INFO* symbol)
 {
