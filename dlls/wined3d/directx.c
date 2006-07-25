@@ -1540,16 +1540,13 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          */
         case WINED3DFMT_V8U8:
         case WINED3DFMT_V16U16:
-            WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
-            return WINED3D_OK;
-
         case WINED3DFMT_L6V5U5:
         case WINED3DFMT_X8L8V8U8:
         case WINED3DFMT_Q8W8V8U8:
         case WINED3DFMT_W11V11U10:
         case WINED3DFMT_A2W10V10U10:
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return D3DERR_NOTAVAILABLE;
+            WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
+            return WINED3D_OK;
 
         /*****
          *  DXTN Formats: Handled above
