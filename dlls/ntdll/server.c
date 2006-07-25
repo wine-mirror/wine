@@ -141,6 +141,7 @@ void server_exit_thread( int status )
 {
     struct wine_pthread_thread_info info;
     SIZE_T size;
+    int fds[4];
 
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );
@@ -151,6 +152,11 @@ void server_exit_thread( int status )
     info.teb_sel     = wine_get_fs();
     info.exit_status = status;
 
+    fds[0] = ntdll_get_thread_data()->wait_fd[0];
+    fds[1] = ntdll_get_thread_data()->wait_fd[1];
+    fds[2] = ntdll_get_thread_data()->reply_fd;
+    fds[3] = ntdll_get_thread_data()->request_fd;
+
     size = 0;
     NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
     info.stack_size = size;
@@ -160,10 +166,10 @@ void server_exit_thread( int status )
     info.teb_size = size;
 
     pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
-    close( ntdll_get_thread_data()->wait_fd[0] );
-    close( ntdll_get_thread_data()->wait_fd[1] );
-    close( ntdll_get_thread_data()->reply_fd );
-    close( ntdll_get_thread_data()->request_fd );
+    close( fds[0] );
+    close( fds[1] );
+    close( fds[2] );
+    close( fds[3] );
     pthread_functions.exit_thread( &info );
 }
 
