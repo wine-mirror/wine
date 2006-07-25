@@ -990,7 +990,7 @@ static void test_streamtable(void)
 static void test_where(void)
 {
     MSIHANDLE hdb = 0, rec;
-    LPSTR query;
+    LPCSTR query;
     UINT r;
 
     hdb = create_db();
