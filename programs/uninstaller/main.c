@@ -76,8 +76,7 @@ static void ListUninstallPrograms(void)
     char *descr;
     char *key;
 
-    if (! FetchUninstallInformation())
-        return;
+    FetchUninstallInformation();
 
     for (i=0; i < numentries; i++)
     {
@@ -100,8 +99,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
     int lenName;
     char *name;
 
-    if (! FetchUninstallInformation())
-        return;
+    FetchUninstallInformation();
 
     for (i=0; i < numentries; i++)
     {
@@ -196,10 +194,7 @@ static int FetchUninstallInformation(void)
     numentries = 0;
     oldsel = -1;
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS)
-    {
-        MessageBoxW(0, sRegistryKeyNotAvailable, sAppName, MB_OK);
         return 0;
-    }
 
     if (!entries)
         entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
@@ -363,6 +358,7 @@ static void UpdateList(HWND hList)
         prevsel = SendMessageW(hList, LB_GETCURSEL, 0, 0);
         if (!(FetchUninstallInformation()))
         {
+            MessageBoxW(0, sRegistryKeyNotAvailable, sAppName, MB_OK);
             PostQuitMessage(0);
             return;
         }
