@@ -315,10 +315,8 @@ static void test_getsourcepath( void )
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
     ok( r == ERROR_DIRECTORY, "return value wrong\n");
 
-    todo_wine {
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
-    }
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 

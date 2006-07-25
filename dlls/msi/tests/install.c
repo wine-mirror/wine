@@ -661,10 +661,7 @@ static void test_MsiSetComponentState(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiDoAction(package, "CostInitialize");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiDoAction(package, "FileCost");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);

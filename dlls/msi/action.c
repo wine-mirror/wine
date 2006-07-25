@@ -1095,13 +1095,16 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
     return rc;
 }
 
-static MSICOMPONENT* load_component( MSIRECORD * row )
+static UINT load_component( MSIRECORD *row, LPVOID param )
 {
+    MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
 
     comp = msi_alloc_zero( sizeof(MSICOMPONENT) );
     if (!comp)
-        return comp;
+        return ERROR_FUNCTION_FAILED;
+
+    list_add_tail( &package->components, &comp->entry );
 
     /* fill in the data */
     comp->Component = msi_dup_record_field( row, 1 );
@@ -1118,26 +1121,41 @@ static MSICOMPONENT* load_component( MSIRECORD * row )
 
     switch (comp->Attributes)
     {
-        case msidbComponentAttributesLocalOnly:
-            comp->Action = INSTALLSTATE_LOCAL;
-            comp->ActionRequest = INSTALLSTATE_LOCAL;
-            break;
-        case msidbComponentAttributesSourceOnly:
-            comp->Action = INSTALLSTATE_SOURCE;
-            comp->ActionRequest = INSTALLSTATE_SOURCE;
-            break;
-        case msidbComponentAttributesOptional:
-            comp->Action = INSTALLSTATE_LOCAL;
-            comp->ActionRequest = INSTALLSTATE_LOCAL;
-            break;
-        default:
-            comp->Action = INSTALLSTATE_UNKNOWN;
-            comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+    case msidbComponentAttributesLocalOnly:
+    case msidbComponentAttributesOptional:
+        comp->Action = INSTALLSTATE_LOCAL;
+        comp->ActionRequest = INSTALLSTATE_LOCAL;
+        break;
+    case msidbComponentAttributesSourceOnly:
+        comp->Action = INSTALLSTATE_SOURCE;
+        comp->ActionRequest = INSTALLSTATE_SOURCE;
+        break;
+    default:
+        comp->Action = INSTALLSTATE_UNKNOWN;
+        comp->ActionRequest = INSTALLSTATE_UNKNOWN;
     }
 
-    comp->Enabled = TRUE;
+    return ERROR_SUCCESS;
+}
 
-    return comp;
+static UINT load_all_components( MSIPACKAGE *package )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
+         '`','C','o','m','p','o','n','e','n','t','`',0 };
+    MSIQUERY *view;
+    UINT r;
+
+    if (!list_empty(&package->components))
+        return ERROR_SUCCESS;
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_IterateRecords(view, NULL, load_component, package);
+    msiobj_release(&view->hdr);
+    return r;
 }
 
 typedef struct {
@@ -1158,56 +1176,24 @@ static UINT add_feature_component( MSIFEATURE *feature, MSICOMPONENT *comp )
     return ERROR_SUCCESS;
 }
 
-static UINT iterate_component_check( MSIRECORD *row, LPVOID param )
-{
-    _ilfs* ilfs= (_ilfs*)param;
-    MSIPACKAGE *package = ilfs->package;
-    MSIFEATURE *feature = ilfs->feature;
-    MSICOMPONENT *comp;
-
-    comp = load_component( row );
-    if (!comp)
-        return ERROR_FUNCTION_FAILED;
-
-    list_add_tail( &package->components, &comp->entry );
-    add_feature_component( feature, comp );
-
-    TRACE("Loaded new component %p\n", comp);
-
-    return ERROR_SUCCESS;
-}
-
 static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
 {
     _ilfs* ilfs= (_ilfs*)param;
     LPCWSTR component;
-    DWORD rc;
     MSICOMPONENT *comp;
-    MSIQUERY * view;
-    static const WCHAR Query[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         'W','H','E','R','E',' ', 
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         '=','\'','%','s','\'',0};
 
     component = MSI_RecordGetString(row,1);
 
     /* check to see if the component is already loaded */
     comp = get_loaded_component( ilfs->package, component );
-    if (comp)
+    if (!comp)
     {
-        TRACE("Component %s already loaded\n", debugstr_w(component) );
-        add_feature_component( ilfs->feature, comp );
-        return ERROR_SUCCESS;
+        ERR("unknown component %s\n", debugstr_w(component));
+        return ERROR_FUNCTION_FAILED;
     }
 
-    rc = MSI_OpenQuery(ilfs->package->db, &view, Query, component);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords(view, NULL, iterate_component_check, ilfs);
-    msiobj_release( &view->hdr );
+    add_feature_component( ilfs->feature, comp );
+    comp->Enabled = TRUE;
 
     return ERROR_SUCCESS;
 }
@@ -1269,6 +1255,27 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     msiobj_release(&view->hdr);
 
     return ERROR_SUCCESS;
+}
+
+static UINT load_all_features( MSIPACKAGE *package )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','F','e','a','t','u','r','e','`',' ','O','R','D','E','R',
+        ' ','B','Y',' ','`','D','i','s','p','l','a','y','`',0};
+    MSIQUERY *view;
+    UINT r;
+
+    if (!list_empty(&package->features))
+        return ERROR_SUCCESS;
+ 
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_IterateRecords( view, NULL, load_feature, package );
+    msiobj_release( &view->hdr );
+    return r;
 }
 
 static LPWSTR folder_split_path(LPWSTR p, WCHAR ch)
@@ -1361,12 +1368,6 @@ static UINT load_all_files(MSIPACKAGE *package)
  */
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
-    MSIQUERY * view;
-    UINT rc;
-    static const WCHAR Query_all[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','F','e','a','t','u','r','e','`',' ','O','R','D','E','R',
-         ' ','B','Y',' ','`','D','i','s','p','l','a','y','`',0};
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
@@ -1375,19 +1376,11 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
         return ERROR_SUCCESS;
 
     MSI_SetPropertyW(package, szCosting, szZero);
-    MSI_SetPropertyW(package, cszRootDrive , c_colon);
+    MSI_SetPropertyW(package, cszRootDrive, c_colon);
 
-    rc = MSI_DatabaseOpenViewW(package->db,Query_all,&view);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    if (list_empty(&package->features))
-    {
-        rc = MSI_IterateRecords(view, NULL, load_feature, package);
-        msiobj_release(&view->hdr);
-    }
-
-    load_all_files(package);
+    load_all_components( package );
+    load_all_features( package );
+    load_all_files( package );
 
     return ERROR_SUCCESS;
 }
