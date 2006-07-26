@@ -1635,13 +1635,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     if (This->Flags & SFLAG_DIRTY) {
         TRACE("Reloading because surface is dirty\n");
     } else if(/* Reload: gl texture has ck, now no ckey is set OR */
-              (This->Flags & SFLAG_GLCKEY && !(This->CKeyFlags & DDSD_CKSRCBLT)) ||
+              ((This->Flags & SFLAG_GLCKEY) && (!(This->CKeyFlags & DDSD_CKSRCBLT))) ||
               /* Reload: vice versa  OR */
-              (!(This->Flags & SFLAG_GLCKEY) && !This->CKeyFlags & DDSD_CKSRCBLT) ||
+              ((!(This->Flags & SFLAG_GLCKEY)) && (This->CKeyFlags & DDSD_CKSRCBLT)) ||
               /* Also reload: Color key is active AND the color key has changed */
-              (This->CKeyFlags & DDSD_CKSRCBLT) && (
-                This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue ||
-                This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)) {
+              ((This->CKeyFlags & DDSD_CKSRCBLT) && (
+                (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue) ||
+                (This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))) {
         TRACE("Reloading because of color keying\n");
     } else {
         TRACE("surface isn't dirty\n");
@@ -2304,6 +2304,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 ( swapchain->backBuffer && (IWineD3DSurface *) Src != swapchain->backBuffer[0]) ) ) {
             float glTexCoord[4];
             DWORD oldCKey;
+            DDCOLORKEY oldBltCKey = {0,0};
             GLint oldLight, oldFog, oldDepth, oldBlend, oldCull, oldAlpha;
             GLint alphafunc;
             GLclampf alpharef;
@@ -2344,6 +2345,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                  */
                 Src->CKeyFlags &= ~DDSD_CKSRCBLT;
             }
+
+            /* Color keying */
+            if(Flags & DDBLT_KEYDEST) {
+                oldBltCKey = This->SrcBltCKey;
+                /* Temporary replace the source color key with the destination one. We do this because the color conversion code which
+                 * is in the end called from LoadTexture works with the source color. At the end of this function we restore the color key.
+                 */
+                This->SrcBltCKey = This->DestBltCKey;
+            } else if (Flags & DDBLT_KEYSRC)
+                oldBltCKey = This->SrcBltCKey;
 
             /* Now load the surface */
             IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
@@ -2506,10 +2517,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 glDrawBuffer(oldDraw);
             }
 
-            /* Restore the color key */
+            /* Restore the color key flags */
             if(oldCKey != Src->CKeyFlags) {
                 Src->CKeyFlags = oldCKey;
             }
+
+            /* Restore the old color key */
+            if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST))
+                This->SrcBltCKey = oldBltCKey;
 
             LEAVE_GL();
 
@@ -2759,6 +2774,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
         ( srcImpl && (srcImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) )) {
 
         RECT SrcRect, DstRect;
+        DWORD Flags=0;
 
         if(rsrc) {
             SrcRect.left = rsrc->left;
@@ -2777,7 +2793,17 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
         DstRect.right = dstx + SrcRect.right - SrcRect.left;
         DstRect.bottom = dsty + SrcRect.bottom - SrcRect.top;
 
-        if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, 0, NULL) == WINED3D_OK) return WINED3D_OK;
+        /* Convert BltFast flags into Btl ones because it is called from SurfaceImpl_Blt aswell */
+        if(trans & DDBLTFAST_SRCCOLORKEY)
+            Flags |= DDBLT_KEYSRC;
+        if(trans & DDBLTFAST_DESTCOLORKEY)
+            Flags |= DDBLT_KEYDEST;
+        if(trans & DDBLTFAST_WAIT)
+            Flags |= DDBLT_WAIT;
+        if(trans & DDBLTFAST_DONOTWAIT)
+            Flags |= DDBLT_DONOTWAIT;
+
+        if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, Flags, NULL) == WINED3D_OK) return WINED3D_OK;
     }
 
 
