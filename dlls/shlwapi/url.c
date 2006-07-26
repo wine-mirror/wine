@@ -330,7 +330,9 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     LPWSTR lpszUrlCpy, wk1, wk2, mp, mp2, root;
     INT nByteLen, state;
     DWORD nLen, nWkLen;
-    WCHAR slash = dwFlags & URL_FILE_USE_PATHURL ? '\\' : '/';
+    WCHAR slash = '/';
+
+    static const WCHAR wszFile[] = {'f','i','l','e',':'};
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
@@ -340,6 +342,10 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
     nByteLen = (lstrlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, nByteLen);
+
+    if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
+            && !memcmp(wszFile, pszUrl, sizeof(wszFile)))
+        slash = '\\';
 
     /*
      * state =

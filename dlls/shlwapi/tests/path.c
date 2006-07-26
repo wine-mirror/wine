@@ -75,6 +75,8 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"file:///c://tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\\\tests\\foo bar"},
     {"file:///c:\\tests\\foo bar", 0, S_OK, "file:///c:/tests/foo bar"},
     {"file:///c:\\tests\\foo bar", URL_DONT_SIMPLIFY, S_OK, "file:///c:/tests/foo bar"},
+    {"http://www.winehq.org/site/about", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org/site/about"},
+    {"file_://www.winehq.org/site/about", URL_FILE_USE_PATHURL, S_OK, "file_://www.winehq.org/site/about"},
 };
 
 typedef struct _TEST_URL_ESCAPE {
