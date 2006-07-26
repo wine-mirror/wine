@@ -164,11 +164,12 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     MSG                 msg;
     LONG                lHash = 0;
     HLPFILE*            hlpfile;
-    char*               wndname = "main";
+    static CHAR         default_wndname[] = "main";
+    LPSTR               wndname = default_wndname;
     WINHELP_DLL*        dll;
 
     Globals.hInstance = hInstance;
-    
+
     /* Get options */
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
     {
