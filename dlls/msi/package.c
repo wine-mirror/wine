@@ -35,6 +35,8 @@
 #include "objidl.h"
 #include "wincrypt.h"
 #include "winuser.h"
+#include "wininet.h"
+#include "urlmon.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
 #include "objbase.h"
@@ -452,6 +454,38 @@ static LPCWSTR copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
     return filename;
 }
 
+static LPCWSTR msi_download_package( LPCWSTR szUrl, LPWSTR filename )
+{
+    LPINTERNET_CACHE_ENTRY_INFOW cache_entry;
+    DWORD size = 0;
+    HRESULT hr;
+
+    /* call will always fail, becase size is 0,
+     * but will return ERROR_FILE_NOT_FOUND first
+     * if the file doesn't exist
+     */
+    GetUrlCacheEntryInfoW( szUrl, NULL, &size );
+    if ( GetLastError() != ERROR_FILE_NOT_FOUND )
+    {
+        cache_entry = HeapAlloc( GetProcessHeap(), 0, size );
+        if ( !GetUrlCacheEntryInfoW( szUrl, cache_entry, &size ) )
+        {
+            HeapFree( GetProcessHeap(), 0, cache_entry );
+            return szUrl;
+        }
+
+        lstrcpyW( filename, cache_entry->lpszLocalFileName );
+        HeapFree( GetProcessHeap(), 0, cache_entry );
+        return filename;
+    }
+
+    hr = URLDownloadToCacheFileW( NULL, szUrl, filename, MAX_PATH, 0, NULL );
+    if ( FAILED(hr) )
+        return szUrl;
+
+    return filename;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     MSIDATABASE *db = NULL;
@@ -471,7 +505,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     else
     {
         WCHAR temppath[MAX_PATH];
-        LPCWSTR file = copy_package_to_temp( szPackage, temppath );
+        LPCWSTR file;
+
+        if ( UrlIsW( szPackage, URLIS_URL ) )
+            file = msi_download_package( szPackage, temppath );
+        else
+            file = copy_package_to_temp( szPackage, temppath );
 
         r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
 
