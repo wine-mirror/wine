@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 #ifdef __i386__
 
   /* debugger/db_disasm.c */
-extern void             be_i386_disasm_one_insn(ADDRESS* addr, int display);
+extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define STEP_FLAG 0x00000100 /* single step flag */
 #define V86_FLAG  0x00020000
@@ -46,30 +46,31 @@ static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD s
     return -1;
 }
 
-static void* be_i386_linearize(HANDLE hThread, const ADDRESS* addr)
+static void* be_i386_linearize(HANDLE hThread, const ADDRESS64* addr)
 {
     LDT_ENTRY	le;
 
     switch (addr->Mode)
     {
     case AddrModeReal:
-        return (void*)((DWORD)(LOWORD(addr->Segment) << 4) + addr->Offset);
+        return (void*)((DWORD)(LOWORD(addr->Segment) << 4) + (DWORD)addr->Offset);
     case AddrMode1632:
         if (!(addr->Segment & 4) || ((addr->Segment >> 3) < 17))
-            return (void*)addr->Offset;
+            return (void*)(DWORD)addr->Offset;
         /* fall through */
     case AddrMode1616:
         if (!GetThreadSelectorEntry(hThread, addr->Segment, &le)) return NULL;
         return (void*)((le.HighWord.Bits.BaseHi << 24) + 
-                       (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->Offset);
+                       (le.HighWord.Bits.BaseMid << 16) + le.BaseLow +
+                       (DWORD)addr->Offset);
         break;
     case AddrModeFlat:
-        return (void*)addr->Offset;
+        return (void*)(DWORD)addr->Offset;
     }
     return NULL;
 }
 
-static unsigned be_i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* addr,
+static unsigned be_i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
                                    unsigned seg, unsigned long offset)
 {
     addr->Mode    = AddrModeFlat;
@@ -96,7 +97,7 @@ static unsigned be_i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* 
 }
 
 static unsigned be_i386_get_addr(HANDLE hThread, const CONTEXT* ctx, 
-                                 enum be_cpu_addr bca, ADDRESS* addr)
+                                 enum be_cpu_addr bca, ADDRESS64* addr)
 {
     switch (bca)
     {
@@ -378,7 +379,7 @@ static unsigned be_i386_is_break_insn(const void* insn)
     return c == 0xCC;
 }
 
-static unsigned be_i386_is_func_call(const void* insn, ADDRESS* callee)
+static unsigned be_i386_is_func_call(const void* insn, ADDRESS64* callee)
 {
     BYTE        ch;
     int         delta;

@@ -29,20 +29,20 @@ struct backend_cpu
     /* Linearizes an address. Only CPUs with segmented address model need this.
      * Otherwise, implementation is straigthforward (be_cpu_linearize will do)
      */
-    void*               (*linearize)(HANDLE hThread, const ADDRESS*);
-    /* Fills in an ADDRESS structure from a segment & an offset. CPUs without
+    void*               (*linearize)(HANDLE hThread, const ADDRESS64*);
+    /* Fills in an ADDRESS64 structure from a segment & an offset. CPUs without
      * segment address model should use 0 as seg. Required method to fill
-     * in an ADDRESS (except an linear one).
+     * in an ADDRESS64 (except an linear one).
      * Non segmented CPU shall use be_cpu_build_addr
      */
     unsigned            (*build_addr)(HANDLE hThread, const CONTEXT* ctx, 
-                                      ADDRESS* addr, unsigned seg,
+                                      ADDRESS64* addr, unsigned seg,
                                       unsigned long offset);
     /* Retrieves in addr an address related to the context (program counter, stack
      * pointer, frame pointer)
      */
     unsigned            (*get_addr)(HANDLE hThread, const CONTEXT* ctx, 
-                                    enum be_cpu_addr, ADDRESS* addr);
+                                    enum be_cpu_addr, ADDRESS64* addr);
     /* -------------------------------------------------------------------------------
      * context manipulation 
      * ------------------------------------------------------------------------------- */
@@ -73,11 +73,11 @@ struct backend_cpu
      */
     unsigned            (*is_break_insn)(const void*);
     /* Check whether instruciton at 'addr' is a function call */
-    unsigned            (*is_function_call)(const void* insn, ADDRESS* callee);
+    unsigned            (*is_function_call)(const void* insn, ADDRESS64* callee);
     /* Ask for dissasembling one instruction. If display is true, assembly code
      * will be printed. In all cases, 'addr' is advanced at next instruction
      */
-    void                (*disasm_one_insn)(ADDRESS* addr, int display);
+    void                (*disasm_one_insn)(ADDRESS64* addr, int display);
     /* -------------------------------------------------------------------------------
      * break points / watchpoints handling 
      * -------------------------------------------------------------------------------*/
@@ -111,6 +111,6 @@ struct backend_cpu
 extern struct backend_cpu*      be_cpu;
 
 /* some handy functions for non segmented CPUs */
-void*    be_cpu_linearize(HANDLE hThread, const ADDRESS*);
-unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* addr, 
+void*    be_cpu_linearize(HANDLE hThread, const ADDRESS64*);
+unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr, 
                            unsigned seg, unsigned long offset);

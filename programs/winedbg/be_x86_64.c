@@ -23,7 +23,7 @@
 #if defined(__x86_64__)
 
 static unsigned be_x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx, 
-                                 enum be_cpu_addr bca, ADDRESS* addr)
+                                 enum be_cpu_addr bca, ADDRESS64* addr)
 {
     addr->Mode = AddrModeFlat;
     switch (bca)
@@ -142,13 +142,13 @@ static unsigned be_x86_64_is_break_insn(const void* insn)
     return FALSE;
 }
 
-static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS* callee)
+static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
 {
     dbg_printf("not done is_func_call\n");
     return FALSE;
 }
 
-static void be_x86_64_disasm_one_insn(ADDRESS* addr, int display)
+static void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display)
 {
     dbg_printf("Disasm NIY\n");
 }

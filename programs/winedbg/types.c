@@ -132,7 +132,7 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
  *
  *
  */
-void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS* addr)
+void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
 {
     if (lvalue->type.id == dbg_itype_segptr && lvalue->type.module == 0)
     {

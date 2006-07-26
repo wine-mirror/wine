@@ -101,7 +101,7 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
 
 BOOL stack_set_frame(int newframe)
 {
-    ADDRESS     addr;
+    ADDRESS64   addr;
     if (!stack_set_frame_internal(newframe)) return FALSE;
     addr.Mode = AddrModeFlat;
     addr.Offset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
@@ -124,7 +124,7 @@ BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
                        &disp, symbol);
 }
 
-static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD addr, 
+static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr, 
                                     PVOID buffer, DWORD size, PDWORD written)
 {
     SIZE_T sz;
@@ -132,7 +132,8 @@ static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD addr,
 
     struct dbg_process* pcs = dbg_get_process_h(hProc);
     if (!pcs) return FALSE;
-    ret = pcs->process_io->read(hProc, (const void*)addr, buffer, size, &sz);
+    ret = pcs->process_io->read(hProc, (const void*)(DWORD_PTR)addr, buffer,
+                                size, &sz);
     if (written != NULL) *written = sz;
     return ret;
 }
@@ -144,8 +145,8 @@ static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD addr,
  */
 unsigned stack_fetch_frames(void)
 {
-    STACKFRAME  sf;
-    unsigned    nf = 0;
+    STACKFRAME64 sf;
+    unsigned     nf = 0;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
@@ -161,9 +162,9 @@ unsigned stack_fetch_frames(void)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
-                     dbg_curr_thread->handle, &sf, &dbg_context, stack_read_mem,
-                     SymFunctionTableAccess, SymGetModuleBase, NULL))
+    while (StackWalk64(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
+                       dbg_curr_thread->handle, &sf, &dbg_context, stack_read_mem,
+                       SymFunctionTableAccess64, SymGetModuleBase64, NULL))
     {
         dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 
                                                    (nf + 1) * sizeof(dbg_curr_thread->frames[0]));

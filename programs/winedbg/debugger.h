@@ -105,7 +105,7 @@ struct dbg_lvalue       /* structure to hold left-values... */
  */
 #	define	DLV_TARGET	0xF00D
 #	define	DLV_HOST	0x50DA
-    ADDRESS             addr;
+    ADDRESS64           addr;
     struct dbg_type     type;
 };
 
@@ -127,7 +127,7 @@ enum dbg_exec_mode
 
 struct dbg_breakpoint
 {
-    ADDRESS             addr;
+    ADDRESS64           addr;
     unsigned long       enabled : 1,
                         xpoint_type : 2,
                         refcount : 13,
@@ -174,8 +174,8 @@ struct dbg_thread
     EXCEPTION_RECORD            excpt_record;   /* only valid when in_exception is TRUE */
     struct
     {
-        ADDRESS                 addr_pc;
-        ADDRESS                 addr_frame;
+        ADDRESS64               addr_pc;
+        ADDRESS64               addr_frame;
     }*                          frames;
     int                         num_frames;
     int                         curr_frame;
@@ -192,7 +192,7 @@ struct dbg_delayed_bp
             int				lineno;
             char*			name;
         } symbol;
-        ADDRESS                 addr;
+        ADDRESS64               addr;
     } u;
 };
 
@@ -263,7 +263,7 @@ enum dbg_start {start_ok, start_error_parse, start_error_init};
 
   /* break.c */
 extern void             break_set_xpoints(BOOL set);
-extern BOOL             break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp);
+extern BOOL             break_add_break(const ADDRESS64* addr, BOOL verbose, BOOL swbp);
 extern BOOL             break_add_break_from_lvalue(const struct dbg_lvalue* value, BOOL swbp);
 extern void             break_add_break_from_id(const char* name, int lineno, BOOL swbp);
 extern void             break_add_break_from_lineno(int lineno, BOOL swbp);
@@ -274,7 +274,7 @@ extern void             break_delete_xpoint(int num);
 extern void             break_delete_xpoints_from_module(unsigned long base);
 extern void             break_enable_xpoint(int num, BOOL enable);
 extern void             break_info(void);
-extern BOOL             break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break);
+extern BOOL             break_should_continue(ADDRESS64* addr, DWORD code, int* count, BOOL* is_break);
 extern void             break_suspend_execution(void);
 extern void             break_restart_execution(int count);
 extern int              break_add_condition(int bpnum, struct expr* exp);
@@ -333,22 +333,24 @@ extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const 
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
 extern BOOL             memory_write_value(const struct dbg_lvalue* val, DWORD size, void* value);
 extern void             memory_examine(const struct dbg_lvalue *lvalue, int count, char format);
-extern void*            memory_to_linear_addr(const ADDRESS* address);
-extern BOOL             memory_get_current_pc(ADDRESS* address);
-extern BOOL             memory_get_current_stack(ADDRESS* address);
-extern BOOL             memory_get_current_frame(ADDRESS* address);
+extern void*            memory_to_linear_addr(const ADDRESS64* address);
+extern BOOL             memory_get_current_pc(ADDRESS64* address);
+extern BOOL             memory_get_current_stack(ADDRESS64* address);
+extern BOOL             memory_get_current_frame(ADDRESS64* address);
 extern BOOL             memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_register(DWORD regno, DWORD** value, char* buffer, int len);
 extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int instruction_count);
-extern BOOL             memory_disasm_one_insn(ADDRESS* addr);
-extern void             print_bare_address(const ADDRESS* addr);
-extern void             print_address(const ADDRESS* addr, BOOLEAN with_line);
+extern BOOL             memory_disasm_one_insn(ADDRESS64* addr);
+#define MAX_OFFSET_TO_STR_LEN 19
+extern char*            memory_offset_to_string(char *str, DWORD64 offset, unsigned mode);
+extern void             print_bare_address(const ADDRESS64* addr);
+extern void             print_address(const ADDRESS64* addr, BOOLEAN with_line);
 extern void             print_basic(const struct dbg_lvalue* value, int count, char format);
 
   /* source.c */
 extern void             source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta);
-extern void             source_list_from_addr(const ADDRESS* addr, int nlines);
+extern void             source_list_from_addr(const ADDRESS64* addr, int nlines);
 extern void             source_show_path(void);
 extern void             source_add_path(const char* path);
 extern void             source_nuke_path(void);
@@ -364,7 +366,7 @@ extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
   /* symbol.c */
 extern enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno, struct dbg_lvalue* addr, BOOL bp_disp);
 extern void             symbol_read_symtable(const char* filename, unsigned long offset);
-extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr);
+extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr);
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE* ret);
 extern void             symbol_info(const char* str);
 extern int              symbol_info_locals(void);
@@ -387,7 +389,7 @@ extern void             print_value(const struct dbg_lvalue* addr, char format, 
 extern int              types_print_type(const struct dbg_type*, BOOL details);
 extern int              print_types(void);
 extern long int         types_extract_as_integer(const struct dbg_lvalue*);
-extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS*);
+extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS64*);
 extern BOOL             types_deref(const struct dbg_lvalue* value, struct dbg_lvalue* result);
 extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, long int* tmpbuf);
 extern BOOL             types_array_index(const struct dbg_lvalue* value, int index, struct dbg_lvalue* result);

@@ -32,13 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-void* be_cpu_linearize(HANDLE hThread, const ADDRESS* addr)
+void* be_cpu_linearize(HANDLE hThread, const ADDRESS64* addr)
 {
     assert(addr->Mode == AddrModeFlat);
-    return (void*)addr->Offset;
+    return (void*)(DWORD_PTR)addr->Offset;
 }
 
-unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* addr, 
+unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr, 
                            unsigned seg, unsigned long offset)
 {
     addr->Mode    = AddrModeFlat;
@@ -47,26 +47,26 @@ unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* addr,
     return TRUE;
 }
 
-void* memory_to_linear_addr(const ADDRESS* addr)
+void* memory_to_linear_addr(const ADDRESS64* addr)
 {
     return be_cpu->linearize(dbg_curr_thread->handle, addr);
 }
 
-BOOL memory_get_current_pc(ADDRESS* addr)
+BOOL memory_get_current_pc(ADDRESS64* addr)
 {
     assert(be_cpu->get_addr);
     return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
                             be_cpu_addr_pc, addr);
 }
 
-BOOL memory_get_current_stack(ADDRESS* addr)
+BOOL memory_get_current_stack(ADDRESS64* addr)
 {
     assert(be_cpu->get_addr);
     return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
                             be_cpu_addr_stack, addr);
 }
 
-BOOL memory_get_current_frame(ADDRESS* addr)
+BOOL memory_get_current_frame(ADDRESS64* addr)
 {
     assert(be_cpu->get_addr);
     return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
@@ -75,7 +75,7 @@ BOOL memory_get_current_frame(ADDRESS* addr)
 
 static void	memory_report_invalid_addr(const void* addr)
 {
-    ADDRESS     address;
+    ADDRESS64   address;
 
     address.Mode    = AddrModeFlat;
     address.Segment = 0;
@@ -104,7 +104,7 @@ BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result
     {
         if (lvalue->addr.Offset)
         {
-            memcpy(result, (void*)lvalue->addr.Offset, size);
+            memcpy(result, (void*)(DWORD_PTR)lvalue->addr.Offset, size);
             ret = TRUE;
         }
     }
@@ -134,7 +134,7 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     }
     else 
     {
-        memcpy((void*)lvalue->addr.Offset, value, size);
+        memcpy((void*)(DWORD_PTR)lvalue->addr.Offset, value, size);
     }
     return ret;
 }
@@ -148,7 +148,7 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
 {
     int			i;
     char                buffer[256];
-    ADDRESS             addr;
+    ADDRESS64           addr;
     void               *linear;
 
     types_extract_as_address(lvalue, &addr);
@@ -271,6 +271,32 @@ BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicod
         return memory_get_string(pcs, ad, TRUE, unicode, buffer, size);
     }
     return FALSE;
+}
+
+/*
+ * Convert an address offset to hex string. If mode == 32, treat offset as
+ * 32 bits (discard upper 32 bits), if mode == 64 use all 64 bits, if mode == 0
+ * treat as either 32 or 64 bits, depending on whether we're running as
+ * Wine32 or Wine64.
+ */
+char* memory_offset_to_string(char *str, DWORD64 offset, unsigned mode)
+{
+    if (mode != 32 && mode != 64)
+    {
+#ifdef _WIN64
+        mode = 64;
+#else
+        mode = 32;
+#endif
+    }
+
+    if (mode == 32)
+        sprintf(str, "0x%08x", (unsigned int) offset);
+    else
+        sprintf(str, "0x%08x%08x", (unsigned int)(offset >> 32),
+                (unsigned int)offset);
+
+    return str;
 }
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
@@ -478,19 +504,22 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
     }
 }
 
-void print_bare_address(const ADDRESS* addr)
+void print_bare_address(const ADDRESS64* addr)
 {
+    char hexbuf[MAX_OFFSET_TO_STR_LEN];
+
     switch (addr->Mode)
     {
     case AddrModeFlat: 
-        dbg_printf("0x%08lx", addr->Offset); 
+        dbg_printf("%s", memory_offset_to_string(hexbuf, addr->Offset, 0)); 
         break;
     case AddrModeReal:
     case AddrMode1616:
-        dbg_printf("0x%04x:0x%04lx", addr->Segment, addr->Offset);
+        dbg_printf("0x%04x:0x%04x", addr->Segment, (unsigned) addr->Offset);
         break;
     case AddrMode1632:
-        dbg_printf("0x%04x:0x%08lx", addr->Segment, addr->Offset);
+        dbg_printf("0x%04x:%s", addr->Segment,
+                   memory_offset_to_string(hexbuf, addr->Offset, 32));
         break;
     default:
         dbg_printf("Unknown mode %x\n", addr->Mode);
@@ -503,7 +532,7 @@ void print_bare_address(const ADDRESS* addr)
  *
  * Print an 16- or 32-bit address, with the nearest symbol if any.
  */
-void print_address(const ADDRESS* addr, BOOLEAN with_line)
+void print_address(const ADDRESS64* addr, BOOLEAN with_line)
 {
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
@@ -532,7 +561,7 @@ void print_address(const ADDRESS* addr, BOOLEAN with_line)
     }
 }
 
-BOOL memory_disasm_one_insn(ADDRESS* addr)
+BOOL memory_disasm_one_insn(ADDRESS64* addr)
 {
     char        ch;
 
@@ -551,7 +580,7 @@ BOOL memory_disasm_one_insn(ADDRESS* addr)
 void memory_disassemble(const struct dbg_lvalue* xstart, 
                         const struct dbg_lvalue* xend, int instruction_count)
 {
-    static ADDRESS last = {0,0,0};
+    static ADDRESS64 last = {0,0,0};
     int stop = 0;
     int i;
 

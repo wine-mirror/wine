@@ -332,7 +332,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
         if ((dbg_curr_thread = dbg_get_thread(dbg_curr_process, mes->ThreadId)))
         {
-            ADDRESS     addr;
+            ADDRESS64   addr;
 
             dbg_curr_tid = mes->ThreadId;
             dbg_curr_thread->in_exception = TRUE;

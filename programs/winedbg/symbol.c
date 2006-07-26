@@ -419,7 +419,7 @@ void symbol_read_symtable(const char* filename, unsigned long offset)
  *
  * Find the symbol nearest to a given address.
  */
-enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
+enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
 {
     IMAGEHLP_LINE       il;
     DWORD               disp;
@@ -573,7 +573,7 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 int symbol_info_locals(void)
 {
     IMAGEHLP_STACK_FRAME        ihsf;
-    ADDRESS                     addr;
+    ADDRESS64                   addr;
 
     stack_get_current_frame(&ihsf);
     addr.Mode = AddrModeFlat;

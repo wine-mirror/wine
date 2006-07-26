@@ -355,10 +355,10 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
     source_end_line = end;
 }
 
-void source_list_from_addr(const ADDRESS* addr, int nlines)
+void source_list_from_addr(const ADDRESS64* addr, int nlines)
 {
     IMAGEHLP_LINE       il;
-    ADDRESS             la;
+    ADDRESS64           la;
     DWORD               disp;
 
     if (!addr)

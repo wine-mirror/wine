@@ -47,7 +47,7 @@ static void dbg_init_current_thread(void* start)
             !dbg_curr_process->threads->next && /* first thread ? */
 	    DBG_IVAR(BreakAllThreadsStartup)) 
         {
-	    ADDRESS     addr;
+	    ADDRESS64   addr;
 
             break_set_xpoints(FALSE);
 	    addr.Mode   = AddrModeFlat;
@@ -118,8 +118,9 @@ static unsigned dbg_fetch_context(void)
 
 static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 {
-    ADDRESS     addr;
+    ADDRESS64   addr;
     BOOL        is_break;
+    char        hexbuf[MAX_OFFSET_TO_STR_LEN];
 
     memory_get_current_pc(&addr);
     break_suspend_execution();
@@ -130,10 +131,19 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     {
         switch (addr.Mode)
         {
-        case AddrModeFlat: dbg_printf(" in 32-bit code (0x%08lx)", addr.Offset); break;
-        case AddrModeReal: dbg_printf(" in vm86 code (%04x:%04lx)", addr.Segment, addr.Offset); break;
-        case AddrMode1616: dbg_printf(" in 16-bit code (%04x:%04lx)", addr.Segment, addr.Offset); break;
-        case AddrMode1632: dbg_printf(" in 32-bit code (%04x:%08lx)", addr.Segment, addr.Offset); break;
+        case AddrModeFlat:
+            dbg_printf(" in 32-bit code (%s)",
+                       memory_offset_to_string(hexbuf, addr.Offset, 0));
+            break;
+        case AddrModeReal:
+            dbg_printf(" in vm86 code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
+            break;
+        case AddrMode1616:
+            dbg_printf(" in 16-bit code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
+            break;
+        case AddrMode1632:
+            dbg_printf(" in 32-bit code (%04x:%08lx)", addr.Segment, (unsigned long) addr.Offset);
+            break;
         default: dbg_printf(" bad address");
         }
 	dbg_printf(".\n");
@@ -209,7 +219,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
         dbg_curr_thread->exec_mode == dbg_exec_step_over_insn ||
         dbg_curr_thread->exec_mode == dbg_exec_step_into_insn)
     {
-        ADDRESS tmp = addr;
+        ADDRESS64 tmp = addr;
         /* Show where we crashed */
         memory_disasm_one_insn(&tmp);
     }
@@ -312,7 +322,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             break;
         case STATUS_POSSIBLE_DEADLOCK:
         {
-            ADDRESS         addr;
+            ADDRESS64       addr;
 
             addr.Mode   = AddrModeFlat;
             addr.Offset = rec->ExceptionInformation[0];
@@ -605,12 +615,14 @@ static void dbg_resume_debuggee(DWORD cont)
 {
     if (dbg_curr_thread->in_exception)
     {
-        ADDRESS         addr;
+        ADDRESS64       addr;
+        char            hexbuf[MAX_OFFSET_TO_STR_LEN];
 
         dbg_exception_epilog();
         memory_get_current_pc(&addr);
-        WINE_TRACE("Exiting debugger      PC=0x%lx mode=%d count=%d\n",
-                   addr.Offset, dbg_curr_thread->exec_mode,
+        WINE_TRACE("Exiting debugger      PC=%s mode=%d count=%d\n",
+                   memory_offset_to_string(hexbuf, addr.Offset, 0),
+                   dbg_curr_thread->exec_mode,
                    dbg_curr_thread->exec_count);
         if (dbg_curr_thread)
         {
@@ -626,7 +638,8 @@ static void dbg_resume_debuggee(DWORD cont)
 void dbg_wait_next_exception(DWORD cont, int count, int mode)
 {
     DEBUG_EVENT         de;
-    ADDRESS             addr;
+    ADDRESS64           addr;
+    char                hexbuf[MAX_OFFSET_TO_STR_LEN];
 
     if (cont == DBG_CONTINUE)
     {
@@ -643,8 +656,9 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     dbg_interactiveP = TRUE;
 
     memory_get_current_pc(&addr);
-    WINE_TRACE("Entering debugger     PC=0x%lx mode=%d count=%d\n",
-               addr.Offset, dbg_curr_thread->exec_mode,
+    WINE_TRACE("Entering debugger     PC=%s mode=%d count=%d\n",
+               memory_offset_to_string(hexbuf, addr.Offset, 0),
+               dbg_curr_thread->exec_mode,
                dbg_curr_thread->exec_count);
 }
 

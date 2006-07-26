@@ -1063,7 +1063,7 @@ static const int db_lengths[] = {
 	10,	/* EXTR */
 };
 
-static unsigned int db_get_task_value( const ADDRESS* addr,
+static unsigned int db_get_task_value( const ADDRESS64* addr,
                                        int size, int is_signed )
 {
     unsigned int 	result = 0;
@@ -1104,7 +1104,7 @@ static unsigned int db_get_task_value( const ADDRESS* addr,
 /*
  * Read address at location and return updated location.
  */
-static void db_read_address( ADDRESS* addr, int short_addr, int regmodrm,
+static void db_read_address( ADDRESS64* addr, int short_addr, int regmodrm,
                              struct i_addr *addrp )
 {
 	int mod, rm, sib, index, disp;
@@ -1186,7 +1186,7 @@ static void db_read_address( ADDRESS* addr, int short_addr, int regmodrm,
 
 static void db_task_printsym(unsigned int addr, int size)
 {
-    ADDRESS     a;
+    ADDRESS64   a;
     a.Mode   = AddrModeFlat;
     a.Offset = addr;
 
@@ -1238,7 +1238,7 @@ static void db_print_address(const char *seg, int size, struct i_addr *addrp, in
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-static void db_disasm_esc( ADDRESS* addr, int inst, int short_addr,
+static void db_disasm_esc( ADDRESS64* addr, int inst, int short_addr,
                            int size, const char *seg )
 {
 	int		regmodrm;
@@ -1311,7 +1311,7 @@ static void db_disasm_esc( ADDRESS* addr, int inst, int short_addr,
  * Disassemble instruction at 'addr'.  addr is changed to point to the
  * start of the next instruction.
  */
-void be_i386_disasm_one_insn(ADDRESS *addr, int display)
+void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
 {
 	int	inst;
 	int	size;
@@ -1791,7 +1791,7 @@ void be_i386_disasm_one_insn(ADDRESS *addr, int display)
 
 		case OS:
                     {
-                        ADDRESS address;
+                        ADDRESS64 address;
                         get_value_inc( address.Offset, addr,  /* offset */
                                        short_addr ? 2 : 4, FALSE );
                         get_value_inc( address.Segment, addr,  /* segment */

@@ -23,7 +23,7 @@
 #if defined(__ALPHA__)
 
 static unsigned be_alpha_get_addr(HANDLE hThread, const CONTEXT* ctx, 
-                                 enum be_cpu_addr bca, ADDRESS* addr)
+                                 enum be_cpu_addr bca, ADDRESS64* addr)
 {
     dbg_printf("not done\n");
     return FALSE;
@@ -77,7 +77,7 @@ static unsigned be_alpha_is_func_call(void* insn, void** insn_callee)
     return FALSE;
 }
 
-static void be_alpha_disasm_one_insn(ADDRESS* addr, int display)
+static void be_alpha_disasm_one_insn(ADDRESS64* addr, int display)
 {
     dbg_printf("Disasm NIY\n");
 }

@@ -88,7 +88,7 @@ void  break_set_xpoints(BOOL set)
  * Find the breakpoint for a given address. Return the breakpoint
  * number or -1 if none.
  */
-static int find_xpoint(const ADDRESS* addr, enum be_xpoint_type type)
+static int find_xpoint(const ADDRESS64* addr, enum be_xpoint_type type)
 {
     int                         i;
     void*                       lin = memory_to_linear_addr(addr);
@@ -108,7 +108,7 @@ static int find_xpoint(const ADDRESS* addr, enum be_xpoint_type type)
  *
  * Find an empty slot in BP table to add a new break/watch point
  */
-static	int init_xpoint(int type, const ADDRESS* addr)
+static	int init_xpoint(int type, const ADDRESS64* addr)
 {
     int	                        num;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
@@ -160,7 +160,7 @@ static	BOOL	get_watched_value(int num, LPDWORD val)
  *
  * Add a breakpoint.
  */
-BOOL break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp)
+BOOL break_add_break(const ADDRESS64* addr, BOOL verbose, BOOL swbp)
 {
     int                         num;
     BYTE                        ch;
@@ -204,7 +204,7 @@ BOOL break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp)
  */
 BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue, BOOL swbp)
 {
-    ADDRESS     addr;
+    ADDRESS64   addr;
 
     types_extract_as_address(lvalue, &addr);
 
@@ -270,7 +270,7 @@ void	break_add_break_from_id(const char *name, int lineno, BOOL swbp)
 struct cb_break_lineno
 {
     int         lineno;
-    ADDRESS     addr;
+    ADDRESS64   addr;
 };
 
 static BOOL CALLBACK line_cb(SRCCODEINFO* sci, void* user)
@@ -336,6 +336,7 @@ void break_check_delayed_bp(void)
     struct dbg_lvalue	        lvalue;
     int			        i;
     struct dbg_delayed_bp*	dbp = dbg_curr_process->delayed_bp;
+    char                        hexbuf[MAX_OFFSET_TO_STR_LEN];
 
     for (i = 0; i < dbg_curr_process->num_delayed_bp; i++)
     {
@@ -350,8 +351,9 @@ void break_check_delayed_bp(void)
             lvalue.addr = dbp[i].u.addr;
         WINE_TRACE("trying to add delayed %s-bp\n", dbp[i].is_symbol ? "S" : "A");
         if (!dbp[i].is_symbol)
-            WINE_TRACE("\t%04x:%08lx\n", 
-                       dbp[i].u.addr.Segment, dbp[i].u.addr.Offset);
+            WINE_TRACE("\t%04x:%s\n", 
+                       dbp[i].u.addr.Segment,
+                       memory_offset_to_string(hexbuf, dbp[i].u.addr.Offset, 0));
         else
             WINE_TRACE("\t'%s' @ %d\n", 
                        dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
@@ -721,7 +723,7 @@ static	BOOL should_stop(int bpnum)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break)
+BOOL break_should_continue(ADDRESS64* addr, DWORD code, int* count, BOOL* is_break)
 {
     DWORD	        oldval = 0;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
@@ -836,10 +838,10 @@ void	break_suspend_execution(void)
  */
 void break_restart_execution(int count)
 {
-    ADDRESS                     addr;
+    ADDRESS64                   addr;
     enum dbg_line_status        status;
     enum dbg_exec_mode          mode, ret_mode;
-    ADDRESS                     callee;
+    ADDRESS64                   callee;
     void*                       linear;
 
     memory_get_current_pc(&addr);
