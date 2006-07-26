@@ -1494,12 +1494,24 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
+    /* This format is nothing special and it is supported perfectly.
+     * However, ati and nvidia driver on windows do not mark this format
+     * supported(tested with the dxCapsViewer) and pretending to
+     * support this format uncovers a bug in Battlefield 1942(fonts are missing)
+     * So do the same as Windows drivers and pretend not to support it on dx8 and 9
+     * Enable it on dx7. It will need additional checking on dx10 when we support it.
+     */
+    if(This->dxVersion > 7 && CheckFormat == WINED3DFMT_R8G8B8) {
+        TRACE_(d3d_caps)("[FAILED]\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
     switch (CheckFormat) {
 
         /*****
          *  supported: RGB(A) formats
          */
-        case WINED3DFMT_R8G8B8:
+        case WINED3DFMT_R8G8B8: /* Enable for dx7, blacklisted for 8 and 9 above */
         case WINED3DFMT_A8R8G8B8:
         case WINED3DFMT_X8R8G8B8:
         case WINED3DFMT_R5G6B5:
