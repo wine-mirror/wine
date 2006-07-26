@@ -2067,13 +2067,12 @@ static void dump_get_queue_status_reply( const struct get_queue_status_reply *re
     fprintf( stderr, " changed_bits=%08x", req->changed_bits );
 }
 
-static void dump_wait_input_idle_request( const struct wait_input_idle_request *req )
+static void dump_get_process_idle_event_request( const struct get_process_idle_event_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " timeout=%d", req->timeout );
+    fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_wait_input_idle_reply( const struct wait_input_idle_reply *req )
+static void dump_get_process_idle_event_reply( const struct get_process_idle_event_reply *req )
 {
     fprintf( stderr, " event=%p", req->event );
 }
@@ -3389,7 +3388,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_msg_queue_request,
     (dump_func)dump_set_queue_mask_request,
     (dump_func)dump_get_queue_status_request,
-    (dump_func)dump_wait_input_idle_request,
+    (dump_func)dump_get_process_idle_event_request,
     (dump_func)dump_send_message_request,
     (dump_func)dump_post_quit_message_request,
     (dump_func)dump_get_message_request,
@@ -3605,7 +3604,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_msg_queue_reply,
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
-    (dump_func)dump_wait_input_idle_reply,
+    (dump_func)dump_get_process_idle_event_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_message_reply,
@@ -3821,7 +3820,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_msg_queue",
     "set_queue_mask",
     "get_queue_status",
-    "wait_input_idle",
+    "get_process_idle_event",
     "send_message",
     "post_quit_message",
     "get_message",

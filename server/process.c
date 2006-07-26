@@ -1040,9 +1040,8 @@ DECL_HANDLER(get_dll_info)
     }
 }
 
-/* wait for a process to start waiting on input */
-/* FIXME: only returns event for now, wait is done in the client */
-DECL_HANDLER(wait_input_idle)
+/* retrieve the process idle event */
+DECL_HANDLER(get_process_idle_event)
 {
     struct process *process;
 

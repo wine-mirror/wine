@@ -1554,10 +1554,9 @@ enum char_info_mode
 @END
 
 
-/* Wait for a process to start waiting on input */
-@REQ(wait_input_idle)
+/* Retrieve the process idle event */
+@REQ(get_process_idle_event)
     obj_handle_t handle;       /* process handle */
-    int          timeout;      /* timeout */
 @REPLY
     obj_handle_t event;        /* handle to idle event */
 @END

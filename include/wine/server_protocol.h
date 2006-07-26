@@ -2176,13 +2176,12 @@ struct get_queue_status_reply
 
 
 
-struct wait_input_idle_request
+struct get_process_idle_event_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          timeout;
 };
-struct wait_input_idle_reply
+struct get_process_idle_event_reply
 {
     struct reply_header __header;
     obj_handle_t event;
@@ -3853,7 +3852,7 @@ enum request
     REQ_get_msg_queue,
     REQ_set_queue_mask,
     REQ_get_queue_status,
-    REQ_wait_input_idle,
+    REQ_get_process_idle_event,
     REQ_send_message,
     REQ_post_quit_message,
     REQ_get_message,
@@ -4073,7 +4072,7 @@ union generic_request
     struct get_msg_queue_request get_msg_queue_request;
     struct set_queue_mask_request set_queue_mask_request;
     struct get_queue_status_request get_queue_status_request;
-    struct wait_input_idle_request wait_input_idle_request;
+    struct get_process_idle_event_request get_process_idle_event_request;
     struct send_message_request send_message_request;
     struct post_quit_message_request post_quit_message_request;
     struct get_message_request get_message_request;
@@ -4291,7 +4290,7 @@ union generic_reply
     struct get_msg_queue_reply get_msg_queue_reply;
     struct set_queue_mask_reply set_queue_mask_reply;
     struct get_queue_status_reply get_queue_status_reply;
-    struct wait_input_idle_reply wait_input_idle_reply;
+    struct get_process_idle_event_reply get_process_idle_event_reply;
     struct send_message_reply send_message_reply;
     struct post_quit_message_reply post_quit_message_reply;
     struct get_message_reply get_message_reply;
@@ -4386,6 +4385,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 240
+#define SERVER_PROTOCOL_VERSION 241
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
