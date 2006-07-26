@@ -50,7 +50,7 @@ extern void fatal_perror( const char *err, ... );
 #endif
 
 extern const char *get_config_dir(void);
-extern void *set_reply_data_size( size_t size );
+extern void *set_reply_data_size( data_size_t size );
 extern int receive_fd( struct process *process );
 extern int send_client_fd( struct process *process, int fd, obj_handle_t handle );
 extern void read_request( struct thread *thread );
@@ -72,7 +72,7 @@ inline static const void *get_req_data(void)
 }
 
 /* get the request vararg size */
-inline static size_t get_req_data_size(void)
+inline static data_size_t get_req_data_size(void)
 {
     return current->req.request_header.request_size;
 }
@@ -85,13 +85,13 @@ inline static void get_req_unicode_str( struct unicode_str *str )
 }
 
 /* get the reply maximum vararg size */
-inline static size_t get_reply_max_size(void)
+inline static data_size_t get_reply_max_size(void)
 {
     return current->req.request_header.reply_size;
 }
 
 /* allocate and fill the reply data */
-inline static void *set_reply_data( const void *data, size_t size )
+inline static void *set_reply_data( const void *data, data_size_t size )
 {
     void *ret = set_reply_data_size( size );
     if (ret) memcpy( ret, data, size );
@@ -99,7 +99,7 @@ inline static void *set_reply_data( const void *data, size_t size )
 }
 
 /* set the reply data pointer directly (will be freed by request code) */
-inline static void set_reply_data_ptr( void *data, size_t size )
+inline static void set_reply_data_ptr( void *data, data_size_t size )
 {
     assert( size <= get_reply_max_size() );
     current->reply_size = size;

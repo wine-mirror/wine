@@ -312,7 +312,7 @@ static struct thread *get_ptrace_thread( struct process *process )
 }
 
 /* read data from a process memory space */
-int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest )
+int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest )
 {
     struct thread *thread = get_ptrace_thread( process );
     unsigned int first_offset, last_offset, len;
@@ -358,7 +358,7 @@ int read_process_memory( struct process *process, const void *ptr, size_t size, 
 
 /* make sure we can write to the whole address range */
 /* len is the total size (in ints) */
-static int check_process_write_access( struct thread *thread, int *addr, size_t len )
+static int check_process_write_access( struct thread *thread, int *addr, data_size_t len )
 {
     int page = get_page_size() / sizeof(int);
 
@@ -373,11 +373,11 @@ static int check_process_write_access( struct thread *thread, int *addr, size_t 
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, void *ptr, size_t size, const char *src )
+int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src )
 {
     struct thread *thread = get_ptrace_thread( process );
     int ret = 0, data = 0;
-    size_t len;
+    data_size_t len;
     int *addr;
     unsigned int first_mask, first_offset, last_mask, last_offset;
 

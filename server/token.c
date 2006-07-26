@@ -189,7 +189,7 @@ static const ACE_HEADER *ace_next( const ACE_HEADER *ace )
     return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
 }
 
-static int acl_is_valid( const ACL *acl, size_t size )
+static int acl_is_valid( const ACL *acl, data_size_t size )
 {
     ULONG i;
     const ACE_HEADER *ace;
@@ -205,7 +205,7 @@ static int acl_is_valid( const ACL *acl, size_t size )
     for (i = 0; i < acl->AceCount; i++)
     {
         const SID *sid;
-        size_t sid_size;
+        data_size_t sid_size;
 
         if (size < sizeof(ACE_HEADER))
             return FALSE;
@@ -285,7 +285,7 @@ static inline const SID *sd_get_group( const struct security_descriptor *sd )
 
 /* checks whether all members of a security descriptor fit inside the size
  * of memory specified */
-static int sd_is_valid( const struct security_descriptor *sd, size_t size )
+static int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
 {
     size_t offset = sizeof(struct security_descriptor);
     const SID *group;
@@ -1079,7 +1079,7 @@ DECL_HANDLER(check_token_privileges)
  * represented by a security descriptor */
 DECL_HANDLER(access_check)
 {
-    size_t sd_size = get_req_data_size();
+    data_size_t sd_size = get_req_data_size();
     const struct security_descriptor *sd = get_req_data();
     struct token *token;
 

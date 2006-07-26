@@ -140,7 +140,7 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     reply->handles  = ptr->handles;
     if ((exe_module = get_process_exe_module( ptr->process )) && exe_module->filename)
     {
-        size_t len = min( exe_module->namelen, get_reply_max_size() );
+        data_size_t len = min( exe_module->namelen, get_reply_max_size() );
         set_reply_data( exe_module->filename, len );
     }
     return 1;
@@ -191,7 +191,7 @@ static int snapshot_next_module( struct snapshot *snapshot, struct next_module_r
     reply->size = ptr->size;
     if (ptr->filename)
     {
-        size_t len = min( ptr->namelen, get_reply_max_size() );
+        data_size_t len = min( ptr->namelen, get_reply_max_size() );
         set_reply_data( ptr->filename, len );
     }
     return 1;

@@ -211,7 +211,7 @@ static void console_input_events_append( struct console_input_events* evts,
 /* retrieves events from the console's renderer events list */
 static void console_input_events_get( struct console_input_events* evts )
 {
-    size_t num = get_reply_max_size() / sizeof(evts->events[0]);
+    data_size_t num = get_reply_max_size() / sizeof(evts->events[0]);
 
     if (num > evts->num_used) num = evts->num_used;
     set_reply_data( evts->events, num * sizeof(evts->events[0]) );
@@ -595,7 +595,7 @@ static int read_console_input( obj_handle_t handle, int count, int flush )
 
 /* set misc console input information */
 static int set_console_input_info( const struct set_console_input_info_request *req,
-				   const WCHAR *title, size_t len )
+				   const WCHAR *title, data_size_t len )
 {
     struct console_input *console;
     struct console_renderer_event evt;
@@ -892,7 +892,7 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 }
 
 /* appends a new line to history (history is a fixed size array) */
-static void console_input_append_hist( struct console_input* console, const WCHAR* buf, size_t len )
+static void console_input_append_hist( struct console_input* console, const WCHAR* buf, data_size_t len )
 {
     WCHAR*	ptr = mem_alloc( (len + 1) * sizeof(WCHAR) );
 
@@ -934,9 +934,9 @@ static void console_input_append_hist( struct console_input* console, const WCHA
 }
 
 /* returns a line from the cache */
-static size_t console_input_get_hist( struct console_input *console, int index )
+static data_size_t console_input_get_hist( struct console_input *console, int index )
 {
-    size_t ret = 0;
+    data_size_t ret = 0;
 
     if (index >= console->history_index) set_error( STATUS_INVALID_PARAMETER );
     else
@@ -1017,7 +1017,7 @@ static void screen_buffer_destroy( struct object *obj )
 }
 
 /* write data into a screen buffer */
-static int write_console_output( struct screen_buffer *screen_buffer, size_t size,
+static int write_console_output( struct screen_buffer *screen_buffer, data_size_t size,
                                  const void* data, enum char_info_mode mode,
                                  int x, int y, int wrap )
 {
@@ -1353,7 +1353,7 @@ DECL_HANDLER(get_console_input_info)
     if (!(console = console_input_get( req->handle, CONSOLE_READ ))) return;
     if (console->title)
     {
-        size_t len = strlenW( console->title ) * sizeof(WCHAR);
+        data_size_t len = strlenW( console->title ) * sizeof(WCHAR);
         if (len > get_reply_max_size()) len = get_reply_max_size();
         set_reply_data( console->title, len );
     }

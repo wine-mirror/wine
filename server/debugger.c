@@ -571,7 +571,7 @@ DECL_HANDLER(wait_debug_event)
     reply->wait = 0;
     if ((event = find_event_to_send( debug_ctx )))
     {
-        size_t size = get_reply_max_size();
+        data_size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
         event->sender->debug_event = event;
         reply->pid = get_process_id( event->sender->process );
@@ -666,7 +666,7 @@ DECL_HANDLER(get_exception_status)
         {
             if (current->context == &event->context)
             {
-                size_t size = min( sizeof(CONTEXT), get_reply_max_size() );
+                data_size_t size = min( sizeof(CONTEXT), get_reply_max_size() );
                 set_reply_data( &event->context, size );
                 current->context = NULL;
             }

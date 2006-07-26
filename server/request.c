@@ -188,7 +188,7 @@ void fatal_perror( const char *err, ... )
 }
 
 /* allocate the reply data */
-void *set_reply_data_size( size_t size )
+void *set_reply_data_size( data_size_t size )
 {
     assert( size <= get_reply_max_size() );
     if (size && !(current->reply_data = mem_alloc( size ))) size = 0;

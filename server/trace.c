@@ -39,13 +39,12 @@
 #include "request.h"
 #include "unicode.h"
 
-static int cur_pos;
 static const void *cur_data;
-static int cur_size;
+static data_size_t cur_size;
 
 /* utility functions */
 
-inline static void remove_data( size_t size )
+inline static void remove_data( data_size_t size )
 {
     cur_data = (const char *)cur_data + size;
     cur_size -= size;
@@ -130,10 +129,10 @@ static void dump_exc_record( const EXCEPTION_RECORD *rec )
     fputc( '}', stderr );
 }
 
-static void dump_varargs_ints( size_t size )
+static void dump_varargs_ints( data_size_t size )
 {
     const int *data = cur_data;
-    size_t len = size / sizeof(*data);
+    data_size_t len = size / sizeof(*data);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -145,10 +144,10 @@ static void dump_varargs_ints( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_handles( size_t size )
+static void dump_varargs_handles( data_size_t size )
 {
     const obj_handle_t *data = cur_data;
-    size_t len = size / sizeof(*data);
+    data_size_t len = size / sizeof(*data);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -160,10 +159,10 @@ static void dump_varargs_handles( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_user_handles( size_t size )
+static void dump_varargs_user_handles( data_size_t size )
 {
     const user_handle_t *data = cur_data;
-    size_t len = size / sizeof(*data);
+    data_size_t len = size / sizeof(*data);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -175,10 +174,10 @@ static void dump_varargs_user_handles( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_bytes( size_t size )
+static void dump_varargs_bytes( data_size_t size )
 {
     const unsigned char *data = cur_data;
-    size_t len = size;
+    data_size_t len = size;
 
     fputc( '{', stderr );
     while (len > 0)
@@ -190,13 +189,13 @@ static void dump_varargs_bytes( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_string( size_t size )
+static void dump_varargs_string( data_size_t size )
 {
     fprintf( stderr, "\"%.*s\"", (int)size, (const char *)cur_data );
     remove_data( size );
 }
 
-static void dump_varargs_unicode_str( size_t size )
+static void dump_varargs_unicode_str( data_size_t size )
 {
     fprintf( stderr, "L\"" );
     dump_strW( cur_data, size / sizeof(WCHAR), stderr, "\"\"" );
@@ -204,7 +203,7 @@ static void dump_varargs_unicode_str( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_context( size_t size )
+static void dump_varargs_context( data_size_t size )
 {
     if (!size)
     {
@@ -215,7 +214,7 @@ static void dump_varargs_context( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_exc_event( size_t size )
+static void dump_varargs_exc_event( data_size_t size )
 {
     const CONTEXT *ptr = cur_data;
 
@@ -232,7 +231,7 @@ static void dump_varargs_exc_event( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_debug_event( size_t size )
+static void dump_varargs_debug_event( data_size_t size )
 {
     const debug_event_t *event = cur_data;
 
@@ -297,7 +296,7 @@ static void dump_varargs_debug_event( size_t size )
 }
 
 /* dump a unicode string contained in a buffer; helper for dump_varargs_startup_info */
-static void dump_inline_unicode_string( const UNICODE_STRING *str, const void *data, size_t size )
+static void dump_inline_unicode_string( const UNICODE_STRING *str, const void *data, data_size_t size )
 {
     size_t length = str->Length;
     size_t offset = (size_t)str->Buffer;
@@ -307,7 +306,7 @@ static void dump_inline_unicode_string( const UNICODE_STRING *str, const void *d
     dump_strW( (const WCHAR *)data + offset/sizeof(WCHAR), length/sizeof(WCHAR), stderr, "\"\"" );
 }
 
-static void dump_varargs_startup_info( size_t size )
+static void dump_varargs_startup_info( data_size_t size )
 {
     const RTL_USER_PROCESS_PARAMETERS *ptr = cur_data;
     RTL_USER_PROCESS_PARAMETERS params;
@@ -360,10 +359,10 @@ static void dump_varargs_startup_info( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_input_records( size_t size )
+static void dump_varargs_input_records( data_size_t size )
 {
     const INPUT_RECORD *rec = cur_data;
-    size_t len = size / sizeof(*rec);
+    data_size_t len = size / sizeof(*rec);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -376,10 +375,10 @@ static void dump_varargs_input_records( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_rectangles( size_t size )
+static void dump_varargs_rectangles( data_size_t size )
 {
     const rectangle_t *rect = cur_data;
-    size_t len = size / sizeof(*rect);
+    data_size_t len = size / sizeof(*rect);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -391,10 +390,10 @@ static void dump_varargs_rectangles( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_properties( size_t size )
+static void dump_varargs_properties( data_size_t size )
 {
     const property_data_t *prop = cur_data;
-    size_t len = size / sizeof(*prop);
+    data_size_t len = size / sizeof(*prop);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -408,10 +407,10 @@ static void dump_varargs_properties( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_LUID_AND_ATTRIBUTES( size_t size )
+static void dump_varargs_LUID_AND_ATTRIBUTES( data_size_t size )
 {
     const LUID_AND_ATTRIBUTES *lat = cur_data;
-    size_t len = size / sizeof(*lat);
+    data_size_t len = size / sizeof(*lat);
 
     fputc( '{', stderr );
     while (len > 0)
@@ -425,7 +424,7 @@ static void dump_varargs_LUID_AND_ATTRIBUTES( size_t size )
     remove_data( size );
 }
 
-static void dump_inline_sid( const SID *sid, size_t size )
+static void dump_inline_sid( const SID *sid, data_size_t size )
 {
     DWORD i;
 
@@ -448,14 +447,14 @@ static void dump_inline_sid( const SID *sid, size_t size )
     fputc( '}', stderr );
 }
 
-static void dump_varargs_SID( size_t size )
+static void dump_varargs_SID( data_size_t size )
 {
     const SID *sid = cur_data;
     dump_inline_sid( sid, size );
     remove_data( size );
 }
 
-static void dump_inline_acl( const ACL *acl, size_t size )
+static void dump_inline_acl( const ACL *acl, data_size_t size )
 {
     const ACE_HEADER *ace;
     ULONG i;
@@ -473,7 +472,7 @@ static void dump_inline_acl( const ACL *acl, size_t size )
         for (i = 0; i < acl->AceCount; i++)
         {
             const SID *sid = NULL;
-            size_t sid_size = 0;
+            data_size_t sid_size = 0;
 
             if (size < sizeof(ACE_HEADER))
                 return;
@@ -522,7 +521,7 @@ static void dump_inline_acl( const ACL *acl, size_t size )
     fputc( '}', stderr );
 }
 
-static void dump_inline_security_descriptor( const struct security_descriptor *sd, size_t size )
+static void dump_inline_security_descriptor( const struct security_descriptor *sd, data_size_t size )
 {
     fputc( '{', stderr );
     if (size >= sizeof(struct security_descriptor))
@@ -553,14 +552,14 @@ static void dump_inline_security_descriptor( const struct security_descriptor *s
     fputc( '}', stderr );
 }
 
-static void dump_varargs_security_descriptor( size_t size )
+static void dump_varargs_security_descriptor( data_size_t size )
 {
     const struct security_descriptor *sd = cur_data;
     dump_inline_security_descriptor( sd, size );
     remove_data( size );
 }
 
-static void dump_varargs_token_groups( size_t size )
+static void dump_varargs_token_groups( data_size_t size )
 {
     const struct token_groups *tg = cur_data;
     fputc( '{', stderr );
@@ -697,7 +696,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " info_size=%lu,", (unsigned long)req->info_size );
+    fprintf( stderr, " info_size=%u,", req->info_size );
     fprintf( stderr, " server_start=%ld,", (long)req->server_start );
     fprintf( stderr, " version=%d", req->version );
 }
@@ -1715,7 +1714,7 @@ static void dump_create_key_request( const struct create_key_request *req )
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " modif=%ld,", (long)req->modif );
-    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
+    fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1769,8 +1768,8 @@ static void dump_enum_key_reply( const struct enum_key_reply *req )
     fprintf( stderr, " max_value=%d,", req->max_value );
     fprintf( stderr, " max_data=%d,", req->max_data );
     fprintf( stderr, " modif=%ld,", (long)req->modif );
-    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
-    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
+    fprintf( stderr, " total=%u,", req->total );
+    fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1782,7 +1781,7 @@ static void dump_set_key_value_request( const struct set_key_value_request *req 
 {
     fprintf( stderr, " hkey=%p,", req->hkey );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
+    fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -1800,7 +1799,7 @@ static void dump_get_key_value_request( const struct get_key_value_request *req 
 static void dump_get_key_value_reply( const struct get_key_value_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
+    fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -1815,8 +1814,8 @@ static void dump_enum_key_value_request( const struct enum_key_value_request *re
 static void dump_enum_key_value_reply( const struct enum_key_value_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
-    fprintf( stderr, " namelen=%lu,", (unsigned long)req->namelen );
+    fprintf( stderr, " total=%u,", req->total );
+    fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
     fputc( ',', stderr );
@@ -2007,7 +2006,7 @@ static void dump_get_atom_information_reply( const struct get_atom_information_r
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pinned=%d,", req->pinned );
-    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
+    fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2127,7 +2126,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
-    fprintf( stderr, " total=%lu,", (unsigned long)req->total );
+    fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -2368,7 +2367,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " is_unicode=%d,", req->is_unicode );
     fprintf( stderr, " user_data=%p,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
-    fprintf( stderr, " extra_size=%lu,", (unsigned long)req->extra_size );
+    fprintf( stderr, " extra_size=%u,", req->extra_size );
     fprintf( stderr, " extra_value=%08x", req->extra_value );
 }
 
@@ -2531,7 +2530,7 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
     fprintf( stderr, " top_org_y=%d,", req->top_org_y );
     fprintf( stderr, " win_org_x=%d,", req->win_org_x );
     fprintf( stderr, " win_org_y=%d,", req->win_org_y );
-    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
+    fprintf( stderr, " total_size=%u,", req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2543,7 +2542,7 @@ static void dump_get_window_region_request( const struct get_window_region_reque
 
 static void dump_get_window_region_reply( const struct get_window_region_reply *req )
 {
-    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
+    fprintf( stderr, " total_size=%u,", req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2566,7 +2565,7 @@ static void dump_get_update_region_reply( const struct get_update_region_reply *
 {
     fprintf( stderr, " child=%p,", req->child );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " total_size=%lu,", (unsigned long)req->total_size );
+    fprintf( stderr, " total_size=%u,", req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2988,7 +2987,7 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
     fprintf( stderr, " win_extra=%d,", req->win_extra );
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
-    fprintf( stderr, " extra_size=%lu,", (unsigned long)req->extra_size );
+    fprintf( stderr, " extra_size=%u,", req->extra_size );
     fprintf( stderr, " extra_value=%lx", req->extra_value );
 }
 
@@ -3135,7 +3134,7 @@ static void dump_get_token_user_request( const struct get_token_user_request *re
 
 static void dump_get_token_user_reply( const struct get_token_user_reply *req )
 {
-    fprintf( stderr, " user_len=%lu,", (unsigned long)req->user_len );
+    fprintf( stderr, " user_len=%u,", req->user_len );
     fprintf( stderr, " user=" );
     dump_varargs_SID( cur_size );
 }
@@ -3147,7 +3146,7 @@ static void dump_get_token_groups_request( const struct get_token_groups_request
 
 static void dump_get_token_groups_reply( const struct get_token_groups_reply *req )
 {
-    fprintf( stderr, " user_len=%lu,", (unsigned long)req->user_len );
+    fprintf( stderr, " user_len=%u,", req->user_len );
     fprintf( stderr, " user=" );
     dump_varargs_token_groups( cur_size );
 }
@@ -3231,7 +3230,7 @@ static void dump_create_symlink_request( const struct create_symlink_request *re
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%p,", req->rootdir );
-    fprintf( stderr, " name_len=%lu,", (unsigned long)req->name_len );
+    fprintf( stderr, " name_len=%u,", req->name_len );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->name_len) );
     fputc( ',', stderr );
@@ -4019,7 +4018,6 @@ void trace_request(void)
         fprintf( stderr, "%04x: %s(", current->id, req_names[req] );
         if (req_dumpers[req])
         {
-            cur_pos = 0;
             cur_data = get_req_data();
             cur_size = get_req_data_size();
             req_dumpers[req]( &current->req );
@@ -4038,7 +4036,6 @@ void trace_reply( enum request req, const union generic_reply *reply )
         if (reply_dumpers[req])
         {
             fprintf( stderr, " {" );
-            cur_pos = 0;
             cur_data = current->reply_data;
             cur_size = reply->reply_header.reply_size;
             reply_dumpers[req]( reply );

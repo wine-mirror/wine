@@ -99,7 +99,7 @@ struct startup_info
     obj_handle_t        hstderr;      /* handle for stderr */
     struct file        *exe_file;     /* file handle for main exe */
     struct process     *process;      /* created process */
-    size_t              data_size;    /* size of startup data */
+    data_size_t         data_size;    /* size of startup data */
     void               *data;         /* data for startup info */
 };
 
@@ -303,7 +303,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
 }
 
 /* initialize the current process and fill in the request */
-size_t init_process( struct thread *thread )
+data_size_t init_process( struct thread *thread )
 {
     struct process *process = thread->process;
     struct startup_info *info = process->startup_info;
@@ -420,7 +420,7 @@ static inline struct process_dll *find_process_dll( struct process *process, voi
 
 /* add a dll to a process list */
 static struct process_dll *process_load_dll( struct process *process, struct file *file,
-                                             void *base, const WCHAR *filename, size_t name_len )
+                                             void *base, const WCHAR *filename, data_size_t name_len )
 {
     struct process_dll *dll;
 
@@ -838,7 +838,7 @@ DECL_HANDLER(get_startup_info)
 {
     struct process *process = current->process;
     struct startup_info *info = process->startup_info;
-    size_t size;
+    data_size_t size;
 
     if (!info) return;
 
@@ -953,7 +953,7 @@ DECL_HANDLER(set_process_info)
 DECL_HANDLER(read_process_memory)
 {
     struct process *process;
-    size_t len = get_reply_max_size();
+    data_size_t len = get_reply_max_size();
 
     if (!(process = get_process_from_handle( req->handle, PROCESS_VM_READ ))) return;
 
@@ -978,7 +978,7 @@ DECL_HANDLER(write_process_memory)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
-        size_t len = get_req_data_size();
+        data_size_t len = get_req_data_size();
         if (len) write_process_memory( process, req->addr, len, get_req_data() );
         else set_error( STATUS_INVALID_PARAMETER );
         release_object( process );
@@ -1029,7 +1029,7 @@ DECL_HANDLER(get_dll_info)
             reply->entry_point = NULL; /* FIXME */
             if (dll->filename)
             {
-                size_t len = min( dll->namelen, get_reply_max_size() );
+                data_size_t len = min( dll->namelen, get_reply_max_size() );
                 set_reply_data( dll->filename, len );
             }
         }

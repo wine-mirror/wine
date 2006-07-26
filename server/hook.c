@@ -55,7 +55,7 @@ struct hook
     void               *proc;     /* hook function */
     int                 unicode;  /* is it a unicode hook? */
     WCHAR              *module;   /* module name for global hooks */
-    size_t              module_size;
+    data_size_t         module_size;
 };
 
 #define WH_WINEVENT (WH_MAXHOOK+1)
@@ -373,7 +373,7 @@ DECL_HANDLER(set_hook)
     struct hook *hook;
     WCHAR *module;
     int global;
-    size_t module_size = get_req_data_size();
+    data_size_t module_size = get_req_data_size();
 
     if (!req->proc || req->id < WH_MINHOOK || req->id > WH_WINEVENT)
     {

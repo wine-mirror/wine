@@ -33,6 +33,7 @@ my %formats =
     "void*"         => "%p",
     "time_t"        => "%ld (long)",
     "size_t"        => "%lu (unsigned long)",
+    "data_size_t"   => "%u",
     "obj_handle_t"  => "%p",
     "atom_t"        => "%04x",
     "user_handle_t" => "%p",

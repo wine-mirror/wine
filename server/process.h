@@ -42,7 +42,7 @@ struct process_dll
     void                *name;            /* ptr to ptr to name (in process addr space) */
     int                  dbg_offset;      /* debug info offset */
     int                  dbg_size;        /* debug info size */
-    size_t               namelen;         /* length of dll file name */
+    data_size_t          namelen;         /* length of dll file name */
     WCHAR               *filename;        /* dll file name */
 };
 
@@ -93,7 +93,7 @@ struct module_snapshot
 {
     void           *base;     /* module base addr */
     size_t          size;     /* module size */
-    size_t          namelen;  /* length of file name */
+    data_size_t     namelen;  /* length of file name */
     WCHAR          *filename; /* module file name */
 };
 
@@ -103,7 +103,7 @@ extern unsigned int alloc_ptid( void *ptr );
 extern void free_ptid( unsigned int id );
 extern void *get_ptid_entry( unsigned int id );
 extern struct thread *create_process( int fd, struct thread *parent_thread, int inherit_all );
-extern size_t init_process( struct thread *thread );
+extern data_size_t init_process( struct thread *thread );
 extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
@@ -126,8 +126,8 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
-extern int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest );
-extern int write_process_memory( struct process *process, void *ptr, size_t size, const char *src );
+extern int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest );
+extern int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src );
 
 inline static process_id_t get_process_id( struct process *process ) { return process->id; }
 

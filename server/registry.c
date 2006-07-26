@@ -90,7 +90,7 @@ struct key_value
     WCHAR            *name;    /* value name */
     unsigned short    namelen; /* length of value name */
     unsigned short    type;    /* value type */
-    size_t            len;     /* value data length in bytes */
+    data_size_t       len;     /* value data length in bytes */
     void             *data;    /* pointer to value data */
 };
 
@@ -369,7 +369,7 @@ inline static void get_req_path( struct unicode_str *str, int skip_root )
 /* token->str must point inside the path, or be NULL for the first call */
 static struct unicode_str *get_path_token( const struct unicode_str *path, struct unicode_str *token )
 {
-    size_t i = 0, len = path->len / sizeof(WCHAR);
+    data_size_t i = 0, len = path->len / sizeof(WCHAR);
 
     if (!token->str)  /* first time */
     {
@@ -555,7 +555,7 @@ static void free_subkey( struct key *parent, int index )
 static struct key *find_subkey( const struct key *key, const struct unicode_str *name, int *index )
 {
     int i, min, max, res;
-    size_t len;
+    data_size_t len;
 
     min = 0;
     max = key->last_subkey;
@@ -668,7 +668,7 @@ static void enum_key( const struct key *key, int index, int info_class,
                       struct enum_key_reply *reply )
 {
     int i;
-    size_t len, namelen, classlen;
+    data_size_t len, namelen, classlen;
     int max_subkey = 0, max_class = 0;
     int max_value = 0, max_data = 0;
     char *data;
@@ -814,7 +814,7 @@ static int grow_values( struct key *key )
 static struct key_value *find_value( const struct key *key, const struct unicode_str *name, int *index )
 {
     int i, min, max, res;
-    size_t len;
+    data_size_t len;
 
     min = 0;
     max = key->last_value;
@@ -864,7 +864,7 @@ static struct key_value *insert_value( struct key *key, const struct unicode_str
 
 /* set a key value */
 static void set_value( struct key *key, const struct unicode_str *name,
-                       int type, const void *data, size_t len )
+                       int type, const void *data, data_size_t len )
 {
     struct key_value *value;
     void *ptr = NULL;
@@ -901,7 +901,7 @@ static void set_value( struct key *key, const struct unicode_str *name,
 }
 
 /* get a key value */
-static void get_value( struct key *key, const struct unicode_str *name, int *type, size_t *len )
+static void get_value( struct key *key, const struct unicode_str *name, int *type, data_size_t *len )
 {
     struct key_value *value;
     int index;
@@ -929,7 +929,7 @@ static void enum_value( struct key *key, int i, int info_class, struct enum_key_
     else
     {
         void *data;
-        size_t namelen, maxlen;
+        data_size_t namelen, maxlen;
 
         value = &key->values[i];
         reply->type = value->type;
@@ -1074,9 +1074,9 @@ static void file_read_error( const char *err, struct file_load_info *info )
 
 /* parse an escaped string back into Unicode */
 /* return the number of chars read from the input, or -1 on output overflow */
-static int parse_strW( WCHAR *dest, size_t *len, const char *src, char endchar )
+static int parse_strW( WCHAR *dest, data_size_t *len, const char *src, char endchar )
 {
-    size_t count = sizeof(WCHAR);  /* for terminating null */
+    data_size_t count = sizeof(WCHAR);  /* for terminating null */
     const char *p = src;
     while (*p && *p != endchar)
     {
@@ -1172,7 +1172,7 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
     WCHAR *p;
     struct unicode_str name;
     int res, modif;
-    size_t len = strlen(buffer) * sizeof(WCHAR);
+    data_size_t len = strlen(buffer) * sizeof(WCHAR);
 
     if (!get_file_tmp_space( info, len )) return NULL;
 
@@ -1202,10 +1202,10 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
 }
 
 /* parse a comma-separated list of hex digits */
-static int parse_hex( unsigned char *dest, size_t *len, const char *buffer )
+static int parse_hex( unsigned char *dest, data_size_t *len, const char *buffer )
 {
     const char *p = buffer;
-    size_t count = 0;
+    data_size_t count = 0;
     while (isxdigit(*p))
     {
         int val;
@@ -1223,13 +1223,13 @@ static int parse_hex( unsigned char *dest, size_t *len, const char *buffer )
 }
 
 /* parse a value name and create the corresponding value */
-static struct key_value *parse_value_name( struct key *key, const char *buffer, size_t *len,
+static struct key_value *parse_value_name( struct key *key, const char *buffer, data_size_t *len,
                                            struct file_load_info *info )
 {
     struct key_value *value;
     struct unicode_str name;
     int index;
-    size_t maxlen = strlen(buffer) * sizeof(WCHAR);
+    data_size_t maxlen = strlen(buffer) * sizeof(WCHAR);
 
     if (!get_file_tmp_space( info, maxlen )) return NULL;
     name.str = info->tmp;
@@ -1263,7 +1263,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     DWORD dw;
     void *ptr, *newptr;
     int res, type, parse_type;
-    size_t maxlen, len;
+    data_size_t maxlen, len;
     struct key_value *value;
 
     if (!(value = parse_value_name( key, buffer, &len, info ))) return 0;
@@ -1328,7 +1328,7 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
 {
     WCHAR *p;
     int res;
-    size_t len = strlen(name) * sizeof(WCHAR);
+    data_size_t len = strlen(name) * sizeof(WCHAR);
 
     if (!get_file_tmp_space( info, len )) return 0;
 
@@ -1820,7 +1820,7 @@ DECL_HANDLER(set_key_value)
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        size_t datalen = get_req_data_size() - req->namelen;
+        data_size_t datalen = get_req_data_size() - req->namelen;
         const char *data = (const char *)get_req_data() + req->namelen;
 
         set_value( key, &name, req->type, data, datalen );

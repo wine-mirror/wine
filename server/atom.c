@@ -156,7 +156,7 @@ static atom_t add_atom_entry( struct atom_table *table, struct atom_entry *entry
 }
 
 /* compute the hash code for a string */
-static unsigned short atom_hash( struct atom_table *table, const WCHAR *str, size_t len )
+static unsigned short atom_hash( struct atom_table *table, const WCHAR *str, data_size_t len )
 {
     unsigned int i;
     unsigned short hash = 0;
@@ -201,7 +201,7 @@ static void atom_table_destroy( struct object *obj )
 
 /* find an atom entry in its hash list */
 static struct atom_entry *find_atom_entry( struct atom_table *table, const WCHAR *str,
-                                           size_t len, unsigned short hash )
+                                           data_size_t len, unsigned short hash )
 {
     struct atom_entry *entry = table->entries[hash];
     while (entry)
@@ -213,7 +213,7 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const WCHAR
 }
 
 /* add an atom to the table */
-static atom_t add_atom( struct atom_table *table, const WCHAR *str, size_t len )
+static atom_t add_atom( struct atom_table *table, const WCHAR *str, data_size_t len )
 {
     struct atom_entry *entry;
     unsigned short hash = atom_hash( table, str, len );
@@ -271,7 +271,7 @@ static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
 }
 
 /* find an atom in the table */
-static atom_t find_atom( struct atom_table *table, const WCHAR *str, size_t len )
+static atom_t find_atom( struct atom_table *table, const WCHAR *str, data_size_t len )
 {
     struct atom_entry *entry;
 
@@ -328,7 +328,7 @@ static struct atom_table *get_table( obj_handle_t h, int create )
 }
 
 /* add an atom in the global table; used for window properties */
-atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, size_t len )
+atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len )
 {
     struct atom_table *global_table = get_global_table( winstation, 1 );
     if (!global_table) return 0;
@@ -336,7 +336,7 @@ atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, size_t 
 }
 
 /* find an atom in the global table; used for window properties */
-atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, size_t len )
+atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len )
 {
     struct atom_table *global_table = get_global_table( winstation, 0 );
     struct atom_entry *entry;
@@ -417,7 +417,7 @@ DECL_HANDLER(get_atom_information)
 
         if ((entry = get_atom_entry( table, req->atom )))
         {
-            size_t len = entry->len * sizeof(WCHAR);
+            data_size_t len = entry->len * sizeof(WCHAR);
             if (get_reply_max_size())
                 set_reply_data( entry->str, min( len, get_reply_max_size()));
             reply->count = entry->count;

@@ -43,7 +43,7 @@ struct object_name
     struct list         entry;           /* entry in the hash list */
     struct object      *obj;             /* object owning this name */
     struct object      *parent;          /* parent object */
-    size_t              len;             /* name length in bytes */
+    data_size_t         len;             /* name length in bytes */
     WCHAR               name[1];
 };
 
@@ -118,7 +118,7 @@ void *memdup( const void *data, size_t len )
 
 /*****************************************************************/
 
-static int get_name_hash( const struct namespace *namespace, const WCHAR *name, size_t len )
+static int get_name_hash( const struct namespace *namespace, const WCHAR *name, data_size_t len )
 {
     WCHAR hash = 0;
     len /= sizeof(WCHAR);
@@ -161,7 +161,7 @@ static void set_object_name( struct namespace *namespace,
 }
 
 /* get the name of an existing object */
-const WCHAR *get_object_name( struct object *obj, size_t *len )
+const WCHAR *get_object_name( struct object *obj, data_size_t *len )
 {
     struct object_name *ptr = obj->name;
     if (!ptr) return NULL;

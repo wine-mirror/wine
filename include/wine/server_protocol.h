@@ -15,17 +15,24 @@
 #include <windef.h>
 #include <winbase.h>
 
+typedef void *obj_handle_t;
+typedef void *user_handle_t;
+typedef unsigned short atom_t;
+typedef unsigned int process_id_t;
+typedef unsigned int thread_id_t;
+typedef unsigned int data_size_t;
+
 struct request_header
 {
     int          req;
-    size_t       request_size;
-    size_t       reply_size;
+    data_size_t  request_size;
+    data_size_t  reply_size;
 };
 
 struct reply_header
 {
     unsigned int error;
-    size_t       reply_size;
+    data_size_t  reply_size;
 };
 
 
@@ -34,12 +41,6 @@ struct request_max_size
 {
     int pad[16];
 };
-
-typedef void *obj_handle_t;
-typedef void *user_handle_t;
-typedef unsigned short atom_t;
-typedef unsigned int process_id_t;
-typedef unsigned int thread_id_t;
 
 #define FIRST_USER_HANDLE 0x0020
 #define LAST_USER_HANDLE  0xffef
@@ -167,10 +168,10 @@ typedef struct
 struct security_descriptor
 {
     unsigned int control;
-    size_t owner_len;
-    size_t group_len;
-    size_t sacl_len;
-    size_t dacl_len;
+    data_size_t  owner_len;
+    data_size_t  group_len;
+    data_size_t  sacl_len;
+    data_size_t  dacl_len;
 
 
 
@@ -297,7 +298,7 @@ struct init_thread_reply
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
-    size_t       info_size;
+    data_size_t  info_size;
     time_t       server_start;
     int          version;
 };
@@ -1718,7 +1719,7 @@ struct create_key_request
     unsigned int attributes;
     unsigned int options;
     time_t       modif;
-    size_t       namelen;
+    data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(class,unicode_str); */
 };
@@ -1787,8 +1788,8 @@ struct enum_key_reply
     int          max_value;
     int          max_data;
     time_t       modif;
-    size_t       total;
-    size_t       namelen;
+    data_size_t  total;
+    data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(class,unicode_str); */
 };
@@ -1800,7 +1801,7 @@ struct set_key_value_request
     struct request_header __header;
     obj_handle_t hkey;
     int          type;
-    size_t       namelen;
+    data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(data,bytes); */
 };
@@ -1821,7 +1822,7 @@ struct get_key_value_reply
 {
     struct reply_header __header;
     int          type;
-    size_t       total;
+    data_size_t  total;
     /* VARARG(data,bytes); */
 };
 
@@ -1838,8 +1839,8 @@ struct enum_key_value_reply
 {
     struct reply_header __header;
     int          type;
-    size_t       total;
-    size_t       namelen;
+    data_size_t  total;
+    data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(data,bytes); */
 };
@@ -2087,7 +2088,7 @@ struct get_atom_information_reply
     struct reply_header __header;
     int          count;
     int          pinned;
-    size_t       total;
+    data_size_t  total;
     /* VARARG(name,unicode_str); */
 };
 
@@ -2263,7 +2264,7 @@ struct get_message_reply
     unsigned int    info;
     unsigned int    hw_id;
     unsigned int    active_hooks;
-    size_t          total;
+    data_size_t     total;
     /* VARARG(data,bytes); */
 };
 #define GET_MSG_REMOVE      1
@@ -2607,7 +2608,7 @@ struct set_window_info_request
     int            is_unicode;
     void*          user_data;
     int            extra_offset;
-    size_t         extra_size;
+    data_size_t    extra_size;
     unsigned int   extra_value;
 };
 struct set_window_info_reply
@@ -2798,7 +2799,7 @@ struct get_visible_region_reply
     int            top_org_y;
     int            win_org_x;
     int            win_org_y;
-    size_t         total_size;
+    data_size_t    total_size;
     /* VARARG(region,rectangles); */
 };
 
@@ -2812,7 +2813,7 @@ struct get_window_region_request
 struct get_window_region_reply
 {
     struct reply_header __header;
-    size_t         total_size;
+    data_size_t    total_size;
     /* VARARG(region,rectangles); */
 };
 
@@ -2843,7 +2844,7 @@ struct get_update_region_reply
     struct reply_header __header;
     user_handle_t  child;
     unsigned int   flags;
-    size_t         total_size;
+    data_size_t    total_size;
     /* VARARG(region,rectangles); */
 };
 #define UPDATE_NONCLIENT       0x01
@@ -3403,7 +3404,7 @@ struct set_class_info_request
     int            win_extra;
     void*          instance;
     int            extra_offset;
-    size_t         extra_size;
+    data_size_t    extra_size;
     unsigned long  extra_value;
 };
 struct set_class_info_reply
@@ -3581,7 +3582,7 @@ struct get_token_user_request
 struct get_token_user_reply
 {
     struct reply_header __header;
-    size_t          user_len;
+    data_size_t     user_len;
     /* VARARG(user,SID); */
 };
 
@@ -3593,7 +3594,7 @@ struct get_token_groups_request
 struct get_token_groups_reply
 {
     struct reply_header __header;
-    size_t          user_len;
+    data_size_t     user_len;
     /* VARARG(user,token_groups); */
 };
 
@@ -3690,7 +3691,7 @@ struct create_symlink_request
     unsigned int   access;
     unsigned int   attributes;
     obj_handle_t   rootdir;
-    size_t         name_len;
+    data_size_t    name_len;
     /* VARARG(name,unicode_str,name_len); */
     /* VARARG(target_name,unicode_str); */
 };
@@ -4385,6 +4386,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 239
+#define SERVER_PROTOCOL_VERSION 240
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

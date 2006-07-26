@@ -32,7 +32,7 @@
 struct __server_iovec
 {
     const void  *ptr;
-    unsigned int size;
+    data_size_t  size;
 };
 
 #define __SERVER_MAX_DATA 5
@@ -64,13 +64,13 @@ inline static unsigned int wine_server_call_err( void *req_ptr )
 }
 
 /* get the size of the variable part of the returned reply */
-inline static size_t wine_server_reply_size( const void *reply )
+inline static data_size_t wine_server_reply_size( const void *reply )
 {
     return ((const struct reply_header *)reply)->reply_size;
 }
 
 /* add some data to be sent along with the request */
-inline static void wine_server_add_data( void *req_ptr, const void *ptr, unsigned int size )
+inline static void wine_server_add_data( void *req_ptr, const void *ptr, data_size_t size )
 {
     struct __server_request_info * const req = req_ptr;
     if (size)
@@ -82,7 +82,7 @@ inline static void wine_server_add_data( void *req_ptr, const void *ptr, unsigne
 }
 
 /* set the pointer and max size for the reply var data */
-inline static void wine_server_set_reply( void *req_ptr, void *ptr, unsigned int max_size )
+inline static void wine_server_set_reply( void *req_ptr, void *ptr, data_size_t max_size )
 {
     struct __server_request_info * const req = req_ptr;
     req->reply_data = ptr;

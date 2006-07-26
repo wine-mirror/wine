@@ -42,7 +42,7 @@ struct symlink
 {
     struct object    obj;       /* object header */
     WCHAR           *target;    /* target of the symlink */
-    size_t           len;       /* target len in bytes */
+    data_size_t      len;       /* target len in bytes */
 };
 
 static void symlink_dump( struct object *obj, int verbose );

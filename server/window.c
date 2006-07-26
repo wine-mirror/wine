@@ -1561,7 +1561,7 @@ DECL_HANDLER(get_window_parents)
     struct window *ptr, *win = get_window( req->handle );
     int total = 0;
     user_handle_t *data;
-    size_t len;
+    data_size_t len;
 
     if (win) for (ptr = win->parent; ptr; ptr = ptr->parent) total++;
 
@@ -1581,7 +1581,7 @@ DECL_HANDLER(get_window_children)
     struct window *ptr, *parent = get_window( req->parent );
     int total = 0;
     user_handle_t *data;
-    size_t len;
+    data_size_t len;
 
     if (parent)
     {
@@ -1613,7 +1613,7 @@ DECL_HANDLER(get_window_children_from_point)
 {
     struct user_handle_array array;
     struct window *parent = get_window( req->parent );
-    size_t len;
+    data_size_t len;
 
     if (!parent) return;
 
@@ -1731,7 +1731,7 @@ DECL_HANDLER(get_window_text)
 
     if (win && win->text)
     {
-        size_t len = strlenW( win->text ) * sizeof(WCHAR);
+        data_size_t len = strlenW( win->text ) * sizeof(WCHAR);
         if (len > get_reply_max_size()) len = get_reply_max_size();
         set_reply_data( win->text, len );
     }
@@ -1746,7 +1746,7 @@ DECL_HANDLER(set_window_text)
     if (win)
     {
         WCHAR *text = NULL;
-        size_t len = get_req_data_size() / sizeof(WCHAR);
+        data_size_t len = get_req_data_size() / sizeof(WCHAR);
         if (len)
         {
             if (!(text = mem_alloc( (len+1) * sizeof(WCHAR) ))) return;

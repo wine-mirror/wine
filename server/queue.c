@@ -616,7 +616,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
 
 /* set the result of the current received message */
 static void reply_message( struct msg_queue *queue, unsigned int result,
-                           unsigned int error, int remove, const void *data, size_t len )
+                           unsigned int error, int remove, const void *data, data_size_t len )
 {
     struct message_result *res = queue->recv_result;
 
@@ -1480,7 +1480,7 @@ void post_message( user_handle_t win, unsigned int message,
 void post_win_event( struct thread *thread, unsigned int event,
                      user_handle_t win, unsigned int object_id,
                      unsigned int child_id, void *hook_proc,
-                     const WCHAR *module, size_t module_size,
+                     const WCHAR *module, data_size_t module_size,
                      user_handle_t hook)
 {
     struct message *msg;
@@ -1791,7 +1791,7 @@ DECL_HANDLER(get_message_reply)
                 set_error( result->error );
                 if (result->data)
                 {
-                    size_t data_len = min( result->data_size, get_reply_max_size() );
+                    data_size_t data_len = min( result->data_size, get_reply_max_size() );
                     set_reply_data_ptr( result->data, data_len );
                     result->data = NULL;
                     result->data_size = 0;
@@ -1989,7 +1989,7 @@ DECL_HANDLER(set_key_state)
     input = thread->queue ? thread->queue->input : NULL;
     if (input)
     {
-        size_t size = min( sizeof(input->keystate), get_req_data_size() );
+        data_size_t size = min( sizeof(input->keystate), get_req_data_size() );
         if (size) memcpy( input->keystate, get_req_data(), size );
     }
     release_object( thread );

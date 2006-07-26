@@ -50,7 +50,7 @@ struct directory;
 struct unicode_str
 {
     const WCHAR *str;
-    size_t       len;
+    data_size_t  len;
 };
 
 /* operations valid on all objects */
@@ -103,7 +103,7 @@ struct wait_queue_entry
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
-extern const WCHAR *get_object_name( struct object *obj, size_t *len );
+extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
 extern void dump_object_name( struct object *obj );
 extern void *create_object( struct namespace *namespace, const struct object_ops *ops,
                             const struct unicode_str *name, struct object *parent );
@@ -179,8 +179,8 @@ extern void init_signals(void);
 
 /* atom functions */
 
-extern atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, size_t len );
-extern atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, size_t len );
+extern atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len );
+extern atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len );
 extern int grab_global_atom( struct winstation *winstation, atom_t atom );
 extern void release_global_atom( struct winstation *winstation, atom_t atom );
 

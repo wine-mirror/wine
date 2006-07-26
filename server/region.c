@@ -581,7 +581,7 @@ struct region *create_empty_region(void)
 }
 
 /* create a region from request data */
-struct region *create_region_from_req_data( const void *data, size_t size )
+struct region *create_region_from_req_data( const void *data, data_size_t size )
 {
     unsigned int alloc_rects;
     struct region *region;
@@ -638,7 +638,7 @@ void set_region_rect( struct region *region, const rectangle_t *rect )
 }
 
 /* retrieve the region data for sending to the client */
-rectangle_t *get_region_data( const struct region *region, size_t max_size, size_t *total_size )
+rectangle_t *get_region_data( const struct region *region, data_size_t max_size, data_size_t *total_size )
 {
     const rectangle_t *data = region->rects;
 
@@ -654,7 +654,7 @@ rectangle_t *get_region_data( const struct region *region, size_t max_size, size
 }
 
 /* retrieve the region data for sending to the client and free the region at the same time */
-rectangle_t *get_region_data_and_free( struct region *region, size_t max_size, size_t *total_size )
+rectangle_t *get_region_data_and_free( struct region *region, data_size_t max_size, data_size_t *total_size )
 {
     rectangle_t *ret = region->rects;
 

@@ -95,19 +95,19 @@ extern void post_message( user_handle_t win, unsigned int message,
 extern void post_win_event( struct thread *thread, unsigned int event,
                             user_handle_t win, unsigned int object_id,
                             unsigned int child_id, void *proc,
-                            const WCHAR *module, size_t module_size,
+                            const WCHAR *module, data_size_t module_size,
                             user_handle_t handle );
 
 /* region functions */
 
 extern struct region *create_empty_region(void);
-extern struct region *create_region_from_req_data( const void *data, size_t size );
+extern struct region *create_region_from_req_data( const void *data, data_size_t size );
 extern void free_region( struct region *region );
 extern void set_region_rect( struct region *region, const rectangle_t *rect );
-extern rectangle_t *get_region_data( const struct region *region, size_t max_size,
-                                     size_t *total_size );
-extern rectangle_t *get_region_data_and_free( struct region *region, size_t max_size,
-                                              size_t *total_size );
+extern rectangle_t *get_region_data( const struct region *region, data_size_t max_size,
+                                     data_size_t *total_size );
+extern rectangle_t *get_region_data_and_free( struct region *region, data_size_t max_size,
+                                              data_size_t *total_size );
 extern int is_region_empty( const struct region *region );
 extern void get_region_extents( const struct region *region, rectangle_t *rect );
 extern void offset_region( struct region *region, int x, int y );

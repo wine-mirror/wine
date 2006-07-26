@@ -135,7 +135,7 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, unsig
     return &file->obj;
 }
 
-static struct object *create_file( const char *nameptr, size_t len, unsigned int access,
+static struct object *create_file( const char *nameptr, data_size_t len, unsigned int access,
                                    unsigned int sharing, int create, unsigned int options,
                                    unsigned int attrs )
 {

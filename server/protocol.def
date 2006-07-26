@@ -31,17 +31,24 @@
 #include <windef.h>
 #include <winbase.h>
 
+typedef void *obj_handle_t;
+typedef void *user_handle_t;
+typedef unsigned short atom_t;
+typedef unsigned int process_id_t;
+typedef unsigned int thread_id_t;
+typedef unsigned int data_size_t;
+
 struct request_header
 {
     int          req;          /* request code */
-    size_t       request_size; /* request variable part size */
-    size_t       reply_size;   /* reply variable part maximum size */
+    data_size_t  request_size; /* request variable part size */
+    data_size_t  reply_size;   /* reply variable part maximum size */
 };
 
 struct reply_header
 {
     unsigned int error;        /* error result */
-    size_t       reply_size;   /* reply variable part size */
+    data_size_t  reply_size;   /* reply variable part size */
 };
 
 /* placeholder structure for the maximum allowed request size */
@@ -50,12 +57,6 @@ struct request_max_size
 {
     int pad[16]; /* the max request size is 16 ints */
 };
-
-typedef void *obj_handle_t;
-typedef void *user_handle_t;
-typedef unsigned short atom_t;
-typedef unsigned int process_id_t;
-typedef unsigned int thread_id_t;
 
 #define FIRST_USER_HANDLE 0x0020  /* first possible value for low word of user handle */
 #define LAST_USER_HANDLE  0xffef  /* last possible value for low word of user handle */
@@ -183,10 +184,10 @@ typedef struct
 struct security_descriptor
 {
     unsigned int control;       /* SE_ flags */
-    size_t owner_len;
-    size_t group_len;
-    size_t sacl_len;
-    size_t dacl_len;
+    data_size_t  owner_len;
+    data_size_t  group_len;
+    data_size_t  sacl_len;
+    data_size_t  dacl_len;
     /* VARARGS(owner,SID); */
     /* VARARGS(group,SID); */
     /* VARARGS(sacl,ACL); */
@@ -282,7 +283,7 @@ struct token_groups
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
-    size_t       info_size;    /* total size of startup info */
+    data_size_t  info_size;    /* total size of startup info */
     time_t       server_start; /* server start time */
     int          version;      /* protocol version */
 @END
@@ -1261,7 +1262,7 @@ enum char_info_mode
     unsigned int attributes;   /* object attributes */
     unsigned int options;      /* creation options */
     time_t       modif;        /* last modification time */
-    size_t       namelen;      /* length of key name in bytes */
+    data_size_t  namelen;      /* length of key name in bytes */
     VARARG(name,unicode_str,namelen);  /* key name */
     VARARG(class,unicode_str);         /* class name */
 @REPLY
@@ -1305,8 +1306,8 @@ enum char_info_mode
     int          max_value;    /* longest value name */
     int          max_data;     /* longest value data */
     time_t       modif;        /* last modification time */
-    size_t       total;        /* total length needed for full name and class */
-    size_t       namelen;      /* length of key name in bytes */
+    data_size_t  total;        /* total length needed for full name and class */
+    data_size_t  namelen;      /* length of key name in bytes */
     VARARG(name,unicode_str,namelen);  /* key name */
     VARARG(class,unicode_str);         /* class name */
 @END
@@ -1316,7 +1317,7 @@ enum char_info_mode
 @REQ(set_key_value)
     obj_handle_t hkey;         /* handle to registry key */
     int          type;         /* value type */
-    size_t       namelen;      /* length of value name in bytes */
+    data_size_t  namelen;      /* length of value name in bytes */
     VARARG(name,unicode_str,namelen);  /* value name */
     VARARG(data,bytes);                /* value data */
 @END
@@ -1328,7 +1329,7 @@ enum char_info_mode
     VARARG(name,unicode_str);  /* value name */
 @REPLY
     int          type;         /* value type */
-    size_t       total;        /* total length needed for data */
+    data_size_t  total;        /* total length needed for data */
     VARARG(data,bytes);        /* value data */
 @END
 
@@ -1340,8 +1341,8 @@ enum char_info_mode
     int          info_class;   /* requested information class */
 @REPLY
     int          type;         /* value type */
-    size_t       total;        /* total length needed for full name and data */
-    size_t       namelen;      /* length of value name in bytes */
+    data_size_t  total;        /* total length needed for full name and data */
+    data_size_t  namelen;      /* length of value name in bytes */
     VARARG(name,unicode_str,namelen);  /* value name */
     VARARG(data,bytes);                /* value data */
 @END
@@ -1498,7 +1499,7 @@ enum char_info_mode
 @REPLY
     int          count;        /* atom lock count */
     int          pinned;       /* whether the atom has been pinned */
-    size_t       total;        /* actual length of atom name */
+    data_size_t  total;        /* actual length of atom name */
     VARARG(name,unicode_str);  /* atom name */
 @END
 
@@ -1620,7 +1621,7 @@ enum message_type
     unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     unsigned int    hw_id;     /* id if hardware message */
     unsigned int    active_hooks; /* active hooks bitmap */
-    size_t          total;     /* total size of extra data */
+    data_size_t     total;     /* total size of extra data */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 #define GET_MSG_REMOVE      1  /* remove the message */
@@ -1853,7 +1854,7 @@ enum message_type
     int            is_unicode;    /* ANSI or unicode */
     void*          user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
-    size_t         extra_size;    /* size to set in extra bytes */
+    data_size_t    extra_size;    /* size to set in extra bytes */
     unsigned int   extra_value;   /* value to set in extra bytes */
 @REPLY
     unsigned int   old_style;     /* old window style */
@@ -1985,7 +1986,7 @@ enum message_type
     int            top_org_y;
     int            win_org_x;     /* window rect origin in screen coords */
     int            win_org_y;
-    size_t         total_size;    /* total size of the resulting region */
+    data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
 @END
 
@@ -1994,7 +1995,7 @@ enum message_type
 @REQ(get_window_region)
     user_handle_t  window;        /* handle to the window */
 @REPLY
-    size_t         total_size;    /* total size of the resulting region */
+    data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region */
 @END
 
@@ -2014,7 +2015,7 @@ enum message_type
 @REPLY
     user_handle_t  child;         /* child to repaint (or window itself) */
     unsigned int   flags;         /* resulting update flags (see below) */
-    size_t         total_size;    /* total size of the resulting region */
+    data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region */
 @END
 #define UPDATE_NONCLIENT       0x01  /* get region for repainting non-client area */
@@ -2386,7 +2387,7 @@ enum message_type
     int            win_extra;      /* number of window extra bytes */
     void*          instance;       /* module instance */
     int            extra_offset;   /* offset to set in extra bytes */
-    size_t         extra_size;     /* size to set in extra bytes */
+    data_size_t    extra_size;     /* size to set in extra bytes */
     unsigned long  extra_value;    /* value to set in extra bytes */
 @REPLY
     atom_t         old_atom;       /* previous class atom */
@@ -2516,14 +2517,14 @@ enum message_type
 @REQ(get_token_user)
     obj_handle_t    handle;       /* handle to the token */
 @REPLY
-    size_t          user_len;     /* length needed to store user */
+    data_size_t     user_len;     /* length needed to store user */
     VARARG(user,SID);             /* sid of the user the token represents */
 @END
 
 @REQ(get_token_groups)
     obj_handle_t    handle;       /* handle to the token */
 @REPLY
-    size_t          user_len;     /* length needed to store user */
+    data_size_t     user_len;     /* length needed to store user */
     VARARG(user,token_groups); /* groups the token's user belongs to */
 @END
 
@@ -2593,7 +2594,7 @@ enum message_type
     unsigned int   access;        /* access flags */
     unsigned int   attributes;    /* object attributes */
     obj_handle_t   rootdir;       /* root directory */
-    size_t         name_len;      /* length of the symlink name in bytes */
+    data_size_t    name_len;      /* length of the symlink name in bytes */
     VARARG(name,unicode_str,name_len); /* symlink name */
     VARARG(target_name,unicode_str);   /* target name */
 @REPLY

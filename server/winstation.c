@@ -152,7 +152,7 @@ static WCHAR *build_desktop_name( const struct unicode_str *name,
 {
     const WCHAR *winstation_name;
     WCHAR *full_name;
-    size_t winstation_len;
+    data_size_t winstation_len;
 
     if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))
     {
@@ -565,7 +565,7 @@ DECL_HANDLER(set_user_object_info)
     }
     if (get_reply_max_size())
     {
-        size_t len;
+        data_size_t len;
         const WCHAR *ptr, *name = get_object_name( obj, &len );
 
         /* if there is a backslash return the part of the name after it */
