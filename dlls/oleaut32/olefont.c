@@ -1400,159 +1400,150 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   UINT*     puArgErr)
 {
   OLEFontImpl *this = impl_from_IDispatch(iface);
-  OLEFontImpl *xthis = (OLEFontImpl*)this;
+  HRESULT hr;
 
   switch (dispIdMember) {
   case DISPID_FONT_NAME:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_BSTR;
-      return OLEFontImpl_get_Name((IFont *)this, &V_BSTR(pVarResult));
-    case DISPATCH_PROPERTYPUT: {
-      BSTR name;
-      BOOL freename;
-      
-      if (V_VT(&pDispParams->rgvarg[0]) == VT_DISPATCH) {
-        IFont *font;
-        HRESULT hr = S_OK;
-        
-        hr = IUnknown_QueryInterface(V_DISPATCH(&pDispParams->rgvarg[0]), &IID_IFont, (void **) &font);
-        if (FAILED(hr))
-        {
-            FIXME("dispatch value for name property is not an OleFont, returning hr=0x%lx\n", hr);
-            return hr;
-        }
+      return IFont_get_Name((IFont *)this, &V_BSTR(pVarResult));
+    } else {
+      VARIANTARG vararg;
 
-        hr = IFont_get_Name(font, &name); /* this allocates a new BSTR so free it later */
-        if (FAILED(hr)) return hr;
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BSTR);
+      if (FAILED(hr))
+        return hr;
 
-        IUnknown_Release(font);
-        
-        freename = TRUE;
-      } else if (V_VT(&pDispParams->rgvarg[0]) == VT_BSTR) {
-        name = V_BSTR(&pDispParams->rgvarg[0]);
-        freename = FALSE;
-      } else {
-        FIXME("app is trying to set name property with a non BSTR, non dispatch value. returning E_FAIL\n");
-        return E_FAIL;
-      }
+      hr = IFont_put_Name((IFont *)this, V_BSTR(&vararg));
 
-      TRACE("name is %s\n", debugstr_w(name));
-      
-      if (!xthis->description.lpstrName)
-	xthis->description.lpstrName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name)+1) * sizeof(WCHAR));
-      else
-	xthis->description.lpstrName = HeapReAlloc(GetProcessHeap(), 0, xthis->description.lpstrName, (lstrlenW(name)+1) * sizeof(WCHAR));
-
-      if (xthis->description.lpstrName==0)
-	return E_OUTOFMEMORY;
-      strcpyW(xthis->description.lpstrName, name);
-
-      if (freename) SysFreeString(name);
-      
-      return S_OK;
-    }
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_BOLD:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
+      BOOL value;
+      hr = IFont_get_Bold((IFont *)this, &value);
       V_VT(pVarResult) = VT_BOOL;
-      return OLEFontImpl_get_Bold((IFont *)this, (BOOL*)&V_BOOL(pVarResult));
-    case DISPATCH_PROPERTYPUT:
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_BOOL) {
-	FIXME("DISPID_FONT_BOLD/put, vt is %d, not VT_BOOL.\n",V_VT(&pDispParams->rgvarg[0]));
-	return E_FAIL;
-      } else {
-        xthis->description.sWeight = V_BOOL(&pDispParams->rgvarg[0]) ? FW_BOLD : FW_NORMAL;
-	return S_OK;
-      }
+      V_BOOL(pVarResult) = value ? VARIANT_TRUE : VARIANT_FALSE;
+      return hr;
+    } else {
+      VARIANTARG vararg;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Bold((IFont *)this, V_BOOL(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_ITALIC:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
+      BOOL value;
+      hr = IFont_get_Italic((IFont *)this, &value);
       V_VT(pVarResult) = VT_BOOL;
-      return OLEFontImpl_get_Italic((IFont *)this, (BOOL*)&V_BOOL(pVarResult));
-    case DISPATCH_PROPERTYPUT:
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_BOOL) {
-	FIXME("DISPID_FONT_ITALIC/put, vt is %d, not VT_BOOL.\n",V_VT(&pDispParams->rgvarg[0]));
-	return E_FAIL;
-      } else {
-        xthis->description.fItalic = V_BOOL(&pDispParams->rgvarg[0]);
-	return S_OK;
-      }
+      V_BOOL(pVarResult) = value ? VARIANT_TRUE : VARIANT_FALSE;
+      return hr;
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Italic((IFont *)this, V_BOOL(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_UNDER:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
+      BOOL value;
+      hr = IFont_get_Underline((IFont *)this, &value);
       V_VT(pVarResult) = VT_BOOL;
-      return OLEFontImpl_get_Underline((IFont *)this, (BOOL*)&V_BOOL(pVarResult));
-    case DISPATCH_PROPERTYPUT:
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_BOOL) {
-	FIXME("DISPID_FONT_UNDER/put, vt is %d, not VT_BOOL.\n",V_VT(&pDispParams->rgvarg[0]));
-	return E_FAIL;
-      } else {
-        xthis->description.fUnderline = V_BOOL(&pDispParams->rgvarg[0]);
-	return S_OK;
-      }
+      V_BOOL(pVarResult) = value ? VARIANT_TRUE : VARIANT_FALSE;
+      return hr;
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Underline((IFont *)this, V_BOOL(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_STRIKE:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
+      BOOL value;
+      hr = IFont_get_Strikethrough((IFont *)this, &value);
       V_VT(pVarResult) = VT_BOOL;
-      return OLEFontImpl_get_Strikethrough((IFont *)this, (BOOL*)&V_BOOL(pVarResult));
-    case DISPATCH_PROPERTYPUT:
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_BOOL) {
-	FIXME("DISPID_FONT_STRIKE/put, vt is %d, not VT_BOOL.\n",V_VT(&pDispParams->rgvarg[0]));
-	return E_FAIL;
-      } else {
-        xthis->description.fStrikethrough = V_BOOL(&pDispParams->rgvarg[0]);
-	return S_OK;
-      }
+      V_BOOL(pVarResult) = value ? VARIANT_TRUE : VARIANT_FALSE;
+      return hr;
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Strikethrough((IFont *)this, V_BOOL(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_SIZE:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYPUT: {
-      assert (pDispParams->cArgs == 1);
-      xthis->description.cySize.s.Hi = 0;
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_CY) {
-        if (V_VT(&pDispParams->rgvarg[0]) == VT_I2) {
-	  xthis->description.cySize.s.Lo = V_I2(&pDispParams->rgvarg[0]) * 10000;
-	} else {
-	  FIXME("property put for Size with vt %d unsupported!\n",V_VT(&pDispParams->rgvarg[0]));
-	}
-      } else {
-        xthis->description.cySize.s.Lo = V_CY(&pDispParams->rgvarg[0]).s.Lo;
-      }
-      return S_OK;
-    }
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_CY;
       return OLEFontImpl_get_Size((IFont *)this, &V_CY(pVarResult));
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_CY);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Size((IFont *)this, V_CY(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_FONT_CHARSET:
-    switch (wFlags) {
-    case DISPATCH_PROPERTYPUT:
-      assert (pDispParams->cArgs == 1);
-      if (V_VT(&pDispParams->rgvarg[0]) != VT_I2)
-	FIXME("varg of first disparg is not VT_I2, but %d\n",V_VT(&pDispParams->rgvarg[0]));
-      xthis->description.sCharset = V_I2(&pDispParams->rgvarg[0]);
-      return S_OK;
-    case DISPATCH_PROPERTYGET:
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+    if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_I2;
       return OLEFontImpl_get_Charset((IFont *)this, &V_I2(pVarResult));
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_I2);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Charset((IFont *)this, V_I2(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   }

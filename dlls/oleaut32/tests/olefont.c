@@ -253,7 +253,10 @@ static void test_font_events_disp(void)
     FONTDESC fontdesc;
     HRESULT hr;
     DWORD dwCookie;
+    IFontDisp *pFontDisp;
     static const WCHAR wszMSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
+    DISPPARAMS dispparams;
+    VARIANTARG vararg;
 
     fontdesc.cbSizeofstruct = sizeof(fontdesc);
     fontdesc.lpstrName = (LPOLESTR)wszMSSansSerif;
@@ -283,15 +286,32 @@ static void test_font_events_disp(void)
 
     ok(fonteventsdisp_invoke_called == 1, "IFontEventDisp::Invoke wasn't called once\n");
 
+    hr = IFont_QueryInterface(pFont, &IID_IFontDisp, (void **)&pFontDisp);
+    ok_ole_success(hr, "IFont_QueryInterface");
+
+    V_VT(&vararg) = VT_BOOL;
+    V_BOOL(&vararg) = VARIANT_FALSE;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IFontDisp_Invoke(pFontDisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+
+    IFontDisp_Release(pFontDisp);
+
+    ok(fonteventsdisp_invoke_called == 2, "IFontEventDisp::Invoke was called %d times instead of twice\n",
+        fonteventsdisp_invoke_called);
+
     hr = IFont_Clone(pFont, &pFont2);
     ok_ole_success(hr, "IFont_Clone");
     IFont_Release(pFont);
 
-    hr = IFont_put_Bold(pFont2, TRUE);
+    hr = IFont_put_Bold(pFont2, FALSE);
     ok_ole_success(hr, "IFont_put_Bold");
 
     /* this test shows that the notification routine isn't called again */
-    ok(fonteventsdisp_invoke_called == 1, "IFontEventDisp::Invoke wasn't called once\n");
+    ok(fonteventsdisp_invoke_called == 2, "IFontEventDisp::Invoke was called %d times instead of twice\n",
+        fonteventsdisp_invoke_called);
 
     IFont_Release(pFont2);
 }
