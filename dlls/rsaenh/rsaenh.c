@@ -2195,6 +2195,8 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 pBlobHeader->bVersion = CUR_BLOB_VERSION;
                 pBlobHeader->reserved = 0;
                 pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
+                if (pBlobHeader->aiKeyAlg == CALG_RSA_SIGN)
+                    pBlobHeader->aiKeyAlg = CALG_RSA_KEYX;
 
                 pRSAPubKey->magic = RSAENH_MAGIC_RSA1; 
                 pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
