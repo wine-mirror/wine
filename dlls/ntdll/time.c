@@ -874,7 +874,8 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGE
      * to one of 1.193182 MHz, with some care for arithmetic
      * overflow ( will not overflow for 5000 years ) and
      * good accuracy ( 105/88 = 1.19318182) */
-    Counter->QuadPart = (((now.tv_sec - server_start_time) * (ULONGLONG)1000000 + now.tv_usec) * 105) / 88;
+    Counter->QuadPart = (((now.tv_sec - server_start_time.sec) * (ULONGLONG)1000000 +
+                          (now.tv_usec - server_start_time.usec)) * 105) / 88;
     if (Frequency) Frequency->QuadPart = 1193182;
     return STATUS_SUCCESS;
 }
@@ -889,7 +890,8 @@ ULONG WINAPI NtGetTickCount(void)
     struct timeval current_time;
 
     gettimeofday(&current_time, NULL);
-    return (current_time.tv_sec - server_start_time)*1000 + current_time.tv_usec/1000;
+    return (current_time.tv_sec - server_start_time.sec) * 1000 +
+           (current_time.tv_usec - server_start_time.usec) / 1000;
 }
 
 

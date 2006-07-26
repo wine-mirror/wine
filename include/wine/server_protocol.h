@@ -299,7 +299,7 @@ struct init_thread_reply
     process_id_t pid;
     thread_id_t  tid;
     data_size_t  info_size;
-    time_t       server_start;
+    abs_time_t   server_start;
     int          version;
 };
 
@@ -4385,6 +4385,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 242
+#define SERVER_PROTOCOL_VERSION 243
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

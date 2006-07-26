@@ -54,7 +54,7 @@ extern void virtual_init(void);
 extern void virtual_init_threading(void);
 
 /* server support */
-extern time_t server_start_time;
+extern abs_time_t server_start_time;
 extern void server_init_process(void);
 extern size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point );
 extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );

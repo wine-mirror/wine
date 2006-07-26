@@ -213,6 +213,6 @@ extern int foreground;
 extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
-extern time_t server_start_time;
+extern struct timeval server_start_time;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

@@ -697,7 +697,9 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " info_size=%u,", req->info_size );
-    fprintf( stderr, " server_start=%ld,", (long)req->server_start );
+    fprintf( stderr, " server_start=" );
+    dump_abs_time( &req->server_start );
+    fprintf( stderr, "," );
     fprintf( stderr, " version=%d", req->version );
 }
 
