@@ -868,18 +868,18 @@ DECL_HANDLER(wait_named_pipe)
     }
     else
     {
-        int timeout;
-        if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT)
-            timeout = pipe->timeout;
-        else
-            timeout = req->timeout;
-
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
             create_async( current, NULL, &pipe->waiters,
                           req->func, req->event, NULL );
         else
-            create_async( current, &timeout, &pipe->waiters,
-                          req->func, req->event, NULL );
+        {
+            struct timeval when;
+
+            gettimeofday( &when, NULL );
+            if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
+            else add_timeout( &when, req->timeout );
+            create_async( current, &when, &pipe->waiters, req->func, req->event, NULL );
+        }
     }
 
     release_object( pipe );

@@ -1116,8 +1116,8 @@ static void async_callback(void *private)
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async(struct thread *thread, int* timeout, struct list *queue,
-                           void *io_apc, void *io_user, void* io_sb)
+struct async *create_async( struct thread *thread, const struct timeval *timeout,
+                            struct list *queue, void *io_apc, void *io_user, void* io_sb )
 {
     struct async *async = mem_alloc( sizeof(struct async) );
 
@@ -1130,14 +1130,7 @@ struct async *create_async(struct thread *thread, int* timeout, struct list *que
 
     list_add_tail( queue, &async->entry );
 
-    if (timeout)
-    {
-        struct timeval when;
-
-        gettimeofday( &when, NULL );
-        add_timeout( &when, *timeout );
-        async->timeout = add_timeout_user( &when, async_callback, async );
-    }
+    if (timeout) async->timeout = add_timeout_user( timeout, async_callback, async );
     else async->timeout = NULL;
 
     return async;
@@ -1583,7 +1576,8 @@ void default_poll_event( struct fd *fd, int event )
     wake_up( fd->user, 0 );
 }
 
-void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count, int *timeout )
+void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count,
+                             const struct timeval *timeout )
 {
     struct list *queue;
     int events;

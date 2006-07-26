@@ -249,7 +249,6 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
                                   void *iosb, int type, int count )
 {
     struct mailslot *mailslot = get_fd_user( fd );
-    int *timeout = NULL;
 
     assert(mailslot->obj.ops == &mailslot_ops);
 
@@ -266,9 +265,14 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
         return;
     }
 
-    if (mailslot->read_timeout != -1) timeout = &mailslot->read_timeout;
-
-    fd_queue_async_timeout( fd, apc, user, iosb, type, count, timeout );
+    if (mailslot->read_timeout != -1)
+    {
+        struct timeval when;
+        gettimeofday( &when, NULL );
+        add_timeout( &when, mailslot->read_timeout );
+        fd_queue_async_timeout( fd, apc, user, iosb, type, count, &when );
+    }
+    else fd_queue_async_timeout( fd, apc, user, iosb, type, count, NULL );
 }
 
 static void mailslot_device_dump( struct object *obj, int verbose )
