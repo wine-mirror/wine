@@ -484,7 +484,7 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
             req->expire.sec  = 0;
             req->expire.usec = 0;
         }
-        else NTDLL_get_server_timeout( &req->expire, when );
+        else NTDLL_get_server_abstime( &req->expire, when );
 
         req->handle   = handle;
         req->period   = period;
@@ -564,7 +564,7 @@ NTSTATUS WINAPI NtQueryTimer(
             status = wine_server_call(req);
 
             /* convert server time to absolute NTDLL time */
-            NTDLL_from_server_timeout(&basic_info->RemainingTime, &reply->when);
+            NTDLL_from_server_abstime(&basic_info->RemainingTime, &reply->when);
             basic_info->TimerState = reply->signaled;
         }
         SERVER_END_REQ;
@@ -721,7 +721,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
             req->flags   = flags;
             req->cookie  = &cookie;
             req->signal  = signal_object;
-            NTDLL_get_server_timeout( &req->timeout, timeout );
+            NTDLL_get_server_abstime( &req->timeout, timeout );
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
             ret = wine_server_call( req );
         }
@@ -819,7 +819,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     {
         abs_time_t when;
 
-        NTDLL_get_server_timeout( &when, timeout );
+        NTDLL_get_server_abstime( &when, timeout );
 
         /* Note that we yield after establishing the desired timeout */
         NtYieldExecution();

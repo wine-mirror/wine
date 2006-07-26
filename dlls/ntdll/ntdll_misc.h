@@ -39,8 +39,8 @@ extern void set_cpu_context( const CONTEXT *context );
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
-extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
-extern void NTDLL_from_server_timeout( LARGE_INTEGER *timeout, const abs_time_t *when );
+extern void NTDLL_get_server_abstime( abs_time_t *when, const LARGE_INTEGER *timeout );
+extern void NTDLL_from_server_abstime( LARGE_INTEGER *time, const abs_time_t *when );
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
                                                  const LARGE_INTEGER *timeout, HANDLE signal_object );
 

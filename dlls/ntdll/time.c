@@ -435,11 +435,11 @@ static inline int IsLeapYear(int Year)
 }
 
 /***********************************************************************
- *              NTDLL_get_server_timeout
+ *              NTDLL_get_server_abstime
  *
- * Convert a NTDLL timeout into a timeval struct to send to the server.
+ * Convert a NTDLL time into an abs_time_t struct to send to the server.
  */
-void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
+void NTDLL_get_server_abstime( abs_time_t *when, const LARGE_INTEGER *timeout )
 {
     UINT remainder;
 
@@ -484,14 +484,14 @@ void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
 
 
 /***********************************************************************
- *              NTDLL_from_server_timeout
+ *              NTDLL_from_server_abstime
  *
- * Convert a timeval struct from the server into an NTDLL timeout.
+ * Convert a timeval struct from the server into an NTDLL time.
  */
-void NTDLL_from_server_timeout( LARGE_INTEGER *timeout, const abs_time_t *when )
+void NTDLL_from_server_abstime( LARGE_INTEGER *time, const abs_time_t *when )
 {
-    timeout->QuadPart = when->sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    timeout->QuadPart += when->usec * 10;
+    time->QuadPart = when->sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    time->QuadPart += when->usec * 10;
 }
 
 
