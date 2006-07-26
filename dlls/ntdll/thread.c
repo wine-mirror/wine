@@ -1077,8 +1077,8 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 status = wine_server_call( req );
                 if (status == STATUS_SUCCESS)
                 {
-                    RtlSecondsSince1970ToTime( reply->creation_time, &kusrt.CreateTime );
-                    RtlSecondsSince1970ToTime( reply->exit_time, &kusrt.ExitTime );
+                    NTDLL_from_server_abstime( &kusrt.CreateTime, &reply->creation_time );
+                    NTDLL_from_server_abstime( &kusrt.ExitTime, &reply->exit_time );
                 }
             }
             SERVER_END_REQ;

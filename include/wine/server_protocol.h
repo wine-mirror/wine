@@ -386,8 +386,8 @@ struct get_thread_info_reply
     int          exit_code;
     int          priority;
     int          affinity;
-    time_t       creation_time;
-    time_t       exit_time;
+    abs_time_t   creation_time;
+    abs_time_t   exit_time;
 };
 
 
@@ -4385,6 +4385,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 241
+#define SERVER_PROTOCOL_VERSION 242
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

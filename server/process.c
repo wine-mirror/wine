@@ -256,6 +256,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     list_init( &process->dlls );
 
     gettimeofday( &process->start_time, NULL );
+    process->end_time.tv_sec = process->end_time.tv_usec = 0;
     list_add_head( &process_list, &process->entry );
 
     if (!(process->id = process->group_id = alloc_ptid( process )))

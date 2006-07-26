@@ -766,8 +766,11 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%d,", req->affinity );
-    fprintf( stderr, " creation_time=%ld,", (long)req->creation_time );
-    fprintf( stderr, " exit_time=%ld", (long)req->exit_time );
+    fprintf( stderr, " creation_time=" );
+    dump_abs_time( &req->creation_time );
+    fprintf( stderr, "," );
+    fprintf( stderr, " exit_time=" );
+    dump_abs_time( &req->exit_time );
 }
 
 static void dump_set_thread_info_request( const struct set_thread_info_request *req )

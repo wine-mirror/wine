@@ -144,10 +144,11 @@ inline static void init_thread_structure( struct thread *thread )
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;
     thread->suspend         = 0;
-    thread->creation_time   = time(NULL);
-    thread->exit_time       = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
+
+    gettimeofday( &thread->creation_time,  NULL );
+    thread->exit_time.tv_sec = thread->exit_time.tv_usec = 0;
 
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
@@ -737,7 +738,7 @@ void kill_thread( struct thread *thread, int violent_death )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
     thread->state = TERMINATED;
-    thread->exit_time = time(NULL);
+    gettimeofday( &thread->exit_time, NULL );
     if (current == thread) current = NULL;
     if (debug_level)
         fprintf( stderr,"%04x: *killed* exit_code=%d\n",
@@ -946,8 +947,10 @@ DECL_HANDLER(get_thread_info)
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
-        reply->creation_time  = thread->creation_time;
-        reply->exit_time      = thread->exit_time;
+        reply->creation_time.sec  = thread->creation_time.tv_sec;
+        reply->creation_time.usec = thread->creation_time.tv_usec;
+        reply->exit_time.sec      = thread->exit_time.tv_sec;
+        reply->exit_time.usec     = thread->exit_time.tv_usec;
 
         release_object( thread );
     }

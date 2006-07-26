@@ -345,8 +345,8 @@ struct token_groups
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
     int          affinity;      /* thread affinity mask */
-    time_t       creation_time; /* thread creation time */
-    time_t       exit_time;     /* thread exit time */
+    abs_time_t   creation_time; /* thread creation time */
+    abs_time_t   exit_time;     /* thread exit time */
 @END
 
 
