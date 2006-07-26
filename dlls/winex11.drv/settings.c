@@ -237,8 +237,9 @@ static const char * _DM_fields(DWORD fields)
 LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    DWORD i, dwBpp;
+    DWORD i, dwBpp = 0;
     DEVMODEW dm;
+    BOOL def_mode = TRUE;
 
     TRACE("(%s,%p,%p,0x%08lx,%p)\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
     TRACE("flags=%s\n",_CDS_flags(flags));
@@ -248,8 +249,15 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         TRACE("width=%ld height=%ld bpp=%ld freq=%ld (%s)\n",
               devmode->dmPelsWidth,devmode->dmPelsHeight,
               devmode->dmBitsPerPel,devmode->dmDisplayFrequency, handler_name);
+
+        dwBpp = (devmode->dmBitsPerPel == 24) ? 32 : devmode->dmBitsPerPel;
+        if (devmode->dmFields & DM_BITSPERPEL) def_mode &= !dwBpp;
+        if (devmode->dmFields & DM_PELSWIDTH)  def_mode &= !devmode->dmPelsWidth;
+        if (devmode->dmFields & DM_PELSHEIGHT) def_mode &= !devmode->dmPelsHeight;
+        if (devmode->dmFields & DM_DISPLAYFREQUENCY) def_mode &= !devmode->dmDisplayFrequency;
     }
-    else
+
+    if (def_mode)
     {
         TRACE("Return to original display mode (%s)\n", handler_name);
         if (!X11DRV_EnumDisplaySettingsEx(devname, dd_mode_default, &dm, 0))
@@ -259,7 +267,10 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         }
         devmode = &dm;
     }
-    dwBpp = (devmode->dmBitsPerPel == 24) ? 32 : devmode->dmBitsPerPel;
+    dwBpp = !dwBpp ? dd_modes[dd_mode_default].dwBPP : dwBpp;
+
+    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
+        return DISP_CHANGE_BADMODE;
 
     for (i = 0; i < dd_mode_count; i++)
     {
@@ -278,7 +289,8 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
             if (devmode->dmPelsHeight != dd_modes[i].dwHeight)
                 continue;
         }
-        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].wRefreshRate != 0))
+        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].wRefreshRate != 0) &&
+            devmode->dmDisplayFrequency != 0)
         {
             if (devmode->dmDisplayFrequency != dd_modes[i].wRefreshRate)
                 continue;

@@ -97,9 +97,59 @@ static void test_enumdisplaydevices(void)
     }
 }
 
+struct vid_mode
+{
+    DWORD w, h, bpp, freq, fields;
+    LONG res;
+};
+
+static struct vid_mode vid_modes_test[] = {
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0,                                DM_BITSPERPEL                      , DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
+
+    {0, 0, 0, 0, DM_PELSWIDTH, DISP_CHANGE_SUCCESSFUL},
+    {0, 0, 0, 0, DM_PELSHEIGHT, DISP_CHANGE_SUCCESSFUL},
+
+    {640, 480, 0, 0, DM_PELSWIDTH, DISP_CHANGE_BADMODE},
+    {640, 480, 0, 0, DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
+    {  0, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
+    {640,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
+
+    {0, 0, 0, 10, DM_DISPLAYFREQUENCY, DISP_CHANGE_BADMODE},
+};
+#define vid_modes_cnt (sizeof(vid_modes_test) / sizeof(vid_modes_test[0]))
+
+static void test_ChangeDisplaySettingsEx(void)
+{
+    DEVMODE dm;
+    LONG res;
+    int i;
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+
+    for (i = 0; i < vid_modes_cnt; i++)
+    {
+        dm.dmPelsWidth        = vid_modes_test[i].w;
+        dm.dmPelsHeight       = vid_modes_test[i].h;
+        dm.dmBitsPerPel       = vid_modes_test[i].bpp;
+        dm.dmDisplayFrequency = vid_modes_test[i].freq;
+        dm.dmFields           = vid_modes_test[i].fields;
+        res = ChangeDisplaySettingsEx(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
+        ok(res == vid_modes_test[i].res, "Failed to change resolution[%d]: %ld\n", i, res);
+    }
+    res = ChangeDisplaySettingsEx(NULL, NULL, NULL, CDS_RESET, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %ld\n", res);
+}
+
 
 START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
+    test_ChangeDisplaySettingsEx();
 }
