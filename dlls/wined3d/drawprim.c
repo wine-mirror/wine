@@ -1145,7 +1145,6 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
         if (This->stateBlock->textures[textureNo] != NULL) {
             int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
-            TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n", textureNo, texture_idx, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
@@ -1158,6 +1157,8 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                 GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
 
             } else {
+                TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
+                      textureNo, texture_idx, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
                 if(curVBO != sd->u.s.texCoords[coordIdx].VBO) {
                     GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.texCoords[coordIdx].VBO));
                     checkGLcall("glBindBufferARB");
