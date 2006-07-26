@@ -158,14 +158,14 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
         /*        LPTSTR pszText = NULL; */
-        LPTSTR pszText = _T("(cannot display value)");
+        static TCHAR pszText[] = {'(','c','a','n','n','o','t',' ','d','i','s','p','l','a','y',' ','v','a','l','u','e',')',0};
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
             if (ValBuf) {
                 ListView_SetItemText(hwndLV, index, 2, ValBuf);
             } else {
-                TCHAR textT[] = {'(','n','o','t',' ','s','e','t',')',0};
+                static TCHAR textT[] = {'(','n','o','t',' ','s','e','t',')',0};
                 ListView_SetItemText(hwndLV, index, 2, textT);
             }
             break;
