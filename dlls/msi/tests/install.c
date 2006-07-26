@@ -126,7 +126,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "WriteRegistryValues\t\t5000";
 
 static const CHAR media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
-                                "i2\ti2\tL64\tS255\tS32\tS72\n"
+                                "i2\ti4\tL64\tS255\tS32\tS72\n"
                                 "Media\tDiskId\n"
                                 "1\t3\t\t\tDISK1\t\n"
                                 "2\t5\t\tmsitest.cab\tDISK2\t\n";
@@ -314,6 +314,17 @@ static int fci_delete(char *pszFile, int *err, void *pv)
     ok(ret, "Failed to DeleteFile %s\n", pszFile);
 
     return 0;
+}
+
+static BOOL check_record(MSIHANDLE rec, UINT field, LPSTR val)
+{
+    CHAR buffer[0x20];
+    UINT r;
+    DWORD sz;
+
+    sz = sizeof buffer;
+    r = MsiRecordGetString(rec, field, buffer, &sz);
+    return (r == ERROR_SUCCESS ) && !strcmp(val, buffer);
 }
 
 static BOOL get_temp_file(char *pszTempName, int cbTempName, void *pv)
@@ -679,6 +690,61 @@ static void test_MsiSetComponentState(void)
     CoUninitialize();
 }
 
+static void test_packagecoltypes(void)
+{
+    MSIHANDLE hdb, view, rec;
+    char path[MAX_PATH];
+    LPSTR query;
+    UINT r, count;
+
+    CoInitialize(NULL);
+
+    lstrcpy(path, CURR_DIR);
+    lstrcat(path, "\\");
+    lstrcat(path, msifile);
+
+    r = MsiOpenDatabase(path, MSIDBOPEN_READONLY, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    query = "SELECT * FROM `Media`";
+    r = MsiDatabaseOpenView( hdb, query, &view );
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    }
+
+    r = MsiViewGetColumnInfo( view, MSICOLINFO_NAMES, &rec );
+    count = MsiRecordGetFieldCount( rec );
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
+        ok(count == 6, "Expected 6, got %d\n", count);
+        ok(check_record(rec, 1, "DiskId"), "wrong column label\n");
+        ok(check_record(rec, 2, "LastSequence"), "wrong column label\n");
+        ok(check_record(rec, 3, "DiskPrompt"), "wrong column label\n");
+        ok(check_record(rec, 4, "Cabinet"), "wrong column label\n");
+        ok(check_record(rec, 5, "VolumeLabel"), "wrong column label\n");
+        ok(check_record(rec, 6, "Source"), "wrong column label\n");
+    }
+
+    r = MsiViewGetColumnInfo( view, MSICOLINFO_TYPES, &rec );
+    count = MsiRecordGetFieldCount( rec );
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
+        ok(count == 6, "Expected 6, got %d\n", count);
+        ok(check_record(rec, 1, "i2"), "wrong column label\n");
+        ok(check_record(rec, 2, "i4"), "wrong column label\n");
+        ok(check_record(rec, 3, "L64"), "wrong column label\n");
+        ok(check_record(rec, 4, "S255"), "wrong column label\n");
+        ok(check_record(rec, 5, "S32"), "wrong column label\n");
+        ok(check_record(rec, 6, "S72"), "wrong column label\n");
+    }
+
+    MsiCloseHandle(hdb);
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     if (!init_function_pointers())
@@ -689,6 +755,7 @@ START_TEST(install)
     
     test_MsiInstallProduct();
     test_MsiSetComponentState();
+    test_packagecoltypes();
     
     delete_test_files();
 }
