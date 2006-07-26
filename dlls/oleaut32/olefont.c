@@ -1402,6 +1402,41 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   OLEFontImpl *this = impl_from_IDispatch(iface);
   HRESULT hr;
 
+  /* validate parameters */
+
+  if (!IsEqualIID(riid, &IID_NULL))
+  {
+    ERR("riid was %s instead of IID_NULL\n", debugstr_guid(riid));
+    return DISP_E_UNKNOWNINTERFACE;
+  }
+
+  if (wFlags & DISPATCH_PROPERTYGET)
+  {
+    if (!pVarResult)
+    {
+      ERR("null pVarResult not allowed when DISPATCH_PROPERTYGET specified\n");
+      return DISP_E_PARAMNOTOPTIONAL;
+    }
+  }
+  else if (wFlags & DISPATCH_PROPERTYPUT)
+  {
+    if (!pDispParams)
+    {
+      ERR("null pDispParams not allowed when DISPATCH_PROPERTYPUT specified\n");
+      return DISP_E_PARAMNOTOPTIONAL;
+    }
+    if (pDispParams->cArgs != 1)
+    {
+      ERR("param count for DISPATCH_PROPERTYPUT was %ld instead of 1\n", pDispParams->cArgs);
+      return DISP_E_BADPARAMCOUNT;
+    }
+  }
+  else
+  {
+    ERR("one of DISPATCH_PROPERTYGET or DISPATCH_PROPERTYPUT must be specified\n");
+    return DISP_E_MEMBERNOTFOUND;
+  }
+
   switch (dispIdMember) {
   case DISPID_FONT_NAME:
     if (wFlags & DISPATCH_PROPERTYGET) {

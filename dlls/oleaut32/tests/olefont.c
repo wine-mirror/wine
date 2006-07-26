@@ -425,6 +425,39 @@ void test_GetIDsOfNames(void)
                    DISPID_FONT_NAME, 0, S_OK,1);
 }
 
+static void test_Invoke(void)
+{
+    IFontDisp *fontdisp;
+    HRESULT hr;
+    VARIANTARG vararg;
+    DISPPARAMS dispparams;
+
+    hr = pOleCreateFontIndirect(NULL, &IID_IFontDisp, (void **)&fontdisp);
+    ok_ole_success(hr, "OleCreateFontIndirect\n");
+
+    V_VT(&vararg) = VT_BOOL;
+    V_BOOL(&vararg) = FALSE;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_IFontDisp, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_UNKNOWNINTERFACE, "IFontDisp_Invoke should have returned DISP_E_UNKNOWNINTERFACE instead of 0x%08lx\n", hr);
+
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IFontDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    IFontDisp_Release(fontdisp);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");    
@@ -447,4 +480,5 @@ START_TEST(olefont)
 
 	test_font_events_disp();
 	test_GetIDsOfNames();
+	test_Invoke();
 }
