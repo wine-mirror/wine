@@ -1356,6 +1356,7 @@ static void testFileNameStore(void)
         compareFile(filename, serializedStoreWithCertAndCRL,
          sizeof(serializedStoreWithCertAndCRL));
     }
+    DeleteFileW(filename);
 }
 
 static void testCertOpenSystemStore(void)
