@@ -51,7 +51,9 @@ static void test_msirecord(void)
     INT i;
     MSIHANDLE h;
     char buf[10];
+    WCHAR bufW[10];
     const char str[] = "hello";
+    const WCHAR strW[] = { 'h','e','l','l','o',0};
     char filename[MAX_PATH];
 
     /* check behaviour with an invalid record */
@@ -146,6 +148,42 @@ static void test_msirecord(void)
     ok(sz == sizeof str-1, "MsiRecordGetString returned the wrong length\n");
     ok(0==strncmp(buf,str,sizeof str-3), "MsiRecordGetString returned the wrong string\n");
     ok(buf[sizeof str - 3]==0, "string wasn't nul terminated\n");
+
+    buf[0]=0;
+    sz = sizeof str;
+    r = MsiRecordGetString(h,0,buf,&sz);
+    ok(r == ERROR_SUCCESS, "wrong error\n");
+    ok(sz == sizeof str-1, "MsiRecordGetString returned the wrong length\n");
+    ok(0==strcmp(buf,str), "MsiRecordGetString returned the wrong string\n");
+
+
+    memset(bufW, 0, sizeof bufW);
+    sz = 5;
+    r = MsiRecordGetStringW(h,0,bufW,&sz);
+    ok(r == ERROR_MORE_DATA, "wrong error\n");
+    ok(sz == 5, "MsiRecordGetString returned the wrong length\n");
+    ok(0==memcmp(bufW,strW,8), "MsiRecordGetString returned the wrong string\n");
+
+    sz = 0;
+    bufW[0] = 'x';
+    r = MsiRecordGetStringW(h,0,bufW,&sz);
+    ok(r == ERROR_MORE_DATA, "wrong error\n");
+    ok(sz == 5, "MsiRecordGetString returned the wrong length\n");
+    ok('x'==bufW[0], "MsiRecordGetString returned the wrong string\n");
+
+    memset(buf, 0, sizeof buf);
+    sz = 5;
+    r = MsiRecordGetStringA(h,0,buf,&sz);
+    ok(r == ERROR_MORE_DATA, "wrong error\n");
+    ok(sz == 5, "MsiRecordGetString returned the wrong length\n");
+    ok(0==memcmp(buf,str,4), "MsiRecordGetString returned the wrong string\n");
+
+    sz = 0;
+    buf[0] = 'x';
+    r = MsiRecordGetStringA(h,0,buf,&sz);
+    ok(r == ERROR_MORE_DATA, "wrong error\n");
+    ok(sz == 5, "MsiRecordGetString returned the wrong length\n");
+    ok('x'==buf[0], "MsiRecordGetString returned the wrong string\n");
 
     /* same record, check we can wipe all the data */
     r = MsiRecordClearData(h);

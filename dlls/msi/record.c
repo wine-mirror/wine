@@ -321,7 +321,7 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, unsigned int iField,
         break;
     }
 
-    if( *pcchValue < len )
+    if( *pcchValue <= len )
         ret = ERROR_MORE_DATA;
     *pcchValue = len;
 
@@ -389,7 +389,7 @@ UINT MSI_RecordGetStringW(MSIRECORD *rec, unsigned int iField,
         break;
     }
 
-    if( *pcchValue < len )
+    if( *pcchValue <= len )
         ret = ERROR_MORE_DATA;
     *pcchValue = len;
 
