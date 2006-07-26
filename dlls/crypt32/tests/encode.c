@@ -788,6 +788,114 @@ static void test_encodeName(DWORD dwEncoding)
     }
 }
 
+static WCHAR commonNameW[] = { 'J','u','a','n',' ','L','a','n','g',0 };
+static WCHAR surNameW[] = { 'L','a','n','g',0 };
+
+static const BYTE twoRDNsNoNull[] = {
+ 0x30,0x21,0x31,0x1f,0x30,0x0b,0x06,0x03,0x55,0x04,0x04,0x13,0x04,0x4c,0x61,
+ 0x6e,0x67,0x30,0x10,0x06,0x03,0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,
+ 0x20,0x4c,0x61,0x6e,0x67 };
+static const BYTE anyType[] = {
+ 0x30,0x2f,0x31,0x2d,0x30,0x2b,0x06,0x03,0x55,0x04,0x03,0x1e,0x24,0x23,0x30,
+ 0x21,0x31,0x0c,0x30,0x03,0x06,0x04,0x55,0x13,0x04,0x4c,0x05,0x6e,0x61,0x00,
+ 0x67,0x11,0x30,0x03,0x06,0x04,0x55,0x13,0x03,0x4a,0x0a,0x61,0x75,0x20,0x6e,
+ 0x61,0x4c,0x67,0x6e };
+
+static void test_encodeUnicodeName(DWORD dwEncoding)
+{
+    CERT_RDN_ATTR attrs[2];
+    CERT_RDN rdn;
+    CERT_NAME_INFO info;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    BOOL ret;
+
+    /* Test with NULL pvStructInfo */
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    /* Test with empty CERT_NAME_INFO */
+    info.cRDN = 0;
+    info.rgRDN = NULL;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
+         "Got unexpected encoding for empty name\n");
+        LocalFree(buf);
+    }
+    /* Check with one CERT_RDN_ATTR, that has an invalid character for the
+     * encoding (the NULL).
+     */
+    attrs[0].pszObjId = szOID_COMMON_NAME;
+    attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
+    attrs[0].Value.cbData = sizeof(commonNameW);
+    attrs[0].Value.pbData = (BYTE *)commonNameW;
+    rdn.cRDNAttr = 1;
+    rdn.rgRDNAttr = attrs;
+    info.cRDN = 1;
+    info.rgRDN = &rdn;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_PRINTABLE_STRING,
+     "Expected CRYPT_E_INVALID_PRINTABLE_STRING, got %08lx\n", GetLastError());
+    ok(size == 9, "Unexpected error index %08lx\n", size);
+    /* Check with two NULL-terminated CERT_RDN_ATTRs.  Note DER encoding
+     * forces the order of the encoded attributes to be swapped.
+     */
+    attrs[0].pszObjId = szOID_COMMON_NAME;
+    attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
+    attrs[0].Value.cbData = 0;
+    attrs[0].Value.pbData = (BYTE *)commonNameW;
+    attrs[1].pszObjId = szOID_SUR_NAME;
+    attrs[1].dwValueType = CERT_RDN_PRINTABLE_STRING;
+    attrs[1].Value.cbData = 0;
+    attrs[1].Value.pbData = (BYTE *)surNameW;
+    rdn.cRDNAttr = 2;
+    rdn.rgRDNAttr = attrs;
+    info.cRDN = 1;
+    info.rgRDN = &rdn;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(!memcmp(buf, twoRDNsNoNull, sizeof(twoRDNsNoNull)),
+         "Got unexpected encoding for two RDN array\n");
+        LocalFree(buf);
+    }
+    /* A name can be "encoded" with previously encoded RDN attrs. */
+    attrs[0].dwValueType = CERT_RDN_ENCODED_BLOB;
+    attrs[0].Value.pbData = (LPBYTE)twoRDNs;
+    attrs[0].Value.cbData = sizeof(twoRDNs);
+    rdn.cRDNAttr = 1;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(encodedTwoRDNs), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, encodedTwoRDNs, size),
+         "Unexpected value for re-endoded two RDN array\n");
+        LocalFree(buf);
+    }
+    /* Unicode names infer the type for CERT_RDN_ANY_TYPE */
+    rdn.cRDNAttr = 1;
+    attrs[0].dwValueType = CERT_RDN_ANY_TYPE;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(anyType), "Unexpected size %ld\n", size);
+        ok(!memcmp(buf, anyType, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 static void compareNameValues(const CERT_NAME_VALUE *expected,
  const CERT_NAME_VALUE *got)
 {
@@ -926,6 +1034,69 @@ static void test_decodeName(DWORD dwEncoding)
     }
 }
 
+static void test_decodeUnicodeName(DWORD dwEncoding)
+{
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+    BOOL ret;
+    CERT_RDN rdn;
+    CERT_NAME_INFO info = { 1, &rdn };
+
+    /* test empty name */
+    bufSize = 0;
+    ret = CryptDecodeObjectEx(dwEncoding, X509_UNICODE_NAME, emptySequence,
+     emptySequence[1] + 2,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(CERT_NAME_INFO),
+         "Expected bufSize %d, got %ld\n", sizeof(CERT_NAME_INFO), bufSize);
+        ok(((CERT_NAME_INFO *)buf)->cRDN == 0,
+         "Expected 0 RDNs in empty info, got %ld\n",
+         ((CERT_NAME_INFO *)buf)->cRDN);
+        LocalFree(buf);
+    }
+    /* test empty RDN */
+    bufSize = 0;
+    ret = CryptDecodeObjectEx(dwEncoding, X509_UNICODE_NAME, emptyRDNs,
+     emptyRDNs[1] + 2,
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_NAME_INFO *info = (CERT_NAME_INFO *)buf;
+
+        ok(bufSize == sizeof(CERT_NAME_INFO) + sizeof(CERT_RDN) &&
+         info->cRDN == 1 && info->rgRDN && info->rgRDN[0].cRDNAttr == 0,
+         "Got unexpected value for empty RDN\n");
+        LocalFree(buf);
+    }
+    /* test two RDN attrs */
+    bufSize = 0;
+    ret = CryptDecodeObjectEx(dwEncoding, X509_UNICODE_NAME, twoRDNsNoNull,
+     sizeof(twoRDNsNoNull),
+     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_RDN_ATTR attrs[] = {
+         { szOID_SUR_NAME, CERT_RDN_PRINTABLE_STRING,
+         { lstrlenW(surNameW) * sizeof(WCHAR), (BYTE *)surNameW } },
+         { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
+         { lstrlenW(commonNameW) * sizeof(WCHAR), (BYTE *)commonNameW } },
+        };
+
+        rdn.cRDNAttr = sizeof(attrs) / sizeof(attrs[0]);
+        rdn.rgRDNAttr = attrs;
+        compareNames(&info, (CERT_NAME_INFO *)buf);
+        LocalFree(buf);
+    }
+}
+
 struct EncodedNameValue
 {
     CERT_NAME_VALUE value;
@@ -936,7 +1107,6 @@ struct EncodedNameValue
 static const char bogusIA5[] = "\x80";
 static const char bogusPrintable[] = "~";
 static const char bogusNumeric[] = "A";
-static WCHAR commonNameW[] = { 'J','u','a','n',' ','L','a','n','g',0 };
 static const BYTE bin42[] = { 0x16,0x02,0x80,0x00 };
 static const BYTE bin43[] = { 0x13,0x02,0x7e,0x00 };
 static const BYTE bin44[] = { 0x12,0x02,0x41,0x00 };
@@ -1448,6 +1618,13 @@ static void test_encodeUnicodeNameValue(DWORD dwEncoding)
     }
 }
 
+static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
+{
+    if (n <= 0) return 0;
+    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
 static void test_decodeUnicodeNameValue(DWORD dwEncoding)
 {
     DWORD i;
@@ -1469,7 +1646,8 @@ static void test_decodeUnicodeNameValue(DWORD dwEncoding)
             ok(value->dwValueType == unicodeResults[i].valueType,
              "Expected value type %ld, got %ld\n", unicodeResults[i].valueType,
              value->dwValueType);
-            ok(!lstrcmpW((LPWSTR)value->Value.pbData, unicodeResults[i].str),
+            ok(!strncmpW((LPWSTR)value->Value.pbData, unicodeResults[i].str,
+             value->Value.cbData / sizeof(WCHAR)),
              "Unexpected decoded value for index %ld (value type %ld)\n", i,
              unicodeResults[i].valueType);
             LocalFree(buf);
@@ -3668,6 +3846,8 @@ START_TEST(encode)
         test_decodeFiletime(encodings[i]);
         test_encodeName(encodings[i]);
         test_decodeName(encodings[i]);
+        test_encodeUnicodeName(encodings[i]);
+        test_decodeUnicodeName(encodings[i]);
         test_encodeNameValue(encodings[i]);
         test_decodeNameValue(encodings[i]);
         test_encodeUnicodeNameValue(encodings[i]);

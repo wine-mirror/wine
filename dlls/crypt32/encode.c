@@ -1095,6 +1095,262 @@ static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
+ CERT_RDN_ATTR *attr, CryptEncodeObjectExFunc nameValueEncodeFunc,
+ BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    DWORD bytesNeeded = 0, lenBytes, size;
+    BOOL ret;
+
+    ret = CRYPT_AsnEncodeOid(dwCertEncodingType, NULL, attr->pszObjId,
+     0, NULL, NULL, &size);
+    if (ret)
+    {
+        bytesNeeded += size;
+        /* hack: a CERT_RDN_ATTR is identical to a CERT_NAME_VALUE beginning
+         * with dwValueType, so "cast" it to get its encoded size
+         */
+        ret = nameValueEncodeFunc(dwCertEncodingType, NULL,
+         (CERT_NAME_VALUE *)&attr->dwValueType, 0, NULL, NULL, &size);
+        if (ret)
+        {
+            bytesNeeded += size;
+            CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+            bytesNeeded += 1 + lenBytes;
+            if (pbEncoded)
+            {
+                if (*pcbEncoded < bytesNeeded)
+                {
+                    SetLastError(ERROR_MORE_DATA);
+                    ret = FALSE;
+                }
+                else
+                {
+                    *pbEncoded++ = ASN_SEQUENCE;
+                    CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
+                     &lenBytes);
+                    pbEncoded += lenBytes;
+                    size = bytesNeeded - 1 - lenBytes;
+                    ret = CRYPT_AsnEncodeOid(dwCertEncodingType, NULL,
+                     attr->pszObjId, 0, NULL, pbEncoded, &size);
+                    if (ret)
+                    {
+                        pbEncoded += size;
+                        size = bytesNeeded - 1 - lenBytes - size;
+                        ret = nameValueEncodeFunc(dwCertEncodingType,
+                         NULL, (CERT_NAME_VALUE *)&attr->dwValueType,
+                         0, NULL, pbEncoded, &size);
+                        if (!ret)
+                            *pcbEncoded = size;
+                    }
+                }
+            }
+            if (ret)
+                *pcbEncoded = bytesNeeded;
+        }
+        else
+        {
+            /* Have to propagate index of failing character */
+            *pcbEncoded = size;
+        }
+    }
+    return ret;
+}
+
+static int BLOBComp(const void *l, const void *r)
+{
+    CRYPT_DER_BLOB *a = (CRYPT_DER_BLOB *)l, *b = (CRYPT_DER_BLOB *)r;
+    int ret;
+
+    if (!(ret = memcmp(a->pbData, b->pbData, min(a->cbData, b->cbData))))
+        ret = a->cbData - b->cbData;
+    return ret;
+}
+
+/* This encodes as a SET OF, which in DER must be lexicographically sorted.
+ */
+static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
+ CryptEncodeObjectExFunc nameValueEncodeFunc, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret;
+    CRYPT_DER_BLOB *blobs = NULL;
+
+    __TRY
+    {
+        DWORD bytesNeeded = 0, lenBytes, i;
+
+        blobs = NULL;
+        ret = TRUE;
+        if (rdn->cRDNAttr)
+        {
+            blobs = CryptMemAlloc(rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
+            if (!blobs)
+                ret = FALSE;
+            else
+                memset(blobs, 0, rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
+        }
+        for (i = 0; ret && i < rdn->cRDNAttr; i++)
+        {
+            ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType, &rdn->rgRDNAttr[i],
+             nameValueEncodeFunc, NULL, &blobs[i].cbData);
+            if (ret)
+                bytesNeeded += blobs[i].cbData;
+            else
+            {
+                /* Have to propagate index of failing character */
+                *pcbEncoded = blobs[i].cbData;
+            }
+        }
+        if (ret)
+        {
+            CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+            bytesNeeded += 1 + lenBytes;
+            if (pbEncoded)
+            {
+                if (*pcbEncoded < bytesNeeded)
+                {
+                    SetLastError(ERROR_MORE_DATA);
+                    ret = FALSE;
+                }
+                else
+                {
+                    for (i = 0; ret && i < rdn->cRDNAttr; i++)
+                    {
+                        blobs[i].pbData = CryptMemAlloc(blobs[i].cbData);
+                        if (!blobs[i].pbData)
+                            ret = FALSE;
+                        else
+                        {
+                            ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType,
+                             &rdn->rgRDNAttr[i], nameValueEncodeFunc,
+                             blobs[i].pbData, &blobs[i].cbData);
+                            if (!ret)
+                                *pcbEncoded = blobs[i].cbData;
+                        }
+                    }
+                    if (ret)
+                    {
+                        qsort(blobs, rdn->cRDNAttr, sizeof(CRYPT_DER_BLOB),
+                         BLOBComp);
+                        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
+                        CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
+                         &lenBytes);
+                        pbEncoded += lenBytes;
+                        for (i = 0; ret && i < rdn->cRDNAttr; i++)
+                        {
+                            memcpy(pbEncoded, blobs[i].pbData, blobs[i].cbData);
+                            pbEncoded += blobs[i].cbData;
+                        }
+                    }
+                }
+            }
+            if (ret)
+                *pcbEncoded = bytesNeeded;
+        }
+        if (blobs)
+        {
+            for (i = 0; i < rdn->cRDNAttr; i++)
+                CryptMemFree(blobs[i].pbData);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    CryptMemFree(blobs);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeUnicodeNameValue(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
+
+static BOOL WINAPI CRYPT_AsnEncodeOrCopyUnicodeNameValue(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
+ DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    const CERT_NAME_VALUE *value = (const CERT_NAME_VALUE *)pvStructInfo;
+    BOOL ret;
+
+    if (value->dwValueType == CERT_RDN_ENCODED_BLOB)
+        ret = CRYPT_CopyEncodedBlob(dwCertEncodingType, NULL, &value->Value,
+         dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    else
+        ret = CRYPT_AsnEncodeUnicodeNameValue(dwCertEncodingType, NULL, value,
+         dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeUnicodeName(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = TRUE;
+
+    __TRY
+    {
+        const CERT_NAME_INFO *info = (const CERT_NAME_INFO *)pvStructInfo;
+        DWORD bytesNeeded = 0, lenBytes, size, i;
+
+        TRACE("encoding name with %ld RDNs\n", info->cRDN);
+        ret = TRUE;
+        for (i = 0; ret && i < info->cRDN; i++)
+        {
+            ret = CRYPT_AsnEncodeRdn(dwCertEncodingType, &info->rgRDN[i],
+             CRYPT_AsnEncodeOrCopyUnicodeNameValue, NULL, &size);
+            if (ret)
+                bytesNeeded += size;
+            else
+                *pcbEncoded = size;
+        }
+        CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+        bytesNeeded += 1 + lenBytes;
+        if (ret)
+        {
+            if (!pbEncoded)
+                *pcbEncoded = bytesNeeded;
+            else
+            {
+                if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pbEncoded, pcbEncoded, bytesNeeded)))
+                {
+                    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                        pbEncoded = *(BYTE **)pbEncoded;
+                    *pbEncoded++ = ASN_SEQUENCEOF;
+                    CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
+                     &lenBytes);
+                    pbEncoded += lenBytes;
+                    for (i = 0; ret && i < info->cRDN; i++)
+                    {
+                        size = bytesNeeded;
+                        ret = CRYPT_AsnEncodeRdn(dwCertEncodingType,
+                         &info->rgRDN[i], CRYPT_AsnEncodeOrCopyUnicodeNameValue,
+                         pbEncoded, &size);
+                        if (ret)
+                        {
+                            pbEncoded += size;
+                            bytesNeeded -= size;
+                        }
+                        else
+                            *pcbEncoded = size;
+                    }
+                }
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
  BYTE tag, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
@@ -1373,155 +1629,6 @@ static BOOL WINAPI CRYPT_AsnEncodeUnicodeNameValue(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
- CERT_RDN_ATTR *attr, BYTE *pbEncoded, DWORD *pcbEncoded)
-{
-    DWORD bytesNeeded = 0, lenBytes, size;
-    BOOL ret;
-
-    ret = CRYPT_AsnEncodeOid(dwCertEncodingType, NULL, attr->pszObjId,
-     0, NULL, NULL, &size);
-    if (ret)
-    {
-        bytesNeeded += size;
-        /* hack: a CERT_RDN_ATTR is identical to a CERT_NAME_VALUE beginning
-         * with dwValueType, so "cast" it to get its encoded size
-         */
-        ret = CRYPT_AsnEncodeNameValue(dwCertEncodingType, X509_NAME_VALUE,
-         (CERT_NAME_VALUE *)&attr->dwValueType, 0, NULL, NULL, &size);
-        if (ret)
-        {
-            bytesNeeded += size;
-            CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
-            bytesNeeded += 1 + lenBytes;
-            if (pbEncoded)
-            {
-                if (*pcbEncoded < bytesNeeded)
-                {
-                    SetLastError(ERROR_MORE_DATA);
-                    ret = FALSE;
-                }
-                else
-                {
-                    *pbEncoded++ = ASN_SEQUENCE;
-                    CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
-                     &lenBytes);
-                    pbEncoded += lenBytes;
-                    size = bytesNeeded - 1 - lenBytes;
-                    ret = CRYPT_AsnEncodeOid(dwCertEncodingType, NULL,
-                     attr->pszObjId, 0, NULL, pbEncoded, &size);
-                    if (ret)
-                    {
-                        pbEncoded += size;
-                        size = bytesNeeded - 1 - lenBytes - size;
-                        ret = CRYPT_AsnEncodeNameValue(dwCertEncodingType,
-                         X509_NAME_VALUE, (CERT_NAME_VALUE *)&attr->dwValueType,
-                         0, NULL, pbEncoded, &size);
-                    }
-                }
-            }
-            *pcbEncoded = bytesNeeded;
-        }
-    }
-    return ret;
-}
-
-static int BLOBComp(const void *l, const void *r)
-{
-    CRYPT_DER_BLOB *a = (CRYPT_DER_BLOB *)l, *b = (CRYPT_DER_BLOB *)r;
-    int ret;
-
-    if (!(ret = memcmp(a->pbData, b->pbData, min(a->cbData, b->cbData))))
-        ret = a->cbData - b->cbData;
-    return ret;
-}
-
-/* This encodes as a SET OF, which in DER must be lexicographically sorted.
- */
-static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
- BYTE *pbEncoded, DWORD *pcbEncoded)
-{
-    BOOL ret;
-    CRYPT_DER_BLOB *blobs = NULL;
-
-    __TRY
-    {
-        DWORD bytesNeeded = 0, lenBytes, i;
-
-        blobs = NULL;
-        ret = TRUE;
-        if (rdn->cRDNAttr)
-        {
-            blobs = CryptMemAlloc(rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
-            if (!blobs)
-                ret = FALSE;
-            else
-                memset(blobs, 0, rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
-        }
-        for (i = 0; ret && i < rdn->cRDNAttr; i++)
-        {
-            ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType, &rdn->rgRDNAttr[i],
-             NULL, &blobs[i].cbData);
-            if (ret)
-                bytesNeeded += blobs[i].cbData;
-        }
-        if (ret)
-        {
-            CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
-            bytesNeeded += 1 + lenBytes;
-            if (pbEncoded)
-            {
-                if (*pcbEncoded < bytesNeeded)
-                {
-                    SetLastError(ERROR_MORE_DATA);
-                    ret = FALSE;
-                }
-                else
-                {
-                    for (i = 0; ret && i < rdn->cRDNAttr; i++)
-                    {
-                        blobs[i].pbData = CryptMemAlloc(blobs[i].cbData);
-                        if (!blobs[i].pbData)
-                            ret = FALSE;
-                        else
-                            ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType,
-                             &rdn->rgRDNAttr[i], blobs[i].pbData,
-                             &blobs[i].cbData);
-                    }
-                    if (ret)
-                    {
-                        qsort(blobs, rdn->cRDNAttr, sizeof(CRYPT_DER_BLOB),
-                         BLOBComp);
-                        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
-                        CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
-                         &lenBytes);
-                        pbEncoded += lenBytes;
-                        for (i = 0; ret && i < rdn->cRDNAttr; i++)
-                        {
-                            memcpy(pbEncoded, blobs[i].pbData, blobs[i].cbData);
-                            pbEncoded += blobs[i].cbData;
-                        }
-                    }
-                }
-            }
-            *pcbEncoded = bytesNeeded;
-        }
-        if (blobs)
-        {
-            for (i = 0; i < rdn->cRDNAttr; i++)
-                CryptMemFree(blobs[i].pbData);
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        SetLastError(STATUS_ACCESS_VIOLATION);
-        ret = FALSE;
-    }
-    __ENDTRY
-    CryptMemFree(blobs);
-    return ret;
-}
-
 static BOOL WINAPI CRYPT_AsnEncodeName(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -1537,8 +1644,8 @@ static BOOL WINAPI CRYPT_AsnEncodeName(DWORD dwCertEncodingType,
         ret = TRUE;
         for (i = 0; ret && i < info->cRDN; i++)
         {
-            ret = CRYPT_AsnEncodeRdn(dwCertEncodingType, &info->rgRDN[i], NULL,
-             &size);
+            ret = CRYPT_AsnEncodeRdn(dwCertEncodingType, &info->rgRDN[i],
+             CRYPT_AsnEncodeNameValue, NULL, &size);
             if (ret)
                 bytesNeeded += size;
         }
@@ -1563,7 +1670,8 @@ static BOOL WINAPI CRYPT_AsnEncodeName(DWORD dwCertEncodingType,
                     {
                         size = bytesNeeded;
                         ret = CRYPT_AsnEncodeRdn(dwCertEncodingType,
-                         &info->rgRDN[i], pbEncoded, &size);
+                         &info->rgRDN[i], CRYPT_AsnEncodeNameValue, pbEncoded,
+                         &size);
                         if (ret)
                         {
                             pbEncoded += size;
@@ -2787,6 +2895,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)RSA_CSP_PUBLICKEYBLOB:
             encodeFunc = CRYPT_AsnEncodeRsaPubKey;
             break;
+        case (WORD)X509_UNICODE_NAME:
+            encodeFunc = CRYPT_AsnEncodeUnicodeName;
+            break;
         case (WORD)X509_UNICODE_NAME_VALUE:
             encodeFunc = CRYPT_AsnEncodeUnicodeNameValue;
             break;
@@ -2896,7 +3007,7 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
     HCRYPTKEY key;
     static CHAR oid[] = szOID_RSA_RSA;
 
-    TRACE("(%ld, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
+    TRACE("(%08lx, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
      dwCertEncodingType, debugstr_a(pszPublicKeyObjId), dwFlags, pvAuxInfo,
      pInfo, pcbInfo);
 
@@ -2976,7 +3087,7 @@ BOOL WINAPI CryptExportPublicKeyInfoEx(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
     ExportPublicKeyInfoExFunc exportFunc = NULL;
     HCRYPTOIDFUNCADDR hFunc = NULL;
 
-    TRACE("(%ld, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
+    TRACE("(%08lx, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
      dwCertEncodingType, debugstr_a(pszPublicKeyObjId), dwFlags, pvAuxInfo,
      pInfo, pcbInfo);
 
