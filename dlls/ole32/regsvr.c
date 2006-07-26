@@ -400,13 +400,25 @@ static LONG recursive_delete_key(HKEY key)
 /***********************************************************************
  *		coclass list
  */
+static GUID const CLSID_StdOleLink = {
+    0x00000300, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+
 static GUID const CLSID_PointerMoniker = {
     0x00000306, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
 static GUID const CLSID_PackagerMoniker = {
     0x00000308, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
+extern GUID const CLSID_Picture_Metafile;
+extern GUID const CLSID_Picture_Dib;
+
 static struct regsvr_coclass const coclass_list[] = {
+    {   &CLSID_StdOleLink,
+	"StdOleLink",
+	NULL,
+	"ole32.dll",
+	NULL
+    },
     {   &CLSID_FileMoniker,
 	"FileMoniker",
 	NULL,
@@ -449,6 +461,18 @@ static struct regsvr_coclass const coclass_list[] = {
 	"ole32.dll",
 	"Both"
     },
+    {   &CLSID_Picture_Metafile,
+	"Picture (Metafile)",
+	NULL,
+	"ole32.dll",
+	NULL
+    },
+    {   &CLSID_Picture_Dib,
+	"Picture (Device Independent Bitmap)",
+	NULL,
+	"ole32.dll",
+	NULL
+    },
     {   &CLSID_ClassMoniker,
 	"ClassMoniker",
 	NULL,
@@ -483,21 +507,54 @@ static const struct regsvr_interface interface_list[] = {
     STD_INTERFACE_ENTRY(IClassFactory),
     LCL_INTERFACE_ENTRY(IMalloc),
     LCL_INTERFACE_ENTRY(IMarshal),
+    STD_INTERFACE_ENTRY(ILockBytes),
     STD_INTERFACE_ENTRY(IStorage),
+    STD_INTERFACE_ENTRY(IStream),
+    STD_INTERFACE_ENTRY(IEnumSTATSTG),
+    STD_INTERFACE_ENTRY(IBindCtx),
+    STD_INTERFACE_ENTRY(IMoniker),
+    STD_INTERFACE_ENTRY(IRunningObjectTable),
+    STD_INTERFACE_ENTRY(IRootStorage),
     LCL_INTERFACE_ENTRY(IMessageFilter),
     LCL_INTERFACE_ENTRY(IStdMarshalInfo),
     LCL_INTERFACE_ENTRY(IExternalConnection),
     LCL_INTERFACE_ENTRY(IMallocSpy),
     LCL_INTERFACE_ENTRY(IMultiQI),
-    STD_INTERFACE_ENTRY(IStream),
+    STD_INTERFACE_ENTRY(IEnumUnknown),
+    STD_INTERFACE_ENTRY(IEnumString),
+    STD_INTERFACE_ENTRY(IEnumMoniker),
+    STD_INTERFACE_ENTRY(IEnumFORMATETC),
+    STD_INTERFACE_ENTRY(IEnumOLEVERB),
+    STD_INTERFACE_ENTRY(IEnumSTATDATA),
+    STD_INTERFACE_ENTRY(IPersistStream),
     STD_INTERFACE_ENTRY(IPersistStorage),
+    STD_INTERFACE_ENTRY(IPersistFile),
+    STD_INTERFACE_ENTRY(IPersist),
+    STD_INTERFACE_ENTRY(IViewObject),
     STD_INTERFACE_ENTRY(IDataObject),
     STD_INTERFACE_ENTRY(IAdviseSink),
     LCL_INTERFACE_ENTRY(IDataAdviseHolder),
     LCL_INTERFACE_ENTRY(IOleAdviseHolder),
     STD_INTERFACE_ENTRY(IOleObject),
+    STD_INTERFACE_ENTRY(IOleInPlaceObject),
+    STD_INTERFACE_ENTRY(IOleWindow),
+    STD_INTERFACE_ENTRY(IOleInPlaceUIWindow),
+    STD_INTERFACE_ENTRY(IOleInPlaceFrame),
+    STD_INTERFACE_ENTRY(IOleInPlaceActiveObject),
     STD_INTERFACE_ENTRY(IOleClientSite),
+    STD_INTERFACE_ENTRY(IOleInPlaceSite),
+    STD_INTERFACE_ENTRY(IParseDisplayName),
+    STD_INTERFACE_ENTRY(IOleContainer),
+    STD_INTERFACE_ENTRY(IOleItemContainer),
+    STD_INTERFACE_ENTRY(IOleLink),
+    STD_INTERFACE_ENTRY(IOleCache),
     LCL_INTERFACE_ENTRY(IDropSource),
+    STD_INTERFACE_ENTRY(IDropTarget),
+    STD_INTERFACE_ENTRY(IAdviseSink2),
+    STD_INTERFACE_ENTRY(IRunnableObject),
+    STD_INTERFACE_ENTRY(IViewObject2),
+    STD_INTERFACE_ENTRY(IOleCache2),
+    STD_INTERFACE_ENTRY(IOleCacheControl),
     STD_INTERFACE_ENTRY(IRemUnknown),
     LCL_INTERFACE_ENTRY(IClientSecurity),
     LCL_INTERFACE_ENTRY(IServerSecurity),
