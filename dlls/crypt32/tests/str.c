@@ -176,6 +176,12 @@ typedef DWORD (WINAPI *CertRDNValueToStrAFunc)(DWORD, PCERT_RDN_VALUE_BLOB,
  LPSTR, DWORD);
 typedef DWORD (WINAPI *CertRDNValueToStrWFunc)(DWORD, PCERT_RDN_VALUE_BLOB,
  LPWSTR, DWORD);
+typedef BOOL (WINAPI *CertStrToNameAFunc)(DWORD dwCertEncodingType,
+ LPCSTR pszX500, DWORD dwStrType, void *pvReserved, BYTE *pbEncoded,
+ DWORD *pcbEncoded, LPCSTR *ppszError);
+typedef BOOL (WINAPI *CertStrToNameWFunc)(DWORD dwCertEncodingType,
+ LPCWSTR pszX500, DWORD dwStrType, void *pvReserved, BYTE *pbEncoded,
+ DWORD *pcbEncoded, LPCWSTR *ppszError);
 
 HMODULE dll;
 static CertNameToStrAFunc pCertNameToStrA;
@@ -183,6 +189,8 @@ static CertNameToStrWFunc pCertNameToStrW;
 static CryptDecodeObjectFunc pCryptDecodeObject;
 static CertRDNValueToStrAFunc pCertRDNValueToStrA;
 static CertRDNValueToStrWFunc pCertRDNValueToStrW;
+static CertStrToNameAFunc pCertStrToNameA;
+static CertStrToNameWFunc pCertStrToNameW;
 
 static void test_CertRDNValueToStrA(void)
 {
@@ -431,6 +439,165 @@ static void test_CertNameToStrW(void)
     }
 }
 
+struct StrToNameA
+{
+    LPCSTR x500;
+    DWORD encodedSize;
+    const BYTE *encoded;
+};
+
+const BYTE encodedSimpleCN[] = {
+0x30,0x0c,0x31,0x0a,0x30,0x08,0x06,0x03,0x55,0x04,0x03,0x13,0x01,0x31 };
+static const BYTE encodedSingleQuotedCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,
+ 0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x27,0x31,0x27 };
+static const BYTE encodedSpacedCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x03,0x20,0x31,0x20 };
+static const BYTE encodedQuotedCN[] = { 0x30,0x11,0x31,0x0f,0x30,0x0d,0x06,0x03,
+ 0x55, 0x04,0x03,0x1e,0x06,0x00,0x22,0x00,0x31,0x00,0x22, };
+static const BYTE encodedMultipleAttrCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,
+ 0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x31,0x2b,0x32 };
+
+struct StrToNameA namesA[] = {
+ { "CN=1", sizeof(encodedSimpleCN), encodedSimpleCN },
+ { "CN=\"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
+ { "CN = \"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
+ { "CN='1'", sizeof(encodedSingleQuotedCN), encodedSingleQuotedCN },
+ { "CN=\" 1 \"", sizeof(encodedSpacedCN), encodedSpacedCN },
+ { "CN=\"\"\"1\"\"\"", sizeof(encodedQuotedCN), encodedQuotedCN },
+ { "CN=\"1+2\"", sizeof(encodedMultipleAttrCN), encodedMultipleAttrCN },
+};
+
+static void test_CertStrToNameA(void)
+{
+    BOOL ret;
+    DWORD size, i;
+    BYTE buf[100];
+
+    if (!pCertStrToNameA) return;
+
+    /* Crash
+    ret = pCertStrToNameA(0, NULL, 0, NULL, NULL, NULL, NULL);
+     */
+    ret = pCertStrToNameA(0, NULL, 0, NULL, NULL, &size, NULL);
+    ok(!ret, "Expected failure\n");
+    ret = pCertStrToNameA(0, "bogus", 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameA(0, "foo=1", 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameA(0, "CN=1", 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1", 0, NULL, NULL, &size, NULL);
+    ok(ret, "CertStrToNameA failed: %08lx\n", GetLastError());
+    size = sizeof(buf);
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"\"1\"\"", 0, NULL, buf, &size,
+     NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1+2", 0, NULL, buf,
+     &size, NULL);
+    todo_wine ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    for (i = 0; i < sizeof(namesA) / sizeof(namesA[0]); i++)
+    {
+        size = sizeof(buf);
+        ret = pCertStrToNameA(X509_ASN_ENCODING, namesA[i].x500, 0, NULL, buf,
+         &size, NULL);
+        ok(ret, "CertStrToNameA failed on string %s: %08lx\n", namesA[i].x500,
+         GetLastError());
+        ok(size == namesA[i].encodedSize,
+         "Expected size %ld, got %ld\n", namesA[i].encodedSize, size);
+        if (ret)
+            ok(!memcmp(buf, namesA[i].encoded, namesA[i].encodedSize),
+             "Unexpected value for string %s\n", namesA[i].x500);
+    }
+}
+
+struct StrToNameW
+{
+    LPCWSTR x500;
+    DWORD encodedSize;
+    const BYTE *encoded;
+};
+
+static const WCHAR badlyQuotedCN_W[] = { 'C','N','=','"','"','1','"','"',0 };
+static const WCHAR simpleCN_W[] = { 'C','N','=','1',0 };
+static const WCHAR simpleCN2_W[] = { 'C','N','=','"','1','"',0 };
+static const WCHAR simpleCN3_W[] = { 'C','N',' ','=',' ','"','1','"',0 };
+static const WCHAR singledQuotedCN_W[] = { 'C','N','=','\'','1','\'',0 };
+static const WCHAR spacedCN_W[] = { 'C','N','=','"',' ','1',' ','"',0 };
+static const WCHAR quotedCN_W[] = { 'C','N','=','"','"','"','1','"','"','"',0 };
+static const WCHAR multipleAttrCN_W[] = { 'C','N','=','"','1','+','2','"',0 };
+static const WCHAR japaneseCN_W[] = { 'C','N','=',0x226f,0x575b,0 };
+static const BYTE encodedJapaneseCN[] = { 0x30,0x0f,0x31,0x0d,0x30,0x0b,0x06,
+ 0x03,0x55,0x04,0x03,0x1e,0x04,0x22,0x6f,0x57,0x5b };
+
+struct StrToNameW namesW[] = {
+ { simpleCN_W, sizeof(encodedSimpleCN), encodedSimpleCN },
+ { simpleCN2_W, sizeof(encodedSimpleCN), encodedSimpleCN },
+ { simpleCN3_W, sizeof(encodedSimpleCN), encodedSimpleCN },
+ { singledQuotedCN_W, sizeof(encodedSingleQuotedCN), encodedSingleQuotedCN },
+ { spacedCN_W, sizeof(encodedSpacedCN), encodedSpacedCN },
+ { quotedCN_W, sizeof(encodedQuotedCN), encodedQuotedCN },
+ { multipleAttrCN_W, sizeof(encodedMultipleAttrCN), encodedMultipleAttrCN },
+ { japaneseCN_W, sizeof(encodedJapaneseCN), encodedJapaneseCN },
+};
+
+static void test_CertStrToNameW(void)
+{
+    static const WCHAR bogusW[] = { 'b','o','g','u','s',0 };
+    static const WCHAR fooW[] = { 'f','o','o','=','1',0 };
+    BOOL ret;
+    DWORD size, i;
+    LPCWSTR errorPtr;
+    BYTE buf[100];
+
+    if (!pCertStrToNameW) return;
+
+    /* Crash
+    ret = pCertStrToNameW(0, NULL, 0, NULL, NULL, NULL, NULL);
+     */
+    ret = pCertStrToNameW(0, NULL, 0, NULL, NULL, &size, NULL);
+    ok(!ret, "Expected failure\n");
+    ret = pCertStrToNameW(0, bogusW, 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameW(0, fooW, 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameW(0, simpleCN_W, 0, NULL, NULL, &size, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = pCertStrToNameW(X509_ASN_ENCODING, simpleCN_W, 0, NULL, NULL, &size,
+     NULL);
+    ok(ret, "CertStrToNameW failed: %08lx\n", GetLastError());
+    size = sizeof(buf);
+    ret = pCertStrToNameW(X509_ASN_ENCODING, badlyQuotedCN_W, 0, NULL, buf,
+     &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ret = pCertStrToNameW(X509_ASN_ENCODING, badlyQuotedCN_W, 0, NULL, buf,
+     &size, &errorPtr);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+     "Expected CRYPT_E_INVALID_X500_STRING, got %08lx\n", GetLastError());
+    ok(errorPtr && *errorPtr == '1', "Expected first error character was 1\n");
+    for (i = 0; i < sizeof(namesW) / sizeof(namesW[0]); i++)
+    {
+        size = sizeof(buf);
+        ret = pCertStrToNameW(X509_ASN_ENCODING, namesW[i].x500, 0, NULL, buf,
+         &size, NULL);
+        ok(ret, "Index %ld: CertStrToNameW failed: %08lx\n", i, GetLastError());
+        ok(size == namesW[i].encodedSize,
+         "Index %ld: expected size %ld, got %ld\n", i, namesW[i].encodedSize,
+         size);
+        if (ret)
+            ok(!memcmp(buf, namesW[i].encoded, size),
+             "Index %ld: unexpected value\n", i);
+    }
+}
+
 START_TEST(str)
 {
     dll = LoadLibrary("Crypt32.dll");
@@ -443,11 +610,15 @@ START_TEST(str)
      "CertRDNValueToStrW");
     pCryptDecodeObject = (CryptDecodeObjectFunc)GetProcAddress(dll,
      "CryptDecodeObject");
+    pCertStrToNameA = (CertStrToNameAFunc)GetProcAddress(dll,"CertStrToNameA");
+    pCertStrToNameW = (CertStrToNameWFunc)GetProcAddress(dll,"CertStrToNameW");
 
     test_CertRDNValueToStrA();
     test_CertRDNValueToStrW();
     test_CertNameToStrA();
     test_CertNameToStrW();
+    test_CertStrToNameA();
+    test_CertStrToNameW();
 
     FreeLibrary(dll);
 }

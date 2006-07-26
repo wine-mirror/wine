@@ -80,8 +80,8 @@
 @ stdcall CertSetCTLContextProperty(ptr long long ptr)
 @ stdcall CertSetCertificateContextProperty(ptr long long ptr)
 @ stdcall CertSetEnhancedKeyUsage(ptr ptr)
-@ stub CertStrToNameA
-@ stub CertStrToNameW
+@ stdcall CertStrToNameA(long str long ptr ptr ptr ptr)
+@ stdcall CertStrToNameW(long wstr long ptr ptr ptr ptr)
 @ stdcall CertVerifyCRLRevocation(long ptr long ptr)
 @ stdcall CertVerifyCRLTimeValidity(ptr ptr)
 @ stub CertVerifyCTLUsage
