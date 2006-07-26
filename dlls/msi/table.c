@@ -477,7 +477,7 @@ static MSITABLE *read_table_from_storage( IStorage *stg, LPCWSTR name,
         goto err;
 
     /* transpose all the data */
-    TRACE("Transposing data from %d columns\n", t->row_count );
+    TRACE("Transposing data from %d rows\n", t->row_count );
     for( i=0; i<t->row_count; i++ )
     {
         t->data[i] = msi_alloc( row_size );
