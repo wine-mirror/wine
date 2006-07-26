@@ -588,7 +588,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     url_dll = url + sizeof(wszRes)/sizeof(wszRes[0]);
-    if(!(url_file = strchrW(url_dll, '/'))) {
+    if(!(url_file = strrchrW(url_dll, '/'))) {
         WARN("wrong url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
         mshtml_free(url);
@@ -605,10 +605,18 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     src = FindResourceW(hdll, url_file, (LPCWSTR)RT_HTML);
     if(!src) {
-        WARN("Could not find resource\n");
-        IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
-        mshtml_free(url);
-        return HRESULT_FROM_WIN32(GetLastError());
+        LPWSTR endpoint = NULL;
+        DWORD file_id = strtolW(url_file, &endpoint, 10);
+        if(endpoint == url_file+strlenW(url_file))
+            src = FindResourceW(hdll, (LPCWSTR)file_id, (LPCWSTR)RT_HTML);
+
+        if(!src) {
+            WARN("Could not find resource\n");
+            IInternetProtocolSink_ReportResult(pOIProtSink,
+                    HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
+            mshtml_free(url);
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     if(This->data) {
