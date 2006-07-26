@@ -406,8 +406,12 @@ multifrom:
   | TK_FROM table TK_COMMA table TK_WHERE expr
         {
             SQL_input* sql = (SQL_input*) info;
-            FIXME("join query %s\n", debugstr_w(sql->command));
-            YYABORT;
+            UINT r;
+
+            /* only support inner joins on two tables */
+            r = JOIN_CreateView( sql->db, &$$, $2, $4, $6 );
+            if( r != ERROR_SUCCESS )
+                YYABORT;
         }
     ;
 

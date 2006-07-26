@@ -117,6 +117,10 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 
+UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view,
+                      LPCWSTR left, LPCWSTR right,
+                      struct expr *cond );
+
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 
 #endif /* __WINE_MSI_QUERY_H */

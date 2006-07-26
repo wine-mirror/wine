@@ -24,6 +24,7 @@ C_SRCS = \
 	helpers.c \
 	insert.c \
 	install.c \
+	join.c \
 	msi.c \
 	msi_main.c \
 	msiquery.c \
