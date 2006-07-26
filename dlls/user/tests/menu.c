@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "windef.h"
@@ -75,7 +76,7 @@ static HMENU hMenus[4];
 
  /* menu texts with their sizes */
 static struct {
-    char *text;
+    LPCSTR text;
     SIZE size; /* size of text up to any \t */
     SIZE sc_size; /* size of the short-cut */
 } MOD_txtsizes[] = {
@@ -324,13 +325,14 @@ static void test_menu_ownerdraw(void)
 /* helper for test_menu_bmp_and_string() */
 static void test_mbs_help( int ispop, int hassub, int mnuopt,
         HWND hwnd, int arrowwidth, int count, HBITMAP hbmp,
-        SIZE bmpsize, char *text, SIZE size, SIZE sc_size)
+        SIZE bmpsize, LPCSTR text, SIZE size, SIZE sc_size)
 {
     BOOL ret;
     HMENU hmenu, submenu;
     MENUITEMINFO mii={ sizeof( MENUITEMINFO )};
     MENUINFO mi;
     RECT rc;
+    CHAR text_copy[16];
     int hastab,  expect;
     int failed = 0;
 
@@ -344,7 +346,8 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     if( text ) {
         char *p;
         mii.fMask |= MIIM_STRING;
-        mii.dwTypeData = text;
+        strcpy(text_copy, text);
+        mii.dwTypeData = text_copy; /* structure member declared non-const */
         if( ( p = strchr( text, '\t'))) {
             hastab = *(p + 1) ? 2 : 1;
         }
