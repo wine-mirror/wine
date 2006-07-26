@@ -66,7 +66,7 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid,
     
     hr = CoCreateInstance( &CLSID_DirectInput8, punkOuter, CLSCTX_INPROC_SERVER, riid, ppDI);
     if(FAILED(hr)) {
-        ERR("CoCreateInstance failed with hr = %ld\n", hr);
+        ERR("CoCreateInstance failed with hr = %ld; Try running wineprefixcreate to fix it.\n", hr);
         return DIERR_INVALIDPARAM;
     }
 
