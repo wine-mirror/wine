@@ -531,7 +531,7 @@ UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
 
     r = msi_strcpy_to_awstring( val, szValue, pcchValueBuf );
 
-    HeapFree(GetProcessHeap(), 0, val);
+    msi_free(val);
 
     return r;
 }
