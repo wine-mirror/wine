@@ -30,7 +30,7 @@ typedef struct _D3DDECLTYPE_INFO {
     int         typesize;
 } D3DDECLTYPE_INFO;
 
-D3DDECLTYPE_INFO static const d3d_dtype_lookup[D3DDECLTYPE_UNUSED] = {
+static D3DDECLTYPE_INFO const d3d_dtype_lookup[D3DDECLTYPE_UNUSED] = {
    {D3DDECLTYPE_FLOAT1,    1, sizeof(float)},
    {D3DDECLTYPE_FLOAT2,    2, sizeof(float)},
    {D3DDECLTYPE_FLOAT3,    3, sizeof(float)},

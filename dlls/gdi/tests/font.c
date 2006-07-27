@@ -336,7 +336,7 @@ static void test_GetCharABCWidthsW(void)
 
 static void test_text_extents(void)
 {
-    const static WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
+    static const WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
     LPINT extents;
     INT i, len, fit1, fit2;
     LOGFONTA lf;
