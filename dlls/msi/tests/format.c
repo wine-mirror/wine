@@ -1181,6 +1181,8 @@ static void test_formatrecord(void)
     ok( sz == 12, "size wrong\n");
     ok( 0 == strcmp(buffer,"{foo[-1]foo}"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
+
+    MsiCloseHandle( hrec );
 }
 
 static void test_formatrecord_package(void)
