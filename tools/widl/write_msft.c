@@ -1324,7 +1324,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
             funcflags |= 0x40; /* FUNCFLAG_FHIDDEN */
             break;
         case ATTR_ID:
-            id = expr->u.lval;
+            id = expr->cval;
             break;
         case ATTR_OUT:
             break;
@@ -1577,7 +1577,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
             varflags |= 0x40; /* VARFLAG_FHIDDEN */
             break;
         case ATTR_ID:
-            id = expr->u.lval;
+            id = expr->cval;
             break;
         case ATTR_READONLY:
             varflags |= 0x01; /* VARFLAG_FREADONLY */
