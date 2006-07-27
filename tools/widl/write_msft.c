@@ -101,6 +101,8 @@ typedef struct _msft_typeinfo_t
     msft_typelib_t *typelib;
     MSFT_TypeInfoBase *typeinfo;
 
+    int typekind;
+
     unsigned int var_data_allocated;
     int *var_data;
 
@@ -1260,7 +1262,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
     id = ((0x6000 | (typeinfo->typeinfo->datatype2 & 0xffff)) << 16) | index;
 
-    switch(typeinfo->typeinfo->typekind & 15) {
+    switch(typeinfo->typekind) {
     case TKIND_DISPATCH:
         funckind = 0x4; /* FUNC_DISPATCH */
         break;
@@ -1346,8 +1348,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
     switch(invokekind) {
     case 0x2: /* INVOKE_PROPERTYGET */
-        if((num_params != 0 && (typeinfo->typeinfo->typekind & 15) == TKIND_DISPATCH)
-           || (num_params != 1 && (typeinfo->typeinfo->typekind & 15) == TKIND_INTERFACE)) {
+        if((num_params != 0 && typeinfo->typekind == TKIND_DISPATCH)
+           || (num_params != 1 && typeinfo->typekind == TKIND_INTERFACE)) {
             error("expecting no args on a propget func\n");
             return S_FALSE;
         }
@@ -1528,12 +1530,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + name_offset;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
-        if((typeinfo->typeinfo->typekind & 15) == TKIND_MODULE)
+        if(typeinfo->typekind == TKIND_MODULE)
             namedata[9] |= 0x10;
     } else
         namedata[9] &= ~0x10;
 
-    if((typeinfo->typeinfo->typekind & 15) == TKIND_MODULE)
+    if(typeinfo->typekind == TKIND_MODULE)
         namedata[9] |= 0x20;
 
     if(invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */) { 
@@ -1638,7 +1640,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     typeinfo->datawidth += var_alignment - 1;
     typeinfo->datawidth &= ~(var_alignment - 1);
 
-    switch(typeinfo->typeinfo->typekind & 0xf) {
+    switch(typeinfo->typekind) {
     case TKIND_ENUM:
         write_value(typeinfo->typelib, &typedata[4], VT_I4, &var->eval->cval);
         var_kind = 2; /* VAR_CONST */
@@ -1655,7 +1657,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         var_alignment = 4;
         break;
     default:
-        error("add_var_desc: unhandled type kind %d\n", typeinfo->typeinfo->typekind & 0xf);
+        error("add_var_desc: unhandled type kind %d\n", typeinfo->typekind);
         break;
     }
 
@@ -1692,12 +1694,12 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
-        if((typeinfo->typeinfo->typekind & 15) != TKIND_DISPATCH)
+        if(typeinfo->typekind != TKIND_DISPATCH)
             namedata[9] |= 0x10;
     } else
         namedata[9] &= ~0x10;
 
-    if ((typeinfo->typeinfo->typekind & 15) == TKIND_ENUM) {
+    if (typeinfo->typekind == TKIND_ENUM) {
 	namedata[9] |= 0x20;
     }
     typeinfo->var_names[var_num] = offset;
@@ -1745,6 +1747,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
     typelib->typelib_segment_data[MSFT_SEG_NAME][nameoffset + 9] = 0x38;
     *((int *)&typelib->typelib_segment_data[MSFT_SEG_NAME][nameoffset]) = typeinfo_offset;
 
+    msft_typeinfo->typekind = kind;
     msft_typeinfo->typeinfo = typeinfo;
 
     typeinfo->typekind |= kind | 0x20;
@@ -1781,6 +1784,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
         case ATTR_DUAL:
             /* FIXME: check interface is compatible */
+            typeinfo->typekind = (typeinfo->typekind & ~0xff) | 0x34;
             typeinfo->flags |= 0x140; /* TYPEFLAG_FDUAL | TYPEFLAG_FOLEAUTOMATION */
             break;
 
