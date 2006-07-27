@@ -809,6 +809,25 @@ static void test_ie_funcs(IUnknown *unk)
     IWebBrowser2_Release(wb);
 }
 
+static void test_GetControlInfo(IUnknown *unk)
+{
+    IOleControl *control;
+    CONTROLINFO info;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
+    ok(hres == S_OK, "Could not get IOleControl: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleControl_GetControlInfo(control, &info);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, exxpected E_NOTIMPL\n", hres);
+    hres = IOleControl_GetControlInfo(control, NULL);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, exxpected E_NOTIMPL\n", hres);
+
+    IOleControl_Release(control);
+}
+
 static void test_WebBrowser(void)
 {
     IUnknown *unk = NULL;
@@ -826,6 +845,7 @@ static void test_WebBrowser(void)
     test_DoVerb(unk);
     test_ClientSite(unk, NULL);
     test_ie_funcs(unk);
+    test_GetControlInfo(unk);
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);

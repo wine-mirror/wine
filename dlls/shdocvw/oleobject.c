@@ -607,7 +607,10 @@ static ULONG WINAPI OleControl_Release(IOleControl *iface)
 static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, LPCONTROLINFO pCI)
 {
     WebBrowser *This = CONTROL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pCI);
+
+    TRACE("(%p)->(%p)\n", This, pCI);
+
+    /* Tests show that this function should be not implemented */
     return E_NOTIMPL;
 }
 
