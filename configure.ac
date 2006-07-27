@@ -326,7 +326,6 @@ then
                       X11/extensions/XShm.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
-                      X11/extensions/xf86dga.h \
                       X11/extensions/xf86vmode.h],,,
 [#ifdef HAVE_X11_XLIB_H
 # include <X11/Xlib.h>
@@ -357,17 +356,6 @@ then
               AC_CHECK_LIB(Xext,XShapeQueryExtension,
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-        fi
-
-        dnl *** Check for XFree86 DGA / DGA 2.0 extension
-        if test "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
-        then
-              AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
-                [ AC_DEFINE(HAVE_LIBXXF86DGA2, 1,
-                            [Define if you have the Xxf86dga library version 2])
-                  X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-                ],,
-                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
         dnl *** Check for XFree86 VMODE extension

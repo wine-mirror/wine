@@ -350,9 +350,6 @@
 /* Define to 1 if you have the <libxslt/transform.h> header file. */
 #undef HAVE_LIBXSLT_TRANSFORM_H
 
-/* Define if you have the Xxf86dga library version 2 */
-#undef HAVE_LIBXXF86DGA2
-
 /* Define if you have the Xxf86vm library */
 #undef HAVE_LIBXXF86VM
 
@@ -889,9 +886,6 @@
 
 /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
-
-/* Define to 1 if you have the <X11/extensions/xf86dga.h> header file. */
-#undef HAVE_X11_EXTENSIONS_XF86DGA_H
 
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H

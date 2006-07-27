@@ -34,9 +34,6 @@
 #ifdef HAVE_LIBXXSHM
 # include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
-#ifdef HAVE_LIBXXF86DGA2
-#include <X11/extensions/xf86dga.h>
-#endif
 
 #define BOOL X_BOOL
 #define BYTE X_BYTE
@@ -620,9 +617,6 @@ extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
 extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
 extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
-extern void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *event );
-extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *event );
-extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *event );
 
 extern DWORD EVENT_x11_time_to_win32_time(Time time);
 

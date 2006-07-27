@@ -21,9 +21,6 @@
 #include "config.h"
 
 #include <X11/Xlib.h>
-#ifdef HAVE_LIBXXF86DGA2
-#include <X11/extensions/xf86dga.h>
-#endif
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -834,49 +831,3 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
     X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
-
-
-#ifdef HAVE_LIBXXF86DGA2
-
-extern HWND DGAhwnd;
-
-/**********************************************************************
- *              X11DRV_DGAMotionEvent
- */
-void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *xev )
-{
-    XDGAMotionEvent *event = (XDGAMotionEvent *)xev;
-    update_key_state( event->state );
-    X11DRV_send_mouse_input( DGAhwnd, MOUSEEVENTF_MOVE, event->dx, event->dy,
-                             0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
-}
-
-/**********************************************************************
- *              X11DRV_DGAButtonPressEvent
- */
-void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *xev )
-{
-    XDGAButtonEvent *event = (XDGAButtonEvent *)xev;
-    int buttonNum = event->button - 1;
-
-    if (buttonNum >= NB_BUTTONS) return;
-    update_key_state( event->state );
-    X11DRV_send_mouse_input( DGAhwnd, button_down_flags[buttonNum], 0, 0,
-                             0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
-}
-
-/**********************************************************************
- *              X11DRV_DGAButtonReleaseEvent
- */
-void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *xev )
-{
-    XDGAButtonEvent *event = (XDGAButtonEvent *)xev;
-    int buttonNum = event->button - 1;
-
-    if (buttonNum >= NB_BUTTONS) return;
-    update_key_state( event->state );
-    X11DRV_send_mouse_input( DGAhwnd, button_up_flags[buttonNum], 0, 0,
-                             0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
-}
-
-#endif /* HAVE_LIBXXF86DGA2 */

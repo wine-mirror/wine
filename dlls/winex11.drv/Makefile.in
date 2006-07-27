@@ -16,7 +16,6 @@ C_SRCS = \
 	codepage.c \
 	dce.c \
 	desktop.c \
-	dga2.c \
 	dib.c \
 	dib_convert.c \
 	dib_dst_swap.c \

@@ -27,9 +27,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
-#ifdef HAVE_LIBXXF86DGA2
-#include <X11/extensions/xf86dga.h>
-#endif
 
 #include <assert.h>
 #include <stdarg.h>

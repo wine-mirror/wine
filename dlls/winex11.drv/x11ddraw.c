@@ -27,7 +27,6 @@
 #define NONAMELESSSTRUCT
 #include "x11drv.h"
 #include "x11ddraw.h"
-#include "dga2.h"
 
 #include "windef.h"
 #include "gdi.h"
@@ -385,12 +384,7 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
       LPDWORD lpInstance = (LPDWORD)lpOutData;
 
       /* FIXME: get x11drv's hInstance */
-#ifdef HAVE_LIBXXF86DGA2
-      if (!X11DRV_XF86DGA2_CreateDriver(&hal_info))
-#endif
-      {
-          X11DRV_Settings_CreateDriver(&hal_info);
-      }
+      X11DRV_Settings_CreateDriver(&hal_info);
 #ifdef HAVE_OPENGL
       /*X11DRV_GLX_CreateDriver(&hal_info);*/
 #endif

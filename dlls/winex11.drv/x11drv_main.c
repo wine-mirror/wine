@@ -49,7 +49,6 @@
 #include "x11drv.h"
 #include "xvidmode.h"
 #include "xrandr.h"
-#include "dga2.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -72,7 +71,6 @@ unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
 int dxgrab = 0;
-int usedga = 0;
 int usexvidmode = 1;
 int usexrandr = 1;
 int use_xkb = 1;
@@ -318,9 +316,6 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "DXGrab", buffer, sizeof(buffer) ))
         dxgrab = IS_OPTION_TRUE( buffer[0] );
 
-    if (!get_config_key( hkey, appkey, "UseDGA", buffer, sizeof(buffer) ))
-        usedga = IS_OPTION_TRUE( buffer[0] );
-
     if (!get_config_key( hkey, appkey, "UseXVidMode", buffer, sizeof(buffer) ))
         usexvidmode = IS_OPTION_TRUE( buffer[0] );
 
@@ -437,10 +432,6 @@ static BOOL process_attach(void)
     /* initialize XRandR */
     X11DRV_XRandR_Init();
 #endif
-#ifdef HAVE_LIBXXF86DGA2
-    /* initialize DGA2 */
-    X11DRV_XF86DGA2_Init();
-#endif
 
     X11DRV_InitKeyboard();
     X11DRV_InitClipboard();
@@ -474,10 +465,6 @@ static void thread_detach(void)
  */
 static void process_detach(void)
 {
-#ifdef HAVE_LIBXXF86DGA2
-    /* cleanup DGA2 */
-    X11DRV_XF86DGA2_Cleanup();
-#endif
 #ifdef HAVE_LIBXXF86VM
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
