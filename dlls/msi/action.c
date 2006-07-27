@@ -2926,7 +2926,8 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
         LPWSTR Path;
         buffer = MSI_RecordGetString(row,12);
         Path = resolve_folder(package, buffer, FALSE, FALSE, NULL);
-        IShellLinkW_SetWorkingDirectory(sl,Path);
+        if (Path)
+            IShellLinkW_SetWorkingDirectory(sl,Path);
         msi_free(Path);
     }
 
