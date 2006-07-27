@@ -516,7 +516,7 @@ static int get_next_timeout(void)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
             int diff = (timeout->when.tv_sec - now.tv_sec) * 1000
-                     + (timeout->when.tv_usec - now.tv_usec) / 1000;
+                     + (timeout->when.tv_usec - now.tv_usec + 999) / 1000;
             if (diff < 0) diff = 0;
             return diff;
         }
