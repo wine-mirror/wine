@@ -160,13 +160,13 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *pdvi)
 {
     TRACE("%p\n",pdvi);
 
-    if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
+    if (pdvi->cbSize < sizeof(DLLVERSIONINFO))
         return E_INVALIDARG;
 
     pdvi->dwMajorVersion = MSI_MAJORVERSION;
     pdvi->dwMinorVersion = MSI_MINORVERSION;
     pdvi->dwBuildNumber = MSI_BUILDNUMBER;
-    pdvi->dwPlatformID = 1;
+    pdvi->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
 
     return S_OK;
 }
