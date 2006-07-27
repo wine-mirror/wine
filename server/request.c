@@ -318,7 +318,11 @@ void read_request( struct thread *thread )
             return;
         }
         if (!(thread->req_data = malloc( thread->req_toread )))
-            fatal_protocol_error( thread, "no memory for %d bytes request\n", thread->req_toread );
+        {
+            fatal_protocol_error( thread, "no memory for %u bytes request %d\n",
+                                  thread->req_toread, thread->req.request_header.req );
+            return;
+        }
     }
 
     /* read the variable sized data */
