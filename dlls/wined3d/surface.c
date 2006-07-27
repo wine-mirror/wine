@@ -737,7 +737,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
                     case RTL_TEXDRAW:
                     case RTL_TEXTEX:
-                        ERR("Reading from render target with a texture isn't implemented yet\n");
+                        read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
+                        FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
                         break;
 
                     case RTL_DISABLE:
@@ -985,6 +986,69 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     return;
 }
 
+static void flush_to_framebuffer_texture(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    float glTexCoord[4];
+
+    glTexCoord[0] = 0.0; /* left */
+    glTexCoord[1] = (float) This->currentDesc.Width / (float) This->pow2Width; /* right */
+    glTexCoord[2] = 0.0; /* top */
+    glTexCoord[3] = (float) This->currentDesc.Height / (float) This->pow2Height; /* bottom */
+
+    IWineD3DSurface_PreLoad(iface);
+
+    ENTER_GL();
+
+    /* Disable some fancy graphics effects */
+    glDisable(GL_LIGHTING);
+    checkGLcall("glDisable GL_LIGHTING");
+    glDisable(GL_DEPTH_TEST);
+    checkGLcall("glDisable GL_DEPTH_TEST");
+    glDisable(GL_FOG);
+    checkGLcall("glDisable GL_FOG");
+    glDisable(GL_CULL_FACE);
+    checkGLcall("glDisable GL_CULL_FACE");
+    glDisable(GL_BLEND);
+    checkGLcall("glDisable GL_BLEND");
+    glDisable(GL_STENCIL_TEST);
+    checkGLcall("glDisable GL_STENCIL_TEST");
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
+    checkGLcall("glEnable glBindTexture");
+
+    /* No filtering for blts */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
+
+    /* Start drawing a quad */
+    glBegin(GL_QUADS);
+
+    glColor3d(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(glTexCoord[0], glTexCoord[2]);
+    glVertex3f(0, 0, 0.0);
+
+    glTexCoord2f(glTexCoord[0], glTexCoord[3]);
+    glVertex3f(0, This->currentDesc.Height, 0.0);
+
+    glTexCoord2f(glTexCoord[1], glTexCoord[3]);
+    glVertex3d(This->currentDesc.Width, This->currentDesc.Height, 0.0);
+
+    glTexCoord2f(glTexCoord[1], glTexCoord[2]);
+    glVertex3f(This->currentDesc.Width, 0, 0.0);
+
+    glEnd();
+    checkGLcall("glEnd");
+
+    /* Unbind the texture */
+    glBindTexture(GL_TEXTURE_2D, 0);
+    checkGLcall("glEnable glBindTexture");
+
+    LEAVE_GL();
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
@@ -1098,7 +1162,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
                 case RTL_READTEX:
                 case RTL_TEXTEX:
-                    ERR("Writing to the render target with textures is not implemented yet\n");
+                    flush_to_framebuffer_texture(iface);
                     break;
 
                 case RTL_DISABLE:
