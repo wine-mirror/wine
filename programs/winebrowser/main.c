@@ -28,7 +28,7 @@
  *  taken from a registry key.
  *  
  *  The argument may be a regular Windows file name, a file URL, an
- *  http(s) URL or a mailto URL. In the first three cases the argument
+ *  URL or a mailto URL. In the first three cases the argument
  *  will be fed to a web browser. In the last case the argument is fed
  *  to a mail client. A mailto URL is composed as follows:
  *
@@ -209,12 +209,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!strncasecmp( url, "http:", 5 ) || !strncasecmp( url, "https:", 6 ))
-        return open_http_url( url );
-
     if (!strncasecmp( url, "mailto:", 7 ))
         return open_mailto_url( url );
 
-    fprintf( stderr, "winebrowser: cannot handle this type of URL: %s\n", url );
-    return 1;
+    /* let the browser decide how to handle the given url */
+    return open_http_url( url );
 }
