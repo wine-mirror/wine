@@ -1427,7 +1427,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
     }
     if (pDispParams->cArgs != 1)
     {
-      ERR("param count for DISPATCH_PROPERTYPUT was %ld instead of 1\n", pDispParams->cArgs);
+      ERR("param count for DISPATCH_PROPERTYPUT was %d instead of 1\n", pDispParams->cArgs);
       return DISP_E_BADPARAMCOUNT;
     }
   }
