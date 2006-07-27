@@ -763,7 +763,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          * Account for any inverted textures (render to texture case) by reversing the y coordinate
          *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices) */
         shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
-        shader_addline(&buffer, "MUL result.position.y, TMP_OUT.y, state.matrix.projection.row[1].y;\n");
+        shader_addline(&buffer, "MUL result.position.y, TMP_OUT.y, PROJECTION.y;\n");
         
         shader_addline(&buffer, "END\n\0"); 
 
