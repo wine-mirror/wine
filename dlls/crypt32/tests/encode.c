@@ -806,6 +806,8 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     CERT_RDN_ATTR attrs[2];
     CERT_RDN rdn;
     CERT_NAME_INFO info;
+    static CHAR oid_common_name[] = szOID_COMMON_NAME,
+                oid_sur_name[]    = szOID_SUR_NAME;
     BYTE *buf = NULL;
     DWORD size = 0;
     BOOL ret;
@@ -830,7 +832,7 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     /* Check with one CERT_RDN_ATTR, that has an invalid character for the
      * encoding (the NULL).
      */
-    attrs[0].pszObjId = szOID_COMMON_NAME;
+    attrs[0].pszObjId = oid_common_name;
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[0].Value.cbData = sizeof(commonNameW);
     attrs[0].Value.pbData = (BYTE *)commonNameW;
@@ -846,11 +848,11 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     /* Check with two NULL-terminated CERT_RDN_ATTRs.  Note DER encoding
      * forces the order of the encoded attributes to be swapped.
      */
-    attrs[0].pszObjId = szOID_COMMON_NAME;
+    attrs[0].pszObjId = oid_common_name;
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[0].Value.cbData = 0;
     attrs[0].Value.pbData = (BYTE *)commonNameW;
-    attrs[1].pszObjId = szOID_SUR_NAME;
+    attrs[1].pszObjId = oid_sur_name;
     attrs[1].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[1].Value.cbData = 0;
     attrs[1].Value.pbData = (BYTE *)surNameW;
