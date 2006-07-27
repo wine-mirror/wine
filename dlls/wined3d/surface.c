@@ -102,7 +102,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             This->dib.bitmap_data = NULL;
             This->resource.allocatedMemory = NULL;
         }
-        IWineD3DSurface_SetMem(iface, NULL);
+        if(This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem(iface, NULL);
 
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         if(iface == device->ddraw_primary)
