@@ -897,7 +897,7 @@ static void test_LpValFindProp(void)
 static void test_FBadRglpszA(void)
 {
     LPSTR lpStrs[4];
-    char *szString = "A String";
+    static CHAR szString[] = "A String";
     BOOL bRet;
 
     pFBadRglpszA = (void*)GetProcAddress(hMapi32, "FBadRglpszA@8");
@@ -922,7 +922,7 @@ static void test_FBadRglpszA(void)
 static void test_FBadRglpszW(void)
 {
     LPWSTR lpStrs[4];
-    WCHAR szString[] = { 'A',' ','S','t','r','i','n','g','\0' };
+    static WCHAR szString[] = { 'A',' ','S','t','r','i','n','g','\0' };
     BOOL bRet;
 
     pFBadRglpszW = (void*)GetProcAddress(hMapi32, "FBadRglpszW@8");
@@ -1005,7 +1005,7 @@ static void test_FBadRow(void)
 
 static void test_FBadProp(void)
 {
-    WCHAR szEmpty[] = { '\0' };
+    static WCHAR szEmpty[] = { '\0' };
     GUID iid;
     ULONG pt, res;
     SPropValue pv;
