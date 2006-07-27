@@ -304,9 +304,6 @@ static void primitiveInitState(
         }
 
         /* Vertex Shader output is already transformed, so set up identity matrices */
-        /* FIXME: Actually, only true for software emulated ones, so when h/w ones
-             come along this needs to take into account whether s/w ones were
-             requested or not                                                       */
         if (useVS) {
             glMatrixMode(GL_MODELVIEW);
             checkGLcall("glMatrixMode");

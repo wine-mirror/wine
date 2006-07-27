@@ -247,8 +247,10 @@ void select_shader_max_constants(WineD3D_GL_Info *gl_info) {
             gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
             break;
         case SHADER_ARB:
-            /* ARB shaders seem to have an implicit PARAM when fog is used, so we need to subtract 1 from the total available */
-            gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 1;
+            /* We have to subtract any other PARAMs that we might use in our shader programs.
+             * ATI seems to count 2 implicit PARAMs when we use fog and NVIDIA counts 1,
+             * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
+            gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 3;
             break;
         case SHADER_SW:
             gl_info->max_vshader_constantsF = 96;  /* TODO: Fixup software shaders */

@@ -144,6 +144,9 @@ void shader_generate_arb_declarations(
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
             (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
 
+    /* Temporary Output register */
+    shader_addline(buffer, "TEMP TMP_OUT;\n");
+
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
         if (reg_maps->temporary[i])
             shader_addline(buffer, "TEMP R%lu;\n", i);
@@ -168,6 +171,7 @@ void shader_generate_arb_declarations(
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
     shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                    max_constantsF, max_constantsF - 1);
+    shader_addline(buffer, "PARAM PROJECTION = state.matrix.projection.row[1];\n");
 }
 
 static const char* shift_tab[] = {
@@ -344,7 +348,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) arg->shader;
 
   /* oPos, oFog and oPts in D3D */
-  static const char* hwrastout_reg_names[] = { "result.position", "TMP_FOG", "result.pointsize" };
+  static const char* hwrastout_reg_names[] = { "TMP_OUT", "TMP_FOG", "result.pointsize" };
 
   DWORD reg = param & D3DSP_REGNUM_MASK;
   DWORD regtype = shader_get_regtype(param);
