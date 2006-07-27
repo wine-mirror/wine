@@ -4637,10 +4637,10 @@ interface IHTMLDocument2 : IHTMLDocument
      HRESULT nameProp([retval, out] BSTR *p);
 
     [vararg, id(DISPID_IHTMLDOCUMENT2_WRITE)]
-    HRESULT write([in] SAFEARRAY *psarray);
+    HRESULT write([in] SAFEARRAY(VARIANT) psarray);
 
     [vararg, id(DISPID_IHTMLDOCUMENT2_WRITELN)]
-    HRESULT writeln([in] SAFEARRAY *psarray);
+    HRESULT writeln([in] SAFEARRAY(VARIANT) psarray);
 
     [id(DISPID_IHTMLDOCUMENT2_OPEN)]
     HRESULT open(
