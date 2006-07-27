@@ -2451,9 +2451,9 @@ static int save_all_changes(msft_typelib_t *typelib)
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_TYPEINFO);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_GUIDHASH);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_GUID);
+    filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_REFERENCES);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_IMPORTINFO);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_IMPORTFILES);
-    filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_REFERENCES);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_NAMEHASH);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_NAME);
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_STRING);
@@ -2474,9 +2474,9 @@ static int save_all_changes(msft_typelib_t *typelib)
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_TYPEINFO    )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_GUIDHASH    )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_GUID        )) return retval;
+    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_REFERENCES  )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_IMPORTINFO  )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_IMPORTFILES )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_REFERENCES  )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_NAMEHASH    )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_NAME        )) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_STRING      )) return retval;
