@@ -1308,6 +1308,8 @@ static UINT msi_table_modify_row( MSITABLEVIEW *tv, MSIRECORD *rec,
             val = MSI_RecordGetInteger( rec, i+1 );
             if ( 2 == bytes_per_column( &tv->columns[i] ) )
                 val ^= 0x8000;
+            else
+                val ^= 0x80000000;
         }
         r = TABLE_set_int( &tv->view, row, i+1, val );
         if( r )

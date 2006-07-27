@@ -1026,11 +1026,19 @@ static void test_where(void)
     r = do_query(hdb, query, &rec);
     ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
     ok( check_record( rec, 4, "zero.cab"), "wrong cabinet\n");
+    MsiCloseHandle( rec );
 
     query = "SELECT * FROM `Media` WHERE `LastSequence` >= 1";
     r = do_query(hdb, query, &rec);
     ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %d\n", r);
     ok( check_record( rec, 4, "one.cab"), "wrong cabinet\n");
+
+    r = MsiRecordGetInteger(rec, 1);
+    ok( 2 == r, "field wrong\n");
+    r = MsiRecordGetInteger(rec, 2);
+    ok( 1 == r, "field wrong\n");
+
+    MsiCloseHandle( rec );
 
     MsiCloseHandle( hdb );
     DeleteFile(msifile);

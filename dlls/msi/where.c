@@ -197,7 +197,7 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
 
     case EXPR_COL_NUMBER32:
         r = table->ops->fetch_int( table, row, cond->u.col_number, &tval );
-        *val = tval;
+        *val = tval - 0x80000000;
         return r;
 
     case EXPR_UVAL:
