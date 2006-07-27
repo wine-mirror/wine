@@ -1440,6 +1440,7 @@ UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
     else
         rc = MSI_GetComponentPath(szProduct, component, lpPathBuf, pcchPathBuf);
 
+    msi_free( info );
 
     if (rc != INSTALLSTATE_LOCAL)
         return ERROR_FILE_NOT_FOUND;
