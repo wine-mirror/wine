@@ -694,7 +694,7 @@ static void test_packagecoltypes(void)
 {
     MSIHANDLE hdb, view, rec;
     char path[MAX_PATH];
-    LPSTR query;
+    LPCSTR query;
     UINT r, count;
 
     CoInitialize(NULL);
