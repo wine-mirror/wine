@@ -1340,6 +1340,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         case ATTR_RESTRICTED:
             funcflags |= 0x1; /* FUNCFLAG_FRESTRICTED */
             break;
+        case ATTR_BINDABLE:
+            funcflags |= 0x4; /* FUNCFLAG_BINDABLE */
+            break;
         default:
             warning("add_func_desc: ignoring attr %d\n", attr->type);
             break;
