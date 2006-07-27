@@ -186,6 +186,7 @@ boolean_factor:
   | value_s
         {
             $$ = ($1 && $1[0]) ? 1 : 0;
+            msi_free($1);
         }
   | value_i operator value_i
         {
@@ -198,6 +199,7 @@ boolean_factor:
                 $$ = compare_int( num, $2, $3 );
             else 
                 $$ = ($2 == COND_NE || $2 == COND_INE );
+            msi_free($1);
         }
   | value_i operator symbol_s
         {
@@ -206,6 +208,7 @@ boolean_factor:
                 $$ = compare_int( $1, $2, num );
             else 
                 $$ = ($2 == COND_NE || $2 == COND_INE );
+            msi_free($3);
         }
   | symbol_s operator symbol_s
         {
@@ -226,10 +229,12 @@ boolean_factor:
   | literal operator value_i
         {
             $$ = 0;
+            msi_free($1);
         }
   | value_i operator literal
         {
             $$ = 0;
+            msi_free($3);
         }
   | COND_LPAR expression COND_RPAR
         {
