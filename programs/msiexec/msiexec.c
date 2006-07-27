@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 	 *  We do that before starting to process the real commandline,
 	 * then overwrite the commandline again.
 	 */
-	if(msi_option_equal(argvW[1], "@"))
+	if(argc>1 && msi_option_equal(argvW[1], "@"))
 	{
 		if(!process_args_from_reg( argvW[2], &argc, &argvW ))
 			return 1;
