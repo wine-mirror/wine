@@ -1385,81 +1385,81 @@ static void test_states(void)
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "two", &state, &action);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "alpha", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "beta", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "gamma", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "delta", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "epsilon", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "zeta", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "eta", &state, &action);
     ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
-    ok( state == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", state);
-    ok( action == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", action);
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1468,8 +1468,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "two", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1478,8 +1478,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1488,8 +1488,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "alpha", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1498,8 +1498,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "beta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1508,8 +1508,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "gamma", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1518,8 +1518,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "delta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1528,8 +1528,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "epsilon", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1538,8 +1538,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "zeta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1548,8 +1548,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "eta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1561,8 +1561,8 @@ static void test_states(void)
     r = MsiDoAction( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1571,8 +1571,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "two", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1581,8 +1581,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1591,8 +1591,8 @@ static void test_states(void)
     }
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "alpha", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1601,8 +1601,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "beta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1611,8 +1611,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "gamma", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1621,8 +1621,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "delta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1631,8 +1631,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "epsilon", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1641,8 +1641,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "zeta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1651,8 +1651,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "eta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     todo_wine
@@ -1664,8 +1664,8 @@ static void test_states(void)
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
@@ -1674,8 +1674,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "two", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
@@ -1684,8 +1684,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
@@ -1694,43 +1694,43 @@ static void test_states(void)
         ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "alpha", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "beta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "gamma", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "delta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "epsilon", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "zeta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
@@ -1739,8 +1739,8 @@ static void test_states(void)
         ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
     }
 
-    state = 0xdeadbeef;
-    action = 0xdeadbeef;
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "eta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
