@@ -181,7 +181,7 @@ DWORD WINAPI FormatMessageA(
 
 #define ADD_TO_T(c) do { \
         *t++=c;\
-        if (t-target == talloced) {\
+        if ((DWORD)(t-target) == talloced) {\
             target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
             t = target+talloced;\
             talloced*=2;\
@@ -395,7 +395,7 @@ DWORD WINAPI FormatMessageW(
 
 #define ADD_TO_T(c)  do {\
     *t++=c;\
-    if (t-target == talloced) {\
+    if ((DWORD)(t-target) == talloced) {\
         target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2*sizeof(WCHAR));\
         t = target+talloced;\
         talloced*=2;\
