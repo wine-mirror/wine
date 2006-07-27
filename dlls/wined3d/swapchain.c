@@ -142,17 +142,40 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     ENTER_GL();
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
-    if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->mouseCursor) {
-        IWineD3DSurfaceImpl *cursor = (IWineD3DSurfaceImpl *) This->wineD3DDevice->mouseCursor;
+    if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->cursorTexture) {
+        IWineD3DSurfaceImpl cursor;
         RECT destRect = {This->wineD3DDevice->xScreenSpace - This->wineD3DDevice->xHotSpot,
                          This->wineD3DDevice->yScreenSpace - This->wineD3DDevice->yHotSpot,
-                         This->wineD3DDevice->xScreenSpace + cursor->currentDesc.Width - This->wineD3DDevice->xHotSpot,
-                         This->wineD3DDevice->yScreenSpace + cursor->currentDesc.Height - This->wineD3DDevice->yHotSpot};
-        TRACE("Rendering the cursor\n");
+                         This->wineD3DDevice->xScreenSpace + This->wineD3DDevice->cursorWidth - This->wineD3DDevice->xHotSpot,
+                         This->wineD3DDevice->yScreenSpace + This->wineD3DDevice->cursorHeight - This->wineD3DDevice->yHotSpot};
+        TRACE("Rendering the cursor. Creating fake surface at %p\n", &cursor);
+        /* Build a fake surface to call the Blitting code. It is not possible to use the interface passed by
+         * the application because we are only supposed to copy the information out. Using a fake surface
+         * allows to use the Blitting engine and avoid copying the whole texture -> render target blitting code.
+         */
+        memset(&cursor, 0, sizeof(cursor));
+        cursor.lpVtbl = &IWineD3DSurface_Vtbl;
+        cursor.resource.ref = 1;
+        cursor.resource.wineD3DDevice = This->wineD3DDevice;
+        cursor.resource.pool = WINED3DPOOL_SCRATCH;
+        cursor.resource.format = WINED3DFMT_A8R8G8B8;
+        cursor.resource.resourceType = WINED3DRTYPE_SURFACE;
+        cursor.glDescription.textureName = This->wineD3DDevice->cursorTexture;
+        cursor.glDescription.target = GL_TEXTURE_2D;
+        cursor.glDescription.level = 0;
+        cursor.currentDesc.Width = This->wineD3DDevice->cursorWidth;
+        cursor.currentDesc.Height = This->wineD3DDevice->cursorHeight;
+        cursor.glRect.left = 0;
+        cursor.glRect.top = 0;
+        cursor.glRect.right = cursor.currentDesc.Width;
+        cursor.glRect.bottom = cursor.currentDesc.Height;
+        /* The cursor must have pow2 sizes */
+        cursor.pow2Width = cursor.currentDesc.Width;
+        cursor.pow2Height = cursor.currentDesc.Height;
         /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
          * which is exactly what we want :-)
          */
-        IWineD3DSurface_Blt(This->backBuffer[0], &destRect, This->wineD3DDevice->mouseCursor, NULL, DDBLT_KEYSRC, NULL);
+        IWineD3DSurface_Blt(This->backBuffer[0], &destRect, (IWineD3DSurface *) &cursor, NULL, DDBLT_KEYSRC, NULL);
     }
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);

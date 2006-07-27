@@ -2115,6 +2115,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
 
+    /* Delete the mouse cursor texture */
+    if(This->cursorTexture) {
+        ENTER_GL();
+        glDeleteTextures(1, &This->cursorTexture);
+        LEAVE_GL();
+        This->cursorTexture = 0;
+    }
+
     for(sampler = 0; sampler < GL_LIMITS(sampler_stages); ++sampler) {
         IWineD3DDevice_SetTexture(iface, sampler, NULL);
     }
@@ -7471,6 +7479,13 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
     /* some basic validation checks */
+    if(This->cursorTexture) {
+        ENTER_GL();
+        glDeleteTextures(1, &This->cursorTexture);
+        LEAVE_GL();
+        This->cursorTexture = 0;
+    }
+
     if(pCursorBitmap) {
         /* MSDN: Cursor must be A8R8G8B8 */
         if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
@@ -7486,19 +7501,24 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         }
 
         /* TODO: MSDN: Cursor sizes must be a power of 2 */
-        if(This->mouseCursor) {
-            ((IWineD3DSurfaceImpl *) This->mouseCursor)->Flags &= ~SFLAG_FORCELOAD;
-        }
         /* This is to tell our texture code to load a SCRATCH surface. This allows us to use out
          * Texture and Blitting code to draw the cursor
          */
         pSur->Flags |= SFLAG_FORCELOAD;
+        IWineD3DSurface_PreLoad(pCursorBitmap);
+        pSur->Flags &= ~SFLAG_FORCELOAD;
+        /* Do not store the surface's pointer because the application may release
+         * it after setting the cursor image. Windows doesn't addref the set surface, so we can't
+         * do this either without creating circular refcount dependencies. Copy out the gl texture instead.
+         */
+        This->cursorTexture = pSur->glDescription.textureName;
+        This->cursorWidth = pSur->currentDesc.Width;
+        This->cursorHeight = pSur->currentDesc.Height;
+        pSur->glDescription.textureName = 0; /* Prevent the texture from beeing changed or deleted */
     }
 
     This->xHotSpot = XHotSpot;
     This->yHotSpot = YHotSpot;
-
-    This->mouseCursor = pCursorBitmap;
     return WINED3D_OK;
 }
 

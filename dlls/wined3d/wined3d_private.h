@@ -540,7 +540,8 @@ typedef struct IWineD3DDeviceImpl
     UINT                    yHotSpot;
     UINT                    xScreenSpace;
     UINT                    yScreenSpace;
-    IWineD3DSurface        *mouseCursor;
+    UINT                    cursorWidth, cursorHeight;
+    GLuint                  cursorTexture;
 
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];
