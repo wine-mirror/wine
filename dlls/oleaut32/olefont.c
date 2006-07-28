@@ -1562,6 +1562,25 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return hr;
     }
     break;
+  case DISPID_FONT_WEIGHT:
+    if (wFlags & DISPATCH_PROPERTYGET) {
+      V_VT(pVarResult) = VT_I2;
+      return OLEFontImpl_get_Weight((IFont *)this, &V_I2(pVarResult));
+    } else {
+      VARIANTARG vararg;
+      HRESULT hr;
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_I2);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IFont_put_Weight((IFont *)this, V_I2(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
+    }
+    break;
   case DISPID_FONT_CHARSET:
     if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_I2;
