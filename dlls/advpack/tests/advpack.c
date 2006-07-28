@@ -36,10 +36,10 @@
 
 static HRESULT (WINAPI *pCloseINFEngine)(HINF);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
-static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
+static HRESULT (WINAPI *pGetVersionFromFile)(LPCSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pOpenINFEngine)(PCSTR,PCSTR,DWORD,HINF*,PVOID);
 static HRESULT (WINAPI *pSetPerUserSecValues)(PPERUSERSECTION pPerUser);
-static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
+static HRESULT (WINAPI *pTranslateInfString)(LPCSTR,LPCSTR,LPCSTR,LPCSTR,LPSTR,DWORD,LPDWORD,LPVOID);
 static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD,PDWORD,PVOID);
 
 static CHAR PROG_FILES[MAX_PATH];
@@ -397,7 +397,7 @@ static void translateinfstringex_test(void)
     DeleteFileA("c:\\test.inf");
 }
 
-static BOOL check_reg_str(HKEY hkey, LPSTR name, LPSTR value)
+static BOOL check_reg_str(HKEY hkey, LPCSTR name, LPCSTR value)
 {
     DWORD size = MAX_PATH;
     char check[MAX_PATH];
@@ -408,7 +408,7 @@ static BOOL check_reg_str(HKEY hkey, LPSTR name, LPSTR value)
     return !lstrcmp(check, value);
 }
 
-static BOOL check_reg_dword(HKEY hkey, LPSTR name, DWORD value)
+static BOOL check_reg_dword(HKEY hkey, LPCSTR name, DWORD value)
 {
     DWORD size = sizeof(DWORD);
     DWORD check;
