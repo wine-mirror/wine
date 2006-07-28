@@ -638,12 +638,10 @@ static void shader_glsl_get_register_name(
             sprintf(tmpStr, "Vsampler%lu", reg);
     break;
     case D3DSPR_COLOROUT:
-        if (reg == 0)
-            sprintf(tmpStr, "gl_FragColor");
-        else {
+        sprintf(tmpStr, "gl_FragData[%lu]", reg);
+        if (reg > 0) {
             /* TODO: See GL_ARB_draw_buffers */
             FIXME("Unsupported write to render target %lu\n", reg);
-            sprintf(tmpStr, "unsupported_register");
         }
     break;
     case D3DSPR_RASTOUT:
@@ -914,7 +912,6 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
             case D3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
             case D3DSIO_LOGP:
             case D3DSIO_LOG:    strcat(tmpLine, "log2"); break;
-            case D3DSIO_EXPP:
             case D3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
             case D3DSIO_SGE:    strcat(tmpLine, "greaterThanEqual"); break;
             case D3DSIO_SLT:    strcat(tmpLine, "lessThan"); break;
@@ -940,6 +937,39 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     }
     shader_addline(buffer, "%s))%s;\n", tmpLine, dst_mask);
 
+}
+
+/** Process the D3DSIO_EXPP instruction in GLSL:
+ * For shader model 1.x, do the following (and honor the writemask, so use a temporary variable):
+ *   dst.x = 2^(floor(src))
+ *   dst.y = src - floor(src)
+ *   dst.z = 2^src   (partial precision is allowed, but optional)
+ *   dst.w = 1.0;
+ * For 2.0 shaders, just do this (honoring writemask and swizzle):
+ *   dst = 2^src;    (partial precision is allowed, but optional)
+ */
+void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
+
+    char tmpLine[256];
+    char dst_str[100], src_str[100];
+    char dst_reg[50], src_reg[50];
+    char dst_mask[6], src_mask[6];
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD hex_version = This->baseShader.hex_version;
+    
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src_reg, src_mask, src_str);
+    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+
+    if (hex_version < D3DPS_VERSION(2,0)) {
+        shader_addline(arg->buffer, "tmp0.x = vec4(exp2(floor(%s))).x;\n", src_str);
+        shader_addline(arg->buffer, "tmp0.y = vec4(%s - floor(%s)).y;\n", src_str, src_str);
+        shader_addline(arg->buffer, "tmp0.z = vec4(exp2(%s)).x;\n", src_str);
+        shader_addline(arg->buffer, "tmp0.w = 1.0;\n");
+        shader_addline(arg->buffer, "%svec4(tmp0))%s;\n", tmpLine, dst_mask);
+    } else {
+        shader_addline(arg->buffer, "%svec4(exp2(%s)))%s;\n", tmpLine, src_str, dst_mask);
+    }
 }
 
 /** Process the RCP (reciprocal or inverse) opcode in GLSL (dst = 1 / src) */
@@ -1354,6 +1384,73 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
    }
 }
 
+/** Process the D3DSIO_TEXDP3TEX instruction in GLSL:
+ * Take a 3-component dot product of the TexCoord[dstreg] and src,
+ * then perform a 1D texture lookup from stage dstregnum, place into dst. */
+void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
+
+    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    char src0_str[100], dst_str[100];
+    char src0_name[50], dst_name[50];
+    char src0_mask[6],  dst_mask[6];
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+
+    shader_addline(arg->buffer, "tmp0.x = dot(vec3(gl_TexCoord[%lu]), vec3(%s));\n", dstreg, src0_str);
+    shader_addline(arg->buffer, "%s = vec4(texture1D(Psampler%lu, tmp0.x))%s;\n", dst_str, dstreg, dst_mask);
+}
+
+/** Process the D3DSIO_TEXDP3 instruction in GLSL:
+ * Take a 3-component dot product of the TexCoord[dstreg] and src. */
+void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
+
+    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    char src0_str[100], dst_str[100];
+    char src0_name[50], dst_name[50];
+    char src0_mask[6],  dst_mask[6];
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+
+    shader_addline(arg->buffer, "%s = vec4(dot(vec3(T%lu), vec3(%s)))%s;\n",
+            dst_str, dstreg, src0_str, dst_mask);
+}
+
+/** Process the D3DSIO_TEXDEPTH instruction in GLSL:
+ * Calculate the depth as dst.x / dst.y   */
+void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
+    
+    char dst_str[100];
+    char dst_reg[50];
+    char dst_mask[6];
+   
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+
+    shader_addline(arg->buffer, "gl_FragDepth = %s.x / %s.y;\n", dst_reg, dst_reg);
+}
+
+/** Process the D3DSIO_TEXM3X2DEPTH instruction in GLSL:
+ * Last row of a 3x2 matrix multiply, use the result to calculate the depth:
+ * Calculate tmp0.y = TexCoord[dstreg] . src.xyz;  (tmp0.x has already been calculated)
+ * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
+ */
+void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
+    
+    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    char src0_str[100], dst_str[100];
+    char src0_name[50], dst_name[50];
+    char src0_mask[6],  dst_mask[6];
+
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+
+    shader_addline(arg->buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", dstreg, src0_str);
+    shader_addline(arg->buffer, "gl_FragDepth = vec4((tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y)%s;\n", dst_str, dst_name);
+}
+
+/** Process the D3DSIO_TEXM3X2PAD instruction in GLSL
+ * Calculate the 1st of a 2-row matrix multiplication. */
 void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
@@ -1363,7 +1460,7 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.x = dot(vec3(T%lu), vec3(%s));\n", reg, src0_name, src0_str);
+    shader_addline(buffer, "tmp0.x = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
 }
 
 /** Process the D3DSIO_TEXM3X3PAD instruction in GLSL
@@ -1426,6 +1523,24 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
     shader_addline(arg->buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
             reg, dimensions, reg, (stype == D3DSTT_2D) ? "xy" : "xyz");
+    current_state->current_row = 0;
+}
+
+/** Process the D3DSIO_TEXM3X3 instruction in GLSL
+ * Perform the 3rd row of a 3x3 matrix multiply */
+void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
+
+    char src0_str[100];
+    char src0_name[50];
+    char src0_mask[6];
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
+    
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
+    
+    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+    shader_addline(arg->buffer, "T%lu = vec4(tmp0.x, tmp0.y, tmp0.z, 1.0);\n", reg);
     current_state->current_row = 0;
 }
 

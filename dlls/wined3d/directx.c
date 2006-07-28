@@ -243,8 +243,8 @@ void select_shader_max_constants(WineD3D_GL_Info *gl_info) {
 
     switch (wined3d_settings.vs_selected_mode) {
         case SHADER_GLSL:
-            /* Subtract the other potential uniforms from the max available (bools & ints) */
-            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+            /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
+            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I - 1;
             break;
         case SHADER_ARB:
             /* We have to subtract any other PARAMs that we might use in our shader programs.

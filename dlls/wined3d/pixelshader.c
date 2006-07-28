@@ -618,9 +618,6 @@ static void pshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-/**
- * log, exp, frc, m*x* seems to be macros ins ... to see
- */
 CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     /* Arithmethic */
@@ -641,7 +638,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_ABS,  "abs",  "ABS", 1, 2, pshader_abs, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_EXP,  "exp",  "EX2", 1, 2, pshader_exp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_LOG,  "log",  "LG2", 1, 2, pshader_log, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_EXPP, "expp", "EXP", 1, 2, pshader_expp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
+    {D3DSIO_EXPP, "expp", "EXP", 1, 2, pshader_expp, pshader_hw_map2gl, shader_glsl_expp, 0, 0},
     {D3DSIO_LOGP, "logp", "LOG", 1, 2, pshader_logp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_DST,  "dst",  "DST", 1, 3, pshader_dst, pshader_hw_map2gl, shader_glsl_dst, 0, 0},
     {D3DSIO_LRP,  "lrp",  "LRP", 1, 4, pshader_lrp, pshader_hw_map2gl, shader_glsl_lrp, 0, 0},
@@ -717,13 +714,12 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined", 1, 3, pshader_texm3x3spec,  pshader_hw_texm3x3spec, pshader_glsl_texm3x3spec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3VSPEC, "texm3x3vspec",  "undefined", 1, 2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, pshader_glsl_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined", 1, 2, pshader_texm3x3tex,   pshader_hw_texm3x3tex, pshader_glsl_texm3x3tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3tex,   NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x2depth, NULL, NULL, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3,   NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3,  NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL, 1, 1, pshader_texdepth, NULL, NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3tex,   NULL, pshader_glsl_texdp3tex, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x2depth, NULL, pshader_glsl_texm3x2depth, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3,   NULL, pshader_glsl_texdp3, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3,  NULL, pshader_glsl_texm3x3, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL, 1, 1, pshader_texdepth, NULL, pshader_glsl_texdepth, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL, 1, 3, pshader_bem,      NULL, NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    /* TODO: dp2add can be made out of multiple instuctions */
     {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsx,     NULL, NULL, 0, 0},
     {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsy,     NULL, NULL, 0, 0},
     {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 5, pshader_texldd,  NULL, NULL, D3DPS_VERSION(2,1), -1},
@@ -854,7 +850,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
-            shader_addline(&buffer, "gl_FragColor = R0;\n");
+            shader_addline(&buffer, "gl_FragData[0] = R0;\n");
         shader_addline(&buffer, "}\n\0");
 
         TRACE("Compiling shader object %u\n", shader_obj);

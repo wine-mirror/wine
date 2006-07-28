@@ -472,9 +472,6 @@ static void vshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-/**
- * log, exp, frc, m*x* seems to be macros ins ... to see
- */
 CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     /* Arithmetic */ 
@@ -495,7 +492,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_ABS,  "abs",  "ABS", 1, 2, vshader_abs,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_EXP,  "exp",  "EX2", 1, 2, vshader_exp,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_LOG,  "log",  "LG2", 1, 2, vshader_log,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_EXPP, "expp", "EXP", 1, 2, vshader_expp, vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
+    {D3DSIO_EXPP, "expp", "EXP", 1, 2, vshader_expp, vshader_hw_map2gl, shader_glsl_expp, 0, 0},
     {D3DSIO_LOGP, "logp", "LOG", 1, 2, vshader_logp, vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_LIT,  "lit",  "LIT", 1, 2, vshader_lit,  vshader_hw_map2gl, shader_glsl_lit, 0, 0},
     {D3DSIO_DST,  "dst",  "DST", 1, 3, vshader_dst,  vshader_hw_map2gl, shader_glsl_dst, 0, 0},
@@ -746,6 +743,9 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         /* Base Declarations */
         shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
+        
+        /* We need the projection matrix to correctly render upside-down objects (render to texture) */
+        shader_addline(&buffer, "PARAM PROJECTION = state.matrix.projection.row[1];\n");
 
         if (reg_maps->fog) {
             This->usesFog = 1;

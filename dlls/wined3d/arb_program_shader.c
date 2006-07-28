@@ -171,7 +171,6 @@ void shader_generate_arb_declarations(
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
     shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                    max_constantsF, max_constantsF - 1);
-    shader_addline(buffer, "PARAM PROJECTION = state.matrix.projection.row[1];\n");
 }
 
 static const char* shift_tab[] = {
