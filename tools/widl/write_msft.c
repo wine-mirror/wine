@@ -2070,6 +2070,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
     int have_default = 0, have_default_source = 0;
     const attr_t *attr;
 
+    cls->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs,
                                          typelib->typelib_header.nrtypeinfos);
 
