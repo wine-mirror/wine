@@ -392,6 +392,9 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
     if ( (val_name == NULL) || (val_data == NULL) )
         return ERROR_INVALID_PARAMETER;
 
+    if (val_data[0] == '-')
+        return RegDeleteValue(currentKeyHandle,val_name);
+
     /* Get the data type stored into the value field */
     dwDataType = getDataType(&val_data, &dwParseType);
 
