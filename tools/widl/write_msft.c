@@ -1901,6 +1901,9 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     var_t *var;
     msft_typeinfo_t *msft_typeinfo;
 
+    if (-1 < dispinterface->typelib_idx)
+        return;
+
     dispinterface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_DISPATCH, dispinterface->name,
                                          dispinterface->attrs, typelib->typelib_header.nrtypeinfos);
@@ -1949,6 +1952,9 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     int num_parents = 0, num_funcs = 0;
     const attr_t *attr;
     const type_t *derived;
+
+    if (-1 < interface->typelib_idx)
+        return;
 
     for(attr = interface->attrs; attr; attr = NEXT_LINK(attr))
         if(attr->type == ATTR_DISPINTERFACE)
@@ -2012,6 +2018,9 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     var_t *cur = structure->fields;
     msft_typeinfo_t *msft_typeinfo;
 
+    if (-1 < structure->typelib_idx)
+        return;
+
     structure->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs,
                                          typelib->typelib_header.nrtypeinfos);
@@ -2050,6 +2059,9 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
     int alignment;
     const attr_t *attrs;
 
+    if (-1 < tdef->type->typelib_idx)
+        return;
+
     tdef->type->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->type->attrs,
                                          typelib->typelib_header.nrtypeinfos);
@@ -2069,6 +2081,9 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
     MSFT_RefRecord *ref, *first = NULL, *first_source = NULL;
     int have_default = 0, have_default_source = 0;
     const attr_t *attr;
+
+    if (-1 < cls->typelib_idx)
+        return;
 
     cls->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs,
@@ -2147,6 +2162,9 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
     int idx = 0;
     func_t *func;
     msft_typeinfo_t *msft_typeinfo;
+
+    if (-1 < module->typelib_idx)
+        return;
 
     module->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_MODULE, module->name, module->attrs,
