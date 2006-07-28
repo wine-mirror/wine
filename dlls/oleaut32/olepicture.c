@@ -2084,11 +2084,6 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
       return DISP_E_BADPARAMCOUNT;
     }
   }
-  else
-  {
-    ERR("one of DISPATCH_PROPERTYGET or DISPATCH_PROPERTYPUT must be specified\n");
-    return DISP_E_MEMBERNOTFOUND;
-  }
 
   switch (dispIdMember)
   {
@@ -2106,6 +2101,22 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
       TRACE("DISPID_PICT_HPAL\n");
       V_VT(pVarResult) = VT_I4;
       return IPicture_get_hPal((IPicture *)&This->lpVtbl, &V_UINT(pVarResult));
+    }
+    else if (wFlags & DISPATCH_PROPERTYPUT)
+    {
+      VARIANTARG vararg;
+      HRESULT hr;
+      TRACE("DISPID_PICT_HPAL\n");
+
+      VariantInit(&vararg);
+      hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_I4);
+      if (FAILED(hr))
+        return hr;
+
+      hr = IPicture_set_hPal((IPicture *)&This->lpVtbl, V_I4(&vararg));
+
+      VariantClear(&vararg);
+      return hr;
     }
     break;
   case DISPID_PICT_TYPE:
