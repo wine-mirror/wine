@@ -355,16 +355,19 @@ void shader_generate_glsl_declarations(
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
         if (reg_maps->samplers[i]) {
 
-            DWORD stype = reg_maps->samplers[i] & D3DSP_TEXTURETYPE_MASK;
+            DWORD stype = reg_maps->samplers[i] & WINED3DSP_TEXTURETYPE_MASK;
             switch (stype) {
 
-                case D3DSTT_2D:
+                case WINED3DSTT_1D:
+                    shader_addline(buffer, "uniform sampler1D %csampler%lu;\n", prefix, i);
+                    break;
+                case WINED3DSTT_2D:
                     shader_addline(buffer, "uniform sampler2D %csampler%lu;\n", prefix, i);
                     break;
-                case D3DSTT_CUBE:
+                case WINED3DSTT_CUBE:
                     shader_addline(buffer, "uniform samplerCube %csampler%lu;\n", prefix, i);
                     break;
-                case D3DSTT_VOLUME:
+                case WINED3DSTT_VOLUME:
                     shader_addline(buffer, "uniform sampler3D %csampler%lu;\n", prefix, i);
                     break;
                 default:
@@ -1341,16 +1344,16 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
         sampler_code = arg->src[1] & D3DSP_REGNUM_MASK;
     }         
 
-    sampler_type = arg->reg_maps->samplers[sampler_code] & D3DSP_TEXTURETYPE_MASK;
+    sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
     switch(sampler_type) {
 
-        case D3DSTT_2D:
+        case WINED3DSTT_2D:
             shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, sampler_str, coord_reg);
             break;
-        case D3DSTT_CUBE:
+        case WINED3DSTT_CUBE:
             shader_addline(buffer, "%s = textureCube(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
             break;
-        case D3DSTT_VOLUME:
+        case WINED3DSTT_VOLUME:
             shader_addline(buffer, "%s = texture3D(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
             break;
         default:
@@ -1505,14 +1508,14 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     char dimensions[5];
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
-    DWORD stype = arg->reg_maps->samplers[src0_regnum] & D3DSP_TEXTURETYPE_MASK;
+    DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     
     switch (stype) {
-        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
@@ -1522,7 +1525,7 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
     shader_addline(arg->buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
-            reg, dimensions, reg, (stype == D3DSTT_2D) ? "xy" : "xyz");
+            reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
     current_state->current_row = 0;
 }
 
@@ -1555,12 +1558,12 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     char src1_str[100], src1_name[50], src1_mask[6];
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
-    DWORD stype = arg->reg_maps->samplers[reg] & D3DSP_TEXTURETYPE_MASK;
+    DWORD stype = arg->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
 
     switch (stype) {
-        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
@@ -1578,7 +1581,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     /* Sample the texture */
     shader_addline(buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
-            reg, dimensions, reg, (stype == D3DSTT_2D) ? "xy" : "xyz");
+            reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
     current_state->current_row = 0;
 }
 
@@ -1677,11 +1680,11 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     char dst_mask[6], src0_mask[6];
     char dimensions[5];
     DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
-    DWORD stype = arg->reg_maps->samplers[src0_regnum] & D3DSP_TEXTURETYPE_MASK;
+    DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
     switch (stype) {
-        case D3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case D3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case D3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
+        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
+        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
+        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
             FIXME("Unrecognized sampler type: %#lx\n", stype);
@@ -1693,7 +1696,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%stexture%s(Psampler%lu, %s.%s))%s;\n",
-            tmpLine, dimensions, src0_regnum, dst_reg, (stype == D3DSTT_2D) ? "xy" : "xyz", dst_mask);
+            tmpLine, dimensions, src0_regnum, dst_reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz", dst_mask);
 }
 
 /** Process the D3DSIO_TEXKILL instruction in GLSL.

@@ -299,7 +299,7 @@ HRESULT shader_get_registers_used(
 
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
-                reg_maps->samplers[sampler_code] = (0x1 << 31) | D3DSTT_2D;
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
                 
             } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
                 (D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
@@ -310,7 +310,13 @@ HRESULT shader_get_registers_used(
                  * we waited to generate the shader until the textures were all bound.
                  * For now, use Cube textures because they are more common. */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
-                reg_maps->samplers[sampler_code] = (0x1 << 31) | D3DSTT_CUBE;
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
+            } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+                (D3DSIO_TEXDP3TEX == curOpcode->opcode)) {
+                
+                /* 1D Sampler usage */
+                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_1D;
             }
 
             /* This will loop over all the registers and try to
@@ -364,12 +370,12 @@ static void shader_dump_decl_usage(
     TRACE("dcl");
 
     if (regtype == D3DSPR_SAMPLER) {
-        DWORD ttype = decl & D3DSP_TEXTURETYPE_MASK;
+        DWORD ttype = decl & WINED3DSP_TEXTURETYPE_MASK;
 
         switch (ttype) {
-            case D3DSTT_2D: TRACE("_2d"); break;
-            case D3DSTT_CUBE: TRACE("_cube"); break;
-            case D3DSTT_VOLUME: TRACE("_volume"); break;
+            case WINED3DSTT_2D: TRACE("_2d"); break;
+            case WINED3DSTT_CUBE: TRACE("_cube"); break;
+            case WINED3DSTT_VOLUME: TRACE("_volume"); break;
             default: TRACE("_unknown_ttype(%08lx)", ttype); 
        }
 
