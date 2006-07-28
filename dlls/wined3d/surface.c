@@ -762,7 +762,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (!messages & 1) {
-            FIXME("TODO stencil depth surface locking surf%p usage(%lu)\n", This, This->resource.usage);
+            FIXME("TODO stencil depth surface locking surf%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
             /*
 
             glReadPixels(This->lockedRect.left,
@@ -776,7 +776,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             messages |= 1;
         }
     } else {
-        FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
+        FIXME("unsupported locking to surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
     }
 
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
@@ -1197,9 +1197,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (iface == myDevice->depthStencilBuffer) {
-            FIXME("TODO stencil depth surface unlocking surf@%p usage(%lu)\n", This, This->resource.usage);
+            FIXME("TODO stencil depth surface unlocking surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
         } else {
-            FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%lu)\n", This, This->resource.usage);
+            FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
         }
 
     } else {
@@ -2766,7 +2766,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *Dest
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     TRACE("(%p)->(%p,%p,%p,%lx,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
-    TRACE("(%p): Usage is %08lx\n", This, This->resource.usage);
+    TRACE("(%p): Usage is %s\n", This, debug_d3dusage(This->resource.usage));
 
     /* Special cases for RenderTargets */
     if( (This->resource.usage & WINED3DUSAGE_RENDERTARGET) ||

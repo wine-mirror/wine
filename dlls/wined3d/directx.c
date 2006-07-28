@@ -1429,12 +1429,12 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
           This,
           Adapter,
           DeviceType, debug_d3ddevicetype(DeviceType),
           AdapterFormat, debug_d3dformat(AdapterFormat),
-          Usage, debug_d3dusage(Usage),
+          Usage, debug_d3dusage(Usage), debug_d3dusagequery(Usage),
           RType, debug_d3dresourcetype(RType),
           CheckFormat, debug_d3dformat(CheckFormat));
 
@@ -1442,6 +1442,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* TODO: Check support against more of the WINED3DUSAGE_QUERY_* constants
+     * See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/IDirect3D9__CheckDeviceFormat.asp
+     * and http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/D3DUSAGE_QUERY.asp */
+    if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
+        TRACE_(d3d_caps)("[FAILED]\n");
+        return WINED3DERR_NOTAVAILABLE;     /* Enable when fully supported */
+    }
+    
     if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
         switch (CheckFormat) {
             case WINED3DFMT_D16_LOCKABLE:
@@ -1455,7 +1463,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             case WINED3DFMT_D32F_LOCKABLE:
             case WINED3DFMT_D24FS8:
                 TRACE_(d3d_caps)("[OK]\n");
-                return D3D_OK;
+                return WINED3D_OK;
             default:
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -1579,7 +1587,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_INDEX32:
         case WINED3DFMT_Q16W16V16U16:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
-            return D3DERR_NOTAVAILABLE;
+            return WINED3DERR_NOTAVAILABLE;
 
         /*****
          *  Float formats: Not supported right now
@@ -1592,20 +1600,20 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_A32B32G32R32F:
         case WINED3DFMT_CxV8U8:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
-            return D3DERR_NOTAVAILABLE;
+            return WINED3DERR_NOTAVAILABLE;
 
             /* Not supported */
         case WINED3DFMT_G16R16:
         case WINED3DFMT_A16B16G16R16:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
-            return D3DERR_NOTAVAILABLE;
+            return WINED3DERR_NOTAVAILABLE;
 
         default:
             break;
     }
 
     TRACE_(d3d_caps)("[FAILED]\n");
-    return D3DERR_NOTAVAILABLE;
+    return WINED3DERR_NOTAVAILABLE;
 }
 
 static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,

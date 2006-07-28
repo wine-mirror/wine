@@ -616,7 +616,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
         return;
     }
 
-    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p\n", object);
+    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p  Usage(%s)\n", object, debug_d3dusage(vboUsage));
 
     ENTER_GL();
     /* Make sure that the gl error is cleared. Do not use checkGLcall
@@ -667,7 +667,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
             glUsage = GL_STREAM_DRAW_ARB;
             break;
         case D3DUSAGE_WRITEONLY:
-            TRACE("Gl usage = GL_STATIC_DRAW\n");
+            TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
             glUsage = GL_DYNAMIC_DRAW_ARB;
             break;
         case D3DUSAGE_DYNAMIC:
@@ -675,7 +675,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
             glUsage = GL_STREAM_COPY_ARB;
             break;
         default:
-            TRACE("Gl usage = GL_STATIC_COPY\n");
+            TRACE("Gl usage = GL_DYNAMIC_COPY\n");
             glUsage = GL_DYNAMIC_COPY_ARB;
             break;
     }

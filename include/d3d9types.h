@@ -120,7 +120,7 @@
 #define D3DUSAGE_QUERY_SRGBREAD                 0x00010000L
 #define D3DUSAGE_QUERY_SRGBWRITE                0x00040000L
 #define D3DUSAGE_QUERY_VERTEXTEXTURE            0x00100000L
-
+#define D3DUSAGE_QUERY_WRAPANDMIP               0x00200000L
 
 #define D3DWRAP_U        1
 #define D3DWRAP_V        2
