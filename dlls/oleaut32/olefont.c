@@ -1299,9 +1299,10 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfoCount(
   unsigned int* pctinfo)
 {
   OLEFontImpl *this = impl_from_IDispatch(iface);
-  FIXME("(%p)->(%p): Stub\n", this, pctinfo);
+  TRACE("(%p)->(%p)\n", this, pctinfo);
+  *pctinfo = 1;
 
-  return E_NOTIMPL;
+  return S_OK;
 }
 
 /************************************************************************
