@@ -253,7 +253,7 @@ int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHand
     
     lpTable->paEntries[lpTable->iFirstFree].pObject = lpObject;
     lpTable->iFirstFree = lpTable->paEntries[lpTable->iFirstFree].iNextFree;
-    lpObject->refcount++;
+    InterlockedIncrement(&lpObject->refcount);
 
     ret = 1;
 exit:
@@ -296,10 +296,12 @@ int release_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
         goto exit;
 
     pObject = lpTable->paEntries[index].pObject;
-    pObject->refcount--;
-    if (pObject->refcount == 0)
+    if (InterlockedDecrement(&pObject->refcount) == 0)
+    {
+        TRACE("destroying handle %d\n", handle);
         if (pObject->destructor)
             pObject->destructor(pObject);
+    }
 
     lpTable->paEntries[index].pObject = NULL;
     lpTable->paEntries[index].iNextFree = lpTable->iFirstFree;

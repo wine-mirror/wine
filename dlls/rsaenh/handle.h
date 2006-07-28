@@ -36,7 +36,7 @@ typedef void (*DESTRUCTOR)(OBJECTHDR *object);
 struct tagOBJECTHDR
 {
     DWORD       dwType;
-    UINT        refcount;
+    LONG        refcount;
     DESTRUCTOR  destructor;
 };
 
