@@ -82,7 +82,7 @@ static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
 static ifref_t *make_ifref(type_t *iface);
 static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
-static class_t *make_class(char *name);
+static type_t *make_class(char *name);
 static type_t *make_safearray(void);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
@@ -114,7 +114,6 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 	var_t *var;
 	func_t *func;
 	ifref_t *ifref;
-	class_t *clas;
 	char *str;
 	UUID *uuid;
 	unsigned int num;
@@ -219,7 +218,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %type <var> dispint_props
 %type <func> funcdef int_statements
 %type <func> dispint_meths
-%type <clas> coclass coclasshdr coclassdef
+%type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
 %type <str> libraryhdr
 
@@ -1056,6 +1055,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->attrs = NULL;
   t->funcs = NULL;
   t->fields = NULL;
+  t->ifaces = NULL;
   t->ignore = parse_only;
   t->is_const = FALSE;
   t->sign = 0;
@@ -1139,12 +1139,10 @@ static func_t *make_func(var_t *def, var_t *args)
   return f;
 }
 
-static class_t *make_class(char *name)
+static type_t *make_class(char *name)
 {
-  class_t *c = xmalloc(sizeof(class_t));
+  type_t *c = make_type(0, NULL);
   c->name = name;
-  c->attrs = NULL;
-  c->ifaces = NULL;
   INIT_LINK(c);
   return c;
 }

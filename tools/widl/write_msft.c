@@ -2061,7 +2061,7 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
     msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
 }
 
-static void add_coclass_typeinfo(msft_typelib_t *typelib, class_t *cls)
+static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
 {
     msft_typeinfo_t *msft_typeinfo;
     ifref_t *iref;

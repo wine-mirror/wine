@@ -855,7 +855,7 @@ static void write_dispiface_guid(const type_t *iface)
   write_guid("DIID", iface->name, uuid);
 }
 
-static void write_coclass_guid(class_t *cocl)
+static void write_coclass_guid(type_t *cocl)
 {
   const UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
   write_guid("CLSID", cocl->name, uuid);
@@ -1006,7 +1006,7 @@ void write_dispinterface(type_t *iface)
   fprintf(header,"#endif  /* __%s_DISPINTERFACE_DEFINED__ */\n\n", iface->name);
 }
 
-void write_coclass(class_t *cocl)
+void write_coclass(type_t *cocl)
 {
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s coclass\n", cocl->name);
@@ -1015,7 +1015,7 @@ void write_coclass(class_t *cocl)
   fprintf(header, "\n");
 }
 
-void write_coclass_forward(class_t *cocl)
+void write_coclass_forward(type_t *cocl)
 {
   fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", cocl->name);
   fprintf(header, "#define __%s_FWD_DEFINED__\n", cocl->name);

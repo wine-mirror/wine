@@ -221,7 +221,7 @@ void add_interface(type_t *iface)
     typelib->entry = entry;
 }
 
-void add_coclass(class_t *cls)
+void add_coclass(type_t *cls)
 {
     typelib_entry_t *entry;
 

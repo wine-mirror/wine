@@ -40,7 +40,6 @@ typedef struct _typeref_t typeref_t;
 typedef struct _var_t var_t;
 typedef struct _func_t func_t;
 typedef struct _ifref_t ifref_t;
-typedef struct _class_t class_t;
 typedef struct _typelib_entry_t typelib_entry_t;
 typedef struct _importlib_t importlib_t;
 typedef struct _importinfo_t importinfo_t;
@@ -203,8 +202,9 @@ struct _type_t {
   unsigned char type;
   struct _type_t *ref;
   const attr_t *attrs;
-  func_t *funcs;
-  var_t *fields;
+  func_t *funcs;                  /* interfaces and modules */
+  var_t *fields;                  /* interfaces, structures and enumerations */
+  ifref_t *ifaces;                /* coclasses */
   int ignore, is_const, sign;
   int defined, written, user_types_registered;
   int typelib_idx;
@@ -249,19 +249,10 @@ struct _ifref_t {
   DECL_LINK(ifref_t);
 };
 
-struct _class_t {
-  char *name;
-  attr_t *attrs;
-  ifref_t *ifaces;
-
-  /* parser-internal */
-  DECL_LINK(class_t);
-};
-
 struct _typelib_entry_t {
     enum type_kind kind;
     union {
-        class_t *class;
+        type_t *class;
         type_t *interface;
         type_t *module;
         type_t *structure;
