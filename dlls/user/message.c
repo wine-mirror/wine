@@ -3179,27 +3179,30 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
 DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
 {
     DWORD start_time, elapsed, ret;
-    HANDLE idle_event = (HANDLE)-1;
+    HANDLE handles[2];
 
+    handles[0] = hProcess;
     SERVER_START_REQ( get_process_idle_event )
     {
         req->handle = hProcess;
-        if (!(ret = wine_server_call_err( req ))) idle_event = reply->event;
+        if (!(ret = wine_server_call_err( req ))) handles[1] = reply->event;
     }
     SERVER_END_REQ;
     if (ret) return WAIT_FAILED;  /* error */
-    if (!idle_event) return 0;  /* no event to wait on */
+    if (!handles[1]) return 0;  /* no event to wait on */
 
     start_time = GetTickCount();
     elapsed = 0;
 
-    TRACE("waiting for %p\n", idle_event );
+    TRACE("waiting for %p\n", handles[1] );
     do
     {
-        ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut - elapsed, QS_SENDMESSAGE );
+        ret = MsgWaitForMultipleObjects ( 2, handles, FALSE, dwTimeOut - elapsed, QS_SENDMESSAGE );
         switch (ret)
         {
-        case WAIT_OBJECT_0+1:
+        case WAIT_OBJECT_0:
+            return WAIT_FAILED;
+        case WAIT_OBJECT_0+2:
             process_sent_messages();
             break;
         case WAIT_TIMEOUT:
