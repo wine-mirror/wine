@@ -1992,9 +1992,11 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfoCount(
   IDispatch*    iface,
   unsigned int* pctinfo)
 {
-  FIXME("():Stub\n");
+  TRACE("(%p)", pctinfo);
 
-  return E_NOTIMPL;
+  *pctinfo = 1;
+
+  return S_OK;
 }
 
 /************************************************************************
@@ -2008,9 +2010,27 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfo(
   LCID        lcid,
   ITypeInfo** ppTInfo)
 {
-  FIXME("():Stub\n");
+  static const WCHAR stdole2tlb[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+  ITypeLib *tl;
+  HRESULT hres;
 
-  return E_NOTIMPL;
+  TRACE("(iTInfo=%d, lcid=%04x, %p)\n", iTInfo, (int)lcid, ppTInfo);
+
+  if (iTInfo != 0)
+    return E_FAIL;
+
+  hres = LoadTypeLib(stdole2tlb, &tl);
+  if (FAILED(hres))
+  {
+    ERR("Could not load stdole2.tlb\n");
+    return hres;
+  }
+
+  hres = ITypeLib_GetTypeInfoOfGuid(tl, &IID_IPictureDisp, ppTInfo);
+  if (FAILED(hres))
+    ERR("Did not get IPictureDisp typeinfo from typelib, hres %lx\n", hres);
+
+  return hres;
 }
 
 /************************************************************************
