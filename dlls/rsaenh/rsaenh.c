@@ -1469,13 +1469,17 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
             break;
 
         case CRYPT_DELETEKEYSET:
-            if (snprintf(szRegKey, MAX_PATH, RSAENH_REGKEY, pszContainer) >= MAX_PATH) {
+            if (snprintf(szRegKey, MAX_PATH, RSAENH_REGKEY, szKeyContainerName) >= MAX_PATH) {
                 SetLastError(NTE_BAD_KEYSET_PARAM);
                 return FALSE;
             } else {
-                RegDeleteKeyA(HKEY_CURRENT_USER, szRegKey);
-                SetLastError(ERROR_SUCCESS);
-                return TRUE;
+                if (!RegDeleteKeyA(HKEY_CURRENT_USER, szRegKey)) {
+                    SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                } else {
+                    SetLastError(NTE_BAD_KEYSET);
+                    return FALSE;
+                }
             }
             break;
 
@@ -2262,6 +2266,7 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
 BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen, 
                                HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
+    KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey, *pPubKey;
     CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
     CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
@@ -2270,11 +2275,13 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     ALG_ID algID;
     BYTE *pbDecrypted;
     DWORD dwKeyLen;
+    BOOL ret;
 
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%ld, hPubKey=%08lx, dwFlags=%08lx, phKey=%p)\n", 
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
     
-    if (!is_valid_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER))
+    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
+                       (OBJECTHDR**)&pKeyContainer)) 
     {
         SetLastError(NTE_BAD_UID);
         return FALSE;
@@ -2303,8 +2310,26 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
             setup_key(pCryptKey);
-            return import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
+            ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                            pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
+            if (ret) {
+                switch (pBlobHeader->aiKeyAlg)
+                {
+                case AT_SIGNATURE:
+                case CALG_RSA_SIGN:
+                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
+                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
+                            (unsigned int*)&pKeyContainer->hSignatureKeyPair);
+                    break;
+                case AT_KEYEXCHANGE:
+                case CALG_RSA_KEYX:
+                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
+                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
+                                (unsigned int*)&pKeyContainer->hKeyExchangeKeyPair);
+                    break;
+                }
+            }
+            return ret;
                 
         case PUBLICKEYBLOB:
             if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) || 
@@ -2324,8 +2349,20 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE; 
             setup_key(pCryptKey);
-            return import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
+            ret = import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                           pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
+            if (ret) {
+                switch (pBlobHeader->aiKeyAlg)
+                {
+                case AT_KEYEXCHANGE:
+                case CALG_RSA_KEYX:
+                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
+                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
+                                (unsigned int*)&pKeyContainer->hKeyExchangeKeyPair);
+                    break;
+                }
+            }
+            return ret;
                 
         case SIMPLEBLOB:
             if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey) ||
