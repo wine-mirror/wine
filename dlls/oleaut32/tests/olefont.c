@@ -465,6 +465,11 @@ static void test_Invoke(void)
     hr = IFontDisp_Invoke(fontdisp, 0xdeadbeef, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "IFontDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
 
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
+    ok_ole_success(hr, "IFontDisp_Invoke");
+
     IFontDisp_Release(fontdisp);
 }
 
