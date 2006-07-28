@@ -1044,6 +1044,137 @@ static void test_where(void)
     DeleteFile(msifile);
 }
 
+static CHAR CURR_DIR[MAX_PATH];
+
+static const CHAR test_data[] = "FirstPrimaryColumn\tSecondPrimaryColumn\tShortInt\tShortIntNullable\tLongInt\tLongIntNullable\tString\tLocalizableString\tLocalizableStringNullable\n"
+                                "s255\ti2\ti2\tI2\ti4\tI4\tS255\tS0\ts0\n"
+                                "TestTable\tFirstPrimaryColumn\n"
+                                "stringage\t5\t2\t\t2147483640\t-2147483640\tanother string\tlocalizable\tduh\n";
+
+static void write_file(const CHAR *filename, const char *data, int data_size)
+{
+    DWORD size;
+
+    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    WriteFile(hf, data, data_size, &size, NULL);
+    CloseHandle(hf);
+}
+
+static UINT add_table_to_db(MSIHANDLE hdb, LPCSTR table_data)
+{
+    UINT r;
+
+    write_file("temp_file", table_data, (lstrlen(table_data) - 1) * sizeof(char));
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "temp_file");
+    DeleteFileA("temp_file");
+
+    return r;
+}
+
+static void test_msiimport(void)
+{
+    MSIHANDLE hdb, view, rec;
+    LPSTR query;
+    UINT r, count;
+    signed int i;
+
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_table_to_db(hdb, test_data);
+    todo_wine
+    {
+    	ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "SELECT * FROM `TestTable`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    todo_wine
+    {
+    	ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    count = MsiRecordGetFieldCount(rec);
+    todo_wine
+    {
+        ok(count == 9, "Expected 9, got %d\n", count);
+        ok(check_record(rec, 1, "FirstPrimaryColumn"), "Expected FirstPrimaryColumn\n");
+        ok(check_record(rec, 2, "SecondPrimaryColumn"), "Expected SecondPrimaryColumn\n");
+        ok(check_record(rec, 3, "ShortInt"), "Expected ShortInt\n");
+        ok(check_record(rec, 4, "ShortIntNullable"), "Expected ShortIntNullalble\n");
+        ok(check_record(rec, 5, "LongInt"), "Expected LongInt\n");
+        ok(check_record(rec, 6, "LongIntNullable"), "Expected LongIntNullalble\n");
+        ok(check_record(rec, 7, "String"), "Expected String\n");
+        ok(check_record(rec, 8, "LocalizableString"), "Expected LocalizableString\n");
+        ok(check_record(rec, 9, "LocalizableStringNullable"), "Expected LocalizableStringNullable\n");
+    }
+
+    r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    count = MsiRecordGetFieldCount(rec);
+    todo_wine
+    {
+        ok(count == 9, "Expected 9, got %d\n", count);
+        ok(check_record(rec, 1, "s255"), "Expected s255\n");
+        ok(check_record(rec, 2, "i2"), "Expected i2\n");
+        ok(check_record(rec, 3, "i2"), "Expected i2\n");
+        ok(check_record(rec, 4, "I2"), "Expected I2\n");
+        ok(check_record(rec, 5, "i4"), "Expected i4\n");
+        ok(check_record(rec, 6, "I4"), "Expected I4\n");
+        ok(check_record(rec, 7, "S255"), "Expected S255\n");
+        ok(check_record(rec, 8, "S0"), "Expected S0\n");
+        ok(check_record(rec, 9, "s0"), "Expected s0\n");
+    }
+
+    query = "SELECT * FROM `TestTable`";
+    r = do_query(hdb, query, &rec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    todo_wine
+    {
+        ok(check_record(rec, 1, "stringage"), "Expected 'stringage'\n");
+        ok(check_record(rec, 7, "another string"), "Expected 'another string'\n");
+        ok(check_record(rec, 8, "localizable"), "Expected 'localizable'\n");
+        ok(check_record(rec, 9, "duh"), "Expected 'duh'\n");
+    }
+
+    i = MsiRecordGetInteger(rec, 2);
+    todo_wine
+    {
+        ok(i == 5, "Expected 5, got %d\n", i);
+    }
+
+    i = MsiRecordGetInteger(rec, 3);
+    todo_wine
+    {
+        ok(i == 2, "Expected 2, got %d\n", i);
+    }
+
+    i = MsiRecordGetInteger(rec, 4);
+    ok(i == 0x80000000, "Expected 0x80000000, got %d\n", i);
+
+    i = MsiRecordGetInteger(rec, 5);
+    todo_wine
+    {
+        ok(i == 2147483640, "Expected 2147483640, got %d\n", i);
+    }
+
+    i = MsiRecordGetInteger(rec, 6);
+    todo_wine
+    {
+        ok(i == -2147483640, "Expected -2147483640, got %d\n", i);
+    }
+
+    DeleteFileA(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -1057,4 +1188,5 @@ START_TEST(db)
     test_longstrings();
     test_streamtable();
     test_where();
+    test_msiimport();
 }
