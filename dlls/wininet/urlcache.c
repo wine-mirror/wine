@@ -2204,7 +2204,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 
     strcpy((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, achUrl);
     if (dwOffsetLocalFileName)
-        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName);
+        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName + DIR_LENGTH + 1);
     if (dwOffsetHeader)
 	memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
 
