@@ -431,12 +431,13 @@ static void test_Invoke(void)
     HRESULT hr;
     VARIANTARG vararg;
     DISPPARAMS dispparams;
+    VARIANT varresult;
 
     hr = pOleCreateFontIndirect(NULL, &IID_IFontDisp, (void **)&fontdisp);
-    ok_ole_success(hr, "OleCreateFontIndirect\n");
+    ok_ole_success(hr, "OleCreateFontIndirect");
 
     V_VT(&vararg) = VT_BOOL;
-    V_BOOL(&vararg) = FALSE;
+    V_BOOL(&vararg) = VARIANT_FALSE;
     dispparams.cNamedArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.cArgs = 1;
@@ -454,6 +455,9 @@ static void test_Invoke(void)
 
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
     ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
+    ok_ole_success(hr, "IFontDisp_Invoke");
 
     IFontDisp_Release(fontdisp);
 }
