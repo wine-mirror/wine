@@ -231,6 +231,8 @@ typedef SECURITY_STATUS (SEC_ENTRY *FREE_CONTEXT_BUFFER_FN)(PVOID);
 SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle
  phCredential);
 
+#define FreeCredentialHandle FreeCredentialsHandle
+
 typedef SECURITY_STATUS (SEC_ENTRY *FREE_CREDENTIALS_HANDLE_FN)(PCredHandle);
 
 SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
