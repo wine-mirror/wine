@@ -337,14 +337,23 @@ static void test_Invoke(void)
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
     ok_ole_success(hr, "IPictureDisp_Invoke");
+    ok(V_VT(&varresult) == VT_I4, "V_VT(&varresult) should have been VT_UINT instead of %d\n", V_VT(&varresult));
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &varresult, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, 0xdeadbeef, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
-    todo_wine {
     ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
-    }
+
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
 
     IPictureDisp_Release(picdisp);
 }

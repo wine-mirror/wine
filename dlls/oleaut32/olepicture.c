@@ -2065,6 +2065,11 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
 
   if (wFlags & DISPATCH_PROPERTYGET)
   {
+    if (pDispParams->cArgs != 0)
+    {
+      ERR("param count for DISPATCH_PROPERTYGET was %d instead of 0\n", pDispParams->cArgs);
+      return DISP_E_BADPARAMCOUNT;
+    }
     if (!pVarResult)
     {
       ERR("null pVarResult not allowed when DISPATCH_PROPERTYGET specified\n");
@@ -2085,30 +2090,52 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
     return DISP_E_MEMBERNOTFOUND;
   }
 
-  if (dispIdMember == DISPID_PICT_TYPE)
+  switch (dispIdMember)
   {
-    TRACE("DISPID_PICT_TYPE\n");
-    if (!(wFlags & INVOKE_PROPERTYGET))
-        return DISP_E_PARAMNOTFOUND;
-    if (pDispParams->cArgs != 0)
-        return DISP_E_BADPARAMCOUNT;
-    if (pVarResult)
+  case DISPID_PICT_HANDLE:
+    if (wFlags & DISPATCH_PROPERTYGET)
     {
-        VariantInit(pVarResult);
-        V_VT(pVarResult) = VT_I2;
-        return OLEPictureImpl_get_Type((IPicture *)&This->lpVtbl, &V_I2(pVarResult));
+      TRACE("DISPID_PICT_HANDLE\n");
+      V_VT(pVarResult) = VT_I4;
+      return IPicture_get_Handle((IPicture *)&This->lpVtbl, &V_UINT(pVarResult));
     }
-    return S_OK;
+    break;
+  case DISPID_PICT_HPAL:
+    if (wFlags & DISPATCH_PROPERTYGET)
+    {
+      TRACE("DISPID_PICT_HPAL\n");
+      V_VT(pVarResult) = VT_I4;
+      return IPicture_get_hPal((IPicture *)&This->lpVtbl, &V_UINT(pVarResult));
+    }
+    break;
+  case DISPID_PICT_TYPE:
+    if (wFlags & DISPATCH_PROPERTYGET)
+    {
+      TRACE("DISPID_PICT_TYPE\n");
+      V_VT(pVarResult) = VT_I2;
+      return OLEPictureImpl_get_Type((IPicture *)&This->lpVtbl, &V_I2(pVarResult));
+    }
+    break;
+  case DISPID_PICT_WIDTH:
+    if (wFlags & DISPATCH_PROPERTYGET)
+    {
+      TRACE("DISPID_PICT_WIDTH\n");
+      V_VT(pVarResult) = VT_I4;
+      return IPicture_get_Width((IPicture *)&This->lpVtbl, &V_I4(pVarResult));
+    }
+    break;
+  case DISPID_PICT_HEIGHT:
+    if (wFlags & DISPATCH_PROPERTYGET)
+    {
+      TRACE("DISPID_PICT_HEIGHT\n");
+      V_VT(pVarResult) = VT_I4;
+      return IPicture_get_Height((IPicture *)&This->lpVtbl, &V_I4(pVarResult));
+    }
+    break;
   }
-  else
-  {
-    FIXME("(dispid: %ld):Stub\n",dispIdMember);
 
-    VariantInit(pVarResult);
-    V_VT(pVarResult) = VT_BOOL;
-    V_BOOL(pVarResult) = FALSE;
-    return S_OK;
-  }
+  ERR("invalid dispid 0x%lx or wFlags 0x%x\n", dispIdMember, wFlags);
+  return DISP_E_MEMBERNOTFOUND;
 }
 
 
