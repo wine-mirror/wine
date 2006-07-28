@@ -1402,6 +1402,10 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   OLEFontImpl *this = impl_from_IDispatch(iface);
   HRESULT hr;
 
+  TRACE("%p->(%ld,%s,0x%lx,0x%x,%p,%p,%p,%p)\n", this, dispIdMember,
+    debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExepInfo,
+    puArgErr);
+
   /* validate parameters */
 
   if (!IsEqualIID(riid, &IID_NULL))
@@ -1600,12 +1604,10 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return hr;
     }
     break;
+  default:
+    ERR("member not found for dispid 0x%lx\n", dispIdMember);
+    return DISP_E_MEMBERNOTFOUND;
   }
-  FIXME("%p->(%ld,%s,%lx,%x,%p,%p,%p,%p), unhandled dispid/flag!\n",
-    this,dispIdMember,debugstr_guid(riid),lcid,
-    wFlags,pDispParams,pVarResult,pExepInfo,puArgErr
-  );
-  return S_OK;
 }
 
 /************************************************************************
