@@ -785,6 +785,7 @@ typedef struct DIDEVCAPS {
 #define DISCL_NONEXCLUSIVE	0x00000002
 #define DISCL_FOREGROUND	0x00000004
 #define DISCL_BACKGROUND	0x00000008
+#define DISCL_NOWINKEY          0x00000010
 
 /* Device FF flags */
 #define DISFFC_RESET            0x00000001

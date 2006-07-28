@@ -54,7 +54,8 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
 	    FE(DISCL_BACKGROUND),
 	    FE(DISCL_EXCLUSIVE),
 	    FE(DISCL_FOREGROUND),
-	    FE(DISCL_NONEXCLUSIVE)
+	    FE(DISCL_NONEXCLUSIVE),
+	    FE(DISCL_NOWINKEY)
 #undef FE
 	};
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
