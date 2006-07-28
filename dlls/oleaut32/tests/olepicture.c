@@ -44,6 +44,8 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleLoadPicture)(LPSTREAM,LONG,BOOL,REFIID,LPVOID*);
 
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
+
 /* 1x1 pixel gif */
 static const unsigned char gifimage[35] = {
 0x47,0x49,0x46,0x38,0x37,0x61,0x01,0x00,0x01,0x00,0x80,0x00,0x00,0xff,0xff,0xff,
@@ -285,6 +287,68 @@ static void test_empty_image_2(void) {
 	IPicture_Release (pic);
 }
 
+static void test_Invoke(void)
+{
+    IPictureDisp *picdisp;
+    HRESULT hr;
+    VARIANTARG vararg;
+    DISPPARAMS dispparams;
+    VARIANT varresult;
+    IStream *stream;
+    HGLOBAL hglob;
+    void *data;
+
+	hglob = GlobalAlloc (0, sizeof(gifimage));
+	data = GlobalLock(hglob);
+	memcpy(data, gifimage, sizeof(gifimage));
+    GlobalUnlock(hglob);
+
+	hr = CreateStreamOnHGlobal (hglob, FALSE, &stream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+	hr = pOleLoadPicture(stream, sizeof(gifimage), TRUE, &IID_IPictureDisp, (void **)&picdisp);
+    IStream_Release(stream);
+    ok_ole_success(hr, "OleLoadPicture");
+
+    V_VT(&vararg) = VT_BOOL;
+    V_BOOL(&vararg) = VARIANT_FALSE;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = &vararg;
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_IPictureDisp, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n", hr);
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_IUnknown, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n", hr);
+
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
+    ok_ole_success(hr, "IPictureDisp_Invoke");
+
+    hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &varresult, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+
+    hr = IPictureDisp_Invoke(picdisp, 0xdeadbeef, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
+    todo_wine {
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    }
+
+    IPictureDisp_Release(picdisp);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -302,6 +366,8 @@ START_TEST(olepicture)
 	 */
 	test_empty_image();
 	test_empty_image_2();
+
+	test_Invoke();
 }
 
 
