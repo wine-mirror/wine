@@ -2158,25 +2158,245 @@ static void test_VarNot(void)
     pcy->int64 = -1;
     VARNOT(CY,*pcy,I4,-1);
 }
+
 static HRESULT (WINAPI *pVarSub)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarSubI4 = "VarSub(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
+static const char *szVarSubR8 = "VarSub(%d,%d): expected 0x0,%d,%f, got 0x%lX,%d,%f\n";
+
+#define VARSUB(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarSub(&left,&right,&result); \
+        if (VT_##rvt == VT_R4 || VT_##rvt == VT_R8 || VT_##rvt == VT_DATE) { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && \
+        EQ_FLOAT(V_##rvt(&result), rval), \
+        szVarSubR8, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (double)(rval), hres, V_VT(&result), (double)V_##rvt(&result)); \
+        } else { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        szVarSubI4, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); }
 
 static void test_VarSub(void)
 {
-    VARIANT va, vb, vc;
-    HRESULT hr;
+    static const WCHAR sz12[] = {'1','2','\0'};
+    VARIANT left, right, result, cy, dec;
+    VARTYPE i;
+    BSTR lbstr, rbstr;
+    HRESULT hres, expectedhres;
+    double r;
 
     CHECKPTR(VarSub);
 
-    V_VT(&va) = VT_DATE;
-    V_DATE(&va) = 200000.0;
-    V_VT(&vb) = VT_DATE;
-    V_DATE(&vb) = 100000.0;
+    lbstr = SysAllocString(sz12);
+    rbstr = SysAllocString(sz12);
 
-    hr = pVarSub(&va, &vb, &vc);
-    ok(hr == S_OK,"VarSub of VT_DATE - VT_DATE failed with %lx\n", hr);
-    ok(V_VT(&vc) == VT_R8,"VarSub of VT_DATE - VT_DATE returned vt 0x%x\n", V_VT(&vc));
-    ok(((V_R8(&vc) >  99999.9) && (V_R8(&vc) < 100000.1)),"VarSub of VT_DATE - VT_DATE  should return 100000.0, but returned %g\n", V_R8(&vc));
-    /* fprintf(stderr,"VarSub of 10000-20000 returned: %g\n", V_R8(&vc)); */
+    VariantInit(&left);
+    VariantInit(&right);
+    VariantInit(&result);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+
+            SKIPTESTS(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+
+                SKIPTESTS(rightvt);
+                expectedhres = S_OK;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = lbstr;
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                if (rightvt == VT_BSTR)
+                    V_BSTR(&right) = rbstr;
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_ERROR;
+
+                /* All extra flags produce errors */
+                if (ExtraFlags[i] == (VT_VECTOR|VT_BYREF|VT_RESERVED) ||
+                    ExtraFlags[i] == (VT_VECTOR|VT_RESERVED) ||
+                    ExtraFlags[i] == (VT_VECTOR|VT_BYREF) ||
+                    ExtraFlags[i] == (VT_BYREF|VT_RESERVED) ||
+                    ExtraFlags[i] == VT_VECTOR ||
+                    ExtraFlags[i] == VT_BYREF ||
+                    ExtraFlags[i] == VT_RESERVED)
+                {
+                    expectedhres = DISP_E_BADVARTYPE;
+                    resvt = VT_EMPTY;
+                }
+                else if (ExtraFlags[i] >= VT_ARRAY)
+                {
+                    expectedhres = DISP_E_TYPEMISMATCH;
+                    resvt = VT_EMPTY;
+                }
+                /* Native VarSub cannot handle: VT_I1, VT_UI2, VT_UI4,
+                   VT_INT, VT_UINT and VT_UI8. Tested with WinXP */
+                else if (!IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_I1 || rightvt == VT_I1 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    leftvt == VT_INT || rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD)
+                {
+                    if (leftvt == VT_RECORD && rightvt == VT_I8)
+                        expectedhres = DISP_E_TYPEMISMATCH;
+                    else if (leftvt < VT_UI1 && rightvt == VT_RECORD)
+                        expectedhres = DISP_E_TYPEMISMATCH;
+                    else if (leftvt >= VT_UI1 && rightvt == VT_RECORD)
+                        expectedhres = DISP_E_TYPEMISMATCH;
+                    else if (leftvt == VT_RECORD && rightvt <= VT_UI1)
+                        expectedhres = DISP_E_TYPEMISMATCH;
+                    else if (leftvt == VT_RECORD && rightvt > VT_UI1)
+                        expectedhres = DISP_E_BADVARTYPE;
+                    else
+                        expectedhres = DISP_E_BADVARTYPE;
+                    resvt = VT_EMPTY;
+                }
+                else if ((leftvt == VT_NULL && rightvt == VT_DISPATCH) ||
+                    (leftvt == VT_DISPATCH && rightvt == VT_NULL))
+                    resvt = VT_NULL;
+                else if (leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR)
+                {
+                    resvt = VT_EMPTY;
+                    expectedhres = DISP_E_TYPEMISMATCH;
+                }
+                else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                    resvt = VT_NULL;
+                else if ((leftvt == VT_EMPTY && rightvt == VT_BSTR) ||
+                    (leftvt == VT_DATE && rightvt == VT_DATE) ||
+                    (leftvt == VT_BSTR && rightvt == VT_EMPTY) ||
+                    (leftvt == VT_BSTR && rightvt == VT_BSTR))
+                    resvt = VT_R8;
+                else if (leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+                    resvt = VT_DECIMAL;
+                else if (leftvt == VT_DATE || rightvt == VT_DATE)
+                    resvt = VT_DATE;
+                else if (leftvt == VT_CY || rightvt == VT_CY)
+                    resvt = VT_CY;
+                else if (leftvt == VT_R8 || rightvt == VT_R8)
+                    resvt = VT_R8;
+                else if (leftvt == VT_BSTR || rightvt == VT_BSTR) {
+                    resvt = VT_R8;
+                } else if (leftvt == VT_R4 || rightvt == VT_R4) {
+                    if (leftvt == VT_I4 || rightvt == VT_I4 ||
+                        leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_R8;
+                    else
+                        resvt = VT_R4;
+                }
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                    resvt = VT_I8;
+                else if (leftvt == VT_I4 || rightvt == VT_I4)
+                    resvt = VT_I4;
+                else if (leftvt == VT_I2 || rightvt == VT_I2 ||
+                    leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                    (leftvt == VT_EMPTY && rightvt == VT_EMPTY))
+                    resvt = VT_I2;
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                    resvt = VT_UI1;
+                else
+                {
+                    resvt = VT_EMPTY;
+                    expectedhres = DISP_E_TYPEMISMATCH;
+                }
+
+                hres = pVarSub(&left, &right, &result);
+
+                ok(hres == expectedhres && V_VT(&result) == resvt,
+                    "VarSub: %d|0x%X, %d|0x%X: Expected failure 0x%lX, "
+                    "got 0x%lX, expected vt %d got vt %d\n",
+                    leftvt, ExtraFlags[i], rightvt, ExtraFlags[i],
+                    expectedhres, hres, resvt, V_VT(&result));
+            }
+        }
+    }
+
+    /* Test returned values */
+    VARSUB(I4,4,I4,2,I4,2);
+    VARSUB(I2,4,I2,2,I2,2);
+    VARSUB(I2,-13,I4,5,I4,-18);
+    VARSUB(I4,-13,I4,5,I4,-18);
+    VARSUB(I2,7,R4,0.5,R4,6.5);
+    VARSUB(R4,0.5,I4,5,R8,-4.5);
+    VARSUB(R8,7.1,BOOL,0,R8,7.1);
+    VARSUB(BSTR,lbstr,I2,4,R8,8);
+    VARSUB(BSTR,lbstr,BOOL,1,R8,11);
+    VARSUB(BSTR,lbstr,R4,0.1,R8,11.9);
+    VARSUB(R4,0.2,BSTR,rbstr,R8,-11.8);
+    VARSUB(DATE,2.25,I4,7,DATE,-4.75);
+    VARSUB(DATE,1.25,R4,-1.7,DATE,2.95);
+
+    VARSUB(UI1, UI1_MAX, UI1, UI1_MAX, UI1, 0);
+    VARSUB(I2, I2_MAX, I2, I2_MAX, I2, 0);
+    VARSUB(I2, I2_MIN, I2, I2_MIN, I2, 0);
+    VARSUB(I4, I4_MAX, I4, I4_MAX, I4, 0.0);
+    VARSUB(I4, I4_MIN, I4, I4_MIN, I4, 0.0);
+    VARSUB(R4, R4_MAX, R4, R4_MAX, R4, 0.0);
+    VARSUB(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX - R4_MIN);
+    VARSUB(R4, R4_MIN, R4, R4_MIN, R4, 0.0);
+    VARSUB(R8, R8_MAX, R8, R8_MIN, R8, R8_MAX - R8_MIN);
+    VARSUB(R8, R8_MIN, R8, R8_MIN, R8, 0.0);
+
+    /* Manually test BSTR + BSTR */
+    V_VT(&left) = VT_BSTR;
+    V_BSTR(&left) = lbstr;
+    V_VT(&right) = VT_BSTR;
+    V_BSTR(&right) = rbstr;
+    hres = VarSub(&left, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VarSub: expected coerced type VT_R8, got %s!\n", vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 0),
+        "VarSub: BSTR + BSTR, expected %f got %f\n", 0.0, V_R8(&result));
+
+    /* Manually test some VT_CY and VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(4711, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(-4.2, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = -11;
+    V_VT(&right) = VT_UI1;
+    V_UI1(&right) = 9;
+
+    hres = VarSub(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_CY,
+        "VarSub: expected coerced type VT_CY, got %s!\n", vtstr(V_VT(&result)));
+    hres = VarR8FromCy(V_CY(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 4702),
+        "VarSub: CY value %f, expected %f\n", r, (double)4720);
+
+    hres = VarSub(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL,
+        "VarSub: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, -6.8),
+        "VarSub: DECIMAL value %f, expected %f\n", r, (double)-15.2);
+
+    SysFreeString(lbstr);
+    SysFreeString(rbstr);
 }
 
 static const char *szVarModFail = "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n";
