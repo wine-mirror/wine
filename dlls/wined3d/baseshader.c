@@ -701,6 +701,7 @@ void shader_generate_main(
                        D3DSIO_DEF == curOpcode->opcode ||
                        D3DSIO_DEFI == curOpcode->opcode ||
                        D3DSIO_DEFB == curOpcode->opcode ||
+                       D3DSIO_PHASE == curOpcode->opcode ||
                        D3DSIO_RET == curOpcode->opcode) {
 
                 pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
