@@ -111,27 +111,99 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,
- PCredHandle phCredential, PTimeStamp ptsExpiry)
+static SECURITY_STATUS schan_CheckCreds(PSCHANNEL_CRED schanCred)
 {
-    SECURITY_STATUS ret;
+    SECURITY_STATUS st;
 
-    if (fCredentialUse == SECPKG_CRED_BOTH)
-        ret = SEC_E_NO_CREDENTIALS;
+    switch (schanCred->dwVersion)
+    {
+    case SCH_CRED_V3:
+    case SCHANNEL_CRED_VERSION:
+        break;
+    default:
+        return SEC_E_INTERNAL_ERROR;
+    }
+
+    if (schanCred->cCreds == 0)
+        st = SEC_E_NO_CREDENTIALS;
+    else if (schanCred->cCreds > 1)
+        st = SEC_E_UNKNOWN_CREDENTIALS;
     else
     {
-        /* For now, the only thing I'm interested in is the direction of the
-         * connection, so just store it.
-         */
-        phCredential->dwUpper = fCredentialUse;
-        /* According to MSDN, all versions prior to XP do this */
+        DWORD keySpec;
+        HCRYPTPROV csp;
+        BOOL ret, freeCSP;
+
+        ret = CryptAcquireCertificatePrivateKey(schanCred->paCred[0],
+         0, /* FIXME: what flags to use? */ NULL,
+         &csp, &keySpec, &freeCSP);
+        if (ret)
+        {
+            st = SEC_E_OK;
+            if (freeCSP)
+                CryptReleaseContext(csp, 0);
+        }
+        else
+            st = SEC_E_UNKNOWN_CREDENTIALS;
+    }
+    return st;
+}
+
+static SECURITY_STATUS schan_AcquireClientCredentials(PSCHANNEL_CRED schanCred,
+ PCredHandle phCredential, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS st = SEC_E_OK;
+
+    if (schanCred)
+    {
+        st = schan_CheckCreds(schanCred);
+        if (st == SEC_E_NO_CREDENTIALS)
+            st = SEC_E_OK;
+    }
+
+    /* For now, the only thing I'm interested in is the direction of the
+     * connection, so just store it.
+     */
+    if (st == SEC_E_OK)
+    {
+        phCredential->dwUpper = SECPKG_CRED_OUTBOUND;
+        /* Outbound credentials have no expiry */
         if (ptsExpiry)
         {
             ptsExpiry->LowPart = 0;
             ptsExpiry->HighPart = 0;
         }
-        ret = SEC_E_OK;
     }
+    return st;
+}
+
+static SECURITY_STATUS schan_AcquireServerCredentials(PSCHANNEL_CRED schanCred,
+ PCredHandle phCredential, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS st;
+
+    if (!schanCred) return SEC_E_NO_CREDENTIALS;
+
+    st = schan_CheckCreds(schanCred);
+    if (st == SEC_E_OK)
+    {
+        phCredential->dwUpper = SECPKG_CRED_INBOUND;
+        /* FIXME: get expiry from cert */
+    }
+    return st;
+}
+
+static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,
+ PSCHANNEL_CRED schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS ret;
+
+    if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+        ret = schan_AcquireClientCredentials(schanCred, phCredential,
+         ptsExpiry);
+    else
+        ret = schan_AcquireServerCredentials(schanCred, phCredential,
+         ptsExpiry);
     return ret;
 }
 
@@ -143,8 +215,8 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleA(
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return schan_AcquireCredentialsHandle(fCredentialUse, phCredential,
-     ptsExpiry);
+    return schan_AcquireCredentialsHandle(fCredentialUse,
+     (PSCHANNEL_CRED)pAuthData, phCredential, ptsExpiry);
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
@@ -155,8 +227,15 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return schan_AcquireCredentialsHandle(fCredentialUse, phCredential,
-     ptsExpiry);
+    return schan_AcquireCredentialsHandle(fCredentialUse,
+     (PSCHANNEL_CRED)pAuthData, phCredential, ptsExpiry);
+}
+
+static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
+ PCredHandle phCredential)
+{
+    FIXME("(%p): stub\n", phCredential);
+    return SEC_E_OK;
 }
 
 /***********************************************************************
@@ -173,7 +252,9 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
-    if(phCredential){
+    if(phCredential)
+    {
+        FIXME("stub\n");
         ret = SEC_E_UNSUPPORTED_FUNCTION;
     }
     else
@@ -199,6 +280,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
     {
+        FIXME("stub\n");
         ret = SEC_E_UNSUPPORTED_FUNCTION;
     }
     else
@@ -213,7 +295,7 @@ static SecurityFunctionTableA schanTableA = {
     NULL, /* EnumerateSecurityPackagesA */
     schan_QueryCredentialsAttributesA,
     schan_AcquireCredentialsHandleA,
-    NULL, /* FreeCredentialsHandle */
+    schan_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     schan_InitializeSecurityContextA, 
     NULL, /* AcceptSecurityContext */
@@ -244,7 +326,7 @@ static SecurityFunctionTableW schanTableW = {
     NULL, /* EnumerateSecurityPackagesW */
     schan_QueryCredentialsAttributesW,
     schan_AcquireCredentialsHandleW,
-    NULL, /* FreeCredentialsHandle */
+    schan_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     schan_InitializeSecurityContextW, 
     NULL, /* AcceptSecurityContext */
