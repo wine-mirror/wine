@@ -160,7 +160,8 @@ enum expr_type
 
 enum type_kind
 {
-    TKIND_ENUM = 0,
+    TKIND_PRIMITIVE = -1,
+    TKIND_ENUM,
     TKIND_RECORD,
     TKIND_MODULE,
     TKIND_INTERFACE,
@@ -199,6 +200,7 @@ struct _expr_t {
 
 struct _type_t {
   const char *name;
+  enum type_kind kind;
   unsigned char type;
   struct _type_t *ref;
   const attr_t *attrs;

@@ -638,6 +638,7 @@ int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
 						  if ($$->defined) yyerror("multiple definition error");
+						  if ($$->kind != TKIND_COCLASS) yyerror("%s was not declared a coclass", $2);
 						}
 	;
 
@@ -1060,6 +1061,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
 {
   type_t *t = xmalloc(sizeof(type_t));
   t->name = NULL;
+  t->kind = TKIND_PRIMITIVE;
   t->type = type;
   t->ref = ref;
   t->attrs = NULL;
@@ -1153,6 +1155,7 @@ static type_t *make_class(char *name)
 {
   type_t *c = make_type(0, NULL);
   c->name = name;
+  c->kind = TKIND_COCLASS;
   INIT_LINK(c);
   return c;
 }
