@@ -342,11 +342,6 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 	StringFromGUID2(list->clsid, buf, 39);
 	res = recursive_delete_keyW(coclass_key, buf);
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
-
-	if (list->progid) {
-	    res = recursive_delete_keyA(HKEY_CLASSES_ROOT, list->progid);
-	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
-	}
     }
 
 error_close_coclass_key:
@@ -589,6 +584,11 @@ static struct progid const progid_list[] = {
 	&CLSID_DOMDocument,
 	NULL
     },
+    {   "MSXML.DOMDocument",
+	"XML DOM Document",
+	&CLSID_DOMDocument,
+	"Microsoft.XMLDOM.1.0"
+    },
     {   "Microsoft.FreeThreadedXMLDOM",
 	"Free threaded XML DOM Document",
 	&CLSID_DOMFreeThreadedDocument,
@@ -598,6 +598,11 @@ static struct progid const progid_list[] = {
 	"Free threaded XML DOM Document",
 	&CLSID_DOMFreeThreadedDocument,
 	NULL
+    },
+    {   "MSXML.FreeThreadedDOMDocument",
+	"Free threaded XML DOM Document",
+	&CLSID_DOMFreeThreadedDocument,
+	"Microsoft.FreeThreadedXMLDOM.1.0"
     },
     {   "Microsoft.XMLHTTP",
 	"XML HTTP Request",
