@@ -936,7 +936,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         case WINED3DFMT_P8:
         {
             UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
-            int row;
+            int height = This->glRect.bottom - This->glRect.top;
             type = GL_UNSIGNED_BYTE;
             fmt = GL_RGBA;
 
@@ -945,12 +945,11 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 ERR("Out of memory\n");
                 return;
             }
-            for(row = This->dirtyRect.top; row < This->dirtyRect.bottom; row++) {
-                d3dfmt_convert_surface(This->resource.allocatedMemory + row * pitch + This->lockedRect.left,
-                                       (BYTE *) mem + row * pitch * 4 + This->lockedRect.left * 4,
-                                       This->lockedRect.right - This->lockedRect.left,
-                                       CONVERT_PALETTED, This);
-            }
+            d3dfmt_convert_surface(This->resource.allocatedMemory,
+                                   mem,
+                                   pitch*height,
+                                   CONVERT_PALETTED,
+                                   This);
         }
         break;
 
@@ -1813,11 +1812,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         else This->Flags &= ~SFLAG_GLCKEY;
         d3dfmt_get_conv(This, TRUE /* We need color keying */, &format, &internal, &type, &convert, &bpp);
 
-        if((convert != NO_CONVERSION) &&
-	   This->resource.allocatedMemory) {
+        if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
             int width = This->glRect.right - This->glRect.left;
             int height = This->glRect.bottom - This->glRect.top;
-            int row;
+            int pitch = IWineD3DSurface_GetPitch(iface);
 
             mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
             if(!mem) {
@@ -1825,14 +1823,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                 return WINED3DERR_OUTOFVIDEOMEMORY;
             }
 
-            for(row = This->glRect.top; row < This->glRect.bottom; row++) {
-                BYTE *cur = This->resource.allocatedMemory + row * This->pow2Width * This->bytesPerPixel;
-                d3dfmt_convert_surface(cur + This->glRect.left * This->bytesPerPixel,
-                                       mem + row * width * bpp,
-                                       width,
-                                       convert,
-                                       This);
-            }
+            d3dfmt_convert_surface(This->resource.allocatedMemory,
+                                    mem,
+                                    pitch*height,
+                                    convert,
+                                    This);
+            /* Make sure the correct pitch is used */
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
+
             This->Flags |= SFLAG_CONVERTED;
         } else {
             This->Flags &= ~SFLAG_CONVERTED;
