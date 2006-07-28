@@ -2486,17 +2486,17 @@ HRESULT WINAPI VarMonthName(INT iMonth, INT fAbbrev, ULONG dwFlags, BSTR *pbstrO
 
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, NULL, 0);
   if (!size) {
-    FIXME("GetLocaleInfo 0x%lx failed.\n", localeValue);
-    return E_INVALIDARG;
+    ERR("GetLocaleInfo 0x%lx failed.\n", localeValue);
+    return HRESULT_FROM_WIN32(GetLastError());
   }
   str = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*size);
   if (!str)
     return E_OUTOFMEMORY;
   size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, str, size);
   if (!size) {
-    FIXME("GetLocaleInfo of 0x%lx failed in 2nd stage?!\n", localeValue);
+    ERR("GetLocaleInfo of 0x%lx failed in 2nd stage?!\n", localeValue);
     HeapFree(GetProcessHeap(),0,str);
-    return E_INVALIDARG;
+    return HRESULT_FROM_WIN32(GetLastError());
   }
   *pbstrOut = SysAllocString(str);
   HeapFree(GetProcessHeap(),0,str);
