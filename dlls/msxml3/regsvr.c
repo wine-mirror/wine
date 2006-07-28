@@ -66,12 +66,23 @@ struct regsvr_coclass
     LPCSTR ips;			/* can be NULL to omit */
     LPCSTR ips32;		/* can be NULL to omit */
     LPCSTR ips32_tmodel;	/* can be NULL to omit */
-    LPCSTR clsid_str;		/* can be NULL to omit */
     LPCSTR progid;		/* can be NULL to omit */
+    LPCSTR version;		/* can be NULL to omit */
 };
 
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
 static HRESULT unregister_coclasses(struct regsvr_coclass const *list);
+
+struct progid
+{
+    LPCSTR name;		/* NULL for end of list */
+    LPCSTR description;		/* can be NULL to omit */
+    CLSID const *clsid;
+    LPCSTR curver;		/* can be NULL to omit */
+};
+
+static HRESULT register_progids(struct progid const *list);
+static HRESULT unregister_progids(struct progid const *list);
 
 /***********************************************************************
  *		static string constants
@@ -99,6 +110,14 @@ static WCHAR const ips32_keyname[15] = {
     '3', '2', 0 };
 static WCHAR const progid_keyname[7] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
+static WCHAR const versionindependentprogid_keyname[] = {
+    'V', 'e', 'r', 's', 'i', 'o', 'n',
+    'I', 'n', 'd', 'e', 'p', 'e', 'n', 'd', 'e', 'n', 't',
+    'P', 'r', 'o', 'g', 'I', 'D', 0 };
+static WCHAR const version_keyname[] = {
+    'V', 'e', 'r', 's', 'i', 'o', 'n', 0 };
+static WCHAR const curver_keyname[] = {
+    'C', 'u', 'r', 'V', 'e', 'r', 0 };
 static char const tmodel_valuename[] = "ThreadingModel";
 
 /***********************************************************************
@@ -260,26 +279,37 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
-	if (list->clsid_str) {
-	    res = register_key_defvalueA(clsid_key, clsid_keyname,
-					 list->clsid_str);
+	if (list->progid) {
+            char *buffer = NULL;
+            LPCSTR progid;
+
+	    if (list->version) {
+		buffer = HeapAlloc(GetProcessHeap(), 0, strlen(list->progid) + strlen(list->version) + 2);
+		if (!buffer) {
+		    res = ERROR_OUTOFMEMORY;
+		    goto error_close_clsid_key;
+		}
+		strcpy(buffer, list->progid);
+		strcat(buffer, ".");
+		strcat(buffer, list->version);
+		progid = buffer;
+	    } else
+		progid = list->progid;
+	    res = register_key_defvalueA(clsid_key, progid_keyname,
+					 progid);
+	    HeapFree(GetProcessHeap(), 0, buffer);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	    if (list->version) {
+	        res = register_key_defvalueA(clsid_key, versionindependentprogid_keyname,
+					     list->progid);
+		if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	    }
 	}
 
-	if (list->progid) {
-	    HKEY progid_key;
-
-	    res = register_key_defvalueA(clsid_key, progid_keyname,
-					 list->progid);
-	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
-
-	    res = RegCreateKeyExA(HKEY_CLASSES_ROOT, list->progid, 0,
-				  NULL, 0, KEY_READ | KEY_WRITE, NULL,
-				  &progid_key, NULL);
-	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
-
-	    res = register_key_defvalueW(progid_key, clsid_keyname, buf);
-	    RegCloseKey(progid_key);
+	if (list->version) {
+	    res = register_key_defvalueA(clsid_key, version_keyname,
+					 list->version);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
@@ -322,6 +352,58 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 error_close_coclass_key:
     RegCloseKey(coclass_key);
 error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		register_progids
+ */
+static HRESULT register_progids(struct progid const *list)
+{
+    LONG res = ERROR_SUCCESS;
+
+    for (; res == ERROR_SUCCESS && list->name; ++list) {
+	WCHAR buf[39];
+	HKEY progid_key;
+
+	res = RegCreateKeyExA(HKEY_CLASSES_ROOT, list->name, 0,
+			  NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			  &progid_key, NULL);
+	if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	res = RegSetValueExA(progid_key, NULL, 0, REG_SZ,
+			 (CONST BYTE*)list->description,
+			 strlen(list->description) + 1);
+	if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	StringFromGUID2(list->clsid, buf, 39);
+
+	res = register_key_defvalueW(progid_key, clsid_keyname, buf);
+	if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	if (list->curver) {
+	    res = register_key_defvalueA(progid_key, curver_keyname, list->curver);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	}
+
+    error_close_clsid_key:
+	RegCloseKey(progid_key);
+    }
+
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		unregister_progids
+ */
+static HRESULT unregister_progids(struct progid const *list)
+{
+    LONG res = ERROR_SUCCESS;
+
+    for (; res == ERROR_SUCCESS && list->name; ++list) {
+	res = recursive_delete_keyA(HKEY_CLASSES_ROOT, list->name);
+    }
+
     return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
 }
 
@@ -449,39 +531,38 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
 	"msxml3.dll",
 	"Both",
-	"XML DOM Document",
-    "Microsoft.XMLDOM"
+	"Microsoft.XMLDOM",
+	"1.0"
     },
     {   &CLSID_DOMFreeThreadedDocument,
 	"Free threaded XML DOM Document",
 	NULL,
 	"msxml3.dll",
 	"Free",
-	"Free threaded XML DOM Document",
-    "Microsoft.FreeThreadedXMLDOM"
+	"Microsoft.FreeThreadedXMLDOM",
+	"1.0"
     },
     {   &CLSID_XMLHTTPRequest,
 	"XML HTTP Request",
 	NULL,
 	"msxml3.dll",
 	"Apartment",
-	"XML HTTP Request",
-	"Microsoft.XMLHTTP"
+	"Microsoft.XMLHTTP",
+	"1.0"
     },
     {   &CLSID_XMLDSOControl,
 	"XML Data Source Object",
 	NULL,
 	"msxml3.dll",
 	"Apartment",
-	"XML Data Source Object",
-	"Microsoft.XMLDSO"
+	"Microsoft.XMLDSO",
+	"1.0"
     },
     {   &CLSID_XMLDocument,
 	"Msxml",
 	NULL,
 	"msxml3.dll",
 	"Both",
-	"Msxml",
 	"Msxml"
     },
     { NULL }			/* list terminator */
@@ -491,6 +572,58 @@ static struct regsvr_coclass const coclass_list[] = {
  *		interface list
  */
 static struct regsvr_interface const interface_list[] = {
+    { NULL }			/* list terminator */
+};
+
+/***********************************************************************
+ *		progid list
+ */
+static struct progid const progid_list[] = {
+    {   "Microsoft.XMLDOM",
+	"XML DOM Document",
+	&CLSID_DOMDocument,
+	"Microsoft.XMLDOM.1.0"
+    },
+    {   "Microsoft.XMLDOM.1.0",
+	"XML DOM Document",
+	&CLSID_DOMDocument,
+	NULL
+    },
+    {   "Microsoft.FreeThreadedXMLDOM",
+	"Free threaded XML DOM Document",
+	&CLSID_DOMFreeThreadedDocument,
+	"Microsoft.FreeThreadedXMLDOM.1.0"
+    },
+    {   "Microsoft.FreeThreadedXMLDOM.1.0",
+	"Free threaded XML DOM Document",
+	&CLSID_DOMFreeThreadedDocument,
+	NULL
+    },
+    {   "Microsoft.XMLHTTP",
+	"XML HTTP Request",
+	&CLSID_XMLHTTPRequest,
+	"Microsoft.XMLHTTP.1.0"
+    },
+    {   "Microsoft.XMLHTTP.1.0",
+	"XML HTTP Request",
+	&CLSID_XMLHTTPRequest,
+	NULL
+    },
+    {   "Microsoft.XMLDSO",
+	"XML Data Source Object",
+	&CLSID_XMLDSOControl,
+	"Microsoft.XMLDSO.1.0"
+    },
+    {   "Microsoft.XMLDSO.1.0",
+	"XML Data Source Object",
+	&CLSID_XMLDSOControl,
+	NULL
+    },
+    {   "Msxml",
+	"Msxml",
+	&CLSID_XMLDocument,
+	NULL
+    },
     { NULL }			/* list terminator */
 };
 
@@ -506,6 +639,8 @@ HRESULT WINAPI DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = register_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+	hr = register_progids(progid_list);
     return hr;
 }
 
@@ -521,5 +656,7 @@ HRESULT WINAPI DllUnregisterServer(void)
     hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = unregister_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+	hr = unregister_progids(progid_list);
     return hr;
 }
