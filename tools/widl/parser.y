@@ -242,8 +242,14 @@ input:   gbl_statements                        { write_proxies($1); write_client
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements interfacedec		{ $$ = $1; }
 	| gbl_statements interfacedef		{ $$ = make_ifref($2); LINK($$, $1); }
-	| gbl_statements coclass ';'	{ $$ = $1; if (!parse_only && do_header) write_coclass_forward($2); }
-	| gbl_statements coclassdef		{ $$ = $1; add_coclass($2); }
+	| gbl_statements coclass ';'		{ $$ = $1;
+						  reg_type($2, $2->name, 0);
+						  if (!parse_only && do_header) write_coclass_forward($2);
+						}
+	| gbl_statements coclassdef		{ $$ = $1;
+						  add_coclass($2);
+						  reg_type($2, $2->name, 0);
+						}
 	| gbl_statements moduledef		{ $$ = $1; add_module($2); }
 	| gbl_statements librarydef		{ $$ = $1; }
 	| gbl_statements statement		{ $$ = $1; }
@@ -252,8 +258,10 @@ gbl_statements:					{ $$ = NULL; }
 imp_statements:					{}
 	| imp_statements interfacedec		{ if (!parse_only) add_interface($2); }
 	| imp_statements interfacedef		{ if (!parse_only) add_interface($2); }
-	| imp_statements coclass ';'	{ reg_type(NULL, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
-	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2); }
+	| imp_statements coclass ';'		{ reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
+	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2);
+						  reg_type($2, $2->name, 0);
+						}
 	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}
 	| imp_statements importlib		{}
@@ -628,7 +636,9 @@ int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	;
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
-	| tCOCLASS aKNOWNTYPE			{ $$ = make_class($2); }
+	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
+						  if ($$->defined) yyerror("multiple definition error");
+						}
 	;
 
 coclasshdr: attributes coclass			{ $$ = $2;
