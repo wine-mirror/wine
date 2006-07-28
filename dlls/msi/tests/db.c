@@ -1076,7 +1076,7 @@ static UINT add_table_to_db(MSIHANDLE hdb, LPCSTR table_data)
 static void test_msiimport(void)
 {
     MSIHANDLE hdb, view, rec;
-    LPSTR query;
+    LPCSTR query;
     UINT r, count;
     signed int i;
 
