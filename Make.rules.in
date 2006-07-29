@@ -169,7 +169,7 @@ filter:
 $(RC_BINARIES): $(BIN2RES) $(RC_BINSRC)
 	$(BIN2RES) -f -o $@ $(SRCDIR)/$(RC_BINSRC)
 
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES) $(RC_TLB)
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES) $(IDL_TLB_SRCS:.idl=.tlb)
 
 # Rules for makefile
 
@@ -221,7 +221,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(IDL_SRCS:.idl=.h) $(PROGRAMS) $(RC_BINARIES) $(RC_TLB) $(MANPAGES)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(IDL_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
@@ -270,7 +270,7 @@ $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(IDL_SRCS:.idl=.h): $(WIDL)
 
-$(RC_TLB:.idl=.tlb): $(WIDL)
+$(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
