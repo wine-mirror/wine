@@ -1060,42 +1060,33 @@ static const IMonikerVtbl VT_URLMonikerImpl =
 static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
 {
     HRESULT hres;
-    DWORD sizeStr = INTERNET_MAX_URL_LENGTH;
+    DWORD sizeStr = 0;
 
     TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszLeftURLName),debugstr_w(lpszURLName));
 
     This->lpvtbl = &VT_URLMonikerImpl;
     This->ref = 0;
 
-    sizeStr = lstrlenW(lpszURLName)+1;
+    This->URLName = HeapAlloc(GetProcessHeap(), 0, INTERNET_MAX_URL_LENGTH*sizeof(WCHAR));
+
     if(lpszLeftURLName)
-        sizeStr += strlenW(lpszLeftURLName)+32;
-
-    This->URLName = HeapAlloc(GetProcessHeap(), 0, sizeStr*sizeof(WCHAR));
-
-    if(lpszLeftURLName) {
         hres = CoInternetCombineUrl(lpszLeftURLName, lpszURLName, URL_FILE_USE_PATHURL,
-                                    This->URLName, sizeStr, &sizeStr, 0);
-        if(FAILED(hres)) {
-            HeapFree(GetProcessHeap(), 0, This->URLName);
-            return hres;
-        }
-    }else {
-        /* FIXME:
-         * We probably should use CoInternetParseUrl or something similar here.
-         */
+                This->URLName, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
+    else
+        hres = CoInternetParseUrl(lpszURLName, PARSE_CANONICALIZE, URL_FILE_USE_PATHURL,
+                This->URLName, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
 
-        static const WCHAR wszFile[] = {'f','i','l','e',':','/','/',};
-
-        /* file protocol is a special case */
-        if(sizeStr > sizeof(wszFile)/sizeof(WCHAR)
-                && !memcmp(lpszURLName, wszFile, sizeof(wszFile)))
-            UrlCanonicalizeW(lpszURLName, This->URLName, &sizeStr, URL_FILE_USE_PATHURL);
-        else
-            strcpyW(This->URLName,lpszURLName);
+    if(FAILED(hres)) {
+        HeapFree(GetProcessHeap(), 0, This->URLName);
+        return hres;
     }
 
     URLMON_LockModule();
+
+    if(sizeStr != INTERNET_MAX_URL_LENGTH)
+        This->URLName = HeapReAlloc(GetProcessHeap(), 0, This->URLName, (sizeStr+1)*sizeof(WCHAR));
+
+    TRACE("URLName = %s\n", debugstr_w(This->URLName));
 
     return S_OK;
 }
