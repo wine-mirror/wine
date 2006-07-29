@@ -32,6 +32,7 @@
 #include <winnls.h>
 #include <process.h>
 #include <errno.h>
+#include "msvcrt.h"
 
 static void test_fdopen( void )
 {
@@ -132,53 +133,124 @@ static void test_fileops( void )
     unlink ("fdopen.tst");
 }
 
-static void test_asciifileops( void )
+#define IOMODE (ao?"ascii mode":"binary mode")
+static void test_readmode( BOOL ascii_mode )
 {
     static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9\r\n\r\nA,B,C,D,E\r\nX,Y,Z";
-    char buffer[256];
+    static const char padbuffer[] = "ghjghjghjghj";
+    static const char nlbuffer[] = "\r\n";
+    char buffer[MSVCRT_BUFSIZ+256];
     int fd;
     FILE *file;
-    int i;
+    int i, j, fp, ao, *ip, pl;
     long l;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
+    /* an internal buffer of MSVCRT_BUFSIZ is maintained, so make a file big
+     * enough to test operations that cross the buffer boundary 
+     */
+    j = (MSVCRT_BUFSIZ-4)/strlen(padbuffer);
+    for (i=0; i<j; i++)
+        write (fd, padbuffer, strlen(padbuffer));
+    j = (MSVCRT_BUFSIZ-4)%strlen(padbuffer);
+    for (i=0; i<j; i++)
+        write (fd, &padbuffer[i], 1);
+    write (fd, nlbuffer, strlen(nlbuffer));
     write (fd, outbuffer, sizeof (outbuffer));
     close (fd);
     
-    /* Open file in ascii mode */
-    fd = open ("fdopen.tst", O_RDONLY);
-    file = fdopen (fd, "rb");
-    ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error\n");
-    ok(ftell(file) == 0,"Did not start at beginning of file\n");
-    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 1 fgets failed unexpected\n");
-    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 2 fgets failed unexpected\n");
-    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 3 fgets failed unexpected\n");
-    ok(fgets(buffer,sizeof(buffer),file) !=0,"line 4 fgets failed unexpected\n");
-    ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF\n");
-    ok(feof(file) !=0,"feof doesn't signal EOF\n");
-    rewind(file);
-    ok(ftell(file) == 0,"Did not rewind to beginning of file\n");
-    for (i=0; i<strlen(outbuffer); i++)
-        if (outbuffer[i] == '\n') break;
-    i++;
-    ok(fgets(buffer,strlen(outbuffer),file) !=0,"line 1 fgets failed unexpected\n");
-    l = ftell(file);
-    todo_wine ok(l == i,"line 1 ftell got %ld should be %d\n", l, i);
-    ok(lstrlenA(buffer) == i-1,"line 1 fgets got size %d should be %d\n", lstrlenA(buffer), i-1);
-    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"line 2 fgets failed unexpected\n");
-    i += 2;
-    l = ftell(file);
-    todo_wine ok(l == i,"line 2 ftell got %ld should be %d\n", l, i);
-    ok(lstrlenA(buffer) == 1,"line 2 fgets got size %d should be %d\n", lstrlenA(buffer), 1);
-    ok(fgets(buffer,sizeof(outbuffer),file) !=0,"line 3 fgets failed unexpected\n");
-    for (; i<strlen(outbuffer); i++)
-        if (outbuffer[i] == '\n') break;
-    i++;
-    l = ftell(file);
-    ok(l == i,"line 3 ftell got %ld should be %d\n", l, i);
+    if (ascii_mode) {
+        /* Open file in ascii mode */
+        fd = open ("fdopen.tst", O_RDONLY);
+        file = fdopen (fd, "r");
+        ao = -1; /* on offset to account for carriage returns */
+    }
+    else {
+        fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
+        file = fdopen (fd, "rb");
+        ao = 0;
+    }
     
-    fclose (file);
+    /* first is a test of fgets, ftell, fseek */
+    ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
+    ok(fgets(buffer,MSVCRT_BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    l = ftell(file);
+    pl = MSVCRT_BUFSIZ-2;
+    ok(l == pl,"padding line ftell got %ld should be %d in %s\n", l, pl, IOMODE);
+    ok(lstrlenA(buffer) == pl+ao,"padding line fgets got size %d should be %d in %s\n",
+     lstrlenA(buffer), pl+ao, IOMODE);
+    for (fp=0; fp<strlen(outbuffer); fp++)
+        if (outbuffer[fp] == '\n') break;
+    fp++;
+    ok(fgets(buffer,256,file) !=0,"line 1 fgets failed unexpected in %s\n", IOMODE);
+    l = ftell(file);
+    if (ao == -1)
+        todo_wine ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    else
+        ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(lstrlenA(buffer) == fp+ao,"line 1 fgets got size %d should be %d in %s\n",
+     lstrlenA(buffer), fp+ao, IOMODE);
+    /* test a seek back across the buffer boundary */
+    l = pl;
+    ok(fseek(file,l,SEEK_SET)==0,"seek failure in %s\n", IOMODE);
+    l = ftell(file);
+    ok(l == pl,"ftell after seek got %ld should be %d in %s\n", l, pl, IOMODE);
+    ok(fgets(buffer,256,file) !=0,"second read of line 1 fgets failed unexpected in %s\n", IOMODE);
+    l = ftell(file);
+    if (ao == -1)
+        todo_wine ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    else
+        ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(lstrlenA(buffer) == fp+ao,"second read of line 1 fgets got size %d should be %d in %s\n",
+     lstrlenA(buffer), fp+ao, IOMODE);
+    ok(fgets(buffer,256,file) !=0,"line 2 fgets failed unexpected in %s\n", IOMODE);
+    fp += 2;
+    l = ftell(file);
+    if (ao == -1)
+        todo_wine ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    else
+        ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(lstrlenA(buffer) == 2+ao,"line 2 fgets got size %d should be %d in %s\n",
+     lstrlenA(buffer), 2+ao, IOMODE);
+    
+    /* test fread across buffer boundary */
+    rewind(file);
+    ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
+    ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    j=strlen(outbuffer);
+    i=fread(buffer,1,256,file);
+    ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
+    l = ftell(file);
+    ok(l == pl+j+1,"ftell after fread got %ld should be %d in %s\n", l, pl+j+1, IOMODE);
+    /* fread should return the requested number of bytes if available */
+    rewind(file);
+    ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
+    ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    j = fp+10;
+    i=fread(buffer,1,j,file);
+    ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
+    
+    /* test some additional functions */
+    rewind(file);
+    ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
+    ok(fgets(buffer,MSVCRT_BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    i = _getw(file);
+    ip = (int *)outbuffer;
+    todo_wine ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
+    for (fp=0; fp<strlen(outbuffer); fp++)
+        if (outbuffer[fp] == '\n') break;
+    fp++;
+    /* this will cause the next _getw to cross carriage return characters */
+    ok(fgets(buffer,fp-6,file) !=0,"line 1 fgets failed unexpected in %s\n", IOMODE);
+    for (i=0, j=0; i<6; i++) {
+        if (ao==0 || outbuffer[fp-3+i] != '\r')
+            buffer[j++] = outbuffer[fp-3+i];
+    }
+    i = _getw(file);
+    ip = (int *)buffer;
+    todo_wine ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
 
+    fclose (file);
     unlink ("fdopen.tst");
 }
 
@@ -280,9 +352,29 @@ static void test_file_write_read( void )
   static const char mytext[]=  "This is test_file_write_read\nsecond line\n";
   static const char dostext[]= "This is test_file_write_read\r\nsecond line\r\n";
   char btext[LLEN];
-  int ret;
+  int ret, i;
 
   tempf=_tempnam(".","wne");
+  tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,
+                     _S_IREAD | _S_IWRITE);
+  ok( tempfd != -1,
+     "Can't open '%s': %d\n", tempf, errno); /* open in BINARY mode */
+  ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext),
+     "_write _O_BINARY bad return value\n");
+  _close(tempfd);
+  i = lstrlenA(mytext);
+  tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
+  ok(_read(tempfd,btext,i) == i,
+     "_read _O_BINARY got bad length\n");
+  ok( memcmp(dostext,btext,i) == 0,
+      "problems with _O_BINARY  _write / _read\n");
+  _close(tempfd);
+  tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
+  todo_wine ok(_read(tempfd,btext,i) == i-1,
+     "_read _O_TEXT got bad length\n");
+  ok( memcmp(mytext,btext,i-1) == 0,
+      "problems with _O_BINARY _write / _O_TEXT _read\n");
+  _close(tempfd);
   tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,
                      _S_IREAD | _S_IWRITE);
   ok( tempfd != -1,
@@ -556,7 +648,8 @@ START_TEST(file)
     test_fdopen();
     test_fopen_fclose_fcloseall();
     test_fileops();
-    test_asciifileops();
+    test_readmode(FALSE); /* binary mode */
+    test_readmode(TRUE);  /* ascii mode */
     test_fgetwc();
     test_file_put_get();
     test_tmpnam();
