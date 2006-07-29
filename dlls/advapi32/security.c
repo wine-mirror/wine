@@ -256,33 +256,33 @@ static const char * debugstr_sid(PSID sid)
     case 0:
         return wine_dbg_sprintf("S-%d-%d", psid->Revision, auth);
     case 1:
-        return wine_dbg_sprintf("S-%d-%d-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu", psid->Revision, auth,
             psid->SubAuthority[0]);
     case 2:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1]);
     case 3:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2]);
     case 4:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3]);
     case 5:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4]);
     case 6:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
     case 7:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
             psid->SubAuthority[6]);
     case 8:
-        return wine_dbg_sprintf("S-%d-%d-%ld-%ld-%ld-%ld-%ld-%ld-%ld-%ld", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
             psid->SubAuthority[6], psid->SubAuthority[7]);
