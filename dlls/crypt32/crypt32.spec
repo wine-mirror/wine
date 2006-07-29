@@ -124,7 +124,7 @@
 @ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr)
 @ stdcall CryptHashCertificate(long long long ptr long ptr ptr)
 @ stub CryptHashMessage
-@ stub CryptHashPublicKeyInfo
+@ stdcall CryptHashPublicKeyInfo(long long long long ptr ptr ptr)
 @ stub CryptHashToBeSigned
 @ stub CryptImportPKCS8
 @ stdcall CryptImportPublicKeyInfo(long long ptr ptr)

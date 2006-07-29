@@ -1544,6 +1544,38 @@ static void testComparePublicKeyInfo(void)
     ok(!ret, "Expected keys not to compare\n");
 }
 
+static void testHashPublicKeyInfo(void)
+{
+    BOOL ret;
+    CERT_PUBLIC_KEY_INFO info = { { 0 } };
+    DWORD len;
+
+    /* Crash
+    ret = CryptHashPublicKeyInfo(0, 0, 0, 0, NULL, NULL, NULL);
+    ret = CryptHashPublicKeyInfo(0, 0, 0, 0, &info, NULL, NULL);
+     */
+    ret = CryptHashPublicKeyInfo(0, 0, 0, 0, NULL, NULL, &len);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+    ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, NULL, NULL, &len);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, NULL, &len);
+    ok(ret, "CryptHashPublicKeyInfo failed: %08lx\n", GetLastError());
+    ok(len == 16, "Expected hash size 16, got %ld\n", len);
+    if (len == 16)
+    {
+        static const BYTE emptyHash[] = { 0xb8,0x51,0x3a,0x31,0x0e,0x9f,0x40,
+         0x36,0x9c,0x92,0x45,0x1b,0x9d,0xc8,0xf9,0xf6 };
+        BYTE buf[16];
+
+        ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, buf,
+         &len);
+        ok(ret, "CryptHashPublicKeyInfo failed: %08lx\n", GetLastError());
+        ok(!memcmp(buf, emptyHash, len), "Unexpected hash\n");
+    }
+}
+
 void testCompareCert(void)
 {
     CERT_INFO info1 = { 0 }, info2 = { 0 };
@@ -1827,6 +1859,7 @@ START_TEST(cert)
     testCompareCertName();
     testCompareIntegerBlob();
     testComparePublicKeyInfo();
+    testHashPublicKeyInfo();
     testCompareCert();
     testVerifySubjectCert();
     testAcquireCertPrivateKey();

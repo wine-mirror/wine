@@ -1115,6 +1115,44 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
     return ret;
 }
 
+BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV hCryptProv, ALG_ID Algid,
+ DWORD dwFlags, DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo,
+ BYTE *pbComputedHash, DWORD *pcbComputedHash)
+{
+    BOOL ret = TRUE;
+    HCRYPTHASH hHash = 0;
+
+    TRACE("(%ld, %d, %08lx, %ld, %p, %p, %p)\n", hCryptProv, Algid, dwFlags,
+     dwCertEncodingType, pInfo, pbComputedHash, pcbComputedHash);
+
+    if (!hCryptProv)
+        hCryptProv = CRYPT_GetDefaultProvider();
+    if (!Algid)
+        Algid = CALG_MD5;
+    if (ret)
+    {
+        BYTE *buf;
+        DWORD size = 0;
+
+        ret = CryptEncodeObjectEx(dwCertEncodingType, X509_PUBLIC_KEY_INFO,
+         pInfo, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        if (ret)
+        {
+            ret = CryptCreateHash(hCryptProv, Algid, 0, 0, &hHash);
+            if (ret)
+            {
+                ret = CryptHashData(hHash, buf, size, 0);
+                if (ret)
+                    ret = CryptGetHashParam(hHash, HP_HASHVAL, pbComputedHash,
+                     pcbComputedHash, 0);
+                CryptDestroyHash(hHash);
+            }
+            LocalFree(buf);
+        }
+    }
+    return ret;
+}
+
 BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
  DWORD dwCertEncodingType, const BYTE *pbEncodedToBeSigned,
  DWORD cbEncodedToBeSigned, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
