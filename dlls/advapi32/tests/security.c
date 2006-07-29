@@ -73,6 +73,23 @@ static void init(void)
     hmod = GetModuleHandle("advapi32.dll");
 }
 
+static void test_str_sid(char *str_sid)
+{
+    PSID psid;
+    char *temp;
+
+    if (pConvertStringSidToSidA(str_sid, &psid))
+    {
+        if (pConvertSidToStringSidA(psid, &temp))
+        {
+            trace(" %s: %s\n", str_sid, temp);
+            LocalFree(temp);
+        }
+    }
+    else
+        trace("%s couldn't be converted\n", str_sid);
+}
+
 static void test_sid(void)
 {
     struct sidRef refs[] = {
@@ -162,6 +179,46 @@ static void test_sid(void)
         if( psid )
             LocalFree( psid );
     }
+
+    trace("String SIDs:\n");
+    test_str_sid("AO");
+    test_str_sid("RU");
+    test_str_sid("AN");
+    test_str_sid("AU");
+    test_str_sid("BA");
+    test_str_sid("BG");
+    test_str_sid("BO");
+    test_str_sid("BU");
+    test_str_sid("CA");
+    test_str_sid("CG");
+    test_str_sid("CO");
+    test_str_sid("DA");
+    test_str_sid("DC");
+    test_str_sid("DD");
+    test_str_sid("DG");
+    test_str_sid("DU");
+    test_str_sid("EA");
+    test_str_sid("ED");
+    test_str_sid("WD");
+    test_str_sid("PA");
+    test_str_sid("IU");
+    test_str_sid("LA");
+    test_str_sid("LG");
+    test_str_sid("LS");
+    test_str_sid("SY");
+    test_str_sid("NU");
+    test_str_sid("NO");
+    test_str_sid("NS");
+    test_str_sid("PO");
+    test_str_sid("PS");
+    test_str_sid("PU");
+    test_str_sid("RS");
+    test_str_sid("RD");
+    test_str_sid("RE");
+    test_str_sid("RC");
+    test_str_sid("SA");
+    test_str_sid("SO");
+    test_str_sid("SU");
 }
 
 static void test_trustee(void)
