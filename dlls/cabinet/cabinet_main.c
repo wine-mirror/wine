@@ -303,6 +303,7 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
     HRESULT res = S_OK;
     HFDI hfdi;
     ERF erf;
+    static CHAR empty[] = "";
 
     TRACE("(%p, %s)\n", dest, szCabName);
 
@@ -322,7 +323,7 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
     if (GetFileAttributesA(dest->directory) == INVALID_FILE_ATTRIBUTES)
         return S_OK;
 
-    if (!FDICopy(hfdi, (LPSTR)szCabName, "", 0,
+    if (!FDICopy(hfdi, (LPSTR)szCabName, empty, 0,
          fdi_notify_extract, NULL, dest))
         res = E_FAIL;
 
