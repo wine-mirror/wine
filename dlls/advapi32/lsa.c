@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "ntsecapi.h"
+#include "advapi32_misc.h"
 
 #include "wine/debug.h"
 
@@ -52,30 +53,6 @@ static void dumpLsaAttributes(PLSA_OBJECT_ATTRIBUTES oa)
               oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
               oa->Attributes, oa->SecurityDescriptor, oa->SecurityQualityOfService);
     }
-}
-
-/************************************************************
- * ADVAPI_IsLocalComputer
- *
- * Checks whether the server name indicates local machine.
- */
-static BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
-{
-    DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-    BOOL Result;
-    LPWSTR buf;
-
-    if (!ServerName || !ServerName[0])
-        return TRUE;
-
-    buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
-    Result = GetComputerNameW(buf,  &dwSize);
-    if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
-        ServerName += 2;
-    Result = Result && !lstrcmpW(ServerName, buf);
-    HeapFree(GetProcessHeap(), 0, buf);
-
-    return Result;
 }
 
 /******************************************************************************

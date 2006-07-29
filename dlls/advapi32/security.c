@@ -35,6 +35,7 @@
 #include "sddl.h"
 #include "winsvc.h"
 #include "aclapi.h"
+#include "advapi32_misc.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -239,7 +240,7 @@ static const WCHAR SDDL_INHERITED[]          = {'I','D',0};
 static const WCHAR SDDL_AUDIT_SUCCESS[]      = {'S','A',0};
 static const WCHAR SDDL_AUDIT_FAILURE[]      = {'F','A',0};
 
-static const char * debugstr_sid(PSID sid)
+const char * debugstr_sid(PSID sid)
 {
     int auth = 0;
     SID * psid = (SID *)sid;
@@ -322,7 +323,7 @@ static void GetWorldAccessACL(PACL pACL)
  *
  * Checks whether the server name indicates local machine.
  */
-static BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
+BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
 {
     DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
     BOOL Result;
