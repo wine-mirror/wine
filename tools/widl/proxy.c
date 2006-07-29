@@ -110,8 +110,8 @@ static void write_formatstringsdecl(void)
   write_formatdesc( "TYPE" );
   write_formatdesc( "PROC" );
   fprintf(proxy, "\n");
-  print_proxy( "extern const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
-  print_proxy( "extern const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
+  print_proxy( "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
+  print_proxy( "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
   print_proxy( "\n");
 }
 
