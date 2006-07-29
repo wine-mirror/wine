@@ -60,7 +60,7 @@ static void append_str(char **str, const char *data)
     *str += strlen(*str);
 }
 
-static void create_inf_file(LPSTR filename)
+static void create_inf_file(LPCSTR filename)
 {
     char data[1024];
     char *ptr = data;
@@ -201,6 +201,7 @@ static void test_LaunchINFSection()
 {
     HRESULT hr;
     char cmdline[MAX_PATH];
+    static char file[] = "test.inf,DefaultInstall,4,0";
 
     /* try an invalid cmdline */
     hr = pLaunchINFSection(NULL, NULL, NULL, 0);
@@ -222,7 +223,7 @@ static void test_LaunchINFSection()
     create_inf_file("test.inf");
 
     /* try just the INF filename */
-    hr = pLaunchINFSection(NULL, NULL, "test.inf,DefaultInstall,4,0", 0);
+    hr = pLaunchINFSection(NULL, NULL, file, 0);
     todo_wine
     {
         ok(hr == 0, "Expected 0, got %ld\n", hr);
