@@ -210,10 +210,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j=strlen(outbuffer);
     i=fread(buffer,1,256,file);
-    if (ao == -1)
-        todo_wine todo_wine ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
-    else
-        ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
+    ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
     l = ftell(file);
     ok(l == pl+j+1,"ftell after fread got %ld should be %d in %s\n", l, pl+j+1, IOMODE);
     /* fread should return the requested number of bytes if available */
@@ -222,10 +219,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j = fp+10;
     i=fread(buffer,1,j,file);
-    if (ao == -1)
-        todo_wine ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
-    else
-        ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
+    ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
     
     /* test some additional functions */
     rewind(file);

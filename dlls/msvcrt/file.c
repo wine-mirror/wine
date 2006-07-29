@@ -2490,6 +2490,8 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 	memcpy(ptr, file->_ptr, pcnt);
 	file->_cnt -= pcnt;
 	file->_ptr += pcnt;
+	if (MSVCRT_fdesc[file->_file].wxflag & WX_TEXT)
+            pcnt -= remove_cr(ptr,pcnt);
 	read += pcnt ;
 	rcnt -= pcnt ;
         ptr = (char*)ptr + pcnt;
@@ -2499,18 +2501,22 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 	} else
             return 0;
   }
-  if(rcnt)
+  while(rcnt>0)
   {
-    pread = _read(file->_file,ptr, rcnt);
+    int i = _read(file->_file,ptr, rcnt);
+    if (i==0) break;
+    pread += i;
+    rcnt -= i;
     /* expose feof condition in the flags
      * MFC tests file->_flag for feof, and doesn't not call feof())
      */
     if ( MSVCRT_fdesc[file->_file].wxflag & WX_ATEOF)
         file->_flag |= MSVCRT__IOEOF;
-    else if (pread == -1)
+    else if (i == -1)
     {
         file->_flag |= MSVCRT__IOERR;
         pread = 0;
+        rcnt = 0;
     }
   }
   read+=pread;
