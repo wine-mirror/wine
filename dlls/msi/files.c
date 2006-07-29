@@ -218,7 +218,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 
         if (!f)
         {
-            ERR("Unknown File in Cabinet (%s)\n",debugstr_a(pfdin->psz1));
+            WARN("unknown file in cabinet (%s)\n",debugstr_a(pfdin->psz1));
             return 0;
         }
 
