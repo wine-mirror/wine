@@ -340,8 +340,13 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
 	return E_INVALIDARG;
 
+    if(!*pszUrl) {
+        *pszCanonicalized = 0;
+        return S_OK;
+    }
+
     nByteLen = (lstrlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
-    lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, nByteLen);
+    lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, INTERNET_MAX_URL_LENGTH);
 
     if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
             && !memcmp(wszFile, pszUrl, sizeof(wszFile)))
@@ -361,6 +366,15 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     wk1 = (LPWSTR)pszUrl;
     wk2 = lpszUrlCpy;
     state = 0;
+
+    if(pszUrl[1] == ':') { /* Assume path */
+        static const WCHAR wszFilePrefix[] = {'f','i','l','e',':','/','/','/'};
+
+        memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
+        wk2 += sizeof(wszFilePrefix)/sizeof(WCHAR);
+        state = 5;
+    }
+
     while (*wk1) {
         switch (state) {
         case 0:

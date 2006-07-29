@@ -77,6 +77,11 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"file:///c:\\tests\\foo bar", URL_DONT_SIMPLIFY, S_OK, "file:///c:/tests/foo bar"},
     {"http://www.winehq.org/site/about", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org/site/about"},
     {"file_://www.winehq.org/site/about", URL_FILE_USE_PATHURL, S_OK, "file_://www.winehq.org/site/about"},
+    {"c:\\dir\\file", 0, S_OK, "file:///c:/dir/file"},
+    {"file:///c:\\dir\\file", 0, S_OK, "file:///c:/dir/file"},
+    {"c:dir\\file", 0, S_OK, "file:///c:dir/file"},
+    {"A", 0, S_OK, "A"},
+    {"", 0, S_OK, ""}
 };
 
 typedef struct _TEST_URL_ESCAPE {
@@ -429,7 +434,7 @@ static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwEx
     dwSize = INTERNET_MAX_URL_LENGTH;
     ok(UrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer\n");
     ok(UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeA didn't return 0x%08lx\n", dwExpectReturn);
-    ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08lx Expected %s, but got %s\n", dwFlags, szExpectUrl, szReturnUrl);
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08lx Expected \"%s\", but got \"%s\"\n", dwFlags, szExpectUrl, szReturnUrl);
 
     dwSize = INTERNET_MAX_URL_LENGTH;
     ok(UrlCanonicalizeW(wszUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer\n");
