@@ -738,7 +738,7 @@ static void test_token_attr(void)
         Name[0] = '\0';
         Domain[0] = '\0';
         ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
-        ok(ret, "LookupAccountSid failed with error %ld\n", GetLastError());
+        ok(ret, "LookupAccountSid(%s) failed with error %ld\n", SidString, GetLastError());
         trace("\t%s, %s\\%s use: %d attr: 0x%08lx\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
         LocalFree(SidString);
     }
