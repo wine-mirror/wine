@@ -1813,7 +1813,7 @@ static HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
 }
 
 /******************************************************************************
- * Internal stream list handlers                   
+ * Internal stream list handlers
  */
 
 void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
@@ -1836,7 +1836,7 @@ void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
   LIST_FOR_EACH_SAFE(cur, cur2, &stg->strmHead) {
     strm = LIST_ENTRY(cur,StgStreamImpl,StrmListEntry);
     TRACE("Streams deleted (stg=%p strm=%p next=%p prev=%p)\n", stg,strm,cur->next,cur->prev);
-    strm->parentStorage = NULL;   
+    strm->parentStorage = NULL;
     list_remove(cur);
   }
 }
@@ -7620,6 +7620,8 @@ HRESULT WINAPI OleConvertOLESTREAMToIStorage (
     HRESULT hRes=S_OK;
     OLECONVERT_OLESTREAM_DATA pOleStreamData[2];
 
+    TRACE("%p %p %p\n", pOleStream, pstg, ptd);
+
     memset(pOleStreamData, 0, sizeof(pOleStreamData));
 
     if(ptd != NULL)
@@ -7710,6 +7712,7 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
     OLECONVERT_OLESTREAM_DATA pOleStreamData[2];
     static const WCHAR wstrStreamName[] = {1, 'O', 'l', 'e', '1', '0', 'N', 'a', 't', 'i', 'v', 'e', 0};
 
+    TRACE("%p %p\n", pstg, pOleStream);
 
     memset(pOleStreamData, 0, sizeof(pOleStreamData));
 
@@ -7783,7 +7786,7 @@ StgIsStorageFile(LPCOLESTR fn)
 	BYTE		magic[8];
 	DWORD		bytes_read;
 
-	TRACE("(\'%s\')\n", debugstr_w(fn));
+	TRACE("%s\n", debugstr_w(fn));
 	hf = CreateFileW(fn, GENERIC_READ,
 	                 FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
 	                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);

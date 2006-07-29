@@ -273,7 +273,7 @@ static HRESULT WINAPI StgStreamImpl_Read(
     WARN("storage reverted\n");
     return STG_E_REVERTED;
   }
- 
+
   /*
    * If the caller is not interested in the number of bytes read,
    * we use another buffer to avoid "if" statements in the code.
@@ -805,6 +805,8 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   StgProperty    curProperty;
   BOOL         readSucessful;
 
+  TRACE("%p %p %ld\n", This, pstatstg, grfStatFlag);
+
   /*
    * if stream has no parent, return STG_E_REVERTED
    */
@@ -853,6 +855,8 @@ static HRESULT WINAPI StgStreamImpl_Clone(
   HRESULT hres;
   StgStreamImpl* new_stream;
   LARGE_INTEGER seek_pos;
+
+  TRACE("%p %p\n", This, ppstm);
 
   /*
    * Sanity check
