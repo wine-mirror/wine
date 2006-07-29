@@ -1615,9 +1615,9 @@ static unsigned int remove_cr(char *buf, unsigned int count)
 }
 
 /*********************************************************************
- *		_read (MSVCRT.@)
+ * (internal) read_i
  */
-int CDECL _read(int fd, void *buf, unsigned int count)
+static int read_i(int fd, void *buf, unsigned int count)
 {
   DWORD num_read, all_read = 0;
   char *bufstart = buf;
@@ -1641,16 +1641,10 @@ int CDECL _read(int fd, void *buf, unsigned int count)
           {
               TRACE(":EOF\n");
               MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
-              if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
-                  num_read -= remove_cr(bufstart+all_read,num_read);
               all_read += num_read;
               if (count > 4)
                   TRACE("%s\n",debugstr_an(buf,all_read));
               return all_read;
-          }
-          if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
-          {
-              num_read -= remove_cr(bufstart+all_read,num_read);
           }
           all_read += num_read;
       }
@@ -1664,6 +1658,20 @@ int CDECL _read(int fd, void *buf, unsigned int count)
   if (count > 4)
       TRACE("(%lu), %s\n",all_read,debugstr_an(buf, all_read));
   return all_read;
+}
+
+/*********************************************************************
+ *		_read (MSVCRT.@)
+ */
+int CDECL _read(int fd, void *buf, unsigned int count)
+{
+  int num_read;
+  num_read = read_i(fd, buf, count);
+  if (num_read>0 && MSVCRT_fdesc[fd].wxflag & WX_TEXT)
+  {
+      num_read -= remove_cr(buf,num_read);
+  }
+  return num_read;
 }
 
 /*********************************************************************
@@ -2109,13 +2117,13 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
   if(file->_flag & MSVCRT__IONBF) {
 	unsigned char c;
         int r;
-  	if ((r = _read(file->_file,&c,1)) != 1) {
+  	if ((r = read_i(file->_file,&c,1)) != 1) {
             file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
             return MSVCRT_EOF;
 	}
   	return c;
   } else {
-	file->_cnt = _read(file->_file, file->_base, file->_bufsiz);
+	file->_cnt = read_i(file->_file, file->_base, file->_bufsiz);
 	if(file->_cnt<=0) {
             file->_flag |= (file->_cnt == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
             file->_cnt = 0;
@@ -2132,12 +2140,21 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
 {
-  if (file->_cnt>0) {
-	file->_cnt--;
-	return *(unsigned char *)file->_ptr++;
-  } else {
-	return MSVCRT__filbuf(file);
-  }
+  char *i;
+  int j;
+  do {
+    if (file->_cnt>0) {
+      file->_cnt--;
+      i = file->_ptr++;
+      j = *i;
+    } else {
+      j = MSVCRT__filbuf(file);
+      if (j == MSVCRT_EOF)
+        return j;
+    }
+    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) || (j != '\r'))
+      return j;
+  } while(1);
 }
 
 /*********************************************************************

@@ -184,10 +184,7 @@ static void test_readmode( BOOL ascii_mode )
     fp++;
     ok(fgets(buffer,256,file) !=0,"line 1 fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
-    if (ao == -1)
-        todo_wine ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
-    else
-        ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == fp+ao,"line 1 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), fp+ao, IOMODE);
     /* test a seek back across the buffer boundary */
@@ -197,19 +194,13 @@ static void test_readmode( BOOL ascii_mode )
     ok(l == pl,"ftell after seek got %ld should be %d in %s\n", l, pl, IOMODE);
     ok(fgets(buffer,256,file) !=0,"second read of line 1 fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
-    if (ao == -1)
-        todo_wine ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
-    else
-        ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"second read of line 1 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == fp+ao,"second read of line 1 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), fp+ao, IOMODE);
     ok(fgets(buffer,256,file) !=0,"line 2 fgets failed unexpected in %s\n", IOMODE);
     fp += 2;
     l = ftell(file);
-    if (ao == -1)
-        todo_wine ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
-    else
-        ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
+    ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == 2+ao,"line 2 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), 2+ao, IOMODE);
     
@@ -219,7 +210,10 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j=strlen(outbuffer);
     i=fread(buffer,1,256,file);
-    ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
+    if (ao == -1)
+        todo_wine todo_wine ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
+    else
+        ok(i==j+6+ao*4,"fread failed, expected %d got %d in %s\n", j+6+ao*4, i, IOMODE);
     l = ftell(file);
     ok(l == pl+j+1,"ftell after fread got %ld should be %d in %s\n", l, pl+j+1, IOMODE);
     /* fread should return the requested number of bytes if available */
@@ -228,7 +222,10 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j = fp+10;
     i=fread(buffer,1,j,file);
-    ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
+    if (ao == -1)
+        todo_wine ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
+    else
+        ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
     
     /* test some additional functions */
     rewind(file);
@@ -370,7 +367,7 @@ static void test_file_write_read( void )
       "problems with _O_BINARY  _write / _read\n");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
-  todo_wine ok(_read(tempfd,btext,i) == i-1,
+  ok(_read(tempfd,btext,i) == i-1,
      "_read _O_TEXT got bad length\n");
   ok( memcmp(mytext,btext,i-1) == 0,
       "problems with _O_BINARY _write / _O_TEXT _read\n");
@@ -413,8 +410,8 @@ static void test_file_write_read( void )
   ok(ret == 1 && *btext == '\n', "_read expected '\\n' got bad length: %d\n", ret);
   _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,2);
-  todo_wine ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
-  todo_wine ok(tell(tempfd) == 42, "bad position %lu expecting 42\n", tell(tempfd));
+  ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
+  ok(tell(tempfd) == 42, "bad position %lu expecting 42\n", tell(tempfd));
   _close(tempfd);
 
   ret = unlink(tempf);
