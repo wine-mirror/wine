@@ -757,6 +757,84 @@ static void test_storage_refcount(void)
     DeleteFileW(filename);
 }
 
+static void test_streamenum(void)
+{
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    STATSTG stat;
+    IEnumSTATSTG *ee = NULL;
+    ULONG count;
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    r = WriteClassStg( stg, &test_stg_cls );
+    ok( r == S_OK, "WriteClassStg failed\n");
+
+    r = IStorage_Commit( stg, STGC_DEFAULT );
+    ok( r == S_OK, "IStorage_Commit failed\n");
+
+    /* now create a stream */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Release(stm);
+
+    /* first enum ... should be 1 stream */
+    r = IStorage_EnumElements(stg, 0, NULL, 0, &ee);
+    ok(r==S_OK, "IStorage->EnumElements failed\n");
+
+    count = 0xf00;
+    r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
+    ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
+    ok(count == 1, "count wrong\n");
+
+    r = IEnumSTATSTG_Release(ee);
+
+    /* second enum... destroy the stream before reading */
+    r = IStorage_EnumElements(stg, 0, NULL, 0, &ee);
+    ok(r==S_OK, "IStorage->EnumElements failed\n");
+
+    r = IStorage_DestroyElement(stg, stmname);
+    ok(r==S_OK, "IStorage->EnumElements failed\n");
+
+    todo_wine {
+    count = 0xf00;
+    r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
+    ok(r==S_FALSE, "IEnumSTATSTG->Next failed\n");
+    ok(count == 0, "count wrong\n");
+    }
+
+    /* reset and try again */
+    r = IEnumSTATSTG_Reset(ee);
+    ok(r==S_OK, "IEnumSTATSTG->Reset failed\n");
+
+    count = 0xf00;
+    r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
+    ok(r==S_FALSE, "IEnumSTATSTG->Next failed\n");
+    ok(count == 0, "count wrong\n");
+
+    r = IEnumSTATSTG_Release(ee);
+    ok (r == 0, "enum not released\n");
+
+    r = IStorage_Release( stg );
+    ok (r == 0, "storage not released\n");
+
+    DeleteFileW(filename);
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -765,4 +843,5 @@ START_TEST(storage32)
     test_open_storage();
     test_storage_suminfo();
     test_storage_refcount();
+    test_streamenum();
 }
