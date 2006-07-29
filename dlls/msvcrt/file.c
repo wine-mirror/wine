@@ -1675,21 +1675,6 @@ int CDECL _read(int fd, void *buf, unsigned int count)
 }
 
 /*********************************************************************
- *		_getw (MSVCRT.@)
- */
-int CDECL MSVCRT__getw(MSVCRT_FILE* file)
-{
-  int i;
-  switch (_read(file->_file, &i, sizeof(int)))
-  {
-  case 1: return i;
-  case 0: file->_flag |= MSVCRT__IOEOF; break;
-  default: file->_flag |= MSVCRT__IOERR; break;
-  }
-  return EOF;
-}
-
-/*********************************************************************
  *		_setmode (MSVCRT.@)
  */
 int CDECL _setmode(int fd,int mode)
@@ -2223,6 +2208,25 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
     return MSVCRT_WEOF;
   else
     return (MSVCRT_wint_t)c;
+}
+
+/*********************************************************************
+ *		_getw (MSVCRT.@)
+ */
+int CDECL MSVCRT__getw(MSVCRT_FILE* file)
+{
+  char *ch;
+  int i, j, k;
+  ch = (char *)&i;
+  for (j=0; j<sizeof(int); j++) {
+    k = MSVCRT_fgetc(file);
+    if (k == MSVCRT_EOF) {
+      file->_flag |= MSVCRT__IOEOF;
+      return EOF;
+    }
+    ch[j] = k;
+  }
+  return i;
 }
 
 /*********************************************************************

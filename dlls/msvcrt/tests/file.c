@@ -227,7 +227,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(fgets(buffer,MSVCRT_BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     i = _getw(file);
     ip = (int *)outbuffer;
-    todo_wine ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
+    ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
     for (fp=0; fp<strlen(outbuffer); fp++)
         if (outbuffer[fp] == '\n') break;
     fp++;
@@ -239,7 +239,7 @@ static void test_readmode( BOOL ascii_mode )
     }
     i = _getw(file);
     ip = (int *)buffer;
-    todo_wine ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
+    ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
 
     fclose (file);
     unlink ("fdopen.tst");
