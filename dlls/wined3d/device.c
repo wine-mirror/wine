@@ -1123,7 +1123,9 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     unsigned int pow2Height = Height;
 
 
-    TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) ....\n", This, Width, Height, Levels, Usage);
+    TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#lx\n", This, Width, Height, Levels, Usage);
+    TRACE("Format %#x (%s), Pool %#x, ppTexture %p, pSharedHandle %p, parent %p\n",
+            Format, debug_d3dformat(Format), Pool, ppTexture, pSharedHandle, parent);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
