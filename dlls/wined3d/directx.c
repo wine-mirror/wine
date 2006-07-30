@@ -216,7 +216,7 @@ static void select_shader_mode(
         *vs_selected = SHADER_NONE;
     } else if (DeviceType == WINED3DDEVTYPE_REF || wined3d_settings.vs_mode == VS_SW) {
         *vs_selected = SHADER_SW;
-    } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
+    } else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested) {
         *vs_selected = SHADER_GLSL;
     } else if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
         *vs_selected = SHADER_ARB;
@@ -229,7 +229,7 @@ static void select_shader_mode(
         *ps_selected = SHADER_NONE;
     } else if (DeviceType == WINED3DDEVTYPE_REF) {
         *ps_selected = SHADER_NONE;
-    } else if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested) {
+    } else if (gl_info->supported[ARB_FRAGMENT_SHADER] && wined3d_settings.glslRequested) {
         *ps_selected = SHADER_GLSL;
     } else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
         *ps_selected = SHADER_ARB;
@@ -521,6 +521,10 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     gl_info->vs_arb_version = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_ati_version = VS_VERSION_NOT_SUPPORTED;
+    gl_info->vs_glsl_constantsF = 0;
+    gl_info->ps_glsl_constantsF = 0;
+    gl_info->vs_arb_constantsF = 0;
+    gl_info->ps_arb_constantsF = 0;
 
     /* Now work out what GL support this card really has */
 #define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
@@ -576,18 +580,14 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
                 gl_info->ps_arb_constantsF = gl_max;
+            } else if (strcmp(ThisExtn, "GL_ARB_fragment_shader") == 0) {
+                gl_info->supported[ARB_FRAGMENT_SHADER] = TRUE;
+                glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB_fragment_shader (GLSL) support - max float ps constants=%u\n", gl_max);
+                gl_info->ps_glsl_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_imaging") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB imaging support\n");
                 gl_info->supported[ARB_IMAGING] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_shading_language_100") == 0) {
-                TRACE_(d3d_caps)(" FOUND: GL Shading Language v100 support\n");
-                gl_info->supported[ARB_SHADING_LANGUAGE_100] = TRUE;
-                glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: GL Shading Language support - max float vs constants=%u\n", gl_max);
-                gl_info->vs_glsl_constantsF = gl_max;
-                glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: GL Shading Language support - max float ps constants=%u\n", gl_max);
-                gl_info->ps_glsl_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -637,6 +637,11 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max float constants=%u\n", gl_max);
                 gl_info->vs_arb_constantsF = gl_max;
+            } else if (strcmp(ThisExtn, "GL_ARB_vertex_shader") == 0) {
+                gl_info->supported[ARB_VERTEX_SHADER] = TRUE;
+                glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB_vertex_shader (GLSL) support - max float vs constants=%u\n", gl_max);
+                gl_info->vs_glsl_constantsF = gl_max;
             } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
                 glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support GL_MAX_VERTEX_UNITS_ARB %d\n", gl_max);
@@ -766,6 +771,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             if (*GL_Extensions == ' ') GL_Extensions++;
         }
     }
+    checkGLcall("extension detection\n");
+
     gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
 
     /* Load all the lookup tables
