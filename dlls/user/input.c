@@ -595,7 +595,10 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
     INT ret;
 
     if (!GetKeyNameTextW(lParam, buf, 256))
+    {
+        lpBuffer[0] = 0;
         return 0;
+    }
     ret = WideCharToMultiByte(CP_ACP, 0, buf, -1, lpBuffer, nSize, NULL, NULL);
     if (!ret && nSize)
     {

@@ -521,8 +521,22 @@ static void test_Input_blackbox(void)
     DestroyWindow(window);
 }
 
+static void test_keynames(void)
+{
+    int i, len;
+    char buff[256];
+
+    for (i = 0; i < 512; i++)
+    {
+        strcpy(buff, "----");
+        len = GetKeyNameTextA(i << 16, buff, sizeof(buff));
+        ok(len || !buff[0], "%d: Buffer is not zeroed\n", i);
+    }
+}
+
 START_TEST(input)
 {
     test_Input_whitebox();
     test_Input_blackbox();
+    test_keynames();
 }
