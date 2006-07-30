@@ -1130,7 +1130,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             }
 
             /* Disable higher textures before calling glDrawPixels */
-            for(tex = 1; tex < GL_LIMITS(sampler_stages); tex++) {
+            for(tex = 1; tex < GL_LIMITS(samplers); tex++) {
                 if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
                     checkGLcall("glActiveTextureARB");
