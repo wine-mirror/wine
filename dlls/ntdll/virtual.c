@@ -1150,8 +1150,14 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
-        SIZE_T size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        SIZE_T size;
         BYTE vprot = VPROT_COMMITTED;
+
+        if (sec->Misc.VirtualSize)
+            size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        else
+            size = ROUND_SIZE( sec->VirtualAddress, sec->SizeOfRawData );
+
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITECOPY;
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
