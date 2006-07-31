@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Mike McCormack for CodeWeavers
+ * Copyright 2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,24 +16,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "commctrl.h"
-
-#include "version.rc"
-
-#include "Bg.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "Hu.rc"
-#include "Ko.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pt.rc"
-#include "Tr.rc"
-
-1 TYPELIB LOADONCALL DISCARDABLE shdocvw_v1.tlb
+#include "exdisp.idl"
