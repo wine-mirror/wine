@@ -52,7 +52,7 @@ typedef struct _MONITOR {
                 DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned);
  BOOL  (WINAPI *pfnOpenPort)(LPWSTR pName, PHANDLE pHandle);
  BOOL  (WINAPI *pfnOpenPortEx)(LPWSTR pPortName, LPWSTR pPrinterName,
-                PHANDLE pHandle, struct _MONITOR FAR *pMonitor);
+                PHANDLE pHandle, struct _MONITOR *pMonitor);
  BOOL  (WINAPI *pfnStartDocPort)(HANDLE hPort, LPWSTR pPrinterName,
                 DWORD JobId, DWORD Level, LPBYTE pDocInfo);
  BOOL  (WINAPI *pfnWritePort)(HANDLE hPort, LPBYTE pBuffer, DWORD cbBuf,
@@ -85,7 +85,7 @@ typedef struct _MONITOR2 {
                 DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned);
  BOOL  (WINAPI *pfnOpenPort)(LPWSTR pName, PHANDLE pHandle);
  BOOL  (WINAPI *pfnOpenPortEx)(LPWSTR pPortName, LPWSTR pPrinterName,
-                PHANDLE pHandle, struct _MONITOR2 FAR *pMonitor2);
+                PHANDLE pHandle, struct _MONITOR2 *pMonitor2);
  BOOL  (WINAPI *pfnStartDocPort)(HANDLE hPort, LPWSTR pPrinterName,
                 DWORD JobId, DWORD Level, LPBYTE pDocInfo);
  BOOL  (WINAPI *pfnWritePort)(HANDLE hPort, LPBYTE pBuffer, DWORD cbBuf,
@@ -170,13 +170,13 @@ typedef struct _PRINTER_NOTIFY_INIT {
 } PRINTER_NOTIFY_INIT, *LPPRINTER_NOTIFY_INIT, *PPRINTER_NOTIFY_INIT;
 
 typedef struct _PRINTPROCESSOROPENDATA {
- PDEVMODE pDevMode;
- LPWSTR   pDatatype;
- LPWSTR   pParameters;
- LPWSTR   pDocumentName;
- DWORD    JobId;
- LPWSTR   pOutputFile;
- LPWSTR   pPrinterName;
+ PDEVMODEW pDevMode;
+ LPWSTR    pDatatype;
+ LPWSTR    pParameters;
+ LPWSTR    pDocumentName;
+ DWORD     JobId;
+ LPWSTR    pOutputFile;
+ LPWSTR    pPrinterName;
 } PRINTPROCESSOROPENDATA, *LPPRINTPROCESSOROPENDATA, *PPRINTPROCESSOROPENDATA;
 
 
@@ -287,7 +287,7 @@ typedef struct _PRINTPROVIDOR {
  BOOL   (WINAPI *fpRefreshPrinterChangeNotification)(HANDLE hPrinter,
                  DWORD Reserved, PVOID pvReserved, PVOID pPrinterNotifyInfo);
  BOOL   (WINAPI *fpOpenPrinterEx)(LPWSTR pPrinterName, LPHANDLE phPrinter,
-                 LPPRINTER_DEFAULTS pDefault, LPBYTE pClientInfo, DWORD Level);
+                 LPPRINTER_DEFAULTSW pDefault, LPBYTE pClientInfo, DWORD Level);
  HANDLE (WINAPI *fpAddPrinterEx)(LPWSTR pName, DWORD Level, LPBYTE pPrinter,
                  LPBYTE pClientInfo, DWORD ClientInfoLevel);
  BOOL   (WINAPI *fpSetPort)(LPWSTR pName, LPWSTR pPortName, DWORD dwLevel,
@@ -360,7 +360,7 @@ HANDLE WINAPI CreatePrinterIC(HANDLE hPrinter, LPDEVMODEW pDevMode);
 BOOL   WINAPI PlayGdiScriptOnPrinterIC(HANDLE hPrinterIC, LPBYTE pIn,
               DWORD cIn, LPBYTE pOut, DWORD cOut, DWORD ul);
 BOOL   WINAPI DeletePrinterIC(HANDLE hPrinterIC);
-BOOL   WINAPI DevQueryPrint(HANDLE hPrinter, LPDEVMODE pDevMode, DWORD *pResID);
+BOOL   WINAPI DevQueryPrint(HANDLE hPrinter, LPDEVMODEW pDevMode, DWORD *pResID);
 
 /* Security and Access */
 HANDLE WINAPI RevertToPrinterSelf(VOID);
@@ -386,7 +386,7 @@ LPMONITOR2  WINAPI InitializePrintMonitor2(PMONITORINIT pMonitorInit,
                    PHANDLE phMonitor);
 PMONITORUI  WINAPI InitializePrintMonitorUI(VOID);
 LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR pRegistryRoot);
-BOOL        WINAPI InitializeMonitorEx(LPWSTR pRegisterRoot, LPMONITOR pMonitor);
+BOOL        WINAPI InitializeMonitorEx(LPWSTR pRegistryRoot, LPMONITOR pMonitor);
 BOOL        WINAPI InitializeMonitor(LPWSTR pRegistryRoot);
 
 BOOL  WINAPI OpenPort(LPWSTR pName, PHANDLE pHandle);
