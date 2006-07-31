@@ -2179,14 +2179,32 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
   if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
     {
       MSVCRT_wchar_t wc;
-      int r;
-      if ((r = _read(file->_file, &wc, sizeof(wc))) != sizeof(wc))
+      int i,j;
+      char *chp, *wcp;
+      wcp = (char *)&wc;
+      for(i=0; i<sizeof(wc); i++)
       {
-          file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
-          return MSVCRT_WEOF;
+        if (file->_cnt>0) 
+        {
+          file->_cnt--;
+          chp = file->_ptr++;
+          wcp[i] = *chp;
+        } 
+        else
+        {
+          j = MSVCRT__filbuf(file);
+          if(file->_cnt<=0)
+          {
+            file->_flag |= (file->_cnt == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
+            file->_cnt = 0;
+            return MSVCRT_WEOF;
+          }
+          wcp[i] = j;
+        }
       }
       return wc;
     }
+    
   c = MSVCRT_fgetc(file);
   if ((*__p___mb_cur_max() > 1) && MSVCRT_isleadbyte(c))
     {
