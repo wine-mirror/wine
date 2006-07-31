@@ -2079,6 +2079,21 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
       continue;
     }
   }
+
+  /* Invalidate the header area */
+  if ( (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
+       (psInfo->ppshheader.dwFlags & PSH_HEADER) )
+  {
+    HWND hwndLineHeader = GetDlgItem(hwndDlg, IDC_SUNKEN_LINEHEADER);
+    RECT r;
+
+    GetClientRect(hwndLineHeader, &r);
+    MapWindowPoints(hwndLineHeader, hwndDlg, (LPPOINT) &r, 2);
+    SetRect(&r, 0, 0, r.right + 1, r.top - 1);
+
+    InvalidateRect(hwndDlg, &r, TRUE);
+  }
+
   /*
    * Display the new page.
    */
