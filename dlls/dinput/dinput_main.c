@@ -84,55 +84,50 @@ HRESULT WINAPI DirectInputCreateEx(
 	HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI,
 	LPUNKNOWN punkOuter) 
 {
-	IDirectInputImpl* This;
+    IDirectInputImpl* This;
+    HRESULT res = DIERR_OLDDIRECTINPUTVERSION;
+    LPCVOID vtable = NULL;
 
-	TRACE("(%p,%04lx,%s,%p,%p)\n", hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter);
+    TRACE("(%p,%04lx,%s,%p,%p)\n", hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter);
 
-	if (IsEqualGUID(&IID_IDirectInputA,riid) ||
-	    IsEqualGUID(&IID_IDirectInput2A,riid) ||
-	    IsEqualGUID(&IID_IDirectInput7A,riid)) {
-	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	  This->lpVtbl = &ddi7avt;
-	  This->ref = 1;
-	  This->dwVersion = dwVersion; 
-	  *ppDI = This;
+    if (IsEqualGUID(&IID_IDirectInputA,riid) ||
+        IsEqualGUID(&IID_IDirectInput2A,riid) ||
+        IsEqualGUID(&IID_IDirectInput7A,riid))
+    {
+        vtable = &ddi7avt;
+        res = DI_OK;
+    }
 
-	  return DI_OK;
-	}
+    if (IsEqualGUID(&IID_IDirectInputW,riid) ||
+        IsEqualGUID(&IID_IDirectInput2W,riid) ||
+        IsEqualGUID(&IID_IDirectInput7W,riid))
+    {
+        vtable = &ddi7wvt;
+        res = DI_OK;
+    }
 
-	if (IsEqualGUID(&IID_IDirectInputW,riid) ||
-	    IsEqualGUID(&IID_IDirectInput2W,riid) ||
-	    IsEqualGUID(&IID_IDirectInput7W,riid)) {
-	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	  This->lpVtbl = &ddi7wvt;
-	  This->ref = 1;
-	  This->dwVersion = dwVersion; 
-	  *ppDI = This;
+    if (IsEqualGUID(&IID_IDirectInput8A,riid))
+    {
+        vtable = &ddi8avt;
+        res = DI_OK;
+    }
 
-	  return DI_OK;
-	}
+    if (IsEqualGUID(&IID_IDirectInput8W,riid))
+    {
+        vtable = &ddi8wvt;
+        res = DI_OK;
+    }
 
-	if (IsEqualGUID(&IID_IDirectInput8A,riid)) {
-	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	  This->lpVtbl = &ddi8avt;
-	  This->ref = 1;
-	  This->dwVersion = dwVersion; 
-	  *ppDI = This;
-
-	  return DI_OK;
-	}
-
-	if (IsEqualGUID(&IID_IDirectInput8W,riid)) {
-	  This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	  This->lpVtbl = &ddi8wvt;
-	  This->ref = 1;
-	  This->dwVersion = dwVersion; 
-	  *ppDI = This;
-
-	  return DI_OK;
-	}
-
-	return DIERR_OLDDIRECTINPUTVERSION;
+    if (res == DI_OK)
+    {
+        This = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectInputImpl));
+        This->lpVtbl = vtable;
+        This->ref = 1;
+        This->dwVersion = dwVersion;
+        This->evsequence = 1;
+        *ppDI = This;
+    }
+    return res;
 }
 
 /******************************************************************************
@@ -140,15 +135,7 @@ HRESULT WINAPI DirectInputCreateEx(
  */
 HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
 {
-	IDirectInputImpl* This;
-	TRACE("(%p,%04lx,%p,%p)\n", hinst,dwVersion,ppDI,punkOuter);
-	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	This->lpVtbl = &ddi7avt;
-	This->ref = 1;
-	This->dwVersion = dwVersion; 
-	*ppDI = (IDirectInputA*)This;
-	return 0;
-
+    return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7A, (LPVOID *)ppDI, punkOuter);
 }
 
 /******************************************************************************
@@ -156,14 +143,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
  */
 HRESULT WINAPI DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTW *ppDI, LPUNKNOWN punkOuter)
 {
-	IDirectInputImpl* This;
-	TRACE("(%p,%04lx,%p,%p)\n", hinst,dwVersion,ppDI,punkOuter);
-	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
-	This->lpVtbl = &ddi7wvt;
-	This->ref = 1;
-	This->dwVersion = dwVersion; 
-	*ppDI = (IDirectInputW*)This;
-	return 0;
+    return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7W, (LPVOID *)ppDI, punkOuter);
 }
 
 static const char *_dump_DIDEVTYPE_value(DWORD dwDevType) {
