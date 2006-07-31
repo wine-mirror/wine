@@ -1981,11 +1981,13 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
         }
     case GWLP_WNDPROC:
     {
+        WNDPROC proc;
         UINT old_flags = wndPtr->flags;
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
-        if (unicode) wndPtr->winproc = WINPROC_AllocProc( NULL, (WNDPROC)newval );
-        else wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, NULL );
-        if (WINPROC_IsUnicode( wndPtr->winproc, unicode )) wndPtr->flags |= WIN_ISUNICODE;
+        if (unicode) proc = WINPROC_AllocProc( NULL, (WNDPROC)newval );
+        else proc = WINPROC_AllocProc( (WNDPROC)newval, NULL );
+        if (proc) wndPtr->winproc = proc;
+        if (WINPROC_IsUnicode( proc, unicode )) wndPtr->flags |= WIN_ISUNICODE;
         else wndPtr->flags &= ~WIN_ISUNICODE;
         if (!((old_flags ^ wndPtr->flags) & WIN_ISUNICODE))
         {

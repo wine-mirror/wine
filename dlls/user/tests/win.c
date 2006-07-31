@@ -3818,6 +3818,54 @@ static void test_CreateWindow(void)
 #undef expect_ex_style
 }
 
+/* function that remembers whether the system the test is running on sets the
+ * last error for user32 functions to make the tests stricter */
+static int check_error(DWORD actual, DWORD expected)
+{
+    static int sets_last_error = -1;
+    if (sets_last_error == -1)
+        sets_last_error = (actual != 0xdeadbeef);
+    return (!sets_last_error && (actual == 0xdeadbeef)) || (actual == expected);
+}
+
+static void test_SetWindowLong(void)
+{
+    LONG_PTR retval;
+
+    SetLastError(0xdeadbeef);
+    retval = SetWindowLongPtr(NULL, GWLP_WNDPROC, 0);
+    ok(!retval, "SetWindowLongPtr on invalid window handle should have returned 0 instead of 0x%x\n", retval);
+    ok(check_error(GetLastError(), ERROR_INVALID_WINDOW_HANDLE),
+        "SetWindowLongPtr should have set error to ERROR_INVALID_WINDOW_HANDLE instad of %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetWindowLongPtr(hwndMain, 0xdeadbeef, 0);
+    ok(!retval, "SetWindowLongPtr on invalid index should have returned 0 instead of 0x%x\n", retval);
+    ok(check_error(GetLastError(), ERROR_INVALID_INDEX),
+        "SetWindowLongPtr should have set error to ERROR_INVALID_INDEX instad of %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetWindowLongPtr(hwndMain, GWLP_WNDPROC, 0);
+    ok((WNDPROC)retval == main_window_procA,
+        "SetWindowLongPtr on invalid window proc should have returned address of main_window_procA instead of 0x%x\n", retval);
+    ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %ld\n", GetLastError());
+    retval = GetWindowLongPtr(hwndMain, GWLP_WNDPROC);
+    ok((WNDPROC)retval == main_window_procA,
+        "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%x\n", retval);
+    ok(!IsWindowUnicode(hwndMain), "hwndMain shouldn't be Unicode\n");
+
+    SetLastError(0xdeadbeef);
+    retval = SetWindowLongPtrW(hwndMain, GWLP_WNDPROC, 0);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %ld\n", GetLastError());
+        ok(IsWindowUnicode(hwndMain), "hwndMain should now be Unicode\n");
+
+        /* set it back to ANSI */
+        SetWindowLongPtr(hwndMain, GWLP_WNDPROC, 0);
+    }
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -3893,6 +3941,7 @@ START_TEST(win)
     test_window_styles();
     test_redrawnow();
     test_csparentdc();
+    test_SetWindowLong();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
