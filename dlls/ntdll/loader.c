@@ -640,7 +640,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.EntryPoint    = NULL;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS;
-    wm->ldr.LoadCount     = 0;
+    wm->ldr.LoadCount     = 1;
     wm->ldr.TlsIndex      = -1;
     wm->ldr.SectionHandle = NULL;
     wm->ldr.CheckSum      = 0;
