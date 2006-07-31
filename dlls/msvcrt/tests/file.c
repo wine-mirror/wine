@@ -261,27 +261,112 @@ static void test_fgetwc( void )
 
   char* tempf;
   FILE *tempfh;
-  static const char mytext[]= "This is test_fgetwc\n";
-  WCHAR wtextW[LLEN+1];
+  static const char mytext[]= "This is test_fgetwc\r\n";
+  WCHAR wtextW[MSVCRT_BUFSIZ+LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
-  unsigned int i;
+  int i, j;
+  long l;
 
   tempf=_tempnam(".","wne");
-  tempfh = fopen(tempf,"wt"); /* open in TEXT mode */
+  tempfh = fopen(tempf,"wb");
+  j = 'a';
+  /* pad to almost the length of the internal buffer */
+  for (i=0; i<MSVCRT_BUFSIZ-4; i++)
+    fputc(j,tempfh);
+  j = '\r';
+  fputc(j,tempfh);
+  j = '\n';
+  fputc(j,tempfh);
   fputs(mytext,tempfh);
   fclose(tempfh);
-  tempfh = fopen(tempf,"rt");
+  /* in text mode, getws/c expects multibyte characters */
+  /*currently Wine only supports plain ascii, and that is all that is tested here */
+  tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
   fgetws(wtextW,LLEN,tempfh);
+  l=ftell(tempfh);
+  ok(l==MSVCRT_BUFSIZ-2, "ftell expected %d got %ld\n", MSVCRT_BUFSIZ-2, l);
+  fgetws(wtextW,LLEN,tempfh);
+  l=ftell(tempfh);
+  ok(l==MSVCRT_BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n",
+   MSVCRT_BUFSIZ-2+strlen(mytext), l);
   mytextW = AtoW ((char*)mytext);
   aptr = mytextW;
   wptr = wtextW;
-
-  for (i=0; i<strlen(mytext); i++, aptr++, wptr++)
+  for (i=0; i<strlen(mytext)-2; i++, aptr++, wptr++)
     {
       diff_found |= (*aptr != *wptr);
     }
   ok(!(diff_found), "fgetwc difference found in TEXT mode\n");
+  ok(*wptr == '\n', "Carriage return was not skipped\n");
+  fclose(tempfh);
+  unlink(tempf);
+  
+  tempfh = fopen(tempf,"wb");
+  j = 'a';
+  /* pad to almost the length of the internal buffer. Use an odd number of bytes
+     to test that we can read wchars that are split across the internal buffer
+     boundary */
+  for (i=0; i<MSVCRT_BUFSIZ-3-strlen(mytext)*sizeof(WCHAR); i++)
+    fputc(j,tempfh);
+  j = '\r';
+  fputwc(j,tempfh);
+  j = '\n';
+  fputwc(j,tempfh);
+  fputws(wtextW,tempfh);
+  fputws(wtextW,tempfh);
+  fclose(tempfh);
+  /* in binary mode, getws/c expects wide characters */
+  tempfh = fopen(tempf,"rb"); /* open in BINARY mode */
+  j=(MSVCRT_BUFSIZ-2)/sizeof(WCHAR)-strlen(mytext);
+  fgetws(wtextW,j,tempfh);
+  l=ftell(tempfh);
+  j=(j-1)*sizeof(WCHAR);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
+  i=fgetc(tempfh);
+  ok(i=='a', "fgetc expected %d got %d\n", 0x61, i);
+  l=ftell(tempfh);
+  j++;
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
+  fgetws(wtextW,3,tempfh);
+  todo_wine ok(wtextW[0]=='\r',"expected carriage return got %04hx\n", wtextW[0]);
+  todo_wine ok(wtextW[1]=='\n',"expected newline got %04hx\n", wtextW[1]);
+  l=ftell(tempfh);
+  j += 4;
+  todo_wine ok(l==j, "ftell expected %d got %ld\n", j, l);
+  for(i=0; i<strlen(mytext); i++)
+    wtextW[i] = 0;
+  /* the first time we get the string, it should be entirely within the local buffer */
+  fgetws(wtextW,LLEN,tempfh);
+  l=ftell(tempfh);
+  j += (strlen(mytext)-1)*sizeof(WCHAR);
+  todo_wine ok(l==j, "ftell expected %d got %ld\n", j, l);
+  diff_found = FALSE;
+  aptr = mytextW;
+  wptr = wtextW;
+  for (i=0; i<strlen(mytext)-2; i++, aptr++, wptr++)
+    {
+      todo_wine ok(*aptr == *wptr, "Char %d expected %04hx got %04hx\n", i, *aptr, *wptr);
+      diff_found |= (*aptr != *wptr);
+    }
+  todo_wine ok(!(diff_found), "fgetwc difference found in BINARY mode\n");
+  todo_wine ok(*wptr == '\n', "Should get newline\n");
+  for(i=0; i<strlen(mytext); i++)
+    wtextW[i] = 0;
+  /* the second time we get the string, it should cross the local buffer boundary.
+     One of the wchars should be split across the boundary */
+  fgetws(wtextW,LLEN,tempfh);
+  diff_found = FALSE;
+  aptr = mytextW;
+  wptr = wtextW;
+  for (i=0; i<strlen(mytext)-2; i++, aptr++, wptr++)
+    {
+      todo_wine ok(*aptr == *wptr, "Char %d expected %04hx got %04hx\n", i, *aptr, *wptr);
+      diff_found |= (*aptr != *wptr);
+    }
+  todo_wine ok(!(diff_found), "fgetwc difference found in BINARY mode\n");
+  todo_wine ok(*wptr == '\n', "Should get newline\n");
+  
   if(mytextW) free (mytextW);
   fclose(tempfh);
   unlink(tempf);
