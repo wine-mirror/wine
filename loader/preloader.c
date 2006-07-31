@@ -131,6 +131,10 @@ static struct wine_preload_info preload_info[] =
 #define AT_SYSINFO_EHDR 33
 #endif
 
+#ifndef DT_GNU_HASH
+#define DT_GNU_HASH 0x6ffffef5
+#endif
+
 static unsigned int page_size, page_mask;
 static char *preloader_start, *preloader_end;
 
@@ -758,6 +762,13 @@ static unsigned int elf_hash( const char *name )
     return hash;
 }
 
+static unsigned int gnu_hash( const char *name )
+{
+    unsigned int h = 5381;
+    while (*name) h = h * 33 + (unsigned char)*name++;
+    return h;
+}
+
 /*
  * Find a symbol in the symbol table of the executable loaded
  */
@@ -767,7 +778,9 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
     const ElfW(Phdr) *ph;
     const ElfW(Sym) *symtab = NULL;
     const Elf_Symndx *hashtab = NULL;
+    const Elf32_Word *gnu_hashtab = NULL;
     const char *strings = NULL;
+    Elf_Symndx idx;
 
     /* check the values */
 #ifdef DUMP_SYMS
@@ -799,6 +812,8 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
             symtab = (const ElfW(Sym) *)dyn->d_un.d_ptr;
         if( dyn->d_tag == DT_HASH )
             hashtab = (const Elf_Symndx *)dyn->d_un.d_ptr;
+        if( dyn->d_tag == DT_GNU_HASH )
+            gnu_hashtab = (const Elf32_Word *)dyn->d_un.d_ptr;
 #ifdef DUMP_SYMS
         wld_printf("%x %x\n", dyn->d_tag, dyn->d_un.d_ptr );
 #endif
@@ -807,28 +822,46 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
 
     if( (!symtab) || (!strings) ) return NULL;
 
-    if (hashtab)
+    if (gnu_hashtab)  /* new style hash table */
     {
-        Elf_Symndx nbuckets = hashtab[0];
-        unsigned int hash = elf_hash(var) % nbuckets;
-        const Elf_Symndx *buckets = hashtab + 2;
-        const Elf_Symndx *chains = buckets + nbuckets;
-        Elf_Symndx idx = buckets[hash];
+        const unsigned int hash   = gnu_hash(var);
+        const Elf32_Word nbuckets = gnu_hashtab[0];
+        const Elf32_Word symbias  = gnu_hashtab[1];
+        const Elf32_Word nwords   = gnu_hashtab[2];
+        const ElfW(Addr) *bitmask = (const ElfW(Addr) *)(gnu_hashtab + 4);
+        const Elf32_Word *buckets = (const Elf32_Word *)(bitmask + nwords);
+        const Elf32_Word *chains  = buckets + nbuckets - symbias;
 
-        while (idx != STN_UNDEF)
+        if (!(idx = buckets[hash % nbuckets])) return NULL;
+        do
+        {
+            if ((chains[idx] & ~1u) == (hash & ~1u) &&
+                symtab[idx].st_info == ELF32_ST_INFO( STB_GLOBAL, type ) &&
+                !wld_strcmp( strings + symtab[idx].st_name, var ))
+                goto found;
+        } while (!(chains[idx++] & 1u));
+    }
+    else if (hashtab)  /* old style hash table */
+    {
+        const unsigned int hash   = elf_hash(var);
+        const Elf_Symndx nbuckets = hashtab[0];
+        const Elf_Symndx *buckets = hashtab + 2;
+        const Elf_Symndx *chains  = buckets + nbuckets;
+
+        for (idx = buckets[hash % nbuckets]; idx != STN_UNDEF; idx = chains[idx])
         {
             if (symtab[idx].st_info == ELF32_ST_INFO( STB_GLOBAL, type ) &&
                 !wld_strcmp( strings + symtab[idx].st_name, var ))
-            {
-#ifdef DUMP_SYMS
-                wld_printf("Found %s -> %x\n", strings + symtab[idx].st_name, symtab[idx].st_value );
-#endif
-                return (void*)symtab[idx].st_value;
-            }
-            idx = chains[idx];
+                goto found;
         }
     }
     return NULL;
+
+found:
+#ifdef DUMP_SYMS
+    wld_printf("Found %s -> %x\n", strings + symtab[idx].st_name, symtab[idx].st_value );
+#endif
+    return (void *)symtab[idx].st_value;
 }
 
 /*
