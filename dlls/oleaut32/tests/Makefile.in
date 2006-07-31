@@ -12,6 +12,7 @@ CTESTS = \
 	safearray.c \
 	typelib.c \
 	usrmarshal.c \
+	varformat.c \
 	vartest.c \
 	vartype.c
 
