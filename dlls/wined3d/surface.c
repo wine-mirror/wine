@@ -673,7 +673,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
             /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
             if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->renderTarget) {
-                    if (iface == swapchain->frontBuffer) {
+                    if (swapchain && iface == swapchain->frontBuffer) {
                         TRACE("locking front\n");
                         glReadBuffer(GL_FRONT);
                     }
