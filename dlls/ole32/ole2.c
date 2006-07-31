@@ -2389,6 +2389,16 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 }
 
 /***********************************************************************
+ *           OleNoteObjectVisible			    [OLE32.@]
+ */
+HRESULT WINAPI OleNoteObjectVisible(LPUNKNOWN pUnknown, BOOL bVisible)
+{
+    TRACE("(%p, %s)\n", pUnknown, bVisible ? "TRUE" : "FALSE");
+    return CoLockObjectExternal(pUnknown, bVisible, TRUE);
+}
+
+
+/***********************************************************************
  *           OLE_FreeClipDataArray   [internal]
  *
  * NOTES:

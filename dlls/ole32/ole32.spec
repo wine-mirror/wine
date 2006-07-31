@@ -200,7 +200,7 @@
 @ stdcall OleLoadFromStream(ptr ptr ptr)
 @ stdcall OleLockRunning(ptr long long)
 @ stdcall OleMetafilePictFromIconAndLabel(long ptr ptr long)
-@ stub OleNoteObjectVisible
+@ stdcall OleNoteObjectVisible(ptr long)
 @ stdcall OleQueryCreateFromData(ptr)
 @ stdcall OleQueryLinkFromData(ptr)
 @ stdcall OleRegEnumFormatEtc(ptr long ptr)
