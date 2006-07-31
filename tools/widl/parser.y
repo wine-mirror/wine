@@ -651,6 +651,7 @@ coclasshdr: attributes coclass			{ $$ = $2;
 
 coclassdef: coclasshdr '{' coclass_ints '}'	{ $$ = $1;
 						  $$->ifaces = $3;
+						  $$->defined = TRUE;
 						}
 	;
 
