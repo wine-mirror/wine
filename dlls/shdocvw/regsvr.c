@@ -650,6 +650,29 @@ err:
     return (res == ERROR_SUCCESS) ? S_OK : E_FAIL;
 }
 
+static HRESULT register_typelib(void)
+{
+    ITypeLib *typelib;
+    HRESULT hres;
+
+    static WCHAR wszSHDocVw[] = {'s','h','d','o','c','v','w','.','d','l','l',0};
+
+    hres = LoadTypeLibEx(wszSHDocVw, REGKIND_REGISTER, &typelib);
+    if(FAILED(hres)) {
+        ERR("Could not load typelib: %08lx\n", hres);
+        return hres;
+    }
+
+    ITypeLib_Release(typelib);
+
+    return hres;
+}
+
+static HRESULT unregister_typelib(void)
+{
+    return UnRegisterTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
+}
+
 /***********************************************************************
  *		DllRegisterServer (SHDOCVW.@)
  */
@@ -664,6 +687,9 @@ HRESULT WINAPI DllRegisterServer(void)
 	hr = register_interfaces(interface_list);
     if (SUCCEEDED(hr))
         hr = register_localserver();
+    if(SUCCEEDED(hr))
+        hr = register_typelib();
+
     return hr;
 }
 
@@ -679,5 +705,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = unregister_interfaces(interface_list);
+    if(SUCCEEDED(hr))
+        hr = unregister_typelib();
+
     return hr;
 }
