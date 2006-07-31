@@ -117,7 +117,7 @@ static UINT add_component_entry( MSIHANDLE hdb, char *values )
 static UINT add_feature_entry( MSIHANDLE hdb, char *values )
 {
     char insert[] = "INSERT INTO `Feature` (`Feature`, `Feature_Parent`, "
-                    "`Display`, `Level`, `Attributes`) VALUES( %s )";
+                    "`Title`, `Description`, `Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )";
     char *query;
     UINT sz, r;
 
@@ -1294,7 +1294,7 @@ static void test_states(void)
     ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'one', '', 2, 1, 0" );
+    r = add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
@@ -1310,7 +1310,7 @@ static void test_states(void)
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'two', '', 2, 1, 1" );
+    r = add_feature_entry( hdb, "'two', '', '', '', 2, 1, '', 1" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesLocalOnly */
@@ -1326,7 +1326,7 @@ static void test_states(void)
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'three', '', 2, 1, 1" );
+    r = add_feature_entry( hdb, "'three', '', '', '', 2, 1, '', 1" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesSourceOnly */
@@ -1669,20 +1669,14 @@ static void test_states(void)
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    todo_wine
-    {
-        ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
-    }
+    ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "two", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    todo_wine
-    {
-        ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
-    }
+    ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -1706,7 +1700,10 @@ static void test_states(void)
     r = MsiGetComponentState(hpkg, "beta", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
+    todo_wine
+    {
+        ok( action == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", action);
+    }
 
     state = 0xdeadbee;
     action = 0xdeadbee;
