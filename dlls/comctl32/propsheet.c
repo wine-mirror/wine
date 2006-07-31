@@ -3283,8 +3283,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 				      szBuffer, 256);
 		if (nLength != 0)
 		{
-		    DrawTextW(hdc, szBuffer, nLength,
-			      &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+		    DrawTextW(hdc, szBuffer, nLength, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
 		}
 	    }
 	}
@@ -3293,15 +3292,14 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	    SelectObject(hdc, psInfo->hFont);
 	    SetRect(&r, 40, 25, rzone.right - 69, rzone.bottom);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
-                DrawTextW(hdc, ppshpage->pszHeaderSubTitle, -1, &r, DT_LEFT | DT_SINGLELINE);
+                DrawTextW(hdc, ppshpage->pszHeaderSubTitle, -1, &r, DT_LEFT | DT_WORDBREAK);
 	    else
 	    {
 		nLength = LoadStringW(ppshpage->hInstance, (UINT_PTR)ppshpage->pszHeaderSubTitle,
 				      szBuffer, 256);
 		if (nLength != 0)
 		{
-		    DrawTextW(hdc, szBuffer, nLength,
-			      &r, DT_LEFT | DT_SINGLELINE);
+		    DrawTextW(hdc, szBuffer, nLength, &r, DT_LEFT | DT_WORDBREAK);
 		}
 	    }
 	}
