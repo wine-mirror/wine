@@ -189,6 +189,68 @@ static void test_EM_FINDTEXT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static const struct getline_s {
+  int line;
+  size_t buffer_len;
+  const char *text;
+} gl[] = {
+  {0, 10, "foo bar\r"},
+  {1, 10, "\r"},
+  {2, 10, "bar\r"},
+  {3, 10, "\r"},
+
+  /* Buffer smaller than line length */
+  {0, 2, "foo bar\r"},
+  {0, 1, "foo bar\r"},
+  {0, 0, "foo bar\r"}
+};
+
+static void test_EM_GETLINE(void)
+{
+  int i;
+  HWND hwndRichEdit = new_richedit(NULL);
+  static const int nBuf = 1024;
+  char dest[1024], origdest[1024];
+  const char text[] = "foo bar\n"
+      "\n"
+      "bar\n";
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+  memset(origdest, 0xBB, nBuf);
+  for (i = 0; i < sizeof(gl)/sizeof(struct getline_s); i++)
+  {
+    int nCopied;
+    int expected_nCopied = min(gl[i].buffer_len, strlen(gl[i].text));
+    int expected_bytes_written = min(gl[i].buffer_len, strlen(gl[i].text) + 1);
+    memset(dest, 0xBB, nBuf);
+    *(WORD *) dest = gl[i].buffer_len;
+
+    /* EM_GETLINE appends a "\r\0" to the end of the line
+     * nCopied counts up to and including the '\r' */
+    nCopied = SendMessage(hwndRichEdit, EM_GETLINE, gl[i].line, (LPARAM) dest);
+    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+       expected_nCopied);
+    /* two special cases since a parameter is passed via dest */
+    if (gl[i].buffer_len == 0)
+      ok(!dest[0] && !dest[1] && !strncmp(dest+2, origdest+2, nBuf-2),
+         "buffer_len=0\n");
+    else if (gl[i].buffer_len == 1)
+      ok(dest[0] == gl[i].text[0] && !dest[1] &&
+         !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
+    else
+    {
+      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      ok(!strncmp(dest + expected_bytes_written, origdest
+                  + expected_bytes_written, nBuf - expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+    }
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static int get_scroll_pos_y(HWND hwnd)
 {
   POINT p = {-1, -1};
@@ -822,6 +884,7 @@ START_TEST( editor )
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
   test_EM_FINDTEXT();
+  test_EM_GETLINE();
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
   test_EM_SETTEXTMODE();

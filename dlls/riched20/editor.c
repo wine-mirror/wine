@@ -52,7 +52,7 @@
   - EM_GETIMESTATUS
   - EM_GETLANGOPTIONS 2.0
   - EM_GETLIMITTEXT
-  - EM_GETLINE        
+  + EM_GETLINE
   + EM_GETLINECOUNT   returns number of rows, not of paragraphs
   + EM_GETMODIFY
   - EM_GETOLEINTERFACE
@@ -1411,7 +1411,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   /* UNSUPPORTED_MSG(EM_GETIMESTATUS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_GETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_GETLIMITTEXT)
-  UNSUPPORTED_MSG(EM_GETLINE)
   /* UNSUPPORTED_MSG(EM_GETOLEINTERFACE) separate stub */
   UNSUPPORTED_MSG(EM_GETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_GETREDONAME)
@@ -2035,6 +2034,58 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       FREE_OBJ(p);
       return nChars;
     }
+  }
+  case EM_GETLINE:
+  {
+    ME_DisplayItem *run;
+    const BOOL bUnicode = IsWindowUnicode(hWnd);
+    const unsigned int nMaxChars = *(WORD *) lParam;
+    unsigned int nEndChars, nCharsLeft = nMaxChars;
+    char *dest = (char *) lParam;
+
+    TRACE("EM_GETLINE: row=%d, nMaxChars=%d (%s)\n", (int) wParam, nMaxChars,
+          bUnicode ? "Unicode" : "Ansi");
+
+    run = ME_FindRowWithNumber(editor, wParam);
+    if (run == NULL)
+      return 0;
+
+    while (nCharsLeft && (run = ME_FindItemFwd(run, diRunOrStartRow))
+           && !(run->member.run.nFlags & MERF_ENDPARA))
+    {
+      unsigned int nCopy;
+      ME_String *strText;
+      if (run->type != diRun)
+        break;
+      strText = run->member.run.strText;
+      nCopy = min(nCharsLeft, strText->nLen);
+
+      if (bUnicode)
+        lstrcpynW((LPWSTR) dest, strText->szData, nCopy);
+      else
+        nCopy = WideCharToMultiByte(CP_ACP, 0, strText->szData, nCopy, dest,
+                                    nCharsLeft, NULL, NULL);
+      dest += nCopy * (bUnicode ? sizeof(WCHAR) : 1);
+      nCharsLeft -= nCopy;
+    }
+
+    /* append \r\0, space allowing */
+    nEndChars = min(nCharsLeft, 2);
+    nCharsLeft -= nEndChars;
+    if (bUnicode)
+    {
+      const WCHAR src[] = {'\r', '\0'};
+      lstrcpynW((LPWSTR) dest, src, nEndChars);
+    }
+    else
+      lstrcpynA(dest, "\r", nEndChars);
+
+    TRACE("EM_GETLINE: got %u bytes\n", nMaxChars - nCharsLeft);
+
+    if (nEndChars == 2)
+      return nMaxChars - nCharsLeft - 1; /* don't count \0 */
+    else
+      return nMaxChars - nCharsLeft;
   }
   case EM_GETLINECOUNT:
   {
