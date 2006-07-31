@@ -1122,13 +1122,16 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     switch (comp->Attributes)
     {
     case msidbComponentAttributesLocalOnly:
-    case msidbComponentAttributesOptional:
         comp->Action = INSTALLSTATE_LOCAL;
         comp->ActionRequest = INSTALLSTATE_LOCAL;
         break;
     case msidbComponentAttributesSourceOnly:
         comp->Action = INSTALLSTATE_SOURCE;
         comp->ActionRequest = INSTALLSTATE_SOURCE;
+        break;
+    case msidbComponentAttributesOptional:
+        comp->Action = INSTALLSTATE_DEFAULT;
+        comp->ActionRequest = INSTALLSTATE_DEFAULT;
         break;
     default:
         comp->Action = INSTALLSTATE_UNKNOWN;
@@ -1713,16 +1716,20 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             }
             else
             {
-                if (feature->Action == INSTALLSTATE_LOCAL)
+                if (feature->Attributes == msidbFeatureAttributesFavorLocal)
                 {
-                    component->Action = INSTALLSTATE_LOCAL;
-                    component->ActionRequest = INSTALLSTATE_LOCAL;
+                    if (!(component->Attributes & msidbComponentAttributesSourceOnly))
+                    {
+                        component->Action = INSTALLSTATE_LOCAL;
+                        component->ActionRequest = INSTALLSTATE_LOCAL;
+                    }
                 }
-                else if (feature->ActionRequest == INSTALLSTATE_SOURCE)
+                else if (feature->Attributes == msidbFeatureAttributesFavorSource)
                 {
                     if ((component->Action == INSTALLSTATE_UNKNOWN) ||
                         (component->Action == INSTALLSTATE_ABSENT) ||
-                        (component->Action == INSTALLSTATE_ADVERTISED))
+                        (component->Action == INSTALLSTATE_ADVERTISED) ||
+                        (component->Action == INSTALLSTATE_DEFAULT))
                            
                     {
                         component->Action = INSTALLSTATE_SOURCE;
