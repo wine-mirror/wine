@@ -342,6 +342,43 @@ BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
     return Result;
 }
 
+/************************************************************
+ *                ADVAPI_GetComputerSid
+ *
+ * Reads the computer SID from the registry.
+ */
+BOOL ADVAPI_GetComputerSid(PSID sid)
+{
+    HKEY key;
+    LONG ret;
+                                                                                
+    if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SECURITY\\SAM\\Domains\\Account", 0,
+        KEY_READ, &key)) == ERROR_SUCCESS)
+    {
+        static const WCHAR V[] = { 'V',0 };
+        DWORD size = 0;
+        ret = RegQueryValueExW(key, V, NULL, NULL, NULL, &size);
+        if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
+        {
+            BYTE * data = HeapAlloc(GetProcessHeap(), 0, size);
+            if (data)
+            {
+                if ((ret = RegQueryValueExW(key, V, NULL, NULL,
+                     data, &size)) == ERROR_SUCCESS)
+                {
+                    /* the SID is in the last 24 bytes of the binary data */
+                    CopyMemory(sid, &data[size-24], 24);
+                    return TRUE;
+                }
+            }
+        }
+        RegCloseKey(key);
+    }
+                                                                                
+    return FALSE;
+}
+
 /*	##############################
 	######	TOKEN FUNCTIONS ######
 	##############################

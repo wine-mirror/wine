@@ -22,5 +22,6 @@
 
 const char * debugstr_sid(PSID sid);
 BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName);
+BOOL ADVAPI_GetComputerSid(PSID sid);
 
 #endif /* __WINE_ADVAPI32MISC_H */
