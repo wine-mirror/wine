@@ -761,7 +761,7 @@ static unsigned int elf_hash( const char *name )
 /*
  * Find a symbol in the symbol table of the executable loaded
  */
-static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
+static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int type )
 {
     const ElfW(Dyn) *dyn = NULL;
     const ElfW(Phdr) *ph;
@@ -817,7 +817,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
 
         while (idx != STN_UNDEF)
         {
-            if( ( ELF32_ST_BIND(symtab[idx].st_info) == STT_OBJECT ) &&
+            if (symtab[idx].st_info == ELF32_ST_INFO( STB_GLOBAL, type ) &&
                 !wld_strcmp( strings + symtab[idx].st_name, var ))
             {
 #ifdef DUMP_SYMS
@@ -991,7 +991,7 @@ void* wld_start( void **stack )
 
     /* store pointer to the preload info into the appropriate main binary variable */
     wine_main_preload_info = find_symbol( main_binary_map.l_phdr, main_binary_map.l_phnum,
-                                          "wine_main_preload_info" );
+                                          "wine_main_preload_info", STT_OBJECT );
     if (wine_main_preload_info) *wine_main_preload_info = preload_info;
     else wld_printf( "wine_main_preload_info not found\n" );
 
