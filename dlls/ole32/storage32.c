@@ -5661,9 +5661,6 @@ HRESULT WINAPI StgCreateDocfile(
     WCHAR tempPath[MAX_PATH];
     static const WCHAR prefix[] = { 'S', 'T', 'O', 0 };
 
-    if (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE)
-      goto end;
-
     memset(tempPath, 0, sizeof(tempPath));
     memset(tempFileName, 0, sizeof(tempFileName));
 
