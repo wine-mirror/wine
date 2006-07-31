@@ -1323,6 +1323,12 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
 
     file->state = msifs_invalid;
 
+    if (file->Attributes & msidbFileAttributesCompressed)
+    {
+        file->Component->Action = INSTALLSTATE_LOCAL;
+        file->Component->ActionRequest = INSTALLSTATE_LOCAL;
+    }
+
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
 
     list_add_tail( &package->files, &file->entry );
