@@ -5218,7 +5218,21 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p)\n",
       This,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
     );
+
+    if (!pDispParams)
+    {
+        ERR("NULL pDispParams not allowed\n");
+        return E_INVALIDARG;
+    }
+
     dump_DispParms(pDispParams);
+
+    if (pDispParams->cNamedArgs > pDispParams->cArgs)
+    {
+        ERR("named argument array cannot be bigger than argument array (%d/%d)\n",
+            pDispParams->cNamedArgs, pDispParams->cArgs);
+        return E_INVALIDARG;
+    }
 
     /* we do this instead of using GetFuncDesc since it will return a fake
      * FUNCDESC for dispinterfaces and we want the real function description */
