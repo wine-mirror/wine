@@ -1618,7 +1618,9 @@ static HRESULT WINAPI StorageImpl_MoveElementTo(
   const OLECHAR *pwcsNewName,/* [string][in] */
   DWORD           grfFlags)    /* [in] */
 {
-  FIXME("not implemented!\n");
+  FIXME("(%p %s %p %s %lu): stub\n", iface,
+         debugstr_w(pwcsName), pstgDest,
+         debugstr_w(pwcsNewName), grfFlags);
   return E_NOTIMPL;
 }
 
@@ -1636,7 +1638,7 @@ static HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */
 {
-  FIXME("(%ld): stub!\n", grfCommitFlags);
+  FIXME("(%p %ld): stub\n", iface, grfCommitFlags);
   return S_OK;
 }
 
@@ -1648,7 +1650,7 @@ static HRESULT WINAPI StorageImpl_Commit(
 static HRESULT WINAPI StorageImpl_Revert(
   IStorage* iface)
 {
-  FIXME("not implemented!\n");
+  FIXME("(%p): stub\n", iface);
   return E_NOTIMPL;
 }
 
