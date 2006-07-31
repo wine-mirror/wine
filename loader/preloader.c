@@ -745,6 +745,19 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 }
 
 
+static unsigned int elf_hash( const char *name )
+{
+    unsigned int hi, hash = 0;
+    while (*name)
+    {
+        hash = (hash << 4) + (unsigned char)*name++;
+        hi = hash & 0xf0000000;
+        hash ^= hi;
+        hash ^= hi >> 24;
+    }
+    return hash;
+}
+
 /*
  * Find a symbol in the symbol table of the executable loaded
  */
@@ -753,8 +766,8 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
     const ElfW(Dyn) *dyn = NULL;
     const ElfW(Phdr) *ph;
     const ElfW(Sym) *symtab = NULL;
+    const Elf_Symndx *hashtab = NULL;
     const char *strings = NULL;
-    uint32_t i, symtabend = 0;
 
     /* check the values */
 #ifdef DUMP_SYMS
@@ -785,7 +798,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
         if( dyn->d_tag == DT_SYMTAB )
             symtab = (const ElfW(Sym) *)dyn->d_un.d_ptr;
         if( dyn->d_tag == DT_HASH )
-            symtabend = *((const uint32_t *)dyn->d_un.d_ptr + 1);
+            hashtab = (const Elf_Symndx *)dyn->d_un.d_ptr;
 #ifdef DUMP_SYMS
         wld_printf("%x %x\n", dyn->d_tag, dyn->d_un.d_ptr );
 #endif
@@ -794,15 +807,25 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
 
     if( (!symtab) || (!strings) ) return NULL;
 
-    for (i = 0; i < symtabend; i++)
+    if (hashtab)
     {
-        if( ( ELF32_ST_BIND(symtab[i].st_info) == STT_OBJECT ) &&
-            ( 0 == wld_strcmp( strings+symtab[i].st_name, var ) ) )
+        Elf_Symndx nbuckets = hashtab[0];
+        unsigned int hash = elf_hash(var) % nbuckets;
+        const Elf_Symndx *buckets = hashtab + 2;
+        const Elf_Symndx *chains = buckets + nbuckets;
+        Elf_Symndx idx = buckets[hash];
+
+        while (idx != STN_UNDEF)
         {
+            if( ( ELF32_ST_BIND(symtab[idx].st_info) == STT_OBJECT ) &&
+                !wld_strcmp( strings + symtab[idx].st_name, var ))
+            {
 #ifdef DUMP_SYMS
-            wld_printf("Found %s -> %x\n", strings+symtab[i].st_name, symtab[i].st_value );
+                wld_printf("Found %s -> %x\n", strings + symtab[idx].st_name, symtab[idx].st_value );
 #endif
-            return (void*)symtab[i].st_value;
+                return (void*)symtab[idx].st_value;
+            }
+            idx = chains[idx];
         }
     }
     return NULL;
