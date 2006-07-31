@@ -199,15 +199,12 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  if (IsEqualGUID(&IID_IUnknown, riid) ||
+      IsEqualGUID(&IID_IStorage, riid))
   {
     *ppvObject = (IStorage*)This;
   }
-  else if (memcmp(&IID_IStorage, riid, sizeof(IID_IStorage)) == 0)
-  {
-    *ppvObject = (IStorage*)This;
-  }
-  else if (memcmp(&IID_IPropertySetStorage, riid, sizeof(IID_IPropertySetStorage)) == 0)
+  else if (IsEqualGUID(&IID_IPropertySetStorage, riid))
   {
     *ppvObject = (IStorage*)&This->pssVtbl;
   }
