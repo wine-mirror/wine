@@ -2405,7 +2405,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
     }
     *pStream = This->stateBlock->streamSource[StreamNumber];
     *pStride = This->stateBlock->streamStride[StreamNumber];
-    *pOffset = This->stateBlock->streamOffset[StreamNumber];
+    if (pOffset) {
+        *pOffset = This->stateBlock->streamOffset[StreamNumber];
+    }
 
      if (*pStream == NULL) {
         FIXME("Attempting to get an empty stream %d, returning WINED3DERR_INVALIDCALL\n", StreamNumber);
