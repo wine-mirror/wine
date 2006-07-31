@@ -487,6 +487,7 @@ enum:	  ident '=' expr_const			{ $$ = reg_const($1);
 	;
 
 enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM);
+						  $$->kind = TKIND_ENUM;
 						  $$->fields = $4;
 						  $$->defined = TRUE;
                                                   if(in_typelib)
@@ -663,8 +664,8 @@ coclass_int:
 	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); }
-	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(0, $2, 0); }
+dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); $$->kind = TKIND_DISPATCH; }
+	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(0, $2, 0); $$->kind = TKIND_DISPATCH; }
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
@@ -707,8 +708,8 @@ inherit:					{ $$ = NULL; }
 	| ':' aKNOWNTYPE			{ $$ = find_type2($2, 0); }
 	;
 
-interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); }
-	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); }
+interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_INTERFACE; }
+	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_INTERFACE; }
 	;
 
 interfacehdr: attributes interface		{ $$ = $2;
@@ -742,8 +743,8 @@ interfacedec:
 	| dispinterface ';'			{ $$ = $1; if (!parse_only && do_header) write_forward($$); }
 	;
 
-module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; }
-	| tMODULE aKNOWNTYPE			{ $$ = make_type(0, NULL); $$->name = $2; }
+module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; $$->kind = TKIND_MODULE; }
+	| tMODULE aKNOWNTYPE			{ $$ = make_type(0, NULL); $$->name = $2; $$->kind = TKIND_MODULE; }
 	;
 
 modulehdr: attributes module			{ $$ = $2;
@@ -780,6 +781,7 @@ pointer_type:
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, tsSTRUCT);
                                                   /* overwrite RPC_FC_STRUCT with a more exact type */
 						  $$->type = get_struct_type( $4 );
+						  $$->kind = TKIND_RECORD;
 						  $$->fields = $4;
 						  $$->defined = TRUE;
                                                   if(in_typelib)
@@ -814,6 +816,7 @@ typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3
 	;
 
 uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, $2, tsUNION);
+						  $$->kind = TKIND_UNION;
 						  $$->fields = $4;
 						  $$->defined = TRUE;
 						}
@@ -821,8 +824,10 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 	  tSWITCH '(' s_field ')'
 	  m_ident '{' cases '}'			{ var_t *u = $7;
 						  $$ = get_typev(RPC_FC_ENCAPSULATED_UNION, $2, tsUNION);
+						  $$->kind = TKIND_UNION;
 						  if (!u) u = make_var("tagged_union");
 						  u->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
+						  u->type->kind = TKIND_UNION;
 						  u->type->fields = $9;
 						  u->type->defined = TRUE;
 						  LINK(u, $5); $$->fields = u;
