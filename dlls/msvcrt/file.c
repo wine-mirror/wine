@@ -1619,7 +1619,7 @@ static unsigned int remove_cr(char *buf, unsigned int count)
  */
 static int read_i(int fd, void *buf, unsigned int count)
 {
-  DWORD num_read, all_read = 0;
+  DWORD num_read;
   char *bufstart = buf;
   HANDLE hand = msvcrt_fdtoh(fd);
 
@@ -1630,34 +1630,25 @@ static int read_i(int fd, void *buf, unsigned int count)
     return -1;
 
   /* Reading single bytes in O_TEXT mode makes things slow
-   * So read big chunks, then remove the \r in memory and try reading
-   * the rest until the request is satisfied or EOF is met
+   * So read big chunks
    */
-  while (all_read < count)
-  {
-      if (ReadFile(hand, bufstart+all_read, count - all_read, &num_read, NULL))
-      {
-          if (num_read != (count - all_read))
-          {
-              TRACE(":EOF\n");
-              MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
-              all_read += num_read;
-              if (count > 4)
-                  TRACE("%s\n",debugstr_an(buf,all_read));
-              return all_read;
-          }
-          all_read += num_read;
-      }
-      else
-      {
-          TRACE(":failed-last error (%ld)\n",GetLastError());
-          return -1;
-      }
-  }
+    if (ReadFile(hand, bufstart, count, &num_read, NULL))
+    {
+        if (num_read != count)
+        {
+            MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
+            TRACE(":EOF %s\n",debugstr_an(buf,num_read));
+        }
+    }
+    else
+    {
+        TRACE(":failed-last error (%ld)\n",GetLastError());
+        return -1;
+    }
 
   if (count > 4)
-      TRACE("(%lu), %s\n",all_read,debugstr_an(buf, all_read));
-  return all_read;
+      TRACE("(%lu), %s\n",num_read,debugstr_an(buf, num_read));
+  return num_read;
 }
 
 /*********************************************************************
@@ -2132,11 +2123,8 @@ int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
       file->_cnt--;
       i = file->_ptr++;
       j = *i;
-    } else {
+    } else
       j = MSVCRT__filbuf(file);
-      if (j == MSVCRT_EOF)
-        return j;
-    }
     if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) || (j != '\r'))
       return j;
   } while(1);
@@ -2508,7 +2496,6 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
   while(rcnt>0)
   {
     int i = _read(file->_file,ptr, rcnt);
-    if (i==0) break;
     pread += i;
     rcnt -= i;
     /* expose feof condition in the flags
@@ -2522,6 +2509,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
         pread = 0;
         rcnt = 0;
     }
+    if (i < 1) break;
   }
   read+=pread;
   return read / size;
