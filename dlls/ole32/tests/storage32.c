@@ -835,6 +835,64 @@ static void test_streamenum(void)
     DeleteFileW(filename);
 }
 
+static void test_transact(void)
+{
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | 
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* now create a stream, but don't commit it */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Release(stm);
+
+    IStorage_Release(stg);
+
+    stm = NULL;
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_NONE | STGM_READ | STGM_TRANSACTED, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed\n");
+
+    if (!stg)
+        return;
+
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_DENY_NONE|STGM_READ, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->OpenStream failed %08lx\n", r);
+
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_DELETEONRELEASE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08lx\n", r);
+
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08lx\n", r);
+
+    todo_wine {
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+    ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08lx\n", r);
+    }
+
+    if (stm)
+        r = IStream_Release(stm);
+    IStorage_Release(stg);
+
+    r = DeleteFileW(filename);
+    ok( r == TRUE, "deleted file\n");
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -844,4 +902,5 @@ START_TEST(storage32)
     test_storage_suminfo();
     test_storage_refcount();
     test_streamenum();
+    test_transact();
 }

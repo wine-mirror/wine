@@ -323,7 +323,8 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   /*
    * Validate the STGM flags
    */
-  if ( FAILED( validateSTGM(grfMode) ))
+  if ( FAILED( validateSTGM(grfMode) ) ||
+       STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE)
   {
     res = STG_E_INVALIDFLAG;
     goto end;
@@ -332,9 +333,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   /*
    * As documented.
    */
-  if ( STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE ||
-        (grfMode & STGM_DELETEONRELEASE) ||
-        (grfMode & STGM_TRANSACTED) )
+  if ( (grfMode & STGM_DELETEONRELEASE) || (grfMode & STGM_TRANSACTED) )
   {
     res = STG_E_INVALIDFUNCTION;
     goto end;
