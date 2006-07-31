@@ -806,6 +806,7 @@ static void dsound8_tests(void)
 const char * get_file_version(const char * file_name)
 {
     static char version[32];
+    static char backslash[] = "\\";
     DWORD size;
     DWORD handle;
 
@@ -816,7 +817,7 @@ const char * get_file_version(const char * file_name)
             if (GetFileVersionInfoA("dsound.dll", handle, size, data)) {
                 VS_FIXEDFILEINFO *pFixedVersionInfo;
                 UINT len;
-                if (VerQueryValueA(data, "\\", (LPVOID *)&pFixedVersionInfo, &len)) {
+                if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
                     sprintf(version, "%ld.%ld.%ld.%ld",
                             pFixedVersionInfo->dwFileVersionMS >> 16,
                             pFixedVersionInfo->dwFileVersionMS & 0xffff,
