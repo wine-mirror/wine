@@ -338,15 +338,16 @@ void mmap_init(void)
 
     if (stack_ptr >= user_space_limit)
     {
+        char *end = 0;
         char *base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) - (granularity_mask + 1);
         if (base > user_space_limit) reserve_area( user_space_limit, base );
         base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) + (granularity_mask + 1);
 #ifdef linux
-        /* Linux heuristic: if the stack top is at c0000000, assume the address space */
-        /* ends there, this avoids a lot of futile allocation attempts */
-        if (base != (char *)0xc0000000)
+        /* Linux heuristic: assume the stack is near the end of the address */
+        /* space, this avoids a lot of futile allocation attempts */
+        end = (char *)(((unsigned long)base + 0x0fffffff) & 0xf0000000);
 #endif
-            reserve_area( base, 0 );
+        reserve_area( base, end );
     }
     else reserve_area( user_space_limit, 0 );
 #endif /* __i386__ */
