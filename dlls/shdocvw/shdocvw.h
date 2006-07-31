@@ -119,6 +119,7 @@ typedef struct {
     RECT pos_rect;
     RECT clip_rect;
     OLEINPLACEFRAMEINFO frameinfo;
+    SIZEL extent;
 
     HWND shell_embedding_hwnd;
 

@@ -395,15 +395,23 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfTyp
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%lx %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%lx %p)\n", This, dwDrawAspect, psizel);
+
+    /* Tests show that dwDrawAspect is ignored */
+    memcpy(&This->extent, psizel, sizeof(SIZEL));
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%lx, %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%lx, %p)\n", This, dwDrawAspect, psizel);
+
+    /* Tests show that dwDrawAspect is ignored */
+    memcpy(psizel, &This->extent, sizeof(SIZEL));
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
@@ -808,6 +816,9 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     memset(&This->pos_rect, 0, sizeof(RECT));
     memset(&This->clip_rect, 0, sizeof(RECT));
     memset(&This->frameinfo, 0, sizeof(OLEINPLACEFRAMEINFO));
+
+    This->extent.cx = 1323;
+    This->extent.cy = 529;
 }
 
 void WebBrowser_OleObject_Destroy(WebBrowser *This)

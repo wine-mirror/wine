@@ -828,6 +828,70 @@ static void test_GetControlInfo(IUnknown *unk)
     IOleControl_Release(control);
 }
 
+static void test_Extent(IUnknown *unk)
+{
+    IOleObject *oleobj;
+    SIZE size;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "Could not get IOleObkect: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 1323 && size.cy == 529, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = 800;
+    size.cy = 700;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &size);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 0, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = 900;
+    size.cy = 800;
+    hres = IOleObject_SetExtent(oleobj, 0, &size);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 0, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = 1000;
+    size.cy = 900;
+    hres = IOleObject_SetExtent(oleobj, 0xdeadbeef, &size);
+    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    size.cx = size.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
+    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
+
+    IOleObject_Release(oleobj);
+}
+
 static void test_WebBrowser(void)
 {
     IUnknown *unk = NULL;
@@ -842,6 +906,7 @@ static void test_WebBrowser(void)
 
     test_ClassInfo(unk);
     test_ClientSite(unk, &ClientSite);
+    test_Extent(unk);
     test_DoVerb(unk);
     test_ClientSite(unk, NULL);
     test_ie_funcs(unk);
