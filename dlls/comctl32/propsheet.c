@@ -3269,15 +3269,16 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
  	}
  	else
  	{
+            int margin;
  	    hbr = GetSysColorBrush(COLOR_WINDOW);
  	    FillRect(hdc, &rzone, hbr);
 
  	    /* Draw the header bitmap. It's always centered like a
  	     * common 49 x 49 bitmap. */
- 	    BitBlt(hdc, rzone.right - 49 - ((rzone.bottom - 49) / 2),
- 	           (rzone.bottom - 49) / 2,
- 	           bm.bmWidth, bm.bmHeight,
- 	           hdcSrc, 0, 0, SRCCOPY);
+            margin = (rzone.bottom - 49) / 2;
+ 	    BitBlt(hdc, rzone.right - 49 - margin, margin,
+                   min(bm.bmWidth, 49), min(bm.bmHeight, 49),
+                   hdcSrc, 0, 0, SRCCOPY);
 
  	    /* NOTE: Native COMCTL32 draws a white stripe over the bitmap
  	     * if its height is smaller than 49 pixels. Because the reason
