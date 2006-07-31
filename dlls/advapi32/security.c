@@ -143,6 +143,7 @@ static const WCHAR DIALUP[] = { 'D','I','A','L','U','P',0 };
 static const WCHAR DOMAIN[] = {'D','O','M','A','I','N',0};
 static const WCHAR ENTERPRISE_DOMAIN_CONTROLLERS[] = { 'E','N','T','E','R','P','R','I','S','E',' ','D','O','M','A','I','N',' ','C','O','N','T','R','O','L','L','E','R','S',0 };
 static const WCHAR Everyone[] = { 'E','v','e','r','y','o','n','e',0 };
+static const WCHAR Guest[] = { 'G','u','e','s','t',0 };
 static const WCHAR Guests[] = { 'G','u','e','s','t','s',0 };
 static const WCHAR INTERACTIVE[] = { 'I','N','T','E','R','A','C','T','I','V','E',0 };
 static const WCHAR LOCAL[] = { 'L','O','C','A','L',0 };
@@ -1825,9 +1826,10 @@ LookupAccountSidW(
 	OUT PSID_NAME_USE name_use )
 {
     int i, j;
-    const WCHAR * ac = Administrator;	/* FIXME */
-    const WCHAR * dm = DOMAIN;		/* FIXME */
-    SID_NAME_USE use = SidTypeUser;	/* FIXME */
+    const WCHAR * ac = NULL;
+    const WCHAR * dm = NULL;
+    SID_NAME_USE use = 0;
+    LPWSTR computer_name = NULL;
 
     TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
 	  debugstr_w(system),debugstr_sid(sid),
@@ -1840,7 +1842,8 @@ LookupAccountSidW(
         SetLastError(ERROR_NONE_MAPPED);
         return FALSE;
     }
-    
+
+    /* check the well known SIDs first */
     for (i = 0; i <= 60; i++) {
         if (IsWellKnownSid(sid, i)) {
             for (j = 0; j < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); j++) {
@@ -1854,16 +1857,61 @@ LookupAccountSidW(
         }
     }
 
-    *accountSize = strlenW(ac)+1;
-    if (account && (*accountSize > strlenW(ac)))
-        strcpyW(account, ac);
+    if (dm == NULL) {
+        MAX_SID local;
+        MAX_SID admin;
+        MAX_SID guest;
 
-    *domainSize = strlenW(dm)+1;
-    if (domain && (*domainSize > strlenW(dm)))
-        strcpyW(domain,dm);
+        /* check for the local computer next */
+        if (ADVAPI_GetComputerSid(&local)) {
+            DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
+            BOOL result;
 
-    *name_use = use;
-    return TRUE;
+            computer_name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            result = GetComputerNameW(computer_name,  &size);
+
+            if (result) {
+                CopySid(GetSidLengthRequired(local.SubAuthorityCount), &admin, &local);
+                admin.SubAuthorityCount++;
+                admin.SubAuthority[4] = DOMAIN_USER_RID_ADMIN;
+                CopySid(GetSidLengthRequired(local.SubAuthorityCount), &guest, &local);
+                guest.SubAuthorityCount++;
+                guest.SubAuthority[4] = DOMAIN_USER_RID_GUEST;
+
+                if (EqualSid(sid, &local)) {
+                    dm = computer_name;
+                    ac = Blank;
+                    use = 3;
+                } else if (EqualSid(sid, &admin)) {
+                    dm = computer_name;
+                    ac = Administrator;
+                    use = 1;
+                } else if (EqualSid(sid, &guest)) {
+                    dm = computer_name;
+                    ac = Guest;
+                    use = 1;
+                }
+            }
+        }
+    }
+
+    if (dm) {
+        *accountSize = strlenW(ac)+1;
+        if (account && (*accountSize > strlenW(ac)))
+            strcpyW(account, ac);
+
+        *domainSize = strlenW(dm)+1;
+        if (domain && (*domainSize > strlenW(dm)))
+            strcpyW(domain,dm);
+
+        *name_use = use;
+        HeapFree(GetProcessHeap(), 0, computer_name);
+        return TRUE;
+    }
+
+    HeapFree(GetProcessHeap(), 0, computer_name);
+    SetLastError(ERROR_NONE_MAPPED);
+    return FALSE;
 }
 
 /******************************************************************************
