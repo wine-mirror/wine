@@ -3276,14 +3276,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	if (ppshpage->dwFlags & PSP_USEHEADERTITLE) {
 	    SetRect(&r, 20, 10, 0, 0);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
-	    {
-		if (psInfo->unicode)
-		    DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderTitle,
-			      -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
-		else
-		    DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderTitle,
-			      -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
-	    }
+                DrawTextW(hdc, ppshpage->pszHeaderTitle, -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
 	    else
 	    {
 		nLength = LoadStringW(ppshpage->hInstance, (UINT_PTR)ppshpage->pszHeaderTitle,
@@ -3300,14 +3293,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	    SelectObject(hdc, psInfo->hFont);
 	    SetRect(&r, 40, 25, rzone.right - 69, rzone.bottom);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
-	    {
-		if (psInfo->unicode)
-		    DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderSubTitle,
-			      -1, &r, DT_LEFT | DT_SINGLELINE);
-		else
-		    DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderSubTitle,
-			      -1, &r, DT_LEFT | DT_SINGLELINE);
-	    }
+                DrawTextW(hdc, ppshpage->pszHeaderSubTitle, -1, &r, DT_LEFT | DT_SINGLELINE);
 	    else
 	    {
 		nLength = LoadStringW(ppshpage->hInstance, (UINT_PTR)ppshpage->pszHeaderSubTitle,
