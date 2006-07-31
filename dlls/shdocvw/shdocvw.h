@@ -212,6 +212,7 @@ extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
 
 HRESULT register_class_object(BOOL);
+HRESULT get_typeinfo(ITypeInfo**);
 
 /* memory allocation functions */
 

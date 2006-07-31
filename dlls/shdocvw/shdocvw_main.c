@@ -40,6 +40,30 @@ LONG SHDOCVW_refCount = 0;
 
 HINSTANCE shdocvw_hinstance = 0;
 static HMODULE SHDOCVW_hshell32 = 0;
+static ITypeInfo *wb_typeinfo = NULL;
+
+HRESULT get_typeinfo(ITypeInfo **typeinfo)
+{
+    ITypeLib *typelib;
+    HRESULT hres;
+
+    if(wb_typeinfo) {
+        *typeinfo = wb_typeinfo;
+        return S_OK;
+    }
+
+    hres = LoadRegTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, &typelib);
+    if(FAILED(hres)) {
+        ERR("LoadRegTypeLib failed: %08lx\n", hres);
+        return hres;
+    }
+
+    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IWebBrowser2, &wb_typeinfo);
+    ITypeLib_Release(typelib);
+
+    *typeinfo = wb_typeinfo;
+    return hres;
+}
 
 /*************************************************************************
  * SHDOCVW DllMain
@@ -56,6 +80,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_DETACH:
         if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
         unregister_iewindow_class();
+        if(wb_typeinfo)
+            ITypeInfo_Release(wb_typeinfo);
         break;
     }
     return TRUE;

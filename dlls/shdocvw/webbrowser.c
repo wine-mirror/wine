@@ -172,9 +172,18 @@ static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember
                                 EXCEPINFO *pExepInfo, UINT *puArgErr)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    ITypeInfo *typeinfo;
+    HRESULT hres;
+
+    TRACE("(%p)->(%ld %s %ld %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
-    return E_NOTIMPL;
+
+    hres = get_typeinfo(&typeinfo);
+    if(FAILED(hres))
+        return hres;
+
+    return ITypeInfo_Invoke(typeinfo, WEBBROWSER2(This), dispIdMember, wFlags, pDispParams,
+                            pVarResult, pExepInfo, puArgErr);
 }
 
 /* IWebBrowser methods */
@@ -923,7 +932,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     WebBrowser *ret;
     HRESULT hres;
 
-    TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
+    TRACE("(%p %s %p) version=%d\n", pOuter, debugstr_guid(riid), ppv, version);
 
     ret = shdocvw_alloc(sizeof(WebBrowser));
 
