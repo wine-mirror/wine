@@ -60,6 +60,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(file);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 typedef struct
 {
@@ -802,7 +803,23 @@ static void start_process( void *arg )
 {
     __TRY
     {
+        PEB *peb = NtCurrentTeb()->Peb;
+        IMAGE_NT_HEADERS *nt;
+        LPTHREAD_START_ROUTINE entry;
+
         LdrInitializeThunk( 0, 0, 0, 0 );
+
+        nt = RtlImageNtHeader( peb->ImageBaseAddress );
+        entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
+                                         nt->OptionalHeader.AddressOfEntryPoint);
+
+        if (TRACE_ON(relay))
+            DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
+                     debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
+
+        SetLastError( 0 );  /* clear error code */
+        if (peb->BeingDebugged) DbgBreakPoint();
+        ExitProcess( entry( peb ) );
     }
     __EXCEPT(UnhandledExceptionFilter)
     {

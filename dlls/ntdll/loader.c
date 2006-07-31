@@ -2094,8 +2094,6 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     LPCWSTR load_path;
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
-    LPTHREAD_START_ROUTINE entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
-                                                            nt->OptionalHeader.AddressOfEntryPoint);
 
     if (main_exe_file) NtClose( main_exe_file );  /* at this point the main module is created */
 
@@ -2128,7 +2126,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     SERVER_START_REQ( init_process_done )
     {
         req->module = peb->ImageBaseAddress;
-        req->entry  = entry;
+        req->entry  = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
         req->gui    = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );
     }
@@ -2153,16 +2151,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     RtlLeaveCriticalSection( &loader_section );
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) VIRTUAL_UseLargeAddressSpace();
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
-                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
-
-    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_SUCCESS );  /* clear error code */
-    if (peb->BeingDebugged) DbgBreakPoint();
-    status = entry( peb );
-    LdrShutdownProcess();
-    NtTerminateProcess( GetCurrentProcess(), status );
+    return;
 
 error:
     ERR( "Main exe initialization for %s failed, status %lx\n",
