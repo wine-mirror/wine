@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -30,13 +31,14 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include "wine/list.h"
 
 /* Max first-level includes per file */
 #define MAX_INCLUDES 200
 
 typedef struct _INCL_FILE
 {
-    struct _INCL_FILE *next;
+    struct list        entry;
     char              *name;
     char              *filename;
     struct _INCL_FILE *included_by;   /* file that included this one */
@@ -46,16 +48,16 @@ typedef struct _INCL_FILE
     struct _INCL_FILE *files[MAX_INCLUDES];
 } INCL_FILE;
 
-static INCL_FILE *firstSrc;
-static INCL_FILE *firstInclude;
+static struct list sources = LIST_INIT(sources);
+static struct list includes = LIST_INIT(includes);
 
 typedef struct _INCL_PATH
 {
-    struct _INCL_PATH *next;
-    const char        *name;
+    struct list entry;
+    const char *name;
 } INCL_PATH;
 
-static INCL_PATH *firstPath;
+static struct list paths = LIST_INIT(paths);
 
 static const char *SrcDir = NULL;
 static const char *OutputFileName = "Makefile";
@@ -143,10 +145,7 @@ static int is_generated( const char *name )
 static void add_include_path( const char *name )
 {
     INCL_PATH *path = xmalloc( sizeof(*path) );
-    INCL_PATH **p = &firstPath;
-    while (*p) p = &(*p)->next;
-    *p = path;
-    path->next = NULL;
+    list_add_tail( &paths, &path->entry );
     path->name = name;
 }
 
@@ -158,12 +157,10 @@ static void add_include_path( const char *name )
  */
 static INCL_FILE *add_src_file( const char *name )
 {
-    INCL_FILE **p = &firstSrc;
     INCL_FILE *file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
-    while (*p) p = &(*p)->next;
-    *p = file;
+    list_add_tail( &sources, &file->entry );
     return file;
 }
 
@@ -175,7 +172,7 @@ static INCL_FILE *add_src_file( const char *name )
  */
 static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int system )
 {
-    INCL_FILE **p = &firstInclude;
+    INCL_FILE *include;
     char *ext;
     int pos;
 
@@ -214,18 +211,19 @@ static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int
                          pFile->filename, line );
     }
 
-    while (*p && strcmp( name, (*p)->name )) p = &(*p)->next;
-    if (!*p)
-    {
-        *p = xmalloc( sizeof(INCL_FILE) );
-        memset( *p, 0, sizeof(INCL_FILE) );
-        (*p)->name = xstrdup(name);
-        (*p)->included_by = pFile;
-        (*p)->included_line = line;
-        (*p)->system = system || pFile->system;
-    }
-    pFile->files[pos] = *p;
-    return *p;
+    LIST_FOR_EACH_ENTRY( include, &includes, INCL_FILE, entry )
+        if (!strcmp( name, include->name )) goto found;
+
+    include = xmalloc( sizeof(INCL_FILE) );
+    memset( include, 0, sizeof(INCL_FILE) );
+    include->name = xstrdup(name);
+    include->included_by = pFile;
+    include->included_line = line;
+    include->system = system || pFile->system;
+    list_add_tail( &includes, &include->entry );
+found:
+    pFile->files[pos] = include;
+    return include;
 }
 
 
@@ -268,7 +266,9 @@ static FILE *open_include_file( INCL_FILE *pFile )
     FILE *file = NULL;
     INCL_PATH *path;
 
-    for (path = firstPath; path; path = path->next)
+    errno = ENOENT;
+
+    LIST_FOR_EACH_ENTRY( path, &paths, INCL_PATH, entry )
     {
         char *filename = xmalloc(strlen(path->name) + strlen(pFile->name) + 2);
         strcpy( filename, path->name );
@@ -301,9 +301,7 @@ static FILE *open_include_file( INCL_FILE *pFile )
     if (!file)
     {
         if (pFile->included_by->system) return NULL;  /* ignore if included by a system file */
-        if (firstPath) perror( pFile->name );
-        else fprintf( stderr, "%s: %s: File not found\n",
-                      ProgramName, pFile->name );
+        perror( pFile->name );
         while (pFile->included_by)
         {
             fprintf( stderr, "  %s was first included from %s:%d\n",
@@ -504,7 +502,7 @@ static void output_dependencies(void)
             exit(1);
         }
     }
-    for( pFile = firstSrc; pFile; pFile = pFile->next)
+    LIST_FOR_EACH_ENTRY( pFile, &sources, INCL_FILE, entry )
     {
         column = 0;
         output_src( file, pFile, &column );
@@ -565,8 +563,7 @@ int main( int argc, char *argv[] )
         argc--;
         argv++;
     }
-    for (pFile = firstInclude; pFile; pFile = pFile->next)
-        parse_file( pFile, 0 );
-    if( firstSrc ) output_dependencies();
+    LIST_FOR_EACH_ENTRY( pFile, &includes, INCL_FILE, entry ) parse_file( pFile, 0 );
+    if (!list_empty( &sources )) output_dependencies();
     return 0;
 }
