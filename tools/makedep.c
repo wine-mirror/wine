@@ -128,6 +128,29 @@ static char *xstrdup( const char *str )
 
 
 /*******************************************************************
+ *         strmake
+ */
+char *strmake( const char* fmt, ... )
+{
+    int n;
+    size_t size = 100;
+    va_list ap;
+
+    for (;;)
+    {
+        char *p = xmalloc (size);
+        va_start(ap, fmt);
+        n = vsnprintf (p, size, fmt, ap);
+        va_end(ap);
+        if (n == -1) size *= 2;
+        else if ((size_t)n >= size) size = n + 1;
+        else return p;
+        free(p);
+    }
+}
+
+
+/*******************************************************************
  *         get_extension
  */
 static char *get_extension( char *filename )
@@ -305,10 +328,7 @@ static FILE *open_src_file( INCL_FILE *pFile )
     /* now try in source dir */
     if (src_dir)
     {
-        pFile->filename = xmalloc( strlen(src_dir) + strlen(pFile->name) + 2 );
-        strcpy( pFile->filename, src_dir );
-        strcat( pFile->filename, "/" );
-        strcat( pFile->filename, pFile->name );
+        pFile->filename = strmake( "%s/%s", src_dir, pFile->name );
         file = fopen( pFile->filename, "r" );
     }
     if (!file)
@@ -326,52 +346,73 @@ static FILE *open_src_file( INCL_FILE *pFile )
 static FILE *open_include_file( INCL_FILE *pFile )
 {
     FILE *file = NULL;
+    char *filename, *p;
     INCL_PATH *path;
 
     errno = ENOENT;
 
-    LIST_FOR_EACH_ENTRY( path, &paths, INCL_PATH, entry )
+    /* first try name as is */
+    if ((file = fopen( pFile->name, "r" )))
     {
-        char *filename = xmalloc(strlen(path->name) + strlen(pFile->name) + 2);
-        strcpy( filename, path->name );
-        strcat( filename, "/" );
-        strcat( filename, pFile->name );
-        if ((file = fopen( filename, "r" )))
-        {
-            pFile->filename = filename;
-            break;
-        }
+        pFile->filename = xstrdup( pFile->name );
+        return file;
+    }
+
+    /* now try in source dir */
+    if (src_dir)
+    {
+        filename = strmake( "%s/%s", src_dir, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
         free( filename );
     }
-    if (!file && pFile->system) return NULL;  /* ignore system files we cannot find */
+
+    /* now try in global includes */
+    if (top_obj_dir)
+    {
+        filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
+    }
+    if (top_src_dir)
+    {
+        filename = strmake( "%s/include/%s", top_src_dir, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
+    }
+
+    /* now search in include paths */
+    LIST_FOR_EACH_ENTRY( path, &paths, INCL_PATH, entry )
+    {
+        filename = strmake( "%s/%s", path->name, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
+    }
+    if (pFile->system) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
-    if (!file)
+    if ((p = strrchr(pFile->included_by->filename, '/')))
     {
-        char *p = strrchr(pFile->included_by->filename, '/');
-        if (p)
-        {
-            int l = p - pFile->included_by->filename + 1;
-            char *filename = xmalloc(l + strlen(pFile->name) + 1);
-            memcpy( filename, pFile->included_by->filename, l );
-            strcpy( filename + l, pFile->name );
-            if ((file = fopen( filename, "r" ))) pFile->filename = filename;
-            else free( filename );
-        }
+        int l = p - pFile->included_by->filename + 1;
+        filename = xmalloc(l + strlen(pFile->name) + 1);
+        memcpy( filename, pFile->included_by->filename, l );
+        strcpy( filename + l, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
     }
 
-    if (!file)
+    if (pFile->included_by->system) return NULL;  /* ignore if included by a system file */
+
+    perror( pFile->name );
+    while (pFile->included_by)
     {
-        if (pFile->included_by->system) return NULL;  /* ignore if included by a system file */
-        perror( pFile->name );
-        while (pFile->included_by)
-        {
-            fprintf( stderr, "  %s was first included from %s:%d\n",
-                     pFile->name, pFile->included_by->name, pFile->included_line );
-            pFile = pFile->included_by;
-        }
-        exit(1);
+        fprintf( stderr, "  %s was first included from %s:%d\n",
+                 pFile->name, pFile->included_by->name, pFile->included_line );
+        pFile = pFile->included_by;
     }
+    exit(1);
+
+found:
+    pFile->filename = filename;
     return file;
 }
 
@@ -629,6 +670,10 @@ int main( int argc, char *argv[] )
         }
         else i++;
     }
+
+    /* ignore redundant source paths */
+    if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
+    if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
 
     /* get rid of absolute paths that don't point into the source dir */
     LIST_FOR_EACH_ENTRY_SAFE( path, next, &paths, INCL_PATH, entry )
