@@ -34,7 +34,7 @@ BEGIN
     POPUP "파일(&F)"
     BEGIN
 	MENUITEM "열기(&O)",			IDM_OPEN
-        MENUITEM "나가기(&x)",                       IDM_EXIT
+        MENUITEM "나가기(&X)",                       IDM_EXIT
     END
     POPUP "회전(&P)"
     BEGIN
