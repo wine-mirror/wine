@@ -80,6 +80,18 @@ static inline LPWSTR strdupW( LPCWSTR str )
     return r;
 }
 
+static inline LPWSTR co_strdupW( LPCWSTR str )
+{
+    LPWSTR r;
+
+    if (!str)
+        return NULL;
+    r = CoTaskMemAlloc((lstrlenW(str)+1) * sizeof (WCHAR));
+    if (r)
+        lstrcpyW(r, str);
+    return r;
+}
+
 static inline void __GetMoniker(HlinkImpl* This, IMoniker** moniker)
 {
     *moniker = NULL;
@@ -281,13 +293,9 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
 
     if (ppwzTarget)
     {
-        if (This->Target)
-        {
-            *ppwzTarget = HeapAlloc(GetProcessHeap(), 0,
-                    (lstrlenW(This->Target)+1) * sizeof(WCHAR));
-            lstrcpyW(*ppwzTarget, This->Target);
-        }
-        else
+        *ppwzTarget = co_strdupW( This->Target );
+
+        if (!This->Target)
         {
             IMoniker* mon;
             __GetMoniker(This, &mon);
@@ -296,34 +304,16 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
                 IBindCtx *pbc;
 
                 CreateBindCtx( 0, &pbc);
-                IMoniker_GetDisplayName(mon, pbc, NULL, &This->Target);
+                IMoniker_GetDisplayName(mon, pbc, NULL, ppwzTarget);
                 IBindCtx_Release(pbc);
-                *ppwzTarget = HeapAlloc(GetProcessHeap(), 0,
-                        (lstrlenW(This->Target)+1) * sizeof(WCHAR));
-                lstrcpyW(*ppwzTarget, This->Target);
                 IMoniker_Release(mon);
             }
             else
-            {
                 FIXME("Unhandled case, no set Target and no moniker\n");
-                *ppwzTarget = NULL;
-            }
         }
     }
     if (ppwzLocation)
-    {
-        if (This->Location)
-        {
-            *ppwzLocation = HeapAlloc(GetProcessHeap(), 0,
-                    (lstrlenW(This->Location)+1) * sizeof(WCHAR));
-            lstrcpyW(*ppwzLocation, This->Location);
-        }
-        else
-        {
-            FIXME("Unhandled case, no explicitly set Location\n");
-            *ppwzLocation = NULL;
-        }
-    }
+        *ppwzLocation = co_strdupW( This->Location );
 
     TRACE("(Target: %s Location: %s)\n",
             (ppwzTarget)?debugstr_w(*ppwzTarget):"<NULL>",
@@ -355,11 +345,7 @@ static HRESULT WINAPI IHlink_fnGetFriendlyName (IHlink* iface,
     /* FIXME: Only using explicitly set and cached friendly names */
 
     if (This->FriendlyName)
-    {
-        *ppwzFriendlyName = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(This->FriendlyName)+1) * sizeof(WCHAR));
-        lstrcpyW(*ppwzFriendlyName, This->FriendlyName);
-    }
+        *ppwzFriendlyName = co_strdupW( This->FriendlyName );
     else
     {
         IMoniker *moniker;
@@ -398,14 +384,7 @@ static HRESULT WINAPI IHlink_fnGetTargetFrameName(IHlink* iface,
     HlinkImpl  *This = (HlinkImpl*)iface;
 
     TRACE("(%p)->(%p)\n", This, ppwzTargetFrameName);
-    if (This->TargetFrameName)
-    {
-        *ppwzTargetFrameName = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(This->TargetFrameName)+1) * sizeof(WCHAR));
-        lstrcpyW(*ppwzTargetFrameName, This->TargetFrameName);
-    }
-    else
-        *ppwzTargetFrameName = NULL;
+    *ppwzTargetFrameName = co_strdupW( This->TargetFrameName );
 
     return S_OK;
 }
