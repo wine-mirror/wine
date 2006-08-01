@@ -795,6 +795,7 @@ static void test_Directory(void)
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     char windir[MAX_PATH];
+    static CHAR cmdline[] = "winver.exe";
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -816,13 +817,13 @@ static void test_Directory(void)
     assert(DeleteFileA(resfile) != 0);
 
     /* search PATH for the exe if directory is NULL */
-    ok(CreateProcessA(NULL, "winver.exe", NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
+    ok(CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     ok(TerminateProcess(info.hProcess, 0), "Child process termination\n");
 
     /* if any directory is provided, don't search PATH, error on bad directory */
     SetLastError(0xdeadbeef);
     memset(&info, 0, sizeof(info));
-    ok(!CreateProcessA(NULL, "winver.exe", NULL, NULL, FALSE, 0L,
+    ok(!CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L,
                        NULL, "non\\existent\\directory", &startup, &info), "CreateProcess\n");
     ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %ld\n", GetLastError());
     ok(!TerminateProcess(info.hProcess, 0), "Child process should not exist\n");
