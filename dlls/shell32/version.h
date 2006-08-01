@@ -25,4 +25,4 @@
 
 /* FIXME: when libs/wpp gets fixed to support concatenation we can remove
  * this and define it in version.rc */
-#define WINE_FILEVERSION "5.0.3900.6975"
+#define WINE_FILEVERSION_STR "5.0.3900.6975"
