@@ -22,6 +22,7 @@
 #define NO_LIBWINE_PORT
 #include "wine/port.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -63,6 +64,7 @@ static const char *SrcDir = NULL;
 static const char *OutputFileName = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *ProgramName;
+static int input_line;
 
 static const char Usage[] =
     "Usage: %s [options] [files]\n"
@@ -89,7 +91,7 @@ static void fatal_error( const char *msg, ... )
 /*******************************************************************
  *         xmalloc
  */
-static void *xmalloc( int size )
+static void *xmalloc( size_t size )
 {
     void *res;
     if (!(res = malloc (size ? size : 1)))
@@ -97,6 +99,18 @@ static void *xmalloc( int size )
     return res;
 }
 
+
+/*******************************************************************
+ *         xrealloc
+ */
+void *xrealloc (void *ptr, size_t size)
+{
+    void *res;
+    assert( size );
+    if (!(res = realloc( ptr, size )))
+        fatal_error( "%s: Virtual memory exhausted.\n", ProgramName );
+    return res;
+}
 
 /*******************************************************************
  *         xstrdup
@@ -119,6 +133,50 @@ static char *get_extension( char *filename )
     return ext;
 }
 
+
+/*******************************************************************
+ *         get_line
+ */
+static char *get_line( FILE *file )
+{
+    static char *buffer;
+    static unsigned int size;
+
+    if (!size)
+    {
+        size = 1024;
+        buffer = xmalloc( size );
+    }
+    if (!fgets( buffer, size, file )) return NULL;
+    input_line++;
+
+    for (;;)
+    {
+        char *p = buffer + strlen(buffer);
+        /* if line is larger than buffer, resize buffer */
+        while (p == buffer + size - 1 && p[-1] != '\n')
+        {
+            buffer = xrealloc( buffer, size * 2 );
+            fgets( buffer + size - 1, size + 1, file );
+            p = buffer + strlen(buffer);
+            size *= 2;
+        }
+        if (p > buffer && p[-1] == '\n')
+        {
+            *(--p) = 0;
+            if (p > buffer && p[-1] == '\r') *(--p) = 0;
+            if (p > buffer && p[-1] == '\\')
+            {
+                *(--p) = 0;
+                /* line ends in backslash, read continuation line */
+                fgets( p, size - (p - buffer), file );
+                input_line++;
+                continue;
+            }
+        }
+        return buffer;
+    }
+}
 
 /*******************************************************************
  *         is_generated
@@ -319,15 +377,13 @@ static FILE *open_include_file( INCL_FILE *pFile )
  */
 static void parse_idl_file( INCL_FILE *pFile, FILE *file )
 {
-    char buffer[1024];
-    char *include;
-    int line = 0;
+    char *buffer, *include;
 
-    while (fgets( buffer, sizeof(buffer)-1, file ))
+    input_line = 0;
+    while ((buffer = get_line( file )))
     {
         char quote;
         char *p = buffer;
-        line++;
         while (*p && isspace(*p)) p++;
 
         if (!strncmp( p, "import", 6 ))
@@ -351,9 +407,9 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file )
         include = p;
         while (*p && (*p != quote)) p++;
         if (!*p) fatal_error( "%s:%d: Malformed #include or import directive\n",
-                              pFile->filename, line );
+                              pFile->filename, input_line );
         *p = 0;
-        add_include( pFile, include, line, (quote == '>') );
+        add_include( pFile, include, input_line, (quote == '>') );
     }
 }
 
@@ -362,15 +418,13 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file )
  */
 static void parse_c_file( INCL_FILE *pFile, FILE *file )
 {
-    char buffer[1024];
-    char *include;
-    int line = 0;
+    char *buffer, *include;
 
-    while (fgets( buffer, sizeof(buffer)-1, file ))
+    input_line = 0;
+    while ((buffer = get_line( file )))
     {
         char quote;
         char *p = buffer;
-        line++;
         while (*p && isspace(*p)) p++;
         if (*p++ != '#') continue;
         while (*p && isspace(*p)) p++;
@@ -383,9 +437,9 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
         include = p;
         while (*p && (*p != quote)) p++;
         if (!*p) fatal_error( "%s:%d: Malformed #include directive\n",
-                              pFile->filename, line );
+                              pFile->filename, input_line );
         *p = 0;
-        add_include( pFile, include, line, (quote == '>') );
+        add_include( pFile, include, input_line, (quote == '>') );
     }
 }
 
@@ -485,11 +539,11 @@ static void output_dependencies(void)
     INCL_FILE *pFile;
     int i, column;
     FILE *file = NULL;
-    char buffer[1024];
+    char *buffer;
 
     if (Separator && ((file = fopen( OutputFileName, "r+" ))))
     {
-        while (fgets( buffer, sizeof(buffer), file ))
+        while ((buffer = get_line( file )))
             if (!strncmp( buffer, Separator, strlen(Separator) )) break;
         ftruncate( fileno(file), ftell(file) );
         fseek( file, 0L, SEEK_END );
