@@ -66,12 +66,34 @@ static void test_lsa(void)
     ok(status == STATUS_SUCCESS, "LsaOpenPolicy() returned 0x%08lx\n", status);
 
     if (status == STATUS_SUCCESS) {
-        PPOLICY_PRIMARY_DOMAIN_INFO domain_info;
+        PPOLICY_AUDIT_EVENTS_INFO audit_events_info;
+        PPOLICY_PRIMARY_DOMAIN_INFO primary_domain_info;
+        PPOLICY_ACCOUNT_DOMAIN_INFO account_domain_info;
+        PPOLICY_DNS_DOMAIN_INFO dns_domain_info;
 
-        status = pLsaQueryInformationPolicy(handle, PolicyPrimaryDomainInformation, (PVOID*)&domain_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08lx\n", status);
-        if (status == STATUS_SUCCESS)
-            pLsaFreeMemory((LPVOID)domain_info);
+        status = pLsaQueryInformationPolicy(handle, PolicyAuditEventsInformation, (PVOID*)&audit_events_info);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08lx\n", status);
+        if (status == STATUS_SUCCESS) {
+            pLsaFreeMemory((LPVOID)audit_events_info);
+        }
+
+        status = pLsaQueryInformationPolicy(handle, PolicyPrimaryDomainInformation, (PVOID*)&primary_domain_info);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyPrimaryDomainInformation) failed, returned 0x%08lx\n", status);
+        if (status == STATUS_SUCCESS) {
+            pLsaFreeMemory((LPVOID)primary_domain_info);
+        }
+
+        status = pLsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&account_domain_info);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) failed, returned 0x%08lx\n", status);
+        if (status == STATUS_SUCCESS) {
+            pLsaFreeMemory((LPVOID)account_domain_info);
+        }
+
+        status = pLsaQueryInformationPolicy(handle, PolicyDnsDomainInformation, (PVOID*)&dns_domain_info);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08lx\n", status);
+        if (status == STATUS_SUCCESS) {
+            pLsaFreeMemory((LPVOID)dns_domain_info);
+        }
 
         status = pLsaClose(handle);
         ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);
