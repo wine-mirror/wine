@@ -68,6 +68,18 @@ static inline HlinkImpl* HlinkImpl_from_IDataObject( IDataObject* iface)
     return (HlinkImpl*) ((CHAR*)iface - FIELD_OFFSET(HlinkImpl, lpDOVtbl));
 }
 
+static inline LPWSTR strdupW( LPCWSTR str )
+{
+    LPWSTR r;
+
+    if (!str)
+        return NULL;
+    r = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(str)+1) * sizeof (WCHAR));
+    if (r)
+        lstrcpyW(r, str);
+    return r;
+}
+
 static inline void __GetMoniker(HlinkImpl* This, IMoniker** moniker)
 {
     *moniker = NULL;
@@ -216,13 +228,7 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
         IMoniker_AddRef(This->Moniker);
 
     HeapFree(GetProcessHeap(), 0, This->Location);
-    This->Location = NULL;
-    if (pwzLocation)
-    {
-        This->Location = HeapAlloc(GetProcessHeap(), 0,
-                          (lstrlenW(pwzLocation)+1)*sizeof(WCHAR));
-        lstrcpyW(This->Location, pwzLocation);
-    }
+    This->Location = strdupW( pwzLocation );
 
     return S_OK;
 }
@@ -238,25 +244,12 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
     if (grfHLSETF & HLINKSETF_TARGET)
     {
         HeapFree(GetProcessHeap(), 0, This->Target);
-        This->Target = NULL;
-        if (pwzTarget)
-        {
-            This->Target = HeapAlloc(GetProcessHeap(), 0,
-                                     (lstrlenW(pwzTarget)+1)*sizeof(WCHAR));
-            lstrcpyW(This->Target, pwzTarget);
-        }
+        This->Target = strdupW( pwzTarget );
     }
     if (grfHLSETF & HLINKSETF_LOCATION)
     {
         HeapFree(GetProcessHeap(), 0, This->Location);
-        This->Location = NULL;
-        if (pwzLocation)
-        {
-            This->Location =
-                HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwzLocation)+1)
-                        *sizeof(WCHAR));
-            lstrcpyW(This->Location, pwzLocation);
-        }
+        This->Location = strdupW( pwzLocation );
     }
 
     return S_OK;
@@ -347,9 +340,7 @@ static HRESULT WINAPI IHlink_fnSetFriendlyName (IHlink *iface,
     TRACE("(%p) -> (%s)\n", This, debugstr_w(pwzFriendlyName));
 
     HeapFree(GetProcessHeap(), 0, This->FriendlyName);
-    This->FriendlyName = HeapAlloc(GetProcessHeap(), 0,
-            (lstrlenW(pwzFriendlyName)+1) * sizeof(WCHAR));
-    lstrcpyW(This->FriendlyName, pwzFriendlyName);
+    This->FriendlyName = strdupW( pwzFriendlyName );
 
     return S_OK;
 }
@@ -396,9 +387,7 @@ static HRESULT WINAPI IHlink_fnSetTargetFrameName(IHlink* iface,
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzTargetFramename));
 
     HeapFree(GetProcessHeap(), 0, This->TargetFrameName);
-    This->TargetFrameName = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(pwzTargetFramename)+1) * sizeof(WCHAR));
-    lstrcpyW(This->TargetFrameName, pwzTargetFramename);
+    This->TargetFrameName = strdupW( pwzTargetFramename );
 
     return S_OK;
 }
