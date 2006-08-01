@@ -59,6 +59,7 @@ typedef struct tagMSICOMPONENT
     INSTALLSTATE ActionRequest;
     INSTALLSTATE Action;
 
+    BOOL ForceLocalState;
     BOOL Enabled;
     INT  Cost;
     INT  RefCount;

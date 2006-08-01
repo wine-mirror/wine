@@ -1328,6 +1328,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
 
     if (file->Attributes & msidbFileAttributesCompressed)
     {
+        file->Component->ForceLocalState = TRUE;
         file->Component->Action = INSTALLSTATE_LOCAL;
         file->Component->ActionRequest = INSTALLSTATE_LOCAL;
     }
@@ -1754,6 +1755,12 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                         component->ActionRequest = INSTALLSTATE_ABSENT;
                     }
                 }
+            }
+
+            if (component->ForceLocalState)
+            {
+                feature->Action = INSTALLSTATE_LOCAL;
+                feature->ActionRequest = INSTALLSTATE_LOCAL;
             }
         }
     } 
