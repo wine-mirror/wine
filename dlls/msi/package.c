@@ -668,6 +668,10 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
 
         action = MSI_RecordGetString(record, 1);
         action_text = MSI_RecordGetString(record, 2);
+
+        if (!action || !action_text)
+            return IDOK;
+
         deformat_string(package, action_text, &deformatted);
 
         len = strlenW(timet) + strlenW(action) + strlenW(template_s);
