@@ -2385,7 +2385,7 @@ BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT firstChar, UINT count,
     if (ret)
     {
         /* convert device units to logical */
-        for( i = firstChar; i <= count; i++, abc++ ) {
+        for( i = 0; i < count; i++, abc++ ) {
             abc->abcA = INTERNAL_XDSTOWS(dc, abc->abcA);
             abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
             abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
