@@ -132,7 +132,7 @@ static BOOL file_good_for_bucket(TRASH_BUCKET *pBucket, struct stat *file_stat)
 {
     if (pBucket->device != file_stat->st_dev)
         return FALSE;
-    return S_ISREG(file_stat->st_mode);
+    return TRUE;
 }
 
 BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
