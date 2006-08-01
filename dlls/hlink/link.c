@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "unknwn.h"
 #include "objidl.h"
+#include "shellapi.h"
 
 #include "wine/debug.h"
 #include "hlink.h"
@@ -427,6 +428,18 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
             IHlinkTarget_SetBrowseContext(target, phbc);
             IHlinkTarget_Navigate(target, grfHLNF, This->Location);
             IHlinkTarget_Release(target);
+        }
+        else
+        {
+            static const WCHAR szOpen[] = {'o','p','e','n',0};
+            LPWSTR target = NULL;
+
+            r = IHlink_GetStringReference(iface, HLINKGETREF_DEFAULT, &target, NULL);
+            if (SUCCEEDED(r) && target)
+            {
+                ShellExecuteW(NULL, szOpen, target, NULL, NULL, SW_SHOW);
+                CoTaskMemFree(target);
+            }
         }
 
         RevokeBindStatusCallback(bcxt, pbsc);
