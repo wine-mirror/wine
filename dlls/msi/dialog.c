@@ -2598,7 +2598,7 @@ UINT msi_dialog_run_message_loop( msi_dialog *dialog )
     {
         while( !dialog->finished )
         {
-            MsgWaitForMultipleObjects( 0, NULL, 0, INFINITE, QS_ALLEVENTS );
+            MsgWaitForMultipleObjects( 0, NULL, 0, INFINITE, QS_ALLINPUT );
             msi_process_pending_messages( dialog->hwnd );
         }
     }
