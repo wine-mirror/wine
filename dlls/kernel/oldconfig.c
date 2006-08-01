@@ -96,7 +96,7 @@ static ULONG allocate_default_keys(void)
  * NOTE: programs usually read these registry entries after sending the
  *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
  */
-static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPSTR lpDriver, UINT uDriveType,
+static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uDriveType,
     LPSTR lpDriveName, LPSTR lpUnixDeviceName )
 {
     static UCHAR uCdromNumber = 0;

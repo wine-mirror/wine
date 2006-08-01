@@ -323,7 +323,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
 /***********************************************************************
  *           GetThunkStuff    (KERNEL32.53)
  */
-LPVOID WINAPI GetThunkStuff(LPSTR module, LPSTR func)
+LPVOID WINAPI GetThunkStuff(LPCSTR module, LPCSTR func)
 {
     return _loadthunk(module, func, "<kernel>", NULL, 0L);
 }
