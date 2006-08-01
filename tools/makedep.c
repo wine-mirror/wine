@@ -60,7 +60,9 @@ typedef struct _INCL_PATH
 
 static struct list paths = LIST_INIT(paths);
 
-static const char *SrcDir = NULL;
+static const char *src_dir;
+static const char *top_src_dir;
+static const char *top_obj_dir;
 static const char *OutputFileName = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *ProgramName;
@@ -71,6 +73,8 @@ static const char Usage[] =
     "Options:\n"
     "   -Idir   Search for include files in directory 'dir'\n"
     "   -Cdir   Search for source files in directory 'dir'\n"
+    "   -Sdir   Set the top source directory\n"
+    "   -Sdir   Set the top object directory\n"
     "   -fxxx   Store output in file 'xxx' (default: Makefile)\n"
     "   -sxxx   Use 'xxx' as separator (default: \"### Dependencies\")\n";
 
@@ -299,10 +303,10 @@ static FILE *open_src_file( INCL_FILE *pFile )
         return file;
     }
     /* now try in source dir */
-    if (SrcDir)
+    if (src_dir)
     {
-        pFile->filename = xmalloc( strlen(SrcDir) + strlen(pFile->name) + 2 );
-        strcpy( pFile->filename, SrcDir );
+        pFile->filename = xmalloc( strlen(src_dir) + strlen(pFile->name) + 2 );
+        strcpy( pFile->filename, src_dir );
         strcat( pFile->filename, "/" );
         strcat( pFile->filename, pFile->name );
         file = fopen( pFile->filename, "r" );
@@ -580,8 +584,13 @@ static void parse_option( const char *opt )
         if (opt[2]) add_include_path( opt + 2 );
         break;
     case 'C':
-        if (opt[2]) SrcDir = opt + 2;
-        else SrcDir = NULL;
+        src_dir = opt + 2;
+        break;
+    case 'S':
+        top_src_dir = opt + 2;
+        break;
+    case 'T':
+        top_obj_dir = opt + 2;
         break;
     case 'f':
         if (opt[2]) OutputFileName = opt + 2;
@@ -604,18 +613,40 @@ static void parse_option( const char *opt )
 int main( int argc, char *argv[] )
 {
     INCL_FILE *pFile;
+    INCL_PATH *path, *next;
+    int i, j;
 
     ProgramName = argv[0];
-    while (argc > 1)
+
+    i = 1;
+    while (i < argc)
     {
-        if (*argv[1] == '-') parse_option( argv[1] );
-        else
+        if (argv[i][0] == '-')
         {
-            pFile = add_src_file( argv[1] );
-            parse_file( pFile, 1 );
+            parse_option( argv[i] );
+            for (j = i; j < argc; j++) argv[j] = argv[j+1];
+            argc--;
         }
-        argc--;
-        argv++;
+        else i++;
+    }
+
+    /* get rid of absolute paths that don't point into the source dir */
+    LIST_FOR_EACH_ENTRY_SAFE( path, next, &paths, INCL_PATH, entry )
+    {
+        if (path->name[0] != '/') continue;
+        if (top_src_dir)
+        {
+            if (!strncmp( path->name, top_src_dir, strlen(top_src_dir) )) continue;
+            if (path->name[strlen(top_src_dir)] == '/') continue;
+        }
+        list_remove( &path->entry );
+        free( path );
+    }
+
+    for (i = 1; i < argc; i++)
+    {
+        pFile = add_src_file( argv[i] );
+        parse_file( pFile, 1 );
     }
     LIST_FOR_EACH_ENTRY( pFile, &includes, INCL_FILE, entry ) parse_file( pFile, 0 );
     if (!list_empty( &sources )) output_dependencies();
