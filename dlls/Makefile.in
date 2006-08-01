@@ -475,6 +475,7 @@ IMPORT_LIBS = \
 	gdi/libgdi32.$(IMPLIBEXT) \
 	glu32/libglu32.$(IMPLIBEXT) \
 	glut32/libglut32.$(IMPLIBEXT) \
+	hlink/libhlink.$(IMPLIBEXT) \
 	icmp/libicmp.$(IMPLIBEXT) \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
@@ -668,6 +669,9 @@ glu32/libglu32.$(IMPLIBEXT): glu32/glu32.spec $(WINEBUILD)
 
 glut32/libglut32.$(IMPLIBEXT): glut32/glut32.spec $(WINEBUILD)
 	@cd glut32 && $(MAKE) libglut32.$(IMPLIBEXT)
+
+hlink/libhlink.$(IMPLIBEXT): hlink/hlink.spec $(WINEBUILD)
+	@cd hlink && $(MAKE) libhlink.$(IMPLIBEXT)
 
 icmp/libicmp.$(IMPLIBEXT): icmp/icmp.spec $(WINEBUILD)
 	@cd icmp && $(MAKE) libicmp.$(IMPLIBEXT)

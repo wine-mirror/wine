@@ -94,6 +94,7 @@ dsound/libdsound.def
 gdi/libgdi32.def
 glu32/libglu32.def
 glut32/libglut32.def
+hlink/libhlink.def
 icmp/libicmp.def
 imagehlp/libimagehlp.def
 imm32/libimm32.def

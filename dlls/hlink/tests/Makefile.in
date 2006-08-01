@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = hlink.dll
+IMPORTS   = hlink ole32 kernel32
+EXTRALIBS = -luuid
+
+CTESTS = \
+	hlink.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

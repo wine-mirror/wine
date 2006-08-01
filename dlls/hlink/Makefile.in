@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hlink.dll
 IMPORTS   = ole32 advapi32 kernel32
+IMPORTLIB = libhlink.$(IMPLIBEXT)
 DELAYIMPORTS = urlmon
 EXTRALIBS = -luuid
 
@@ -11,6 +12,8 @@ C_SRCS = \
 	browse_ctx.c \
 	hlink_main.c \
 	link.c
+
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 

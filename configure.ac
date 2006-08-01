@@ -1617,6 +1617,7 @@ dlls/glut32/Makefile
 dlls/gphoto2.ds/Makefile
 dlls/hhctrl.ocx/Makefile
 dlls/hlink/Makefile
+dlls/hlink/tests/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
 dlls/ifsmgr.vxd/Makefile
