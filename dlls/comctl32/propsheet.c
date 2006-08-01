@@ -3348,6 +3348,8 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	GetObjectW(psInfo->ppshheader.u4.hbmWatermark, sizeof(BITMAP), (LPVOID)&bm);
 	hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u4.hbmWatermark);
 
+        /* The watermark is truncated to a width of 164 pixels */
+        r.right = min(r.right, 164);
 	BitBlt(hdc, 0, offsety, min(bm.bmWidth, r.right),
 	       min(bm.bmHeight, r.bottom), hdcSrc, 0, 0, SRCCOPY);
 
