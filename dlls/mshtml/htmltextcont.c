@@ -115,8 +115,21 @@ static HRESULT WINAPI HTMLTextContainer_get_scrollWidth(IHTMLTextContainer *ifac
 static HRESULT WINAPI HTMLTextContainer_put_scrollTop(IHTMLTextContainer *iface, long v)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, v);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    nsresult nsres;
+
+    TRACE("(%p)->(%ld)\n", This, v);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->element->nselem, &IID_nsIDOMNSHTMLElement,
+                                             (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMNSHTMLElement_SetScrollTop(nselem, v);
+        nsIDOMNSHTMLElement_Release(nselem);
+    }else {
+        ERR("Could not get nsIDOMNSHTMLElement interface: %08lx\n", nsres);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTextContainer_get_scrollTop(IHTMLTextContainer *iface, long *p)
@@ -129,8 +142,21 @@ static HRESULT WINAPI HTMLTextContainer_get_scrollTop(IHTMLTextContainer *iface,
 static HRESULT WINAPI HTMLTextContainer_put_scrollLeft(IHTMLTextContainer *iface, long v)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, v);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    nsresult nsres;
+
+    TRACE("(%p)->(%ld)\n", This, v);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->element->nselem, &IID_nsIDOMNSHTMLElement,
+                                             (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMNSHTMLElement_SetScrollLeft(nselem, v);
+        nsIDOMNSHTMLElement_Release(nselem);
+    }else {
+        ERR("Could not get nsIDOMNSHTMLElement interface: %08lx\n", nsres);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTextContainer_get_scrollLeft(IHTMLTextContainer *iface, long *p)

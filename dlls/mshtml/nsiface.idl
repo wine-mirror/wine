@@ -465,6 +465,30 @@ interface nsIDOMHTMLElement : nsIDOMElement
 
 [
     object,
+    uuid(da83b2ec-8264-4410-8496-ada3acd2ae42)
+]
+interface nsIDOMNSHTMLElement : nsISupports
+{
+    nsresult GetOffsetTop(PRInt32 *aOffsetTop);
+    nsresult GetOffsetLeft(PRInt32 *aOffsetLeft);
+    nsresult GetOffsetWidth(PRInt32 *aOffsetWidth);
+    nsresult GetOffsetHeight(PRInt32 *aOffsetHeight);
+    nsresult GetOffsetParent(nsIDOMElement **aOffsetParent);
+    nsresult GetInnerHTML(nsAString *aInnerHTML);
+    nsresult SetInnerHTML(const nsAString *aInnerHTML);
+    nsresult GetScrollTop(PRInt32 *aScrollTop);
+    nsresult SetScrollTop(PRInt32 aScrollTop);
+    nsresult GetScrollLeft(PRInt32 *aScrollLeft);
+    nsresult SetScrollLeft(PRInt32 aScrollLeft);
+    nsresult GetScrollHeight(PRInt32 *aScrollHeight);
+    nsresult GetScrollWidth(PRInt32 *aScrollWidth);
+    nsresult GetClientHeight(PRInt32 *aClientHeight);
+    nsresult GetClientWidth(PRInt32 *aClientWidth);
+    nsresult ScrollIntoView(PRBool top);
+}
+
+[
+    object,
     uuid(a6cf9075-15b3-11d2-932e-00805f8add32)
 ]
 interface nsIDOMDocument : nsIDOMNode
