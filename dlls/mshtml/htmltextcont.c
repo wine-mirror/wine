@@ -40,19 +40,19 @@ static HRESULT WINAPI HTMLTextContainer_QueryInterface(IHTMLTextContainer *iface
                                                        REFIID riid, void **ppv)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IUnknown_QueryInterface(This->impl, riid, ppv);
+    return IHTMLElement_QueryInterface(HTMLELEM(This->element), riid, ppv);
 }
 
 static ULONG WINAPI HTMLTextContainer_AddRef(IHTMLTextContainer *iface)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IUnknown_AddRef(This->impl);
+    return IHTMLElement_AddRef(HTMLELEM(This->element));
 }
 
 static ULONG WINAPI HTMLTextContainer_Release(IHTMLTextContainer *iface)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IUnknown_Release(This->impl);
+    return IHTMLElement_Release(HTMLELEM(This->element));
 }
 
 static HRESULT WINAPI HTMLTextContainer_GetTypeInfoCount(IHTMLTextContainer *iface, UINT *pctinfo)
@@ -175,8 +175,8 @@ static const IHTMLTextContainerVtbl HTMLTextContainerVtbl = {
     HTMLTextContainer_get_onscroll
 };
 
-void HTMLTextContainer_Init(HTMLTextContainer *This, IUnknown *impl)
+void HTMLTextContainer_Init(HTMLTextContainer *This, HTMLElement *elem)
 {
     This->lpHTMLTextContainerVtbl = &HTMLTextContainerVtbl;
-    This->impl = impl;
+    This->element = elem;
 }

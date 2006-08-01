@@ -204,7 +204,7 @@ typedef struct {
 typedef struct {
     const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
 
-    IUnknown *impl;
+    HTMLElement *element;
 } HTMLTextContainer;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
@@ -316,7 +316,7 @@ void HTMLTextAreaElement_Create(HTMLElement*);
 
 void HTMLElement2_Init(HTMLElement*);
 
-void HTMLTextContainer_Init(HTMLTextContainer*,IUnknown*);
+void HTMLTextContainer_Init(HTMLTextContainer*,HTMLElement*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);

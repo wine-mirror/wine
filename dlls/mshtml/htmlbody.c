@@ -441,7 +441,7 @@ void HTMLBodyElement_Create(HTMLElement *element)
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->element = element;
 
-    HTMLTextContainer_Init(&ret->text_container, (IUnknown*)HTMLBODY(ret));
+    HTMLTextContainer_Init(&ret->text_container, element);
 
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);
