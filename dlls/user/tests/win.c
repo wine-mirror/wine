@@ -3831,6 +3831,7 @@ static int check_error(DWORD actual, DWORD expected)
 static void test_SetWindowLong(void)
 {
     LONG_PTR retval;
+    WNDPROC old_window_procW;
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(NULL, GWLP_WNDPROC, 0);
@@ -3854,11 +3855,15 @@ static void test_SetWindowLong(void)
         "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%x\n", retval);
     ok(!IsWindowUnicode(hwndMain), "hwndMain shouldn't be Unicode\n");
 
+    old_window_procW = (WNDPROC)GetWindowLongPtrW(hwndMain, GWLP_WNDPROC);
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtrW(hwndMain, GWLP_WNDPROC, 0);
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
     {
         ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %ld\n", GetLastError());
+        ok(retval != 0, "SetWindowLongPtr error %ld\n", GetLastError());
+        ok((WNDPROC)retval == old_window_procW,
+            "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%x\n", retval);
         ok(IsWindowUnicode(hwndMain), "hwndMain should now be Unicode\n");
 
         /* set it back to ANSI */
