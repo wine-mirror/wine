@@ -1139,8 +1139,37 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
   IFont* iface,
   IFont* pFontOther)
 {
-  FIXME("(%p, %p), stub!\n",iface,pFontOther);
-  return E_NOTIMPL;
+  OLEFontImpl *left = (OLEFontImpl *)iface;
+  OLEFontImpl *right = (OLEFontImpl *)pFontOther;
+  HRESULT hres;
+  INT left_len,right_len;
+
+  if((iface == NULL) || (pFontOther == NULL))
+    return E_POINTER;
+  else if (left->description.cySize.s.Lo != right->description.cySize.s.Lo)
+    return S_FALSE;
+  else if (left->description.cySize.s.Hi != right->description.cySize.s.Hi)
+    return S_FALSE;
+  else if (left->description.sWeight != right->description.sWeight)
+    return S_FALSE;
+  else if (left->description.sCharset != right->description.sCharset)
+    return S_FALSE;
+  else if (left->description.fItalic != right->description.fItalic)
+    return S_FALSE;
+  else if (left->description.fUnderline != right->description.fUnderline)
+    return S_FALSE;
+  else if (left->description.fStrikethrough != right->description.fStrikethrough)
+    return S_FALSE;
+
+  /* Check from string */
+  left_len = strlenW(left->description.lpstrName);
+  right_len = strlenW(right->description.lpstrName);
+  hres = CompareStringW(0,0,left->description.lpstrName, left_len,
+    right->description.lpstrName, right_len);
+  if (hres != CSTR_EQUAL)
+    return S_FALSE;
+
+  return S_OK;
 }
 
 /************************************************************************

@@ -503,27 +503,21 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_OK,
         "IFont_IsEqual: (EQUAL) Expected S_OK but got 0x%08lx\n",hres);
-    }
     IFont_Release(ifnt2);
 
     /* Check for bad pointer */
     hres = IFont_IsEqual(ifnt,NULL);
-    todo_wine {
     ok(hres == E_POINTER,
         "IFont_IsEqual: (NULL) Expected 0x80004003 but got 0x%08lx\n",hres);
-    }
 
     /* Test strName */
     fd.lpstrName = (WCHAR*)arial_font;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (strName) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.lpstrName = (WCHAR*)system_font;
     IFont_Release(ifnt2);
 
@@ -532,10 +526,8 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Lo font size) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     S(fd.cySize).Lo = 100;
     IFont_Release(ifnt2);
 
@@ -544,10 +536,8 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Hi font size) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     S(fd.cySize).Hi = 100;
     IFont_Release(ifnt2);
 
@@ -556,10 +546,8 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Weight) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.sWeight = 0;
     IFont_Release(ifnt2);
 
@@ -567,10 +555,8 @@ static void test_IsEqual()
     fd.sCharset = 1;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Charset) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.sCharset = 0;
     IFont_Release(ifnt2);
 
@@ -578,10 +564,8 @@ static void test_IsEqual()
     fd.fItalic = 1;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Italic) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.fItalic = 0;
     IFont_Release(ifnt2);
 
@@ -589,10 +573,8 @@ static void test_IsEqual()
     fd.fUnderline = 1;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Underline) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.fUnderline = 0;
     IFont_Release(ifnt2);
 
@@ -600,10 +582,8 @@ static void test_IsEqual()
     fd.fStrikethrough = 1;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
-    todo_wine {
     ok(hres == S_FALSE,
         "IFont_IsEqual: (Strikethrough) Expected S_FALSE but got 0x%08lx\n",hres);
-    }
     fd.fStrikethrough = 0;
     IFont_Release(ifnt2);
 
