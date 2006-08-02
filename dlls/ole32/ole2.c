@@ -129,13 +129,13 @@ static void OLEUTL_ReadRegistryDWORDValue(HKEY regKey, DWORD* pdwValue);
  */
 static void OLEMenu_Initialize(void);
 static void OLEMenu_UnInitialize(void);
-BOOL OLEMenu_InstallHooks( DWORD tid );
-BOOL OLEMenu_UnInstallHooks( DWORD tid );
-OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid );
+static BOOL OLEMenu_InstallHooks( DWORD tid );
+static BOOL OLEMenu_UnInstallHooks( DWORD tid );
+static OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid );
 static BOOL OLEMenu_FindMainMenuIndex( HMENU hMainMenu, HMENU hPopupMenu, UINT *pnPos );
-BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor );
-LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam);
+static BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor );
+static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam);
+static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam);
 
 /******************************************************************************
  * These are the prototypes of the OLE Clipboard initialization methods (in clipboard.c)
@@ -1103,7 +1103,7 @@ HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCl
  *
  * Initializes the OLEMENU data structures.
  */
-static void OLEMenu_Initialize()
+static void OLEMenu_Initialize(void)
 {
 }
 
@@ -1112,7 +1112,7 @@ static void OLEMenu_Initialize()
  *
  * Releases the OLEMENU data structures.
  */
-static void OLEMenu_UnInitialize()
+static void OLEMenu_UnInitialize(void)
 {
 }
 
@@ -1123,7 +1123,7 @@ static void OLEMenu_UnInitialize()
  * RETURNS: TRUE if message hooks were successfully installed
  *          FALSE on failure
  */
-BOOL OLEMenu_InstallHooks( DWORD tid )
+static BOOL OLEMenu_InstallHooks( DWORD tid )
 {
   OleMenuHookItem *pHookItem = NULL;
 
@@ -1172,7 +1172,7 @@ CLEANUP:
  * RETURNS: TRUE if message hooks were successfully installed
  *          FALSE on failure
  */
-BOOL OLEMenu_UnInstallHooks( DWORD tid )
+static BOOL OLEMenu_UnInstallHooks( DWORD tid )
 {
   OleMenuHookItem *pHookItem = NULL;
   OleMenuHookItem **ppHook = &hook_list;
@@ -1214,7 +1214,7 @@ CLEANUP:
  * RETURNS: The pointer and index of the hook table entry for the tid
  *          NULL and -1 for the index if no hooks were installed for this thread
  */
-OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid )
+static OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid )
 {
   OleMenuHookItem *pHookItem = NULL;
 
@@ -1280,7 +1280,7 @@ static BOOL OLEMenu_FindMainMenuIndex( HMENU hMainMenu, HMENU hPopupMenu, UINT *
  * RETURNS: TRUE if the popup menu is part of a server owned group
  *          FALSE if the popup menu is part of a container owned group
  */
-BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor )
+static BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor )
 {
   UINT nPos = 0, nWidth, i;
 
@@ -1319,7 +1319,7 @@ BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor
  * Thread scope WH_CALLWNDPROC hook proc filter function (callback)
  * This is invoked from a message hook installed in OleSetMenuDescriptor.
  */
-LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
 {
   LPCWPSTRUCT pMsg = NULL;
   HOLEMENU hOleMenu = 0;
@@ -1424,7 +1424,7 @@ NEXTHOOK:
  * Thread scope WH_GETMESSAGE hook proc filter function (callback)
  * This is invoked from a message hook installed in OleSetMenuDescriptor.
  */
-LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
 {
   LPMSG pMsg = NULL;
   HOLEMENU hOleMenu = 0;

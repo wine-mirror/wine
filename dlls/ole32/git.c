@@ -94,7 +94,8 @@ static CRITICAL_SECTION git_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /** This destroys it again. It should revoke all the held interfaces first **/
-void StdGlobalInterfaceTable_Destroy(void* self) {
+static void StdGlobalInterfaceTable_Destroy(void* self)
+{
   TRACE("(%p)\n", self);
   FIXME("Revoke held interfaces here\n");
   

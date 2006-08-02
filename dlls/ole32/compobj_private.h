@@ -171,7 +171,6 @@ struct oletls
 /* Global Interface Table Functions */
 
 extern void* StdGlobalInterfaceTable_Construct(void);
-extern void  StdGlobalInterfaceTable_Destroy(void* self);
 extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
 extern void* StdGlobalInterfaceTableInstance;
 

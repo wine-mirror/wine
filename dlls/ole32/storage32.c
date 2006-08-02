@@ -64,6 +64,49 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 static const char rootPropertyName[] = "Root Entry";
 
+/****************************************************************************
+ * Storage32InternalImpl definitions.
+ *
+ * Definition of the implementation structure for the IStorage32 interface.
+ * This one implements the IStorage32 interface for storage that are
+ * inside another storage.
+ */
+struct StorageInternalImpl
+{
+  struct StorageBaseImpl base;
+  /*
+   * There is no specific data for this class.
+   */
+};
+typedef struct StorageInternalImpl StorageInternalImpl;
+
+/* Method definitions for the Storage32InternalImpl class. */
+static StorageInternalImpl* StorageInternalImpl_Construct(StorageImpl* ancestorStorage,
+                                                          DWORD openFlags, ULONG rootTropertyIndex);
+static void StorageImpl_Destroy(StorageBaseImpl* iface);
+static void* StorageImpl_GetBigBlock(StorageImpl* This, ULONG blockIndex);
+static void* StorageImpl_GetROBigBlock(StorageImpl* This, ULONG blockIndex);
+static void StorageImpl_ReleaseBigBlock(StorageImpl* This, void* pBigBlock);
+static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
+static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
+static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
+static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
+static void StorageImpl_SaveFileHeader(StorageImpl* This);
+
+static void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm);
+
+static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex);
+static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This);
+static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex);
+static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex);
+static void Storage32Impl_SetExtDepotBlock(StorageImpl* This, ULONG depotIndex, ULONG blockIndex);
+
+static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This);
+static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This);
+static ULONG BlockChainStream_GetCount(BlockChainStream* This);
+
+static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This);
+
 
 /* OLESTREAM memory structure to use for Get and Put Routines */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
@@ -165,6 +208,44 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm);
 
 extern const IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
 
+
+/****************************************************************************
+ * IEnumSTATSTGImpl definitions.
+ *
+ * Definition of the implementation structure for the IEnumSTATSTGImpl interface.
+ * This class allows iterating through the content of a storage and to find
+ * specific items inside it.
+ */
+struct IEnumSTATSTGImpl
+{
+  const IEnumSTATSTGVtbl *lpVtbl;    /* Needs to be the first item in the struct
+				* since we want to cast this in an IEnumSTATSTG pointer */
+
+  LONG           ref;                   /* Reference count */
+  StorageImpl*   parentStorage;         /* Reference to the parent storage */
+  ULONG          firstPropertyNode;     /* Index of the root of the storage to enumerate */
+
+  /*
+   * The current implementation of the IEnumSTATSTGImpl class uses a stack
+   * to walk the property sets to get the content of a storage. This stack
+   * is implemented by the following 3 data members
+   */
+  ULONG          stackSize;
+  ULONG          stackMaxSize;
+  ULONG*         stackToVisit;
+
+#define ENUMSTATSGT_SIZE_INCREMENT 10
+};
+
+
+static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageImpl* This, ULONG firstPropertyNode);
+static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
+static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, ULONG nodeToPush);
+static ULONG IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
+static ULONG IEnumSTATSTGImpl_FindProperty(IEnumSTATSTGImpl* This, const OLECHAR* lpszPropName,
+                                           StgProperty* buffer);
+static INT IEnumSTATSTGImpl_FindParentProperty(IEnumSTATSTGImpl *This, ULONG childProperty,
+                                               StgProperty *currentProperty, ULONG *propertyId);
 
 
 /************************************************************************
@@ -1675,7 +1756,7 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   StgProperty       parentProperty;
   ULONG             foundPropertyIndexToDelete;
   ULONG             typeOfRelation;
-  ULONG             parentPropertyId;
+  ULONG             parentPropertyId = 0;
 
   TRACE("(%p, %s)\n",
 	iface, debugstr_w(pwcsName));
@@ -1814,7 +1895,7 @@ static HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
  * Internal stream list handlers
  */
 
-void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
+static void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
 {
   TRACE("Stream added (stg=%p strm=%p)\n", stg, strm);
   list_add_tail(&stg->strmHead,&strm->StrmListEntry);
@@ -1826,7 +1907,7 @@ void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm)
   list_remove(&(strm->StrmListEntry));
 }
 
-void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
+static void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
 {
   struct list *cur, *cur2;
   StgStreamImpl *strm=NULL;
@@ -2277,7 +2358,7 @@ static const IStorageVtbl Storage32Impl_Vtbl =
     StorageImpl_Stat
 };
 
-HRESULT StorageImpl_Construct(
+static HRESULT StorageImpl_Construct(
   StorageImpl* This,
   HANDLE       hFile,
   LPCOLESTR    pwcsName,
@@ -2490,7 +2571,7 @@ HRESULT StorageImpl_Construct(
   return hr;
 }
 
-void StorageImpl_Destroy(StorageBaseImpl* iface)
+static void StorageImpl_Destroy(StorageBaseImpl* iface)
 {
   StorageImpl *This = (StorageImpl*) iface;
   TRACE("(%p)\n", This);
@@ -2514,7 +2595,7 @@ void StorageImpl_Destroy(StorageBaseImpl* iface)
  * If the big block depot is filled, this method will enlarge it.
  *
  */
-ULONG StorageImpl_GetNextFreeBigBlock(
+static ULONG StorageImpl_GetNextFreeBigBlock(
   StorageImpl* This)
 {
   ULONG depotBlockIndexPos;
@@ -2647,7 +2728,7 @@ ULONG StorageImpl_GetNextFreeBigBlock(
  * This will create a depot block, essentially it is a block initialized
  * to BLOCK_UNUSEDs.
  */
-void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex)
+static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex)
 {
   BYTE* blockBuffer;
 
@@ -2668,7 +2749,7 @@ void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex)
  * index. This method is only for depot indexes equal or greater than
  * COUNT_BBDEPOTINHEADER.
  */
-ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
+static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
 {
   ULONG depotBlocksPerExtBlock = (This->bigBlockSize / sizeof(ULONG)) - 1;
   ULONG numExtBlocks           = depotIndex - COUNT_BBDEPOTINHEADER;
@@ -2714,9 +2795,7 @@ ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
  * This method is only for depot indexes equal or greater than
  * COUNT_BBDEPOTINHEADER.
  */
-void Storage32Impl_SetExtDepotBlock(StorageImpl* This,
-                                    ULONG depotIndex,
-                                    ULONG blockIndex)
+static void Storage32Impl_SetExtDepotBlock(StorageImpl* This, ULONG depotIndex, ULONG blockIndex)
 {
   ULONG depotBlocksPerExtBlock = (This->bigBlockSize / sizeof(ULONG)) - 1;
   ULONG numExtBlocks           = depotIndex - COUNT_BBDEPOTINHEADER;
@@ -2754,7 +2833,7 @@ void Storage32Impl_SetExtDepotBlock(StorageImpl* This,
  *
  * Creates an extended depot block.
  */
-ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
+static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
 {
   ULONG numExtBlocks           = This->extBigBlockDepotCount;
   ULONG nextExtBlock           = This->extBigBlockDepotStart;
@@ -2808,7 +2887,7 @@ ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
  *
  * This method will flag the specified block as free in the big block depot.
  */
-void  StorageImpl_FreeBigBlock(
+static void StorageImpl_FreeBigBlock(
   StorageImpl* This,
   ULONG          blockIndex)
 {
@@ -2842,7 +2921,7 @@ void  StorageImpl_FreeBigBlock(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT StorageImpl_GetNextBlockInChain(
+static HRESULT StorageImpl_GetNextBlockInChain(
   StorageImpl* This,
   ULONG        blockIndex,
   ULONG*       nextBlockIndex)
@@ -2915,7 +2994,7 @@ HRESULT StorageImpl_GetNextBlockInChain(
  *    - BLOCK_UNUSED: there is no next extended block.
  *    - Any other return values denotes failure.
  */
-ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex)
+static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex)
 {
   ULONG nextBlockIndex   = BLOCK_SPECIAL;
   ULONG depotBlockOffset = This->bigBlockSize - sizeof(ULONG);
@@ -2947,7 +3026,7 @@ ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex)
  * Storage32Impl_SetNextBlockInChain(This, 7, BLOCK_END_OF_CHAIN);
  *
  */
-void  StorageImpl_SetNextBlockInChain(
+static void StorageImpl_SetNextBlockInChain(
           StorageImpl* This,
           ULONG          blockIndex,
           ULONG          nextBlock)
@@ -2995,7 +3074,7 @@ void  StorageImpl_SetNextBlockInChain(
  *
  * This method will read in the file header, i.e. big block index -1.
  */
-HRESULT StorageImpl_LoadFileHeader(
+static HRESULT StorageImpl_LoadFileHeader(
           StorageImpl* This)
 {
   HRESULT hr = STG_E_FILENOTFOUND;
@@ -3113,7 +3192,7 @@ HRESULT StorageImpl_LoadFileHeader(
  *
  * This method will save to the file the header, i.e. big block -1.
  */
-void StorageImpl_SaveFileHeader(
+static void StorageImpl_SaveFileHeader(
           StorageImpl* This)
 {
   BYTE   headerBigBlock[BIG_BLOCK_SIZE];
@@ -3396,7 +3475,7 @@ BOOL StorageImpl_WriteProperty(
   return writeSuccessful;
 }
 
-BOOL StorageImpl_ReadBigBlock(
+static BOOL StorageImpl_ReadBigBlock(
   StorageImpl* This,
   ULONG          blockIndex,
   void*          buffer)
@@ -3417,7 +3496,7 @@ BOOL StorageImpl_ReadBigBlock(
   return FALSE;
 }
 
-BOOL StorageImpl_WriteBigBlock(
+static BOOL StorageImpl_WriteBigBlock(
   StorageImpl* This,
   ULONG          blockIndex,
   void*          buffer)
@@ -3438,21 +3517,21 @@ BOOL StorageImpl_WriteBigBlock(
   return FALSE;
 }
 
-void* StorageImpl_GetROBigBlock(
+static void* StorageImpl_GetROBigBlock(
   StorageImpl* This,
   ULONG          blockIndex)
 {
   return BIGBLOCKFILE_GetROBigBlock(This->bigBlockFile, blockIndex);
 }
 
-void* StorageImpl_GetBigBlock(
+static void* StorageImpl_GetBigBlock(
   StorageImpl* This,
   ULONG          blockIndex)
 {
   return BIGBLOCKFILE_GetBigBlock(This->bigBlockFile, blockIndex);
 }
 
-void StorageImpl_ReleaseBigBlock(
+static void StorageImpl_ReleaseBigBlock(
   StorageImpl* This,
   void*          pBigBlock)
 {
@@ -3568,7 +3647,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   return bigBlockChain;
 }
 
-void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
+static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
 
@@ -3603,7 +3682,7 @@ static HRESULT WINAPI StorageInternalImpl_Revert(
   return S_OK;
 }
 
-void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
+static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
 {
   IStorage_Release((IStorage*)This->parentStorage);
   HeapFree(GetProcessHeap(), 0, This->stackToVisit);
@@ -3881,7 +3960,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   return S_OK;
 }
 
-INT IEnumSTATSTGImpl_FindParentProperty(
+static INT IEnumSTATSTGImpl_FindParentProperty(
   IEnumSTATSTGImpl *This,
   ULONG             childProperty,
   StgProperty      *currentProperty,
@@ -3946,7 +4025,7 @@ INT IEnumSTATSTGImpl_FindParentProperty(
   return PROPERTY_NULL;
 }
 
-ULONG IEnumSTATSTGImpl_FindProperty(
+static ULONG IEnumSTATSTGImpl_FindProperty(
   IEnumSTATSTGImpl* This,
   const OLECHAR*  lpszPropName,
   StgProperty*      currentProperty)
@@ -3991,7 +4070,7 @@ ULONG IEnumSTATSTGImpl_FindProperty(
   return PROPERTY_NULL;
 }
 
-void IEnumSTATSTGImpl_PushSearchNode(
+static void IEnumSTATSTGImpl_PushSearchNode(
   IEnumSTATSTGImpl* This,
   ULONG             nodeToPush)
 {
@@ -4040,7 +4119,7 @@ void IEnumSTATSTGImpl_PushSearchNode(
   }
 }
 
-ULONG IEnumSTATSTGImpl_PopSearchNode(
+static ULONG IEnumSTATSTGImpl_PopSearchNode(
   IEnumSTATSTGImpl* This,
   BOOL            remove)
 {
@@ -4075,7 +4154,7 @@ static const IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
 ** IEnumSTATSTGImpl implementation
 */
 
-IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
+static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
   StorageImpl* parentStorage,
   ULONG          firstPropertyNode)
 {
@@ -4146,7 +4225,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl =
 ** Storage32InternalImpl implementation
 */
 
-StorageInternalImpl* StorageInternalImpl_Construct(
+static StorageInternalImpl* StorageInternalImpl_Construct(
   StorageImpl* ancestorStorage,
   DWORD        openFlags,
   ULONG        rootPropertyIndex)
@@ -4373,7 +4452,7 @@ void BlockChainStream_Destroy(BlockChainStream* This)
  * This->headOfStreamPlaceHolder.
  *
  */
-ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
+static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 {
   StgProperty chainProperty;
   BOOL      readSuccessful;
@@ -4404,7 +4483,7 @@ ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
  * This is not the size of the stream as the last block may not be full!
  *
  */
-ULONG BlockChainStream_GetCount(BlockChainStream* This)
+static ULONG BlockChainStream_GetCount(BlockChainStream* This)
 {
   ULONG blockIndex;
   ULONG count = 0;
@@ -4611,8 +4690,8 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
  *
  * Shrinks this chain in the big block depot.
  */
-BOOL BlockChainStream_Shrink(BlockChainStream* This,
-                               ULARGE_INTEGER    newSize)
+static BOOL BlockChainStream_Shrink(BlockChainStream* This,
+                                    ULARGE_INTEGER    newSize)
 {
   ULONG blockIndex, extraBlock;
   ULONG numBlocks;
@@ -4679,8 +4758,8 @@ BOOL BlockChainStream_Shrink(BlockChainStream* This,
  *
  * Grows this chain in the big block depot.
  */
-BOOL BlockChainStream_Enlarge(BlockChainStream* This,
-                                ULARGE_INTEGER    newSize)
+static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
+                                     ULARGE_INTEGER    newSize)
 {
   ULONG blockIndex, currentBlock;
   ULONG newNumBlocks;
@@ -4822,7 +4901,7 @@ BOOL BlockChainStream_SetSize(
  * Returns the size of this chain.
  * Will return the block count if this chain doesn't have a property.
  */
-ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
+static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
 {
   StgProperty chainProperty;
 
@@ -4886,7 +4965,7 @@ void SmallBlockChainStream_Destroy(
  *
  * Returns the head of this chain of small blocks.
  */
-ULONG SmallBlockChainStream_GetHeadOfChain(
+static ULONG SmallBlockChainStream_GetHeadOfChain(
   SmallBlockChainStream* This)
 {
   StgProperty chainProperty;
@@ -4918,7 +4997,7 @@ ULONG SmallBlockChainStream_GetHeadOfChain(
  *    - BLOCK_END_OF_CHAIN: end of this chain
  *    - BLOCK_UNUSED: small block 'blockIndex' is free
  */
-HRESULT SmallBlockChainStream_GetNextBlockInChain(
+static HRESULT SmallBlockChainStream_GetNextBlockInChain(
   SmallBlockChainStream* This,
   ULONG                  blockIndex,
   ULONG*                 nextBlockInChain)
@@ -4960,7 +5039,7 @@ HRESULT SmallBlockChainStream_GetNextBlockInChain(
  * To set the end of chain use BLOCK_END_OF_CHAIN as nextBlock.
  * To flag a block as free use BLOCK_UNUSED as nextBlock.
  */
-void SmallBlockChainStream_SetNextBlockInChain(
+static void SmallBlockChainStream_SetNextBlockInChain(
   SmallBlockChainStream* This,
   ULONG                  blockIndex,
   ULONG                  nextBlock)
@@ -4990,7 +5069,7 @@ void SmallBlockChainStream_SetNextBlockInChain(
  *
  * Flag small block 'blockIndex' as free in the small block depot.
  */
-void SmallBlockChainStream_FreeBlock(
+static void SmallBlockChainStream_FreeBlock(
   SmallBlockChainStream* This,
   ULONG                  blockIndex)
 {
@@ -5004,7 +5083,7 @@ void SmallBlockChainStream_FreeBlock(
  * enlarged if necessary. The small block chain will also be enlarged if
  * necessary.
  */
-ULONG SmallBlockChainStream_GetNextFreeBlock(
+static ULONG SmallBlockChainStream_GetNextFreeBlock(
   SmallBlockChainStream* This)
 {
   ULARGE_INTEGER offsetOfBlockInDepot;
@@ -5348,7 +5427,7 @@ BOOL SmallBlockChainStream_WriteAt(
  *
  * Shrinks this chain in the small block depot.
  */
-BOOL SmallBlockChainStream_Shrink(
+static BOOL SmallBlockChainStream_Shrink(
   SmallBlockChainStream* This,
   ULARGE_INTEGER newSize)
 {
@@ -5431,7 +5510,7 @@ BOOL SmallBlockChainStream_Shrink(
  *
  * Grows this chain in the small block depot.
  */
-BOOL SmallBlockChainStream_Enlarge(
+static BOOL SmallBlockChainStream_Enlarge(
   SmallBlockChainStream* This,
   ULARGE_INTEGER newSize)
 {
@@ -5506,30 +5585,6 @@ BOOL SmallBlockChainStream_Enlarge(
 }
 
 /******************************************************************************
- *      SmallBlockChainStream_GetCount
- *
- * Returns the number of blocks that comprises this chain.
- * This is not the size of this chain as the last block may not be full!
- */
-ULONG SmallBlockChainStream_GetCount(SmallBlockChainStream* This)
-{
-  ULONG blockIndex;
-  ULONG count = 0;
-
-  blockIndex = SmallBlockChainStream_GetHeadOfChain(This);
-
-  while (blockIndex != BLOCK_END_OF_CHAIN)
-  {
-    count++;
-
-    if(FAILED(SmallBlockChainStream_GetNextBlockInChain(This, blockIndex, &blockIndex)))
-      return 0;
-  }
-
-  return count;
-}
-
-/******************************************************************************
  *      SmallBlockChainStream_SetSize
  *
  * Sets the size of this stream.
@@ -5565,7 +5620,7 @@ BOOL SmallBlockChainStream_SetSize(
  *
  * Returns the size of this chain.
  */
-ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
+static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 {
   StgProperty chainProperty;
 

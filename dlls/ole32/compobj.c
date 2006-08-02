@@ -82,7 +82,7 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(void);
 
-APARTMENT *MTA; /* protected by csApartment */
+static APARTMENT *MTA; /* protected by csApartment */
 static struct list apts = LIST_INIT( apts ); /* protected by csApartment */
 
 static CRITICAL_SECTION csApartment;
