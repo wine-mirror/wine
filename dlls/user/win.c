@@ -46,6 +46,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 /**********************************************************************/
 
+/* helper for Get/SetWindowLong */
+static inline LONG_PTR get_win_data( const void *ptr, UINT size )
+{
+    if (size == sizeof(WORD))
+    {
+        WORD ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+    else if (size == sizeof(DWORD))
+    {
+        DWORD ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+    else
+    {
+        LONG_PTR ret;
+        memcpy( &ret, ptr, sizeof(ret) );
+        return ret;
+    }
+}
+
+/* helper for Get/SetWindowLong */
+static inline void set_win_data( void *ptr, LONG_PTR val, UINT size )
+{
+    if (size == sizeof(WORD))
+    {
+        WORD newval = val;
+        memcpy( ptr, &newval, sizeof(newval) );
+    }
+    else if (size == sizeof(DWORD))
+    {
+        DWORD newval = val;
+        memcpy( ptr, &newval, sizeof(newval) );
+    }
+    else
+    {
+        memcpy( ptr, &val, sizeof(val) );
+    }
+}
+
 
 static void *user_handles[NB_USER_HANDLES];
 
@@ -1692,138 +1734,11 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
 
 
 /**********************************************************************
- *		GetWindowWord (USER32.@)
- */
-WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
-{
-    if (offset >= 0)
-    {
-        WORD retvalue = 0;
-        WND *wndPtr = WIN_GetPtr( hwnd );
-        if (!wndPtr)
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return 0;
-        }
-        if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
-        {
-            SERVER_START_REQ( set_window_info )
-            {
-                req->handle = hwnd;
-                req->flags  = 0;  /* don't set anything, just retrieve */
-                req->extra_offset = offset;
-                req->extra_size = sizeof(retvalue);
-                if (!wine_server_call_err( req ))
-                    memcpy( &retvalue, &reply->old_extra_value, sizeof(retvalue) );
-            }
-            SERVER_END_REQ;
-            return retvalue;
-        }
-        if (offset > (int)(wndPtr->cbWndExtra - sizeof(WORD)))
-        {
-            WARN("Invalid offset %d\n", offset );
-            SetLastError( ERROR_INVALID_INDEX );
-        }
-        else memcpy( &retvalue,  (char *)wndPtr->wExtra + offset, sizeof(retvalue) );
-        WIN_ReleasePtr( wndPtr );
-        return retvalue;
-    }
-
-    switch(offset)
-    {
-    case GWLP_HWNDPARENT:
-        return GetWindowLongPtrW( hwnd, offset );
-    case GWLP_ID:
-    case GWLP_HINSTANCE:
-        {
-            LONG_PTR ret = GetWindowLongPtrW( hwnd, offset );
-            if (HIWORD(ret))
-                WARN("%d: discards high bits of 0x%08lx!\n", offset, ret );
-            return LOWORD(ret);
-        }
-    default:
-        WARN("Invalid offset %d\n", offset );
-        return 0;
-    }
-}
-
-
-/**********************************************************************
- *		SetWindowWord (USER32.@)
- */
-WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
-{
-    WORD retval = 0;
-    WND * wndPtr;
-
-    switch(offset)
-    {
-    case GWLP_ID:
-    case GWLP_HINSTANCE:
-    case GWLP_HWNDPARENT:
-        return SetWindowLongPtrW( hwnd, offset, (ULONG_PTR)newval );
-    default:
-        if (offset < 0)
-        {
-            WARN("Invalid offset %d\n", offset );
-            SetLastError( ERROR_INVALID_INDEX );
-            return 0;
-        }
-    }
-
-    wndPtr = WIN_GetPtr( hwnd );
-    if (wndPtr == WND_DESKTOP)
-    {
-        SetLastError( ERROR_ACCESS_DENIED );
-        return 0;
-    }
-    if (wndPtr == WND_OTHER_PROCESS)
-    {
-        if (IsWindow(hwnd))
-            FIXME( "set %d <- %x not supported yet on other process window %p\n",
-                   offset, newval, hwnd );
-        wndPtr = NULL;
-    }
-    if (!wndPtr)
-    {
-       SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-       return 0;
-    }
-
-    if (offset > (int)(wndPtr->cbWndExtra - sizeof(WORD)))
-    {
-        WARN("Invalid offset %d\n", offset );
-        WIN_ReleasePtr(wndPtr);
-        SetLastError( ERROR_INVALID_INDEX );
-        return 0;
-    }
-
-    SERVER_START_REQ( set_window_info )
-    {
-        req->handle = hwnd;
-        req->flags = SET_WIN_EXTRA;
-        req->extra_offset = offset;
-        req->extra_size = sizeof(newval);
-        memcpy( &req->extra_value, &newval, sizeof(newval) );
-        if (!wine_server_call_err( req ))
-        {
-            void *ptr = (char *)wndPtr->wExtra + offset;
-            memcpy( &retval, ptr, sizeof(retval) );
-            memcpy( ptr, &newval, sizeof(newval) );
-        }
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( wndPtr );
-    return retval;
-}
-
-
-/**********************************************************************
  *	     WIN_GetWindowLong
  *
  * Helper function for GetWindowLong().
  */
-static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
+static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicode )
 {
     LONG_PTR retvalue = 0;
     WND *wndPtr;
@@ -1853,7 +1768,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
             req->handle = hwnd;
             req->flags  = 0;  /* don't set anything, just retrieve */
             req->extra_offset = (offset >= 0) ? offset : -1;
-            req->extra_size = (offset >= 0) ? sizeof(retvalue) : 0;
+            req->extra_size = (offset >= 0) ? size : 0;
             if (!wine_server_call_err( req ))
             {
                 switch(offset)
@@ -1864,7 +1779,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
                 case GWLP_HINSTANCE: retvalue = (ULONG_PTR)reply->old_instance; break;
                 case GWLP_USERDATA:  retvalue = (ULONG_PTR)reply->old_user_data; break;
                 default:
-                    if (offset >= 0) retvalue = reply->old_extra_value;
+                    if (offset >= 0) retvalue = get_win_data( &reply->old_extra_value, size );
                     else SetLastError( ERROR_INVALID_INDEX );
                     break;
                 }
@@ -1878,16 +1793,17 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
 
     if (offset >= 0)
     {
-        if (offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
+        if (offset > (int)(wndPtr->cbWndExtra - size))
         {
             WARN("Invalid offset %d\n", offset );
             WIN_ReleasePtr( wndPtr );
             SetLastError( ERROR_INVALID_INDEX );
             return 0;
         }
-        retvalue = *(LONG_PTR *)(((char *)wndPtr->wExtra) + offset);
+        retvalue = get_win_data( (char *)wndPtr->wExtra + offset, size );
+
         /* Special case for dialog window procedure */
-        if ((offset == DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+        if ((offset == DWLP_DLGPROC) && (size == sizeof(LONG_PTR)) && (wndPtr->flags & WIN_ISDIALOG))
             retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, unicode );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
@@ -1919,7 +1835,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
  * 0 is the failure code. However, in the case of failure SetLastError
  * must be set to distinguish between a 0 return value and a failure.
  */
-static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL unicode )
+LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL unicode )
 {
     STYLESTRUCT style;
     BOOL ok;
@@ -1952,7 +1868,12 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
             SetLastError( ERROR_ACCESS_DENIED );
             return 0;
         }
-        return SendMessageW( hwnd, WM_WINE_SETWINDOWLONG, offset, newval );
+        if (offset > 32767 || offset < -32767)
+        {
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        return SendMessageW( hwnd, WM_WINE_SETWINDOWLONG, MAKEWPARAM( offset, size ), newval );
     }
 
     /* first some special cases */
@@ -2002,7 +1923,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
     case GWLP_USERDATA:
         break;
     case DWLP_DLGPROC:
-        if ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+        if ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
+            (size == sizeof(LONG_PTR)) && (wndPtr->flags & WIN_ISDIALOG))
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, unicode );
@@ -2013,21 +1935,18 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
         }
         /* fall through */
     default:
-        if (offset < 0 || offset > (int)(wndPtr->cbWndExtra - sizeof(LONG_PTR)))
+        if (offset < 0 || offset > (int)(wndPtr->cbWndExtra - size))
         {
             WARN("Invalid offset %d\n", offset );
             WIN_ReleasePtr( wndPtr );
             SetLastError( ERROR_INVALID_INDEX );
             return 0;
         }
-        else
+        else if (get_win_data( (char *)wndPtr->wExtra + offset, size ) == newval)
         {
-            LONG_PTR *ptr = (LONG_PTR *)((char *)wndPtr->wExtra + offset);
-            if (*ptr == newval)  /* already set to the same value */
-            {
-                WIN_ReleasePtr( wndPtr );
-                return newval;
-            }
+            /* already set to the same value */
+            WIN_ReleasePtr( wndPtr );
+            return newval;
         }
         break;
     }
@@ -2065,8 +1984,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
         default:
             req->flags = SET_WIN_EXTRA;
             req->extra_offset = offset;
-            req->extra_size = sizeof(newval);
-            memcpy( &req->extra_value, &newval, sizeof(newval) );
+            req->extra_size = size;
+            set_win_data( &req->extra_value, newval, size );
         }
         if ((ok = !wine_server_call_err( req )))
         {
@@ -2095,11 +2014,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
                 retval = (ULONG_PTR)reply->old_user_data;
                 break;
             default:
-                {
-                    void *ptr = (char *)wndPtr->wExtra + offset;
-                    memcpy( &retval, ptr, sizeof(retval) );
-                    memcpy( ptr, &newval, sizeof(newval) );
-                }
+                retval = get_win_data( (char *)wndPtr->wExtra + offset, size );
+                set_win_data( (char *)wndPtr->wExtra + offset, newval, size );
                 break;
             }
         }
@@ -2168,11 +2084,35 @@ LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
 
 
 /**********************************************************************
+ *		GetWindowWord (USER32.@)
+ */
+WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
+{
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        break;
+    default:
+        if (offset < 0)
+        {
+            WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        break;
+    }
+    return WIN_GetWindowLong( hwnd, offset, sizeof(WORD), FALSE );
+}
+
+
+/**********************************************************************
  *		GetWindowLongA (USER32.@)
  */
 LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, FALSE );
+    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), FALSE );
 }
 
 
@@ -2181,7 +2121,7 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
  */
 LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, TRUE );
+    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), TRUE );
 }
 
 
@@ -2219,13 +2159,37 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 
 
 /**********************************************************************
+ *		SetWindowWord (USER32.@)
+ */
+WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
+{
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        break;
+    default:
+        if (offset < 0)
+        {
+            WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+        break;
+    }
+    return WIN_SetWindowLong( hwnd, offset, sizeof(WORD), newval, FALSE );
+}
+
+
+/**********************************************************************
  *		SetWindowLongA (USER32.@)
  *
  * See SetWindowLongW.
  */
 LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
 {
-    return WIN_SetWindowLong( hwnd, offset, newval, FALSE );
+    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, FALSE );
 }
 
 
@@ -2300,7 +2264,7 @@ LONG WINAPI SetWindowLongW(
     INT offset, /* [in] offset, in bytes, of location to alter */
     LONG newval /* [in] new value of location */
 ) {
-    return WIN_SetWindowLong( hwnd, offset, newval, TRUE );
+    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, TRUE );
 }
 
 
@@ -3198,8 +3162,7 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
  */
 LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
 {
-    FIXME("\n");
-    return 0;
+    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG_PTR), TRUE );
 }
 
 /*****************************************************************************
@@ -3207,8 +3170,7 @@ LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
 {
-    FIXME("\n");
-    return 0;
+    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG_PTR), FALSE );
 }
 
 /*****************************************************************************
@@ -3216,8 +3178,7 @@ LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI SetWindowLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
 {
-    FIXME("\n");
-    return 0;
+    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG_PTR), newval, TRUE );
 }
 
 /*****************************************************************************
@@ -3225,6 +3186,5 @@ LONG_PTR WINAPI SetWindowLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
  */
 LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 {
-    FIXME("\n");
-    return 0;
+    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG_PTR), newval, FALSE );
 }

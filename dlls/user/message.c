@@ -1183,7 +1183,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (hwnd == GetDesktopWindow()) return 0;
         return (LRESULT)SetParent( hwnd, (HWND)wparam );
     case WM_WINE_SETWINDOWLONG:
-        return (LRESULT)SetWindowLongW( hwnd, wparam, lparam );
+        return WIN_SetWindowLong( hwnd, (short)LOWORD(wparam), HIWORD(wparam), lparam, TRUE );
     case WM_WINE_ENABLEWINDOW:
         if (hwnd == GetDesktopWindow()) return 0;
         return EnableWindow( hwnd, wparam );

@@ -1854,14 +1854,14 @@ enum message_type
     void*          user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
     data_size_t    extra_size;    /* size to set in extra bytes */
-    unsigned int   extra_value;   /* value to set in extra bytes */
+    unsigned long  extra_value;   /* value to set in extra bytes */
 @REPLY
     unsigned int   old_style;     /* old window style */
     unsigned int   old_ex_style;  /* old window extended style */
     unsigned int   old_id;        /* old window id */
     void*          old_instance;  /* old creator instance */
     void*          old_user_data; /* old user-specific data */
-    unsigned int   old_extra_value; /* old value in extra bytes */
+    unsigned long  old_extra_value; /* old value in extra bytes */
 @END
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02

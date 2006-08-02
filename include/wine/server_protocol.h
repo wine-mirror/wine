@@ -2608,7 +2608,7 @@ struct set_window_info_request
     void*          user_data;
     int            extra_offset;
     data_size_t    extra_size;
-    unsigned int   extra_value;
+    unsigned long  extra_value;
 };
 struct set_window_info_reply
 {
@@ -2618,7 +2618,7 @@ struct set_window_info_reply
     unsigned int   old_id;
     void*          old_instance;
     void*          old_user_data;
-    unsigned int   old_extra_value;
+    unsigned long  old_extra_value;
 };
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
@@ -4385,6 +4385,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 243
+#define SERVER_PROTOCOL_VERSION 244
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
