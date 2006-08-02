@@ -1036,7 +1036,7 @@ static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
     "CCM_SETNOTIFYWINDOW"
 };
 
-#define SPY_MAX_WINEMSGNUM   6
+#define SPY_MAX_WINEMSGNUM   (WM_WINE_MOUSE_LL_HOOK - WM_WINE_DESTROYWINDOW)
 static const char * const WINEMessageTypeNames[SPY_MAX_WINEMSGNUM + 1] =
 {
     "WM_WINE_DESTROYWINDOW",
@@ -1044,7 +1044,10 @@ static const char * const WINEMessageTypeNames[SPY_MAX_WINEMSGNUM + 1] =
     "WM_WINE_SHOWWINDOW",
     "WM_WINE_SETPARENT",
     "WM_WINE_SETWINDOWLONG",
-    "WM_WINE_ENABLEWINDOW"
+    "WM_WINE_ENABLEWINDOW",
+    "WM_WINE_SETACTIVEWINDOW",
+    "WM_WINE_KEYBOARD_LL_HOOK",
+    "WM_WINE_MOUSE_LL_HOOK",
 };
 
 /* Virtual key names */
