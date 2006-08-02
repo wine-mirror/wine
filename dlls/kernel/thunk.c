@@ -1674,8 +1674,8 @@ void WINAPI SetThunkletCallbackGlue16( FARPROC glueLS, SEGPTR glueSL )
 /***********************************************************************
  *     THUNK_FindThunklet
  */
-THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
-                              DWORD glue, BYTE type )
+static THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
+                                     DWORD glue, BYTE type )
 {
     THUNKLET *thunk;
 
@@ -1694,8 +1694,8 @@ THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
 /***********************************************************************
  *     THUNK_AllocLSThunklet
  */
-FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
-                                 FARPROC glue, HTASK16 owner )
+static FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
+                                      FARPROC glue, HTASK16 owner )
 {
     THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
                                           THUNKLET_TYPE_LS );
@@ -1728,8 +1728,8 @@ FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
 /***********************************************************************
  *     THUNK_AllocSLThunklet
  */
-SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
-                              SEGPTR glue, HTASK16 owner )
+static SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
+                                     SEGPTR glue, HTASK16 owner )
 {
     THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
                                           THUNKLET_TYPE_SL );
@@ -1762,7 +1762,7 @@ SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
 /**********************************************************************
  *     IsLSThunklet
  */
-BOOL16 WINAPI IsLSThunklet( THUNKLET *thunk )
+static BOOL16 IsLSThunklet( THUNKLET *thunk )
 {
     return    thunk->prefix_target == 0x90 && thunk->pushl_target == 0x68
            && thunk->prefix_relay  == 0x90 && thunk->pushl_relay  == 0x68
