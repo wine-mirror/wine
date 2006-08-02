@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-void DSOUND_RecalcPrimary(DirectSoundDevice *device)
+static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 {
 	DWORD nBlockAlign;
 	TRACE("(%p)\n", device);

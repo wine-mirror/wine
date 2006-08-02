@@ -226,7 +226,7 @@ void setup_dsound_options(void)
         WARN("ds_default_bits_per_sample = %d (default=8)\n",ds_default_bits_per_sample);
 }
 
-const char * get_device_id(LPCGUID pGuid)
+static const char * get_device_id(LPCGUID pGuid)
 {
     if (IsEqualGUID(&DSDEVID_DefaultPlayback, pGuid))
         return "DSDEVID_DefaultPlayback";

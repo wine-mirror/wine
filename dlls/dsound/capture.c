@@ -44,6 +44,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+/*****************************************************************************
+ * IDirectSoundCapture implementation structure
+ */
+struct IDirectSoundCaptureImpl
+{
+    /* IUnknown fields */
+    const IDirectSoundCaptureVtbl     *lpVtbl;
+    LONG                               ref;
+
+    DirectSoundCaptureDevice          *device;
+};
+
+static HRESULT IDirectSoundCaptureImpl_Create(LPDIRECTSOUNDCAPTURE8 * ppds);
+
+
+/*****************************************************************************
+ * IDirectSoundCaptureNotify implementation structure
+ */
+struct IDirectSoundCaptureNotifyImpl
+{
+    /* IUnknown fields */
+    const IDirectSoundNotifyVtbl       *lpVtbl;
+    LONG                                ref;
+    IDirectSoundCaptureBufferImpl*      dscb;
+};
+
+static HRESULT IDirectSoundCaptureNotifyImpl_Create(IDirectSoundCaptureBufferImpl *dscb,
+                                                    IDirectSoundCaptureNotifyImpl ** pdscn);
+
+
 DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 
 static HRESULT DirectSoundCaptureDevice_Create(DirectSoundCaptureDevice ** ppDevice);
@@ -550,7 +580,7 @@ static const IDirectSoundCaptureVtbl dscvt =
     IDirectSoundCaptureImpl_Initialize
 };
 
-HRESULT IDirectSoundCaptureImpl_Create(
+static HRESULT IDirectSoundCaptureImpl_Create(
     LPDIRECTSOUNDCAPTURE8 * ppDSC)
 {
     IDirectSoundCaptureImpl *pDSC;
@@ -676,7 +706,7 @@ static const IDirectSoundNotifyVtbl dscnvt =
     IDirectSoundCaptureNotifyImpl_SetNotificationPositions,
 };
 
-HRESULT IDirectSoundCaptureNotifyImpl_Create(
+static HRESULT IDirectSoundCaptureNotifyImpl_Create(
     IDirectSoundCaptureBufferImpl *dscb,
     IDirectSoundCaptureNotifyImpl **pdscn)
 {

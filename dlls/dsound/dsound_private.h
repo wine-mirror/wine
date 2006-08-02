@@ -73,22 +73,6 @@ typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
 /*****************************************************************************
- * IDirectSound implementation structure
- */
-struct IDirectSoundImpl
-{
-    LONG                        ref;
-
-    DirectSoundDevice          *device;
-    LPUNKNOWN                   pUnknown;
-    LPDIRECTSOUND               pDS;
-    LPDIRECTSOUND8              pDS8;
-};
-
-HRESULT IDirectSoundImpl_Create(
-    LPDIRECTSOUND8 * ppds);
-
-/*****************************************************************************
  * IDirectSoundDevice implementation structure
  */
 struct DirectSoundDevice
@@ -132,8 +116,6 @@ typedef struct BufferMemory
     LPBYTE                      memory;
 } BufferMemory;
 
-HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice);
-ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device);
 ULONG DirectSoundDevice_Release(DirectSoundDevice * device);
 HRESULT DirectSoundDevice_Initialize(
     DirectSoundDevice ** ppDevice,
@@ -166,65 +148,6 @@ HRESULT DirectSoundDevice_GetSpeakerConfig(
 HRESULT DirectSoundDevice_SetSpeakerConfig(
     DirectSoundDevice * device,
     DWORD config);
-HRESULT DirectSoundDevice_VerifyCertification(
-    DirectSoundDevice * device,
-    LPDWORD pdwCertified);
-
-/*****************************************************************************
- * IDirectSound COM components
- */
-struct IDirectSound_IUnknown {
-    const IUnknownVtbl         *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-HRESULT IDirectSound_IUnknown_Create(
-    LPDIRECTSOUND8 pds,
-    LPUNKNOWN * ppunk);
-
-struct IDirectSound_IDirectSound {
-    const IDirectSoundVtbl     *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-HRESULT IDirectSound_IDirectSound_Create(
-    LPDIRECTSOUND8 pds,
-    LPDIRECTSOUND * ppds);
-
-/*****************************************************************************
- * IDirectSound8 COM components
- */
-struct IDirectSound8_IUnknown {
-    const IUnknownVtbl         *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-HRESULT IDirectSound8_IUnknown_Create(
-    LPDIRECTSOUND8 pds,
-    LPUNKNOWN * ppunk);
-
-struct IDirectSound8_IDirectSound {
-    const IDirectSoundVtbl     *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-HRESULT IDirectSound8_IDirectSound_Create(
-    LPDIRECTSOUND8 pds,
-    LPDIRECTSOUND * ppds);
-
-struct IDirectSound8_IDirectSound8 {
-    const IDirectSound8Vtbl    *lpVtbl;
-    LONG                        ref;
-    LPDIRECTSOUND8              pds;
-};
-
-HRESULT IDirectSound8_IDirectSound8_Create(
-    LPDIRECTSOUND8 pds,
-    LPDIRECTSOUND8 * ppds);
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure
@@ -295,8 +218,6 @@ struct SecondaryBufferImpl
 HRESULT SecondaryBufferImpl_Create(
     IDirectSoundBufferImpl *dsb,
     SecondaryBufferImpl **pdsb);
-HRESULT SecondaryBufferImpl_Destroy(
-    SecondaryBufferImpl *pdsb);
 
 /*****************************************************************************
  * PrimaryBuffer implementation structure
@@ -312,21 +233,6 @@ HRESULT PrimaryBufferImpl_Create(
     DirectSoundDevice * device,
     PrimaryBufferImpl **ppdsb,
     LPCDSBUFFERDESC dsbd);
-
-/*****************************************************************************
- * IDirectSoundCapture implementation structure
- */
-struct IDirectSoundCaptureImpl
-{
-    /* IUnknown fields */
-    const IDirectSoundCaptureVtbl     *lpVtbl;
-    LONG                               ref;
-
-    DirectSoundCaptureDevice          *device;
-};
-
-HRESULT IDirectSoundCaptureImpl_Create(
-    LPDIRECTSOUNDCAPTURE8 * ppds);
 
 /*****************************************************************************
  * DirectSoundCaptureDevice implementation structure
@@ -441,38 +347,6 @@ struct IDirectSoundFullDuplex_IDirectSoundCapture {
 };
 
 /*****************************************************************************
- * IDirectSoundNotify implementation structure
- */
-struct IDirectSoundNotifyImpl
-{
-    /* IUnknown fields */
-    const IDirectSoundNotifyVtbl *lpVtbl;
-    LONG                        ref;
-    IDirectSoundBufferImpl*     dsb;
-};
-
-HRESULT IDirectSoundNotifyImpl_Create(
-    IDirectSoundBufferImpl *dsb,
-    IDirectSoundNotifyImpl **pdsn);
-HRESULT IDirectSoundNotifyImpl_Destroy(
-    IDirectSoundNotifyImpl *pdsn);
-
-/*****************************************************************************
- * IDirectSoundCaptureNotify implementation structure
- */
-struct IDirectSoundCaptureNotifyImpl
-{
-    /* IUnknown fields */
-    const IDirectSoundNotifyVtbl       *lpVtbl;
-    LONG                                ref;
-    IDirectSoundCaptureBufferImpl*      dscb;
-};
-
-HRESULT IDirectSoundCaptureNotifyImpl_Create(
-    IDirectSoundCaptureBufferImpl *dscb,
-    IDirectSoundCaptureNotifyImpl ** pdscn);
-
-/*****************************************************************************
  *  IDirectSound3DListener implementation structure
  */
 struct IDirectSound3DListenerImpl
@@ -577,7 +451,6 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
 void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
 void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
 void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq);
-void DSOUND_PerformMix(DirectSoundDevice *device);
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
@@ -587,10 +460,6 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 /* sound3d.c */
 
 void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
-
-/* duplex.c */
-
-HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkOuter);
 
 /* capture.c */
 
@@ -622,5 +491,4 @@ extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err);
 void setup_dsound_options(void);
-const char * get_device_id(LPCGUID pGuid);
 const char * dumpCooperativeLevel(DWORD level);

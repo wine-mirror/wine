@@ -36,9 +36,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+static HRESULT SecondaryBufferImpl_Destroy(SecondaryBufferImpl *pdsb);
+
 /*******************************************************************************
  *		IDirectSoundNotify
  */
+
+struct IDirectSoundNotifyImpl
+{
+    /* IUnknown fields */
+    const IDirectSoundNotifyVtbl *lpVtbl;
+    LONG                        ref;
+    IDirectSoundBufferImpl*     dsb;
+};
+
+static HRESULT IDirectSoundNotifyImpl_Create(IDirectSoundBufferImpl *dsb,
+                                             IDirectSoundNotifyImpl **pdsn);
+static HRESULT IDirectSoundNotifyImpl_Destroy(IDirectSoundNotifyImpl *pdsn);
+
 static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	LPDIRECTSOUNDNOTIFY iface,REFIID riid,LPVOID *ppobj
 ) {
@@ -133,7 +148,7 @@ static const IDirectSoundNotifyVtbl dsnvt =
     IDirectSoundNotifyImpl_SetNotificationPositions,
 };
 
-HRESULT IDirectSoundNotifyImpl_Create(
+static HRESULT IDirectSoundNotifyImpl_Create(
     IDirectSoundBufferImpl * dsb,
     IDirectSoundNotifyImpl **pdsn)
 {
@@ -157,7 +172,7 @@ HRESULT IDirectSoundNotifyImpl_Create(
     return DS_OK;
 }
 
-HRESULT IDirectSoundNotifyImpl_Destroy(
+static HRESULT IDirectSoundNotifyImpl_Destroy(
     IDirectSoundNotifyImpl *pdsn)
 {
     TRACE("(%p)\n",pdsn);
@@ -1613,7 +1628,7 @@ HRESULT SecondaryBufferImpl_Create(
 	return S_OK;
 }
 
-HRESULT SecondaryBufferImpl_Destroy(
+static HRESULT SecondaryBufferImpl_Destroy(
     SecondaryBufferImpl *pdsb)
 {
     TRACE("(%p)\n",pdsb);

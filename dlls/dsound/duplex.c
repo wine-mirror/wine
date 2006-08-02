@@ -760,7 +760,7 @@ static const IDirectSoundFullDuplexVtbl dsfdvt =
     IDirectSoundFullDuplexImpl_Initialize
 };
 
-HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkOuter)
+static HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkOuter)
 {
     IDirectSoundFullDuplexImpl *This = NULL;
 

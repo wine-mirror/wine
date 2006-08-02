@@ -941,7 +941,7 @@ void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq)
 
 /* #define SYNC_CALLBACK */
 
-void DSOUND_PerformMix(DirectSoundDevice *device)
+static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
 	int nfiller;
 	BOOL forced;
