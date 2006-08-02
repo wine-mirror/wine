@@ -807,11 +807,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
-    /* install_on_demand should be set if OLE supports install on demand OLE
-     * servers. For now i am defaulting to FALSE because i do not know how to
-     * check, and i am told our builtin OLE does not support it
-     */
-    
     LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
     {
         MSICOMPONENT *comp;
@@ -826,17 +821,14 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 
         feature = cls->Feature;
 
-        /* 
-         * yes. MSDN says that these are based on _Feature_ not on
-         * Component.  So verify the feature is to be installed
+        /*
+         * MSDN says that these are based on Feature not on Component.
          */
-        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ))
-             /* && !(install_on_demand &&
-               ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED ))) */
+        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ) &&
+            !ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED ))
         {
-            TRACE("Skipping class %s reg due to disabled feature %s\n", 
-                            debugstr_w(cls->clsid), 
-                            debugstr_w(feature->Feature));
+            TRACE("Skipping class %s reg due to disabled feature %s\n",
+                  debugstr_w(cls->clsid), debugstr_w(feature->Feature));
 
             continue;
         }
