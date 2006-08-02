@@ -717,7 +717,7 @@ static UINT get_columns_table_type(MSIHANDLE hdb, const char *table, UINT field)
     return type;
 }
 
-static BOOL check_record( MSIHANDLE rec, UINT field, LPSTR val )
+static BOOL check_record( MSIHANDLE rec, UINT field, LPCSTR val )
 {
     CHAR buffer[0x20];
     UINT r;
