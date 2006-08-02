@@ -26,7 +26,6 @@
 #include "win.h"
 #include "ddrawi.h"
 #include "x11drv.h"
-#include "x11ddraw.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);

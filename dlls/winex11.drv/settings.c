@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "x11drv.h"
-#include "x11ddraw.h"
 
 #include "windef.h"
 #include "wingdi.h"

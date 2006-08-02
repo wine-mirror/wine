@@ -29,7 +29,6 @@
 #include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_LIBXXF86VM */
 
-#include "x11ddraw.h"
 #include "xvidmode.h"
 
 #include "windef.h"

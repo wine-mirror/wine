@@ -26,7 +26,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "x11drv.h"
-#include "x11ddraw.h"
 
 #include "windef.h"
 #include "gdi.h"
@@ -34,17 +33,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+typedef struct _X11DRIVERINFO {
+  const GUID *		lpGuid;
+  DWORD			dwSize;
+  LPVOID		lpvData;
+  struct _X11DRIVERINFO*lpNext;
+} X11DRIVERINFO,*LPX11DRIVERINFO;
+
+typedef struct _X11DEVICE {
+  LPX11DRIVERINFO	lpInfo;
+} X11DEVICE,*LPX11DEVICE;
+
 extern int dxgrab;
 
-LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;
-LPDDRAWI_DDRAWSURFACE_GBL X11DRV_DD_PrimaryGbl;
-HWND X11DRV_DD_PrimaryWnd;
-HBITMAP X11DRV_DD_PrimaryDIB;
-Drawable X11DRV_DD_PrimaryDrawable;
-ATOM X11DRV_DD_UserClass;
-BOOL X11DRV_DD_IsDirect;
+static LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;
+static LPDDRAWI_DDRAWSURFACE_GBL X11DRV_DD_PrimaryGbl;
+static HWND X11DRV_DD_PrimaryWnd;
+static HBITMAP X11DRV_DD_PrimaryDIB;
+static Drawable X11DRV_DD_PrimaryDrawable;
+static ATOM X11DRV_DD_UserClass;
 static UINT X11DRV_DD_GrabMessage;
 static WNDPROC X11DRV_DD_GrabOldProcedure;
+
+static void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
+                                       LPPALETTEENTRY lpEntries);
 
 static void SetPrimaryDIB(HBITMAP hBmp)
 {
@@ -419,8 +431,8 @@ void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem)
   X11DRV_DDHAL_SetInfo();
 }
 
-void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
-				LPPALETTEENTRY lpEntries)
+static void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
+                                       LPPALETTEENTRY lpEntries)
 {
   XColor c;
   unsigned int n;

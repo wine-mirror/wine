@@ -29,7 +29,6 @@
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
-#include "x11ddraw.h"
 #include "xrandr.h"
 
 #include "windef.h"

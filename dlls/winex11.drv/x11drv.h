@@ -697,4 +697,6 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
                                             unsigned int nmodes, 
                                             int reserve_depths);
 
+extern void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem);
+
 #endif  /* __WINE_X11DRV_H */
