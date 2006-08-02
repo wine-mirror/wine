@@ -273,6 +273,12 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
     return strcmpiW(pwzFileName+len, url_ext) ? S_FALSE : S_OK;
 }
 
+HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTranslatedURL)
+{
+    FIXME("(%s %08lx %p)\n", debugstr_w(pwzURL), grfFlags, ppwzTranslatedURL);
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {

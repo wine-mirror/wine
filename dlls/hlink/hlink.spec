@@ -23,7 +23,7 @@
 28 stub HlinkGetValueFromParams
 29 stub HlinkCreateShortcutFromMoniker
 30 stub HlinkResolveShortcutToMoniker
-31 stub HlinkTranslateURL
+31 stdcall HlinkTranslateURL(wstr long ptr)
 32 stdcall HlinkCreateExtensionServices(wstr long wstr wstr ptr ptr ptr)
 33 stub HlinkPreprocessMoniker
 
