@@ -71,7 +71,7 @@
 @ stub TrustDecode
 @ stub TrustFindIssuerCertificate
 @ stub TrustFreeDecode
-@ stub TrustIsCertificateSelfSigned
+@ stdcall TrustIsCertificateSelfSigned(ptr)
 @ stub TrustOpenStores
 @ stub WTHelperCertFindIssuerCertificate
 @ stub WTHelperCertIsSelfSigned

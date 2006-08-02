@@ -83,6 +83,19 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 }
 
 /***********************************************************************
+ *		TrustIsCertificateSelfSigned (WINTRUST.@)
+ */
+BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
+{
+    BOOL ret;
+
+    TRACE("%p\n", cert);
+    ret = CertCompareCertificateName(cert->dwCertEncodingType,
+     &cert->pCertInfo->Subject, &cert->pCertInfo->Issuer);
+    return ret;
+}
+
+/***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
