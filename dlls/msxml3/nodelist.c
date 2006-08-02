@@ -77,8 +77,8 @@ static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xm
         return 0;
     return 1;
 }
- 
-void free_xslt_info( struct xslt_info *info )
+
+static void free_xslt_info( struct xslt_info *info )
 {
     if (info->pattern)
         xsltFreeCompMatchList( info->pattern );

@@ -115,7 +115,7 @@ static HRESULT WINAPI xmlcf_LockServer(
     return S_OK;
 }
 
-const struct IClassFactoryVtbl xmlcf_vtbl =
+static const struct IClassFactoryVtbl xmlcf_vtbl =
 {
     xmlcf_QueryInterface,
     xmlcf_AddRef,

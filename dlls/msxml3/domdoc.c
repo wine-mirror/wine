@@ -144,7 +144,7 @@ static HRESULT WINAPI bsc_OnObjectAvailable(
     return S_OK;
 }
 
-const struct IBindStatusCallbackVtbl bsc_vtbl =
+static const struct IBindStatusCallbackVtbl bsc_vtbl =
 {
     bsc_QueryInterface,
     bsc_AddRef,
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI domdoc_abort(
 }
 
 
-BOOL bstr_to_utf8( BSTR bstr, char **pstr, int *plen )
+static BOOL bstr_to_utf8( BSTR bstr, char **pstr, int *plen )
 {
     UINT len, blen = SysStringLen( bstr );
     LPSTR str;
@@ -1233,7 +1233,7 @@ static HRESULT WINAPI domdoc_put_onTransformNode(
     return E_NOTIMPL;
 }
 
-const struct IXMLDOMDocumentVtbl domdoc_vtbl =
+static const struct IXMLDOMDocumentVtbl domdoc_vtbl =
 {
     domdoc_QueryInterface,
     domdoc_AddRef,
