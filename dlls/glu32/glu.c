@@ -448,7 +448,7 @@ void WINAPI wine_gluTessEndPolygon(void *tess)
 }
 
 
-void wine_glu_tess_begin_data(int type, wine_tess_t *wine_tess)
+static void wine_glu_tess_begin_data(int type, wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_begin_data)
         wine_tess->cb_tess_begin_data(type, wine_tess->polygon_data);
@@ -456,7 +456,7 @@ void wine_glu_tess_begin_data(int type, wine_tess_t *wine_tess)
         wine_tess->cb_tess_begin(type);
 }
 
-void wine_glu_tess_vertex_data(void *vertex_data, wine_tess_t *wine_tess)
+static void wine_glu_tess_vertex_data(void *vertex_data, wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_vertex_data)
         wine_tess->cb_tess_vertex_data(vertex_data, wine_tess->polygon_data);
@@ -464,7 +464,7 @@ void wine_glu_tess_vertex_data(void *vertex_data, wine_tess_t *wine_tess)
         wine_tess->cb_tess_vertex(vertex_data);
 }
 
-void wine_glu_tess_end_data(wine_tess_t *wine_tess)
+static void wine_glu_tess_end_data(wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_end_data)
         wine_tess->cb_tess_end_data(wine_tess->polygon_data);
@@ -472,7 +472,7 @@ void wine_glu_tess_end_data(wine_tess_t *wine_tess)
         wine_tess->cb_tess_end();
 }
 
-void wine_glu_tess_error_data(int error, wine_tess_t *wine_tess)
+static void wine_glu_tess_error_data(int error, wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_error_data)
         wine_tess->cb_tess_error_data(error, wine_tess->polygon_data);
@@ -480,7 +480,7 @@ void wine_glu_tess_error_data(int error, wine_tess_t *wine_tess)
         wine_tess->cb_tess_error(error);
 }
 
-void wine_glu_tess_edge_flag_data(int flag, wine_tess_t *wine_tess)
+static void wine_glu_tess_edge_flag_data(int flag, wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_edge_flag_data)
         wine_tess->cb_tess_edge_flag_data(flag, wine_tess->polygon_data);
@@ -488,8 +488,8 @@ void wine_glu_tess_edge_flag_data(int flag, wine_tess_t *wine_tess)
         wine_tess->cb_tess_edge_flag(flag);
 }
 
-void wine_glu_tess_combine_data(double *coords, void *vertex_data, float *weight, void **outData,
-                                wine_tess_t *wine_tess)
+static void wine_glu_tess_combine_data(double *coords, void *vertex_data, float *weight, void **outData,
+                                       wine_tess_t *wine_tess)
 {
     if(wine_tess->cb_tess_combine_data)
         wine_tess->cb_tess_combine_data(coords, vertex_data, weight, outData, wine_tess->polygon_data);
