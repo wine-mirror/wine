@@ -473,6 +473,144 @@ static void test_Invoke(void)
     IFontDisp_Release(fontdisp);
 }
 
+static void test_IsEqual()
+{
+    FONTDESC fd;
+    static const WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
+    static const WCHAR arial_font[] = { 'A','r','i','a','l',0 };
+    LPVOID pvObj = NULL;
+    LPVOID pvObj2 = NULL;
+    IFont* ifnt = NULL;
+    IFont* ifnt2 = NULL;
+    HRESULT hres;
+
+    /* Basic font description */
+    fd.cbSizeofstruct = sizeof(FONTDESC);
+    fd.lpstrName      = (WCHAR*)system_font;
+    S(fd.cySize).Lo   = 100;
+    S(fd.cySize).Hi   = 100;
+    fd.sWeight        = 0;
+    fd.sCharset       = 0;
+    fd.fItalic        = 0;
+    fd.fUnderline     = 0;
+    fd.fStrikethrough = 0;
+
+    /* Create font */
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj);
+    ifnt = pvObj;
+
+    /* Test equal fonts */
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    ifnt2 = pvObj2;
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_OK,
+        "IFont_IsEqual: (EQUAL) Expected S_OK but got 0x%08lx\n",hres);
+    }
+    IFont_Release(ifnt2);
+
+    /* Check for bad pointer */
+    hres = IFont_IsEqual(ifnt,NULL);
+    todo_wine {
+    ok(hres == E_POINTER,
+        "IFont_IsEqual: (NULL) Expected 0x80004003 but got 0x%08lx\n",hres);
+    }
+
+    /* Test strName */
+    fd.lpstrName = (WCHAR*)arial_font;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (strName) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.lpstrName = (WCHAR*)system_font;
+    IFont_Release(ifnt2);
+
+    /* Test lo font size */
+    S(fd.cySize).Lo = 10000;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    ifnt2 = pvObj2;
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Lo font size) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    S(fd.cySize).Lo = 100;
+    IFont_Release(ifnt2);
+
+    /* Test hi font size */
+    S(fd.cySize).Hi = 10000;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    ifnt2 = pvObj2;
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Hi font size) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    S(fd.cySize).Hi = 100;
+    IFont_Release(ifnt2);
+
+    /* Test font weight  */
+    fd.sWeight = 100;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    ifnt2 = pvObj2;
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Weight) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.sWeight = 0;
+    IFont_Release(ifnt2);
+
+    /* Test charset */
+    fd.sCharset = 1;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Charset) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.sCharset = 0;
+    IFont_Release(ifnt2);
+
+    /* Test italic setting */
+    fd.fItalic = 1;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Italic) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.fItalic = 0;
+    IFont_Release(ifnt2);
+
+    /* Test underline setting */
+    fd.fUnderline = 1;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Underline) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.fUnderline = 0;
+    IFont_Release(ifnt2);
+
+    /* Test strikethrough setting */
+    fd.fStrikethrough = 1;
+    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
+    hres = IFont_IsEqual(ifnt,ifnt2);
+    todo_wine {
+    ok(hres == S_FALSE,
+        "IFont_IsEqual: (Strikethrough) Expected S_FALSE but got 0x%08lx\n",hres);
+    }
+    fd.fStrikethrough = 0;
+    IFont_Release(ifnt2);
+
+    /* Free IFont. */
+    IFont_Release(ifnt);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");    
@@ -496,4 +634,5 @@ START_TEST(olefont)
 	test_font_events_disp();
 	test_GetIDsOfNames();
 	test_Invoke();
+	test_IsEqual();
 }
