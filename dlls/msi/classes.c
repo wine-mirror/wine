@@ -797,7 +797,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     static const WCHAR szVIProgID[] = { 'V','e','r','s','i','o','n','I','n','d','e','p','e','n','d','e','n','t','P','r','o','g','I','D',0 };
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     static const WCHAR szSpace[] = {' ',0};
-    static const WCHAR szInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
     static const WCHAR szFileType_fmt[] = {'F','i','l','e','T','y','p','e','\\','%','s','\\','%','i',0};
     HKEY hkey,hkey2,hkey3;
     MSICLASS *cls;
@@ -811,7 +810,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp;
         MSIFILE *file;
-        DWORD size, sz;
+        DWORD size;
         LPWSTR argument;
         MSIFEATURE *feature;
 
@@ -846,63 +845,28 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         RegCreateKeyW( hkey2, cls->Context, &hkey3 );
         file = get_loaded_file( package, comp->KeyPath );
 
-
-        /* the context server is a short path name 
-         * except for if it is InprocServer32... 
+        /*
+         * FIXME: Implement install on demand (advertised components).
+         *
+         * ole32.dll should call msi.MsiProvideComponentFromDescriptor()
+         *  when it needs an InProcServer that doesn't exist.
+         * The component advertise string should be in the "InProcServer" value.
          */
-        if (strcmpiW( cls->Context, szInprocServer32 )!=0)
+        size = lstrlenW( file->TargetPath )+1;
+        if (cls->Argument)
+            size += lstrlenW(cls->Argument)+1;
+
+        argument = msi_alloc( size * sizeof(WCHAR) );
+        lstrcpyW( argument, file->TargetPath );
+
+        if (cls->Argument)
         {
-            sz = GetShortPathNameW( file->TargetPath, NULL, 0 );
-            if (sz == 0)
-            {
-                ERR("Unable to find short path for CLSID COM Server\n");
-                argument = NULL;
-            }
-            else
-            {
-                size = sz * sizeof(WCHAR);
-
-                if (cls->Argument)
-                {
-                    size += strlenW(cls->Argument) * sizeof(WCHAR);
-                    size += sizeof(WCHAR);
-                }
-
-                argument = msi_alloc( size + sizeof(WCHAR));
-                GetShortPathNameW( file->TargetPath, argument, sz );
-
-                if (cls->Argument)
-                {
-                    strcatW(argument,szSpace);
-                    strcatW( argument, cls->Argument );
-                }
-            }
-        }
-        else
-        {
-            size = lstrlenW( file->TargetPath ) * sizeof(WCHAR);
-
-            if (cls->Argument)
-            {
-                size += strlenW(cls->Argument) * sizeof(WCHAR);
-                size += sizeof(WCHAR);
-            }
-
-            argument = msi_alloc( size + sizeof(WCHAR));
-            strcpyW( argument, file->TargetPath );
-
-            if (cls->Argument)
-            {
-                strcatW(argument,szSpace);
-                strcatW( argument, cls->Argument );
-            }
+            lstrcatW( argument, szSpace );
+            lstrcatW( argument, cls->Argument );
         }
 
-        if (argument)
-        {
-            msi_reg_set_val_str( hkey3, NULL, argument );
-            msi_free(argument);
-        }
+        msi_reg_set_val_str( hkey3, NULL, argument );
+        msi_free(argument);
 
         RegCloseKey(hkey3);
 
@@ -925,7 +889,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
 
         if (cls->AppID)
-        { 
+        {
             MSIAPPID *appid = cls->AppID;
 
             msi_reg_set_val_str( hkey2, szAppID, appid->AppID );
