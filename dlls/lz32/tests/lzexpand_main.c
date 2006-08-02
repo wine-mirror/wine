@@ -62,10 +62,11 @@ static void test_LZOpenFileA(void)
   INT file;
   char expected[MAX_PATH];
   char filled_0xA5[OFS_MAXPATHNAME];
+  static char badfilename_[] = "badfilename_";
 
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
-  file = LZOpenFileA("badfilename_", &test, OF_READ);
+  file = LZOpenFileA(badfilename_, &test, OF_READ);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
   ok(GetLastError() == ERROR_FILE_NOT_FOUND, 
