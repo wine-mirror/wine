@@ -46,7 +46,7 @@ typedef struct
 {
     DWORD			keyState;	/* keyState (from INPUT_RECORD) to match */
     BOOL			chkChar;	/* check vk or char */
-    KeyEntry*			entries;	/* array of entries */
+    const KeyEntry*		entries;	/* array of entries */
 } KeyMap;
 
 typedef struct WCEL_Context {
@@ -648,7 +648,7 @@ static void WCEL_RepeatCount(WCEL_Context* ctx)
  * ====================================================================*/
 
 #define CTRL(x)	((x) - '@')
-static KeyEntry StdKeyMap[] =
+static const KeyEntry StdKeyMap[] =
 {
     {/*BACK*/0x08,	WCEL_DeletePrevChar 	},
     {/*RETURN*/0x0d,	WCEL_Done		},
@@ -656,14 +656,14 @@ static KeyEntry StdKeyMap[] =
     {	0,		NULL			}
 };
 
-static KeyEntry Win32ExtraStdKeyMap[] =
+static const KeyEntry Win32ExtraStdKeyMap[] =
 {
     {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
     {	0,		NULL			}
 };
 
 
-static	KeyEntry EmacsKeyMapCtrl[] =
+static const KeyEntry EmacsKeyMapCtrl[] =
 {
     {	CTRL('@'),	WCEL_SetMark		},
     {	CTRL('A'),	WCEL_MoveToBeg		},
@@ -695,7 +695,7 @@ static	KeyEntry EmacsKeyMapCtrl[] =
     {	0,		NULL			}
 };
 
-static KeyEntry EmacsKeyMapAlt[] =
+static const KeyEntry EmacsKeyMapAlt[] =
 {
     {/*DEL*/127,	WCEL_DeleteLeftWord	},
     {	'<',		WCEL_MoveToFirstHist	},
@@ -712,7 +712,7 @@ static KeyEntry EmacsKeyMapAlt[] =
     {	0,		NULL			}
 };
 
-static KeyEntry EmacsKeyMapExtended[] =
+static const KeyEntry EmacsKeyMapExtended[] =
 {
     {/*RETURN*/  0x0d,	WCEL_Done },
     {/*VK_PRIOR*/0x21, 	WCEL_MoveToPrevHist	},
@@ -725,7 +725,7 @@ static KeyEntry EmacsKeyMapExtended[] =
     {	0,		NULL 			}
 };
 
-static KeyMap	EmacsKeyMap[] =
+static const KeyMap EmacsKeyMap[] =
 {
     {0x00000000, 1, StdKeyMap},
     {0x00000001, 1, EmacsKeyMapAlt},	/* left  alt  */
@@ -736,7 +736,7 @@ static KeyMap	EmacsKeyMap[] =
     {0,		 0, 0}
 };
 
-static	KeyEntry Win32KeyMapExtended[] =
+static const KeyEntry Win32KeyMapExtended[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveLeft 		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight		},
@@ -748,7 +748,7 @@ static	KeyEntry Win32KeyMapExtended[] =
     {	0,		NULL 			}
 };
 
-static	KeyEntry Win32KeyMapCtrlExtended[] =
+static const KeyEntry Win32KeyMapCtrlExtended[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveToLeftWord 	},
     {/*VK_RIGHT*/0x27,	WCEL_MoveToRightWord	},
@@ -756,7 +756,7 @@ static	KeyEntry Win32KeyMapCtrlExtended[] =
     {	0,		NULL 			}
 };
 
-KeyMap	Win32KeyMap[] =
+static const KeyMap Win32KeyMap[] =
 {
     {0x00000000, 1, StdKeyMap},
     {0x00000000, 0, Win32ExtraStdKeyMap},
@@ -777,8 +777,8 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 {
     WCEL_Context	ctx;
     INPUT_RECORD	ir;
-    KeyMap*		km;
-    KeyEntry*		ke;
+    const KeyMap*	km;
+    const KeyEntry*	ke;
     unsigned		ofs;
     void		(*func)(struct WCEL_Context* ctx);
     DWORD               ks;
