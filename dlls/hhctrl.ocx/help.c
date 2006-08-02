@@ -148,7 +148,7 @@ static void SB_OnMouseMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
         return;
 }
 
-LRESULT CALLBACK SizeBar_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK SizeBar_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
@@ -264,7 +264,7 @@ static void Child_OnPaint(HWND hWnd)
     EndPaint(hWnd, &ps);
 }
 
-LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
@@ -619,7 +619,7 @@ static void Help_OnSize(HWND hWnd)
     WB_ResizeBrowser(pHHInfo->pWBInfo, rc.right - dwSize, rc.bottom - dwSize);
 }
 
-LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;

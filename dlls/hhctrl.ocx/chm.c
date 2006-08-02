@@ -46,7 +46,7 @@ static LPWSTR CHM_ANSIToUnicode(LPCSTR ansi)
 }
 
 /* Reads a string from the #STRINGS section in the CHM file */
-LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
+static LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
 {
     LARGE_INTEGER liOffset;
     IStorage *pStorage = pChmInfo->pStorage;
