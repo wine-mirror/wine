@@ -669,15 +669,17 @@ GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 {
     IRunnableObject *runable;
-    IRunnableObject *This = (IRunnableObject *)pUnknown;
-    LRESULT ret;
+    HRESULT hres;
 
-    ret = IRunnableObject_QueryInterface(This,&IID_IRunnableObject,(LPVOID*)&runable);
-    if (ret)
-        return 0; /* Appears to return no error. */
-    ret = IRunnableObject_Run(runable,NULL);
+    TRACE("(%p)\n", pUnknown);
+
+    hres = IUnknown_QueryInterface(pUnknown, &IID_IRunnableObject, (void**)&runable);
+    if (FAILED(hres))
+        return S_OK; /* Appears to return no error. */
+
+    hres = IRunnableObject_Run(runable, NULL);
     IRunnableObject_Release(runable);
-    return ret;
+    return hres;
 }
 
 /******************************************************************************
