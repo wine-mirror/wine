@@ -1060,6 +1060,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         {
           CHARFORMAT2W chf;
           char buf[2048];
+          chf.cbSize = sizeof(chf);
           
           ME_GetSelectionCharFormat(editor, &chf);
           ME_DumpStyleToBuf(&chf, buf);
@@ -1393,11 +1394,16 @@ get_msg_name(UINT msg)
  */
 LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   SCROLLINFO si;
-  ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
+  ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
   
   TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam);
   
+  if (!editor && msg != WM_NCCREATE && msg != WM_NCDESTROY) {
+    ERR("RichEditANSIWndProc called with invalid hWnd %p - application bug?\n", hWnd);
+    return 0; 
+  }
+
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
