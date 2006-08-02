@@ -17,7 +17,7 @@
 22 stub HlinkGetSpecialReference
 23 stub HlinkCreateShortcut
 24 stub HlinkResolveShortcut
-25 stub HlinkIsShortcut
+25 stdcall HlinkIsShortcut(wstr)
 26 stub HlinkResolveShortcutToString
 27 stub HlinkCreateShortcutFromString
 28 stub HlinkGetValueFromParams

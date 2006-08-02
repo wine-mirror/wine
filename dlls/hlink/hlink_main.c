@@ -31,6 +31,7 @@
 #include "unknwn.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "hlink.h"
 
 #include "initguid.h"
@@ -252,6 +253,24 @@ HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
         r = HlinkNavigate(hlink, pihlframe, grfHLNF, pibc, pibsc, pihlbc);
 
     return r;
+}
+
+HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
+{
+    int len;
+
+    static const WCHAR url_ext[] = {'.','u','r','l',0};
+
+    TRACE("(%s)\n", debugstr_w(pwzFileName));
+
+    if(!pwzFileName)
+        return E_INVALIDARG;
+
+    len = strlenW(pwzFileName)-4;
+    if(len < 0)
+        return S_FALSE;
+
+    return strcmpiW(pwzFileName+len, url_ext) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,

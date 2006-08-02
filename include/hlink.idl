@@ -32,6 +32,7 @@ cpp_quote("HRESULT WINAPI HlinkCreateBrowseContext(IUnknown*, REFIID, void **);"
 cpp_quote("HRESULT WINAPI HlinkNavigateToStringReference(LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IHlinkFrame*, DWORD, LPBC, IBindStatusCallback*, IHlinkBrowseContext*);")
 cpp_quote("HRESULT WINAPI HlinkNavigate(IHlink*, IHlinkFrame*, DWORD, LPBC, IBindStatusCallback*, IHlinkBrowseContext*);")
 cpp_quote("HRESULT WINAPI HlinkOnNavigate(IHlinkFrame*, IHlinkBrowseContext*, DWORD, IMoniker*, LPCWSTR, LPCWSTR, ULONG*);")
+cpp_quote("HRESULT WINAPI HlinkIsShortcut(LPCWSTR);")
 
 /*****************************************************************************
  *    IHlink interface
