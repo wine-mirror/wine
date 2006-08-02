@@ -90,21 +90,21 @@ static char *WGL_extensions = NULL;
  *
  * @TODO: use a struct to handle parameters 
  */
-BOOL query_function_make_current_read(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static BOOL query_function_make_current_read(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				      const char* glx_version, const char *glx_extensions,
 				      const char *server_glx_extensions, const char *client_glx_extensions)
 {
   return 0 <= strcmp("1.3", glx_version);
 }
 
-BOOL query_function_multisample(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static BOOL query_function_multisample(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				const char* glx_version, const char *glx_extensions,
 				const char *server_glx_extensions, const char *client_glx_extensions)
 {
   return NULL != strstr(glx_extensions, "GLX_ARB_multisample");
 }
 
-BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 			    const char* glx_version, const char *glx_extensions,
 			    const char *server_glx_extensions, const char *client_glx_extensions)
 {
@@ -114,7 +114,7 @@ BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version,
   return 0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer");
 }
 
-BOOL query_function_pixel_format(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static BOOL query_function_pixel_format(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				 const char* glx_version, const char *glx_extensions,
 				 const char *server_glx_extensions, const char *client_glx_extensions)
 {
@@ -126,12 +126,12 @@ BOOL query_function_pixel_format(glXGetProcAddressARB_t proc, const char *gl_ver
  * http://oss.sgi.com/projects/ogl-sample/registry/ARB/wgl_render_texture.txt
  * ~/tmp/ogl/ogl_offscreen_rendering_3
  */
-Bool (*p_glXBindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-Bool (*p_glXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
-Bool (*p_glXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
-int  use_render_texture_emulation = 0;
-int  use_render_texture_ati = 0;
-BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static Bool (*p_glXBindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+static Bool (*p_glXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+static Bool (*p_glXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
+static int  use_render_texture_emulation = 0;
+static int  use_render_texture_ati = 0;
+static BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				   const char* glx_version, const char *glx_extensions,
 				   const char *server_glx_extensions, const char *client_glx_extensions)
 {
@@ -165,8 +165,8 @@ BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_v
   return bTest;
 }
 
-int (*p_glXSwapIntervalSGI)(int);
-BOOL query_function_swap_control(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+static int (*p_glXSwapIntervalSGI)(int);
+static BOOL query_function_swap_control(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				 const char* glx_version, const char *glx_extensions,
 				 const char *server_glx_extensions, const char *client_glx_extensions)
 {
@@ -1212,7 +1212,7 @@ GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *p
   return GL_TRUE;
 }
 
-GLboolean WINAPI wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
+static GLboolean WINAPI wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
@@ -1255,7 +1255,7 @@ GLboolean WINAPI wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
   return GL_FALSE;
 }
 
-GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
+static GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
@@ -1295,7 +1295,7 @@ GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
   return GL_FALSE;
 }
 
-GLboolean WINAPI wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
+static GLboolean WINAPI wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);

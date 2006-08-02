@@ -39,17 +39,4 @@ typedef struct {
 extern WGL_extension wgl_extension_registry[];
 extern int wgl_extension_registry_size;
 
-typedef struct wine_glx_s {
-  unsigned     version;
-  /** SGIX / 1.3 */
-  GLXFBConfig* (*p_glXChooseFBConfig) (Display *dpy, int screen, const int *attrib_list, int *nelements);
-  int          (*p_glXGetFBConfigAttrib) (Display *dpy, GLXFBConfig config, int attribute, int *value);
-  XVisualInfo* (*p_glXGetVisualFromFBConfig) (Display *dpy, GLXFBConfig config); 
-  /** 1.3 */
-  GLXFBConfig* (*p_glXGetFBConfigs) (Display *dpy, int screen, int *nelements);
-  void         (*p_glXQueryDrawable) (Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
-  Bool         (*p_glXMakeContextCurrent) (Display *, GLXDrawable, GLXDrawable, GLXContext);
-} wine_glx_t;
-extern wine_glx_t wine_glx;
-
 #endif /* __DLLS_OPENGL32_WGL_EXT_H */
