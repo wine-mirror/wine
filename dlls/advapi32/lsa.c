@@ -374,7 +374,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
     IN POLICY_INFORMATION_CLASS InformationClass,
     OUT PVOID *Buffer)
 {
-    FIXME("(%p,0x%08x,%p) stub\n", PolicyHandle, InformationClass, Buffer);
+    TRACE("(%p,0x%08x,%p)\n", PolicyHandle, InformationClass, Buffer);
 
     if(!Buffer) return STATUS_INVALID_PARAMETER;
     switch (InformationClass)
@@ -388,16 +388,12 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         }
         break;
         case PolicyPrimaryDomainInformation: /* 3 */
-        case PolicyAccountDomainInformation: /* 5 */
         {
-            struct di
-            {
-                POLICY_PRIMARY_DOMAIN_INFO ppdi;
-                SID sid;
-                DWORD padding[3];
-            };
-
-            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*xdi));
+            /* Only the domain name is valid for the local computer.
+             * All other fields are zero.
+             */
+            PPOLICY_PRIMARY_DOMAIN_INFO pinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                          sizeof(POLICY_PRIMARY_DOMAIN_INFO));
             HKEY key;
             BOOL useDefault = TRUE;
             LONG ret;
@@ -412,43 +408,62 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                 ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
                 if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
                 {
-                    xdi->ppdi.Name.Buffer = HeapAlloc(GetProcessHeap(),
-                                                      HEAP_ZERO_MEMORY, size);
+                    pinfo->Name.Buffer = HeapAlloc(GetProcessHeap(),
+                                                   HEAP_ZERO_MEMORY, size);
 
                     if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
-                         (LPBYTE)xdi->ppdi.Name.Buffer, &size)) == ERROR_SUCCESS)
+                         (LPBYTE)pinfo->Name.Buffer, &size)) == ERROR_SUCCESS)
                     {
-                        xdi->ppdi.Name.Length = (USHORT)size;
+                        pinfo->Name.Length = (USHORT)(size - sizeof(WCHAR));
+                        pinfo->Name.MaximumLength = (USHORT)size;
                         useDefault = FALSE;
                     }
                     else
                     {
-                        HeapFree(GetProcessHeap(), 0, xdi->ppdi.Name.Buffer);
-                        xdi->ppdi.Name.Buffer = NULL;
+                        HeapFree(GetProcessHeap(), 0, pinfo->Name.Buffer);
+                        pinfo->Name.Buffer = NULL;
                     }
                 }
                 RegCloseKey(key);
             }
             if (useDefault)
+                RtlCreateUnicodeStringFromAsciiz(&(pinfo->Name), "DOMAIN");
+
+            TRACE("setting domain to %s\n", debugstr_w(pinfo->Name.Buffer));
+
+            *Buffer = pinfo;
+        }
+        break;
+        case PolicyAccountDomainInformation: /* 5 */
+        {
+            struct di
             {
-                DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-                LPWSTR buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize * sizeof(WCHAR));
-                if (GetComputerNameW(buf, &dwSize))
-                {
-                    xdi->ppdi.Name.Buffer = buf;
-                    xdi->ppdi.Name.Length = dwSize * sizeof(WCHAR);
-                }
+                POLICY_ACCOUNT_DOMAIN_INFO info;
+                SID sid;
+                DWORD padding[3];
+            };
+
+            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*xdi));
+            DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+            LPWSTR buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize * sizeof(WCHAR));
+
+            xdi->info.DomainName.MaximumLength = dwSize * sizeof(WCHAR);
+
+            if (GetComputerNameW(buf, &dwSize))
+            {
+                xdi->info.DomainName.Buffer = buf;
+                xdi->info.DomainName.Length = dwSize * sizeof(WCHAR);
             }
-                                                                                
-            TRACE("setting domain to %s\n", debugstr_w(xdi->ppdi.Name.Buffer));
-                                                                                
-            xdi->ppdi.Sid = &(xdi->sid);
-                                                                                
+
+            TRACE("setting name to %s\n", debugstr_w(xdi->info.DomainName.Buffer));
+
+            xdi->info.DomainSid = &(xdi->sid);
+
             /* read the computer SID from the registry */
             if (!ADVAPI_GetComputerSid(&(xdi->sid)))
             {
                 SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-                                                                                
+
                 xdi->sid.Revision = SID_REVISION;
                 xdi->sid.SubAuthorityCount = 4;
                 xdi->sid.IdentifierAuthority = localSidAuthority;
@@ -456,8 +471,10 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                 xdi->sid.SubAuthority[1] = 0;
                 xdi->sid.SubAuthority[2] = 0;
                 xdi->sid.SubAuthority[3] = 0;
+
+                WARN("Computer SID not found in registry\n");
             }
-                                                                                
+
             TRACE("setting SID to %s\n", debugstr_sid(&xdi->sid));
 
             *Buffer = xdi;
@@ -465,14 +482,11 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         break;
         case  PolicyDnsDomainInformation:	/* 12 (0xc) */
         {
-            struct di
-            {
-                POLICY_DNS_DOMAIN_INFO pddi;
-                SID sid;
-                DWORD padding[3];
-            };
-
-            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*xdi));
+            /* Only the domain name is valid for the local computer.
+             * All other fields are zero.
+             */
+            PPOLICY_DNS_DOMAIN_INFO pinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                      sizeof(POLICY_DNS_DOMAIN_INFO));
             HKEY key;
             BOOL useDefault = TRUE;
             LONG ret;
@@ -487,55 +501,30 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                 ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
                 if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
                 {
-                    xdi->pddi.Name.Buffer = HeapAlloc(GetProcessHeap(),
-                                                      HEAP_ZERO_MEMORY, size);
+                    pinfo->Name.Buffer = HeapAlloc(GetProcessHeap(),
+                                                   HEAP_ZERO_MEMORY, size);
 
                     if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
-                         (LPBYTE)xdi->pddi.Name.Buffer, &size)) == ERROR_SUCCESS)
+                         (LPBYTE)pinfo->Name.Buffer, &size)) == ERROR_SUCCESS)
                     {
-                        xdi->pddi.Name.Length = (USHORT)size;
+                        pinfo->Name.Length = (USHORT)(size - sizeof(WCHAR));
+                        pinfo->Name.MaximumLength = (USHORT)size;
                         useDefault = FALSE;
                     }
                     else
                     {
-                        HeapFree(GetProcessHeap(), 0, xdi->pddi.Name.Buffer);
-                        xdi->pddi.Name.Buffer = NULL;
+                        HeapFree(GetProcessHeap(), 0, pinfo->Name.Buffer);
+                        pinfo->Name.Buffer = NULL;
                     }
                 }
                 RegCloseKey(key);
             }
             if (useDefault)
-            {
-                DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-                LPWSTR buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize * sizeof(WCHAR));
-                if (GetComputerNameW(buf, &dwSize))
-                {
-                    xdi->pddi.Name.Buffer = buf;
-                    xdi->pddi.Name.Length = dwSize * sizeof(WCHAR);
-                }
-            }
-                                                                                
-            TRACE("setting domain to %s\n", debugstr_w(xdi->pddi.Name.Buffer));
-                                                                                
-            xdi->pddi.Sid = &(xdi->sid);
-                                                                                
-            /* read the computer SID from the registry */
-            if (!ADVAPI_GetComputerSid(&(xdi->sid)))
-            {
-                SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-                                                                                
-                xdi->sid.Revision = SID_REVISION;
-                xdi->sid.SubAuthorityCount = 4;
-                xdi->sid.IdentifierAuthority = localSidAuthority;
-                xdi->sid.SubAuthority[0] = SECURITY_NT_NON_UNIQUE;
-                xdi->sid.SubAuthority[1] = 0;
-                xdi->sid.SubAuthority[2] = 0;
-                xdi->sid.SubAuthority[3] = 0;
-            }
-                                                                                
-            TRACE("setting SID to %s\n", debugstr_sid(&xdi->sid));
+                RtlCreateUnicodeStringFromAsciiz(&(pinfo->Name), "DOMAIN");
 
-            *Buffer = xdi;
+            TRACE("setting domain to %s\n", debugstr_w(pinfo->Name.Buffer));
+
+            *Buffer = pinfo;
         }
         break;
         case  PolicyAuditLogInformation:
@@ -547,7 +536,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         case  PolicyAuditFullSetInformation:
         case  PolicyAuditFullQueryInformation:
         {
-            FIXME("category not implemented\n");
+            FIXME("category %d not implemented\n", InformationClass);
             return STATUS_UNSUCCESSFUL;
         }
     }
