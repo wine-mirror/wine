@@ -37,8 +37,14 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     {
     case CERT_RDN_ANY_TYPE:
         break;
+    case CERT_RDN_NUMERIC_STRING:
     case CERT_RDN_PRINTABLE_STRING:
+    case CERT_RDN_TELETEX_STRING:
+    case CERT_RDN_VIDEOTEX_STRING:
     case CERT_RDN_IA5_STRING:
+    case CERT_RDN_GRAPHIC_STRING:
+    case CERT_RDN_VISIBLE_STRING:
+    case CERT_RDN_GENERAL_STRING:
         if (!psz || !csz)
             ret = pValue->cbData;
         else
@@ -79,8 +85,14 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     {
     case CERT_RDN_ANY_TYPE:
         break;
+    case CERT_RDN_NUMERIC_STRING:
     case CERT_RDN_PRINTABLE_STRING:
+    case CERT_RDN_TELETEX_STRING:
+    case CERT_RDN_VIDEOTEX_STRING:
     case CERT_RDN_IA5_STRING:
+    case CERT_RDN_GRAPHIC_STRING:
+    case CERT_RDN_VISIBLE_STRING:
+    case CERT_RDN_GENERAL_STRING:
         if (!psz || !csz)
             ret = pValue->cbData;
         else
