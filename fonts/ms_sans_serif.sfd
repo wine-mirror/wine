@@ -2283,17 +2283,17 @@ BDFChar: 166 228 6 1 5 0 8
 BDFChar: 167 229 6 1 5 0 9
 +Aa0\E!U]ELj/n"
 BDFChar: 168 230 10 1 9 0 5
-G5qo!IfP9)Lk'sT
+G5qo!It3=TLk'sT
 BDFChar: 169 231 6 1 5 -2 5
 E/9$pLi=J%
 BDFChar: 170 232 6 1 5 0 8
-5Tg&GM"#qNDu]k<
+5Tg&GM"lLVDu]k<
 BDFChar: 171 233 6 1 5 0 8
-&0LslM"#qNDu]k<
+&0LslM"lLVDu]k<
 BDFChar: 172 234 6 1 5 0 8
-+A`&WM"#qNDu]k<
++A`&WM"lLVDu]k<
 BDFChar: 173 235 6 1 5 0 8
-L]@EoM"#qNDu]k<
+L]@EoM"lLVDu]k<
 BDFChar: 174 236 2 0 1 0 8
 J3X*"5X7S"5QCca
 BDFChar: 175 237 4 2 3 0 8
@@ -2361,11 +2361,11 @@ BDFChar: 205 273 7 1 6 0 8
 BDFChar: 206 280 7 1 5 -2 8
 pjdmFn:6%>p`M6j
 BDFChar: 207 281 6 1 5 -2 5
-E/="6Li=Ij
+E/=:>Li=Ij
 BDFChar: 208 282 7 1 5 0 10
 :a#O`J:R->J:RCp
 BDFChar: 209 283 6 1 5 0 8
-:`oaWM"#qNDu]k<
+:`oaWM"lLVDu]k<
 BDFChar: 210 313 6 1 5 0 10
 +@(I-J:N0#J:RCp
 BDFChar: 211 314 3 1 2 0 10
@@ -2403,7 +2403,7 @@ n:6%>J:IV"
 BDFChar: 227 1076 6 0 5 -1 5
 GXt@r8Gn,@
 BDFChar: 228 1077 6 1 5 0 5
-E/="6Li<=o
+E/=:>Li<=o
 BDFChar: 229 1078 8 1 7 0 5
 P#OD#<0@4]
 BDFChar: 230 1079 6 1 5 0 5
@@ -2651,7 +2651,7 @@ KE-[U`B^5LU]?[qMu\M2KE(uP
 BDFChar: 351 1025 7 1 5 0 10
 :]U9@J:R->J:RCp
 BDFChar: 352 1105 6 1 5 0 7
-:]PHjn:6=6
+:]PHjpje0>
 EndBitmapFont
 BitmapFont: 16 354 13 3 1 FontForge
 BDFChar: 0 32 3 0 0 0 0
