@@ -57,17 +57,17 @@ static const WCHAR szDllName[] = {'D','l','l','N','a','m','e','\0'};
 static const WCHAR szIniDocumentation[] = {'d','o','c','u','m','e','n','t','a','t','i','o','n','\0'};
 
 HINSTANCE hDllInst;
-
-DWORD dwThemeAppProperties = STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS;
-ATOM atWindowTheme;
-ATOM atSubAppName;
-ATOM atSubIdList;
 ATOM atDialogThemeEnabled;
 
-BOOL bThemeActive = FALSE;
-WCHAR szCurrentTheme[MAX_PATH];
-WCHAR szCurrentColor[64];
-WCHAR szCurrentSize[64];
+static DWORD dwThemeAppProperties = STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS;
+static ATOM atWindowTheme;
+static ATOM atSubAppName;
+static ATOM atSubIdList;
+
+static BOOL bThemeActive = FALSE;
+static WCHAR szCurrentTheme[MAX_PATH];
+static WCHAR szCurrentColor[64];
+static WCHAR szCurrentSize[64];
 
 /***********************************************************************/
 
