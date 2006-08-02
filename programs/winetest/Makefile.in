@@ -33,6 +33,7 @@ TESTBINS = \
 	dnsapi_test.exe$(DLLEXT) \
 	dsound_test.exe$(DLLEXT) \
 	gdi32_test.exe$(DLLEXT) \
+	hlink_test.exe$(DLLEXT) \
 	iphlpapi_test.exe$(DLLEXT) \
 	kernel32_test.exe$(DLLEXT) \
 	lz32_test.exe$(DLLEXT) \
@@ -131,6 +132,8 @@ dsound_test.exe$(DLLEXT): $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+hlink_test.exe$(DLLEXT): $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT)
+	cp $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT) $@ && $(STRIP) $@
 iphlpapi_test.exe$(DLLEXT): $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe$(DLLEXT): $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
