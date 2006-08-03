@@ -21,14 +21,17 @@
 
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "winternl.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -377,9 +380,118 @@ void TRASH_DisposeElement(TRASH_ELEMENT *element)
         SHFree(element->filename);
 }
 
+HRESULT TRASH_GetDetails(const TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)
+{
+    LPSTR path;
+    struct stat stats;
+    int suffix_length = lstrlenA(trashinfo_suffix);
+    int filename_length = lstrlenA(element->filename);
+    int path_length = lstrlenA(element->bucket->files_dir);
+    static const WCHAR fmt[] = {'T','O','D','O','\\','(','%','h','s',')',0};
+    
+    path = SHAlloc(path_length + filename_length + 1);
+    if (path == NULL) return E_OUTOFMEMORY;
+    lstrcpyA(path, element->bucket->files_dir);
+    lstrcpyA(path+path_length, element->filename);
+    path[path_length + filename_length - suffix_length] = 0;  /* remove the '.trashinfo' */
+    if (lstat(path, &stats) == -1)
+    {
+        ERR("Error accessing data file for trashinfo %s (errno=%d)\n", element->filename, errno);
+        return S_FALSE;
+    }
+    
+    ZeroMemory(data, sizeof(*data));
+    data->nFileSizeHigh = (DWORD)((LONGLONG)stats.st_size>>32);
+    data->nFileSizeLow = stats.st_size & 0xffffffff;
+    RtlSecondsSince1970ToTime(stats.st_mtime, (LARGE_INTEGER *)&data->ftLastWriteTime);
+    wnsprintfW(data->cFileName, MAX_PATH, fmt, element->filename);
+    return S_OK;
+}
+
+INT CALLBACK free_item_callback(void *item, void *lParam)
+{
+    SHFree(item);
+    return TRUE;
+}
+
+static HDPA enum_bucket_trashinfos(TRASH_BUCKET *bucket, int *count)
+{
+    HDPA ret = DPA_Create(32);
+    struct dirent *entry;
+    DIR *dir = NULL;
+    
+    errno = ENOMEM;
+    *count = 0;
+    if (ret == NULL) goto failed;
+    dir = opendir(bucket->info_dir);
+    if (dir == NULL) goto failed;
+    while ((entry = readdir(dir)) != NULL)
+    {
+        LPSTR filename;
+        int namelen = lstrlenA(entry->d_name);
+        int suffixlen = lstrlenA(trashinfo_suffix);
+        if (namelen <= suffixlen ||
+                lstrcmpA(entry->d_name+namelen-suffixlen, trashinfo_suffix) != 0)
+            continue;
+
+        filename = StrDupA(entry->d_name);
+        if (filename == NULL)
+            goto failed;
+        if (DPA_InsertPtr(ret, DPA_APPEND, filename) == -1)
+        {
+            SHFree(filename);
+            goto failed;
+        }
+        (*count)++;
+    }
+    closedir(dir);
+    return ret;
+failed:
+    if (dir) closedir(dir);
+    if (ret)
+        DPA_DestroyCallback(ret, free_item_callback, NULL);
+    return NULL;
+}
+
 HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count)
 {
-    *count = 0;
-    *pidls = SHAlloc(0);
+    int ti_count;
+    int pos=0, i;
+    HRESULT err = E_OUTOFMEMORY;
+    HDPA tinfs;
+    
+    if (!TRASH_EnsureInitialized()) return E_FAIL;
+    tinfs = enum_bucket_trashinfos(home_trash, &ti_count);
+    if (tinfs == NULL) return E_FAIL;
+    *pidls = SHAlloc(sizeof(LPITEMIDLIST)*ti_count);
+    if (!*pidls) goto failed;
+    for (i=0; i<ti_count; i++)
+    {
+        WIN32_FIND_DATAW data;
+        TRASH_ELEMENT elem;
+        
+        elem.bucket = home_trash;
+        elem.filename = DPA_GetPtr(tinfs, i);
+        if (FAILED(err = TRASH_GetDetails(&elem, &data)))
+            goto failed;
+        if (err == S_FALSE)
+            continue;
+        if (FAILED(err = TRASH_CreateSimplePIDL(&elem, &data, &(*pidls)[pos])))
+            goto failed;
+        pos++;
+    }
+    *count = pos;
+    DPA_DestroyCallback(tinfs, free_item_callback, NULL);
     return S_OK;
+failed:
+    if (*pidls != NULL)
+    {
+        int j;
+        for (j=0; j<pos; j++)
+            SHFree((*pidls)[j]);
+        SHFree(*pidls);
+    }
+    DPA_DestroyCallback(tinfs, free_item_callback, NULL);
+    
+    return err;
 }
