@@ -2302,6 +2302,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         
     switch (wstr)
     {
+    case 1: /* Ctrl-A */
+      ME_SetSelection(editor, 0, -1);
+      return 0;
     case 3: /* Ctrl-C */
       SendMessageW(editor->hWnd, WM_COPY, 0, 0);
       return 0;
@@ -2314,9 +2317,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
     switch (wstr)
     {
-    case 1: /* Ctrl-A */
-      ME_SetSelection(editor, 0, -1);
-      return 0;
     case 22: /* Ctrl-V */
       SendMessageW(editor->hWnd, WM_PASTE, 0, 0);
       return 0;
