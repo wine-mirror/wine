@@ -772,6 +772,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     DWORD	infosize;
     UINT	subblocklen;
     char	*s, buf[2048], fn[260];
+    static char version_info_spec[] = "\\StringFileInfo\\040904E4\\FileDescription";
     LPBYTE	infobuf;
     LPVOID	subblock;
     DWORD	i, cnt = 0, lRet;
@@ -844,7 +845,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     }
     /* FIXME: language problem? */
     if (VerQueryValueA(	infobuf,
-                        "\\StringFileInfo\\040904E4\\FileDescription",
+                        version_info_spec,
                         &subblock,
                         &subblocklen
             )) 
