@@ -365,19 +365,20 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
 
         do {
             hres = IStream_Read(pstgmed->u.pstm, This->nsstream->buf, sizeof(This->nsstream->buf),
-                                &This->nsstream->buf_size);
-            if(This->nsstream->buf_size) {
-                nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
-                        (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
-                        NSINSTREAM(This->nsstream), 0 /* FIXME */, dwSize);
-                if(NS_FAILED(nsres))
-                    FIXME("OnDataAvailable failed: %08lx\n", nsres);
-
-                if(This->nsstream->buf_size)
-                    FIXME("buffer is not empty!\n");
-            }else {
+                         &This->nsstream->buf_size);
+            if(!This->nsstream->buf_size)
                 break;
-            }
+
+            nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
+                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
+                    NSINSTREAM(This->nsstream), This->readed, This->nsstream->buf_size);
+            if(NS_FAILED(nsres))
+                FIXME("OnDataAvailable failed: %08lx\n", nsres);
+
+            if(This->nsstream->buf_size)
+                FIXME("buffer is not empty!\n");
+
+            This->readed += This->nsstream->buf_size;
         }while(hres == S_OK);
     }
 
@@ -575,6 +576,7 @@ BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
     ret->post_data = NULL;
     ret->headers = NULL;
     ret->post_data_len = 0;
+    ret->readed = 0;
     ret->nschannel = NULL;
     ret->nslistener = NULL;
     ret->nscontext = NULL;

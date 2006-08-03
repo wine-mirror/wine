@@ -160,6 +160,7 @@ struct BSCallback {
     LPWSTR headers;
     HGLOBAL post_data;
     ULONG post_data_len;
+    ULONG readed;
 
     nsChannel *nschannel;
     nsIStreamListener *nslistener;
