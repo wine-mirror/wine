@@ -73,6 +73,7 @@ struct regsvr_coclass
     DWORD dwCallForAttributes;
     LPCSTR clsid_str;		/* can be NULL to omit */
     LPCSTR progid;		/* can be NULL to omit */
+    UINT idDefaultIcon;         /* can be 0 to omit */
 };
 
 /* flags for regsvr_coclass.flags */
@@ -127,6 +128,8 @@ static WCHAR const shellfolder_keyname[12] = {
 static WCHAR const mcdm_keyname[21] = {
     'M', 'a', 'y', 'C', 'h', 'a', 'n', 'g', 'e', 'D', 'e', 'f',
     'a', 'u', 'l', 't', 'M', 'e', 'n', 'u', 0 };
+static WCHAR const defaulticon_keyname[] = {
+    'D','e','f','a','u','l','t','I','c','o','n',0};
 static char const tmodel_valuename[] = "ThreadingModel";
 static char const wfparsing_valuename[] = "WantsFORPARSING";
 static char const attributes_valuename[] = "Attributes";
@@ -273,6 +276,21 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
             sprintf(buffer+strlen(buffer), "%u", list->idName);
             res = RegSetValueExA(clsid_key, localized_valuename, 0, REG_EXPAND_SZ,
                                  (CONST BYTE*)(buffer), strlen(buffer)+1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+        
+        if (list->idDefaultIcon) {
+            HKEY icon_key;
+            char buffer[64] = "%SYSTEMROOT%\\system32\\shell32.dll,-";
+
+            res = RegCreateKeyExW(clsid_key, defaulticon_keyname, 0, NULL, 0,
+                        KEY_READ | KEY_WRITE, NULL, &icon_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+            sprintf(buffer+strlen(buffer), "%u", list->idDefaultIcon);
+            res = RegSetValueExA(icon_key, NULL, 0, REG_EXPAND_SZ,
+                                 (CONST BYTE*)(buffer), strlen(buffer)+1);
+            RegCloseKey(icon_key);
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
 
@@ -668,7 +686,10 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
 	SHELLFOLDER_ATTRIBUTES,
 	SFGAO_FOLDER|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET,
-	0
+	0,
+	NULL,
+	NULL,
+	IDI_SHELL_FULL_RECYCLE_BIN
     },
     { NULL }			/* list terminator */
 };
