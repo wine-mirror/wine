@@ -1442,7 +1442,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
 
-HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & DDSD_CKSRCBLT);
     const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
@@ -1459,7 +1459,10 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *f
             /* ****************
                 Paletted Texture
                 **************** */
-            if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) || colorkey_active) {
+            /* Use conversion when the paletted texture extension is not available, or when it is available make sure it is used
+             * for texturing as it won't work for calls like glDraw-/glReadPixels and further also use conversion in case of color keying.
+             */
+            if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) || colorkey_active || (!use_texturing && GL_SUPPORT(EXT_PALETTED_TEXTURE)) ) {
                 *format = GL_RGBA;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
@@ -1688,6 +1691,58 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
     return WINED3D_OK;
 }
 
+/* This function is used in case of 8bit paletted textures to upload the palette.
+   For now it only supports GL_EXT_paletted_texture extension but support for other
+   extensions like ARB_fragment_program and ATI_fragment_shaders will be added aswell.
+*/
+void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DPaletteImpl* pal = This->palette;
+    BYTE table[256][4];
+    int i;
+
+    if (pal == NULL) {
+        /* Still no palette? Use the device's palette */
+        /* Get the surface's palette */
+        for (i = 0; i < 256; i++) {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+            table[i][0] = device->palettes[device->currentPalette][i].peRed;
+            table[i][1] = device->palettes[device->currentPalette][i].peGreen;
+            table[i][2] = device->palettes[device->currentPalette][i].peBlue;
+            if ((convert == CONVERT_PALETTED_CK) &&
+                (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
+                (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
+                /* We should maybe here put a more 'neutral' color than the standard bright purple
+                   one often used by application to prevent the nice purple borders when bi-linear
+                   filtering is on */
+                table[i][3] = 0x00;
+            } else {
+                table[i][3] = 0xFF;
+            }
+        }
+    } else {
+        TRACE("Using surface palette %p\n", pal);
+        /* Get the surface's palette */
+        for (i = 0; i < 256; i++) {
+            table[i][0] = pal->palents[i].peRed;
+            table[i][1] = pal->palents[i].peGreen;
+            table[i][2] = pal->palents[i].peBlue;
+            if ((convert == CONVERT_PALETTED_CK) &&
+                (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
+                (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
+                /* We should maybe here put a more 'neutral' color than the standard bright purple
+                   one often used by application to prevent the nice purple borders when bi-linear
+                   filtering is on */
+                table[i][3] = 0x00;
+            } else {
+                table[i][3] = 0xFF;
+            }
+        }
+    }
+    GL_EXTCALL(glColorTableEXT(GL_TEXTURE_2D,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -1810,7 +1865,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             This->glCKey = This->SrcBltCKey;
         }
         else This->Flags &= ~SFLAG_GLCKEY;
-        d3dfmt_get_conv(This, TRUE /* We need color keying */, &format, &internal, &type, &convert, &bpp);
+        d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
         if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
             int width = This->glRect.right - This->glRect.left;
@@ -1832,6 +1887,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 
             This->Flags |= SFLAG_CONVERTED;
+        } else if(This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
+                int pitch = IWineD3DSurface_GetPitch(iface);
+                d3dfmt_p8_upload_palette(iface, convert);
+
+                /* Make sure the correct pitch is used */
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
+
+                This->Flags &= ~SFLAG_CONVERTED;
+                mem = This->resource.allocatedMemory;
         } else {
             This->Flags &= ~SFLAG_CONVERTED;
             mem = This->resource.allocatedMemory;
