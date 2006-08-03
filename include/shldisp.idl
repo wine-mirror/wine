@@ -83,3 +83,13 @@ interface IFolderViewOC : IDispatch
 {
     HRESULT SetFolderView( [in] IDispatch *pdisp );
 }
+
+[
+    uuid(9ba05971-f6a8-11cf-a442-00a0c90a8f39),
+    hidden
+]
+coclass ShellFolderViewOC
+{
+    [default]         interface     IFolderViewOC;
+    [default, source] dispinterface DShellFolderViewEvents;
+}
