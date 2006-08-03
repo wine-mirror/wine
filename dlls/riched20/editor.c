@@ -1461,7 +1461,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
     TRACE("WM_NCCREATE: style 0x%08lx\n", pcs->style);
     editor = ME_MakeEditor(hWnd);
-    SetWindowLongW(hWnd, 0, (long)editor);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
     pcs = 0; /* ignore */
     return TRUE;
   }
@@ -2234,7 +2234,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return 0;
   case WM_DESTROY:
     ME_DestroyEditor(editor);
-    SetWindowLongW(hWnd, 0, 0);
+    SetWindowLongPtrW(hWnd, 0, 0);
     return 0;
   case WM_LBUTTONDOWN:
     SetFocus(hWnd);
@@ -2530,7 +2530,7 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
   result = RichEditANSIWndProc(hWnd, msg, wParam, lParam);
   if (msg == WM_NCCREATE)
   {
-    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
+    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
     
     editor->bEmulateVersion10 = TRUE;
     editor->pBuffer->pLast->member.para.nCharOfs = 2;
@@ -2639,7 +2639,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   wcW.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcW.lpfnWndProc = RichEditANSIWndProc;
   wcW.cbClsExtra = 0;
-  wcW.cbWndExtra = 4;
+  wcW.cbWndExtra = sizeof(ME_TextEditor *);
   wcW.hInstance = NULL; /* hInstance would register DLL-local class */
   wcW.hIcon = NULL;
   wcW.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
@@ -2655,7 +2655,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcA.lpfnWndProc = RichEditANSIWndProc;
   wcA.cbClsExtra = 0;
-  wcA.cbWndExtra = 4;
+  wcA.cbWndExtra = sizeof(ME_TextEditor *);
   wcA.hInstance = NULL; /* hInstance would register DLL-local class */
   wcA.hIcon = NULL;
   wcA.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
