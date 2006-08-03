@@ -72,7 +72,6 @@ struct thread_apc
     struct object      *owner;    /* object that queued this apc */
     void               *func;     /* function to call in client */
     enum apc_type       type;     /* type of apc function */
-    int                 nb_args;  /* number of arguments */
     void               *arg1;     /* function arguments */
     void               *arg2;
     void               *arg3;
