@@ -48,6 +48,11 @@
 
 #include "ddraw_private.h"
 
+typedef IWineD3D* (WINAPI *fnWineDirect3DCreate)(UINT, UINT, IUnknown *);
+
+static HMODULE hWineD3D = (HMODULE) -1;
+static fnWineDirect3DCreate pWineDirect3DCreate;
+
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* The configured default surface */
@@ -149,13 +154,27 @@ DDRAW_Create(GUID *guid,
     This->orig_width = GetSystemMetrics(SM_CXSCREEN);
     This->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
+    if (hWineD3D == (HMODULE) -1)
+    {
+        hWineD3D = LoadLibraryA("wined3d");
+        if (hWineD3D)
+            pWineDirect3DCreate = (fnWineDirect3DCreate) GetProcAddress(hWineD3D, "WineDirect3DCreate");
+    }
+
+    if (!hWineD3D)
+    {
+        ERR("Couldn't load WineD3D - OpenGL libs not present?\n");
+        hr = E_NOTIMPL;
+        goto err_out;
+    }
+
     /* Initialize WineD3D
      *
      * All Rendering (2D and 3D) is relayed to WineD3D,
      * but DirectDraw specific management, like DDSURFACEDESC and DDPIXELFORMAT
      * structure handling is handled in this lib.
      */
-    wineD3D = WineDirect3DCreate(0 /* SDKVersion */, 7 /* DXVersion */, (IUnknown *) This /* Parent */);
+    wineD3D = pWineDirect3DCreate(0 /* SDKVersion */, 7 /* DXVersion */, (IUnknown *) This /* Parent */);
     if(!wineD3D)
     {
         ERR("Failed to initialise WineD3D\n");
