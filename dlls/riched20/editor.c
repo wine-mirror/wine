@@ -2048,6 +2048,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     const unsigned int nMaxChars = *(WORD *) lParam;
     unsigned int nEndChars, nCharsLeft = nMaxChars;
     char *dest = (char *) lParam;
+    /* rich text editor 1.0 uses \r\n for line end, 2.0 uses just \r; 
+    we need to know how if we have the extra \n or not */
+    int nLF = editor->bEmulateVersion10;
 
     TRACE("EM_GETLINE: row=%d, nMaxChars=%d (%s)\n", (int) wParam, nMaxChars,
           bUnicode ? "Unicode" : "Ansi");
@@ -2075,20 +2078,21 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       nCharsLeft -= nCopy;
     }
 
-    /* append \r\0, space allowing */
-    nEndChars = min(nCharsLeft, 2);
+    /* append \r\0 (or \r\n\0 in 1.0), space allowing */
+    nEndChars = min(nCharsLeft, 2 + nLF);
     nCharsLeft -= nEndChars;
     if (bUnicode)
     {
       const WCHAR src[] = {'\r', '\0'};
-      lstrcpynW((LPWSTR) dest, src, nEndChars);
+      const WCHAR src10[] = {'\r', '\n', '\0'};
+      lstrcpynW((LPWSTR) dest, nLF ? src10 : src, nEndChars);
     }
     else
-      lstrcpynA(dest, "\r", nEndChars);
+      lstrcpynA(dest, nLF ? "\r\n" : "\r", nEndChars);
 
     TRACE("EM_GETLINE: got %u bytes\n", nMaxChars - nCharsLeft);
 
-    if (nEndChars == 2)
+    if (nEndChars == 2 + nLF)
       return nMaxChars - nCharsLeft - 1; /* don't count \0 */
     else
       return nMaxChars - nCharsLeft;
