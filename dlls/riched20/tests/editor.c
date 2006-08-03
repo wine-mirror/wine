@@ -120,7 +120,7 @@ struct find_s find_tests2[] = {
   {0, 20, "WINE", FR_MATCHCASE, -1, 0}
 };
 
-static void check_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *f, int id) {
+static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
   int findloc;
   FINDTEXT ft;
   memset(&ft, 0, sizeof(ft));
@@ -133,7 +133,7 @@ static void check_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *f, int id) {
      name, id, f->needle, f->start, f->end, f->flags, findloc);
 }
 
-static void check_EM_FINDTEXTEX(HWND hwnd, char *name, struct find_s *f,
+static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
     int id) {
   int findloc;
   FINDTEXTEX ft;
@@ -154,7 +154,7 @@ static void check_EM_FINDTEXTEX(HWND hwnd, char *name, struct find_s *f,
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax);
 }
 
-static void run_tests_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *find,
+static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *find,
     int num_tests)
 {
   int i;
