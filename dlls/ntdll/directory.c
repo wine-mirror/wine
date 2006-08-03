@@ -1126,6 +1126,74 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
 }
 
+/***********************************************************************
+ *           read_directory_stat
+ *
+ * Read a single file from a directory by determining whether the file
+ * identified by mask exists using stat.
+ */
+static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                BOOLEAN restart_scan )
+{
+    int unix_len, ret, used_default;
+    char *unix_name;
+    struct stat st;
+
+    TRACE("trying optimisation for file %s\n", debugstr_us( mask ));
+
+    unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+    {
+        io->u.Status = STATUS_NO_MEMORY;
+        return 0;
+    }
+    ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), unix_name, unix_len,
+                           NULL, &used_default );
+    if (ret > 0 && !used_default)
+    {
+        if (restart_scan)
+        {
+            lseek( fd, 0, SEEK_SET );
+        }
+        else if (lseek( fd, 0, SEEK_CUR ) != 0)
+        {
+            io->u.Status = STATUS_NO_MORE_FILES;
+            ret = 0;
+            goto done;
+        }
+
+        ret = stat( unix_name, &st );
+        if (!ret)
+        {
+            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, &io->Information, length, unix_name, NULL, mask );
+            if (info)
+            {
+                info->NextEntryOffset = 0;
+                if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+                    io->u.Status = STATUS_BUFFER_OVERFLOW;
+                else
+                    lseek( fd, 1, SEEK_CUR );
+            }
+        }
+    }
+    else ret = -1;
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+
+    TRACE("returning %d\n", ret);
+
+    return ret;
+}
+
+
+static inline WCHAR *mempbrkW( const WCHAR *ptr, const WCHAR *accept, size_t n )
+{
+    const WCHAR *end;
+    for (end = ptr + n; ptr < end; ptr++) if (strchrW( accept, *ptr )) return (WCHAR *)ptr;
+    return NULL;
+}
 
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
@@ -1141,6 +1209,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       BOOLEAN restart_scan )
 {
     int cwd, fd;
+    static const WCHAR wszWildcards[] = { '*','?',0 };
 
     TRACE("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
@@ -1171,14 +1240,20 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
+        if (mask && !mempbrkW( mask->Buffer, wszWildcards, mask->Length / sizeof(WCHAR) ) &&
+            read_directory_stat( fd, io, buffer, length, single_entry, mask, restart_scan ) != -1)
+            goto done;
 #ifdef VFAT_IOCTL_READDIR_BOTH
-        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) == -1)
+        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
+            goto done;
 #endif
 #ifdef USE_GETDENTS
-            if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) == -1)
+        if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
+            goto done;
 #endif
-                read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
+        read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
 
+    done:
         if (fchdir( cwd ) == -1) chdir( "/" );
     }
     else io->u.Status = FILE_GetNtStatus();
