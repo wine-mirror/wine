@@ -253,7 +253,7 @@ ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs)
 }
 
 /* remove some external references */
-ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs)
+ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL last_unlock_releases)
 {
     ULONG rc;
 
@@ -267,7 +267,7 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs)
     
     TRACE("removed %lu refs from %p (oid %s), rc is now %lu\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
-    if (rc == 0)
+    if (rc == 0 && last_unlock_releases)
         stub_manager_int_release(m);
 
     return rc;
@@ -537,7 +537,7 @@ void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const
     else if (ifstub->flags & MSHLFLAGS_TABLESTRONG)
         refs = 1;
 
-    stub_manager_ext_release(m, refs);
+    stub_manager_ext_release(m, refs, TRUE);
 }
 
 /* is an ifstub table marshaled? */
@@ -717,7 +717,7 @@ static HRESULT WINAPI RemUnknown_RemRelease(IRemUnknown *iface,
             break;
         }
 
-        stub_manager_ext_release(stubmgr, InterfaceRefs[i].cPublicRefs);
+        stub_manager_ext_release(stubmgr, InterfaceRefs[i].cPublicRefs, TRUE);
         if (InterfaceRefs[i].cPrivateRefs)
             FIXME("Releasing %ld refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
 

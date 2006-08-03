@@ -187,7 +187,7 @@ ULONG stub_manager_int_addref(struct stub_manager *This);
 ULONG stub_manager_int_release(struct stub_manager *This);
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
-ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
+ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL last_unlock_releases);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, MSHLFLAGS flags);
 struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
