@@ -2717,6 +2717,11 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
     depotBlockOffset = 0;
   }
 
+  /*
+   * make sure that the block physically exists before using it
+   */
+  BIGBLOCKFILE_EnsureExists(This->bigBlockFile, freeBlock);
+
   This->prevFreeBlock = freeBlock;
 
   return freeBlock;

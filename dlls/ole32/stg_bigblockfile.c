@@ -351,12 +351,11 @@ void* BIGBLOCKFILE_GetROBigBlock(
 }
 
 /******************************************************************************
- *      BIGBLOCKFILE_GetBigBlock
+ *      BIGBLOCKFILE_EnsureExists
  *
- * Returns the specified block.
- * Will grow the file if necessary.
+ * Grows the file if necessary to make sure the block is valid.
  */
-void* BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index)
+void BIGBLOCKFILE_EnsureExists(LPBIGBLOCKFILE This, ULONG index)
 {
   /*
    * block index starts at -1
@@ -379,6 +378,27 @@ void* BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index)
 
     BIGBLOCKFILE_SetSize(This, newSize);
   }
+}
+
+/******************************************************************************
+ *      BIGBLOCKFILE_GetBigBlock
+ *
+ * Returns the specified block.
+ * Will grow the file if necessary.
+ */
+void* BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index)
+{
+  /* FIXME: is this necessary? */
+  BIGBLOCKFILE_EnsureExists(This, index);
+
+  /*
+   * block index starts at -1
+   * translate to zero based index
+   */
+  if (index == 0xffffffff)
+    index = 0;
+  else
+    index++;
 
   return BIGBLOCKFILE_GetBigBlockPointer(This, index, FILE_MAP_WRITE);
 }
