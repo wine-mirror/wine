@@ -794,6 +794,27 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
 }
 #endif /* TODO: Software shaders */
 
+/* This should match any arrays loaded in loadNumberedArrays. */
+/* TODO: Only load / unload arrays if we have to. */
+static void unloadNumberedArrays(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* disable any attribs (this is the same for both GLSL and ARB modes) */
+    GLint maxAttribs;
+    int i;
+
+    /* Leave all the attribs disabled */
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
+    /* MESA does not support it right not */
+    if (glGetError() != GL_NO_ERROR)
+        maxAttribs = 16;
+    for (i = 0; i < maxAttribs; ++i) {
+        GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+        checkGLcall("glDisableVertexAttribArrayARB(reg);");
+    }
+}
+
+/* TODO: Only load / unload arrays if we have to. */
 static void loadNumberedArrays(
     IWineD3DDevice *iface,
     IWineD3DVertexShader *shader,
@@ -825,6 +846,25 @@ static void loadNumberedArrays(
    }
 }
 
+/* This should match any arrays loaded in loadVertexData. */
+/* TODO: Only load / unload arrays if we have to. */
+static void unloadVertexData(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    int texture_idx;
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+        glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
+    }
+    for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
+        glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+}
+
+/* TODO: Only load / unload arrays if we have to. */
 static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd) {
     unsigned int textureNo   = 0;
     unsigned int texture_idx = 0;
@@ -1814,21 +1854,12 @@ inline static void drawPrimitiveDrawStrided(
 
     /* Cleanup vertex program */
     if (useVertexShaderFunction) {
-        /* disable any attribs (this is the same for both GLSL and ARB modes) */
-        GLint maxAttribs;
-        int i;
-        /* Leave all the attribs disabled */
-        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
-        /* MESA does not support it right not */
-        if (glGetError() != GL_NO_ERROR)
-            maxAttribs = 16;
-        for (i = 0; i < maxAttribs; ++i) {
-            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-            checkGLcall("glDisableVertexAttribArrayARB(reg);");
-        }
+        unloadNumberedArrays(iface);
 
         if (wined3d_settings.vs_selected_mode == SHADER_ARB)
             glDisable(GL_VERTEX_PROGRAM_ARB);
+    } else {
+        unloadVertexData(iface);
     }
 
     /* Cleanup fragment program */
