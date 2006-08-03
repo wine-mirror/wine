@@ -108,8 +108,19 @@ static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUi
                                          PRUint32 *_retval)
 {
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
-    FIXME("(%p)->(%p %ld %p)\n", This, aBuf, aCount, _retval);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%p %ld %p)\n", This, aBuf, aCount, _retval);
+
+    /* Gecko always calls Read with big enough buffer */
+    if(aCount < This->buf_size)
+        FIXME("aCount < This->buf_size\n");
+
+    *_retval = This->buf_size;
+    if(This->buf_size)
+        memcpy(aBuf, This->buf, This->buf_size);
+    This->buf_size = 0;
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
