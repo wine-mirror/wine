@@ -146,10 +146,13 @@ STRINGTABLE DISCARDABLE
 	IDS_SHV_COLUMN9		"Komentarz"
 	IDS_SHV_COLUMN10        "W³aœciciel"
 	IDS_SHV_COLUMN11        "Grupa"
+	IDS_SHV_COLUMN_DELFROM	"Lokacja oryginalna"
+	IDS_SHV_COLUMN_DELDATE	"Data usuniêcia"
 
         /* special folders */
 	IDS_DESKTOP		"Pulpit"
 	IDS_MYCOMPUTER		"Mój komputer"
+	IDS_RECYCLEBIN_FOLDER_NAME	"Kosz"
 
 	/* context menus */
 	IDS_VIEW_LARGE		"&Du¿e Ikony"
