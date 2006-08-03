@@ -354,10 +354,16 @@ static int active_users;                    /* current number of active users */
 static int allocated_users;                 /* count of allocated entries in the array */
 static struct fd **freelist;                /* list of free entries in the array */
 
+static int get_next_timeout(void);
+
 #ifdef USE_EPOLL
 
 static int epoll_fd;
-static struct epoll_event *epoll_events;
+
+static inline void init_epoll(void)
+{
+    epoll_fd = epoll_create( 128 );
+}
 
 /* set the events that epoll waits for on this fd; helper for set_fd_events */
 static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
@@ -398,11 +404,60 @@ static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
     }
 }
 
+static inline void remove_epoll_user( struct fd *fd, int user )
+{
+    if (epoll_fd == -1) return;
+
+    if (pollfd[user].fd != -1)
+    {
+        struct epoll_event dummy;
+        epoll_ctl( epoll_fd, EPOLL_CTL_DEL, fd->unix_fd, &dummy );
+    }
+}
+
+static inline void main_loop_epoll(void)
+{
+    int i, ret, timeout;
+    struct epoll_event events[128];
+
+    assert( POLLIN == EPOLLIN );
+    assert( POLLOUT == EPOLLOUT );
+    assert( POLLERR == EPOLLERR );
+    assert( POLLHUP == EPOLLHUP );
+
+    if (epoll_fd == -1) return;
+
+    while (active_users)
+    {
+        timeout = get_next_timeout();
+
+        if (!active_users) break;  /* last user removed by a timeout */
+        if (epoll_fd == -1) break;  /* an error occurred with epoll */
+
+        ret = epoll_wait( epoll_fd, events, sizeof(events)/sizeof(events[0]), timeout );
+
+        /* put the events into the pollfd array first, like poll does */
+        for (i = 0; i < ret; i++)
+        {
+            int user = events[i].data.u32;
+            pollfd[user].revents = events[i].events;
+        }
+
+        /* read events from the pollfd array, as set_fd_events may modify them */
+        for (i = 0; i < ret; i++)
+        {
+            int user = events[i].data.u32;
+            if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
+        }
+    }
+}
+
 #else /* USE_EPOLL */
 
-static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
-{
-}
+static inline void init_epoll(void) { }
+static inline void set_fd_epoll_events( struct fd *fd, int user, int events ) { }
+static inline void remove_epoll_user( struct fd *fd, int user ) { }
+static inline void main_loop_epoll(void) { }
 
 #endif /* USE_EPOLL */
 
@@ -434,16 +489,7 @@ static int add_poll_user( struct fd *fd )
             }
             poll_users = newusers;
             pollfd = newpoll;
-#ifdef USE_EPOLL
-            if (!allocated_users) epoll_fd = epoll_create( new_count );
-            if (epoll_fd != -1)
-            {
-                struct epoll_event *new_events;
-                if (!(new_events = realloc( epoll_events, new_count * sizeof(*epoll_events) )))
-                    return -1;
-                epoll_events = new_events;
-            }
-#endif
+            if (!allocated_users) init_epoll();
             allocated_users = new_count;
         }
         ret = nb_users++;
@@ -462,13 +508,7 @@ static void remove_poll_user( struct fd *fd, int user )
     assert( user >= 0 );
     assert( poll_users[user] == fd );
 
-#ifdef USE_EPOLL
-    if (epoll_fd != -1 && pollfd[user].fd != -1)
-    {
-        struct epoll_event dummy;
-        epoll_ctl( epoll_fd, EPOLL_CTL_DEL, fd->unix_fd, &dummy );
-    }
-#endif
+    remove_epoll_user( fd, user );
     pollfd[user].fd = -1;
     pollfd[user].events = 0;
     pollfd[user].revents = 0;
@@ -529,40 +569,8 @@ void main_loop(void)
 {
     int i, ret, timeout;
 
-#ifdef USE_EPOLL
-    assert( POLLIN == EPOLLIN );
-    assert( POLLOUT == EPOLLOUT );
-    assert( POLLERR == EPOLLERR );
-    assert( POLLHUP == EPOLLHUP );
-
-    if (epoll_fd != -1)
-    {
-        while (active_users)
-        {
-            timeout = get_next_timeout();
-
-            if (!active_users) break;  /* last user removed by a timeout */
-            if (epoll_fd == -1) break;  /* an error occurred with epoll */
-
-            ret = epoll_wait( epoll_fd, epoll_events, allocated_users, timeout );
-
-            /* put the events into the pollfd array first, like poll does */
-            for (i = 0; i < ret; i++)
-            {
-                int user = epoll_events[i].data.u32;
-                pollfd[user].revents = epoll_events[i].events;
-            }
-
-            /* read events from the pollfd array, as set_fd_events may modify them */
-            for (i = 0; i < ret; i++)
-            {
-                int user = epoll_events[i].data.u32;
-                if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
-            }
-        }
-    }
+    main_loop_epoll();
     /* fall through to normal poll loop */
-#endif  /* USE_EPOLL */
 
     while (active_users)
     {
