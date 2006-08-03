@@ -297,7 +297,7 @@ static const IDataObjectVtbl VT_DataObjectImpl =
     DataObjectImpl_EnumDAdvise
 };
 
-static HRESULT DataObjectImpl_CreateText(LPSTR text, LPDATAOBJECT *lplpdataobj)
+static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
 {
     DataObjectImpl *obj;
 
