@@ -108,8 +108,8 @@ static void device_init(void)
 void X11DRV_GDI_Finalize(void)
 {
     X11DRV_PALETTE_Cleanup();
-    XCloseDisplay( gdi_display );
-    gdi_display = NULL;
+    /* don't bother to close the display, it often triggers X bugs */
+    /* XCloseDisplay( gdi_display ); */
 }
 
 /**********************************************************************
