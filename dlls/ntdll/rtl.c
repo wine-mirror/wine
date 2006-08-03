@@ -372,17 +372,27 @@ VOID WINAPI RtlReleasePebLock(void)
 /******************************************************************************
  *  RtlNewSecurityObject		[NTDLL.@]
  */
-DWORD WINAPI RtlNewSecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
-	return 0;
+NTSTATUS WINAPI
+RtlNewSecurityObject( PSECURITY_DESCRIPTOR ParentDescriptor,
+                      PSECURITY_DESCRIPTOR CreatorDescriptor,
+                      PSECURITY_DESCRIPTOR *NewDescriptor,
+                      BOOLEAN IsDirectoryObject,
+                      HANDLE Token,
+                      PGENERIC_MAPPING GenericMapping )
+{
+    FIXME("(%p %p %p %d %p %p) stub!\n", ParentDescriptor, CreatorDescriptor,
+          NewDescriptor, IsDirectoryObject, Token, GenericMapping);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
  *  RtlDeleteSecurityObject		[NTDLL.@]
  */
-DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
-	FIXME("(0x%08lx),stub!\n",x1);
-	return 0;
+NTSTATUS WINAPI
+RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *ObjectDescriptor )
+{
+    FIXME("(%p) stub!\n", ObjectDescriptor);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /**************************************************************************

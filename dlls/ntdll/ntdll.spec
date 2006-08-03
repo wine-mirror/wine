@@ -517,7 +517,7 @@
 @ stub RtlDeleteRange
 @ stdcall RtlDeleteRegistryValue(long ptr ptr)
 @ stdcall RtlDeleteResource(ptr)
-@ stdcall RtlDeleteSecurityObject(long)
+@ stdcall RtlDeleteSecurityObject(ptr)
 # @ stub RtlDeleteTimer
 # @ stub RtlDeleteTimerQueue
 # @ stub RtlDeleteTimerQueueEx
@@ -738,7 +738,7 @@
 @ stdcall RtlMultiByteToUnicodeSize(ptr str long)
 @ stub RtlNewInstanceSecurityObject
 @ stub RtlNewSecurityGrantedAccess
-@ stdcall RtlNewSecurityObject(long long long long long long)
+@ stdcall RtlNewSecurityObject(ptr ptr ptr long ptr ptr)
 # @ stub RtlNewSecurityObjectEx
 # @ stub RtlNewSecurityObjectWithMultipleInheritance
 @ stdcall RtlNormalizeProcessParams(ptr)
