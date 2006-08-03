@@ -1050,20 +1050,20 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                   dwarf2_debug_info_t* di)
 {
     struct symt* param_type;
-    union attribute loc;
+    union attribute name, loc, value;
     BOOL is_pmt = di->abbrev->tag == DW_TAG_formal_parameter;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     param_type = dwarf2_lookup_type(subpgm->ctx, di);
-    if (dwarf2_find_attribute(di, DW_AT_location, &loc))
+    dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
+    if (dwarf2_find_attribute(di, DW_AT_location, &loc) && loc.block)
     {
         union attribute name;
         union attribute ext;
         long offset;
         int in_reg;
 
-        dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
         offset = dwarf2_compute_location(subpgm->ctx, loc.block, &in_reg);
 	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
               name.string, offset, in_reg, dwarf2_debug_ctx(subpgm->ctx));
@@ -1093,6 +1093,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                 block, param_type, name.string);
             break;
         }
+    }
+    if (dwarf2_find_attribute(di, DW_AT_const_value, &value))
+    {
+        FIXME("NIY (const value %08lx for %s\n", value.uvalue, name.string);
     }
     if (is_pmt && subpgm->func && subpgm->func->type)
         symt_add_function_signature_parameter(subpgm->ctx->module,
