@@ -1868,13 +1868,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
         if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
-            int width = This->glRect.right - This->glRect.left;
             int height = This->glRect.bottom - This->glRect.top;
-            int pitch = IWineD3DSurface_GetPitch(iface);
+            int pitch;
 
-            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+            /* Set the pitch in 'length' not in bytes */
+            if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+                pitch = This->currentDesc.Width;
+            else
+                pitch = This->pow2Width;
+
+            mem = HeapAlloc(GetProcessHeap(), 0, pitch * height * bpp);
             if(!mem) {
-                ERR("Out of memory %d, %d!\n", width, height);
+                ERR("Out of memory %d, %d!\n", pitch, height);
                 return WINED3DERR_OUTOFVIDEOMEMORY;
             }
 
@@ -2005,6 +2010,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             This->resource.allocatedMemory = NULL;
         }
 
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     }
 
     return WINED3D_OK;
