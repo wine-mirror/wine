@@ -249,6 +249,7 @@ gbl_statements:					{ $$ = NULL; }
 	| gbl_statements coclassdef		{ $$ = $1;
 						  add_coclass($2);
 						  reg_type($2, $2->name, 0);
+						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| gbl_statements moduledef		{ $$ = $1; add_module($2); }
 	| gbl_statements librarydef		{ $$ = $1; }
@@ -261,6 +262,7 @@ imp_statements:					{}
 	| imp_statements coclass ';'		{ reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
 	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2);
 						  reg_type($2, $2->name, 0);
+						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}

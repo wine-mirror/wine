@@ -87,7 +87,7 @@ typedef struct {
     ConnectionPointContainer cps;
 } DocHost;
 
-typedef struct {
+struct WebBrowser {
     /* Interfaces available via WebBrowser object */
 
     const IWebBrowser2Vtbl              *lpWebBrowser2Vtbl;
@@ -130,9 +130,9 @@ typedef struct {
     VARIANT_BOOL tool_bar;
 
     DocHost doc_host;
-} WebBrowser;
+};
 
-typedef struct {
+struct InternetExplorer {
     const IWebBrowser2Vtbl *lpWebBrowser2Vtbl;
 
     LONG ref;
@@ -140,7 +140,7 @@ typedef struct {
     HWND frame_hwnd;
 
     DocHost doc_host;
-} InternetExplorer;
+};
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
 #define WEBBROWSER2(x)  ((IWebBrowser2*)                &(x)->lpWebBrowser2Vtbl)

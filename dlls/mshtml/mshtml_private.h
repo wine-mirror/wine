@@ -53,7 +53,7 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
-typedef struct {
+struct HTMLDocument {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
@@ -96,7 +96,7 @@ typedef struct {
     ConnectionPoint *cp_propnotif;
 
     HTMLDOMNode *nodes;
-} HTMLDocument;
+};
 
 struct NSContainer {
     const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
