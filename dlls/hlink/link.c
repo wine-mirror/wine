@@ -72,24 +72,28 @@ static inline HlinkImpl* HlinkImpl_from_IDataObject( IDataObject* iface)
 static inline LPWSTR strdupW( LPCWSTR str )
 {
     LPWSTR r;
+    UINT len;
 
     if (!str)
         return NULL;
-    r = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(str)+1) * sizeof (WCHAR));
+    len = (lstrlenW(str)+1) * sizeof (WCHAR);
+    r = HeapAlloc(GetProcessHeap(), 0, len);
     if (r)
-        lstrcpyW(r, str);
+        memcpy(r, str, len);
     return r;
 }
 
 static inline LPWSTR co_strdupW( LPCWSTR str )
 {
     LPWSTR r;
+    UINT len;
 
     if (!str)
         return NULL;
-    r = CoTaskMemAlloc((lstrlenW(str)+1) * sizeof (WCHAR));
+    len = (lstrlenW(str)+1) * sizeof (WCHAR);
+    r = CoTaskMemAlloc(len);
     if (r)
-        lstrcpyW(r, str);
+        memcpy(r, str, len);
     return r;
 }
 
