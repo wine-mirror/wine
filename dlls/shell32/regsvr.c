@@ -660,6 +660,16 @@ static struct regsvr_coclass const coclass_list[] = {
 	SFGAO_FILESYSANCESTOR|SFGAO_FOLDER|SFGAO_HASSUBFOLDER,
 	SFGAO_FILESYSTEM
     },
+    {	&CLSID_RecycleBin,
+	"Trash",
+	IDS_RECYCLEBIN_FOLDER_NAME,
+	NULL,
+	"shell32.dll",
+	"Apartment",
+	SHELLFOLDER_ATTRIBUTES,
+	SFGAO_FOLDER|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET,
+	0
+    },
     { NULL }			/* list terminator */
 };
 
@@ -677,6 +687,7 @@ static struct regsvr_interface const interface_list[] = {
 static const WCHAR wszDesktop[] = { 'D','e','s','k','t','o','p',0 };
 static const WCHAR wszSlash[] = { '/', 0 };
 static const WCHAR wszMyDocuments[] = { 'M','y',' ','D','o','c','u','m','e','n','t','s', 0 };
+static const WCHAR wszRecycleBin[] = { 'T','r','a','s','h', 0 };
 
 static struct regsvr_namespace const namespace_extensions_list[] = {
     {   
@@ -688,6 +699,11 @@ static struct regsvr_namespace const namespace_extensions_list[] = {
         &CLSID_MyDocuments,
         wszDesktop,
         wszMyDocuments
+    },
+    {   
+        &CLSID_RecycleBin,
+        wszDesktop,
+        wszRecycleBin
     },
     { NULL }
 };

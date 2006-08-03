@@ -145,10 +145,13 @@ STRINGTABLE DISCARDABLE
 	IDS_SHV_COLUMN9		"Comments"
 	IDS_SHV_COLUMN10	"Owner"
 	IDS_SHV_COLUMN11	"Group"
+	IDS_SHV_COLUMN_DELFROM	"Original location"
+	IDS_SHV_COLUMN_DELDATE	"Date deleted"
 
         /* special folders */
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"My Computer"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Trash"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Lar&ge Icons"

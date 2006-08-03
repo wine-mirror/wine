@@ -27,6 +27,7 @@ C_SRCS = \
 	folders.c \
 	iconcache.c \
 	pidl.c \
+	recyclebin.c \
 	regsvr.c \
 	shell32_main.c \
 	shelllink.c \

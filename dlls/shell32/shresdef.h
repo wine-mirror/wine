@@ -33,6 +33,8 @@
 #define IDS_SHV_COLUMN9		15
 #define IDS_SHV_COLUMN10	16
 #define IDS_SHV_COLUMN11	17
+#define IDS_SHV_COLUMN_DELFROM  18
+#define IDS_SHV_COLUMN_DELDATE  19
 
 #define IDS_DESKTOP		20
 #define IDS_MYCOMPUTER		21
@@ -90,6 +92,9 @@
 #define IDS_TRASHITEM_TEXT          138
 #define IDS_TRASHMULTIPLE_TEXT      139
 #define IDS_CANTTRASH_TEXT          140
+
+/* Note: this string is referenced from the registry*/
+#define IDS_RECYCLEBIN_FOLDER_NAME   8964
 
 /* browse for folder dialog box */
 #define IDD_STATUS		0x3743

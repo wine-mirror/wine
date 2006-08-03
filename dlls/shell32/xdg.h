@@ -33,7 +33,13 @@ int XDG_MakeDirs(const char *path);
 BOOL XDG_WriteDesktopStringEntry(int fd, const char *keyName, DWORD dwFlags, const char *value);
 
 /* implemented in trash.c */
+typedef struct tagTRASH_ELEMENT TRASH_ELEMENT;
+
 BOOL TRASH_CanTrashFile(LPCWSTR wszPath);
 BOOL TRASH_TrashFile(LPCWSTR wszPath);
+HRESULT TRASH_UnpackItemID(LPCSHITEMID id, TRASH_ELEMENT *element, WIN32_FIND_DATAW *data);
+HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count);
+void TRASH_DisposeElement(TRASH_ELEMENT *element);
+
 
 #endif /* ndef __XDG_H__ */

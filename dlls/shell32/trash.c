@@ -306,3 +306,80 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
     HeapFree(GetProcessHeap(), 0, unix_path);
     return result;
 }
+
+/*
+ * The item ID of a trashed element is built as follows:
+ *  NUL byte                    - in most PIDLs the first byte is the type so we keep it constant
+ *  WIN32_FIND_DATAW structure  - with data about original file attributes
+ *  bucket name                 - currently only an empty string meaning the home bucket is supported
+ *  trash file name             - a NUL-terminated string
+ */
+struct tagTRASH_ELEMENT
+{
+    TRASH_BUCKET *bucket;
+    LPSTR filename;
+};
+
+static HRESULT TRASH_CreateSimplePIDL(const TRASH_ELEMENT *element, const WIN32_FIND_DATAW *data, LPITEMIDLIST *pidlOut)
+{
+    LPITEMIDLIST pidl = SHAlloc(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(element->filename)+1+2);
+    *pidlOut = NULL;
+    if (pidl == NULL)
+        return E_OUTOFMEMORY;
+    pidl->mkid.cb = (USHORT)(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(element->filename)+1);
+    pidl->mkid.abID[0] = 0;
+    memcpy(pidl->mkid.abID+1, data, sizeof(WIN32_FIND_DATAW));
+    pidl->mkid.abID[1+sizeof(WIN32_FIND_DATAW)] = 0;
+    lstrcpyA((LPSTR)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1), element->filename);
+    *(USHORT *)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(element->filename)+1) = 0;
+    *pidlOut = pidl;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      TRASH_UnpackItemID [Internal]
+ *
+ * DESCRITION:
+ * Extract the information stored in an Item ID. The TRASH_ELEMENT
+ * identifies the element in the Trash. The WIN32_FIND_DATA contains the
+ * information about the original file. The data->ftLastAccessTime contains
+ * the deletion time
+ *
+ * PARAMETER(S):
+ * [I] id : the ID of the item
+ * [O] element : the trash element this item id contains. Can be NULL if not needed
+ * [O] data : the WIN32_FIND_DATA of the original file. Can be NULL is not needed
+ */                 
+HRESULT TRASH_UnpackItemID(LPCSHITEMID id, TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)
+{
+    if (id->cb < 2+1+sizeof(WIN32_FIND_DATAW)+2)
+        return E_INVALIDARG;
+    if (id->abID[0] != 0 || id->abID[1+sizeof(WIN32_FIND_DATAW)] != 0)
+        return E_INVALIDARG;
+    if (memchr(id->abID+1+sizeof(WIN32_FIND_DATAW)+1, 0, id->cb-(2+1+sizeof(WIN32_FIND_DATAW)+1)) == NULL)
+        return E_INVALIDARG;
+
+    if (data != NULL)
+        *data = *(WIN32_FIND_DATAW *)(id->abID+1);
+    if (element != NULL)
+    {
+        element->bucket = home_trash;
+        element->filename = StrDupA((LPCSTR)(id->abID+1+sizeof(WIN32_FIND_DATAW)+1));
+        if (element->filename == NULL)
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+void TRASH_DisposeElement(TRASH_ELEMENT *element)
+{
+    if (element)
+        SHFree(element->filename);
+}
+
+HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count)
+{
+    *count = 0;
+    *pidls = SHAlloc(0);
+    return S_OK;
+}
