@@ -2934,6 +2934,10 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
         Path = build_icon_path(package,buffer);
         index = MSI_RecordGetInteger(row,10);
 
+        /* no value means 0 */
+        if (index == MSI_NULL_INTEGER)
+            index = 0;
+
         IShellLinkW_SetIconLocation(sl,Path,index);
         msi_free(Path);
     }
