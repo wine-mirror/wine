@@ -411,6 +411,18 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 {
     TRACE("(%x,%lx)\n", flags, reason);
 
+    if (!WIN_IsCurrentThread( GetDesktopWindow() ))
+    {
+        BOOL ret = PostMessageW( GetDesktopWindow(), WM_USER + 666,
+                                 MAKEWPARAM( flags, 0xbabe ), reason);
+        if (ret)
+            return TRUE;
+        /* this can happen if explorer hasn't been started or created the
+         * desktop window yet */
+        WARN("PostMessage failed with error %ld\n", GetLastError());
+        /* fall through to doing it in the same process */
+    }
+
     if ((flags & EWX_FORCE) == 0)
     {
         HWND *list;
@@ -468,6 +480,5 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
             MESSAGE("wine: Failed to start wineboot\n");
     }
 
-    ExitProcess(0);
     return TRUE;
 }
