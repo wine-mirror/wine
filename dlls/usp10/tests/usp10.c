@@ -32,20 +32,18 @@
 #include <winerror.h>
 #include <usp10.h>
 
-static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
+static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256])
 {
     HRESULT         hr;
     int             iMaxProps;
     const SCRIPT_PROPERTIES **ppSp;
-    HWND            hwnd;
-    HDC             hdc;
 
     int             cInChars;
     int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
-    WCHAR           TestItem2[6] = {'T', 'e', 's', 't', 'b', 0}; 
+    WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
+    WCHAR           TestItem2[] = {'T', 'e', 's', 't', 'b', 0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -58,22 +56,12 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
     int             piAdvance[256];
     GOFFSET         pGoffset[256];
     ABC             pABC[256];
-    LOGFONTW        lf;
+    LOGFONTA        lf;
     HFONT           zfont;
     int             cnt;
 
-    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
-     * to set up for the tests.                                                               */
-    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
-                           0, 0, 0, NULL);
-    assert(hwnd != 0);
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
 
-    hdc = GetDC(hwnd);                                      /* We now have a hdc             */
-    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
-
-    lstrcpyW(lf.lfFaceName, (WCHAR *) "Courier");
+    lstrcpyA(lf.lfFaceName, "Symbol");
     lf.lfHeight = 10;
     lf.lfItalic = 0;
     lf.lfEscapement = 0;
@@ -83,7 +71,7 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
     lf.lfWeight = 3;
     lf.lfWidth = 10;
 
-    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectW(&lf));
+    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
 
     /* Start testing usp10 functions                                                         */
     /* This test determines that the pointer returned by ScriptGetProperties is valid
@@ -205,33 +193,19 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
         hr = ScriptFreeCache( &psc);
         ok (!psc, "psc is not null after ScriptFreeCache\n");
 
-
     }
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
 }
 
-void test_ScriptGetCMap(unsigned short pwOutGlyphs[256])
+void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
 {
     HRESULT         hr;
-    HWND            hwnd;
-    HDC             hdc;
     SCRIPT_CACHE    psc = NULL;
     int             cInChars;
     int             cChars;
     unsigned short  pwOutGlyphs3[256];
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
+    WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
     DWORD           dwFlags;
     int             cnt;
-
-    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
-     * to set up for the tests.                                                               */
-    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
-                           0, 0, 0, NULL);
-    assert(hwnd != 0);
-
-    hdc = GetDC(hwnd);
-    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
     /*  Check to make sure that SCRIPT_CACHE gets allocated ok                     */
     dwFlags = 0;
@@ -275,6 +249,7 @@ void test_ScriptGetCMap(unsigned short pwOutGlyphs[256])
         
     hr = ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
+
 }
 
 void test_ScriptGetFontProperties(void)
@@ -363,7 +338,7 @@ void test_ScriptTextOut(void)
     int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
+    WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -582,7 +557,7 @@ static void test_ScriptString(void)
     HRESULT         hr;
     HWND            hwnd;
     HDC             hdc = 0;
-    WCHAR           teststr[6] = {'T', 'e', 's', 't', 'a', '\0'};
+    WCHAR           teststr[] = {'T', 'e', 's', 't', 'a', '\0'};
     void            *pString = (WCHAR *) &teststr;
     int             cString = 5;
     int             cGlyphs = cString * 2 + 16;
@@ -604,7 +579,7 @@ static void test_ScriptString(void)
     int             iMaxSel = 0;
     BOOL            fDisabled = FALSE;
 
-    LOGFONTW        lf;
+    LOGFONTA        lf;
     HFONT           zfont;
 
     /* We need a valid HDC to drive a lot of Script functions which requires the following    *
@@ -616,7 +591,7 @@ static void test_ScriptString(void)
     hdc = GetDC(hwnd);                                      /* We now have a hdc             */
     ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
-    lstrcpyW(lf.lfFaceName, (WCHAR *) "Courier");
+    lstrcpyA(lf.lfFaceName, "Symbol");
     lf.lfHeight = 10;
     lf.lfItalic = 0;
     lf.lfEscapement = 0;
@@ -626,8 +601,8 @@ static void test_ScriptString(void)
     lf.lfWeight = 3;
     lf.lfWidth = 10;
 
-    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectW(&lf));
-
+    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
+ 
     /* Test without hdc to get E_INVALIDARG */
     hr = ScriptStringAnalyse( NULL, pString, cString, cGlyphs, iCharset, dwFlags,
                              iReqWidth, &psControl, &psState, piDx, &pTabdef,
@@ -653,10 +628,28 @@ static void test_ScriptString(void)
 
 START_TEST(usp10)
 {
+    HWND            hwnd;
+    HDC             hdc;
+
     unsigned short  pwOutGlyphs[256];
 
-    test_ScriptItemIzeShapePlace(pwOutGlyphs);
-    test_ScriptGetCMap(pwOutGlyphs);
+    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
+     * to set up for the tests.                                                               */
+    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    assert(hwnd != 0);
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+
+    hdc = GetDC(hwnd);                                      /* We now have a hdc             */
+    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
+
+    test_ScriptItemIzeShapePlace(hdc,pwOutGlyphs);
+    test_ScriptGetCMap(hdc, pwOutGlyphs);
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
     test_ScriptGetFontProperties();
     test_ScriptTextOut();
     test_ScriptXtoX();
