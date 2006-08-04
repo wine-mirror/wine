@@ -142,6 +142,26 @@ void WINAPI WTSFreeMemory(PVOID pMemory)
 }
 
 /************************************************************
+ *                WTSOpenServerA (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerA(LPSTR pServerName)
+{
+    FIXME("(%s) stub\n", debugstr_a(pServerName));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/************************************************************
+ *                WTSOpenServerW (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName)
+{
+    FIXME("(%s) stub\n", debugstr_w(pServerName));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/************************************************************
  *                WTSQuerySessionInformationA  (WTSAPI32.@)
  */
 BOOL WINAPI WTSQuerySessionInformationA(
