@@ -156,6 +156,7 @@ void server_exit_thread( int status )
     fds[1] = ntdll_get_thread_data()->wait_fd[1];
     fds[2] = ntdll_get_thread_data()->reply_fd;
     fds[3] = ntdll_get_thread_data()->request_fd;
+    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
 
     size = 0;
     NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
@@ -165,7 +166,6 @@ void server_exit_thread( int status )
     NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base, &size, MEM_RELEASE | MEM_SYSTEM );
     info.teb_size = size;
 
-    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
     close( fds[0] );
     close( fds[1] );
     close( fds[2] );
