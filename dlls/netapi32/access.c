@@ -303,7 +303,19 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     return NERR_Success;
 }
 
-
+/************************************************************
+ *                NetUserGetLocalGroups  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI
+NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
+                      DWORD flags, LPBYTE* bufptr, DWORD prefmaxlen,
+                      LPDWORD entriesread, LPDWORD totalentries)
+{
+    FIXME("(%s, %s, %ld, %08lx, %p %ld, %p, %p) stub!\n",
+          debugstr_w(servername), debugstr_w(username), level, flags, bufptr,
+          prefmaxlen, entriesread, totalentries);
+    return NERR_InternalError;
+}
 
 /************************************************************
  *                NetUserEnum  (NETAPI32.@)

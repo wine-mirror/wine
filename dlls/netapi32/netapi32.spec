@@ -205,7 +205,7 @@
 @ stdcall NetUserEnum(wstr long long ptr long ptr ptr ptr)
 @ stub NetUserGetGroups
 @ stdcall NetUserGetInfo(wstr wstr long ptr)
-@ stub NetUserGetLocalGroups
+@ stdcall NetUserGetLocalGroups(ptr ptr long long ptr long ptr ptr);
 @ stdcall NetUserModalsGet(wstr long ptr)
 @ stub NetUserModalsSet
 @ stub NetUserSetGroups
