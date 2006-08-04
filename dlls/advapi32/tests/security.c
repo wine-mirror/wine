@@ -18,15 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "aclapi.h"
 #include "winnt.h"
+#include "winternl.h"
 #include "sddl.h"
+#include "ntsecapi.h"
+
+#include "wine/test.h"
 
 typedef VOID (WINAPI *fnBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
 typedef VOID (WINAPI *fnBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
@@ -49,6 +55,11 @@ typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
 typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
 typedef BOOL (WINAPI *fnCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 
+typedef NTSTATUS (WINAPI *fnLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
+typedef NTSTATUS (WINAPI *fnLsaClose)(LSA_HANDLE);
+typedef NTSTATUS (WINAPI *fnLsaFreeMemory)(PVOID);
+typedef NTSTATUS (WINAPI *fnLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
+
 static HMODULE hmod;
 
 fnBuildTrusteeWithSidA   pBuildTrusteeWithSidA;
@@ -61,6 +72,10 @@ fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
 fnRtlAdjustPrivilege pRtlAdjustPrivilege;
 fnCreateWellKnownSid pCreateWellKnownSid;
+fnLsaQueryInformationPolicy pLsaQueryInformationPolicy;
+fnLsaClose pLsaClose;
+fnLsaFreeMemory pLsaFreeMemory;
+fnLsaOpenPolicy pLsaOpenPolicy;
 
 struct sidRef
 {
@@ -87,7 +102,7 @@ static void test_str_sid(char *str_sid)
         }
     }
     else
-        trace("%s couldn't be converted\n", str_sid);
+        trace("%s couldn't be converted, returned %ld\n", str_sid, GetLastError());
 }
 
 static void test_sid(void)
@@ -180,7 +195,6 @@ static void test_sid(void)
             LocalFree( psid );
     }
 
-    trace("String SIDs:\n");
     test_str_sid("AO");
     test_str_sid("RU");
     test_str_sid("AN");
@@ -799,6 +813,7 @@ static void test_token_attr(void)
         trace("\t%s, %s\\%s use: %d attr: 0x%08lx\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
         LocalFree(SidString);
     }
+    HeapFree(GetProcessHeap(), 0, Groups);
 
     /* user */
     ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
@@ -852,19 +867,19 @@ static void test_LookupAccountSid(void)
 
     ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &pUsersSid);
-    ok(ret, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());    
+    ok(ret, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
 
     /* try NULL account */
     acc_size = MAX_PATH;
     dom_size = MAX_PATH;
     ret = LookupAccountSid(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
-    ok(ret, "Expected TRUE, got FALSE\n");
+    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
 
     /* try NULL domain */
     acc_size = MAX_PATH;
     dom_size = MAX_PATH;
     ret = LookupAccountSid(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
-    ok(ret, "Expected TRUE, got FALSE\n");
+    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
 
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
@@ -882,11 +897,114 @@ static void test_LookupAccountSid(void)
                     dom_size = MAX_PATH;
                     if (LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use))
                         trace(" %d: %s %s\\%s %d\n", i, str_sid, domain, account, use);
-                    LocalFree(str_sid); 
+                    LocalFree(str_sid);
                 }
             }
             else
-                trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError()); 
+                trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError());
+        }
+
+        pLsaQueryInformationPolicy = (fnLsaQueryInformationPolicy)GetProcAddress( hmod, "LsaQueryInformationPolicy");
+        pLsaOpenPolicy = (fnLsaOpenPolicy)GetProcAddress( hmod, "LsaOpenPolicy");
+        pLsaFreeMemory = (fnLsaFreeMemory)GetProcAddress( hmod, "LsaFreeMemory");
+        pLsaClose = (fnLsaClose)GetProcAddress( hmod, "LsaClose");
+
+        if (pLsaQueryInformationPolicy && pLsaOpenPolicy && pLsaFreeMemory && pLsaClose)
+        {
+            NTSTATUS status;
+            LSA_HANDLE handle;
+            LSA_OBJECT_ATTRIBUTES object_attributes;
+
+            ZeroMemory(&object_attributes, sizeof(object_attributes));
+
+            status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
+            ok(status == STATUS_SUCCESS, "LsaOpenPolicy() returned 0x%08lx\n", status);
+
+            if (status == STATUS_SUCCESS)
+            {
+                PPOLICY_ACCOUNT_DOMAIN_INFO info;
+                status = pLsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&info);
+                ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08lx\n", status);
+                if (status == STATUS_SUCCESS)
+                {
+                    ok(info->DomainSid!=0, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) missing SID\n");
+                    if (info->DomainSid)
+                    {
+                        int count = *GetSidSubAuthorityCount(info->DomainSid);
+                        int len = GetSidLengthRequired(count);
+
+                        CopySid(len, &max_sid, info->DomainSid);
+
+                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
+                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+                        if (ret)
+                        {
+                            acc_size = MAX_PATH;
+                            dom_size = MAX_PATH;
+                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
+                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+                            if (ret)
+                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
+                            LocalFree(str_sid);
+                        }
+
+                        max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_ADMIN;
+                        max_sid.sid.SubAuthorityCount = count + 1;
+
+                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
+                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+                        if (ret)
+                        {
+                            acc_size = MAX_PATH;
+                            dom_size = MAX_PATH;
+                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
+                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+                            if (ret)
+                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
+                            LocalFree(str_sid);
+                        }
+
+                        max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_GUEST;
+                        max_sid.sid.SubAuthorityCount = count + 1;
+
+                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
+                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+                        if (ret)
+                        {
+                            acc_size = MAX_PATH;
+                            dom_size = MAX_PATH;
+                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
+                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+                            if (ret)
+                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
+                            LocalFree(str_sid);
+                        }
+
+                        max_sid.sid.SubAuthority[count] = 1000;
+                        max_sid.sid.SubAuthorityCount = count + 1;
+
+                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
+                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+                        if (ret)
+                        {
+                            acc_size = MAX_PATH;
+                            dom_size = MAX_PATH;
+                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
+                            /* this can fail if no user accounts exist */
+                            if (ret)
+                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
+                            else
+                                trace("LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+                            LocalFree(str_sid);
+                        }
+                    }
+
+                    pLsaFreeMemory((LPVOID)info);
+                }
+
+                status = pLsaClose(handle);
+                ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);
+            }
         }
     }
 }
