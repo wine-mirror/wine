@@ -1732,9 +1732,44 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                        D3DPCMPCAPS_NEVER        |
                        D3DPCMPCAPS_NOTEQUAL;
 
-    *pCaps->SrcBlendCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
-    *pCaps->DestBlendCaps = 0xFFFFFFFF;   /*FIXME: Tidy up later */
-    *pCaps->AlphaCmpCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
+    *pCaps->SrcBlendCaps  = D3DPBLENDCAPS_BLENDFACTOR     |
+                            D3DPBLENDCAPS_BOTHINVSRCALPHA |
+                            D3DPBLENDCAPS_BOTHSRCALPHA    |
+                            D3DPBLENDCAPS_DESTALPHA       |
+                            D3DPBLENDCAPS_DESTCOLOR       |
+                            D3DPBLENDCAPS_INVDESTALPHA    |
+                            D3DPBLENDCAPS_INVDESTCOLOR    |
+                            D3DPBLENDCAPS_INVSRCALPHA     |
+                            D3DPBLENDCAPS_INVSRCCOLOR     |
+                            D3DPBLENDCAPS_ONE             |
+                            D3DPBLENDCAPS_SRCALPHA        |
+                            D3DPBLENDCAPS_SRCALPHASAT     |
+                            D3DPBLENDCAPS_SRCCOLOR        |
+                            D3DPBLENDCAPS_ZERO;
+                            
+    *pCaps->DestBlendCaps = D3DPBLENDCAPS_BLENDFACTOR     |
+                            D3DPBLENDCAPS_BOTHINVSRCALPHA |
+                            D3DPBLENDCAPS_BOTHSRCALPHA    |
+                            D3DPBLENDCAPS_DESTALPHA       |
+                            D3DPBLENDCAPS_DESTCOLOR       |
+                            D3DPBLENDCAPS_INVDESTALPHA    |
+                            D3DPBLENDCAPS_INVDESTCOLOR    |
+                            D3DPBLENDCAPS_INVSRCALPHA     |
+                            D3DPBLENDCAPS_INVSRCCOLOR     |
+                            D3DPBLENDCAPS_ONE             |
+                            D3DPBLENDCAPS_SRCALPHA        |
+                            D3DPBLENDCAPS_SRCALPHASAT     |
+                            D3DPBLENDCAPS_SRCCOLOR        |
+                            D3DPBLENDCAPS_ZERO;
+
+    *pCaps->AlphaCmpCaps = D3DPCMPCAPS_ALWAYS       |
+                           D3DPCMPCAPS_EQUAL        |
+                           D3DPCMPCAPS_GREATER      |
+                           D3DPCMPCAPS_GREATEREQUAL |
+                           D3DPCMPCAPS_LESS         |
+                           D3DPCMPCAPS_LESSEQUAL    |
+                           D3DPCMPCAPS_NEVER        |
+                           D3DPCMPCAPS_NOTEQUAL;
 
     *pCaps->ShadeCaps     = WINED3DPSHADECAPS_SPECULARGOURAUDRGB |
                             WINED3DPSHADECAPS_COLORGOURAUDRGB    |
@@ -1778,7 +1813,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->CubeTextureFilterCaps = 0;
     *pCaps->VolumeTextureFilterCaps = 0;
 
-    *pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_BORDER |
+    *pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_INDEPENDENTUV |
                                   D3DPTADDRESSCAPS_CLAMP  |
                                   D3DPTADDRESSCAPS_WRAP;
 
