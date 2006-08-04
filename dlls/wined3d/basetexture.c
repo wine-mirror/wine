@@ -430,8 +430,12 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
             break;
             case WINED3DSAMP_MAXANISOTROPY:
                 *state = samplerStates[textureObjectSamplerStates[i].state];
-                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT,  *state);
-                checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
+                if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+                    glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT,  *state);
+                    checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
+                } else {
+                    WARN("Unsupported in local OpenGL implementation: glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT\n");
+                }
             break;
             case WINED3DFUNC_UNIMPLEMENTED: /* unimplemented */
                 TRACE("(%p) : stub\n", This);
