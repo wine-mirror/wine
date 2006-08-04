@@ -37,6 +37,11 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#ifdef HAVE_SYS_EVENT_H
+#include <sys/event.h>
+#undef LIST_INIT
+#undef LIST_ENTRY
+#endif
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -358,7 +363,7 @@ static int get_next_timeout(void);
 
 #ifdef USE_EPOLL
 
-static int epoll_fd;
+static int epoll_fd = -1;
 
 static inline void init_epoll(void)
 {
@@ -452,7 +457,120 @@ static inline void main_loop_epoll(void)
     }
 }
 
-#else /* USE_EPOLL */
+#elif defined(HAVE_KQUEUE)
+
+static int kqueue_fd = -1;
+
+static inline void init_epoll(void)
+{
+#ifndef __APPLE__ /* kqueue support is broken in the MacOS kernel so we can't use it */
+    kqueue_fd = kqueue();
+#endif
+}
+
+static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
+{
+    struct kevent ev[2];
+
+    if (kqueue_fd == -1) return;
+
+    EV_SET( &ev[0], fd->unix_fd, EVFILT_READ, 0, NOTE_LOWAT, 1, (void *)user );
+    EV_SET( &ev[1], fd->unix_fd, EVFILT_WRITE, 0, NOTE_LOWAT, 1, (void *)user );
+
+    if (events == -1)  /* stop waiting on this fd completely */
+    {
+        if (pollfd[user].fd == -1) return;  /* already removed */
+        ev[0].flags |= EV_DELETE;
+        ev[1].flags |= EV_DELETE;
+    }
+    else if (pollfd[user].fd == -1)
+    {
+        if (pollfd[user].events) return;  /* stopped waiting on it, don't restart */
+        ev[0].flags |= EV_ADD | ((events & POLLIN) ? EV_ENABLE : EV_DISABLE);
+        ev[1].flags |= EV_ADD | ((events & POLLOUT) ? EV_ENABLE : EV_DISABLE);
+    }
+    else
+    {
+        if (pollfd[user].events == events) return;  /* nothing to do */
+        ev[0].flags |= (events & POLLIN) ? EV_ENABLE : EV_DISABLE;
+        ev[1].flags |= (events & POLLOUT) ? EV_ENABLE : EV_DISABLE;
+    }
+
+    if (kevent( kqueue_fd, ev, 2, NULL, 0, NULL ) == -1)
+    {
+        if (errno == ENOMEM)  /* not enough memory, give up on kqueue */
+        {
+            close( kqueue_fd );
+            kqueue_fd = -1;
+        }
+        else perror( "kevent" );  /* should not happen */
+    }
+}
+
+static inline void remove_epoll_user( struct fd *fd, int user )
+{
+    if (kqueue_fd == -1) return;
+
+    if (pollfd[user].fd != -1)
+    {
+        struct kevent ev[2];
+
+        EV_SET( &ev[0], fd->unix_fd, EVFILT_READ, EV_DELETE, 0, 0, 0 );
+        EV_SET( &ev[1], fd->unix_fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0 );
+        kevent( kqueue_fd, ev, 2, NULL, 0, NULL );
+    }
+}
+
+static inline void main_loop_epoll(void)
+{
+    int i, ret, timeout;
+    struct kevent events[128];
+
+    if (kqueue_fd == -1) return;
+
+    while (active_users)
+    {
+        timeout = get_next_timeout();
+
+        if (!active_users) break;  /* last user removed by a timeout */
+        if (kqueue_fd == -1) break;  /* an error occurred with kqueue */
+
+        if (timeout != -1)
+        {
+            struct timespec ts;
+
+            ts.tv_sec = timeout / 1000;
+            ts.tv_nsec = (timeout % 1000) * 1000000;
+            ret = kevent( kqueue_fd, NULL, 0, events, sizeof(events)/sizeof(events[0]), &ts );
+        }
+        else ret = kevent( kqueue_fd, NULL, 0, events, sizeof(events)/sizeof(events[0]), NULL );
+
+        /* put the events into the pollfd array first, like poll does */
+        for (i = 0; i < ret; i++)
+        {
+            long user = (long)events[i].udata;
+            pollfd[user].revents = 0;
+        }
+        for (i = 0; i < ret; i++)
+        {
+            long user = (long)events[i].udata;
+            if (events[i].filter == EVFILT_READ) pollfd[user].revents |= POLLIN;
+            else if (events[i].filter == EVFILT_WRITE) pollfd[user].revents |= POLLOUT;
+            if (events[i].flags & EV_EOF) pollfd[user].revents |= POLLHUP;
+            if (events[i].flags & EV_ERROR) pollfd[user].revents |= POLLERR;
+        }
+
+        /* read events from the pollfd array, as set_fd_events may modify them */
+        for (i = 0; i < ret; i++)
+        {
+            long user = (long)events[i].udata;
+            if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
+            pollfd[user].revents = 0;
+        }
+    }
+}
+
+#else /* HAVE_KQUEUE */
 
 static inline void init_epoll(void) { }
 static inline void set_fd_epoll_events( struct fd *fd, int user, int events ) { }

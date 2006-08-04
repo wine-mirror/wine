@@ -263,6 +263,9 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define to 1 if you have the `kqueue' function. */
+#undef HAVE_KQUEUE
+
 /* Define to 1 if you have the <lber.h> header file. */
 #undef HAVE_LBER_H
 
@@ -724,6 +727,9 @@
 
 /* Define to 1 if you have the <sys/errno.h> header file. */
 #undef HAVE_SYS_ERRNO_H
+
+/* Define to 1 if you have the <sys/event.h> header file. */
+#undef HAVE_SYS_EVENT_H
 
 /* Define to 1 if you have the <sys/exec_elf.h> header file. */
 #undef HAVE_SYS_EXEC_ELF_H

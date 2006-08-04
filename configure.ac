@@ -227,6 +227,7 @@ AC_CHECK_HEADERS(\
 	sys/elf32.h \
 	sys/epoll.h \
 	sys/errno.h \
+	sys/event.h \
 	sys/exec_elf.h \
 	sys/filio.h \
 	sys/ioctl.h \
@@ -1289,6 +1290,7 @@ AC_CHECK_FUNCS(\
 	gettimeofday \
 	getuid \
 	inet_network \
+	kqueue \
 	lstat \
 	memmove \
 	mmap \
