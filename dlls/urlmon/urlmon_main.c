@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 LONG URLMON_refCount = 0;
 
 HINSTANCE URLMON_hInstance = 0;
+static HMODULE hCabinet = NULL;
 
 DWORD urlmon_tls = 0;
 
@@ -63,6 +64,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_DETACH:
         if(urlmon_tls)
             TlsFree(urlmon_tls);
+        if (hCabinet)
+            FreeLibrary(hCabinet);
+        hCabinet = NULL;
         init_session(FALSE);
         URLMON_hInstance = 0;
 	break;
@@ -596,4 +600,21 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     }
 
     return E_FAIL;
+}
+
+/***********************************************************************
+ * Extract (URLMON.@)
+ */
+HRESULT WINAPI Extract(void *dest, LPCSTR szCabName)
+{
+    HRESULT (WINAPI *pExtract)(void *, LPCSTR);
+
+    if (!hCabinet)
+        hCabinet = LoadLibraryA("cabinet.dll");
+
+    if (!hCabinet) return HRESULT_FROM_WIN32(GetLastError());
+    pExtract = (void *)GetProcAddress(hCabinet, "Extract");
+    if (!pExtract) return HRESULT_FROM_WIN32(GetLastError());
+
+    return pExtract(dest, szCabName);
 }

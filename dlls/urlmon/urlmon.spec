@@ -32,7 +32,7 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllRegisterServerEx()
 @ stdcall -private DllUnregisterServer()
-@ stdcall Extract(long ptr) cabinet.Extract
+@ stdcall Extract(long ptr)
 @ stdcall FaultInIEFeature(long ptr ptr long)
 @ stub FindMediaType
 @ stub FindMediaTypeClass
