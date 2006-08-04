@@ -1013,7 +1013,18 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
     TRACE("%s %s %p 0x%08lx\n", debugstr_guid(class), debugstr_w(enumstr),
      parent, flags);
 
-    if (enumstr)
+    if(flags & DIGCF_DEVICEINTERFACE)
+    {
+        if(!class)
+            SetLastError(ERROR_INVALID_PARAMETER);
+        else
+        {
+            /* WinXP always succeeds, returns empty list for unknown classes */
+            FIXME(": returning empty list\n");
+            ret = SetupDiCreateDeviceInfoList(class, parent);
+        }
+    }
+    else if (enumstr)
         FIXME(": unimplemented for enumerator strings (%s)\n",
          debugstr_w(enumstr));
     else if (flags & DIGCF_ALLCLASSES)
@@ -1045,7 +1056,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
  *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInterfaces(
-       HDEVINFO DeviceInfoSet,
+       HDEVINFO devinfo,
        PSP_DEVINFO_DATA DeviceInfoData,
        CONST GUID * InterfaceClassGuid,
        DWORD MemberIndex,
@@ -1053,10 +1064,19 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
 {
     BOOL ret = FALSE;
 
-    FIXME("%p, %p, %s, 0x%08lx, %p\n", DeviceInfoSet, DeviceInfoData,
+    FIXME("%p, %p, %s, 0x%08lx, %p\n", devinfo, DeviceInfoData,
      debugstr_guid(InterfaceClassGuid), MemberIndex, DeviceInterfaceData);
 
-    SetLastError(ERROR_INVALID_HANDLE);
+    if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
+    {
+        struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
+        if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
+            SetLastError(ERROR_NO_MORE_ITEMS);
+        else
+            SetLastError(ERROR_INVALID_HANDLE);
+    }
+    else
+        SetLastError(ERROR_INVALID_HANDLE);
     return ret;
 }
 
