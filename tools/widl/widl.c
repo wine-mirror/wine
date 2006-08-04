@@ -189,7 +189,7 @@ int main(int argc,char *argv[])
       do_client = 1;
       break;
     case 'C':
-      client_name = strdup(optarg);
+      client_name = xstrdup(optarg);
       break;
     case 'd':
       debuglevel = strtol(optarg, NULL, 0);
@@ -206,7 +206,7 @@ int main(int argc,char *argv[])
       do_header = 1;
       break;
     case 'H':
-      header_name = strdup(optarg);
+      header_name = xstrdup(optarg);
       break;
     case 'I':
       wpp_add_include_path(optarg);
@@ -219,28 +219,28 @@ int main(int argc,char *argv[])
       do_proxies = 1;
       break;
     case 'P':
-      proxy_name = strdup(optarg);
+      proxy_name = xstrdup(optarg);
       break;
     case 's':
       do_everything = 0;
       do_server = 1;
       break;
     case 'S':
-      server_name = strdup(optarg);
+      server_name = xstrdup(optarg);
       break;
     case 't':
       do_everything = 0;
       do_typelib = 1;
       break;
     case 'T':
-      typelib_name = strdup(optarg);
+      typelib_name = xstrdup(optarg);
       break;
     case 'u':
       do_everything = 0;
       do_idfile = 1;
       break;
     case 'U':
-      idfile_name = strdup(optarg);
+      idfile_name = xstrdup(optarg);
       break;
     case 'V':
       printf(version_string);

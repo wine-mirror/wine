@@ -362,7 +362,6 @@ static int ctl2_encode_string(
  * RETURNS
  *
  *  Success: The offset within the segment of the new data area.
- *  Failure: -1 (this is invariably an out of memory condition).
  *
  * BUGS
  *
@@ -389,8 +388,7 @@ static int ctl2_alloc_segment(
 	char *block;
 
 	block_size = typelib->typelib_segment_block_length[segment];
-	block = realloc(typelib->typelib_segment_data[segment], block_size << 1);
-	if (!block) return -1;
+	block = xrealloc(typelib->typelib_segment_data[segment], block_size << 1);
 
 	if (segment == MSFT_SEG_TYPEINFO) {
 	    /* TypeInfos have a direct pointer to their memory space, so we have to fix them up. */
@@ -430,7 +428,6 @@ static int ctl2_alloc_typeinfo(
     MSFT_TypeInfoBase *typeinfo;
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEINFO, sizeof(MSFT_TypeInfoBase), 0);
-    if (offset == -1) return -1;
 
     typelib->typelib_typeinfo_offsets[typelib->typelib_header.nrtypeinfos++] = offset;
 
@@ -475,7 +472,6 @@ static int ctl2_alloc_typeinfo(
  * RETURNS
  *
  *  Success: The offset of the new GUID.
- *  Failure: -1 (this is invariably an out of memory condition).
  */
 static int ctl2_alloc_guid(
 	msft_typelib_t *typelib,   /* [I] The type library to allocate in. */
@@ -491,7 +487,6 @@ static int ctl2_alloc_guid(
     if (offset != -1) return offset;
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_GUID, sizeof(MSFT_GuidEntry), 0);
-    if (offset == -1) return -1;
 
     guid_space = (void *)(typelib->typelib_segment_data[MSFT_SEG_GUID] + offset);
     *guid_space = *guid;
@@ -528,7 +523,6 @@ static int ctl2_alloc_name(
     if (offset != -1) return offset;
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_NAME, length + 8, 0);
-    if (offset == -1) return -1;
 
     name_space = (void *)(typelib->typelib_segment_data[MSFT_SEG_NAME] + offset);
     name_space->hreftype = -1;
@@ -574,7 +568,6 @@ static int ctl2_alloc_string(
     }
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_STRING, length, 0);
-    if (offset == -1) return -1;
 
     string_space = typelib->typelib_segment_data[MSFT_SEG_STRING] + offset;
     memcpy(string_space, encoded_string, length);
@@ -611,7 +604,6 @@ static int alloc_msft_importinfo(
     impinfo->flags |= typelib->typelib_header.nimpinfos++;
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_IMPORTINFO, sizeof(MSFT_ImpInfo), 0);
-    if (offset == -1) return -1;
 
     impinfo_space = (void *)(typelib->typelib_segment_data[MSFT_SEG_IMPORTINFO] + offset);
     *impinfo_space = *impinfo;
@@ -653,7 +645,6 @@ static int alloc_importfile(
     }
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_IMPORTFILES, length + 0xc, 0);
-    if (offset == -1) return -1;
 
     importfile = (MSFT_ImpFile *)&typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset];
     importfile->guid = guidoffset;
@@ -1233,11 +1224,9 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     guidentry.next_hash = -1;
 
     guidoffset = ctl2_alloc_guid(typelib, &guidentry);
-    if (guidoffset == -1) return E_OUTOFMEMORY;
     write_value(typelib, &data_out, vt, value);
 
     custoffset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATAGUID, 12, 0);
-    if (custoffset == -1) return E_OUTOFMEMORY;
 
     custdata = (int *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][custoffset];
     custdata[0] = guidoffset;
@@ -2262,9 +2251,6 @@ static void set_guid(msft_typelib_t *typelib)
     }
 
     offset = ctl2_alloc_guid(typelib, &guidentry);
-    
-    if (offset == -1) return;
-
     typelib->typelib_header.posguid = offset;
 
     return;
@@ -2527,8 +2513,7 @@ int create_msft_typelib(typelib_t *typelib)
     GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
     GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
 
-    msft = malloc(sizeof(*msft));
-    if (!msft) return 0;
+    msft = xmalloc(sizeof(*msft));
     memset(msft, 0, sizeof(*msft));
     msft->typelib = typelib;
 
