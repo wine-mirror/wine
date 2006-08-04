@@ -58,7 +58,7 @@
   - EM_GETOLEINTERFACE
   + EM_GETOPTIONS
   + EM_GETPARAFORMAT
-  - EM_GETPASSWORDCHAR 2.0
+  + EM_GETPASSWORDCHAR 2.0
   - EM_GETPUNCTUATION 1.0asian
   + EM_GETRECT
   - EM_GETREDONAME 2.0
@@ -105,7 +105,7 @@
   + EM_SETOPTIONS (partially implemented)
   - EM_SETPALETTE 2.0
   + EM_SETPARAFORMAT
-  - EM_SETPASSWORDCHAR 2.0
+  + EM_SETPASSWORDCHAR 2.0
   - EM_SETPUNCTUATION 1.0asian
   + EM_SETREADONLY no beep on modification attempt
   + EM_SETRECT
@@ -1146,6 +1146,12 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
     ed->pFontCache[i].hFont = NULL;
   }
   ME_CheckCharOffsets(ed);
+  
+  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_PASSWORD)
+    ed->cPasswordMask = '*';
+  else
+    ed->cPasswordMask = 0;
+  
   return ed;
 }
 
@@ -1418,7 +1424,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_GETLIMITTEXT)
   /* UNSUPPORTED_MSG(EM_GETOLEINTERFACE) separate stub */
-  UNSUPPORTED_MSG(EM_GETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_GETREDONAME)
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
@@ -1432,7 +1437,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETFONTSIZE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
-  UNSUPPORTED_MSG(EM_SETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_SETSCROLLPOS)
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
@@ -1933,6 +1937,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     LPDATAOBJECT dataObj = NULL;
     CHARRANGE range;
     HRESULT hr = S_OK;
+    
+    if (editor->cPasswordMask)
+      return 0; /* Copying or Cutting masked text isn't allowed */
+    
     ME_GetSelection(editor, (int*)&range.cpMin, (int*)&range.cpMax);
     if(editor->lpOleCallback)
         hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, &range, RECO_COPY, &dataObj);
@@ -2473,6 +2481,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     LPVOID *ppvObj = (LPVOID*) lParam;
     return CreateIRichEditOle(editor, ppvObj);
   }
+  case EM_GETPASSWORDCHAR:
+  {
+    return editor->cPasswordMask;
+  }
   case EM_SETOLECALLBACK:
     if(editor->lpOleCallback)
       IUnknown_Release(editor->lpOleCallback);
@@ -2514,7 +2526,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       }
     }
     return ret;
-  }      
+  }
+  case EM_SETPASSWORDCHAR:
+  {
+    editor->cPasswordMask = wParam;
+    ME_RewrapRepaint(editor);
+    return 0;
+  }
   default:
   do_default:
     return DefWindowProcW(hWnd, msg, wParam, lParam);

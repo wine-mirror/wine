@@ -50,6 +50,32 @@ ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars)
   return s;
 }
 
+ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars)
+{ /* Make a string by repeating a char nMaxChars times */
+  int i;
+   ME_String *s = ALLOC_OBJ(ME_String);
+  
+  s->nLen = nMaxChars;
+  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
+  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
+
+  for (i = 0;i<nMaxChars;i++)
+    s->szData[i] = cRepeat;
+  s->szData[s->nLen] = 0;
+  return s;
+}
+
+ME_String *ME_MakeStringB(int nMaxChars)
+{ /* Create a buffer (uninitialized string) of size nMaxChars */
+  ME_String *s = ALLOC_OBJ(ME_String);
+  
+  s->nLen = nMaxChars;
+  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
+  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
+  s->szData[s->nLen] = 0;
+  return s;
+}
+
 ME_String *ME_StrDup(ME_String *s)
 {
   return ME_MakeStringN(s->szData, s->nLen);

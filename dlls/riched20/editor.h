@@ -75,6 +75,8 @@ const char *ME_GetDITypeName(ME_DIType type);
 int ME_GetOptimalBuffer(int nLen);
 ME_String *ME_MakeString(LPCWSTR szText);
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars);
+ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars);
+ME_String *ME_MakeStringB(int nMaxChars);
 ME_String *ME_StrDup(ME_String *s);
 void ME_DestroyString(ME_String *s);
 void ME_AppendString(ME_String *s1, ME_String *s2);

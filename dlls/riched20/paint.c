@@ -222,7 +222,8 @@ void ME_DrawGraphics(ME_Context *c, int x, int y, ME_Run *run,
   }
 }
 
-static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph *para) {
+static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph *para) 
+{
   ME_Run *run = &rundi->member.run;
   ME_DisplayItem *start = ME_FindItemBack(rundi, diStartRow);
   int runofs = run->nCharOfs+para->nCharOfs;
@@ -247,9 +248,20 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   if (run->nFlags & MERF_GRAPHICS)
     ME_DrawGraphics(c, x, y, run, para, (runofs >= nSelFrom) && (runofs < nSelTo));
   else
-    ME_DrawTextWithStyle(c, x, y, 
-      run->strText->szData, ME_StrVLen(run->strText), run->style, NULL, 
-        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
+  {
+    if (c->editor->cPasswordMask)
+    {
+      ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
+      ME_DrawTextWithStyle(c, x, y, 
+        szMasked->szData, ME_StrVLen(szMasked), run->style, NULL, 
+	nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
+      ME_DestroyString(szMasked);
+    }
+    else
+      ME_DrawTextWithStyle(c, x, y, 
+        run->strText->szData, ME_StrVLen(run->strText), run->style, NULL, 
+	nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
+    }
 }
 
 COLORREF ME_GetBackColor(ME_TextEditor *editor)

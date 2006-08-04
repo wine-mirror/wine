@@ -320,6 +320,7 @@ typedef struct tagME_TextEditor
   int mode;
   BOOL bHideSelection;
   BOOL AutoURLDetect_bEnable;
+  WCHAR cPasswordMask;
 } ME_TextEditor;
 
 typedef struct tagME_Context

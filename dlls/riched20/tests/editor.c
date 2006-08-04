@@ -873,6 +873,30 @@ static void test_EM_SETUNDOLIMIT()
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_ES_PASSWORD()
+{
+  /* This isn't hugely testable, so we're just going to run it through it's paces. */
+	
+  HWND hwndRichEdit = new_richedit(NULL);
+  WCHAR result;
+	
+  /* First, check the default of a regular control */
+  result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
+  ok (result == 0,
+	"EM_GETPASSWORDCHAR returned %c by default, instead of NULL\n",result);
+  
+  /* Now, set it to something normal */
+  SendMessage(hwndRichEdit, EM_SETPASSWORDCHAR, 'x', 0);
+  result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
+  ok (result == 120,
+	"EM_GETPASSWORDCHAR returned %c (%d) when set to 'x', instead of x (120)\n",result,result);
+	
+  /* Now, set it to something odd */	
+  SendMessage(hwndRichEdit, EM_SETPASSWORDCHAR, (WCHAR)1234, 0);
+  result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
+  ok (result == 1234,
+	"EM_GETPASSWORDCHAR returned %c (%d) when set to 'x', instead of x (120)\n",result,result);
+}
 
 START_TEST( editor )
 {
@@ -893,6 +917,7 @@ START_TEST( editor )
   test_WM_GETTEXT();
   test_EM_AUTOURLDETECT();
   test_EM_SETUNDOLIMIT();
+  test_ES_PASSWORD();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
