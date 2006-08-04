@@ -98,7 +98,7 @@ static UINT create_file_table( MSIHANDLE hdb )
             "PRIMARY KEY `File`)" );
 }
 
-static UINT add_component_entry( MSIHANDLE hdb, char *values )
+static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
             "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
@@ -114,7 +114,7 @@ static UINT add_component_entry( MSIHANDLE hdb, char *values )
     return r;
 }
 
-static UINT add_feature_entry( MSIHANDLE hdb, char *values )
+static UINT add_feature_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Feature` (`Feature`, `Feature_Parent`, "
                     "`Title`, `Description`, `Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )";
@@ -129,7 +129,7 @@ static UINT add_feature_entry( MSIHANDLE hdb, char *values )
     return r;
 }
 
-static UINT add_feature_components_entry( MSIHANDLE hdb, char *values )
+static UINT add_feature_components_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `FeatureComponents` "
             "(`Feature_`, `Component_`) "
@@ -145,7 +145,7 @@ static UINT add_feature_components_entry( MSIHANDLE hdb, char *values )
     return r;
 }
 
-static UINT add_file_entry( MSIHANDLE hdb, char *values )
+static UINT add_file_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `File` "
             "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
@@ -291,7 +291,7 @@ static void test_getsourcepath_bad( void )
     ok( r == ERROR_INVALID_HANDLE, "return value wrong\n");
 }
 
-static UINT add_directory_entry( MSIHANDLE hdb, char *values )
+static UINT add_directory_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Directory` (`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )";
     char *query;
@@ -334,7 +334,7 @@ static void test_getsourcepath( void )
     /* another test but try create a directory this time */
     hdb = create_package_db();
     ok( hdb, "failed to create database\n");
-    
+
     r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
     ok( r == S_OK, "failed\n");
 
@@ -470,7 +470,7 @@ static void test_settargetpath(void)
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
-    
+
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
@@ -985,7 +985,7 @@ static void test_condition(void)
     DeleteFile(msifile);
 }
 
-static BOOL check_prop_empty( MSIHANDLE hpkg, char * prop)
+static BOOL check_prop_empty( MSIHANDLE hpkg, const char * prop)
 {
     UINT r;
     DWORD sz;
