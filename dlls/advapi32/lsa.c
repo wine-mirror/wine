@@ -462,17 +462,12 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
             /* read the computer SID from the registry */
             if (!ADVAPI_GetComputerSid(&(xdi->sid)))
             {
-                SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+                HeapFree(GetProcessHeap(), 0, buf);
+                HeapFree(GetProcessHeap(), 0, xdi);
 
-                xdi->sid.Revision = SID_REVISION;
-                xdi->sid.SubAuthorityCount = 4;
-                xdi->sid.IdentifierAuthority = localSidAuthority;
-                xdi->sid.SubAuthority[0] = SECURITY_NT_NON_UNIQUE;
-                xdi->sid.SubAuthority[1] = 0;
-                xdi->sid.SubAuthority[2] = 0;
-                xdi->sid.SubAuthority[3] = 0;
+                WARN("Computer SID not found\n");
 
-                WARN("Computer SID not found in registry\n");
+                return STATUS_UNSUCCESSFUL;
             }
 
             TRACE("setting SID to %s\n", debugstr_sid(&xdi->sid));

@@ -332,7 +332,7 @@ BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
 
     if (!ServerName || !ServerName[0])
         return TRUE;
-    
+
     buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
     Result = GetComputerNameW(buf,  &dwSize);
     if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
@@ -352,12 +352,12 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
 {
     HKEY key;
     LONG ret;
-                                                                                
-    if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-        "SECURITY\\SAM\\Domains\\Account", 0,
+    static const WCHAR Account[] = { 'S','E','C','U','R','I','T','Y','\\','S','A','M','\\','D','o','m','a','i','n','s','\\','A','c','c','o','u','n','t',0 };
+    static const WCHAR V[] = { 'V',0 };
+
+    if ((ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, Account, 0,
         KEY_READ, &key)) == ERROR_SUCCESS)
     {
-        static const WCHAR V[] = { 'V',0 };
         DWORD size = 0;
         ret = RegQueryValueExW(key, V, NULL, NULL, NULL, &size);
         if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
@@ -370,13 +370,40 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
                 {
                     /* the SID is in the last 24 bytes of the binary data */
                     CopyMemory(sid, &data[size-24], 24);
+                    HeapFree(GetProcessHeap(), 0, data);
+                    RegCloseKey(key);
                     return TRUE;
                 }
+                HeapFree(GetProcessHeap(), 0, data);
             }
         }
         RegCloseKey(key);
     }
-                                                                                
+
+    /* create a new random SID */
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, Account,
+        0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) == ERROR_SUCCESS)
+    {
+        PSID new_sid;
+        SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
+        DWORD id[3];
+
+        if (RtlGenRandom(&id, sizeof(id)))
+        {
+            if (AllocateAndInitializeSid(&identifierAuthority, 4, SECURITY_NT_NON_UNIQUE, id[0], id[1], id[2], 0, 0, 0, 0, &new_sid))
+            {
+                if (RegSetValueExW(key, V, 0, REG_BINARY, new_sid, GetLengthSid(new_sid)) == ERROR_SUCCESS)
+                {
+                    FreeSid(new_sid);
+                    RegCloseKey(key);
+                    return CopySid(GetLengthSid(new_sid), sid, &new_sid);
+                }
+                FreeSid(new_sid);
+            }
+        }
+        RegCloseKey(key);
+    }
+
     return FALSE;
 }
 
