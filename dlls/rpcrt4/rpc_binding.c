@@ -293,7 +293,10 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
     if (response_hdr->common.ptype != PKT_BIND_ACK ||
         response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
-      ERR("failed to bind\n");
+      ERR("failed to bind for interface %s, %d.%d\n",
+        debugstr_guid(&InterfaceId->SyntaxGUID),
+        InterfaceId->SyntaxVersion.MajorVersion,
+        InterfaceId->SyntaxVersion.MinorVersion);
       RPCRT4_FreeHeader(response_hdr);
       RPCRT4_DestroyConnection(NewConnection);
       return RPC_S_PROTOCOL_ERROR;
