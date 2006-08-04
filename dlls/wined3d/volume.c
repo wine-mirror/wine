@@ -24,7 +24,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
+#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
 
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
@@ -285,18 +285,19 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLen
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
     const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
-    TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-            GL_TEXTURE_3D,
-            gl_level,
-            formatEntry->glInternal,
-            This->currentDesc.Width,
-            This->currentDesc.Height,
-            This->currentDesc.Depth,
-            0,
-            formatEntry->glFormat,
-            formatEntry->glType,
-            This->resource.allocatedMemory);
-    glTexImage3D(GL_TEXTURE_3D,
+    if(GL_SUPPORT(EXT_TEXTURE3D)) {
+        TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+                GL_TEXTURE_3D,
+                gl_level,
+                formatEntry->glInternal,
+                This->currentDesc.Width,
+                This->currentDesc.Height,
+                This->currentDesc.Depth,
+                0,
+                formatEntry->glFormat,
+                formatEntry->glType,
+                This->resource.allocatedMemory);
+        GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D,
                     gl_level,
                     formatEntry->glInternal,
                     This->currentDesc.Width,
@@ -305,8 +306,11 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLen
                     0,
                     formatEntry->glFormat,
                     formatEntry->glType,
-                    This->resource.allocatedMemory);
-    checkGLcall("glTexImage3D");
+                    This->resource.allocatedMemory));
+        checkGLcall("glTexImage3D");
+    } else
+        WARN("This OpenGL implementation doesn't support 3D textures\n");
+    
     return WINED3D_OK;
 
 }

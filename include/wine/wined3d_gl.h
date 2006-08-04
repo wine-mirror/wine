@@ -350,6 +350,20 @@ typedef void (APIENTRY * PGLFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum intern
 #endif
 typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFEXTPROC) (GLenum pname, GLfloat param);
 typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GLfloat *params);
+/* GL_EXT_texture3D */
+#ifndef GL_EXT_texture3D
+#define GL_PACK_SKIP_IMAGES_EXT           0x806B
+#define GL_PACK_IMAGE_HEIGHT_EXT          0x806C
+#define GL_UNPACK_SKIP_IMAGES_EXT         0x806D
+#define GL_UNPACK_IMAGE_HEIGHT_EXT        0x806E
+#define GL_TEXTURE_3D_EXT                 0x806F
+#define GL_PROXY_TEXTURE_3D_EXT           0x8070
+#define GL_TEXTURE_DEPTH_EXT              0x8071
+#define GL_TEXTURE_WRAP_R_EXT             0x8072
+#define GL_MAX_3D_TEXTURE_SIZE_EXT        0x8073
+#endif
+typedef void (APIENTRY * PGLFNGLTEXIMAGE3DEXTPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+typedef void (APIENTRY * PGLFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
 /* GL_EXT_texture_env_combine */
 #ifndef GL_EXT_texture_env_combine
 #define GL_EXT_texture_env_combine 1
@@ -1373,6 +1387,7 @@ typedef enum _GL_SupportedExt {
   EXT_SECONDARY_COLOR,
   EXT_STENCIL_TWO_SIDE,
   EXT_STENCIL_WRAP,
+  EXT_TEXTURE3D,
   EXT_TEXTURE_COMPRESSION_S3TC,
   EXT_TEXTURE_FILTER_ANISOTROPIC,
   EXT_TEXTURE_LOD,
@@ -1482,6 +1497,9 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC,       glSecondaryColor3fEXT); \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,      glSecondaryColor3fvEXT); \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC,  glSecondaryColorPointerEXT); \
+    /* GL_EXT_texture3D */ \
+    USE_GL_FUNC(PGLFNGLTEXIMAGE3DEXTPROC,              glTexImage3DEXT); \
+    USE_GL_FUNC(PGLFNGLTEXSUBIMAGE3DEXTPROC,           glTexSubImage3DEXT); \
     /* GL_ARB_vertex_program */ \
     USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC,              glGenProgramsARB); \
     USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC,              glBindProgramARB); \

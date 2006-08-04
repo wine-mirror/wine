@@ -680,6 +680,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_EXT_stencil_wrap") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Stencil wrap support\n");
                 gl_info->supported[EXT_STENCIL_WRAP] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_EXT_texture3D") == 0) {
+                TRACE_(d3d_caps)(" FOUND: EXT_texture3D support\n");
+                gl_info->supported[EXT_TEXTURE3D] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Texture S3TC compression support\n");
                 gl_info->supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
@@ -1803,12 +1806,16 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->TextureCaps =  WINED3DPTEXTURECAPS_ALPHA              |
                            WINED3DPTEXTURECAPS_ALPHAPALETTE       |
                            WINED3DPTEXTURECAPS_BORDER             |
-                           WINED3DPTEXTURECAPS_VOLUMEMAP          |
                            WINED3DPTEXTURECAPS_MIPMAP             |
                            WINED3DPTEXTURECAPS_PROJECTED          |
                            WINED3DPTEXTURECAPS_PERSPECTIVE        |
-                           WINED3DPTEXTURECAPS_VOLUMEMAP_POW2     |
                            WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+
+    if( GL_SUPPORT(EXT_TEXTURE3D)) {
+        *pCaps->TextureCaps |=  WINED3DPTEXTURECAPS_VOLUMEMAP      |
+                                WINED3DPTEXTURECAPS_MIPVOLUMEMAP   |
+                                WINED3DPTEXTURECAPS_VOLUMEMAP_POW2;
+    }
 
     if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
         *pCaps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP     |
