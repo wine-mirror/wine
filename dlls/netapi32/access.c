@@ -294,7 +294,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     case 1053:
     {
         FIXME("Level %ld is not implemented\n", level);
-        break;
+        return NERR_InternalError;
     }
     default:
         ERR("Invalid level %ld is specified\n", level);
