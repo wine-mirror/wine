@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = iphlpapi.dll
 IMPORTLIB = libiphlpapi.$(IMPLIBEXT)
 IMPORTS   = advapi32 kernel32
+EXTRALIBS = @RESOLVLIBS@
 
 C_SRCS = \
 	ifenum.c \

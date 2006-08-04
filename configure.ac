@@ -146,8 +146,6 @@ dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lpoll for Mac OS X/Darwin
 AC_CHECK_LIB(poll,poll)
-dnl Check for -lresolv for Mac OS X/Darwin
-AC_CHECK_LIB(resolv,res_9_init)
 dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
