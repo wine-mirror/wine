@@ -443,13 +443,193 @@ HRESULT WINAPI ScriptBreak(const WCHAR *pwcChars, int cChars,  const SCRIPT_ANAL
     return S_OK;
 }
 
+static const struct
+{
+    WCHAR start;
+    WCHAR end;
+    DWORD flag;
+}
+complex_ranges[] =
+{
+    { 0, 0x0b, SIC_COMPLEX },
+    { 0x0c, 0x0c, SIC_NEUTRAL },
+    { 0x0d, 0x1f, SIC_COMPLEX },
+    { 0x20, 0x2f, SIC_NEUTRAL },
+    { 0x30, 0x39, SIC_ASCIIDIGIT },
+    { 0x3a, 0x40, SIC_NEUTRAL },
+    { 0x5b, 0x60, SIC_NEUTRAL },
+    { 0x7b, 0x7e, SIC_NEUTRAL },
+    { 0x7f, 0x9f, SIC_COMPLEX },
+    { 0xa0, 0xa5, SIC_NEUTRAL },
+    { 0xa7, 0xa8, SIC_NEUTRAL },
+    { 0xab, 0xab, SIC_NEUTRAL },
+    { 0xad, 0xad, SIC_NEUTRAL },
+    { 0xaf, 0xaf, SIC_NEUTRAL },
+    { 0xb0, 0xb1, SIC_NEUTRAL },
+    { 0xb4, 0xb4, SIC_NEUTRAL },
+    { 0xb6, 0xb8, SIC_NEUTRAL },
+    { 0xbb, 0xbf, SIC_NEUTRAL },
+    { 0xd7, 0xd7, SIC_NEUTRAL },
+    { 0xf7, 0xf7, SIC_NEUTRAL },
+    { 0x2b9, 0x2ba, SIC_NEUTRAL },
+    { 0x2c2, 0x2cf, SIC_NEUTRAL },
+    { 0x2d2, 0x2df, SIC_NEUTRAL },
+    { 0x2e5, 0x2e9, SIC_COMPLEX },
+    { 0x2ea, 0x2ed, SIC_NEUTRAL },
+    { 0x300, 0x362, SIC_COMPLEX },
+    { 0x530, 0x60b, SIC_COMPLEX },
+    { 0x60c, 0x60d, SIC_NEUTRAL },
+    { 0x60e, 0x669, SIC_COMPLEX },
+    { 0x66a, 0x66a, SIC_NEUTRAL },
+    { 0x66b, 0x6e8, SIC_COMPLEX },
+    { 0x6e9, 0x6e9, SIC_NEUTRAL },
+    { 0x6ea, 0x7bf, SIC_COMPLEX },
+    { 0x900, 0x1360, SIC_COMPLEX },
+    { 0x137d, 0x137f, SIC_COMPLEX },
+    { 0x1680, 0x1680, SIC_NEUTRAL },
+    { 0x1780, 0x18af, SIC_COMPLEX },
+    { 0x2000, 0x200a, SIC_NEUTRAL },
+    { 0x200b, 0x200f, SIC_COMPLEX },
+    { 0x2010, 0x2016, SIC_NEUTRAL },
+    { 0x2018, 0x2022, SIC_NEUTRAL },
+    { 0x2024, 0x2028, SIC_NEUTRAL },
+    { 0x2029, 0x202e, SIC_COMPLEX },
+    { 0x202f, 0x2037, SIC_NEUTRAL },
+    { 0x2039, 0x203c, SIC_NEUTRAL },
+    { 0x2044, 0x2046, SIC_NEUTRAL },
+    { 0x206a, 0x206f, SIC_COMPLEX },
+    { 0x207a, 0x207e, SIC_NEUTRAL },
+    { 0x208a, 0x20aa, SIC_NEUTRAL },
+    { 0x20ac, 0x20cf, SIC_NEUTRAL },
+    { 0x20d0, 0x20ff, SIC_COMPLEX },
+    { 0x2103, 0x2103, SIC_NEUTRAL },
+    { 0x2105, 0x2105, SIC_NEUTRAL },
+    { 0x2109, 0x2109, SIC_NEUTRAL },
+    { 0x2116, 0x2116, SIC_NEUTRAL },
+    { 0x2121, 0x2122, SIC_NEUTRAL },
+    { 0x212e, 0x212e, SIC_NEUTRAL },
+    { 0x2153, 0x2154, SIC_NEUTRAL },
+    { 0x215b, 0x215e, SIC_NEUTRAL },
+    { 0x2190, 0x2199, SIC_NEUTRAL },
+    { 0x21b8, 0x21b9, SIC_NEUTRAL },
+    { 0x21d2, 0x21d2, SIC_NEUTRAL },
+    { 0x21d4, 0x21d4, SIC_NEUTRAL },
+    { 0x21e7, 0x21e7, SIC_NEUTRAL },
+    { 0x2200, 0x2200, SIC_NEUTRAL },
+    { 0x2202, 0x2203, SIC_NEUTRAL },
+    { 0x2207, 0x2208, SIC_NEUTRAL },
+    { 0x220b, 0x220b, SIC_NEUTRAL },
+    { 0x220f, 0x220f, SIC_NEUTRAL },
+    { 0x2211, 0x2213, SIC_NEUTRAL },
+    { 0x2215, 0x2215, SIC_NEUTRAL },
+    { 0x221a, 0x221a, SIC_NEUTRAL },
+    { 0x221d, 0x2220, SIC_NEUTRAL },
+    { 0x2223, 0x2223, SIC_NEUTRAL },
+    { 0x2225, 0x2225, SIC_NEUTRAL },
+    { 0x2227, 0x222c, SIC_NEUTRAL },
+    { 0x222e, 0x222e, SIC_NEUTRAL },
+    { 0x2234, 0x2237, SIC_NEUTRAL },
+    { 0x223c, 0x223d, SIC_NEUTRAL },
+    { 0x2248, 0x2248, SIC_NEUTRAL },
+    { 0x224c, 0x224c, SIC_NEUTRAL },
+    { 0x2252, 0x2252, SIC_NEUTRAL },
+    { 0x2260, 0x2261, SIC_NEUTRAL },
+    { 0x2264, 0x2267, SIC_NEUTRAL },
+    { 0x226a, 0x226b, SIC_NEUTRAL },
+    { 0x226e, 0x226f, SIC_NEUTRAL },
+    { 0x2282, 0x2283, SIC_NEUTRAL },
+    { 0x2286, 0x2287, SIC_NEUTRAL },
+    { 0x2295, 0x2295, SIC_NEUTRAL },
+    { 0x2299, 0x2299, SIC_NEUTRAL },
+    { 0x22a5, 0x22a5, SIC_NEUTRAL },
+    { 0x22bf, 0x22bf, SIC_NEUTRAL },
+    { 0x2312, 0x2312, SIC_NEUTRAL },
+    { 0x24ea, 0x24ea, SIC_COMPLEX },
+    { 0x2500, 0x254b, SIC_NEUTRAL },
+    { 0x2550, 0x256d, SIC_NEUTRAL },
+    { 0x256e, 0x2574, SIC_NEUTRAL },
+    { 0x2581, 0x258f, SIC_NEUTRAL },
+    { 0x2592, 0x2595, SIC_NEUTRAL },
+    { 0x25a0, 0x25a1, SIC_NEUTRAL },
+    { 0x25a3, 0x25a9, SIC_NEUTRAL },
+    { 0x25b2, 0x25b3, SIC_NEUTRAL },
+    { 0x25b6, 0x25b7, SIC_NEUTRAL },
+    { 0x25bc, 0x25bd, SIC_NEUTRAL },
+    { 0x25c0, 0x25c1, SIC_NEUTRAL },
+    { 0x25c6, 0x25c8, SIC_NEUTRAL },
+    { 0x25cb, 0x25cb, SIC_NEUTRAL },
+    { 0x25ce, 0x25d1, SIC_NEUTRAL },
+    { 0x25e2, 0x25e5, SIC_NEUTRAL },
+    { 0x25ef, 0x25ef, SIC_NEUTRAL },
+    { 0x2605, 0x2606, SIC_NEUTRAL },
+    { 0x2609, 0x2609, SIC_NEUTRAL },
+    { 0x260e, 0x260f, SIC_NEUTRAL },
+    { 0x261c, 0x261c, SIC_NEUTRAL },
+    { 0x261e, 0x261e, SIC_NEUTRAL },
+    { 0x2640, 0x2640, SIC_NEUTRAL },
+    { 0x2642, 0x2642, SIC_NEUTRAL },
+    { 0x2660, 0x2661, SIC_NEUTRAL },
+    { 0x2663, 0x2665, SIC_NEUTRAL },
+    { 0x2667, 0x266a, SIC_NEUTRAL },
+    { 0x266c, 0x266d, SIC_NEUTRAL },
+    { 0x266f, 0x266f, SIC_NEUTRAL },
+    { 0x273d, 0x273d, SIC_NEUTRAL },
+    { 0x2e80, 0x312f, SIC_COMPLEX },
+    { 0x3190, 0x31bf, SIC_COMPLEX },
+    { 0x31f0, 0x31ff, SIC_COMPLEX },
+    { 0x3220, 0x325f, SIC_COMPLEX },
+    { 0x3280, 0xa4ff, SIC_COMPLEX },
+    { 0xd800, 0xdfff, SIC_COMPLEX },
+    { 0xe000, 0xf8ff, SIC_NEUTRAL },
+    { 0xf900, 0xfaff, SIC_COMPLEX },
+    { 0xfb13, 0xfb28, SIC_COMPLEX },
+    { 0xfb29, 0xfb29, SIC_NEUTRAL },
+    { 0xfb2a, 0xfb4f, SIC_COMPLEX },
+    { 0xfd3e, 0xfd3f, SIC_NEUTRAL },
+    { 0xfdd0, 0xfdef, SIC_COMPLEX },
+    { 0xfe20, 0xfe6f, SIC_COMPLEX },
+    { 0xfeff, 0xfeff, SIC_COMPLEX },
+    { 0xff01, 0xff5e, SIC_COMPLEX },
+    { 0xff61, 0xff9f, SIC_COMPLEX },
+    { 0xffe0, 0xffe6, SIC_COMPLEX },
+    { 0xffe8, 0xffee, SIC_COMPLEX },
+    { 0xfff9, 0xfffb, SIC_COMPLEX },
+    { 0xfffe, 0xfffe, SIC_COMPLEX }
+};
+
 /***********************************************************************
  *      ScriptIsComplex (USP10.@)
+ * 
+ *  Determine if a string is complex.
  *
+ *  PARAMS
+ *   chars [I] Array of characters to test.
+ *   len   [I] Length in characters.
+ *   flag  [I] Flag.
+ *
+ *  RETURNS
+ *   Success: S_OK
+ *   Failure: S_FALSE
+ *
+ *  NOTES
+ *   Behaviour matches that of WinXP.
  */
-HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFlags) {
-  FIXME("(%s,%d,0x%lx): stub\n",  debugstr_wn(pwcInChars, cInChars), cInChars, dwFlags);
-   return E_NOTIMPL;
+HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
+{
+    unsigned int i, j;
+
+    TRACE("(%s,%d,0x%lx)\n", debugstr_wn(chars, len), len, flag);
+
+    for (i = 0; i < len; i++)
+    {
+        for (j = 0; j < sizeof(complex_ranges)/sizeof(complex_ranges[0]); j++)
+        {
+            if (chars[i] >= complex_ranges[j].start &&
+                chars[i] <= complex_ranges[j].end &&
+                (flag & complex_ranges[j].flag)) return S_OK;
+        }
+    }
+    return S_FALSE;
 }
 
 /***********************************************************************
