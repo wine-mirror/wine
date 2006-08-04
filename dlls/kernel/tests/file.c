@@ -1308,11 +1308,11 @@ static void test_MapFile(void)
     ok( hmap == NULL, "mapped zero size file\n");
     ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
 
-    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x1000, 0, NULL );
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x80000000, 0, NULL );
     ok( hmap == NULL, "mapping should fail\n");
     /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
 
-    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x1000, 0x10000, NULL );
+    hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x80000000, 0x10000, NULL );
     ok( hmap == NULL, "mapping should fail\n");
     /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
 
