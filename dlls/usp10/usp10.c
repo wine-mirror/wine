@@ -914,3 +914,47 @@ HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, long *height)
     *height = metric.tmHeight;
     return S_OK;
 }
+
+/***********************************************************************
+ *      ScriptGetGlyphABCWidth (USP10.@)
+ *
+ * Retrieve the width of a glyph.
+ *
+ * PARAMS
+ *  hdc    [I]    Device context.
+ *  psc    [I/O]  Opaque pointer to a script cache.
+ *  glyph  [I]    Glyph to retrieve the width for.
+ *  abc    [O]    ABC widths of the glyph.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, ABC *abc)
+{
+    HDC phdc;
+    Scriptcache *pScriptcache;
+
+    TRACE("(%p, %p, 0x%04x, %p)\n", hdc, psc, glyph, abc);
+
+    if  (!psc)
+        return E_INVALIDARG;
+
+    if (!hdc) return E_PENDING;
+
+    if  (!*psc) {
+        pScriptcache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache));
+        pScriptcache->hdc = hdc;
+        phdc = hdc;
+        *psc = pScriptcache;
+    } else {
+        pScriptcache = *psc;
+        phdc = pScriptcache->hdc;
+    }
+
+    /* FIXME: get this from the cache */
+    if (!GetCharABCWidthsW(phdc, glyph, glyph, abc))
+        return E_HANDLE;
+
+    return S_OK;
+}

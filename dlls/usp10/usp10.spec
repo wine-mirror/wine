@@ -7,7 +7,7 @@
 @ stdcall ScriptFreeCache(ptr)
 @ stdcall ScriptGetCMap(ptr ptr ptr long long ptr)
 @ stdcall ScriptGetFontProperties(long ptr ptr)
-@ stub ScriptGetGlyphABCWidth
+@ stdcall ScriptGetGlyphABCWidth(ptr ptr long ptr)
 @ stub ScriptGetLogicalWidths
 @ stdcall ScriptGetProperties(ptr long)
 @ stdcall ScriptIsComplex(wstr long long)

@@ -626,6 +626,58 @@ static void test_ScriptString(void)
     }
 }
 
+void test_ScriptCacheGetHeight(HDC hdc)
+{
+    HRESULT hr;
+    SCRIPT_CACHE sc = NULL;
+    LONG height;
+
+    hr = ScriptCacheGetHeight(NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+
+    hr = ScriptCacheGetHeight(NULL, &sc, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+
+    hr = ScriptCacheGetHeight(NULL, &sc, &height);
+    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08lx\n", hr);
+
+    height = 0;
+
+    hr = ScriptCacheGetHeight(hdc, &sc, &height);
+    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+
+    ok(height > 0, "expected height > 0\n");
+}
+
+void test_ScriptGetGlyphABCWidth(HDC hdc)
+{
+    HRESULT hr;
+    LOGFONTA lf;
+    HFONT hfont;
+    SCRIPT_CACHE sc = NULL;
+    ABC abc;
+
+    memset(&lf, 0, sizeof(lf));
+
+    lstrcpyA(lf.lfFaceName, "Symbol");
+    hfont = CreateFontIndirectA(&lf);
+    hfont = SelectObject(hdc, hfont);
+
+    hr = ScriptGetGlyphABCWidth(NULL, NULL, 'a', NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+
+    hr = ScriptGetGlyphABCWidth(NULL, &sc, 'a', NULL);
+    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08lx\n", hr);
+
+    if (0) {    /* crashes on WinXP */
+    hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    }
+
+    hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', &abc);
+    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -646,6 +698,8 @@ START_TEST(usp10)
 
     test_ScriptItemIzeShapePlace(hdc,pwOutGlyphs);
     test_ScriptGetCMap(hdc, pwOutGlyphs);
+    test_ScriptCacheGetHeight(hdc);
+    test_ScriptGetGlyphABCWidth(hdc);
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
