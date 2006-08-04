@@ -43,6 +43,7 @@ extern int do_typelib;
 extern int do_proxies;
 extern int do_client;
 extern int do_server;
+extern int do_idfile;
 extern int old_names;
 
 extern char *input_name;
@@ -60,6 +61,7 @@ extern int line_number;
 extern int char_number;
 
 extern FILE* header;
+extern FILE* idfile;
 
 extern void write_proxies(ifref_t *ifaces);
 extern void write_client(ifref_t *ifaces);

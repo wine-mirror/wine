@@ -96,6 +96,11 @@ static int get_struct_type(var_t *fields);
 static var_t *reg_const(var_t *var);
 static var_t *find_const(char *name, int f);
 
+static void write_libid(const char *name, const attr_t *attr);
+static void write_clsid(type_t *cls);
+static void write_diid(type_t *iface);
+static void write_iid(type_t *iface);
+
 #define tsENUM   1
 #define tsSTRUCT 2
 #define tsUNION  3
@@ -299,7 +304,9 @@ importlib: tIMPORTLIB '(' aSTRING ')'		{ if(!parse_only) add_importlib($3); }
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ start_typelib($2, $1);
-						  if (!parse_only && do_header) write_library($2, $1); }
+						  if (!parse_only && do_header) write_library($2, $1);
+						  if (!parse_only && do_idfile) write_libid($2, $1);
+						}
 	;
 librarydef: library_start imp_statements '}'	{ end_typelib(); }
 	;
@@ -649,6 +656,8 @@ coclasshdr: attributes coclass			{ $$ = $2;
 						  $$->attrs = $1;
 						  if (!parse_only && do_header)
 						    write_coclass($$);
+						  if (!parse_only && do_idfile)
+						    write_clsid($$);
 						}
 	;
 
@@ -698,10 +707,12 @@ dispinterfacedef: dispinterfacehdr '{'
 						  $$->fields = $3;
 						  $$->funcs = $4;
 						  if (!parse_only && do_header) write_dispinterface($$);
+						  if (!parse_only && do_idfile) write_diid($$);
 						}
 /* FIXME: not sure how to handle this yet
 	| dispinterfacehdr '{' interface '}'	{ $$ = $1;
 						  if (!parse_only && do_header) write_interface($$);
+						  if (!parse_only && do_idfile) write_iid($$);
 						}
 */
 	;
@@ -727,6 +738,7 @@ interfacedef: interfacehdr inherit
 						  $$->ref = $2;
 						  $$->funcs = $4;
 						  if (!parse_only && do_header) write_interface($$);
+						  if (!parse_only && do_idfile) write_iid($$);
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
@@ -736,6 +748,7 @@ interfacedef: interfacehdr inherit
 						  if (!$$->ref) yyerror("base class '%s' not found in import", $3);
 						  $$->funcs = $6;
 						  if (!parse_only && do_header) write_interface($$);
+						  if (!parse_only && do_idfile) write_iid($$);
 						}
 	| dispinterfacedef			{ $$ = $1; }
 	;
@@ -1504,4 +1517,28 @@ static var_t *find_const(char *name, int f)
     return NULL;
   }
   return cur->var;
+}
+
+static void write_libid(const char *name, const attr_t *attr)
+{
+  const UUID *uuid = get_attrp(attr, ATTR_UUID);
+  write_guid(idfile, "LIBID", name, uuid);
+}
+
+static void write_clsid(type_t *cls)
+{
+  const UUID *uuid = get_attrp(cls->attrs, ATTR_UUID);
+  write_guid(idfile, "CLSID", cls->name, uuid);
+}
+
+static void write_diid(type_t *iface)
+{
+  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  write_guid(idfile, "DIID", iface->name, uuid);
+}
+
+static void write_iid(type_t *iface)
+{
+  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  write_guid(idfile, "IID", iface->name, uuid);
 }

@@ -80,10 +80,10 @@ int is_void(const type_t *t, const var_t *v)
   return 0;
 }
 
-static void write_guid(const char *guid_prefix, const char *name, const UUID *uuid)
+void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
-  fprintf(header, "DEFINE_GUID(%s_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
+  fprintf(f, "DEFINE_GUID(%s_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
         "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
         guid_prefix, name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0],
         uuid->Data4[1], uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5],
@@ -503,7 +503,7 @@ void write_externdef(const var_t *v)
 void write_library(const char *name, const attr_t *attr) {
   const UUID *uuid = get_attrp(attr, ATTR_UUID);
   fprintf(header, "\n");
-  write_guid("LIBID", name, uuid);
+  write_guid(header, "LIBID", name, uuid);
   fprintf(header, "\n");
 }
 
@@ -846,19 +846,19 @@ void write_forward(type_t *iface)
 static void write_iface_guid(const type_t *iface)
 {
   const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid("IID", iface->name, uuid);
+  write_guid(header, "IID", iface->name, uuid);
 } 
 
 static void write_dispiface_guid(const type_t *iface)
 {
   const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid("DIID", iface->name, uuid);
+  write_guid(header, "DIID", iface->name, uuid);
 }
 
 static void write_coclass_guid(type_t *cocl)
 {
   const UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
-  write_guid("CLSID", cocl->name, uuid);
+  write_guid(header, "CLSID", cocl->name, uuid);
 }
 
 static void write_com_interface(type_t *iface)
