@@ -505,6 +505,7 @@ ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs)
 void
 ME_InvalidateSelection(ME_TextEditor *editor)
 {
+  ME_WrapMarkedParagraphs(editor);
   if (ME_IsSelection(editor) || editor->nLastSelStart != editor->nLastSelEnd)
   {
     int x, y, height;

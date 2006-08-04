@@ -118,6 +118,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
 
   assert(!pCursor->nOffset || !editor->bCaretAtEnd);
   assert(height && x && y);
+  assert(!(ME_GetParagraph(pCursorRun)->member.para.nFlags & MEPF_REWRAP));
   
   if (pCursorRun->type == diRun) {
     ME_DisplayItem *row = ME_FindItemBack(pCursorRun, diStartRowOrParagraph);
