@@ -140,7 +140,7 @@ static void test_parent_owner(void)
     SetLastError(0xdeadbeef);
     test = CreateWindowExA(0, "ToolWindowClass", "Tool window 1",
                            WS_CHILD, 0, 0, 100, 100, 0, 0, 0, NULL );
-    todo_wine ok( GetLastError() == ERROR_TLW_WITH_WSCHILD, "CreateWindowExA should call SetLastError\n" );
+    ok( GetLastError() == ERROR_TLW_WITH_WSCHILD, "CreateWindowExA should call SetLastError\n" );
     ok( !test, "WS_CHILD without parent created\n" );
 
     /* desktop window */

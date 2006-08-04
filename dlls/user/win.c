@@ -995,6 +995,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
         if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
         {
             WARN("No parent for child window\n" );
+            SetLastError(ERROR_TLW_WITH_WSCHILD);
             return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
         }
         if (classAtom != LOWORD(DESKTOP_CLASS_ATOM))  /* are we creating the desktop itself? */
