@@ -1530,9 +1530,6 @@ AC_SUBST_FILE(MAKE_IMPLIB_RULES)
 MAKE_TEST_RULES=dlls/Maketest.rules
 AC_SUBST_FILE(MAKE_TEST_RULES)
 
-MAKE_LIB_RULES=libs/Makelib.rules
-AC_SUBST_FILE(MAKE_LIB_RULES)
-
 MAKE_PROG_RULES=programs/Makeprog.rules
 AC_SUBST_FILE(MAKE_PROG_RULES)
 
@@ -1541,7 +1538,6 @@ Make.rules
 dlls/Makedll.rules
 dlls/Makeimplib.rules
 dlls/Maketest.rules
-libs/Makelib.rules
 programs/Makeprog.rules
 Makefile
 dlls/Makefile

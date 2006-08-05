@@ -2,11 +2,16 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBRARY   = wine
-SOVERSION = 1
+DLLFLAGS  = @DLLFLAGS@
+LIBEXT    = @LIBEXT@
+MODULE    = libwine.$(LIBEXT)
 VERSCRIPT = $(SRCDIR)/wine.map
-EXTRADEFS = -D__WINESRC__ -DWINE_UNICODE_API=""
 EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
+DEFS      = -D__WINESRC__ -DWINE_UNICODE_API=""
+
+SOVERSION = 1
+SONAME    = libwine.so.$(SOVERSION)
+DYNAME    = libwine.$(SOVERSION).dylib
 
 C_SRCS = \
 	casemap.c \
@@ -88,7 +93,11 @@ C_SRCS = \
 	c_28605.c \
 	c_28606.c
 
-@MAKE_LIB_RULES@
+all: $(MODULE) $(MODULE:.dll=.a)
+
+@MAKE_RULES@
+
+# Special defines needed for config.c
 
 CONFIGDIRS = \
 	-DBINDIR='"$(bindir)"' \
@@ -101,5 +110,65 @@ CONFIGDIRS = \
 
 config.o: config.c $(RELPATH)
 	$(CC) -c $(ALLCFLAGS) -o $@ $(SRCDIR)/config.c $(CONFIGDIRS)
+
+# Linking rules
+
+libwine.so.$(SOVERSION): $(OBJS) $(VERSCRIPT) Makefile.in
+	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+
+libwine.so: libwine.so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
+
+libwine.a: wine.def
+	$(DLLTOOL) -l $@ -d $(SRCDIR)/wine.def
+
+libwine.dll: $(OBJS) wine.def Makefile.in
+	$(DLLWRAP) --def $(SRCDIR)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
+
+libwine.$(SOVERSION).dylib: $(OBJS) $(RELPATH) Makefile.in
+	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+
+libwine.dylib: libwine.$(SOVERSION).dylib
+	$(RM) $@ && $(LN_S) libwine.$(SOVERSION).dylib $@
+
+# Install rules
+
+.PHONY: install-lib-so install-lib-dll install-lib-dylib install-dev-so install-dev-dll install-dev-dylib
+
+install-lib-so: libwine.so.$(SOVERSION) dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(DESTDIR)$(libdir)/libwine.so.$(SOVERSION)
+
+install-lib-dll: libwine.dll dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) libwine.dll $(DESTDIR)$(libdir)/libwine.dll
+
+install-lib-dylib: libwine.$(SOVERSION).dylib dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_PROGRAM) libwine.$(SOVERSION).dylib $(DESTDIR)$(libdir)/libwine.$(SOVERSION).dylib
+
+install-dev-so: dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	cd $(DESTDIR)$(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
+
+install-dev-dll: libwine.a dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) libwine.a $(DESTDIR)$(libdir)/libwine.a
+
+install-dev-dylib: dummy
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	cd $(DESTDIR)$(libdir) && $(RM) libwine.dylib && $(LN_S) libwine.$(SOVERSION).dylib libwine.dylib
+
+install install-lib:: $(LIBEXT:%=install-lib-%)
+install install-dev:: $(LIBEXT:%=install-dev-%)
+
+uninstall::
+	-cd $(DESTDIR)$(libdir) && $(RM) libwine.a libwine.dll libwine.so libwine.so.$(SOVERSION) libwine.dylib libwine.$(SOVERSION).dylib
+
+clean::
+	$(RM) libwine.so.$(SOVERSION)
+
+$(RELPATH):
+	@cd $(TOOLSDIR)/tools && $(MAKE) relpath
 
 ### Dependencies:
