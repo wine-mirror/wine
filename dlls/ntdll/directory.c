@@ -175,6 +175,13 @@ static char *get_default_com_device( int num )
         strcpy( ret, "/dev/ttyS0" );
         ret[strlen(ret) - 1] = '0' + num - 1;
     }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuad0") );
+    if (ret)
+    {
+        strcpy( ret, "/dev/cuad0" );
+        ret[strlen(ret) - 1] = '0' + num - 1;
+    }
 #else
     FIXME( "no known default for device com%d\n", num );
 #endif
