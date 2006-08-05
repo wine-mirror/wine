@@ -380,7 +380,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9 i
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *pSurface = (IDirect3DSurface9Impl*)pRenderTarget;
     TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_SetRenderTarget(This->WineD3DDevice,RenderTargetIndex,(IWineD3DSurface*)pSurface->wineD3DSurface);
+    return IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, RenderTargetIndex, pSurface ? (IWineD3DSurface*)pSurface->wineD3DSurface : NULL);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9 **ppRenderTarget) {
