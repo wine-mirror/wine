@@ -661,13 +661,31 @@ BOOL vshader_input_is_color(
     IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
     DWORD usage_token = This->semantics_in[regnum].usage;
     DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
+    DWORD usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
 
-    /* FIXME: D3D8 shader: the semantics token is not the way to 
-     * determine color info, since it is just a fake map to shader inputs */
-    if (This->vertexDeclaration != NULL)
-        return FALSE; 
-    else
-        return usage == D3DDECLUSAGE_COLOR;
+    IWineD3DVertexDeclarationImpl *vertexDeclaration = NULL;
+    if (This->vertexDeclaration) {
+        /* D3D8 declaration */
+        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->vertexDeclaration;
+    } else {
+        /* D3D9 declaration */
+        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DDeviceImpl *)This->wineD3DDevice)->stateBlock->vertexDecl;
+    }
+
+    if (vertexDeclaration) {
+        int i;
+        /* Find the declaration element that matches our register, then check
+         * if it has D3DCOLOR as it's type. This works for both d3d8 and d3d9. */
+        for (i = 0; i < vertexDeclaration->declarationWNumElements-1; ++i) {
+            WINED3DVERTEXELEMENT *element = vertexDeclaration->pDeclarationWine + i;
+            if ((element->Usage == usage && element->UsageIndex == usage_idx)) {
+                return element->Type == WINED3DDECLTYPE_D3DCOLOR;
+            }
+        }
+    }
+
+    ERR("Either no vertexdeclaration present, or register not matched. This should never happen.\n");
+    return FALSE;
 }
 
 /** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
