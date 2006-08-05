@@ -521,6 +521,9 @@
 /* Define to 1 if you have the <process.h> header file. */
 #undef HAVE_PROCESS_H
 
+/* Define to 1 if you have the `pthread_attr_get_np' function. */
+#undef HAVE_PTHREAD_ATTR_GET_NP
+
 /* Define to 1 if you have the `pthread_getattr_np' function. */
 #undef HAVE_PTHREAD_GETATTR_NP
 
@@ -532,6 +535,9 @@
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
+
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
 
 /* Define to 1 if the system has the type `pthread_rwlockattr_t'. */
 #undef HAVE_PTHREAD_RWLOCKATTR_T

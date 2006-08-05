@@ -8339,6 +8339,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	CoreAudio/CoreAudio.h \
@@ -8393,6 +8394,7 @@ for ac_header in \
 	poll.h \
 	process.h \
 	pthread.h \
+	pthread_np.h \
 	pwd.h \
 	regex.h \
 	sched.h \
@@ -13955,7 +13957,9 @@ LIBS="$LIBS $LIBPTHREAD"
 
 
 
+
 for ac_func in \
+        pthread_attr_get_np \
         pthread_getattr_np \
         pthread_get_stackaddr_np \
         pthread_get_stacksize_np

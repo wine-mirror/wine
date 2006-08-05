@@ -211,6 +211,7 @@ AC_CHECK_HEADERS(\
 	poll.h \
 	process.h \
 	pthread.h \
+	pthread_np.h \
 	pwd.h \
 	regex.h \
 	sched.h \
@@ -779,6 +780,7 @@ AC_CHECK_TYPES([pthread_rwlock_t, pthread_rwlockattr_t],,,[#define _GNU_SOURCE
 
 dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
+        pthread_attr_get_np \
         pthread_getattr_np \
         pthread_get_stackaddr_np \
         pthread_get_stacksize_np,

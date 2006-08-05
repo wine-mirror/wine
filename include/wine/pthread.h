@@ -29,6 +29,9 @@ struct wine_pthread_callbacks;
 
 #define _GNU_SOURCE
 #include <pthread.h>
+#ifdef HAVE_PTHREAD_NP_H
+#include <pthread_np.h>
+#endif
 
 #ifndef HAVE_PTHREAD_RWLOCK_T
 typedef void *pthread_rwlock_t;
