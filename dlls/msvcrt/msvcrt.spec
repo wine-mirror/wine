@@ -90,6 +90,7 @@
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno
 @ cdecl __fpecode()
+@ stub __get_app_type
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
 @ cdecl __isascii(long) MSVCRT___isascii
@@ -249,6 +250,8 @@
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
 @ cdecl _get_sbh_threshold()
+@ stub _get_terminate
+@ stub _get_unexpected
 @ cdecl _getch()
 @ cdecl _getche()
 @ cdecl _getcwd(str long)
