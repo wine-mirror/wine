@@ -1131,11 +1131,15 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
     return WINED3D_OK;
 }
 
+/* Note that for vertex shaders CompileShader isn't called until the
+ * shader is first used. The reason for this is that we need the vertex
+ * declaration the shader will be used with in order to determine if
+ * the data in a register is of type D3DCOLOR, and needs swizzling. */
 static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     HRESULT hr;
-    shader_reg_maps reg_maps;
+    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
@@ -1159,15 +1163,12 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     }
 
     /* Second pass: figure out registers used, semantics, etc.. */
-    memset(&reg_maps, 0, sizeof(shader_reg_maps));
-    hr = shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps,
+    memset(reg_maps, 0, sizeof(shader_reg_maps));
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
        This->semantics_in, This->semantics_out, pFunction);
     if (hr != WINED3D_OK) return hr;
 
-    /* Generate HW shader in needed */
     This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;
-    if (NULL != pFunction && This->baseShader.shader_mode != SHADER_SW) 
-        IWineD3DVertexShaderImpl_GenerateShader(iface, &reg_maps, pFunction);
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
@@ -1177,6 +1178,30 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     } else {
         This->baseShader.function = NULL;
     }
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    CONST DWORD *function = This->baseShader.function;
+
+    TRACE("(%p) : function %p\n", iface, function);
+
+    /* We're already compiled. */
+    if (This->baseShader.is_compiled) return WINED3D_OK;
+
+    /* We don't need to compile */
+    if (!function || This->baseShader.shader_mode == SHADER_SW) {
+        This->baseShader.is_compiled = TRUE;
+        return WINED3D_OK;
+    }
+
+    /* Generate the HW shader */
+    TRACE("(%p) : Generating hardware program\n", This);
+    IWineD3DVertexShaderImpl_GenerateShader(iface, &This->baseShader.reg_maps, function);
+
+    This->baseShader.is_compiled = TRUE;
 
     return WINED3D_OK;
 }
@@ -1191,6 +1216,7 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     IWineD3DVertexShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
     IWineD3DVertexShaderImpl_SetFunction,
+    IWineD3DVertexShaderImpl_CompileShader,
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction

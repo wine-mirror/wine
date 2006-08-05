@@ -1780,6 +1780,10 @@ inline static void drawPrimitiveDrawStrided(
         loadNumberedArrays(iface, This->stateBlock->vertexShader, dataLocations);
         useDrawStridedSlow = FALSE;
 
+        /* We compile the shader here because we need the vertex declaration
+         * in order to determine if we need to do any swizzling for D3DCOLOR
+         * registers. If the shader is already compiled this call will do nothing. */
+        IWineD3DVertexShader_CompileShader(This->stateBlock->vertexShader);
     /* Draw vertex by vertex */
     } else { 
         TRACE("Not loading vertex data\n");

@@ -1424,6 +1424,7 @@ DECLARE_INTERFACE_(IWineD3DBaseShader,IWineD3DBase)
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     /*** IWineD3DBaseShader methods ***/
     STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
+    STDMETHOD(CompileShader)(THIS) PURE;
 };
 #undef INTERFACE
 
@@ -1436,6 +1437,7 @@ DECLARE_INTERFACE_(IWineD3DBaseShader,IWineD3DBase)
 #define IWineD3DBaseShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DBaseShader methods ***/
 #define IWineD3DBaseShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
+#define IWineD3DBaseShader_CompileShader(p)          (p)->lpVtbl->CompileShader(p)
 #endif
 
 /*****************************************************************************
@@ -1452,6 +1454,7 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     /*** IWineD3DBaseShader methods ***/
     STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
+    STDMETHOD(CompileShader)(THIS) PURE;
     /*** IWineD3DVertexShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
@@ -1475,6 +1478,7 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
 #define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DBaseShader methods ***/
 #define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
+#define IWineD3DVertexShader_CompileShader(p)          (p)->lpVtbl->CompileShader(p)
 /*** IWineD3DVertexShader methods ***/
 #define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
@@ -1501,6 +1505,7 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBaseShader)
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     /*** IWineD3DBaseShader methods ***/
     STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
+    STDMETHOD(CompileShader)(THIS) PURE;
     /*** IWineD3DPixelShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
@@ -1516,6 +1521,7 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBaseShader)
 #define IWineD3DPixelShader_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DBaseShader methods ***/
 #define IWineD3DPixelShader_SetFunction(p,a)           (p)->lpVtbl->SetFunction(p,a)
+#define IWineD3DPixelShader_CompileShader(p)           (p)->lpVtbl->CompileShader(p)
 /*** IWineD3DPixelShader methods ***/
 #define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)

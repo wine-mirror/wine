@@ -1552,6 +1552,7 @@ typedef struct IWineD3DBaseShaderClass
     CONST DWORD                     *function;
     UINT                            functionLength;
     GLuint                          prgId;
+    BOOL                            is_compiled;
 
     /* Type of shader backend */
     int shader_mode;
@@ -1560,6 +1561,7 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsB;
     struct list constantsF;
     struct list constantsI;
+    shader_reg_maps reg_maps;
 
 } IWineD3DBaseShaderClass;
 
