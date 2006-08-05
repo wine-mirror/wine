@@ -102,16 +102,16 @@
 @ stub NetGroupSetInfo
 @ stub NetGroupSetUsers
 @ stdcall NetLocalGroupAdd(wstr long ptr ptr)
-@ stub NetLocalGroupAddMember
-@ stub NetLocalGroupAddMembers
-@ stub NetLocalGroupDel
-@ stub NetLocalGroupDelMember
-@ stub NetLocalGroupDelMembers
-@ stdcall NetLocalGroupEnum(ptr long ptr long ptr ptr ptr)
-@ stub NetLocalGroupGetInfo
-@ stub NetLocalGroupGetMembers
-@ stub NetLocalGroupSetInfo
-@ stdcall NetLocalGroupSetMembers(wstr wstr long ptr ptr)
+@ stdcall NetLocalGroupAddMember(wstr wstr ptr)
+@ stdcall NetLocalGroupAddMembers(wstr wstr long ptr long)
+@ stdcall NetLocalGroupDel(wstr wstr)
+@ stdcall NetLocalGroupDelMember(wstr wstr ptr)
+@ stdcall NetLocalGroupDelMembers(wstr wstr long ptr long)
+@ stdcall NetLocalGroupEnum(wstr long ptr long ptr ptr ptr)
+@ stdcall NetLocalGroupGetInfo(wstr wstr long ptr)
+@ stdcall NetLocalGroupGetMembers(wstr wstr long ptr long ptr ptr ptr)
+@ stdcall NetLocalGroupSetInfo(wstr wstr long ptr ptr)
+@ stdcall NetLocalGroupSetMembers(wstr wstr long ptr long)
 @ stub NetMessageBufferSend
 @ stub NetMessageNameAdd
 @ stub NetMessageNameDel
@@ -205,7 +205,7 @@
 @ stdcall NetUserEnum(wstr long long ptr long ptr ptr ptr)
 @ stub NetUserGetGroups
 @ stdcall NetUserGetInfo(wstr wstr long ptr)
-@ stdcall NetUserGetLocalGroups(ptr ptr long long ptr long ptr ptr);
+@ stdcall NetUserGetLocalGroups(wstr wstr long long ptr long ptr ptr)
 @ stdcall NetUserModalsGet(wstr long ptr)
 @ stub NetUserModalsSet
 @ stub NetUserSetGroups

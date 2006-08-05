@@ -12,6 +12,7 @@ C_SRCS = \
 	apibuf.c \
 	browsr.c \
 	ds.c \
+	local_group.c \
 	nbcmdqueue.c \
 	nbnamecache.c \
 	nbt.c \
