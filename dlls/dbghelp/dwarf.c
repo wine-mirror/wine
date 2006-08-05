@@ -1059,7 +1059,6 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
     if (dwarf2_find_attribute(di, DW_AT_location, &loc) && loc.block)
     {
-        union attribute name;
         union attribute ext;
         long offset;
         int in_reg;
@@ -1096,7 +1095,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     }
     if (dwarf2_find_attribute(di, DW_AT_const_value, &value))
     {
-        FIXME("NIY (const value %08lx for %s\n", value.uvalue, name.string);
+        FIXME("NIY: const value %08lx for %s\n", value.uvalue, name.string);
     }
     if (is_pmt && subpgm->func && subpgm->func->type)
         symt_add_function_signature_parameter(subpgm->ctx->module,
