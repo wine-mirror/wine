@@ -91,7 +91,7 @@ int val_empty, val_null;
 #define EXPECT_GT       EXPECTRES(VARCMP_GT, VARCMP_GT)
 #define EXPECT_EQ       EXPECTRES(VARCMP_EQ, VARCMP_EQ)
 #define EXPECT_DBL(x)   \
-  ok(hres == S_OK && fabs(out-(x))<1e-14, "expected " #x ", got %16.16g; hres=0x%08lx\n", out, hres)
+  ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08lx\n", (x), out, hres)
 
 #define CONVERT(func, val) in = val; hres = p##func(in, &out)
 #define CONVERTRANGE(func,start,end) for (i = start; i < end; i+=1) { CONVERT(func, i); EXPECT(i); };
