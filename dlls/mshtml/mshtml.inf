@@ -381,7 +381,7 @@ HKCR,"MIME\Database\Content Type\image/pjpeg","Extension",,".jpg"
 HKCR,"MIME\Database\Content Type\image/pjpeg\Bits","0",1,02,00,00,00,FF,FF,FF,D8
 HKCR,"MIME\Database\Content Type\image/pjpeg","Image Filter CLSID",,"%CLSID_IImageDecodeFilter%"
 HKCR,".jfif",,,"pjpegfile"
-HKCR,".jfif","Content Type",,"image/pjpeg"
+HKCR,".jfif","Content Type",,"image/jpeg"
 HKCR,"pjpegfile",,,"JPEG Image"
 HKCR,"pjpegfile\CLSID",,,"%CLSID_HTMLDocument%"
 ;; HKCR,"pjpegfile\shell\open\command",,,"""%IEXPLORE%"" -nohome"
