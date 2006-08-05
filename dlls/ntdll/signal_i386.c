@@ -94,6 +94,32 @@ typedef struct
 #define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
 #define HANDLER_CONTEXT (&__context)
 
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define TRAP_sig(context)    ((context)->sc_trapno)
+#define ERROR_sig(context)   ((context)->sc_err)
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     ((context)->sc_eip)
+#define ESP_sig(context)     ((context)->sc_esp)
+
+#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
+
+#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->cr2)
+
 /* this is the sigaction structure from the Linux 2.1.20 kernel.  */
 struct kernel_sigaction
 {
@@ -219,8 +245,32 @@ typedef struct trapframe SIGCONTEXT;
 
 typedef struct sigcontext SIGCONTEXT;
 
-#define HANDLER_DEF(name) void name( int __signal, int code, SIGCONTEXT *__context )
+#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
 #define HANDLER_CONTEXT __context
+
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define TRAP_sig(context)    ((context)->sc_trapno)
+#define ERROR_sig(context)   ((context)->sc_err)
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     ((context)->sc_eip)
+#define ESP_sig(context)     ((context)->sc_esp)
+
+#define FAULT_ADDRESS        (__siginfo->si_addr)
 
 #endif  /* *BSD */
 
@@ -237,6 +287,42 @@ typedef struct ucontext SIGCONTEXT;
 
 #define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
 #define HANDLER_CONTEXT __context
+
+#ifdef _SCO_DS
+#define gregs regs
+#endif
+
+#define EAX_sig(context)     ((context)->uc_mcontext.gregs[EAX])
+#define EBX_sig(context)     ((context)->uc_mcontext.gregs[EBX])
+#define ECX_sig(context)     ((context)->uc_mcontext.gregs[ECX])
+#define EDX_sig(context)     ((context)->uc_mcontext.gregs[EDX])
+#define ESI_sig(context)     ((context)->uc_mcontext.gregs[ESI])
+#define EDI_sig(context)     ((context)->uc_mcontext.gregs[EDI])
+#define EBP_sig(context)     ((context)->uc_mcontext.gregs[EBP])
+
+#define CS_sig(context)      ((context)->uc_mcontext.gregs[CS])
+#define DS_sig(context)      ((context)->uc_mcontext.gregs[DS])
+#define ES_sig(context)      ((context)->uc_mcontext.gregs[ES])
+#define SS_sig(context)      ((context)->uc_mcontext.gregs[SS])
+
+#define FS_sig(context)      ((context)->uc_mcontext.gregs[FS])
+#define GS_sig(context)      ((context)->uc_mcontext.gregs[GS])
+
+#define EFL_sig(context)     ((context)->uc_mcontext.gregs[EFL])
+
+#define EIP_sig(context)     ((context)->uc_mcontext.gregs[EIP])
+#ifdef UESP
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[UESP])
+#elif defined(R_ESP)
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[R_ESP])
+#else
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
+#endif
+#ifdef TRAPNO
+#define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
+#endif
+
+#define FAULT_ADDRESS         (__siginfo->si_addr)
 
 #endif  /* svr4 || SCO_DS */
 
@@ -263,6 +349,26 @@ typedef struct
     unsigned long sc_esp;
     unsigned long sc_ss;
 } SIGCONTEXT;
+
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     ((context)->sc_eip)
+#define ESP_sig(context)     ((context)->sc_esp)
 
 #endif  /* __EMX__ */
 
@@ -299,6 +405,28 @@ typedef struct
 
 #define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
 #define HANDLER_CONTEXT (&__context)
+
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define TRAP_sig(context)    ((context)->sc_trapno)
+#define ERROR_sig(context)   ((context)->sc_err)
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     ((context)->sc_eip)
+#define ESP_sig(context)     ((context)->sc_esp)
 
 #endif /* __CYGWIN__ */
 
@@ -339,89 +467,6 @@ typedef ucontext_t SIGCONTEXT;
 
 #endif /* __APPLE__ */
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) ||\
-    defined(__OpenBSD__) || defined(__EMX__) || defined(__CYGWIN__)
-
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
-
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
-
-#define TRAP_sig(context)    ((context)->sc_trapno)
-
-#ifdef __NetBSD__
-#define ERROR_sig(context)   ((context)->sc_err)
-#endif
-
-#ifdef linux
-#define ERROR_sig(context)   ((context)->sc_err)
-#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
-#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->cr2)
-#endif
-
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#define EFL_sig(context)     ((context)->sc_efl)
-/* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
-#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->sc_err)
-#else
-#define EFL_sig(context)     ((context)->sc_eflags)
-#endif
-
-#define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
-#define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
-
-#endif  /* linux || __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
-
-#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
-
-#ifdef _SCO_DS
-#define gregs regs
-#endif
-
-#define EAX_sig(context)     ((context)->uc_mcontext.gregs[EAX])
-#define EBX_sig(context)     ((context)->uc_mcontext.gregs[EBX])
-#define ECX_sig(context)     ((context)->uc_mcontext.gregs[ECX])
-#define EDX_sig(context)     ((context)->uc_mcontext.gregs[EDX])
-#define ESI_sig(context)     ((context)->uc_mcontext.gregs[ESI])
-#define EDI_sig(context)     ((context)->uc_mcontext.gregs[EDI])
-#define EBP_sig(context)     ((context)->uc_mcontext.gregs[EBP])
-
-#define CS_sig(context)      ((context)->uc_mcontext.gregs[CS])
-#define DS_sig(context)      ((context)->uc_mcontext.gregs[DS])
-#define ES_sig(context)      ((context)->uc_mcontext.gregs[ES])
-#define SS_sig(context)      ((context)->uc_mcontext.gregs[SS])
-
-#define FS_sig(context)      ((context)->uc_mcontext.gregs[FS])
-#define GS_sig(context)      ((context)->uc_mcontext.gregs[GS])
-
-#define EFL_sig(context)     ((context)->uc_mcontext.gregs[EFL])
-
-#define EIP_sig(context)     ((context)->uc_mcontext.gregs[EIP])
-#ifdef UESP
-#define ESP_sig(context)     ((context)->uc_mcontext.gregs[UESP])
-#elif defined(R_ESP)
-#define ESP_sig(context)     ((context)->uc_mcontext.gregs[R_ESP])
-#else
-#define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
-#endif
-#ifdef TRAPNO
-#define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
-#endif
-
-#define FAULT_ADDRESS         (__siginfo->si_addr)
-
-#endif  /* svr4 || SCO_DS */
-
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -439,6 +484,27 @@ extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *c
 enum i386_trap_code
 {
     TRAP_x86_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+    TRAP_x86_DIVIDE     = T_DIVIDE,     /* Division by zero exception */
+    TRAP_x86_TRCTRAP    = T_TRCTRAP,    /* Single-step exception */
+    TRAP_x86_NMI        = T_NMI,        /* NMI interrupt */
+    TRAP_x86_BPTFLT     = T_BPTFLT,     /* Breakpoint exception */
+    TRAP_x86_OFLOW      = T_OFLOW,      /* Overflow exception */
+    TRAP_x86_BOUND      = T_BOUND,      /* Bound range exception */
+    TRAP_x86_PRIVINFLT  = T_PRIVINFLT,  /* Invalid opcode exception */
+    TRAP_x86_DNA        = T_DNA,        /* Device not available exception */
+    TRAP_x86_DOUBLEFLT  = T_DOUBLEFLT,  /* Double fault exception */
+    TRAP_x86_FPOPFLT    = T_FPOPFLT,    /* Coprocessor segment overrun */
+    TRAP_x86_TSSFLT     = T_TSSFLT,     /* Invalid TSS exception */
+    TRAP_x86_SEGNPFLT   = T_SEGNPFLT,   /* Segment not present exception */
+    TRAP_x86_STKFLT     = T_STKFLT,     /* Stack fault */
+    TRAP_x86_PROTFLT    = T_PROTFLT,    /* General protection fault */
+    TRAP_x86_PAGEFLT    = T_PAGEFLT,    /* Page fault */
+    TRAP_x86_ARITHTRAP  = T_ARITHTRAP,  /* Floating point exception */
+    TRAP_x86_ALIGNFLT   = T_ALIGNFLT,   /* Alignment check exception */
+    TRAP_x86_MCHK       = T_MCHK,       /* Machine check exception */
+    TRAP_x86_CACHEFLT   = T_XMMFLT      /* Cache flush exception */
+#else
     TRAP_x86_DIVIDE     = 0,   /* Division by zero exception */
     TRAP_x86_TRCTRAP    = 1,   /* Single-step exception */
     TRAP_x86_NMI        = 2,   /* NMI interrupt */
@@ -458,6 +524,7 @@ enum i386_trap_code
     TRAP_x86_ALIGNFLT   = 17,  /* Alignment check exception */
     TRAP_x86_MCHK       = 18,  /* Machine check exception */
     TRAP_x86_CACHEFLT   = 19   /* Cache flush exception */
+#endif
 };
 
 
@@ -1000,9 +1067,10 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     if ((char *)stack >= (char *)get_signal_stack() &&
         (char *)stack < (char *)get_signal_stack() + signal_stack_size)
     {
-        ERR( "nested exception on signal stack in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
-             GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
-             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        ERR( "nested exception on signal stack in thread %04lx eip %08x esp %08x stack %p-%p\n",
+             GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+             (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+             NtCurrentTeb()->Tib.StackBase );
         server_abort_thread(1);
     }
 
@@ -1013,14 +1081,16 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)stack;
         if (diff < 4096)
         {
-            ERR( "stack overflow %u bytes in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
-                 diff, GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
-                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            ERR( "stack overflow %u bytes in thread %04lx eip %08x esp %08x stack %p-%p\n",
+                 diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+                 (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+                 NtCurrentTeb()->Tib.StackBase );
             server_abort_thread(1);
         }
-        else WARN( "exception outside of stack limits in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
-                   GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
-                   NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        else WARN( "exception outside of stack limits in thread %04lx eip %08x esp %08x stack %p-%p\n",
+                   GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+                   (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+                   NtCurrentTeb()->Tib.StackBase );
     }
 
     stack--;  /* push the stack_layout structure */
@@ -1440,9 +1510,11 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sigaddset( &sig_act.sa_mask, SIGUSR1 );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
+#if defined(linux)
     sig_act.sa_flags = SA_RESTART;
-#elif defined (__svr4__) || defined(_SCO_DS) || defined(__APPLE__)
+#elif defined (__svr4__) || defined(_SCO_DS) || defined(__APPLE__) || \
+        defined(__NetBSD__) || defined(__OpenBSD__) || \
+        defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
 #else
     sig_act.sa_flags = 0;
