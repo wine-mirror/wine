@@ -107,7 +107,7 @@ static BOOL check_info_filename(PSP_INF_INFORMATION info, LPSTR test)
     return ret;
 }
 
-static PSP_INF_INFORMATION alloc_inf_info(LPSTR filename, DWORD search, PDWORD size)
+static PSP_INF_INFORMATION alloc_inf_info(LPCSTR filename, DWORD search, PDWORD size)
 {
     PSP_INF_INFORMATION info;
     BOOL ret;

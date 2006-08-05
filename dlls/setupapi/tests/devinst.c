@@ -36,11 +36,12 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     HDEVINFO devlist;
     BOOL ret;
     DWORD error;
+    static CHAR notnull[] = "NotNull";
     static const WCHAR machine[] = { 'd','u','m','m','y',0 };
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set Reserved to a value, which is not NULL */
-    devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, "NotNull");
+    devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
