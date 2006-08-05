@@ -503,18 +503,20 @@ static void testQuerySecurityPackageInfo(void)
 {
     SECURITY_STATUS     sec_status;
     PSecPkgInfo         pkg_info;
-    
+    static SEC_CHAR     ntlm[]     = "NTLM",
+                        winetest[] = "Winetest";
+
     trace("Running testQuerySecurityPackageInfo\n");
-    
+
     /* Test with an existing package. Test should pass */
 
     pkg_info = (void *)0xdeadbeef;
-    sec_status = setupPackageA("NTLM", &pkg_info);
+    sec_status = setupPackageA(ntlm, &pkg_info);
 
     ok((sec_status == SEC_E_OK) || (sec_status == SEC_E_SECPKG_NOT_FOUND), 
        "Return value of QuerySecurityPackageInfo() shouldn't be %s\n",
        getSecError(sec_status) );
-        
+
     if (sec_status == SEC_E_OK)
     {
         ok(pkg_info != (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
@@ -533,7 +535,7 @@ static void testQuerySecurityPackageInfo(void)
     /* Test with a nonexistent package, test should fail */
 
     pkg_info = (void *)0xdeadbeef;
-    sec_status = pQuerySecurityPackageInfoA("Winetest", &pkg_info);
+    sec_status = pQuerySecurityPackageInfoA(winetest, &pkg_info);
 
     ok( sec_status != SEC_E_OK,
         "Return value of QuerySecurityPackageInfo() should not be %s for a nonexistent package\n", getSecError(SEC_E_OK));
@@ -541,7 +543,7 @@ static void testQuerySecurityPackageInfo(void)
     ok(pkg_info == (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
 
     sec_status = pFreeContextBuffer(pkg_info);
-    
+
     ok( sec_status == SEC_E_OK,
         "Return value of FreeContextBuffer() shouldn't be %s\n",
         getSecError(sec_status) );
@@ -678,8 +680,10 @@ START_TEST(main)
             testQuerySecurityPackageInfo();
             if(pInitSecurityInterfaceA)
             {
-                testAuth("NTLM", SECURITY_NATIVE_DREP);
-                testAuth("NTLM", SECURITY_NETWORK_DREP);
+                static SEC_CHAR sec_pkg_name[] = "NTLM";
+
+                testAuth(sec_pkg_name, SECURITY_NATIVE_DREP);
+                testAuth(sec_pkg_name, SECURITY_NETWORK_DREP);
             }
         }
     }
