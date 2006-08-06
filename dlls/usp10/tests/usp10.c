@@ -485,7 +485,7 @@ static void test_ScriptXtoX(void)
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %d\n", (unsigned int) hr);
     ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
-    ok(piTrailing == TRUE, "Negative iX should return piTrailing=TRUE not %d", piTrailing);
+    ok(piTrailing == TRUE, "Negative iX should return piTrailing=TRUE not %d\n", piTrailing);
     iX = 1954;
     cChars = 10;
     cGlyphs = 10;
