@@ -36,7 +36,7 @@ IDM_MENU MENU
     }
     POPUP " 객체(&O)"
     {
-        POPUP "&CoCreateInstance 플래"
+        POPUP "&CoCreateInstance 플래그"
         {
             MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
             MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
@@ -72,14 +72,32 @@ IDM_MENU MENU
     }
 }
 
+IDM_TYPELIB MENU
+{
+ 	POPUP "파일(&F)"
+	{
+		MENUITEM "다른 이름으로 저장(&S)",    IDM_SAVEAS
+		MENUITEM "닫기(&C)",  IDM_CLOSE
+	}
+	POPUP "보기(&V)"
+	{
+		MENUITEM "타입 종류에 따라 구분(&G)", IDM_GROUP
+		MENUITEM SEPARATOR
+		MENUITEM "도구바(&T)",    IDM_TOOLBAR
+		MENUITEM "상태바(&S)", IDM_STATUSBAR,CHECKED
+	}
+}
+
+
 STRINGTABLE
 {
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "OleView"
     IDS_READY              "준비"
-    IDS_ABOUT              "OleView - OLE/COM 객체 보여주기"
+    IDS_ABOUT              "OleView - OLE/COM 객체 뷰어"
     IDS_ABOUTVER           "버젼 1.0"
-
+    IDS_TYPELIBTITLE       "ITypeLib 뷰어"
+    
     IDM_BIND,              "파일 별명으로 파일 연결"
     IDM_TYPELIB,           "타입 라이브러리 파일을 열고 내용 보기"
     IDM_SYSCONF,           "머신 전체의 DCOM설정 바꾸기"
@@ -101,6 +119,10 @@ STRINGTABLE
     IDM_REFRESH,           "모든 목록 새로 고침"
     IDM_ABOUT,             "프로그램 정보, 버젼, 저작권 보여주기"
 
+    IDM_SAVEAS,            ".IDL 이나 .H file로 저장"
+    IDM_CLOSE,             "창 닫기"
+    IDM_GROUP,             "타입정보를 타입에 따라 분류"
+
     IDS_TREE_OC,           "ObjectClasses"
     IDS_TREE_GBCC,         "컴포턴트 분류"
     IDS_TREE_O1O,          "OLE 1.0 객체"
@@ -117,6 +139,9 @@ STRINGTABLE
 
     IDS_CGCOFAIL,          "CoGetClassObject 실패."
     IDS_ERROR_UNKN,        "알수 없는 에러"
+    IDS_TRUE               "참"
+    IDS_FALSE              "거짓"
+    IDS_BYTES              "바이트"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
@@ -142,3 +167,45 @@ FONT 8, "MS Shell Dlg"
     DEFPUSHBUTTON   "확인(&O)", IDOK, 70, 80, 45, 14
     PUSHBUTTON  "취소(&C)", IDCANCEL, 120, 80, 45, 14
 }
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "기본 인터페이스 보기"
+FONT 8, "MS Shell Dlg"
+{
+  LTEXT   "인터페이스", IDIGNORE, 5, 6, 50, 8
+  LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+  LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+  LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+  DEFPUSHBUTTON   "닫기(&C)", IDCANCEL, 230, 6, 45, 14
+  PUSHBUTTON  "타입 정보 보기(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist 인터페이스 보기"
+FONT 8, "MS Shell Dlg"
+{
+  LTEXT   "클래스 이름:", IDIGNORE, 5, 6, 50, 8
+  LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+  LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+  LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+  DEFPUSHBUTTON   "닫기(&C)", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream 인터페이스 보기"
+FONT 8, "MS Shell Dlg"
+{
+  LTEXT   "클래스 이름:", IDIGNORE, 5, 6, 50, 8
+  LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+  LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+  LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+  DEFPUSHBUTTON   "닫기(&C)", IDCANCEL, 230, 6, 45, 14
+  PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+  LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+  PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+  LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
+
