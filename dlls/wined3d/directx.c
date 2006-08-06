@@ -1839,8 +1839,47 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                 WINED3DPTFILTERCAPS_MIPNEAREST       |
                                 WINED3DPTFILTERCAPS_NEAREST;
 
-    *pCaps->CubeTextureFilterCaps = 0;
-    *pCaps->VolumeTextureFilterCaps = 0;
+    if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+        *pCaps->TextureFilterCaps |= WINED3DPTFILTERCAPS_MAGFANISOTROPIC |
+                                     WINED3DPTFILTERCAPS_MINFANISOTROPIC;
+    }
+
+    if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        *pCaps->CubeTextureFilterCaps = WINED3DPTFILTERCAPS_MAGFLINEAR       |
+                                        WINED3DPTFILTERCAPS_MAGFPOINT        |
+                                        WINED3DPTFILTERCAPS_MINFLINEAR       |
+                                        WINED3DPTFILTERCAPS_MINFPOINT        |
+                                        WINED3DPTFILTERCAPS_MIPFLINEAR       |
+                                        WINED3DPTFILTERCAPS_MIPFPOINT        |
+                                        WINED3DPTFILTERCAPS_LINEAR           |
+                                        WINED3DPTFILTERCAPS_LINEARMIPLINEAR  |
+                                        WINED3DPTFILTERCAPS_LINEARMIPNEAREST |
+                                        WINED3DPTFILTERCAPS_MIPLINEAR        |
+                                        WINED3DPTFILTERCAPS_MIPNEAREST       |
+                                        WINED3DPTFILTERCAPS_NEAREST;
+
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+            *pCaps->CubeTextureFilterCaps |= WINED3DPTFILTERCAPS_MAGFANISOTROPIC |
+                                            WINED3DPTFILTERCAPS_MINFANISOTROPIC;
+        }
+    } else
+        *pCaps->CubeTextureFilterCaps = 0;
+
+    if (GL_SUPPORT(EXT_TEXTURE3D)) {
+        *pCaps->VolumeTextureFilterCaps = WINED3DPTFILTERCAPS_MAGFLINEAR       |
+                                          WINED3DPTFILTERCAPS_MAGFPOINT        |
+                                          WINED3DPTFILTERCAPS_MINFLINEAR       |
+                                          WINED3DPTFILTERCAPS_MINFPOINT        |
+                                          WINED3DPTFILTERCAPS_MIPFLINEAR       |
+                                          WINED3DPTFILTERCAPS_MIPFPOINT        |
+                                          WINED3DPTFILTERCAPS_LINEAR           |
+                                          WINED3DPTFILTERCAPS_LINEARMIPLINEAR  |
+                                          WINED3DPTFILTERCAPS_LINEARMIPNEAREST |
+                                          WINED3DPTFILTERCAPS_MIPLINEAR        |
+                                          WINED3DPTFILTERCAPS_MIPNEAREST       |
+                                          WINED3DPTFILTERCAPS_NEAREST;
+    } else
+        *pCaps->VolumeTextureFilterCaps = 0;
 
     *pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_INDEPENDENTUV |
                                   D3DPTADDRESSCAPS_CLAMP  |
