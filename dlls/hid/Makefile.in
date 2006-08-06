@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = hid.dll
+IMPORTLIB = libhid.$(IMPLIBEXT)
+IMPORTS   = kernel32 ntdll
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
