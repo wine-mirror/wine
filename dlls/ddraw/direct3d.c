@@ -992,7 +992,10 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     {
         ERR("(%p) IWineD3DDevice::CreateVertexBuffer failed with hr=%08lx\n", This, hr);
         HeapFree(GetProcessHeap(), 0, object);
-        return hr;
+        if (hr == WINED3DERR_INVALIDCALL)
+            return DDERR_INVALIDPARAMS;
+        else
+            return hr;
     }
 
     /* Return the interface */
