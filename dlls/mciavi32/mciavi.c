@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 static DWORD MCIAVI_mciStop(UINT, DWORD, LPMCI_GENERIC_PARMS);
 
 /*======================================================================*
- *                  	    MCI AVI implemantation			*
+ *                  	    MCI AVI implementation			*
  *======================================================================*/
 
 HINSTANCE MCIAVI_hInstance = 0;

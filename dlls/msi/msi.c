@@ -1091,7 +1091,7 @@ end:
  *   INSTALLSTATE_LOCAL        Feature is installed and useable
  *   INSTALLSTATE_ABSENT       Feature is absent
  *   INSTALLSTATE_ADVERTISED   Feature should be installed on demand
- *   INSTALLSTATE_UNKNOWN      An error occured
+ *   INSTALLSTATE_UNKNOWN      An error occurred
  *   INSTALLSTATE_INVALIDARG   One of the GUIDs was invalid
  *
  */

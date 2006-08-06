@@ -311,7 +311,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
      * 0 means disabled, 2 means enabled. The enablerefrast.reg and disablerefrast.reg
      * files in the DirectX 7.0 sdk demo directory suggest this.
      *
-     * Some games(GTA 2) seem to use the secound enumerated device, so I have to enumerate
+     * Some games(GTA 2) seem to use the second enumerated device, so I have to enumerate
      * at least 2 devices. So enumerate the reference device to have 2 devices.
      */
 

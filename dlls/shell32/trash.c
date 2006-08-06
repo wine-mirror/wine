@@ -154,7 +154,7 @@ BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
 }
 
 /*
- * Try to create a single .trashinfo file. Return TRUE if successfull, else FALSE
+ * Try to create a single .trashinfo file. Return TRUE if successful, else FALSE
  */
 static BOOL try_create_trashinfo_file(const char *info_dir, const char *file_name,
     const char *original_file_name)

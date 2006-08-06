@@ -128,7 +128,7 @@ static void test_ddraw_objects(void)
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
     IDirectDrawSurface7_Release(surface);
-    /* Incresed before - decrease now */
+    /* Increased before - decrease now */
     ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
 
@@ -138,7 +138,7 @@ static void test_ddraw_objects(void)
 
     IDirectDrawPalette_Release(palette);
 
-    /* Incresed before - decrease now */
+    /* Increased before - decrease now */
     ref = getRefcount( (IUnknown *) DDraw7);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 

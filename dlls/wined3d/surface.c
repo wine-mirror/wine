@@ -312,9 +312,9 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         case WINED3DFMT_P8:
         {
             /* GL can't return palettized data, so read ARGB pixels into a
-             * seperate block of memory and convert them into palettized format
+             * separate block of memory and convert them into palettized format
              * in software. Slow, but if the app means to use palettized render
-             * targets and lock it...
+             * targets and locks it...
              *
              * Use GL_RGB, GL_UNSIGNED_BYTE to read the surface for performance reasons
              * Don't use GL_BGR as in the WINED3DFMT_R8G8B8 case, instead watch out
@@ -898,7 +898,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         case WINED3DFMT_X8R8G8B8:
         {
             /* make sure the X byte is set to alpha on, since it 
-               could be any random value this fixes the intro move in Pirates! */
+               could be any random value. This fixes the intro movie in Pirates! */
             int size;
             unsigned int *data;
             data = (unsigned int *)This->resource.allocatedMemory;
@@ -909,7 +909,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 size--;
             }
         }
-        /* Fall trough */
+        /* Fall through */
 
         case WINED3DFMT_A8R8G8B8:
         {

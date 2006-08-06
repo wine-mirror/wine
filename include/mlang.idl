@@ -20,7 +20,7 @@ import "unknwn.idl";
 
 interface IStream;
 
-/* FIXME: LANDID is defined in winnt.h and mlang.h in the platform SDK */
+/* FIXME: LANGID is defined in winnt.h and mlang.h in the platform SDK */
 cpp_quote("#ifndef _WINNT_")
 typedef WORD LANGID;
 cpp_quote("#endif")

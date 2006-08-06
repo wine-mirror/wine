@@ -146,7 +146,7 @@ static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos,
             DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + (int) specular);
             srcColor = * (DWORD *) ( ((int) src + (int) specular) + i * stride);
 
-            /* Simmilar to diffuse
+            /* Similar to diffuse
              * TODO: Write the alpha value out for fog coords
              */
             *dstColor = 0;

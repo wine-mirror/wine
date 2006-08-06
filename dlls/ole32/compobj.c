@@ -474,7 +474,7 @@ void apartment_joinmta(void)
 }
 
 /*****************************************************************************
- * This section contains OpenDllList implemantation
+ * This section contains OpenDllList implementation
  */
 
 static void COMPOBJ_DLLList_Add(HANDLE hLibrary)

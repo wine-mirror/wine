@@ -146,7 +146,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
     }
 
     if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
-	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
+	WARN("Couldn't allocate thread for async command handling, sending synchronously\n");
 	return MCI_SCAStarter(&sca);
     }
     SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
@@ -155,7 +155,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 }
 
 /*======================================================================*
- *                  	    MCI MIDI implemantation			*
+ *                  	    MCI MIDI implementation			*
  *======================================================================*/
 
 static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
@@ -489,10 +489,10 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
      */
     if (wmm->nDivision > 0x8000) {
 	/* eric.pouech@lemel.fr 98/11
-	 * In did not check this very code (pulses are expressed as SMPTE sub-frames).
+	 * I did not check this very code (pulses are expressed as SMPTE sub-frames).
 	 * In about 40 MB of MIDI files I have, none was SMPTE based...
 	 * I'm just wondering if this is widely used :-). So, if someone has one of
-	 * these files, I'd like to know about.
+	 * these files, I'd like to know about it.
 	 */
 	FIXME("Handling SMPTE time in MIDI files has not been tested\n"
 	      "Please report to comp.emulators.ms-windows.wine with MIDI file !\n");

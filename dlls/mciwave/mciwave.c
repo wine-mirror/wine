@@ -117,7 +117,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
     }
 
     if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
-	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
+	WARN("Couldn't allocate thread for async command handling, sending synchronously\n");
 	return MCI_SCAStarter(&sca);
     }
     SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
@@ -126,7 +126,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 }
 
 /*======================================================================*
- *                  	    MCI WAVE implemantation			*
+ *                  	    MCI WAVE implementation			*
  *======================================================================*/
 
 static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);

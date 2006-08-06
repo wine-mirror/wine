@@ -732,7 +732,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
      * Therefore do not create a VBO for WINED3DUSAGE_DYNAMIC buffers.
      *
      * Direct3D7 has another problem: Its vertexbuffer api doesn't offer a way to specify
-     * the range of vertices beeing locked, so each lock will require the whole buffer to be transformed.
+     * the range of vertices being locked, so each lock will require the whole buffer to be transformed.
      * Moreover geometry data in dx7 is quite simple, so drawStridedSlow isn't a big hit. A plus
      * is that the vertex buffers fvf can be trusted in dx7. So only create non-converted vbos for
      * dx7 apps.
@@ -744,7 +744,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         (dxVersion > 7 || !conv) ) {
         CreateVBO(object);
 
-        /* DX7 buffers can be locked directly into the VBO(no conversion, see above */
+        /* DX7 buffers can be locked directly into the VBO (no conversion, see above */
         if(dxVersion == 7 && object->vbo) {
             HeapFree(GetProcessHeap(), 0, object->resource.allocatedMemory);
             object->resource.allocatedMemory = NULL;
@@ -7518,7 +7518,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         This->cursorTexture = pSur->glDescription.textureName;
         This->cursorWidth = pSur->currentDesc.Width;
         This->cursorHeight = pSur->currentDesc.Height;
-        pSur->glDescription.textureName = 0; /* Prevent the texture from beeing changed or deleted */
+        pSur->glDescription.textureName = 0; /* Prevent the texture from being changed or deleted */
     }
 
     This->xHotSpot = XHotSpot;
