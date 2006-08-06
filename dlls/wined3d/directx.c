@@ -85,7 +85,6 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        BOOL         failed = FALSE;
        int          num;
        XWindowAttributes win_attr;
-
        TRACE_(d3d_caps)("Creating Fake GL Context\n");
 
        ctx.drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
@@ -290,7 +289,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     const char *gl_string        = NULL;
     const char *gl_string_cursor = NULL;
     GLint       gl_max;
-    GLfloat     gl_float;
+    GLfloat     gl_floatv[2];
     Bool        test = 0;
     int         major, minor;
     WineD3D_Context *fake_ctx = NULL;
@@ -545,9 +544,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     gl_info->max_texture_size = gl_max;
     TRACE_(d3d_caps)("Maximum texture size support - max texture size=%d\n", gl_max);
 
-    glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
-    gl_info->max_pointsize = gl_float;
-    TRACE_(d3d_caps)("Maximum point size support - max texture size=%f\n", gl_float);
+    glGetFloatv(GL_POINT_SIZE_RANGE, gl_floatv);
+    gl_info->max_pointsize = gl_floatv[1];
+    TRACE_(d3d_caps)("Maximum point size support - max point size=%f\n", gl_floatv[1]);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
@@ -683,6 +682,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_EXT_texture3D") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT_texture3D support\n");
                 gl_info->supported[EXT_TEXTURE3D] = TRUE;
+                glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
+                TRACE_(d3d_caps)("Max texture3D size: %d\n", gl_max);
+                gl_info->max_texture3d_size = gl_max;
             } else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Texture S3TC compression support\n");
                 gl_info->supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
@@ -1866,10 +1868,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->MaxTextureWidth  = GL_LIMITS(texture_size);
     *pCaps->MaxTextureHeight = GL_LIMITS(texture_size);
 
-    *pCaps->MaxVolumeExtent = 0;
+    if(GL_SUPPORT(EXT_TEXTURE3D))
+        *pCaps->MaxVolumeExtent = GL_LIMITS(texture3d_size);
+    else
+        *pCaps->MaxVolumeExtent = 0;
 
     *pCaps->MaxTextureRepeat = 32768;
-    *pCaps->MaxTextureAspectRatio = 32768;
+    *pCaps->MaxTextureAspectRatio = GL_LIMITS(texture_size);
     *pCaps->MaxVertexW = 1.0;
 
     *pCaps->GuardBandLeft = 0;
@@ -1961,8 +1966,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                   /* FIXME: Add 
                                      D3DVTXPCAPS_TWEENING */
 
-    *pCaps->MaxPrimitiveCount   = 0xFFFFFFFF;
-    *pCaps->MaxVertexIndex      = 0xFFFFFFFF;
+    *pCaps->MaxPrimitiveCount   = 0xFFFFF; /* For now set 2^20-1 which is used by most >=Geforce3/Radeon8500 cards */
+    *pCaps->MaxVertexIndex      = 0xFFFFF;
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
