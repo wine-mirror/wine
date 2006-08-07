@@ -1439,6 +1439,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNBEGINQUERYARBPROC,              glBeginQueryARB); \
     USE_GL_FUNC(PGLFNENDQUERYARBPROC,                glEndQueryARB); \
     USE_GL_FUNC(PGLFNGETQUERYOBJECTIVARBPROC,        glGetQueryObjectivARB); \
+    USE_GL_FUNC(PGLFNGETQUERYOBJECTUIVARBPROC,       glGetQueryObjectuivARB); \
     /* GL_ARB_point_parameters */ \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFARBPROC,       glPointParameterfARB); \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVARBPROC,      glPointParameterfvARB); \

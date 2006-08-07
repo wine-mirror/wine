@@ -94,6 +94,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3
 
 static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
+    HRESULT res = S_OK;
 
     TRACE("(%p) : type %#x, pData %p, dwSize %#lx, dwGetDataFlags %#lx\n", This, This->type, pData, dwSize, dwGetDataFlags);
 
@@ -157,14 +158,27 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     {
         DWORD* data = pData;
         if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-            GLint samples;
-            GL_EXTCALL(glGetQueryObjectivARB(((WineQueryOcclusionData *)This->extendedData)->queryId, GL_QUERY_RESULT_ARB, &samples));
-            checkGLcall("glGetQueryObjectiv()\n");
-            TRACE("(%p) : Returning %d samples.\n", This, samples);
-            *data = samples;
+            GLuint available;
+            GLuint samples;
+            GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
+
+            GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
+            checkGLcall("glGetQueryObjectiv(GL_QUERY_RESULT_AVAILABLE)\n");
+            TRACE("(%p) : available %d.\n", This, available);
+
+            if (available || dwGetDataFlags & WINED3DGETDATA_FLUSH) {
+                GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
+                checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT)\n");
+                TRACE("(%p) : Returning %d samples.\n", This, samples);
+                *data = samples;
+                res = S_OK;
+            } else {
+                res = S_FALSE;
+            }
         } else {
             FIXME("(%p) : Occlusion queries not supported. Returning 1.\n", This);
             *data = 1;
+            res = S_OK;
         }
     }
     break;
@@ -252,7 +266,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     D3DGETDATA_FLUSH may return WINED3DERR_DEVICELOST if the device is lost
     */
     FIXME("(%p) : type %#x, Partial stub\n", This, This->type);
-    return S_OK; /* S_OK if the query data is available*/
+    return res; /* S_OK if the query data is available*/
 }
 
 
