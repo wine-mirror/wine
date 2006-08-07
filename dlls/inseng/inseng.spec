@@ -5,7 +5,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllInstall
 @ stdcall -private DllRegisterServer()
-#@ stdcall -private DllUnregisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub DownloadFile
 @ stub GetICifFileFromFile
 @ stub GetICifRWFileFromFile

@@ -35,9 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inseng);
 
-DEFINE_GUID(CLSID_DLManager, 0xBFC880F1,0x7484,0x11D0,0x83,0x09,0x00,0xAA,0x00,0xB6,0x01,0x5C);
-DEFINE_GUID(CLSID_ActiveSetupEng, 0x6e449686,0xc509,0x11cf,0xaa,0xfa,0x00,0xaa,0x00,0xb6,0x01,0x5c );
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason)
@@ -64,47 +61,6 @@ HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("\n");
     return S_FALSE;
-}
-
-static HRESULT register_clsid(LPCGUID guid)
-{
-    static const WCHAR clsid[] =
-        {'C','L','S','I','D','\\',0};
-    static const WCHAR ips[] =
-        {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
-    static const WCHAR inseng[] =
-        {'i','n','s','e','n','g','.','d','l','l',0};
-    static const WCHAR threading_model[] =
-        {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
-    static const WCHAR apartment[] =
-        {'A','p','a','r','t','m','e','n','t',0};
-    WCHAR path[80];
-    HKEY key = NULL;
-    LONG r;
-
-    lstrcpyW(path, clsid);
-    StringFromGUID2(guid, &path[6], 80);
-    lstrcatW(path, ips);
-    r = RegCreateKeyW(HKEY_CLASSES_ROOT, path, &key);
-    if (r != ERROR_SUCCESS)
-        return E_FAIL;
-
-    RegSetValueExW(key, NULL, 0, REG_SZ, (LPBYTE)inseng, sizeof inseng);
-    RegSetValueExW(key, threading_model, 0, REG_SZ, (LPBYTE)apartment, sizeof apartment);
-    RegCloseKey(key);
-
-    return S_OK;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    HRESULT r;
-
-    r = register_clsid(&CLSID_ActiveSetupEng);
-    if (SUCCEEDED(r))
-        r = register_clsid(&CLSID_DLManager);
-
-    return r;
 }
 
 BOOL WINAPI CheckTrustEx( LPVOID a, LPVOID b, LPVOID c, LPVOID d, LPVOID e )

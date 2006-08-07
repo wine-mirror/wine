@@ -8,7 +8,8 @@ EXTRALIBS = -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
-	inseng_main.c
+	inseng_main.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
