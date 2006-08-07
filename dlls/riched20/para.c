@@ -92,6 +92,15 @@ void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_Display
   }
 }
 
+void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, ME_DisplayItem *last)
+{
+  while(first != last)
+  {
+    first->member.para.nFlags |= MEPF_REPAINT;
+    first = first->member.para.next_para;
+  }
+}
+
 /* split paragraph at the beginning of the run */
 ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME_Style *style)
 {
@@ -245,6 +254,11 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp)
   ME_Remove(pRun);
   ME_DestroyDisplayItem(pRun);
 
+  if (editor->pLastSelStartPara == pNext)
+    editor->pLastSelStartPara = tp;
+  if (editor->pLastSelEndPara == pNext)
+    editor->pLastSelEndPara = tp;
+    
   tp->member.para.next_para = pNext->member.para.next_para;
   pNext->member.para.next_para->member.para.prev_para = tp;
   ME_Remove(pNext);

@@ -148,7 +148,6 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, ME_DisplayIte
 }
 
 void ME_CommitUndo(ME_TextEditor *editor) {
-  
   if (editor->nUndoMode == umIgnore)
     return;
   

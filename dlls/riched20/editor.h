@@ -202,10 +202,12 @@ ME_DisplayItem *ME_MakeRow(int height, int baseline, int width);
 void ME_InsertRowStart(ME_WrapContext *wc, ME_DisplayItem *pEnd);
 void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp);
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
+void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor);
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force);
 
 /* para.c */
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
+void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end);
 void ME_MakeFirstParagraph(HDC hDC, ME_TextBuffer *editor);
 ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style);
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp);
@@ -217,6 +219,7 @@ void ME_GetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *
 void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt);
 /* marks from first up to (but not including) last */
 void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_DisplayItem *last);
+void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, ME_DisplayItem *last);
 void ME_MarkAllForWrapping(ME_TextEditor *editor);
 
 /* paint.c */
@@ -230,7 +233,6 @@ int ME_GetYScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
 void ME_Scroll(ME_TextEditor *editor, int cx, int cy);
-void ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);

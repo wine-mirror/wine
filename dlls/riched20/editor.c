@@ -1048,7 +1048,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         ME_DeleteTextAtCursor(editor, 1, 1);
       else
         return TRUE;
-      ME_QueueInvalidateFromCursor(editor, 1);
+      ME_CommitUndo(editor);
       ME_UpdateRepaint(editor);
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
@@ -1130,6 +1130,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
+  ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
   ed->nScrollPosY = 0;
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;

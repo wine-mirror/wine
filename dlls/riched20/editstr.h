@@ -64,6 +64,7 @@ typedef struct tagME_Style
 } ME_Style;
 
 typedef enum {
+  diInvalid,
   diTextStart, /* start of the text buffer */
   diParagraph, /* paragraph start */
   diRun, /* run (sequence of chars with the same character format) */
@@ -292,7 +293,6 @@ typedef struct tagME_TextEditor
   int nTotalLength, nLastTotalLength;
   int nUDArrowX;
   int nSequence;
-  int nOldSelFrom, nOldSelTo;
   COLORREF rgbBackColor;
   HBRUSH hbrBackground;
   BOOL bCaretAtEnd;
@@ -304,6 +304,7 @@ typedef struct tagME_TextEditor
   ME_UndoMode nUndoMode;
   int nParagraphs;
   int nLastSelStart, nLastSelEnd;
+  ME_DisplayItem *pLastSelStartPara, *pLastSelEndPara;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
   BOOL bScrollX, bScrollY;
   int nScrollPosY;

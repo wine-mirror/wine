@@ -505,35 +505,49 @@ ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs)
 void
 ME_InvalidateSelection(ME_TextEditor *editor)
 {
+  ME_DisplayItem *para1, *para2;
+  int nStart, nEnd;
+  int len = ME_GetTextLength(editor);
+
+  ME_GetSelection(editor, &nStart, &nEnd);
+  /* if both old and new selection are 0-char (= caret only), then
+  there's no (inverted) area to be repainted, neither old nor new */
+  if (nStart == nEnd && editor->nLastSelStart == editor->nLastSelEnd)
+    return;
   ME_WrapMarkedParagraphs(editor);
-  if (ME_IsSelection(editor) || editor->nLastSelStart != editor->nLastSelEnd)
-  {
-    int x, y, height;
-    int x2, y2, height2;
-    int last_x, last_y, last_height;
-    int last_x2, last_y2, last_height2;
-    RECT rc;
-    ME_Cursor tmp;
-  
-    ME_GetCursorCoordinates(editor, &editor->pCursors[1], &x, &y, &height);
-    ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x2, &y2, &height2);
-    ME_RunOfsFromCharOfs(editor, editor->nLastSelStart, &tmp.pRun, &tmp.nOffset);
-    ME_GetCursorCoordinates(editor, &tmp, &last_x, &last_y, &last_height);
-    ME_RunOfsFromCharOfs(editor, editor->nLastSelEnd, &tmp.pRun, &tmp.nOffset);
-    ME_GetCursorCoordinates(editor, &tmp, &last_x2, &last_y2, &last_height2);
-    {
-      rc.left = 0;
-
-      rc.top = min(min(y, last_y), min(y2, last_y2));
-      rc.right = editor->rcFormat.right;
-      rc.bottom = max(max(y + height, last_y + last_height),
-                      max(y2 + height2, last_y2 + last_height2));
-      InvalidateRect(editor->hWnd, &rc, FALSE);
-    }
+  ME_GetSelectionParas(editor, &para1, &para2);
+  assert(para1->type == diParagraph);
+  assert(para2->type == diParagraph);
+  /* last selection markers aren't always updated, which means
+  they can point past the end of the document */ 
+  if (editor->nLastSelStart > len)
+    editor->nLastSelEnd = len; 
+  if (editor->nLastSelEnd > len)
+    editor->nLastSelEnd = len; 
+    
+  /* if the start part of selection is being expanded or contracted... */
+  if (nStart < editor->nLastSelStart) {
+    ME_MarkForPainting(editor, para1, ME_FindItemFwd(editor->pLastSelStartPara, diParagraphOrEnd));
+  } else 
+  if (nStart > editor->nLastSelStart) {
+    ME_MarkForPainting(editor, editor->pLastSelStartPara, ME_FindItemFwd(para1, diParagraphOrEnd));
   }
-  ME_GetSelection(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
-}
 
+  /* if the end part of selection is being contracted or expanded... */
+  if (nEnd < editor->nLastSelEnd) {
+    ME_MarkForPainting(editor, para2, ME_FindItemFwd(editor->pLastSelEndPara, diParagraphOrEnd));
+  } else 
+  if (nEnd > editor->nLastSelEnd) {
+    ME_MarkForPainting(editor, editor->pLastSelEndPara, ME_FindItemFwd(para2, diParagraphOrEnd));
+  }
+
+  ME_InvalidateMarkedParagraphs(editor);
+  /* remember the last invalidated position */
+  ME_GetSelection(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
+  ME_GetSelectionParas(editor, &editor->pLastSelStartPara, &editor->pLastSelEndPara);
+  assert(editor->pLastSelStartPara->type == diParagraph);
+  assert(editor->pLastSelEndPara->type == diParagraph);
+}
 
 void
 ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor)

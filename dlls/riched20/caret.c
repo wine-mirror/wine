@@ -24,7 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-
 static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
 
@@ -87,7 +86,7 @@ void ME_SetSelection(ME_TextEditor *editor, int from, int to)
     editor->pCursors[1].nOffset = 0; 
     editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun); 
     editor->pCursors[0].nOffset = 0; 
-    ME_Repaint(editor);
+    ME_InvalidateSelection(editor);
     ME_ClearTempStyle(editor);
     return;
   }
@@ -119,6 +118,8 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
   assert(!pCursor->nOffset || !editor->bCaretAtEnd);
   assert(height && x && y);
   assert(!(ME_GetParagraph(pCursorRun)->member.para.nFlags & MEPF_REWRAP));
+  assert(pCursor->pRun);
+  assert(pCursor->pRun->type == diRun);
   
   if (pCursorRun->type == diRun) {
     ME_DisplayItem *row = ME_FindItemBack(pCursorRun, diStartRowOrParagraph);
@@ -127,7 +128,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       HDC hDC = GetDC(editor->hWnd);
       ME_Context c;
       ME_DisplayItem *run = pCursorRun;
-      ME_DisplayItem *para;
+      ME_DisplayItem *para = NULL;
       SIZE sz = {0, 0};
     
       ME_InitContext(&c, editor, hDC);
@@ -135,19 +136,25 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       if (!pCursor->nOffset && !editor->bCaretAtEnd)
       {
         ME_DisplayItem *prev = ME_FindItemBack(pCursorRun, diRunOrStartRow);
+        assert(prev);
         if (prev->type == diRun)
           pSizeRun = prev;
       }
       assert(row->type == diStartRow); /* paragraph -> run without start row ?*/
       para = ME_FindItemBack(row, diParagraph);
+      assert(para);
+      assert(para->type == diParagraph);
       if (editor->bCaretAtEnd && !pCursor->nOffset && 
           run == ME_FindItemFwd(row, diRun))
       {
         ME_DisplayItem *tmp = ME_FindItemBack(row, diRunOrParagraph);
+        assert(tmp);
         if (tmp->type == diRun)
         {
           row = ME_FindItemBack(tmp, diStartRow);
           pSizeRun = run = tmp;
+          assert(run);
+          assert(run->type == diRun);
           sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, ME_StrLen(run->member.run.strText));
         }
       }
@@ -175,6 +182,7 @@ ME_MoveCaret(ME_TextEditor *editor)
 {
   int x, y, height;
 
+  ME_WrapMarkedParagraphs(editor);
   ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
   CreateCaret(editor->hWnd, NULL, 0, height);
   SetCaretPos(x, y);
@@ -992,6 +1000,10 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
+  /* bCaretAtEnd doesn't make sense if the cursor isn't set at the
+  first character of the next row */
+  assert(!editor->bCaretAtEnd || !pCursor->nOffset);
+  ME_WrapMarkedParagraphs(editor);
   if (pRow) {
     ME_DisplayItem *pRun;
     if (editor->bCaretAtEnd && !pCursor->nOffset) {
@@ -1150,10 +1162,8 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
   ME_Cursor *p = &editor->pCursors[nCursor];
   ME_Cursor tmp_curs = *p;
   BOOL success = FALSE;
-
-  if (ME_IsSelection(editor) && !extend)
-    ME_InvalidateSelection(editor);
   
+  ME_CheckCharOffsets(editor);
   editor->nUDArrowX = -1;
   switch(nVKey) {
     case VK_LEFT:
@@ -1202,8 +1212,8 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
     editor->pCursors[1] = tmp_curs;
   *p = tmp_curs;
   
-  if (ME_IsSelection(editor))
-    ME_InvalidateSelection(editor);
+  ME_InvalidateSelection(editor);
+  ME_Repaint(editor);
   HideCaret(editor->hWnd);
   ME_EnsureVisible(editor, tmp_curs.pRun); 
   ME_ShowCaret(editor);

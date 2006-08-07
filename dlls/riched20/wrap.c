@@ -462,33 +462,40 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
   ME_DestroyContext(&c);
   ReleaseDC(hWnd, hDC);
+  
+  if (bModified || editor->nTotalLength < editor->nLastTotalLength)
+    ME_InvalidateMarkedParagraphs(editor);
+  return bModified;
+}
 
+void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor) {
+  ME_Context c;
+  HDC hDC = GetDC(editor->hWnd);
+
+  ME_InitContext(&c, editor, hDC);
   if (editor->bRedraw)
   {
-     RECT rc = c.rcView;
+    RECT rc = c.rcView;
+    int ofs = ME_GetYScrollPos(editor); 
      
-     /* Invalidate rewrapped rows */
-     if (yStart != -1)
-     {
-       yStart -= ME_GetYScrollPos(editor);
-       yEnd -= ME_GetYScrollPos(editor);
-       if ((yStart >= 0 && yStart < c.rcView.bottom - c.rcView.top)
-           || (yEnd >= 0 && yEnd < c.rcView.bottom - c.rcView.top))
-       {
-         rc.top = yStart;
-         rc.bottom = yEnd;
-         InvalidateRect(editor->hWnd, &rc, TRUE);
-       }
-     }
-
-     /* Invalidate cursor row */
-     if (editor->nInvalidOfs != -1)
-     {
-       ME_InvalidateFromOfs(editor, editor->nInvalidOfs);
-       editor->nInvalidOfs = -1;
-     }
+    ME_DisplayItem *item = editor->pBuffer->pFirst;
+    while(item != editor->pBuffer->pLast) {
+      if (item->member.para.nFlags & MEPF_REPAINT) { 
+        rc.top = item->member.para.nYPos - ofs;
+        rc.bottom = item->member.para.nYPos + item->member.para.nHeight - ofs;
+        InvalidateRect(editor->hWnd, &rc, TRUE);
+      }
+      item = item->member.para.next_para;
+    }
+    if (editor->nTotalLength < editor->nLastTotalLength)
+    {
+      rc.top = editor->nTotalLength - ofs;
+      rc.bottom = editor->nLastTotalLength - ofs;
+      InvalidateRect(editor->hWnd, &rc, TRUE);
+    }
   }
-  return bModified;
+  ME_DestroyContext(&c);
+  ReleaseDC(editor->hWnd, hDC);
 }
 
 
