@@ -29,6 +29,8 @@ C_SRCS = \
 	utils.c \
 	winegcc.c
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
@@ -39,8 +41,7 @@ winegcc$(EXEEXT): winegcc.o utils.o
 winecpp$(EXEEXT) wineg++$(EXEEXT): winegcc$(EXEEXT)
 	$(RM) $@ && $(LN_S) winegcc$(EXEEXT) $@
 
-install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) winegcc$(EXEEXT) $(DESTDIR)$(bindir)/winegcc$(EXEEXT)
 	cd $(DESTDIR)$(bindir) && $(RM) wineg++$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) wineg++$(EXEEXT)
 	cd $(DESTDIR)$(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)

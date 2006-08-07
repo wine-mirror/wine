@@ -53,6 +53,8 @@ C_SRCS = \
 PROGRAMS = wineserver
 MANPAGES = wineserver.man
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
@@ -62,8 +64,7 @@ LDEXERPATH = @LDEXERPATH@
 wineserver: $(OBJS)
 	$(CC) -o $@ $(LDEXERPATH) $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
-install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) wineserver $(DESTDIR)$(bindir)/wineserver
 	$(INSTALL_DATA) wineserver.man $(DESTDIR)$(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 

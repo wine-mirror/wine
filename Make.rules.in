@@ -243,6 +243,9 @@ install:: $(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 
+$(INSTALLDIRS):
+	$(MKINSTALLDIRS) $@
+
 .PHONY: install install-lib install-dev uninstall \
 	$(SUBDIRS:%=%/__install__) $(SUBDIRS:%=%/__uninstall__) \
 	$(SUBDIRS:%=%/__install-lib__) $(SUBDIRS:%=%/__install-dev__)

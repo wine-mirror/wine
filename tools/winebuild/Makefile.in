@@ -19,6 +19,8 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
@@ -26,8 +28,7 @@ all: $(PROGRAMS) $(MANPAGES)
 winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
 	$(INSTALL_DATA) winebuild.man $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
 

@@ -20,6 +20,8 @@ WINE_BINARIES  = $(MAIN_BINARY) $(EXTRA_BINARIES)
 
 MANPAGES = wine.man
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(WINE_BINARIES) $(MODULE) $(MANPAGES)
 
 @MAKE_RULES@
@@ -43,8 +45,7 @@ wine-pthread: $(PTHREAD_OBJS) Makefile.in
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
-install:: $(WINE_BINARIES) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(WINE_BINARIES) $(MANPAGES) $(INSTALLDIRS)
 	for f in $(WINE_BINARIES); do \
 	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
 	  then $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$(MODULE); \

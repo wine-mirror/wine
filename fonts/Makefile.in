@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 fontdir   = $(datadir)/wine/fonts
+INSTALLDIRS = $(DESTDIR)$(fontdir)
 
 BITMAP_FONTS  = \
 	coue1255.fon \
@@ -354,8 +355,7 @@ hvgasys.fon: system-949-96-16.fnt $(FNT2FON)
 cvgasys.fon: system-950-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-950-96-16.fnt system-1252-96-16.fnt $@
 
-install:: $(FONTS)
-	$(MKINSTALLDIRS) $(DESTDIR)$(fontdir)
+install:: $(FONTS) $(INSTALLDIRS)
 	for i in $(FONTS); do $(INSTALL_DATA) $$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 
 uninstall::

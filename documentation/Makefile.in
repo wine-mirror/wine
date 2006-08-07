@@ -4,6 +4,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
+INSTALLDIRS = $(DESTDIR)$(mandir)/man$(api_manext)
+
 @MAKE_RULES@
 
 manpages:
@@ -20,8 +22,7 @@ sgmlpages:
 
 .PHONY: manpages htmlpages sgmlpages
 
-install:: manpages
-	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$(api_manext)
+install:: manpages $(INSTALLDIRS)
 	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$$i; done
 
 clean::

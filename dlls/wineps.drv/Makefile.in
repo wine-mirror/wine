@@ -82,8 +82,7 @@ EXTRASUBDIRS = data
 
 @MAKE_DLL_RULES@
 
-install install-lib::
-	$(MKINSTALLDIRS) $(DESTDIR)$(datadir)/wine
+install install-lib:: $(DESTDIR)$(datadir)/wine
 	$(INSTALL_DATA) $(SRCDIR)/generic.ppd $(DESTDIR)$(datadir)/wine/generic.ppd
 
 uninstall::

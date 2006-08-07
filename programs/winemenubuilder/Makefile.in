@@ -12,8 +12,7 @@ C_SRCS = \
 
 @MAKE_PROG_RULES@
 
-install::
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+install:: $(DESTDIR)$(bindir)
 	$(INSTALL_SCRIPT) $(TOPSRCDIR)/tools/wineshelllink $(DESTDIR)$(bindir)/wineshelllink
 
 uninstall::

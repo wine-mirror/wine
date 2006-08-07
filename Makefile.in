@@ -63,6 +63,8 @@ all: Make.rules wine
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
 
+INSTALLDIRS = $(DESTDIR)$(datadir)/aclocal
+
 @MAKE_RULES@
 
 Make.rules: Make.rules.in configure
@@ -74,21 +76,16 @@ wine: $(WINEWRAPPER)
 
 # Installation rules
 
-install-aclocal: dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(datadir)/aclocal
+install install-dev:: $(DESTDIR)$(datadir)/aclocal dummy
 	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(DESTDIR)$(datadir)/aclocal/wine.m4
 
-install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-lib__)
+install install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-lib__)
 
-install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) install-aclocal
-
-install:: install-lib install-dev install-aclocal
+install install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__)
 
 uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 	$(RM) $(DESTDIR)$(datadir)/aclocal/wine.m4
 	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(datadir)/aclocal
-
-.PHONY: install-aclocal
 
 # Dependencies between directories
 

@@ -8,6 +8,7 @@
 
 DLLFLAGS = @DLLFLAGS@
 DEFS     = -D__WINESRC__ $(EXTRADEFS)
+INSTALLDIRS = $(DESTDIR)$(dlldir)
 
 @MAKE_RULES@
 
@@ -22,8 +23,7 @@ $(MODULE): $(OBJS) Makefile.in
 
 # Rules for installation
 
-install install-dev:: $(MODULE)
-	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+install install-dev:: $(MODULE) $(DESTDIR)$(dlldir)
 	$(INSTALL_DATA) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
 
 install-lib::

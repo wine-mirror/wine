@@ -24,6 +24,7 @@ ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 STATICIMPLIB= $(IMPORTLIB:.def=.def.a)
 DLL_LDPATH  = -L$(DLLDIR) $(ALL_IMPORTS:%=-L$(DLLDIR)/%)
+INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(datadir)/wine
 
 all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
@@ -111,16 +112,13 @@ WIN16_INSTALL = $(ALL_SPECS16:%=_install_/%)
 $(ALL_SPECS16:%=_install_/%): install_lib
 	echo "$(MODULE)" > $(DESTDIR)$(dlldir)/`basename $@`
 
-install_lib: $(MODULE)$(DLLEXT)
-	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+install_lib: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)
 	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT)
 
-$(IMPORTLIB:%=_install_/%): $(IMPORTLIB)
-	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+$(IMPORTLIB:%=_install_/%): $(IMPORTLIB) $(DESTDIR)$(dlldir)
 	$(INSTALL_DATA) $(IMPORTLIB) $(DESTDIR)$(dlldir)/$(IMPORTLIB)
 
-install_static_implib_def: $(STATICIMPLIB)
-	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+install_static_implib_def: $(STATICIMPLIB) $(DESTDIR)$(dlldir)
 	$(INSTALL_DATA) $(STATICIMPLIB) $(DESTDIR)$(dlldir)/$(STATICIMPLIB)
 
 install_static_implib_a:

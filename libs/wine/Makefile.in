@@ -14,6 +14,8 @@ SOVERSION = 1
 SONAME    = libwine.so.$(SOVERSION)
 DYNAME    = libwine.$(SOVERSION).dylib
 
+INSTALLDIRS = $(DESTDIR)$(libdir)
+
 C_SRCS = \
 	casemap.c \
 	collation.c \
@@ -142,30 +144,24 @@ libwine.dylib: libwine.$(SOVERSION).dylib
 
 .PHONY: install-lib-so install-lib-dll install-lib-dylib install-dev-so install-dev-dll install-dev-dylib
 
-install-lib-so: libwine.so.$(VERSION) dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-lib-so: libwine.so.$(VERSION) $(DESTDIR)$(libdir) dummy
 	$(INSTALL_PROGRAM) libwine.so.$(VERSION) $(DESTDIR)$(libdir)/libwine.so.$(VERSION)
 	cd $(DESTDIR)$(libdir) && $(RM) libwine.so.$(SOVERSION) && $(LN_S) libwine.so.$(VERSION) libwine.so.$(SOVERSION)
 
-install-lib-dll: libwine.dll dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-lib-dll: libwine.dll $(DESTDIR)$(libdir) dummy
 	$(INSTALL_DATA) libwine.dll $(DESTDIR)$(libdir)/libwine.dll
 
-install-lib-dylib: libwine.$(VERSION).dylib dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-lib-dylib: libwine.$(VERSION).dylib $(DESTDIR)$(libdir) dummy
 	$(INSTALL_PROGRAM) libwine.$(VERSION).dylib $(DESTDIR)$(libdir)/libwine.$(VERSION).dylib
 	cd $(DESTDIR)$(libdir) && $(RM) libwine.$(SOVERSION).dylib && $(LN_S) libwine.$(VERSION).dylib libwine.$(SOVERSION).dylib
 
-install-dev-so: dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-dev-so: $(DESTDIR)$(libdir) dummy
 	cd $(DESTDIR)$(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(VERSION) libwine.so
 
-install-dev-dll: libwine.a dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-dev-dll: libwine.a $(DESTDIR)$(libdir) dummy
 	$(INSTALL_DATA) libwine.a $(DESTDIR)$(libdir)/libwine.a
 
-install-dev-dylib: dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+install-dev-dylib: $(DESTDIR)$(libdir) dummy
 	cd $(DESTDIR)$(libdir) && $(RM) libwine.dylib && $(LN_S) libwine.$(VERSION).dylib libwine.dylib
 
 install install-lib:: $(LIBEXT:%=install-lib-%)

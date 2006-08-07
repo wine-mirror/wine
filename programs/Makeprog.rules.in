@@ -16,6 +16,7 @@ ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 ALL_LIBS    = $(ALL_IMPORTS:%=-l%) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 BASEMODULE  = $(MODULE:.exe=)
 RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 @MAKE_RULES@
 
@@ -44,12 +45,10 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 .PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
 
-install_prog.so: $(MODULE).so dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+install_prog.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
 
-install_prog: $(MODULE) dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+install_prog: $(MODULE) $(DESTDIR)$(bindir) dummy
 	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(bindir)/$(MODULE)
 
 uninstall_prog.so: dummy

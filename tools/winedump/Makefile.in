@@ -24,6 +24,8 @@ C_SRCS = \
 	search.c \
 	symbol.c
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
@@ -31,8 +33,7 @@ all: $(PROGRAMS) $(MANPAGES)
 winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
 	$(INSTALL_DATA) winedump.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl

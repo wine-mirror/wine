@@ -18,6 +18,8 @@ C_SRCS = \
 EXTRA_SRCS = mcy.y
 EXTRA_OBJS = mcy.tab.o
 
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
 all: $(PROGRAMS) $(MANPAGES)
 
 mcl.o: mcy.tab.h
@@ -34,8 +36,7 @@ mcy.tab.c mcy.tab.h: mcy.y
 mcy.tab.h: mcy.tab.c
 mcy.tab.o: mcy.tab.h
 
-install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 

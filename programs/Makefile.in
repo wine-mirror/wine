@@ -98,6 +98,8 @@ INSTALLPROGS = \
 	winepath \
 	winhelp
 
+INSTALLDIRS = $(DESTDIR)$(bindir)
+
 @MAKE_RULES@
 
 all: wineapploader winelauncher $(SUBDIRS)
@@ -112,8 +114,7 @@ winelauncher: winelauncher.in
 
 .PHONY: install-apploader install-progs install-progs.so $(INSTALLPROGS:%=%/__installprog__)
 
-install-apploader: wineapploader dummy
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+install-apploader: wineapploader $(INSTALLDIRS) dummy
 	$(INSTALL_SCRIPT) wineapploader $(DESTDIR)$(bindir)/wineapploader
 
 $(INSTALLPROGS:%=%/__installprog__): install-apploader
@@ -124,8 +125,7 @@ install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
 
 install-progs: # nothing to do here
 
-install:: winelauncher install-progs$(DLLEXT)
-	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+install:: winelauncher install-progs$(DLLEXT) $(INSTALLDIRS)
 	$(INSTALL_SCRIPT) winelauncher $(DESTDIR)$(bindir)/winelauncher
 
 uninstall::
