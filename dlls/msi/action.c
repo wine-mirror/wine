@@ -1326,7 +1326,23 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
 
     file->state = msifs_invalid;
 
+    /* if the compressed bits are not set in the file attributes,
+     * then read the information from the package word count property
+     */
     if (file->Attributes & msidbFileAttributesCompressed)
+    {
+        file->IsCompressed = TRUE;
+    }
+    else if (file->Attributes & msidbFileAttributesNoncompressed)
+    {
+        file->IsCompressed = FALSE;
+    }
+    else
+    {
+        file->IsCompressed = package->WordCount & MSIWORDCOUNT_COMPRESSED;
+    }
+
+    if (file->IsCompressed)
     {
         file->Component->ForceLocalState = TRUE;
         file->Component->Action = INSTALLSTATE_LOCAL;

@@ -40,6 +40,7 @@
 #include "shlobj.h"
 #include "wine/unicode.h"
 #include "objbase.h"
+#include "msidefs.h"
 
 #include "msipriv.h"
 #include "action.h"
@@ -376,6 +377,34 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     ReleaseDC(0, dc);
 }
 
+static UINT msi_get_word_count( MSIPACKAGE *package )
+{
+    UINT rc;
+    INT word_count;
+    MSIHANDLE suminfo;
+    MSIHANDLE hdb = alloc_msihandle( &package->db->hdr );
+
+    rc = MsiGetSummaryInformationW( hdb, NULL, 0, &suminfo );
+    MsiCloseHandle(hdb);
+    if (rc != ERROR_SUCCESS)
+    {
+        ERR("Unable to open Summary Information\n");
+        return 0;
+    }
+
+    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_WORDCOUNT, NULL,
+                                     &word_count, NULL, NULL, NULL );
+    if (rc != ERROR_SUCCESS)
+    {
+        ERR("Unable to query word count\n");
+        MsiCloseHandle(suminfo);
+        return 0;
+    }
+
+    MsiCloseHandle(suminfo);
+    return word_count;
+}
+
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
 {
     static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
@@ -410,6 +439,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         list_init( &package->extensions );
         list_init( &package->progids );
         list_init( &package->RunningActions );
+
+        package->WordCount = msi_get_word_count( package );
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

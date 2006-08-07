@@ -330,7 +330,7 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
 static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, MSICOMPONENT*
         comp, LPCWSTR path)
 {
-    if (!(file->Attributes & msidbFileAttributesCompressed))
+    if (!file->IsCompressed)
     {
         LPWSTR p, path;
         p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
@@ -419,7 +419,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     msi_free(mi->last_path);
     mi->last_path = NULL;
 
-    if (!(file->Attributes & msidbFileAttributesCompressed))
+    if (!file->IsCompressed)
     {
         mi->last_path = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
         set_file_source(package,file,comp,mi->last_path);
@@ -605,7 +605,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             continue;
 
         /* compressed files are extracted in ready_media_for_file */
-        if (file->Attributes & msidbFileAttributesCompressed)
+        if (file->IsCompressed)
         {
             if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(file->TargetPath))
                 ERR("compressed file wasn't extracted (%s)\n",
