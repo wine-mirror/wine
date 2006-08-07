@@ -100,25 +100,13 @@ BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
-    static const GUID gen_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
-
     FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
 
     /* Trust providers can be found at:
      * HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\CertCheck\
      *
-     * Process Explorer expects a correct implementation, so we 
-     * return TRUST_E_PROVIDER_UNKNOWN.
-     *
-     * Girotel needs ERROR_SUCCESS.
-     *
-     * For now return TRUST_E_PROVIDER_UNKNOWN only when 
-     * ActionID = WINTRUST_ACTION_GENERIC_VERIFY_V2.
-     *
+     * Process Explorer is now happy with ERROR_SUCCESS
      */
-
-    if (IsEqualCLSID(ActionID, &gen_verify_v2))
-        return TRUST_E_PROVIDER_UNKNOWN;
 
     return ERROR_SUCCESS;
 }
