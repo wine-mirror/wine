@@ -1125,7 +1125,11 @@ static HRESULT WINAPI DefaultHandler_DAdvise(
 
   /* Make sure we have a data advise holder before we start. */
   if (!This->dataAdviseHolder)
+  {
     hres = CreateDataAdviseHolder(&This->dataAdviseHolder);
+    if (SUCCEEDED(hres) && This->pDataDelegate)
+      DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
+  }
 
   if (SUCCEEDED(hres))
     hres = IDataAdviseHolder_Advise(This->dataAdviseHolder,
