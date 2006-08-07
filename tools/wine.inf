@@ -112,7 +112,7 @@ HKCR,lnkfile,"NeverShowExt",2,""
 HKCR,lnkfile,"IsShortcut",2,"yes"
 HKCR,lnkfile\CLSID,,2,"{00021401-0000-0000-C000-000000000046}"
 HKCR,lnkfile\shellex\IconHandler,,2,"{00021401-0000-0000-C000-000000000046}"
-HKCR,lnkfile\shellex\ContextMenuHandlers\{00021401-0000-0000-C000-000000000046},,2,""
+HKCR,lnkfile\shellex\ContextMenuHandlers\{00021401-0000-0000-C000-000000000046},,0x10,
 HKCR,Msi.Package\DefaultIcon,,2,"msiexec.exe"
 HKCR,Msi.Package\shell\Open\command,,2,"msiexec /i %1"
 HKCR,Msi.Package\shell\Repair\command,,2,"msiexec /f %1"
