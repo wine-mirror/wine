@@ -247,7 +247,7 @@ void FillList (HWND hCb, char *pszLatest)
 
     if (ERROR_SUCCESS != RegCreateKeyExA (
         HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU",
-        0, "", REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL))
+        0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL))
         MessageBoxA (hCb, "Unable to open registry key !", "Nix", MB_OK) ;
 
     RegQueryValueExA (hkey, "MRUList", NULL, NULL, NULL, &icList) ;

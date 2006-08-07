@@ -522,7 +522,7 @@ SignalFileOpen (DWORD dwParam1)
  * RETURNS
  *   result of the SHQueryValueEx call
  */
-static INT SHADD_get_policy(LPSTR policy, LPDWORD type, LPVOID buffer, LPDWORD len)
+static INT SHADD_get_policy(LPCSTR policy, LPDWORD type, LPVOID buffer, LPDWORD len)
 {
     HKEY Policy_basekey;
     INT ret;
