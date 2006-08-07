@@ -336,7 +336,7 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
 
 /* get a metric from the registry. If the value is negative
  * it is assumed to be in twips and converted to pixels */
-static UINT metricfromreg( char *keyname, char *valname, int dpi)
+static UINT metricfromreg( const char *keyname, const char *valname, int dpi)
 {
     HKEY hkey;
     char buf[64];
