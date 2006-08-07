@@ -170,6 +170,16 @@ typedef enum _D3DVSDT_TYPE {
 #define D3DVSD_END() 0xFFFFFFFF
 #define D3DVSD_NOP() 0x00000000
 
+static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
+    TRACE("     Stream: %d\n", element->Stream);
+    TRACE("     Offset: %d\n", element->Offset);
+    TRACE("       Type: %s (%#x)\n", debug_d3ddecltype(element->Type), element->Type);
+    TRACE("     Method: %s (%#x)\n", debug_d3ddeclmethod(element->Method), element->Method);
+    TRACE("      Usage: %s (%#x)\n", debug_d3ddeclusage(element->Usage), element->Usage);
+    TRACE("Usage index: %d\n", element->UsageIndex);
+    TRACE("   Register: %d\n", element->Reg);
+}
+
 static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
   const DWORD token = *pToken;
   DWORD tokenlen = 1;
@@ -298,6 +308,8 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             convToW[nTokens].Type       = type;
             convToW[nTokens].Offset     = offset;
             convToW[nTokens].Reg        = reg;
+            TRACE("Adding element %ld:\n", nTokens);
+            dump_wined3dvertexelement(&convToW[nTokens]);
             offset += glTypeLookup[type].size * glTypeLookup[type].typesize;
             ++nTokens;
         } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
@@ -386,6 +398,8 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
     for(i = 0; i < This->declaration9NumElements; ++i) {
         memcpy(This->pDeclarationWine + i, This->pDeclaration9 + i, sizeof(D3DVERTEXELEMENT9));
         This->pDeclarationWine[i].Reg = -1;
+        TRACE("Adding element %d:\n", i);
+        dump_wined3dvertexelement(&This->pDeclarationWine[i]);
     }
 
     This->declarationWNumElements = This->declaration9NumElements;
