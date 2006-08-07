@@ -4465,8 +4465,121 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
             ERR(" Antialias not supported yet.\n");
         break;
     }
+
+    case WINED3DRS_MULTISAMPLEMASK :
+    {
+        if(0xFFFFFFFF != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_PATCHEDGESTYLE :
+    {
+        if(D3DPATCHEDGE_DISCRETE != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_PATCHSEGMENTS :
+    {
+        /* available in d3d8 but in d3d9 it was replaced by IDirect3DDevice9::SetNPatchMode */
+        tmpvalue.f = 1.0f;
+        if(tmpvalue.d != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_DEBUGMONITORTOKEN :
+    {
+        /* Only useful for "debug builds". */
+        if(0xbaadcafe != Value) {
+            /* MSDN says the default is D3DDMT_ENABLE but our tests confirm 0xbaadcafe is the default. */
+            /* MSDN says anything other than D3DDMT_ENABLE or DISABLE does not change the state,
+             * but our tests disagree. */
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        }
+        break;
+    }
+
+    case WINED3DRS_POSITIONDEGREE :
+    {
+        if(D3DDEGREE_CUBIC != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_NORMALDEGREE :
+    {
+        if(D3DDEGREE_LINEAR != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_MINTESSELLATIONLEVEL :
+    case WINED3DRS_MAXTESSELLATIONLEVEL :
+    case WINED3DRS_ADAPTIVETESS_X :
+    case WINED3DRS_ADAPTIVETESS_Y :
+    case WINED3DRS_ADAPTIVETESS_Z :
+    case WINED3DRS_ADAPTIVETESS_W :
+    {
+        if(This->stateBlock->renderState[WINED3DRS_ENABLEADAPTIVETESSELLATION])
+            FIXME("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        else
+            TRACE("(%p)->(%s,%ld): recording state but WINED3DRS_ENABLEADAPTIVETESSELLATION is not enabled\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_ENABLEADAPTIVETESSELLATION:
+    {
+        if(Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_COLORWRITEENABLE1         :
+    case WINED3DRS_COLORWRITEENABLE2         :
+    case WINED3DRS_COLORWRITEENABLE3         :
+    {
+        /* depends on WINED3DRS_COLORWRITEENABLE. */
+        if(0x0000000F != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented. Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_BLENDFACTOR               :
+    {
+        if(0xFFFFFFFF != Value)
+            ERR("(%p)->(%s,%ld) not yet implemented. Missing of cap D3DPBLENDCAPS_BLENDFACTOR wasn't honored?\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_SRGBWRITEENABLE           :
+    {
+        if(Value)
+            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_SEPARATEALPHABLENDENABLE  :
+    {
+        if(Value)
+            ERR("(%p)->(%s,%ld) not yet implemented. Missing of cap D3DPMISCCAPS_SEPARATEALPHABLEND wasn't honored?\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
+    case WINED3DRS_SRCBLENDALPHA             :
+    case WINED3DRS_DESTBLENDALPHA            :
+    case WINED3DRS_BLENDOPALPHA              :
+    {
+        if(This->stateBlock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE])
+            FIXME("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+        else
+            TRACE("(%p)->(%s,%ld): recording state but WINED3DRS_SEPARATEALPHABLENDENABLE is not enabled\n", This, debug_d3drenderstate(State), Value);
+        break;
+    }
+
     default:
-        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
+        FIXME("(%p)->(%s,%ld) unknown state\n", This, debug_d3drenderstate(State), Value);
     }
 
     LEAVE_GL();
