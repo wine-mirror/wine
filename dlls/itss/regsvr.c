@@ -61,8 +61,9 @@ struct regsvr_coclass
     LPCSTR ips;			/* can be NULL to omit */
     LPCSTR ips32;		/* can be NULL to omit */
     LPCSTR ips32_tmodel;	/* can be NULL to omit */
-    LPCSTR clsid_str;		/* can be NULL to omit */
     LPCSTR progid;		/* can be NULL to omit */
+    LPCSTR viprogid;		/* can be NULL to omit */
+    LPCSTR progid_extra;	/* can be NULL to omit */
 };
 
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
@@ -86,6 +87,8 @@ static WCHAR const ps_clsid32_keyname[17] = {
     'i', 'd', '3', '2', 0 };
 static WCHAR const clsid_keyname[6] = {
     'C', 'L', 'S', 'I', 'D', 0 };
+static WCHAR const curver_keyname[7] = {
+    'C', 'u', 'r', 'V', 'e', 'r', 0 };
 static WCHAR const ips_keyname[13] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
@@ -94,7 +97,16 @@ static WCHAR const ips32_keyname[15] = {
     '3', '2', 0 };
 static WCHAR const progid_keyname[7] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
+static WCHAR const viprogid_keyname[25] = {
+    'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
+    'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
+    0 };
 static char const tmodel_valuename[] = "ThreadingModel";
+static WCHAR const lcs32_keyname[] = {
+    'L','o','c','a','l','S','e','r','v','e','r','3','2',0 };
+static const WCHAR szIERelPath[] = {
+    'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
+    'i','e','x','p','l','o','r','e','.','e','x','e',0 };
 
 /***********************************************************************
  *		static helper functions
@@ -104,6 +116,9 @@ static LONG register_key_defvalueW(HKEY base, WCHAR const *name,
 				   WCHAR const *value);
 static LONG register_key_defvalueA(HKEY base, WCHAR const *name,
 				   char const *value);
+static LONG register_progid(WCHAR const *clsid,
+			    char const *progid, char const *curver_progid,
+			    char const *name, char const *extra);
 static LONG recursive_delete_key(HKEY key);
 static LONG recursive_delete_keyA(HKEY base, char const *name);
 static LONG recursive_delete_keyW(HKEY base, WCHAR const *name);
@@ -255,26 +270,23 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
-	if (list->clsid_str) {
-	    res = register_key_defvalueA(clsid_key, clsid_keyname,
-					 list->clsid_str);
-	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
-	}
-
 	if (list->progid) {
-	    HKEY progid_key;
-
 	    res = register_key_defvalueA(clsid_key, progid_keyname,
 					 list->progid);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
-	    res = RegCreateKeyExA(HKEY_CLASSES_ROOT, list->progid, 0,
-				  NULL, 0, KEY_READ | KEY_WRITE, NULL,
-				  &progid_key, NULL);
+	    res = register_progid(buf, list->progid, NULL,
+				  list->name, list->progid_extra);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	}
+
+	if (list->viprogid) {
+	    res = register_key_defvalueA(clsid_key, viprogid_keyname,
+					 list->viprogid);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
-	    res = register_key_defvalueW(progid_key, clsid_keyname, buf);
-	    RegCloseKey(progid_key);
+	    res = register_progid(buf, list->viprogid, list->progid,
+				  list->name, list->progid_extra);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
@@ -310,6 +322,11 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 
 	if (list->progid) {
 	    res = recursive_delete_keyA(HKEY_CLASSES_ROOT, list->progid);
+	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+	}
+
+	if (list->viprogid) {
+	    res = recursive_delete_keyA(HKEY_CLASSES_ROOT, list->viprogid);
 	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 	}
     }
@@ -368,6 +385,56 @@ static LONG register_key_defvalueA(
     res = RegSetValueExA(key, NULL, 0, REG_SZ, (CONST BYTE*)value,
 			 lstrlenA(value) + 1);
     RegCloseKey(key);
+    return res;
+}
+
+/***********************************************************************
+ *		regsvr_progid
+ */
+static LONG register_progid(
+    WCHAR const *clsid,
+    char const *progid,
+    char const *curver_progid,
+    char const *name,
+    char const *extra)
+{
+    LONG res;
+    HKEY progid_key;
+
+    res = RegCreateKeyExA(HKEY_CLASSES_ROOT, progid, 0,
+			  NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			  &progid_key, NULL);
+    if (res != ERROR_SUCCESS) return res;
+
+    if (name) {
+	res = RegSetValueExA(progid_key, NULL, 0, REG_SZ,
+			     (CONST BYTE*)name, strlen(name) + 1);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (clsid) {
+	res = register_key_defvalueW(progid_key, clsid_keyname, clsid);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (curver_progid) {
+	res = register_key_defvalueA(progid_key, curver_keyname,
+				     curver_progid);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (extra) {
+	HKEY extra_key;
+
+	res = RegCreateKeyExA(progid_key, extra, 0,
+			      NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			      &extra_key, NULL);
+	if (res == ERROR_SUCCESS)
+	    RegCloseKey(extra_key);
+    }
+
+error_close_progid_key:
+    RegCloseKey(progid_key);
     return res;
 }
 
@@ -445,6 +512,14 @@ static struct regsvr_coclass const coclass_list[] = {
         NULL,
         "itss.dll",
         "Both"
+    },
+    {   &CLSID_ITSProtocol,
+        "Microsoft InforTech Protocol for IE 3.0",
+        NULL,
+        "itss.dll",
+        "Both",
+        "MSITFS1.0",
+        "MSITFS"
     },
     { NULL }			/* list terminator */
 };
