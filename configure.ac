@@ -283,6 +283,15 @@ AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h n
      # include <sys/socket.h>
      #endif])
 
+AC_CHECK_HEADERS([linux/ipx.h],,,
+    [#include <sys/types.h>
+     #ifdef HAVE_ASM_TYPES_H
+     # include <asm/types.h>
+     #endif
+     #if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif])
+
 AC_CHECK_HEADERS([resolv.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
@@ -297,7 +306,7 @@ AC_CHECK_HEADERS([resolv.h],,,
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
-AC_CHECK_HEADERS([linux/ipx.h linux/videodev.h],,,
+AC_CHECK_HEADERS([linux/videodev.h],,,
 [#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
