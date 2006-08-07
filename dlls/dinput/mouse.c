@@ -426,16 +426,14 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     EnterCriticalSection(&(This->crit));
     dwCoop = This->dwCoopLevel;
 
-    /* Mouse moved -> send event if asked */
-    if (This->hEvent)
-        SetEvent(This->hEvent);
-    
     if (wparam == WM_MOUSEMOVE) {
 	if (This->absolute) {
 	    if (hook->pt.x != This->prevX)
-		GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x, hook->time, 0);
+                GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x,
+                          hook->time, This->dinput->evsequence);
 	    if (hook->pt.y != This->prevY)
-		GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y, hook->time, 0);
+                GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y,
+                          hook->time, This->dinput->evsequence);
 	} else {
 	    /* Now, warp handling */
 	    if ((This->need_warp == WARP_STARTED) &&
@@ -450,22 +448,22 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 		(This->need_warp == WARP_STARTED)) {
 		if (hook->pt.x != This->prevX)
 		    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->prevX,
-			      hook->time, (This->dinput->evsequence)++);
+                              hook->time, This->dinput->evsequence);
 		if (hook->pt.y != This->prevY)
 		    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->prevY,
-			      hook->time, (This->dinput->evsequence)++);
+                              hook->time, This->dinput->evsequence);
 	    } else {
 		/* This is the first time the event handler has been called after a
 		   GetDeviceData or GetDeviceState. */
 		if (hook->pt.x != This->mapped_center.x) {
 		    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->mapped_center.x,
-			      hook->time, (This->dinput->evsequence)++);
+                              hook->time, This->dinput->evsequence);
 		    This->need_warp = WARP_NEEDED;
 		}
 		
 		if (hook->pt.y != This->mapped_center.y) {
 		    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->mapped_center.y,
-			      hook->time, (This->dinput->evsequence)++);
+                              hook->time, This->dinput->evsequence);
 		    This->need_warp = WARP_NEEDED;
 		}
 	    }
@@ -489,38 +487,38 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     switch(wparam) {
         case WM_LBUTTONDOWN:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x80,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[0] = 0x80;
 	    break;
 	case WM_LBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x00,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[0] = 0x00;
 	    break;
 	case WM_RBUTTONDOWN:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x80,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[1] = 0x80;
 	    break;
 	case WM_RBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x00,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[1] = 0x00;
 	    break;
 	case WM_MBUTTONDOWN:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x80,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[2] = 0x80;
 	    break;
 	case WM_MBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x00,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.rgbButtons[2] = 0x00;
 	    break;
 	case WM_MOUSEWHEEL:
 	    wdata = (short)HIWORD(hook->mouseData);
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_Z_POSITION], wdata,
-		      hook->time, This->dinput->evsequence++);
+                      hook->time, This->dinput->evsequence);
 	    This->m_state.lZ += wdata;
 	    break;
     }
@@ -529,7 +527,12 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	  This->m_state.lX, This->m_state.lY,
 	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
     
+    This->dinput->evsequence++;
+
   end:
+    /* Mouse moved -> send event if asked */
+    if (This->hEvent) SetEvent(This->hEvent);
+    
     LeaveCriticalSection(&(This->crit));
     
     if (dwCoop & DISCL_NONEXCLUSIVE) {
