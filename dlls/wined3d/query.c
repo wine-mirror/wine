@@ -251,7 +251,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     /*dwGetDataFlags = 0 || D3DGETDATA_FLUSH
     D3DGETDATA_FLUSH may return WINED3DERR_DEVICELOST if the device is lost
     */
-    FIXME("(%p) : stub\n", This);
+    FIXME("(%p) : type %#x, Partial stub\n", This, This->type);
     return S_OK; /* S_OK if the query data is available*/
 }
 
@@ -259,7 +259,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
 static DWORD  WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     int dataSize = 0;
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) : type %#x\n", This, This->type);
     switch(This->type){
     case WINED3DQUERYTYPE_VCACHE:
         dataSize = sizeof(WINED3DDEVINFO_VCACHE);
