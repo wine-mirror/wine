@@ -2504,6 +2504,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_CONTEXT_VALUE:
 	 FIXME("Option INTERNET_OPTION_CONTEXT_VALUE; STUB\n");
 	 break;
+    case INTERNET_OPTION_SECURITY_FLAGS:
+	 FIXME("Option INTERNET_OPTION_SECURITY_FLAGS; STUB\n");
+	 break;
     default:
         FIXME("Option %ld STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
