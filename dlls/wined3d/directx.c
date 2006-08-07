@@ -1950,10 +1950,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                              D3DTEXOPCAPS_SELECTARG1  |
                              D3DTEXOPCAPS_SELECTARG2  |
                              D3DTEXOPCAPS_DISABLE;
-#if defined(GL_VERSION_1_3)
-    *pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 |
-                             D3DTEXOPCAPS_SUBTRACT;
-#endif
+
     if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) ||
         GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) ||
         GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
@@ -1961,7 +1958,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                 D3DTEXOPCAPS_BLENDTEXTUREALPHA  |
                                 D3DTEXOPCAPS_BLENDFACTORALPHA   |
                                 D3DTEXOPCAPS_BLENDCURRENTALPHA  |
-                                D3DTEXOPCAPS_LERP;
+                                D3DTEXOPCAPS_LERP               |
+                                D3DTEXOPCAPS_SUBTRACT;
     }
     if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
         *pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH             |
@@ -1970,7 +1968,15 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                 D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
                                 D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
+    if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3))
+        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3;
 
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR |
+                                 D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
+    }
+    
+    
 #if 0
     *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
                             /* FIXME: Add
