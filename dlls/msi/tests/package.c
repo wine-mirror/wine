@@ -1737,6 +1737,50 @@ static void test_states(void)
     MsiCloseHandle( hpkg );
 }
 
+static void test_getproperty(void)
+{
+    MSIHANDLE hPackage = 0;
+    char prop[100];
+    DWORD size;
+    UINT r;
+
+    hPackage = package_from_db(create_package_db());
+    ok( hPackage != 0, " Failed to create package\n");
+
+    /* set the property */
+    r = MsiSetProperty(hPackage, "Name", "Value");
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* retrieve the size, NULL pointer */
+    size = 0;
+    r = MsiGetProperty(hPackage, "Name", NULL, &size);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok( size == 5, "Expected 5, got %ld\n", size);
+
+    /* retrieve the size, empty string */
+    size = 0;
+    r = MsiGetProperty(hPackage, "Name", "", &size);
+    ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok( size == 5, "Expected 5, got %ld\n", size);
+
+    /* don't change size */
+    r = MsiGetProperty(hPackage, "Name", prop, &size);
+    ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( !lstrcmp(prop, "Valu"), "Expected Valu, got %s\n", prop);
+
+    /* increase the size by 1 */
+    size++;
+    r = MsiGetProperty(hPackage, "Name", prop, &size);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( !lstrcmp(prop, "Value"), "Expected Value, got %s\n", prop);
+
+    r = MsiCloseHandle( hPackage);
+    ok( r == ERROR_SUCCESS , "Failed to close package\n" );
+    DeleteFile(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -1750,4 +1794,5 @@ START_TEST(package)
     test_msipackage();
     test_formatrecord2();
     test_states();
+    test_getproperty();
 }
