@@ -303,7 +303,7 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
     HRESULT res = S_OK;
     HFDI hfdi;
     ERF erf;
-    static CHAR empty[] = "";
+    char *str, *path, *name;
 
     TRACE("(%p, %s)\n", dest, szCabName);
 
@@ -323,9 +323,31 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR szCabName)
     if (GetFileAttributesA(dest->directory) == INVALID_FILE_ATTRIBUTES)
         return S_OK;
 
-    if (!FDICopy(hfdi, (LPSTR)szCabName, empty, 0,
+    /* split the cabinet name into path + name */
+    str = HeapAlloc(GetProcessHeap(), 0, lstrlenA(szCabName)+1);
+    if (!str)
+    {
+        res = E_OUTOFMEMORY;
+        goto end;
+    }
+    lstrcpyA(str, szCabName);
+
+    path = str;
+    name = strrchr(path, '\\');
+    if (name)
+        *name++ = 0;
+    else
+    {
+        name = path;
+        path = NULL;
+    }
+
+    if (!FDICopy(hfdi, name, path, 0,
          fdi_notify_extract, NULL, dest))
         res = E_FAIL;
+
+    HeapFree(GetProcessHeap(), 0, str);
+end:
 
     FDIDestroy(hfdi);
 
