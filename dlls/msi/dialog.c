@@ -2077,25 +2077,36 @@ static void msi_get_screen_resolution( msi_dialog *dialog, UINT *xres, UINT *yre
     *yres = atolW( num );
 }
 
-static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, LPRECT pos, LPSIZE sz )
+static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LPRECT pos )
 {
     UINT xres, yres;
+    POINT center;
+    SIZE sz;
     LONG style;
-    
-    sz->cx = msi_dialog_scale_unit( dialog, sz->cx );
-    sz->cy = msi_dialog_scale_unit( dialog, sz->cy );
+
+    center.x = MSI_RecordGetInteger( rec, 2 );
+    center.y = MSI_RecordGetInteger( rec, 3 );
+
+    sz.cx = MSI_RecordGetInteger( rec, 4 );
+    sz.cy = MSI_RecordGetInteger( rec, 5 );
+
+    sz.cx = msi_dialog_scale_unit( dialog, sz.cx );
+    sz.cy = msi_dialog_scale_unit( dialog, sz.cy );
 
     msi_get_screen_resolution( dialog, &xres, &yres );
-    pos->left = MulDiv( pos->left, xres, 100 );
-    pos->top = MulDiv( pos->top, yres, 100 );
+    center.x = MulDiv( center.x, xres, 100 );
+    center.y = MulDiv( center.y, yres, 100 );
 
     /* turn the client pos into the window rectangle */
-    pos->right = pos->left + sz->cx;
-    pos->bottom = pos->top + sz->cy;
+    pos->left = center.x - sz.cx/2;
+    pos->right = pos->left + sz.cx;
+    pos->top = center.y - sz.cy/2;
+    pos->bottom = pos->top + sz.cy;
+
+    TRACE("%lu %lu %lu %lu\n", pos->left, pos->top, pos->right, pos->bottom);
+
     style = GetWindowLongPtrW( dialog->hwnd, GWL_STYLE );
     AdjustWindowRect( pos, style, FALSE );
-    sz->cx = pos->right - pos->left;
-    sz->cy = pos->bottom - pos->top;
 }
 
 static BOOL msi_control_set_next( msi_control *control, msi_control *next )
@@ -2140,7 +2151,6 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     msi_dialog *dialog = (msi_dialog*) cs->lpCreateParams;
     MSIRECORD *rec = NULL;
     LPWSTR title = NULL;
-    SIZE size;
     RECT pos;
 
     TRACE("%p %p\n", dialog, dialog->package);
@@ -2157,11 +2167,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 
     dialog->scale = msi_dialog_get_sans_serif_height(dialog->hwnd);
 
-    pos.left = MSI_RecordGetInteger( rec, 2 );
-    pos.top = MSI_RecordGetInteger( rec, 3 );
-    size.cx = MSI_RecordGetInteger( rec, 4 );
-    size.cy = MSI_RecordGetInteger( rec, 5 );
-    msi_dialog_adjust_dialog_pos( dialog, &pos, &size );
+    msi_dialog_adjust_dialog_pos( dialog, rec, &pos );
 
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
 
@@ -2176,7 +2182,8 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     SetWindowTextW( hwnd, title );
     msi_free( title );
 
-    SetWindowPos( hwnd, 0, pos.left, pos.top, size.cx, size.cy,
+    SetWindowPos( hwnd, 0, pos.left, pos.top,
+                  pos.right - pos.left, pos.bottom - pos.top,
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
     msi_dialog_build_font_list( dialog );
