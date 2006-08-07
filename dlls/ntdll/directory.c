@@ -1150,7 +1150,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     TRACE("trying optimisation for file %s\n", debugstr_us( mask ));
 
     unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len + 1)))
     {
         io->u.Status = STATUS_NO_MEMORY;
         return 0;
@@ -1159,6 +1159,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                            NULL, &used_default );
     if (ret > 0 && !used_default)
     {
+        unix_name[ret] = 0;
         if (restart_scan)
         {
             lseek( fd, 0, SEEK_SET );
