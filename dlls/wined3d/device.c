@@ -4363,24 +4363,31 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
 
     so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
     */
-        TRACE("(%p)->(%s,%ld) Texture wraping not yet supported\n",This, debug_d3drenderstate(State), Value);
-    break;
-    case WINED3DRS_MULTISAMPLEANTIALIAS      :
     {
-        if (!GL_SUPPORT(ARB_MULTISAMPLE)) {
-            TRACE("Multisample antialiasing not supported\n");
-            break;
-        }
-
         if(Value) {
-            glEnable(GL_MULTISAMPLE_ARB);
-            checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
-        } else {
-            glDisable(GL_MULTISAMPLE_ARB);
-            checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
+            ERR("(%p)->(%s,%ld) Texture wraping not yet supported\n",This, debug_d3drenderstate(State), Value);
         }
         break;
     }
+
+    case WINED3DRS_MULTISAMPLEANTIALIAS      :
+    {
+        if( GL_SUPPORT(ARB_MULTISAMPLE) ) {
+            if(Value) {
+                glEnable(GL_MULTISAMPLE_ARB);
+                checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
+            } else {
+                glDisable(GL_MULTISAMPLE_ARB);
+                checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
+            }
+        } else {
+            if(Value) {
+                ERR("Multisample antialiasing not supported by gl\n");
+            }
+        }
+        break;
+    }
+
     case WINED3DRS_SCISSORTESTENABLE :
     {
         if(Value) {
