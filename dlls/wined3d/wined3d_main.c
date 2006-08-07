@@ -100,6 +100,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        HKEY hkey = 0;
        HKEY appkey = 0;
        DWORD len;
+       wined3d_settings.emulated_textureram = 64*1024*1024;
 
        DisableThreadLibraryCalls(hInstDLL);
 
@@ -224,6 +225,19 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     TRACE("Reading render targets via textures and writing via textures\n");
                     wined3d_settings.rendertargetlock_mode = RTL_TEXTEX;
                 }
+            }
+            if ( !get_config_key( hkey, appkey, "VideoMemorySize", buffer, size) )
+            {
+                int TmpVideoMemorySize = atoi(buffer);
+                if(TmpVideoMemorySize > 0)
+                {
+                    wined3d_settings.emulated_textureram = TmpVideoMemorySize *1024*1024;
+                    TRACE("Use %iMB = %d byte for emulated_textureram\n",
+                            TmpVideoMemorySize,
+                            wined3d_settings.emulated_textureram);
+                }
+                else
+                    ERR("VideoMemorySize is %i but must be >0\n", TmpVideoMemorySize);
             }
        }
        if (wined3d_settings.vs_mode == VS_HW)

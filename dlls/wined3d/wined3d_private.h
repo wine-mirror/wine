@@ -159,6 +159,8 @@ typedef struct wined3d_settings_s {
 /* nonpower 2 function */
   int nonpower2_mode;
   int rendertargetlock_mode;
+/* Memory tracking and object counting */
+  unsigned int emulated_textureram;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings;

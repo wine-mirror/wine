@@ -70,9 +70,6 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
-/* Memory tracking and object counting */
-static unsigned int emulated_textureram = 64*1024*1024;
-
 /* TODO: setup some flags in the regestry to enable, disable pbuffer support */
 /* enable pbuffer support for offscreen textures */
 BOOL pbuffer_support     = FALSE;
@@ -2264,19 +2261,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWin
 static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
     /** NOTE: There's a probably  a hack-around for this one by putting as many pbuffers, VBO's (or whatever)
     * Into the video ram as possible and seeing how many fit
-    * you can also get the correct initial value from via X and ATI's driver
+    * you can also get the correct initial value from nvidia and ATI's driver via X
+    * texture memory is video memory + AGP memory
     *******************/
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     static BOOL showfixmes = TRUE;
     if (showfixmes) {
-        FIXME("(%p) : stub, emulating %dMB for now, returning %dMB\n", This, (emulated_textureram/(1024*1024)),
-         ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
+        FIXME("(%p) : stub, simulating %dMB for now, returning %dMB left\n", This,
+         (wined3d_settings.emulated_textureram/(1024*1024)),
+         ((wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
          showfixmes = FALSE;
     }
-    TRACE("(%p) :  emulating %dMB for now, returning %dMB\n",  This, (emulated_textureram/(1024*1024)),
-         ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
-    /* videomemory is simulated videomemory + AGP memory left */
-    return (emulated_textureram - wineD3DGlobalStatistics->glsurfaceram);
+    TRACE("(%p) : simulating %dMB, returning %dMB left\n",  This,
+         (wined3d_settings.emulated_textureram/(1024*1024)),
+         ((wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
+    /* return simulated texture memory left */
+    return (wined3d_settings.emulated_textureram - wineD3DGlobalStatistics->glsurfaceram);
 }
 
 
