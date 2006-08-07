@@ -555,6 +555,7 @@ typedef struct DataAdviseHolder
   LONG                  ref;
   DWORD                 maxCons;
   DataAdviseConnection* Connections;
+  IDataObject*          delegate;
 } DataAdviseHolder;
 
 /* this connection has also has been advised to the delegate data object */
@@ -572,6 +573,11 @@ static void DataAdviseHolder_Destructor(DataAdviseHolder* ptrToDestroy)
   {
     if (ptrToDestroy->Connections[index].sink != NULL)
     {
+      if (ptrToDestroy->delegate && 
+          (ptrToDestroy->Connections[index].advf & WINE_ADVF_REMOTE))
+        IDataObject_DUnadvise(ptrToDestroy->delegate,
+          ptrToDestroy->Connections[index].remote_connection);
+
       IAdviseSink_Release(ptrToDestroy->Connections[index].sink);
       ptrToDestroy->Connections[index].sink = NULL;
     }
@@ -725,6 +731,23 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
     if(advf & ADVF_PRIMEFIRST) {
       IDataAdviseHolder_SendOnDataChange(iface, pDataObject, 0, advf);
     }
+
+    /* if we are already connected advise the remote object */
+    if (This->delegate)
+    {
+        HRESULT hr;
+
+        hr = IDataObject_DAdvise(This->delegate, &This->Connections[index].fmat,
+                                 This->Connections[index].advf,
+                                 This->Connections[index].sink,
+                                 &This->Connections[index].remote_connection);
+        if (FAILED(hr))
+        {
+            IDataAdviseHolder_Unadvise(iface, index + 1);
+            return hr;
+        }
+        This->Connections[index].advf |= WINE_ADVF_REMOTE;
+    }
   }
   /*
    * Return the index as the cookie.
@@ -763,11 +786,16 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
   if (This->Connections[dwConnection].sink == NULL)
     return OLE_E_NOCONNECTION;
 
+  if (This->delegate && This->Connections[dwConnection].advf & WINE_ADVF_REMOTE)
+    IDataObject_DUnadvise(This->delegate,
+      This->Connections[dwConnection].remote_connection);
+
   /*
    * Release the sink and mark the spot in the list as free.
    */
   IAdviseSink_Release(This->Connections[dwConnection].sink);
   memset(&(This->Connections[dwConnection]), 0, sizeof(DataAdviseConnection));
+
   return S_OK;
 }
 
@@ -852,13 +880,26 @@ HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDeleg
       This->Connections[index].advf |= WINE_ADVF_REMOTE;
     }
   }
-  /* FIXME: store pDelegate somewhere */
+  This->delegate = pDelegate;
   return hr;
 }
 
 void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface)
 {
-    /* FIXME: Unadvise all remote interfaces */
+  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DWORD index;
+
+  for(index = 0; index < This->maxCons; index++)
+  {
+    if((This->Connections[index].sink != NULL) &&
+       (This->Connections[index].advf & WINE_ADVF_REMOTE))
+    {
+      IDataObject_DUnadvise(This->delegate,
+        This->Connections[index].remote_connection);
+      This->Connections[index].advf &= ~WINE_ADVF_REMOTE;
+    }
+  }
+  This->delegate = NULL;
 }
 
 /******************************************************************************
@@ -877,6 +918,7 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
 				     HEAP_ZERO_MEMORY,
 				     newHolder->maxCons *
 				     sizeof(DataAdviseConnection));
+  newHolder->delegate = NULL;
 
   TRACE("returning %p\n", newHolder);
   return (IDataAdviseHolder*)newHolder;
