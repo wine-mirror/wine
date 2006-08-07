@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(powermgnt);
  */
 BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
 {
-    FIXME("(hDevice %p pfOn %p): stub\n", hDevice, pfOn);
+    WARN("(hDevice %p pfOn %p): stub\n", hDevice, pfOn);
     return TRUE; /* no information */
 }
 
@@ -39,7 +39,7 @@ BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 {
-    FIXME("(): stub, harmless.\n");
+    WARN("(): stub, harmless.\n");
     return FALSE;   /* no power management support */
 }
 
@@ -48,7 +48,7 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
  */
 BOOL WINAPI IsSystemResumeAutomatic(void)
 {
-    FIXME("(): stub, harmless.\n");
+    WARN("(): stub, harmless.\n");
     return FALSE;
 }
 
@@ -57,7 +57,7 @@ BOOL WINAPI IsSystemResumeAutomatic(void)
  */
 BOOL WINAPI RequestWakeupLatency(LATENCY_TIME latency)
 {
-    FIXME("(): stub, harmless.\n");
+    WARN("(): stub, harmless.\n");
     return TRUE;
 }
 
@@ -67,7 +67,7 @@ BOOL WINAPI RequestWakeupLatency(LATENCY_TIME latency)
 BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
                                   BOOL force_flag)
 {
-    FIXME("(): stub, harmless.\n");
+    WARN("(): stub, harmless.\n");
     /* suspend_or_hibernate flag: w95 does not support
        this feature anyway */
 
@@ -95,7 +95,7 @@ EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
         ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
     EXECUTION_STATE old = current;
 
-    FIXME("(0x%lx): stub, harmless.\n", flags);
+    WARN("(0x%lx): stub, harmless.\n", flags);
 
     if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
         current = flags;
