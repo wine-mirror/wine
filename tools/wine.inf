@@ -2120,7 +2120,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,rundll32.exe
 10,,winebrowser.exe
 10,,winhelp.exe
-10,,winhlp32.exe,winhelp.exe
 10,command,start.exe
 11,,advapi32.dll
 11,,advpack.dll
@@ -2132,7 +2131,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dbghelp.dll
 11,,ddraw.dll
 11,,gdi32.dll
-11,,help.exe,winhelp.exe
 11,,hhctrl.ocx
 11,,imaadp32.acm
 11,,imagehlp.dll
