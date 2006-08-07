@@ -39,7 +39,10 @@ AC_CACHE_CHECK([for -l$1 soname], ac_Lib,
 [ac_get_soname_save_LIBS=$LIBS
 LIBS="-l$1 $3 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
-  [AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep lib$1\\.$LIBEXT | sed -e "s/^.*\(lib$1\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`])
+  [case "$LIBEXT" in
+    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep lib$1\\.[[0-9A-Za-z.]]*dylib | sed -e "s/^.*\/\(lib$1\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
+    so) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep lib$1\\.so | sed -e "s/^.*\(lib$1\.so[[^	 ]]*\).*$/\1/"';2,$d'`]) ;;
+  esac
   if test "x$ac_Lib" = "x"
   then
      AS_VAR_SET(ac_Lib,"lib$1.$LIBEXT")

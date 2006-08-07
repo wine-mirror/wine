@@ -17382,7 +17382,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.$LIBEXT | sed -e "s/^.*\(libX11\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_X11=`otool -L conftest$ac_exeext | grep libX11\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libX11\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.so | sed -e "s/^.*\(libX11\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_X11" = "x"
   then
      ac_cv_lib_soname_X11="libX11.$LIBEXT"
@@ -17471,7 +17474,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.$LIBEXT | sed -e "s/^.*\(libXext\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_Xext=`otool -L conftest$ac_exeext | grep libXext\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libXext\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.so | sed -e "s/^.*\(libXext\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_Xext" = "x"
   then
      ac_cv_lib_soname_Xext="libXext.$LIBEXT"
@@ -17560,7 +17566,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xi=`$ac_cv_path_LDD conftest$ac_exeext | grep libXi\\.$LIBEXT | sed -e "s/^.*\(libXi\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_Xi=`otool -L conftest$ac_exeext | grep libXi\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libXi\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_Xi=`$ac_cv_path_LDD conftest$ac_exeext | grep libXi\\.so | sed -e "s/^.*\(libXi\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_Xi" = "x"
   then
      ac_cv_lib_soname_Xi="libXi.$LIBEXT"
@@ -17649,7 +17658,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.$LIBEXT | sed -e "s/^.*\(libXrender\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_Xrender=`otool -L conftest$ac_exeext | grep libXrender\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libXrender\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.so | sed -e "s/^.*\(libXrender\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_Xrender" = "x"
   then
      ac_cv_lib_soname_Xrender="libXrender.$LIBEXT"
@@ -17738,7 +17750,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xrandr=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrandr\\.$LIBEXT | sed -e "s/^.*\(libXrandr\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_Xrandr=`otool -L conftest$ac_exeext | grep libXrandr\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libXrandr\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_Xrandr=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrandr\\.so | sed -e "s/^.*\(libXrandr\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_Xrandr" = "x"
   then
      ac_cv_lib_soname_Xrandr="libXrandr.$LIBEXT"
@@ -17827,7 +17842,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.$LIBEXT | sed -e "s/^.*\(libfreetype\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_freetype=`otool -L conftest$ac_exeext | grep libfreetype\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libfreetype\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.so | sed -e "s/^.*\(libfreetype\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_freetype" = "x"
   then
      ac_cv_lib_soname_freetype="libfreetype.$LIBEXT"
@@ -17916,7 +17934,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.$LIBEXT | sed -e "s/^.*\(libGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_GL=`otool -L conftest$ac_exeext | grep libGL\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.so | sed -e "s/^.*\(libGL\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_GL" = "x"
   then
      ac_cv_lib_soname_GL="libGL.$LIBEXT"
@@ -18005,7 +18026,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_dbus_1=`$ac_cv_path_LDD conftest$ac_exeext | grep libdbus-1\\.$LIBEXT | sed -e "s/^.*\(libdbus-1\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_dbus_1=`otool -L conftest$ac_exeext | grep libdbus-1\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libdbus-1\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_dbus_1=`$ac_cv_path_LDD conftest$ac_exeext | grep libdbus-1\\.so | sed -e "s/^.*\(libdbus-1\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_dbus_1" = "x"
   then
      ac_cv_lib_soname_dbus_1="libdbus-1.$LIBEXT"
@@ -18094,7 +18118,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_hal=`$ac_cv_path_LDD conftest$ac_exeext | grep libhal\\.$LIBEXT | sed -e "s/^.*\(libhal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_hal=`otool -L conftest$ac_exeext | grep libhal\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libhal\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_hal=`$ac_cv_path_LDD conftest$ac_exeext | grep libhal\\.so | sed -e "s/^.*\(libhal\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_hal" = "x"
   then
      ac_cv_lib_soname_hal="libhal.$LIBEXT"
@@ -18183,7 +18210,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_txc_dxtn=`$ac_cv_path_LDD conftest$ac_exeext | grep libtxc_dxtn\\.$LIBEXT | sed -e "s/^.*\(libtxc_dxtn\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_txc_dxtn=`otool -L conftest$ac_exeext | grep libtxc_dxtn\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libtxc_dxtn\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_txc_dxtn=`$ac_cv_path_LDD conftest$ac_exeext | grep libtxc_dxtn\\.so | sed -e "s/^.*\(libtxc_dxtn\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_txc_dxtn" = "x"
   then
      ac_cv_lib_soname_txc_dxtn="libtxc_dxtn.$LIBEXT"
@@ -18272,7 +18302,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.$LIBEXT | sed -e "s/^.*\(libcups\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_cups=`otool -L conftest$ac_exeext | grep libcups\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libcups\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.so | sed -e "s/^.*\(libcups\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_cups" = "x"
   then
      ac_cv_lib_soname_cups="libcups.$LIBEXT"
@@ -18361,7 +18394,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.$LIBEXT | sed -e "s/^.*\(libjack\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_jack=`otool -L conftest$ac_exeext | grep libjack\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libjack\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.so | sed -e "s/^.*\(libjack\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_jack" = "x"
   then
      ac_cv_lib_soname_jack="libjack.$LIBEXT"
@@ -18450,7 +18486,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_fontconfig=`$ac_cv_path_LDD conftest$ac_exeext | grep libfontconfig\\.$LIBEXT | sed -e "s/^.*\(libfontconfig\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_fontconfig=`otool -L conftest$ac_exeext | grep libfontconfig\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libfontconfig\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_fontconfig=`$ac_cv_path_LDD conftest$ac_exeext | grep libfontconfig\\.so | sed -e "s/^.*\(libfontconfig\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_fontconfig" = "x"
   then
      ac_cv_lib_soname_fontconfig="libfontconfig.$LIBEXT"
@@ -18539,7 +18578,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.$LIBEXT | sed -e "s/^.*\(libssl\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_ssl=`otool -L conftest$ac_exeext | grep libssl\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libssl\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.so | sed -e "s/^.*\(libssl\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_ssl" = "x"
   then
      ac_cv_lib_soname_ssl="libssl.$LIBEXT"
@@ -18628,7 +18670,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.$LIBEXT | sed -e "s/^.*\(libcrypto\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_crypto=`otool -L conftest$ac_exeext | grep libcrypto\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libcrypto\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.so | sed -e "s/^.*\(libcrypto\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_crypto" = "x"
   then
      ac_cv_lib_soname_crypto="libcrypto.$LIBEXT"
@@ -18717,7 +18762,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep libncurses\\.$LIBEXT | sed -e "s/^.*\(libncurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_ncurses=`otool -L conftest$ac_exeext | grep libncurses\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libncurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep libncurses\\.so | sed -e "s/^.*\(libncurses\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_ncurses" = "x"
   then
      ac_cv_lib_soname_ncurses="libncurses.$LIBEXT"
@@ -18806,7 +18854,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep libcurses\\.$LIBEXT | sed -e "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_curses=`otool -L conftest$ac_exeext | grep libcurses\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libcurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep libcurses\\.so | sed -e "s/^.*\(libcurses\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_curses" = "x"
   then
      ac_cv_lib_soname_curses="libcurses.$LIBEXT"
@@ -18895,7 +18946,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_jpeg=`$ac_cv_path_LDD conftest$ac_exeext | grep libjpeg\\.$LIBEXT | sed -e "s/^.*\(libjpeg\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_jpeg=`otool -L conftest$ac_exeext | grep libjpeg\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libjpeg\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_jpeg=`$ac_cv_path_LDD conftest$ac_exeext | grep libjpeg\\.so | sed -e "s/^.*\(libjpeg\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_jpeg" = "x"
   then
      ac_cv_lib_soname_jpeg="libjpeg.$LIBEXT"
@@ -18984,7 +19038,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ungif=`$ac_cv_path_LDD conftest$ac_exeext | grep libungif\\.$LIBEXT | sed -e "s/^.*\(libungif\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_ungif=`otool -L conftest$ac_exeext | grep libungif\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libungif\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_ungif=`$ac_cv_path_LDD conftest$ac_exeext | grep libungif\\.so | sed -e "s/^.*\(libungif\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_ungif" = "x"
   then
      ac_cv_lib_soname_ungif="libungif.$LIBEXT"
@@ -19073,7 +19130,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_gif=`$ac_cv_path_LDD conftest$ac_exeext | grep libgif\\.$LIBEXT | sed -e "s/^.*\(libgif\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_gif=`otool -L conftest$ac_exeext | grep libgif\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libgif\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_gif=`$ac_cv_path_LDD conftest$ac_exeext | grep libgif\\.so | sed -e "s/^.*\(libgif\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_gif" = "x"
   then
      ac_cv_lib_soname_gif="libgif.$LIBEXT"
@@ -19162,7 +19222,10 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_capi20=`$ac_cv_path_LDD conftest$ac_exeext | grep libcapi20\\.$LIBEXT | sed -e "s/^.*\(libcapi20\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  case "$LIBEXT" in
+    dylib) ac_cv_lib_soname_capi20=`otool -L conftest$ac_exeext | grep libcapi20\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libcapi20\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    so) ac_cv_lib_soname_capi20=`$ac_cv_path_LDD conftest$ac_exeext | grep libcapi20\\.so | sed -e "s/^.*\(libcapi20\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
   if test "x$ac_cv_lib_soname_capi20" = "x"
   then
      ac_cv_lib_soname_capi20="libcapi20.$LIBEXT"
