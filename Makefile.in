@@ -127,7 +127,7 @@ tags ctags:
 	find $(TOPSRCDIR)/ -name '*.[ch]' -print | ctags --c-types=+px -L -
 
 manpages htmlpages sgmlpages:
-	cd documentation && $(MAKE) $@
+	@cd documentation && $(MAKE) $@
 
 clean::
 	$(RM) wine

@@ -200,7 +200,7 @@ winapi_check:: dummy
 # Rules for dependencies
 
 $(SUBDIRS:%=%/__depend__): dummy
-	cd `dirname $@` && $(MAKE) depend
+	@cd `dirname $@` && $(MAKE) depend
 
 depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
 	$(MAKEDEP) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(EXTRA_SRCS)
@@ -210,10 +210,10 @@ depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
 # Rules for cleaning
 
 $(SUBDIRS:%=%/__clean__): dummy
-	cd `dirname $@` && $(MAKE) clean
+	@cd `dirname $@` && $(MAKE) clean
 
 $(SUBDIRS:%=%/__testclean__): dummy
-	cd `dirname $@` && $(MAKE) testclean
+	@cd `dirname $@` && $(MAKE) testclean
 
 $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
@@ -228,16 +228,16 @@ clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 # Rules for installing
 
 $(SUBDIRS:%=%/__install__): dummy
-	cd `dirname $@` && $(MAKE) install
+	@cd `dirname $@` && $(MAKE) install
 
 $(SUBDIRS:%=%/__install-lib__): dummy
-	cd `dirname $@` && $(MAKE) install-lib
+	@cd `dirname $@` && $(MAKE) install-lib
 
 $(SUBDIRS:%=%/__install-dev__): dummy
-	cd `dirname $@` && $(MAKE) install-dev
+	@cd `dirname $@` && $(MAKE) install-dev
 
 $(SUBDIRS:%=%/__uninstall__): dummy
-	cd `dirname $@` && $(MAKE) uninstall
+	@cd `dirname $@` && $(MAKE) uninstall
 
 install:: $(INSTALLSUBDIRS:%=%/__install__)
 

@@ -8,15 +8,15 @@ MODULE    = none
 
 manpages:
 	$(MKINSTALLDIRS) man$(api_manext)
-	cd $(DLLDIR) && $(MAKE) man
+	@cd $(DLLDIR) && $(MAKE) man
 
 htmlpages:
 	$(MKINSTALLDIRS) html
-	cd $(DLLDIR) && $(MAKE) doc-html
+	@cd $(DLLDIR) && $(MAKE) doc-html
 
 sgmlpages:
 	$(MKINSTALLDIRS) api-guide
-	cd $(DLLDIR) && $(MAKE) doc-sgml
+	@cd $(DLLDIR) && $(MAKE) doc-sgml
 
 .PHONY: manpages htmlpages sgmlpages
 
