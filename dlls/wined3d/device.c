@@ -3886,9 +3886,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
     case WINED3DRS_RANGEFOGENABLE            :
         {
             if (Value) {
-              TRACE("Enabled RANGEFOG");
+              TRACE("Enabled RANGEFOG\n");
             } else {
-              TRACE("Disabled RANGEFOG");
+              TRACE("Disabled RANGEFOG\n");
             }
         }
         break;
