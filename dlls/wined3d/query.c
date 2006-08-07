@@ -159,6 +159,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
         if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
             GLint samples;
             GL_EXTCALL(glGetQueryObjectivARB(((WineQueryOcclusionData *)This->extendedData)->queryId, GL_QUERY_RESULT_ARB, &samples));
+            checkGLcall("glGetQueryObjectiv()\n");
             TRACE("(%p) : Returning %d samples.\n", This, samples);
             *data = samples;
         } else {
@@ -326,9 +327,11 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
             if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
                 if (dwIssueFlags & D3DISSUE_BEGIN) {
                     GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
+                    checkGLcall("glBeginQuery()");
                 }
                 if (dwIssueFlags & D3DISSUE_END) {
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
+                    checkGLcall("glEndQuery()");
                 }
             } else {
                 FIXME("(%p) : Occlusion queries not supported\n", This);
