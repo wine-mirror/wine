@@ -157,7 +157,7 @@ static long fdi_seek(INT_PTR hf, long dist, int seektype)
 static void fill_file_node(struct ExtractFileList *pNode, LPSTR szFilename)
 {
     pNode->next = NULL;
-    pNode->unknown = TRUE;
+    pNode->flag = FALSE;
 
     pNode->filename = HeapAlloc(GetProcessHeap(), 0, strlen(szFilename) + 1);
     lstrcpyA(pNode->filename, szFilename);
@@ -216,7 +216,8 @@ static INT_PTR fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
                 pDestination->filecount++;
             }
 
-            if (pDestination->flags & EXTRACT_EXTRACTFILES)
+            if ((pDestination->flags & EXTRACT_EXTRACTFILES) ||
+                file_in_list(pDestination->filterlist, pfdin->psz1))
             {
                 /* skip this file it it's not in the file list */
                 if (!file_in_list(pDestination->filelist, pfdin->psz1))

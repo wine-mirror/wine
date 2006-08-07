@@ -20,8 +20,16 @@
 
 #include <stdio.h>
 #include <windows.h>
-#include <fci.h>
+#include "fci.h"
 #include "wine/test.h"
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#endif
+
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER 0xffffffff
+#endif
 
 /* make the max size large so there is only one cab file */
 #define MEDIA_SIZE          999999999
@@ -38,7 +46,7 @@
 struct ExtractFileList {
     LPSTR  filename;
     struct ExtractFileList *next;
-    BOOL   unknown;  /* always 1L */
+    BOOL   flag;
 };
 
 /* the first parameter of the function extract */
@@ -48,8 +56,10 @@ typedef struct {
     struct ExtractFileList *filelist; /* 0x010 */
     long   filecount;        /* 0x014 */
     long   flags;            /* 0x018 */
-    char   directory[0x104]; /* 0x01c */
-    char   lastfile[0x20c];  /* 0x120 */
+    char   directory[MAX_PATH]; /* 0x01c */
+    char   lastfile[MAX_PATH];  /* 0x120 */
+    char   unknown2[MAX_PATH];  /* 0x224 */
+    struct ExtractFileList *filterlist; /* 0x328 */
 } EXTRACTDEST;
 
 /* function pointers */
@@ -310,6 +320,16 @@ static void create_cab_file(void)
     ok(res, "Failed to destroy the cabinet\n");
 }
 
+static BOOL check_list(EXTRACTDEST *dest, const char *filename, BOOL flag)
+{
+    struct ExtractFileList *i;
+
+    for (i = dest->filelist; i; i=i->next)
+        if (!lstrcmp(filename, i->filename))
+            return (flag == i->flag);
+    return FALSE;
+}
+
 static void test_Extract(void)
 {
     EXTRACTDEST extractDest;
@@ -362,9 +382,15 @@ static void test_Extract(void)
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
 
+    ok(check_list(&extractDest, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "a.txt", FALSE), "list entry wrong\n");
+
     /* remove two of the files in the list */
     extractDest.filelist->next = extractDest.filelist->next->next;
     extractDest.filelist->next->next = NULL;
+    extractDest.filterlist = NULL;
     CreateDirectoryA("dest", NULL);
     res = pExtract(&extractDest, "extract.cab");
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
@@ -372,6 +398,59 @@ static void test_Extract(void)
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
+
+    todo_wine {
+    ok(check_list(&extractDest, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&extractDest, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "b.txt", FALSE), "list entry wrong\n");
+    ok(!check_list(&extractDest, "a.txt", FALSE), "list entry wrong\n");
+    }
+
+    extractDest.flags = 1;
+    extractDest.filelist = NULL;
+    res = pExtract(&extractDest, "extract.cab");
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
+    ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
+    ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
+    ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
+
+    todo_wine {
+    ok(check_list(&extractDest, "testdir\\d.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "testdir\\c.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "b.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "a.txt", TRUE), "list entry wrong\n");
+    }
+
+    extractDest.flags = 0;
+    res = pExtract(&extractDest, "extract.cab");
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
+    ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
+
+    todo_wine {
+    ok(check_list(&extractDest, "testdir\\d.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "testdir\\c.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "b.txt", TRUE), "list entry wrong\n");
+    ok(check_list(&extractDest, "a.txt", TRUE), "list entry wrong\n");
+    }
+
+    extractDest.flags = 0;
+    extractDest.filterlist = extractDest.filelist;
+    res = pExtract(&extractDest, "extract.cab");
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
+    ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
+    ok(DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to exist\n");
+
+    ok(check_list(&extractDest, "testdir\\d.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "testdir\\c.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "b.txt", FALSE), "list entry wrong\n");
+    ok(check_list(&extractDest, "a.txt", FALSE), "list entry wrong\n");
+
     ok(RemoveDirectoryA("dest\\testdir"), "Expected dest\\testdir to exist\n");
     ok(RemoveDirectoryA("dest"), "Expected dest\\testdir to exist\n");
 }
