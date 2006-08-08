@@ -1042,7 +1042,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
             fileDest = &flTo->feFiles[i];
 
         if (IsAttribDir(entryToCopy->attributes) &&
-            !lstrcmpW(entryToCopy->szFullPath, fileDest->szDirectory))
+            !lstrcmpiW(entryToCopy->szFullPath, fileDest->szDirectory))
         {
             return ERROR_SUCCESS;
         }
@@ -1052,7 +1052,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
 
         create_dest_dirs(fileDest->szDirectory);
 
-        if (!strcmpW(entryToCopy->szFullPath, fileDest->szFullPath))
+        if (!lstrcmpiW(entryToCopy->szFullPath, fileDest->szFullPath))
         {
             if (IsAttribFile(entryToCopy->attributes))
                 return ERROR_NO_MORE_SEARCH_HANDLES;
