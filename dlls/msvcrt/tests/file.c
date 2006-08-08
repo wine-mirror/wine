@@ -372,6 +372,53 @@ static void test_fgetwc( void )
   unlink(tempf);
 }
 
+static void test_ctrlz( void )
+{
+  char* tempf;
+  FILE *tempfh;
+  static const char mytext[]= "This is test_ctrlz";
+  char buffer[256];
+  int i, j;
+  long l;
+
+  tempf=_tempnam(".","wne");
+  tempfh = fopen(tempf,"wb");
+  fputs(mytext,tempfh);
+  j = 0x1a; /* a ctrl-z character signals EOF in text mode */
+  fputc(j,tempfh);
+  j = '\r';
+  fputc(j,tempfh);
+  j = '\n';
+  fputc(j,tempfh);
+  j = 'a';
+  fputc(j,tempfh);
+  fclose(tempfh);
+  tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
+  ok(fgets(buffer,256,tempfh) != 0,"fgets failed unexpected\n");
+  i=strlen(buffer);
+  j=strlen(mytext);
+  ok(i==j, "returned string length expected %d got %d\n", j, i);
+  j+=4; /* ftell should indicate the true end of file */
+  l=ftell(tempfh);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
+  ok(feof(tempfh), "did not get EOF\n");
+  fclose(tempfh);
+  
+  tempfh = fopen(tempf,"rb"); /* open in BINARY mode */
+  ok(fgets(buffer,256,tempfh) != 0,"fgets failed unexpected\n");
+  i=strlen(buffer);
+  j=strlen(mytext)+3; /* should get through newline */
+  ok(i==j, "returned string length expected %d got %d\n", j, i);
+  l=ftell(tempfh);
+  ok(l==j, "ftell expected %d got %ld\n", j, l);
+  ok(fgets(buffer,256,tempfh) != 0,"fgets failed unexpected\n");
+  i=strlen(buffer);
+  ok(i==1, "returned string length expected %d got %d\n", 1, i);
+  ok(feof(tempfh), "did not get EOF\n");
+  fclose(tempfh);
+  unlink(tempf);
+}
+
 static void test_file_put_get( void )
 {
   char* tempf;
@@ -727,6 +774,7 @@ START_TEST(file)
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
     test_fgetwc();
+    test_ctrlz();
     test_file_put_get();
     test_tmpnam();
     test_get_osfhandle();

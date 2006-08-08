@@ -1634,6 +1634,19 @@ static int read_i(int fd, void *buf, unsigned int count)
    */
     if (ReadFile(hand, bufstart, count, &num_read, NULL))
     {
+        if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
+        {
+            int i;
+            /* in text mode, a ctrl-z signals EOF */
+            for (i=0; i<num_read; i++)
+            {
+                if (bufstart[i] == 0x1a)
+                {
+                    num_read = i;
+                    break;
+                }
+            }
+        }
         if (num_read != count)
         {
             MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
