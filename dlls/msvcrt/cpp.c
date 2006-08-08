@@ -544,8 +544,7 @@ DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_dtor);
 void __stdcall MSVCRT_type_info_dtor(type_info * _this)
 {
   TRACE("(%p)\n", _this);
-  if (_this->name)
-    MSVCRT_free(_this->name);
+  MSVCRT_free(_this->name);
 }
 
 /******************************************************************

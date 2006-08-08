@@ -219,8 +219,7 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
     }
     memcpy (newtable, MSVCRT_atexit_table, MSVCRT_atexit_table_size);
     MSVCRT_atexit_table_size += 32;
-    if (MSVCRT_atexit_table)
-      MSVCRT_free (MSVCRT_atexit_table);
+    MSVCRT_free (MSVCRT_atexit_table);
     MSVCRT_atexit_table = newtable;
   }
   MSVCRT_atexit_table[MSVCRT_atexit_registered] = func;

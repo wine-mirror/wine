@@ -231,8 +231,7 @@ int CDECL _kbhit(void)
           break;
         }
       }
-    if (ir)
-      MSVCRT_free(ir);
+    MSVCRT_free(ir);
   }
   UNLOCK_CONSOLE;
   return retval;

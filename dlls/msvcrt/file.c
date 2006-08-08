@@ -2040,11 +2040,8 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
   int r, flag;
 
   flag = file->_flag;
-  if (file->_tmpfname)
-  {
-    MSVCRT_free(file->_tmpfname);
-    file->_tmpfname = NULL;
-  }
+  MSVCRT_free(file->_tmpfname);
+  file->_tmpfname = NULL;
   /* flush stdio buffers */
   if(file->_flag & MSVCRT__IOWRT)
       MSVCRT_fflush(file);

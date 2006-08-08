@@ -371,7 +371,7 @@ MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ..
     ret = msvcrt_spawn(flags, name, args, envs);
 
     MSVCRT_free(args);
-    if (envs) MSVCRT_free(envs);
+    MSVCRT_free(envs);
     return ret;
 }
 
@@ -427,7 +427,7 @@ MSVCRT_intptr_t CDECL _spawnlpe(int flags, const char* name, const char* arg0, .
     ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, envs);
 
     MSVCRT_free(args);
-    if (envs) MSVCRT_free(envs);
+    MSVCRT_free(envs);
     return ret;
 }
 
@@ -482,8 +482,7 @@ MSVCRT_intptr_t CDECL _spawnve(int flags, const char* name, const char* const* a
     ret = msvcrt_spawn(flags, fullname, args, envs);
     MSVCRT_free(args);
   }
-  if (envs)
-    MSVCRT_free(envs);
+  MSVCRT_free(envs);
 
   return ret;
 }
