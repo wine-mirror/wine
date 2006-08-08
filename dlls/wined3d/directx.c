@@ -1917,7 +1917,21 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
     }
 
-    *pCaps->VolumeTextureAddressCaps = 0;
+    if (GL_SUPPORT(EXT_TEXTURE3D)) {
+        *pCaps->VolumeTextureAddressCaps =  D3DPTADDRESSCAPS_INDEPENDENTUV |
+                                            D3DPTADDRESSCAPS_CLAMP  |
+                                            D3DPTADDRESSCAPS_WRAP;
+        if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
+            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
+        }
+        if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
+            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+        }
+        if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
+            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
+        }
+    } else
+        *pCaps->VolumeTextureAddressCaps = 0;
 
     *pCaps->LineCaps = D3DLINECAPS_TEXTURE |
                        D3DLINECAPS_ZTEST;
