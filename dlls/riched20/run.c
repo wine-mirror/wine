@@ -512,8 +512,20 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
   }
   hDC = GetDC(editor->hWnd);
   hOldFont = ME_SelectStyleFont(editor, hDC, run->style);
-  GetTextExtentExPointW(hDC, run->strText->szData, run->strText->nLen,
-    cx, &fit, NULL, &sz);
+  
+  if (editor->cPasswordMask)
+  {
+    ME_String *strMasked = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(run->strText));
+    GetTextExtentExPointW(hDC, strMasked->szData, run->strText->nLen,
+      cx, &fit, NULL, &sz);
+    ME_DestroyString(strMasked);
+  }
+  else
+  {
+    GetTextExtentExPointW(hDC, run->strText->szData, run->strText->nLen,
+      cx, &fit, NULL, &sz);
+  }
+  
   ME_UnselectStyleFont(editor, hDC, run->style, hOldFont);
   ReleaseDC(editor->hWnd, hDC);
   return fit;
