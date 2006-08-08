@@ -396,42 +396,50 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 {
   HWND hWnd = editor->hWnd;
   SCROLLINFO si;
-  int nOldLen = editor->nTotalLength;
-  BOOL bScrollY = (editor->nTotalLength > editor->sizeWindow.cy);
   BOOL bUpdateScrollBars;
   si.cbSize = sizeof(si);
-  si.fMask = SIF_POS | SIF_RANGE;
+  si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
   GetScrollInfo(hWnd, SB_VERT, &si);
-  bUpdateScrollBars = (bScrollY || editor->bScrollY)&& ((si.nMax != nOldLen) || (si.nPage != editor->sizeWindow.cy));
-  
-  if (bScrollY != editor->bScrollY)
-  {
+  bUpdateScrollBars = (editor->bScrollY)&& ((si.nMax != editor->nTotalLength) || (si.nPage != editor->sizeWindow.cy));
+	
+  if (editor->bScrollY != (si.nMax > 0))
+  { /* The scroll bar needs to be shown or hidden */
     si.fMask = SIF_RANGE | SIF_PAGE;
+    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+      si.fMask |= SIF_DISABLENOSCROLL;
+  
     si.nMin = 0;
     si.nPage = editor->sizeWindow.cy;
-    if (bScrollY) {
+	  
+    if (editor->bScrollY)
       si.nMax = editor->nTotalLength;
-    } else {
+    else
       si.nMax = 0;
-    }
+    
     SetScrollInfo(hWnd, SB_VERT, &si, FALSE);
     ME_MarkAllForWrapping(editor);
-    editor->bScrollY = bScrollY;
     ME_WrapMarkedParagraphs(editor);
+    
     bUpdateScrollBars = TRUE;
   }
-  if (bUpdateScrollBars) {
+  if (bUpdateScrollBars) 
+  {
     int nScroll = 0;
     si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-    if (editor->nTotalLength > editor->sizeWindow.cy) {
+    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+      si.fMask |= SIF_DISABLENOSCROLL;
+    if (editor->bScrollY)
+    {
       si.nMax = editor->nTotalLength;
       si.nPage = editor->sizeWindow.cy;
-      if (si.nPos > si.nMax-si.nPage) {
+      if (si.nPos > si.nMax-si.nPage) 
+      {
         nScroll = (si.nMax-si.nPage)-si.nPos;
         si.nPos = si.nMax-si.nPage;
       }
     }
-    else {
+    else 
+    {
       si.nMax = 0;
       si.nPage = 0;
       si.nPos = 0;

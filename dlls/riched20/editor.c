@@ -87,7 +87,7 @@
   + EM_REDO 2.0
   + EM_REQUESTRESIZE
   + EM_REPLACESEL (proper style?) ANSI&Unicode
-  - EM_SCROLL
+  + EM_SCROLL
   + EM_SCROLLCARET
   - EM_SELECTIONTYPE
   - EM_SETBIDIOPTIONS 3.0
@@ -111,7 +111,7 @@
   + EM_SETRECT
   + EM_SETRECTNP (EM_SETRECT without repainting)
   + EM_SETSEL
-  - EM_SETSCROLLPOS 3.0
+  + EM_SETSCROLLPOS 3.0
   - EM_SETTABSTOPS 3.0
   - EM_SETTARGETDEVICE
   + EM_SETTEXTEX 3.0 (unicode only, no rich text insertion handling, proper style?)
@@ -122,7 +122,7 @@
   - EM_SETWORDBREAKPROCEX
   - EM_SETWORDWRAPMODE 1.0asian
   + EM_SETZOOM 3.0
-  - EM_SHOWSCROLLBAR 2.0
+  + EM_SHOWSCROLLBAR 2.0
   - EM_STOPGROUPTYPING 2.0
   + EM_STREAMIN
   + EM_STREAMOUT
@@ -168,7 +168,7 @@
   - ES_AUTOHSCROLL
   - ES_AUTOVSCROLL
   - ES_CENTER
-  - ES_DISABLENOSCROLL (scrollbar is always visible)
+  + ES_DISABLENOSCROLL (scrollbar is always visible)
   - ES_EX_NOCALLOLEINIT
   - ES_LEFT
   - ES_MULTILINE (currently single line controls aren't supported)
@@ -182,7 +182,7 @@
   - ES_WANTRETURN (don't know how to do WM_GETDLGCODE part)
   - WS_SETFONT
   - WS_HSCROLL
-  - WS_VSCROLL
+  + WS_VSCROLL
 */
 
 /*
@@ -1146,6 +1146,12 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
     ed->pFontCache[i].nAge = 0;
     ed->pFontCache[i].hFont = NULL;
   }
+  
+  if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
+    FIXME("WS_HSCROLL requested, but horizontal scrolling isn't implemented yet.\n");
+  ed->bScrollX = 0;  
+  ed->bScrollY = GetWindowLongW(hWnd, GWL_STYLE) & WS_VSCROLL;
+  
   ME_CheckCharOffsets(ed);
   
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_PASSWORD)
@@ -1438,12 +1444,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETFONTSIZE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
-  UNSUPPORTED_MSG(EM_SETSCROLLPOS)
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_SHOWSCROLLBAR)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
   UNSUPPORTED_MSG(WM_STYLECHANGED)
 /*  UNSUPPORTED_MSG(WM_UNICHAR) FIXME missing in Wine headers */
@@ -1574,6 +1578,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_SendSelChange(editor);
     return 0;
   }
+  case EM_SETSCROLLPOS:
+  {
+    POINT *point = (POINT *)lParam;
+    /* Native behavior when point->y is too large is very odd / dosn't follow MSDN.
+       This seems to be a pretty close approximation of what it does. */
+    ME_Scroll(editor, 0, -(min(point->y, (editor->nTotalLength - 1)) - editor->nScrollPosY));
+    return 0;
+  }
   case EM_AUTOURLDETECT:
   {
     if (wParam==1 || wParam ==0) 
@@ -1595,6 +1607,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_SetSelection(editor, pRange->cpMin, pRange->cpMax);
     ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
+    return 0;
+  }
+  case EM_SHOWSCROLLBAR:
+  {
+    if (wParam == SB_VERT)
+      editor->bScrollY = lParam;
+    else if (wParam == SB_HORZ)
+      editor->bScrollX = lParam;
+    ME_UpdateScrollBar(editor);
     return 0;
   }
   case EM_SETTEXTEX:
@@ -2241,6 +2262,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
+    if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
+    { /* Squelch the default horizontal scrollbar it would make */
+      si.cbSize = sizeof(SCROLLINFO);
+      si.fMask = SIF_POS | SIF_RANGE;
+      si.nMax = 0;
+      si.nMin = 0;
+      si.nPos = 0;
+      SetScrollInfo(hWnd, SB_HORZ, &si, FALSE);
+    }	  
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
