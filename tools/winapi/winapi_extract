@@ -63,7 +63,7 @@ if($options->spec_files || $options->winetest) {
 
 	my $type = "win32";
 
-	open(IN, "< $wine_dir/$spec_file");
+	open(IN, "< $wine_dir/$spec_file") || die "Error: Can't open $wine_dir/$spec_file: $!\n";
 
 	my $header = 1;
 	my $lookahead = 0;
@@ -210,7 +210,7 @@ foreach my $file (@h_files, @c_files) {
     $progress_current++;
 
     {
-	open(IN, "< $file");
+	open(IN, "< $file") || die "Error: Can't open $file: $!\n";
 	local $/ = undef;
 	$_ = <IN>;
 	close(IN);
@@ -463,7 +463,7 @@ if($options->spec_files) {
 	    $spec_file .= "2";
 
 	    $output->progress("$spec_file");
-	    open(OUT, "> $wine_dir/$spec_file");
+	    open(OUT, "> $wine_dir/$spec_file") || die "Error: Can't open $wine_dir/$spec_file: $!\n";
 
 	    if(exists($specifications{$module}{init})) {
 		my $function = $specifications{$module}{init}{function};
@@ -666,7 +666,7 @@ if($options->winetest) {
 	    next if $external_name eq "\@";
 
 	    if($n == 0) {
-                open(OUT, "> $wine_dir/programs/winetest/include/${package}.pm");
+                open(OUT, "> $wine_dir/programs/winetest/include/${package}.pm") || die "Error: Can't open $wine_dir/programs/winetest/include/${package}.pm: $!\n";
 
                 print OUT "package ${package};\n";
                 print OUT "\n";

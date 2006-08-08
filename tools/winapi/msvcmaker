@@ -45,7 +45,7 @@ sub read_spec_file($) {
 
     my $type = "win32";
 
-    open(IN, "< $wine_dir/$spec_file");
+    open(IN, "< $wine_dir/$spec_file") || die "Error: Can't open $wine_dir/$spec_file: $!\n";
 
     my $header = 1;
     my $lookahead = 0;
@@ -115,7 +115,7 @@ sub filter_files($$) {
 my %wine_test_dsp_files;
 
 MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
-    open(IN, "< $wine_dir/$makefile_in_file");
+    open(IN, "< $wine_dir/$makefile_in_file") || die "Error: Can't open $wine_dir/$makefile_in_file: $!\n";
 
     my $topobjdir;
     my $module;

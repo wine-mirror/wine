@@ -155,7 +155,7 @@ sub _get_files($$;$) {
 
     my @dirs = ($dir);
     while(defined(my $dir = shift @dirs)) {
-	opendir(DIR, $dir);
+	opendir(DIR, $dir) || die "Can't open directory $dir: $!\n";
 	my @entries= readdir(DIR);
 	closedir(DIR);
 	foreach (@entries) {

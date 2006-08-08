@@ -22,7 +22,7 @@ use strict;
 
 my @authors;
 open(AUTHORS,"<AUTHORS") or die "Can't open AUTHORS";
-open(NEWAUTHORS,">AUTHORS.new");
+open(NEWAUTHORS,">AUTHORS.new") or die "Can't open AUTHORS.new";
 while(<AUTHORS>)
   {
     print NEWAUTHORS;

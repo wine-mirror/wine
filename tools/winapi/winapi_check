@@ -82,7 +82,7 @@ if ($options->global) {
 
 	$include2info{$file} = { name => $file };
 
-	open(IN, "< $wine_dir/$file");
+	open(IN, "< $wine_dir/$file") || die "Error: Can't open $wine_dir/$file: $!\n";
 	while(<IN>) {
 	    if(/^\s*\#\s*include\s*\"(.*?)\"/) {
 		my $header = $1;

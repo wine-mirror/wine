@@ -54,7 +54,7 @@ if (defined $usage)
 }
 
 foreach my $file (@files) {
-    open(IN, "< $file");
+    open(IN, "< $file") || die "Error: Can't open $file: $!\n";
 
     my $level = 0;
     my $extern_c = 0;

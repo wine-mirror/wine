@@ -59,7 +59,7 @@ sub new($) {
 
     $output->progress("$api_file");
 
-    open(IN, "< $api_file");
+    open(IN, "< $api_file") || die "Error: Can't open $api_file: $!\n";
     local $/ = "\n";
     while(<IN>) {
 	s/^\s*(.*?)\s*$/$1/; # remove whitespace at begin and end of line
@@ -73,7 +73,7 @@ sub new($) {
     $output->progress("$configure_ac_file");
 
     my $again = 0;
-    open(IN, "< $configure_ac_file");
+    open(IN, "< $configure_ac_file") || die "Error: Can't open $configure_ac_file: $!\n";
     local $/ = "\n";
     while($again || (defined($_ = <IN>))) {
 	$again = 0;
@@ -141,7 +141,7 @@ sub new($) {
 
     $output->progress("$config_h_in_file");
 
-    open(IN, "< $config_h_in_file");
+    open(IN, "< $config_h_in_file") || die "Error: Can't open $config_h_in_file: $!\n";
     local $/ = "\n";
     while(<IN>) {
 	# remove leading and trailing whitespace

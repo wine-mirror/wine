@@ -61,7 +61,7 @@ foreach my $file (@c_files) {
     $output->prefix("$file:");
 
     {
-	open(IN, "< $file");
+	open(IN, "< $file") || die "Error: Can't open $file: $!\n";
 	local $/ = undef;
 	$_ = <IN>;
 	close(IN);

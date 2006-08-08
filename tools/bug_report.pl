@@ -45,7 +45,7 @@ sub do_var($) {
 	$var =~ s/\t//g;
 	return $var;
 }
-open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT";
+open(STDERR, ">&SAVEERR"); open(STDERR, ">&STDOUT");
 $ENV{'SHELL'}="/bin/bash";
 my $var0 = qq{
 	What is your level of Wine expertise? 1-newbie 2-intermediate 3-advanced
@@ -530,7 +530,7 @@ elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
 		}
 	}
 	unlink($tmpoutfile);
-	open(OUTFILE, "$outfile");
+	open(OUTFILE, "$outfile") || die "Error: Can't open $outfile: $!\n";
 	while (<OUTFILE>) {
 		$lastlines .= $_;
 	}
@@ -550,7 +550,7 @@ else {
 	system("$wineloc WINEDEBUG=$debugopts $extraops \"$program\"");
 }
 sub generate_outfile() {
-open(OUTFILE,">$outfile");
+open(OUTFILE,">$outfile") || die "Error: Can't open $outfile: $!\n";
 print OUTFILE <<EOM;
 Auto-generated debug report by Wine Quick Debug Report Maker Tool:
 WINE Version:                $winever

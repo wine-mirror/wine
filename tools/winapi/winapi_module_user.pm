@@ -626,7 +626,7 @@ sub _parse_file($$$) {
     my $found_comment = shift;
 
     {
-	open(IN, "< $file");
+	open(IN, "< $file") || die "Error: Can't open $file: $!\n";
 	local $/ = undef;
 	$_ = <IN>;
 	close(IN);

@@ -44,7 +44,7 @@ if($options->progress) {
 ########################################################################
 
 my $command = $options->make . " " . join(" ", $options->arguments);
-open(IN, "($command) 2>&1 |");
+open(IN, "($command) 2>&1 |") || die "Cannot execute command $command: $!";
 
 while(<IN>) {
     chomp;

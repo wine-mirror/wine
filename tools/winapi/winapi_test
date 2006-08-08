@@ -81,7 +81,7 @@ if (0) {
 
     $file .= "2"; # FIXME: For tests
 
-    open(OUT, "> $winapi_dir/$file") || die "$winapi_dir/$file: $!\n";
+    open(OUT, "> $winapi_dir/$file") || die "Error: Can't open $winapi_dir/$file: $!\n";
 
     my $x = 0;
     my @test_dirs = $tests->get_test_dirs();
@@ -337,7 +337,7 @@ foreach my $file (@files) {
     $progress_current++;
 
     {
-	open(IN, "< $wine_dir/$file");
+	open(IN, "< $wine_dir/$file") || die "Error: Can't open $wine_dir/$file: $!\n";
 	local $/ = undef;
 	$_ = <IN>;
 	close(IN);
