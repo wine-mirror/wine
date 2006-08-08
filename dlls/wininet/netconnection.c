@@ -511,7 +511,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     else
     {
 #if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
-	if (flags & (~MSG_PEEK))
+	if (flags & ~(MSG_PEEK|MSG_WAITALL))
 	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
 
         /* this ugly hack is all for MSG_PEEK. eww gross */
@@ -538,6 +538,15 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
 		connection->peek_msg_mem = NULL;
                 connection->peek_msg = NULL;
+		/* check if the peek buffer held too few data */
+		if ((flags & MSG_WAITALL) && (*recvd < len))
+		{
+		    int recv2 = 0;
+		    /* recursive call - but now the peek buffer is empty */
+		    if (!NETCON_recv(connection, (char*)buf + *recvd, len - *recvd, flags, &recv2))
+			return FALSE;
+		    *recvd += recv2;
+		}
 	    }
             return TRUE;
 	}
