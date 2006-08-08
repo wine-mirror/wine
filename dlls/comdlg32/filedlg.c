@@ -430,19 +430,12 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       MemFree(lpstrSavDir);
   }
 
-  if(title)
-    MemFree(title);
-  if(defext)
-    MemFree(defext);
-  if(filter)
-    MemFree(filter);
-  if(customfilter)
-    MemFree(customfilter);
-  if(fodInfos.initdir)
-    MemFree(fodInfos.initdir);
-
-  if(fodInfos.filename)
-    MemFree(fodInfos.filename);
+  MemFree(title);
+  MemFree(defext);
+  MemFree(filter);
+  MemFree(customfilter);
+  MemFree(fodInfos.initdir);
+  MemFree(fodInfos.filename);
 
   TRACE("selected file: %s\n",ofn->lpstrFile);
 
@@ -1304,8 +1297,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
               result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
               if (result) {
                  *nameBit = 0x00;
-                 if (fodInfos->initdir)
-                    MemFree(fodInfos->initdir);
+                 MemFree(fodInfos->initdir);
                  fodInfos->initdir = MemAlloc((strlenW(tmpBuf2) + 1)*sizeof(WCHAR));
                  strcpyW(fodInfos->initdir, tmpBuf2);
                  handledPath = TRUE;
@@ -1342,8 +1334,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
             *nameBit = 0x00;
 
             len = strlenW(tmpBuf);
-            if(fodInfos->initdir)
-               MemFree(fodInfos->initdir);
+            MemFree(fodInfos->initdir);
             fodInfos->initdir = MemAlloc((len+1)*sizeof(WCHAR));
             strcpyW(fodInfos->initdir, tmpBuf);
 
@@ -1384,8 +1375,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
            } else {
                searchMore = FALSE;
 
-               if(fodInfos->initdir)
-                  MemFree(fodInfos->initdir);
+               MemFree(fodInfos->initdir);
                fodInfos->initdir = MemAlloc(MAX_PATH*sizeof(WCHAR));
                GetCurrentDirectoryW(MAX_PATH, fodInfos->initdir);
 
@@ -2000,8 +1990,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
         DWORD len;
 
         /* replace the current filter */
-        if(fodInfos->ShellInfos.lpstrCurrentFilter)
-	  MemFree((LPVOID)fodInfos->ShellInfos.lpstrCurrentFilter);
+        MemFree((LPVOID)fodInfos->ShellInfos.lpstrCurrentFilter);
         len = strlenW(lpszTemp)+1;
         fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc(len * sizeof(WCHAR));
         strcpyW( fodInfos->ShellInfos.lpstrCurrentFilter, lpszTemp);
@@ -2472,8 +2461,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
         (fodInfos->customfilter == NULL ? 1 : 0);
 
       /* Set the current filter with the current selection */
-      if(fodInfos->ShellInfos.lpstrCurrentFilter)
-         MemFree((LPVOID)fodInfos->ShellInfos.lpstrCurrentFilter);
+      MemFree((LPVOID)fodInfos->ShellInfos.lpstrCurrentFilter);
 
       lpstrFilter = (LPWSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,
                                              iItem);
@@ -2538,8 +2526,7 @@ static void FILEDLG95_FILETYPE_Clean(HWND hwnd)
     }
   }
   /* Current filter */
-  if(fodInfos->ShellInfos.lpstrCurrentFilter)
-     MemFree(fodInfos->ShellInfos.lpstrCurrentFilter);
+  MemFree(fodInfos->ShellInfos.lpstrCurrentFilter);
 
 }
 
