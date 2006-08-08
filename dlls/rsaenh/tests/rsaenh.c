@@ -303,6 +303,11 @@ static void test_block_cipher_modes(void)
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
     ok(result, "%08lx\n", GetLastError());
 
+    dwLen = 23;
+    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwLen, 24);
+    ok(result, "CryptEncrypt failed: %08lx\n", GetLastError());
+    ok(dwLen == 24, "Unexpected length %ld\n", dwLen);
+
     SetLastError(ERROR_SUCCESS);
     dwLen = 23;
     result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
@@ -317,6 +322,11 @@ static void test_block_cipher_modes(void)
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
     ok(result, "%08lx\n", GetLastError());
     
+    dwLen = 23;
+    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwLen, 24);
+    ok(result, "CryptEncrypt failed: %08lx\n", GetLastError());
+    ok(dwLen == 24, "Unexpected length %ld\n", dwLen);
+
     dwLen = 23;
     result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
     ok(result && dwLen == 24 && !memcmp(cbc, abData, sizeof(cbc)), 
@@ -595,6 +605,9 @@ static void test_rc4(void)
         result = CryptDestroyHash(hHash);
         ok(result, "%08lx\n", GetLastError());
 
+        dwDataLen = 16;
+        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwDataLen, 24);
+        ok(result, "%08lx\n", GetLastError());
         dwDataLen = 16;
         result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08lx\n", GetLastError());
@@ -1104,6 +1117,10 @@ static void test_rsa_encrypt(void)
     ok (result, "%08lx\n", GetLastError());
     if (!result) return;
 
+    dwLen = 12;
+    result = CryptEncrypt(hRSAKey, 0, TRUE, 0, NULL, &dwLen, (DWORD)sizeof(abData));
+    ok(result, "CryptEncrypt failed: %08lx\n", GetLastError());
+    ok(dwLen == 128, "Unexpected length %ld\n", dwLen);
     dwLen = 12;
     result = CryptEncrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen, (DWORD)sizeof(abData));
     ok (result, "%08lx\n", GetLastError());

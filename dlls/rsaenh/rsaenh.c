@@ -1940,11 +1940,19 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             memcpy(in, out, pCryptKey->dwBlockLen); 
         }
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
+        if (pbData == NULL) {
+            *pdwDataLen = dwBufLen;
+            return TRUE;
+        }
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_RSA) {
         if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
             SetLastError(NTE_BAD_KEY);
             return FALSE;
+        }
+        if (!pbData) {
+            *pdwDataLen = pCryptKey->dwBlockLen;
+            return TRUE;
         }
         if (dwBufLen < pCryptKey->dwBlockLen) {
             SetLastError(ERROR_MORE_DATA);
