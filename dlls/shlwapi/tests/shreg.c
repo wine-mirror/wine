@@ -53,7 +53,7 @@ static DWORD nExpLen2;
 static const char * sEmptyBuffer ="0123456789";
 
 /* delete key and all its subkeys */
-static DWORD delete_key( HKEY hkey, LPSTR parent, LPSTR keyname )
+static DWORD delete_key( HKEY hkey, LPCSTR parent, LPCSTR keyname )
 {
     HKEY parentKey;
     DWORD ret;

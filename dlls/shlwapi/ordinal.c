@@ -2281,7 +2281,7 @@ BOOL WINAPI FDSA_Destroy(FDSA_info *info)
  *
  * Insert element into an FDSA array
  */
-DWORD WINAPI FDSA_InsertItem(FDSA_info *info, DWORD where, void *block)
+DWORD WINAPI FDSA_InsertItem(FDSA_info *info, DWORD where, const void *block)
 {
     TRACE("(%p 0x%08lx %p)\n", info, where, block);
     if(where > info->num_items)

@@ -242,7 +242,7 @@ static void test_fdsa(void)
     BOOL (WINAPI *pFDSA_Initialize)(DWORD block_size, DWORD inc, FDSA_info *info, void *mem,
                                     DWORD init_blocks);
     BOOL (WINAPI *pFDSA_Destroy)(FDSA_info *info);
-    DWORD (WINAPI *pFDSA_InsertItem)(FDSA_info *info, DWORD where, void *block);
+    DWORD (WINAPI *pFDSA_InsertItem)(FDSA_info *info, DWORD where, const void *block);
     BOOL (WINAPI *pFDSA_DeleteItem)(FDSA_info *info, DWORD where);
 
     FDSA_info info;
