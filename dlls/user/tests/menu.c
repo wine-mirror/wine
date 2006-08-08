@@ -974,7 +974,7 @@ static void test_menu_iteminfo( void )
         {, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, },
         init, OK, ER )
     TMII_DONE
- 
+    /* Separator */
     TMII_INSMI( {, S, MIIM_TYPE, MFT_SEPARATOR, 0, 0, 0, 0, 0, 0, txt, 0, 0, }, OK)
     TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, string, 80, -9, },
         {, S, MIIM_TYPE, MFT_SEPARATOR, -9, -9, 0, -9, -9, -9, 0, 0, 0, },
@@ -1165,7 +1165,96 @@ static void test_menu_iteminfo( void )
         {, S, MIIM_BITMAP|MIIM_FTYPE, MFT_SEPARATOR, -9, -9, 0, -9, -9, -9, string, 80, hbm, },
         init, OK, ER )
     TMII_DONE
-
+    /* Bitmaps inserted with MIIM_TYPE and MFT_BITMAP:
+       Only the low word of the dwTypeData is used.
+       Use a magic bitmap here (Word 95 uses this to create its MDI menu buttons) */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -1, -1, -1, -1, -1, -1, MAKELONG(HBMMENU_MBAR_CLOSE, 0x1234), -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -9, -9, 0, -9, -9, -9, HBMMENU_MBAR_CLOSE, 0, HBMMENU_MBAR_CLOSE, },
+        empty, OK, OK )
+    TMII_DONE
+    /* Type flags */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP | MFT_MENUBARBREAK | MFT_RADIOCHECK | MFT_RIGHTJUSTIFY | MFT_RIGHTORDER, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_MENUBARBREAK | MFT_RADIOCHECK | MFT_RIGHTJUSTIFY | MFT_RIGHTORDER, -9, -9, 0, -9, -9, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_DONE
+    /* State flags */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_STATE, -1, MFS_CHECKED | MFS_DEFAULT | MFS_GRAYED | MFS_HILITE, -1, -1, -1, -1, -1, -1, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_STATE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_STATE, -9, MFS_CHECKED | MFS_DEFAULT | MFS_GRAYED | MFS_HILITE, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_DONE
+    /* The style MFT_RADIOCHECK cannot be set with MIIM_CHECKMARKS only */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_CHECKMARKS, MFT_RADIOCHECK, -1, -1, -1, hbm, hbm, -1, -1, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_CHECKMARKS | MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_CHECKMARKS | MIIM_TYPE, MFT_BITMAP, -9, -9, 0, hbm, hbm, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_DONE
+    /* MFT_BITMAP is added automatically by GetMenuItemInfo() for MIIM_TYPE */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_FTYPE, MFT_OWNERDRAW, -1, -1, -1, -1, -1, -1, 0x1234, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_FTYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_GMII ( {, S, MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_FTYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_SMII( {, S, MIIM_BITMAP, -1, -1, -1, -1, -1, -1, -1, -1, -1, NULL, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, NULL, 0, NULL, },
+        empty, OK, OK )
+    TMII_DONE
+    /* Bitmaps inserted with MIIM_TYPE and MFT_BITMAP:
+       Only the low word of the dwTypeData is used.
+       Use a magic bitmap here (Word 95 uses this to create its MDI menu buttons) */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -1, -1, -1, -1, -1, -1, MAKELONG(HBMMENU_MBAR_CLOSE, 0x1234), -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -9, -9, 0, -9, -9, -9, HBMMENU_MBAR_CLOSE, 0, HBMMENU_MBAR_CLOSE, },
+        empty, OK, OK )
+    TMII_DONE
+    /* Type flags */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP | MFT_MENUBARBREAK | MFT_RADIOCHECK | MFT_RIGHTJUSTIFY | MFT_RIGHTORDER, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_MENUBARBREAK | MFT_RADIOCHECK | MFT_RIGHTJUSTIFY | MFT_RIGHTORDER, -9, -9, 0, -9, -9, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_DONE
+    /* State flags */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_STATE, -1, MFS_CHECKED | MFS_DEFAULT | MFS_GRAYED | MFS_HILITE, -1, -1, -1, -1, -1, -1, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_STATE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_STATE, -9, MFS_CHECKED | MFS_DEFAULT | MFS_GRAYED | MFS_HILITE, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_DONE
+    /* The style MFT_RADIOCHECK cannot be set with MIIM_CHECKMARKS only */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_CHECKMARKS, MFT_RADIOCHECK, -1, -1, -1, hbm, hbm, -1, -1, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_CHECKMARKS | MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_CHECKMARKS | MIIM_TYPE, MFT_BITMAP, -9, -9, 0, hbm, hbm, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_DONE
+    /* MFT_BITMAP is added automatically by GetMenuItemInfo() for MIIM_TYPE */
+    TMII_INSMI( {, S, MIIM_TYPE, MFT_BITMAP, -1, -1, -1, -1, -1, -1, hbm, -1, -1, }, OK)
+    TMII_SMII( {, S, MIIM_FTYPE, MFT_OWNERDRAW, -1, -1, -1, -1, -1, -1, 0x1234, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_FTYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_BITMAP | MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, hbm, 0, hbm, },
+        empty, OK, OK )
+    TMII_GMII ( {, S, MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_FTYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, -9, -9, -9, },
+        empty, OK, OK )
+    TMII_SMII( {, S, MIIM_BITMAP, -1, -1, -1, -1, -1, -1, -1, -1, -1, NULL, }, OK)
+    TMII_GMII ( {, S, MIIM_TYPE, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, },
+        {, S, MIIM_TYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, NULL, 0, NULL, },
+        empty, OK, OK )
+    TMII_DONE
   } while( !(ansi = !ansi) );
   DeleteObject( hbm);
 }
@@ -1686,6 +1775,71 @@ static void test_menu_input(void) {
     DestroyWindow(hWnd);
 }
 
+void test_menu_flags( void )
+{
+    HMENU hMenu, hPopupMenu;
+
+    hMenu = CreateMenu();
+    hPopupMenu = CreatePopupMenu();
+
+    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT)hPopupMenu, "Popup");
+
+    AppendMenu(hPopupMenu, MF_STRING | MF_HILITE | MF_DEFAULT, 101, "Item 1");
+    InsertMenu(hPopupMenu, 1, MF_BYPOSITION | MF_STRING | MF_HILITE | MF_DEFAULT, 102, "Item 2");
+    AppendMenu(hPopupMenu, MF_STRING, 103, "Item 3");
+    ModifyMenu(hPopupMenu, 2, MF_BYPOSITION | MF_STRING | MF_HILITE | MF_DEFAULT, 103, "Item 3");
+
+    ok(GetMenuState(hPopupMenu, 0, MF_BYPOSITION) & MF_HILITE,
+      "AppendMenu should accept MF_HILITE\n");
+    ok(GetMenuState(hPopupMenu, 1, MF_BYPOSITION) & MF_HILITE,
+      "InsertMenu should accept MF_HILITE\n");
+    ok(GetMenuState(hPopupMenu, 2, MF_BYPOSITION) & MF_HILITE,
+      "ModifyMenu should accept MF_HILITE\n");
+
+    ok(!(GetMenuState(hPopupMenu, 0, MF_BYPOSITION) & MF_DEFAULT),
+      "AppendMenu must not accept MF_DEFAULT\n");
+    ok(!(GetMenuState(hPopupMenu, 1, MF_BYPOSITION) & MF_DEFAULT),
+      "InsertMenu must not accept MF_DEFAULT\n");
+    ok(!(GetMenuState(hPopupMenu, 2, MF_BYPOSITION) & MF_DEFAULT),
+      "ModifyMenu must not accept MF_DEFAULT\n");
+
+    DestroyMenu(hMenu);
+}
+
+void test_menu_hilitemenuitem( void )
+{
+    HMENU hMenu, hPopupMenu;
+
+    hMenu = CreateMenu();
+    hPopupMenu = CreatePopupMenu();
+
+    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT)hPopupMenu, "Popup");
+
+    AppendMenu(hPopupMenu, MF_STRING, 101, "Item 1");
+    AppendMenu(hPopupMenu, MF_STRING, 102, "Item 2");
+    AppendMenu(hPopupMenu, MF_STRING, 103, "Item 3");
+
+    HiliteMenuItem(NULL, hPopupMenu, 0, MF_HILITE);
+    HiliteMenuItem(NULL, hPopupMenu, 1, MF_HILITE);
+    HiliteMenuItem(NULL, hPopupMenu, 2, MF_HILITE);
+    HiliteMenuItem(NULL, hPopupMenu, 1, MF_UNHILITE);
+
+    todo_wine
+    {
+    ok(GetMenuState(hPopupMenu, 0, MF_BYPOSITION) & MF_HILITE,
+      "HiliteMenuItem: Item 1 is not hilited\n");
+    }
+    ok(!(GetMenuState(hPopupMenu, 1, MF_BYPOSITION) & MF_HILITE),
+      "HiliteMenuItem: Item 2 is hilited\n");
+    todo_wine
+    {
+    ok(GetMenuState(hPopupMenu, 2, MF_BYPOSITION) & MF_HILITE,
+      "HiliteMenuItem: Item 3 is not hilited\n");
+    }
+
+    DestroyMenu(hMenu);
+}
+
 START_TEST(menu)
 {
     pSetMenuInfo =
@@ -1702,4 +1856,6 @@ START_TEST(menu)
     test_menu_search_bycommand();
     test_menu_bmp_and_string();
     test_menu_input();
+    test_menu_flags();
+    test_menu_hilitemenuitem();
 }

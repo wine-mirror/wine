@@ -159,11 +159,13 @@ typedef struct
 #define IS_SYSTEM_MENU(menu)  \
 	(!((menu)->wFlags & MF_POPUP) && ((menu)->wFlags & MF_SYSMENU))
 
-#define TYPE_MASK (MFT_STRING | MFT_BITMAP | MFT_OWNERDRAW | MFT_SEPARATOR | \
-		   MFT_MENUBARBREAK | MFT_MENUBREAK | MFT_RADIOCHECK | \
-		   MFT_RIGHTORDER | MFT_RIGHTJUSTIFY | \
-		   MF_POPUP | MF_SYSMENU | MF_HELP)
+#define MENUITEMINFO_TYPE_MASK \
+		(MFT_STRING | MFT_BITMAP | MFT_OWNERDRAW | MFT_SEPARATOR | \
+		MFT_MENUBARBREAK | MFT_MENUBREAK | MFT_RADIOCHECK | \
+		MFT_RIGHTORDER | MFT_RIGHTJUSTIFY /* same as MF_HELP */ )
+#define TYPE_MASK  (MENUITEMINFO_TYPE_MASK | MF_POPUP | MF_SYSMENU)
 #define STATE_MASK (~TYPE_MASK)
+#define MENUITEMINFO_STATE_MASK (STATE_MASK & ~(MF_BYPOSITION | MF_MOUSESELECT))
 
 #define WIN_ALLOWED_MENU(style) ((style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
 
@@ -2050,8 +2052,9 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
       flags |= MF_POPUP; /* keep popup */
 
     item->fType = flags & TYPE_MASK;
-    item->fState = (flags & STATE_MASK) &
-        ~(MF_HILITE | MF_MOUSESELECT | MF_BYPOSITION);
+    /* MFS_DEFAULT is not accepted. MF_HILITE is not listed as a valid flag
+       for ModifyMenu, but Windows accepts it */
+    item->fState = flags & MENUITEMINFO_STATE_MASK & ~MFS_DEFAULT;
 
     /* Don't call SetRectEmpty here! */
 
@@ -2123,10 +2126,14 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
 {
     WORD flags, id = 0;
     LPCSTR str;
+    BOOL end_flag;
 
     do
     {
         flags = GET_WORD(res);
+        end_flag = flags & MF_END;
+        /* Remove MF_END because it has the same value as MF_HILITE */
+        flags &= ~MF_END;
         res += sizeof(WORD);
         if (!(flags & MF_POPUP))
         {
@@ -2151,7 +2158,7 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
             else AppendMenuW( hMenu, flags, id,
                                 *(LPCWSTR)str ? (LPCWSTR)str : NULL );
         }
-    } while (!(flags & MF_END));
+    } while (!end_flag);
     return res;
 }
 
@@ -4352,7 +4359,7 @@ BOOL WINAPI IsMenu(HMENU hmenu)
 static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 					LPMENUITEMINFOW lpmii, BOOL unicode)
 {
-    MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos? MF_BYPOSITION : 0);
+    MENUITEM *menu = MENU_FindItem (&hmenu, &item, bypos ? MF_BYPOSITION : 0);
 
     debug_print_menuitem("GetMenuItemInfo_common: ", menu, "");
 
@@ -4366,7 +4373,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
             SetLastError( ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-	lpmii->fType = menu->fType & ~MF_POPUP;
+	lpmii->fType = menu->fType & MENUITEMINFO_TYPE_MASK;
         if( menu->hbmpItem) lpmii->fType |= MFT_BITMAP;
 	lpmii->hbmpItem = menu->hbmpItem; /* not on Win9x/ME */
         if( lpmii->fType & MFT_BITMAP) {
@@ -4421,13 +4428,13 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     }
 
     if (lpmii->fMask & MIIM_FTYPE)
-	lpmii->fType = menu->fType & ~MF_POPUP;
+	lpmii->fType = menu->fType & MENUITEMINFO_TYPE_MASK;
 
     if (lpmii->fMask & MIIM_BITMAP)
 	lpmii->hbmpItem = menu->hbmpItem;
 
     if (lpmii->fMask & MIIM_STATE)
-	lpmii->fState = menu->fState;
+	lpmii->fState = menu->fState & MENUITEMINFO_STATE_MASK;
 
     if (lpmii->fMask & MIIM_ID)
 	lpmii->wID = menu->wID;
@@ -4524,7 +4531,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 {
     if (!menu) return FALSE;
 
-    debug_print_menuitem("SetmenuItemInfo_common from: ", menu, "");
+    debug_print_menuitem("SetMenuItemInfo_common from: ", menu, "");
 
     if (lpmii->fMask & MIIM_TYPE ) {
         if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
@@ -4533,15 +4540,16 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
             SetLastError( ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-	/* make only MENU_ITEM_TYPE bits in menu->fType equal lpmii->fType */
-	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
-	menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
+
+        /* Remove the old type bits and replace them with the new ones */
+        menu->fType &= ~MENUITEMINFO_TYPE_MASK;
+        menu->fType |= lpmii->fType & MENUITEMINFO_TYPE_MASK;
 
         if (IS_STRING_ITEM(menu->fType)) {
 	    HeapFree(GetProcessHeap(), 0, menu->text);
             set_menu_item_text( menu, lpmii->dwTypeData, unicode );
         } else if( (menu->fType) & MFT_BITMAP)
-                menu->hbmpItem = (HBITMAP)lpmii->dwTypeData;
+                menu->hbmpItem = HBITMAP_32(LOWORD(lpmii->dwTypeData));
     }
 
     if (lpmii->fMask & MIIM_FTYPE ) {
@@ -4549,8 +4557,8 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
             SetLastError( ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
-	menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
+        menu->fType &= ~MENUITEMINFO_TYPE_MASK;
+        menu->fType |= lpmii->fType & MENUITEMINFO_TYPE_MASK;
     }
     if (lpmii->fMask & MIIM_STRING ) {
         /* free the string when used */
@@ -4560,8 +4568,9 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     if (lpmii->fMask & MIIM_STATE)
     {
-	/* FIXME: MFS_DEFAULT do we have to reset the other menu items? */
-	menu->fState = lpmii->fState;
+         /* Other menu items having MFS_DEFAULT are not converted
+           to normal items */
+         menu->fState = lpmii->fState & MENUITEMINFO_STATE_MASK;
     }
 
     if (lpmii->fMask & MIIM_ID)
@@ -4586,9 +4595,6 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     if (lpmii->fMask & MIIM_CHECKMARKS)
     {
-        if (lpmii->fType & MFT_RADIOCHECK)
-            menu->fType |= MFT_RADIOCHECK;
-
 	menu->hCheckBit = lpmii->hbmpChecked;
 	menu->hUnCheckBit = lpmii->hbmpUnchecked;
     }
