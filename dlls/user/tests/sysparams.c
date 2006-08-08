@@ -374,7 +374,7 @@ typedef struct
 } LOGFONT16, *LPLOGFONT16;
 
 /* get logfont from the registry */
-static int lffromreg( char *keyname,  char *valname, LOGFONTA *plf)
+static int lffromreg( const char *keyname, const char *valname, LOGFONTA *plf)
 {
     HKEY hkey;
     LOGFONTW lfw;
