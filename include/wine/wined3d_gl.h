@@ -1713,7 +1713,11 @@ typedef struct _WineD3D_GL_Info {
   unsigned max_pshader_constantsF;
 
   unsigned vs_arb_constantsF;
+  unsigned vs_arb_max_instructions;
+  unsigned vs_arb_max_temps;
   unsigned ps_arb_constantsF;
+  unsigned ps_arb_max_instructions;
+  unsigned ps_arb_max_temps;
   unsigned vs_glsl_constantsF;
   unsigned ps_glsl_constantsF;
 
