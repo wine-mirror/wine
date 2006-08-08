@@ -98,6 +98,18 @@ static UINT create_file_table( MSIHANDLE hdb )
             "PRIMARY KEY `File`)" );
 }
 
+static UINT create_remove_file_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `RemoveFile` ("
+            "`FileKey` CHAR(72) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL, "
+            "`FileName` CHAR(255) LOCALIZABLE, "
+            "`DirProperty` CHAR(72) NOT NULL, "
+            "`InstallMode` SHORT NOT NULL "
+            "PRIMARY KEY `FileKey`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -249,6 +261,18 @@ MSIHANDLE package_from_db(MSIHANDLE hdb)
     ok( res == ERROR_SUCCESS , "Failed to close db handle\n" );
 
     return hPackage;
+}
+
+static void create_test_file(const CHAR *name)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, name, strlen(name), &written, NULL);
+    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+    CloseHandle(file);
 }
 
 static void test_createpackage(void)
@@ -1781,6 +1805,153 @@ static void test_getproperty(void)
     DeleteFile(msifile);
 }
 
+static void test_removefiles(void)
+{
+    MSIHANDLE hpkg;
+    UINT r;
+    MSIHANDLE hdb;
+    char CURR_DIR[MAX_PATH];
+
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n" );
+
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
+    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r );
+
+    r = create_feature_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Feature table: %d\n", r );
+
+    r = create_component_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
+
+    r = add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
+    r = add_component_entry( hdb, "'hydrogen', '', 'TARGETDIR', 0, '', 'hydrogen_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'helium', '', 'TARGETDIR', 0, '', 'helium_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'lithium', '', 'TARGETDIR', 0, '', 'lithium_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'beryllium', '', 'TARGETDIR', 0, '', 'beryllium_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'boron', '', 'TARGETDIR', 0, '', 'boron_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'carbon', '', 'TARGETDIR', 0, '', 'carbon_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = create_feature_components_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'hydrogen'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'helium'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'lithium'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'beryllium'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'boron'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'carbon'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = create_file_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r );
+
+    r = add_file_entry( hdb, "'hydrogen_file', 'hydrogen', 'hydrogen.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'helium_file', 'helium', 'helium.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'lithium_file', 'lithium', 'lithium.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'beryllium_file', 'beryllium', 'beryllium.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'boron_file', 'boron', 'boron.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'carbon_file', 'carbon', 'carbon.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = create_remove_file_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Remove File table: %d\n", r);
+
+    hpkg = package_from_db( hdb );
+    ok( hpkg, "failed to create package\n");
+
+    create_test_file( "hydrogen.txt" );
+    create_test_file( "helium.txt" );
+    create_test_file( "lithium.txt" );
+    create_test_file( "beryllium.txt" );
+    create_test_file( "boron.txt" );
+    create_test_file( "carbon.txt" );
+
+    r = MsiSetProperty( hpkg, "TARGETDIR", CURR_DIR );
+    ok( r == ERROR_SUCCESS, "set property failed\n");
+
+    r = MsiDoAction( hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "cost init failed\n");
+
+    r = MsiDoAction( hpkg, "FileCost");
+    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+
+    r = MsiDoAction( hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+
+    r = MsiDoAction( hpkg, "InstallValidate");
+    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+
+    r = MsiSetComponentState( hpkg, "hydrogen", INSTALLSTATE_ABSENT );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiSetComponentState( hpkg, "helium", INSTALLSTATE_LOCAL );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiSetComponentState( hpkg, "lithium", INSTALLSTATE_SOURCE );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiSetComponentState( hpkg, "beryllium", INSTALLSTATE_ABSENT );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiSetComponentState( hpkg, "boron", INSTALLSTATE_LOCAL );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiSetComponentState( hpkg, "carbon", INSTALLSTATE_SOURCE );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    r = MsiDoAction( hpkg, "RemoveFiles");
+    ok( r == ERROR_SUCCESS, "remove files failed\n");
+
+    todo_wine
+    {
+        ok(DeleteFileA("hydrogen.txt"), "Expected hydrogen.txt to exist\n");
+        ok(DeleteFileA("lithium.txt"), "Expected lithium.txt to exist\n");    
+        ok(DeleteFileA("beryllium.txt"), "Expected beryllium.txt to exist\n");
+        ok(DeleteFileA("carbon.txt"), "Expected carbon.txt to exist\n");
+    }
+    ok(DeleteFileA("helium.txt"), "Expected helium.txt to exist\n");
+    ok(DeleteFileA("boron.txt"), "Expected boron.txt to exist\n");
+
+    MsiCloseHandle( hpkg );
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -1795,4 +1966,5 @@ START_TEST(package)
     test_formatrecord2();
     test_states();
     test_getproperty();
+    test_removefiles();
 }
