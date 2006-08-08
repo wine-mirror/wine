@@ -195,72 +195,147 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
                              SCRIPT_ITEM *pItems, int *pcItems)
 {
-    /* This implementation currently treats the entire string represented in 
-     * pwcInChars as a single entity.  Hence pcItems will be set to 1.          */
 
-    FIXME("%s,%d,%d,%p,%p,%p,%p: semi-stub\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
+#define Numeric_start 0x0030
+#define Numeric_stop  0x0039
+#define Numeric_space 0x0020
+#define Arabic_start  0x0600
+#define Arabic_stop   0x06ff
+#define Latin_start   0x0001
+#define Latin_stop    0x024f
+#define Script_Arabic  6
+#define Script_Latin   1
+#define Script_Numeric 5
+
+    int   cnt = 0, index = 0;
+    int   New_Script = SCRIPT_UNDEFINED;
+
+    TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
-    /*  Set a sensible default                              */
-    /*  Set SCRIPT_ITEM                                     */
-    pItems[0].iCharPos = 0;
+    if  (pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
+        pItems[index].a.eScript = Script_Numeric;
+    else
+    if  (pwcInChars[cnt] >= Arabic_start && pwcInChars[cnt] <= Arabic_stop)
+        pItems[index].a.eScript = Script_Arabic;
+    else
+    if  (pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
+        pItems[index].a.eScript = Script_Latin;
+    else
+        pItems[index].a.eScript = SCRIPT_UNDEFINED;
+    pItems[index].iCharPos = 0;
     /*  Set the SCRIPT_ANALYSIS                             */
-    pItems[0].a.eScript = SCRIPT_UNDEFINED;
-    pItems[0].a.fRTL = 0;
-    pItems[0].a.fLayoutRTL = 0;
-    pItems[0].a.fLinkBefore = 0;
-    pItems[0].a.fLinkAfter = 0;
-    pItems[0].a.fLogicalOrder = 0;
-    pItems[0].a.fNoGlyphIndex = 0;
+    pItems[index].a.fRTL = 0;
+    pItems[index].a.fLayoutRTL = 0;
+    pItems[index].a.fLinkBefore = 0;
+    pItems[index].a.fLinkAfter = 0;
+    pItems[index].a.fLogicalOrder = 0;
+    pItems[index].a.fNoGlyphIndex = 0;
     /*  set the SCRIPT_STATE                                */
-    pItems[0].a.s.uBidiLevel = 0;
-    pItems[0].a.s.fOverrideDirection = 0;
-    pItems[0].a.s.fInhibitSymSwap = FALSE;
-    pItems[0].a.s.fCharShape = 0;
-    pItems[0].a.s.fDigitSubstitute = 0;
-    pItems[0].a.s.fInhibitLigate = 0;
-    pItems[0].a.s.fDisplayZWG = 0;
-    pItems[0].a.s.fArabicNumContext = 0;
-    pItems[0].a.s.fGcpClusters = 0;
-    pItems[0].a.s.fReserved = 0;
-    pItems[0].a.s.fEngineReserved = 0;
+    if  (New_Script == Script_Arabic)
+        pItems[index].a.s.uBidiLevel = 1;
+    else
+        pItems[index].a.s.uBidiLevel = 0;
+    pItems[index].a.s.fOverrideDirection = 0;
+    pItems[index].a.s.fInhibitSymSwap = FALSE;
+    pItems[index].a.s.fCharShape = 0;
+    pItems[index].a.s.fDigitSubstitute = 0;
+    pItems[index].a.s.fInhibitLigate = 0;
+    pItems[index].a.s.fDisplayZWG = 0;
+    pItems[index].a.s.fArabicNumContext = 0;
+    pItems[index].a.s.fGcpClusters = 0;
+    pItems[index].a.s.fReserved = 0;
+    pItems[index].a.s.fEngineReserved = 0;
+    TRACE("New_Script=%d, eScript=%d ", New_Script, pItems[index].a.eScript);
+    TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos = cnt);
+
+    for (cnt=0; cnt < cInChars; cnt++)
+    {
+        if  ((pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
+             || (New_Script == Script_Numeric && pwcInChars[cnt] == Numeric_space))
+            New_Script = Script_Numeric;
+        else
+        if  ((pwcInChars[cnt] >= Arabic_start && pwcInChars[cnt] <= Arabic_stop)
+             || (New_Script == Script_Arabic && pwcInChars[cnt] == Numeric_space))
+            New_Script = Script_Arabic;
+        else
+        if  ((WCHAR) pwcInChars[cnt] >= Latin_start && (WCHAR) pwcInChars[cnt] <= Latin_stop)
+            New_Script = Script_Latin;
+        else
+            New_Script = SCRIPT_UNDEFINED;
+        
+        if  (New_Script != pItems[index].a.eScript)
+        {
+            TRACE("New_Script=%d, eScript=%d ", New_Script, pItems[index].a.eScript);
+            index++;
+            if  (index+1 > cMaxItems)
+                return E_OUTOFMEMORY;
+            pItems[index].iCharPos = cnt;
+            if  (New_Script == Script_Arabic)
+                pItems[index].a.s.uBidiLevel = 1;
+            /*  Set SCRIPT_ITEM                                     */
+            pItems[index].iCharPos = cnt;
+            /*  Set the SCRIPT_ANALYSIS                             */
+            pItems[index].a.eScript = New_Script;
+            pItems[index].a.fRTL = 0;
+            pItems[index].a.fLayoutRTL = 0;
+            pItems[index].a.fLinkBefore = 0;
+            pItems[index].a.fLinkAfter = 0;
+            pItems[index].a.fLogicalOrder = 0;
+            pItems[index].a.fNoGlyphIndex = 0;
+            /*  set the SCRIPT_STATE                                */
+            if  (New_Script == Script_Arabic)
+                pItems[index].a.s.uBidiLevel = 1;
+            else
+                pItems[index].a.s.uBidiLevel = 0;
+            pItems[index].a.s.fOverrideDirection = 0;
+            pItems[index].a.s.fInhibitSymSwap = FALSE;
+            pItems[index].a.s.fCharShape = 0;
+            pItems[index].a.s.fDigitSubstitute = 0;
+            pItems[index].a.s.fInhibitLigate = 0;
+            pItems[index].a.s.fDisplayZWG = 0;
+            pItems[index].a.s.fArabicNumContext = 0;
+            pItems[index].a.s.fGcpClusters = 0;
+            pItems[index].a.s.fReserved = 0;
+            pItems[index].a.s.fEngineReserved = 0;
+            TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos = cnt);
+        }
+    }
 
     /* While not strickly necessary according to the spec, make sure the n+1
      * item is set up to prevent random behaviour if the caller eroneously
      * checks the n+1 structure                                              */
-    pItems[1].a.eScript = 0;
-    pItems[1].a.fRTL = 0;
-    pItems[1].a.fLayoutRTL = 0;
-    pItems[1].a.fLinkBefore = 0;
-    pItems[1].a.fLinkAfter = 0;
-    pItems[1].a.fLogicalOrder = 0;
-    pItems[1].a.fNoGlyphIndex = 0;
+    pItems[index+1].a.eScript = 0;
+    pItems[index+1].a.fRTL = 0;
+    pItems[index+1].a.fLayoutRTL = 0;
+    pItems[index+1].a.fLinkBefore = 0;
+    pItems[index+1].a.fLinkAfter = 0;
+    pItems[index+1].a.fLogicalOrder = 0;
+    pItems[index+1].a.fNoGlyphIndex = 0;
     /*  set the SCRIPT_STATE                                */
-    pItems[1].a.s.uBidiLevel = 0;
-    pItems[1].a.s.fOverrideDirection = 0;
-    pItems[1].a.s.fInhibitSymSwap = FALSE;
-    pItems[1].a.s.fCharShape = 0;
-    pItems[1].a.s.fDigitSubstitute = 0;
-    pItems[1].a.s.fInhibitLigate = 0;
-    pItems[1].a.s.fDisplayZWG = 0;
-    pItems[1].a.s.fArabicNumContext = 0;
-    pItems[1].a.s.fGcpClusters = 0;
-    pItems[1].a.s.fReserved = 0;
-    pItems[1].a.s.fEngineReserved = 0;
+    pItems[index+1].a.s.uBidiLevel = 0;
+    pItems[index+1].a.s.fOverrideDirection = 0;
+    pItems[index+1].a.s.fInhibitSymSwap = FALSE;
+    pItems[index+1].a.s.fCharShape = 0;
+    pItems[index+1].a.s.fDigitSubstitute = 0;
+    pItems[index+1].a.s.fInhibitLigate = 0;
+    pItems[index+1].a.s.fDisplayZWG = 0;
+    pItems[index+1].a.s.fArabicNumContext = 0;
+    pItems[index+1].a.s.fGcpClusters = 0;
+    pItems[index+1].a.s.fReserved = 0;
+    pItems[index+1].a.s.fEngineReserved = 0;
+    TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos = cnt);
 
     /*  Set one SCRIPT_STATE item being returned  */
-    *pcItems = 1;
+    *pcItems = index + 1;
 
     /*  Set SCRIPT_ITEM                                     */
-    pItems[1].iCharPos = cInChars - pItems[0].iCharPos ; /* the last + 1 item
+    pItems[index+1].iCharPos = cnt;       /* the last + 1 item
                                              contains the ptr to the lastchar */
-    TRACE("%s,%d,%d,%p,%p,%p,%p,%d\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
-          psControl, psState, pItems, pcItems, *pcItems);
-    TRACE("Start Pos in string: %d, Stop Pos %d\n", pItems[0].iCharPos, pItems[1].iCharPos);
-    return 0;
+    return S_OK;
 }
 
 /***********************************************************************

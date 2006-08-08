@@ -44,6 +44,8 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     int             pcItems;
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
     WCHAR           TestItem2[] = {'T', 'e', 's', 't', 'b', 0}; 
+    WCHAR           TestItem3[] = {'T', 'e', 's', 't', 'c',' ','1','2','3',' ',' ','e','n','d',0}; 
+    WCHAR           TestItem4[] = {'T', 'e', 's', 't', 'c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -193,6 +195,54 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         hr = ScriptFreeCache( &psc);
         ok (!psc, "psc is not null after ScriptFreeCache\n");
 
+    }
+
+    /* This is a valid test that will cause parsing to take place and create 3 script_items   */
+    cInChars = (sizeof(TestItem3)/2)-1;
+    cMaxItems = 255;
+    hr = ScriptItemize(TestItem3, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    if  (hr == 0)
+	{
+        ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
+        if (pcItems > 2)
+        {
+            ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == 6,
+                "Start pos [0] not = 0 (%d) or end pos [1] not = %d\n",
+                pItem[0].iCharPos, pItem[1].iCharPos);
+            ok (pItem[1].iCharPos == 6 && pItem[2].iCharPos == 11,
+                "Start pos [1] not = 6 (%d) or end pos [2] not = 11 (%d)\n",
+                pItem[1].iCharPos, pItem[2].iCharPos);
+            ok (pItem[2].iCharPos == 11 && pItem[3].iCharPos == cInChars,
+                "Start pos [2] not = 11 (%d) or end [3] pos not = 14 (%d), cInChars = %d\n",
+                pItem[2].iCharPos, pItem[3].iCharPos, cInChars);
+        }
+        hr = ScriptFreeCache( &psc);
+        ok (!psc, "psc is not null after ScriptFreeCache\n");
+    }
+
+    /* This is a valid test that will cause parsing to take place and create 3 script_items   */
+    cInChars = (sizeof(TestItem4)/2)-1;
+    cMaxItems = 255;
+    hr = ScriptItemize(TestItem4, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    if  (hr == 0)
+	{
+        ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
+        if (pcItems > 2)
+        {
+            ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == 6,
+                "Start pos [0] not = 0 (%d) or end pos [1] not = %d\n",
+                pItem[0].iCharPos, pItem[1].iCharPos);
+            ok (pItem[1].iCharPos == 6 && pItem[2].iCharPos == 11,
+                "Start pos [1] not = 6 (%d) or end pos [2] not = 11 (%d)\n",
+                pItem[1].iCharPos, pItem[2].iCharPos);
+            ok (pItem[2].iCharPos == 11 && pItem[3].iCharPos == cInChars,
+                "Start pos [2] not = 11 (%d) or end [3] pos not = 14 (%d), cInChars = %d\n",
+                pItem[2].iCharPos, pItem[3].iCharPos, cInChars);
+        }
+        hr = ScriptFreeCache( &psc);
+        ok (!psc, "psc is not null after ScriptFreeCache\n");
     }
 }
 
