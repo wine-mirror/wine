@@ -49,6 +49,36 @@ typedef struct {
     WNDPROC proc;
 } tooltip_data;
 
+static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if(msg > WM_USER)
+        FIXME("(%p %d %x %lx)\n", hwnd, msg, wParam, lParam);
+
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+static void create_hidden_window(HTMLDocument *This)
+{
+    static ATOM hidden_wnd_class = 0;
+    static const WCHAR wszInternetExplorer_Hidden[] = {'I','n','t','e','r','n','e','t',
+            ' ','E','x','p','l','o','r','e','r','_','H','i','d','d','e','n',0};
+
+    if(!hidden_wnd_class) {
+        WNDCLASSEXW wndclass = {
+            sizeof(WNDCLASSEXW), 0,
+            hidden_proc,
+            0, 0, hInst, NULL, NULL, NULL, NULL,
+            wszInternetExplorer_Hidden,
+            NULL
+        };
+
+        hidden_wnd_class = RegisterClassExW(&wndclass);
+    }
+
+    This->hidden_hwnd = CreateWindowExW(0, wszInternetExplorer_Hidden, NULL, WS_POPUP,
+                                        0, 0, 0, 0, NULL, NULL, hInst, This);
+}
+
 static void paint_disabled(HWND hwnd) {
     HDC hdc;
     PAINTSTRUCT ps;
@@ -664,4 +694,6 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->in_place_active = FALSE;
     This->ui_active = FALSE;
     This->window_active = FALSE;
+
+    create_hidden_window(This);
 }

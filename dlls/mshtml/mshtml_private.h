@@ -87,6 +87,7 @@ struct HTMLDocument {
     IOleInPlaceFrame *frame;
 
     HWND hwnd;
+    HWND hidden_hwnd;
     HWND tooltips_hwnd;
 
     USERMODE usermode;

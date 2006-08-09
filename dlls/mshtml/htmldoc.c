@@ -154,6 +154,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             DestroyWindow(This->tooltips_hwnd);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+        DestroyWindow(This->hidden_hwnd);
 
         release_nodes(This);
 
