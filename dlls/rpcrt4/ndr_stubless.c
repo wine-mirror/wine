@@ -573,9 +573,10 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     {
         stack_size = pProcHeader->stack_size;
         procedure_number = pProcHeader->proc_num;
-        TRACE("proc num: %d\n", procedure_number);
         pFormat += sizeof(NDR_PROC_HEADER);
     }
+    TRACE("stack size: 0x%x\n", stack_size);
+    TRACE("proc num: %d\n", procedure_number);
 
     /* create the full pointer translation tables, if requested */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
@@ -856,7 +857,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                         break;
 
                     TRACE("param[%d]: old format\n", i);
-                    TRACE("\tparam_direction: %x\n", pParam->param_direction);
+                    TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
                     TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
                     TRACE("\tmemory addr (before): %p\n", pArg);
 
@@ -1320,7 +1321,7 @@ long WINAPI NdrStubCall2(
 
                     TRACE("param[%d]: new format\n", i);
                     TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
-                    TRACE("\tstack_offset: %x\n", current_stack_offset);
+                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
                     TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
 
                     if (pParam->param_attributes.ServerAllocSize)
@@ -1453,7 +1454,7 @@ long WINAPI NdrStubCall2(
 
                     TRACE("param[%d]: old format\n", i);
                     TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-                    TRACE("\tstack_offset: %x\n", current_stack_offset_adjusted);
+                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
 
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
                         pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
