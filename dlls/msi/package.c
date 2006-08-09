@@ -485,7 +485,7 @@ static LPCWSTR copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
     return filename;
 }
 
-static LPCWSTR msi_download_package( LPCWSTR szUrl, LPWSTR filename )
+LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename )
 {
     LPINTERNET_CACHE_ENTRY_INFOW cache_entry;
     DWORD size = 0;
@@ -539,7 +539,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         LPCWSTR file;
 
         if ( UrlIsW( szPackage, URLIS_URL ) )
-            file = msi_download_package( szPackage, temppath );
+            file = msi_download_file( szPackage, temppath );
         else
             file = copy_package_to_temp( szPackage, temppath );
 

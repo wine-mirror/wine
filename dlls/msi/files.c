@@ -42,6 +42,8 @@
 #include "msvcrt/fcntl.h"
 #include "msipriv.h"
 #include "winuser.h"
+#include "winreg.h"
+#include "shlwapi.h"
 #include "wine/unicode.h"
 #include "action.h"
 
@@ -56,6 +58,7 @@ extern const WCHAR szRemoveFiles[];
 
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
+extern LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename );
 
 /*
  * This is a helper function for handling embedded cabinet media
@@ -378,6 +381,52 @@ static void free_media_info( struct media_info *mi )
     msi_free( mi );
 }
 
+/* downloads a remote cabinet and extracts it if it exists */
+static UINT msi_extract_remote_cabinet( MSIPACKAGE *package, struct media_info *mi )
+{
+    FDICABINETINFO cabinfo;
+    WCHAR temppath[MAX_PATH];
+    WCHAR src[MAX_PATH];
+    LPSTR cabpath;
+    LPCWSTR file;
+    LPWSTR ptr;
+    HFDI hfdi;
+    ERF erf;
+    int hf;
+
+    /* the URL is the path prefix of the package URL and the filename
+     * of the file to download
+     */
+    ptr = strrchrW(package->PackagePath, '/');
+    lstrcpynW(src, package->PackagePath, ptr - package->PackagePath + 2);
+    ptr = strrchrW(mi->source, '\\');
+    lstrcatW(src, ptr + 1);
+
+    file = msi_download_file( src, temppath );
+    lstrcpyW(mi->source, file);
+
+    /* check if the remote cabinet still exists, ignore if it doesn't */
+    hfdi = FDICreate(cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
+                     cabinet_write, cabinet_close, cabinet_seek, 0, &erf);
+    if (!hfdi)
+    {
+        ERR("FDICreate failed\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    cabpath = strdupWtoA(mi->source);
+    hf = cabinet_open(cabpath, _O_RDONLY, 0);
+    if (!FDIIsCabinet(hfdi, hf, &cabinfo))
+    {
+        WARN("Remote cabinet %s does not exist.\n", debugstr_w(mi->source));
+        msi_free(cabpath);
+        return ERROR_SUCCESS;
+    }
+
+    msi_free(cabpath);
+    return !extract_cabinet_file(package, mi->source, mi->last_path);
+}
+
 static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                                   MSIFILE *file )
 {
@@ -488,7 +537,17 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                     GetTempPathW(MAX_PATH,mi->last_path);
             }
         }
-        rc = !extract_cabinet_file(package, mi->source, mi->last_path);
+
+        /* only download the remote cabinet file if a local copy does not exist */
+        if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
+            UrlIsW(package->PackagePath, URLIS_URL))
+        {
+            rc = msi_extract_remote_cabinet(package, mi);
+        }
+        else
+        {
+            rc = !extract_cabinet_file(package, mi->source, mi->last_path);
+        }
     }
     else
     {
