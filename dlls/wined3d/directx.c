@@ -512,6 +512,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
      *  with Default values
      */
     memset(&gl_info->supported, 0, sizeof(gl_info->supported));
+    gl_info->max_buffers        = 1;
     gl_info->max_textures       = 1;
     gl_info->max_texture_stages = 1;
     gl_info->max_samplers       = 1;
@@ -573,7 +574,12 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             /**
              * ARB
              */
-            if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
+            if (strcmp(ThisExtn, "GL_ARB_draw_buffers") == 0) {
+                glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB_draw_buffers support - max buffers=%u\n", gl_max);            
+                gl_info->supported[ARB_DRAW_BUFFERS] = TRUE;
+                gl_info->max_buffers = gl_max;
+            } else if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
                 gl_info->ps_arb_version = PS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - version=%02x\n", gl_info->ps_arb_version);
                 gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
@@ -2106,7 +2112,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
-        GLint max_buffers = 1;
         FIXME("Caps support for directx9 is nonexistent at the moment!\n");
         *pCaps->DevCaps2                          = 0;
         /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES and VS3.0 needs atleast D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
@@ -2130,17 +2135,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         } else
             *pCaps->DeclTypes                         = 0;
 
-#if 0 /*FIXME: Simultaneous render targets*/
-        GL_MAX_DRAW_BUFFERS_ATI 0x00008824
-        if (GL_SUPPORT(GL_MAX_DRAW_BUFFERS_ATI)) {
-            ENTER_GL();
-            glEnable(GL_MAX_DRAW_BUFFERS_ATI);
-            glGetIntegerv(GL_MAX_DRAW_BUFFERS_ATI, &max_buffers);
-            glDisable(GL_MAX_DRAW_BUFFERS_ATI);
-            LEAVE_GL();
-        }
+#if 0 /* We don't properly support multiple render targets yet, so disable this for now */
+        if (GL_SUPPORT(ARB_DRAWBUFFERS)) {
+            *pCaps->NumSimultaneousRTs = GL_LIMITS(buffers);
+        } else    
 #endif
-        *pCaps->NumSimultaneousRTs                = max_buffers;
+            *pCaps->NumSimultaneousRTs = 1;
+            
         *pCaps->StretchRectFilterCaps             = 0;
         *pCaps->VertexTextureFilterCaps           = 0;
         

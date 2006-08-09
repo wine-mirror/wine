@@ -51,6 +51,28 @@
  *     #defines and functions pointer
  ****************************************************/
 
+/* GL_ARB_draw_buffers */
+#ifndef GL_ARB_draw_buffers
+#define GL_MAX_DRAW_BUFFERS_ARB           0x8824
+#define GL_DRAW_BUFFER0_ARB               0x8825
+#define GL_DRAW_BUFFER1_ARB               0x8826
+#define GL_DRAW_BUFFER2_ARB               0x8827
+#define GL_DRAW_BUFFER3_ARB               0x8828
+#define GL_DRAW_BUFFER4_ARB               0x8829
+#define GL_DRAW_BUFFER5_ARB               0x882A
+#define GL_DRAW_BUFFER6_ARB               0x882B
+#define GL_DRAW_BUFFER7_ARB               0x882C
+#define GL_DRAW_BUFFER8_ARB               0x882D
+#define GL_DRAW_BUFFER9_ARB               0x882E
+#define GL_DRAW_BUFFER10_ARB              0x882F
+#define GL_DRAW_BUFFER11_ARB              0x8830
+#define GL_DRAW_BUFFER12_ARB              0x8831
+#define GL_DRAW_BUFFER13_ARB              0x8832
+#define GL_DRAW_BUFFER14_ARB              0x8833
+#define GL_DRAW_BUFFER15_ARB              0x8834
+#endif
+typedef void (APIENTRY *PGLFNDRAWBUFFERSARBPROC) (GLsizei n, const GLenum *bufs);
+
 /* GL_ARB_imaging */
 #ifndef GL_ARB_imaging
 #define GL_CONSTANT_COLOR                 0x8001
@@ -1358,6 +1380,7 @@ typedef enum _GL_PSVersion {
 /* OpenGL Supported Extensions (ARB and EXT) */
 typedef enum _GL_SupportedExt {
   /* ARB */
+  ARB_DRAW_BUFFERS,
   ARB_FRAGMENT_PROGRAM,
   ARB_FRAGMENT_SHADER,
   ARB_IMAGING,
@@ -1423,6 +1446,8 @@ typedef enum _GL_SupportedExt {
  ****************************************************/
 #define GL_EXT_FUNCS_GEN \
     /** ARB Extensions **/ \
+    /* GL_ARB_draw_buffers */ \
+    USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC, glDrawBuffersARB); \
     /* GL_ARB_imaging */ \
     USE_GL_FUNC(PGLFNBLENDCOLORPROC,                 glBlendColor); \
     USE_GL_FUNC(PGLFNBLENDEQUATIONPROC,              glBlendEquation); \
@@ -1697,6 +1722,7 @@ typedef struct _WineD3D_GL_Info {
   /**
    * CAPS Constants 
    */
+  UINT   max_buffers;
   UINT   max_lights;
   UINT   max_textures;
   UINT   max_texture_stages;

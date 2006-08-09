@@ -849,8 +849,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
-        if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
-            shader_addline(&buffer, "gl_FragData[0] = R0;\n");
+        if (This->baseShader.hex_version < D3DPS_VERSION(2,0)) {
+            /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
+            if(GL_SUPPORT(ARB_DRAW_BUFFERS))
+                shader_addline(&buffer, "gl_FragData[0] = R0;\n");
+            else
+                shader_addline(&buffer, "gl_FragColor = R0;\n");
+        }
         shader_addline(&buffer, "}\n\0");
 
         TRACE("Compiling shader object %u\n", shader_obj);
