@@ -174,7 +174,7 @@ struct user_thread_info
     struct hook16_queue_info     *hook16_info;            /* 10 Opaque pointer for 16-bit hook support */
     DWORD                         GetMessageTimeVal;      /* 14 Value for GetMessageTime */
     DWORD                         GetMessagePosVal;       /* 18 Value for GetMessagePos */
-    DWORD                         GetMessageExtraInfoVal; /* 1c Value for GetMessageExtraInfo */
+    ULONG_PTR                     GetMessageExtraInfoVal; /* 1c Value for GetMessageExtraInfo */
     HCURSOR                       cursor;                 /* 20 Current cursor */
     INT                           cursor_count;           /* 24 Cursor show count */
     UINT                          active_hooks;           /* 28 Bitmap of active hooks */

@@ -2199,7 +2199,7 @@ struct send_message_request
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
-    unsigned int    info;
+    unsigned long   info;
     int             timeout;
     void*           callback;
     /* VARARG(data,bytes); */
@@ -2243,10 +2243,10 @@ struct send_hardware_message_request
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
+    unsigned long   info;
     int             x;
     int             y;
     unsigned int    time;
-    unsigned int    info;
 };
 struct send_hardware_message_reply
 {
@@ -2272,12 +2272,12 @@ struct get_message_reply
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
+    unsigned long   info;
     int             x;
     int             y;
     user_handle_t   hook;
     void*           hook_proc;
     unsigned int    time;
-    unsigned int    info;
     unsigned int    hw_id;
     unsigned int    active_hooks;
     data_size_t     total;
@@ -4405,6 +4405,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 245
+#define SERVER_PROTOCOL_VERSION 246
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

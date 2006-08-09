@@ -72,10 +72,10 @@ struct message
     unsigned int           msg;       /* message code */
     unsigned long          wparam;    /* parameters */
     unsigned long          lparam;    /* parameters */
+    unsigned long          info;      /* extra info */
     int                    x;         /* x position */
     int                    y;         /* y position */
     unsigned int           time;      /* message time */
-    unsigned int           info;      /* extra info */
     user_handle_t          hook;      /* winevent hook handle */
     void                  *hook_proc; /* winevent hook proc address */
     void                  *data;      /* message data for sent messages */
@@ -520,7 +520,7 @@ static void result_timeout( void *private )
 static struct message_result *alloc_message_result( struct msg_queue *send_queue,
                                                     struct msg_queue *recv_queue,
                                                     struct message *msg, int timeout,
-                                                    void *callback, unsigned int callback_data )
+                                                    void *callback, unsigned long callback_data )
 {
     struct message_result *result = mem_alloc( sizeof(*result) );
     if (result)

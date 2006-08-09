@@ -1571,7 +1571,7 @@ enum char_info_mode
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters */
     unsigned long   lparam;    /* parameters */
-    unsigned int    info;      /* extra info */
+    unsigned long   info;      /* extra info */
     int             timeout;   /* timeout for reply */
     void*           callback;  /* callback address */
     VARARG(data,bytes);        /* message data for sent messages */
@@ -1603,10 +1603,10 @@ enum message_type
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters */
     unsigned long   lparam;    /* parameters */
+    unsigned long   info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
-    unsigned int    info;      /* extra info */
 @END
 
 
@@ -1623,12 +1623,12 @@ enum message_type
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters (callback function for MSG_CALLBACK_RESULT) */
     unsigned long   lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
+    unsigned long   info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     int             x;         /* x position */
     int             y;         /* y position */
     user_handle_t   hook;      /* winevent hook handle */
     void*           hook_proc; /* winevent hook proc address */
     unsigned int    time;      /* message time */
-    unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     unsigned int    hw_id;     /* id if hardware message */
     unsigned int    active_hooks; /* active hooks bitmap */
     data_size_t     total;     /* total size of extra data */

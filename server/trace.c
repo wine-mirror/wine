@@ -2091,7 +2091,7 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " info=%08x,", req->info );
+    fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " timeout=%d,", req->timeout );
     fprintf( stderr, " callback=%p,", req->callback );
     fprintf( stderr, " data=" );
@@ -2110,10 +2110,10 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
+    fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
-    fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " info=%08x", req->info );
+    fprintf( stderr, " time=%08x", req->time );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -2132,12 +2132,12 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
+    fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " hook=%p,", req->hook );
     fprintf( stderr, " hook_proc=%p,", req->hook_proc );
     fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " total=%u,", req->total );
