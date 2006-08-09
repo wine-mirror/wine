@@ -972,6 +972,96 @@ static void test_EM_SETTEXTEX()
 }
 
 
+static void test_EM_EXLIMITTEXT(void)
+{
+  int i, selBegin, selEnd, len1, len2;
+  int BUFSIZE = 1024;
+  char text[BUFSIZE+1];
+  int textlimit = 0; /* multiple of 100 */
+  HWND hwndRichEdit = new_richedit(NULL);
+  
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok(32767 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 32767, i); /* default */
+  
+  textlimit = 256000;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  /* set higher */
+  ok(textlimit == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", textlimit, i);
+  
+  textlimit = 1000;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  /* set lower */
+  ok(textlimit == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", textlimit, i);
+ 
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, 0);
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  /* default for WParam = 0 */
+  ok(65536 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 65536, i);
+ 
+  textlimit = BUFSIZE;
+  memset(text, 'W', textlimit);
+  text[BUFSIZE] = 0;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
+  /* maxed out text */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+  
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);  /* select everything */
+  SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM)&selBegin, (LPARAM)&selEnd);
+  len1 = selEnd - selBegin;
+  
+  SendMessage(hwndRichEdit, WM_KEYDOWN, VK_BACK, 1);
+  SendMessage(hwndRichEdit, WM_CHAR, VK_BACK, 1);
+  SendMessage(hwndRichEdit, WM_KEYUP, VK_BACK, 1);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM)&selBegin, (LPARAM)&selEnd);
+  len2 = selEnd - selBegin;
+  
+  ok(len1 != len2,
+    "EM_EXLIMITTEXT: Change Expected\nOld Length: %d, New Length: %d, Limit: %d\n",
+    len1,len2,i);
+  
+  SendMessage(hwndRichEdit, WM_KEYDOWN, 'A', 1);
+  SendMessage(hwndRichEdit, WM_CHAR, 'A', 1);
+  SendMessage(hwndRichEdit, WM_KEYUP, 'A', 1);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM)&selBegin, (LPARAM)&selEnd);
+  len1 = selEnd - selBegin;
+  
+  ok(len1 != len2,
+    "EM_EXLIMITTEXT: Change Expected\nOld Length: %d, New Length: %d, Limit: %d\n",
+    len1,len2,i);
+  
+  SendMessage(hwndRichEdit, WM_KEYDOWN, 'A', 1);
+  SendMessage(hwndRichEdit, WM_CHAR, 'A', 1);
+  SendMessage(hwndRichEdit, WM_KEYUP, 'A', 1);  /* full; should be no effect */
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM)&selBegin, (LPARAM)&selEnd);
+  len2 = selEnd - selBegin;
+  
+  ok(len1 == len2, 
+    "EM_EXLIMITTEXT: No Change Expected\nOld Length: %d, New Length: %d, Limit: %d\n",
+    len1,len2,i);
+
+  DestroyWindow(hwndRichEdit);
+}
+
+static void test_EM_GETLIMITTEXT(void)
+{
+  int i;
+  HWND hwndRichEdit = new_richedit(NULL);
+
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok(32767 == i, "expected: %d, actual: %d\n", 32767, i); /* default value */
+
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, 50000);
+  i = SendMessage(hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok(50000 == i, "expected: %d, actual: %d\n", 50000, i);
+
+  DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -993,6 +1083,8 @@ START_TEST( editor )
   test_EM_SETUNDOLIMIT();
   test_ES_PASSWORD();
   test_EM_SETTEXTEX();
+  test_EM_EXLIMITTEXT();
+  test_EM_GETLIMITTEXT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

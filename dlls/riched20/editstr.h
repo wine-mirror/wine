@@ -312,6 +312,7 @@ typedef struct tagME_TextEditor
   RECT rcFormat;
   BOOL bRedraw;
   int nInvalidOfs;
+  int nTextLimit;
   EDITWORDBREAKPROCW pfnWordBreak;
   LPRICHEDITOLECALLBACK lpOleCallback;
   /*TEXTMODE variable; contains only one of each of the following options:

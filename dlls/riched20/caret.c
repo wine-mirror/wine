@@ -383,6 +383,9 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 {
   const WCHAR *pos;
   ME_Cursor *p = NULL;
+  /* FIXME: is this too slow? */
+  /* Didn't affect performance for WM_SETTEXT (around 50sec/30K) */
+  int freeSpace = editor->nTextLimit - ME_GetTextLength(editor);
 
   assert(style);
 
@@ -393,6 +396,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   assert(nCursor>=0 && nCursor<editor->nCursors);
   if (len == -1)
     len = lstrlenW(str);
+  len = min(len, freeSpace);
   while (len)
   {
     pos = str;

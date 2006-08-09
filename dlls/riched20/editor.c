@@ -32,7 +32,7 @@
   - EM_DISPLAYBAND
   + EM_EMPTYUNDOBUFFER
   + EM_EXGETSEL
-  - EM_EXLIMITTEXT
+  + EM_EXLIMITTEXT
   + EM_EXLINEFROMCHAR
   + EM_EXSETSEL
   + EM_FINDTEXT (only FR_DOWN flag implemented)
@@ -51,7 +51,7 @@
   - EM_GETIMEOPTIONS 1.0asian
   - EM_GETIMESTATUS
   - EM_GETLANGOPTIONS 2.0
-  - EM_GETLIMITTEXT
+  + EM_GETLIMITTEXT
   + EM_GETLINE
   + EM_GETLINECOUNT   returns number of rows, not of paragraphs
   + EM_GETMODIFY
@@ -232,6 +232,8 @@
 
 #define STACK_SIZE_DEFAULT  100
 #define STACK_SIZE_MAX     1000
+
+#define TEXT_LIMIT_DEFAULT 32767
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -1124,6 +1126,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->bCaretAtEnd = FALSE;
   ed->nEventMask = 0;
   ed->nModifyStep = 0;
+  ed->nTextLimit = TEXT_LIMIT_DEFAULT;
   ed->pUndoStack = ed->pRedoStack = ed->pUndoStackBottom = NULL;
   ed->nUndoStackSize = 0;
   ed->nUndoLimit = STACK_SIZE_DEFAULT;
@@ -1420,7 +1423,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
-  UNSUPPORTED_MSG(EM_EXLIMITTEXT)
   UNSUPPORTED_MSG(EM_FINDWORDBREAK)
   UNSUPPORTED_MSG(EM_FMTLINES)
   UNSUPPORTED_MSG(EM_FORMATRANGE)
@@ -1429,7 +1431,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETIMECOMPMODE)
   /* UNSUPPORTED_MSG(EM_GETIMESTATUS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_GETLANGOPTIONS)
-  UNSUPPORTED_MSG(EM_GETLIMITTEXT)
   /* UNSUPPORTED_MSG(EM_GETOLEINTERFACE) separate stub */
   UNSUPPORTED_MSG(EM_GETREDONAME)
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
@@ -2193,6 +2194,20 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%d)==%d\n",wParam, nChars);
     return nChars;
+  }
+  case EM_EXLIMITTEXT:
+  {
+    if (wParam != 0 || lParam < 0)
+     return 0;
+    if (lParam == 0)
+      editor->nTextLimit = 65536;
+    else
+      editor->nTextLimit = (int) lParam;
+    return 0;
+  }
+  case EM_GETLIMITTEXT:
+  {
+    return editor->nTextLimit;
   }
   case EM_FINDTEXT:
   {
