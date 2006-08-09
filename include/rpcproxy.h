@@ -229,7 +229,7 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
 
 /* macros used in dlldata.c files */
 #define EXTERN_PROXY_FILE(proxy) \
-    EXTERN_C const ProxyFileInfo proxy##_ProxyFileInfo
+    EXTERN_C const ProxyFileInfo proxy##_ProxyFileInfo;
 
 #define PROXYFILE_LIST_START \
     const ProxyFileInfo *aProxyFileList[] = \
@@ -241,7 +241,80 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
 #define PROXYFILE_LIST_END \
         NULL \
     };
-    
+
+
+/* define PROXY_CLSID to use an existing CLSID */
+/* define PROXY_CLSID_IS to specify the CLSID data of the PSFactoryBuffer */
+/* define neither to use the GUID of the first interface */
+#ifdef PROXY_CLSID
+# define CLSID_PSFACTORYBUFFER extern CLSID PROXY_CLSID;
+#else
+# ifdef PROXY_CLSID_IS
+#  define CLSID_PSFACTORYBUFFER const CLSID CLSID_PSFactoryBuffer = \
+    PROXY_CLSID_IS;
+#  define PROXY_CLSID CLSID_PSFactoryBuffer
+# else
+#  define CLSID_PSFACTORYBUFFER
+# endif
+#endif
+
+#ifndef PROXY_CLSID
+# define GET_DLL_CLSID (aProxyFileList[0]->pStubVtblList[0] ? \
+    aProxyFileList[0]->pStubVtblList[0]->header.piid : NULL)
+#else
+# define GET_DLL_CLSID &PROXY_CLSID
+#endif
+
+#ifdef ENTRY_PREFIX
+# define __rpc_macro_expand2(a, b) a##b
+# define __rpc_macro_expand(a, b) __rpc_macro_expand2(a, b)
+# define DLLREGISTERSERVER_ENTRY __rpc_macro_expand(ENTRY_PREFIX, DllRegisterServer)
+# define DLLUNREGISTERSERVER_ENTRY __rpc_macro_expand(ENTRY_PREFIX, DllUnregisterServer)
+# define DLLMAIN_ENTRY __rpc_macro_expand(ENTRY_PREFIX, DllMain)
+# define DLLGETCLASSOBJECT_ENTRY __rpc_macro_expand(ENTRY_PREFIX, DllGetClassObject)
+# define DLLCANUNLOADNOW_ENTRY __rpc_macro_expand(ENTRY_PREFIX, DllCanUnloadNow)
+#else
+# define DLLREGISTERSERVER_ENTRY DllRegisterServer
+# define DLLUNREGISTERSERVER_ENTRY DllUnregisterServer
+# define DLLMAIN_ENTRY DllMain
+# define DLLGETCLASSOBJECT_ENTRY DllGetClassObject
+# define DLLCANUNLOADNOW_ENTRY DllCanUnloadNow
+#endif
+
+#define DLLDATA_GETPROXYDLLINFO(pfl, rclsid) \
+    void RPC_ENTRY GetProxyDllInfo(const ProxyFileInfo ***ppProxyFileInfo, \
+                                   const CLSID **ppClsid) \
+    { \
+        *ppProxyFileInfo = (pfl); \
+        *ppClsid = (rclsid); \
+    }
+
+#define DLLGETCLASSOBJECTROUTINE(pfl, factory_clsid, factory) \
+    HRESULT WINAPI DLLGETCLASSOBJECT_ENTRY(REFCLSID rclsid, REFIID riid, \
+                                           void **ppv) \
+    { \
+        return NdrDllGetClassObject(rclsid, riid, ppv, (pfl), \
+                                    (factory_clsid), factory); \
+    }
+
+#define DLLCANUNLOADNOW(factory) \
+    HRESULT WINAPI DLLCANUNLOADNOW_ENTRY(void) \
+    { \
+        return NdrDllCanUnloadNow((factory)); \
+    }
+
+#define DLLREGISTRY_ROUTINES(pfl, factory_clsid)
+
+#define DLLDATA_ROUTINES(pfl, factory_clsid) \
+    CLSID_PSFACTORYBUFFER \
+    CStdPSFactoryBuffer gPFactory = { NULL, 0, NULL, 0 }; \
+    DLLDATA_GETPROXYDLLINFO(pfl, factory_clsid) \
+    DLLGETCLASSOBJECTROUTINE(pfl, factory_clsid, &gPFactory) \
+    DLLCANUNLOADNOW(&gPFactory) \
+    CSTDSTUBBUFFERRELEASE(&gPFactory) \
+    CSTDSTUBBUFFER2RELEASE(&gPFactory) \
+    DLLREGISTRY_ROUTINES(pfl, factory_clsid)
+
 #if 0
 
 /* see http://www.microsoft.com/msj/0199/com/com0199.aspx */
