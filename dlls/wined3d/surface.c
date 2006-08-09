@@ -1858,6 +1858,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         GLenum format, internal, type;
         CONVERT_TYPES convert;
         int bpp;
+        int pitch;
         BYTE *mem;
 
         if(This->CKeyFlags & DDSD_CKSRCBLT) { 
@@ -1867,44 +1868,38 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         else This->Flags &= ~SFLAG_GLCKEY;
         d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
+        /* The pitch is in 'length' not in bytes */
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            pitch = This->currentDesc.Width;
+        else
+            pitch = This->pow2Width;
+
         if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
             int height = This->glRect.bottom - This->glRect.top;
-            int pitch;
-
-            /* Set the pitch in 'length' not in bytes */
-            if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-                pitch = This->currentDesc.Width;
-            else
-                pitch = This->pow2Width;
 
             mem = HeapAlloc(GetProcessHeap(), 0, pitch * height * bpp);
             if(!mem) {
                 ERR("Out of memory %d, %d!\n", pitch, height);
                 return WINED3DERR_OUTOFVIDEOMEMORY;
             }
-
             d3dfmt_convert_surface(This->resource.allocatedMemory,
                                     mem,
                                     pitch*height,
                                     convert,
                                     This);
-            /* Make sure the correct pitch is used */
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 
             This->Flags |= SFLAG_CONVERTED;
         } else if(This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
-                int pitch = IWineD3DSurface_GetPitch(iface);
-                d3dfmt_p8_upload_palette(iface, convert);
-
-                /* Make sure the correct pitch is used */
-                glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
-
-                This->Flags &= ~SFLAG_CONVERTED;
-                mem = This->resource.allocatedMemory;
+            d3dfmt_p8_upload_palette(iface, convert);
+            This->Flags &= ~SFLAG_CONVERTED;
+            mem = This->resource.allocatedMemory;
         } else {
             This->Flags &= ~SFLAG_CONVERTED;
             mem = This->resource.allocatedMemory;
         }
+
+        /* Make sure the correct pitch is used */
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 
        /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
         if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE) ) {
