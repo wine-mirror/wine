@@ -1031,6 +1031,12 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
         ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
         size *= pStubMsg->MaxCount;
         break;
+    case RPC_FC_SMFARRAY:
+        size = *(const WORD*)(pFormat + 2);
+        break;
+    case RPC_FC_LGFARRAY:
+        size = *(const DWORD*)(pFormat + 2);
+        break;
     default:
         FIXME("Unhandled type %02x\n", *pFormat);
         /* fallthrough */
