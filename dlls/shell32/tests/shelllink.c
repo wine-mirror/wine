@@ -24,16 +24,32 @@
 
 #define COBJMACROS
 
-#include <stdarg.h>
-#include <stdio.h>
-#include "windef.h"
-#include "winbase.h"
+#include <windows.h>
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "shlobj.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
+
+#ifndef _MSC_VER
+#define DBH(x)  (x).dbh
+#else
+#define DBH(x)  (x)
+#endif
+
+typedef void (WINAPI *fnILFree)(LPITEMIDLIST);
+typedef BOOL (WINAPI *fnILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
+typedef HRESULT (WINAPI *fnSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
+
+static fnILFree pILFree;
+static fnILIsEqual pILIsEqual;
+static fnSHILCreateFromPath pSHILCreateFromPath;
+
+static const GUID _IID_IShellLinkDataList = {
+    0x45e2b4ae, 0xb1c3, 0x11d0,
+    { 0xb9, 0x2f, 0x00, 0xa0, 0xc9, 0x03, 0x12, 0xe1 }
+};
 
 static const WCHAR lnkfile[]= { 'C',':','\\','t','e','s','t','.','l','n','k',0 };
 static const WCHAR notafile[]= { 'C',':','\\','n','o','n','e','x','i','s','t','e','n','t','\\','f','i','l','e',0 };
@@ -72,7 +88,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
         pathW=HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, len);
 
-        r=SHILCreateFromPath(pathW, &pidl, NULL);
+        r=pSHILCreateFromPath(pathW, &pidl, NULL);
         todo_wine {
         ok(SUCCEEDED(r), "SHILCreateFromPath failed (0x%08lx)\n", r);
         }
@@ -188,11 +204,11 @@ static void test_get_set(void)
         tmp_pidl=NULL;
         r = IShellLinkA_GetIDList(sl, &tmp_pidl);
         ok(SUCCEEDED(r), "GetIDList failed (0x%08lx)\n", r);
-        ok(tmp_pidl && ILIsEqual(pidl, tmp_pidl),
+        ok(tmp_pidl && pILIsEqual(pidl, tmp_pidl),
            "GetIDList returned an incorrect pidl\n");
 
         /* tmp_pidl is owned by IShellLink so we don't free it */
-        ILFree(pidl);
+        pILFree(pidl);
 
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
@@ -410,7 +426,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         LPITEMIDLIST pidl=NULL;
         r = IShellLinkA_GetIDList(sl, &pidl);
         lok(SUCCEEDED(r), "GetIDList failed (0x%08lx)\n", r);
-        lok(ILIsEqual(pidl, desc->pidl),
+        lok(pILIsEqual(pidl, desc->pidl),
            "GetIDList returned an incorrect pidl\n");
     }
     if (desc->showcmd)
@@ -468,7 +484,6 @@ static void test_load_save(void)
     desc.icon="";
     check_lnk(lnkfile, &desc);
 
-
     /* Point a .lnk file to nonexistent files */
     desc.description="";
     desc.workdir="c:\\Nonexitent\\work\\directory";
@@ -488,7 +503,6 @@ static void test_load_save(void)
     p=strrchr(mydir, '\\');
     if (p)
         *p='\0';
-
 
     /* Overwrite the existing lnk file and point it to existing files */
     desc.description="test 2";
@@ -541,7 +555,7 @@ static void test_datalink(void)
     if (!sl)
         return;
 
-    r = IShellLinkW_QueryInterface( sl, &IID_IShellLinkDataList, (LPVOID*) &dl );
+    r = IShellLinkW_QueryInterface( sl, &_IID_IShellLinkDataList, (LPVOID*) &dl );
     ok(r == S_OK, "no datalink interface\n");
 
     if (!dl)
@@ -575,7 +589,7 @@ static void test_datalink(void)
     r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
     ok( r == S_OK, "CopyDataBlock failed\n");
 
-    ok( dar && dar->dbh.dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
+    ok( dar && DBH(*dar).dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
     ok( dar && 0==lstrcmpW(dar->szwDarwinID, comp ), "signature wrong\n");
 
     LocalFree( dar );
@@ -587,6 +601,12 @@ static void test_datalink(void)
 START_TEST(shelllink)
 {
     HRESULT r;
+    HMODULE hmod;
+
+    hmod = GetModuleHandle("shell32");
+    pILFree = (fnILFree) GetProcAddress(hmod, (LPSTR)155);
+    pILIsEqual = (fnILIsEqual) GetProcAddress(hmod, (LPSTR)21);
+    pSHILCreateFromPath = (fnSHILCreateFromPath) GetProcAddress(hmod, (LPSTR)28);
 
     r = CoInitialize(NULL);
     ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\n", r);
