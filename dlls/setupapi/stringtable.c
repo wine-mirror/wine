@@ -172,18 +172,12 @@ StringTableDestroy(HSTRING_TABLE hStringTable)
     {
         for (i = 0; i < pStringTable->dwMaxSlots; i++)
         {
-            if (pStringTable->pSlots[i].pString != NULL)
-            {
-                MyFree(pStringTable->pSlots[i].pString);
-                pStringTable->pSlots[i].pString = NULL;
-            }
+            MyFree(pStringTable->pSlots[i].pString);
+            pStringTable->pSlots[i].pString = NULL;
 
-            if (pStringTable->pSlots[i].pData != NULL)
-            {
-                MyFree(pStringTable->pSlots[i].pData);
-                pStringTable->pSlots[i].pData = NULL;
-                pStringTable->pSlots[i].dwSize = 0;
-            }
+            MyFree(pStringTable->pSlots[i].pData);
+            pStringTable->pSlots[i].pData = NULL;
+            pStringTable->pSlots[i].dwSize = 0;
         }
 
         MyFree(pStringTable->pSlots);

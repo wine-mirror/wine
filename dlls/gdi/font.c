@@ -1243,7 +1243,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     if (lpnFit)
 	*lpnFit = nFit;
 
-    if (dxs && ! alpDx)
+    if (! alpDx)
         HeapFree(GetProcessHeap(), 0, dxs);
 
     GDI_ReleaseObj( hdc );

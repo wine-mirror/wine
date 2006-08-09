@@ -767,8 +767,7 @@ DWORD WINAPI TakeOwnershipOfFile(LPCWSTR lpFileName)
 fail:;
     dwError = GetLastError();
 
-    if (pOwner != NULL)
-        MyFree(pOwner);
+    MyFree(pOwner);
 
     if (hToken != NULL)
         CloseHandle(hToken);
