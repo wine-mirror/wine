@@ -3716,7 +3716,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
    * Compare the riid with the interface IDs implemented by this object.
    */
   if (IsEqualGUID(&IID_IUnknown, riid) ||
-      IsEqualGUID(&IID_IStorage, riid))
+      IsEqualGUID(&IID_IEnumSTATSTG, riid))
   {
     *ppvObject = (IEnumSTATSTG*)This;
     IEnumSTATSTG_AddRef((IEnumSTATSTG*)This);
