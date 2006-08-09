@@ -186,15 +186,17 @@
 @ stdcall I_CryptFlushLruCache(ptr long long)
 @ stdcall I_CryptFreeLruCache(ptr long long)
 @ stdcall I_CryptFreeTls(long long)
-@ stub I_CryptGetDefaultCryptProv
+@ stdcall I_CryptGetDefaultCryptProv(long long long)
 @ stub I_CryptGetDefaultCryptProvForEncrypt
 @ stdcall I_CryptGetOssGlobal(long)
 @ stdcall I_CryptGetTls(long)
 @ stub I_CryptInsertLruEntry
 @ stdcall I_CryptInstallAsn1Module(long long long)
 @ stdcall I_CryptInstallOssGlobal(long long long)
+@ stdcall I_CryptReadTrustedPublisherDWORDValueFromRegistry(wstr ptr)
 @ stub I_CryptReleaseLruEntry
 @ stdcall I_CryptSetTls(long ptr)
+@ stdcall I_CryptUninstallAsn1Module(ptr)
 @ stub I_CryptUninstallOssGlobal
 @ stub PFXExportCertStore
 @ stub PFXImportCertStore

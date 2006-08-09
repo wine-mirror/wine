@@ -27,6 +27,8 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "mssip.h"
+#include "winuser.h"
+#include "advpub.h"
 #include "crypt32_private.h"
 #include "wine/debug.h"
 
@@ -269,6 +271,39 @@ BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
     return FALSE;
 }
 
+BOOL WINAPI I_CryptGetDefaultCryptProv(DWORD x, DWORD y, DWORD z)
+{
+    FIXME("%08lx %08lx %08lx\n", x, y, z);
+    return FALSE;
+}
+
+BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
+ DWORD *value)
+{
+    static const WCHAR safer[] = { 
+     'S','o','f','t','w','a','r','e','\\','P','o','l','i','c','i','e','s','\\',
+     'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
+     'C','e','r','t','i','f','i','c','a','t','e','s','\\',
+     'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r','\\',
+     'S','a','f','e','r',0 };
+    HKEY key;
+    LONG rc;
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %p)\n", debugstr_w(name), value);
+
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+    if (rc == ERROR_SUCCESS)
+    {
+        DWORD size = sizeof(DWORD);
+
+        if (!RegQueryValueExW(key, name, NULL, NULL, (LPBYTE)value, &size))
+            ret = TRUE;
+        RegCloseKey(key);
+    }
+    return ret;
+}
+
 BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 {
     FIXME("%08lx %08lx %08lx\n", x, y, z);
@@ -278,6 +313,12 @@ BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 BOOL WINAPI I_CryptInstallAsn1Module(void *x, DWORD y, DWORD z)
 {
     FIXME("%p %08lx %08lx\n", x, y, z);
+    return TRUE;
+}
+
+BOOL WINAPI I_CryptUninstallAsn1Module(void *x)
+{
+    FIXME("%p\n", x);
     return TRUE;
 }
 

@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <winreg.h>
 
 #include "wine/test.h"
 
@@ -272,6 +273,54 @@ static void test_cryptTls(void)
     }
 }
 
+typedef BOOL (WINAPI *I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)
+ (LPCWSTR, DWORD *);
+
+static void test_readTrustedPublisherDWORD(void)
+{
+    HMODULE lib = LoadLibraryA("crypt32.dll");
+
+    if (lib)
+    {
+        I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc pReadDWORD = 
+         (I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)GetProcAddress(
+         lib, "I_CryptReadTrustedPublisherDWORDValueFromRegistry");
+
+        if (pReadDWORD)
+        {
+            static const WCHAR safer[] = { 
+             'S','o','f','t','w','a','r','e','\\',
+             'P','o','l','i','c','i','e','s','\\',
+             'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
+             'C','e','r','t','i','f','i','c','a','t','e','s','\\',
+             'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',
+             '\\','S','a','f','e','r',0 };
+            static const WCHAR authenticodeFlags[] = { 'A','u','t','h','e','n',
+             't','i','c','o','d','e','F','l','a','g','s',0 };
+            BOOL ret, exists = FALSE;
+            DWORD size, readFlags, returnedFlags;
+            HKEY key;
+            LONG rc;
+
+            rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+            if (rc == ERROR_SUCCESS)
+            {
+                size = sizeof(readFlags);
+                rc = RegQueryValueExW(key, authenticodeFlags, NULL, NULL,
+                 (LPBYTE)&readFlags, &size);
+                if (rc == ERROR_SUCCESS)
+                    exists = TRUE;
+            }
+            ret = pReadDWORD(authenticodeFlags, &returnedFlags);
+            ok(ret == exists, "Unexpected return value\n");
+            if (exists)
+                ok(readFlags == returnedFlags,
+                 "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
+        }
+        FreeLibrary(lib);
+    }
+}
+
 START_TEST(main)
 {
     test_findAttribute();
@@ -280,4 +329,5 @@ START_TEST(main)
     test_verifyTimeValidity();
     test_cryptAllocate();
     test_cryptTls();
+    test_readTrustedPublisherDWORD();
 }
