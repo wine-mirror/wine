@@ -165,6 +165,14 @@ static inline int is_base_type(unsigned char type)
     }
 }
 
+static unsigned char ref_type(const type_t *type)
+{
+    while (type_has_ref(type))
+        type = type->ref;
+
+    return type->type;
+}
+
 static size_t write_procformatstring_var(FILE *file, int indent,
     const var_t *var, int is_return, unsigned int *type_offset)
 {
@@ -374,6 +382,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
     if (subexpr->type == EXPR_IDENTIFIER)
     {
         const type_t *correlation_variable = NULL;
+        unsigned char correlation_variable_type;
         unsigned char param_type = 0;
         const char *param_type_string = NULL;
         size_t offset;
@@ -418,10 +427,9 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             correlation_type = RPC_FC_TOP_LEVEL_CONFORMANCE;
         }
 
-        while (type_has_ref(correlation_variable))
-            correlation_variable = correlation_variable->ref;
+        correlation_variable_type = ref_type(correlation_variable);
 
-        switch (correlation_variable->type)
+        switch (correlation_variable_type)
         {
         case RPC_FC_CHAR:
         case RPC_FC_SMALL:
@@ -452,7 +460,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             break;
         default:
             error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
-                correlation_variable->type);
+                correlation_variable_type);
         }
 
         print_file(file, 2, "0x%x, /* Corr desc: %s%s */\n",
@@ -710,18 +718,19 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     size_t start_offset = *typestring_offset;
     unsigned char flags = 0;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    unsigned char rtype;
+
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
     if (!get_attrp(attrs, ATTR_SIZEIS))
         flags |= RPC_FC_P_SIMPLEPOINTER;
 
-    while (type_has_ref(type))
-        type = type->ref;
+    rtype = ref_type(type);
 
-    if ((type->type != RPC_FC_BYTE) && (type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
+    if ((rtype != RPC_FC_BYTE) && (rtype != RPC_FC_CHAR) && (rtype != RPC_FC_WCHAR))
     {
-        error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
+        error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", rtype, name);
         return start_offset;
     }
 
@@ -743,7 +752,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
             error("array size for parameter %s exceeds %d bytes by %ld bytes\n",
                   name, USHRT_MAX, array->cval - USHRT_MAX);
 
-        if (type->type == RPC_FC_CHAR)
+        if (rtype == RPC_FC_CHAR)
             WRITE_FCTYPE(file, FC_CSTRING, *typestring_offset);
         else
             WRITE_FCTYPE(file, FC_WSTRING, *typestring_offset);
@@ -757,7 +766,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     }
     else if (has_size)
     {
-        if (type->type == RPC_FC_CHAR)
+        if (rtype == RPC_FC_CHAR)
             WRITE_FCTYPE(file, FC_C_CSTRING, *typestring_offset);
         else
             WRITE_FCTYPE(file, FC_C_WSTRING, *typestring_offset);
@@ -770,7 +779,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     }
     else
     {
-        if (type->type == RPC_FC_CHAR)
+        if (rtype == RPC_FC_CHAR)
             WRITE_FCTYPE(file, FC_C_CSTRING, *typestring_offset);
         else
             WRITE_FCTYPE(file, FC_C_WSTRING, *typestring_offset);
@@ -1004,9 +1013,11 @@ static size_t write_struct_members(FILE *file, const type_t *type)
     while (NEXT_LINK(field)) field = NEXT_LINK(field);
     for (; field; field = PREV_LINK(field))
     {
-        if (is_base_type(field->type->type))
+        unsigned char rtype = ref_type(field->type);
+
+        if (is_base_type(rtype))
         {
-            switch (field->type->type)
+            switch (rtype)
             {
 #define CASE_BASETYPE(fctype) \
             case RPC_##fctype: \
@@ -1035,7 +1046,7 @@ static size_t write_struct_members(FILE *file, const type_t *type)
             }
         }
         else
-            error("Unsupported member type 0x%x\n", field->type->type);
+            error("Unsupported member type 0x%x\n", rtype);
     }
 
     if (typestring_size % 1)
@@ -1576,15 +1587,15 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     const type_t *type = var->type;
     unsigned int size;
     unsigned int alignment = 0;
+    unsigned char rtype;
 
     /* no work to do for other phases, buffer sizing is done elsewhere */
     if (phase != PHASE_MARSHAL && phase != PHASE_UNMARSHAL)
         return;
 
-    while (type_has_ref(type))
-        type = type->ref;
+    rtype = ref_type(type);
 
-    switch (type->type)
+    switch (rtype)
     {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
@@ -1621,7 +1632,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
             return;
 
         default:
-            error("print_phase_basetype: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, type->type);
+            error("print_phase_basetype: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, rtype);
             size = 0;
     }
 
@@ -1683,6 +1694,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
         const type_t *type = var->type;
+        unsigned char rtype;
+
         length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
         has_length = length_is && (length_is->type != EXPR_VOID);
@@ -1711,8 +1724,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             break;
         }
 
-        while (type_has_ref(type))
-            type = type->ref;
+        rtype = ref_type(type);
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
@@ -1795,7 +1807,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     print_phase_function(file, indent, array_type, phase, var->name, *type_offset + 4);
             }
         }
-        else if (var->ptr_level == 0 && is_base_type(type->type))
+        else if (var->ptr_level == 0 && is_base_type(rtype))
         {
             print_phase_basetype(file, indent, phase, pass, var, var->name);
         }
@@ -1803,7 +1815,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             const char *ndrtype;
 
-            switch (type->type)
+            switch (rtype)
             {
             case RPC_FC_STRUCT:
                 ndrtype = "SimpleStruct";
@@ -1820,7 +1832,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 break;
             default:
                 error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
-                    var->name, type->type, var->ptr_level);
+                    var->name, rtype, var->ptr_level);
                 ndrtype = NULL;
             }
 
@@ -1828,11 +1840,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else
         {
-            if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(type->type))
+            if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(rtype))
             {
                 print_phase_basetype(file, indent, phase, pass, var, var->name);
             }
-            else if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && (type->type == RPC_FC_STRUCT))
+            else if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && (rtype == RPC_FC_STRUCT))
             {
                 if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
                     print_phase_function(file, indent, "SimpleStruct", phase, var->name, *type_offset + 4);
