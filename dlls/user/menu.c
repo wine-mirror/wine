@@ -524,7 +524,7 @@ static UINT  MENU_GetStartOfNextColumn(
 	return i;
 
     for( ; i < menu->nItems; ++i ) {
-	if (menu->items[i].fType & MF_MENUBARBREAK)
+	if (menu->items[i].fType & (MF_MENUBREAK | MF_MENUBARBREAK))
 	    return i;
     }
 
@@ -554,14 +554,14 @@ static UINT  MENU_GetStartOfPrevColumn(
     /* Find the start of the column */
 
     for(i = menu->FocusedItem; i != 0 &&
-	 !(menu->items[i].fType & MF_MENUBARBREAK);
+	 !(menu->items[i].fType & (MF_MENUBREAK | MF_MENUBARBREAK));
 	--i); /* empty */
 
     if(i == 0)
 	return NO_SELECTED_ITEM;
 
     for(--i; i != 0; --i) {
-	if (menu->items[i].fType & MF_MENUBARBREAK)
+	if (menu->items[i].fType & (MF_MENUBREAK | MF_MENUBARBREAK))
 	    break;
     }
 
@@ -1131,7 +1131,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     {
 	lpitem = &lppop->items[start];
 	orgX = maxX;
-        if( lpitem->fType & MF_MENUBREAK)
+        if( lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))
             orgX += MENU_COL_SPACE; 
 	orgY = MENU_TOP_MARGIN;
 
@@ -1143,8 +1143,6 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE, lppop );
-
-	    if (lpitem->fType & MF_MENUBARBREAK) orgX++;
 	    maxX = max( maxX, lpitem->rect.right );
 	    orgY = lpitem->rect.bottom;
 	    if (IS_STRING_ITEM(lpitem->fType) && lpitem->xTab)
@@ -1457,6 +1455,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         HPEN oldPen;
         RECT rc = rect;
 
+        rc.left -= MENU_COL_SPACE / 2 + 1;
         rc.top = 3;
         rc.bottom = height - 3;
         if (flat_menu)
