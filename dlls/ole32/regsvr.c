@@ -68,6 +68,7 @@ struct regsvr_coclass
     LPCSTR ips;			/* can be NULL to omit */
     LPCSTR ips32;		/* can be NULL to omit */
     LPCSTR ips32_tmodel;	/* can be NULL to omit */
+    LPCSTR progid;		/* can be NULL to omit */
 };
 
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
@@ -97,6 +98,8 @@ static WCHAR const ips_keyname[13] = {
 static WCHAR const ips32_keyname[15] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     '3', '2', 0 };
+static WCHAR const progid_keyname[7] = {
+    'P', 'r', 'o', 'g', 'I', 'D', 0 };
 static char const tmodel_valuename[] = "ThreadingModel";
 
 /***********************************************************************
@@ -107,7 +110,10 @@ static LONG register_key_defvalueW(HKEY base, WCHAR const *name,
 				   WCHAR const *value);
 static LONG register_key_defvalueA(HKEY base, WCHAR const *name,
 				   char const *value);
+static LONG register_progid(WCHAR const *clsid, char const *progid,
+                            char const *name);
 static LONG recursive_delete_key(HKEY key);
+static LONG recursive_delete_keyA(HKEY base, char const *name);
 
 
 /***********************************************************************
@@ -268,6 +274,15 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
+	if (list->progid) {
+	    res = register_key_defvalueA(clsid_key, progid_keyname,
+					 list->progid);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	    res = register_progid(buf, list->progid, list->name);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	}
+
     error_close_clsid_key:
 	RegCloseKey(clsid_key);
     }
@@ -306,6 +321,11 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 	res = recursive_delete_key(clsid_key);
 	RegCloseKey(clsid_key);
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+	if (list->progid) {
+	    res = recursive_delete_keyA(HKEY_CLASSES_ROOT, list->progid);
+	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+	}
     }
 
 error_close_coclass_key:
@@ -366,6 +386,38 @@ static LONG register_key_defvalueA(
 }
 
 /***********************************************************************
+ *		regsvr_progid
+ */
+static LONG register_progid(
+    WCHAR const *clsid,
+    char const *progid,
+    char const *name)
+{
+    LONG res;
+    HKEY progid_key;
+
+    res = RegCreateKeyExA(HKEY_CLASSES_ROOT, progid, 0,
+			  NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			  &progid_key, NULL);
+    if (res != ERROR_SUCCESS) return res;
+
+    if (name) {
+	res = RegSetValueExA(progid_key, NULL, 0, REG_SZ,
+			     (CONST BYTE*)name, strlen(name) + 1);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (clsid) {
+	res = register_key_defvalueW(progid_key, clsid_keyname, clsid);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+error_close_progid_key:
+    RegCloseKey(progid_key);
+    return res;
+}
+
+/***********************************************************************
  *		recursive_delete_key
  */
 static LONG recursive_delete_key(HKEY key)
@@ -394,6 +446,22 @@ static LONG recursive_delete_key(HKEY key)
     }
 
     if (res == ERROR_SUCCESS) res = RegDeleteKeyW(key, 0);
+    return res;
+}
+
+/***********************************************************************
+ *		recursive_delete_keyA
+ */
+static LONG recursive_delete_keyA(HKEY base, char const *name)
+{
+    LONG res;
+    HKEY key;
+
+    res = RegOpenKeyExA(base, name, 0, KEY_READ | KEY_WRITE, &key);
+    if (res == ERROR_FILE_NOT_FOUND) return ERROR_SUCCESS;
+    if (res != ERROR_SUCCESS) return res;
+    res = recursive_delete_key(key);
+    RegCloseKey(key);
     return res;
 }
 
@@ -465,13 +533,15 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Picture (Metafile)",
 	NULL,
 	"ole32.dll",
-	NULL
+	NULL,
+	"StaticMetafile"
     },
     {   &CLSID_Picture_Dib,
 	"Picture (Device Independent Bitmap)",
 	NULL,
 	"ole32.dll",
-	NULL
+	NULL,
+	"StaticDib"
     },
     {   &CLSID_ClassMoniker,
 	"ClassMoniker",
