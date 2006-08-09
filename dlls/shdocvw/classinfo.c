@@ -76,7 +76,8 @@ static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
         return E_FAIL;
     }
 
-    memcpy(pGUID, &DIID_DWebBrowserEvents2, sizeof(GUID));
+    memcpy(pGUID, This->version == 1 ? &DIID_DWebBrowserEvents : &DIID_DWebBrowserEvents2,
+           sizeof(GUID));
     return S_OK;
 }
 
