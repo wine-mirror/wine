@@ -199,11 +199,9 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
 
-    SERVER_START_REQ( send_message )
+    SERVER_START_REQ( send_hardware_message )
     {
         req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
-        req->type     = MSG_HARDWARE;
-        req->flags    = 0;
         req->win      = hwnd;
         req->msg      = message;
         req->wparam   = MAKEWPARAM( get_key_state(), data );
@@ -212,8 +210,6 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
         req->y        = y;
         req->time     = time;
         req->info     = extra_info;
-        req->timeout  = -1;
-        req->callback = NULL;
         wine_server_call( req );
     }
     SERVER_END_REQ;

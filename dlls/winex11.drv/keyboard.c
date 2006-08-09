@@ -1183,11 +1183,9 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     hook.dwExtraInfo = dwExtraInfo;
     if (HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
 
-    SERVER_START_REQ( send_message )
+    SERVER_START_REQ( send_hardware_message )
     {
         req->id       = (injected_flags & LLKHF_INJECTED) ? 0 : GetCurrentThreadId();
-        req->type     = MSG_HARDWARE;
-        req->flags    = 0;
         req->win      = 0;
         req->msg      = message;
         req->wparam   = wVk;
@@ -1196,8 +1194,6 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
         req->y        = cursor_pos.y;
         req->time     = time;
         req->info     = dwExtraInfo;
-        req->timeout  = -1;
-        req->callback = NULL;
         wine_server_call( req );
     }
     SERVER_END_REQ;

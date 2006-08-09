@@ -233,6 +233,7 @@ DECL_HANDLER(get_queue_status);
 DECL_HANDLER(get_process_idle_event);
 DECL_HANDLER(send_message);
 DECL_HANDLER(post_quit_message);
+DECL_HANDLER(send_hardware_message);
 DECL_HANDLER(get_message);
 DECL_HANDLER(reply_message);
 DECL_HANDLER(accept_hardware_message);
@@ -452,6 +453,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_process_idle_event,
     (req_handler)req_send_message,
     (req_handler)req_post_quit_message,
+    (req_handler)req_send_hardware_message,
     (req_handler)req_get_message,
     (req_handler)req_reply_message,
     (req_handler)req_accept_hardware_message,

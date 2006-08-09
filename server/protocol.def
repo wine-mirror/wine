@@ -1571,9 +1571,6 @@ enum char_info_mode
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters */
     unsigned long   lparam;    /* parameters */
-    int             x;         /* x position */
-    int             y;         /* y position */
-    unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info */
     int             timeout;   /* timeout for reply */
     void*           callback;  /* callback address */
@@ -1597,6 +1594,20 @@ enum message_type
     MSG_WINEVENT        /* winevent message */
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
+
+
+/* Send a hardware message to a thread queue */
+@REQ(send_hardware_message)
+    thread_id_t     id;        /* thread id */
+    user_handle_t   win;       /* window handle */
+    unsigned int    msg;       /* message code */
+    unsigned long   wparam;    /* parameters */
+    unsigned long   lparam;    /* parameters */
+    int             x;         /* x position */
+    int             y;         /* y position */
+    unsigned int    time;      /* message time */
+    unsigned int    info;      /* extra info */
+@END
 
 
 /* Get a message from the current queue */

@@ -2091,9 +2091,6 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " x=%d,", req->x );
-    fprintf( stderr, " y=%d,", req->y );
-    fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " timeout=%d,", req->timeout );
     fprintf( stderr, " callback=%p,", req->callback );
@@ -2104,6 +2101,19 @@ static void dump_send_message_request( const struct send_message_request *req )
 static void dump_post_quit_message_request( const struct post_quit_message_request *req )
 {
     fprintf( stderr, " exit_code=%d", req->exit_code );
+}
+
+static void dump_send_hardware_message_request( const struct send_hardware_message_request *req )
+{
+    fprintf( stderr, " id=%04x,", req->id );
+    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " wparam=%lx,", req->wparam );
+    fprintf( stderr, " lparam=%lx,", req->lparam );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " time=%08x,", req->time );
+    fprintf( stderr, " info=%08x", req->info );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -3396,6 +3406,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_process_idle_event_request,
     (dump_func)dump_send_message_request,
     (dump_func)dump_post_quit_message_request,
+    (dump_func)dump_send_hardware_message_request,
     (dump_func)dump_get_message_request,
     (dump_func)dump_reply_message_request,
     (dump_func)dump_accept_hardware_message_request,
@@ -3610,6 +3621,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_get_process_idle_event_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_message_reply,
@@ -3828,6 +3840,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_process_idle_event",
     "send_message",
     "post_quit_message",
+    "send_hardware_message",
     "get_message",
     "reply_message",
     "accept_hardware_message",

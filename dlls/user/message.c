@@ -1390,7 +1390,6 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = lp;
-        req->time    = GetCurrentTime();
         req->timeout = 0;
         for (i = 0; i < data->count; i++)
             wine_server_add_data( req, data->data[i], data->size[i] );
@@ -2196,7 +2195,6 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = info->lparam;
-        req->time    = GetCurrentTime();
         req->timeout = timeout;
 
         if (info->type == MSG_CALLBACK)

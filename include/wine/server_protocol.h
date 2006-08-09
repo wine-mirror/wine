@@ -2199,9 +2199,6 @@ struct send_message_request
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
-    int             x;
-    int             y;
-    unsigned int    time;
     unsigned int    info;
     int             timeout;
     void*           callback;
@@ -2235,6 +2232,26 @@ enum message_type
     MSG_WINEVENT
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
+
+
+
+struct send_hardware_message_request
+{
+    struct request_header __header;
+    thread_id_t     id;
+    user_handle_t   win;
+    unsigned int    msg;
+    unsigned long   wparam;
+    unsigned long   lparam;
+    int             x;
+    int             y;
+    unsigned int    time;
+    unsigned int    info;
+};
+struct send_hardware_message_reply
+{
+    struct reply_header __header;
+};
 
 
 
@@ -3855,6 +3872,7 @@ enum request
     REQ_get_process_idle_event,
     REQ_send_message,
     REQ_post_quit_message,
+    REQ_send_hardware_message,
     REQ_get_message,
     REQ_reply_message,
     REQ_accept_hardware_message,
@@ -4075,6 +4093,7 @@ union generic_request
     struct get_process_idle_event_request get_process_idle_event_request;
     struct send_message_request send_message_request;
     struct post_quit_message_request post_quit_message_request;
+    struct send_hardware_message_request send_hardware_message_request;
     struct get_message_request get_message_request;
     struct reply_message_request reply_message_request;
     struct accept_hardware_message_request accept_hardware_message_request;
@@ -4293,6 +4312,7 @@ union generic_reply
     struct get_process_idle_event_reply get_process_idle_event_reply;
     struct send_message_reply send_message_reply;
     struct post_quit_message_reply post_quit_message_reply;
+    struct send_hardware_message_reply send_hardware_message_reply;
     struct get_message_reply get_message_reply;
     struct reply_message_reply reply_message_reply;
     struct accept_hardware_message_reply accept_hardware_message_reply;
@@ -4385,6 +4405,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 244
+#define SERVER_PROTOCOL_VERSION 245
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

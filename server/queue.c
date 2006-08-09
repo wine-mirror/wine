@@ -1569,24 +1569,15 @@ DECL_HANDLER(send_message)
     struct msg_queue *recv_queue = NULL;
     struct thread *thread = NULL;
 
-    if (req->id)
-    {
-        if (!(thread = get_thread_from_id( req->id ))) return;
-    }
-    else if (req->type != MSG_HARDWARE)
-    {
-        /* only hardware messages are allowed without destination thread */
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
+    if (!(thread = get_thread_from_id( req->id ))) return;
 
-    if (thread && !(recv_queue = thread->queue))
+    if (!(recv_queue = thread->queue))
     {
         set_error( STATUS_INVALID_PARAMETER );
         release_object( thread );
         return;
     }
-    if (recv_queue && (req->flags & SEND_MSG_ABORT_IF_HUNG) && is_queue_hung(recv_queue))
+    if ((req->flags & SEND_MSG_ABORT_IF_HUNG) && is_queue_hung(recv_queue))
     {
         set_error( STATUS_TIMEOUT );
         release_object( thread );
@@ -1600,9 +1591,9 @@ DECL_HANDLER(send_message)
         msg->msg       = req->msg;
         msg->wparam    = req->wparam;
         msg->lparam    = req->lparam;
-        msg->time      = req->time;
-        msg->x         = req->x;
-        msg->y         = req->y;
+        msg->time      = get_tick_count();
+        msg->x         = 0;
+        msg->y         = 0;
         msg->info      = req->info;
         msg->hook      = 0;
         msg->hook_proc = NULL;
@@ -1645,15 +1636,53 @@ DECL_HANDLER(send_message)
             list_add_tail( &recv_queue->msg_list[POST_MESSAGE], &msg->entry );
             set_queue_bits( recv_queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
             break;
-        case MSG_HARDWARE:
-            queue_hardware_message( recv_queue, msg );
-            break;
+        case MSG_HARDWARE:  /* should use send_hardware_message instead */
         case MSG_CALLBACK_RESULT:  /* cannot send this one */
         default:
             set_error( STATUS_INVALID_PARAMETER );
             free( msg );
             break;
         }
+    }
+    release_object( thread );
+}
+
+/* send a hardware message to a thread queue */
+DECL_HANDLER(send_hardware_message)
+{
+    struct message *msg;
+    struct msg_queue *recv_queue = NULL;
+    struct thread *thread = NULL;
+
+    if (req->id)
+    {
+        if (!(thread = get_thread_from_id( req->id ))) return;
+    }
+
+    if (thread && !(recv_queue = thread->queue))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        release_object( thread );
+        return;
+    }
+
+    if ((msg = mem_alloc( sizeof(*msg) )))
+    {
+        msg->type      = MSG_HARDWARE;
+        msg->win       = get_user_full_handle( req->win );
+        msg->msg       = req->msg;
+        msg->wparam    = req->wparam;
+        msg->lparam    = req->lparam;
+        msg->time      = req->time;
+        msg->x         = req->x;
+        msg->y         = req->y;
+        msg->info      = req->info;
+        msg->hook      = 0;
+        msg->hook_proc = NULL;
+        msg->result    = NULL;
+        msg->data      = NULL;
+        msg->data_size = 0;
+        queue_hardware_message( recv_queue, msg );
     }
     if (thread) release_object( thread );
 }
