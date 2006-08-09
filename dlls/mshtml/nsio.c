@@ -572,6 +572,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    BSCallback *bscallback;
+    nsIWineURI *wine_uri;
+    IMoniker *mon;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
@@ -612,31 +615,68 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
     }
 
-    if(!This->channel) {
-        FIXME("channel == NULL\n");
+    if(This->channel) {
+        if(This->post_data_stream) {
+            nsIUploadChannel *upload_channel;
+
+            nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
+                                          (void**)&upload_channel);
+            if(NS_SUCCEEDED(nsres)) {
+                nsACString empty_string;
+                nsACString_Init(&empty_string, "");
+
+                nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
+                                                         &empty_string, -1);
+                nsIUploadChannel_Release(upload_channel);
+                if(NS_FAILED(nsres))
+                    WARN("SetUploadStream failed: %08lx\n", nsres);
+
+                nsACString_Finish(&empty_string);
+            }
+        }
+
+        return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+    }
+
+    TRACE("channel == NULL\n");
+
+    if(!This->original_uri) {
+        ERR("original_uri == NULL\n");
         return NS_ERROR_UNEXPECTED;
     }
 
-    if(This->post_data_stream) {
-        nsIUploadChannel *upload_channel;
-
-        nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
-                                          (void**)&upload_channel);
-        if(NS_SUCCEEDED(nsres)) {
-            nsACString empty_string;
-            nsACString_Init(&empty_string, "");
-
-            nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
-                                                     &empty_string, -1);
-            nsIUploadChannel_Release(upload_channel);
-            if(NS_FAILED(nsres))
-                WARN("SetUploadStream failed: %08lx\n", nsres);
-
-            nsACString_Finish(&empty_string);
-        }
+    nsres = nsIURI_QueryInterface(This->original_uri, &IID_nsIWineURI, (void**)&wine_uri);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWineURI: %08lx\n", nsres);
+        return NS_ERROR_UNEXPECTED;
     }
 
-    return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+    nsIWineURI_GetMoniker(wine_uri, &mon);
+    nsIWineURI_Release(wine_uri);
+
+    if(!mon) {
+        WARN("mon == NULL\n");
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    bscallback = create_bscallback(NULL, mon);
+    IMoniker_Release(mon);
+
+    nsIChannel_AddRef(NSCHANNEL(This));
+    bscallback->nschannel = This;
+
+    nsIStreamListener_AddRef(aListener);
+    bscallback->nslistener = aListener;
+
+    if(aContext) {
+        nsISupports_AddRef(aContext);
+        bscallback->nscontext = aContext;
+    }
+
+    start_binding(bscallback);
+    IBindStatusCallback_Release(STATUSCLB(bscallback));
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetRequestMethod(nsIHttpChannel *iface, nsACString *aRequestMethod)
