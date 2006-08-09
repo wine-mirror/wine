@@ -216,6 +216,29 @@ static void test_get_set(void)
         ok(lstrcmpi(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
     }
 
+    /* test path with quotes */
+    r = IShellLinkA_SetPath(sl, "\"c:\\nonexistent\\file\"");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
+    r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
+    ok(r==S_OK, "GetPath failed (0x%08lx)\n", r);
+    ok(!lstrcmp(buffer, "C:\\nonexistent\\file"), "case doesn't match\n");
+
+    r = IShellLinkA_SetPath(sl, "\"c:\\foo");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
+    r = IShellLinkA_SetPath(sl, "\"\"c:\\foo");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
+    r = IShellLinkA_SetPath(sl, "c:\\foo\"");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
+    r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
+    r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"\"");
+    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+
     /* Test Getting / Setting the arguments */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetArguments(sl, buffer, sizeof(buffer));

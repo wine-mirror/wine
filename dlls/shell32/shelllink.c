@@ -2156,10 +2156,24 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
     WCHAR buffer[MAX_PATH];
-    LPWSTR fname;
+    LPWSTR fname, unquoted = NULL;
     HRESULT hr = S_OK;
+    UINT len;
 
     TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
+
+    /* quotes at the ends of the string are stripped */
+    len = lstrlenW(pszFile);
+    if (pszFile[0] == '"' && pszFile[len-1] == '"')
+    {
+        unquoted = strdupW(pszFile);
+        PathUnquoteSpacesW(unquoted);
+        pszFile = unquoted;
+    }
+
+    /* any other quote marks are invalid */
+    if (strchrW(pszFile, '"'))
+        return S_FALSE;
 
     HeapFree(GetProcessHeap(), 0, This->sPath);
     This->sPath = NULL;
@@ -2191,6 +2205,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
         lstrcpyW(This->sPath, buffer);
     }
     This->bDirty = TRUE;
+    HeapFree(GetProcessHeap(), 0, unquoted);
 
     return hr;
 }
