@@ -602,6 +602,24 @@ static struct regsvr_coclass const coclass_list[] = {
         NULL,
         NULL
     },
+    {
+        &CLSID_CUrlHistory,
+        "Microsoft Url History Service",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        NULL,
+        NULL
+    },
+    {
+        &CLSID_Internet,
+        "Internet Explorer",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        NULL,
+        NULL
+    },
     { NULL }			/* list terminator */
 };
 
