@@ -27,6 +27,9 @@
 
 #include "nsiface.h"
 
+#define GENERATE_MSHTML_NS_FAILURE(code) \
+    ((nsresult) ((PRUint32)(1<<31) | ((PRUint32)(0x45+6)<<16) | (PRUint32)(code)))
+
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
@@ -34,6 +37,8 @@
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
 #define NS_ERROR_UNKNOWN_PROTOCOL ((nsresult)0x804b0012L)
+
+#define WINE_NS_LOAD_FROM_MONIKER GENERATE_MSHTML_NS_FAILURE(0)
 
 #define NS_FAILED(res) ((res) & 0x80000000)
 #define NS_SUCCEEDED(res) (!NS_FAILED(res))

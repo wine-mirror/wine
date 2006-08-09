@@ -237,7 +237,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             IBindStatusCallback_Release(STATUSCLB(bscallback));
             CoTaskMemFree(url);
             return S_OK;
-        }else {
+        }else if(nsres != WINE_NS_LOAD_FROM_MONIKER) {
             WARN("LoadURI failed: %08lx\n", nsres);
         }
     }

@@ -596,6 +596,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             }
 
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
+
+            if(!This->channel)
+                return WINE_NS_LOAD_FROM_MONIKER;
         }else {
             BOOL cont = before_async_open(This, container);
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
