@@ -306,6 +306,22 @@ struct {
     {	"file:partial",					FALSE,	TRUE	}
 };
 
+struct {
+    const char *path;
+    const char *result;
+} TEST_PATH_UNQUOTE_SPACES[] = {
+    { "abcdef",                    "abcdef"         },
+    { "\"abcdef\"",                "abcdef"         },
+    { "\"abcdef",                  "\"abcdef"       },
+    { "abcdef\"",                  "abcdef\""       },
+    { "\"\"abcdef\"\"",            "\"abcdef\""     },
+    { "abc\"def",                  "abc\"def"       },
+    { "\"abc\"def",                "\"abc\"def"     },
+    { "\"abc\"def\"",              "abc\"def"       },
+    { "\'abcdef\'",                "\'abcdef\'"     },
+    { "\"\"",                      ""               },
+    { "\"",                        ""               }
+};
 
 static LPWSTR GetWideString(const char* szString)
 {
@@ -319,6 +335,15 @@ static LPWSTR GetWideString(const char* szString)
 static void FreeWideString(LPWSTR wszString)
 {
    HeapFree(GetProcessHeap(), 0, wszString);
+}
+
+static LPSTR strdupA(LPCSTR p)
+{
+    LPSTR ret;
+    DWORD len = (strlen(p) + 1);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
 }
 
 static void hash_url(const char* szUrl)
@@ -1757,6 +1782,29 @@ static void test_PathCommonPrefixA(void)
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 }
 
+static void test_PathUnquoteSpaces(void)
+{
+    int i;
+    for(i = 0; i < sizeof(TEST_PATH_UNQUOTE_SPACES) / sizeof(TEST_PATH_UNQUOTE_SPACES[0]); i++)
+    {
+        char *path = strdupA(TEST_PATH_UNQUOTE_SPACES[i].path);
+        WCHAR *pathW = GetWideString(TEST_PATH_UNQUOTE_SPACES[i].path);
+        WCHAR *resultW = GetWideString(TEST_PATH_UNQUOTE_SPACES[i].result);
+
+        PathUnquoteSpacesA(path);
+        ok(!strcmp(path, TEST_PATH_UNQUOTE_SPACES[i].result), "%s (A): got %s expected %s\n",
+           TEST_PATH_UNQUOTE_SPACES[i].path, path,
+           TEST_PATH_UNQUOTE_SPACES[i].result);
+
+        PathUnquoteSpacesW(pathW);
+        ok(!lstrcmpW(pathW, resultW), "%s (W): strings differ\n",
+           TEST_PATH_UNQUOTE_SPACES[i].path);
+        FreeWideString(pathW);
+        FreeWideString(resultW);
+        HeapFree(GetProcessHeap(), 0, path);
+    }
+}
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -1801,4 +1849,5 @@ START_TEST(path)
   test_PathFindExtensionA();
   test_PathBuildRootA();
   test_PathCommonPrefixA();
+  test_PathUnquoteSpaces();
 }
