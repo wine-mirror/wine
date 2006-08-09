@@ -1461,6 +1461,8 @@ long WINAPI NdrStubCall2(
                         case STUBLESS_UNMARSHAL:
                             if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
                                 call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
+                            else if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                                retval_ptr = (LONG_PTR *)pArg;
                             break;
                         case STUBLESS_CALCSIZE:
                             if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
@@ -1495,6 +1497,18 @@ long WINAPI NdrStubCall2(
                             if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_IN_PARAM)
                                 call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                            else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
+                                retval_ptr = (LONG_PTR *)pArg;
+                            else if (pParam->param_direction == RPC_FC_OUT_PARAM)
+                            {
+                                DWORD size = calc_arg_size(&stubMsg, pTypeFormat);
+
+                                if(size)
+                                {
+                                    *(void **)pArg = NdrAllocate(&stubMsg, size);
+                                    memset(*(void **)pArg, 0, size);
+                                }
+                            }
                             break;
                         case STUBLESS_CALCSIZE:
                             if (pParam->param_direction == RPC_FC_OUT_PARAM ||
