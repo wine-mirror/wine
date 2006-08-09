@@ -53,6 +53,7 @@ typedef struct {
     nsIURI *uri;
     NSContainer *container;
     IMoniker *mon;
+    LPSTR spec;
 } nsURI;
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
@@ -1050,6 +1051,9 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->uri)
             nsIURI_Release(This->uri);
+        if(This->mon)
+            IMoniker_Release(This->mon);
+        mshtml_free(This->spec);
         mshtml_free(This);
     }
 
@@ -1065,7 +1069,12 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
     if(This->uri)
         return nsIURI_GetSpec(This->uri, aSpec);
 
-    FIXME("default action not implemented\n");
+    if(This->spec) {
+        nsACString_Init(aSpec, This->spec);
+        return NS_OK;
+    }
+
+    WARN("mon and uri are NULL\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 
 }
@@ -1459,10 +1468,31 @@ static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
     if(This->mon) {
         WARN("Moniker already set: %p\n", This->container);
         IMoniker_Release(This->mon);
+
+        mshtml_free(This->spec);
+        This->spec = NULL;
     }
 
-    if(aMoniker)
+    if(aMoniker) {
+        LPWSTR url = NULL;
+        HRESULT hres;
+
+        hres = IMoniker_GetDisplayName(aMoniker, NULL, NULL, &url);
+        if(SUCCEEDED(hres)) {
+            DWORD len;
+
+            len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL);
+            This->spec = mshtml_alloc(len*sizeof(WCHAR));
+            WideCharToMultiByte(CP_ACP, 0, url, -1, This->spec, -1, NULL, NULL);
+            CoTaskMemFree(url);
+
+            TRACE("spec %s\n", debugstr_a(This->spec));
+        }else {
+            ERR("GetDisplayName failed: %08lx\n", hres);
+        }
+
         IMoniker_AddRef(aMoniker);
+    }
     This->mon = aMoniker;
 
     return NS_OK;
@@ -1515,6 +1545,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval
     ret->uri = uri;
     ret->container = container;
     ret->mon = NULL;
+    ret->spec = NULL;
 
     if(container)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
