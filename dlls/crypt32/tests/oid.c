@@ -23,6 +23,7 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <winreg.h>
 
 #include "wine/test.h"
 
@@ -314,6 +315,92 @@ static void test_registerOIDFunction(void)
     ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
 }
 
+static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
+static const WCHAR bogus2Dll[] = { 'b','o','g','u','s','2','.','d','l','l',0 };
+
+static void test_registerDefaultOIDFunction(void)
+{
+    static const char fmt[] =
+     "Software\\Microsoft\\Cryptography\\OID\\EncodingType %d\\%s\\DEFAULT";
+    static const char func[] = "CertDllOpenStoreProv";
+    char buf[MAX_PATH];
+    BOOL ret;
+    long rc;
+    HKEY key;
+
+    ret = CryptRegisterDefaultOIDFunction(0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* This succeeds on WinXP, although the bogus entry is unusable.
+    ret = CryptRegisterDefaultOIDFunction(0, NULL, 0, bogusDll);
+     */
+    /* Register one at index 0 */
+    ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
+     bogusDll);
+    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08lx\n", GetLastError());
+    /* Reregistering should fail */
+    ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
+     bogusDll);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+     "Expected ERROR_FILE_EXISTS, got %08lx\n", GetLastError());
+    /* Registering the same one at index 1 should also fail */
+    ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 1,
+     bogusDll);
+    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+     "Expected ERROR_FILE_EXISTS, got %08lx\n", GetLastError());
+    /* Registering a different one at index 1 succeeds */
+    ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 1,
+     bogus2Dll);
+    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08lx\n", GetLastError());
+    sprintf(buf, fmt, 0, func);
+    rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, buf, &key);
+    ok(rc == 0, "Expected key to exist, RegOpenKeyW failed: %ld\n", rc);
+    if (rc == 0)
+    {
+        static const WCHAR dllW[] = { 'D','l','l',0 };
+        WCHAR dllBuf[MAX_PATH];
+        DWORD type, size;
+        LPWSTR ptr;
+
+        size = sizeof(dllBuf) / sizeof(dllBuf[0]);
+        rc = RegQueryValueExW(key, dllW, NULL, &type, (LPBYTE)dllBuf, &size);
+        ok(rc == 0,
+         "Expected Dll value to exist, RegQueryValueExW failed: %ld\n", rc);
+        ok(type == REG_MULTI_SZ, "Expected type REG_MULTI_SZ, got %ld\n", type);
+        /* bogusDll was registered first, so that should be first */
+        ptr = dllBuf;
+        ok(!lstrcmpiW(ptr, bogusDll), "Unexpected dll\n");
+        ptr += lstrlenW(ptr) + 1;
+        ok(!lstrcmpiW(ptr, bogus2Dll), "Unexpected dll\n");
+        RegCloseKey(key);
+    }
+    /* Unregister both of them */
+    ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
+     bogusDll);
+    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08lx\n",
+     GetLastError());
+    ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
+     bogus2Dll);
+    ok(ret, "CryptUnregisterDefaultOIDFunction failed: %08lx\n",
+     GetLastError());
+    /* Now that they're both unregistered, unregistering should fail */
+    ret = CryptUnregisterDefaultOIDFunction(0, "CertDllOpenStoreProv",
+     bogusDll);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+
+    /* Repeat a few tests on the normal encoding type */
+    ret = CryptRegisterDefaultOIDFunction(X509_ASN_ENCODING,
+     "CertDllOpenStoreProv", 0, bogusDll);
+    ret = CryptUnregisterDefaultOIDFunction(X509_ASN_ENCODING,
+     "CertDllOpenStoreProv", bogusDll);
+    ok(ret, "CryptUnregisterDefaultOIDFunction failed\n");
+    ret = CryptUnregisterDefaultOIDFunction(X509_ASN_ENCODING,
+     "CertDllOpenStoreProv", bogusDll);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
+}
+
 static BOOL WINAPI countOidInfo(PCCRYPT_OID_INFO pInfo, void *pvArg)
 {
     (*(DWORD *)pvArg)++;
@@ -397,4 +484,5 @@ START_TEST(oid)
     test_oidFunctionSet();
     test_installOIDFunctionAddress();
     test_registerOIDFunction();
+    test_registerDefaultOIDFunction();
 }

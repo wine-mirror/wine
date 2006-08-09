@@ -404,22 +404,6 @@ BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
     return TRUE;
 }
 
-BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
- LPCSTR pszFuncName, DWORD dwIndex, LPCWSTR pwszDll)
-{
-    FIXME("(%lx,%s,%lx,%s) stub!\n", dwEncodingType, pszFuncName, dwIndex,
-          debugstr_w(pwszDll));
-    return FALSE;
-}
-
-BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
- LPCSTR pszFuncName, LPCWSTR pwszDll)
-{
-    FIXME("(%lx %s %s): stub\n", dwEncodingType, debugstr_a(pszFuncName),
-     debugstr_w(pwszDll));
-    return FALSE;
-}
-
 BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
  DWORD dwEncodingType, LPCWSTR pwszDll, DWORD dwFlags, void *ppvFuncAddr,
  HCRYPTOIDFUNCADDR *phFuncAddr)
@@ -576,6 +560,234 @@ BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
         RegCloseKey(hKey);
     }
     return rc ? FALSE : TRUE;
+}
+
+static LPCWSTR CRYPT_FindStringInMultiString(LPCWSTR multi, LPCWSTR toFind)
+{
+    LPCWSTR ret = NULL, ptr;
+
+    for (ptr = multi; ptr && *ptr && !ret; ptr += lstrlenW(ptr) + 1)
+    {
+        if (!lstrcmpiW(ptr, toFind))
+            ret = ptr;
+    }
+    return ret;
+}
+
+static DWORD CRYPT_GetMultiStringCharacterLen(LPCWSTR multi)
+{
+    DWORD ret;
+
+    if (multi)
+    {
+        LPCWSTR ptr;
+
+        /* Count terminating empty string */
+        ret = 1;
+        for (ptr = multi; *ptr; ptr += lstrlenW(ptr) + 1)
+            ret += lstrlenW(ptr) + 1;
+    }
+    else
+        ret = 0;
+    return ret;
+}
+
+static LPWSTR CRYPT_AddStringToMultiString(LPWSTR multi, LPCWSTR toAdd,
+ DWORD index)
+{
+    LPWSTR ret;
+
+    if (!multi)
+    {
+        /* FIXME: ignoring index, is that okay? */
+        ret = CryptMemAlloc((lstrlenW(toAdd) + 2) * sizeof(WCHAR));
+        if (ret)
+        {
+            /* copy string, including NULL terminator */
+            memcpy(ret, toAdd, (lstrlenW(toAdd) + 1) * sizeof(WCHAR));
+            /* add terminating empty string */
+            *(ret + lstrlenW(toAdd) + 1) = 0;
+        }
+    }
+    else
+    {
+        DWORD len = CRYPT_GetMultiStringCharacterLen(multi);
+
+        ret = CryptMemRealloc(multi, (len + lstrlenW(toAdd) + 1) *
+         sizeof(WCHAR));
+        if (ret)
+        {
+            LPWSTR spotToAdd;
+
+            if (index == CRYPT_REGISTER_LAST_INDEX)
+                spotToAdd = ret + len - 1;
+            else
+            {
+                DWORD i;
+
+                /* FIXME: if index is too large for the string, toAdd is
+                 * added to the end.  Is that okay?
+                 */
+                for (i = 0, spotToAdd = ret; i < index && *spotToAdd;
+                 spotToAdd += lstrlenW(spotToAdd) + 1)
+                    ;
+            }
+            if (spotToAdd)
+            {
+                /* Copy existing string "right" */
+                memmove(spotToAdd + lstrlenW(toAdd) + 1, spotToAdd,
+                 (len - (spotToAdd - ret)) * sizeof(WCHAR));
+                /* Copy new string */
+                memcpy(spotToAdd, toAdd, (lstrlenW(toAdd) + 1) * sizeof(WCHAR));
+            }
+            else
+            {
+                CryptMemFree(ret);
+                ret = NULL;
+            }
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_RemoveStringFromMultiString(LPWSTR multi, LPCWSTR toRemove)
+{
+    LPWSTR spotToRemove = (LPWSTR)CRYPT_FindStringInMultiString(multi,
+     toRemove);
+    BOOL ret;
+
+    if (spotToRemove)
+    {
+        DWORD len = CRYPT_GetMultiStringCharacterLen(multi);
+
+        /* Copy remainder of string "left" */
+        memmove(spotToRemove, spotToRemove + lstrlenW(toRemove) + 1,
+         (len - (spotToRemove - multi)) * sizeof(WCHAR));
+        ret = TRUE;
+    }
+    else
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL CRYPT_GetDefaultOIDKey(DWORD dwEncodingType, LPCSTR pszFuncName,
+ PHKEY key)
+{
+    LPSTR keyName;
+    LONG r;
+
+    keyName = CRYPT_GetKeyName(dwEncodingType, pszFuncName, "DEFAULT");
+    TRACE("Key name is %s\n", debugstr_a(keyName));
+
+    if (!keyName)
+        return FALSE;
+
+    r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keyName, 0, NULL, 0, KEY_ALL_ACCESS,
+     NULL, key, NULL);
+    CryptMemFree(keyName);
+    if (r != ERROR_SUCCESS)
+    {
+        SetLastError(r);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static LPWSTR CRYPT_GetDefaultOIDDlls(HKEY key)
+{
+    LONG r;
+    DWORD type, size;
+    LPWSTR dlls;
+
+    r = RegQueryValueExW(key, DllW, NULL, &type, NULL, &size);
+    if (r == ERROR_SUCCESS && type == REG_MULTI_SZ)
+    {
+        dlls = CryptMemAlloc(size);
+        r = RegQueryValueExW(key, DllW, NULL, &type, (LPBYTE)dlls, &size);
+        if (r != ERROR_SUCCESS)
+        {
+            CryptMemFree(dlls);
+            dlls = NULL;
+        }
+    }
+    else
+        dlls = NULL;
+    return dlls;
+}
+
+static inline BOOL CRYPT_SetDefaultOIDDlls(HKEY key, LPCWSTR dlls)
+{
+    DWORD len = CRYPT_GetMultiStringCharacterLen(dlls);
+    LONG r;
+
+    if ((r = RegSetValueExW(key, DllW, 0, REG_MULTI_SZ, (const BYTE *)dlls,
+     len * sizeof (WCHAR))))
+        SetLastError(r);
+    return r == ERROR_SUCCESS;
+}
+
+BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
+ LPCSTR pszFuncName, DWORD dwIndex, LPCWSTR pwszDll)
+{
+    HKEY key;
+    LPWSTR dlls;
+    LPCWSTR existing;
+    BOOL ret = FALSE;
+
+    TRACE("(%lx, %s, %lx, %s)\n", dwEncodingType, pszFuncName, dwIndex,
+     debugstr_w(pwszDll));
+
+    if (!pwszDll)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    if (!CRYPT_GetDefaultOIDKey(dwEncodingType, pszFuncName, &key))
+        return FALSE;
+
+    dlls = CRYPT_GetDefaultOIDDlls(key);
+    if ((existing = CRYPT_FindStringInMultiString(dlls, pwszDll)))
+        SetLastError(ERROR_FILE_EXISTS);
+    else
+    {
+        dlls = CRYPT_AddStringToMultiString(dlls, pwszDll, dwIndex);
+        if (dlls)
+            ret = CRYPT_SetDefaultOIDDlls(key, dlls);
+    }
+    CryptMemFree(dlls);
+    RegCloseKey(key);
+    return ret;
+}
+
+BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
+ LPCSTR pszFuncName, LPCWSTR pwszDll)
+{
+    HKEY key;
+    LPWSTR dlls;
+    BOOL ret;
+
+    TRACE("(%lx, %s, %s)\n", dwEncodingType, debugstr_a(pszFuncName),
+     debugstr_w(pwszDll));
+
+    if (!pwszDll)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    if (!CRYPT_GetDefaultOIDKey(dwEncodingType, pszFuncName, &key))
+        return FALSE;
+
+    dlls = CRYPT_GetDefaultOIDDlls(key);
+    if ((ret = CRYPT_RemoveStringFromMultiString(dlls, pwszDll)))
+        ret = CRYPT_SetDefaultOIDDlls(key, dlls);
+    CryptMemFree(dlls);
+    RegCloseKey(key);
+    return ret;
 }
 
 static CRITICAL_SECTION oidInfoCS;
