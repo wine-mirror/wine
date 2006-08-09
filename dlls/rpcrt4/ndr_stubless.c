@@ -94,7 +94,18 @@ static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemor
 static inline unsigned long call_memory_sizer(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
 {
     NDR_MEMORYSIZE m = NdrMemorySizer[pFormat[0] & NDR_TABLE_MASK];
-    if (m) return m(pStubMsg, pFormat);
+    if (m)
+    {
+        unsigned char *saved_buffer = pStubMsg->Buffer;
+        unsigned long ret;
+        int saved_ignore_embedded_pointers = pStubMsg->IgnoreEmbeddedPointers;
+        pStubMsg->MemorySize = 0;
+        pStubMsg->IgnoreEmbeddedPointers = 1;
+        ret = m(pStubMsg, pFormat);
+        pStubMsg->IgnoreEmbeddedPointers = saved_ignore_embedded_pointers;
+        pStubMsg->Buffer = saved_buffer;
+        return ret;
+    }
     else
     {
         FIXME("format type 0x%x not implemented\n", pFormat[0]);
