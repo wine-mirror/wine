@@ -7659,11 +7659,13 @@ static void     WINAPI  IWineD3DDeviceImpl_SetCursorPosition(IWineD3DDevice* ifa
 
 static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOOL bShow) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    BOOL oldVisible = This->bCursorVisible;
     TRACE("(%p) : visible(%d)\n", This, bShow);
 
-    This->bCursorVisible = bShow;
+    if(This->cursorTexture)
+        This->bCursorVisible = bShow;
 
-    return WINED3D_OK;
+    return oldVisible;
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) {

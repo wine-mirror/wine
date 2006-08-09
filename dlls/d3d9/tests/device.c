@@ -392,6 +392,88 @@ cleanup:
     DestroyWindow( hwnd );
 }
 
+static void test_cursor(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D9                  *pD3d               = NULL;
+    IDirect3DDevice9            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    CURSORINFO                   info;
+    IDirect3DSurface9 *cursor = NULL;
+    HCURSOR cur;
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    cur = info.hCursor;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    if (FAILED(hr)) goto cleanup;
+
+    IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &cursor, 0);
+    ok(cursor != NULL, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %08lx\n", hr);
+
+    /* Initially hidden */
+    hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+
+    /* Not enabled without a surface*/
+    hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+
+    /* Fails */
+    hr = IDirect3DDevice9_SetCursorProperties(pDevice, 0, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetCursorProperties returned %08lx\n", hr);
+
+    hr = IDirect3DDevice9_SetCursorProperties(pDevice, 0, 0, cursor);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetCursorProperties returned %08lx\n", hr);
+
+    IDirect3DSurface9_Release(cursor);
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    ok(hr != 0, "GetCursorInfo returned %08lx\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08lx)\n", info.flags);
+    ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
+
+    /* Still hidden */
+    hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+
+    /* Enabled now*/
+    hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
+    ok(hr == TRUE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+
+    /* GDI cursor unchanged */
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    ok(hr != 0, "GetCursorInfo returned %08lx\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08lx)\n", info.flags);
+    ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
+
+cleanup:
+    if(pD3d) IDirect3D9_Release(pD3d);
+    if(pDevice) IDirect3D9_Release(pDevice);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -402,5 +484,6 @@ START_TEST(device)
         test_swapchain();
         test_refcount();
         test_mipmap_levels();
+        test_cursor();
     }
 }
