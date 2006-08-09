@@ -117,7 +117,53 @@ static void register_nscontainer_class(void)
     nscontainer_class = RegisterClassExW(&wndclass);
 }
 
-static BOOL get_mozilla_path(PRUnichar *gre_path)
+static BOOL load_xpcom(PRUnichar *gre_path)
+{
+    WCHAR path_env[MAX_PATH];
+    int len;
+
+    static const WCHAR wszPATH[] = {'P','A','T','H',0};
+    static const WCHAR strXPCOM[] = {'x','p','c','o','m','.','d','l','l',0};
+
+    TRACE("(%s)\n", debugstr_w(gre_path));
+
+    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
+    GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
+    len = strlenW(path_env);
+    path_env[len++] = ';';
+    strcpyW(path_env+len, gre_path);
+    SetEnvironmentVariableW(wszPATH, path_env);
+
+    hXPCOM = LoadLibraryW(strXPCOM);
+    if(!hXPCOM) {
+        WARN("Could not load XPCOM: %ld\n", GetLastError());
+        return FALSE;
+    }
+
+#define NS_DLSYM(func) \
+    func = (typeof(func))GetProcAddress(hXPCOM, #func); \
+    if(!func) \
+        ERR("Could not GetProcAddress(" #func ") failed\n")
+
+    NS_DLSYM(NS_InitXPCOM2);
+    NS_DLSYM(NS_ShutdownXPCOM);
+    NS_DLSYM(NS_GetComponentRegistrar);
+    NS_DLSYM(NS_StringContainerInit);
+    NS_DLSYM(NS_CStringContainerInit);
+    NS_DLSYM(NS_StringContainerFinish);
+    NS_DLSYM(NS_CStringContainerFinish);
+    NS_DLSYM(NS_StringSetData);
+    NS_DLSYM(NS_CStringSetData);
+    NS_DLSYM(NS_NewLocalFile);
+    NS_DLSYM(NS_StringGetData);
+    NS_DLSYM(NS_CStringGetData);
+
+#undef NS_DLSYM
+
+    return TRUE;
+}
+
+static BOOL load_mozilla(PRUnichar *gre_path)
 {
     DWORD res, type, i, size = MAX_PATH;
     HKEY mozilla_key, hkey;
@@ -146,10 +192,10 @@ static BOOL get_mozilla_path(PRUnichar *gre_path)
     }
 
     RegCloseKey(mozilla_key);
-    return ret;
+    return ret ? load_xpcom(gre_path) : FALSE;
 }
 
-static BOOL get_mozctl_path(PRUnichar *gre_path)
+static BOOL load_mozctl(PRUnichar *gre_path)
 {
     HKEY hkey;
     DWORD res, type, size = MAX_PATH;
@@ -168,7 +214,7 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
     if(res == ERROR_SUCCESS) {
         res = RegQueryValueExW(hkey, wszBinDirectoryPath, NULL, &type, (LPBYTE)gre_path, &size);
         if(res == ERROR_SUCCESS)
-            return TRUE;
+            return load_xpcom(gre_path);
         else
             ERR("Could not get value %s\n", debugstr_w(wszBinDirectoryPath));
     }
@@ -180,7 +226,7 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
             WCHAR *ptr;
             if((ptr = strrchrW(gre_path, '\\')))
                 ptr[1] = 0;
-            return TRUE;
+            load_xpcom(gre_path);
         }else {
             ERR("Could not get value of %s\n", debugstr_w(wszMozCtlClsidKey));
         }
@@ -191,7 +237,7 @@ static BOOL get_mozctl_path(PRUnichar *gre_path)
     return FALSE;
 }
 
-static BOOL get_wine_gecko_path(PRUnichar *gre_path)
+static BOOL load_wine_gecko(PRUnichar *gre_path)
 {
     HKEY hkey;
     DWORD res, type, size = MAX_PATH;
@@ -211,7 +257,7 @@ static BOOL get_wine_gecko_path(PRUnichar *gre_path)
     if(res != ERROR_SUCCESS || type != REG_SZ)
         return FALSE;
 
-    return TRUE;
+    return load_xpcom(gre_path);
 }
 
 static void set_profile(void)
@@ -251,12 +297,8 @@ static BOOL load_gecko(void)
     nsAString path;
     nsIFile *gre_dir;
     PRUnichar gre_path[MAX_PATH];
-    WCHAR path_env[MAX_PATH];
-    int len;
 
     static BOOL tried_load = FALSE;
-    static const WCHAR wszPATH[] = {'P','A','T','H',0};
-    static const WCHAR strXPCOM[] = {'x','p','c','o','m','.','d','l','l',0};
 
     TRACE("()\n");
 
@@ -264,49 +306,13 @@ static BOOL load_gecko(void)
         return pCompMgr != NULL;
     tried_load = TRUE;
 
-    if(!get_wine_gecko_path(gre_path) && !get_mozctl_path(gre_path)
-       && !get_mozilla_path(gre_path)) {
+    if(!load_wine_gecko(gre_path) && !load_mozctl(gre_path) && !load_mozilla(gre_path)) {
         install_wine_gecko();
-        if(!get_wine_gecko_path(gre_path)) {
+        if(!load_wine_gecko(gre_path)) {
             MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
             return FALSE;
         }
     }
-
-    TRACE("found path %s\n", debugstr_w(gre_path));
-
-    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
-    GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
-    len = strlenW(path_env);
-    path_env[len++] = ';';
-    strcpyW(path_env+len, gre_path);
-    SetEnvironmentVariableW(wszPATH, path_env);
-
-    hXPCOM = LoadLibraryW(strXPCOM);
-    if(!hXPCOM) {
-        ERR("Could not load XPCOM: %ld\n", GetLastError());
-        return FALSE;
-    }
-
-#define NS_DLSYM(func) \
-    func = (typeof(func))GetProcAddress(hXPCOM, #func); \
-    if(!func) \
-        ERR("Could not GetProcAddress(" #func ") failed\n")
-
-    NS_DLSYM(NS_InitXPCOM2);
-    NS_DLSYM(NS_ShutdownXPCOM);
-    NS_DLSYM(NS_GetComponentRegistrar);
-    NS_DLSYM(NS_StringContainerInit);
-    NS_DLSYM(NS_CStringContainerInit);
-    NS_DLSYM(NS_StringContainerFinish);
-    NS_DLSYM(NS_CStringContainerFinish);
-    NS_DLSYM(NS_StringSetData);
-    NS_DLSYM(NS_CStringSetData);
-    NS_DLSYM(NS_NewLocalFile);
-    NS_DLSYM(NS_StringGetData);
-    NS_DLSYM(NS_CStringGetData);
-
-#undef NS_DLSYM
 
     NS_StringContainerInit(&path);
     NS_StringSetData(&path, gre_path, PR_UINT32_MAX);
