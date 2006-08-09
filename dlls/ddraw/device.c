@@ -2241,6 +2241,52 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                                                        Value);
         }
 
+        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+        {
+            /* Old texture combine setup style, superseded by texture stage states
+             * in D3D7. It is safe for us to wrap it to texture stage states.
+             */
+            switch ( (D3DTEXTUREBLEND) Value)
+            {
+                case D3DTBLEND_MODULATE:
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+                    break;
+
+                case D3DTBLEND_MODULATEALPHA:
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+                    break;
+
+                case D3DTBLEND_DECAL:
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+                    break;
+
+                case D3DTBLEND_DECALALPHA:
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                    IWineD3DDevice_SetTextureStageState(iface, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+                    break;
+
+                default:
+                    ERR("Unhandled texture environment %ld !\n",Value);
+                }
+                return D3D_OK;
+            break;
+        }
+
         default:
             return IWineD3DDevice_SetRenderState(This->wineD3DDevice,
                                                  RenderStateType,
