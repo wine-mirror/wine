@@ -235,6 +235,7 @@ interface IEnumCodePage : IUnknown
 
 [
   object,
+  uuid(d66d6f98-cdaa-11d0-b822-00c04fc9b31f),
   pointer_default(unique)
 ]
 interface IMLangConvertCharset : IUnknown
@@ -271,6 +272,14 @@ interface IMLangConvertCharset : IUnknown
         [in] CHAR *pDstStr,
         [in,out] UINT *pcDstSize);
 }
+
+[
+    uuid(d66d6f99-cdaa-11d0-b822-00c04fc9b31f)
+]
+coclass CMLangConvertCharset
+{
+    [default] interface IMLangConvertCharset;
+};
 
 [
   object,

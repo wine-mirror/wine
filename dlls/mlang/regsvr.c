@@ -30,15 +30,15 @@
 #include "winerror.h"
 
 #include "objbase.h"
-#include "initguid.h"
+#include "mlang.h"
 
 #include "wine/debug.h"
+#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
-DEFINE_GUID( CLSID_MLANGSupport, 0x275c23e2,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46 );
-DEFINE_GUID( CLSID_MLANGString, 0xc04d65cf, 0xb70d, 0x11d0, 0xb1,0x88, 0x00,0xaa,0x00,0x38,0xc9,0x69);
-DEFINE_GUID( CLSID_MLANGCharSet, 0xd66d6f99,0xcdaa,0x11d0,0xb8,0x22,0x00,0xC0,0x4f,0xc9,0xb3,0x1f );
+/* This one should probably be defined in mlang.idl but MSDN claims it is no longer supported */
+DEFINE_GUID(CLSID_CMLangString, 0xc04d65cf, 0xb70d, 0x11d0, 0xb1,0x88, 0x00,0xaa,0x00,0x38,0xc9,0x69);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -509,21 +509,21 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
  */
 static struct regsvr_coclass const coclass_list[] = {
     {
-        &CLSID_MLANGSupport,
+        &CLSID_CMultiLanguage,
         "Multi Language Support",
         NULL,
         "mlang.dll",
         "Both"
     },
     {
-        &CLSID_MLANGString,
+        &CLSID_CMLangString,
         "Multi Language String",
         NULL,
         "mlang.dll",
         "Both"
     },
     {
-        &CLSID_MLANGCharSet,
+        &CLSID_CMLangConvertCharset,
         "Multi Language ConvertCharset",
         NULL,
         "mlang.dll",
