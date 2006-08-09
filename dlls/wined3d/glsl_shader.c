@@ -562,6 +562,7 @@ static void shader_glsl_get_register_name(
     /* oPos, oFog and oPts in D3D */
     const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)((IWineD3DPixelShaderImpl*)arg->shader)->wineD3DDevice->wineD3D)->gl_info;
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
@@ -641,10 +642,17 @@ static void shader_glsl_get_register_name(
             sprintf(tmpStr, "Vsampler%lu", reg);
     break;
     case D3DSPR_COLOROUT:
-        sprintf(tmpStr, "gl_FragData[%lu]", reg);
-        if (reg > 0) {
-            /* TODO: See GL_ARB_draw_buffers */
-            FIXME("Unsupported write to render target %lu\n", reg);
+        if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+            sprintf(tmpStr, "gl_FragData[%lu]", reg);
+            if (reg > 0) {
+                /* TODO: See GL_ARB_draw_buffers */
+                FIXME("Unsupported write to render target %lu\n", reg);
+            }
+        } else { /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
+            if (reg > 0)
+                WARN("This OpenGL implementation doesn't support writing to multiple render targets!\n");
+            else
+                sprintf(tmpStr, "gl_FragColor");
         }
     break;
     case D3DSPR_RASTOUT:
