@@ -1001,23 +1001,61 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 #endif
     static const WCHAR nt_genericW[] = {'.','n','t',0};
 
-    WCHAR *p, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
+    WCHAR *s, *d, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
     void *callback_context;
-    UINT mode;
+    UINT mode, in_quotes, bcount;
     HINF hinf;
 
     TRACE("hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_w(cmdline));
 
     lstrcpynW( section, cmdline, MAX_PATH );
 
-    if (!(p = strchrW( section, ' ' ))) return;
-    *p++ = 0;
-    while (*p == ' ') p++;
-    mode = atoiW( p );
+    if (!(s = strchrW( section, ' ' ))) return;
+    *s++ = 0;
+    while (*s == ' ') s++;
+    mode = atoiW( s );
 
-    if (!(p = strchrW( p, ' ' ))) return;
-    path = p + 1;
-    while (*path == ' ') path++;
+    if (!(s = strchrW( s, ' ' ))) return;
+    while (*s == ' ') s++;
+
+    /* The inf path may be quoted. Code adapted from CommandLineToArgvW() */
+    bcount=0;
+    in_quotes=0;
+    path=d=s;
+    while (*s)
+    {
+        if (*s==0 || ((*s=='\t' || *s==' ') && !in_quotes)) {
+            /* end of this command line argument */
+            break;
+        } else if (*s=='\\') {
+            /* '\\' */
+            *d++=*s++;
+            bcount++;
+        } else if (*s=='"') {
+            /* '"' */
+            if ((bcount & 1)==0) {
+                /* Preceded by an even number of '\', this is half that
+                 * number of '\', plus a quote which we erase.
+                 */
+                d-=bcount/2;
+                in_quotes=!in_quotes;
+                s++;
+            } else {
+                /* Preceded by an odd number of '\', this is half that
+                 * number of '\' followed by a '"'
+                 */
+                d=d-bcount/2-1;
+                *d++='"';
+                s++;
+            }
+            bcount=0;
+        } else {
+            /* a regular character */
+            *d++=*s++;
+            bcount=0;
+        }
+    }
+    *d=0;
 
     hinf = SetupOpenInfFileW( path, NULL, INF_STYLE_WIN4, NULL );
     if (hinf == INVALID_HANDLE_VALUE) return;
@@ -1028,14 +1066,14 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
         /* check for <section>.ntx86 (or corresponding name for the current platform)
          * and then <section>.nt */
-        p = section + strlenW(section);
-        memcpy( p, nt_platformW, sizeof(nt_platformW) );
+        s = section + strlenW(section);
+        memcpy( s, nt_platformW, sizeof(nt_platformW) );
         if (!(SetupFindFirstLineW( hinf, section, NULL, &context )))
         {
-            memcpy( p, nt_genericW, sizeof(nt_genericW) );
-            if (!(SetupFindFirstLineW( hinf, section, NULL, &context ))) *p = 0;
+            memcpy( s, nt_genericW, sizeof(nt_genericW) );
+            if (!(SetupFindFirstLineW( hinf, section, NULL, &context ))) *s = 0;
         }
-        if (*p) TRACE( "using section %s instead\n", debugstr_w(section) );
+        if (*s) TRACE( "using section %s instead\n", debugstr_w(section) );
     }
 
     callback_context = SetupInitDefaultQueueCallback( hwnd );
