@@ -963,7 +963,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
                 PSecPkgContext_Sizes spcs = (PSecPkgContext_Sizes)pBuffer;
                 spcs->cbMaxToken = NTLM_MAX_BUF;
                 spcs->cbMaxSignature = 16;
-                spcs->cbBlockSize = 1;
+                spcs->cbBlockSize = 0;
                 spcs->cbSecurityTrailer = 16;
                 return SEC_E_OK;
             }

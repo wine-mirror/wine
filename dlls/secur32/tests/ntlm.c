@@ -67,12 +67,6 @@ typedef struct _SspiData {
     ULONG max_token;
 } SspiData;
 
-static BYTE client_req[] = 
-    {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x01, 0x00,
-     0x00, 0x00, 0x07, 0x82, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00};
-
 static BYTE network_challenge[] = 
    {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02, 0x00,
     0x00, 0x00, 0x10, 0x00, 0x10, 0x00, 0x30, 0x00, 0x00, 0x00,
@@ -596,14 +590,8 @@ static void testAuth(ULONG data_rep, BOOL fake)
                     "Running the client returned %s, more tests will fail.\n",
                     getSecError(client_stat));
 
-            if(first)
-                todo_wine{
-                ok(!memcmp(client.out_buf->pBuffers[0].pvBuffer, client_req, 
-                        sizeof(client_req)), "Client gave an invalid reply!\n");
-                }
-            
             communicate(&client, &server);
-            
+
             if(fake)
                 server_stat = runFakeServer(&server, first, data_rep);
             else
@@ -619,7 +607,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
             first = FALSE;
         }
 
-        if(!strcmp(sec_pkg_name, "NTLM"))
+        if(client_stat == SEC_E_OK)
         {
             sec_status = pQueryContextAttributesA(client.ctxt,
                     SECPKG_ATTR_SIZES, &ctxt_sizes);
@@ -636,12 +624,12 @@ static void testAuth(ULONG data_rep, BOOL fake)
             ok(ctxt_sizes.cbSecurityTrailer == 16,
                     "cbSecurityTrailer should be 16 but is  %lu\n",
                     ctxt_sizes.cbSecurityTrailer);
-            ok(ctxt_sizes.cbBlockSize == 1,
-                    "cbBlockSize should be 1 but is %lu\n", 
+            ok(ctxt_sizes.cbBlockSize == 0,
+                    "cbBlockSize should be 0 but is %lu\n",
                     ctxt_sizes.cbBlockSize);
         }
         else
-            trace("Unknown sec package %s\n", sec_pkg_name);
+            trace("Authentication failed, skipping test.\n");
 
         cleanupBuffers(&client);
         cleanupBuffers(&server);
