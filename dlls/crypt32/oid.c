@@ -1032,6 +1032,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
     {
         struct OIDInfo *info;
 
+        TRACE("CRYPT_OID_INFO_ALGID_KEY: %ld\n", *(DWORD *)pvKey);
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
@@ -1049,6 +1050,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
     {
         struct OIDInfo *info;
 
+        TRACE("CRYPT_OID_INFO_NAME_KEY: %s\n", debugstr_w((LPWSTR)pvKey));
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
@@ -1067,6 +1069,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         struct OIDInfo *info;
         LPSTR oid = (LPSTR)pvKey;
 
+        TRACE("CRYPT_OID_INFO_OID_KEY: %s\n", debugstr_a(oid));
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
@@ -1084,6 +1087,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
     {
         struct OIDInfo *info;
 
+        TRACE("CRYPT_OID_INFO_SIGN_KEY: %ld\n", *(DWORD *)pvKey);
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
