@@ -1608,6 +1608,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     NSContainer *nscontainer = NULL;
     nsIURI *uri = NULL;
     PRBool is_javascript = FALSE;
+    IMoniker *base_mon = NULL;
     nsresult nsres;
 
     nsACString_GetData(aSpec, &spec, NULL);
@@ -1651,6 +1652,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&wine_uri);
         if(NS_SUCCEEDED(nsres)) {
             nsIWineURI_GetNSContainer(wine_uri, &nscontainer);
+            nsIWineURI_GetMoniker(wine_uri, &base_mon);
             nsIWineURI_Release(wine_uri);
         }else {
             ERR("Could not get nsIWineURI: %08lx\n", nsres);
@@ -1661,6 +1663,26 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 
     if(nscontainer)
         nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
+
+    if(base_mon) {
+        LPWSTR url;
+        IMoniker *mon;
+        DWORD len;
+        HRESULT hres;
+
+        len = MultiByteToWideChar(CP_ACP, 0, spec, -1, NULL, 0);
+        url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, spec, -1, url, -1);
+
+        hres = CreateURLMoniker(base_mon, url, &mon);
+        HeapFree(GetProcessHeap(), 0, url);
+        if(SUCCEEDED(hres)) {
+            nsIWineURI_SetMoniker((nsIWineURI*)*_retval, mon);
+            IMoniker_Release(mon);
+        }else {
+            WARN("CreateURLMoniker failed: %08lx\n", hres);
+        }
+    }
 
     return nsres;
 }
