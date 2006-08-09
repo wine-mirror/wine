@@ -1622,7 +1622,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   {
     LPWSTR wszText = (LPWSTR)lParam;
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
-    size_t len = lstrlenW(wszText);
+    size_t len = wszText ? lstrlenW(wszText) : 0;
     int from, to;
     ME_Style *style;
     TRACE("EM_SETTEXEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
@@ -1640,7 +1640,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     else {
       ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
-      ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+      ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
       len = 1;
     }
     ME_CommitUndo(editor);

@@ -898,6 +898,80 @@ static void test_ES_PASSWORD()
 	"EM_GETPASSWORDCHAR returned %c (%d) when set to 'x', instead of x (120)\n",result,result);
 }
 
+static void test_EM_SETTEXTEX()
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  SETTEXTEX setText;
+  GETTEXTEX getText;
+  WCHAR TestItem1[] = {'T', 'e', 's', 't', 
+                       'S', 'o', 'm', 'e', 
+                       'T', 'e', 'x', 't', 0}; 
+#define MAX_BUF_LEN 1024
+  WCHAR buf[MAX_BUF_LEN];
+  int result;
+  CHARRANGE cr;
+
+  setText.codepage = 1200;  /* no constant for unicode */
+  getText.codepage = 1200;  /* no constant for unicode */
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) TestItem1);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(lstrcmpW(buf, TestItem1) == 0,
+      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
+                       (WPARAM)&setText, (LPARAM) NULL);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  
+  ok (result == 1, 
+      "EM_SETTEXTEX returned %d, instead of 1\n",result);
+  ok(lstrlenW(buf) == 0,
+      "EM_SETTEXTEX with NULL lParam should clear rich edit.\n");
+  
+  /* put some text back */
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) TestItem1);
+  /* select some text */
+  cr.cpMax = 1;
+  cr.cpMin = 3;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  /* replace current selection */
+  setText.flags = ST_SELECTION;
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
+                       (WPARAM)&setText, (LPARAM) NULL);
+  ok(result == 0,
+      "EM_SETTEXTEX with NULL lParam to replace selection"
+      " with no text should return 0. Got %i\n",
+      result);
+  
+  /* put some text back */
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) TestItem1);
+  /* select some text */
+  cr.cpMax = 1;
+  cr.cpMin = 3;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  /* replace current selection */
+  setText.flags = ST_SELECTION;
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX,
+                       (WPARAM)&setText, (LPARAM) TestItem1);
+  /* get text */
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(result == lstrlenW(TestItem1),
+      "EM_SETTEXTEX with NULL lParam to replace selection"
+      " with no text should return 0. Got %i\n",
+      result);
+  ok(lstrlenW(buf) == 22,
+      "EM_SETTEXTEX to replace selection with more text failed: %i.\n",
+      lstrlenW(buf) );
+
+  DestroyWindow(hwndRichEdit);
+}
+
+
 START_TEST( editor )
 {
   MSG msg;
@@ -918,6 +992,7 @@ START_TEST( editor )
   test_EM_AUTOURLDETECT();
   test_EM_SETUNDOLIMIT();
   test_ES_PASSWORD();
+  test_EM_SETTEXTEX();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
