@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define DESKTOP_CLASS_ATOM MAKEINTATOMW(32769)
 #define DESKTOP_ALL_ACCESS 0x01ff
 
+static BOOL using_root;
+
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
@@ -50,14 +52,14 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         return HTCLIENT;
 
     case WM_ERASEBKGND:
-        PaintDesktop( (HDC)wp );
+        if (!using_root) PaintDesktop( (HDC)wp );
         return TRUE;
 
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             BeginPaint( hwnd, &ps );
-            if (ps.fErase) PaintDesktop( ps.hdc );
+            if (!using_root && ps.fErase) PaintDesktop( ps.hdc );
             EndPaint( hwnd, &ps );
         }
         return 0;
@@ -155,6 +157,7 @@ void manage_desktop( char *arg )
 
     if (!xwin)  /* using the root window */
     {
+        using_root = TRUE;
         width = GetSystemMetrics(SM_CXSCREEN);
         height = GetSystemMetrics(SM_CYSCREEN);
     }
