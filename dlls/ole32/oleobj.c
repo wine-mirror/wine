@@ -827,6 +827,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
 
   for(index = 0; index < This->maxCons; index++) {
     if(This->Connections[index].sink != NULL) {
+      memset(&stg, 0, sizeof(stg));
       if(!(This->Connections[index].advf & ADVF_NODATA)) {
 	TRACE("Calling IDataObject_GetData\n");
 	res = IDataObject_GetData(pDataObject,
