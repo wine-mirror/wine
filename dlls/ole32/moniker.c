@@ -448,7 +448,7 @@ RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjec
     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
     {
         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
-            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+            !memcmp(&moniker_data->abData, &rot_entry->moniker_data->abData, moniker_data->ulCntData))
         {
             hr = S_OK;
             break;
@@ -494,7 +494,7 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
     {
         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
-            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+            !memcmp(&moniker_data->abData, &rot_entry->moniker_data->abData, moniker_data->ulCntData))
         {
             IStream *pStream;
             hr = create_stream_on_mip_ro(rot_entry->object, &pStream);
@@ -585,7 +585,7 @@ RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
     {
         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
-            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+            !memcmp(&moniker_data->abData, &rot_entry->moniker_data->abData, moniker_data->ulCntData))
         {
             *pfiletime = rot_entry->last_modified;
             hr = S_OK;
