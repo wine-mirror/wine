@@ -1026,7 +1026,7 @@ static nsresult NSAPI nsURI_QueryInterface(nsIWineURI *iface, nsIIDRef riid, nsQ
     }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
-    return nsIURI_QueryInterface(This->uri, riid, result);
+    return This->uri ? nsIURI_QueryInterface(This->uri, riid, result) : NS_NOINTERFACE;
 }
 
 static nsrefcnt NSAPI nsURI_AddRef(nsIWineURI *iface)
