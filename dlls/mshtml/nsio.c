@@ -52,6 +52,7 @@ typedef struct {
 
     nsIURI *uri;
     NSContainer *container;
+    IMoniker *mon;
 } nsURI;
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
@@ -1436,6 +1437,37 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     return NS_OK;
 }
 
+static nsresult NSAPI nsURI_GetMoniker(nsIWineURI *iface, IMoniker **aMoniker)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aMoniker);
+
+    if(This->mon)
+        IMoniker_AddRef(This->mon);
+    *aMoniker = This->mon;
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aMoniker);
+
+    if(This->mon) {
+        WARN("Moniker already set: %p\n", This->container);
+        IMoniker_Release(This->mon);
+    }
+
+    if(aMoniker)
+        IMoniker_AddRef(aMoniker);
+    This->mon = aMoniker;
+
+    return NS_OK;
+}
+
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -1470,6 +1502,8 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_GetOriginCharset,
     nsURI_GetNSContainer,
     nsURI_SetNSContainer,
+    nsURI_GetMoniker,
+    nsURI_SetMoniker
 };
 
 static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)
@@ -1480,6 +1514,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval
     ret->ref = 1;
     ret->uri = uri;
     ret->container = container;
+    ret->mon = NULL;
 
     if(container)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(container));

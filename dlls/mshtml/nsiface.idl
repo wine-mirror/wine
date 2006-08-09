@@ -69,6 +69,8 @@ interface nsILoadGroup;
 interface nsIDOMNode;
 interface nsIDOMDocument;
 
+interface IMoniker;
+
 [
     object,
     uuid(00000000-0000-0000-c000-000000000046)
@@ -1170,4 +1172,6 @@ interface nsIWineURI : nsIURI
 
     nsresult GetNSContainer(NSContainer **aNSContainer);
     nsresult SetNSContainer(NSContainer *aNSContainer);
+    nsresult GetMoniker(IMoniker **aMoniker);
+    nsresult SetMoniker(IMoniker *aMoniker);
 }
