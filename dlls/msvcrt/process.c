@@ -295,7 +295,7 @@ MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execve(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const char* const* envv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
 }
