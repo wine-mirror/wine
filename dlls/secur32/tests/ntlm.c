@@ -49,6 +49,14 @@ static SECURITY_STATUS (SEC_ENTRY * pAcceptSecurityContext)(PCredHandle, PCtxtHa
 static SECURITY_STATUS (SEC_ENTRY * pFreeCredentialsHandle)(PCredHandle);
 static SECURITY_STATUS (SEC_ENTRY * pDeleteSecurityContext)(PCtxtHandle);
 static SECURITY_STATUS (SEC_ENTRY * pQueryContextAttributesA)(PCtxtHandle, ULONG, PVOID);
+static SECURITY_STATUS (SEC_ENTRY * pMakeSignature)(PCtxtHandle, ULONG,
+                            PSecBufferDesc, ULONG);
+static SECURITY_STATUS (SEC_ENTRY * pVerifySignature)(PCtxtHandle, PSecBufferDesc,
+                            ULONG, PULONG);
+static SECURITY_STATUS (SEC_ENTRY * pEncryptMessage)(PCtxtHandle, ULONG,
+                            PSecBufferDesc, ULONG);
+static SECURITY_STATUS (SEC_ENTRY * pDecryptMessage)(PCtxtHandle, PSecBufferDesc,
+                            ULONG, PULONG);
 
 typedef struct _SspiData {
     PCredHandle cred;
@@ -99,6 +107,32 @@ static BYTE native_challenge[] =
     0x61, 0x00, 0x73, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x6f, 0x00,
     0x30, 0x00, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+static BYTE message_signature[] =
+   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static BYTE message_binary[] =
+   {0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
+    0x6c, 0x64, 0x21};
+
+static char message[] = "Hello, world!";
+
+static BYTE crypt_trailer_client[] =
+   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe8, 0xc7,
+    0xaa, 0x26, 0x16, 0x39, 0x07, 0x4e};
+
+static BYTE crypt_message_client[] =
+   {0x86, 0x9c, 0x5a, 0x10, 0x78, 0xb3, 0x30, 0x98, 0x46, 0x15,
+    0xa0, 0x31, 0xd9};
+
+static BYTE crypt_trailer_server[] =
+   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x46,
+    0x2e, 0x77, 0xeb, 0xf0, 0xf6, 0x9e};
+
+static BYTE crypt_message_server[] =
+   {0xf6, 0xb7, 0x92, 0x0c, 0xac, 0xea, 0x98, 0xe6, 0xef, 0xa0,
+    0x29, 0x66, 0xfd};
+
 static void InitFunctionPtrs(void)
 {
     secdll = LoadLibraryA("secur32.dll");
@@ -116,6 +150,10 @@ static void InitFunctionPtrs(void)
         pFreeCredentialsHandle = (PVOID)GetProcAddress(secdll, "FreeCredentialsHandle");
         pDeleteSecurityContext = (PVOID)GetProcAddress(secdll, "DeleteSecurityContext");
         pQueryContextAttributesA = (PVOID)GetProcAddress(secdll, "QueryContextAttributesA");
+        pMakeSignature = (PVOID)GetProcAddress(secdll, "MakeSignature");
+        pVerifySignature = (PVOID)GetProcAddress(secdll, "VerifySignature");
+        pEncryptMessage = (PVOID)GetProcAddress(secdll, "EncryptMessage");
+        pDecryptMessage = (PVOID)GetProcAddress(secdll, "DecryptMessage");
     }
 }
 
@@ -636,6 +674,165 @@ static void testAuth(ULONG data_rep, BOOL fake)
     }
 }
 
+static void testSignSeal()
+{
+    SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         sec_status;
+    PSecPkgInfo             pkg_info = NULL;
+    BOOL                    first = TRUE;
+    SspiData                client, server;
+    SEC_WINNT_AUTH_IDENTITY id;
+    static char             sec_pkg_name[] = "NTLM";
+    PSecBufferDesc          crypt = NULL;
+    PSecBuffer              data = NULL;
+    ULONG                   qop = 0;
+    SecPkgContext_Sizes     ctxt_sizes;
+
+    /****************************************************************
+     * This is basically the same as in testAuth with a fake server,
+     * as we need a valid, authenticated context.
+     */
+    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)== SEC_E_OK)
+    {
+        pFreeContextBuffer(pkg_info);
+        id.User = (unsigned char*) "testuser";
+        id.UserLength = strlen((char *) id.User);
+        id.Domain = (unsigned char *) "WORKGROUP";
+        id.DomainLength = strlen((char *) id.Domain);
+        id.Password = (unsigned char*) "testpass";
+        id.PasswordLength = strlen((char *) id.Password);
+        id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+        client.id = &id;
+
+        sec_status = setupClient(&client, sec_pkg_name);
+
+        if(sec_status != SEC_E_OK)
+        {
+            trace("Error: Setting up the client returned %s, exiting test!\n",
+                    getSecError(sec_status));
+            pFreeCredentialsHandle(client.cred);
+            return;
+        }
+
+        sec_status = setupFakeServer(&server, sec_pkg_name);
+
+        while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
+        {
+            client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
+
+            communicate(&client, &server);
+
+            server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
+
+            communicate(&server, &client);
+            trace("Looping\n");
+            first = FALSE;
+        }
+
+        /********************************************
+         *    Now start with the actual testing     *
+         ********************************************/
+
+        if(pQueryContextAttributesA(client.ctxt, SECPKG_ATTR_SIZES,
+                    &ctxt_sizes) != SEC_E_OK)
+        {
+            trace("Failed to get context sizes, aborting test.\n");
+            goto end;
+        }
+
+        if((crypt = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBufferDesc))) == NULL)
+        {
+            trace("Failed to allocate the crypto buffer, aborting test.\n");
+            goto end;
+        }
+
+        crypt->ulVersion = SECBUFFER_VERSION;
+        crypt->cBuffers = 2;
+
+        if((data = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBuffer) * 2)) == NULL)
+        {
+            trace("Failed to allocate the crypto buffer, aborting test.\n");
+            goto end;
+        }
+
+        crypt->pBuffers = data;
+
+        data[0].BufferType = SECBUFFER_TOKEN;
+        data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+        data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[0].cbBuffer);
+
+        data[1].BufferType = SECBUFFER_DATA;
+        data[1].cbBuffer = lstrlen(message);
+        data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+        memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
+
+        /* As we forced NTLM to fall back to a password-derived session key,
+         * we should get the same signature for our data, no matter if
+         * it is sent by the client or the server
+         */
+        sec_status = pMakeSignature(client.ctxt, 0, crypt, 0);
+        todo_wine {
+        ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+        ok(!memcmp(crypt->pBuffers[0].pvBuffer, message_signature,
+                   crypt->pBuffers[0].cbBuffer), "Signature is not as expected.\n");
+        }
+
+        data[0].cbBuffer = sizeof(message_signature);
+        memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
+
+        sec_status = pVerifySignature(client.ctxt, crypt, 0, &qop);
+        todo_wine {
+        ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+        }
+
+        sec_status = pEncryptMessage(client.ctxt, 0, crypt, 0);
+        todo_wine{
+        ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+        ok(!memcmp(crypt->pBuffers[0].pvBuffer, crypt_trailer_client,
+                   crypt->pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
+        ok(!memcmp(crypt->pBuffers[1].pvBuffer, crypt_message_client,
+                   crypt->pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+        }
+
+        data[0].cbBuffer = sizeof(crypt_trailer_server);
+        data[1].cbBuffer = sizeof(crypt_message_server);
+        memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
+        memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
+
+        sec_status = pDecryptMessage(client.ctxt, crypt, 0, &qop);
+        todo_wine {
+        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+        ok(!memcmp(crypt->pBuffers[1].pvBuffer, message_binary,
+                   crypt->pBuffers[1].cbBuffer),
+                "Failed to decrypt message correctly.\n");
+        }
+
+end:
+        cleanupBuffers(&client);
+        cleanupBuffers(&server);
+
+        pDeleteSecurityContext(client.ctxt);
+        pFreeCredentialsHandle(client.cred);
+        if(data)
+        {
+            HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
+            HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
+        }
+        HeapFree(GetProcessHeap(), 0, data);
+        HeapFree(GetProcessHeap(), 0, crypt);
+    }
+    else
+    {
+        trace("Package not installed, skipping test.\n");
+    }
+}
+
 START_TEST(ntlm)
 {
     InitFunctionPtrs();
@@ -652,8 +849,11 @@ START_TEST(ntlm)
             testAuth(SECURITY_NATIVE_DREP, FALSE);
             testAuth(SECURITY_NETWORK_DREP, FALSE);
         }
+        if(pMakeSignature && pVerifySignature && pEncryptMessage &&
+           pDecryptMessage)
+            testSignSeal();
      }
-    
+
     if(secdll)
         FreeLibrary(secdll);
 }
