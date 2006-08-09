@@ -10,6 +10,7 @@
 *.so
 *.tab.[ch]
 *.tlb
+*_[cips].c
 *~
 /Make.rules
 /TAGS

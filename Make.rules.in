@@ -108,7 +108,7 @@ prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.tab.c *.tab.h @LEX_OUTPUT_ROOT@.c core
+                  *.flc *.res *.mc.rc *.tab.[ch] @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
 
@@ -117,7 +117,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf .man.in .man
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -139,6 +139,18 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<
+
+.idl_c.c:
+	$(WIDL) $(IDLFLAGS) -c -C $@ $<
+
+.idl_i.c:
+	$(WIDL) $(IDLFLAGS) -u -U $@ $<
+
+.idl_p.c:
+	$(WIDL) $(IDLFLAGS) -p -P $@ $<
+
+.idl_s.c:
+	$(WIDL) $(IDLFLAGS) -s -S $@ $<
 
 .idl.tlb:
 	$(WIDL) $(IDLFLAGS) -t -T $@ $<
@@ -221,7 +233,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(IDL_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
+	$(RM) $(CLEAN_FILES) $(IDL_SRCS:.idl=.h) $(IDL_SRCS:.idl=_c.c) $(IDL_SRCS:.idl=_i.c) $(IDL_SRCS:.idl=_p.c) $(IDL_SRCS:.idl=_s.c) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
@@ -272,6 +284,11 @@ $(SUBDIRS:%=%/__crosstest__): dummy
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(IDL_SRCS:.idl=.h): $(WIDL)
+
+$(IDL_SRCS:.idl=_c.c): $(WIDL)
+$(IDL_SRCS:.idl=_i.c): $(WIDL)
+$(IDL_SRCS:.idl=_p.c): $(WIDL)
+$(IDL_SRCS:.idl=_s.c): $(WIDL)
 
 $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
 
