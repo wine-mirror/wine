@@ -533,7 +533,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Free threaded XML DOM Document",
 	NULL,
 	"msxml3.dll",
-	"Free",
+	"Both",
 	"Microsoft.FreeThreadedXMLDOM",
 	"1.0"
     },
