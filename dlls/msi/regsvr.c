@@ -526,7 +526,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
 	"msi.dll",
 	"Apartment",
-	"WindowsInstaller.Installer",
+	"IMsiServer",
 	NULL
     },    
     {     
