@@ -365,6 +365,7 @@ struct symt_block* symt_close_func_block(struct module* module,
                                          struct symt_function* func,
                                          struct symt_block* block, unsigned pc)
 {
+    assert(func);
     assert(func->symt.tag == SymTagFunction);
 
     if (pc) block->size = func->address + pc - block->address;

@@ -1327,13 +1327,17 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                                      stabs_parse_type(ptr));
             break;
         case N_LBRAC:
-            block = symt_open_func_block(module, curr_func, block,
-                                         stab_ptr->n_value, 0);
-            pending_flush(&pending, module, curr_func, block);
+            if (curr_func)
+            {
+                block = symt_open_func_block(module, curr_func, block,
+                                             stab_ptr->n_value, 0);
+                pending_flush(&pending, module, curr_func, block);
+            }
             break;
         case N_RBRAC:
-            block = symt_close_func_block(module, curr_func, block,
-                                          stab_ptr->n_value);
+            if (curr_func)
+                block = symt_close_func_block(module, curr_func, block,
+                                              stab_ptr->n_value);
             break;
         case N_PSYM:
             /* These are function parameters. */
