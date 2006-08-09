@@ -215,7 +215,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    bscallback = create_bscallback(This, url);
+    bscallback = create_bscallback(This, pimkName);
 
     if(This->nscontainer) {
         nsIInputStream *post_data_stream = get_post_data_stream(pibc);
@@ -249,7 +249,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(pibc)
         FIXME("not supported pibc\n");
 
-    hres = start_binding(bscallback, pimkName);
+    hres = start_binding(bscallback);
 
     IBindStatusCallback_Release(STATUSCLB(bscallback));
     CoTaskMemFree(url);

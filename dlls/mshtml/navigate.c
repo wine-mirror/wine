@@ -131,7 +131,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
     PRUint32 written = 0;
     nsresult nsres;
 
-    FIXME("(%p)->(%p %p %ld %p)\n", This, aWriter, aClousure, aCount, _retval);
+    TRACE("(%p)->(%p %p %ld %p)\n", This, aWriter, aClousure, aCount, _retval);
 
     if(!This->buf_size)
         return S_OK;
@@ -246,6 +246,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             nsISupports_Release(This->nscontext);
         if(This->nsstream)
             nsIInputStream_Release(NSINSTREAM(This->nsstream));
+        if(This->mon)
+            IMoniker_Release(This->mon);
         mshtml_free(This->headers);
         mshtml_free(This);
     }
@@ -564,7 +566,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryService
 };
 
-BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
+BSCallback *create_bscallback(HTMLDocument *doc, IMoniker *mon)
 {
     BSCallback *ret = mshtml_alloc(sizeof(BSCallback));
 
@@ -581,6 +583,10 @@ BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
     ret->nslistener = NULL;
     ret->nscontext = NULL;
     ret->nsstream = NULL;
+
+    if(mon)
+        IMoniker_AddRef(mon);
+    ret->mon = mon;
 
     return ret;
 }
@@ -663,7 +669,7 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IMoniker *mon;
     IHlink *hlink;
 
-    callback = create_bscallback(doc, uri);
+    callback = create_bscallback(doc, NULL);
 
     if(post_data_stream) {
         parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
@@ -692,7 +698,7 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
 
 }
 
-HRESULT start_binding(BSCallback *bscallback, IMoniker *mon)
+HRESULT start_binding(BSCallback *bscallback)
 {
     IStream *str = NULL;
     IBindCtx *bctx;
@@ -704,7 +710,7 @@ HRESULT start_binding(BSCallback *bscallback, IMoniker *mon)
         return hres;
     }
 
-    hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&str);
+    hres = IMoniker_BindToStorage(bscallback->mon, bctx, NULL, &IID_IStream, (void**)&str);
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
         WARN("BindToStorage failed: %08lx\n", hres);
@@ -714,5 +720,7 @@ HRESULT start_binding(BSCallback *bscallback, IMoniker *mon)
     if(str)
         IStream_Release(str);
 
+    IMoniker_Release(bscallback->mon);
+    bscallback->mon = NULL;
     return S_OK;
 }

@@ -172,6 +172,8 @@ struct BSCallback {
     nsIStreamListener *nslistener;
     nsISupports *nscontext;
 
+    IMoniker *mon;
+
     nsProtocolStream *nsstream;
 };
 
@@ -308,8 +310,9 @@ void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
 
-BSCallback *create_bscallback(HTMLDocument*,LPCOLESTR);
-HRESULT start_binding(BSCallback*,IMoniker*);
+BSCallback *create_bscallback(HTMLDocument*,IMoniker*);
+HRESULT start_binding(BSCallback*);
+void create_hidden_hwnd(HTMLDocument*);
 
 IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
