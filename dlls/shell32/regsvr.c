@@ -29,6 +29,7 @@
 #include "winerror.h"
 
 #include "ole2.h"
+#include "shldisp.h"
 #include "shlguid.h"
 #include "shell32_main.h"
 #include "shresdef.h"
@@ -625,6 +626,13 @@ static struct regsvr_coclass const coclass_list[] = {
 	"shell32.dll",
 	"Apartment"
     },
+    {   &CLSID_NetworkPlaces,
+	"My Network Places",
+	0,
+	NULL,
+	"shell32.dll",
+	"Apartment"
+    },
     {   &CLSID_Shortcut,
 	"Shortcut",
 	0,
@@ -690,6 +698,20 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
 	NULL,
 	IDI_SHELL_FULL_RECYCLE_BIN
+    },
+    {   &CLSID_ShellFSFolder,
+	"Shell File System Folder",
+	0,
+	NULL,
+	"shell32.dll",
+	"Apartment"
+    },
+    {   &CLSID_ShellFolderViewOC,
+	"Microsoft Shell Folder View Router",
+	0,
+	NULL,
+	"shell32.dll",
+	"Apartment"
     },
     { NULL }			/* list terminator */
 };
