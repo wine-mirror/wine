@@ -898,17 +898,17 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                         case PROXY_CALCSIZE:
                             if (pParam->param_direction == RPC_FC_IN_PARAM ||
                                 pParam->param_direction & RPC_FC_IN_OUT_PARAM)
-                                call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
+                                call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             break;
                         case PROXY_MARSHAL:
                             if (pParam->param_direction == RPC_FC_IN_PARAM ||
                                 pParam->param_direction & RPC_FC_IN_OUT_PARAM)
-                                call_marshaller(&stubMsg, pArg, pTypeFormat);
+                                call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             break;
                         case PROXY_UNMARSHAL:
                             if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_OUT_PARAM)
-                                 call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
+                                 call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
                                 call_unmarshaller(&stubMsg, (unsigned char **)&RetVal, pTypeFormat, 0);
                             break;
@@ -1483,18 +1483,18 @@ long WINAPI NdrStubCall2(
                             if (pParam->param_direction == RPC_FC_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_RETURN_PARAM)
-                                call_marshaller(&stubMsg, pArg, pTypeFormat);
+                                call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             break;
                         case STUBLESS_UNMARSHAL:
                             if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_IN_PARAM)
-                                call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
+                                call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             break;
                         case STUBLESS_CALCSIZE:
                             if (pParam->param_direction == RPC_FC_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                                 pParam->param_direction == RPC_FC_RETURN_PARAM)
-                                call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
+                                call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             break;
                         default:
                             RpcRaiseException(RPC_S_INTERNAL_ERROR);
