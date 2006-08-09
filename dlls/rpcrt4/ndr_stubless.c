@@ -834,15 +834,19 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 {
                     NDR_PARAM_OI_BASETYPE * pParam =
                         (NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-                    unsigned char * pArg = ARG_FROM_OFFSET(stubMsg, current_stack_offset);
+                    /* note: current_stack_offset starts after the This pointer
+                     * if present, so adjust this */
+                    unsigned short current_stack_offset_adjusted = current_stack_offset +
+                        ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ? sizeof(void *) : 0);
+                    unsigned char * pArg = ARG_FROM_OFFSET(stubMsg, current_stack_offset_adjusted);
 
                     /* no more parameters; exit loop */
-                    if (current_stack_offset > stack_size)
+                    if (current_stack_offset_adjusted >= stack_size)
                         break;
 
                     TRACE("param[%d]: old format\n", i);
                     TRACE("\tparam_direction: %x\n", pParam->param_direction);
-                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
+                    TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
                     TRACE("\tmemory addr (before): %p\n", pArg);
 
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
@@ -1420,13 +1424,19 @@ long WINAPI NdrStubCall2(
                 {
                     NDR_PARAM_OI_BASETYPE *pParam =
                         (NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-                    unsigned char *pArg = (unsigned char *)(args+current_stack_offset);
+                    /* note: current_stack_offset starts after the This pointer
+                     * if present, so adjust this */
+                    unsigned short current_stack_offset_adjusted = current_stack_offset +
+                        ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ? sizeof(void *) : 0);
+                    unsigned char *pArg = (unsigned char *)(args+current_stack_offset_adjusted);
 
                     /* no more parameters; exit loop */
-                    if (current_stack_offset > stack_size)
+                    if (current_stack_offset_adjusted >= stack_size)
                         break;
 
-                    TRACE("param[%d]: old format\n\tparam_direction: 0x%x\n", i, pParam->param_direction);
+                    TRACE("param[%d]: old format\n", i);
+                    TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
+                    TRACE("\tstack_offset: %x\n", current_stack_offset_adjusted);
 
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
                         pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
