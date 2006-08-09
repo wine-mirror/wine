@@ -841,9 +841,10 @@ static HRESULT WINAPI ResProtocolInfo_CombineUrl(IInternetProtocolInfo *iface, L
         LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD* pcchResult, DWORD dwReserved)
 {
-    FIXME("%p)->(%s %s %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzBaseUrl), debugstr_w(pwzRelativeUrl),
+    TRACE("%p)->(%s %s %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzBaseUrl), debugstr_w(pwzRelativeUrl),
             dwCombineFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
 }
 
 static HRESULT WINAPI ResProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,

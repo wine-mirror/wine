@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "urlmon.h"
+#include "shlwapi.h"
 
 #include "initguid.h"
 
@@ -247,6 +248,7 @@ static void test_res_protocol(void)
 
     static const WCHAR blank_url[] =
         {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l','/','b','l','a','n','k','.','h','t','m',0};
+    static const WCHAR test_part_url[] = {'r','e','s',':','/','/','C','S','S','/','t','e','s','t',0};
     static const WCHAR wrong_url1[] =
         {'m','s','h','t','m','l','.','d','l','l','/','b','l','a','n','k','.','m','t','h',0};
     static const WCHAR wrong_url2[] =
@@ -333,6 +335,21 @@ static void test_res_protocol(void)
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08lx, expected INET_E_DEFAULT_ACTION\n", hres);
         ok(buf[0] == '?', "buf changed\n");
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
+                0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
+                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, NULL, NULL,
+                URL_FILE_USE_PATHURL, NULL, 0xdeadbeef, NULL, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
 
         IInternetProtocolInfo_Release(protocol_info);
     }
