@@ -176,6 +176,7 @@ static void test_info(void)
     VS_FIXEDFILEINFO *pFixedVersionInfo;
     UINT uiLength;
     char VersionString[MAX_PATH];
+    static CHAR backslash[] = "\\";
     DWORDLONG dwlVersion;
 
     hdl = 0x55555555;
@@ -215,7 +216,7 @@ static void test_info(void)
     if (!boolret)
         return;
 
-    boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, &uiLength );
+    boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, &uiLength );
     ok (boolret, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
     if (!boolret)
         return;

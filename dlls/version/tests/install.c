@@ -34,6 +34,9 @@ static void test_find_file(void)
     char filename[MAX_PATH];
     char outBuf[MAX_PATH];
     char windir[MAX_PATH];
+    static CHAR empty[]    = "",
+               regedit[] = "regedit",
+               regedit_exe[] = "regedit.exe";
 
     memset(appdir, 0, MAX_PATH);
     memset(windir, 0, MAX_PATH);
@@ -42,7 +45,7 @@ static void test_find_file(void)
     dwOut=MAX_PATH;
     memset(curdir, 0, MAX_PATH);
     memset(outBuf, 0, MAX_PATH);
-    ret = VerFindFileA(0, "regedit", "", "", curdir, &dwCur, outBuf, &dwOut);
+    ret = VerFindFileA(0, regedit, empty, empty, curdir, &dwCur, outBuf, &dwOut);
     switch(ret) {
     case 0L:
     ok(dwCur == 1, "Wrong length of buffer for current location: "
@@ -71,7 +74,7 @@ static void test_find_file(void)
             dwOut=MAX_PATH;
             memset(curdir, 0, MAX_PATH);
             memset(outBuf, 0, MAX_PATH);
-            ret = VerFindFileA(0, "regedit.exe", "", "", curdir, &dwCur, outBuf, &dwOut);
+            ret = VerFindFileA(0, regedit_exe, empty, empty, curdir, &dwCur, outBuf, &dwOut);
             switch(ret) {
             case VFF_CURNEDEST:
                 ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
@@ -93,7 +96,7 @@ static void test_find_file(void)
             dwOut=MAX_PATH;
             memset(curdir, 0, MAX_PATH);
             memset(outBuf, 0, MAX_PATH);
-            ret = VerFindFileA(0, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
+            ret = VerFindFileA(0, regedit_exe, NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
             switch(ret) {
             case VFF_CURNEDEST:
                 ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
