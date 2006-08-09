@@ -416,7 +416,8 @@ static void WINAPI DefaultHandler_Stop(DefaultHandler *This)
 
   /* FIXME: call IOleCache_OnStop */
 
-  DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
+  if (This->dataAdviseHolder)
+    DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
   if (This->pDataDelegate)
   {
      IDataObject_Release(This->pDataDelegate);
@@ -1030,16 +1031,13 @@ static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
 	    LPFORMATETC      pformatetcOut)
 {
   DefaultHandler *This = impl_from_IDataObject(iface);
-  IDataObject *pDataObject;
-  HRESULT hr;
 
   TRACE("(%p, %p, %p)\n", iface, pformatetcIn, pformatetcOut);
 
-  if (!This->pOleDelegate)
+  if (!This->pDataDelegate)
     return OLE_E_NOTRUNNING;
 
-  hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject, (void **)&pDataObject);
-  return IDataObject_GetCanonicalFormatEtc(pDataObject, pformatetcIn, pformatetcOut);
+  return IDataObject_GetCanonicalFormatEtc(This->pDataDelegate, pformatetcIn, pformatetcOut);
 }
 
 /************************************************************************
