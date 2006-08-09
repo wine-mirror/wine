@@ -303,7 +303,36 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
         return NdrDllCanUnloadNow((factory)); \
     }
 
-#define DLLREGISTRY_ROUTINES(pfl, factory_clsid)
+#define REGISTER_PROXY_DLL_ROUTINES(pfl, factory_clsid) \
+    HINSTANCE hProxyDll = NULL; \
+    \
+    BOOL WINAPI DLLMAIN_ENTRY(HINSTANCE hinstDLL, DWORD fdwReason, \
+                              LPVOID lpvReserved) \
+    { \
+        if (fdwReason == DLL_PROCESS_ATTACH) \
+        { \
+            DisableThreadLibraryCalls(hinstDLL); \
+            hProxyDll = hinstDLL; \
+        } \
+        return TRUE; \
+    } \
+    \
+    HRESULT WINAPI DLLREGISTERSERVER_ENTRY(void) \
+    { \
+        return NdrDllRegisterProxy(hProxyDll, (pfl), (factory_clsid)); \
+    } \
+    \
+    HRESULT WINAPI DLLUNREGISTERSERVER_ENTRY(void) \
+    { \
+        return NdrDllUnregisterProxy(hProxyDll, (pfl), (factory_clsid)); \
+    }
+
+#ifdef REGISTER_PROXY_DLL
+# define DLLREGISTRY_ROUTINES(pfl, factory_clsid) \
+    REGISTER_PROXY_DLL_ROUTINES(pfl, factory_clsid)
+#else
+# define DLLREGISTRY_ROUTINES(pfl, factory_clsid)
+#endif
 
 #define DLLDATA_ROUTINES(pfl, factory_clsid) \
     CLSID_PSFACTORYBUFFER \
