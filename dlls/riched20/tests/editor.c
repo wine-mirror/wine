@@ -1062,6 +1062,67 @@ static void test_EM_GETLIMITTEXT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_WM_SETFONT()
+{
+  /* There is no invalid input or error conditions for this function.
+   * NULL wParam and lParam just fall back to their default values 
+   * It should be noted that even if you use a gibberish name for your fonts
+   * here, it will still work because the name is stored. They will display as
+   * System, but will report their name to be whatever they were created as */
+  
+  HWND hwndRichEdit = new_richedit(NULL);
+  HFONT testFont1 = CreateFontA (0,0,0,0,FW_LIGHT, 0, 0, 0, ANSI_CHARSET, 
+    OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | 
+    FF_DONTCARE, "Marlett");
+  HFONT testFont2 = CreateFontA (0,0,0,0,FW_LIGHT, 0, 0, 0, ANSI_CHARSET, 
+    OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | 
+    FF_DONTCARE, "MS Sans Serif");
+  HFONT testFont3 = CreateFontA (0,0,0,0,FW_LIGHT, 0, 0, 0, ANSI_CHARSET, 
+    OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | 
+    FF_DONTCARE, "Courier");
+  LOGFONTA sentLogFont;
+  CHARFORMAT2A returnedCF2A;
+  
+  returnedCF2A.cbSize = sizeof(returnedCF2A);
+  
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "x");
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont1,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
+
+  GetObjectA(testFont1, sizeof(LOGFONTA), &sentLogFont);
+  ok (!strcmp(sentLogFont.lfFaceName,returnedCF2A.szFaceName),
+    "EM_GETCHARFOMAT: Returned wrong font on test 1. Sent: %s, Returned: %s\n",
+    sentLogFont.lfFaceName,returnedCF2A.szFaceName);
+
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont2,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
+  GetObjectA(testFont2, sizeof(LOGFONTA), &sentLogFont);
+  ok (!strcmp(sentLogFont.lfFaceName,returnedCF2A.szFaceName),
+    "EM_GETCHARFOMAT: Returned wrong font on test 2. Sent: %s, Returned: %s\n",
+    sentLogFont.lfFaceName,returnedCF2A.szFaceName);
+    
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont3,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
+  GetObjectA(testFont3, sizeof(LOGFONTA), &sentLogFont);
+  ok (!strcmp(sentLogFont.lfFaceName,returnedCF2A.szFaceName),
+    "EM_GETCHARFOMAT: Returned wrong font on test 3. Sent: %s, Returned: %s\n",
+    sentLogFont.lfFaceName,returnedCF2A.szFaceName);
+   
+  /* This last test is special since we send in NULL. We clear the variables
+   * and just compare to "System" instead of the sent in font name. */
+  ZeroMemory(&returnedCF2A,sizeof(returnedCF2A));
+  ZeroMemory(&sentLogFont,sizeof(sentLogFont));
+  returnedCF2A.cbSize = sizeof(returnedCF2A);
+  
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)NULL,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
+  GetObjectA(NULL, sizeof(LOGFONTA), &sentLogFont);
+  ok (!strcmp("System",returnedCF2A.szFaceName),
+    "EM_GETCHARFOMAT: Returned wrong font on test 4. Sent: NULL, Returned: %s. Expected \"System\".\n",returnedCF2A.szFaceName);
+  
+  DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1085,6 +1146,7 @@ START_TEST( editor )
   test_EM_SETTEXTEX();
   test_EM_EXLIMITTEXT();
   test_EM_GETLIMITTEXT();
+  test_WM_SETFONT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

@@ -1875,7 +1875,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     BOOL bRepaint = LOWORD(lParam);
     
     if (!wParam)
-      wParam = (WPARAM)GetStockObject(DEFAULT_GUI_FONT); 
+      wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
     GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
     hDC = GetDC(hWnd);
     ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
