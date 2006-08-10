@@ -859,7 +859,7 @@ static void unloadVertexData(IWineD3DDevice *iface) {
         glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
     for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
-        glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx);
+        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
 }
