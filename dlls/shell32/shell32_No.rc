@@ -145,10 +145,13 @@ STRINGTABLE DISCARDABLE
 	IDS_SHV_COLUMN9		"Kommentarer"
 	IDS_SHV_COLUMN10	"Eier"
 	IDS_SHV_COLUMN11	"Gruppe"
+	IDS_SHV_COLUMN_DELFROM	"Opprinnelig plassering"
+	IDS_SHV_COLUMN_DELDATE	"Dato slettet"
 
         /* special folders */
 	IDS_DESKTOP		"Skrivebord"
 	IDS_MYCOMPUTER		"Min datamaskin"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Papirkurv"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Store ikoner"
@@ -164,6 +167,11 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Bekreft sletting av mappe"
 	IDS_DELETEITEM_TEXT "Virkelig slette «%1»?"
 	IDS_DELETEMULTIPLE_TEXT "Virkelig slette disse %1 elementene?"
+	IDS_DELETESELECTED_TEXT "Virkelig slette valgte element(er)??"
+	IDS_TRASHITEM_TEXT "Virkelig legge «%1» i papirkurven?"
+	IDS_TRASHFOLDER_TEXT "Virkelig legge «%1» og alt innholdet i papirkurven?"
+	IDS_TRASHMULTIPLE_TEXT "Virkelig legge disse %1 valgte elementene i papirkurven?"
+	IDS_CANTTRASH_TEXT "Elementet «%1» kan ikke legges i papirkurven. Vil du slette det i stedet?"
 	IDS_OVERWRITEFILE_TEXT "Overskrive filen «%1»?"
 	IDS_OVERWRITEFILE_CAPTION "Bekreft overskriving av fil"
 
