@@ -898,18 +898,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 static SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext,
  PSecBufferDesc pToken)
 {
-    SECURITY_STATUS ret;
-
+    /* We never need to call CompleteAuthToken anyway */
     TRACE("%p %p\n", phContext, pToken);
-    if (phContext)
-    {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
-    }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
-    return ret;
+    if (!phContext)
+        return SEC_E_INVALID_HANDLE;
+    
+    return SEC_E_OK;
 }
 
 /***********************************************************************
