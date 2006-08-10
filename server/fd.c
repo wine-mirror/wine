@@ -302,6 +302,7 @@ struct timeout_user
 };
 
 static struct list timeout_list = LIST_INIT(timeout_list);   /* sorted timeouts list */
+struct timeval current_time;
 
 /* add a timeout user */
 struct timeout_user *add_timeout_user( const struct timeval *when, timeout_callback func,
@@ -440,6 +441,7 @@ static inline void main_loop_epoll(void)
         if (epoll_fd == -1) break;  /* an error occurred with epoll */
 
         ret = epoll_wait( epoll_fd, events, sizeof(events)/sizeof(events[0]), timeout );
+        gettimeofday( &current_time, NULL );
 
         /* put the events into the pollfd array first, like poll does */
         for (i = 0; i < ret; i++)
@@ -545,6 +547,8 @@ static inline void main_loop_epoll(void)
         }
         else ret = kevent( kqueue_fd, NULL, 0, events, sizeof(events)/sizeof(events[0]), NULL );
 
+        gettimeofday( &current_time, NULL );
+
         /* put the events into the pollfd array first, like poll does */
         for (i = 0; i < ret; i++)
         {
@@ -641,9 +645,6 @@ static int get_next_timeout(void)
     if (!list_empty( &timeout_list ))
     {
         struct list expired_list, *ptr;
-        struct timeval now;
-
-        gettimeofday( &now, NULL );
 
         /* first remove all expired timers from the list */
 
@@ -652,7 +653,7 @@ static int get_next_timeout(void)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
 
-            if (!time_before( &now, &timeout->when ))
+            if (!time_before( &current_time, &timeout->when ))
             {
                 list_remove( &timeout->entry );
                 list_add_tail( &expired_list, &timeout->entry );
@@ -673,8 +674,8 @@ static int get_next_timeout(void)
         if ((ptr = list_head( &timeout_list )) != NULL)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-            int diff = (timeout->when.tv_sec - now.tv_sec) * 1000
-                     + (timeout->when.tv_usec - now.tv_usec + 999) / 1000;
+            int diff = (timeout->when.tv_sec - current_time.tv_sec) * 1000
+                     + (timeout->when.tv_usec - current_time.tv_usec + 999) / 1000;
             if (diff < 0) diff = 0;
             return diff;
         }
@@ -687,6 +688,8 @@ void main_loop(void)
 {
     int i, ret, timeout;
 
+    gettimeofday( &current_time, NULL );
+
     main_loop_epoll();
     /* fall through to normal poll loop */
 
@@ -697,6 +700,8 @@ void main_loop(void)
         if (!active_users) break;  /* last user removed by a timeout */
 
         ret = poll( pollfd, nb_users, timeout );
+        gettimeofday( &current_time, NULL );
+
         if (ret > 0)
         {
             for (i = 0; i < nb_users; i++)

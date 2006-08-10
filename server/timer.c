@@ -156,7 +156,7 @@ static int set_timer( struct timer *timer, const abs_time_t *expire, int period,
     if (!expire->sec && !expire->usec)
     {
         /* special case: use now + period as first expiration */
-        gettimeofday( &timer->when, NULL );
+        timer->when = current_time;
         add_timeout( &timer->when, period );
     }
     else

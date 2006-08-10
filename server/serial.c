@@ -246,7 +246,7 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
 {
     struct serial *serial = get_fd_user( fd );
     struct list *queue;
-    struct timeval when;
+    struct timeval when = current_time;
     int timeout;
     int events;
 
@@ -271,7 +271,6 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
         return;
     }
 
-    gettimeofday( &when, NULL );
     add_timeout( &when, timeout );
     if (!create_async( current, &when, queue, apc, user, iosb )) return;
 

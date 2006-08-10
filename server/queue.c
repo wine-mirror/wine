@@ -253,7 +253,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
-        gettimeofday( &queue->last_get_msg, NULL );
+        queue->last_get_msg    = current_time;
         list_init( &queue->send_result );
         list_init( &queue->callback_result );
         list_init( &queue->pending_timers );
@@ -567,8 +567,7 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
 
         if (timeout)
         {
-            struct timeval when;
-            gettimeofday( &when, NULL );
+            struct timeval when = current_time;
             add_timeout( &when, timeout );
             result->timeout = add_timeout_user( &when, result_timeout, result );
         }
@@ -749,11 +748,9 @@ static void cleanup_results( struct msg_queue *queue )
 /* check if the thread owning the queue is hung (not checking for messages) */
 static int is_queue_hung( struct msg_queue *queue )
 {
-    struct timeval now;
     struct wait_queue_entry *entry;
 
-    gettimeofday( &now, NULL );
-    if (now.tv_sec - queue->last_get_msg.tv_sec <= 5)
+    if (current_time.tv_sec - queue->last_get_msg.tv_sec <= 5)
         return 0;  /* less than 5 seconds since last get message -> not hung */
 
     LIST_FOR_EACH_ENTRY( entry, &queue->obj.wait_queue, struct wait_queue_entry, entry )
@@ -1027,11 +1024,8 @@ static void free_timer( struct msg_queue *queue, struct timer *timer )
 /* restart an expired timer */
 static void restart_timer( struct msg_queue *queue, struct timer *timer )
 {
-    struct timeval now;
-
     list_remove( &timer->entry );
-    gettimeofday( &now, NULL );
-    while (!time_before( &now, &timer->when )) add_timeout( &timer->when, timer->rate );
+    while (!time_before( &current_time, &timer->when )) add_timeout( &timer->when, timer->rate );
     link_timer( queue, timer );
     set_next_timer( queue );
 }
@@ -1062,8 +1056,8 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     struct timer *timer = mem_alloc( sizeof(*timer) );
     if (timer)
     {
-        timer->rate  = max( rate, 1 );
-        gettimeofday( &timer->when, NULL );
+        timer->rate = max( rate, 1 );
+        timer->when = current_time;
         add_timeout( &timer->when, rate );
         link_timer( queue, timer );
         /* check if we replaced the next timer */
@@ -1711,7 +1705,7 @@ DECL_HANDLER(get_message)
     reply->active_hooks = get_active_hooks();
 
     if (!queue) return;
-    gettimeofday( &queue->last_get_msg, NULL );
+    queue->last_get_msg = current_time;
 
     /* first check for sent messages */
     if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))

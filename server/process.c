@@ -255,7 +255,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     list_init( &process->classes );
     list_init( &process->dlls );
 
-    gettimeofday( &process->start_time, NULL );
+    process->start_time = current_time;
     process->end_time.tv_sec = process->end_time.tv_usec = 0;
     list_add_head( &process_list, &process->entry );
 
@@ -508,7 +508,7 @@ static void process_killed( struct process *process )
     struct list *ptr;
 
     assert( list_empty( &process->thread_list ));
-    gettimeofday( &process->end_time, NULL );
+    process->end_time = current_time;
     close_process_desktop( process );
     handles = process->handles;
     process->handles = NULL;

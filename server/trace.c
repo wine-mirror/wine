@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
+#include "file.h"
 #include "request.h"
 #include "unicode.h"
 
@@ -63,7 +64,6 @@ static void dump_uints( const int *ptr, int len )
 
 static void dump_abs_time( const abs_time_t *time )
 {
-    struct timeval tv;
     int secs, usecs;
 
     if (!time->sec && !time->usec)
@@ -71,9 +71,8 @@ static void dump_abs_time( const abs_time_t *time )
         fprintf( stderr, "0" );
         return;
     }
-    gettimeofday( &tv, NULL );
-    secs = time->sec - tv.tv_sec;
-    if ((usecs = time->usec - tv.tv_usec) < 0)
+    secs = time->sec - current_time.tv_sec;
+    if ((usecs = time->usec - current_time.tv_usec) < 0)
     {
         usecs += 1000000;
         secs--;

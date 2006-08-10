@@ -1682,9 +1682,8 @@ static void periodic_save( void *arg )
 /* start the periodic save timer */
 static void set_periodic_save_timer(void)
 {
-    struct timeval next;
+    struct timeval next = current_time;
 
-    gettimeofday( &next, NULL );
     add_timeout( &next, save_period );
     if (save_timeout_user) remove_timeout_user( save_timeout_user );
     save_timeout_user = add_timeout_user( &next, periodic_save, NULL );

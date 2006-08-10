@@ -337,8 +337,7 @@ void close_process_desktop( struct process *process )
         /* if we have one remaining user, it has to be the manager of the desktop window */
         if (desktop->users == 1 && get_top_window_owner( desktop ))
         {
-            struct timeval when;
-            gettimeofday( &when, NULL );
+            struct timeval when = current_time;
             add_timeout( &when, 1000 );
             assert( !desktop->close_timeout );
             desktop->close_timeout = add_timeout_user( &when, close_desktop_timeout, desktop );

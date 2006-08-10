@@ -488,9 +488,7 @@ static void check_flushed( void *arg )
     assert( server->event );
     if (pipe_data_remaining( server ))
     {
-        struct timeval tv;
-
-        gettimeofday( &tv, NULL );
+        struct timeval tv = current_time;
         add_timeout( &tv, 100 );
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
     }
@@ -521,14 +519,13 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
 
     if (pipe_data_remaining( server ))
     {
-        struct timeval tv;
+        struct timeval tv = current_time;
 
         /* this kind of sux - 
            there's no unix way to be alerted when a pipe becomes empty */
         server->event = create_event( NULL, NULL, 0, 0, 0 );
         if (!server->event)
             return 0;
-        gettimeofday( &tv, NULL );
         add_timeout( &tv, 100 );
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
         *event = server->event;
@@ -873,9 +870,7 @@ DECL_HANDLER(wait_named_pipe)
                           req->func, req->event, NULL );
         else
         {
-            struct timeval when;
-
-            gettimeofday( &when, NULL );
+            struct timeval when = current_time;
             if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
             else add_timeout( &when, req->timeout );
             create_async( current, &when, &pipe->waiters, req->func, req->event, NULL );

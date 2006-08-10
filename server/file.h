@@ -82,6 +82,7 @@ inline static struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get
 /* timeout functions */
 
 struct timeout_user;
+extern struct timeval current_time;
 
 typedef void (*timeout_callback)( void *private );
 

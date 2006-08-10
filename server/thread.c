@@ -146,7 +146,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->desktop_users   = 0;
     thread->token           = NULL;
 
-    gettimeofday( &thread->creation_time,  NULL );
+    thread->creation_time = current_time;
     thread->exit_time.tv_sec = thread->exit_time.tv_usec = 0;
 
     list_init( &thread->mutex_list );
@@ -468,9 +468,7 @@ static int check_wait( struct thread *thread )
     if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;
     if (wait->flags & SELECT_TIMEOUT)
     {
-        struct timeval now;
-        gettimeofday( &now, NULL );
-        if (!time_before( &now, &wait->timeout )) return STATUS_TIMEOUT;
+        if (!time_before( &current_time, &wait->timeout )) return STATUS_TIMEOUT;
     }
     return -1;
 }
@@ -737,7 +735,7 @@ void kill_thread( struct thread *thread, int violent_death )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
     thread->state = TERMINATED;
-    gettimeofday( &thread->exit_time, NULL );
+    thread->exit_time = current_time;
     if (current == thread) current = NULL;
     if (debug_level)
         fprintf( stderr,"%04x: *killed* exit_code=%d\n",

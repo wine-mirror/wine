@@ -267,8 +267,7 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
 
     if (mailslot->read_timeout != -1)
     {
-        struct timeval when;
-        gettimeofday( &when, NULL );
+        struct timeval when = current_time;
         add_timeout( &when, mailslot->read_timeout );
         fd_queue_async_timeout( fd, apc, user, iosb, type, count, &when );
     }

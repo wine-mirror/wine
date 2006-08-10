@@ -467,10 +467,8 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 /* get current tick count to return to client */
 unsigned int get_tick_count(void)
 {
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    return ((t.tv_sec - server_start_time.tv_sec) * 1000) +
-           ((t.tv_usec - server_start_time.tv_usec) / 1000);
+    return ((current_time.tv_sec - server_start_time.tv_sec) * 1000) +
+           ((current_time.tv_usec - server_start_time.tv_usec) / 1000);
 }
 
 static void master_socket_dump( struct object *obj, int verbose )
@@ -826,13 +824,11 @@ static void close_socket_timeout( void *arg )
 /* close the master socket and stop waiting for new clients */
 void close_master_socket(void)
 {
-    struct timeval when;
-
     if (master_socket_timeout == -1) return;  /* just keep running forever */
 
     if (master_socket_timeout)
     {
-        gettimeofday( &when, NULL );
+        struct timeval when = current_time;
         add_timeout( &when, master_socket_timeout * 1000 );
         master_socket->timeout = add_timeout_user( &when, close_socket_timeout, NULL );
     }
