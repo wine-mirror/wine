@@ -37,7 +37,6 @@
  *        - MNS_AUTODISMISS
  *        - MNS_DRAGDROP
  *        - MNS_MODELESS
- *        - MNS_NOTIFYBYPOS
  */
 
 #include "config.h"
@@ -2450,7 +2449,13 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 		    PostMessageW( pmt->hOwnerWnd, WM_SYSCOMMAND, item->wID,
 				  MAKELPARAM((INT16)pmt->pt.x, (INT16)pmt->pt.y) );
 		else
-		    PostMessageW( pmt->hOwnerWnd, WM_COMMAND, item->wID, 0 );
+		{
+                    if (menu->dwStyle & MNS_NOTIFYBYPOS)
+                        PostMessageW( pmt->hOwnerWnd, WM_MENUCOMMAND, menu->FocusedItem,
+                                      (LPARAM)hMenu);
+                    else
+                        PostMessageW( pmt->hOwnerWnd, WM_COMMAND, item->wID, 0 );
+		}
 	    }
 	    return item->wID;
 	}
@@ -4901,7 +4906,7 @@ BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
 	    if (menu->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
 	    if (menu->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
 	    if (menu->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
-	    if (menu->dwStyle & MNS_NOTIFYBYPOS) FIXME("MNS_NOTIFYBYPOS unimplemented\n");
+	    if (menu->dwStyle & MNS_NOTIFYBYPOS) FIXME("MNS_NOTIFYBYPOS partially implemented\n");
 	}
 
 	return TRUE;
