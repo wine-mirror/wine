@@ -1057,6 +1057,7 @@ static void ReadColorTbl(RTF_Info *info)
 	RTFColor	*cp;
 	int		cnum = 0;
 	const char	*fn = "ReadColorTbl";
+        int group_level = 1;
 
 	TRACE("\n");
 
@@ -1066,7 +1067,18 @@ static void ReadColorTbl(RTF_Info *info)
 		if (info->rtfClass == rtfEOF)
 			break;
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
-			break;
+                {
+                        group_level--;
+                        if (!group_level)
+                                break;
+                        continue;
+                }
+                else if (RTFCheckCM(info, rtfGroup, rtfBeginGroup))
+                {
+                        group_level++;
+                        continue;
+                }
+                
 		cp = New (RTFColor);
 		if (cp == NULL)
 			ERR ( "%s: cannot allocate color entry\n", fn);
