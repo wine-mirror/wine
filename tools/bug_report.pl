@@ -425,11 +425,11 @@ if ($debuglevel > 1) {
 		$winever .= " CVS";
 	}
 	else {
-		$winever = `$wineloc -v 2>&1`;
+		$winever = `$wineloc --version 2>&1`;
 		chomp $winever;
 	}
 } elsif ($debuglevel =~ 1) {
-	$winever=`$wineloc -v 2>&1`;
+	$winever=`$wineloc --version 2>&1`;
 	chomp $winever;
 }
 my $gccver=`gcc -v 2>&1`;
