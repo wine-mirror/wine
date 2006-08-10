@@ -121,7 +121,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
 {
     HICON prevIcon;
     CURSORICONINFO * info;
-    
+
     if ((style & SS_TYPEMASK) != SS_ICON) return 0;
     info = hicon?(CURSORICONINFO *) GlobalLock16(HICON_16(hicon)):NULL;
     if (hicon && !info) {
@@ -759,14 +759,10 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
             iconRect.top = (rc.bottom - rc.top) / 2 - info->nHeight / 2;
             iconRect.right = iconRect.left + info->nWidth;
             iconRect.bottom = iconRect.top + info->nHeight;
-            FillRect( hdc, &rc, hbrush );
         }
-        else
-        {
-            FillRect( hdc, &rc, hbrush );
-            DrawIconEx( hdc, rc.left, rc.top, hIcon, rc.right - rc.left,
-                        rc.bottom - rc.top, 0, NULL, DI_NORMAL );
-        }
+        FillRect( hdc, &rc, hbrush );
+        DrawIconEx( hdc, rc.left, rc.top, hIcon, rc.right - rc.left,
+                    rc.bottom - rc.top, 0, NULL, DI_NORMAL );
     }
     if (info) GlobalUnlock16(HICON_16(hIcon));
 }
