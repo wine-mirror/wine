@@ -823,6 +823,24 @@ UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     return rc;
 }
 
+/* compares the version of a file read from the filesystem and
+ * the version specified in the File table
+ */
+static int msi_compare_file_version( MSIFILE *file )
+{
+    WCHAR version[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    size = MAX_PATH;
+    version[0] = '\0';
+    r = MsiGetFileVersionW( file->TargetPath, version, &size, NULL, NULL );
+    if ( r != ERROR_SUCCESS )
+        return 0;
+
+    return lstrcmpW( version, file->Version );
+}
+
 UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 {
     MSIFILE *file;
@@ -841,6 +859,12 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
 
         if ( file->state != msifs_present )
+            continue;
+
+        /* only remove a file if the version to be installed
+         * is strictly newer than the old file
+         */
+        if ( msi_compare_file_version( file ) >= 0 )
             continue;
 
         TRACE("removing %s\n", debugstr_w(file->File) );

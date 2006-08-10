@@ -1938,13 +1938,10 @@ static void test_removefiles(void)
     r = MsiDoAction( hpkg, "RemoveFiles");
     ok( r == ERROR_SUCCESS, "remove files failed\n");
 
-    todo_wine
-    {
-        ok(DeleteFileA("hydrogen.txt"), "Expected hydrogen.txt to exist\n");
-        ok(DeleteFileA("lithium.txt"), "Expected lithium.txt to exist\n");    
-        ok(DeleteFileA("beryllium.txt"), "Expected beryllium.txt to exist\n");
-        ok(DeleteFileA("carbon.txt"), "Expected carbon.txt to exist\n");
-    }
+    ok(DeleteFileA("hydrogen.txt"), "Expected hydrogen.txt to exist\n");
+    ok(DeleteFileA("lithium.txt"), "Expected lithium.txt to exist\n");    
+    ok(DeleteFileA("beryllium.txt"), "Expected beryllium.txt to exist\n");
+    ok(DeleteFileA("carbon.txt"), "Expected carbon.txt to exist\n");
     ok(DeleteFileA("helium.txt"), "Expected helium.txt to exist\n");
     ok(DeleteFileA("boron.txt"), "Expected boron.txt to exist\n");
 
