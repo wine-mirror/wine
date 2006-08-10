@@ -31,6 +31,7 @@ WineFakeDlls=FakeDllsSection
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
+    ContentIndex,\
     ControlClass,\
     CurrentVersion,\
     Debugger,\
@@ -53,6 +54,7 @@ WineFakeDlls=FakeDllsSection
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
+    ContentIndex,\
     ControlClass,\
     CurrentVersion,\
     Debugger,\
@@ -140,6 +142,11 @@ HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\1.0\FLAGS,,,"1"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0,,,"OLE Automation"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0\0\win32,,,"stdole2.tlb"
 HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\2.0\FLAGS,,,"0"
+
+[ContentIndex]
+HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"WBreakerClass",,"{369647e0-17b0-11ce-9950-00aa004bbb1f}"
+HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"StemmerClass",,""
+HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"Locale",0x10003,0
 
 [ControlClass]
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},,,"Ports (COM & LPT)"
@@ -2099,6 +2106,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dxdiagn.dll,1
 11,,hhctrl.ocx,1
 11,,hlink.dll,1
+11,,infosoft.dll,1
 11,,inseng.dll,1
 11,,itss.dll,1
 11,,mlang.dll,1

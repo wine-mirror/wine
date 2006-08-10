@@ -147,7 +147,7 @@ static const IWordBreakerVtbl wordbreaker_vtbl =
     wb_GetLicenseToUse,
 };
 
-HRESULT WINAPI wb_en_us_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObject)
+HRESULT WINAPI wb_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
     wordbreaker_impl *This;
     IWordBreaker *wb;

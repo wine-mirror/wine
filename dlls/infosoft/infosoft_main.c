@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -36,8 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(infosoft);
 
-DEFINE_GUID(CLSID_wb_en_us,
-            0x59e09780,0x8099,0x101b,0x8d,0xf3,0x00,0x00,0x0b,0x65,0xc3,0xb5);
+DEFINE_GUID(CLSID_wb_Neutral,0x369647e0,0x17b0,0x11ce,0x99,0x50,0x00,0xaa,0x00,0x4b,0xbb,0x1f);
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -54,7 +54,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
-extern HRESULT WINAPI wb_en_us_Constructor(IUnknown*, REFIID, LPVOID *);
+extern HRESULT WINAPI wb_Constructor(IUnknown*, REFIID, LPVOID *);
 
 typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
@@ -121,7 +121,7 @@ static const IClassFactoryVtbl infosoft_cfvt =
     infosoftcf_fnLockServer
 };
 
-static CFImpl wb_en_us_cf = { &infosoft_cfvt, &wb_en_us_Constructor };
+static CFImpl wb_cf = { &infosoft_cfvt, &wb_Constructor };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
@@ -133,8 +133,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         return E_INVALIDARG;
     *ppv = NULL;
 
-    if (IsEqualIID(rclsid, &CLSID_wb_en_us))
-        pcf = (IClassFactory*) &wb_en_us_cf;
+    if (IsEqualIID(rclsid, &CLSID_wb_Neutral))
+        pcf = (IClassFactory*) &wb_cf;
     else
         return CLASS_E_CLASSNOTAVAILABLE;
 
@@ -148,8 +148,43 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return S_FALSE;
 }
 
+static HRESULT add_key_val( LPCSTR key, LPCSTR valname, LPCSTR value )
+{
+    HKEY hkey;
+
+    if (RegCreateKeyA( HKEY_CLASSES_ROOT, key, &hkey ) != ERROR_SUCCESS) return E_FAIL;
+    RegSetValueA( hkey, valname, REG_SZ, value, strlen( value ) + 1 );
+    RegCloseKey( hkey );
+    return S_OK;
+}
+
+static HRESULT add_wordbreaker_clsid( LPCSTR lang, const CLSID *id)
+{
+    CHAR key[100], val[50];
+
+    strcpy(key, "CLSID\\");
+    sprintf(key+6, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            id->Data1, id->Data2, id->Data3,
+            id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+            id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7]);
+    sprintf(val, "%s Word Breaker", lang);
+    add_key_val( key, NULL, val );
+    strcat(key, "\\InProcServer32");
+    add_key_val( key, NULL, "infosoft.dll" );
+    add_key_val( key, "ThreadingModel", "Both" );
+    return S_OK;
+}
+
+#define ADD_BREAKER(name)  add_wordbreaker_clsid( #name, &CLSID_wb_##name )
+
+static HRESULT add_content_index_keys(void)
+{
+    ADD_BREAKER(Neutral); /* in query.dll on Windows */
+    return S_OK;
+}
+
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
+    add_content_index_keys();
     return S_OK;
 }
