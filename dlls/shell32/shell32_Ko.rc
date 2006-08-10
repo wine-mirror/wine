@@ -146,10 +146,13 @@ IDS_SHV_COLUMN8		"이름"
 IDS_SHV_COLUMN9		"주석"
 IDS_SHV_COLUMN10	"소유자"
 IDS_SHV_COLUMN11	"그룹"
+IDS_SHV_COLUMN_DELFROM	"원래 위치"
+IDS_SHV_COLUMN_DELDATE	"지워진 날짜"
 
 /* special folders */
 IDS_DESKTOP		"데스크탑"
 IDS_MYCOMPUTER		"내 컴퓨터"
+IDS_RECYCLEBIN_FOLDER_NAME      "휴지통"
 
 /* context menus */
 IDS_VIEW_LARGE		"큰 아이콘(&G)"
