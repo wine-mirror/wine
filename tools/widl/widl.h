@@ -25,8 +25,6 @@
 
 #include <time.h>
 
-#define WIDL_FULLVERSION "0.1"
-
 extern int debuglevel;
 #define DEBUGLEVEL_NONE		0x0000
 #define DEBUGLEVEL_CHAT		0x0001
