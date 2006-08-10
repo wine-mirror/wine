@@ -505,6 +505,12 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
 {
     TVINSERTSTRUCT tvins;
     HTREEITEM hRoot;
+    static TCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
+                 hkcu[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},
+                 hklm[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0},
+                 hku[]  = {'H','K','E','Y','_','U','S','E','R','S',0},
+                 hkcc[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0},
+                 hkdd[] = {'H','K','E','Y','_','D','Y','N','_','D','A','T','A',0};
 
     tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     /* Set the text of the item.  */
@@ -521,13 +527,13 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     /* Add the item to the tree view control.  */
     if (!(hRoot = TreeView_InsertItem(hwndTV, &tvins))) return FALSE;
 
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_CLASSES_ROOT"), HKEY_CLASSES_ROOT, 1)) return FALSE;
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_CURRENT_USER"), HKEY_CURRENT_USER, 1)) return FALSE;
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_LOCAL_MACHINE"), HKEY_LOCAL_MACHINE, 1)) return FALSE;
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_USERS"), HKEY_USERS, 1)) return FALSE;
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_CURRENT_CONFIG"), HKEY_CURRENT_CONFIG, 1)) return FALSE;
-    if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_DYN_DATA"), HKEY_DYN_DATA, 1)) return FALSE;
-    
+    if (!AddEntryToTree(hwndTV, hRoot, hkcr, HKEY_CLASSES_ROOT, 1)) return FALSE;
+    if (!AddEntryToTree(hwndTV, hRoot, hkcu, HKEY_CURRENT_USER, 1)) return FALSE;
+    if (!AddEntryToTree(hwndTV, hRoot, hklm, HKEY_LOCAL_MACHINE, 1)) return FALSE;
+    if (!AddEntryToTree(hwndTV, hRoot, hku, HKEY_USERS, 1)) return FALSE;
+    if (!AddEntryToTree(hwndTV, hRoot, hkcc, HKEY_CURRENT_CONFIG, 1)) return FALSE;
+    if (!AddEntryToTree(hwndTV, hRoot, hkdd, HKEY_DYN_DATA, 1)) return FALSE;
+
     /* expand and select host name */
     SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot );
     SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
