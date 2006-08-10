@@ -632,7 +632,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_StreamInFill(&inStream);
     if (!inStream.editstream->dwError)
     {
-      if (strncmp(inStream.buffer, "{\\rtf1", 6) && strncmp(inStream.buffer, "{\\urtf", 6))
+      if (strncmp(inStream.buffer, "{\\rtf", 5) && strncmp(inStream.buffer, "{\\urtf", 6))
       {
         format &= ~SF_RTF;
         format |= SF_TEXT;
@@ -1894,7 +1894,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (lParam)
     {
       TRACE("WM_SETTEXT lParam==%lx\n",lParam);
-      if (!IsWindowUnicode(hWnd) && !strncmp((char *)lParam, "{\\rtf1", 6))
+      if (!IsWindowUnicode(hWnd) && !strncmp((char *)lParam, "{\\rtf", 5))
       {
         /* Undocumented: WM_SETTEXT supports RTF text */
         ME_StreamInRTFString(editor, 0, (char *)lParam);
