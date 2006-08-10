@@ -906,7 +906,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     return 0;
 }
 
-static void test_basic_request(int port, char *url)
+static void test_basic_request(int port, const char *url)
 {
     HINTERNET hi, hc, hr;
     DWORD r, count;
@@ -999,6 +999,8 @@ static void test_proxy_direct(int port)
     HINTERNET hi, hc, hr;
     DWORD r, sz;
     char buffer[0x40];
+    static CHAR username[] = "mike",
+                password[] = "1101";
 
     sprintf(buffer, "localhost:%d\n", port);
     hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_PROXY, buffer, NULL, 0);
@@ -1022,10 +1024,10 @@ static void test_proxy_direct(int port)
 
     /* set the user + password then try again */
     todo_wine {
-    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, "mike", 4);
+    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, username, 4);
     ok(r, "failed to set user\n");
 
-    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_PASSWORD, "1101", 4);
+    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_PASSWORD, password, 4);
     ok(r, "failed to set password\n");
     }
 
