@@ -2121,9 +2121,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->NumberOfAdaptersInGroup           = 1;
 
         if(*pCaps->VertexShaderVersion >= D3DVS_VERSION(2,0)) {
-            /* OpenGL supports all formats below perhaps not allways without conversion but it supports them.
+            /* OpenGL supports all formats below, perhaps not always without conversion but it supports them.
                Further GLSL doesn't seem to have an official unsigned type as I'm not sure how we handle it
-               don't advertise iet yet. We might need to add some clamping in the shader engine to support it.       
+               don't advertise it yet. We might need to add some clamping in the shader engine to support it.
                TODO: D3DDTCAPS_USHORT2N, D3DDTCAPS_USHORT4N, D3DDTCAPS_UDEC3, D3DDTCAPS_DEC3N */
             *pCaps->DeclTypes = D3DDTCAPS_UBYTE4    |
                                 D3DDTCAPS_UBYTE4N   |
@@ -2131,7 +2131,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                 D3DDTCAPS_SHORT4N   |
                                 D3DDTCAPS_FLOAT16_2 |
                                 D3DDTCAPS_FLOAT16_4;
-                                                                                                                                
+
         } else
             *pCaps->DeclTypes                         = 0;
 
