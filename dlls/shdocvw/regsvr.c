@@ -64,7 +64,16 @@ struct regsvr_coclass
     LPCSTR progid;		/* can be NULL to omit */
     LPCSTR viprogid;		/* can be NULL to omit */
     LPCSTR progid_extra;	/* can be NULL to omit */
+    DWORD flags;
+    DWORD dwAttributes;
+    DWORD dwCallForAttributes;
 };
+
+/* flags for regsvr_coclass.flags */
+#define SHELLEX_MAYCHANGEDEFAULTMENU  0x00000001
+#define SHELLFOLDER_WANTSFORPARSING   0x00000002
+#define SHELLFOLDER_ATTRIBUTES        0x00000004
+#define SHELLFOLDER_CALLFORATTRIBUTES 0x00000008
 
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
 static HRESULT unregister_coclasses(struct regsvr_coclass const *list);
@@ -101,7 +110,17 @@ static WCHAR const viprogid_keyname[25] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
+static WCHAR const shellex_keyname[8] = {
+    's', 'h', 'e', 'l', 'l', 'e', 'x', 0 };
+static WCHAR const shellfolder_keyname[12] = {
+    'S', 'h', 'e', 'l', 'l', 'F', 'o', 'l', 'd', 'e', 'r', 0 };
+static WCHAR const mcdm_keyname[21] = {
+    'M', 'a', 'y', 'C', 'h', 'a', 'n', 'g', 'e', 'D', 'e', 'f',
+    'a', 'u', 'l', 't', 'M', 'e', 'n', 'u', 0 };
 static char const tmodel_valuename[] = "ThreadingModel";
+static char const wfparsing_valuename[] = "WantsFORPARSING";
+static char const attributes_valuename[] = "Attributes";
+static char const cfattributes_valuename[] = "CallForAttributes";
 static WCHAR const lcs32_keyname[] = {
     'L','o','c','a','l','S','e','r','v','e','r','3','2',0 };
 static const WCHAR szIERelPath[] = {
@@ -267,6 +286,42 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 				     (CONST BYTE*)list->ips32_tmodel,
 				     strlen(list->ips32_tmodel) + 1);
 	    RegCloseKey(ips32_key);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	}
+
+	if (list->flags & SHELLEX_MAYCHANGEDEFAULTMENU) {
+	    HKEY shellex_key, mcdm_key;
+
+	    res = RegCreateKeyExW(clsid_key, shellex_keyname, 0, NULL, 0,
+				  KEY_READ | KEY_WRITE, NULL,
+				  &shellex_key, NULL);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	    res = RegCreateKeyExW(shellex_key, mcdm_keyname, 0, NULL, 0,
+				  KEY_READ | KEY_WRITE, NULL,
+				  &mcdm_key, NULL);
+	    RegCloseKey(shellex_key);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	    RegCloseKey(mcdm_key);
+	}
+
+	if (list->flags & 
+		(SHELLFOLDER_WANTSFORPARSING|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_CALLFORATTRIBUTES))
+	{
+	    HKEY shellfolder_key;
+
+	    res = RegCreateKeyExW(clsid_key, shellfolder_keyname, 0, NULL, 0,
+			     	  KEY_READ | KEY_WRITE, NULL,
+				  &shellfolder_key, NULL);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	    if (list->flags & SHELLFOLDER_WANTSFORPARSING)
+		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, (LPBYTE)"", 1);
+	    if (list->flags & SHELLFOLDER_ATTRIBUTES) 
+		res = RegSetValueExA(shellfolder_key, attributes_valuename, 0, REG_DWORD, 
+				     (LPBYTE)&list->dwAttributes, sizeof(DWORD));
+	    if (list->flags & SHELLFOLDER_CALLFORATTRIBUTES) 
+		res = RegSetValueExA(shellfolder_key, cfattributes_valuename, 0, REG_DWORD,
+				     (LPBYTE)&list->dwCallForAttributes, sizeof(DWORD));
+	    RegCloseKey(shellfolder_key);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
@@ -618,7 +673,10 @@ static struct regsvr_coclass const coclass_list[] = {
         "shdocvw.dll",
         "Apartment",
         NULL,
-        NULL
+        NULL,
+        NULL,
+        SHELLFOLDER_ATTRIBUTES,
+        SFGAO_CANDELETE|SFGAO_CANLINK
     },
     { NULL }			/* list terminator */
 };
