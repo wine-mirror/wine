@@ -1134,8 +1134,8 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
         comp->ActionRequest = INSTALLSTATE_DEFAULT;
         break;
     default:
-        comp->Action = INSTALLSTATE_UNKNOWN;
-        comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+        comp->Action = INSTALLSTATE_LOCAL;
+        comp->ActionRequest = INSTALLSTATE_LOCAL;
     }
 
     return ERROR_SUCCESS;
