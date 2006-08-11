@@ -87,35 +87,67 @@ static HRESULT WINAPI wb_Init( IWordBreaker *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI wb_BreakText( IWordBreaker *iface,
-         TEXT_SOURCE *pTextSource, IWordSink *pWordSink, IPhraseSink *pPhraseSink)
+static HRESULT call_sink( IWordSink *pWordSink, TEXT_SOURCE *ts, UINT len )
 {
-    LPCWSTR p, q;
-    DWORD len;
+    HRESULT r;
 
-    FIXME("%p %p %p\n", pTextSource, pWordSink, pPhraseSink);
+    if (!len)
+        return S_OK;
 
-    p = pTextSource->awcBuffer;
+    TRACE("%d %s\n", len, debugstr_w(&ts->awcBuffer[ts->iCur]));
 
-    while (*p)
+    r = IWordSink_PutWord( pWordSink, len, &ts->awcBuffer[ts->iCur], len, ts->iCur );
+    ts->iCur += len;
+
+    return r;
+}
+
+static HRESULT WINAPI wb_BreakText( IWordBreaker *iface,
+         TEXT_SOURCE *ts, IWordSink *pWordSink, IPhraseSink *pPhraseSink)
+{
+    UINT len, state = 0;
+    WCHAR ch;
+
+    TRACE("%p %p %p\n", ts, pWordSink, pPhraseSink);
+
+    if (pPhraseSink)
+        FIXME("IPhraseSink won't be called\n");
+
+    do
     {
-        /* skip spaces and punctuation */
-        while(ispunctW(*p) || isspaceW(*p))
-            p++;
+        len = 0;
+        while ((ts->iCur + len) < ts->iEnd)
+        {
+            ch = ts->awcBuffer[ts->iCur + len];
 
-        /* find the end of the word */
-        q = p;
-        while(*q && !ispunctW(*q) && !isspaceW(*q))
-            q++;
+            switch (state)
+            {
+            case 0: /* skip spaces and punctuation */
 
-        len = q - p;
-        if (!len)
-            break;
+                if (!ch || ispunctW(ch) || isspaceW(ch))
+                    ts->iCur ++;
+                else
+                    state = 1;
+                break;
 
-        IWordSink_PutWord( pWordSink, len, p, len, p - pTextSource->awcBuffer );
+            case 1: /* find the end of the word */
 
-        p = q;
-    }
+                if (ch && !ispunctW(ch) && !isspaceW(ch))
+                    len++;
+                else
+                {
+                    call_sink( pWordSink, ts, len );
+                    len = 0;
+                    state = 0;
+                }
+                break;
+
+            }
+        }
+        call_sink( pWordSink, ts, len );
+
+    } while (S_OK == ts->pfnFillTextBuffer( ts ));
+
     return S_OK;
 }
 
@@ -152,7 +184,7 @@ HRESULT WINAPI wb_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObjec
     wordbreaker_impl *This;
     IWordBreaker *wb;
 
-    FIXME("%p %s %p\n", pUnkOuter, debugstr_guid(riid), ppvObject);
+    TRACE("%p %s %p\n", pUnkOuter, debugstr_guid(riid), ppvObject);
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
     if (!This)
