@@ -65,60 +65,36 @@
  */
 
 #ifdef linux
-typedef struct
-{
-    unsigned short sc_gs, __gsh;
-    unsigned short sc_fs, __fsh;
-    unsigned short sc_es, __esh;
-    unsigned short sc_ds, __dsh;
-    unsigned long sc_edi;
-    unsigned long sc_esi;
-    unsigned long sc_ebp;
-    unsigned long sc_esp;
-    unsigned long sc_ebx;
-    unsigned long sc_edx;
-    unsigned long sc_ecx;
-    unsigned long sc_eax;
-    unsigned long sc_trapno;
-    unsigned long sc_err;
-    unsigned long sc_eip;
-    unsigned short sc_cs, __csh;
-    unsigned long sc_eflags;
-    unsigned long esp_at_signal;
-    unsigned short sc_ss, __ssh;
-    unsigned long i387;
-    unsigned long oldmask;
-    unsigned long cr2;
-} volatile SIGCONTEXT;
 
-#define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
-#define HANDLER_CONTEXT (&__context)
+typedef ucontext_t SIGCONTEXT;
 
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
+#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
+#define HANDLER_CONTEXT __context
 
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
+#define EAX_sig(context)     ((context)->uc_mcontext.gregs[REG_EAX])
+#define EBX_sig(context)     ((context)->uc_mcontext.gregs[REG_EBX])
+#define ECX_sig(context)     ((context)->uc_mcontext.gregs[REG_ECX])
+#define EDX_sig(context)     ((context)->uc_mcontext.gregs[REG_EDX])
+#define ESI_sig(context)     ((context)->uc_mcontext.gregs[REG_ESI])
+#define EDI_sig(context)     ((context)->uc_mcontext.gregs[REG_EDI])
+#define EBP_sig(context)     ((context)->uc_mcontext.gregs[REG_EBP])
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[REG_ESP])
 
-#define TRAP_sig(context)    ((context)->sc_trapno)
-#define ERROR_sig(context)   ((context)->sc_err)
-#define EFL_sig(context)     ((context)->sc_eflags)
+#define CS_sig(context)      ((context)->uc_mcontext.gregs[REG_CS])
+#define DS_sig(context)      ((context)->uc_mcontext.gregs[REG_DS])
+#define ES_sig(context)      ((context)->uc_mcontext.gregs[REG_ES])
+#define SS_sig(context)      ((context)->uc_mcontext.gregs[REG_SS])
+#define FS_sig(context)      ((context)->uc_mcontext.gregs[REG_FS])
+#define GS_sig(context)      ((context)->uc_mcontext.gregs[REG_GS])
 
-#define EIP_sig(context)     ((context)->sc_eip)
-#define ESP_sig(context)     ((context)->sc_esp)
+#define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
+#define EIP_sig(context)     ((context)->uc_mcontext.gregs[REG_EIP])
+#define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
+#define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
-#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
+#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
 
-#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->cr2)
+#define FAULT_ADDRESS        (__siginfo->si_addr)
 
 #define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
 
@@ -1466,16 +1442,7 @@ BOOL SIGNAL_Init(void)
     sigaddset( &sig_act.sa_mask, SIGINT );
     sigaddset( &sig_act.sa_mask, SIGUSR1 );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
-
-#if defined(linux)
-    sig_act.sa_flags = SA_RESTART;
-#elif defined (__svr4__) || defined(_SCO_DS) || defined(__APPLE__) || \
-        defined(__NetBSD__) || defined(__OpenBSD__) || \
-        defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
-#else
-    sig_act.sa_flags = 0;
-#endif
 
 #ifdef SA_ONSTACK
     sig_act.sa_flags |= SA_ONSTACK;
