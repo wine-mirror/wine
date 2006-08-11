@@ -2793,6 +2793,17 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 }
 
 
+/**********************************************************************
+ *           IsWow64Process         (KERNEL32.@)
+ */
+BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
+{
+    FIXME("(%p %p) stub!\n", hProcess, Wow64Process);
+    *Wow64Process = FALSE;
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.@)
  *

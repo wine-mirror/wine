@@ -1747,6 +1747,7 @@ BOOL        WINAPI IsValidAcl(PACL);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI IsWellKnownSid(PSID,WELL_KNOWN_SID_TYPE);
+BOOL        WINAPI IsWow64Process(HANDLE,PBOOL);
 BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);
 BOOL        WINAPI ImpersonateNamedPipeClient(HANDLE);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);

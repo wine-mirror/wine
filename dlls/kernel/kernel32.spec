@@ -736,7 +736,7 @@
 @ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
 # @ stub IsValidUILanguage
-# @ stub IsWow64Process
+@ stdcall IsWow64Process(ptr ptr)
 @ stdcall -i386 -register K32Thk1632Epilog()
 @ stdcall -i386 -register K32Thk1632Prolog()
 @ stdcall LCMapStringA(long long str long ptr long)
