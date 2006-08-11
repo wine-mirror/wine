@@ -39,6 +39,7 @@
 #include "wine/pthread.h"
 
 static int init_done;
+static int nb_threads = 1;
 
 #ifndef __i386__
 static pthread_key_t teb_key;
@@ -107,7 +108,12 @@ static int create_thread( struct wine_pthread_thread_info *info )
     pthread_attr_setstacksize( &attr, info->stack_size );
     pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread on Solaris */
-    if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) ret = -1;
+    interlocked_xchg_add( &nb_threads, 1 );
+    if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info ))
+    {
+        interlocked_xchg_add( &nb_threads, -1 );
+        ret = -1;
+    }
     pthread_attr_destroy( &attr );
     return ret;
 }
@@ -164,6 +170,7 @@ static void *get_current_teb(void)
  */
 static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info )
 {
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) exit( info->exit_status );
     wine_ldt_free_fs( info->teb_sel );
     if (info->teb_size) munmap( info->teb_base, info->teb_size );
     pthread_exit( (void *)info->exit_status );
@@ -175,6 +182,7 @@ static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info
  */
 static void DECLSPEC_NORETURN abort_thread( long status )
 {
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
     pthread_exit( (void *)status );
 }
 
