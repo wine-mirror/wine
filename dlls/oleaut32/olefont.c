@@ -2018,7 +2018,7 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
    IConnectionPoint **ppCp)
 {
   OLEFontImpl *this = impl_from_IConnectionPointContainer(iface);
-  TRACE("(%p)->(%s, %p): stub\n", this, debugstr_guid(riid), ppCp);
+  TRACE("(%p)->(%s, %p)\n", this, debugstr_guid(riid), ppCp);
 
   if(IsEqualIID(riid, &IID_IPropertyNotifySink)) {
     return IConnectionPoint_QueryInterface(this->pPropertyNotifyCP,
