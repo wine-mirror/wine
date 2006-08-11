@@ -29,7 +29,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ole2.h"
-#include "indexsvr.h"
+#include "indexsrv.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

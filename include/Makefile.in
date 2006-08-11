@@ -19,7 +19,7 @@ WINDOWS_IDL_SRCS = \
 	hlink.idl \
 	htiframe.idl \
 	iads.idl \
-	indexsvr.idl \
+	indexsrv.idl \
 	mediaobj.idl \
 	mimeinfo.idl \
 	mlang.idl \

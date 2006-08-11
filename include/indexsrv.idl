@@ -118,8 +118,8 @@ interface IWordBreaker: IUnknown
               [in] ULONG cwcNoun,
               [size_is(cwcModifier)][in] const WCHAR *pwcModifier,
               [in] ULONG cwcModifier,
-              [in] ULONG ulAttachmentType, 
-              [size_is(*pcwcPhrase)][out] WCHAR *pwcPhrase, 
+              [in] ULONG ulAttachmentType,
+              [size_is(*pcwcPhrase)][out] WCHAR *pwcPhrase,
               [out][in] ULONG *pcwcPhrase);
     HRESULT GetLicenseToUse(
               [string][out] const WCHAR **ppwcsLicense);
