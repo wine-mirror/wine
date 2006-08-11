@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = pstorec.dll
+IMPORTS   = ole32 shlwapi advapi32 kernel32
+EXTRALIBS = -luuid
+
+C_SRCS = \
+	pstorec.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

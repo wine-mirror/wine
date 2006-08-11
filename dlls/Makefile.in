@@ -130,6 +130,7 @@ BASEDIRS = \
 	olesvr32 \
 	powrprof \
 	psapi \
+	pstorec \
 	qcap \
 	quartz \
 	query \

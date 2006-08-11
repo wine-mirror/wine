@@ -1704,6 +1704,7 @@ dlls/opengl32/Makefile
 dlls/powrprof/Makefile
 dlls/psapi/Makefile
 dlls/psapi/tests/Makefile
+dlls/pstorec/Makefile
 dlls/qcap/Makefile
 dlls/quartz/Makefile
 dlls/quartz/tests/Makefile
