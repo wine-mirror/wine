@@ -50,8 +50,9 @@ static int print_client( const char *format, ... )
     int i, r;
 
     va_start(va, format);
-    for (i = 0; i < indent; i++)
-        fprintf(client, "    ");
+    if (format[0] != '\n')
+        for (i = 0; i < indent; i++)
+            fprintf(client, "    ");
     r = vfprintf(client, format, va);
     va_end(va);
     return r;

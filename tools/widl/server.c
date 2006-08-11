@@ -52,8 +52,9 @@ static int print_server(const char *format, ...)
     int i, r;
 
     va_start(va, format);
-    for (i = 0; i < indent; i++)
-        fprintf(server, "    ");
+    if (format[0] != '\n')
+        for (i = 0; i < indent; i++)
+            fprintf(server, "    ");
     r = vfprintf(server, format, va);
     va_end(va);
     return r;

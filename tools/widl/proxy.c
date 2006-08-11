@@ -56,8 +56,9 @@ static int print_proxy( const char *format, ... )
   int i, r;
 
   va_start( va, format );
-  for( i=0; i<indent; i++ )
-    fprintf( proxy, "    " );
+  if ( format[0] != '\n' )
+    for( i=0; i<indent; i++ )
+      fprintf( proxy, "    " );
   r = vfprintf( proxy, format, va );
   va_end( va );
   return r;
