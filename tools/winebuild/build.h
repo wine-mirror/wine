@@ -154,11 +154,13 @@ extern void error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void warning( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern int output( const char *format, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
-extern void output_standard_file_header( FILE *outfile );
+extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );
-extern void dump_bytes( FILE *outfile, const void *buffer, unsigned int size );
+extern void dump_bytes( const void *buffer, unsigned int size );
 extern int remove_stdcall_decoration( char *name );
 extern void assemble_file( const char *src_file, const char *obj_file );
 extern DLLSPEC *alloc_dll_spec(void);
@@ -176,8 +178,8 @@ extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_short_keyword(void);
 extern const char *get_asm_rodata_section(void);
 extern const char *get_asm_string_section(void);
-extern void output_function_size( FILE *outfile, const char *name );
-extern void output_gnu_stack_note( FILE *outfile );
+extern void output_function_size( const char *name );
+extern void output_gnu_stack_note(void);
 
 extern void add_import_dll( const char *name, const char *filename );
 extern void add_delayed_import( const char *name );
@@ -187,20 +189,20 @@ extern void read_undef_symbols( DLLSPEC *spec, char **argv );
 extern int resolve_imports( DLLSPEC *spec );
 extern int has_imports(void);
 extern int has_relays( DLLSPEC *spec );
-extern void output_get_pc_thunk( FILE *outfile );
-extern void output_stubs( FILE *outfile, DLLSPEC *spec );
-extern void output_imports( FILE *outfile, DLLSPEC *spec );
+extern void output_get_pc_thunk(void);
+extern void output_stubs( DLLSPEC *spec );
+extern void output_imports( DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
-extern void output_resources( FILE *outfile, DLLSPEC *spec );
+extern void output_resources( DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
-extern void output_res16_data( FILE *outfile, DLLSPEC *spec );
-extern void output_res16_directory( FILE *outfile, DLLSPEC *spec, const char *header_name );
+extern void output_res16_data( DLLSPEC *spec );
+extern void output_res16_directory( DLLSPEC *spec, const char *header_name );
 
-extern void BuildRelays16( FILE *outfile );
-extern void BuildRelays32( FILE *outfile );
-extern void BuildSpec16File( FILE *outfile, DLLSPEC *spec );
-extern void BuildSpec32File( FILE *outfile, DLLSPEC *spec );
-extern void BuildDef32File( FILE *outfile, DLLSPEC *spec );
+extern void BuildRelays16(void);
+extern void BuildRelays32(void);
+extern void BuildSpec16File( DLLSPEC *spec );
+extern void BuildSpec32File( DLLSPEC *spec );
+extern void BuildDef32File( DLLSPEC *spec );
 
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );
 extern int parse_def_file( FILE *file, DLLSPEC *spec );
@@ -219,6 +221,7 @@ extern int link_ext_symbols;
 
 extern char *input_file_name;
 extern char *spec_file_name;
+extern FILE *output_file;
 extern const char *output_file_name;
 extern char **lib_path;
 

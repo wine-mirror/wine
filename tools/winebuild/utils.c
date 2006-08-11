@@ -162,6 +162,18 @@ void warning( const char *msg, ... )
     va_end( valist );
 }
 
+int output( const char *format, ... )
+{
+    int ret;
+    va_list valist;
+
+    va_start( valist, format );
+    ret = vfprintf( output_file, format, valist );
+    va_end( valist );
+    if (ret < 0) fatal_perror( "Output error" );
+    return ret;
+}
+
 /* get a name for a temp file, automatically cleaned up on exit */
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {
@@ -193,31 +205,29 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
 }
 
 /* output a standard header for generated files */
-void output_standard_file_header( FILE *outfile )
+void output_standard_file_header(void)
 {
     if (spec_file_name)
-        fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n",
-                 spec_file_name );
+        output( "/* File generated automatically from %s; do not edit! */\n", spec_file_name );
     else
-        fprintf( outfile, "/* File generated automatically; do not edit! */\n" );
-    fprintf( outfile,
-             "/* This file can be copied, modified and distributed without restriction. */\n\n" );
+        output( "/* File generated automatically; do not edit! */\n" );
+    output( "/* This file can be copied, modified and distributed without restriction. */\n\n" );
 }
 
 /* dump a byte stream into the assembly code */
-void dump_bytes( FILE *outfile, const void *buffer, unsigned int size )
+void dump_bytes( const void *buffer, unsigned int size )
 {
     unsigned int i;
     const unsigned char *ptr = buffer;
 
     if (!size) return;
-    fprintf( outfile, "\t.byte " );
+    output( "\t.byte " );
     for (i = 0; i < size - 1; i++, ptr++)
     {
-        if ((i % 16) == 15) fprintf( outfile, "0x%02x\n\t.byte ", *ptr );
-        else fprintf( outfile, "0x%02x,", *ptr );
+        if ((i % 16) == 15) output( "0x%02x\n\t.byte ", *ptr );
+        else output( "0x%02x,", *ptr );
     }
-    fprintf( outfile, "0x%02x\n", *ptr );
+    output( "0x%02x\n", *ptr );
 }
 
 
@@ -520,7 +530,7 @@ const char *func_declaration( const char *func )
 }
 
 /* output a size declaration for an assembly function */
-void output_function_size( FILE *outfile, const char *name )
+void output_function_size( const char *name )
 {
     switch (target_platform)
     {
@@ -528,13 +538,13 @@ void output_function_size( FILE *outfile, const char *name )
     case PLATFORM_WINDOWS:
         break;
     default:
-        fprintf( outfile, "\t.size %s, .-%s\n", name, name );
+        output( "\t.size %s, .-%s\n", name, name );
         break;
     }
 }
 
 /* output the GNU note for non-exec stack */
-void output_gnu_stack_note( FILE *outfile )
+void output_gnu_stack_note(void)
 {
     switch (target_platform)
     {
@@ -542,7 +552,7 @@ void output_gnu_stack_note( FILE *outfile )
     case PLATFORM_APPLE:
         break;
     default:
-        fprintf( outfile, "\t.section .note.GNU-stack,\"\",@progbits\n" );
+        output( "\t.section .note.GNU-stack,\"\",@progbits\n" );
         break;
     }
 }

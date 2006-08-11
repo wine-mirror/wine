@@ -75,6 +75,7 @@ char **lib_path = NULL;
 
 char *input_file_name = NULL;
 char *spec_file_name = NULL;
+FILE *output_file = NULL;
 const char *output_file_name = NULL;
 static const char *output_file_source_name;
 
@@ -82,7 +83,6 @@ char *as_command = NULL;
 char *ld_command = NULL;
 char *nm_command = NULL;
 
-static FILE *output_file;
 static int nb_res_files;
 static char **res_files;
 
@@ -597,11 +597,11 @@ int main(int argc, char **argv)
             case SPEC_WIN16:
                 if (argv[0])
                     fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-                BuildSpec16File( output_file, spec );
+                BuildSpec16File( spec );
                 break;
             case SPEC_WIN32:
                 read_undef_symbols( spec, argv );
-                BuildSpec32File( output_file, spec );
+                BuildSpec32File( spec );
                 break;
             default: assert(0);
         }
@@ -613,22 +613,22 @@ int main(int argc, char **argv)
         load_import_libs( argv );
         if (spec_file_name && !parse_input_file( spec )) break;
         read_undef_symbols( spec, argv );
-        BuildSpec32File( output_file, spec );
+        BuildSpec32File( spec );
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         if (spec->type == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
-        BuildDef32File( output_file, spec );
+        BuildDef32File( spec );
         break;
     case MODE_RELAY16:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        BuildRelays16( output_file );
+        BuildRelays16();
         break;
     case MODE_RELAY32:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        BuildRelays32( output_file );
+        BuildRelays32();
         break;
     default:
         usage(1);
@@ -637,7 +637,7 @@ int main(int argc, char **argv)
     if (nb_errors) exit(1);
     if (output_file_name)
     {
-        fclose( output_file );
+        if (fclose( output_file ) < 0) fatal_perror( "fclose" );
         if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
         output_file_name = NULL;
     }
