@@ -454,6 +454,7 @@ DWORD WINAPI VerInstallFileA(
 	    buf2 = _fetch_versioninfo(tmpfn,&tmpvffi);
 	    if (buf2) {
 	    	char	*tbuf1,*tbuf2;
+	    	static CHAR trans_array[] = "\\VarFileInfo\\Translation";
 		UINT	len1,len2;
 
 		len1=len2=40;
@@ -470,8 +471,8 @@ DWORD WINAPI VerInstallFileA(
 		    (destvffi->dwFileSubtype!=tmpvffi->dwFileSubtype)
 		)
 		    xret |= VIF_MISMATCH|VIF_DIFFTYPE;
-		if (VerQueryValueA(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
-		    VerQueryValueA(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
+		if (VerQueryValueA(buf1,trans_array,(LPVOID*)&tbuf1,&len1) &&
+		    VerQueryValueA(buf2,trans_array,(LPVOID*)&tbuf2,&len2)
 		) {
                     /* Do something with tbuf1 and tbuf2
 		     * generates DIFFLANG|MISMATCH
