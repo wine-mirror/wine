@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -68,9 +69,6 @@
 
 typedef ucontext_t SIGCONTEXT;
 
-#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT __context
-
 #define EAX_sig(context)     ((context)->uc_mcontext.gregs[REG_EAX])
 #define EBX_sig(context)     ((context)->uc_mcontext.gregs[REG_EBX])
 #define ECX_sig(context)     ((context)->uc_mcontext.gregs[REG_ECX])
@@ -93,8 +91,6 @@ typedef ucontext_t SIGCONTEXT;
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
-
-#define FAULT_ADDRESS        (__siginfo->si_addr)
 
 #define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
 
@@ -141,6 +137,9 @@ __ASM_GLOBAL_FUNC(vm86_enter,
 
 #ifdef BSDI
 
+#include <machine/frame.h>
+typedef struct trapframe SIGCONTEXT;
+
 #define EAX_sig(context)     ((context)->tf_eax)
 #define EBX_sig(context)     ((context)->tf_ebx)
 #define ECX_sig(context)     ((context)->tf_ecx)
@@ -154,12 +153,6 @@ __ASM_GLOBAL_FUNC(vm86_enter,
 #define ES_sig(context)      ((context)->tf_es)
 #define SS_sig(context)      ((context)->tf_ss)
 
-#include <machine/frame.h>
-typedef struct trapframe SIGCONTEXT;
-
-#define HANDLER_DEF(name) void name( int __signal, int code, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT __context
-
 #define EFL_sig(context)     ((context)->tf_eflags)
 
 #define EIP_sig(context)     (*((unsigned long*)&(context)->tf_eip))
@@ -170,9 +163,6 @@ typedef struct trapframe SIGCONTEXT;
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 
 typedef struct sigcontext SIGCONTEXT;
-
-#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT __context
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)
@@ -196,8 +186,6 @@ typedef struct sigcontext SIGCONTEXT;
 #define EIP_sig(context)     ((context)->sc_eip)
 #define ESP_sig(context)     ((context)->sc_esp)
 
-#define FAULT_ADDRESS        (__siginfo->si_addr)
-
 #endif  /* *BSD */
 
 #if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
@@ -210,9 +198,6 @@ typedef struct sigcontext SIGCONTEXT;
 #include <sys/ucontext.h>
 #undef ERR
 typedef struct ucontext SIGCONTEXT;
-
-#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT __context
 
 #ifdef _SCO_DS
 #define gregs regs
@@ -248,118 +233,10 @@ typedef struct ucontext SIGCONTEXT;
 #define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
 #endif
 
-#define FAULT_ADDRESS         (__siginfo->si_addr)
-
 #endif  /* svr4 || SCO_DS */
-
-#ifdef __EMX__
-
-typedef struct
-{
-    unsigned long ContextFlags;
-    FLOATING_SAVE_AREA sc_float;
-    unsigned long sc_gs;
-    unsigned long sc_fs;
-    unsigned long sc_es;
-    unsigned long sc_ds;
-    unsigned long sc_edi;
-    unsigned long sc_esi;
-    unsigned long sc_eax;
-    unsigned long sc_ebx;
-    unsigned long sc_ecx;
-    unsigned long sc_edx;
-    unsigned long sc_ebp;
-    unsigned long sc_eip;
-    unsigned long sc_cs;
-    unsigned long sc_eflags;
-    unsigned long sc_esp;
-    unsigned long sc_ss;
-} SIGCONTEXT;
-
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
-
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
-
-#define EFL_sig(context)     ((context)->sc_eflags)
-
-#define EIP_sig(context)     ((context)->sc_eip)
-#define ESP_sig(context)     ((context)->sc_esp)
-
-#endif  /* __EMX__ */
-
-#ifdef __CYGWIN__
-
-/* FIXME: This section is just here so it can compile, it's most likely
- * completely wrong. */
-
-typedef struct
-{
-    unsigned short sc_gs, __gsh;
-    unsigned short sc_fs, __fsh;
-    unsigned short sc_es, __esh;
-    unsigned short sc_ds, __dsh;
-    unsigned long sc_edi;
-    unsigned long sc_esi;
-    unsigned long sc_ebp;
-    unsigned long sc_esp;
-    unsigned long sc_ebx;
-    unsigned long sc_edx;
-    unsigned long sc_ecx;
-    unsigned long sc_eax;
-    unsigned long sc_trapno;
-    unsigned long sc_err;
-    unsigned long sc_eip;
-    unsigned short sc_cs, __csh;
-    unsigned long sc_eflags;
-    unsigned long esp_at_signal;
-    unsigned short sc_ss, __ssh;
-    unsigned long i387;
-    unsigned long oldmask;
-    unsigned long cr2;
-} SIGCONTEXT;
-
-#define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
-#define HANDLER_CONTEXT (&__context)
-
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
-
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
-
-#define TRAP_sig(context)    ((context)->sc_trapno)
-#define ERROR_sig(context)   ((context)->sc_err)
-#define EFL_sig(context)     ((context)->sc_eflags)
-
-#define EIP_sig(context)     ((context)->sc_eip)
-#define ESP_sig(context)     ((context)->sc_esp)
-
-#endif /* __CYGWIN__ */
 
 #ifdef __APPLE__
 # include <sys/ucontext.h>
-# include <sys/types.h>
-# include <signal.h>
 
 typedef ucontext_t SIGCONTEXT;
 
@@ -383,13 +260,8 @@ typedef ucontext_t SIGCONTEXT;
 #define EIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->ss.eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->ss.esp))
 
-#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
-#define HANDLER_CONTEXT (__context)
-
 #define TRAP_sig(context)    ((context)->uc_mcontext->es.trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->es.err)
-
-#define FAULT_ADDRESS        (__siginfo->si_addr)
 
 #endif /* __APPLE__ */
 
@@ -1196,9 +1068,9 @@ done:
  * immediately set VIP_MASK, causing pending events to be handled
  * as early as possible.
  */
-static HANDLER_DEF(usr2_handler)
+static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_vm86_sti_exception );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_vm86_sti_exception );
     rec->ExceptionCode = EXCEPTION_VM86_STI;
 }
 #endif /* __HAVE_VM86 */
@@ -1209,11 +1081,12 @@ static HANDLER_DEF(usr2_handler)
  *
  * Handler for SIGSEGV and related errors.
  */
-static HANDLER_DEF(segv_handler)
+static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_segv_exception );
+    SIGCONTEXT *context = sigcontext;
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_segv_exception );
 
-    switch(get_trap_code(HANDLER_CONTEXT))
+    switch(get_trap_code(context))
     {
     case TRAP_x86_OFLOW:   /* Overflow exception */
         rec->ExceptionCode = EXCEPTION_INT_OVERFLOW;
@@ -1230,11 +1103,11 @@ static HANDLER_DEF(segv_handler)
     case TRAP_x86_SEGNPFLT:  /* Segment not present exception */
     case TRAP_x86_PROTFLT:   /* General protection fault */
     case TRAP_x86_UNKNOWN:   /* Unknown fault code */
-        if (!get_error_code(HANDLER_CONTEXT) && is_privileged_instr( get_exception_context(rec) ))
+        if (!get_error_code(context) && is_privileged_instr( get_exception_context(rec) ))
             rec->ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
         else
         {
-            WORD err = get_error_code(HANDLER_CONTEXT);
+            WORD err = get_error_code(context);
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec->NumberParameters = 2;
             rec->ExceptionInformation[0] = 0;
@@ -1244,17 +1117,15 @@ static HANDLER_DEF(segv_handler)
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-#ifdef FAULT_ADDRESS
         rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = (get_error_code(HANDLER_CONTEXT) >> 1) & 0x09;
-        rec->ExceptionInformation[1] = (ULONG_PTR)FAULT_ADDRESS;
-#endif
+        rec->ExceptionInformation[0] = (get_error_code(context) >> 1) & 0x09;
+        rec->ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR( "Got unexpected trap %d\n", get_trap_code(HANDLER_CONTEXT) );
+        ERR( "Got unexpected trap %d\n", get_trap_code(context) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -1273,11 +1144,12 @@ static HANDLER_DEF(segv_handler)
  *
  * Handler for SIGTRAP.
  */
-static HANDLER_DEF(trap_handler)
+static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_trap_exception );
+    SIGCONTEXT *context = sigcontext;
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_trap_exception );
 
-    switch(get_trap_code(HANDLER_CONTEXT))
+    switch(get_trap_code(context))
     {
     case TRAP_x86_TRCTRAP:  /* Single-step exception */
         rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
@@ -1297,14 +1169,15 @@ static HANDLER_DEF(trap_handler)
  *
  * Handler for SIGFPE.
  */
-static HANDLER_DEF(fpe_handler)
+static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
-    CONTEXT *context;
+    CONTEXT *win_context;
+    SIGCONTEXT *context = sigcontext;
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_exception );
 
-    context = get_exception_context( rec );
+    win_context = get_exception_context( rec );
 
-    switch(get_trap_code(HANDLER_CONTEXT))
+    switch(get_trap_code(context))
     {
     case TRAP_x86_DIVIDE:   /* Division by zero exception */
         rec->ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
@@ -1314,10 +1187,10 @@ static HANDLER_DEF(fpe_handler)
         break;
     case TRAP_x86_ARITHTRAP:  /* Floating point exception */
     case TRAP_x86_UNKNOWN:    /* Unknown fault code */
-        rec->ExceptionCode = get_fpu_code( context );
+        rec->ExceptionCode = get_fpu_code( win_context );
         break;
     default:
-        ERR( "Got unexpected trap %d\n", get_trap_code(HANDLER_CONTEXT) );
+        ERR( "Got unexpected trap %d\n", get_trap_code(context) );
         rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
@@ -1331,13 +1204,13 @@ static HANDLER_DEF(fpe_handler)
  *
  * FIXME: should not be calling external functions on the signal stack.
  */
-static HANDLER_DEF(int_handler)
+static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     WORD fs, gs;
-    init_handler( HANDLER_CONTEXT, &fs, &gs );
+    init_handler( sigcontext, &fs, &gs );
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
+        EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_exception );
         rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
@@ -1347,9 +1220,9 @@ static HANDLER_DEF(int_handler)
  *
  * Handler for SIGABRT.
  */
-static HANDLER_DEF(abrt_handler)
+static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_exception );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_exception );
     rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
     rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
@@ -1360,10 +1233,10 @@ static HANDLER_DEF(abrt_handler)
  *
  * Handler for SIGTERM.
  */
-static HANDLER_DEF(term_handler)
+static void term_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     WORD fs, gs;
-    init_handler( HANDLER_CONTEXT, &fs, &gs );
+    init_handler( sigcontext, &fs, &gs );
     server_abort_thread(0);
 }
 
@@ -1373,15 +1246,15 @@ static HANDLER_DEF(term_handler)
  *
  * Handler for SIGUSR1, used to signal a thread that it got suspended.
  */
-static HANDLER_DEF(usr1_handler)
+static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    WORD fs, gs;
     CONTEXT context;
+    WORD fs, gs;
 
-    init_handler( HANDLER_CONTEXT, &fs, &gs );
-    save_context( &context, HANDLER_CONTEXT, fs, gs );
+    init_handler( sigcontext, &fs, &gs );
+    save_context( &context, sigcontext, fs, gs );
     wait_suspend( &context );
-    restore_context( &context, HANDLER_CONTEXT );
+    restore_context( &context, sigcontext );
 }
 
 
@@ -1448,18 +1321,18 @@ BOOL SIGNAL_Init(void)
     sig_act.sa_flags |= SA_ONSTACK;
 #endif
 
-    sig_act.sa_handler = (void (*)())int_handler;
+    sig_act.sa_sigaction = int_handler;
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
-    sig_act.sa_handler = (void (*)())fpe_handler;
+    sig_act.sa_sigaction = fpe_handler;
     if (sigaction( SIGFPE, &sig_act, NULL ) == -1) goto error;
-    sig_act.sa_handler = (void (*)())abrt_handler;
+    sig_act.sa_sigaction = abrt_handler;
     if (sigaction( SIGABRT, &sig_act, NULL ) == -1) goto error;
-    sig_act.sa_handler = (void (*)())term_handler;
+    sig_act.sa_sigaction = term_handler;
     if (sigaction( SIGTERM, &sig_act, NULL ) == -1) goto error;
-    sig_act.sa_handler = (void (*)())usr1_handler;
+    sig_act.sa_sigaction = usr1_handler;
     if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
 
-    sig_act.sa_handler = (void (*)())segv_handler;
+    sig_act.sa_sigaction = segv_handler;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
 #ifdef SIGBUS
@@ -1467,12 +1340,12 @@ BOOL SIGNAL_Init(void)
 #endif
 
 #ifdef SIGTRAP
-    sig_act.sa_handler = (void (*)())trap_handler;
+    sig_act.sa_sigaction = trap_handler;
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
 
 #ifdef __HAVE_VM86
-    sig_act.sa_handler = (void (*)())usr2_handler;
+    sig_act.sa_sigaction = usr2_handler;
     if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
 #endif
 
