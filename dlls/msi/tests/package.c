@@ -1765,6 +1765,7 @@ static void test_getproperty(void)
 {
     MSIHANDLE hPackage = 0;
     char prop[100];
+    static CHAR empty[] = "";
     DWORD size;
     UINT r;
 
@@ -1783,7 +1784,7 @@ static void test_getproperty(void)
 
     /* retrieve the size, empty string */
     size = 0;
-    r = MsiGetProperty(hPackage, "Name", "", &size);
+    r = MsiGetProperty(hPackage, "Name", empty, &size);
     ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok( size == 5, "Expected 5, got %ld\n", size);
 
