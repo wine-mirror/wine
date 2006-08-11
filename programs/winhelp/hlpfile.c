@@ -1498,8 +1498,16 @@ static BYTE *HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr)
                 int code   = GET_USHORT(ptr, 0);
                 int len    = 3 + (code >> 12);
                 int offset = code & 0xfff;
-                memcpy(newptr, newptr - offset - 1, len);
-                newptr += len;
+                /*
+                 * We must copy byte-by-byte here. We cannot use memcpy nor
+                 * memmove here. Just example:
+                 * a[]={1,2,3,4,5,6,7,8,9,10}
+                 * newptr=a+2;
+                 * offset=1;
+                 * We expect:
+                 * {1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 11, 12}
+                 */
+                for (; len>0; len--, newptr++) *newptr = *(newptr-offset-1);
                 ptr    += 2;
 	    }
             else *newptr++ = *ptr++;
