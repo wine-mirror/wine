@@ -132,7 +132,7 @@ static int has_ldap_scheme( char *url )
  * Prepend a given scheme and append a given portnumber to each hostname
  * if necessary.
  */
-static char *join_hostnames( char *scheme, char **hostnames, ULONG portnumber )
+static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnumber )
 {
     char *res, *p, *q, **v;
     unsigned int i = 0, size = 0; 
@@ -196,7 +196,7 @@ static char *join_hostnames( char *scheme, char **hostnames, ULONG portnumber )
     return res;
 }
 
-static char *urlify_hostnames( char *scheme, char *hostnames, ULONG port )
+static char *urlify_hostnames( const char *scheme, char *hostnames, ULONG port )
 {
     char *url = NULL, **strarray;
 

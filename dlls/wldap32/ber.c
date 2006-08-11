@@ -373,7 +373,8 @@ INT CDECL WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
             {
                 char *str = va_arg( list, char * );
                 int len = va_arg( list, int );
-                ret = ber_printf( berelement, "B" /* 'X' is deprecated */, str, len );
+                new_fmt[0] = 'B';  /* 'X' is deprecated */
+                ret = ber_printf( berelement, new_fmt, str, len );
                 break;
             }
         case 'n':
