@@ -28,6 +28,8 @@
 
 #include "wine/test.h"
 
+HMODULE hCrypt;
+
 static void test_findAttribute(void)
 {
     PCRYPT_ATTRIBUTE ret;
@@ -208,68 +210,64 @@ static I_CryptFreeTlsFunc pI_CryptFreeTls;
 
 static void test_cryptTls(void)
 {
-    HMODULE lib = LoadLibraryA("crypt32.dll");
+    DWORD index;
+    BOOL ret;
 
-    if (lib)
+    if (!hCrypt) return;
+
+    pI_CryptAllocTls = (I_CryptAllocTlsFunc)GetProcAddress(hCrypt,
+     "I_CryptAllocTls");
+    pI_CryptDetachTls = (I_CryptDetachTlsFunc)GetProcAddress(hCrypt,
+     "I_CryptDetachTls");
+    pI_CryptGetTls = (I_CryptGetTlsFunc)GetProcAddress(hCrypt,
+     "I_CryptGetTls");
+    pI_CryptSetTls = (I_CryptSetTlsFunc)GetProcAddress(hCrypt,
+     "I_CryptSetTls");
+    pI_CryptFreeTls = (I_CryptFreeTlsFunc)GetProcAddress(hCrypt,
+     "I_CryptFreeTls");
+
+    /* One normal pass */
+    index = pI_CryptAllocTls();
+    ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+    if (index)
     {
-        DWORD index;
-        BOOL ret;
+        LPVOID ptr;
 
-        pI_CryptAllocTls = (I_CryptAllocTlsFunc)GetProcAddress(lib,
-         "I_CryptAllocTls");
-        pI_CryptDetachTls = (I_CryptDetachTlsFunc)GetProcAddress(lib,
-         "I_CryptDetachTls");
-        pI_CryptGetTls = (I_CryptGetTlsFunc)GetProcAddress(lib,
-         "I_CryptGetTls");
-        pI_CryptSetTls = (I_CryptSetTlsFunc)GetProcAddress(lib,
-         "I_CryptSetTls");
-        pI_CryptFreeTls = (I_CryptFreeTlsFunc)GetProcAddress(lib,
-         "I_CryptFreeTls");
+        ptr = pI_CryptGetTls(index);
+        ok(!ptr, "Expected NULL\n");
+        ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
+        ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+        ptr = pI_CryptGetTls(index);
+        ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+        /* This crashes
+        ret = pI_CryptFreeTls(index, 1);
+         */
+        ret = pI_CryptFreeTls(index, 0);
+        ok(ret, "I_CryptFreeTls failed: %08lx\n", GetLastError());
+        ret = pI_CryptFreeTls(index, 0);
+        /* Not sure if this fails because TlsFree should fail, so leave as
+         * todo for now.
+         */
+        todo_wine ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    }
+    /* Similar pass, check I_CryptDetachTls */
+    index = pI_CryptAllocTls();
+    ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+    if (index)
+    {
+        LPVOID ptr;
 
-        /* One normal pass */
-        index = pI_CryptAllocTls();
-        ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
-        if (index)
-        {
-            LPVOID ptr;
-
-            ptr = pI_CryptGetTls(index);
-            ok(!ptr, "Expected NULL\n");
-            ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
-            ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
-            ptr = pI_CryptGetTls(index);
-            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
-            /* This crashes
-            ret = pI_CryptFreeTls(index, 1);
-             */
-            ret = pI_CryptFreeTls(index, 0);
-            ok(ret, "I_CryptFreeTls failed: %08lx\n", GetLastError());
-            ret = pI_CryptFreeTls(index, 0);
-            /* Not sure if this fails because TlsFree should fail, so leave as
-             * todo for now.
-             */
-            todo_wine ok(!ret && GetLastError() == E_INVALIDARG,
-             "Expected E_INVALIDARG, got %08lx\n", GetLastError());
-        }
-        /* Similar pass, check I_CryptDetachTls */
-        index = pI_CryptAllocTls();
-        ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
-        if (index)
-        {
-            LPVOID ptr;
-
-            ptr = pI_CryptGetTls(index);
-            ok(!ptr, "Expected NULL\n");
-            ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
-            ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
-            ptr = pI_CryptGetTls(index);
-            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
-            ptr = pI_CryptDetachTls(index);
-            ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
-            ptr = pI_CryptGetTls(index);
-            ok(!ptr, "Expected NULL\n");
-        }
-        FreeLibrary(lib);
+        ptr = pI_CryptGetTls(index);
+        ok(!ptr, "Expected NULL\n");
+        ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
+        ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+        ptr = pI_CryptGetTls(index);
+        ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+        ptr = pI_CryptDetachTls(index);
+        ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
+        ptr = pI_CryptGetTls(index);
+        ok(!ptr, "Expected NULL\n");
     }
 }
 
@@ -278,51 +276,49 @@ typedef BOOL (WINAPI *I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)
 
 static void test_readTrustedPublisherDWORD(void)
 {
-    HMODULE lib = LoadLibraryA("crypt32.dll");
+    I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc pReadDWORD;
 
-    if (lib)
+    if (!hCrypt) return;
+
+    pReadDWORD = 
+     (I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)GetProcAddress(
+     hCrypt, "I_CryptReadTrustedPublisherDWORDValueFromRegistry");
+    if (pReadDWORD)
     {
-        I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc pReadDWORD = 
-         (I_CryptReadTrustedPublisherDWORDValueFromRegistryFunc)GetProcAddress(
-         lib, "I_CryptReadTrustedPublisherDWORDValueFromRegistry");
+        static const WCHAR safer[] = { 
+         'S','o','f','t','w','a','r','e','\\',
+         'P','o','l','i','c','i','e','s','\\',
+         'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
+         'C','e','r','t','i','f','i','c','a','t','e','s','\\',
+         'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',
+         '\\','S','a','f','e','r',0 };
+        static const WCHAR authenticodeFlags[] = { 'A','u','t','h','e','n',
+         't','i','c','o','d','e','F','l','a','g','s',0 };
+        BOOL ret, exists = FALSE;
+        DWORD size, readFlags, returnedFlags;
+        HKEY key;
+        LONG rc;
 
-        if (pReadDWORD)
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+        if (rc == ERROR_SUCCESS)
         {
-            static const WCHAR safer[] = { 
-             'S','o','f','t','w','a','r','e','\\',
-             'P','o','l','i','c','i','e','s','\\',
-             'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
-             'C','e','r','t','i','f','i','c','a','t','e','s','\\',
-             'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',
-             '\\','S','a','f','e','r',0 };
-            static const WCHAR authenticodeFlags[] = { 'A','u','t','h','e','n',
-             't','i','c','o','d','e','F','l','a','g','s',0 };
-            BOOL ret, exists = FALSE;
-            DWORD size, readFlags, returnedFlags;
-            HKEY key;
-            LONG rc;
-
-            rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+            size = sizeof(readFlags);
+            rc = RegQueryValueExW(key, authenticodeFlags, NULL, NULL,
+             (LPBYTE)&readFlags, &size);
             if (rc == ERROR_SUCCESS)
-            {
-                size = sizeof(readFlags);
-                rc = RegQueryValueExW(key, authenticodeFlags, NULL, NULL,
-                 (LPBYTE)&readFlags, &size);
-                if (rc == ERROR_SUCCESS)
-                    exists = TRUE;
-            }
-            ret = pReadDWORD(authenticodeFlags, &returnedFlags);
-            ok(ret == exists, "Unexpected return value\n");
-            if (exists)
-                ok(readFlags == returnedFlags,
-                 "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
+                exists = TRUE;
         }
-        FreeLibrary(lib);
+        ret = pReadDWORD(authenticodeFlags, &returnedFlags);
+        ok(ret == exists, "Unexpected return value\n");
+        if (exists)
+            ok(readFlags == returnedFlags,
+             "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
     }
 }
 
 START_TEST(main)
 {
+    hCrypt = LoadLibraryA("crypt32.dll");
     test_findAttribute();
     test_findExtension();
     test_findRDNAttr();
