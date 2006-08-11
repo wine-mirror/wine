@@ -283,6 +283,7 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
     BOOL ret;
     char *cabinet;
     char *cab_path;
+    static CHAR empty[] = "";
     CabData data;
 
     TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
@@ -317,7 +318,7 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
     data.package = package;
     data.cab_path = cab_path;
 
-    ret = FDICopy(hfdi, cabinet, "", 0, cabinet_notify, NULL, &data);
+    ret = FDICopy(hfdi, cabinet, empty, 0, cabinet_notify, NULL, &data);
 
     if (!ret)
         ERR("FDICopy failed\n");
