@@ -626,26 +626,33 @@ static const BYTE localhostAttr[] = { 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f,
 static const BYTE aric[] = { 0x61, 0x72, 0x69, 0x63, 0x40, 0x63, 0x6f, 0x64,
  0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e, 0x63, 0x6f, 0x6d };
 
-#define _blob_of(arr) { sizeof(arr), (LPBYTE)arr }
-const CERT_RDN_ATTR rdnAttrs[] = {
- { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,        _blob_of(us) },
- { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,        _blob_of(minnesota) },
- { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,        _blob_of(minneapolis) },
- { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,       _blob_of(codeweavers) },
- { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,       _blob_of(wine) },
- { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,        _blob_of(localhostAttr) },
- { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING, _blob_of(aric) },
-};
-const CERT_RDN_ATTR decodedRdnAttrs[] = {
- { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,        _blob_of(us) },
- { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,        _blob_of(localhostAttr) },
- { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,        _blob_of(minnesota) },
- { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,        _blob_of(minneapolis) },
- { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,       _blob_of(codeweavers) },
- { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,       _blob_of(wine) },
- { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING, _blob_of(aric) },
-};
-#undef _blob_of
+#define RDNA(arr)   oid_ ## arr, CERT_RDN_PRINTABLE_STRING, { sizeof(arr), (LPBYTE)arr }
+#define RDNIA5(arr) oid_ ## arr, CERT_RDN_IA5_STRING,       { sizeof(arr), (LPBYTE)arr }
+
+static CHAR oid_us[]            = "2.5.4.6",
+            oid_minnesota[]     = "2.5.4.8",
+            oid_minneapolis[]   = "2.5.4.7",
+            oid_codeweavers[]   = "2.5.4.10",
+            oid_wine[]          = "2.5.4.11",
+            oid_localhostAttr[] = "2.5.4.3",
+            oid_aric[]          = "1.2.840.113549.1.9.1";
+static CERT_RDN_ATTR rdnAttrs[] = { { RDNA(us) },
+                                    { RDNA(minnesota) },
+                                    { RDNA(minneapolis) },
+                                    { RDNA(codeweavers) },
+                                    { RDNA(wine) },
+                                    { RDNA(localhostAttr) },
+                                    { RDNIA5(aric) } };
+static CERT_RDN_ATTR decodedRdnAttrs[] = { { RDNA(us) },
+                                           { RDNA(localhostAttr) },
+                                           { RDNA(minnesota) },
+                                           { RDNA(minneapolis) },
+                                           { RDNA(codeweavers) },
+                                           { RDNA(wine) },
+                                           { RDNIA5(aric) } };
+
+#undef RDNIA5
+#undef RDNA
 
 static const BYTE encodedRDNAttrs[] = {
 0x30,0x81,0x96,0x31,0x81,0x93,0x30,0x09,0x06,0x03,0x55,0x04,0x06,0x13,0x02,0x55,
@@ -1009,10 +1016,13 @@ static void test_decodeName(DWORD dwEncoding)
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
+        static CHAR oid_sur_name[]    = szOID_SUR_NAME,
+                    oid_common_name[] = szOID_COMMON_NAME;
+
         CERT_RDN_ATTR attrs[] = {
-         { szOID_SUR_NAME, CERT_RDN_PRINTABLE_STRING, { sizeof(surName),
+         { oid_sur_name, CERT_RDN_PRINTABLE_STRING, { sizeof(surName),
           (BYTE *)surName } },
-         { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING, { sizeof(commonName),
+         { oid_common_name, CERT_RDN_PRINTABLE_STRING, { sizeof(commonName),
           (BYTE *)commonName } },
         };
 
@@ -1085,10 +1095,13 @@ static void test_decodeUnicodeName(DWORD dwEncoding)
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
+        static CHAR oid_sur_name[]    = szOID_SUR_NAME,
+                    oid_common_name[] = szOID_COMMON_NAME;
+
         CERT_RDN_ATTR attrs[] = {
-         { szOID_SUR_NAME, CERT_RDN_PRINTABLE_STRING,
+         { oid_sur_name, CERT_RDN_PRINTABLE_STRING,
          { lstrlenW(surNameW) * sizeof(WCHAR), (BYTE *)surNameW } },
-         { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
+         { oid_common_name, CERT_RDN_PRINTABLE_STRING,
          { lstrlenW(commonNameW) * sizeof(WCHAR), (BYTE *)commonNameW } },
         };
 
@@ -2327,11 +2340,11 @@ struct encodedExtensions
 
 static BYTE crit_ext_data[] = { 0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
 static BYTE noncrit_ext_data[] = { 0x30,0x06,0x01,0x01,0xff,0x02,0x01,0x01 };
-
+static CHAR oid_basic_constraints2[] = szOID_BASIC_CONSTRAINTS2;
 static CERT_EXTENSION criticalExt =
- { szOID_BASIC_CONSTRAINTS2, TRUE, { 8, crit_ext_data } };
+ { oid_basic_constraints2, TRUE, { 8, crit_ext_data } };
 static CERT_EXTENSION nonCriticalExt =
- { szOID_BASIC_CONSTRAINTS2, FALSE, { 8, noncrit_ext_data } };
+ { oid_basic_constraints2, FALSE, { 8, noncrit_ext_data } };
 
 static const BYTE ext0[] = { 0x30,0x00 };
 static const BYTE ext1[] = { 0x30,0x14,0x30,0x12,0x06,0x03,0x55,0x1d,0x13,0x01,0x01,
@@ -2449,23 +2462,26 @@ static const unsigned char bin71[] = {
     0x0f};
 static unsigned char bin72[] = { 0x05,0x00};
 
+static CHAR oid_bogus[] = "1.2.3",
+            oid_rsa[]   = szOID_RSA;
+
 static const struct encodedPublicKey pubKeys[] = {
  /* with a bogus OID */
- { { { "1.2.3", { 0, NULL } }, { 0, NULL, 0 } },
+ { { { oid_bogus, { 0, NULL } }, { 0, NULL, 0 } },
   bin64, bin65,
-  { { "1.2.3", { 2, bin72 } }, { 0, NULL, 0 } } },
+  { { oid_bogus, { 2, bin72 } }, { 0, NULL, 0 } } },
  /* some normal keys */
- { { { szOID_RSA, { 0, NULL } }, { 0, NULL, 0} },
+ { { { oid_rsa, { 0, NULL } }, { 0, NULL, 0} },
   bin66, bin67,
-  { { szOID_RSA, { 2, bin72 } }, { 0, NULL, 0 } } },
- { { { szOID_RSA, { 0, NULL } }, { sizeof(aKey), (BYTE *)aKey, 0} },
+  { { oid_rsa, { 2, bin72 } }, { 0, NULL, 0 } } },
+ { { { oid_rsa, { 0, NULL } }, { sizeof(aKey), (BYTE *)aKey, 0} },
   bin68, bin69,
-  { { szOID_RSA, { 2, bin72 } }, { sizeof(aKey), (BYTE *)aKey, 0} } },
+  { { oid_rsa, { 2, bin72 } }, { sizeof(aKey), (BYTE *)aKey, 0} } },
  /* with add'l parameters--note they must be DER-encoded */
- { { { szOID_RSA, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
+ { { { oid_rsa, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
   (BYTE *)aKey, 0 } },
   bin70, bin71,
-  { { szOID_RSA, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
+  { { oid_rsa, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
   (BYTE *)aKey, 0 } } },
 };
 
