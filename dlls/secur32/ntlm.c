@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Kai Blin
+ * Copyright 2005, 2006 Kai Blin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -377,7 +378,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     SECURITY_STATUS ret;
     PNegoHelper helper;
     ULONG ctxt_attr = 0;
-    char* buffer;
+    char* buffer, *want_flags = NULL;
     PBYTE bin;
     int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
 
@@ -406,6 +407,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
      *                          base64 encoded password
      * AF <base64 blob>         client is done, blob should be
      *                          sent to server with KK prefixed
+     * GF <string list>         A string list of negotiated flags
+     * GK <base64 blob>         base64 encoded session key
      * BH <char reason>         something broke
      */
     /* The squid cache size is 2010 chars, and that's what ntlm_auth uses */
@@ -414,30 +417,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     {
         TRACE("According to a MS whitepaper pszTargetName is ignored.\n");
     }
-    /* Handle all the flags */
-    if(fContextReq & ISC_REQ_CONFIDENTIALITY)
-    {
-        FIXME("InitializeSecurityContext(): ISC_REQ_CONFIDENTIALITY stub\n");
-    }
-    if(fContextReq & ISC_REQ_CONNECTION)
-    {
-        /* This is default, so we'll enable it */
-        ctxt_attr |= ISC_RET_CONNECTION;
-    }
-    if(fContextReq & ISC_REQ_EXTENDED_ERROR)
-        FIXME("ISC_REQ_EXTENDED_ERROR\n");
-    if(fContextReq & ISC_REQ_INTEGRITY)
-        FIXME("ISC_REQ_INTEGRITY\n");
-    if(fContextReq & ISC_REQ_MUTUAL_AUTH)
-        FIXME("ISC_REQ_MUTUAL_AUTH\n");
-    if(fContextReq & ISC_REQ_REPLAY_DETECT)
-        FIXME("ISC_REQ_REPLAY_DETECT\n");
-    if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
-        FIXME("ISC_REQ_SEQUENCE_DETECT\n");
-    if(fContextReq & ISC_REQ_STREAM)
-        FIXME("ISC_REQ_STREAM\n");
 
-    /* Done with the flags */
     if(TargetDataRep == SECURITY_NETWORK_DREP){
         TRACE("Setting SECURITY_NETWORK_DREP\n");
     }
@@ -448,6 +428,38 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     if((phContext == NULL) && (pInput == NULL))
     {
         TRACE("First time in ISC()\n");
+        /* Allocate space for a maximal string of 
+         * "SF NTLMSSP_FEATURE_SIGN NTLMSSP_FEATURE_SEAL
+         * NTLMSSP_FEATURE_SESSION_KEY"
+         */
+        want_flags = HeapAlloc(GetProcessHeap(), 0, 73);
+        if(want_flags == NULL)
+        {
+            ret = SEC_E_INSUFFICIENT_MEMORY;
+            goto end;
+        }
+        lstrcpyA(want_flags, "SF");
+        if(fContextReq & ISC_REQ_CONFIDENTIALITY)
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SEAL");
+        if(fContextReq & ISC_REQ_CONNECTION)
+        {
+            /* This is default, so we'll enable it */
+            ctxt_attr |= ISC_RET_CONNECTION;
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SESSION_KEY");
+        }
+        if(fContextReq & ISC_REQ_EXTENDED_ERROR)
+            FIXME("ISC_REQ_EXTENDED_ERROR\n");
+        if(fContextReq & ISC_REQ_INTEGRITY)
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
+        if(fContextReq & ISC_REQ_MUTUAL_AUTH)
+            FIXME("ISC_REQ_MUTUAL_AUTH\n");
+        if(fContextReq & ISC_REQ_REPLAY_DETECT)
+            FIXME("ISC_REQ_REPLAY_DETECT\n");
+        if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
+            FIXME("ISC_REQ_SEQUENCE_DETECT\n");
+        if(fContextReq & ISC_REQ_STREAM)
+            FIXME("ISC_REQ_STREAM\n");
+
         /* Request a challenge request from ntlm_auth */
         if(helper->password == NULL)
         {
@@ -474,6 +486,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             goto end;
 
         TRACE("Helper returned %s\n", debugstr_a(buffer));
+
+        if(lstrlenA(want_flags) > 2)
+        {
+            TRACE("Want flags are '%s'\n", debugstr_a(want_flags));
+            lstrcpynA(buffer, want_flags, max_len-1);
+            if((ret = run_helper(helper, buffer, max_len, &buffer_len)) 
+                    != SEC_E_OK)
+                goto end;
+            if(!strncmp(buffer, "BH", 2))
+                TRACE("Helper doesn't understand new command set\n");
+        }
+
         lstrcpynA(buffer, "YR", max_len-1);
 
         if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
@@ -542,22 +566,73 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 (strncmp(buffer, "AF ", 3) !=0))
         {
             TRACE("Helper returned %c%c\n", buffer[0], buffer[1]);
-            HeapFree(GetProcessHeap(), 0, buffer);
-            HeapFree(GetProcessHeap(), 0, bin);
-            return SEC_E_INVALID_TOKEN;
+            ret = SEC_E_INVALID_TOKEN;
+            goto end;
         }
 
         /* decode the blob and send it to server */
         if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len,
                         &bin_len)) != SEC_E_OK)
         {
-            HeapFree(GetProcessHeap(), 0, buffer);
-            HeapFree(GetProcessHeap(), 0, bin);
-            return ret;
+            goto end;
+        }
+
+        TRACE("Getting negotiated flags\n");
+        lstrcpynA(buffer, "GF", max_len - 1);
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        if(buffer_len < 3)
+        {
+            TRACE("No flags negotiated, or helper does not support GF command\n");
+        }
+        else
+        {
+            TRACE("Negotiated %s\n", debugstr_a(buffer));
+            sscanf(buffer + 3, "%lx", &(helper->neg_flags));
+            TRACE("Stored 0x%08lx as flags\n", helper->neg_flags);
+        }
+
+        TRACE("Getting session key\n");
+        lstrcpynA(buffer, "GK", max_len - 1);
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        if(buffer_len < 3)
+            TRACE("Helper does not support GK command\n");
+        else
+        {
+            if(strncmp(buffer, "BH ", 3) == 0)
+            {
+                TRACE("Helper sent %s\n", debugstr_a(buffer+3));
+                helper->valid_session_key = FALSE;
+                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+                /*FIXME: Generate the dummy session key = MD4(MD4(password))*/
+                memset(helper->session_key, 0 , 16);
+            }
+            else if(strncmp(buffer, "GK ", 3) == 0)
+            {
+                if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len, 
+                                &bin_len)) != SEC_E_OK)
+                {
+                    TRACE("Failed to decode session key\n");
+                }
+                TRACE("Session key is %s\n", debugstr_a(buffer+3));
+                helper->valid_session_key = TRUE;
+                if(!helper->session_key)
+                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
+                if(!helper->session_key)
+                {
+                    TRACE("Failed to allocate memory for session key\n");
+                    ret = SEC_E_INTERNAL_ERROR;
+                    goto end;
+                }
+                memcpy(helper->session_key, bin, bin_len);
+            }
         }
 
         phNewContext->dwUpper = ctxt_attr;
-        phNewContext->dwLower = ret;
+        phNewContext->dwLower = (DWORD)helper;
 
         ret = SEC_E_OK;
     }
@@ -600,6 +675,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         HeapFree(GetProcessHeap(), 0, helper->password);
     }
 end:
+    HeapFree(GetProcessHeap(), 0, want_flags);
     HeapFree(GetProcessHeap(), 0, buffer);
     HeapFree(GetProcessHeap(), 0, bin);
     return ret;
@@ -1024,18 +1100,56 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContex
 static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
  PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-    SECURITY_STATUS ret;
+    PNegoHelper helper;
 
     TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
-    if (phContext)
+    if (!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    if(fQOP)
+        FIXME("Ignoring fQOP 0x%08lx", fQOP);
+
+    if(MessageSeqNo)
+        FIXME("Ignoring MessageSeqNo");
+
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
+            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
+            !pMessage->pBuffers[0].pvBuffer)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[0].cbBuffer < 16)
+        return SEC_E_BUFFER_TOO_SMALL;
+
+    helper = (PNegoHelper)phContext->dwLower;
+    TRACE("Negotiated flags are: 0x%08lx\n", helper->neg_flags);
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
     {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        FIXME("Can't handle NTLMv2 signing yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
-    else
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        ret = SEC_E_INVALID_HANDLE;
+        FIXME("Can't handle real signing yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
-    return ret;
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
+    {
+        FIXME("Can't handle encrypted session key yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
+    {
+        TRACE("Generating dummy signature\n");
+        /* A dummy signature is 0x01 followed by 15 bytes of 0x00 */
+        memset(pMessage->pBuffers[0].pvBuffer, 0, 16);
+        memset(pMessage->pBuffers[0].pvBuffer, 0x01, 1);
+        pMessage->pBuffers[0].cbBuffer = 16;
+        return SEC_E_OK;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /***********************************************************************

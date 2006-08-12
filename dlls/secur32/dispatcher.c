@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Kai Blin
+ * Copyright 2005, 2006 Kai Blin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -114,6 +114,8 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         helper->com_buf = NULL;
         helper->com_buf_size = 0;
         helper->com_buf_offset = 0;
+        helper->session_key = NULL;
+        helper->neg_flags = 0;
         helper->pipe_in = pipe_in[0];
         close(pipe_in[1]);
         helper->pipe_out = pipe_out[1];
@@ -262,6 +264,7 @@ void cleanup_helper(PNegoHelper helper)
       
     HeapFree(GetProcessHeap(), 0, helper->password);
     HeapFree(GetProcessHeap(), 0, helper->com_buf);
+    HeapFree(GetProcessHeap(), 0, helper->session_key);
 
     /* closing stdin will terminate ntlm_auth */
     close(helper->pipe_out);

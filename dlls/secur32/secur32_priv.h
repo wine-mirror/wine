@@ -66,6 +66,9 @@ typedef struct _NegoHelper {
     char *com_buf;
     int com_buf_size;
     int com_buf_offset;
+    BYTE *session_key;
+    BOOL valid_session_key;
+    unsigned long neg_flags;
 } NegoHelper, *PNegoHelper;
 
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
@@ -121,4 +124,24 @@ SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf,
 SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf, 
         int max_len, int *out_len);
 
+/* NTLMSSP flags indicating the negotiated features */
+#define NTLMSSP_NEGOTIATE_UNICODE                   0x00000001
+#define NTLMSSP_NEGOTIATE_OEM                       0x00000002
+#define NTLMSSP_REQUEST_TARGET                      0x00000004
+#define NTLMSSP_NEGOTIATE_SIGN                      0x00000010
+#define NTLMSSP_NEGOTIATE_SEAL                      0x00000020
+#define NTLMSSP_NEGOTIATE_DATAGRAM_STYLE            0x00000040
+#define NTLMSSP_NEGOTIATE_LM_SESSION_KEY            0x00000080
+#define NTLMSSP_NEGOTIATE_NTLM                      0x00000200
+#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED           0x00001000
+#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED      0x00002000
+#define NTLMSSP_NEGOTIATE_LOCAL_CALL                0x00004000
+#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN               0x00008000
+#define NTLMSSP_NEGOTIATE_TARGET_TYPE_DOMAIN        0x00010000
+#define NTLMSSP_NEGOTIATE_TARGET_TYPE_SERVER        0x00020000
+#define NTLMSSP_NEGOTIATE_NTLM2                     0x00080000
+#define NTLMSSP_NEGOTIATE_TARGET_INFO               0x00800000
+#define NTLMSSP_NEGOTIATE_128                       0x20000000
+#define NTLMSSP_NEGOTIATE_KEY_EXCHANGE              0x40000000
+#define NTLMSSP_NEGOTIATE_56                        0x80000000
 #endif /* ndef __SECUR32_PRIV_H__ */

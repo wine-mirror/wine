@@ -673,7 +673,7 @@ static void testSignSeal()
     SEC_WINNT_AUTH_IDENTITY id;
     static char             sec_pkg_name[] = "NTLM";
     PSecBufferDesc          crypt = NULL;
-    PSecBuffer              data = NULL;
+    PSecBuffer              data = NULL, fake_data = NULL;
     ULONG                   qop = 0;
     SecPkgContext_Sizes     ctxt_sizes;
 
@@ -739,6 +739,28 @@ static void testSignSeal()
         crypt->ulVersion = SECBUFFER_VERSION;
         crypt->cBuffers = 2;
 
+        if((fake_data = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBuffer) * 2)) == NULL)
+        {
+            trace("Failed to allocate the fake crypto buffer, aborting test.\n");
+            goto end;
+        }
+
+        crypt->pBuffers = fake_data;
+
+        fake_data[0].BufferType = SECBUFFER_DATA;
+        fake_data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+        fake_data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[0].cbBuffer);
+
+        fake_data[1].BufferType = SECBUFFER_DATA;
+        fake_data[1].cbBuffer = lstrlen(message);
+        fake_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[1].cbBuffer);
+
+        sec_status = pMakeSignature(client.ctxt, 0, crypt, 0);
+        ok(sec_status == SEC_E_INVALID_TOKEN, 
+                "MakeSignature returned %s, not SEC_E_INVALID_TOKEN.\n",
+                getSecError(sec_status));
+
+
         if((data = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBuffer) * 2)) == NULL)
         {
             trace("Failed to allocate the crypto buffer, aborting test.\n");
@@ -761,12 +783,10 @@ static void testSignSeal()
          * it is sent by the client or the server
          */
         sec_status = pMakeSignature(client.ctxt, 0, crypt, 0);
-        todo_wine {
         ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
         ok(!memcmp(crypt->pBuffers[0].pvBuffer, message_signature,
                    crypt->pBuffers[0].cbBuffer), "Signature is not as expected.\n");
-        }
 
         data[0].cbBuffer = sizeof(message_signature);
         memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
@@ -807,6 +827,11 @@ end:
 
         pDeleteSecurityContext(client.ctxt);
         pFreeCredentialsHandle(client.cred);
+        if(fake_data)
+        {
+            HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
+            HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
+        }
         if(data)
         {
             HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
