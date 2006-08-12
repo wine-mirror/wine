@@ -195,6 +195,7 @@ static void test_sid(void)
             LocalFree( psid );
     }
 
+    trace("String SIDs:\n");
     test_str_sid("AO");
     test_str_sid("RU");
     test_str_sid("AN");
@@ -846,6 +847,34 @@ static void test_token_attr(void)
     }
 }
 
+typedef union _MAX_SID
+{
+    SID sid;
+    char max[SECURITY_MAX_SID_SIZE];
+} MAX_SID;
+
+static void test_sid_str(PSID * sid)
+{
+    char *str_sid;
+    BOOL ret = pConvertSidToStringSidA(sid, &str_sid);
+    ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+    if (ret)
+    {
+        char account[MAX_PATH], domain[MAX_PATH];
+        SID_NAME_USE use;
+        DWORD acc_size = MAX_PATH;
+        DWORD dom_size = MAX_PATH;
+        ret = LookupAccountSid(NULL, sid, account, &acc_size, domain, &dom_size, &use);
+        ok(ret || (!ret && (GetLastError() == ERROR_NONE_MAPPED)),
+           "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+        if (ret)
+            trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
+        else if (GetLastError() == ERROR_NONE_MAPPED)
+            trace(" %s Couldn't me mapped\n", str_sid);
+        LocalFree(str_sid);
+    }
+}
+
 static void test_LookupAccountSid(void)
 {
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
@@ -855,11 +884,7 @@ static void test_LookupAccountSid(void)
     SID_NAME_USE use;
     BOOL ret;
     DWORD size;
-    union u
-    {
-        SID sid;
-        char max[SECURITY_MAX_SID_SIZE];
-    } max_sid;
+    MAX_SID  max_sid;
     char *str_sid;
     int i;
 
@@ -931,72 +956,35 @@ static void test_LookupAccountSid(void)
                     if (info->DomainSid)
                     {
                         int count = *GetSidSubAuthorityCount(info->DomainSid);
-                        int len = GetSidLengthRequired(count);
-
-                        CopySid(len, &max_sid, info->DomainSid);
-
-                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
-                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
-                        if (ret)
-                        {
-                            acc_size = MAX_PATH;
-                            dom_size = MAX_PATH;
-                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
-                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
-                            if (ret)
-                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
-                            LocalFree(str_sid);
-                        }
-
+                        CopySid(GetSidLengthRequired(count), &max_sid, info->DomainSid);
+                        test_sid_str((PSID)&max_sid.sid);
                         max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_ADMIN;
                         max_sid.sid.SubAuthorityCount = count + 1;
-
-                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
-                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
-                        if (ret)
-                        {
-                            acc_size = MAX_PATH;
-                            dom_size = MAX_PATH;
-                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
-                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
-                            if (ret)
-                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
-                            LocalFree(str_sid);
-                        }
-
+                        test_sid_str((PSID)&max_sid.sid);
                         max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_GUEST;
-                        max_sid.sid.SubAuthorityCount = count + 1;
-
-                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
-                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
-                        if (ret)
-                        {
-                            acc_size = MAX_PATH;
-                            dom_size = MAX_PATH;
-                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
-                            ok(ret, "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
-                            if (ret)
-                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
-                            LocalFree(str_sid);
-                        }
-
-                        max_sid.sid.SubAuthority[count] = 1000;
-                        max_sid.sid.SubAuthorityCount = count + 1;
-
-                        ret = pConvertSidToStringSidA(&max_sid.sid, &str_sid);
-                        ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
-                        if (ret)
-                        {
-                            acc_size = MAX_PATH;
-                            dom_size = MAX_PATH;
-                            ret = LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use);
-                            /* this can fail if no user accounts exist */
-                            if (ret)
-                                trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
-                            else
-                                trace("LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
-                            LocalFree(str_sid);
-                        }
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ADMINS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_USERS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_GUESTS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_COMPUTERS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CONTROLLERS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CERT_ADMINS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_SCHEMA_ADMINS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ENTERPRISE_ADMINS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_POLICY_ADMINS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = DOMAIN_ALIAS_RID_RAS_SERVERS;
+                        test_sid_str((PSID)&max_sid.sid);
+                        max_sid.sid.SubAuthority[count] = 1000;	/* first user account */
+                        test_sid_str((PSID)&max_sid.sid);
                     }
 
                     pLsaFreeMemory((LPVOID)info);
