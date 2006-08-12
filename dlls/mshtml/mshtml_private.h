@@ -295,8 +295,6 @@ void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
-nsIURI *get_nsIURI(LPCWSTR);
-
 void *nsalloc(size_t);
 void nsfree(void*);
 

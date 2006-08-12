@@ -1917,27 +1917,3 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
     if(NS_FAILED(nsres))
         ERR("RegisterFactory failed: %08lx\n", nsres);
 }
-
-nsIURI *get_nsIURI(LPCWSTR url)
-{
-    nsIURI *ret;
-    nsACString acstr;
-    nsresult nsres;
-    char *urla;
-    int len;
-
-    len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, -1, NULL, NULL);
-    urla = mshtml_alloc(len);
-    WideCharToMultiByte(CP_ACP, 0, url, -1, urla, -1, NULL, NULL);
-
-    nsACString_Init(&acstr, urla);
-
-    nsres = nsIIOService_NewURI(nsio, &acstr, NULL, NULL, &ret);
-    if(NS_FAILED(nsres))
-        FIXME("NewURI failed: %08lx\n", nsres);
-
-    nsACString_Finish(&acstr);
-    mshtml_free(urla);
-
-    return ret;
-}
