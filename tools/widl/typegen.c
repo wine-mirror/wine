@@ -165,7 +165,7 @@ static inline int is_base_type(unsigned char type)
     }
 }
 
-static unsigned char ref_type(const type_t *type)
+unsigned char ref_type(const type_t *type)
 {
     while (type_has_ref(type))
         type = type->ref;

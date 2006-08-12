@@ -1235,10 +1235,7 @@ static unsigned char get_pointer_type( type_t *type )
   int t;
   if (is_attr( type->attrs, ATTR_STRING ))
   {
-    type_t *t = type;
-    while( t->type == 0 && t->ref )
-      t = t->ref;
-    switch( t->type )
+    switch( ref_type( type ) )
     {
     case RPC_FC_CHAR:
       return RPC_FC_C_CSTRING;

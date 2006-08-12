@@ -297,4 +297,7 @@ struct _typelib_t {
     importlib_t *importlibs;
 };
 
+/* Get the actual type field for a type (chase down typedef references).  */
+unsigned char ref_type(const type_t *type);
+
 #endif
