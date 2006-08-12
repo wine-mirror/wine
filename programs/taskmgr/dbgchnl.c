@@ -53,9 +53,9 @@
 
 static DWORD (WINAPI *pSymSetOptions)(DWORD);
 static BOOL  (WINAPI *pSymInitialize)(HANDLE, PSTR, BOOL);
-static DWORD (WINAPI *pSymLoadModule)(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
+static DWORD (WINAPI *pSymLoadModule)(HANDLE, HANDLE, PCSTR, PCSTR, DWORD, DWORD);
 static BOOL  (WINAPI *pSymCleanup)(HANDLE);
-static BOOL  (WINAPI *pSymFromName)(HANDLE, LPSTR, PSYMBOL_INFO);
+static BOOL  (WINAPI *pSymFromName)(HANDLE, PCSTR, PSYMBOL_INFO);
 
 BOOL AreDebugChannelsSupported(void)
 {
@@ -158,7 +158,7 @@ static int change_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_ch
     return 1;
 }
 
-static void* get_symbol(HANDLE hProcess, char* name, char* lib)
+static void* get_symbol(HANDLE hProcess, const char* name, const char* lib)
 {
     char                buffer[sizeof(IMAGEHLP_SYMBOL) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
