@@ -302,16 +302,20 @@ int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
 }
 
 void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
-        WCHAR *wszHelpString, TYPEATTR *pTypeAttr, TYPELIB_DATA *pTLData)
+        WCHAR *wszHelpString, unsigned long ulHelpContext, TYPEATTR *pTypeAttr,
+        TYPELIB_DATA *pTLData)
 {
     ITypeInfo *pRefTypeInfo;
     HREFTYPE hRefType;
     BSTR bstrName;
     WCHAR wszGuid[MAX_LOAD_STRING];
+    WCHAR wszHelpContext[MAX_LOAD_STRING];
     BOOL bFirst;
 
+    const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
     const WCHAR wszInterface[] = { 'I','n','t','e','r','f','a','c','e',' ','\0' };
     const WCHAR wszHelpstring[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
+    const WCHAR wszHelpcontext[] = { 'h','e','l','p','c','o','n','t','e','x','t','\0' };
     const WCHAR wszTYPEFLAG_FAPPOBJECT[] = { 'a','p','p','o','b','j','e','c','t','\0' };
     const WCHAR wszTYPEFLAG_FCANCREATE[] = { 'c','a','n','c','r','e','a','t','e','\0' };
     const WCHAR wszTYPEFLAG_FLICENSED[] = { 'l','i','c','e','n','s','e','d','\0' };
@@ -357,6 +361,16 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
         AddToTLDataStrW(pTLData, wszInvertedComa);
         AddToTLDataStrW(pTLData, wszCloseBrackets2);
     }
+    if(ulHelpContext)
+    {
+        AddToTLDataStrW(pTLData, wszComa);
+        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, wszHelpcontext);
+        AddToTLDataStrW(pTLData, wszOpenBrackets2);
+        wsprintfW(wszHelpContext, wszFormat, ulHelpContext);
+        AddToTLDataStrW(pTLData, wszHelpContext);
+        AddToTLDataStrW(pTLData, wszCloseBrackets2);
+    }
     if(pTypeAttr->wTypeFlags)
     {
         bFirst = TRUE;
@@ -367,7 +381,7 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
             if(!bFirst)\
             {\
                 AddToTLDataStrW(pTLData, wszComa);\
-                AddToTLDataStrW(pTLData, wszSpace);\
+                AddToTLDataStrW(pTLData, wszNewLine);\
             }\
             bFirst = FALSE;\
             AddToTLDataStrW(pTLData, wsz##x);\
@@ -426,6 +440,7 @@ int PopulateTree(void)
     HREFTYPE hRefType;
     TYPEATTR *pTypeAttr;
     INT count, i;
+    unsigned long ulHelpContext;
     BSTR bstrName;
     BSTR bstrData;
     WCHAR wszText[MAX_LOAD_STRING];
@@ -527,7 +542,7 @@ int PopulateTree(void)
         ITypeLib_GetTypeInfo(pTypeLib, i, &pTypeInfo);
 
         ITypeInfo_GetDocumentation(pTypeInfo, MEMBERID_NIL, &bstrName, &bstrData,
-                NULL, NULL);
+                &ulHelpContext, NULL);
         ITypeInfo_GetTypeAttr(pTypeInfo, &pTypeAttr);
 
         memset(wszText, 0, sizeof(wszText));
@@ -567,7 +582,8 @@ int PopulateTree(void)
                 break;
             case TKIND_INTERFACE:
                 CreateInterfaceInfo(pTypeInfo, pTypeAttr->cImplTypes, bstrName,
-                        bstrData, pTypeAttr, (TYPELIB_DATA*)(U(tvis).item.lParam));
+                        bstrData, ulHelpContext, pTypeAttr,
+                        (TYPELIB_DATA*)(U(tvis).item.lParam));
 
                 AddToStrW(wszText, wszTKIND_INTERFACE);
                 AddToStrW(wszText, bstrName);
@@ -590,12 +606,16 @@ int PopulateTree(void)
                     memset(wszText, 0, sizeof(wszText));
                     U(tvis).item.lParam = InitializeTLData();
 
+                    SysFreeString(bstrName);
+                    SysFreeString(bstrData);
+
                     ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo);
                     ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
-                                &bstrData, NULL, NULL);
+                                &bstrData, &ulHelpContext, NULL);
 
                     CreateInterfaceInfo(pTypeInfo, pTypeAttr->cImplTypes, bstrName,
-                            bstrData, pTypeAttr, (TYPELIB_DATA*)(U(tvis).item.lParam));
+                            bstrData, ulHelpContext, pTypeAttr,
+                            (TYPELIB_DATA*)(U(tvis).item.lParam));
 
                     AddToStrW(wszText, wszTKIND_INTERFACE);
                     AddToStrW(wszText, bstrName);
