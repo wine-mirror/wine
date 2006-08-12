@@ -295,7 +295,7 @@ static void test_readTrustedPublisherDWORD(void)
         static const WCHAR authenticodeFlags[] = { 'A','u','t','h','e','n',
          't','i','c','o','d','e','F','l','a','g','s',0 };
         BOOL ret, exists = FALSE;
-        DWORD size, readFlags, returnedFlags;
+        DWORD size, readFlags = 0, returnedFlags;
         HKEY key;
         LONG rc;
 
@@ -308,12 +308,39 @@ static void test_readTrustedPublisherDWORD(void)
             if (rc == ERROR_SUCCESS)
                 exists = TRUE;
         }
+        returnedFlags = 0xdeadbeef;
         ret = pReadDWORD(authenticodeFlags, &returnedFlags);
         ok(ret == exists, "Unexpected return value\n");
-        if (exists)
-            ok(readFlags == returnedFlags,
-             "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
+        ok(readFlags == returnedFlags,
+         "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
     }
+}
+
+typedef HCRYPTPROV (WINAPI *I_CryptGetDefaultCryptProvFunc)(DWORD w);
+
+static void test_getDefaultCryptProv(void)
+{
+    I_CryptGetDefaultCryptProvFunc pI_CryptGetDefaultCryptProv;
+    HCRYPTPROV prov;
+
+    if (!hCrypt) return;
+
+    pI_CryptGetDefaultCryptProv = (I_CryptGetDefaultCryptProvFunc)
+     GetProcAddress(hCrypt, "I_CryptGetDefaultCryptProv");
+    if (!pI_CryptGetDefaultCryptProv) return;
+
+    prov = pI_CryptGetDefaultCryptProv(0xdeadbeef);
+    ok(prov == 0 && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    prov = pI_CryptGetDefaultCryptProv(PROV_RSA_FULL);
+    ok(prov == 0 && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    prov = pI_CryptGetDefaultCryptProv(1);
+    ok(prov == 0 && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    prov = pI_CryptGetDefaultCryptProv(0);
+    ok(prov != 0, "I_CryptGetDefaultCryptProv failed: %08lx\n", GetLastError());
+    CryptReleaseContext(prov, 0);
 }
 
 START_TEST(main)
@@ -326,4 +353,5 @@ START_TEST(main)
     test_cryptAllocate();
     test_cryptTls();
     test_readTrustedPublisherDWORD();
+    test_getDefaultCryptProv();
 }

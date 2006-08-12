@@ -271,10 +271,20 @@ BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
     return FALSE;
 }
 
-BOOL WINAPI I_CryptGetDefaultCryptProv(DWORD x, DWORD y, DWORD z)
+HCRYPTPROV WINAPI I_CryptGetDefaultCryptProv(DWORD reserved)
 {
-    FIXME("%08lx %08lx %08lx\n", x, y, z);
-    return FALSE;
+    HCRYPTPROV ret;
+
+    TRACE("(%08lx)\n", reserved);
+
+    if (reserved)
+    {
+        SetLastError(E_INVALIDARG);
+        return (HCRYPTPROV)0;
+    }
+    ret = CRYPT_GetDefaultProvider();
+    CryptContextAddRef(ret, NULL, 0);
+    return ret;
 }
 
 BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
@@ -292,6 +302,7 @@ BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
 
     TRACE("(%s, %p)\n", debugstr_w(name), value);
 
+    *value = 0;
     rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, safer, &key);
     if (rc == ERROR_SUCCESS)
     {

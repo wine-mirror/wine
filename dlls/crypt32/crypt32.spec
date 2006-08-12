@@ -186,7 +186,7 @@
 @ stdcall I_CryptFlushLruCache(ptr long long)
 @ stdcall I_CryptFreeLruCache(ptr long long)
 @ stdcall I_CryptFreeTls(long long)
-@ stdcall I_CryptGetDefaultCryptProv(long long long)
+@ stdcall I_CryptGetDefaultCryptProv(long)
 @ stub I_CryptGetDefaultCryptProvForEncrypt
 @ stdcall I_CryptGetOssGlobal(long)
 @ stdcall I_CryptGetTls(long)
