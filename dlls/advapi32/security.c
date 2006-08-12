@@ -1,6 +1,7 @@
 /*
  * Copyright 1999, 2000 Juergen Schmied <juergen.schmied@debitel.net>
  * Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla)
+ * Copyright 2006 Robert Reif
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -142,6 +143,7 @@ static const WCHAR Backup_Operators[] = { 'B','a','c','k','u','p',' ','O','p','e
 static const WCHAR BATCH[] = { 'B','A','T','C','H',0 };
 static const WCHAR Blank[] = { 0 };
 static const WCHAR BUILTIN[] = { 'B','U','I','L','T','I','N',0 };
+static const WCHAR Cert_Publishers[] = { 'C','e','r','t',' ','P','u','b','l','i','s','h','e','r','s',0 };
 static const WCHAR CREATOR_GROUP[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',0 };
 static const WCHAR CREATOR_GROUP_SERVER[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',' ','S','E','R','V','E','R',0 };
 static const WCHAR CREATOR_OWNER[] = { 'C','R','E','A','T','O','R',' ','O','W','N','E','R',0 };
@@ -149,8 +151,15 @@ static const WCHAR CREATOR_OWNER_SERVER[] = { 'C','R','E','A','T','O','R',' ','O
 static const WCHAR DIALUP[] = { 'D','I','A','L','U','P',0 };
 static const WCHAR Digest_Authentication[] = { 'D','i','g','e','s','t',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
 static const WCHAR DOMAIN[] = {'D','O','M','A','I','N',0};
+static const WCHAR Domain_Admins[] = { 'D','o','m','a','i','n',' ','A','d','m','i','n','s',0 };
+static const WCHAR Domain_Computers[] = { 'D','o','m','a','i','n',' ','C','o','m','p','u','t','e','r','s',0 };
+static const WCHAR Domain_Controllers[] = { 'D','o','m','a','i','n',' ','C','o','n','t','r','o','l','l','e','r','s',0 };
+static const WCHAR Domain_Guests[] = { 'D','o','m','a','i','n',' ','G','u','e','s','t','s',0 };
+static const WCHAR Domain_Users[] = { 'D','o','m','a','i','n',' ','U','s','e','r','s',0 };
+static const WCHAR Enterprise_Admins[] = { 'E','n','t','e','r','p','r','i','s','e',' ','A','d','m','i','n','s',0 };
 static const WCHAR ENTERPRISE_DOMAIN_CONTROLLERS[] = { 'E','N','T','E','R','P','R','I','S','E',' ','D','O','M','A','I','N',' ','C','O','N','T','R','O','L','L','E','R','S',0 };
 static const WCHAR Everyone[] = { 'E','v','e','r','y','o','n','e',0 };
+static const WCHAR Group_Policy_Creator_Owners[] = { 'G','r','o','u','p',' ','P','o','l','i','c','y',' ','C','r','e','a','t','o','r',' ','O','w','n','e','r','s',0 };
 static const WCHAR Guest[] = { 'G','u','e','s','t',0 };
 static const WCHAR Guests[] = { 'G','u','e','s','t','s',0 };
 static const WCHAR INTERACTIVE[] = { 'I','N','T','E','R','A','C','T','I','V','E',0 };
@@ -170,11 +179,13 @@ static const WCHAR Power_Users[] = { 'P','o','w','e','r',' ','U','s','e','r','s'
 static const WCHAR Pre_Windows_2000_Compatible_Access[] = { 'P','r','e','-','W','i','n','d','o','w','s',' ','2','0','0','0',' ','C','o','m','p','a','t','i','b','l','e',' ','A','c','c','e','s','s',0 };
 static const WCHAR Print_Operators[] = { 'P','r','i','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
 static const WCHAR PROXY[] = { 'P','R','O','X','Y',0 };
+static const WCHAR RAS_and_IAS_Servers[] = { 'R','A','S',' ','a','n','d',' ','I','A','S',' ','S','e','r','v','e','r','s',0 };
 static const WCHAR Remote_Desktop_Users[] = { 'R','e','m','o','t','e',' ','D','e','s','k','t','o','p',' ','U','s','e','r','s',0 };
 static const WCHAR REMOTE_INTERACTIVE_LOGON[] = { 'R','E','M','O','T','E',' ','I','N','T','E','R','A','C','T','I','V','E',' ','L','O','G','O','N',0 };
 static const WCHAR Replicators[] = { 'R','e','p','l','i','c','a','t','o','r','s',0 };
 static const WCHAR RESTRICTED[] = { 'R','E','S','T','R','I','C','T','E','D',0 };
 static const WCHAR SChannel_Authentication[] = { 'S','C','h','a','n','n','e','l',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
+static const WCHAR Schema_Admins[] = { 'S','c','h','e','m','a',' ','A','d','m','i','n','s',0 };
 static const WCHAR SELF[] = { 'S','E','L','F',0 };
 static const WCHAR Server_Operators[] = { 'S','e','r','v','e','r',' ','O','p','e','r','a','t','o','r','s',0 };
 static const WCHAR SERVICE[] = { 'S','E','R','V','I','C','E',0 };
@@ -218,7 +229,7 @@ static const AccountSid ACCOUNT_SIDS[] = {
     { WinBuiltinPrintOperatorsSid, Print_Operators, BUILTIN, SidTypeAlias },
     { WinBuiltinBackupOperatorsSid, Backup_Operators, BUILTIN, SidTypeAlias },
     { WinBuiltinReplicatorSid, Replicators, BUILTIN, SidTypeAlias },
-   { WinBuiltinPreWindows2000CompatibleAccessSid, Pre_Windows_2000_Compatible_Access, BUILTIN, SidTypeAlias },
+    { WinBuiltinPreWindows2000CompatibleAccessSid, Pre_Windows_2000_Compatible_Access, BUILTIN, SidTypeAlias },
     { WinBuiltinRemoteDesktopUsersSid, Remote_Desktop_Users, BUILTIN, SidTypeAlias },
     { WinBuiltinNetworkConfigurationOperatorsSid, Network_Configuration_Operators, BUILTIN, SidTypeAlias },
     { WinNTLMAuthenticationSid, NTML_Authentication, NT_AUTHORITY, SidTypeWellKnownGroup },
@@ -1909,8 +1920,6 @@ LookupAccountSidW(
 
     if (dm == NULL) {
         MAX_SID local;
-        MAX_SID admin;
-        MAX_SID guest;
 
         /* check for the local computer next */
         if (ADVAPI_GetComputerSid(&local)) {
@@ -1921,25 +1930,58 @@ LookupAccountSidW(
             result = GetComputerNameW(computer_name,  &size);
 
             if (result) {
-                CopySid(GetSidLengthRequired(local.SubAuthorityCount), &admin, &local);
-                admin.SubAuthorityCount++;
-                admin.SubAuthority[4] = DOMAIN_USER_RID_ADMIN;
-                CopySid(GetSidLengthRequired(local.SubAuthorityCount), &guest, &local);
-                guest.SubAuthorityCount++;
-                guest.SubAuthority[4] = DOMAIN_USER_RID_GUEST;
-
                 if (EqualSid(sid, &local)) {
                     dm = computer_name;
                     ac = Blank;
                     use = 3;
-                } else if (EqualSid(sid, &admin)) {
-                    dm = computer_name;
-                    ac = Administrator;
-                    use = 1;
-                } else if (EqualSid(sid, &guest)) {
-                    dm = computer_name;
-                    ac = Guest;
-                    use = 1;
+                } else {
+                    local.SubAuthorityCount++;
+
+                    if (EqualPrefixSid(sid, &local)) {
+                        dm = computer_name;
+                        use = 1;
+                        switch (((MAX_SID *)sid)->SubAuthority[4]) {
+                        case DOMAIN_USER_RID_ADMIN:
+                            ac = Administrator;
+                            break;
+                        case DOMAIN_USER_RID_GUEST:
+                            ac = Guest;
+                            break;
+                        case DOMAIN_GROUP_RID_ADMINS:
+                            ac = Domain_Admins;
+                            break;
+                       case DOMAIN_GROUP_RID_USERS:
+                            ac = Domain_Users;
+                            break;
+                        case DOMAIN_GROUP_RID_GUESTS:
+                            ac = Domain_Guests;
+                            break;
+                        case DOMAIN_GROUP_RID_COMPUTERS:
+                            ac = Domain_Computers;
+                            break;
+                        case DOMAIN_GROUP_RID_CONTROLLERS:
+                            ac = Domain_Controllers;
+                            break;
+                        case DOMAIN_GROUP_RID_CERT_ADMINS:
+                            ac = Cert_Publishers;
+                            break;
+                        case DOMAIN_GROUP_RID_SCHEMA_ADMINS:
+                            ac = Schema_Admins;
+                            break;
+                        case DOMAIN_GROUP_RID_ENTERPRISE_ADMINS:
+                            ac = Enterprise_Admins;
+                            break;
+                        case DOMAIN_GROUP_RID_POLICY_ADMINS:
+                            ac = Group_Policy_Creator_Owners;
+                            break;
+                        case DOMAIN_ALIAS_RID_RAS_SERVERS:
+                            ac = RAS_and_IAS_Servers;
+                            break;
+                        default:
+                            dm = NULL;
+                            break;
+                        }
+                    }
                 }
             }
         }
