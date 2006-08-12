@@ -618,10 +618,11 @@ NET_API_STATUS WINAPI NetUserModalsGet(
             NTSTATUS ntStatus;
             PSID domainIdentifier = NULL;
             int domainNameLen;
-                        
+
             ZeroMemory(&objectAttributes, sizeof(objectAttributes));
-            
-            ntStatus = LsaOpenPolicy(NULL, &objectAttributes, 
+            objectAttributes.Length = sizeof(objectAttributes);
+
+            ntStatus = LsaOpenPolicy(NULL, &objectAttributes,
                                      POLICY_VIEW_LOCAL_INFORMATION,
                                      &policyHandle);
             if (ntStatus != STATUS_SUCCESS)
@@ -630,28 +631,29 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                      LsaNtStatusToWinError(ntStatus));
                 return ntStatus;
             }
-            
-            ntStatus = LsaQueryInformationPolicy(policyHandle, 
+
+            ntStatus = LsaQueryInformationPolicy(policyHandle,
                                                  PolicyAccountDomainInformation,
                                                  (PVOID *)&domainInfo);
             if (ntStatus != STATUS_SUCCESS)
             {
                 WARN("LsaQueryInformationPolicy failed with NT status %lx\n",
                      LsaNtStatusToWinError(ntStatus));
+                LsaClose(policyHandle);
                 return ntStatus;
             }
-            
+
             domainIdentifier = domainInfo->DomainSid;
             domainNameLen = lstrlenW(domainInfo->DomainName.Buffer) + 1;
             LsaClose(policyHandle);
-            
+
             ntStatus = NetApiBufferAllocate(sizeof(USER_MODALS_INFO_2) +
                                             GetLengthSid(domainIdentifier) +
                                             domainNameLen * sizeof(WCHAR),
                                             (LPVOID *)pbuffer);
-           
+
             if (ntStatus != NERR_Success)
-            { 
+            {
                 WARN("NetApiBufferAllocate() failed\n");
                 LsaFreeMemory(domainInfo);
                 return ntStatus;
@@ -662,7 +664,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                 sizeof(USER_MODALS_INFO_2));
             umi->usrmod2_domain_name = (LPWSTR)(*pbuffer +
                 sizeof(USER_MODALS_INFO_2) + GetLengthSid(domainIdentifier));
-        
+
             lstrcpynW(umi->usrmod2_domain_name,
                       domainInfo->DomainName.Buffer,
                       domainNameLen);
@@ -670,9 +672,9 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                     domainIdentifier);
 
             LsaFreeMemory(domainInfo);
-            
+
             break;
-        }            
+        } 
         case 3:
             /* return lockout information */
             FIXME("level 3 not implemented!\n");
@@ -683,6 +685,6 @@ NET_API_STATUS WINAPI NetUserModalsGet(
             *pbuffer = NULL;
             return ERROR_INVALID_LEVEL;
     }
-    
+
     return NERR_Success;
 }
