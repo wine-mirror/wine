@@ -623,15 +623,20 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
+        static CHAR platform_windows[]  = "WINETEST_PLATFORM=windows",
+                    debug_yes[]         = "WINETEST_DEBUG=1",
+                    interactive_no[]    = "WINETEST_INTERACTIVE=0",
+                    report_success_no[] = "WINETEST_REPORT_SUCCESS=0";
+
         report (R_STATUS, "Starting up");
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
 
-        if (reset_env && (putenv ("WINETEST_PLATFORM=windows") ||
-                          putenv ("WINETEST_DEBUG=1") || 
-                          putenv ("WINETEST_INTERACTIVE=0") ||
-                          putenv ("WINETEST_REPORT_SUCCESS=0")))
+        if (reset_env && (putenv (platform_windows) ||
+                          putenv (debug_yes)        ||
+                          putenv (interactive_no)   ||
+                          putenv (report_success_no)))
             report (R_FATAL, "Could not reset environment: %d", errno);
 
         if (!tag) {
