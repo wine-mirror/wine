@@ -83,7 +83,6 @@ static void print_message_buffer_size(const func_t *func)
 static void check_pointers(const func_t *func)
 {
     var_t *var;
-    int pointer_type;
 
     if (!func->args)
         return;
@@ -92,21 +91,14 @@ static void check_pointers(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-        if (!pointer_type)
-            pointer_type = RPC_FC_RP;
-
-        if (pointer_type == RPC_FC_RP)
+        if (is_pointer(var) && cant_be_null(var))
         {
-            if (var->ptr_level >= 1)
-            {
-                print_client("if (!%s)\n", var->name);
-                print_client("{\n");
-                indent++;
-                print_client("RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
-                indent--;
-                print_client("}\n\n");
-            }
+            print_client("if (!%s)\n", var->name);
+            print_client("{\n");
+            indent++;
+            print_client("RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
+            indent--;
+            print_client("}\n\n");
         }
 
         var = PREV_LINK(var);

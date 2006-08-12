@@ -299,5 +299,7 @@ struct _typelib_t {
 
 /* Get the actual type field for a type (chase down typedef references).  */
 unsigned char ref_type(const type_t *type);
+int is_pointer(var_t *v);
+int cant_be_null(var_t *v);
 
 #endif

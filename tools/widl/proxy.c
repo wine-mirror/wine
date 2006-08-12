@@ -181,20 +181,64 @@ static void clear_output_vars( var_t *arg )
   }
 }
 
-static int is_pointer(var_t *arg)
+int is_pointer(var_t *arg)
 {
   if (arg->ptr_level)
     return 1;
-  if (arg->type->type == RPC_FC_FP )
+
+  switch (ref_type(arg->type))
+  {
+  case RPC_FC_RP:
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+  case RPC_FC_FP:
+  case RPC_FC_OP:
+  case RPC_FC_UP:
     return 1;
+  }
+
   return 0;
+}
+
+int cant_be_null(var_t *v)
+{
+  /* Search backwards for the most recent pointer attribute.  */
+  const attr_t *attrs = v->attrs;
+  const type_t *type = v->type;
+
+  if (! attrs && type)
+  {
+    attrs = type->attrs;
+    type = type->ref;
+  }
+
+  while (attrs)
+  {
+    int t = get_attrv(attrs, ATTR_POINTERTYPE);
+
+    if (t == RPC_FC_FP || t == RPC_FC_OP || t == RPC_FC_UP)
+      return 0;
+
+    if (t == RPC_FC_RP)
+      return 1;
+
+    if (type)
+    {
+      attrs = type->attrs;
+      type = type->ref;
+    }
+    else
+      attrs = NULL;
+  }
+
+  return 1;                             /* Default is RPC_FC_RP.  */
 }
 
 static void proxy_check_pointers( var_t *arg )
 {
   END_OF_LIST(arg);
   while (arg) {
-    if (is_pointer(arg)) {
+    if (is_pointer(arg) && cant_be_null(arg)) {
         print_proxy( "if(!%s)\n", arg->name );
         indent++;
         print_proxy( "RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
