@@ -119,6 +119,7 @@ void test_QueryInterface(void)
         LPVOID pvObj = NULL;
         HRESULT hres;
         IFont*  font = NULL;
+        LONG ret;
 
         hres = pOleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
         font = pvObj;
@@ -129,10 +130,17 @@ void test_QueryInterface(void)
         pvObj = NULL;
         hres = IFont_QueryInterface( font, &IID_IFont, &pvObj);
 
+        /* Test if QueryInterface increments ref counter for IFONTs */
+        ret = IFont_AddRef(font);
+        ok(ret == 3, "IFont_QI expected ref value 3 but instead got %12lu\n",ret);
+        IFont_Release(font);
+
         ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08lx\n", hres);
         ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
 
-	IFont_Release(font);
+        /* Orignial ref and QueryInterface ref both have to be released */
+        IFont_Release(font);
+        IFont_Release(font);
 }
 
 void test_type_info(void)
