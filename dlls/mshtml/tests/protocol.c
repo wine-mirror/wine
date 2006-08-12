@@ -340,16 +340,19 @@ static void test_res_protocol(void)
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
                 0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
                 URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, NULL, NULL,
                 URL_FILE_USE_PATHURL, NULL, 0xdeadbeef, NULL, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
 
         IInternetProtocolInfo_Release(protocol_info);
     }
@@ -516,6 +519,24 @@ static void test_about_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08lx, expected INET_E_DEFAULT_ACTION\n", hres);
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_url,
+                0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_url,
+                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
+
+        size = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, NULL, NULL,
+                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08lx\n", hres);
+        ok(size == 0xdeadbeef, "size=%ld\n", size);
 
         IInternetProtocolInfo_Release(protocol_info);
     }

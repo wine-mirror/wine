@@ -91,6 +91,17 @@ static ULONG WINAPI InternetProtocolInfo_Release(IInternetProtocolInfo *iface)
     return 1;
 }
 
+static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult,
+        DWORD cchResult, DWORD* pcchResult, DWORD dwReserved)
+{
+    TRACE("%p)->(%s %s %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzBaseUrl),
+            debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult,
+            pcchResult, dwReserved);
+
+    return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
+}
+
 #undef PROTOCOLINFO_THIS
 
 #define CLASSFACTORY_THIS(iface) DEFINE_THIS(ProtocolFactory, ClassFactory, iface)
@@ -427,15 +438,6 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
     return INET_E_DEFAULT_ACTION;
 }
 
-static HRESULT WINAPI AboutProtocolInfo_CombineUrl(IInternetProtocolInfo *iface, LPCWSTR pwzBaseUrl,
-        LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult, DWORD cchResult,
-        DWORD* pcchResult, DWORD dwReserved)
-{
-    FIXME("%p)->(%s %s %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzBaseUrl), debugstr_w(pwzRelativeUrl),
-            dwCombineFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI AboutProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,
         LPCWSTR pwzUrl2, DWORD dwCompareFlags)
 {
@@ -457,7 +459,7 @@ static const IInternetProtocolInfoVtbl AboutProtocolInfoVtbl = {
     InternetProtocolInfo_AddRef,
     InternetProtocolInfo_Release,
     AboutProtocolInfo_ParseUrl,
-    AboutProtocolInfo_CombineUrl,
+    InternetProtocolInfo_CombineUrl,
     AboutProtocolInfo_CompareUrl,
     AboutProtocolInfo_QueryInfo
 };
@@ -837,16 +839,6 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
     return INET_E_DEFAULT_ACTION;
 }
 
-static HRESULT WINAPI ResProtocolInfo_CombineUrl(IInternetProtocolInfo *iface, LPCWSTR pwzBaseUrl,
-        LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult, DWORD cchResult,
-        DWORD* pcchResult, DWORD dwReserved)
-{
-    TRACE("%p)->(%s %s %08lx %p %ld %p %ld)\n", iface, debugstr_w(pwzBaseUrl), debugstr_w(pwzRelativeUrl),
-            dwCombineFlags, pwzResult, cchResult, pcchResult, dwReserved);
-
-    return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
-}
-
 static HRESULT WINAPI ResProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,
         LPCWSTR pwzUrl2, DWORD dwCompareFlags)
 {
@@ -868,7 +860,7 @@ static const IInternetProtocolInfoVtbl ResProtocolInfoVtbl = {
     InternetProtocolInfo_AddRef,
     InternetProtocolInfo_Release,
     ResProtocolInfo_ParseUrl,
-    ResProtocolInfo_CombineUrl,
+    InternetProtocolInfo_CombineUrl,
     ResProtocolInfo_CompareUrl,
     ResProtocolInfo_QueryInfo
 };
