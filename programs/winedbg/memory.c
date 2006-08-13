@@ -325,11 +325,11 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
         case btInt:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
-            dbg_printf("%lld", val_int);
+            dbg_printf("%s", wine_dbgstr_longlong(val_int));
             break;
         case btUInt:
             if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
-            dbg_printf("%llu", val_int);
+            dbg_printf("%s", wine_dbgstr_longlong(val_int));
             break;
         case btFloat:
             if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
@@ -436,7 +436,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 count -= min(count, 256);
                 fcp->Start += 256;
             }
-            if (!ok) dbg_printf("%lld", val_int);
+            if (!ok) dbg_printf("%s", wine_dbgstr_longlong(val_int));
         }
         break;
     default:
