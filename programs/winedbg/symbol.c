@@ -233,11 +233,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
      * enumeration
      */
     SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-    if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
-    {
-        SymSetOptions(opt);
-        return sglv_unknown;
-    }
+    SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv);
 
     if (!sgv.num && (name[0] != '_'))
     {
@@ -255,11 +251,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
             buffer[2] = '_';
             strcpy(&buffer[3], name);
         }
-        if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
-        {
-            SymSetOptions(opt);
-            return sglv_unknown;
-        }
+        SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv);
     }
     SymSetOptions(opt);
 
