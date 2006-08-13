@@ -147,6 +147,10 @@ unsigned stack_fetch_frames(void)
 {
     STACKFRAME64 sf;
     unsigned     nf = 0;
+    /* as native stackwalk can modify the context passed to it, simply copy
+     * it to avoid any damage
+     */
+    CONTEXT      ctx = dbg_context;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
@@ -163,7 +167,7 @@ unsigned stack_fetch_frames(void)
     }
 
     while (StackWalk64(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
-                       dbg_curr_thread->handle, &sf, &dbg_context, stack_read_mem,
+                       dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
                        SymFunctionTableAccess64, SymGetModuleBase64, NULL))
     {
         dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 
