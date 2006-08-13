@@ -47,7 +47,7 @@ BEGIN
     END
     POPUP "정보(&I)"
     BEGIN
-	MENUITEM "&Hello",			IDM_HELLO
+	MENUITEM "안녕하세요(&H)",			IDM_HELLO
     END
 END
 
