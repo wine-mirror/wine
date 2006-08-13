@@ -88,7 +88,7 @@ static void init(void)
     hmod = GetModuleHandle("advapi32.dll");
 }
 
-static void test_str_sid(char *str_sid)
+static void test_str_sid(const char *str_sid)
 {
     PSID psid;
     char *temp;
