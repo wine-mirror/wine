@@ -1158,18 +1158,63 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
 static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
  PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
-    SECURITY_STATUS ret;
+    PNegoHelper helper;
+    ULONG fQOP = 0;
 
     TRACE("%p %p %ld %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
-    if (phContext)
+    if(!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
+            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
+            !pMessage->pBuffers[0].pvBuffer)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[0].cbBuffer < 16)
+        return SEC_E_BUFFER_TOO_SMALL;
+
+    if(MessageSeqNo)
+        FIXME("Ignoring MessageSeqNo\n");
+
+    helper = (PNegoHelper)phContext->dwLower;
+    TRACE("Negotiated flags: 0x%08lx\n", helper->neg_flags);
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
     {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        FIXME("Can't handle NTLMv2 signing yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
-    else
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        ret = SEC_E_INVALID_HANDLE;
+        FIXME("Can't handle real signing yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
-    return ret;
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
+    {
+        FIXME("Can't handle encrypted session keys yet. Aborting.\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
+    {
+        const BYTE dummy_sig[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        TRACE("Assuming dummy signature.\n");
+        if(memcmp(pMessage->pBuffers[0].pvBuffer, dummy_sig, sizeof(dummy_sig)) != 0)
+        {
+            TRACE("Failed to verify the packet signature. Not a dummy signature?\n");
+            return SEC_E_MESSAGE_ALTERED;
+        }
+        else
+        {
+            pfQOP = &fQOP;
+            return SEC_E_OK;
+        }
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /***********************************************************************

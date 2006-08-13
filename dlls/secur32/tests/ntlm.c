@@ -177,6 +177,7 @@ static const char* getSecError(SECURITY_STATUS status)
         _SEC_ERR(SEC_E_LOGON_DENIED);
         _SEC_ERR(SEC_E_NO_CREDENTIALS);
         _SEC_ERR(SEC_E_OUT_OF_SEQUENCE);
+        _SEC_ERR(SEC_E_MESSAGE_ALTERED);
         default:
             sprintf(buf, "%08lx\n", status);
             return buf;
@@ -789,13 +790,19 @@ static void testSignSeal()
                    crypt->pBuffers[0].cbBuffer), "Signature is not as expected.\n");
 
         data[0].cbBuffer = sizeof(message_signature);
+
+        memcpy(data[0].pvBuffer, crypt_trailer_client, data[0].cbBuffer);
+
+        sec_status = pVerifySignature(client.ctxt, crypt, 0, &qop);
+        ok(sec_status == SEC_E_MESSAGE_ALTERED,
+                "VerifySignature returned %s, not SEC_E_MESSAGE_ALTERED.\n",
+                getSecError(sec_status));
+
         memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
 
         sec_status = pVerifySignature(client.ctxt, crypt, 0, &qop);
-        todo_wine {
         ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
-        }
 
         sec_status = pEncryptMessage(client.ctxt, 0, crypt, 0);
         todo_wine{
