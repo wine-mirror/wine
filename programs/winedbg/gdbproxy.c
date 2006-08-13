@@ -34,26 +34,35 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/poll.h>
-#include <sys/wait.h>
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+/* if we don't have poll support on this system
+ * we won't provide gdb proxy support here...
+ */
+#ifdef HAVE_POLL
 
 #include "debugger.h"
 
 #include "windef.h"
 #include "winbase.h"
 #include "tlhelp32.h"
-
-/* those two are needed only for the SHOWNORMAL flag */
-#include "wingdi.h"
-#include "winuser.h"
 
 #define GDBPXY_TRC_LOWLEVEL             0x01
 #define GDBPXY_TRC_PACKET               0x02
@@ -2280,9 +2289,11 @@ static int gdb_remote(unsigned flags)
     wait(NULL);
     return 0;
 }
+#endif
 
 int gdb_main(int argc, char* argv[])
 {
+#ifdef HAVE_POLL
     unsigned gdb_flags = 0;
 
     argc--; argv++;
@@ -2305,6 +2316,9 @@ int gdb_main(int argc, char* argv[])
     if (dbg_active_attach(argc, argv) == start_ok ||
         dbg_active_launch(argc, argv) == start_ok)
         return gdb_remote(gdb_flags);
+#else
+    fprintf(stderr, "GdbProxy mode not supported on this platform\n");
+#endif
     return -1;
 }
 
