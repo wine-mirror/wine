@@ -87,7 +87,7 @@ void shader_glsl_load_constantsF(
         
     GLhandleARB tmp_loc;
     int i;
-    char tmp_name[7];
+    char tmp_name[8];
     char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PC":"VC";
     struct list* ptr;
@@ -146,7 +146,7 @@ void shader_glsl_load_constantsI(
     
     GLhandleARB tmp_loc;
     int i;
-    char tmp_name[7];
+    char tmp_name[8];
     char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PI":"VI";
     struct list* ptr;
@@ -204,7 +204,7 @@ void shader_glsl_load_constantsB(
     
     GLhandleARB tmp_loc;
     int i;
-    char tmp_name[7];
+    char tmp_name[8];
     char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PB":"VB";
     struct list* ptr;
