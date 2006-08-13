@@ -1019,7 +1019,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
         _x(SECPKG_ATTR_ACCESS_TOKEN);
         _x(SECPKG_ATTR_AUTHORITY);
         _x(SECPKG_ATTR_DCE_INFO);
-        _x(SECPKG_ATTR_FLAGS);
+        case SECPKG_ATTR_FLAGS:
+        {
+            PSecPkgContext_Flags spcf = (PSecPkgContext_Flags)pBuffer;
+            PNegoHelper helper = (PNegoHelper)phContext->dwLower;
+
+            spcf->Flags = 0;
+            if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
+                spcf->Flags |= ISC_RET_INTEGRITY;
+            if(helper->neg_flags & NTLMSSP_NEGOTIATE_SEAL)
+                spcf->Flags |= ISC_RET_CONFIDENTIALITY;
+            return SEC_E_OK;
+        }
         _x(SECPKG_ATTR_KEY_INFO);
         _x(SECPKG_ATTR_LIFESPAN);
         _x(SECPKG_ATTR_NAMES);
@@ -1029,14 +1040,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
         _x(SECPKG_ATTR_PASSWORD_EXPIRY);
         _x(SECPKG_ATTR_SESSION_KEY);
         case SECPKG_ATTR_SIZES:
-            {
-                PSecPkgContext_Sizes spcs = (PSecPkgContext_Sizes)pBuffer;
-                spcs->cbMaxToken = NTLM_MAX_BUF;
-                spcs->cbMaxSignature = 16;
-                spcs->cbBlockSize = 0;
-                spcs->cbSecurityTrailer = 16;
-                return SEC_E_OK;
-            }
+        {
+            PSecPkgContext_Sizes spcs = (PSecPkgContext_Sizes)pBuffer;
+            spcs->cbMaxToken = NTLM_MAX_BUF;
+            spcs->cbMaxSignature = 16;
+            spcs->cbBlockSize = 0;
+            spcs->cbSecurityTrailer = 16;
+            return SEC_E_OK;
+        }
         _x(SECPKG_ATTR_STREAM_SIZES);
         _x(SECPKG_ATTR_TARGET_INFORMATION);
 #undef _x
