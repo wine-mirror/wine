@@ -26,6 +26,7 @@
 #include <stdarg.h>
 
 #include "debugger.h"
+#include "psapi.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -405,6 +406,34 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
 
+static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
+                              char* buffer, size_t bufsz, BOOL is_pcs)
+{
+    memory_get_string_indirect(dbg_curr_process, name_addr, unicode, buffer, bufsz);
+    if (!buffer[0] &&
+        !GetModuleFileNameExA(dbg_curr_process->handle, mod_addr, buffer, bufsz))
+    {
+        if (is_pcs)
+        {
+            HMODULE h;
+            WORD (WINAPI *gpif)(HANDLE, LPSTR, DWORD);
+
+            /* On Windows, when we get the process creation debug event for a process
+             * created by winedbg, the modules' list is not initialized yet. Hence,
+             * GetModuleFileNameExA (on the main module) will generate an error.
+             * Psapi (starting on XP) provides GetProcessImageFileName() which should
+             * give us the expected result
+             */
+            if (!(h = GetModuleHandleA("psapi")) ||
+                !(gpif = (void*)GetProcAddress(h, "GetProcessImageFileName")) ||
+                !(gpif)(dbg_curr_process->handle, buffer, bufsz))
+                snprintf(buffer, bufsz, "Process_%08lx", dbg_curr_pid);
+        }
+        else
+            snprintf(buffer, bufsz, "DLL_%p", mod_addr);
+    }
+}
+
 static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 {
     char	buffer[256];
@@ -456,11 +485,10 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Couldn't create process\n");
             break;
         }
-        memory_get_string_indirect(dbg_curr_process,
-                                   de->u.CreateProcessInfo.lpImageName,
-                                   de->u.CreateProcessInfo.fUnicode,
-                                   buffer, sizeof(buffer));
-        if (!buffer[0]) strcpy(buffer, "<Debugged Process>");
+        fetch_module_name(de->u.CreateProcessInfo.lpImageName,
+                          de->u.CreateProcessInfo.fUnicode,
+                          de->u.CreateProcessInfo.lpBaseOfImage,
+                          buffer, sizeof(buffer), TRUE);
 
         WINE_TRACE("%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
                    de->dwProcessId, de->dwThreadId,
@@ -470,8 +498,11 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    de->u.CreateProcessInfo.nDebugInfoSize);
         dbg_set_process_name(dbg_curr_process, buffer);
 
-        if (!SymInitialize(dbg_curr_process->handle, NULL, TRUE))
+        if (!SymInitialize(dbg_curr_process->handle, NULL, FALSE))
             dbg_printf("Couldn't initiate DbgHelp\n");
+        if (!SymLoadModule(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, buffer, NULL,
+                           (unsigned long)de->u.CreateProcessInfo.lpBaseOfImage, 0))
+            dbg_printf("couldn't load main module (%lx)\n", GetLastError());
 
         WINE_TRACE("%08lx:%08lx: create thread I @%08lx\n",
                    de->dwProcessId, de->dwThreadId,
@@ -550,10 +581,10 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Unknown thread\n");
             break;
         }
-        memory_get_string_indirect(dbg_curr_process, 
-                                   de->u.LoadDll.lpImageName,
-                                   de->u.LoadDll.fUnicode,
-                                   buffer, sizeof(buffer));
+        fetch_module_name(de->u.LoadDll.lpImageName,
+                          de->u.LoadDll.fUnicode,
+                          de->u.LoadDll.lpBaseOfDll,
+                          buffer, sizeof(buffer), FALSE);
 
         WINE_TRACE("%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n",
                    de->dwProcessId, de->dwThreadId,
