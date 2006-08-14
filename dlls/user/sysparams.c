@@ -1026,6 +1026,7 @@ static void load_nonclient_metrics(void)
     NONCLIENTMETRICSW ncm;
     INT r;
 
+    ncm.cbSize = sizeof (ncm);
     if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
