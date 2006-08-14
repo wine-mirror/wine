@@ -48,11 +48,50 @@ static void dumpLsaAttributes(PLSA_OBJECT_ATTRIBUTES oa)
 {
     if (oa)
     {
-        TRACE("\n\tlength=%lu, rootdir=%p, objectname=%s\n\tattr=0x%08lx, sid=%p qos=%p\n",
+        TRACE("\n\tlength=%lu, rootdir=%p, objectname=%s\n\tattr=0x%08lx, sid=%s qos=%p\n",
               oa->Length, oa->RootDirectory,
               oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
-              oa->Attributes, oa->SecurityDescriptor, oa->SecurityQualityOfService);
+              oa->Attributes, debugstr_sid(oa->SecurityDescriptor),
+              oa->SecurityQualityOfService);
     }
+}
+
+static void ADVAPI_GetDomainName(UNICODE_STRING * name)
+{
+    HKEY key;
+    BOOL useDefault = TRUE;
+    LONG ret;
+
+    if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+         "System\\CurrentControlSet\\Services\\VxD\\VNETSUP", 0,
+         KEY_READ, &key)) == ERROR_SUCCESS)
+    {
+        DWORD size = 0;
+        static const WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
+
+        ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
+        if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
+        {
+            name->Buffer = HeapAlloc(GetProcessHeap(),
+                                     HEAP_ZERO_MEMORY, size);
+
+            if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
+                 (LPBYTE)name->Buffer, &size)) == ERROR_SUCCESS)
+            {
+                name->Length = (USHORT)(size - sizeof(WCHAR));
+                name->MaximumLength = (USHORT)size;
+                useDefault = FALSE;
+            }
+            else
+            {
+                HeapFree(GetProcessHeap(), 0, name->Buffer);
+                name->Buffer = NULL;
+            }
+        }
+        RegCloseKey(key);
+    }
+    if (useDefault)
+        RtlCreateUnicodeStringFromAsciiz(name, "DOMAIN");
 }
 
 /******************************************************************************
@@ -394,40 +433,8 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
              */
             PPOLICY_PRIMARY_DOMAIN_INFO pinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                                           sizeof(POLICY_PRIMARY_DOMAIN_INFO));
-            HKEY key;
-            BOOL useDefault = TRUE;
-            LONG ret;
 
-            if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                 "System\\CurrentControlSet\\Services\\VxD\\VNETSUP", 0,
-                 KEY_READ, &key)) == ERROR_SUCCESS)
-            {
-                DWORD size = 0;
-                static const WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
-
-                ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
-                if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
-                {
-                    pinfo->Name.Buffer = HeapAlloc(GetProcessHeap(),
-                                                   HEAP_ZERO_MEMORY, size);
-
-                    if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
-                         (LPBYTE)pinfo->Name.Buffer, &size)) == ERROR_SUCCESS)
-                    {
-                        pinfo->Name.Length = (USHORT)(size - sizeof(WCHAR));
-                        pinfo->Name.MaximumLength = (USHORT)size;
-                        useDefault = FALSE;
-                    }
-                    else
-                    {
-                        HeapFree(GetProcessHeap(), 0, pinfo->Name.Buffer);
-                        pinfo->Name.Buffer = NULL;
-                    }
-                }
-                RegCloseKey(key);
-            }
-            if (useDefault)
-                RtlCreateUnicodeStringFromAsciiz(&(pinfo->Name), "DOMAIN");
+            ADVAPI_GetDomainName(&pinfo->Name);
 
             TRACE("setting domain to %s\n", debugstr_w(pinfo->Name.Buffer));
 
@@ -482,40 +489,8 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
              */
             PPOLICY_DNS_DOMAIN_INFO pinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                                       sizeof(POLICY_DNS_DOMAIN_INFO));
-            HKEY key;
-            BOOL useDefault = TRUE;
-            LONG ret;
 
-            if ((ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                 "System\\CurrentControlSet\\Services\\VxD\\VNETSUP", 0,
-                 KEY_READ, &key)) == ERROR_SUCCESS)
-            {
-                DWORD size = 0;
-                static const WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
-
-                ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
-                if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
-                {
-                    pinfo->Name.Buffer = HeapAlloc(GetProcessHeap(),
-                                                   HEAP_ZERO_MEMORY, size);
-
-                    if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
-                         (LPBYTE)pinfo->Name.Buffer, &size)) == ERROR_SUCCESS)
-                    {
-                        pinfo->Name.Length = (USHORT)(size - sizeof(WCHAR));
-                        pinfo->Name.MaximumLength = (USHORT)size;
-                        useDefault = FALSE;
-                    }
-                    else
-                    {
-                        HeapFree(GetProcessHeap(), 0, pinfo->Name.Buffer);
-                        pinfo->Name.Buffer = NULL;
-                    }
-                }
-                RegCloseKey(key);
-            }
-            if (useDefault)
-                RtlCreateUnicodeStringFromAsciiz(&(pinfo->Name), "DOMAIN");
+            ADVAPI_GetDomainName(&pinfo->Name);
 
             TRACE("setting domain to %s\n", debugstr_w(pinfo->Name.Buffer));
 
