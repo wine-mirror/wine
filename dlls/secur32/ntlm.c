@@ -577,6 +577,44 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             goto isc_end;
         }
 
+        phNewContext->dwUpper = ctxt_attr;
+        phNewContext->dwLower = (ULONG_PTR)helper;
+
+        ret = SEC_E_OK;
+    }
+
+    /* put the decoded client blob into the out buffer */
+
+    if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
+    {
+        if (pOutput)
+        {
+            pOutput->cBuffers = 1;
+            pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
+            pOutput->pBuffers[0].cbBuffer = bin_len;
+        }
+    }
+
+    if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
+    {
+        TRACE("out buffer is NULL or has not enough space\n");
+        ret = SEC_E_BUFFER_TOO_SMALL;
+        goto isc_end;
+    }
+
+    if (!pOutput->pBuffers[0].pvBuffer)
+    {
+        TRACE("out buffer is NULL\n");
+        ret = SEC_E_INTERNAL_ERROR;
+        goto isc_end;
+    }
+
+    pOutput->pBuffers[0].cbBuffer = bin_len;
+    pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
+    memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
+
+    if(ret == SEC_E_OK)
+    {
         TRACE("Getting negotiated flags\n");
         lstrcpynA(buffer, "GF", max_len - 1);
         if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
@@ -630,42 +668,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 memcpy(helper->session_key, bin, bin_len);
             }
         }
-
-        phNewContext->dwUpper = ctxt_attr;
-        phNewContext->dwLower = (ULONG_PTR)helper;
-
-        ret = SEC_E_OK;
     }
-
-    /* put the decoded client blob into the out buffer */
-
-    if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
-    {
-        if (pOutput)
-        {
-            pOutput->cBuffers = 1;
-            pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
-            pOutput->pBuffers[0].cbBuffer = bin_len;
-        }
-    }
-
-    if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
-    {
-        TRACE("out buffer is NULL or has not enough space\n");
-        ret = SEC_E_BUFFER_TOO_SMALL;
-        goto isc_end;
-    }
-
-    if (!pOutput->pBuffers[0].pvBuffer)
-    {
-        TRACE("out buffer is NULL\n");
-        ret = SEC_E_INTERNAL_ERROR;
-        goto isc_end;
-    }
-
-    pOutput->pBuffers[0].cbBuffer = bin_len;
-    pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
-    memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
 
     if(ret != SEC_I_CONTINUE_NEEDED)
     {
