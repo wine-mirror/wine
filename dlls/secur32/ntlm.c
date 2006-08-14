@@ -117,7 +117,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
             {
                 helper->mode = NTLM_SERVER;
                 phCredential->dwUpper = fCredentialUse;
-                phCredential->dwLower = (DWORD)helper;
+                phCredential->dwLower = (ULONG_PTR)helper;
             }
             ret = SEC_E_OK;
             break;
@@ -229,7 +229,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                     }
            
                     phCredential->dwUpper = fCredentialUse;
-                    phCredential->dwLower = (DWORD)helper;
+                    phCredential->dwLower = (ULONG_PTR)helper;
                     TRACE("ACH phCredential->dwUpper: 0x%08lx, dwLower: 0x%08lx\n",
                             phCredential->dwUpper, phCredential->dwLower);
                 }
@@ -632,7 +632,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         }
 
         phNewContext->dwUpper = ctxt_attr;
-        phNewContext->dwLower = (DWORD)helper;
+        phNewContext->dwLower = (ULONG_PTR)helper;
 
         ret = SEC_E_OK;
     }
@@ -956,7 +956,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         }
         
         phNewContext->dwUpper = ctxt_attr;
-        phNewContext->dwLower = ret;
+        phNewContext->dwLower = (ULONG_PTR)helper;
         HeapFree(GetProcessHeap(), 0, buffer);
         HeapFree(GetProcessHeap(), 0, bin);
 
