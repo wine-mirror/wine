@@ -2228,7 +2228,7 @@ HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
   OLEPictureImpl* newPict = NULL;
   HRESULT      hr         = S_OK;
 
-  TRACE("(%p,%p,%d,%p)\n", lpPictDesc, riid, fOwn, ppvObj);
+  TRACE("(%p,%s,%d,%p)\n", lpPictDesc, debugstr_guid(riid), fOwn, ppvObj);
 
   /*
    * Sanity check
