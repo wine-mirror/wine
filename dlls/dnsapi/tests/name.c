@@ -168,35 +168,52 @@ static void test_DnsValidateName_A( void )
 
 static void test_DnsNameCompare_A( void )
 {
+    static CHAR empty[]          = "",
+                dot[]            = ".",
+                dotdot[]         = "..",
+                A[]              = "A",
+                a[]              = "a",
+                B[]              = "B",
+                b[]              = "b",
+                A_dot_B[]        = "A.B",
+                a_dot_a[]        = "a.a",
+                a_dot_b[]        = "a.b",
+                a_dot_b_dot[]    = "a.b.",
+                a_dot_b_dotdot[] = "a.b..",
+                B_dot_A[]        = "B.A",
+                b_dot_a[]        = "b.a",
+                b_dot_a_dot[]    = "b.a.",
+                b_dot_a_dotdot[] = "b.a..";
+
     ok( pDnsNameCompare_A( NULL, NULL ) == TRUE, "failed unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( "", "" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( ".", "" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "", "." ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( ".", ".." ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "..", "." ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a", "a" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a", "A" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "A", "a" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b", "A.B" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b", "a.b" ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b.", "a.b." ) == TRUE, "failed unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b..", "a.b.." ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( empty, empty ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( dot, empty ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( empty, dot ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( dot, dotdot ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( dotdot, dot ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a, a ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a, A ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( A, a ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b, A_dot_B ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b, a_dot_b ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dot, a_dot_b_dot ) == TRUE, "failed unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dotdot, a_dot_b_dotdot ) == TRUE, "failed unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( "", NULL ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( NULL, "" ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( empty, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( NULL, empty ) == FALSE, "succeeded unexpectedly\n" );
 
-    ok( pDnsNameCompare_A( "a", "b" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a", "B" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "A", "b" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b", "B.A" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b.", "b.a." ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b", "a.a" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b..", "b.a.." ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b.", "b.a.." ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b..", "b.a." ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b.", "b.a" ) == FALSE, "succeeded unexpectedly\n" );
-    ok( pDnsNameCompare_A( "a.b", "b.a." ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a, b ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a, B ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( A, b ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b, B_dot_A ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b, a_dot_a ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a_dotdot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dotdot, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b_dot, b_dot_a ) == FALSE, "succeeded unexpectedly\n" );
+    ok( pDnsNameCompare_A( a_dot_b, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
 }
 
 START_TEST(name)
