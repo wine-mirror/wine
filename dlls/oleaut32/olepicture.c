@@ -308,11 +308,7 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
   newObject->bIsDirty = FALSE;
 
   if (pictDesc) {
-      if(pictDesc->cbSizeofstruct != sizeof(PICTDESC)) {
-	  FIXME("struct size = %d\n", pictDesc->cbSizeofstruct);
-      }
       memcpy(&newObject->desc, pictDesc, sizeof(PICTDESC));
-
 
       switch(pictDesc->picType) {
       case PICTYPE_BITMAP:
