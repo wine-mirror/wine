@@ -39,12 +39,13 @@ ScriptLang: 2
 LangName: 1033 "" "" "" "" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
 Encoding: UnicodeBmp
 UnicodeInterp: none
+NameList: Adobe Glyph List
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 0 20 18
+WinInfo: 1360 20 13
 OnlyBitmaps: 1
-BeginChars: 65536 437
+BeginChars: 65536 465
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -2389,8 +2390,176 @@ Width: 16
 Flags: W
 TeX: 0 0 0 0
 EndChar
+StartChar: afii57636
+Encoding: 8362 8362 437
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57664
+Encoding: 1488 1488 438
+Width: 12
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57665
+Encoding: 1489 1489 439
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57666
+Encoding: 1490 1490 440
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57667
+Encoding: 1491 1491 441
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57668
+Encoding: 1492 1492 442
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57669
+Encoding: 1493 1493 443
+Width: 5
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57670
+Encoding: 1494 1494 444
+Width: 7
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57671
+Encoding: 1495 1495 445
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57690
+Encoding: 1514 1514 446
+Width: 750
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57688
+Encoding: 1512 1512 447
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57687
+Encoding: 1511 1511 448
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57673
+Encoding: 1497 1497 449
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57672
+Encoding: 1496 1496 450
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57674
+Encoding: 1498 1498 451
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57675
+Encoding: 1499 1499 452
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57676
+Encoding: 1500 1500 453
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57677
+Encoding: 1501 1501 454
+Width: 625
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57678
+Encoding: 1502 1502 455
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57679
+Encoding: 1503 1503 456
+Width: 5
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57680
+Encoding: 1504 1504 457
+Width: 375
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57681
+Encoding: 1505 1505 458
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57682
+Encoding: 1506 1506 459
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57683
+Encoding: 1507 1507 460
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57684
+Encoding: 1508 1508 461
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57685
+Encoding: 1509 1509 462
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57686
+Encoding: 1510 1510 463
+Width: 10
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii57689
+Encoding: 1513 1513 464
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 16 437 13 3 1 
+BitmapFont: 16 465 13 3 1 
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -3265,5 +3434,61 @@ BDFChar: 435 287 8 1 6 -3 9
 b]j,8bfn;Tb^9iCGQ7^D
 BDFChar: 436 286 10 1 8 0 12
 _gVSJB#DF"cbmY54TGH^
+BDFChar: 437 8362 16 1 14 0 11
+s,=b;bfn;Tbfn;Tbfn;Tbfn9>bRDhm
+BDFChar: 438 1488 12 1 11 0 9
+^qa?n0Yhsac%*h7_Z7N'^qd`n
+BDFChar: 439 1489 10 1 9 0 9
+rW!-&"oni-"oni-"oni-"p"[R
+BDFChar: 440 1490 8 1 7 0 9
+i%Qi%3,HgY`l7uY
+BDFChar: 441 1491 10 1 9 0 9
+s*t:R"oni-"oni-"oni-"oni-
+BDFChar: 442 1492 10 1 9 0 9
+s*t-#!It3$!J&":_19@P_19@P
+BDFChar: 443 1493 5 1 4 0 9
+n1ZOM0JG170JEJ,
+BDFChar: 444 1494 7 1 6 0 9
+r%KfY0JF=\(`35Q
+BDFChar: 445 1495 10 1 9 0 9
+s+"O._19@P_19@P_19@P_19@P
+BDFChar: 446 1514 12 1 11 0 9
+5N"5'0OQSB0OQSB0OQSB0OXBX
+BDFChar: 447 1512 10 1 9 0 9
+s*t-#!It3$!It3$!It3$!It3$
+BDFChar: 448 1511 10 1 9 -3 9
+s*t-#!It3$!J&":_19E'_Z7[V^];.M^]4?7
+BDFChar: 449 1497 5 1 4 6 9
+n1ZOM
+BDFChar: 450 1496 10 1 9 0 9
+a+2!V_19@P_19@P_19@P_1;Q9
+BDFChar: 451 1498 10 1 9 -3 9
+s*t-#!It3$!It3$!It3$!It3$!It3$!It.M
+BDFChar: 452 1499 10 1 9 0 9
+s*t-#!It3$!It3$!It3$!J(3#
+BDFChar: 453 1500 10 1 9 0 12
+^];.M^]=Cb!It3$!It3$!rrE'!rrN*"onW'
+BDFChar: 454 1501 10 1 9 0 9
+s+"O._19@P_19@P_19@P_1;Q9
+BDFChar: 455 1502 10 1 9 0 9
+s*uhS@=Z1E_19@P_19@P_1:En
+BDFChar: 456 1503 5 1 4 -3 9
+n1ZOM0JG170JG170E;(Q
+BDFChar: 457 1504 6 1 5 0 9
+GSh87(`4),)#+(2
+BDFChar: 458 1505 10 1 9 0 9
+s+%q9_19@P_19@P_19@P@fS[m
+BDFChar: 459 1506 10 1 9 0 9
+!J&":_15sE0n:-l)1W0H#Cui)
+BDFChar: 460 1507 10 1 9 -3 9
+s+"O.@=Vd:H%5pG!It3$!It3$!It3$!It.M
+BDFChar: 461 1508 10 1 9 0 9
+s+"O.@=Vd:H%5pG!It3$!J(3#
+BDFChar: 462 1509 10 1 9 -3 9
+_15sE0n:2C%KH_6!rrE'!rrE'!rrE'!rr<$
+BDFChar: 463 1510 10 1 9 0 9
+_Z7RS@fSCe)upBI"on`*!J(3#
+BDFChar: 464 1513 11 1 10 0 9
+^qe10beVH<beVH<beVH<beX7o
 EndBitmapFont
 EndSplineFont
