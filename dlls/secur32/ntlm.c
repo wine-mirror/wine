@@ -875,7 +875,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                     return SEC_E_INVALID_TOKEN;
                 }
             }
-            
+            pOutput->pBuffers[0].cbBuffer = 0;
             ret = SEC_E_OK;
         }
         
