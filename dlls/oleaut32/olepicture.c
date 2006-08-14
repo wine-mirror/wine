@@ -1838,6 +1838,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
                 hResult = E_FAIL;
                 break;
             }
+            HeapFree(GetProcessHeap(), 0, This->data);
             This->data = pIconData;
             This->datalen = iDataSize;
         }
@@ -1850,7 +1851,6 @@ static HRESULT WINAPI OLEPictureImpl_Save(
         }
         IStream_Write(pStm, This->data, This->datalen, &dummy);
 
-        HeapFree(GetProcessHeap(), 0, This->data);
         hResult = S_OK;
         break;
     case PICTYPE_BITMAP:
