@@ -700,6 +700,7 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
             int colorElements[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
             COLORREF colorRgb[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
             LPCWSTR lpValueEnd;
+            int captionColors = 0;
 
             while((lpName=UXINI_GetNextValue(ini, &dwLen, &lpValue, &dwValueLen))) {
                 lstrcpynW(szPropertyName, lpName, min(dwLen+1, sizeof(szPropertyName)/sizeof(szPropertyName[0])));
@@ -712,6 +713,21 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
                         if(MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
                             colorElements[colorCount] = iPropertyId - TMT_FIRSTCOLOR;
                             colorRgb[colorCount++] = RGB(r,g,b);
+                            switch (iPropertyId)
+                            {
+                              case TMT_ACTIVECAPTION: 
+                                captionColors |= 0x1; 
+                                break;
+                              case TMT_INACTIVECAPTION: 
+                                captionColors |= 0x2; 
+                                break;
+                              case TMT_GRADIENTACTIVECAPTION: 
+                                captionColors |= 0x4; 
+                                break;
+                              case TMT_GRADIENTINACTIVECAPTION: 
+                                captionColors |= 0x8; 
+                                break;
+                            }
                         }
                         else {
                             FIXME("Invalid color value for %s\n", debugstr_w(szPropertyName));
@@ -730,6 +746,8 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
             }
             if (setMetrics && (colorCount > 0))
                 SetSysColors(colorCount, colorElements, colorRgb);
+	    if (setMetrics && (captionColors == 0xf))
+		SystemParametersInfoW (SPI_SETGRADIENTCAPTIONS, 0, (PVOID)TRUE, 0);
             continue;
         }
         if(MSSTYLES_ParseIniSectionName(lpName, dwLen, szAppName, szClassName, &iPartId, &iStateId)) {

@@ -249,6 +249,8 @@ static const WCHAR strColorKey[] =
     { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
       'C','o','l','o','r','s',0 };
 static const WCHAR keyFlatMenus[] = { 'F','l','a','t','M','e','n','u', 0};
+static const WCHAR keyGradientCaption[] = { 'G','r','a','d','i','e','n','t',
+                                            'C','a','p','t','i','o','n', 0 };
 
 static const struct BackupSysParam
 {
@@ -257,6 +259,7 @@ static const struct BackupSysParam
 } backupSysParams[] = 
 {
     {SPI_GETFLATMENU, SPI_SETFLATMENU, keyFlatMenus},
+    {SPI_GETGRADIENTCAPTIONS, SPI_SETGRADIENTCAPTIONS, keyGradientCaption},
     {-1, -1, 0}
 };
 
