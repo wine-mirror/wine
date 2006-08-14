@@ -2690,6 +2690,8 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
 
     switch(pvarSrc->vt)
     {
+    case VT_FILETIME:
+        break;
     case VT_STREAM:
     case VT_STREAMED_OBJECT:
     case VT_STORAGE:
