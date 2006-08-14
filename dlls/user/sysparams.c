@@ -1478,7 +1478,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_SETICONTITLELOGFONT:       	/*     34 */
-        if( uiParam == sizeof( ICONMETRICSW)) {
+        if( uiParam == sizeof(LOGFONTW)) {
             ret = SYSPARAMS_SaveLogFont( SPI_SETICONTITLELOGFONT_REGKEY,
                     SPI_SETICONTITLELOGFONT_VALNAME, (LOGFONTW *)pvParam, fWinIni);
             if( ret) {
