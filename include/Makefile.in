@@ -138,6 +138,7 @@ WINDOWS_INCLUDES = \
 	dpnathlp.h \
 	dsconf.h \
 	dsdriver.h \
+	dsgetdc.h \
 	dshow.h \
 	dsound.h \
 	dsrole.h \
