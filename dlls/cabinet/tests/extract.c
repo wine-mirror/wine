@@ -298,6 +298,10 @@ static void create_cab_file(void)
     CCAB cabParams;
     HFCI hfci;
     ERF erf;
+    static CHAR a_txt[]         = "a.txt",
+                b_txt[]         = "b.txt",
+                testdir_c_txt[] = "testdir\\c.txt",
+                testdir_d_txt[] = "testdir\\d.txt";
     BOOL res;
 
     set_cab_parameters(&cabParams);
@@ -308,10 +312,10 @@ static void create_cab_file(void)
 
     ok(hfci != NULL, "Failed to create an FCI context\n");
 
-    add_file(hfci, "a.txt");
-    add_file(hfci, "b.txt");
-    add_file(hfci, "testdir\\c.txt");
-    add_file(hfci, "testdir\\d.txt");
+    add_file(hfci, a_txt);
+    add_file(hfci, b_txt);
+    add_file(hfci, testdir_c_txt);
+    add_file(hfci, testdir_d_txt);
 
     res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
     ok(res, "Failed to flush the cabinet\n");
