@@ -2422,7 +2422,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 # in a Makefile.  We should not override ac_cv_exeext if it was cached,
 # so that the user can short-circuit this test for compilers unknown to
 # Autoconf.
-for ac_file in $ac_files
+for ac_file in $ac_files ''
 do
   test -f "$ac_file" || continue
   case $ac_file in
@@ -2450,6 +2450,12 @@ done
 test "$ac_cv_exeext" = no && ac_cv_exeext=
 
 else
+  ac_file=''
+fi
+
+{ echo "$as_me:$LINENO: result: $ac_file" >&5
+echo "${ECHO_T}$ac_file" >&6; }
+if test -z "$ac_file"; then
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
@@ -2461,8 +2467,6 @@ See \`config.log' for more details." >&2;}
 fi
 
 ac_exeext=$ac_cv_exeext
-{ echo "$as_me:$LINENO: result: $ac_file" >&5
-echo "${ECHO_T}$ac_file" >&6; }
 
 # Check that the compiler produces executables we can run.  If not, either
 # the compiler is broken, or we cross compile.
@@ -17077,7 +17081,7 @@ echo "${ECHO_T}$ac_cv_c_dll_macho" >&6; }
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
-            LDDLLFLAGS="-bundle"
+            LDDLLFLAGS="-bundle -multiply_defined suppress"
             LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME) \$(SOVERSION:%=-compatibility_version %)"
             STRIP="$STRIP -u -r"
                         COREFOUNDATIONLIB="-framework CoreFoundation"
@@ -24801,7 +24805,7 @@ current configuration.
 Usage: $0 [OPTIONS] [FILE]...
 
   -h, --help       print this help, then exit
-  -V, --version    print version number, then exit
+  -V, --version    print version number and configuration settings, then exit
   -q, --quiet      do not print progress messages
   -d, --debug      don't remove temporary files
       --recheck    update $as_me by reconfiguring in the same conditions

@@ -1150,7 +1150,7 @@ case $host_os in
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
-            LDDLLFLAGS="-bundle"
+            LDDLLFLAGS="-bundle -multiply_defined suppress"
             LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME) \$(SOVERSION:%=-compatibility_version %)"
             STRIP="$STRIP -u -r"
             dnl declare needed frameworks
