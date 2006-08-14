@@ -412,7 +412,7 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
     WCHAR tmp[2];
     HRESULT hr;
 
-    if(tf) UXTHEME_BackupSystemMetrics();
+    if(tf && !bThemeActive) UXTHEME_BackupSystemMetrics();
     hr = MSSTYLES_SetActiveTheme(tf, TRUE);
     if(FAILED(hr))
         return hr;
