@@ -116,7 +116,7 @@
 @ stub WintrustGetDefaultForUsage
 @ stdcall WintrustGetRegPolicyFlags(ptr)
 @ stub WintrustLoadFunctionPointers
-@ stub WintrustRemoveActionID
+@ stdcall WintrustRemoveActionID(ptr)
 @ stdcall WintrustSetRegPolicyFlags(long)
 @ stub mscat32DllRegisterServer
 @ stub mscat32DllUnregisterServer

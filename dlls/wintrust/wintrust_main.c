@@ -154,6 +154,16 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
 }
 
 /***********************************************************************
+ *              WintrustRemoveActionID (WINTRUST.@)
+ */
+BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
+{
+    FIXME("(%s)\n", debugstr_guid(pgActionID));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		WintrustGetRegPolicyFlags (WINTRUST.@)
  */
 void WINAPI WintrustGetRegPolicyFlags( DWORD* pdwPolicyFlags )
