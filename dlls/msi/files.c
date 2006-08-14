@@ -460,9 +460,6 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         return ERROR_FUNCTION_FAILED;
     }
 
-    seq = MSI_RecordGetInteger(row,2);
-    mi->last_sequence = seq;
-
     volume = MSI_RecordGetString(row, 5);
     prompt = MSI_RecordGetString(row, 3);
 
@@ -485,6 +482,9 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         msiobj_release(&row->hdr);
         return rc;
     }
+
+    seq = MSI_RecordGetInteger(row,2);
+    mi->last_sequence = seq;
 
     cab = MSI_RecordGetString(row,4);
     if (cab)
