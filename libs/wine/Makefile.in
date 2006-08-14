@@ -131,8 +131,10 @@ libwine.a: wine.def
 libwine.dll: $(OBJS) wine.def Makefile.in
 	$(DLLWRAP) --def $(SRCDIR)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
 
+DYLIB_LDFLAGS = -compatibility_version $(SOVERSION) -current_version $(VERSION)
+
 libwine.$(VERSION).dylib: $(OBJS) $(RELPATH) Makefile.in
-	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+	$(LDSHARED) $(DYLIB_LDFLAGS) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
 
 libwine.$(SOVERSION).dylib: libwine.$(VERSION).dylib
 	$(RM) $@ && $(LN_S) libwine.$(VERSION).dylib $@
