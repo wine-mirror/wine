@@ -2826,6 +2826,9 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 
     TRACE("(%lu, %p)\n", cVariants, rgvars);
 
+    if (!rgvars)
+        return E_INVALIDARG;
+
     for(i = 0; i < cVariants; i++)
         PropVariantClear(&rgvars[i]);
 
