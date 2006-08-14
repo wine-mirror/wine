@@ -217,6 +217,38 @@ static void set_process_startup_state( struct process *process, enum startup_sta
     }
 }
 
+/* final cleanup once we are sure a process is really dead */
+static void process_died( struct process *process )
+{
+    if (debug_level) fprintf( stderr, "%04x: *process killed*\n", process->id );
+    release_object( process );
+    if (!--running_processes) close_master_socket();
+}
+
+/* callback for process sigkill timeout */
+static void process_sigkill( void *private )
+{
+    struct process *process = private;
+
+    process->sigkill_timeout = NULL;
+    kill( process->unix_pid, SIGKILL );
+    process_died( process );
+}
+
+/* start the sigkill timer for a process upon exit */
+static void start_sigkill_timer( struct process *process )
+{
+    grab_object( process );
+    if (process->unix_pid != -1 && process->msg_fd)
+    {
+        struct timeval when = current_time;
+
+        add_timeout( &when, 1000 );
+        process->sigkill_timeout = add_timeout_user( &when, process_sigkill, process );
+    }
+    else process_died( process );
+}
+
 /* create a new process and its main thread */
 /* if the function fails the fd is closed */
 struct thread *create_process( int fd, struct thread *parent_thread, int inherit_all )
@@ -234,6 +266,8 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->debugger        = NULL;
     process->handles         = NULL;
     process->msg_fd          = NULL;
+    process->sigkill_timeout = NULL;
+    process->unix_pid        = -1;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
@@ -322,6 +356,8 @@ static void process_destroy( struct object *obj )
     /* we can't have a thread remaining */
     assert( list_empty( &process->thread_list ));
 
+    assert( !process->sigkill_timeout );  /* timeout should hold a reference to the process */
+
     set_process_startup_state( process, STARTUP_ABORTED );
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
@@ -362,7 +398,18 @@ static void process_poll_event( struct fd *fd, int event )
     struct process *process = get_fd_user( fd );
     assert( process->obj.ops == &process_ops );
 
-    if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
+    if (event & (POLLERR | POLLHUP))
+    {
+        release_object( process->msg_fd );
+        process->msg_fd = NULL;
+        if (process->sigkill_timeout)  /* already waiting for it to die */
+        {
+            remove_timeout_user( process->sigkill_timeout );
+            process->sigkill_timeout = NULL;
+            process_died( process );
+        }
+        else kill_process( process, NULL, 0 );
+    }
     else if (event & POLLIN) receive_fd( process );
 }
 
@@ -528,8 +575,8 @@ static void process_killed( struct process *process )
     destroy_process_classes( process );
     remove_process_locks( process );
     set_process_startup_state( process, STARTUP_ABORTED );
+    start_sigkill_timer( process );
     wake_up( &process->obj, 0 );
-    if (!--running_processes) close_master_socket();
 }
 
 /* add a thread to a process running threads list */

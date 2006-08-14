@@ -872,12 +872,15 @@ DECL_HANDLER(init_thread)
 
     if (!process->peb)  /* first thread, initialize the process too */
     {
+        process->unix_pid = current->unix_pid;
         process->peb      = req->peb;
         process->ldt_copy = req->ldt_copy;
         reply->info_size  = init_process( current );
     }
     else
     {
+        if (process->unix_pid != current->unix_pid)
+            process->unix_pid = -1;  /* can happen with linuxthreads */
         if (current->suspend + process->suspend > 0) stop_thread( current );
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
     }
