@@ -38,6 +38,7 @@
 #include "object.h"
 #include "process.h"
 #include "thread.h"
+#include "request.h"
 
 #if defined(linux) && defined(__SIGRTMIN)
 /* the signal used by linuxthreads as exit signal for clone() threads */
@@ -185,7 +186,7 @@ static void sigint_callback(void)
 {
     kill_all_processes( NULL, 1 );
     flush_registry();
-    exit(1);
+    shutdown_master_socket();
 }
 
 /* SIGHUP handler */

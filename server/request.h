@@ -58,7 +58,7 @@ extern void write_reply( struct thread *thread );
 extern unsigned int get_tick_count(void);
 extern void open_master_socket(void);
 extern void close_master_socket(void);
-extern void lock_master_socket( int locked );
+extern void shutdown_master_socket(void);
 extern int wait_for_lock(void);
 extern int kill_lock_owner( int sig );
 

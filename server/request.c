@@ -117,6 +117,7 @@ unsigned int global_error = 0;  /* global error code for when no thread is curre
 struct timeval server_start_time = { 0, 0 };  /* server startup time */
 
 static struct master_socket *master_socket;  /* the master socket object */
+static int force_shutdown;
 
 /* socket communication static structures */
 static struct iovec myiovec;
@@ -497,7 +498,7 @@ static void master_socket_poll_event( struct fd *fd, int event )
     {
         /* this is not supposed to happen */
         fprintf( stderr, "wineserver: Error on master socket\n" );
-        release_object( sock );
+        set_fd_events( sock->fd, -1 );
     }
     else if (event & POLLIN)
     {
@@ -811,14 +812,14 @@ static void close_socket_timeout( void *arg )
     flush_registry();
 
     /* if a new client is waiting, we keep on running */
-    if (check_fd_events( master_socket->fd, POLLIN )) return;
+    if (!force_shutdown && check_fd_events( master_socket->fd, POLLIN )) return;
 
     if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
     close_objects();  /* shut down everything properly */
 #endif
-    exit(0);
+    exit( force_shutdown );
 }
 
 /* close the master socket and stop waiting for new clients */
@@ -835,8 +836,15 @@ void close_master_socket(void)
     else close_socket_timeout( NULL );  /* close it right away */
 }
 
-/* lock/unlock the master socket to stop accepting new clients */
-void lock_master_socket( int locked )
+/* forced shutdown, used for wineserver -k */
+void shutdown_master_socket(void)
 {
-    set_fd_events( master_socket->fd, locked ? 0 : POLLIN );
+    force_shutdown = 1;
+    master_socket_timeout = 0;
+    if (master_socket->timeout)
+    {
+        remove_timeout_user( master_socket->timeout );
+        close_socket_timeout( NULL );
+    }
+    set_fd_events( master_socket->fd, -1 ); /* stop waiting for new clients */
 }
