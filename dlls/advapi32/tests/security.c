@@ -941,9 +941,18 @@ static void test_LookupAccountSid(void)
             LSA_OBJECT_ATTRIBUTES object_attributes;
 
             ZeroMemory(&object_attributes, sizeof(object_attributes));
+            object_attributes.Length = sizeof(object_attributes);
 
             status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
-            ok(status == STATUS_SUCCESS, "LsaOpenPolicy() returned 0x%08lx\n", status);
+            ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+               "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08lx\n", status);
+
+            /* try a more restricted access mask if necessary */
+            if (status == STATUS_ACCESS_DENIED) {
+                trace("LsaOpenPolicy(POLICY_ALL_ACCESS) failed, trying POLICY_VIEW_LOCAL_INFORMATION\n");
+                status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_VIEW_LOCAL_INFORMATION, &handle);
+                ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08lx\n", status);
+            }
 
             if (status == STATUS_SUCCESS)
             {
