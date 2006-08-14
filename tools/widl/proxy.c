@@ -172,10 +172,8 @@ static void clear_output_vars( var_t *arg )
     if (is_attr(arg->attrs, ATTR_OUT) && !is_attr(arg->attrs, ATTR_IN)) {
       print_proxy( "if(%s)\n", arg->name );
       indent++;
-      print_proxy( "MIDL_memset( %s, 0, sizeof( ", arg->name );
+      print_proxy( "MIDL_memset( %s, 0, sizeof( *%s ));\n", arg->name, arg->name );
       indent--;
-      write_type(proxy, arg->type, arg, arg->tname);
-      fprintf( proxy, " ));\n" );
     }
     arg = PREV_LINK(arg);
   }
