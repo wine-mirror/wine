@@ -1826,41 +1826,32 @@ static HRESULT WINAPI OLEPictureImpl_Save(
     unsigned int iDataSize;
     ULONG dummy;
     int iSerializeResult = 0;
+    OLEPictureImpl *This = impl_from_IPersistStream(iface);
 
-  OLEPictureImpl *This = impl_from_IPersistStream(iface);
+    TRACE("%p %p %d\n", This, pStm, fClearDirty);
 
     switch (This->desc.picType) {
     case PICTYPE_ICON:
-        if (This->bIsDirty) {
-            if (serializeIcon(This->desc.u.icon.hicon, &pIconData, &iDataSize)) {
-                if (This->loadtime_magic != 0xdeadbeef) {
-                    DWORD header[2];
-
-                    header[0] = This->loadtime_magic;
-                    header[1] = iDataSize;
-                    IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
-                }
-                IStream_Write(pStm, pIconData, iDataSize, &dummy);
-
-                HeapFree(GetProcessHeap(), 0, This->data);
-                This->data = pIconData;
-                This->datalen = iDataSize;
-                hResult = S_OK;
-            } else {
-                FIXME("(%p,%p,%d), unable to serializeIcon()!\n",This,pStm,fClearDirty);
+        if (This->bIsDirty || !This->data) {
+            if (!serializeIcon(This->desc.u.icon.hicon, &pIconData, &iDataSize)) {
+                ERR("(%p,%p,%d), serializeIcon() failed\n", This, pStm, fClearDirty);
                 hResult = E_FAIL;
+                break;
             }
-        } else {
-            if (This->loadtime_magic != 0xdeadbeef) {
-                DWORD header[2];
-
-                header[0] = This->loadtime_magic;
-                header[1] = This->datalen;
-                IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
-            }
-            IStream_Write(pStm, This->data, This->datalen, &dummy);
-            hResult = S_OK;
+            This->data = pIconData;
+            This->datalen = iDataSize;
         }
+        if (This->loadtime_magic != 0xdeadbeef) {
+            DWORD header[2];
+
+            header[0] = This->loadtime_magic;
+            header[1] = This->datalen;
+            IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
+        }
+        IStream_Write(pStm, This->data, This->datalen, &dummy);
+
+        HeapFree(GetProcessHeap(), 0, This->data);
+        hResult = S_OK;
         break;
     case PICTYPE_BITMAP:
         if (This->bIsDirty) {
