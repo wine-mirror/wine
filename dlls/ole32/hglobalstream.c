@@ -287,8 +287,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
 
-  TRACE("(%p, %p, %ld, %p)\n", iface,
-	pv, cb, pcbWritten);
+  TRACE("(%p, %p, %ld, %p)\n", iface, pv, cb, pcbWritten);
 
   /*
    * If the caller is not interested in the number of bytes written,
@@ -298,14 +297,10 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
     pcbWritten = &bytesWritten;
 
   if (cb == 0)
-  {
-    return S_OK;
-  }
-  else
-  {
-    newSize.u.HighPart = 0;
-    newSize.u.LowPart = This->currentPosition.u.LowPart + cb;
-  }
+    goto out;
+
+  newSize.u.HighPart = 0;
+  newSize.u.LowPart = This->currentPosition.u.LowPart + cb;
 
   /*
    * Verify if we need to grow the stream
@@ -334,14 +329,15 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   This->currentPosition.u.LowPart+=cb;
 
   /*
-   * Return the number of bytes read.
-   */
-  *pcbWritten = cb;
-
-  /*
    * Cleanup
    */
   GlobalUnlock(This->supportHandle);
+
+out:
+  /*
+   * Return the number of bytes read.
+   */
+  *pcbWritten = cb;
 
   return S_OK;
 }
