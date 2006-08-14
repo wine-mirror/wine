@@ -1385,7 +1385,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
             {
                 PROPVARIANT prop;
 
-                memset(&prop, 0, sizeof prop);
+                PropVariantInit(&prop);
                 if (SUCCEEDED(PropertyStorage_ReadProperty(This, &prop,
                  buf + idOffset->dwOffset - sizeof(PROPERTYSECTIONHEADER))))
                 {
