@@ -18,6 +18,9 @@
  */
 #include <assert.h>
 #include <stdarg.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -859,12 +862,52 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesA(PULONG pcPackages,
 
 /***********************************************************************
  *		GetComputerObjectNameA (SECUR32.@)
+ *
+ * Get the local computer's name using the format specified.
+ *
+ * PARAMS
+ *  NameFormat   [I] The format for the name.
+ *  lpNameBuffer [O] Pointer to buffer to receive the name.
+ *  nSize        [I/O] Size in characters of buffer.
+ *
+ * RETURNS
+ *  TRUE  If the name was written to lpNameBuffer.
+ *  FALSE If the name couldn't be written.
+ *
+ * NOTES
+ *  If lpNameBuffer is NULL, then the size of the buffer needed to hold the
+ *  name will be returned in *nSize.
+ *
+ *  nSize returns the number of characters written when lpNameBuffer is not
+ *  NULL or the size of the buffer needed to hold the name when the buffer
+ *  is too short or lpNameBuffer is NULL.
+ * 
+ *  It the buffer is too short, ERROR_INSUFFICIENT_BUFFER error will be set.
  */
 BOOLEAN WINAPI GetComputerObjectNameA(
   EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
-    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
-    return FALSE;
+    BOOLEAN rc;
+    LPWSTR bufferW = NULL;
+    ULONG sizeW = *nSize;
+    TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
+    if (lpNameBuffer) {
+        bufferW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR));
+        if (bufferW == NULL) {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
+    rc = GetComputerObjectNameW(NameFormat, bufferW, &sizeW);
+    if (rc && bufferW) {
+        ULONG len = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, lpNameBuffer, *nSize, NULL, NULL);
+        *nSize = len;
+    }
+    else
+        *nSize = sizeW;
+    HeapFree(GetProcessHeap(), 0, bufferW);
+    return rc;
 }
 
 /***********************************************************************
@@ -873,8 +916,114 @@ BOOLEAN WINAPI GetComputerObjectNameA(
 BOOLEAN WINAPI GetComputerObjectNameW(
   EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
-    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
-    return FALSE;
+    LSA_HANDLE policyHandle;
+    LSA_OBJECT_ATTRIBUTES objectAttributes;
+    PPOLICY_DNS_DOMAIN_INFO domainInfo;
+    NTSTATUS ntStatus;
+    BOOLEAN status;
+    TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
+
+    if (NameFormat == NameUnknown)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    ZeroMemory(&objectAttributes, sizeof(objectAttributes));
+    objectAttributes.Length = sizeof(objectAttributes);
+
+    ntStatus = LsaOpenPolicy(NULL, &objectAttributes,
+                             POLICY_VIEW_LOCAL_INFORMATION,
+                             &policyHandle);
+    if (ntStatus != STATUS_SUCCESS)
+    {
+        SetLastError(LsaNtStatusToWinError(ntStatus));
+        WARN("LsaOpenPolicy failed with NT status %lx\n", GetLastError());
+        return FALSE;
+    }
+
+    ntStatus = LsaQueryInformationPolicy(policyHandle,
+                                         PolicyDnsDomainInformation,
+                                         (PVOID *)&domainInfo);
+    if (ntStatus != STATUS_SUCCESS)
+    {
+        SetLastError(LsaNtStatusToWinError(ntStatus));
+        WARN("LsaQueryInformationPolicy failed with NT status %lx\n",
+             GetLastError());
+        LsaClose(policyHandle);
+        return FALSE;
+    }
+
+    if (domainInfo->Sid)
+    {
+        switch (NameFormat)
+        {
+        case NameSamCompatible:
+            {
+                WCHAR name[MAX_COMPUTERNAME_LENGTH + 1];
+                DWORD size = sizeof(name);
+                if (GetComputerNameW(name, &size))
+                {
+                    int len = domainInfo->Name.Length + size + 3;
+                    if (lpNameBuffer)
+                    {
+                        if (*nSize < len)
+                        {
+                            *nSize = len;
+                            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                            status = FALSE;
+                        }
+                        else
+                        {
+                            WCHAR bs[] = { '\\', 0 };
+                            WCHAR ds[] = { '$', 0 };
+                            lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
+                            lstrcatW(lpNameBuffer, bs);
+                            lstrcatW(lpNameBuffer, name);
+                            lstrcatW(lpNameBuffer, ds);
+                            status = TRUE;
+                        }
+                    }
+                    else	/* just requesting length required */
+                    {
+                        *nSize = len;
+                        status = TRUE;
+                    }
+                }
+                else
+                {
+                    SetLastError(ERROR_INTERNAL_ERROR);
+                    status = FALSE;
+                }
+            }
+            break;
+        case NameFullyQualifiedDN:
+        case NameDisplay:
+        case NameUniqueId:
+        case NameCanonical:
+        case NameUserPrincipal:
+        case NameCanonicalEx:
+        case NameServicePrincipal:
+        case NameDnsDomain:
+            FIXME("NameFormat %d not implemented\n", NameFormat);
+            SetLastError(ERROR_CANT_ACCESS_DOMAIN_INFO);
+            status = FALSE;
+            break;
+        default:
+            SetLastError(ERROR_INVALID_PARAMETER);
+            status = FALSE;
+        }
+    }
+    else
+    {
+        SetLastError(ERROR_CANT_ACCESS_DOMAIN_INFO);
+        status = FALSE;
+    }
+
+    LsaFreeMemory(domainInfo);
+    LsaClose(policyHandle);
+
+    return status;
 }
 
 BOOLEAN WINAPI GetUserNameExA(
