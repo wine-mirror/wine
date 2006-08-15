@@ -30,6 +30,21 @@
 
 #include "wine/test.h"
 
+/* function pointers */
+static HMODULE hSetupAPI;
+static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
+static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
+
+static void init_function_pointers(void)
+{
+    hSetupAPI = LoadLibraryA("setupapi.dll");
+
+    if (hSetupAPI)
+    {
+        pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
+        pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
+    }
+}
 
 static void test_SetupDiCreateDeviceInfoListEx(void) 
 {
@@ -41,7 +56,7 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set Reserved to a value, which is not NULL */
-    devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
+    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
@@ -49,22 +64,29 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set MachineName to something */
-    devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
+    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
     ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %ld, (expected %d)\n", error, ERROR_INVALID_MACHINENAME);
 
     /* create empty DeviceInfoList */
-    devlist = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
     ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
 
     /* destroy DeviceInfoList */
-    ret = SetupDiDestroyDeviceInfoList(devlist);
+    ret = pSetupDiDestroyDeviceInfoList(devlist);
     ok(ret, "SetupDiDestroyDeviceInfoList failed : %ld\n", error);
 }
 
 START_TEST(devinst)
 {
-    test_SetupDiCreateDeviceInfoListEx();
+    init_function_pointers();
+    if (!hSetupAPI)
+        return;
+
+    if (pSetupDiCreateDeviceInfoListExW && pSetupDiDestroyDeviceInfoList)
+        test_SetupDiCreateDeviceInfoListEx();
+    else
+        trace("Needed calls not all available, skipping tests.\n");
 }
