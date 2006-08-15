@@ -101,6 +101,8 @@ static void write_clsid(type_t *cls);
 static void write_diid(type_t *iface);
 static void write_iid(type_t *iface);
 
+static int compute_method_indexes(type_t *iface);
+
 #define tsENUM   1
 #define tsSTRUCT 2
 #define tsUNION  3
@@ -711,6 +713,7 @@ dispinterfacedef: dispinterfacehdr '{'
 						}
 /* FIXME: not sure how to handle this yet
 	| dispinterfacehdr '{' interface '}'	{ $$ = $1;
+						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_iid($$);
 						}
@@ -737,6 +740,7 @@ interfacedef: interfacehdr inherit
 	  '{' int_statements '}'		{ $$ = $1;
 						  $$->ref = $2;
 						  $$->funcs = $4;
+						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_iid($$);
 						}
@@ -747,6 +751,7 @@ interfacedef: interfacehdr inherit
 						  $$->ref = find_type2($3, 0);
 						  if (!$$->ref) yyerror("base class '%s' not found in import", $3);
 						  $$->funcs = $6;
+						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_iid($$);
 						}
@@ -1538,4 +1543,27 @@ static void write_iid(type_t *iface)
 {
   const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   write_guid(idfile, "IID", iface->name, uuid);
+}
+
+static int compute_method_indexes(type_t *iface)
+{
+  int idx;
+  func_t *f = iface->funcs;
+
+  if (iface->ref)
+    idx = compute_method_indexes(iface->ref);
+  else
+    idx = 0;
+
+  if (! f)
+    return idx;
+
+  while (NEXT_LINK(f))
+    f = NEXT_LINK(f);
+
+  for ( ; f ; f = PREV_LINK(f))
+    if (! is_callas(f->def->attrs))
+      f->idx = idx++;
+
+  return idx;
 }

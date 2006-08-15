@@ -572,15 +572,13 @@ const var_t *is_callas(const attr_t *a)
   return get_attrp(a, ATTR_CALLAS);
 }
 
-static int write_method_macro(const type_t *iface, const char *name)
+static void write_method_macro(const type_t *iface, const char *name)
 {
-  int idx;
   func_t *cur = iface->funcs;
 
-  if (iface->ref) idx = write_method_macro(iface->ref, name);
-  else idx = 0;
+  if (iface->ref) write_method_macro(iface->ref, name);
 
-  if (!cur) return idx;
+  if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
   fprintf(header, "/*** %s methods ***/\n", iface->name);
@@ -608,13 +606,9 @@ static int write_method_macro(const type_t *iface, const char *name)
       for (c=0; c<argc; c++)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ")\n");
-      if (cur->idx == -1) cur->idx = idx;
-      else if (cur->idx != idx) yyerror("BUG: method index mismatch in write_method_macro");
-      idx++;
     }
     cur = PREV_LINK(cur);
   }
-  return idx;
 }
 
 void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent)
