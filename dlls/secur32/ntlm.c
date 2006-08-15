@@ -734,7 +734,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
-    char *buffer;
+    char *buffer, *want_flags = NULL;
     PBYTE bin;
     int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
     ULONG ctxt_attr = 0;
@@ -786,17 +786,26 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             bin_len = pInput->pBuffers[0].cbBuffer;
 
         /* Handle all the flags */
+        want_flags = HeapAlloc(GetProcessHeap(), 0, 73);
+        if(want_flags == NULL)
+        {
+            TRACE("Failed to allocate memory for the want_flags!\n");
+            ret = SEC_E_INSUFFICIENT_MEMORY;
+            goto asc_end;
+        }
+        lstrcpyA(want_flags, "SF");
         if(fContextReq & ASC_REQ_ALLOCATE_MEMORY)
         {
             FIXME("ASC_REQ_ALLOCATE_MEMORY stub\n");
         }
         if(fContextReq & ASC_REQ_CONFIDENTIALITY)
         {
-            FIXME("ASC_REQ_CONFIDENTIALITY stub\n");
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SEAL");
         }
         if(fContextReq & ASC_REQ_CONNECTION)
         {
             /* This is default, so we'll enable it */
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SESSION_KEY");
             ctxt_attr |= ASC_RET_CONNECTION;
         }
         if(fContextReq & ASC_REQ_EXTENDED_ERROR)
@@ -805,7 +814,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         }
         if(fContextReq & ASC_REQ_INTEGRITY)
         {
-            FIXME("ASC_REQ_INTEGRITY stub\n");
+            lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
         }
         if(fContextReq & ASC_REQ_MUTUAL_AUTH)
         {
@@ -824,6 +833,17 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             FIXME("ASC_REQ_STREAM stub\n");
         }
         /* Done with the flags */
+
+        if(lstrlenA(want_flags) > 3)
+        {
+            TRACE("Server set want_flags: %s\n", debugstr_a(want_flags));
+            lstrcpynA(buffer, want_flags, max_len - 1);
+            if((ret = run_helper(helper, buffer, max_len, &buffer_len)) !=
+                    SEC_E_OK)
+                goto asc_end;
+            if(!strncmp(buffer, "BH", 2))
+                TRACE("Helper doesn't understand new command set\n");
+        }
 
         /* This is the YR request from the client, encode to base64 */
 
@@ -887,7 +907,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             ret = SEC_E_INCOMPLETE_MESSAGE;
             goto asc_end;
         }
-        
+
         if(pInput->cBuffers < 1)
         {
             ret = SEC_E_INCOMPLETE_MESSAGE;
@@ -937,12 +957,67 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         }
         pOutput->pBuffers[0].cbBuffer = 0;
         ret = SEC_E_OK;
+
+        TRACE("Getting negotiated flags\n");
+        lstrcpynA(buffer, "GF", max_len - 1);
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto asc_end;
+
+        if(buffer_len < 3)
+        {
+            TRACE("No flags negotiated, or helper does not support GF command\n");
+        }
+        else
+        {
+            TRACE("Negotiated %s\n", debugstr_a(buffer));
+            sscanf(buffer + 3, "%lx", &(helper->neg_flags));
+            TRACE("Stored 0x%08lx as flags\n", helper->neg_flags);
+        }
+
+        TRACE("Getting session key\n");
+        lstrcpynA(buffer, "GK", max_len - 1);
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto asc_end;
+
+        if(buffer_len < 3)
+            TRACE("Helper does not support GK command\n");
+        else
+        {
+            if(strncmp(buffer, "BH ", 3) == 0)
+            {
+                TRACE("Helper sent %s\n", debugstr_a(buffer+3));
+                helper->valid_session_key = FALSE;
+                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+                /*FIXME: Generate the dummy session key = MD4(MD4(password))*/
+                memset(helper->session_key, 0 , 16);
+            }
+            else if(strncmp(buffer, "GK ", 3) == 0)
+            {
+                if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len, 
+                                &bin_len)) != SEC_E_OK)
+                {
+                    TRACE("Failed to decode session key\n");
+                }
+                TRACE("Session key is %s\n", debugstr_a(buffer+3));
+                helper->valid_session_key = TRUE;
+                if(!helper->session_key)
+                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
+                if(!helper->session_key)
+                {
+                    TRACE("Failed to allocate memory for session key\n");
+                    ret = SEC_E_INTERNAL_ERROR;
+                    goto asc_end;
+                }
+                memcpy(helper->session_key, bin, bin_len);
+            }
+        }
     }
 
     phNewContext->dwUpper = ctxt_attr;
     phNewContext->dwLower = (ULONG_PTR)helper;
 
 asc_end:
+    HeapFree(GetProcessHeap(), 0, want_flags);
     HeapFree(GetProcessHeap(), 0, buffer);
     HeapFree(GetProcessHeap(), 0, bin);
     return ret;
