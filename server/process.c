@@ -733,6 +733,7 @@ struct process_snapshot *process_snap( int *count )
 {
     struct process_snapshot *snapshot, *ptr;
     struct process *process;
+
     if (!running_processes) return NULL;
     if (!(snapshot = mem_alloc( sizeof(*snapshot) * running_processes )))
         return NULL;
@@ -748,7 +749,12 @@ struct process_snapshot *process_snap( int *count )
         grab_object( process );
         ptr++;
     }
-    *count = running_processes;
+
+    if (!(*count = ptr - snapshot))
+    {
+        free( snapshot );
+        snapshot = NULL;
+    }
     return snapshot;
 }
 
