@@ -1052,6 +1052,9 @@ case $host_os in
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
         ;;
     esac
+    dnl Disable optimizations because of force_align_arg_pointer bug
+    dnl FIXME: should be removed when gcc is fixed
+    CFLAGS=`echo "$CFLAGS" | sed -e s/-O2/-O1/`
     ;;
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"

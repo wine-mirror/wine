@@ -15300,6 +15300,7 @@ fi
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"          ;;
     esac
+            CFLAGS=`echo "$CFLAGS" | sed -e s/-O2/-O1/`
     ;;
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
