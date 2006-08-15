@@ -74,7 +74,7 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define if you have dlopen */
+/* Define to 1 if you have the `dlopen' function. */
 #undef HAVE_DLOPEN
 
 /* Define to 1 if you have the <elf.h> header file. */

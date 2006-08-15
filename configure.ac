@@ -136,12 +136,6 @@ dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lossaudio for NetBSD
 AC_CHECK_LIB(ossaudio,_oss_ioctl)
-dnl Check for -lnsl for Solaris
-AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
-dnl Check for -lsocket for Solaris
-AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
-dnl Check for -lresolv for Solaris
-AC_CHECK_FUNCS(inet_aton,,AC_CHECK_LIB(resolv,inet_aton))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lpthread
@@ -1017,7 +1011,6 @@ dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(DLLIBS,"")
 AC_SUBST(LDSHARED,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LIBEXT,"so")
@@ -1039,20 +1032,6 @@ case $host_os in
     WIN16_INSTALL=""
     ;;
   *)
-    if test "$ac_cv_header_dlfcn_h" = "yes"
-    then
-        AC_CHECK_FUNCS(dlopen,,
-            [AC_CHECK_LIB(dl,dlopen,
-                         [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
-                          DLLIBS="-ldl"],
-                         [LIBEXT="a"])])
-        WINE_CHECK_LIB_FUNCS(dladdr,[$DLLIBS])
-    else
-        LIBEXT="a"
-    fi
-
-    if test "$LIBEXT" = "so"
-    then
       DLLFLAGS="$DLLFLAGS -fPIC"
       DLLEXT=".so"
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
@@ -1180,7 +1159,6 @@ case $host_os in
           fi
         fi
       fi
-    fi
 
     dnl Check for cross compiler to build test programs
     AC_SUBST(CROSSTEST,"")
@@ -1274,6 +1252,8 @@ AC_CHECK_FUNCS(\
 	asctime_r \
 	chsize \
 	clone \
+	connect \
+	dlopen \
 	epoll_create \
 	ffs \
 	finite \
@@ -1285,6 +1265,7 @@ AC_CHECK_FUNCS(\
 	futimes \
 	futimesat \
 	getaddrinfo \
+	gethostbyname \
 	getnameinfo \
 	getnetbyname \
 	getopt_long \
@@ -1296,6 +1277,7 @@ AC_CHECK_FUNCS(\
 	gettid \
 	gettimeofday \
 	getuid \
+	inet_aton \
 	inet_network \
 	kqueue \
 	lstat \
@@ -1331,10 +1313,35 @@ AC_CHECK_FUNCS(\
 	waitpid \
 )
 
+dnl Check for -ldl
+if test "$ac_cv_func_dlopen" = no
+then
+    AC_CHECK_LIB(dl,dlopen,[AC_DEFINE(HAVE_DLOPEN,1) AC_SUBST(LIBDL,"-ldl")])
+fi
+WINE_CHECK_LIB_FUNCS(dladdr,[$LIBDL])
+
 dnl Check for -lpoll for Mac OS X/Darwin
 if test "$ac_cv_func_poll" = no
 then
     AC_CHECK_LIB(poll,poll,[AC_DEFINE(HAVE_POLL,1) AC_SUBST(LIBPOLL,"-lpoll")])
+fi
+
+dnl Check for -lnsl for Solaris
+if test "$ac_cv_func_gethostbyname" = no
+then
+    AC_CHECK_LIB(nsl,gethostbyname)
+fi
+
+dnl Check for -lsocket for Solaris
+if test "$ac_cv_func_connect" = no
+then
+    AC_CHECK_LIB(socket,connect)
+fi
+
+dnl Check for -lresolv for Solaris
+if test "$ac_cv_func_inet_aton" = no
+then
+    AC_CHECK_LIB(resolv,inet_aton)
 fi
 
 dnl **** Check for types ****
