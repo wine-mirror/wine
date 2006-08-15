@@ -8,7 +8,8 @@ IMPORTS   = crypt32 secur32 advapi32 kernel32
 CTESTS = \
 	main.c \
 	ntlm.c \
-	schannel.c
+	schannel.c \
+	secur32.c
 
 @MAKE_TEST_RULES@
 
