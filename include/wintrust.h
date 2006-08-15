@@ -290,6 +290,7 @@ extern "C" {
 
 BOOL      WINAPI WintrustAddActionID(GUID*,DWORD,CRYPT_REGISTER_ACTIONID*);
 BOOL      WINAPI WintrustRemoveActionID(GUID*);
+BOOL      WINAPI WintrustLoadFunctionPointers(GUID*,CRYPT_PROVIDER_FUNCTIONS*);
 void      WINAPI WintrustGetRegPolicyFlags(DWORD*);
 LONG      WINAPI WinVerifyTrust(HWND,GUID*,WINTRUST_DATA*);
 HRESULT   WINAPI WinVerifyTrustEx(HWND,GUID*,WINTRUST_DATA*);
