@@ -431,13 +431,14 @@ static void test_enumOIDInfo(void)
 static void test_findOIDInfo(void)
 {
     static const WCHAR sha1[] = { 's','h','a','1',0 };
+    static CHAR oid_rsa_md5[] = szOID_RSA_MD5;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
     PCCRYPT_OID_INFO info;
 
     info = CryptFindOIDInfo(0, NULL, 0);
     ok(info == NULL, "Expected NULL\n");
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, szOID_RSA_MD5, 0);
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_rsa_md5, 0);
     ok(info != NULL, "Expected to find szOID_RSA_MD5\n");
     if (info)
     {
