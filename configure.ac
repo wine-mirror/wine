@@ -1239,8 +1239,6 @@ fi
 dnl **** Check for functions ****
 
 AC_CHECK_FUNCS(\
-	_lwp_create \
-	_lwp_self \
 	_pclose \
 	_popen \
 	_snprintf \

@@ -58,12 +58,6 @@ struct _pthread_cleanup_buffer;
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
-#ifdef HAVE_SYS_LWP_H
-# include <sys/lwp.h>
-#endif
-#ifdef HAVE_UCONTEXT_H
-# include <ucontext.h>
-#endif
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif
@@ -192,9 +186,6 @@ static void cleanup_thread( void *ptr )
     wine_ldt_free_fs( info.teb_sel );
     if (info.stack_size) munmap( info.stack_base, info.stack_size );
     if (info.teb_size) munmap( info.teb_base, info.teb_size );
-#ifdef HAVE__LWP_CREATE
-    _lwp_exit();
-#endif
     _exit( info.exit_status );
 }
 
@@ -276,15 +267,6 @@ static int create_thread( struct wine_pthread_thread_info *info )
             : "eax", "edx");
         return 0;
     }
-#elif defined(HAVE__LWP_CREATE)
-    {
-        ucontext_t context;
-        _lwp_makecontext( &context, (void(*)(void *))info->entry, info,
-                          NULL, info->stack_base, info->stack_size );
-        if ( _lwp_create( &context, 0, NULL ) )
-            return -1;
-        return 0;
-    }
 #endif
     return -1;
 }
@@ -297,7 +279,6 @@ static int create_thread( struct wine_pthread_thread_info *info )
  */
 static void init_current_teb( struct wine_pthread_thread_info *info )
 {
-#ifdef __i386__
     /* On the i386, the current thread is in the %fs register */
     LDT_ENTRY fs_entry;
 
@@ -305,30 +286,10 @@ static void init_current_teb( struct wine_pthread_thread_info *info )
     wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( info->teb_sel, &fs_entry );
-#elif defined(HAVE__LWP_CREATE)
-    /* On non-i386 Solaris, we use the LWP private pointer */
-    _lwp_setprivate( info->teb_base );
-#elif defined(__powerpc__)
-    /* On PowerPC, the current TEB is in the gpr13 register */
-# ifdef __APPLE__
-    __asm__ __volatile__("mr r13, %0" : : "r" (info->teb_base));
-# else
-    __asm__ __volatile__("mr 2, %0" : : "r" (info->teb_base));
-# endif
-#elif defined(__ALPHA__)
-    /* FIXME: On Alpha, the current TEB is not accessible to user-space */
-/*    __asm__ __volatile__();*/
-#else
-# error You must implement init_current_teb for your platform
-#endif
 
     /* set pid and tid */
     info->pid = getpid();
-#ifdef HAVE__LWP_SELF
-    info->tid = _lwp_self();
-#else
     info->tid = -1;
-#endif
 }
 
 
@@ -338,29 +299,7 @@ static void init_current_teb( struct wine_pthread_thread_info *info )
 static void *get_current_teb(void)
 {
     void *ret;
-
-#ifdef __i386__
     __asm__( ".byte 0x64\n\tmovl 0x18,%0" : "=r" (ret) );
-#elif defined(HAVE__LWP_CREATE)
-    ret = _lwp_getprivate();
-#elif defined(__powerpc__)
-# ifdef __APPLE__
-    __asm__( "mr %0,r13" : "=r" (ret) );
-# else
-    __asm__( "mr %0,2" : "=r" (ret) );
-# endif
-#elif defined(__ALPHA__)
-    /* 0x00ab is the PAL opcode for rdteb */
-    __asm__( "lda $30,8($30)\n\t"
-             "stq $0,0($30)\n\t"
-             "call_pal 0x00ab\n\t"
-             "mov $0,%0\n\t"
-             "ldq $0,0($30)\n\t"
-             "lda $30,-8($30)" : "=r" (ret) );
-#else
-# error get_current_teb not defined for this architecture
-#endif  /* __i386__ */
-
     return ret;
 }
 
@@ -379,9 +318,6 @@ static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info
  */
 static void DECLSPEC_NORETURN abort_thread( long status )
 {
-#ifdef HAVE__LWP_CREATE
-    _lwp_exit();
-#endif
     _exit( status );
 }
 

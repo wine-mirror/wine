@@ -932,12 +932,6 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
-/* Define to 1 if you have the `_lwp_create' function. */
-#undef HAVE__LWP_CREATE
-
-/* Define to 1 if you have the `_lwp_self' function. */
-#undef HAVE__LWP_SELF
-
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 
