@@ -1641,6 +1641,7 @@ dlls/imaadp32.acm/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/infosoft/Makefile
+dlls/infosoft/tests/Makefile
 dlls/inseng/Makefile
 dlls/iphlpapi/Makefile
 dlls/iphlpapi/tests/Makefile
