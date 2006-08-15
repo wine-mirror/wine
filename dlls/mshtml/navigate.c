@@ -309,9 +309,19 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
 
-    if(This->nslistener)
+    if(This->nslistener) {
         nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
                 This->nscontext, NS_OK);
+
+        if(This->nschannel->load_group) {
+            nsresult nsres;
+
+            nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
+                    (nsIRequest*)NSCHANNEL(This->nschannel), NULL, NS_OK);
+            if(NS_FAILED(nsres))
+                ERR("RemoveRequest failed: %08lx\n", nsres);
+        }
+    }
 
     return S_OK;
 }
