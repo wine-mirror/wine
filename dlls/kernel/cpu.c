@@ -779,6 +779,16 @@ VOID WINAPI GetSystemInfo(
 
 
 /***********************************************************************
+ * 			GetNativeSystemInfo            	[KERNEL32.@]
+ */
+VOID WINAPI GetNativeSystemInfo(
+    LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
+{
+    FIXME("(%p) using GetSystemInfo()\n", si);
+    GetSystemInfo(si); 
+}
+
+/***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNEL32.@]
  *
  * Determine if the cpu supports a given feature.
