@@ -474,9 +474,17 @@ enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path )
     if (basename != module+1 && ((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
         goto done;
 
+    /* if loading the main exe with an explicit path, try native first */
+    if (!app_name && basename != module+1)
+    {
+        ret = LO_NATIVE_BUILTIN;
+        TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
+        goto done;
+    }
+
     /* and last the hard-coded default */
     ret = LO_DEFAULT;
-    TRACE( "got hardcoded default %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
+    TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
 
  done:
     RtlFreeHeap( GetProcessHeap(), 0, module );
