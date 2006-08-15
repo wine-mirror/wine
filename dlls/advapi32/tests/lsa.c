@@ -100,8 +100,10 @@ static void test_lsa(void)
             pLsaFreeMemory((LPVOID)account_domain_info);
         }
 
+        /* This isn't supported in NT4 */
         status = pLsaQueryInformationPolicy(handle, PolicyDnsDomainInformation, (PVOID*)&dns_domain_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER,
+           "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08lx\n", status);
         if (status == STATUS_SUCCESS) {
             ok(IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL), "DomainGUID should be GUID_NULL on local computer\n");
             ok(dns_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
