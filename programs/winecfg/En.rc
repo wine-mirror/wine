@@ -70,8 +70,7 @@ BEGIN
     		    IDC_STATIC,15,37,228,80
     CONTROL	    "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
     
-    /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
+    LTEXT           "You can either choose to have all Windows applications confined to a single window acting as a virtual desktop, or to have them behave like your other applications.",
                     IDC_STATIC,15,125,228,28
     LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
