@@ -30,6 +30,9 @@ static const char *get_relative_path( const char *from, const char *dest, unsign
 #define DIR_END(p)  (*(p) == 0 || *(p) == '/')
     const char *start;
 
+    /* a path of "." is equivalent to an empty path */
+    if (!strcmp( from, "." )) from = "";
+
     *dotdots = 0;
     for (;;)
     {
