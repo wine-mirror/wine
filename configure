@@ -740,12 +740,12 @@ LIBEXT
 IMPLIBEXT
 DLLTOOL
 DLLWRAP
-LDEXECFLAGS
-LDEXERPATH
-LDDLLRPATH
 COREFOUNDATIONLIB
 IOKITLIB
+LDEXECFLAGS
 COREAUDIO
+LDEXERPATH
+LDDLLRPATH
 CROSSTEST
 CROSSCC
 CROSSWINDRES
@@ -15278,10 +15278,33 @@ fi
         WIN16_FILES=""
     WIN16_INSTALL=""
     ;;
+  darwin*|macosx*)
+    DLLEXT=".so"
+    LIBEXT="dylib"
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-bundle -multiply_defined suppress"
+    LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
+    STRIP="$STRIP -u -r"
+        COREFOUNDATIONLIB="-framework CoreFoundation"
+
+    IOKITLIB="-framework IOKit -framework CoreFoundation"
+
+    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"
+
+    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+    then
+                COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices"
+
+    fi
+    case $host_cpu in
+      *powerpc*)
+        LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"          ;;
+    esac
+    ;;
   *)
-      DLLFLAGS="$DLLFLAGS -fPIC"
-      DLLEXT=".so"
-      { echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    DLLEXT=".so"
+    { echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
 echo $ECHO_N "checking whether we can build a GNU style ELF dll... $ECHO_C" >&6; }
 if test "${ac_cv_c_dll_gnuelf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15339,11 +15362,11 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_dll_gnuelf" >&5
 echo "${ECHO_T}$ac_cv_c_dll_gnuelf" >&6; }
-      if test "$ac_cv_c_dll_gnuelf" = "yes"
-      then
-        LDSHARED="\$(CC) -shared"
-        LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-        { echo "$as_me:$LINENO: checking whether the linker accepts soname" >&5
+    if test "$ac_cv_c_dll_gnuelf" = "yes"
+    then
+      LDSHARED="\$(CC) -shared"
+      LDDLLFLAGS="-shared -Wl,-Bsymbolic"
+      { echo "$as_me:$LINENO: checking whether the linker accepts soname" >&5
 echo $ECHO_N "checking whether the linker accepts soname... $ECHO_C" >&6; }
 if test "${ac_cv_c_sonames+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15413,11 +15436,11 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_sonames" >&5
 echo "${ECHO_T}$ac_cv_c_sonames" >&6; }
-        if test "$ac_cv_c_sonames" = "yes"
-        then
-          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-        else
-          { echo "$as_me:$LINENO: checking check to see if -h soname is an alternate" >&5
+      if test "$ac_cv_c_sonames" = "yes"
+      then
+        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+      else
+        { echo "$as_me:$LINENO: checking check to see if -h soname is an alternate" >&5
 echo $ECHO_N "checking check to see if -h soname is an alternate... $ECHO_C" >&6; }
 if test "${ac_cv_c_h_sonames+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15487,13 +15510,13 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_h_sonames" >&5
 echo "${ECHO_T}$ac_cv_c_h_sonames" >&6; }
-          if test "$ac_cv_c_h_sonames" = "yes"
-          then
-            LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
-          fi
+        if test "$ac_cv_c_h_sonames" = "yes"
+        then
+          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
         fi
+      fi
 
-        { echo "$as_me:$LINENO: checking whether the linker accepts -z defs" >&5
+      { echo "$as_me:$LINENO: checking whether the linker accepts -z defs" >&5
 echo $ECHO_N "checking whether the linker accepts -z defs... $ECHO_C" >&6; }
 if test "${ac_cv_c_dll_zdefs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15563,12 +15586,12 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_dll_zdefs" >&5
 echo "${ECHO_T}$ac_cv_c_dll_zdefs" >&6; }
-        if test "$ac_cv_c_dll_zdefs" = "yes"
-        then
-          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
-        fi
+      if test "$ac_cv_c_dll_zdefs" = "yes"
+      then
+        LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+      fi
 
-        { echo "$as_me:$LINENO: checking whether the linker accepts -init and -fini" >&5
+      { echo "$as_me:$LINENO: checking whether the linker accepts -init and -fini" >&5
 echo $ECHO_N "checking whether the linker accepts -init and -fini... $ECHO_C" >&6; }
 if test "${ac_cv_c_dll_init_fini+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15638,18 +15661,18 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_dll_init_fini" >&5
 echo "${ECHO_T}$ac_cv_c_dll_init_fini" >&6; }
-        if test "$ac_cv_c_dll_init_fini" = "yes"
-        then
-          LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
-        fi
+      if test "$ac_cv_c_dll_init_fini" = "yes"
+      then
+        LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
+      fi
 
-        { echo "$as_me:$LINENO: checking whether the linker accepts version scripts" >&5
+      { echo "$as_me:$LINENO: checking whether the linker accepts version scripts" >&5
 echo $ECHO_N "checking whether the linker accepts version scripts... $ECHO_C" >&6; }
 if test "${ac_cv_c_ld_version_scripts+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   echo '{ global: *; };' >conftest.map
-           ac_wine_try_cflags_saved=$CFLAGS
+         ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS -fPIC -shared -Wl,--version-script=conftest.map"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -15711,16 +15734,16 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-           rm -f conftest.map
+         rm -f conftest.map
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_ld_version_scripts" >&5
 echo "${ECHO_T}$ac_cv_c_ld_version_scripts" >&6; }
-        if test "$ac_cv_c_ld_version_scripts" = "yes"
-        then
-          LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
-        fi
+      if test "$ac_cv_c_ld_version_scripts" = "yes"
+      then
+        LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
+      fi
 
-        { echo "$as_me:$LINENO: checking whether the linker accepts --export-dynamic" >&5
+      { echo "$as_me:$LINENO: checking whether the linker accepts --export-dynamic" >&5
 echo $ECHO_N "checking whether the linker accepts --export-dynamic... $ECHO_C" >&6; }
 if test "${ac_cv_c_export_dynamic+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15790,13 +15813,13 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_export_dynamic" >&5
 echo "${ECHO_T}$ac_cv_c_export_dynamic" >&6; }
-        if test "$ac_cv_c_export_dynamic" = "yes"
-        then
-          LDEXECFLAGS="-Wl,--export-dynamic"
+      if test "$ac_cv_c_export_dynamic" = "yes"
+      then
+        LDEXECFLAGS="-Wl,--export-dynamic"
 
-        fi
+      fi
 
-        { echo "$as_me:$LINENO: checking whether the linker accepts --rpath" >&5
+      { echo "$as_me:$LINENO: checking whether the linker accepts --rpath" >&5
 echo $ECHO_N "checking whether the linker accepts --rpath... $ECHO_C" >&6; }
 if test "${ac_cv_ld_rpath+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15866,17 +15889,17 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_ld_rpath" >&5
 echo "${ECHO_T}$ac_cv_ld_rpath" >&6; }
-        if test "$ac_cv_ld_rpath" = "yes"
-        then
-          LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+      if test "$ac_cv_ld_rpath" = "yes"
+      then
+        LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
 
-          LDDLLRPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"
+        LDDLLRPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"
 
-        fi
+      fi
 
-        case $host_cpu in
-          *i[3456789]86* | x86_64)
-            { echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
+      case $host_cpu in
+        *i[3456789]86* | x86_64)
+          { echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
 echo $ECHO_N "checking whether we can relocate the executable to 0x7bf00000... $ECHO_C" >&6; }
 if test "${ac_cv_ld_reloc_exec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -15946,15 +15969,15 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_ld_reloc_exec" >&5
 echo "${ECHO_T}$ac_cv_ld_reloc_exec" >&6; }
-            if test "$ac_cv_ld_reloc_exec" = "yes"
-            then
-              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
-            fi
-            ;;
-        esac
+          if test "$ac_cv_ld_reloc_exec" = "yes"
+          then
+            LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
+          fi
+          ;;
+      esac
 
-      else
-        { echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
+    else
+      { echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
 echo $ECHO_N "checking whether we can build a UnixWare (Solaris) dll... $ECHO_C" >&6; }
 if test "${ac_cv_c_dll_unixware+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -16012,96 +16035,13 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_dll_unixware" >&5
 echo "${ECHO_T}$ac_cv_c_dll_unixware" >&6; }
-        if test "$ac_cv_c_dll_unixware" = "yes"
-        then
-          LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-          LDDLLFLAGS="-Wl,-G,-B,symbolic"
+      if test "$ac_cv_c_dll_unixware" = "yes"
+      then
+        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+        LDDLLFLAGS="-Wl,-G,-B,symbolic"
 
-        else
-          { echo "$as_me:$LINENO: checking whether we can build a Mach-O (Mac OS X/Darwin) dll" >&5
-echo $ECHO_N "checking whether we can build a Mach-O (Mac OS X/Darwin) dll... $ECHO_C" >&6; }
-if test "${ac_cv_c_dll_macho+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -bundle"
-cat >conftest.$ac_ext <<_ACEOF
-void myfunc() {}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_dll_macho="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_c_dll_macho="no"
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_dll_macho" >&5
-echo "${ECHO_T}$ac_cv_c_dll_macho" >&6; }
-          if test "$ac_cv_c_dll_macho" = "yes"
-          then
-            LIBEXT="dylib"
-            LDDLLFLAGS="-bundle -multiply_defined suppress"
-            LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
-            STRIP="$STRIP -u -r"
-                        COREFOUNDATIONLIB="-framework CoreFoundation"
-
-            IOKITLIB="-framework IOKit -framework CoreFoundation"
-
-            LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"
-
-	    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
-            then
-				COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices"
-
-	    fi
-            case $host_cpu in
-              *powerpc*)
-                CFLAGS="$CFLAGS -ffixed-r13"
-                LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"
-                ;;
-            esac
-
-          else
-            { echo "$as_me:$LINENO: checking whether we can build an HP-UX dll" >&5
+      else
+        { echo "$as_me:$LINENO: checking whether we can build an HP-UX dll" >&5
 echo $ECHO_N "checking whether we can build an HP-UX dll... $ECHO_C" >&6; }
 if test "${ac_cv_c_dll_hpux+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -16159,16 +16099,15 @@ CFLAGS=$ac_wine_try_cflags_saved
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_dll_hpux" >&5
 echo "${ECHO_T}$ac_cv_c_dll_hpux" >&6; }
-            if test "$ac_cv_c_dll_hpux" = "yes"
-            then
-              LIBEXT="sl"
-              DLLEXT=".sl"
-              LDDLLFLAGS="-shared -fPIC"
-              LDSHARED="\$(CC) -shared"
-            fi
-          fi
+        if test "$ac_cv_c_dll_hpux" = "yes"
+        then
+          LIBEXT="sl"
+          DLLEXT=".sl"
+          LDDLLFLAGS="-shared -fPIC"
+          LDSHARED="\$(CC) -shared"
         fi
       fi
+    fi
 
         CROSSTEST=""
 
@@ -25086,12 +25025,12 @@ LIBEXT!$LIBEXT$ac_delim
 IMPLIBEXT!$IMPLIBEXT$ac_delim
 DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
-LDEXECFLAGS!$LDEXECFLAGS$ac_delim
-LDEXERPATH!$LDEXERPATH$ac_delim
-LDDLLRPATH!$LDDLLRPATH$ac_delim
 COREFOUNDATIONLIB!$COREFOUNDATIONLIB$ac_delim
 IOKITLIB!$IOKITLIB$ac_delim
+LDEXECFLAGS!$LDEXECFLAGS$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
+LDEXERPATH!$LDEXERPATH$ac_delim
+LDDLLRPATH!$LDDLLRPATH$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
 CROSSCC!$CROSSCC$ac_delim
 CROSSWINDRES!$CROSSWINDRES$ac_delim

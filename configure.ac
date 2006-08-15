@@ -1031,134 +1031,130 @@ case $host_os in
     WIN16_FILES=""
     WIN16_INSTALL=""
     ;;
+  darwin*|macosx*)
+    DLLEXT=".so"
+    LIBEXT="dylib"
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-bundle -multiply_defined suppress"
+    LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
+    STRIP="$STRIP -u -r"
+    dnl declare needed frameworks
+    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
+    AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+    AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"])
+    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+    then
+        dnl CoreServices needed by AudioUnit
+        AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices")
+    fi
+    case $host_cpu in
+      *powerpc*)
+        LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
+        ;;
+    esac
+    ;;
   *)
-      DLLFLAGS="$DLLFLAGS -fPIC"
-      DLLEXT=".so"
-      AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
-          [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
-                                ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
-      if test "$ac_cv_c_dll_gnuelf" = "yes"
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    DLLEXT=".so"
+    AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
+        [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
+                              ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
+    if test "$ac_cv_c_dll_gnuelf" = "yes"
+    then
+      LDSHARED="\$(CC) -shared"
+      LDDLLFLAGS="-shared -Wl,-Bsymbolic"
+      AC_CACHE_CHECK([whether the linker accepts soname], ac_cv_c_sonames,
+        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
+                         ac_cv_c_sonames="yes",ac_cv_c_sonames="no")])
+      if test "$ac_cv_c_sonames" = "yes"
       then
-        LDSHARED="\$(CC) -shared"
-        LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-        AC_CACHE_CHECK([whether the linker accepts soname], ac_cv_c_sonames,
-          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
-                           ac_cv_c_sonames="yes",ac_cv_c_sonames="no")])
-        if test "$ac_cv_c_sonames" = "yes"
-        then
-          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-        else
-          AC_CACHE_CHECK([check to see if -h soname is an alternate], ac_cv_c_h_sonames,
-            [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
-                             ac_cv_c_h_sonames="yes",ac_cv_c_h_sonames="no")])
-          if test "$ac_cv_c_h_sonames" = "yes"
-          then
-            LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
-          fi
-        fi
-
-        AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
-          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
-                           ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
-        if test "$ac_cv_c_dll_zdefs" = "yes"
-        then
-          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
-        fi
-
-        AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
-          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
-                           ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")])
-        if test "$ac_cv_c_dll_init_fini" = "yes"
-        then
-          LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
-        fi
-
-        AC_CACHE_CHECK([whether the linker accepts version scripts], ac_cv_c_ld_version_scripts,
-          [echo '{ global: *; };' >conftest.map
-           WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
-                           ac_cv_c_ld_version_scripts="yes",ac_cv_c_ld_version_scripts="no")
-           rm -f conftest.map])
-        if test "$ac_cv_c_ld_version_scripts" = "yes"
-        then
-          LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
-        fi
-
-        AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
-          [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
-                           ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
-        if test "$ac_cv_c_export_dynamic" = "yes"
-        then
-          AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])
-        fi
-
-        AC_CACHE_CHECK([whether the linker accepts --rpath], ac_cv_ld_rpath,
-          [WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                           ac_cv_ld_rpath="yes",ac_cv_ld_rpath="no")])
-        if test "$ac_cv_ld_rpath" = "yes"
-        then
-          AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
-          AC_SUBST(LDDLLRPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"])
-        fi
-
-        case $host_cpu in
-          *i[[3456789]]86* | x86_64)
-            AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,
-              [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
-                               ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
-            if test "$ac_cv_ld_reloc_exec" = "yes"
-            then
-              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
-            fi
-            ;;
-        esac
-
+        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
       else
-        AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
-            [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
-                                  ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
-        if test "$ac_cv_c_dll_unixware" = "yes"
+        AC_CACHE_CHECK([check to see if -h soname is an alternate], ac_cv_c_h_sonames,
+          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
+                           ac_cv_c_h_sonames="yes",ac_cv_c_h_sonames="no")])
+        if test "$ac_cv_c_h_sonames" = "yes"
         then
-          LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-          LDDLLFLAGS="-Wl,-G,-B,symbolic"
-
-        else
-          AC_CACHE_CHECK(whether we can build a Mach-O (Mac OS X/Darwin) dll, ac_cv_c_dll_macho,
-            [WINE_TRY_SHLIB_FLAGS([-bundle], ac_cv_c_dll_macho="yes", ac_cv_c_dll_macho="no")])
-          if test "$ac_cv_c_dll_macho" = "yes"
-          then
-            LIBEXT="dylib"
-            LDDLLFLAGS="-bundle -multiply_defined suppress"
-            LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
-            STRIP="$STRIP -u -r"
-            dnl declare needed frameworks
-            AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
-            AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
-            AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"])
-	    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
-            then
-		dnl CoreServices needed by AudioUnit
-		AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices")
-	    fi
-            case $host_cpu in
-              *powerpc*)
-                CFLAGS="$CFLAGS -ffixed-r13"
-                LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"
-                ;;
-            esac
-
-          else
-            AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
-              [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
-            if test "$ac_cv_c_dll_hpux" = "yes"
-            then
-              LIBEXT="sl"
-              DLLEXT=".sl"
-              LDDLLFLAGS="-shared -fPIC"
-              LDSHARED="\$(CC) -shared"
-            fi
-          fi
+          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
         fi
       fi
+
+      AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
+        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
+                         ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
+      if test "$ac_cv_c_dll_zdefs" = "yes"
+      then
+        LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+      fi
+
+      AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
+        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
+                         ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")])
+      if test "$ac_cv_c_dll_init_fini" = "yes"
+      then
+        LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
+      fi
+
+      AC_CACHE_CHECK([whether the linker accepts version scripts], ac_cv_c_ld_version_scripts,
+        [echo '{ global: *; };' >conftest.map
+         WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
+                         ac_cv_c_ld_version_scripts="yes",ac_cv_c_ld_version_scripts="no")
+         rm -f conftest.map])
+      if test "$ac_cv_c_ld_version_scripts" = "yes"
+      then
+        LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
+      fi
+
+      AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
+        [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
+                         ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
+      if test "$ac_cv_c_export_dynamic" = "yes"
+      then
+        AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])
+      fi
+
+      AC_CACHE_CHECK([whether the linker accepts --rpath], ac_cv_ld_rpath,
+        [WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
+                         ac_cv_ld_rpath="yes",ac_cv_ld_rpath="no")])
+      if test "$ac_cv_ld_rpath" = "yes"
+      then
+        AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
+        AC_SUBST(LDDLLRPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"])
+      fi
+
+      case $host_cpu in
+        *i[[3456789]]86* | x86_64)
+          AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,
+            [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
+                             ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
+          if test "$ac_cv_ld_reloc_exec" = "yes"
+          then
+            LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
+          fi
+          ;;
+      esac
+
+    else
+      AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
+          [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
+                                ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
+      if test "$ac_cv_c_dll_unixware" = "yes"
+      then
+        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+        LDDLLFLAGS="-Wl,-G,-B,symbolic"
+
+      else
+        AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
+          [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
+        if test "$ac_cv_c_dll_hpux" = "yes"
+        then
+          LIBEXT="sl"
+          DLLEXT=".sl"
+          LDDLLFLAGS="-shared -fPIC"
+          LDSHARED="\$(CC) -shared"
+        fi
+      fi
+    fi
 
     dnl Check for cross compiler to build test programs
     AC_SUBST(CROSSTEST,"")
