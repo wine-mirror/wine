@@ -144,8 +144,6 @@ dnl Check for -lresolv for Solaris
 AC_CHECK_FUNCS(inet_aton,,AC_CHECK_LIB(resolv,inet_aton))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
-dnl Check for -lpoll for Mac OS X/Darwin
-AC_CHECK_LIB(poll,poll)
 dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
@@ -1304,6 +1302,7 @@ AC_CHECK_FUNCS(\
 	memmove \
 	mmap \
 	pclose \
+	poll \
 	popen \
 	prctl \
 	pread \
@@ -1332,6 +1331,11 @@ AC_CHECK_FUNCS(\
 	waitpid \
 )
 
+dnl Check for -lpoll for Mac OS X/Darwin
+if test "$ac_cv_func_poll" = no
+then
+    AC_CHECK_LIB(poll,poll,[AC_DEFINE(HAVE_POLL,1) AC_SUBST(LIBPOLL,"-lpoll")])
+fi
 
 dnl **** Check for types ****
 

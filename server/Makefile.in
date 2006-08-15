@@ -4,6 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
+EXTRALIBS = @LIBPOLL@
 
 C_SRCS = \
 	atom.c \

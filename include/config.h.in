@@ -320,9 +320,6 @@
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
 
-/* Define to 1 if you have the `poll' library (-lpoll). */
-#undef HAVE_LIBPOLL
-
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
@@ -502,6 +499,9 @@
 
 /* Define to 1 if the system has the type `pid_t'. */
 #undef HAVE_PID_T
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
