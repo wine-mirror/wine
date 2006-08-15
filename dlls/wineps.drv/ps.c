@@ -231,8 +231,7 @@ DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
 }
 
 
-INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
-			 char *invocation)
+static INT PSDRV_WriteFeature(HANDLE16 hJob, LPCSTR feature, LPCSTR value, LPSTR invocation)
 {
 
     char *buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psbeginfeature) +
