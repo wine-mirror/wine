@@ -1214,7 +1214,9 @@ static void test_FindFirstFileA(void)
     handle = FindFirstFileA(buffer2, &search_results);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
-    ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
+    todo_wine {
+        ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    }
 
     /* try FindFirstFileA on "C:\foo\bar.txt" */
     SetLastError( 0xdeadbeaf );
