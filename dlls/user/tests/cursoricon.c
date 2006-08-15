@@ -29,8 +29,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, LONG copyWidth, LONG copyHeight,
-                                  LONG expectedWidth, LONG expectedHeight, WORD expectedDepth, BOOL dibExpected)
+static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, INT copyWidth, INT copyHeight,
+                                  INT expectedWidth, INT expectedHeight, WORD expectedDepth, BOOL dibExpected)
 {
     HBITMAP copy;
     BITMAP origBitmap;
@@ -42,7 +42,7 @@ static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, LONG copyWidth, LON
     ok(copy != NULL, "CopyImage() failed\n");
     if (copy != NULL)
     {
-        GetObject(bitmap, sizeof(origBitmap), &origBitmap) != 0, 
+        GetObject(bitmap, sizeof(origBitmap), &origBitmap);
         GetObject(copy, sizeof(copyBitmap), &copyBitmap);
         orig_is_dib = (origBitmap.bmBits != NULL);
         copy_is_dib = (copyBitmap.bmBits != NULL);
@@ -72,11 +72,11 @@ static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, LONG copyWidth, LON
              && (copyBitmap.bmWidth == expectedWidth)
              && (copyBitmap.bmHeight == expectedHeight)
              && (copyBitmap.bmBitsPixel == expectedDepth)),
-             "CopyImage ((%s, %ldx%ld, %u bpp), %ld, %ld, %#x): Expected (%s, %ldx%ld, %u bpp), got (%s, %ldx%ld, %u bpp)\n",
-                  orig_is_dib ? "DIB" : "DDB", (long)origBitmap.bmWidth, (long)origBitmap.bmHeight, (unsigned int)origBitmap.bmBitsPixel,
-                  (long)copyWidth, (long)copyHeight, (unsigned int)flags,
-                  dibExpected ? "DIB" : "DDB", (long)expectedWidth, (long)expectedHeight, (unsigned int)expectedDepth,
-                  copy_is_dib ? "DIB" : "DDB", (long)copyBitmap.bmWidth, (long)copyBitmap.bmHeight, (unsigned int)copyBitmap.bmBitsPixel);
+             "CopyImage ((%s, %dx%d, %u bpp), %d, %d, %#x): Expected (%s, %dx%d, %u bpp), got (%s, %dx%d, %u bpp)\n",
+                  orig_is_dib ? "DIB" : "DDB", origBitmap.bmWidth, origBitmap.bmHeight, origBitmap.bmBitsPixel,
+                  copyWidth, copyHeight, flags,
+                  dibExpected ? "DIB" : "DDB", expectedWidth, expectedHeight, expectedDepth,
+                  copy_is_dib ? "DIB" : "DDB", copyBitmap.bmWidth, copyBitmap.bmHeight, copyBitmap.bmBitsPixel);
 
         DeleteObject(copy);
     }
