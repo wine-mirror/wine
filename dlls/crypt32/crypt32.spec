@@ -18,7 +18,7 @@
 @ stdcall CertControlStore(long long long ptr)
 @ stdcall CertCreateCRLContext(long ptr long)
 @ stdcall CertCreateCTLContext(long ptr long)
-@ stub CertCreateCertificateChainEngine
+@ stdcall CertCreateCertificateChainEngine(ptr ptr)
 @ stdcall CertCreateCertificateContext(long ptr long)
 @ stdcall CertCreateSelfSignCertificate(long ptr long ptr ptr ptr ptr ptr)
 @ stdcall CertDeleteCRLFromStore(ptr)
@@ -45,7 +45,7 @@
 @ stdcall CertFreeCRLContext(ptr)
 @ stdcall CertFreeCTLContext(ptr)
 @ stub CertFreeCertificateChain
-@ stub CertFreeCertificateChainEngine
+@ stdcall CertFreeCertificateChainEngine(ptr)
 @ stdcall CertFreeCertificateContext(ptr)
 @ stdcall CertGetCRLContextProperty(ptr long ptr ptr)
 @ stdcall CertGetCRLFromStore(ptr ptr ptr ptr)
