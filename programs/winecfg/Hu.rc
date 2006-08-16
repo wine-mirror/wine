@@ -221,4 +221,8 @@ BEGIN
     IDS_DLL_NATIVE_BUILTIN  "natív, beépített"
     IDS_DLL_BUILTIN_NATIVE  "beépített, natív"
     IDS_DLL_DISABLED        "letiltva"
+    IDS_DEFAULT_SETTINGS    "Default Settings"
+    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Use global settings"
+    IDS_SELECT_EXECUTABLE   "Select an executable file"
 END

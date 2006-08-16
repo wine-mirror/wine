@@ -227,4 +227,8 @@ BEGIN
     IDS_DLL_NATIVE_BUILTIN  "собствена, вградена"
     IDS_DLL_BUILTIN_NATIVE  "вградена, собствена"
     IDS_DLL_DISABLED        "забранена"
+    IDS_DEFAULT_SETTINGS    "Default Settings"
+    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Use global settings"
+    IDS_SELECT_EXECUTABLE   "Select an executable file"
 END

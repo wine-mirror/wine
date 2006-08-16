@@ -229,4 +229,8 @@ BEGIN
     IDS_DLL_NATIVE_BUILTIN  "네이티브, 내장"
     IDS_DLL_BUILTIN_NATIVE  "내장, 네이티브"
     IDS_DLL_DISABLED        "사용하지 않음"
+    IDS_DEFAULT_SETTINGS    "Default Settings"
+    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Use global settings"
+    IDS_SELECT_EXECUTABLE   "Select an executable file"
 END
