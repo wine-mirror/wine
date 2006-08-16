@@ -616,6 +616,8 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
   int hTest;
   int tmp;
   int curGLXAttr = 0;
+  int nWGLFormats = 0;
+  int fmt_index = 0;
 
   TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues);
   
@@ -630,13 +632,20 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
     return GL_FALSE;
   }
 
+  /* Convert the WGL pixelformat to a GLX one, if this fails then most likely the iPixelFormat isn't supoprted.
+   * We don't have to fail yet as a program can specify an invaled iPixelFormat (lets say 0) if it wants to query
+   * the number of supported WGL formats. Whether the iPixelFormat is valid is handled in the for-loop below. */
+  if(!ConvertPixelFormatWGLtoGLX(display, iPixelFormat, &fmt_index, &nWGLFormats)) {
+    ERR("Unable to convert iPixelFormat %d to a GLX one, expect problems!\n", iPixelFormat);
+  }
+
   for (i = 0; i < nAttributes; ++i) {
     const int curWGLAttr = piAttributes[i];
     TRACE("pAttr[%d] = %x\n", i, curWGLAttr);
     
     switch (curWGLAttr) {
     case WGL_NUMBER_PIXEL_FORMATS_ARB:
-      piValues[i] = nCfgs; 
+      piValues[i] = nWGLFormats; 
       continue ;
 
     case WGL_SUPPORT_OPENGL_ARB:
@@ -661,8 +670,10 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
 
     case WGL_TRANSPARENT_ARB:
       curGLXAttr = GLX_TRANSPARENT_TYPE;
-      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
-      curCfg = cfgs[iPixelFormat - 1];
+      /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
+       * supported WGLFormats and also check if the GLX fmt_index is valid. */
+      if((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs)) goto pix_error;
+      curCfg = cfgs[fmt_index];
       hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
       if (hTest) goto get_error;
       piValues[i] = GL_FALSE;
@@ -671,8 +682,10 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
 
     case WGL_PIXEL_TYPE_ARB:
       curGLXAttr = GLX_RENDER_TYPE;
-      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
-      curCfg = cfgs[iPixelFormat - 1];
+      /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
+       * supported WGLFormats and also check if the GLX fmt_index is valid. */
+      if((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs)) goto pix_error;
+      curCfg = cfgs[fmt_index];
       hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
       if (hTest) goto get_error;
       TRACE("WGL_PIXEL_TYPE_ARB: GLX_RENDER_TYPE = 0x%x\n", tmp);
@@ -688,8 +701,10 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
 
     case WGL_COLOR_BITS_ARB:
       /** see ConvertAttribWGLtoGLX for explain */
-      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
-      curCfg = cfgs[iPixelFormat - 1];
+      /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
+       * supported WGLFormats and also check if the GLX fmt_index is valid. */
+      if((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs)) goto pix_error;
+      curCfg = cfgs[fmt_index];
       hTest = glXGetFBConfigAttrib(display, curCfg, GLX_BUFFER_SIZE, piValues + i);
       if (hTest) goto get_error;
       TRACE("WGL_COLOR_BITS_ARB: GLX_BUFFER_SIZE = %d\n", piValues[i]);
@@ -714,8 +729,10 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
 	continue ;	
       }
       curGLXAttr = GLX_RENDER_TYPE;
-      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
-      curCfg = cfgs[iPixelFormat - 1];
+      /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
+       * supported WGLFormats and also check if the GLX fmt_index is valid. */
+      if((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs)) goto pix_error;
+      curCfg = cfgs[fmt_index];
       hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
       if (hTest) goto get_error;
       if (GLX_COLOR_INDEX_BIT == tmp) {
@@ -779,8 +796,10 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
     }
     
     if (0 != curGLXAttr) {
-      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
-      curCfg = cfgs[iPixelFormat - 1];
+      /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
+       * supported WGLFormats and also check if the GLX fmt_index is valid. */
+      if((iPixelFormat > 0) && ((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs))) goto pix_error;
+      curCfg = cfgs[fmt_index];
       hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, piValues + i);
       if (hTest) goto get_error;
     } else { 
@@ -815,6 +834,10 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
   int gl_test = 0;
   int attribs[256];
   int nAttribs = 0;
+  GLboolean res = FALSE;
+
+  /* We need the visualid to check if the format is suitable */
+  VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
 
   GLXFBConfig* cfgs = NULL;
   int nCfgs = 0;
@@ -825,8 +848,10 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
   int nCfgs_fmt = 0;
   UINT it_fmt;
   int tmp_fmt_id;
+  int tmp_vis_id;
 
   int pfmt_it = 0;
+  int offscreen_index = 1; /* Start at one because we allways have a main visual at iPixelFormat=1 */
 
   TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
   if (NULL != pfAttribFList) {
@@ -840,12 +865,14 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
   }
   PUSH1(attribs, None);
 
+  /* Search for FB configurations matching the requirements in attribs */
   cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
   if (NULL == cfgs) {
     WARN("Compatible Pixel Format not found\n");
     return GL_FALSE;
   }
 
+  /* Get a list of all FB configurations */
   cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
   if (NULL == cfgs_fmt) {
     ERR("Failed to get All FB Configs\n");
@@ -853,21 +880,60 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
     return GL_FALSE;
   }
 
-  for (it = 0; it < nMaxFormats && it < nCfgs; ++it) {
+  /* Loop through all matching formats and check if they are suitable.
+   * Note that this function should at max return nMaxFormats different formats */
+  for (it = 0; pfmt_it < nMaxFormats && it < nCfgs; ++it) {
     gl_test = glXGetFBConfigAttrib(display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
       continue ;
     }
+
+    gl_test = glXGetFBConfigAttrib(display, cfgs[it], GLX_VISUAL_ID, &tmp_vis_id);
+    if (gl_test) {
+      ERR("Failed to retrieve VISUAL_ID from GLXFBConfig, expect problems.\n");
+      continue ;
+    }
+
+    /* When the visualid of the GLXFBConfig matches the one of the main visual we have found our
+     * only supported onscreen rendering format. This format has a WGL index of 1. */
+    if(tmp_vis_id == visualid) {
+      piFormats[pfmt_it] = 1;
+      ++pfmt_it;
+      res = GL_TRUE;
+      TRACE("Found compatible GLXFBConfig 0x%x with WGL index 1\n", fmt_id);
+      continue;
+    }
+    /* Only continue with this loop for offscreen rendering formats (visualid = 0) */
+    else if(tmp_vis_id != 0) {
+      TRACE("Discarded GLXFBConfig %0x with VisualID %x because the visualid is not the same as our main visual (%lx)\n", fmt_id, tmp_vis_id, visualid);
+      continue;
+    }
+
+    /* Find the index of the found format in the whole format table */
     for (it_fmt = 0; it_fmt < nCfgs_fmt; ++it_fmt) {
       gl_test = glXGetFBConfigAttrib(display, cfgs_fmt[it_fmt], GLX_FBCONFIG_ID, &tmp_fmt_id);
       if (gl_test) {
 	ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
 	continue ;
       }
+      gl_test = glXGetFBConfigAttrib(display, cfgs[it], GLX_VISUAL_ID, &tmp_vis_id);
+      if (gl_test) {
+        ERR("Failed to retrieve VISUAL_ID from GLXFBConfig, expect problems.\n");
+        continue ;
+      }
+      /* The format of Wine's main visual is stored at index 1 of our WGL format table.
+       * At higher indices we store offscreen rendering formats (visualid=0). Below we calculate
+       * the index of the offscreen format. We do this by counting the number of offscreen formats
+       * which we see upto reaching our target format. */ 
+      if(tmp_vis_id == 0)
+        offscreen_index++;
+
+      /* We have found the format in the table (note the format is offscreen) */
       if (fmt_id == tmp_fmt_id) {
 	int tmp;
-	piFormats[pfmt_it] = it_fmt + 1;
+
+	piFormats[pfmt_it] = offscreen_index + 1; /* Add 1 to get a one-based index */ 
 	++pfmt_it;
 	glXGetFBConfigAttrib(display, cfgs_fmt[it_fmt], GLX_ALPHA_SIZE, &tmp);
 	TRACE("ALPHA_SIZE of FBCONFIG_ID(%d/%d) found as '%d'\n", it_fmt + 1, nCfgs_fmt, tmp);
@@ -897,13 +963,14 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   int nCfgs = 0;
   int attribs[256];
   unsigned nAttribs = 0;
+  int fmt_index = 0;
 
   TRACE("(%p, %d, %d, %d, %p)\n", hdc, iPixelFormat, iWidth, iHeight, piAttribList);
 
   if (0 >= iPixelFormat) {
     ERR("(%p): unexpected iPixelFormat(%d) <= 0, returns NULL\n", hdc, iPixelFormat);
     SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-    return NULL; /* unespected error */
+    return NULL; /* unexpected error */
   }
 
   cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
@@ -911,24 +978,25 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   if (NULL == cfgs || 0 == nCfgs) {
     ERR("(%p): Cannot get FB Configs for iPixelFormat(%d), returns NULL\n", hdc, iPixelFormat);
     SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-    return NULL; /* unespected error */
+    return NULL; /* unexpected error */
   }
-  if (nCfgs < iPixelFormat) {
+
+  /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
+  if(!ConvertPixelFormatWGLtoGLX(display, iPixelFormat, &fmt_index, &nCfgs)) {
     ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
     SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-    goto create_failed; /* unespected error */
+    goto create_failed; /* unexpected error */
   }
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLPBuffer));
   if (NULL == object) {
     SetLastError(ERROR_NO_SYSTEM_RESOURCES);
-    goto create_failed; /* unespected error */
+    goto create_failed; /* unexpected error */
   }
   object->hdc = hdc;
   object->display = display;
   object->width = iWidth;
   object->height = iHeight;
-  object->pixelFormat = iPixelFormat;
 
   nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs, object);
   if (-1 == nAttribs) {
@@ -937,7 +1005,6 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   }
   PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
   PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
-
   while (0 != *piAttribList) {
     int attr_v;
     switch (*piAttribList) {
@@ -1063,12 +1130,11 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   }
 
   PUSH1(attribs, None);
-
-  object->drawable = glXCreatePbuffer(display, cfgs[iPixelFormat - 1], attribs);
+  object->drawable = glXCreatePbuffer(display, cfgs[fmt_index], attribs);
   TRACE("new Pbuffer drawable as %p\n", (void*) object->drawable);
   if (!object->drawable) {
     SetLastError(ERROR_NO_SYSTEM_RESOURCES);
-    goto create_failed; /* unespected error */
+    goto create_failed; /* unexpected error */
   }
   TRACE("->(%p)\n", object);
 
@@ -1092,7 +1158,10 @@ HDC WINAPI wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
     return NULL;
   }
   hDC = CreateCompatibleDC(object->hdc);
-  SetPixelFormat(hDC, object->pixelFormat, NULL);
+
+  /* The function wglGetPbufferDCARB returns a DC to which the pbuffer can be connected.
+   * We only support one onscreen rendering format (the one from the main visual), so use that. */
+  SetPixelFormat(hDC, 1, NULL);
   set_drawable(hDC, object->drawable); /* works ?? */
   TRACE("(%p)->(%p)\n", hPbuffer, hDC);
   return hDC;

@@ -200,6 +200,67 @@ inline static Font get_font( HDC hdc )
     return font;
 }
 
+/* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
+ * In our WGL implementation we only support a subset of these formats namely the format of
+ * Wine's main visual and offscreen formats (if they are available).
+ * This function converts a WGL format to its corresponding GLX one. It returns the index (zero-based)
+ * into the GLX FB config table and it returns the number of supported WGL formats in fmt_count.
+ */
+BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_index, int *fmt_count)
+{
+  int res = FALSE;
+  int i = 0;
+  GLXFBConfig* cfgs = NULL;
+  int nCfgs = 0;
+  int tmp_fmt_id = 0;
+  int tmp_vis_id = 0;
+  int nFormats = 1; /* Start at 1 as we allways have a main visual */
+  VisualID visualid = 0;
+
+  /* Request to look up the format of the main visual when iPixelFormat = 1 */
+  if(iPixelFormat == 1) visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+
+  /* As mentioned in various parts of the code only the format of the main visual can be used for onscreen rendering.
+   * Next to this format there are also so called offscreen rendering formats (used for pbuffers) which can be supported
+   * because they don't need a visual. Below we use glXGetFBConfigs instead of glXChooseFBConfig to enumerate the fb configurations
+   * bas this call lists both types of formats instead of only onscreen ones. */
+  cfgs = wine_glx.p_glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
+  if (NULL == cfgs || 0 == nCfgs) {
+    ERR("glXChooseFBConfig returns NULL\n");
+    if(cfgs != NULL) XFree(cfgs);
+    return FALSE;
+  }
+
+  /* Find the requested offscreen format and count the number of offscreen formats */
+  for(i=0; i<nCfgs; i++) {
+    wine_glx.p_glXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+    wine_glx.p_glXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
+
+    /* We are looking up the GLX index of our main visual and have found it :) */
+    if(iPixelFormat == 1 && visualid == tmp_vis_id) {
+      *fmt_index = i;
+      TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", tmp_fmt_id, *fmt_index, tmp_vis_id);
+      res = TRUE;
+    }
+    /* We found an offscreen rendering format :) */
+    else if(tmp_vis_id == 0) {
+      nFormats++;
+      TRACE("Checking offscreen format FBCONFIG_ID 0x%x at index %d\n", tmp_fmt_id, i);
+
+      if(iPixelFormat == nFormats) {
+        *fmt_index = i;
+        TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, iPixelFormat, i);
+        res = TRUE;
+      }
+    }
+  }
+  *fmt_count = nFormats;
+  TRACE("Number of offscreen formats: %d; returning index: %d\n", *fmt_count, *fmt_index);
+
+  if(cfgs != NULL) XFree(cfgs);
+
+  return res;
+}
 
 /***********************************************************************
  *		wglCreateContext (OPENGL32.@)
@@ -207,26 +268,21 @@ inline static Font get_font( HDC hdc )
 HGLRC WINAPI wglCreateContext(HDC hdc)
 {
   Wine_GLContext *ret;
-  int num;
-  XVisualInfo template;
-  XVisualInfo *vis = NULL;
   Display *display = get_display( hdc );
-  int hdcPF = GetPixelFormat(hdc);
+  int hdcPF = 1; /* We can only use the Wine's main visual which has an index of 1 */
+  int tmp = 0;
+  int fmt_index = 0;
   GLXFBConfig cur_cfg;
 
   TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
   /* First, get the visual in use by the X11DRV */
   if (!display) return 0;
-  template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
-  vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
 
-  if (vis == NULL) {
-    ERR("NULL visual !!!\n");
-    /* Need to set errors here */
-    return NULL;
-  }
-  if (0 >= hdcPF) {
+  /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the correspondig GLX format.
+   * If this fails something is very wrong on the system. */
+  if(!ConvertPixelFormatWGLtoGLX(display, hdcPF, &tmp, &fmt_index)) {
+    ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
     SetLastError(ERROR_INVALID_PIXEL_FORMAT);
     return NULL;
   }
@@ -242,12 +298,12 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
       SetLastError(ERROR_INVALID_PIXEL_FORMAT);
       return NULL;
     }
-    if (nCfgs_fmt < hdcPF) {
-      ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, hdcPF, nCfgs_fmt);
+    if (nCfgs_fmt < fmt_index) {
+      ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, fmt_index, nCfgs_fmt);
       SetLastError(ERROR_INVALID_PIXEL_FORMAT);
       return NULL;
     }
-    cur_cfg = cfgs_fmt[hdcPF - 1];
+    cur_cfg = cfgs_fmt[fmt_index];
     gl_test = wine_glx.p_glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");

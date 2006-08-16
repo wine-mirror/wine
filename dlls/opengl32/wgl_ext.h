@@ -29,6 +29,9 @@ typedef void* (*glXGetProcAddressARB_t)(const GLubyte *);
 void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc, const char* disabled_extensions);
 void wgl_ext_finalize_extensions(void);
 
+/* Used to convert between WGL and GLX pixel formats in wglMakeCurrent and some WGL extensions */
+BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_index, int *fmt_count);
+
 typedef struct {
     const char *func_name;
     void *func_address;

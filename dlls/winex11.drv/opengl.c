@@ -172,10 +172,42 @@ sym_not_found:
     return FALSE;
 }
 
-#define TEST_AND_ADD1(t,a) if (t) att_list[att_pos++] = (a)
-#define TEST_AND_ADD2(t,a,b) if (t) { att_list[att_pos++] = (a); att_list[att_pos++] = (b); }
-#define NULL_TEST_AND_ADD2(tv,a,b) att_list[att_pos++] = (a); att_list[att_pos++] = ((tv) == 0 ? 0 : (b))
-#define ADD2(a,b) att_list[att_pos++] = (a); att_list[att_pos++] = (b)
+static BOOL get_fbconfig_from_main_visual(int *fmt_id, int *fmt_index)
+{
+  int nCfgs = 0;
+  int tmp_fmt_id = 0;
+  int tmp_vis_id = 0;
+  int i = 0;
+  GLXFBConfig* cfgs = NULL;
+
+  /* Retrieve the visualid from our main visual */
+  VisualID visualid = XVisualIDFromVisual(visual);
+
+  cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), NULL, &nCfgs);
+  if (NULL == cfgs || 0 == nCfgs) {
+    ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
+    if(cfgs != NULL) XFree(cfgs);
+    return FALSE;
+  }
+
+  /* Walk through all FB configurations to retrieve the FB configuration matching our visual */
+  for(i=0; i<nCfgs; i++) {
+    pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+    if(tmp_vis_id == visualid) {
+      *fmt_id = tmp_fmt_id;
+      *fmt_index = i + 1; /* Use a one based index, iPixelFormat uses that too */
+      TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", *fmt_id, *fmt_index, tmp_vis_id);
+      if(cfgs != NULL) XFree(cfgs);
+      return TRUE;
+    }
+  }
+
+  ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visualid);
+
+  if(cfgs != NULL) XFree(cfgs);
+  return FALSE;
+}
 
 /**
  * X11DRV_ChoosePixelFormat
@@ -184,141 +216,104 @@ sym_not_found:
  */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev, 
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
-  int att_list[64];
-  int att_pos = 0;
-  int att_pos_fac = 0;
   GLXFBConfig* cfgs = NULL;
   int ret = 0;
+  int nCfgs = 0;
+  int fmt_id = 0;
+  int fmt_index = 0;
 
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
   }
-  
+
   if (TRACE_ON(opengl)) {
     TRACE("(%p,%p)\n", physDev, ppfd);
 
     dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
   }
 
-  /* Now, build the request to GLX */
-  
-  if (ppfd->iPixelType == PFD_TYPE_COLORINDEX) {
-    ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
-  }  
-  if (ppfd->iPixelType == PFD_TYPE_RGBA) {
-    ADD2(GLX_RENDER_TYPE, GLX_RGBA_BIT);
-    if (ppfd->dwFlags & PFD_DEPTH_DONTCARE) {
-      ADD2(GLX_DEPTH_SIZE, GLX_DONT_CARE);
-    } else {
-      if (32 == ppfd->cDepthBits) {
-	/**
-	 * for 32 bpp depth buffers force to use 24.
-	 * needed as some drivers don't support 32bpp
-	 */
-	TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, 24);
-      } else {
-	TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
-      }
-    }
-    if (32 == ppfd->cColorBits) {
-      ADD2(GLX_RED_SIZE,   8);
-      ADD2(GLX_GREEN_SIZE, 8);
-      ADD2(GLX_BLUE_SIZE,  8);
-      ADD2(GLX_ALPHA_SIZE, 8);
-    } else {
-      ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
-      /* Some broken apps try to ask for more than 8 bits of alpha */
-      TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, min(ppfd->cAlphaBits,8));
-    }
-  }
-  TEST_AND_ADD2(ppfd->cStencilBits, GLX_STENCIL_SIZE, ppfd->cStencilBits);
-  TEST_AND_ADD2(ppfd->cAuxBuffers,  GLX_AUX_BUFFERS,  ppfd->cAuxBuffers);
-   
-  /* These flags are not supported yet...
-  ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits);
-  */
-
-  /** facultative flags now */
-  att_pos_fac = att_pos;
-  if (ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) {
-    ADD2(GLX_DOUBLEBUFFER, GLX_DONT_CARE);
-  } else {
-    ADD2(GLX_DOUBLEBUFFER, (ppfd->dwFlags & PFD_DOUBLEBUFFER) ? TRUE : FALSE);
-  }
-  if (ppfd->dwFlags & PFD_STEREO_DONTCARE) {
-    ADD2(GLX_STEREO, GLX_DONT_CARE);
-  } else {
-    ADD2(GLX_STEREO, (ppfd->dwFlags & PFD_STEREO) ? TRUE : FALSE);
-  }
-  
-  /** Attributes List End */
-  att_list[att_pos] = None;
-
   wine_tsx11_lock(); 
-  {
-    int nCfgs = 0;
-    int gl_test = 0;
-    int fmt_id;
+  if(!visual) {
+    ERR("Can't get an opengl visual!\n");
+    goto choose_exit;
+  }
 
-    GLXFBConfig* cfgs_fmt = NULL;
-    int nCfgs_fmt = 0;
-    int tmp_fmt_id;
-    UINT it_fmt;
+  /* Get a list containing all supported FB configurations */
+  cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), NULL, &nCfgs);
+  if (NULL == cfgs || 0 == nCfgs) {
+    ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
+    goto choose_exit;
+  }
 
-    cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), att_list, &nCfgs); 
-    /** 
-     * if we have facultative flags and we failed, try without 
-     *  as MSDN said
-     *
-     * see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/opengl/ntopnglr_2qb8.asp
-     */
-    if ((NULL == cfgs || 0 == nCfgs) && att_pos > att_pos_fac) {
-      att_list[att_pos_fac] = None;
-      cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), att_list, &nCfgs); 
-    }
+  /* In case an fbconfig was found, check if it matches to the requirements of the ppfd */
+  if(!get_fbconfig_from_main_visual(&fmt_id, &fmt_index)) {
+    ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visual->visualid);
+  } else {
+    int dwFlags = 0;
+    int iPixelType = 0;
+    int value = 0;
 
-    if (NULL == cfgs || 0 == nCfgs) {
-      ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
-      ret = 0;
-      goto choose_exit;
-    }
-    
-    gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[0], GLX_FBCONFIG_ID, &fmt_id);
-    if (gl_test) {
-      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-      ret = 0;
-      goto choose_exit;
-    }
-    
-    cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
-    if (NULL == cfgs_fmt) {
-      ERR("Failed to get All FB Configs\n");
-      ret = 0;
+    /* Pixel type */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_RENDER_TYPE, &value);
+    if (value & GLX_RGBA_BIT)
+      iPixelType = PFD_TYPE_RGBA;
+    else
+      iPixelType = PFD_TYPE_COLORINDEX;
+
+    if (ppfd->iPixelType != iPixelType) {
       goto choose_exit;
     }
 
-    for (it_fmt = 0; it_fmt < nCfgs_fmt; ++it_fmt) {
-      gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs_fmt[it_fmt], GLX_FBCONFIG_ID, &tmp_fmt_id);
-      if (gl_test) {
-	ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-	XFree(cfgs_fmt);
-	ret = 0;
-	goto choose_exit;
-      }
-      if (fmt_id == tmp_fmt_id) {
-	ret = it_fmt + 1;
-	break ;
+    /* Doublebuffer */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
+    if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE)) {
+      if ((ppfd->dwFlags & PFD_DOUBLEBUFFER) != (dwFlags & PFD_DOUBLEBUFFER)) {
+        goto choose_exit;
       }
     }
-    if (it_fmt == nCfgs_fmt) {
-      ERR("Failed to get valid fmt for FBCONFIG_ID(%d)\n", fmt_id);
-      ret = 0;
+
+    /* Stereo */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
+    if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE)) {
+      if ((ppfd->dwFlags & PFD_STEREO) != (dwFlags & PFD_STEREO)) {
+        goto choose_exit;
+      }
     }
-    XFree(cfgs_fmt);
+
+    /* Alpha bits */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_ALPHA_SIZE, &value);
+    if (ppfd->iPixelType==PFD_TYPE_RGBA && ppfd->cAlphaBits && !value) {
+      goto choose_exit;
+    }
+
+    /* Depth bits */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DEPTH_SIZE, &value);
+    if (ppfd->cDepthBits && !value) {
+      goto choose_exit;
+    }
+
+    /* Stencil bits */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STENCIL_SIZE, &value);
+    if (ppfd->cStencilBits && !value) {
+      goto choose_exit;
+    }
+
+    /* Aux buffers */
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_AUX_BUFFERS, &value);
+    if (ppfd->cAuxBuffers && !value) {
+      goto choose_exit;
+    }
+
+    /* When we pass all the checks we have found a matching format :) */
+    ret = 1;
+    TRACE("Succesfully found a matching mode, returning index: %d\n", ret);
   }
 
 choose_exit:
+  if(!ret)
+    TRACE("No matching mode was found returning 0\n");
+
   if (NULL != cfgs) XFree(cfgs);
   wine_tsx11_unlock();
   return ret;
@@ -358,6 +353,14 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     return 0; /* unespected error */
   }
 
+  /* This function allways reports the total number of supported pixel formats.
+   * At the moment we only support the pixel format corresponding to the main
+   * visual which got created at x11drv initialization. More formats could be
+   * supported if there was a way to recreate x11 windows in x11drv. 
+   * Because we only support one format nCfgs needs to be set to 1.
+   */
+  nCfgs = 1;
+
   if (ppfd == NULL) {
     /* The application is only querying the number of visuals */
     wine_tsx11_lock();
@@ -375,6 +378,12 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   if (nCfgs < iPixelFormat || 1 > iPixelFormat) {
     WARN("unexpected iPixelFormat(%d): not >=1 and <=nFormats(%d), returning NULL\n", iPixelFormat, nCfgs);
     return 0;
+  }
+
+  /* Retrieve the index in the FBConfig table corresponding to the visual ID from the main visual */
+  if(!get_fbconfig_from_main_visual(&value, &iPixelFormat)) {
+      ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
+      return 0;
   }
 
   ret = nCfgs;
@@ -481,6 +490,15 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
+  /* At the moment we only support the pixelformat corresponding to the main
+   * x11drv visual which got created at x11drv initialization. More formats
+   * can be supported if there was a way to recreate x11 windows in x11drv
+   */
+  if(iPixelFormat != 1) {
+    TRACE("Invalid iPixelFormat: %d\n", iPixelFormat);
+    return 0;
+  }
+
   physDev->current_pf = iPixelFormat;
   
   if (TRACE_ON(opengl)) {
@@ -489,6 +507,11 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     GLXFBConfig cur_cfg;
     int value;
     int gl_test = 0;
+
+    if(!get_fbconfig_from_main_visual(&value, &iPixelFormat)) {
+      ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
+      return TRUE; /* Return true because the SetPixelFormat stuff itself passed */
+    }
 
     /*
      * How to test if hdc current drawable is compatible (visual/FBConfig) ?
@@ -530,17 +553,15 @@ static XID create_glxpixmap(X11DRV_PDEVICE *physDev)
     XVisualInfo *vis;
     XVisualInfo template;
     int num;
-    GLXFBConfig *cfgs;
 
     wine_tsx11_lock();
-    cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &num);
-    pglXGetFBConfigAttrib(gdi_display, cfgs[physDev->current_pf - 1], GLX_VISUAL_ID, (int *)&template.visualid);
 
+    /* Retrieve the visualid from our main visual which is the only visual we can use */
+    template.visualid =  XVisualIDFromVisual(visual);
     vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
     ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
     XFree(vis);
-    XFree(cfgs);
     wine_tsx11_unlock(); 
     TRACE("return %lx\n", ret);
     return ret;
