@@ -314,7 +314,7 @@ static void on_remove_app_click(HWND dialog)
     LVITEMW item;
 
     item.iItem = selection;
-    item.mask = LVIF_PARAM | LVIF_TEXT;
+    item.mask = LVIF_PARAM;
 
     WINE_TRACE("selection=%d, section=%s\n", selection, section);
     
