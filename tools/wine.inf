@@ -2123,6 +2123,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,urlmon.dll,1
 
 [FakeDllsSection]
+11,,explorer.exe
 10,,notepad.exe
 10,,regedit.exe
 10,,rundll32.exe
