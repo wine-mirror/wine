@@ -4431,3 +4431,19 @@ UINT WINAPI ZoneComputePaneSize(HWND hwnd)
     FIXME("\n");
     return 0x95;
 }
+
+typedef void (WINAPI *fnSHChangeNotify)(LONG, UINT, LPCVOID, LPCVOID);
+
+void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
+{
+    static fnSHChangeNotify fn;
+    HMODULE hshell32;
+
+    if (!fn)
+    {
+        hshell32 = LoadLibraryA("shell32");
+        if (hshell32)
+            fn = (fnSHChangeNotify) GetProcAddress(hshell32, "SHChangeNotify");
+    }
+    fn(wEventId, uFlags, dwItem1, dwItem2);
+}

@@ -391,7 +391,7 @@
 391 stdcall -noname WNetGetLastErrorWrapW(ptr ptr long ptr long)
 392 stdcall -noname EndDialogWrap(ptr ptr) user32.EndDialog
 393 stdcall @(long ptr long ptr long) user32.CreateDialogIndirectParamW
-394 stdcall @(long ptr long ptr long) user32.CreateDialogIndirectParamA
+394 stdcall -noname SHChangeNotify(long long ptr ptr)
 395 stub -noname MLWinHelpA
 396 stub -noname MLHtmlHelpA
 397 stub -noname MLWinHelpW
