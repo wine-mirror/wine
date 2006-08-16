@@ -128,9 +128,10 @@ static LPTSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
 }
 
 LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
-    LPTSTR parts[2] = {_T(""), _T("")};
-    HKEY hRootKey = NULL;
+    LPTSTR parts[2];
     LPTSTR ret;
+    HKEY hRootKey = NULL;
+
     parts[0] = GetPathRoot(hwndTV, hItem, bFull);
     parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
     ret = CombinePaths((LPCTSTR *)parts, 2);
@@ -139,7 +140,9 @@ LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
 }
 
 LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
-    LPTSTR parts[2] = {_T(""), _T("")}, ret;
+    LPTSTR parts[2];
+    LPTSTR ret;
+
     parts[0] = GetPathRoot(hwndTV, 0, TRUE);
     parts[1] = path;
     ret = CombinePaths((LPCTSTR *)parts, 2);
