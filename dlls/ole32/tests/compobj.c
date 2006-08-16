@@ -73,6 +73,9 @@ static void test_ProgIDFromCLSID(void)
     hr = ProgIDFromCLSID(&CLSID_non_existent, &progid);
     ok(hr == REGDB_E_CLASSNOTREG, "ProgIDFromCLSID returned %08lx\n", hr);
     ok(progid == NULL, "ProgIDFromCLSID returns with progid %p\n", progid);
+
+    hr = ProgIDFromCLSID(&CLSID_CDeviceMoniker, NULL);
+    ok(hr == E_INVALIDARG, "ProgIDFromCLSID should return E_INVALIDARG instead of 0x%08lx\n", hr);
 }
 
 static void test_CLSIDFromProgID(void)
@@ -106,6 +109,10 @@ static void test_CLSIDFromString(void)
     HRESULT hr = CLSIDFromString((LPOLESTR)wszCLSID_CDeviceMoniker, &clsid);
     ok_ole_success(hr, "CLSIDFromString");
     ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
+
+    hr = CLSIDFromString(NULL, &clsid);
+    ok_ole_success(hr, "CLSIDFromString");
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "clsid wasn't equal to CLSID_NULL\n");
 }
 
 static void test_CoCreateInstance(void)
@@ -418,6 +425,35 @@ static void test_CoRegisterPSClsid(void)
     CoUninitialize();
 }
 
+static void test_CoGetPSClsid(void)
+{
+    HRESULT hr;
+    CLSID clsid;
+
+    hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+    ok(hr == CO_E_NOTINITIALIZED,
+       "CoGetPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n",
+       hr);
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+    ok_ole_success(hr, "CoGetPSClsid");
+
+    hr = CoGetPSClsid(&IID_IWineTest, &clsid);
+    ok(hr == REGDB_E_IIDNOTREG,
+       "CoGetPSClsid for random IID returned 0x%08lx instead of REGDB_E_IIDNOTREG\n",
+       hr);
+
+    hr = CoGetPSClsid(&IID_IClassFactory, NULL);
+    ok(hr == E_INVALIDARG,
+       "CoGetPSClsid for null clsid returned 0x%08lx instead of E_INVALIDARG\n",
+       hr);
+
+    CoUninitialize();
+}
+
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -435,4 +471,5 @@ START_TEST(compobj)
     test_CoGetClassObject();
     test_CoRegisterMessageFilter();
     test_CoRegisterPSClsid();
+    test_CoGetPSClsid();
 }

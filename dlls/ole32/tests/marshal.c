@@ -46,20 +46,6 @@ static const IID IID_IWineTest =
     {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
-static void test_CoGetPSClsid(void)
-{
-	HRESULT hr;
-	CLSID clsid;
-
-	hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
-	ok_ole_success(hr, CoGetPSClsid);
-
-	hr = CoGetPSClsid(&IID_IWineTest, &clsid);
-	ok(hr == REGDB_E_IIDNOTREG,
-	   "CoGetPSClsid for random IID returned 0x%08lx instead of REGDB_E_IIDNOTREG\n",
-	   hr);
-}
-
 static void test_cocreateinstance_proxy(void)
 {
     IUnknown *pProxy;
@@ -2280,9 +2266,6 @@ START_TEST(marshal)
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* FIXME: test CoCreateInstanceEx */
-
-    /* helper function tests */
-    test_CoGetPSClsid();
 
     /* lifecycle management and marshaling tests */
     test_no_marshaler();

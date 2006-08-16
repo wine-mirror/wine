@@ -915,6 +915,9 @@ HRESULT WINAPI CLSIDFromString(LPOLESTR idstr, CLSID *id )
 {
     HRESULT ret;
 
+    if (!id)
+        return E_INVALIDARG;
+
     ret = __CLSIDFromString(idstr, id);
     if(ret != S_OK) { /* It appears a ProgID is also valid */
         ret = CLSIDFromProgID(idstr, id);
@@ -1057,21 +1060,27 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
  *
  * PARAMS
  *  clsid        [I] Class ID, as found in registry.
- *  lplpszProgID [O] Associated ProgID.
+ *  ppszProgID [O] Associated ProgID.
  *
  * RETURNS
  *   S_OK
  *   E_OUTOFMEMORY
  *   REGDB_E_CLASSNOTREG if the given clsid has no associated ProgID
  */
-HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
+HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
 {
     static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
     HKEY     hkey;
     HRESULT  ret;
     LONG progidlen = 0;
 
-    *lplpszProgID = NULL;
+    if (!ppszProgID)
+    {
+        ERR("ppszProgId isn't optional\n");
+        return E_INVALIDARG;
+    }
+
+    *ppszProgID = NULL;
     ret = COM_OpenKeyForCLSID(clsid, wszProgID, KEY_READ, &hkey);
     if (FAILED(ret))
         return ret;
@@ -1081,10 +1090,10 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
 
     if (ret == S_OK)
     {
-      *lplpszProgID = CoTaskMemAlloc(progidlen * sizeof(WCHAR));
-      if (*lplpszProgID)
+      *ppszProgID = CoTaskMemAlloc(progidlen * sizeof(WCHAR));
+      if (*ppszProgID)
       {
-        if (RegQueryValueW(hkey, NULL, *lplpszProgID, &progidlen))
+        if (RegQueryValueW(hkey, NULL, *ppszProgID, &progidlen))
           ret = REGDB_E_CLASSNOTREG;
       }
       else
@@ -1198,6 +1207,12 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
+    }
+
+    if (!pclsid)
+    {
+        ERR("pclsid isn't optional\n");
+        return E_INVALIDARG;
     }
 
     EnterCriticalSection(&apt->cs);
