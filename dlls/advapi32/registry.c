@@ -1142,7 +1142,11 @@ LONG WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWORD
     RtlInitUnicodeString( &name_str, name );
 
     if (data) total_size = min( sizeof(buffer), *count + info_size );
-    else total_size = info_size;
+    else
+    {
+        total_size = info_size;
+        if (count) *count = 0;
+    }
 
     status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
                               buffer, total_size, &total_size );
@@ -1223,6 +1227,11 @@ LONG WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD 
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
+    if (!data && count) *count = 0;
+
+    /* this matches Win9x behaviour - NT sets *type to a random value */
+    if (type) *type = REG_NONE;
 
     RtlInitAnsiString( &nameA, name );
     if ((status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,

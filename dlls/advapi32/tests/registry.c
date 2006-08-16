@@ -333,11 +333,25 @@ static void test_query_value_ex(void)
     DWORD ret;
     DWORD size;
     DWORD type;
+    BYTE buffer[10];
     
     ret = RegQueryValueExA(hkey_main, "TP1_SZ", NULL, &type, NULL, &size);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
     ok(size == strlen(sTestpath1) + 1, "(%ld,%ld)\n", (DWORD)strlen(sTestpath1) + 1, size);
     ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
+
+    type = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, NULL, &size);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+    ok(size == 0, "size should have been set to 0 instead of %ld\n", size);
+    ok(type == (DWORD)HKEY_CLASSES_ROOT /* NT */ || type == 0 /* Win9x */,
+        "type should have been set to 0x80000000 or 0 instead of 0x%lx\n", type);
+
+    size = sizeof(buffer);
+    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, buffer, &size);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+    ok(size == sizeof(buffer), "size shouldn't have been changed to %ld\n", size);
 }
 
 static void test_get_value(void)
