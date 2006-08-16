@@ -745,7 +745,6 @@ IOKITLIB
 LDEXECFLAGS
 COREAUDIO
 LDEXERPATH
-LDDLLRPATH
 CROSSTEST
 CROSSCC
 CROSSWINDRES
@@ -15894,8 +15893,6 @@ echo "${ECHO_T}$ac_cv_ld_rpath" >&6; }
       then
         LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
 
-        LDDLLRPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"
-
       fi
 
       case $host_cpu in
@@ -25028,7 +25025,6 @@ IOKITLIB!$IOKITLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
 LDEXERPATH!$LDEXERPATH$ac_delim
-LDDLLRPATH!$LDDLLRPATH$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
 CROSSCC!$CROSSCC$ac_delim
 CROSSWINDRES!$CROSSWINDRES$ac_delim
@@ -25044,7 +25040,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
