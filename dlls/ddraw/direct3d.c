@@ -290,6 +290,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     D3DDEVICEDESC dref, d1, d2;
     D3DDEVICEDESC7 newDesc;
+    static CHAR wined3d_description[] = "Wine D3DDevice using WineD3D and OpenGL";
     HRESULT hr;
 
     /* Some games (Motoracer 2 demo) have the bad idea to modify the device name string.
@@ -317,10 +318,12 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
 
     if(This->d3dversion != 1)
     {
+        static CHAR reference_description[] = "Reference Direct3D ID";
+
         TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
         d1 = dref;
         d2 = dref;
-        hr = Callback( (LPIID) &IID_IDirect3DRefDevice, "Reference Direct3D ID", device_name, &d1, &d2, Context);
+        hr = Callback( (LPIID) &IID_IDirect3DRefDevice, reference_description, device_name, &d1, &d2, Context);
         if(hr != D3DENUMRET_OK)
         {
             TRACE("Application cancelled the enumeration\n");
@@ -331,7 +334,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
     d1 = dref;
     d2 = dref;
-    hr = Callback( (LPIID) &IID_D3DDEVICE_WineD3D, "Wine D3DDevice using WineD3D and OpenGL", device_name, &d1, &d2, Context);
+    hr = Callback( (LPIID) &IID_D3DDEVICE_WineD3D, wined3d_description, device_name, &d1, &d2, Context);
     if(hr != D3DENUMRET_OK)
     {
         TRACE("Application cancelled the enumeration\n");
