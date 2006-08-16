@@ -150,6 +150,7 @@ ULONG CDECL ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
     case LDAP_OPT_SECURITY_CONTEXT:
     case LDAP_OPT_SEND_TIMEOUT:
     case LDAP_OPT_SERVER_CERTIFICATE:
+    case LDAP_OPT_SERVER_CONTROLS:
     case LDAP_OPT_SERVER_ERROR:
     case LDAP_OPT_SERVER_EXT_ERROR:
     case LDAP_OPT_SIGN:
@@ -288,6 +289,7 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
     case LDAP_OPT_SECURITY_CONTEXT:
     case LDAP_OPT_SEND_TIMEOUT:
     case LDAP_OPT_SERVER_CERTIFICATE:
+    case LDAP_OPT_SERVER_CONTROLS:
     case LDAP_OPT_SERVER_ERROR:
     case LDAP_OPT_SERVER_EXT_ERROR:
     case LDAP_OPT_SIGN:
@@ -323,6 +325,17 @@ ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
 
     switch (option)
     {
+    case LDAP_OPT_SERVER_CONTROLS:
+    {
+        LDAPControlW **ctrlsW;
+
+        ctrlsW = controlarrayAtoW( (LDAPControlA **)value );
+        if (!ctrlsW) return WLDAP32_LDAP_NO_MEMORY;
+
+        ret = ldap_set_optionW( ld, option, ctrlsW );
+        controlarrayfreeW( ctrlsW );
+        return ret;
+    }
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
     case LDAP_OPT_ERROR_NUMBER:
@@ -415,6 +428,17 @@ ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
 
     switch (option)
     {
+    case LDAP_OPT_SERVER_CONTROLS:
+    {
+        LDAPControl **ctrlsU;
+
+        ctrlsU = controlarrayWtoU( (LDAPControlW **)value );
+        if (!ctrlsU) return WLDAP32_LDAP_NO_MEMORY;
+
+        ret = ldap_set_option( ld, option, ctrlsU );
+        controlarrayfreeU( ctrlsU );
+        return ret;
+    }
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
     case LDAP_OPT_ERROR_NUMBER:
