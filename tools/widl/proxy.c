@@ -232,6 +232,34 @@ int cant_be_null(var_t *v)
   return 1;                             /* Default is RPC_FC_RP.  */
 }
 
+static int is_user_derived(var_t *v)
+{
+  const attr_t *attrs = v->attrs;
+  const type_t *type = v->type;
+
+  if (! attrs && type)
+  {
+    attrs = type->attrs;
+    type = type->ref;
+  }
+
+  while (attrs)
+  {
+    if (is_attr(attrs, ATTR_WIREMARSHAL))
+      return 1;
+
+    if (type)
+    {
+      attrs = type->attrs;
+      type = type->ref;
+    }
+    else
+      attrs = NULL;
+  }
+
+  return 0;
+}
+
 static void proxy_check_pointers( var_t *arg )
 {
   END_OF_LIST(arg);
@@ -260,6 +288,13 @@ static void marshall_size_arg( var_t *arg )
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrConformantArrayBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+    return;
+  }
+
+  if (is_user_derived(arg))
+  {
+    print_proxy("NdrUserMarshalBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index);
     return;
   }
 
@@ -352,6 +387,13 @@ static void marshall_copy_arg( var_t *arg )
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrConformantArrayMarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+    return;
+  }
+
+  if (is_user_derived(arg))
+  {
+    print_proxy("NdrUserMarshalMarshall( &_StubMsg, (unsigned char*)%s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index);
     return;
   }
 
@@ -451,6 +493,13 @@ static void unmarshall_copy_arg( var_t *arg )
   {
     print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char**)&%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
+    return;
+  }
+
+  if (is_user_derived(arg))
+  {
+    print_proxy("NdrUserMarshalUnmarshall( &_StubMsg, (unsigned char**)&%s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0 );\n", index);
     return;
   }
 
