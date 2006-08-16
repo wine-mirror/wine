@@ -124,6 +124,8 @@ struct NSContainer {
     NSContainer *parent;
     HTMLDocument *doc;
 
+    nsIURIContentListener *content_listener;
+
     HWND hwnd;
 
     BSCallback *bscallback; /* hack */

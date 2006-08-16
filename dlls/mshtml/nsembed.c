@@ -800,7 +800,10 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
     nsIWineURI_Release(wine_uri);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    *_retval = FALSE;
+    return This->content_listener
+        ? nsIURIContentListener_OnStartURIOpen(This->content_listener, aURI, _retval)
+        : NS_OK;
 }
 
 static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *iface,
@@ -808,9 +811,14 @@ static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *ifac
         nsIStreamListener **aContentHandler, PRBool *_retval)
 {
     NSContainer *This = NSURICL_THIS(iface);
+
     TRACE("(%p)->(%s %x %p %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
             aRequest, aContentHandler, _retval);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    return This->content_listener
+        ? nsIURIContentListener_DoContent(This->content_listener, aContentType,
+                  aIsContentPreferred, aRequest, aContentHandler, _retval)
+        : NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *iface,
@@ -822,7 +830,11 @@ static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *if
 
     /* FIXME: Should we do something here? */
     *_retval = TRUE; 
-    return NS_OK;
+
+    return This->content_listener
+        ? nsIURIContentListener_IsPreferred(This->content_listener, aContentType,
+                  aDesiredContentType, _retval)
+        : NS_OK;
 }
 
 static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListener *iface,
@@ -830,41 +842,72 @@ static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListene
         PRBool *_retval)
 {
     NSContainer *This = NSURICL_THIS(iface);
+
     TRACE("(%p)->(%s %x %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
             aDesiredContentType, _retval);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    return This->content_listener
+        ? nsIURIContentListener_CanHandleContent(This->content_listener, aContentType,
+                aIsContentPreferred, aDesiredContentType, _retval)
+        : NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURIContentListener_GetLoadCookie(nsIURIContentListener *iface,
         nsISupports **aLoadCookie)
 {
     NSContainer *This = NSURICL_THIS(iface);
+
     WARN("(%p)->(%p)\n", This, aLoadCookie);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    return This->content_listener
+        ? nsIURIContentListener_GetLoadCookie(This->content_listener, aLoadCookie)
+        : NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURIContentListener_SetLoadCookie(nsIURIContentListener *iface,
         nsISupports *aLoadCookie)
 {
     NSContainer *This = NSURICL_THIS(iface);
+
     WARN("(%p)->(%p)\n", This, aLoadCookie);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    return This->content_listener
+        ? nsIURIContentListener_SetLoadCookie(This->content_listener, aLoadCookie)
+        : NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURIContentListener_GetParentContentListener(nsIURIContentListener *iface,
         nsIURIContentListener **aParentContentListener)
 {
     NSContainer *This = NSURICL_THIS(iface);
-    WARN("(%p)->(%p)\n", This, aParentContentListener);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%p)\n", This, aParentContentListener);
+
+    if(This->content_listener)
+        nsIURIContentListener_AddRef(This->content_listener);
+
+    *aParentContentListener = This->content_listener;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURIContentListener_SetParentContentListener(nsIURIContentListener *iface,
         nsIURIContentListener *aParentContentListener)
 {
     NSContainer *This = NSURICL_THIS(iface);
-    WARN("(%p)->(%p)\n", This, aParentContentListener);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%p)\n", This, aParentContentListener);
+
+    if(aParentContentListener == NSURICL(This))
+        return NS_OK;
+
+    if(This->content_listener)
+        nsIURIContentListener_Release(This->content_listener);
+
+    This->content_listener = aParentContentListener;
+    if(This->content_listener)
+        nsIURIContentListener_AddRef(This->content_listener);
+
+    return NS_OK;
 }
 
 #undef NSURICL_THIS
@@ -1185,6 +1228,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     ret->doc = doc;
     ret->ref = 1;
     ret->bscallback = NULL;
+    ret->content_listener = NULL;
 
     if(parent)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));
@@ -1274,6 +1318,11 @@ void NSContainer_Release(NSContainer *This)
 
     nsIWebBrowserFocus_Release(This->focus);
     This->focus = NULL;
+
+    if(This->content_listener) {
+        nsIURIContentListener_Release(This->content_listener);
+        This->content_listener = NULL;
+    }
 
     if(This->hwnd) {
         DestroyWindow(This->hwnd);
