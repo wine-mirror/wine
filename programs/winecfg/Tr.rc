@@ -62,11 +62,11 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Pencere ayarlarý ",IDC_STATIC,8,25,244,180
 
-    CONTROL	    "DirectX uygulamalarýnýn fareyi pencere içine kilitlemelerine izin ver",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Masaüstü çift tamponlamayý etkinleþtir",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    LTEXT 	    "Pencereler pencere yöneticiniz tarafýndan yönetildiðinde, standart kenarlara sahip olacak, sanal masaüstünüze uygun davranacak ve pencere listenizde görünecektir. \n\nEðer pencereler yönetilmezse, pencere yöneticinizden baðýmsýz olacaklardýr. Bu, pencerelerin masaüstünüzle tam olarak bütünleþemeyeceði anlamýna gelir; ama emülasyon daha düzgün yapýlabiliceðinden bazý programlar daha iyi çalýþabilir.",
+    CONTROL         "DirectX uygulamalarýnýn fareyi pencere içine kilitlemelerine izin ver",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL         "Masaüstü çift tamponlamayý etkinleþtir",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    LTEXT           "Pencereler pencere yöneticiniz tarafýndan yönetildiðinde, standart kenarlara sahip olacak, sanal masaüstünüze uygun davranacak ve pencere listenizde görünecektir. \n\nEðer pencereler yönetilmezse, pencere yöneticinizden baðýmsýz olacaklardýr. Bu, pencerelerin masaüstünüzle tam olarak bütünleþemeyeceði anlamýna gelir; ama emülasyon daha düzgün yapýlabiliceðinden bazý programlar daha iyi çalýþabilir.",
     		    IDC_STATIC,15,58,228,80
-    CONTROL	    "Pencere yöneticisinin pencereleri yönetmesine izin ver",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+    CONTROL         "Pencere yöneticisinin pencereleri yönetmesine izin ver",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
     
     LTEXT           "Tüm pencerelerin sanal bir ekrana hapsedildiði bir windows masaüstü emüle edebilirsiniz veya pencerelerin standart masaüstünüze yerleþmesini saðlayabilirsiniz.",
                     IDC_STATIC,15,146,228,28
@@ -80,7 +80,7 @@ BEGIN
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
 
-    LTEXT	    "Vertex Shader Desteði: ",IDC_STATIC,15,220,80,30
+    LTEXT           "Vertex Shader Desteði: ",IDC_STATIC,15,220,80,30
     COMBOBOX	    IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Pixel Shader'a izin ver (donaným destekliyorsa)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
@@ -161,9 +161,9 @@ BEGIN
     GROUPBOX        " Sürücü Seçimi ",IDC_STATIC,8,4,244,195
     LTEXT           "Ýstediðiniz sürücünün kutusunu iþaretleyerek bir ses sürücüsü seçin. Hiçbir sürücü seçmeyerek sesi etkisizleþtirebilirsiniz. Birden fazla sürücü seçimi önerilmez. Üzerine sað týklayarak bir sürücüyü yapýlandýrýn.",IDC_STATIC,15,20,227,30
     CONTROL         "Aygýtlar",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
-    PUSHBUTTON	    "Denetin Masasý",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
+    PUSHBUTTON	    "Denetim Masasý",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "Donaným Hýzlandýrmasý: ",IDC_STATIC,15,215,90,10
+    LTEXT           "Donaným Hýzlandýrmasý: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Öntanýmlý Örnekleme Hýzý:",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -217,15 +217,15 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-IDS_DLL_WARNING         "Bu kitaplýðýn yükleme sýrasýnýn deðiþtirilmesi önerilmez.\nBunu yapmak istediðinizden emin misiniz?"
-IDS_DLL_WARNING_CAPTION "Uyarý: sistem kitaplýðý"
-IDS_DLL_NATIVE          "doðal"
-IDS_DLL_BUILTIN         "yerleþik"
-IDS_DLL_NATIVE_BUILTIN  "doðal, yerleþik"
-IDS_DLL_BUILTIN_NATIVE  "yerleþik, doðal"
-IDS_DLL_DISABLED        "devre dýþý"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DLL_WARNING         "Bu kitaplýðýn yükleme sýrasýnýn deðiþtirilmesi önerilmez.\nBunu yapmak istediðinizden emin misiniz?"
+    IDS_DLL_WARNING_CAPTION "Uyarý: sistem kitaplýðý"
+    IDS_DLL_NATIVE          "doðal"
+    IDS_DLL_BUILTIN         "yerleþik"
+    IDS_DLL_NATIVE_BUILTIN  "doðal, yerleþik"
+    IDS_DLL_BUILTIN_NATIVE  "yerleþik, doðal"
+    IDS_DLL_DISABLED        "devre dýþý"
+    IDS_DEFAULT_SETTINGS    "Öntanýmlý Ayarlar"
+    IDS_EXECUTABLE_FILTER   "Wine Programlarý (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Genel ayarlarý kullan"
+    IDS_SELECT_EXECUTABLE   "Çalýþtýrýlabilir bir dosya seçin"
 END
