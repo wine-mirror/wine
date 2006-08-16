@@ -7,6 +7,7 @@
  *      Copyright 1999  Sylvain St-Germain
  *      Copyright 2002  Marcus Meissner
  *      Copyright 2004  Mike Hearn
+ *      Copyright 2005-2006 Robert Shearman (for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1321,65 +1322,6 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
 }
 
 
-
-/***********************************************************************
- *		WriteClassStm (OLE32.@)
- *
- * Writes a CLSID to a stream.
- *
- * PARAMS
- *  pStm   [I] Stream to write to.
- *  rclsid [I] CLSID to write.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
-{
-    TRACE("(%p,%p)\n",pStm,rclsid);
-
-    if (rclsid==NULL)
-        return E_INVALIDARG;
-
-    return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
-}
-
-/***********************************************************************
- *		ReadClassStm (OLE32.@)
- *
- * Reads a CLSID from a stream.
- *
- * PARAMS
- *  pStm   [I] Stream to read from.
- *  rclsid [O] CLSID to read.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
-{
-    ULONG nbByte;
-    HRESULT res;
-
-    TRACE("(%p,%p)\n",pStm,pclsid);
-
-    if (pclsid==NULL)
-        return E_INVALIDARG;
-
-    res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
-
-    if (FAILED(res))
-        return res;
-
-    if (nbByte != sizeof(CLSID))
-        return S_FALSE;
-    else
-        return S_OK;
-}
-
-
 /***
  * COM_GetRegisteredClassObject
  *
@@ -2375,33 +2317,6 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
     return S_OK;
 }
 
-
-/******************************************************************************
- *              OleGetAutoConvert        [OLE32.@]
- */
-HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
-{
-    static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
-    HKEY hkey = NULL;
-    WCHAR buf[CHARS_IN_GUID];
-    LONG len;
-    HRESULT res = S_OK;
-
-    res = COM_OpenKeyForCLSID(clsidOld, wszAutoConvertTo, KEY_READ, &hkey);
-    if (FAILED(res))
-        goto done;
-
-    len = sizeof(buf);
-    if (RegQueryValueW(hkey, NULL, buf, &len))
-    {
-        res = REGDB_E_KEYMISSING;
-        goto done;
-    }
-    res = CLSIDFromString(buf, pClsidNew);
-done:
-    if (hkey) RegCloseKey(hkey);
-    return res;
-}
 
 /******************************************************************************
  *              CoTreatAsClass        [OLE32.@]

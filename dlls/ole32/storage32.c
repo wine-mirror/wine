@@ -7871,3 +7871,60 @@ StgIsStorageFile(LPCOLESTR fn)
 	WARN(" -> Invalid header.\n");
 	return S_FALSE;
 }
+
+/***********************************************************************
+ *		WriteClassStm (OLE32.@)
+ *
+ * Writes a CLSID to a stream.
+ *
+ * PARAMS
+ *  pStm   [I] Stream to write to.
+ *  rclsid [I] CLSID to write.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ */
+HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
+{
+    TRACE("(%p,%p)\n",pStm,rclsid);
+
+    if (rclsid==NULL)
+        return E_INVALIDARG;
+
+    return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
+}
+
+/***********************************************************************
+ *		ReadClassStm (OLE32.@)
+ *
+ * Reads a CLSID from a stream.
+ *
+ * PARAMS
+ *  pStm   [I] Stream to read from.
+ *  rclsid [O] CLSID to read.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ */
+HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
+{
+    ULONG nbByte;
+    HRESULT res;
+
+    TRACE("(%p,%p)\n",pStm,pclsid);
+
+    if (pclsid==NULL)
+        return E_INVALIDARG;
+
+    res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
+
+    if (FAILED(res))
+        return res;
+
+    if (nbByte != sizeof(CLSID))
+        return S_FALSE;
+    else
+        return S_OK;
+}

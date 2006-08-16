@@ -2334,6 +2334,33 @@ HRESULT WINAPI OleCreate(
 }
 
 /******************************************************************************
+ *              OleGetAutoConvert        [OLE32.@]
+ */
+HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
+{
+    static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
+    HKEY hkey = NULL;
+    WCHAR buf[CHARS_IN_GUID];
+    LONG len;
+    HRESULT res = S_OK;
+
+    res = COM_OpenKeyForCLSID(clsidOld, wszAutoConvertTo, KEY_READ, &hkey);
+    if (FAILED(res))
+        goto done;
+
+    len = sizeof(buf);
+    if (RegQueryValueW(hkey, NULL, buf, &len))
+    {
+        res = REGDB_E_KEYMISSING;
+        goto done;
+    }
+    res = CLSIDFromString(buf, pClsidNew);
+done:
+    if (hkey) RegCloseKey(hkey);
+    return res;
+}
+
+/******************************************************************************
  *              OleSetAutoConvert        [OLE32.@]
  */
 HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
