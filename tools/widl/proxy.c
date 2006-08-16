@@ -449,8 +449,8 @@ static void unmarshall_copy_arg( var_t *arg )
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
   if (expr)
   {
-    print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+    print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char**)&%s, ", arg->name );
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
     return;
   }
 
@@ -481,8 +481,8 @@ static void unmarshall_copy_arg( var_t *arg )
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
   case RPC_FC_CARRAY:
-    print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+    print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char**)&%s, ", arg->name );
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
     break;
 
   case RPC_FC_BOGUS_STRUCT:
