@@ -27,22 +27,28 @@
 
 #include "wine/test.h"
 
-static void testGetComputerObjectName()
+static HMODULE secdll;
+
+static BOOLEAN (WINAPI * pGetComputerObjectNameA)(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG lpnSize);
+static BOOLEAN (WINAPI * pGetComputerObjectNameW)(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG lpnSize);
+
+static EXTENDED_NAME_FORMAT formats[] = {
+    NameUnknown, NameFullyQualifiedDN, NameSamCompatible, NameDisplay,
+    NameUniqueId, NameCanonical, NameUserPrincipal, NameCanonicalEx,
+    NameServicePrincipal, NameDnsDomain
+};
+
+static void testGetComputerObjectNameA(void)
 {
     char name[256];
-    WCHAR nameW[256];
     ULONG size;
     BOOLEAN rc;
     int i;
-    EXTENDED_NAME_FORMAT formats[] = { NameUnknown, NameFullyQualifiedDN,
-         NameSamCompatible, NameDisplay, NameUniqueId, NameCanonical,
-         NameUserPrincipal, NameCanonicalEx, NameServicePrincipal,
-         NameDnsDomain };
 
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
         size = sizeof(name);
         ZeroMemory(name, sizeof(name));
-        rc = GetComputerObjectNameA(formats[i], name, &size);
+        rc = pGetComputerObjectNameA(formats[i], name, &size);
         ok(rc || ((formats[i] == NameUnknown) &&
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO),
@@ -50,10 +56,20 @@ static void testGetComputerObjectName()
            formats[i], GetLastError());
         if (rc)
             trace("GetComputerObjectNameA() returned %s\n", name);
+    }
+}
 
+static void testGetComputerObjectNameW(void)
+{
+    WCHAR nameW[256];
+    ULONG size;
+    BOOLEAN rc;
+    int i;
+
+    for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
         size = sizeof(nameW)/sizeof(nameW[0]);
         ZeroMemory(nameW, sizeof(nameW));
-        rc = GetComputerObjectNameW(formats[i], nameW, &size);
+        rc = pGetComputerObjectNameW(formats[i], nameW, &size);
         ok(rc || ((formats[i] == NameUnknown) &&
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO),
@@ -64,5 +80,22 @@ static void testGetComputerObjectName()
 
 START_TEST(secur32)
 {
-    testGetComputerObjectName();
+    secdll = LoadLibraryA("secur32.dll");
+
+    if (!secdll)
+        secdll = LoadLibraryA("security.dll");
+
+    if (secdll)
+    {
+        pGetComputerObjectNameA = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameA");
+        pGetComputerObjectNameW = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameW");
+ 
+        if (pGetComputerObjectNameA)
+            testGetComputerObjectNameA();
+
+        if (pGetComputerObjectNameW)
+            testGetComputerObjectNameW();
+
+        FreeLibrary(secdll);
+    }
 }
