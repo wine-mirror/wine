@@ -685,8 +685,10 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
 static void stub_write_locals( var_t *arg )
 {
   int n = 0;
+  END_OF_LIST(arg);
   while (arg) {
-    int outptr = is_attr(arg->attrs, ATTR_OUT);
+    int outptr = is_attr(arg->attrs, ATTR_OUT)
+                 && ! is_attr(arg->attrs, ATTR_IN);
 
     /* create a temporary variable to store the output */
     if (outptr) {
@@ -702,7 +704,7 @@ static void stub_write_locals( var_t *arg )
     fprintf(proxy, " ");
     write_name(proxy, arg);
     fprintf(proxy, ";\n");
-    arg = NEXT_LINK(arg);
+    arg = PREV_LINK(arg);
   }
 }
 
@@ -731,7 +733,8 @@ static void stub_unmarshall( var_t *arg )
         print_proxy("");
         write_name(proxy, arg);
         fprintf(proxy," = &_M%d;\n", n);
-        print_proxy("_M%d = 0;\n", n++);
+        print_proxy("MIDL_memset(&_M%d, 0, sizeof _M%d);\n", n, n);
+        ++n;
         break;
       }
     }
