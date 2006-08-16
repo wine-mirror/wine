@@ -121,6 +121,12 @@ static inline char *strdupA(const char *s)
     return strcpy(r, s);
 }
 
+static inline WCHAR *strdupW(const WCHAR *s)
+{
+    WCHAR *r = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(s)+1)*sizeof(WCHAR));
+    return lstrcpyW(r, s);
+}
+
 static inline char *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);

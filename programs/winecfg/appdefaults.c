@@ -109,7 +109,12 @@ init_comboboxes (HWND dialog)
 
     /* add the default entries (automatic) which correspond to no setting  */
     if (current_app)
-        SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
+    {
+        WCHAR str[256];
+        LoadStringW (GetModuleHandle (NULL), IDS_USE_GLOBAL_SETTINGS, str,
+            sizeof(str)/sizeof(str[0]));
+        SendDlgItemMessageW (dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM)str);
+    }
 
     for (i = 0; i < NB_VERSIONS; i++)
     {
@@ -118,19 +123,19 @@ init_comboboxes (HWND dialog)
     }
 }
 
-static void add_listview_item(HWND listview, const char *text, void *association)
+static void add_listview_item(HWND listview, const WCHAR *text, void *association)
 {
-  LVITEM item;
+  LVITEMW item;
 
   ZeroMemory(&item, sizeof(LVITEM));
 
   item.mask = LVIF_TEXT | LVIF_PARAM;
-  item.pszText = (char*) text;
-  item.cchTextMax = strlen(text);
+  item.pszText = (WCHAR*) text;
+  item.cchTextMax = lstrlenW(text);
   item.lParam = (LPARAM) association;
   item.iItem = ListView_GetItemCount(listview);
 
-  SendMessage(listview, LVM_INSERTITEM, 0, (LPARAM) &item);
+  SendMessage(listview, LVM_INSERTITEMW, 0, (LPARAM) &item);
 }
 
 /* Called when the application is initialized (cannot reinit!)  */
@@ -140,7 +145,7 @@ static void init_appsheet(HWND dialog)
   HKEY key;
   int i;
   DWORD size;
-  char appname[1024];
+  WCHAR appname[1024];
 
   WINE_TRACE("()\n");
 
@@ -148,19 +153,19 @@ static void init_appsheet(HWND dialog)
 
   /* we use the lparam field of the item so we can alter the presentation later and not change code
    * for instance, to use the tile view or to display the EXEs embedded 'display name' */
-  add_listview_item(listview, "Default Settings", NULL);
+  add_listview_item(listview, load_string (IDS_DEFAULT_SETTINGS), NULL);
 
   /* because this list is only populated once, it's safe to bypass the settings list here  */
   if (RegOpenKey(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
   {
       i = 0;
-      size = sizeof(appname);
-      while (RegEnumKeyEx(key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+      size = sizeof(appname)/sizeof(appname[0]);
+      while (RegEnumKeyExW (key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
       {
-          add_listview_item(listview, appname, strdupA(appname));
+          add_listview_item(listview, appname, strdupW(appname));
 
           i++;
-          size = sizeof(appname);
+          size = sizeof(appname)/sizeof(appname[0]);
       }
 
       RegCloseKey(key);
@@ -240,47 +245,63 @@ static void on_selection_change(HWND dialog, HWND listview)
   set_window_title(dialog);
 }
 
-static BOOL list_contains_file(HWND listview, char *filename)
+static BOOL list_contains_file(HWND listview, WCHAR *filename)
 {
-  LVFINDINFO find_info = { LVFI_STRING, filename, 0, {0, 0}, 0 };
+  LVFINDINFOW find_info = { LVFI_STRING, filename, 0, {0, 0}, 0 };
   int index;
 
-  index = ListView_FindItem(listview, -1, &find_info);
+  index = ListView_FindItemW(listview, -1, &find_info);
 
   return (index != -1);
 }
 
 static void on_add_app_click(HWND dialog)
 {
-  char filetitle[MAX_PATH];
-  char file[MAX_PATH];
+  WCHAR filetitle[MAX_PATH];
+  WCHAR file[MAX_PATH];
+  WCHAR programsFilter[100];
+  WCHAR selectExecutableStr[100];
+  static const WCHAR pathC[] = { 'c',':','\\',0 };
 
-  OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		       0, /*hInst*/0, "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0", NULL, 0, 0, NULL,
-		       0, NULL, 0, "c:\\", "Select a Windows executable file",
+  OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
+		       0, /*hInst*/0, 0, NULL, 0, 0, NULL,
+		       0, NULL, 0, pathC, 0,
 		       OFN_SHOWHELP | OFN_HIDEREADONLY, 0, 0, NULL, 0, NULL };
 
+  LoadStringW (GetModuleHandle (NULL), IDS_SELECT_EXECUTABLE, selectExecutableStr,
+      sizeof(selectExecutableStr)/sizeof(selectExecutableStr[0]));
+  LoadStringW (GetModuleHandle (NULL), IDS_EXECUTABLE_FILTER, programsFilter,
+      sizeof(programsFilter)/sizeof(programsFilter[0]));
+
+  ofn.lpstrTitle = selectExecutableStr;
+  ofn.lpstrFilter = programsFilter;
   ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
-  ofn.nMaxFileTitle = sizeof(filetitle);
+  ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);
   ofn.lpstrFile = file;
   ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = sizeof(file);
+  ofn.nMaxFile = sizeof(file)/sizeof(file[0]);
 
-  if (GetOpenFileName(&ofn))
+  if (GetOpenFileNameW (&ofn))
   {
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
       int count = ListView_GetItemCount(listview);
-      char* new_app;
+      WCHAR* new_app;
+      char* new_appA;
+      DWORD new_appA_len;
       
-      new_app = strdupA(filetitle);
+      new_app = strdupW(filetitle);
 
       if (list_contains_file(listview, new_app))
           return;
       
-      WINE_TRACE("adding %s\n", new_app);
+      WINE_TRACE("adding %s\n", wine_dbgstr_w (new_app));
       
-      add_listview_item(listview, new_app, new_app);
+      new_appA_len = WideCharToMultiByte (CP_ACP, 0, new_app, -1, NULL, 0, NULL, NULL);
+      new_appA = HeapAlloc (GetProcessHeap(), 0, new_appA_len);
+      WideCharToMultiByte (CP_ACP, 0, new_app, -1, new_appA, new_appA_len, NULL, NULL);
+      
+      add_listview_item(listview, new_app, new_appA);
 
       ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
@@ -294,6 +315,10 @@ static void on_remove_app_click(HWND dialog)
     HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
     int selection = get_listview_selection(listview);
     char *section = keypath(""); /* AppDefaults\\whatever.exe\\ */
+    LVITEMW item;
+
+    item.iItem = selection;
+    item.mask = LVIF_PARAM | LVIF_TEXT;
 
     WINE_TRACE("selection=%d, section=%s\n", selection, section);
     
@@ -301,6 +326,9 @@ static void on_remove_app_click(HWND dialog)
 
     section[strlen(section)] = '\0'; /* remove last backslash  */
     set_reg_key(config_key, section, NULL, NULL); /* delete the section  */
+    SendMessage(listview, LVM_GETITEMW, 0, (LPARAM) &item);
+    HeapFree (GetProcessHeap(), 0, item.pszText);
+    HeapFree (GetProcessHeap(), 0, (void*)item.lParam);
     SendMessage(listview, LVM_DELETEITEM, selection, 0);
     ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 

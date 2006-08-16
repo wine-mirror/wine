@@ -86,6 +86,10 @@
 #define IDS_DLL_NATIVE_BUILTIN          8014
 #define IDS_DLL_BUILTIN_NATIVE          8015
 #define IDS_DLL_DISABLED                8016
+#define IDS_DEFAULT_SETTINGS            8017
+#define IDS_EXECUTABLE_FILTER           8018
+#define IDS_USE_GLOBAL_SETTINGS         8019
+#define IDS_SELECT_EXECUTABLE           8020
 
 /* drive editing */
 #define IDC_LIST_DRIVES                 1042
