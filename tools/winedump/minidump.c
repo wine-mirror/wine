@@ -78,7 +78,7 @@ void mdmp_dump(void)
     printf("StreamDirectoryRva: %lu\n", hdr->StreamDirectoryRva);
     printf("CheckSum: %lu\n", hdr->CheckSum);
     printf("TimeDateStamp: %s\n", get_time_str(hdr->u.TimeDateStamp));
-    printf("Flags: %llx\n", hdr->Flags);
+    printf("Flags: %lx%08lx\n", (DWORD)(hdr->Flags >> 32), (DWORD)hdr->Flags);
 
     for (idx = 0; idx <= LastReservedStream; idx++)
     {
@@ -102,10 +102,12 @@ void mdmp_dump(void)
                 printf("    SuspendCount: %lu\n", mt->SuspendCount);
                 printf("    PriorityClass: %lu\n", mt->PriorityClass);
                 printf("    Priority: %lu\n", mt->Priority);
-                printf("    Teb: 0x%llx\n", mt->Teb);
-                printf("    Stack: 0x%llx-0x%llx\n", 
-                       mt->Stack.StartOfMemoryRange, 
-                       mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize);
+                printf("    Teb: 0x%lx%08lx\n", (DWORD)(mt->Teb >> 32), (DWORD)mt->Teb);
+                printf("    Stack: 0x%lx%08lx-0x%lx%08lx\n", 
+                       (DWORD)(mt->Stack.StartOfMemoryRange >> 32),
+                       (DWORD)mt->Stack.StartOfMemoryRange,
+                       (DWORD)((mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize) >> 32),
+                       (DWORD)(mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize));
                 dump_mdmp_data(&mt->Stack.Memory, "    ");
                 printf("    ThreadContext:\n");
                 dump_mdmp_data(&mt->ThreadContext, "    ");
@@ -127,7 +129,8 @@ void mdmp_dump(void)
             for (i = 0; i < mml->NumberOfModules; i++, mm++)
             {
                 printf("  Module #%d:\n", i);
-                printf("    BaseOfImage: 0x%llx\n", mm->BaseOfImage);
+                printf("    BaseOfImage: 0x%lx%08lx\n",
+		    (DWORD)(mm->BaseOfImage >> 32), (DWORD) mm->BaseOfImage);
                 printf("    SizeOfImage: %lu\n", mm->SizeOfImage);
                 printf("    CheckSum: %lu\n", mm->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mm->TimeDateStamp));
@@ -200,8 +203,10 @@ void mdmp_dump(void)
                 dump_mdmp_data(&mm->CvRecord, "    ");
                 printf("    MiscRecord: <%lu>\n", mm->MiscRecord.DataSize);
                 dump_mdmp_data(&mm->MiscRecord, "    ");
-                printf("    Reserved0: %llu\n", mm->Reserved0);
-                printf("    Reserved1: %llu\n", mm->Reserved1);
+                printf("    Reserved0: 0x%lx%08lx\n",
+		    (DWORD)(mm->Reserved0 >> 32), (DWORD)mm->Reserved0);
+                printf("    Reserved1: 0x%lx%08lx\n",
+		    (DWORD)(mm->Reserved1 >> 32), (DWORD)mm->Reserved1);
             }
         }       
         break;
@@ -215,9 +220,11 @@ void mdmp_dump(void)
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
             {
                 printf("  Memory Range #%d:\n", i);
-                printf("    Range: 0x%llx-0x%llx\n",
-                       mmd->StartOfMemoryRange, 
-                       mmd->StartOfMemoryRange + mmd->Memory.DataSize);
+                printf("    Range: 0x%lx%08lx-0x%lx%08lx\n",
+                       (DWORD)(mmd->StartOfMemoryRange >> 32),
+                       (DWORD)mmd->StartOfMemoryRange,
+		       (DWORD)((mmd->StartOfMemoryRange + mmd->Memory.DataSize) >> 32),
+		       (DWORD)(mmd->StartOfMemoryRange + mmd->Memory.DataSize));
                 dump_mdmp_data(&mmd->Memory, "    ");
             }   
         }
@@ -346,16 +353,19 @@ void mdmp_dump(void)
             printf("  ExceptionRecord:\n");
             printf("  ExceptionCode: %lu\n", mes->ExceptionRecord.ExceptionCode);
             printf("  ExceptionFlags: %lu\n", mes->ExceptionRecord.ExceptionFlags);
-            printf("  ExceptionRecord: 0x%llx\n", 
-                   mes->ExceptionRecord.ExceptionRecord);
-            printf("  ExceptionAddress: 0x%llx\n",
-                   mes->ExceptionRecord.ExceptionAddress);
+            printf("  ExceptionRecord: 0x%lx%08lx\n", 
+                   (DWORD)(mes->ExceptionRecord.ExceptionRecord  >> 32),
+                   (DWORD)mes->ExceptionRecord.ExceptionRecord);
+            printf("  ExceptionAddress: 0x%lx%08lx\n",
+                   (DWORD)(mes->ExceptionRecord.ExceptionAddress >> 32),
+                   (DWORD)(mes->ExceptionRecord.ExceptionAddress));
             printf("  ExceptionNumberParameters: %lu\n",
                    mes->ExceptionRecord.NumberParameters);
             for (i = 0; i < mes->ExceptionRecord.NumberParameters; i++)
             {
-                printf("    [%d]: 0x%llx\n", i, 
-                       mes->ExceptionRecord.ExceptionInformation[i]);
+                printf("    [%d]: 0x%lx%08lx\n", i, 
+                       (DWORD)(mes->ExceptionRecord.ExceptionInformation[i] >> 32),
+                       (DWORD)mes->ExceptionRecord.ExceptionInformation[i]);
             }
             printf("  ThreadContext:\n");
             dump_mdmp_data(&mes->ThreadContext, "    ");
