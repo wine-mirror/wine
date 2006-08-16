@@ -4422,3 +4422,12 @@ HRESULT WINAPI IUnknown_ProfferService(IUnknown *unk, void *x0, void *x1, void *
     FIXME("%p %p %p %p\n", unk, x0, x1, x2);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *              ZoneComputePaneSize [SHLWAPI.382]
+ */
+UINT WINAPI ZoneComputePaneSize(HWND hwnd)
+{
+    FIXME("\n");
+    return 0x95;
+}
