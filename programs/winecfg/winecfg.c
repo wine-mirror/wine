@@ -53,22 +53,24 @@ HMENU hPopupMenus = 0;
  */
 void set_window_title(HWND dialog)
 {
-    char newtitle[256];
+    WCHAR newtitle[256];
 
     /* update the window title  */
     if (current_app)
     {
-        char apptitle[256];
-        LoadString(GetModuleHandle(NULL), IDS_WINECFG_TITLE_APP, apptitle, 256);
-        sprintf(newtitle, apptitle, current_app);
+        WCHAR apptitle[256];
+        LoadStringW (GetModuleHandle(NULL), IDS_WINECFG_TITLE_APP, apptitle,
+            sizeof(apptitle)/sizeof(apptitle[0]));
+        wsprintfW (newtitle, apptitle, current_app);
     }
     else
     {
-        LoadString(GetModuleHandle(NULL), IDS_WINECFG_TITLE, newtitle, 256);
+        LoadStringW (GetModuleHandle(NULL), IDS_WINECFG_TITLE, newtitle,
+            sizeof(newtitle)/sizeof(newtitle[0]));
     }
 
-    WINE_TRACE("setting title to %s\n", newtitle);
-    SendMessage(GetParent(dialog), PSM_SETTITLE, 0, (LPARAM) newtitle);
+    WINE_TRACE("setting title to %s\n", wine_dbgstr_w (newtitle));
+    SendMessageW (GetParent(dialog), PSM_SETTITLEW, 0, (LPARAM) newtitle);
 }
 
 
@@ -316,6 +318,7 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
 
         if (root != s->root) continue;
         if (strcasecmp(path, s->path) != 0) continue;
+        if (!s->name) continue;
         if (strcasecmp(name, s->name) != 0) continue;
 
         WINE_TRACE("found %s:%s in settings list, returning %s\n", path, name, s->value);
@@ -584,7 +587,7 @@ void apply(void)
 
 /* ================================== utility functions ============================ */
 
-char *current_app = NULL; /* the app we are currently editing, or NULL if editing global */
+WCHAR* current_app = NULL; /* the app we are currently editing, or NULL if editing global */
 
 /* returns a registry key path suitable for passing to addTransaction  */
 char *keypath(const char *section)
@@ -595,8 +598,8 @@ char *keypath(const char *section)
 
     if (current_app)
     {
-        result = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(current_app) + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
-        sprintf(result, "AppDefaults\\%s", current_app);
+        result = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + lstrlenW(current_app)*2 + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
+        wsprintf(result, "AppDefaults\\%ls", current_app);
         if (section[0]) sprintf( result + strlen(result), "\\%s", section );
     }
     else

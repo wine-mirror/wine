@@ -153,7 +153,9 @@ static void init_appsheet(HWND dialog)
 
   /* we use the lparam field of the item so we can alter the presentation later and not change code
    * for instance, to use the tile view or to display the EXEs embedded 'display name' */
-  add_listview_item(listview, load_string (IDS_DEFAULT_SETTINGS), NULL);
+  LoadStringW (GetModuleHandle (NULL), IDS_DEFAULT_SETTINGS, appname,
+      sizeof(appname)/sizeof(appname[0]));
+  add_listview_item(listview, appname, NULL);
 
   /* because this list is only populated once, it's safe to bypass the settings list here  */
   if (RegOpenKey(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
@@ -208,7 +210,7 @@ static int get_listview_selection(HWND listview)
 static void on_selection_change(HWND dialog, HWND listview)
 {
   LVITEM item;
-  char *oldapp = current_app;
+  WCHAR* oldapp = current_app;
 
   WINE_TRACE("()\n");
 
@@ -221,11 +223,11 @@ static void on_selection_change(HWND dialog, HWND listview)
   
   SendMessage(listview, LVM_GETITEM, 0, (LPARAM) &item);
 
-  current_app = (char *) item.lParam;
+  current_app = (WCHAR*) item.lParam;
 
   if (current_app)
   {
-      WINE_TRACE("current_app is now %s\n", current_app);
+      WINE_TRACE("current_app is now %s\n", wine_dbgstr_w (current_app));
       enable(IDC_APP_REMOVEAPP);
   }
   else
@@ -287,21 +289,15 @@ static void on_add_app_click(HWND dialog)
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
       int count = ListView_GetItemCount(listview);
       WCHAR* new_app;
-      char* new_appA;
-      DWORD new_appA_len;
+      
+      if (list_contains_file(listview, filetitle))
+          return;
       
       new_app = strdupW(filetitle);
 
-      if (list_contains_file(listview, new_app))
-          return;
-      
       WINE_TRACE("adding %s\n", wine_dbgstr_w (new_app));
       
-      new_appA_len = WideCharToMultiByte (CP_ACP, 0, new_app, -1, NULL, 0, NULL, NULL);
-      new_appA = HeapAlloc (GetProcessHeap(), 0, new_appA_len);
-      WideCharToMultiByte (CP_ACP, 0, new_app, -1, new_appA, new_appA_len, NULL, NULL);
-      
-      add_listview_item(listview, new_app, new_appA);
+      add_listview_item(listview, new_app, new_app);
 
       ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
@@ -327,7 +323,6 @@ static void on_remove_app_click(HWND dialog)
     section[strlen(section)] = '\0'; /* remove last backslash  */
     set_reg_key(config_key, section, NULL, NULL); /* delete the section  */
     SendMessage(listview, LVM_GETITEMW, 0, (LPARAM) &item);
-    HeapFree (GetProcessHeap(), 0, item.pszText);
     HeapFree (GetProcessHeap(), 0, (void*)item.lParam);
     SendMessage(listview, LVM_DELETEITEM, selection, 0);
     ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);

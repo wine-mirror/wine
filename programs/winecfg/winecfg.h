@@ -38,7 +38,7 @@
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-extern char *current_app; /* NULL means editing global settings  */
+extern WCHAR* current_app; /* NULL means editing global settings  */
 
 /* Use get_reg_key and set_reg_key to alter registry settings. The changes made through
    set_reg_key won't be committed to the registry until process_all_settings is called,
