@@ -1613,13 +1613,16 @@ HWND WINAPI GetDesktopWindow(void)
 
     if (!thread_info->desktop)
     {
+        static const WCHAR command_line[] = {'\\','e','x','p','l','o','r','e','r','.','e','x','e',' ','/','d','e','s','k','t','o','p',0};
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
-        WCHAR command_line[] = {'e','x','p','l','o','r','e','r','.','e','x','e',' ','/','d','e','s','k','t','o','p',0};
+        WCHAR cmdline[MAX_PATH + sizeof(command_line)/sizeof(WCHAR)];
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
-        if (CreateProcessW( NULL, command_line, NULL, NULL, FALSE, DETACHED_PROCESS,
+        GetSystemDirectoryW( cmdline, MAX_PATH );
+        lstrcatW( cmdline, command_line );
+        if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
                             NULL, NULL, &si, &pi ))
         {
             TRACE( "started explorer pid %04lx tid %04lx\n", pi.dwProcessId, pi.dwThreadId );
