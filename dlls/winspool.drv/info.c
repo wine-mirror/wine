@@ -1166,6 +1166,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 				LPDEVMODEA pDevModeInput,DWORD fMode )
 {
     LPSTR lpName = pDeviceName;
+    static CHAR port[] = "LPT1:";
     LONG ret;
 
     TRACE("(%p,%p,%s,%p,%p,%ld)\n",
@@ -1191,7 +1192,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 		return -1;
 	}
     }
-    ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, "LPT1:",
+    ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, port,
 				  pDevModeInput, NULL, fMode);
 
     if(!pDeviceName)
