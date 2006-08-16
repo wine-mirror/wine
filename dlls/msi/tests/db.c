@@ -1196,6 +1196,7 @@ static void test_markers(void)
     query = "CREATE TABLE `Table` ( `One` SHORT NOT NULL, `Two` CHAR(255) PRIMARY KEY `One`)";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try table name as marker */
     rec = MsiCreateRecord(1);
@@ -1351,6 +1352,7 @@ static void test_markers(void)
     query = "INSERT INTO `Table` ( `One`, `Two` ) VALUES ( ?, ? )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    MsiCloseHandle(rec);
 
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
