@@ -486,7 +486,7 @@ static void unmarshall_copy_arg( var_t *arg )
     break;
 
   case RPC_FC_BOGUS_STRUCT:
-    print_proxy( "NdrComplexStructUnmarshall(&_StubMsg, (unsigned char*)%s, ", arg->name );
+    print_proxy( "NdrComplexStructUnmarshall(&_StubMsg, (unsigned char**)&%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0 );\n", index );
     break;
 
