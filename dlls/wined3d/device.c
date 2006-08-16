@@ -4495,8 +4495,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
         if(0xbaadcafe != Value) {
             /* MSDN says the default is D3DDMT_ENABLE but our tests confirm 0xbaadcafe is the default. */
             /* MSDN says anything other than D3DDMT_ENABLE or DISABLE does not change the state,
-             * but our tests disagree. */
-            ERR("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
+             * but our tests disagree.
+             * We do not claim to implement a debugging lib, so do not write an ERR
+             */
+            WARN("(%p)->(%s,%ld) not yet implemented\n", This, debug_d3drenderstate(State), Value);
         }
         break;
     }
