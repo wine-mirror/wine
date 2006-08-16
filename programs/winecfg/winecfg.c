@@ -72,6 +72,21 @@ void set_window_title(HWND dialog)
 }
 
 
+WCHAR* load_string (UINT id)
+{
+    WCHAR buf[100];
+    int len;
+    WCHAR* newStr;
+
+    LoadStringW (GetModuleHandle (NULL), id, buf, sizeof(buf)/sizeof(buf[0]));
+
+    len = lstrlenW (buf);
+    newStr = HeapAlloc (GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR));
+    memcpy (newStr, buf, len * sizeof (WCHAR));
+    newStr[len] = 0;
+    return newStr;
+}
+
 /**
  * get_config_key: Retrieves a configuration value from the registry
  *

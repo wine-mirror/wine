@@ -58,6 +58,9 @@ BOOL reg_key_exists(HKEY root, const char *path, const char *name);
 void apply(void);
 char **enumerate_values(HKEY root, char *path);
 
+/* Load a string from the resources. Allocated with HeapAlloc (GetProcessHeap()) */
+WCHAR* load_string (UINT id);
+
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
    the user is editing the global settings.
  

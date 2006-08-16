@@ -78,21 +78,6 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-static WCHAR* load_string (UINT id)
-{
-    WCHAR buf[100];
-    int len;
-    WCHAR* newStr;
-
-    LoadStringW (GetModuleHandle (NULL), id, buf, sizeof(buf)/sizeof(buf[0]));
-
-    len = lstrlenW (buf);
-    newStr = HeapAlloc (GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR));
-    memcpy (newStr, buf, len * sizeof (WCHAR));
-    newStr[len] = 0;
-    return newStr;
-}
-
 #define NUM_PROPERTY_PAGES 7
 
 static INT_PTR
