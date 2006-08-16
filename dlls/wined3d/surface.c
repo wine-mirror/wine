@@ -1269,6 +1269,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                 break;
         }
 
+        if (!b_info)
+            return E_OUTOFMEMORY;
+
         /* Some apps access the surface in via DWORDs, and do not take the necessary care at the end of the
          * surface. So we need at least extra 4 bytes at the end of the surface. Check against the page size,
          * if the last page used for the surface has at least 4 spare bytes we're safe, otherwise
@@ -1347,9 +1350,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
         if (!This->dib.DIBsection) {
             ERR("CreateDIBSection failed!\n");
+            HeapFree(GetProcessHeap(), 0, b_info);
             return HRESULT_FROM_WIN32(GetLastError());
         }
-        HeapFree(GetProcessHeap(), 0, b_info);
 
         TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
 
@@ -1362,6 +1365,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
             /* This is to make LockRect read the gl Texture although memory is allocated */
             This->Flags |= SFLAG_GLDIRTY;
         }
+
+        HeapFree(GetProcessHeap(), 0, b_info);
 
         /* Use the dib section from now on */
         This->resource.allocatedMemory = This->dib.bitmap_data;
