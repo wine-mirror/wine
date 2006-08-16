@@ -696,8 +696,9 @@ TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top
             draw_masked = TRUE;
         }
     }
-    else if ((tbcd->nmcd.uItemState & CDIS_HOT) 
-      && ((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf)))
+    else if (tbcd->nmcd.uItemState & CDIS_CHECKED ||
+      ((tbcd->nmcd.uItemState & CDIS_HOT) 
+      && ((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf))))
     {
         /* if hot, attempt to draw with hot image list, if fails, 
            use default image list */
