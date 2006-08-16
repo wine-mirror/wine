@@ -1102,20 +1102,30 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
  *
  * PARAMS
  *  progid [I] Unicode program ID, as found in registry.
- *  riid   [O] Associated CLSID.
+ *  clsid  [O] Associated CLSID.
  *
  * RETURNS
  *	Success: S_OK
  *  Failure: CO_E_CLASSSTRING - the given ProgID cannot be found.
  */
-HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
+HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
 {
     static const WCHAR clsidW[] = { '\\','C','L','S','I','D',0 };
     WCHAR buf2[CHARS_IN_GUID];
     LONG buf2len = sizeof(buf2);
     HKEY xhkey;
+    WCHAR *buf;
 
-    WCHAR *buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
+    if (!progid || !clsid)
+    {
+        ERR("neither progid (%p) nor clsid (%p) are optional\n", progid, clsid);
+        return E_INVALIDARG;
+    }
+
+    /* initialise clsid in case of failure */
+    memset(clsid, 0, sizeof(*clsid));
+
+    buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
     strcpyW( buf, progid );
     strcatW( buf, clsidW );
     if (RegOpenKeyW(HKEY_CLASSES_ROOT,buf,&xhkey))
@@ -1131,7 +1141,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
         return CO_E_CLASSSTRING;
     }
     RegCloseKey(xhkey);
-    return CLSIDFromString(buf2,riid);
+    return CLSIDFromString(buf2,clsid);
 }
 
 
