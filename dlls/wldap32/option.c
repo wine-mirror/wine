@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_get_optionA     (WLDAP32.@)
+ *
+ * See ldap_get_optionW.
+ */
 ULONG CDECL ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -164,6 +169,20 @@ ULONG CDECL ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_get_optionW     (WLDAP32.@)
+ *
+ * Retrieve option values for a given LDAP context.
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  option  [I] Option to get values for.
+ *  value   [O] Pointer to option values.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -288,6 +307,11 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_set_optionA     (WLDAP32.@)
+ *
+ * See ldap_set_optionW.
+ */
 ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -363,6 +387,23 @@ ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_set_optionW     (WLDAP32.@)
+ *
+ * Set option values for a given LDAP context.
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  option  [I] Option to set values for.
+ *  value   [I] Pointer to option values.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Set value to LDAP_OPT_ON or LDAP_OPT_OFF for on/off options.
+ */ 
 ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
