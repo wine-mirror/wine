@@ -901,10 +901,53 @@ static void test_client_init(void)
 
 }
 
+static void test_ndr_allocate(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *p1, *p2;
+    struct tag_mem_list_t
+    {
+        DWORD magic;
+        void *ptr;
+        struct tag_mem_list_t *next;
+    } *mem_list;
+    const DWORD magic_MEML = 'M' << 24 | 'E' << 16 | 'M' << 8 | 'L';
+
+    StubDesc = Object_StubDesc;
+    NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
+
+    ok(StubMsg.pMemoryList == NULL, "memlist %p\n", StubMsg.pMemoryList);
+    my_alloc_called = my_free_called = 0;
+    p1 = NdrAllocate(&StubMsg, 10);
+    p2 = NdrAllocate(&StubMsg, 20);
+    ok(my_alloc_called == 2, "alloc called %d\n", my_alloc_called);
+    mem_list = StubMsg.pMemoryList;
+todo_wine {
+    ok(mem_list != NULL, "mem_list NULL\n");
+ }
+    if(mem_list)
+    {
+        ok(mem_list->magic == magic_MEML, "magic %08lx\n", mem_list->magic);
+        ok(mem_list->ptr == p2, "ptr != p2\n");
+        ok(mem_list->next != NULL, "next NULL\n");
+        mem_list = mem_list->next;
+        if(mem_list)
+        {
+            ok(mem_list->magic == magic_MEML, "magic %08lx\n", mem_list->magic);
+            ok(mem_list->ptr == p1, "ptr != p2\n");
+            ok(mem_list->next == NULL, "next %p\n", mem_list->next);
+        }
+    }
+    /* NdrFree isn't exported so we can't test free'ing */
+}
+
 START_TEST( ndr_marshall )
 {
     test_simple_types();
     test_simple_struct();
     test_fullpointer_xlat();
     test_client_init();
+    test_ndr_allocate();
 }
