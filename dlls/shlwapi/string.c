@@ -1563,7 +1563,7 @@ LPSTR WINAPI StrFormatKBSizeA(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
   char szBuff[256], *szOut = szBuff + sizeof(szBuff) - 1;
   LONGLONG ulKB = (llBytes + 1023) >> 10;
 
-  TRACE("(%lld,%p,%d)\n", llBytes, lpszDest, cchMax);
+  TRACE("(0x%s,%p,%d)\n", wine_dbgstr_longlong(llBytes), lpszDest, cchMax);
 
   *szOut-- = '\0';
   *szOut-- = 'B';
@@ -1591,7 +1591,7 @@ LPWSTR WINAPI StrFormatKBSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
   WCHAR szBuff[256], *szOut = szBuff + sizeof(szBuff)/sizeof(WCHAR) - 1;
   LONGLONG ulKB = (llBytes + 1023) >> 10;
 
-  TRACE("(%lld,%p,%d)\n", llBytes, lpszDest, cchMax);
+  TRACE("(0x%s,%p,%d)\n", wine_dbgstr_longlong(llBytes), lpszDest, cchMax);
 
   *szOut-- = '\0';
   *szOut-- = 'B';
@@ -2265,7 +2265,7 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
   double dBytes;
   UINT i = 0;
 
-  TRACE("(%lld,%p,%d)\n", llBytes, lpszDest, cchMax);
+  TRACE("(0x%s,%p,%d)\n", wine_dbgstr_longlong(llBytes), lpszDest, cchMax);
 
   if (!lpszDest || !cchMax)
     return lpszDest;
