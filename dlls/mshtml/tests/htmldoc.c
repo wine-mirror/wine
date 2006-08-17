@@ -28,6 +28,7 @@
 #include "docobj.h"
 #include "mshtmhst.h"
 #include "mshtmdid.h"
+#include "mshtmcid.h"
 #include "hlink.h"
 #include "idispids.h"
 #include "shlguid.h"
@@ -106,7 +107,7 @@ DEFINE_EXPECT(OnFrameWindowActivate);
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
-static enum {
+static enum load_state_t {
     LD_NO = 0,
     LD_DOLOAD,
     LD_LOADING,
@@ -800,7 +801,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
 {
     CHECK_EXPECT(ShowUI);
 
-    ok(dwID == 0, "dwID=%ld, expected 0\n", dwID);
+    ok(dwID == DOCHOSTUITYPE_BROWSE, "dwID=%ld, expected DOCHOSTUITYPE_BROWSE\n", dwID);
     ok(pActiveObject != NULL, "pActiveObject = NULL\n");
     ok(pCommandTarget != NULL, "pCommandTarget = NULL\n");
     ok(pFrame == &InPlaceFrame, "pFrame=%p, expected %p\n", pFrame, &InPlaceFrame);
@@ -1026,7 +1027,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
         case 37:
-            CHECK_EXPECT(Exec_ShellDocView_37);
+            CHECK_EXPECT2(Exec_ShellDocView_37);
             ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
@@ -1601,6 +1602,36 @@ static void test_exec_onunload(IUnknown *unk)
     IOleCommandTarget_Release(cmdtrg);
 }
 
+static void test_exec_editmode(IUnknown *unk)
+{
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    SET_EXPECT(SetStatusText);
+    SET_EXPECT(Exec_ShellDocView_37);
+    SET_EXPECT(GetHostInfo);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    expect_status_text = NULL;
+
+    hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
+            OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+    ok(hres == S_OK, "Exec failed: %08lx\n", hres);
+
+    CHECK_CALLED(SetStatusText);
+    CHECK_CALLED(Exec_ShellDocView_37);
+    CHECK_CALLED(GetHostInfo);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
 static HWND create_container_window(void)
 {
     static const WCHAR wszHTMLDocumentTest[] =
@@ -2014,13 +2045,20 @@ static void test_Navigate(IUnknown *unk)
     IHlinkTarget_Release(hlink);
 }
 
-static void test_HTMLDocument(void)
+static void init_test(enum load_state_t ls) {
+    hwnd = last_hwnd = NULL;
+    set_clientsite = FALSE;
+    call_UIActivate = FALSE;
+    load_state = ls;
+}
+
+static void test_HTMLDocument(enum load_state_t ls)
 {
     IUnknown *unk;
     HRESULT hres;
     ULONG ref;
 
-    hwnd = last_hwnd = NULL;
+    init_test(ls);
 
     hres = create_document(&unk);
     if(FAILED(hres))
@@ -2098,7 +2136,7 @@ static void test_HTMLDocument_hlink(void)
     HRESULT hres;
     ULONG ref;
 
-    hwnd = last_hwnd = NULL;
+    init_test(LD_DOLOAD);
 
     hres = create_document(&unk);
     if(FAILED(hres))
@@ -2119,6 +2157,42 @@ static void test_HTMLDocument_hlink(void)
     if(view)
         IOleDocumentView_Release(view);
     view = NULL;
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
+}
+
+static void test_editing_mode(void)
+{
+    IUnknown *unk;
+    IOleObject *oleobj;
+    HRESULT hres;
+    ULONG ref;
+
+    init_test(LD_DOLOAD);
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "Could not get IOleObject: %08lx\n", hres);
+
+    test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
+    test_DoVerb(oleobj);
+
+    IOleObject_Release(oleobj);
+
+    test_exec_editmode(unk);
+
+    test_UIDeactivate();
+    test_InPlaceDeactivate(unk, TRUE);
+    test_Close(unk, FALSE);
+
+    if(view) {
+        IOleDocumentView_Release(view);
+        view = NULL;
+    }
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
@@ -2161,12 +2235,10 @@ START_TEST(htmldoc)
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
-    load_state = LD_NO;
-    test_HTMLDocument();
-    load_state = LD_DOLOAD;
-    test_HTMLDocument();
-    load_state = LD_DOLOAD;
+    test_HTMLDocument(LD_NO);
+    test_HTMLDocument(LD_DOLOAD);
     test_HTMLDocument_hlink();
+    test_editing_mode();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
