@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = advapi32.dll
-IMPORTS   = advapi32 kernel32
+IMPORTS   = ole32 advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \

@@ -28,6 +28,9 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "ntsecapi.h"
+#include "sddl.h"
+#include "winnls.h"
+#include "objbase.h"
 #define INITGUID
 #include "guiddef.h"
 #include "wine/test.h"
@@ -91,6 +94,25 @@ static void test_lsa(void)
         ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyPrimaryDomainInformation) failed, returned 0x%08lx\n", status);
         if (status == STATUS_SUCCESS) {
             ok(primary_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
+            if (primary_domain_info->Sid) {
+                LPSTR strsid;
+                if (ConvertSidToStringSidA(primary_domain_info->Sid, &strsid))
+                {
+                    if (primary_domain_info->Name.Buffer) {
+                        LPSTR name = NULL;
+                        UINT len;
+                        len = WideCharToMultiByte( CP_ACP, 0, primary_domain_info->Name.Buffer, -1, NULL, 0, NULL, NULL );
+                        name = LocalAlloc( 0, len );
+                        WideCharToMultiByte( CP_ACP, 0, primary_domain_info->Name.Buffer, -1, name, len, NULL, NULL );
+                        trace("  name: %s sid: %s\n", name, strsid);
+                        LocalFree( name );
+                    } else
+                        trace("  name: NULL sid: %s\n", strsid);
+                    LocalFree( strsid );
+                }
+                else
+                    trace("invalid sid\n");
+            }
             pLsaFreeMemory((LPVOID)primary_domain_info);
         }
 
@@ -107,6 +129,44 @@ static void test_lsa(void)
         if (status == STATUS_SUCCESS) {
             ok(IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL), "DomainGUID should be GUID_NULL on local computer\n");
             ok(dns_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
+            if (dns_domain_info->Sid || !IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL)) {
+                LPSTR strsid = NULL;
+                LPSTR name = NULL;
+                LPSTR domain = NULL;
+                LPSTR forest = NULL;
+                LPSTR guidstr = NULL;
+                WCHAR guidstrW[64];
+                UINT len;
+                guidstr[0] = '\0';
+                ConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
+                StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, sizeof(guidstrW)/sizeof(WCHAR));
+                len = WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, NULL, 0, NULL, NULL );
+                guidstr = LocalAlloc( 0, len );
+                WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, guidstr, len, NULL, NULL );
+                if (dns_domain_info->Name.Buffer) {
+                    len = WideCharToMultiByte( CP_ACP, 0, dns_domain_info->Name.Buffer, -1, NULL, 0, NULL, NULL );
+                    name = LocalAlloc( 0, len );
+                    WideCharToMultiByte( CP_ACP, 0, dns_domain_info->Name.Buffer, -1, name, len, NULL, NULL );
+                }
+                if (dns_domain_info->DnsDomainName.Buffer) {
+                    len = WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsDomainName.Buffer, -1, NULL, 0, NULL, NULL );
+                    domain = LocalAlloc( 0, len );
+                    WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsDomainName.Buffer, -1, name, len, NULL, NULL );
+                }
+                if (dns_domain_info->DnsForestName.Buffer) {
+                    len = WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsForestName.Buffer, -1, NULL, 0, NULL, NULL );
+                    forest = LocalAlloc( 0, len );
+                    WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsForestName.Buffer, -1, name, len, NULL, NULL );
+                }
+                trace("  name: %s domain: %s forest: %s guid: %s sid: %s\n",
+                      name ? name : "NULL", domain ? domain : "NULL",
+                      forest ? forest : "NULL", guidstr, strsid ? strsid : "NULL");
+                LocalFree( name );
+                LocalFree( forest );
+                LocalFree( domain );
+                LocalFree( guidstr );
+                LocalFree( strsid );
+            }
             pLsaFreeMemory((LPVOID)dns_domain_info);
         }
 
