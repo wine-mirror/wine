@@ -395,37 +395,6 @@ static void write_clientinterfacedecl(type_t *iface)
 }
 
 
-static void write_formatdesc( const char *str )
-{
-    print_client("typedef struct _MIDL_%s_FORMAT_STRING\n", str );
-    print_client("{\n");
-    indent++;
-    print_client("short Pad;\n");
-    print_client("unsigned char Format[%s_FORMAT_STRING_SIZE];\n", str);
-    indent--;
-    print_client("} MIDL_%s_FORMAT_STRING;\n", str);
-    print_client("\n");
-}
-
-
-static void write_formatstringsdecl(ifref_t *ifaces)
-{
-    print_client("#define TYPE_FORMAT_STRING_SIZE %d\n",
-                 get_size_typeformatstring(ifaces));
-
-    print_client("#define PROC_FORMAT_STRING_SIZE %d\n",
-                 get_size_procformatstring(ifaces));
-
-    fprintf(client, "\n");
-    write_formatdesc("TYPE");
-    write_formatdesc("PROC");
-    fprintf(client, "\n");
-    print_client("static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
-    print_client("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
-    print_client("\n");
-}
-
-
 static void write_implicithandledecl(type_t *iface)
 {
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
@@ -471,7 +440,7 @@ void write_client(ifref_t *ifaces)
     if (!client)
         return;
 
-    write_formatstringsdecl(ifaces);
+    write_formatstringsdecl(client, indent, ifaces);
 
     for (; iface; iface = PREV_LINK(iface))
     {

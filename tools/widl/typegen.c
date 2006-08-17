@@ -132,6 +132,33 @@ static int print_file(FILE *file, int indent, const char *format, ...)
     return r;
 }
 
+static void write_formatdesc(FILE *f, int indent, const char *str)
+{
+    print_file(f, indent, "typedef struct _MIDL_%s_FORMAT_STRING\n", str);
+    print_file(f, indent, "{\n");
+    print_file(f, indent + 1, "short Pad;\n");
+    print_file(f, indent + 1, "unsigned char Format[%s_FORMAT_STRING_SIZE];\n", str);
+    print_file(f, indent, "} MIDL_%s_FORMAT_STRING;\n", str);
+    print_file(f, indent, "\n");
+}
+
+void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces)
+{
+    print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
+               get_size_typeformatstring(ifaces));
+
+    print_file(f, indent, "#define PROC_FORMAT_STRING_SIZE %d\n",
+               get_size_procformatstring(ifaces));
+
+    fprintf(f, "\n");
+    write_formatdesc(f, indent, "TYPE");
+    write_formatdesc(f, indent, "PROC");
+    fprintf(f, "\n");
+    print_file(f, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
+    print_file(f, indent, "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
+    print_file(f, indent, "\n");
+}
+
 static inline int type_has_ref(const type_t *type)
 {
     return (type->type == 0 && type->ref);

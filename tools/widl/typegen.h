@@ -35,6 +35,7 @@ enum remoting_phase
     PHASE_FREE
 };
 
+void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces);
 void write_procformatstring(FILE *file, const ifref_t *ifaces);
 void write_typeformatstring(FILE *file, const ifref_t *ifaces);
 size_t get_type_memsize(const type_t *type);

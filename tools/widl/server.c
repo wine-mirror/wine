@@ -550,36 +550,6 @@ static void write_serverinterfacedecl(type_t *iface)
     fprintf(server, "\n");
 }
 
-static void write_formatdesc( const char *str )
-{
-    print_server("typedef struct _MIDL_%s_FORMAT_STRING\n", str );
-    print_server("{\n");
-    indent++;
-    print_server("short Pad;\n");
-    print_server("unsigned char Format[%s_FORMAT_STRING_SIZE];\n", str);
-    indent--;
-    print_server("} MIDL_%s_FORMAT_STRING;\n", str);
-    print_server("\n");
-}
-
-
-static void write_formatstringsdecl(ifref_t *ifaces)
-{
-    print_server("#define TYPE_FORMAT_STRING_SIZE %d\n",
-                 get_size_typeformatstring(ifaces));
-
-    print_server("#define PROC_FORMAT_STRING_SIZE %d\n",
-                 get_size_procformatstring(ifaces));
-
-    fprintf(server, "\n");
-    write_formatdesc("TYPE");
-    write_formatdesc("PROC");
-    fprintf(server, "\n");
-    print_server("static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
-    print_server("static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
-    print_server("\n");
-}
-
 
 static void init_server(void)
 {
@@ -612,7 +582,7 @@ void write_server(ifref_t *ifaces)
     if (!server)
         return;
 
-    write_formatstringsdecl(ifaces);
+    write_formatstringsdecl(server, indent, ifaces);
 
     for (; iface; iface = PREV_LINK(iface))
     {
