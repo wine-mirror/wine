@@ -516,6 +516,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         max_len-1, &bin_len)) != SEC_E_OK)
             goto isc_end;
 
+        /* Mask away the NTLMv2 flag, as well as the key exchange flag */
+        bin[14] &= ~0x08;
+        bin[15] &= ~0x40;
+
         /* put the decoded client blob into the out buffer */
 
         ret = SEC_I_CONTINUE_NEEDED;
