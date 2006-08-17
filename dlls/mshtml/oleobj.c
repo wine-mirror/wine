@@ -520,7 +520,7 @@ static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *pMsg)
     return E_NOTIMPL;
 }
 
-static HRESULT get_property(IOleClientSite *client, DISPID dispid, VARIANT *res)
+HRESULT get_client_disp_property(IOleClientSite *client, DISPID dispid, VARIANT *res)
 {
     IDispatch *disp = NULL;
     DISPPARAMS dispparams = {NULL, 0};
@@ -548,7 +548,7 @@ static HRESULT on_change_dlcontrol(HTMLDocument *This)
     VARIANT res;
     HRESULT hres;
     
-    hres = get_property(This->client, DISPID_AMBIENT_DLCONTROL, &res);
+    hres = get_client_disp_property(This->client, DISPID_AMBIENT_DLCONTROL, &res);
     if(SUCCEEDED(hres))
         FIXME("unsupported dlcontrol %08lx\n", V_I4(&res));
 
@@ -569,7 +569,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     switch(dispID) {
     case DISPID_AMBIENT_USERMODE:
         TRACE("(%p)->(DISPID_AMBIENT_USERMODE)\n", This);
-        hres = get_property(This->client, DISPID_AMBIENT_USERMODE, &res);
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_USERMODE, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -590,7 +590,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
         TRACE("(%p)->(DISPID_AMBIENT_OFFLINEIFNOTCONNECTED)\n", This);
         on_change_dlcontrol(This);
-        hres = get_property(This->client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &res);
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -606,7 +606,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     case DISPID_AMBIENT_SILENT:
         TRACE("(%p)->(DISPID_AMBIENT_SILENT)\n", This);
         on_change_dlcontrol(This);
-        hres = get_property(This->client, DISPID_AMBIENT_SILENT, &res);
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -621,7 +621,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
         return S_OK;
     case DISPID_AMBIENT_USERAGENT:
         TRACE("(%p)->(DISPID_AMBIENT_USERAGENT)\n", This);
-        hres = get_property(This->client, DISPID_AMBIENT_USERAGENT, &res);
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_USERAGENT, &res);
         if(FAILED(hres))
             return S_OK;
 
@@ -630,7 +630,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
         return S_OK;
     case DISPID_AMBIENT_PALETTE:
         TRACE("(%p)->(DISPID_AMBIENT_PALETTE)\n", This);
-        hres = get_property(This->client, DISPID_AMBIENT_PALETTE, &res);
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_PALETTE, &res);
         if(FAILED(hres))
             return S_OK;
 
