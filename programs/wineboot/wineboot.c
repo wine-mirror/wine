@@ -51,15 +51,24 @@
  *   processed (requires translations from Unicode to Ansi).
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdio.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 #include <windows.h>
 #include <wine/debug.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
 #define MAX_LINE_LENGTH (2*MAX_PATH+2)
+
+extern BOOL shutdown_close_windows( BOOL force );
+extern void kill_processes( BOOL kill_desktop );
 
 static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
 {
@@ -607,6 +616,31 @@ static int ProcessWindowsFileProtection(void)
     return 1;
 }
 
+static void usage(void)
+{
+    WINE_MESSAGE( "Usage: wineboot [options]\n" );
+    WINE_MESSAGE( "Options;\n" );
+    WINE_MESSAGE( "    -h,--help         Display this help message\n" );
+    WINE_MESSAGE( "    -e,--end-session  End the current session cleanly\n" );
+    WINE_MESSAGE( "    -f,--force        Force exit for processes that don't exit cleanly\n" );
+    WINE_MESSAGE( "    -k,--kill         Kill running processes without any cleanup\n" );
+    WINE_MESSAGE( "    -r,--restart      Restart only, don't do normal startup operations\n" );
+    WINE_MESSAGE( "    -s,--shutdown     Shutdown only, don't reboot\n" );
+}
+
+static const char short_options[] = "efhkrs";
+
+static const struct option long_options[] =
+{
+    { "help",        0, 0, 'h' },
+    { "end-session", 0, 0, 'e' },
+    { "force",       0, 0, 'f' },
+    { "kill",        0, 0, 'k' },
+    { "restart",     0, 0, 'r' },
+    { "shutdown",    0, 0, 's' },
+    { NULL,          0, 0, 0 }
+};
+
 struct op_mask {
     BOOL w9xonly; /* Perform only operations done on Windows 9x */
     BOOL ntonly; /* Perform only operations done on Windows NT */
@@ -618,14 +652,15 @@ struct op_mask {
 
 static const struct op_mask SESSION_START={FALSE, FALSE, TRUE, TRUE, TRUE, TRUE},
     SETUP={FALSE, FALSE, FALSE, TRUE, TRUE, TRUE};
-#define DEFAULT SESSION_START
 
 int main( int argc, char *argv[] )
 {
-    struct op_mask ops; /* Which of the ops do we want to perform? */
+    struct op_mask ops = SESSION_START; /* Which of the ops do we want to perform? */
     /* First, set the current directory to SystemRoot */
     TCHAR gen_path[MAX_PATH];
     DWORD res;
+    int optc;
+    int end_session = 0, force = 0, kill = 0, restart = 0, shutdown = 0;
 
     res=GetWindowsDirectory( gen_path, sizeof(gen_path) );
     
@@ -651,22 +686,31 @@ int main( int argc, char *argv[] )
         return 100;
     }
 
-    if( argc>1 )
+
+    while ((optc = getopt_long(argc, argv, short_options, long_options, NULL )) != -1)
     {
-        switch( argv[1][0] )
+        switch(optc)
         {
-        case 'r': /* Restart */
-            ops=SETUP;
-            break;
-        case 's': /* Full start */
-            ops=SESSION_START;
-            break;
-        default:
-            ops=DEFAULT;
-            break;
+        case 'e': end_session = 1; break;
+        case 'f': force = 1; break;
+        case 'k': kill = 1; break;
+        case 'r': restart = 1; break;
+        case 's': shutdown = 1; break;
+        case 'h': usage(); return 0;
+        case '?': usage(); return 1;
         }
-    } else
-        ops=DEFAULT;
+    }
+
+    if (end_session)
+    {
+        if (!shutdown_close_windows( force )) return 1;
+    }
+
+    if (end_session || kill) kill_processes( shutdown );
+
+    if (shutdown) return 0;
+
+    if (restart) ops = SETUP;
 
     /* Perform the ops by order, stopping if one fails, skipping if necessary */
     /* Shachar: Sorry for the perl syntax */
