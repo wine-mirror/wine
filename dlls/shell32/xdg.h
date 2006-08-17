@@ -32,6 +32,12 @@ int XDG_MakeDirs(const char *path);
 #define XDG_URLENCODE 0x1
 BOOL XDG_WriteDesktopStringEntry(int fd, const char *keyName, DWORD dwFlags, const char *value);
 
+typedef struct tagXDG_PARSED_FILE XDG_PARSED_FILE;
+
+XDG_PARSED_FILE *XDG_ParseDesktopFile(int fd);
+char *XDG_GetStringValue(XDG_PARSED_FILE *file, const char *group_name, const char *value_name, DWORD dwFlags);
+void XDG_FreeParsedFile(XDG_PARSED_FILE *file);
+
 /* implemented in trash.c */
 typedef struct tagTRASH_ELEMENT TRASH_ELEMENT;
 

@@ -290,6 +290,58 @@ static int dskentry_encode(const char *value, char *output)
     return num_written;
 }
 
+/******************************************************************************
+ * dskentry_decode    [internal]
+ *
+ * Unescape the characters that can be escaped according to the desktop entry spec.
+ * The output parameter may be NULL. Then only the number of characters will
+ * be computers.
+ *
+ * RETURNS
+ *   The number of characters after unescaping the special characters, including the
+ * terminating NUL.
+ */
+static int dskentry_decode(const char *value, int len, char *output)
+{
+    int pos = 0;
+    int count = 0;
+    while (pos<len)
+    {
+        char c;
+        if (value[pos] == '\\' && pos<len-1)
+        {
+            pos++;
+            switch (value[pos])
+            {
+                case 's': c = ' '; break;
+                case 'n': c = '\n'; break;
+                case 't': c = '\t'; break;
+                case 'r': c = 'r'; break;
+                case '\\': c = '\\'; break;
+                default:
+                    /* store both the backslash and the character */
+                    if (output)
+                        *(output++) = '\\';
+                    count++;
+                    c = value[pos];
+                    break;
+            }
+        }
+        else
+            c = value[pos];
+            
+        if (output)
+            *(output++) = c;
+        count++;
+        pos++;
+    }
+    
+    if (output)
+        *(output++) = 0;
+    count++;
+    return count;
+}
+
 
 /******************************************************************************
  * url_encode    [internal]
@@ -338,6 +390,54 @@ static int url_encode(const char *value, char *output)
     return num_written;
 }
 
+static int decode_url_code(const char *c)
+{
+    const char *p1, *p2;
+    int v1, v2;
+    static const char *hexchars = "0123456789ABCDEF";
+    if (*c == 0)
+        return -1;
+
+    p1 = strchr(hexchars, toupper(*c));
+    p2 = strchr(hexchars, toupper(*(c+1)));
+    if (p1 == NULL || p2 == NULL)
+        return -1;
+    v1 = (int)(p1 - hexchars);
+    v2 = (int)(p2 - hexchars);
+    return (v1<<4) + v2;
+}
+
+/******************************************************************************
+ * url_decode    [internal]
+ *
+ * URL-decode the given string (i.e. unescape codes like %20). The decoded string
+ * will never be longer than the encoded one. The decoding can be done in place - the
+ * output variable can point to the value buffer.
+ *
+ * output should not be NULL
+ */
+static void url_decode(const char *value, char *output)
+{
+    const char *c = value;
+    while (*c)
+    {
+        if (*c == '%')
+        {
+            int v = decode_url_code(c+1);
+            if (v != -1)
+            {
+                *(output++) = v;
+                c += 3;
+                continue;
+            }
+        }
+        
+        *(output++) = *c;
+        c++;
+    }
+    *output = 0;
+}
+
 static int escape_value(const char *value, DWORD dwFlags, char *output)
 {
     if (dwFlags & XDG_URLENCODE)
@@ -369,4 +469,240 @@ BOOL XDG_WriteDesktopStringEntry(int writer, const char *keyName, DWORD dwFlags,
     ret = (write(writer, string, keyLen+1+valueLen)!=-1);
     SHFree(string);
     return ret;
+}
+
+typedef struct
+{
+    char *str;
+    int len;
+} PARSED_STRING;
+
+typedef struct tagPARSED_ENTRY PARSED_ENTRY;
+struct tagPARSED_ENTRY
+{
+    PARSED_STRING name;
+    PARSED_STRING equals;
+    PARSED_STRING value;
+    PARSED_ENTRY *next;
+};
+
+typedef struct tagPARSED_GROUP PARSED_GROUP;
+struct tagPARSED_GROUP
+{
+    PARSED_STRING name;
+    PARSED_ENTRY *entries;
+    PARSED_GROUP *next;
+};
+
+
+struct tagXDG_PARSED_FILE
+{
+    char *contents;
+    PARSED_ENTRY *head_comments;
+    PARSED_GROUP *groups;
+};
+
+static BOOL parsed_str_eq(PARSED_STRING *str1, const char *str2)
+{
+    if (strncmp(str1->str, str2, str1->len) != 0)
+        return FALSE;
+    if (str2[str1->len] != 0)
+        return FALSE;
+    return TRUE;
+}
+
+static void free_entries_list(PARSED_ENTRY *first)
+{
+    PARSED_ENTRY *next;
+    while (first)
+    {
+        next = first->next;
+        SHFree(first);
+        first = next;
+    }
+}
+
+void XDG_FreeParsedFile(XDG_PARSED_FILE *parsed)
+{
+    PARSED_GROUP *group, *next;
+    if (!parsed)
+        return;
+    free_entries_list(parsed->head_comments);
+    
+    group = parsed->groups;
+    while (group)
+    {
+        next = group->next;
+        free_entries_list(group->entries);
+        SHFree(group);
+        group = next;
+    }
+}
+
+#define LINE_GROUP   1
+#define LINE_ENTRY   2
+#define LINE_COMMENT 3
+
+static int parse_line(char *content, PARSED_ENTRY *output, int *outType)
+{
+    char *end;
+    
+    ZeroMemory(output, sizeof(PARSED_ENTRY));
+    end = strchr(content, '\n');
+    if (end == NULL)
+        end = content + strlen(content) - 1;
+    
+    if (*content == '#')
+    {
+        *outType = LINE_COMMENT;
+        output->equals.str = content;
+        output->equals.len = end - content;
+        if (*end != '\n')
+            output->equals.len++;
+    }
+    else if (*content == '[')
+    {
+        char *last_char = end;
+        
+        *outType = LINE_GROUP;
+        
+        /* the standard says nothing about skipping white spaces but e.g. KDE accepts such files */
+        while (isspace(*last_char))
+            last_char--;
+        if (*last_char != ']')
+            return -1;
+        output->name.str = content + 1;
+        output->name.len = last_char - (content + 1);
+    }
+    else
+    {
+        /* 'name = value' line */
+        char *equal, *eq_begin, *eq_end;
+        
+        *outType = LINE_ENTRY;
+        
+        equal = strchr(content, '=');
+        if (equal == NULL || equal > end)
+            return -1;
+        for (eq_begin = equal-1;  isspace(*eq_begin) && eq_begin >= content; eq_begin--)
+            ;
+        for (eq_end = equal+1; isspace(*eq_end) && *eq_end != '\n'; eq_end++)
+            ;
+
+        output->name.str = content;
+        output->name.len = eq_begin - content + 1;
+
+        output->equals.str = eq_begin + 1;
+        output->equals.len = eq_end - eq_begin - 1;
+        
+        output->value.str = eq_end;
+        output->value.len = end - eq_end;
+
+        if (*end != '\n')
+            output->value.len++;
+    }
+    return end - content + 1;
+}
+
+XDG_PARSED_FILE *XDG_ParseDesktopFile(int fd)
+{
+    struct stat stats;
+    XDG_PARSED_FILE *parsed = NULL;
+    PARSED_ENTRY **curr_entry;
+    PARSED_GROUP **curr_group;
+    BOOL is_in_group = FALSE;
+    
+    int pos = 0;
+    
+    if (fstat(fd, &stats) == -1) goto failed;
+    parsed = SHAlloc(sizeof(XDG_PARSED_FILE));
+    if (parsed == NULL) goto failed;
+    parsed->groups = NULL;
+    parsed->head_comments = NULL;
+    parsed->contents = SHAlloc(stats.st_size+1);
+    if (parsed->contents == NULL) goto failed;
+    
+    curr_entry = &parsed->head_comments;
+    curr_group = &parsed->groups;
+    
+    if (read(fd, parsed->contents, stats.st_size) == -1) goto failed;
+    parsed->contents[stats.st_size] = 0;
+
+    while (pos < stats.st_size)
+    {
+        PARSED_ENTRY statement;
+        int type, size;
+
+        size = parse_line(parsed->contents + pos, &statement, &type);
+        if (size == -1) goto failed;
+        if (size == 0)
+            break;
+        pos += size;
+        
+        switch (type)
+        {
+            case LINE_GROUP:
+            {
+                PARSED_GROUP *group = SHAlloc(sizeof(PARSED_GROUP));
+                if (group == NULL) goto failed;
+                is_in_group = TRUE;
+                
+                group->name = statement.name;
+                group->entries = NULL;
+                group->next = NULL;
+                *curr_group = group;
+                curr_group = &group->next;
+                curr_entry = &group->entries;
+                break;
+            }
+
+            case LINE_ENTRY:
+                if (!is_in_group) goto failed;
+                /* fall through */
+            case LINE_COMMENT:
+            {
+                PARSED_ENTRY *new_stat = SHAlloc(sizeof(PARSED_ENTRY));
+                if (new_stat == NULL) goto failed;
+                *new_stat = statement;
+                new_stat->next = NULL;
+                *curr_entry = new_stat;
+                curr_entry = &new_stat->next;
+                break;
+            }
+        }
+    }
+    return parsed;
+    
+failed:
+    XDG_FreeParsedFile(parsed);
+    return NULL;
+}
+
+char *XDG_GetStringValue(XDG_PARSED_FILE *file, const char *group_name, const char *value_name, DWORD dwFlags)
+{
+    PARSED_GROUP *group;
+    PARSED_ENTRY *entry;
+
+    for (group = file->groups; group; group = group->next)
+    {
+        if (!parsed_str_eq(&group->name, group_name))
+            continue;
+
+        for (entry = group->entries; entry; entry = entry->next)
+            if (entry->name.str != NULL && parsed_str_eq(&entry->name, value_name))
+            {
+                int len;
+                char *ret;
+                
+                len = dskentry_decode(entry->value.str, entry->value.len, NULL);
+                ret = SHAlloc(len);
+                if (ret == NULL) return NULL;
+                dskentry_decode(entry->value.str, entry->value.len, ret);
+                if (dwFlags & XDG_URLENCODE)
+                    url_decode(ret, ret);
+                return ret;
+            }
+    }
+    
+    return NULL;
 }
