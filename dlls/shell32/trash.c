@@ -55,6 +55,7 @@ static CRITICAL_SECTION TRASH_Creating = { &TRASH_Creating_Debug, -1, 0, 0, 0, 0
 
 static const char trashinfo_suffix[] = ".trashinfo";
 static const char trashinfo_header[] = "[Trash Info]\n";
+static const char trashinfo_group[] = "Trash Info";
 
 typedef struct
 {
@@ -382,30 +383,96 @@ void TRASH_DisposeElement(TRASH_ELEMENT *element)
 
 HRESULT TRASH_GetDetails(const TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)
 {
-    LPSTR path;
+    LPSTR path = NULL;
+    XDG_PARSED_FILE *parsed = NULL;
+    char *original_file_name = NULL;
+    char *deletion_date = NULL;
+    int fd = -1;
     struct stat stats;
+    HRESULT ret = S_FALSE;
+    LPWSTR original_dos_name;
     int suffix_length = lstrlenA(trashinfo_suffix);
     int filename_length = lstrlenA(element->filename);
-    int path_length = lstrlenA(element->bucket->files_dir);
-    static const WCHAR fmt[] = {'T','O','D','O','\\','(','%','h','s',')',0};
+    int files_length = lstrlenA(element->bucket->files_dir);
+    int path_length = max(lstrlenA(element->bucket->info_dir), files_length);
     
     path = SHAlloc(path_length + filename_length + 1);
     if (path == NULL) return E_OUTOFMEMORY;
-    lstrcpyA(path, element->bucket->files_dir);
-    lstrcpyA(path+path_length, element->filename);
-    path[path_length + filename_length - suffix_length] = 0;  /* remove the '.trashinfo' */
+    wsprintfA(path, "%s%s", element->bucket->files_dir, element->filename);
+    path[path_length + filename_length - suffix_length] = 0;  /* remove the '.trashinfo' */    
     if (lstat(path, &stats) == -1)
     {
         ERR("Error accessing data file for trashinfo %s (errno=%d)\n", element->filename, errno);
-        return S_FALSE;
+        goto failed;
+    }
+    
+    wsprintfA(path, "%s%s", element->bucket->info_dir, element->filename);
+    fd = open(path, O_RDONLY);
+    if (fd == -1)
+    {
+        ERR("Couldn't open trashinfo file %s (errno=%d)\n", path, errno);
+        goto failed;
+    }
+    
+    parsed = XDG_ParseDesktopFile(fd);
+    if (parsed == NULL)
+    {
+        ERR("Parse error in trashinfo file %s\n", path);
+        goto failed;
+    }
+    
+    original_file_name = XDG_GetStringValue(parsed, trashinfo_group, "Path", XDG_URLENCODE);
+    if (original_file_name == NULL)
+    {
+        ERR("No 'Path' entry in trashinfo file\n");
+        goto failed;
     }
     
     ZeroMemory(data, sizeof(*data));
     data->nFileSizeHigh = (DWORD)((LONGLONG)stats.st_size>>32);
     data->nFileSizeLow = stats.st_size & 0xffffffff;
     RtlSecondsSince1970ToTime(stats.st_mtime, (LARGE_INTEGER *)&data->ftLastWriteTime);
-    wnsprintfW(data->cFileName, MAX_PATH, fmt, element->filename);
-    return S_OK;
+    
+    original_dos_name = wine_get_dos_file_name(original_file_name);
+    if (original_dos_name != NULL)
+    {
+        lstrcpynW(data->cFileName, original_dos_name, MAX_PATH);
+        SHFree(original_dos_name);
+    }
+    else
+    {
+        /* show only the file name */
+        char *filename = strrchr(original_file_name, '/');
+        if (filename == NULL)
+            filename = original_file_name;
+        MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, data->cFileName, MAX_PATH);
+    }
+    
+    deletion_date = XDG_GetStringValue(parsed, trashinfo_group, "DeletionDate", 0);
+    if (deletion_date)
+    {
+        struct tm del_time;
+        time_t del_secs;
+        
+        sscanf(deletion_date, "%d-%d-%dT%d:%d:%d",
+            &del_time.tm_year, &del_time.tm_mon, &del_time.tm_mday,
+            &del_time.tm_hour, &del_time.tm_min, &del_time.tm_sec);
+        del_time.tm_year -= 1900;
+        del_time.tm_mon--;
+        del_secs = mktime(&del_time);
+        
+        RtlSecondsSince1970ToTime(del_secs, (LARGE_INTEGER *)&data->ftLastAccessTime);
+    }
+    
+    ret = S_OK;
+failed:
+    SHFree(path);
+    SHFree(original_file_name);
+    SHFree(deletion_date);
+    if (fd != -1)
+        close(fd);
+    XDG_FreeParsedFile(parsed);
+    return ret;
 }
 
 INT CALLBACK free_item_callback(void *item, void *lParam)
