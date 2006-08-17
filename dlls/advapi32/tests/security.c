@@ -892,7 +892,12 @@ static void test_LookupAccountSid(void)
 
     ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &pUsersSid);
-    ok(ret, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+    ok(ret || (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED),
+       "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+
+    /* not running on NT so give up */
+    if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+        return;
 
     /* try NULL account */
     acc_size = MAX_PATH;
