@@ -151,7 +151,7 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
         params.lpszText = szBuffer;
         params.lpszCaption = szCaption;
         params.lpszIcon = (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id);
-        params.dwStyle = MB_OKCANCEL | MB_USERICON;
+        params.dwStyle = MB_YESNO | MB_USERICON;
 
 	return (IDOK == MessageBoxIndirectW(&params));
 }
