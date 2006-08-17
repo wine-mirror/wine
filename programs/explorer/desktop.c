@@ -64,13 +64,6 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         }
         return 0;
 
-    /* simple check to prevent applications accidentally triggering the
-     * ExitWindowsEx code if they send random messages to the desktop window */
-    case WM_USER + 666:
-        if (HIWORD(wp) == 0xbabe)
-            return ExitWindowsEx( LOWORD(wp), lp );
-        return DefWindowProcW( hwnd, message, wp, lp );
-
     default:
         return DefWindowProcW( hwnd, message, wp, lp );
     }
