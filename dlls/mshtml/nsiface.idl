@@ -108,6 +108,7 @@ typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIDOMRange;
+typedef nsISupports nsIEditor;
 
 [
     object,
@@ -1155,6 +1156,22 @@ interface nsIWindowWatcher : nsISupports
                              nsIDOMWindow **_retval);
     nsresult GetActiveWindow(nsIDOMWindow **aActiveWindow);
     nsresult SetActiveWindow(nsIDOMWindow *aActiveWindow);
+}
+
+[
+    object,
+    uuid(d39fd2b4-3978-45d2-a4be-ba448171b61b)
+]
+interface nsIEditingSession : nsISupports
+{
+    nsresult GetEditorStatus(PRUint32 *aEditorStatus);
+    nsresult MakeWindowEditable(nsIDOMWindow *window, const char *aEditorType,
+                                PRBool doAfterUriLoad);
+    nsresult WindowIsEditable(nsIDOMWindow *window, PRBool *_retval);
+    nsresult GetEditorForWindow(nsIDOMWindow *window, nsIEditor **_retval);
+    nsresult SetupEditorOnWindow(nsIDOMWindow *window);
+    nsresult TearDownEditorOnWindow(nsIDOMWindow *window);
+    nsresult SetEditorOnControllers(nsIDOMWindow *aWindow, nsIEditor *aEditor);
 }
 
 /*

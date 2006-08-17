@@ -247,11 +247,59 @@ static HRESULT exec_browsemode(HTMLDocument *This)
     return S_OK;
 }
 
+static void setup_ns_editing(NSContainer *This)
+{
+    nsIInterfaceRequestor *iface_req;
+    nsIEditingSession *editing_session = NULL;
+    nsIURIContentListener *listener = NULL;
+    nsIDOMWindow *dom_window = NULL;
+    nsresult nsres;
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIEditingSession,
+                                               (void**)&editing_session);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIEditingSession: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
+    nsIDOMWindow_Release(dom_window);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get content DOM window: %08lx\n", nsres);
+        nsIEditingSession_Release(editing_session);
+        return;
+    }
+
+    nsres = nsIEditingSession_MakeWindowEditable(editing_session, dom_window, NULL, FALSE);
+    nsIEditingSession_Release(editing_session);
+    if(NS_FAILED(nsres)) {
+        ERR("MakeWindowEditable failed: %08lx\n", nsres);
+        return;
+    }
+
+    /* MakeWindowEditable changes WebBrowser's parent URI content listener.
+     * It seams to be a bug in Gecko. To workaround it we set our content
+     * listener again and Gecko's one as its parent.
+     */
+    nsIWebBrowser_GetParentURIContentListener(This->webbrowser, &listener);
+    nsIURIContentListener_SetParentContentListener(NSURICL(This), listener);
+    nsIURIContentListener_Release(listener);
+    nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
+}
+
 static HRESULT exec_editmode(HTMLDocument *This)
 {
     HRESULT hres;
 
-    FIXME("(%p)\n", This);
+    TRACE("(%p)\n", This);
 
     This->usermode = EDITMODE;
 
@@ -305,6 +353,9 @@ static HRESULT exec_editmode(HTMLDocument *This)
                 FIXME("offline == true\n");
         }
     }
+
+    if(This->nscontainer)
+        setup_ns_editing(This->nscontainer);
 
     return S_OK;
 }
