@@ -52,7 +52,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(sfc);
  */
 BOOL WINAPI SfcIsFileProtected(HANDLE RpcHandle, LPCWSTR ProtFileName)
 {
-    FIXME("(%p, %s) stub\n", RpcHandle, debugstr_w(ProtFileName));
+    static BOOL reported = FALSE;
+
+    if (reported) {
+        TRACE("(%p, %s) stub\n", RpcHandle, debugstr_w(ProtFileName));
+    }
+    else
+    {
+        FIXME("(%p, %s) stub\n", RpcHandle, debugstr_w(ProtFileName));
+        reported = TRUE;
+    }
+
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }
