@@ -15,6 +15,7 @@ C_SRCS = \
 	schannel.c \
 	secur32.c \
 	thunks.c \
+	util.c \
 	wrapper.c
 
 SUBDIRS = tests

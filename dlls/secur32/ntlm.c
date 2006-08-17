@@ -649,8 +649,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 TRACE("Helper sent %s\n", debugstr_a(buffer+3));
                 helper->valid_session_key = FALSE;
                 helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
-                /*FIXME: Generate the dummy session key = MD4(MD4(password))*/
-                memset(helper->session_key, 0 , 16);
+                /*Generate the dummy session key = MD4(MD4(password))*/
+                if(helper->password)
+                    SECUR32_CreateNTLMv1SessionKey(helper->password, helper->session_key);
+                else
+                    memset(helper->session_key, 0, 16);
             }
             else if(strncmp(buffer, "GK ", 3) == 0)
             {
@@ -672,6 +675,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 memcpy(helper->session_key, bin, bin_len);
             }
         }
+        helper->crypt.ntlm.a4i = SECUR32_arc4Alloc();
+        SECUR32_arc4Init(helper->crypt.ntlm.a4i, helper->session_key, 16);
+        helper->crypt.ntlm.seq_num = 0l;
     }
 
     if(ret != SEC_I_CONTINUE_NEEDED)
@@ -1005,16 +1011,19 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                 TRACE("Session key is %s\n", debugstr_a(buffer+3));
                 helper->valid_session_key = TRUE;
                 if(!helper->session_key)
-                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
+                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
                 if(!helper->session_key)
                 {
                     TRACE("Failed to allocate memory for session key\n");
                     ret = SEC_E_INTERNAL_ERROR;
                     goto asc_end;
                 }
-                memcpy(helper->session_key, bin, bin_len);
+                memcpy(helper->session_key, bin, 16);
             }
         }
+        helper->crypt.ntlm.a4i = SECUR32_arc4Alloc();
+        SECUR32_arc4Init(helper->crypt.ntlm.a4i, helper->session_key, 16);
+        helper->crypt.ntlm.seq_num = 0l;
     }
 
     phNewContext->dwUpper = ctxt_attr;
@@ -1171,6 +1180,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
  PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
+    ULONG sign_version = 1;
 
     TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (!phContext)
@@ -1199,8 +1209,28 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     }
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        FIXME("Can't handle real signing yet. Aborting.\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        PBYTE sig = pMessage->pBuffers[0].pvBuffer;
+        ULONG crc = ComputeCrc32(pMessage->pBuffers[1].pvBuffer,
+                pMessage->pBuffers[1].cbBuffer);
+
+        sig[ 0] = (sign_version >>  0) & 0xff;
+        sig[ 1] = (sign_version >>  8) & 0xff;
+        sig[ 2] = (sign_version >> 16) & 0xff;
+        sig[ 3] = (sign_version >> 24) & 0xff;
+        memset(sig+4, 0, 4);
+        sig[ 8] = (crc >>  0) & 0xff;
+        sig[ 9] = (crc >>  8) & 0xff;
+        sig[10] = (crc >> 16) & 0xff;
+        sig[11] = (crc >> 24) & 0xff;
+        sig[12] = (helper->crypt.ntlm.seq_num >>  0) & 0xff;
+        sig[13] = (helper->crypt.ntlm.seq_num >>  8) & 0xff;
+        sig[14] = (helper->crypt.ntlm.seq_num >> 16) & 0xff;
+        sig[15] = (helper->crypt.ntlm.seq_num >> 24) & 0xff;
+
+        ++(helper->crypt.ntlm.seq_num);
+
+        SECUR32_arc4Process(helper->crypt.ntlm.a4i, sig+4, 12);
+        return SEC_E_OK;
     }
 
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
@@ -1257,8 +1287,26 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        FIXME("Can't handle real signing yet. Aborting.\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        SecBufferDesc local_desc;
+        SecBuffer     local_buff[2];
+        BYTE          local_sig[16];
+
+        local_desc.ulVersion = SECBUFFER_VERSION;
+        local_desc.cBuffers = 2;
+        local_desc.pBuffers = local_buff;
+        local_buff[0].BufferType = SECBUFFER_TOKEN;
+        local_buff[0].cbBuffer = 16;
+        local_buff[0].pvBuffer = local_sig;
+        local_buff[1].BufferType = SECBUFFER_DATA;
+        local_buff[1].cbBuffer = pMessage->pBuffers[1].cbBuffer;
+        local_buff[1].pvBuffer = pMessage->pBuffers[1].pvBuffer;
+
+        ntlm_MakeSignature(phContext, fQOP, &local_desc, MessageSeqNo);
+
+        if(memcmp(((PBYTE)local_buff[0].pvBuffer) + 8, ((PBYTE)pMessage->pBuffers[0].pvBuffer) + 8, 8))
+            return SEC_E_MESSAGE_ALTERED;
+
+        return SEC_E_OK;
     }
 
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)

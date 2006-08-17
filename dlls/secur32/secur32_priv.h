@@ -55,6 +55,11 @@ typedef enum _helper_mode {
     NUM_HELPER_MODES
 } HelperMode;
 
+typedef struct tag_arc4_info {
+    unsigned char x, y;
+    unsigned char state[256];
+} arc4_info;
+
 typedef struct _NegoHelper {
     pid_t helper_pid;
     HelperMode mode;
@@ -69,6 +74,12 @@ typedef struct _NegoHelper {
     BYTE *session_key;
     BOOL valid_session_key;
     unsigned long neg_flags;
+    struct {
+        struct {
+            ULONG seq_num;
+            arc4_info *a4i;
+        } ntlm;
+    } crypt;
 } NegoHelper, *PNegoHelper;
 
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
@@ -121,8 +132,15 @@ void check_version(PNegoHelper helper);
 SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf, 
         int max_len, int *out_len);
 
-SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf, 
+SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
         int max_len, int *out_len);
+
+/* Functions from util.c */
+ULONG ComputeCrc32(const BYTE *pData, INT iLen);
+SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(const char* password, PBYTE session_key);
+arc4_info *SECUR32_arc4Alloc(void);
+void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);
+void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length);
 
 /* NTLMSSP flags indicating the negotiated features */
 #define NTLMSSP_NEGOTIATE_UNICODE                   0x00000001
