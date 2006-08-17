@@ -2365,6 +2365,8 @@ void WINAPI NdrConformantArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
+  pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
+
   EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
