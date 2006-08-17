@@ -247,6 +247,68 @@ static HRESULT exec_browsemode(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_editmode(HTMLDocument *This)
+{
+    HRESULT hres;
+
+    FIXME("(%p)\n", This);
+
+    This->usermode = EDITMODE;
+
+    if(This->frame)
+        IOleInPlaceFrame_SetStatusText(This->frame, NULL);
+
+    if(This->client) {
+        IOleCommandTarget *cmdtrg = NULL;
+
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+                (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
+
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = 0;
+            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+        }
+    }
+
+    if(This->hostui) {
+        DOCHOSTUIINFO hostinfo;
+
+        memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
+        hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
+        hres = IDocHostUIHandler_GetHostInfo(This->hostui, &hostinfo);
+        if(SUCCEEDED(hres))
+            /* FIXME: use hostinfo */
+            TRACE("hostinfo = {%lu %08lx %08lx %s %s}\n",
+                    hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
+                    debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
+    }
+
+    if(This->client) {
+        VARIANT silent, offline;
+
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&silent) != VT_BOOL)
+                WARN("V_VT(silent) = %d\n", V_VT(&silent));
+            else if(V_BOOL(&silent))
+                FIXME("silent == true\n");
+        }
+
+        hres = get_client_disp_property(This->client,
+                DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline); 
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&silent) != VT_BOOL)
+                WARN("V_VT(offline) = %d\n", V_VT(&silent));
+            else if(V_BOOL(&silent))
+                FIXME("offline == true\n");
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT exec_baselinefont3(HTMLDocument *This)
 {
     FIXME("(%p)\n", This);
@@ -393,6 +455,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case IDM_BROWSEMODE:
             return exec_browsemode(This);
+        case IDM_EDITMODE:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_editmode(This);
         case IDM_BASELINEFONT3:
             return exec_baselinefont3(This);
         default:
