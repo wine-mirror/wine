@@ -128,11 +128,10 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     TRACE("(%p)->(%p %p)\n", This, pUnkSink, pdwCookie);
 
     hres = IUnknown_QueryInterface(pUnkSink, &This->iid, (void**)&sink);
-    if(FAILED(hres) && !IsEqualGUID(&IID_IPropertyNotifySink, &This->iid)) {
+    if(FAILED(hres) && !IsEqualGUID(&IID_IPropertyNotifySink, &This->iid))
         hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatch, (void**)&sink);
-        if(FAILED(hres))
-            return CONNECT_E_CANNOTCONNECT;
-    }
+    if(FAILED(hres))
+        return CONNECT_E_CANNOTCONNECT;
 
     if(This->sinks) {
         for(i=0; i<This->sinks_size; i++) {
