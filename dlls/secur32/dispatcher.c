@@ -236,11 +236,6 @@ SECURITY_STATUS run_helper(PNegoHelper helper, char *buffer,
         return SEC_E_ILLEGAL_MESSAGE;
     }
 
-    if( (*buflen <= 3) && (strncmp(helper->com_buf, "BH", 2) == 0))
-    {
-        return SEC_E_INTERNAL_ERROR;
-    }
-
     /* We only get ERR if the input size is too big. On a GENSEC error,
      * ntlm_auth will return BH */
     if(strncmp(helper->com_buf, "ERR", 3) == 0)

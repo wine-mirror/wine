@@ -627,6 +627,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(buffer_len < 3)
         {
             TRACE("No flags negotiated, or helper does not support GF command\n");
+            helper->neg_flags = 0l;
         }
         else
         {
@@ -640,41 +641,37 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
             goto isc_end;
 
-        if(buffer_len < 3)
-            TRACE("Helper does not support GK command\n");
-        else
+        if(strncmp(buffer, "BH", 2) == 0)
         {
-            if(strncmp(buffer, "BH ", 3) == 0)
-            {
-                TRACE("Helper sent %s\n", debugstr_a(buffer+3));
-                helper->valid_session_key = FALSE;
-                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
-                /*Generate the dummy session key = MD4(MD4(password))*/
-                if(helper->password)
-                    SECUR32_CreateNTLMv1SessionKey(helper->password, helper->session_key);
-                else
-                    memset(helper->session_key, 0, 16);
-            }
-            else if(strncmp(buffer, "GK ", 3) == 0)
-            {
-                if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len, 
-                                &bin_len)) != SEC_E_OK)
-                {
-                    TRACE("Failed to decode session key\n");
-                }
-                TRACE("Session key is %s\n", debugstr_a(buffer+3));
-                helper->valid_session_key = TRUE;
-                if(!helper->session_key)
-                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
-                if(!helper->session_key)
-                {
-                    TRACE("Failed to allocate memory for session key\n");
-                    ret = SEC_E_INTERNAL_ERROR;
-                    goto isc_end;
-                }
-                memcpy(helper->session_key, bin, bin_len);
-            }
+            TRACE("Helper does not understand command or no key negotiated.\n");
+            helper->valid_session_key = FALSE;
+            helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+            /*Generate the dummy session key = MD4(MD4(password))*/
+            if(helper->password)
+                SECUR32_CreateNTLMv1SessionKey(helper->password, helper->session_key);
+            else
+                memset(helper->session_key, 0, 16);
         }
+        else if(strncmp(buffer, "GK ", 3) == 0)
+        {
+            if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len, 
+                            &bin_len)) != SEC_E_OK)
+            {
+                TRACE("Failed to decode session key\n");
+            }
+            TRACE("Session key is %s\n", debugstr_a(buffer+3));
+            helper->valid_session_key = TRUE;
+            if(!helper->session_key)
+                helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
+            if(!helper->session_key)
+            {
+                TRACE("Failed to allocate memory for session key\n");
+                ret = SEC_E_INTERNAL_ERROR;
+                goto isc_end;
+            }
+            memcpy(helper->session_key, bin, bin_len);
+        }
+
         helper->crypt.ntlm.a4i = SECUR32_arc4Alloc();
         SECUR32_arc4Init(helper->crypt.ntlm.a4i, helper->session_key, 16);
         helper->crypt.ntlm.seq_num = 0l;
@@ -1239,7 +1236,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
     {
         TRACE("Generating dummy signature\n");
         /* A dummy signature is 0x01 followed by 15 bytes of 0x00 */
@@ -1315,7 +1312,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
     {
         const BYTE dummy_sig[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
