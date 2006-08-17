@@ -71,10 +71,9 @@ BEGIN
     LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wien창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
     		    IDC_STATIC,15,37,228,80
     CONTROL	    "창관리자가 Wine창을 관리하도록 함",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
-    
-    /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "Wine은 모든 Wine창들이 하나의 '가상 화면'에 포함되도록, 윈도우즈 데스크탑을 흉내낼 수 있습니다. 또는 Wine은 Wine창들을 당신의 표준 데스크탑 위에 위치하도록 할 수 있습니다.",
-                    IDC_STATIC,15,121,228,28
+    LTEXT           "당신은 모든 윈도우즈 프로그램이 가상데스크탑에서 동일한 행동을 하게 할 것인지, 서로 다른 행동을 하게 할 것인지 선택할 수 있습니다.",
+                    IDC_STATIC,15,125,228,28
+   
     LTEXT           "데스크탑 크기:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "가상 데스크탑 흉내내기",IDC_ENABLE_DESKTOP,"Button",
@@ -229,8 +228,8 @@ BEGIN
     IDS_DLL_NATIVE_BUILTIN  "네이티브, 내장"
     IDS_DLL_BUILTIN_NATIVE  "내장, 네이티브"
     IDS_DLL_DISABLED        "사용하지 않음"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DEFAULT_SETTINGS    "기본 설정"
+    IDS_EXECUTABLE_FILTER   "Wine 프로그램 (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "전체 설정 사용"
+    IDS_SELECT_EXECUTABLE   "실행 파일 선택"
 END
