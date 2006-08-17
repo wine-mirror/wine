@@ -42,6 +42,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#include "resource.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /* Get a function pointer from a DLL handle */
@@ -55,6 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
   } while (0)
 
 extern HMODULE SHLWAPI_hmlang;
+extern HINSTANCE shlwapi_hInstance;
 
 typedef HRESULT (WINAPI *fnpConvertINetUnicodeToMultiByte)(LPDWORD,DWORD,LPCWSTR,LPINT,LPSTR,LPINT);
 static  fnpConvertINetUnicodeToMultiByte pConvertINetUnicodeToMultiByte;
@@ -2230,7 +2233,6 @@ typedef struct tagSHLWAPI_BYTEFORMATS
  */
 LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 {
-  static const WCHAR wszBytes[] = {'%','l','d',' ','b','y','t','e','s',0};
   static const WCHAR wsz3_0[] = {'%','3','.','0','f',0};
   static const WCHAR wsz3_1[] = {'%','3','.','1','f',0};
   static const WCHAR wsz3_2[] = {'%','3','.','2','f',0};
@@ -2272,7 +2274,9 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 
   if (llBytes < 1024)  /* 1K */
   {
-    snprintfW(lpszDest, cchMax, wszBytes, (long)llBytes);
+    WCHAR wszBytesFormat[64];
+    LoadStringW(shlwapi_hInstance, IDS_BYTES_FORMAT, wszBytesFormat, 64);
+    snprintfW(lpszDest, cchMax, wszBytesFormat, (long)llBytes);
     return lpszDest;
   }
 

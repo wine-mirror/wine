@@ -20,6 +20,8 @@
 #ifndef WINE_SHLWAPI_RESOURCE_H
 #define WINE_SHLWAPI_RESOURCE_H
 
+#define IDS_BYTES_FORMAT 64
+
 /* These numbers match native ID's and shouldn't be abitrarily changed */
 #define IDD_ERR_DIALOG    0x1200
 #define IDS_ERR_USER_MSG  0x1201
