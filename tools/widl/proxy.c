@@ -36,6 +36,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
+#include "typegen.h"
 
 #define END_OF_LIST(list)       \
   do {                          \
@@ -91,59 +92,7 @@ static void write_stubdesc(void)
   print_proxy( "\n");
 }
 
-static void write_formatdesc( const char *str )
-{
-  print_proxy( "typedef struct _MIDL_%s_FORMAT_STRING\n", str );
-  indent++;
-  print_proxy( "{\n");
-  print_proxy( "short Pad;\n");
-  print_proxy( "unsigned char Format[%s_FORMAT_STRING_SIZE];\n", str);
-  indent--;
-  print_proxy( "} MIDL_%s_FORMAT_STRING;\n", str);
-  print_proxy( "\n");
-}
-
-static void write_formatstringsdecl(void)
-{
-  print_proxy( "#define TYPE_FORMAT_STRING_SIZE %d\n",1); /* FIXME */
-  print_proxy( "#define PROC_FORMAT_STRING_SIZE %d\n",1); /* FIXME */
-  fprintf(proxy, "\n");
-  write_formatdesc( "TYPE" );
-  write_formatdesc( "PROC" );
-  fprintf(proxy, "\n");
-  print_proxy( "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString;\n");
-  print_proxy( "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString;\n");
-  print_proxy( "\n");
-}
-
-static void write_formatstring( int proc )
-{
-  const char *t, *n;
-  if( !proc )
-  {
-    t = "TYPE";
-    n = "Type";
-  }
-  else
-  {
-    t = "PROC";
-    n = "Proc";
-  }
-  print_proxy( "static const MIDL_%s_FORMAT_STRING __MIDL_%sFormatString =\n", t, n);
-  print_proxy( "{\n");
-  indent++;
-  print_proxy( "0,\n");
-  print_proxy( "{\n");
-  indent++;
-  print_proxy( "0\n");
-  indent--;
-  print_proxy( "}\n");
-  indent--;
-  print_proxy( "};\n");
-  print_proxy( "\n");
-}
-
-static void init_proxy(void)
+static void init_proxy(ifref_t *ifaces)
 {
   if (proxy) return;
   if(!(proxy = fopen(proxy_name, "w")))
@@ -161,7 +110,7 @@ static void init_proxy(void)
   print_proxy( "\n");
   print_proxy( "#include \"%s\"\n", header_name);
   print_proxy( "\n");
-  write_formatstringsdecl();
+  write_formatstringsdecl(proxy, indent, ifaces);
   write_stubdescproto();
 }
 
@@ -1064,7 +1013,7 @@ void write_proxies(ifref_t *ifaces)
   if (!lcur) return;
   END_OF_LIST(lcur);
 
-  init_proxy();
+  init_proxy(ifaces);
   if(!proxy) return;
 
   cur = lcur;
@@ -1082,8 +1031,8 @@ void write_proxies(ifref_t *ifaces)
   print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
-  write_formatstring( 1 );
-  write_formatstring( 0 );
+  write_procformatstring(proxy, ifaces);
+  write_typeformatstring(proxy, ifaces);
 
   fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
