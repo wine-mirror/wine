@@ -2298,16 +2298,20 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     SetFocus(hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     SetCapture(hWnd);
+    ME_LinkNotify(editor,msg,wParam,lParam);
     break;
   case WM_MOUSEMOVE:
     if (GetCapture() == hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     break;
+    ME_LinkNotify(editor,msg,wParam,lParam);
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
       ReleaseCapture();
+    ME_LinkNotify(editor,msg,wParam,lParam);
     break;
   case WM_LBUTTONDBLCLK:
+    ME_LinkNotify(editor,msg,wParam,lParam);
     ME_SelectWord(editor);
     break;
   case WM_CONTEXTMENU:
@@ -2612,6 +2616,37 @@ void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
   SendMessageA(GetParent(hWnd), WM_COMMAND, (nCode<<16)|GetWindowLongW(hWnd, GWLP_ID), (LPARAM)hWnd);
 }
 
+void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  int x,y;
+  ME_Cursor tmpCursor;
+  ME_Run *tmpRun;
+  BOOL bNothing;
+  ENLINK info;
+  x = (short)LOWORD(lParam);
+  y = (short)HIWORD(lParam);
+  ME_FindPixelPos(editor, x, y, &tmpCursor, &bNothing);
+  tmpRun = &tmpCursor.pRun->member.run;
+  if (tmpRun->style->fmt.dwMask & CFM_UNDERLINE)
+    FIXME("CFM_UNDERLINE! GASP!\n");
+  if (tmpRun->style->fmt.dwEffects & CFE_UNDERLINE)
+    FIXME("CFE_UNDERLINE! GASP!\n");
+	
+  if ((tmpRun->style->fmt.dwMask & CFM_LINK) 
+    && (tmpRun->style->fmt.dwEffects & CFE_LINK))
+  { /* The clicked run has CFE_LINK set */
+    info.nmhdr.hwndFrom = editor->hWnd;
+    info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
+    info.nmhdr.code = EN_LINK;
+    info.msg = msg;
+    info.wParam = wParam;
+    info.lParam = lParam;
+    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor,tmpCursor.pRun,0);
+    info.chrg.cpMax = info.chrg.cpMin + ME_StrVLen(tmpRun->strText);
+    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
+  }  
+}
+
 int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)
 {
   ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
@@ -2840,9 +2875,8 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
   RichEditANSIWndProc(editor->hWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cur_format);
   RichEditANSIWndProc(editor->hWnd, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM) &default_format);
   link.cbSize = sizeof(link);
-  link.dwMask = CFM_LINK | CFM_COLOR | CFM_UNDERLINE;
-  link.dwEffects = CFE_LINK | CFE_UNDERLINE;
-  link.crTextColor = RGB(0,0,255);
+  link.dwMask = CFM_LINK;
+  link.dwEffects = CFE_LINK;
   curf_ef = cur_format.dwEffects & link.dwEffects;
   def_ef = default_format.dwEffects & link.dwEffects;
   link_ef = link.dwEffects & link.dwEffects;

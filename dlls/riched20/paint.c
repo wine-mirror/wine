@@ -138,7 +138,9 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
   int yOffset = 0, yTwipsOffset = 0;
   hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
   rgbBack = ME_GetBackColor(c->editor);
-  if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
+  if ((s->fmt.dwMask & CFM_LINK) && (s->fmt.dwEffects & CFE_LINK))
+    rgbOld = SetTextColor(hDC, RGB(0,0,255));  
+  else if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
     rgbOld = SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
   else
     rgbOld = SetTextColor(hDC, s->fmt.crTextColor);

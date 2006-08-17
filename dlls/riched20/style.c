@@ -275,7 +275,7 @@ ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, ME_Style *s, int nZoomNumerator, int 
     lf->lfWeight = s->fmt.wWeight;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
     lf->lfItalic = 1;
-  if (s->fmt.dwEffects & s->fmt.dwMask & CFM_UNDERLINE)
+  if (s->fmt.dwEffects & s->fmt.dwMask & (CFM_UNDERLINE | CFE_LINK))
     lf->lfUnderline = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_STRIKEOUT)
     lf->lfStrikeOut = 1;
@@ -301,6 +301,8 @@ void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt)
   if (lf->lfWeight>400) fmt->dwEffects |= CFM_BOLD;
   if (lf->lfItalic) fmt->dwEffects |= CFM_ITALIC;
   if (lf->lfUnderline) fmt->dwEffects |= CFM_UNDERLINE;
+  /* notice that if a logfont was created with underline due to CFM_LINK, this
+      would add an erronious CFM_UNDERLINE. This isn't currently ever a problem */
   if (lf->lfStrikeOut) fmt->dwEffects |= CFM_STRIKEOUT;
   fmt->bPitchAndFamily = lf->lfPitchAndFamily;
   fmt->bCharSet = lf->lfCharSet;  
