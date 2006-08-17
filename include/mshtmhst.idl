@@ -99,6 +99,11 @@ coclass HostDialogHelper
  *    IDocHostUIHandler interface
  */
 
+typedef enum tagDOCHOSTUITYPE {
+    DOCHOSTUITYPE_BROWSE = 0,
+    DOCHOSTUITYPE_AUTHOR = 1
+} DOCHOSTUITYPE;
+
 typedef enum tagDOCHOSTUIDBLCLK
 {
     DOCHOSTUIDBLCLK_DEFAULT         = 0,
