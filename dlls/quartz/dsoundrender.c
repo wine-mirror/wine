@@ -179,6 +179,13 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         else
              buf_free = DSBUFFERSIZE - This->write_pos + play_pos;
 
+        /* This situation is ambiguous; Assume full when playing */
+        if(buf_free == DSBUFFERSIZE && This->started)
+        {
+            Sleep(10);
+            continue;
+        }
+
         size2 = min(buf_free, size);
         hr = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, &lpbuf1, &dwsize1, &lpbuf2, &dwsize2, 0);
         if (hr != DS_OK) {
