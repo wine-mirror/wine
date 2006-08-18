@@ -157,7 +157,7 @@ int WINAPI WinMain(HINSTANCE hinstance,
     PROCESS_INFORMATION info;
     parameters_struct   parameters;
     BOOL rc;
-    static const WCHAR winefile[] = {'w','i','n','e','f','i','l','e','.','e','x','e',0};
+    static const WCHAR winefile[] = {'\\','w','i','n','e','f','i','l','e','.','e','x','e',0};
     static const WCHAR space[] = {' ',0};
     LPWSTR winefile_commandline = NULL;
     DWORD len = 0;
@@ -166,23 +166,22 @@ int WINAPI WinMain(HINSTANCE hinstance,
     memset(&si,0,sizeof(STARTUPINFOW));
 
     ParseCommandLine(cmdline,&parameters);
-    len = lstrlenW(winefile) +1;
+    len = GetSystemDirectoryW( NULL, 0 ) + sizeof(winefile)/sizeof(WCHAR);
+
+    if (parameters.selection[0]) len += lstrlenW(parameters.selection) + 2;
+    else if (parameters.root[0]) len += lstrlenW(parameters.root) + 3;
+
+    winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    GetSystemDirectoryW( winefile_commandline, len );
+    lstrcatW(winefile_commandline,winefile);
 
     if (parameters.selection[0])
     {
-        len += lstrlenW(parameters.selection) + 2;
-        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-
-        lstrcpyW(winefile_commandline,winefile);
         lstrcatW(winefile_commandline,space);
         lstrcatW(winefile_commandline,parameters.selection);
     }
     else if (parameters.root[0])
     {
-        len += lstrlenW(parameters.root) + 3;
-        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-
-        lstrcpyW(winefile_commandline,winefile);
         lstrcatW(winefile_commandline,space);
         lstrcatW(winefile_commandline,parameters.root);
         if (winefile_commandline[lstrlenW(winefile_commandline)-1]!='\\')
@@ -190,11 +189,6 @@ int WINAPI WinMain(HINSTANCE hinstance,
             static const WCHAR slash[] = {'\\',0};
             lstrcatW(winefile_commandline,slash);
         }
-    }
-    else
-    {
-        winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        lstrcpyW(winefile_commandline,winefile);
     }
 
     rc = CreateProcessW(NULL, winefile_commandline, NULL, NULL, FALSE, 0, NULL,
