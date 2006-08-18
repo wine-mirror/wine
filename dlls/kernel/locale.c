@@ -2375,8 +2375,9 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
         return 0;
     }
 
+    /* this style is related to diacritics in Arabic, Japanese, and Hebrew */
     if (style & 0x10000000)
-        FIXME("Ignoring unknown style 0x10000000\n");
+        WARN("Ignoring unknown style 0x10000000\n");
 
     if (len1 < 0) len1 = strlenW(str1);
     if (len2 < 0) len2 = strlenW(str2);
