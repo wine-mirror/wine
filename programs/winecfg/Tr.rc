@@ -229,3 +229,10 @@ BEGIN
     IDS_USE_GLOBAL_SETTINGS "Genel ayarlarý kullan"
     IDS_SELECT_EXECUTABLE   "Çalýþtýrýlabilir bir dosya seçin"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardware"
+    IDS_SHADER_MODE_NONE        "None"
+    IDS_SHADER_MODE_EMULATION   "Emulated"
+END

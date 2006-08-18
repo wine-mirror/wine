@@ -139,6 +139,9 @@
 #define IDC_DOUBLE_BUFFER               1104
 #define IDC_D3D_VSHADER_MODE            1105
 #define IDC_D3D_PSHADER_MODE            1106
+#define IDS_SHADER_MODE_HARDWARE        8100
+#define IDS_SHADER_MODE_NONE            8101
+#define IDS_SHADER_MODE_EMULATION       8102
 
 /* applications tab */
 #define IDC_APP_LISTVIEW                1200

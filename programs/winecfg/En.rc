@@ -232,6 +232,13 @@ BEGIN
     IDS_SELECT_EXECUTABLE   "Select an executable file"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardware"
+    IDS_SHADER_MODE_NONE        "None"
+    IDS_SHADER_MODE_EMULATION   "Emulated"
+END
+
 /****************************************************************/
 /* English neutral resources
 /****************************************************************/

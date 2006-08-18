@@ -38,11 +38,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
 
 
-static const char* D3D_VS_Modes[] = {
-  "hardware",
-  "none",
-  "emulation",
-  NULL
+static struct SHADERMODE
+{
+  UINT displayStrID;
+  const char* settingStr;
+} const D3D_VS_Modes[] = {
+  {IDS_SHADER_MODE_HARDWARE,  "hardware"},
+  {IDS_SHADER_MODE_EMULATION, "emulation"},
+  {IDS_SHADER_MODE_NONE,      "none"},
+  {0, 0}
 };
 
 
@@ -145,17 +149,18 @@ static void init_dialog(HWND dialog)
     HeapFree(GetProcessHeap(), 0, buf);
 
     SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
-    for (it = 0; NULL != D3D_VS_Modes[it]; ++it) {
-      SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0, (LPARAM) D3D_VS_Modes[it]);
+    for (it = 0; 0 != D3D_VS_Modes[it].displayStrID; ++it) {
+      SendDlgItemMessageW (dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0,
+          (LPARAM)load_string (D3D_VS_Modes[it].displayStrID));
     }  
     buf = get_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode", "hardware"); 
-    for (it = 0; NULL != D3D_VS_Modes[it]; ++it) {
-      if (strcmp(buf, D3D_VS_Modes[it]) == 0) {
+    for (it = 0; NULL != D3D_VS_Modes[it].settingStr; ++it) {
+      if (strcmp(buf, D3D_VS_Modes[it].settingStr) == 0) {
 	SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_SETCURSEL, it, 0);
 	break ;
       }
     }
-    if (NULL == D3D_VS_Modes[it]) {
+    if (NULL == D3D_VS_Modes[it].settingStr) {
       WINE_ERR("Invalid Direct3D VertexShader Mode read from registry (%s)\n", buf);
     }
     HeapFree(GetProcessHeap(), 0, buf);
@@ -238,7 +243,8 @@ static void on_double_buffer_clicked(HWND dialog) {
 
 static void on_d3d_vshader_mode_changed(HWND dialog) {
   int selected_mode = SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_GETCURSEL, 0, 0);  
-  set_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode", D3D_VS_Modes[selected_mode]); 
+  set_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode",
+      D3D_VS_Modes[selected_mode].settingStr); 
 }
 
 static void on_d3d_pshader_mode_clicked(HWND dialog) {

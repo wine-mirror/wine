@@ -230,3 +230,10 @@ BEGIN
     IDS_USE_GLOBAL_SETTINGS "Globale Einstellung benutzen"
     IDS_SELECT_EXECUTABLE   "Ausführbares Programm auswählen"
 END 
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardware"
+    IDS_SHADER_MODE_NONE        "Aus"
+    IDS_SHADER_MODE_EMULATION   "Emuliert"
+END
