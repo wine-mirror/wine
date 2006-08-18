@@ -132,6 +132,18 @@
 
 #define IDC_DRIVE_LABEL                 1078
 
+#define IDS_DRIVE_UNKNOWN               8200
+#define IDS_DRIVE_FIXED                 8201
+#define IDS_DRIVE_REMOTE                8202
+#define IDS_DRIVE_REMOVABLE             8203
+#define IDS_DRIVE_CDROM                 8204
+#define IDS_DRIVE_LETTERS_EXCEEDED      8205
+#define IDS_SYSTEM_DRIVE_LABEL          8206
+#define IDS_CONFIRM_DELETE_C            8207
+#define IDS_COL_DRIVELETTER             8208
+#define IDS_COL_DRIVEMAPPING            8209
+#define IDS_NO_DRIVE_C                  8210
+
 /* graphics */
 #define IDC_ENABLE_MANAGED              1100
 #define IDC_DX_MOUSE_GRAB               1102

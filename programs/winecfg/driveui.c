@@ -52,6 +52,16 @@ static struct drive* current_drive;
 static void get_etched_rect(HWND dialog, RECT *rect);
 static void update_controls(HWND dialog);
 
+static DWORD driveui_msgbox (HWND parent, UINT messageId, DWORD flags)
+{
+  WCHAR* caption = load_string (IDS_WINECFG_TITLE);
+  WCHAR* text = load_string (flags);
+  DWORD result = MessageBoxW (parent, text, caption, flags);
+  HeapFree (GetProcessHeap(), 0, caption);
+  HeapFree (GetProcessHeap(), 0, text);
+  return result;
+}
+
 /**** listview helper functions ****/
 
 /* clears the item at index in the listview */
@@ -145,15 +155,15 @@ static void set_advanced(HWND dialog)
 
 struct drive_typemap {
     unsigned int sCode;
-    const char *sDesc;
+    UINT idDesc;
 };
 
 static const struct drive_typemap type_pairs[] = {
-  { DRIVE_UNKNOWN,    "Autodetect"      },
-  { DRIVE_FIXED,      "Local hard disk" },
-  { DRIVE_REMOTE,     "Network share"   },
-  { DRIVE_REMOVABLE,  "Floppy disk"     },
-  { DRIVE_CDROM,      "CD-ROM"          }
+  { DRIVE_UNKNOWN,    IDS_DRIVE_UNKNOWN   },
+  { DRIVE_FIXED,      IDS_DRIVE_FIXED     },
+  { DRIVE_REMOTE,     IDS_DRIVE_REMOTE    },
+  { DRIVE_REMOVABLE,  IDS_DRIVE_REMOVABLE },
+  { DRIVE_CDROM,      IDS_DRIVE_CDROM     }
 };
 
 #define DRIVE_TYPE_DEFAULT 0
@@ -335,14 +345,20 @@ static void on_add_click(HWND dialog)
         new++;
         if (new > 'Z')
         {
-            MessageBox(dialog, "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26", "", MB_OK | MB_ICONEXCLAMATION);
+            driveui_msgbox (dialog, IDS_DRIVE_LETTERS_EXCEEDED, MB_OK | MB_ICONEXCLAMATION);
             return;
         }
     }
 
     WINE_TRACE("allocating drive letter %c\n", new);
 
-    if (new == 'C') add_drive(new, "../drive_c", "System Drive", "", DRIVE_FIXED);
+    if (new == 'C')
+    {
+        char label[64];
+        LoadStringA (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
+            sizeof(label)/sizeof(label[0])); 
+        add_drive(new, "../drive_c", label, "", DRIVE_FIXED);
+    }
     else add_drive(new, "/", "", "", DRIVE_UNKNOWN);
 
     fill_drives_list(dialog);
@@ -384,7 +400,7 @@ static void on_remove_click(HWND dialog)
 
     if (drive->letter == 'C')
     {
-        DWORD result = MessageBox(dialog, "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!", "", MB_YESNO | MB_ICONEXCLAMATION);
+        DWORD result = driveui_msgbox (dialog, IDS_CONFIRM_DELETE_C, MB_YESNO | MB_ICONEXCLAMATION);
         if (result == IDNO) return;
     }
 
@@ -445,7 +461,10 @@ static void update_controls(HWND dialog)
 
     for (i = 0; i < sizeof(type_pairs) / sizeof(struct drive_typemap); i++)
     {
-        SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0, (LPARAM) type_pairs[i].sDesc);
+        WCHAR driveDesc[64];
+        LoadStringW (GetModuleHandle (NULL), type_pairs[i].idDesc, driveDesc,
+            sizeof(driveDesc)/sizeof(driveDesc[0]));
+        SendDlgItemMessageW (dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0, (LPARAM)driveDesc);
 
         if (type_pairs[i].sCode ==  type)
         {
@@ -655,25 +674,30 @@ BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
 
 static void init_listview_columns(HWND dialog)
 {
-    LVCOLUMN listColumn;
+    LVCOLUMNW listColumn;
     RECT viewRect;
     int width;
+    WCHAR column[64];
 
     GetClientRect(GetDlgItem(dialog, IDC_LIST_DRIVES), &viewRect);
     width = (viewRect.right - viewRect.left) / 6 - 5;
 
+    LoadStringW (GetModuleHandle (NULL), IDS_COL_DRIVELETTER, column,
+        sizeof(column)/sizeof(column[0]));
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-    listColumn.pszText = (char*) "Letter";
-    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+    listColumn.pszText = column;
+    listColumn.cchTextMax = lstrlenW (listColumn.pszText);
     listColumn.cx = width;
 
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 0, (LPARAM) &listColumn);
+    SendDlgItemMessageW (dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMNW, 0, (LPARAM) &listColumn);
 
+    LoadStringW (GetModuleHandle (NULL), IDS_COL_DRIVEMAPPING, column,
+        sizeof(column)/sizeof(column[0]));
     listColumn.cx = viewRect.right - viewRect.left - width;
-    listColumn.pszText = (char*) "Drive Mapping";
-    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+    listColumn.pszText = column;
+    listColumn.cchTextMax = lstrlenW (listColumn.pszText);
 
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 1, (LPARAM) &listColumn);
+    SendDlgItemMessageW (dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMNW, 1, (LPARAM) &listColumn);
 }
 
 static void load_drive_options(HWND dialog)
@@ -696,7 +720,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
             load_drive_options(dialog);
 
             if (!drives[2].in_use)
-                MessageBox(dialog, "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n", "", MB_OK | MB_ICONEXCLAMATION);
+                driveui_msgbox (dialog, IDS_NO_DRIVE_C, MB_OK | MB_ICONEXCLAMATION);
 
             fill_drives_list(dialog);
             update_controls(dialog);

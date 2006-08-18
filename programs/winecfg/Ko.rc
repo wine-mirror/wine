@@ -68,7 +68,7 @@ BEGIN
 
     CONTROL	    "DirectX 프로그램들이 마우스 커서를 그들의 창안에 잡아두게 함",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
     CONTROL	    "데스크탑 이중 버퍼링을 가능하게 함",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
-    LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wien창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
+    LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wine창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
     		    IDC_STATIC,15,37,228,80
     CONTROL	    "창관리자가 Wine창을 관리하도록 함",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
     LTEXT           "당신은 모든 윈도우즈 프로그램이 가상데스크탑에서 동일한 행동을 하게 할 것인지, 서로 다른 행동을 하게 할 것인지 선택할 수 있습니다.",
@@ -239,4 +239,19 @@ BEGIN
     IDS_SHADER_MODE_HARDWARE    "Hardware"
     IDS_SHADER_MODE_NONE        "None"
     IDS_SHADER_MODE_EMULATION   "Emulated"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Autodetect"
+    IDS_DRIVE_FIXED             "Local hard disk"
+    IDS_DRIVE_REMOTE            "Network share"
+    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
+    IDS_SYSTEM_DRIVE_LABEL      "System drive"
+    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
+    IDS_COL_DRIVELETTER         "Letter"
+    IDS_COL_DRIVEMAPPING        "Drive Mapping"
+    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
 END

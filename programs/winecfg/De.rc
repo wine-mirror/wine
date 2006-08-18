@@ -237,3 +237,18 @@ BEGIN
     IDS_SHADER_MODE_NONE        "Aus"
     IDS_SHADER_MODE_EMULATION   "Emuliert"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Automatisch"
+    IDS_DRIVE_FIXED             "Lokale Festplatte"
+    IDS_DRIVE_REMOTE            "Netzwerkfreigabe"
+    IDS_DRIVE_REMOVABLE         "Diskette"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Sie können keine weiteren Laufwerke mehr hinzufügen.\n\nJedes Laufwerk muss einen Buchstaben besitzen, von A bis Z, deshalb können Sie nicht mehr als 26 haben."
+    IDS_SYSTEM_DRIVE_LABEL      "Systemlaufwerk"
+    IDS_CONFIRM_DELETE_C        "Sind Sie sich sicher, dass Sie Laufwerk C entfernen möchten?\n\nDie meisten Windows-Anwendungen erwarten, dass ein Laufwerk C existiert und funktionieren ohne nicht richtig. Wenn Sie fortfahren, vergessen Sie nicht, Laufwerk C neu zu erstellen!"
+    IDS_COL_DRIVELETTER         "Buchst."
+    IDS_COL_DRIVEMAPPING        "Zuordnung"
+    IDS_NO_DRIVE_C              "Sie haben kein Laufwerk C. Das ist nicht so gut.\n\nVergessen Sie nicht, im Laufwerke-Reiter „Hinzufügen“ zu klicken um eins zu erstellen!\n"
+END
