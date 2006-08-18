@@ -41,6 +41,7 @@ struct Keyword {
 
 static const WCHAR ABORT_W[] = { 'A','B','O','R','T',0 };
 static const WCHAR AFTER_W[] = { 'A','F','T','E','R',0 };
+static const WCHAR ALTER_W[] = { 'A','L','T','E','R',0 };
 static const WCHAR ALL_W[] = { 'A','L','L',0 };
 static const WCHAR AND_W[] = { 'A','N','D',0 };
 static const WCHAR AS_W[] = { 'A','S',0 };
@@ -78,6 +79,7 @@ static const WCHAR EXPLAIN_W[] = { 'E','X','P','L','A','I','N',0 };
 static const WCHAR FAIL_W[] = { 'F','A','I','L',0 };
 static const WCHAR FOR_W[] = { 'F','O','R',0 };
 static const WCHAR FOREIGN_W[] = { 'F','O','R','E','I','G','N',0 };
+static const WCHAR FREE_W[] = { 'F','R','E','E',0 };
 static const WCHAR FROM_W[] = { 'F','R','O','M',0 };
 static const WCHAR FULL_W[] = { 'F','U','L','L',0 };
 static const WCHAR GLOB_W[] = { 'G','L','O','B',0 };
@@ -152,6 +154,7 @@ static const WCHAR WHERE_W[] = { 'W','H','E','R','E',0 };
 static const Keyword aKeywordTable[] = {
   { ABORT_W, TK_ABORT },
   { AFTER_W, TK_AFTER },
+  { ALTER_W, TK_ALTER },
   { ALL_W, TK_ALL },
   { AND_W, TK_AND },
   { AS_W, TK_AS },

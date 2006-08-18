@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	action.c \
+	alter.c \
 	appsearch.c \
 	classes.c \
 	create.c \
