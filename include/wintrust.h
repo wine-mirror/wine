@@ -76,6 +76,20 @@ typedef struct WINTRUST_CERT_INFO_
     FILETIME*     psftVerifyAsOf;
 } WINTRUST_CERT_INFO, *PWINTRUST_CERT_INFO;
 
+/* dwUIChoice */
+#define WTD_UI_ALL                1
+#define WTD_UI_NONE               2
+#define WTD_UI_NOBAD              3
+#define WTD_UI_NOGOOD             4
+/* fdwRevocationChecks */
+#define WTD_REVOKE_NONE           0
+#define WTD_REVOKE_WHOLECHAIN     1
+/* dwUnionChoice */
+#define WTD_CHOICE_FILE           1
+#define WTD_CHOICE_CATALOG        2
+#define WTD_CHOICE_BLOB           3
+#define WTD_CHOICE_SIGNER         4
+#define WTD_CHOICE_CERT           5
 
 typedef struct _WINTRUST_DATA
 {
