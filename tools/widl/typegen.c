@@ -1279,6 +1279,31 @@ static size_t write_union_tfs(FILE *file, const attr_t *attrs,
     return *typeformat_offset;
 }
 
+static size_t write_ip_tfs(FILE *file, const attr_t *attrs, const type_t *type,
+                           const char *name, unsigned int *typeformat_offset)
+{
+    size_t i;
+    size_t start_offset = *typeformat_offset;
+    const UUID *uuid = get_attrp(attrs, ATTR_UUID);
+
+    if (! uuid)
+        error("%s: interface %s missing UUID\n", __FUNCTION__, name);
+
+    print_file(file, 2, "0x2f,\t/* FC_IP */\n");
+    print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
+    print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
+    print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data2);
+    print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data3);
+    for (i = 0; i < 8; ++i)
+        print_file(file, 2, "0x%02x,\n", uuid->Data4[i]);
+
+    if (file)
+        fprintf(file, "\n");
+
+    *typeformat_offset += 18;
+    return start_offset;
+}
+
 static size_t write_typeformatstring_var(FILE *file, int indent,
                                          const var_t *var, unsigned int *typeformat_offset)
 {
@@ -1338,6 +1363,11 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             int out_attr = is_attr(var->attrs, ATTR_OUT);
             int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
             if (!pointer_type) pointer_type = RPC_FC_RP;
+
+            if (type->type == RPC_FC_IP)
+            {
+                return write_ip_tfs(file, type->attrs, type, type->name, typeformat_offset);
+            }
 
             /* special case for pointers to base types */
             switch (type->type)
