@@ -526,7 +526,7 @@ static char *PSDRV_PPDGetWord(char *str, char **next)
  *	PSDRV_AddSlot
  *
  */
-static INT PSDRV_AddSlot(PPD *ppd, LPSTR szName, LPSTR szFullName,
+static INT PSDRV_AddSlot(PPD *ppd, LPCSTR szName, LPCSTR szFullName,
 	LPSTR szInvocationString, WORD wWinBin)
 {
     INPUTSLOT	*slot, **insert = &ppd->InputSlots;

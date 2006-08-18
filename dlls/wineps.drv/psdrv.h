@@ -173,8 +173,8 @@ typedef struct _tagCONSTRAINT {
 } CONSTRAINT;
 
 typedef struct _tagINPUTSLOT {
-    char			*Name;
-    char			*FullName;
+    const char			*Name;
+    const char			*FullName;
     char			*InvocationString;
     WORD			WinBin; /* eg DMBIN_LOWER */
     struct _tagINPUTSLOT	*next;
