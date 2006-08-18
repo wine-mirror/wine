@@ -260,7 +260,8 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFEREN
   SystemClockImpl *This = (SystemClockImpl *)iface;
   SystemClockAdviseEntry* pEntry = NULL;
 
-  TRACE("(%p, %lld, %lld, %ld, %p)\n", This, rtBaseTime, rtStreamTime, hEvent, pdwAdviseCookie);
+  TRACE("(%p, 0x%s, 0x%s, %ld, %p)\n", This, wine_dbgstr_longlong(rtBaseTime),
+      wine_dbgstr_longlong(rtStreamTime), hEvent, pdwAdviseCookie);
 
   if ((HEVENT) 0 == hEvent) {
     return E_INVALIDARG;
@@ -294,7 +295,8 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface, REF
   SystemClockImpl *This = (SystemClockImpl *)iface;
   SystemClockAdviseEntry* pEntry = NULL;
 
-  TRACE("(%p, %lld, %lld, %ld, %p)\n", This, rtStartTime, rtPeriodTime, hSemaphore, pdwAdviseCookie);
+  TRACE("(%p, 0x%s, 0x%s, %ld, %p)\n", This, wine_dbgstr_longlong(rtStartTime),
+      wine_dbgstr_longlong(rtPeriodTime), hSemaphore, pdwAdviseCookie);
 
   if ((HSEMAPHORE) 0 == hSemaphore) {
     return E_INVALIDARG;

@@ -1646,7 +1646,8 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface,
 						     const GUID *pSourceFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p, %p, %lld, %p): stub !!!\n", This, iface, pTarget, pTargetFormat, Source, pSourceFormat);
+    TRACE("(%p/%p)->(%p, %p, 0x%s, %p): stub !!!\n", This, iface, pTarget,
+        pTargetFormat, wine_dbgstr_longlong(Source), pSourceFormat);
 
     return S_OK;
 }
@@ -4067,7 +4068,7 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 
 static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME tStart)
 {
-    FIXME("(%lld): stub\n", tStart);
+    FIXME("(0x%s): stub\n", wine_dbgstr_longlong(tStart));
 
     return E_NOTIMPL;
 }
