@@ -390,7 +390,10 @@ DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
     /* We only have one driver */
     __TRY
     {
-        stop = !Callback(NULL, "DirectDraw HAL", "display", Context);
+        static CHAR driver_desc[] = "DirectDraw HAL",
+        driver_name[] = "display";
+
+        stop = !Callback(NULL, driver_desc, driver_name, Context);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -422,8 +425,11 @@ DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
     /* We only have one driver by now */
     __TRY
     {
+        static CHAR driver_desc[] = "DirectDraw HAL",
+        driver_name[] = "display";
+
         /* QuickTime expects the description "DirectDraw HAL" */
-        stop = !Callback(NULL, "DirectDraw HAL", "display", Context, 0);
+        stop = !Callback(NULL, driver_desc, driver_name, Context, 0);
     }
     __EXCEPT_PAGE_FAULT
     {
