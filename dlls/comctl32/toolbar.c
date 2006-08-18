@@ -2689,48 +2689,48 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	switch (lpAddBmp->nID)
     {
 	    case IDB_STD_SMALL_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_STD_SMALL));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_STD_SMALL, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
 		break;
 
 	    case IDB_STD_LARGE_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_STD_LARGE));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_STD_LARGE, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
 		break;
 
 	    case IDB_VIEW_SMALL_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_VIEW_SMALL));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_VIEW_SMALL, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
 		break;
 
 	    case IDB_VIEW_LARGE_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_VIEW_LARGE));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_VIEW_LARGE, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
 		break;
 
 	    case IDB_HIST_SMALL_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_HIST_SMALL));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_HIST_SMALL, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
 		break;
 
 	    case IDB_HIST_LARGE_COLOR:
-		hbmLoad = LoadBitmapW (COMCTL32_hModule,
-				       MAKEINTRESOURCEW(IDB_HIST_LARGE));
+		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
+                                              IDB_HIST_LARGE, 0, NULL, 0);
 		nIndex = ImageList_AddMasked (himlDef,
 					      hbmLoad, comctl32_color.clrBtnFace);
 		DeleteObject (hbmLoad);
@@ -2744,7 +2744,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     else
     {
-	hbmLoad = LoadBitmapW (lpAddBmp->hInst, (LPWSTR)lpAddBmp->nID);
+        hbmLoad = CreateMappedBitmap(lpAddBmp->hInst, lpAddBmp->nID, 0, NULL, 0);
 	nIndex = ImageList_AddMasked (himlDef, hbmLoad, comctl32_color.clrBtnFace);
 	DeleteObject (hbmLoad);
     }
