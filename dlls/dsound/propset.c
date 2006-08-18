@@ -1504,9 +1504,17 @@ static const IKsPropertySetVtbl ikspvt = {
 };
 
 HRESULT IKsPrivatePropertySetImpl_Create(
+    REFIID riid,
     IKsPrivatePropertySetImpl **piks)
 {
     IKsPrivatePropertySetImpl *iks;
+    TRACE("(%s, %p)\n", debugstr_guid(riid), piks);
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IKsPropertySet)) {
+        *piks = 0;
+        return E_NOINTERFACE;
+    }
 
     iks = HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
     iks->ref = 1;

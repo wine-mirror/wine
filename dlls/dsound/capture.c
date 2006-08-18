@@ -85,13 +85,19 @@ static const char * captureStateString[] = {
     "STATE_STOPPING"
 };
 
-static HRESULT DSOUND_CaptureCreate(
-    LPDIRECTSOUNDCAPTURE *ppDSC,
-    IUnknown *pUnkOuter)
+HRESULT DSOUND_CaptureCreate(
+    REFIID riid,
+    LPDIRECTSOUNDCAPTURE *ppDSC)
 {
     LPDIRECTSOUNDCAPTURE pDSC;
     HRESULT hr;
-    TRACE("(%p,%p)\n",ppDSC,pUnkOuter);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDSC);
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSoundCapture)) {
+        *ppDSC = 0;
+        return E_NOINTERFACE;
+    }
 
     /* Get dsound configuration */
     setup_dsound_options();
@@ -108,13 +114,19 @@ static HRESULT DSOUND_CaptureCreate(
     return hr;
 }
 
-static HRESULT DSOUND_CaptureCreate8(
-    LPDIRECTSOUNDCAPTURE8 *ppDSC8,
-    IUnknown *pUnkOuter)
+HRESULT DSOUND_CaptureCreate8(
+    REFIID riid,
+    LPDIRECTSOUNDCAPTURE8 *ppDSC8)
 {
     LPDIRECTSOUNDCAPTURE8 pDSC8;
     HRESULT hr;
-    TRACE("(%p,%p)\n",ppDSC8,pUnkOuter);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDSC8);
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSoundCapture8)) {
+        *ppDSC8 = 0;
+        return E_NOINTERFACE;
+    }
 
     /* Get dsound configuration */
     setup_dsound_options();
@@ -173,7 +185,7 @@ HRESULT WINAPI DirectSoundCaptureCreate(
         return DSERR_NOAGGREGATION;
     }
 
-    hr = DSOUND_CaptureCreate(&pDSC, (IUnknown *)pUnkOuter);
+    hr = DSOUND_CaptureCreate(&IID_IDirectSoundCapture, &pDSC);
     if (hr == DS_OK) {
         hr = IDirectSoundCapture_Initialize(pDSC, lpcGUID);
         if (hr != DS_OK) {
@@ -229,7 +241,7 @@ HRESULT WINAPI DirectSoundCaptureCreate8(
         return DSERR_NOAGGREGATION;
     }
 
-    hr = DSOUND_CaptureCreate8(&pDSC8, (IUnknown *)pUnkOuter);
+    hr = DSOUND_CaptureCreate8(&IID_IDirectSoundCapture8, &pDSC8);
     if (hr == DS_OK) {
         hr = IDirectSoundCapture_Initialize(pDSC8, lpcGUID);
         if (hr != DS_OK) {
@@ -1694,80 +1706,3 @@ ULONG DirectSoundCaptureDevice_Release(
     }
     return ref;
 }
-
-/*******************************************************************************
- * DirectSoundCapture ClassFactory
- */
-
-static HRESULT WINAPI
-DSCCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-    FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI
-DSCCF_AddRef(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
-    return ref;
-}
-
-static ULONG WINAPI
-DSCCF_Release(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
-    /* static class, won't be  freed */
-    return ref;
-}
-
-static HRESULT WINAPI
-DSCCF_CreateInstance(
-	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-
-    if (pOuter) {
-        WARN("aggregation not supported\n");
-        return CLASS_E_NOAGGREGATION;
-    }
-
-    if (ppobj == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
-    }
-
-    *ppobj = NULL;
-
-    if ( IsEqualGUID( &IID_IDirectSoundCapture, riid ) )
-	return DSOUND_CaptureCreate8((LPDIRECTSOUNDCAPTURE*)ppobj,pOuter);
-
-    WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
-    return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI
-DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
-    return S_OK;
-}
-
-static const IClassFactoryVtbl DSCCF_Vtbl =
-{
-    DSCCF_QueryInterface,
-    DSCCF_AddRef,
-    DSCCF_Release,
-    DSCCF_CreateInstance,
-    DSCCF_LockServer
-};
-
-IClassFactoryImpl DSOUND_CAPTURE_CF = { &DSCCF_Vtbl, 1 };

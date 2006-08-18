@@ -760,19 +760,22 @@ static const IDirectSoundFullDuplexVtbl dsfdvt =
     IDirectSoundFullDuplexImpl_Initialize
 };
 
-static HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkOuter)
+HRESULT DSOUND_FullDuplexCreate(
+    REFIID riid,
+    LPDIRECTSOUNDFULLDUPLEX* ppDSFD)
 {
     IDirectSoundFullDuplexImpl *This = NULL;
-
-    if (pUnkOuter) {
-        WARN("pUnkOuter != 0\n");
-        *ppDSFD = NULL;
-        return DSERR_NOAGGREGATION;
-    }
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDSFD);
 
     if (ppDSFD == NULL) {
         WARN("invalid parameter: ppDSFD == NULL\n");
         return DSERR_INVALIDPARAM;
+    }
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSoundFullDuplex)) {
+        *ppDSFD = 0;
+        return E_NOINTERFACE;
     }
 
     /* Get dsound configuration */
@@ -907,79 +910,3 @@ DirectSoundFullDuplexCreate(
 
     return hres;
 }
-
-/*******************************************************************************
- * DirectSoundFullDuplex ClassFactory
- */
-
-static HRESULT WINAPI
-DSFDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-    FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI
-DSFDCF_AddRef(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    return InterlockedIncrement(&(This->ref));
-}
-
-static ULONG WINAPI
-DSFDCF_Release(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    /* static class, won't be  freed */
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    return InterlockedDecrement(&(This->ref));
-}
-
-static HRESULT WINAPI
-DSFDCF_CreateInstance(
-    LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-
-    if (pOuter) {
-        WARN("aggregation not supported\n");
-        return CLASS_E_NOAGGREGATION;
-    }
-
-    if (ppobj == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
-    }
-
-    *ppobj = NULL;
-
-    if ( IsEqualGUID( &IID_IDirectSoundFullDuplex, riid ) )
-	return DSOUND_FullDuplexCreate((LPDIRECTSOUNDFULLDUPLEX*)ppobj,pOuter);
-
-    WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
-    return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI
-DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
-    return S_OK;
-}
-
-static const IClassFactoryVtbl DSFDCF_Vtbl =
-{
-    DSFDCF_QueryInterface,
-    DSFDCF_AddRef,
-    DSFDCF_Release,
-    DSFDCF_CreateInstance,
-    DSFDCF_LockServer
-};
-
-IClassFactoryImpl DSOUND_FULLDUPLEX_CF = { &DSFDCF_Vtbl, 1 };

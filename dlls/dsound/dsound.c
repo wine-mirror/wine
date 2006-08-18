@@ -977,12 +977,18 @@ static HRESULT IDirectSound8_IDirectSound8_Create(
 }
 
 HRESULT DSOUND_Create(
-    LPDIRECTSOUND *ppDS,
-    IUnknown *pUnkOuter)
+    REFIID riid,
+    LPDIRECTSOUND *ppDS)
 {
     LPDIRECTSOUND8 pDS;
     HRESULT hr;
-    TRACE("(%p,%p)\n",ppDS,pUnkOuter);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDS);
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSound)) {
+        *ppDS = 0;
+        return E_NOINTERFACE;
+    }
 
     /* Get dsound configuration */
     setup_dsound_options();
@@ -1040,7 +1046,7 @@ HRESULT WINAPI DirectSoundCreate(
         return DSERR_INVALIDPARAM;
     }
 
-    hr = DSOUND_Create(&pDS, pUnkOuter);
+    hr = DSOUND_Create(&IID_IDirectSound, &pDS);
     if (hr == DS_OK) {
         hr = IDirectSound_Initialize(pDS, lpcGUID);
         if (hr != DS_OK) {
@@ -1058,12 +1064,18 @@ HRESULT WINAPI DirectSoundCreate(
 }
 
 HRESULT DSOUND_Create8(
-    LPDIRECTSOUND8 *ppDS,
-    IUnknown *pUnkOuter)
+    REFIID riid,
+    LPDIRECTSOUND8 *ppDS)
 {
     LPDIRECTSOUND8 pDS;
     HRESULT hr;
-    TRACE("(%p,%p)\n",ppDS,pUnkOuter);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppDS);
+
+    if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSound8)) {
+        *ppDS = 0;
+        return E_NOINTERFACE;
+    }
 
     /* Get dsound configuration */
     setup_dsound_options();
@@ -1121,7 +1133,7 @@ HRESULT WINAPI DirectSoundCreate8(
         return DSERR_INVALIDPARAM;
     }
 
-    hr = DSOUND_Create8(&pDS, pUnkOuter);
+    hr = DSOUND_Create8(&IID_IDirectSound8, &pDS);
     if (hr == DS_OK) {
         hr = IDirectSound8_Initialize(pDS, lpcGUID);
         if (hr != DS_OK) {

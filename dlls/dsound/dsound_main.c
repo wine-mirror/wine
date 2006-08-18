@@ -426,12 +426,23 @@ HRESULT WINAPI DirectSoundEnumerateW(
  * DirectSound ClassFactory
  */
 
-static HRESULT WINAPI
-DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+typedef  HRESULT (*FnCreateInstance)(REFIID riid, LPVOID *ppobj);
+ 
+typedef struct {
+    const IClassFactoryVtbl *lpVtbl;
+    LONG ref;
+    REFCLSID rclsid;
+    FnCreateInstance pfnCreateInstance;
+} IClassFactoryImpl;
 
-	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
+static HRESULT WINAPI
+DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    FIXME("(%p, %s, %p) stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL)
+        return E_POINTER;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI DSCF_AddRef(LPCLASSFACTORY iface)
@@ -452,114 +463,49 @@ static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
-	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pOuter,
+    REFIID riid,
+    LPVOID *ppobj)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    TRACE("(%p, %p, %s, %p)\n", This, pOuter, debugstr_guid(riid), ppobj);
 
-	if (pOuter)
-		return CLASS_E_NOAGGREGATION;
+    if (pOuter)
+        return CLASS_E_NOAGGREGATION;
 
-	if (ppobj == NULL) {
-		WARN("invalid parameter\n");
-		return DSERR_INVALIDPARAM;
-	}
-
-	*ppobj = NULL;
-
-	if ( IsEqualIID( &IID_IDirectSound, riid ) )
-		return DSOUND_Create((LPDIRECTSOUND*)ppobj,pOuter);
-
-	if ( IsEqualIID( &IID_IDirectSound8, riid ) )
-		return DSOUND_Create8((LPDIRECTSOUND8*)ppobj,pOuter);
-
-	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
-	return E_NOINTERFACE;
+    if (ppobj == NULL) {
+        WARN("invalid parameter\n");
+        return DSERR_INVALIDPARAM;
+    }
+    *ppobj = NULL;
+    return This->pfnCreateInstance(riid, ppobj);
 }
-
-static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p)->(%d),stub!\n",This,dolock);
-	return S_OK;
+ 
+static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    FIXME("(%p, %d) stub!\n", This, dolock);
+    return S_OK;
 }
 
 static const IClassFactoryVtbl DSCF_Vtbl = {
-	DSCF_QueryInterface,
-	DSCF_AddRef,
-	DSCF_Release,
-	DSCF_CreateInstance,
-	DSCF_LockServer
+    DSCF_QueryInterface,
+    DSCF_AddRef,
+    DSCF_Release,
+    DSCF_CreateInstance,
+    DSCF_LockServer
 };
 
-static IClassFactoryImpl DSOUND_CF = { &DSCF_Vtbl, 1 };
-
-/*******************************************************************************
- * DirectSoundPrivate ClassFactory
- */
-
-static HRESULT WINAPI
-DSPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI DSPCF_AddRef(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
-    return ref;
-}
-
-static ULONG WINAPI DSPCF_Release(LPCLASSFACTORY iface)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
-    /* static class, won't be freed */
-    return ref;
-}
-
-static HRESULT WINAPI
-DSPCF_CreateInstance(
-	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-
-	if (ppobj == NULL) {
-		WARN("invalid parameter\n");
-		return DSERR_INVALIDPARAM;
-	}
-
-	*ppobj = NULL;
-
-	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		return IKsPrivatePropertySetImpl_Create((IKsPrivatePropertySetImpl**)ppobj);
-	}
-
-	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
-	return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI
-DSPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p)->(%d),stub!\n",This,dolock);
-	return S_OK;
-}
-
-static const IClassFactoryVtbl DSPCF_Vtbl = {
-	DSPCF_QueryInterface,
-	DSPCF_AddRef,
-	DSPCF_Release,
-	DSPCF_CreateInstance,
-	DSPCF_LockServer
+static IClassFactoryImpl DSOUND_CF[] = {
+    { &DSCF_Vtbl, 1, &CLSID_DirectSound, (FnCreateInstance)DSOUND_Create },
+    { &DSCF_Vtbl, 1, &CLSID_DirectSound8, (FnCreateInstance)DSOUND_Create8 },
+    { &DSCF_Vtbl, 1, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
+    { &DSCF_Vtbl, 1, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
+    { &DSCF_Vtbl, 1, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
+    { &DSCF_Vtbl, 1, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
+    { NULL, 0, NULL, NULL }
 };
-
-static IClassFactoryImpl DSOUND_PRIVATE_CF = { &DSPCF_Vtbl, 1 };
 
 /*******************************************************************************
  * DllGetClassObject [DSOUND.@]
@@ -580,62 +526,33 @@ static IClassFactoryImpl DSOUND_PRIVATE_CF = { &DSPCF_Vtbl, 1 };
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    int i = 0;
+    TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if (ppv == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
+        WARN("invalid parameter\n");
+        return E_INVALIDARG;
     }
 
     *ppv = NULL;
 
-    if ( IsEqualCLSID( &CLSID_DirectSound, rclsid ) ||
-	 IsEqualCLSID( &CLSID_DirectSound8, rclsid ) ) {
-	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-	    *ppv = (LPVOID)&DSOUND_CF;
-	    IClassFactory_AddRef((IClassFactory*)*ppv);
-	    return S_OK;
-	}
-    	WARN("(%s,%s,%p): no interface found.\n",
-	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-	return S_FALSE;
+    if (!IsEqualIID(riid, &IID_IClassFactory) &&
+        !IsEqualIID(riid, &IID_IUnknown)) {
+        WARN("no interface for %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if ( IsEqualCLSID( &CLSID_DirectSoundCapture, rclsid ) ||
-	 IsEqualCLSID( &CLSID_DirectSoundCapture8, rclsid ) ) {
-	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-	    *ppv = (LPVOID)&DSOUND_CAPTURE_CF;
-	    IClassFactory_AddRef((IClassFactory*)*ppv);
-	    return S_OK;
-	}
-    	WARN("(%s,%s,%p): no interface found.\n",
-	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-	return S_FALSE;
+    while (NULL != DSOUND_CF[i].rclsid) {
+        if (IsEqualGUID(rclsid, DSOUND_CF[i].rclsid)) {
+            DSCF_AddRef((IClassFactory*) &DSOUND_CF[i]);
+            *ppv = &DSOUND_CF[i];
+            return S_OK;
+        }
+        i++;
     }
 
-    if ( IsEqualCLSID( &CLSID_DirectSoundFullDuplex, rclsid ) ) {
-	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-	    *ppv = (LPVOID)&DSOUND_FULLDUPLEX_CF;
-	    IClassFactory_AddRef((IClassFactory*)*ppv);
-	    return S_OK;
-	}
-    	WARN("(%s,%s,%p): no interface found.\n",
-	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-	return S_FALSE;
-    }
-
-    if ( IsEqualCLSID( &CLSID_DirectSoundPrivate, rclsid ) ) {
-	if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-	    *ppv = (LPVOID)&DSOUND_PRIVATE_CF;
-	    IClassFactory_AddRef((IClassFactory*)*ppv);
-	    return S_OK;
-	}
-    	WARN("(%s,%s,%p): no interface found.\n",
-	    debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-	return S_FALSE;
-    }
-
-    WARN("(%s,%s,%p): no class found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
+         debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

@@ -68,7 +68,6 @@ typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
 typedef struct IKsPrivatePropertySetImpl     IKsPrivatePropertySetImpl;
 typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
 typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
-typedef struct IClassFactoryImpl             IClassFactoryImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -391,6 +390,7 @@ struct IKsPrivatePropertySetImpl
 };
 
 HRESULT IKsPrivatePropertySetImpl_Create(
+    REFIID riid,
     IKsPrivatePropertySetImpl **piks);
 
 /*****************************************************************************
@@ -412,25 +412,12 @@ HRESULT IDirectSound3DBufferImpl_Destroy(
     IDirectSound3DBufferImpl *pds3db);
 
 /*******************************************************************************
- * DirectSound ClassFactory implementation structure
- */
-struct IClassFactoryImpl
-{
-    /* IUnknown fields */
-    const IClassFactoryVtbl    *lpVtbl;
-    LONG                        ref;
-};
-
-extern IClassFactoryImpl DSOUND_CAPTURE_CF;
-extern IClassFactoryImpl DSOUND_FULLDUPLEX_CF;
-
-/*******************************************************************************
  */
 
 /* dsound.c */
 
-HRESULT DSOUND_Create(LPDIRECTSOUND *ppDS, IUnknown *pUnkOuter);
-HRESULT DSOUND_Create8(LPDIRECTSOUND8 *ppDS, IUnknown *pUnkOuter);
+HRESULT DSOUND_Create(REFIID riid, LPDIRECTSOUND *ppDS);
+HRESULT DSOUND_Create8(REFIID riid, LPDIRECTSOUND8 *ppDS);
 
 /* primary.c */
 
@@ -440,6 +427,10 @@ HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device);
 HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos);
 HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex);
+
+/* duplex.c */
+ 
+HRESULT DSOUND_FullDuplexCreate(REFIID riid, LPDIRECTSOUNDFULLDUPLEX* ppDSFD);
 
 /* buffer.c */
 
@@ -462,7 +453,9 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 /* capture.c */
-
+ 
+HRESULT DSOUND_CaptureCreate(REFIID riid, LPDIRECTSOUNDCAPTURE *ppDSC);
+HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8);
 HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
     LPDIRECTSOUNDCAPTURE iface,
     LPCDSCBUFFERDESC lpcDSCBufferDesc,
