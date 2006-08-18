@@ -35,16 +35,16 @@ enum remoting_phase
     PHASE_FREE
 };
 
-void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces);
-void write_procformatstring(FILE *file, const ifref_t *ifaces);
-void write_typeformatstring(FILE *file, const ifref_t *ifaces);
+void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces, int for_objects);
+void write_procformatstring(FILE *file, const ifref_t *ifaces, int for_objects);
+void write_typeformatstring(FILE *file, const ifref_t *ifaces, int for_objects);
 size_t get_type_memsize(const type_t *type);
 unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass);
 void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase, enum pass pass, const var_t *var, const char *varname);
 void write_remoting_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass, enum remoting_phase phase);
 size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_typeformatstring_var(const var_t *var);
-size_t get_size_procformatstring(const ifref_t *ifaces);
-size_t get_size_typeformatstring(const ifref_t *ifaces);
+size_t get_size_procformatstring(const ifref_t *ifaces, int for_objects);
+size_t get_size_typeformatstring(const ifref_t *ifaces, int for_objects);
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);

@@ -142,13 +142,13 @@ static void write_formatdesc(FILE *f, int indent, const char *str)
     print_file(f, indent, "\n");
 }
 
-void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces)
+void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces, int for_objects)
 {
     print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
-               get_size_typeformatstring(ifaces));
+               get_size_typeformatstring(ifaces, for_objects));
 
     print_file(f, indent, "#define PROC_FORMAT_STRING_SIZE %d\n",
-               get_size_procformatstring(ifaces));
+               get_size_procformatstring(ifaces, for_objects));
 
     fprintf(f, "\n");
     write_formatdesc(f, indent, "TYPE");
@@ -275,7 +275,7 @@ static size_t write_procformatstring_var(FILE *file, int indent,
     return size;
 }
 
-void write_procformatstring(FILE *file, const ifref_t *ifaces)
+void write_procformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
 {
     const ifref_t *iface = ifaces;
     int indent = 0;
@@ -293,7 +293,7 @@ void write_procformatstring(FILE *file, const ifref_t *ifaces)
 
     for (; iface; iface = PREV_LINK(iface))
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
 
         if (iface->iface->funcs)
@@ -1385,7 +1385,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 }
 
 
-void write_typeformatstring(FILE *file, const ifref_t *ifaces)
+void write_typeformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
 {
     int indent = 0;
     var_t *var;
@@ -1405,7 +1405,7 @@ void write_typeformatstring(FILE *file, const ifref_t *ifaces)
 
     for (; iface; iface = PREV_LINK(iface))
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
 
         if (iface->iface->funcs)
@@ -1900,7 +1900,7 @@ size_t get_size_typeformatstring_var(const var_t *var)
     return type_offset;
 }
 
-size_t get_size_procformatstring(const ifref_t *ifaces)
+size_t get_size_procformatstring(const ifref_t *ifaces, int for_objects)
 {
     const ifref_t *iface = ifaces;
     size_t size = 1;
@@ -1911,7 +1911,7 @@ size_t get_size_procformatstring(const ifref_t *ifaces)
 
     for (; iface; iface = PREV_LINK(iface))
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
 
         if (iface->iface->funcs)
@@ -1946,7 +1946,7 @@ size_t get_size_procformatstring(const ifref_t *ifaces)
     return size;
 }
 
-size_t get_size_typeformatstring(const ifref_t *ifaces)
+size_t get_size_typeformatstring(const ifref_t *ifaces, int for_objects)
 {
     const ifref_t *iface = ifaces;
     size_t size = 3;
@@ -1957,7 +1957,7 @@ size_t get_size_typeformatstring(const ifref_t *ifaces)
 
     for (; iface; iface = PREV_LINK(iface))
     {
-        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
 
         if (iface->iface->funcs)

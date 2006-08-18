@@ -582,7 +582,7 @@ void write_server(ifref_t *ifaces)
     if (!server)
         return;
 
-    write_formatstringsdecl(server, indent, ifaces);
+    write_formatstringsdecl(server, indent, ifaces, 0);
 
     for (; iface; iface = PREV_LINK(iface))
     {
@@ -620,8 +620,8 @@ void write_server(ifref_t *ifaces)
 
     fprintf(server, "\n");
 
-    write_procformatstring(server, ifaces);
-    write_typeformatstring(server, ifaces);
+    write_procformatstring(server, ifaces, 0);
+    write_typeformatstring(server, ifaces, 0);
 
     fclose(server);
 }

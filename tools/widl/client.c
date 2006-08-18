@@ -440,7 +440,7 @@ void write_client(ifref_t *ifaces)
     if (!client)
         return;
 
-    write_formatstringsdecl(client, indent, ifaces);
+    write_formatstringsdecl(client, indent, ifaces, 0);
 
     for (; iface; iface = PREV_LINK(iface))
     {
@@ -479,8 +479,8 @@ void write_client(ifref_t *ifaces)
 
     fprintf(client, "\n");
 
-    write_procformatstring(client, ifaces);
-    write_typeformatstring(client, ifaces);
+    write_procformatstring(client, ifaces, 0);
+    write_typeformatstring(client, ifaces, 0);
 
     fclose(client);
 }

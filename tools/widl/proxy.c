@@ -110,7 +110,7 @@ static void init_proxy(ifref_t *ifaces)
   print_proxy( "\n");
   print_proxy( "#include \"%s\"\n", header_name);
   print_proxy( "\n");
-  write_formatstringsdecl(proxy, indent, ifaces);
+  write_formatstringsdecl(proxy, indent, ifaces, 1);
   write_stubdescproto();
 }
 
@@ -1031,8 +1031,8 @@ void write_proxies(ifref_t *ifaces)
   print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
-  write_procformatstring(proxy, ifaces);
-  write_typeformatstring(proxy, ifaces);
+  write_procformatstring(proxy, ifaces, 1);
+  write_typeformatstring(proxy, ifaces, 1);
 
   fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
