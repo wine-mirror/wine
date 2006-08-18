@@ -202,6 +202,15 @@ static void propset_private_tests(void)
        "IID_IClassFactory) should have returned DSERR_INVALIDPARAM, "
        "returned: %s\n",DXGetErrorString8(rc));
 
+    rc = (fProc)(&CLSID_DirectSound, &IID_IDirectSound, (void **)(&pcf));
+    ok(rc==E_NOINTERFACE,"DllGetClassObject(CLSID_DirectSound, "
+       "IID_IDirectSound) should have returned E_NOINTERFACE, "
+       "returned: %s\n",DXGetErrorString8(rc));
+
+    rc = (fProc)(&CLSID_DirectSound, &IID_IUnknown, (void **)(&pcf));
+    ok(rc==DS_OK,"DllGetClassObject(CLSID_DirectSound, "
+       "IID_IUnknown) failed: %s\n",DXGetErrorString8(rc));
+
     rc = (fProc)(&CLSID_DirectSound, &IID_IClassFactory, (void **)(&pcf));
     ok(pcf!=0, "DllGetClassObject(CLSID_DirectSound, IID_IClassFactory) "
        "failed: %s\n",DXGetErrorString8(rc));

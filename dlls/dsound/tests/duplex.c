@@ -66,7 +66,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
         ok(ref==0, "IDirectSound_Release() has %d references, "
            "should have 0\n", ref);
     }
-                                                                                
+
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IDirectSound8,(LPVOID*)&ds8);
     ok(rc==(initialized?DS_OK:E_NOINTERFACE),"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSound8) "
        "failed: %s\n",DXGetErrorString8(rc));
@@ -136,7 +136,7 @@ static void IDirectSoundFullDuplex_tests(void)
     if (dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, FALSE, NULL, NULL);
 
-    /* try the COM class factory method of creation with default devices 
+    /* try the COM class factory method of creation with default devices
      * specified */
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,

@@ -192,8 +192,19 @@ static void IDirectSoundCapture_tests(void)
 {
     HRESULT rc;
     LPDIRECTSOUNDCAPTURE dsco=NULL;
+    LPCLASSFACTORY cf=NULL;
 
     trace("Testing IDirectSoundCapture\n");
+
+    rc=CoGetClassObject(&CLSID_DirectSoundCapture, CLSCTX_INPROC_SERVER, NULL,
+                        &IID_IClassFactory, (void**)&cf);
+    ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSoundCapture, IID_IClassFactory) "
+       "failed: %s\n", DXGetErrorString8(rc));
+
+    rc=CoGetClassObject(&CLSID_DirectSoundCapture, CLSCTX_INPROC_SERVER, NULL,
+                        &IID_IUnknown, (void**)&cf);
+    ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSoundCapture, IID_IUnknown) "
+       "failed: %s\n", DXGetErrorString8(rc));
 
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSoundCapture, NULL, CLSCTX_INPROC_SERVER,

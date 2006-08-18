@@ -191,8 +191,19 @@ static void IDirectSound8_tests(void)
 {
     HRESULT rc;
     LPDIRECTSOUND8 dso=NULL;
+    LPCLASSFACTORY cf=NULL;
 
     trace("Testing IDirectSound8\n");
+
+    rc=CoGetClassObject(&CLSID_DirectSound8, CLSCTX_INPROC_SERVER, NULL,
+                        &IID_IClassFactory, (void**)&cf);
+    ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSound8, IID_IClassFactory) "
+       "failed: %s\n", DXGetErrorString8(rc));
+
+    rc=CoGetClassObject(&CLSID_DirectSound8, CLSCTX_INPROC_SERVER, NULL,
+                        &IID_IUnknown, (void**)&cf);
+    ok(rc==S_OK,"CoGetClassObject(CLSID_DirectSound8, IID_IUnknown) "
+       "failed: %s\n", DXGetErrorString8(rc));
 
     /* try the COM class factory method of creation with no device specified */
     rc=CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER,
