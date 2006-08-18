@@ -315,7 +315,7 @@ int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 );
-int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
+int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
@@ -326,16 +326,16 @@ int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
     }
     else
     {
-        void **args = ((void**)jmp->Esp)+2;
+        int i;
+        va_list args;
 
-        if (nb_args > 0) jmp->UnwindFunc = (unsigned long)*args++;
-        if (nb_args > 1) jmp->TryLevel = (unsigned long)*args++;
+        va_start( args, nb_args );
+        if (nb_args > 0) jmp->UnwindFunc = va_arg( args, unsigned long );
+        if (nb_args > 1) jmp->TryLevel = va_arg( args, unsigned long );
         else jmp->TryLevel = ((MSVCRT_EXCEPTION_FRAME*)jmp->Registration)->trylevel;
-        if (nb_args > 2)
-        {
-            size_t size = (nb_args - 2) * sizeof(DWORD);
-            memcpy( jmp->UnwindData, args, min( size, sizeof(jmp->UnwindData) ));
-        }
+        for (i = 0; i < 6 && i < nb_args - 2; i++)
+            jmp->UnwindData[i] = va_arg( args, unsigned long );
+        va_end( args );
     }
 
     TRACE("buf=%p ebx=%08lx esi=%08lx edi=%08lx ebp=%08lx esp=%08lx eip=%08lx frame=%08lx\n",
