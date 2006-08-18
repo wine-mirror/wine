@@ -339,7 +339,7 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     }
 
     end = dos_name + strlenW(dos_name) - 1;
-    if (end >= dos_name && *end == ':') end--;  /* remove trailing ':' */
+    while (end >= dos_name && *end == ':') end--;  /* remove all trailing ':' */
 
     /* find start of file name */
     for (start = end; start >= dos_name; start--)
