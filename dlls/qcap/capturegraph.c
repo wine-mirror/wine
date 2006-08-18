@@ -303,8 +303,8 @@ fnCaptureGraphBuilder2_AllocCapFile(ICaptureGraphBuilder2 * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
 
-    FIXME("(%p/%p)->(%s, %lld) Stub!\n", This, iface,
-          debugstr_w(lpwstr), dwlSize);
+    FIXME("(%p/%p)->(%s, 0x%s) Stub!\n", This, iface,
+          debugstr_w(lpwstr), wine_dbgstr_longlong(dwlSize));
 
     return E_NOTIMPL;
 }
