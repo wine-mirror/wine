@@ -109,6 +109,7 @@ typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIDOMRange;
 typedef nsISupports nsIEditor;
+typedef nsISupports nsICommandParams;
 
 [
     object,
@@ -1172,6 +1173,22 @@ interface nsIEditingSession : nsISupports
     nsresult SetupEditorOnWindow(nsIDOMWindow *window);
     nsresult TearDownEditorOnWindow(nsIDOMWindow *window);
     nsresult SetEditorOnControllers(nsIDOMWindow *aWindow, nsIEditor *aEditor);
+}
+
+[
+    object,
+    uuid(080d2001-f91e-11d4-a73c-f9242928207c)
+]
+interface nsICommandManager : nsISupports
+{
+    nsresult AddCommandObserver(nsIObserver *aCommandObserver, const char *aCommandToObserve);
+    nsresult RemoveCommandObserver(nsIObserver *aCommandObserver, const char *aCommandObserved);
+    nsresult IsCommandSupported(const char *aCommandName, nsIDOMWindow *aTargetWindow, PRBool *_retval);
+    nsresult IsCommandEnabled(const char *aCommandName, nsIDOMWindow *aTargetWindow, PRBool *_retval);
+    nsresult GetCommandState(const char *aCommandName, nsIDOMWindow *aTargetWindow,
+            nsICommandParams *aCommandParams);
+    nsresult DoCommand(const char *aCommandName, nsICommandParams *aCommandParams,
+            nsIDOMWindow *aTargetWindow);
 }
 
 /*

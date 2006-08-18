@@ -238,6 +238,46 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
+static void do_ns_command(NSContainer *This, const char *cmd)
+{
+    nsICommandManager *cmdmgr;
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    FIXME("(%p)\n", This);
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
+                                               (void**)&cmdmgr);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsICommandManager: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, NULL, NULL);
+    if(NS_FAILED(nsres))
+        ERR("DoCommand(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
+
+    nsICommandManager_Release(cmdmgr);
+}
+
+static HRESULT exec_bold(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, "cmd_bold");
+
+    return S_OK;
+}
+
 static HRESULT exec_browsemode(HTMLDocument *This)
 {
     WARN("(%p)\n", This);
@@ -504,7 +544,13 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
         switch(nCmdID) {
+        case IDM_BOLD:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_bold(This);
         case IDM_BROWSEMODE:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
             return exec_browsemode(This);
         case IDM_EDITMODE:
             if(pvaIn || pvaOut)
