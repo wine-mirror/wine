@@ -977,6 +977,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     if(!pguidCmdGroup) {
+        ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
+
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
             CHECK_EXPECT2(Exec_SETPROGRESSMAX);
@@ -1008,7 +1010,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return S_OK;
         case OLECMDID_UPDATECOMMANDS:
             CHECK_EXPECT(Exec_UPDATECOMMANDS);
-            /* TODO */
+            ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
+            ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             return S_OK;
         case OLECMDID_SETTITLE:
             CHECK_EXPECT2(Exec_SETTITLE);
@@ -1025,6 +1028,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
+        ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
+
         switch(nCmdID) {
         case 37:
             CHECK_EXPECT2(Exec_ShellDocView_37);
@@ -1042,6 +1047,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
+
         switch(nCmdID) {
         case 2315:
             CHECK_EXPECT(Exec_MSHTML_2315);

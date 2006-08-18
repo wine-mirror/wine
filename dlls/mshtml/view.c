@@ -245,8 +245,10 @@ static HRESULT activate_window(HTMLDocument *This)
 
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0;
-        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSMAX, 0, &var, NULL);
-        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSPOS, 0, &var, NULL);
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSMAX,
+                OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
+        IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSPOS, 
+                OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
 
         IOleCommandTarget_Release(cmdtrg);
     }
