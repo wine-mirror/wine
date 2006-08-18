@@ -36,5 +36,5 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_BYTES_FORMAT    "%ld bytes"
+    IDS_BYTES_FORMAT    "%ld Bytes"
 }
