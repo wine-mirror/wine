@@ -540,7 +540,7 @@ static void copy_sane_short_name(const char *in, char *out, size_t outsize)
 static const SANE_Device **sane_devlist;
 
 static void
-detect_sane_devices() {
+detect_sane_devices(void) {
     if (sane_devlist && sane_devlist[0]) return;
     TRACE("detecting sane...\n");
     if (sane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)

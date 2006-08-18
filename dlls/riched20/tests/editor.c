@@ -455,7 +455,7 @@ static void test_EM_SETTEXTMODE(void)
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_TM_PLAINTEXT()
+static void test_TM_PLAINTEXT(void)
 {
   /*Tests plain text properties*/
 
@@ -557,7 +557,7 @@ static void test_TM_PLAINTEXT()
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_WM_GETTEXT()
+static void test_WM_GETTEXT(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
     static const char text[] = "Hello. My name is RichEdit!";
@@ -572,7 +572,7 @@ static void test_WM_GETTEXT()
 }
 
 /* FIXME: need to test unimplemented options and robustly test wparam */
-static void test_EM_SETOPTIONS()
+static void test_EM_SETOPTIONS(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
     static const char text[] = "Hello. My name is RichEdit!";
@@ -675,7 +675,7 @@ static void test_EM_AUTOURLDETECT(void)
   DestroyWindow(parent);
 }
 
-static void test_EM_SCROLL()
+static void test_EM_SCROLL(void)
 {
   int i, j;
   int r; /* return value */
@@ -810,7 +810,7 @@ static void test_EM_SCROLL()
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_EM_SETUNDOLIMIT()
+static void test_EM_SETUNDOLIMIT(void)
 {
   /* cases we test for:
    * default behaviour - limiting at 100 undo's 

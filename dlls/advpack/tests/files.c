@@ -127,7 +127,7 @@ static BOOL check_ini_contents(LPSTR filename, BOOL add)
     return ret;
 }
 
-static void test_AddDelBackupEntry()
+static void test_AddDelBackupEntry(void)
 {
     HRESULT res;
     CHAR path[MAX_PATH];

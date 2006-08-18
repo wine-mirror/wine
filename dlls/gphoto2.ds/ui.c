@@ -226,7 +226,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	return FALSE;
 }
 
-BOOL DoCameraUI()
+BOOL DoCameraUI(void)
 {
 	return DialogBoxW(GPHOTO2_instance,
 			(LPWSTR)MAKEINTRESOURCE(IDD_CAMERAUI),NULL, DialogProc);

@@ -2010,7 +2010,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  *   exists and left alone if not.
  * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
  */
-static void _SHCreateSymbolicLinks()
+static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEO, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };

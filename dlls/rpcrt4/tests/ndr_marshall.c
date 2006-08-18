@@ -228,7 +228,7 @@ static int deref_cmp(const void *s1, const void *s2, size_t num)
 }
 
 
-static void test_simple_types()
+static void test_simple_types(void)
 {
     unsigned char wiredata[16];
     unsigned char ch;

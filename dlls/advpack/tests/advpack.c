@@ -419,7 +419,7 @@ static BOOL check_reg_dword(HKEY hkey, LPCSTR name, DWORD value)
     return (check == value);
 }
 
-static void setperusersecvalues_test()
+static void setperusersecvalues_test(void)
 {
     PERUSERSECTION peruser;
     HRESULT hr;

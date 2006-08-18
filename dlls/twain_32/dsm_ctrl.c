@@ -98,7 +98,7 @@ twain_add_onedriver(const char *dsname) {
 static int detectionrun = 0;
 
 static void
-twain_autodetect() {
+twain_autodetect(void) {
 	if (detectionrun) return;
 	detectionrun = 1;
 

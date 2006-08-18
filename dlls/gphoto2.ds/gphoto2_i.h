@@ -246,7 +246,7 @@ TW_UINT16 GPHOTO2_RGBResponseSet
     (pTW_IDENTITY pOrigin, TW_MEMREF pData);
 
 /* UI function */
-BOOL DoCameraUI();
+BOOL DoCameraUI(void);
 HWND TransferringDialogBox(HWND dialog, DWORD progress);
 
 #ifdef HAVE_GPHOTO2

@@ -220,7 +220,7 @@ static void LightTest(void)
     ok(rc==DDERR_INVALIDPARAMS, "GetLightEnable returned: %lx\n", rc);
 }
 
-static void ProcessVerticesTest()
+static void ProcessVerticesTest(void)
 {
     D3DVERTEXBUFFERDESC desc;
     HRESULT rc;
