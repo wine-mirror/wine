@@ -277,13 +277,13 @@ uglier, because of the Pascal heritage and the segmented memory model.
 All of the Win32 APIs known to Wine are listed in the .spec file of
 their corresponding dll. An unimplemented call will look like (from
 gdi32.spec)
-  269 stub PolyBezierTo
+  @ stub PolyPatBlt
 To implement this call, you need to do the following four things.
 
 1. Find the appropriate parameters for the call, and add a prototype to
 the correct header file. In this case, that means [include/wingdi.h],
 and it might look like
-  BOOL WINAPI PolyBezierTo(HDC, LPCVOID, DWORD);
+  BOOL WINAPI PolyPatBlt(HDC, LPCVOID, DWORD);
 If the function has both an ASCII and a Unicode version, you need to
 define both and add a #define WINELIB_NAME_AW declaration. See below
 for discussion of function naming conventions.
@@ -294,13 +294,13 @@ to use for the implementation. In Win32, things are simple--everything
 is 32-bits. However, the relay code handles pointers and pointers to
 strings slightly differently, so you should use 'str' and 'wstr' for
 strings, 'ptr' for other pointer types, and 'long' for everything else.
-  269 stdcall PolyBezierTo(long ptr long) PolyBezierTo
-The 'PolyBezierTo' at the end of the line is which Wine function to use
+  @ stdcall PolyPatBlt(long ptr long) PolyPatBlt
+The 'PolyPatBlt' at the end of the line is which Wine function to use
 for the implementation.
 
 3. Implement the function as a stub. Once you add the function to the .spec
 file, you must add the function to the Wine source before it will link.
-Add a function called 'PolyBezierTo' somewhere. Good things to put
+Add a function called 'PolyPatBlt' somewhere. Good things to put
 into a stub:
   o a correct prototype, including the WINAPI
   o header comments, including full documentation for the function and
@@ -309,7 +309,7 @@ into a stub:
     put in a stub.
 
   /************************************************************
-   *                    PolyBezierTo   (GDI32.269)  
+   *                    PolyPatBlt   (GDI32.@)
    *  
    * Draw many Bezier curves.
    *
@@ -325,7 +325,7 @@ into a stub:
    * BUGS
    *   Unimplemented
    */
-   BOOL WINAPI PolyBezierTo(HDC hdc, LPCVOID p, DWORD count) 
+   BOOL WINAPI PolyPatBlt(HDC hdc, LPCVOID p, DWORD count) 
    {
        /* tell the user they've got a substandard implementation */
        FIXME("(%x,%p,%d): stub\n", hdc, p, count);
