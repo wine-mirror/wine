@@ -287,7 +287,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 {
-    static const WCHAR winebootW[]    = { '\\','w','i','n','e','b','o','o','t',0 };
+    static const WCHAR winebootW[]    = { '\\','w','i','n','e','b','o','o','t','.','e','x','e',0 };
     static const WCHAR killW[]        = { ' ','-','-','k','i','l','l',0 };
     static const WCHAR end_sessionW[] = { ' ','-','-','e','n','d','-','s','e','s','s','i','o','n',0 };
     static const WCHAR forceW[]       = { ' ','-','-','f','o','r','c','e',0 };
