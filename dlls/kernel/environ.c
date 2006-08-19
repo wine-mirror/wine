@@ -345,6 +345,11 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     TRACE("(%s %p %lu)\n", debugstr_w(src), dst, len);
 
     RtlInitUnicodeString(&us_src, src);
+
+    /* make sure we don't overflow maximum UNICODE_STRING size */
+    if (len > 0x7fff)
+        len = 0x7fff;
+
     us_dst.Length = 0;
     us_dst.MaximumLength = len * sizeof(WCHAR);
     us_dst.Buffer = dst;

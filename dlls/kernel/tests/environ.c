@@ -213,8 +213,13 @@ static void test_GetSetEnvironmentVariableW(void)
 
 static void test_ExpandEnvironmentStringsA(void)
 {
-    char buf[256], buf1[256];
+    char buf[256], buf1[256], buf2[0x8000];
     DWORD ret_size, ret_size1;
+
+    /* test a large destination size */
+    strcpy(buf, "12345");
+    ret_size = ExpandEnvironmentStringsA(buf, buf2, sizeof(buf2));
+    ok(!strcmp(buf, buf2), "ExpandEnvironmentStrings failed %s vs %s. ret_size = %ld\n", buf, buf2, ret_size);
 
     ret_size1 = GetWindowsDirectoryA(buf1,256);
     ok ((ret_size1 >0) && (ret_size1<256), "GetWindowsDirectory Failed\n");
