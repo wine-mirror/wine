@@ -96,8 +96,8 @@ void shader_glsl_load_constantsF(
         if (NULL == constants_set || constants_set[i]) {
 
             TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
-                  constants[i * sizeof(float) + 0], constants[i * sizeof(float) + 1],
-                  constants[i * sizeof(float) + 2], constants[i * sizeof(float) + 3]);
+                  constants[i * 4 + 0], constants[i * 4 + 1],
+                  constants[i * 4 + 2], constants[i * 4 + 3]);
 
             /* TODO: Benchmark and see if it would be beneficial to store the 
              * locations of the constants to avoid looking up each time */
@@ -105,7 +105,7 @@ void shader_glsl_load_constantsF(
             tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
             if (tmp_loc != -1) {
                 /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, &constants[i * sizeof(float)]));
+                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, &constants[i * 4]));
                 checkGLcall("glUniform4fvARB");
             }
         }

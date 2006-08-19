@@ -60,10 +60,10 @@ void shader_arb_load_constantsF(
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
             TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
-                  constants[i * sizeof(float) + 0], constants[i * sizeof(float) + 1],
-                  constants[i * sizeof(float) + 2], constants[i * sizeof(float) + 3]);
+                  constants[i * 4 + 0], constants[i * 4 + 1],
+                  constants[i * 4 + 2], constants[i * 4 + 3]);
 
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i * sizeof(float)]));
+            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i * 4]));
             checkGLcall("glProgramEnvParameter4fvARB");
         }
     }
