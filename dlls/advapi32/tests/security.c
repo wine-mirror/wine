@@ -880,6 +880,7 @@ static void test_LookupAccountSid(void)
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     char account[MAX_PATH], domain[MAX_PATH];
     DWORD acc_size, dom_size;
+    DWORD real_acc_size, real_dom_size;
     PSID pUsersSid = NULL;
     SID_NAME_USE use;
     BOOL ret;
@@ -899,17 +900,68 @@ static void test_LookupAccountSid(void)
     if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
         return;
 
+    real_acc_size = MAX_PATH;
+    real_dom_size = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &real_acc_size, domain, &real_dom_size, &use);
+    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
+
     /* try NULL account */
     acc_size = MAX_PATH;
     dom_size = MAX_PATH;
-    ret = LookupAccountSid(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
+    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
     ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
 
     /* try NULL domain */
     acc_size = MAX_PATH;
     dom_size = MAX_PATH;
-    ret = LookupAccountSid(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
     ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
+
+    /* try a small account buffer */
+    acc_size = 1;
+    dom_size = MAX_PATH;
+    account[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    ok(!ret, "LookupAccountSid() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "LookupAccountSid() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+
+    /* try a 0 sized account buffer */
+    acc_size = 0;
+    dom_size = MAX_PATH;
+    account[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(acc_size == real_acc_size, "LookupAccountSid() Expected acc_size = %lu, got %lu\n", real_acc_size, acc_size);
+
+    /* try a 0 sized account buffer */
+    acc_size = 0;
+    dom_size = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(acc_size == real_acc_size, "LookupAccountSid() Expected acc_size = %lu, got %lu\n", real_acc_size, acc_size);
+
+    /* try a small domain buffer */
+    dom_size = 1;
+    acc_size = MAX_PATH;
+    account[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    ok(!ret, "LookupAccountSid() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "LookupAccountSid() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+
+    /* try a 0 sized domain buffer */
+    dom_size = 0;
+    acc_size = MAX_PATH;
+    account[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(dom_size == real_dom_size, "LookupAccountSid() Expected dom_size = %lu, got %lu\n", real_dom_size, dom_size);
+
+    /* try a 0 sized domain buffer */
+    dom_size = 0;
+    acc_size = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(acc_size == real_acc_size, "LookupAccountSid() Expected dom_size = %lu, got %lu\n", real_dom_size, dom_size);
 
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
