@@ -1827,8 +1827,8 @@ LookupAccountSidA(
     LPWSTR systemW = NULL;
     LPWSTR accountW = NULL;
     LPWSTR domainW = NULL;
-    DWORD accountSizeW = *accountSize * sizeof(WCHAR);
-    DWORD domainSizeW = *domainSize * sizeof(WCHAR);
+    DWORD accountSizeW = *accountSize;
+    DWORD domainSizeW = *domainSize;
 
     TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
           debugstr_a(system),debugstr_sid(sid),
@@ -1838,22 +1838,30 @@ LookupAccountSidA(
 
     if (system) {
         len = MultiByteToWideChar( CP_ACP, 0, system, -1, NULL, 0 );
-        systemW = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(WCHAR) );
+        systemW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, system, -1, systemW, len );
     }
-    accountW = HeapAlloc( GetProcessHeap(), 0, accountSizeW );
-    domainW = HeapAlloc( GetProcessHeap(), 0, domainSizeW );
+    if (account)
+        accountW = HeapAlloc( GetProcessHeap(), 0, accountSizeW * sizeof(WCHAR) );
+    if (domain)
+        domainW = HeapAlloc( GetProcessHeap(), 0, domainSizeW * sizeof(WCHAR) );
 
-    r = LookupAccountSidW(systemW, sid, accountW, &accountSizeW, domainW, &domainSizeW, name_use );
+    r = LookupAccountSidW( systemW, sid, accountW, &accountSizeW, domainW, &domainSizeW, name_use );
 
     if (r) {
-        len = WideCharToMultiByte( CP_ACP, 0, accountW, -1, NULL, 0, NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, accountW, -1, account, len, NULL, NULL );
-        *accountSize = len;
+        if (accountW && *accountSize) {
+            len = WideCharToMultiByte( CP_ACP, 0, accountW, -1, NULL, 0, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, accountW, -1, account, len, NULL, NULL );
+            *accountSize = len;
+        } else
+            *accountSize = accountSizeW;
 
-        len = WideCharToMultiByte( CP_ACP, 0, domainW, -1, NULL, 0, NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, domainW, -1, domain, len, NULL, NULL );
-        *domainSize = len;
+        if (domainW && *domainSize) {
+            len = WideCharToMultiByte( CP_ACP, 0, domainW, -1, NULL, 0, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, domainW, -1, domain, len, NULL, NULL );
+            *domainSize = len;
+        } else
+            *domainSize = domainSizeW;
     }
 
     HeapFree( GetProcessHeap(), 0, systemW );
@@ -1988,17 +1996,25 @@ LookupAccountSidW(
     }
 
     if (dm) {
-        *accountSize = strlenW(ac)+1;
-        if (account && (*accountSize > strlenW(ac)))
-            strcpyW(account, ac);
-
-        *domainSize = strlenW(dm)+1;
-        if (domain && (*domainSize > strlenW(dm)))
-            strcpyW(domain,dm);
-
+        BOOL status = TRUE;
+        if (*accountSize > lstrlenW(ac)) {
+            if (account)
+                lstrcpyW(account, ac);
+        }
+        if (*domainSize > lstrlenW(dm)) {
+            if (domain)
+                lstrcpyW(domain, dm);
+        }
+        if (((*accountSize != 0) && (*accountSize < strlenW(ac))) ||
+            ((*domainSize != 0) && (*domainSize < strlenW(dm)))) {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            status = FALSE;
+        }
+        *domainSize = strlenW(dm) + 1;
+        *accountSize = strlenW(ac) + 1;
         *name_use = use;
         HeapFree(GetProcessHeap(), 0, computer_name);
-        return TRUE;
+        return status;
     }
 
     HeapFree(GetProcessHeap(), 0, computer_name);
