@@ -805,9 +805,9 @@ static void testSignSeal()
                 getSecError(sec_status));
 
         sec_status = pEncryptMessage(client.ctxt, 0, crypt, 0);
-        todo_wine{
         ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
+        todo_wine{
         ok(!memcmp(crypt->pBuffers[0].pvBuffer, crypt_trailer_client,
                    crypt->pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
         ok(!memcmp(crypt->pBuffers[1].pvBuffer, crypt_message_client,

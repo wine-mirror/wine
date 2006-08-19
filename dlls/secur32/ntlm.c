@@ -1360,12 +1360,66 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
 static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
         ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-    TRACE("%p %ld %p %ld stub\n", phContext, fQOP, pMessage, MessageSeqNo);
+    PNegoHelper helper;
+    TRACE("(%p %ld %p %ld)\n", phContext, fQOP, pMessage, MessageSeqNo);
 
     if(!phContext)
         return SEC_E_INVALID_HANDLE;
 
-    return SEC_E_UNSUPPORTED_FUNCTION;
+    if(fQOP)
+        FIXME("Ignoring fQOP\n");
+
+    if(MessageSeqNo)
+        FIXME("Ignoring MessageSeqNo\n");
+
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
+            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
+            !pMessage->pBuffers[0].pvBuffer)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[0].cbBuffer < 16)
+        return SEC_E_BUFFER_TOO_SMALL;
+
+    helper = (PNegoHelper) phContext->dwLower;
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
+    {
+        FIXME("Can't handle NTLMv2 encryption yet, aborting\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    else
+    {
+        PBYTE sig = pMessage->pBuffers[0].pvBuffer;
+        ULONG crc = ComputeCrc32(pMessage->pBuffers[1].pvBuffer,
+                pMessage->pBuffers[1].cbBuffer);
+        ULONG sign_version = 1l;
+
+        sig[ 0] = (sign_version >>  0) & 0xff;
+        sig[ 1] = (sign_version >>  8) & 0xff;
+        sig[ 2] = (sign_version >> 16) & 0xff;
+        sig[ 3] = (sign_version >> 24) & 0xff;
+        memset(sig+4, 0, 4);
+        sig[ 8] = (crc >>  0) & 0xff;
+        sig[ 9] = (crc >>  8) & 0xff;
+        sig[10] = (crc >> 16) & 0xff;
+        sig[11] = (crc >> 24) & 0xff;
+        sig[12] = (helper->crypt.ntlm.seq_num >>  0) & 0xff;
+        sig[13] = (helper->crypt.ntlm.seq_num >>  8) & 0xff;
+        sig[14] = (helper->crypt.ntlm.seq_num >> 16) & 0xff;
+        sig[15] = (helper->crypt.ntlm.seq_num >> 24) & 0xff;
+
+        SECUR32_arc4Process(helper->crypt.ntlm.a4i, pMessage->pBuffers[1].pvBuffer,
+                pMessage->pBuffers[1].cbBuffer);
+        SECUR32_arc4Process(helper->crypt.ntlm.a4i, sig+4, 12);
+
+        if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
+            memset(sig+4, 0, 4);
+
+        ++(helper->crypt.ntlm.seq_num);
+
+    }
+
+    return SEC_E_OK;
 }
 
 /***********************************************************************
@@ -1374,12 +1428,37 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
         PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
-    TRACE("%p %p %ld %p stub\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    PNegoHelper helper;
+    TRACE("(%p %p %ld %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if(!phContext)
         return SEC_E_INVALID_HANDLE;
 
-    return SEC_E_UNSUPPORTED_FUNCTION;
+    if(MessageSeqNo)
+        FIXME("Ignoring MessageSeqNo\n");
+
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
+            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
+            !pMessage->pBuffers[0].pvBuffer)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[0].cbBuffer < 16)
+        return SEC_E_BUFFER_TOO_SMALL;
+
+    helper = (PNegoHelper) phContext->dwLower;
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
+    {
+        FIXME("Can't handle NTLMv2 encryption yet, aborting\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    else
+    {
+        SECUR32_arc4Process(helper->crypt.ntlm.a4i,
+                pMessage->pBuffers[1].pvBuffer, pMessage->pBuffers[1].cbBuffer);
+    }
+
+    return ntlm_VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 }
 
 static SecurityFunctionTableA ntlmTableA = {
