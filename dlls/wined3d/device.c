@@ -6828,6 +6828,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         }
      }
     checkGLcall("glTexSubImage2D");
+    ((IWineD3DSurfaceImpl *)pDestinationSurface)->Flags |= SFLAG_GLDIRTY;
 
     /* I only need to look up baseTexture here, so it may be a good idea to hava a GL_TARGET ->
      * GL_DIMENSIONS lookup, or maybe store the dimensions on the surface (but that's making the
