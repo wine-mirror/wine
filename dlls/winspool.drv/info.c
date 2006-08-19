@@ -376,17 +376,26 @@ static BOOL CUPS_LoadPrinters(void)
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
         } else {
+            static CHAR data_type[] = "RAW",
+                    print_proc[]    = "WinPrint",
+                    driver_name[]   = "PS Driver",
+                    comment[]       = "WINEPS Printer using CUPS",
+                    location[]      = "<physical location of printer>",
+                    params[]        = "<parameters?>",
+                    share_name[]    = "<share name?>",
+                    sep_file[]      = "<sep file?>";
+
             memset(&pinfo2a,0,sizeof(pinfo2a));
-            pinfo2a.pPrinterName	= dests[i].name;
-            pinfo2a.pDatatype	= "RAW";
-            pinfo2a.pPrintProcessor	= "WinPrint";
-            pinfo2a.pDriverName	= "PS Driver";
-            pinfo2a.pComment	= "WINEPS Printer using CUPS";
-            pinfo2a.pLocation	= "<physical location of printer>";
-            pinfo2a.pPortName	= port;
-            pinfo2a.pParameters	= "<parameters?>";
-            pinfo2a.pShareName	= "<share name?>";
-            pinfo2a.pSepFile	= "<sep file?>";
+            pinfo2a.pPrinterName    = dests[i].name;
+            pinfo2a.pDatatype       = data_type;
+            pinfo2a.pPrintProcessor = print_proc;
+            pinfo2a.pDriverName     = driver_name;
+            pinfo2a.pComment        = comment;
+            pinfo2a.pLocation       = location;
+            pinfo2a.pPortName       = port;
+            pinfo2a.pParameters     = params;
+            pinfo2a.pShareName      = share_name;
+            pinfo2a.pSepFile        = sep_file;
 
             if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
                 if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
@@ -405,7 +414,7 @@ static BOOL CUPS_LoadPrinters(void)
 #endif
 
 static BOOL
-PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
+PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     PRINTER_INFO_2A	pinfo2a;
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
@@ -490,17 +499,25 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
         RegDeleteValueW(hkeyPrinter, May_Delete_Value);
         RegCloseKey(hkeyPrinter);
     } else {
+        static CHAR data_type[]   = "RAW",
+                    print_proc[]  = "WinPrint",
+                    driver_name[] = "PS Driver",
+                    comment[]     = "WINEPS Printer using LPR",
+                    params[]      = "<parameters?>",
+                    share_name[]  = "<share name?>",
+                    sep_file[]    = "<sep file?>";
+
         memset(&pinfo2a,0,sizeof(pinfo2a));
-        pinfo2a.pPrinterName            = devname;
-        pinfo2a.pDatatype               = "RAW";
-        pinfo2a.pPrintProcessor	        = "WinPrint";
-        pinfo2a.pDriverName             = "PS Driver";
-        pinfo2a.pComment                = "WINEPS Printer using LPR";
-        pinfo2a.pLocation               = prettyname;
-        pinfo2a.pPortName               = port;
-        pinfo2a.pParameters             = "<parameters?>";
-        pinfo2a.pShareName              = "<share name?>";
-        pinfo2a.pSepFile                = "<sep file?>";
+        pinfo2a.pPrinterName    = devname;
+        pinfo2a.pDatatype       = data_type;
+        pinfo2a.pPrintProcessor = print_proc;
+        pinfo2a.pDriverName     = driver_name;
+        pinfo2a.pComment        = comment;
+        pinfo2a.pLocation       = prettyname;
+        pinfo2a.pPortName       = port;
+        pinfo2a.pParameters     = params;
+        pinfo2a.pShareName      = share_name;
+        pinfo2a.pSepFile        = sep_file;
 
         if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
             if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
@@ -587,17 +604,25 @@ void WINSPOOL_LoadSystemPrinters(void)
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
+    static CHAR         name[]              = "PS Driver",
+                        driver_path[]       = "wineps16",
+                        data_file[]         = "<datafile?>",
+                        config_file[]       = "wineps16",
+                        help_file[]         = "<helpfile?>",
+                        dep_file[]          = "<dependend files?>",
+                        monitor_name[]      = "<monitor name?>",
+                        default_data_type[] = "RAW";
 
     di3a.cVersion = (GetVersion() & 0x80000000) ? 0 : 3; /* FIXME: add 1, 2 */
-    di3a.pName = "PS Driver";
-    di3a.pEnvironment = NULL;	/* NULL means auto */
-    di3a.pDriverPath = "wineps16";
-    di3a.pDataFile = "<datafile?>";
-    di3a.pConfigFile = "wineps16";
-    di3a.pHelpFile = "<helpfile?>";
-    di3a.pDependentFiles = "<dependend files?>";
-    di3a.pMonitorName = "<monitor name?>";
-    di3a.pDefaultDataType = "RAW";
+    di3a.pName            = name;
+    di3a.pEnvironment     = NULL;      /* NULL means auto */
+    di3a.pDriverPath      = driver_path;
+    di3a.pDataFile        = data_file;
+    di3a.pConfigFile      = config_file;
+    di3a.pHelpFile        = help_file;
+    di3a.pDependentFiles  = dep_file;
+    di3a.pMonitorName     = monitor_name;
+    di3a.pDefaultDataType = default_data_type;
 
     if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
 	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
@@ -3936,6 +3961,8 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 {
     DRIVER_INFO_3A di3;
     HKEY hkeyDrivers, hkeyName;
+    static CHAR empty[]    = "",
+                nullnull[] = "\0";
 
     TRACE("(%s,%ld,%p)\n",debugstr_a(pName),level,pDriverInfo);
 
@@ -3966,10 +3993,11 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
         SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
-    if(!di3.pDefaultDataType) di3.pDefaultDataType = "";
-    if(!di3.pDependentFiles) di3.pDependentFiles = "\0";
-    if(!di3.pHelpFile) di3.pHelpFile = "";
-    if(!di3.pMonitorName) di3.pMonitorName = "";
+
+    if(!di3.pDefaultDataType) di3.pDefaultDataType = empty;
+    if(!di3.pDependentFiles) di3.pDependentFiles = nullnull;
+    if(!di3.pHelpFile) di3.pHelpFile = empty;
+    if(!di3.pMonitorName) di3.pMonitorName = empty;
 
     hkeyDrivers = WINSPOOL_OpenDriverReg(di3.pEnvironment, FALSE);
 
