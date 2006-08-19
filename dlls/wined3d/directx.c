@@ -449,60 +449,6 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
         }
         gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
         TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08lx)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
-
-        /* Fill in the renderer information */
-
-        switch (gl_info->gl_vendor) {
-        case VENDOR_NVIDIA:
-            if (strstr(gl_info->gl_renderer, "GeForce4 Ti")) {
-                gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
-            } else if (strstr(gl_info->gl_renderer, "GeForceFX")) {
-                gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5900ULTRA;
-            } else if (strstr(gl_info->gl_renderer, "Quadro FX 3000")) {
-                gl_info->gl_card = CARD_NVIDIA_QUADROFX_3000;
-            } else if (strstr(gl_info->gl_renderer, "GeForce 6800")) {
-                gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800ULTRA;
-            } else if (strstr(gl_info->gl_renderer, "Quadro FX 4000")) {
-                gl_info->gl_card = CARD_NVIDIA_QUADROFX_4000;
-            } else if (strstr(gl_info->gl_renderer, "GeForce 7800")) {
-                gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800ULTRA;
-            } else {
-                gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
-            }
-            break;
-
-        case VENDOR_ATI:
-            if (strstr(gl_info->gl_renderer, "RADEON 9800 PRO")) {
-                gl_info->gl_card = CARD_ATI_RADEON_9800PRO;
-            } else if (strstr(gl_info->gl_renderer, "RADEON 9700 PRO")) {
-                gl_info->gl_card = CARD_ATI_RADEON_9700PRO;
-            } else {
-                gl_info->gl_card = CARD_ATI_RADEON_8500;
-            }
-            break;
-
-        case VENDOR_INTEL:
-            if (strstr(gl_info->gl_renderer, "915GM")) {
-                gl_info->gl_card = CARD_INTEL_I915GM;
-            } else if (strstr(gl_info->gl_renderer, "915G")) {
-                gl_info->gl_card = CARD_INTEL_I915G;
-            } else if (strstr(gl_info->gl_renderer, "865G")) {
-                gl_info->gl_card = CARD_INTEL_I865G;
-            } else if (strstr(gl_info->gl_renderer, "855G")) {
-                gl_info->gl_card = CARD_INTEL_I855G;
-            } else if (strstr(gl_info->gl_renderer, "830G")) {
-                gl_info->gl_card = CARD_INTEL_I830G;
-            } else {
-	      gl_info->gl_card = CARD_INTEL_I915G;
-            }
-            break;
-
-        default:
-            gl_info->gl_card = CARD_WINE;
-            break;
-        }
-    } else {
-        FIXME("get version string returned null\n");
     }
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
@@ -807,6 +753,155 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     checkGLcall("extension detection\n");
 
     gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
+
+    /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of different GPUs with roughly the same
+     * features. In most cases GPUs from a certain family differ in clockspeeds, the amount of video memory and
+     * in case of the latest videocards in the number of pixel/vertex pipelines.
+     *
+     * A Direct3D device object contains the PCI id (vendor + device) of the videocard which is used for
+     * rendering. Various games use this information to get a rough estimation of the features of the card
+     * and some might use it for enabling 3d effects only on certain types of videocards. In some cases
+     * games might even use it to work around bugs which happen on certain videocards/driver combinations.
+     * The problem is that OpenGL only exposes a rendering string containing the name of the videocard and
+     * not the PCI id.
+     *
+     * Various games depend on the PCI id, so somehow we need to provide one. A simple option is to parse
+     * the renderer string and translate this to the right PCI id. This is a lot of work because there are more
+     * than 200 GPUs just for Nvidia. Various cards share the same renderer string, so the amount of code might
+     * be 'small' but there are quite a number of exceptions which would make this a pain to maintain.
+     * Another way would be to query the PCI id from the operating system (assuming this is the videocard which
+     * is used for rendering which doesn't allways the case). This would work but it is not very portable. Second
+     * it would not work well in lets say a remote X situation in which the amount of 3d features which can be used
+     * is limited.
+     *
+     * As said most games only use the PCI id to get an indication of the capabilities of the card.
+     * It doesn't really matter if the given id is the correct one if we return the id of a card with
+     * similar 3d features.
+     *
+     * The code below checks the OpenGL capabilities of a videocard and matches that to a certain level of
+     * Direct3D functionality. Once a card passes the Direct3D9 check, we know that the card (in case of Nvidia)
+     * is atleast a GeforceFX. To give a better estimate we do a basic check on the renderer string but if that
+     * won't pass we return a default card. This way is better than maintaining a full card database as even
+     * without a full database we can return a card with similar features. Second the size of the database
+     * can be made quite small because when you know what type of 3d functionality a card has, you know to which
+     * GPU family the GPU must belong. Because of this you only have to check a small part of the renderer string
+     * to distinguishes between different models from that family. 
+     */
+    switch (gl_info->gl_vendor) {
+        case VENDOR_NVIDIA:
+            /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two typs have more
+             * shader capabilities, so we use the shader capabilities to distinct between FX and 6xxx/7xxx.
+             */
+            if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
+                if (strstr(gl_info->gl_renderer, "7800") ||
+                    strstr(gl_info->gl_renderer, "7900") ||
+                    strstr(gl_info->gl_renderer, "7950") ||
+                    strstr(gl_info->gl_renderer, "Quadro FX 4") ||
+                    strstr(gl_info->gl_renderer, "Quadro FX 5"))
+                        gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
+                else if(strstr(gl_info->gl_renderer, "6800") ||
+                        strstr(gl_info->gl_renderer, "7600"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800;
+                else if(strstr(gl_info->gl_renderer, "6600") ||
+                        strstr(gl_info->gl_renderer, "6610") ||
+                        strstr(gl_info->gl_renderer, "6700"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCE_6600GT;
+                else
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400 */
+            } else if(WINE_D3D9_CAPABLE(gl_info)) {
+                if (strstr(gl_info->gl_renderer, "5800") ||
+                    strstr(gl_info->gl_renderer, "5900") ||
+                    strstr(gl_info->gl_renderer, "5950") ||
+                    strstr(gl_info->gl_renderer, "Quadro FX"))
+                        gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5800;
+                else if(strstr(gl_info->gl_renderer, "5600") ||
+                        strstr(gl_info->gl_renderer, "5650") ||
+                        strstr(gl_info->gl_renderer, "5700") ||
+                        strstr(gl_info->gl_renderer, "5750"))
+                            gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5600;
+                else
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
+            } else if(WINE_D3D8_CAPABLE(gl_info)) {
+                if (strstr(gl_info->gl_renderer, "GeForce4 Ti") || strstr(gl_info->gl_renderer, "Quadro4"))
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
+                else
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
+            } else if(WINE_D3D7_CAPABLE(gl_info)) {
+                if (strstr(gl_info->gl_renderer, "GeForce4 MX"))
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
+                else if(strstr(gl_info->gl_renderer, "GeForce2 MX") || strstr(gl_info->gl_renderer, "Quadro2 MXR"))
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
+                else if(strstr(gl_info->gl_renderer, "GeForce2") || strstr(gl_info->gl_renderer, "Quadro2"))
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
+                else
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE; /* Geforce 256/DDR, Quadro */
+            } else {
+                if (strstr(gl_info->gl_renderer, "TNT2"))
+                    gl_info->gl_card = CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
+                else
+                    gl_info->gl_card = CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
+            }
+            break;
+        case VENDOR_ATI:
+            if(WINE_D3D9_CAPABLE(gl_info)) {
+                /* Radeon R5xx */
+                if (strstr(gl_info->gl_renderer, "X1600") ||
+                    strstr(gl_info->gl_renderer, "X1800") ||
+                    strstr(gl_info->gl_renderer, "X1900") ||
+                    strstr(gl_info->gl_renderer, "X1950"))
+                        gl_info->gl_card = CARD_ATI_RADEON_X1600;
+                /* Radeon R4xx + X1300/X1400 (lowend R5xx) */
+                else if(strstr(gl_info->gl_renderer, "X700") ||
+                        strstr(gl_info->gl_renderer, "X800") ||
+                        strstr(gl_info->gl_renderer, "X850") ||
+                        strstr(gl_info->gl_renderer, "X1300") ||
+                        strstr(gl_info->gl_renderer, "X1400"))
+                            gl_info->gl_card = CARD_ATI_RADEON_X700;
+                /* Radeon R3xx */ 
+                else
+                    gl_info->gl_card = CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
+            } else if(WINE_D3D8_CAPABLE(gl_info)) {
+                    gl_info->gl_card = CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
+            } else if(WINE_D3D7_CAPABLE(gl_info)) {
+                    gl_info->gl_card = CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
+            } else
+                gl_info->gl_card = CARD_ATI_RAGE_128PRO;
+            break;
+        case VENDOR_INTEL:
+            if (strstr(gl_info->gl_renderer, "915GM")) {
+                gl_info->gl_card = CARD_INTEL_I915GM;
+            } else if (strstr(gl_info->gl_renderer, "915G")) {
+                gl_info->gl_card = CARD_INTEL_I915G;
+            } else if (strstr(gl_info->gl_renderer, "865G")) {
+                gl_info->gl_card = CARD_INTEL_I865G;
+            } else if (strstr(gl_info->gl_renderer, "855G")) {
+                gl_info->gl_card = CARD_INTEL_I855G;
+            } else if (strstr(gl_info->gl_renderer, "830G")) {
+                gl_info->gl_card = CARD_INTEL_I830G;
+            } else {
+                gl_info->gl_card = CARD_INTEL_I915G;
+            }
+            break;
+        case VENDOR_MESA:
+        case VENDOR_WINE:
+        default:
+            /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice 
+             * for Nvidia was because the hardware and drivers they make are of good quality. This makes
+             * them a good generic choice.
+             */
+            gl_info->gl_vendor = VENDOR_NVIDIA;
+            if(WINE_D3D9_CAPABLE(gl_info))
+                gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5600;
+            else if(WINE_D3D8_CAPABLE(gl_info))
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE3;            
+            else if(WINE_D3D7_CAPABLE(gl_info))
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE;
+            else if(WINE_D3D6_CAPABLE(gl_info))
+                gl_info->gl_card = CARD_NVIDIA_RIVA_TNT;
+            else
+                gl_info->gl_card = CARD_NVIDIA_RIVA_128;
+    }
+    TRACE("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", gl_info->gl_vendor, gl_info->gl_card);
 
     /* Load all the lookup tables
     TODO: It may be a good idea to make minLookup and maxLookup const and populate them in wined3d_private.h where they are declared */
@@ -1190,7 +1285,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
           /* 71.74 is a current Linux Nvidia driver version */
           pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(10, (71*100+74));
           *(pIdentifier->VendorId) = VENDOR_NVIDIA;
-          *(pIdentifier->DeviceId) = CARD_NVIDIA_GEFORCE4_TI4600;
+          *(pIdentifier->DeviceId) = CARD_NVIDIA_GEFORCE4_TI4200;
           *(pIdentifier->SubSysId) = 0;
           *(pIdentifier->Revision) = 0;
         }
