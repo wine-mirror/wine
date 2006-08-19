@@ -312,7 +312,7 @@ static void test_AddMonitor(void)
 
     DeleteMonitorA(NULL, entry->env, winetest_monitor); 
     SetLastError(MAGIC_DEAD);
-    res = AddMonitorA("", 2, (LPBYTE) &mi2a);
+    res = AddMonitorA(empty, 2, (LPBYTE) &mi2a);
     ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
 
     /* cleanup */
@@ -324,9 +324,11 @@ static void test_AddMonitor(void)
 
 static void test_DeleteMonitor(void)
 {
-    MONITOR_INFO_2A mi2a; 
-    struct  monitor_entry * entry = NULL;
-    DWORD   res;
+    MONITOR_INFO_2A         mi2a;
+    struct monitor_entry  * entry = NULL;
+    DWORD                   res;
+    static CHAR             empty[]   = "",
+                            bad_env[] = "bad_env";
 
     entry = find_installed_monitor();
 
@@ -364,12 +366,12 @@ static void test_DeleteMonitor(void)
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, "", winetest_monitor);
+    res = DeleteMonitorA(NULL, empty, winetest_monitor);
     ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, "bad_env", winetest_monitor);
+    res = DeleteMonitorA(NULL, bad_env, winetest_monitor);
     ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
 
     /* the monitor-name */
@@ -385,7 +387,7 @@ static void test_DeleteMonitor(void)
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, entry->env, "");
+    res = DeleteMonitorA(NULL, entry->env, empty);
     /* NT: ERROR_INVALID_PARAMETER (87),  9x: ERROR_INVALID_NAME (123)*/
     ok( !res && 
         ((GetLastError() == ERROR_INVALID_PARAMETER) ||
@@ -395,7 +397,7 @@ static void test_DeleteMonitor(void)
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA("", entry->env, winetest_monitor);
+    res = DeleteMonitorA(empty, entry->env, winetest_monitor);
     ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
 
     /* cleanup */
@@ -697,9 +699,10 @@ static void test_GetDefaultPrinter(void)
 
 static void test_GetPrinterDriverDirectory(void)
 {
-    LPBYTE buffer = NULL;
-    DWORD  cbBuf = 0, pcbNeeded = 0;
-    BOOL   res;
+    LPBYTE      buffer = NULL;
+    DWORD       cbBuf = 0, pcbNeeded = 0;
+    BOOL        res;
+    static CHAR empty[] = "";
 
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
@@ -827,15 +830,15 @@ static void test_GetPrinterDriverDirectory(void)
 
     /* A Setup-Programm (PDFCreator_0.8.0) use empty strings */
     SetLastError(MAGIC_DEAD);
-    res = GetPrinterDriverDirectoryA("", "", 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrinterDriverDirectoryA(empty, empty, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
 
     SetLastError(MAGIC_DEAD);
-    res = GetPrinterDriverDirectoryA(NULL, "", 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrinterDriverDirectoryA(NULL, empty, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
 
     SetLastError(MAGIC_DEAD);
-    res = GetPrinterDriverDirectoryA("", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrinterDriverDirectoryA(empty, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
 
     HeapFree( GetProcessHeap(), 0, buffer);
@@ -845,10 +848,13 @@ static void test_GetPrinterDriverDirectory(void)
 
 static void test_GetPrintProcessorDirectory(void)
 {
-    LPBYTE  buffer = NULL;
-    DWORD   cbBuf = 0;
-    DWORD   pcbNeeded = 0;
-    BOOL    res;
+    LPBYTE      buffer = NULL;
+    DWORD       cbBuf = 0;
+    DWORD       pcbNeeded = 0;
+    BOOL        res;
+    static CHAR empty[]          = "",
+                invalid_env[]    = "invalid_env",
+                invalid_server[] = "\\invalid_server";
 
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
@@ -924,7 +930,7 @@ static void test_GetPrintProcessorDirectory(void)
     /* Empty environment is the same as the default environment */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetPrintProcessorDirectoryA(NULL, "", 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrintProcessorDirectoryA(NULL, empty, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
 
     /* "Windows 4.0" is valid for win9x and NT */
@@ -945,7 +951,7 @@ static void test_GetPrintProcessorDirectory(void)
     /* invalid on all Systems */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetPrintProcessorDirectoryA(NULL, "invalid_env", 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrintProcessorDirectoryA(NULL, invalid_env, 1, buffer, cbBuf*2, &pcbNeeded);
     ok( !res && (GetLastError() == ERROR_INVALID_ENVIRONMENT), 
         "returned %d with %ld (expected '0' with ERROR_INVALID_ENVIRONMENT)\n",
         res, GetLastError());
@@ -953,13 +959,13 @@ static void test_GetPrintProcessorDirectory(void)
     /* Empty servername is the same as the local computer */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetPrintProcessorDirectoryA("", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrintProcessorDirectoryA(empty, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
 
     /* invalid on all Systems */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetPrintProcessorDirectoryA("\\invalid_server", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrintProcessorDirectoryA(invalid_server, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER), 
         "returned %d with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -971,14 +977,15 @@ static void test_GetPrintProcessorDirectory(void)
 
 static void test_OpenPrinter(void)
 {
-    PRINTER_DEFAULTSA defaults;
-    HANDLE  hprinter;
-    LPSTR   default_printer;
-    DWORD   res;
-    DWORD   size;
-    CHAR    buffer[DEFAULT_PRINTER_SIZE];
-    static CHAR empty[] = "";
-    LPSTR   ptr;
+    PRINTER_DEFAULTSA   defaults;
+    HANDLE              hprinter;
+    LPSTR               default_printer;
+    DWORD               res;
+    DWORD               size;
+    CHAR                buffer[DEFAULT_PRINTER_SIZE];
+    LPSTR               ptr;
+    static CHAR         empty[]        = "",
+                        illegal_name[] = "illegal,name";
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
@@ -1046,7 +1053,7 @@ static void test_OpenPrinter(void)
     /* Invalid Printername */
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
-    res = OpenPrinter("illegal,name", &hprinter, NULL);
+    res = OpenPrinter(illegal_name, &hprinter, NULL);
     ok(!res && ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
                 (GetLastError() == ERROR_INVALID_PARAMETER) ),
        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or" \
@@ -1055,7 +1062,7 @@ static void test_OpenPrinter(void)
 
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
-    res = OpenPrinter("", &hprinter, NULL);
+    res = OpenPrinter(empty, &hprinter, NULL);
     /* NT: ERROR_INVALID_PRINTER_NAME,  9x: ERROR_INVALID_PARAMETER */
     ok( !res &&
         ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
