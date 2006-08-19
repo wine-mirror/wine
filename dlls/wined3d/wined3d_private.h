@@ -1120,7 +1120,7 @@ struct IWineD3DStateBlockImpl
     DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 
     /* Current GLSL Shader Program */
-    GLhandleARB               shaderPrgId;
+    struct glsl_shader_prog_link *glsl_program;
 };
 
 extern void stateblock_savedstates_set(
@@ -1304,6 +1304,8 @@ typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 struct glsl_shader_prog_link {
     struct list             entry;
     GLhandleARB             programId;
+    GLhandleARB             *vuniformF_locations;
+    GLhandleARB             *puniformF_locations;
     IWineD3DVertexShader*   vertexShader;
     IWineD3DPixelShader*    pixelShader;
 };

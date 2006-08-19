@@ -166,7 +166,7 @@ void stateblock_copy(
     Dest->pixelShader = This->pixelShader;
     Dest->vertex_blend = This->vertex_blend;
     Dest->tween_factor = This->tween_factor;
-    Dest->shaderPrgId = This->shaderPrgId;
+    Dest->glsl_program = This->glsl_program;
 
     /* Fixed size arrays */
     memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
@@ -1067,9 +1067,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     }
     This->wineD3DDevice->currentPalette = 0;
 
-    /* Set default GLSL program ID to 0.  We won't actually create one
+    /* Set default GLSL program to NULL.  We won't actually create one
      * until the app sets a vertex or pixel shader */
-    This->shaderPrgId = 0;
+    This->glsl_program = NULL;
 
     TRACE("-----------------------> Device defaults now set up...\n");
     return WINED3D_OK;

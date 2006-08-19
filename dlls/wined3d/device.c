@@ -7,6 +7,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Stefan Dösinger for CodeWeavers
+ * Copyright 2006 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -246,9 +247,9 @@ static void attach_glsl_shader(IWineD3DDevice *iface, IWineD3DBaseShader* shader
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLhandleARB shaderObj = ((IWineD3DBaseShaderImpl*)shader)->baseShader.prgId;
-    if (This->stateBlock->shaderPrgId != 0 && shaderObj != 0) {
-        TRACE_(d3d_shader)("Attaching GLSL shader object %u to program %u\n", shaderObj, This->stateBlock->shaderPrgId);
-        GL_EXTCALL(glAttachObjectARB(This->stateBlock->shaderPrgId, shaderObj));
+    if (This->stateBlock->glsl_program && shaderObj != 0) {
+        TRACE_(d3d_shader)("Attaching GLSL shader object %u to program %u\n", shaderObj, This->stateBlock->glsl_program->programId);
+        GL_EXTCALL(glAttachObjectARB(This->stateBlock->glsl_program->programId, shaderObj));
         checkGLcall("glAttachObjectARB");
     }
 }
@@ -278,6 +279,8 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     struct glsl_shader_prog_link *newLink  = NULL;
     struct list *ptr                       = NULL;
     GLhandleARB programId                  = 0;
+    int i;
+    char glsl_name[8];
     
     ptr = list_head( &This->glsl_shader_progs );
     while (ptr) {
@@ -287,7 +290,7 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
             /* Existing Program found, use it */
             TRACE_(d3d_shader)("Found existing program (%u) for this vertex/pixel shader combination\n", 
                    curLink->programId);
-            This->stateBlock->shaderPrgId = curLink->programId;
+            This->stateBlock->glsl_program = curLink;
             return;
         }
         /* This isn't the entry we need - try the next one */
@@ -297,11 +300,11 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     /* If we get to this point, then no matching program exists, so we create one */
     programId = GL_EXTCALL(glCreateProgramObjectARB());
     TRACE_(d3d_shader)("Created new GLSL shader program %u\n", programId);
-    This->stateBlock->shaderPrgId = programId;
 
     /* Allocate a new link for the list of programs */
     newLink = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     newLink->programId    = programId;
+    This->stateBlock->glsl_program = newLink;
    
     /* Attach GLSL vshader */ 
     if (NULL != vshader && wined3d_settings.vs_selected_mode == SHADER_GLSL) {
@@ -341,6 +344,18 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     GL_EXTCALL(glLinkProgramARB(programId));
     print_glsl_info_log(&GLINFO_LOCATION, programId);
     list_add_head( &This->glsl_shader_progs, &newLink->entry);
+
+    newLink->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vshader_constantsF));
+    for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
+        snprintf(glsl_name, sizeof(glsl_name), "VC[%i]", i);
+        newLink->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+    }
+    newLink->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(pshader_constantsF));
+    for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
+        snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
+        newLink->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+    }
+
     return;
 }
 
@@ -400,6 +415,10 @@ static void delete_glsl_shader_list(IWineD3DDevice* iface) {
         }
         
         delete_glsl_shader_program(iface, curLink->programId);
+
+        /* Free the uniform locations */
+        HeapFree(GetProcessHeap(), 0, curLink->vuniformF_locations);
+        HeapFree(GetProcessHeap(), 0, curLink->puniformF_locations);
 
         /* Free the memory for this list item */    
         HeapFree(GetProcessHeap(), 0, curLink);

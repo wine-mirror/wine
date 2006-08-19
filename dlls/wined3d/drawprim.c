@@ -1791,20 +1791,21 @@ inline static void drawPrimitiveDrawStrided(
     }
 
     /* If GLSL is used for either pixel or vertex shaders, make a GLSL program 
-     * Otherwise set 0, which restores fixed function */
+     * Otherwise set NULL, to restore fixed function */
     if ((wined3d_settings.vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
         (wined3d_settings.ps_selected_mode == SHADER_GLSL && usePixelShaderFunction)) 
         set_glsl_shader_program(iface);
     else
-        This->stateBlock->shaderPrgId = 0;
+        This->stateBlock->glsl_program = NULL;
 
     /* If GLSL is used now, or might have been used before, (re)set the program */
     if (wined3d_settings.vs_selected_mode == SHADER_GLSL || 
         wined3d_settings.ps_selected_mode == SHADER_GLSL) {
 
-        if (This->stateBlock->shaderPrgId) 
-            TRACE_(d3d_shader)("Using GLSL program %u\n", This->stateBlock->shaderPrgId);
-        GL_EXTCALL(glUseProgramObjectARB(This->stateBlock->shaderPrgId));
+        GLhandleARB progId = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;
+        if (progId)
+            TRACE_(d3d_shader)("Using GLSL program %u\n", progId);
+        GL_EXTCALL(glUseProgramObjectARB(progId));
         checkGLcall("glUseProgramObjectARB");
     }
         

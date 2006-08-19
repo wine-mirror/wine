@@ -2,6 +2,7 @@
  * GLSL pixel and vertex shader implementation
  *
  * Copyright 2006 Jason Green 
+ * Copyright 2006 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,7 +56,7 @@ void shader_glsl_load_psamplers(
     IWineD3DStateBlock* iface) {
 
     IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
-    GLhandleARB programId = stateBlock->shaderPrgId;
+    GLhandleARB programId = stateBlock->glsl_program->programId;
     GLhandleARB name_loc;
     int i;
     char sampler_name[20];
@@ -77,19 +78,11 @@ void shader_glsl_load_psamplers(
  * Loads floating point constants (aka uniforms) into the currently set GLSL program.
  * When @constants_set == NULL, it will load all the constants.
  */
-void shader_glsl_load_constantsF(
-    IWineD3DBaseShaderImpl* This,
-    WineD3D_GL_Info *gl_info,
-    GLhandleARB programId,
-    unsigned max_constants,
-    float* constants,
-    BOOL* constants_set) {
-        
+void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info,
+        unsigned int max_constants, float* constants, GLhandleARB *constant_locations,
+        BOOL* constants_set) {
     GLhandleARB tmp_loc;
     int i;
-    char tmp_name[8];
-    char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
-    const char* prefix = is_pshader? "PC":"VC";
     struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
@@ -99,10 +92,7 @@ void shader_glsl_load_constantsF(
                   constants[i * 4 + 0], constants[i * 4 + 1],
                   constants[i * 4 + 2], constants[i * 4 + 3]);
 
-            /* TODO: Benchmark and see if it would be beneficial to store the 
-             * locations of the constants to avoid looking up each time */
-            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
-            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+            tmp_loc = constant_locations[i];
             if (tmp_loc != -1) {
                 /* We found this uniform name in the program - go ahead and send the data */
                 GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, &constants[i * 4]));
@@ -121,8 +111,7 @@ void shader_glsl_load_constantsF(
         TRACE("Loading local constants %i: %f, %f, %f, %f\n", idx,
             values[0], values[1], values[2], values[3]);
 
-        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
-        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+        tmp_loc = constant_locations[idx];
         if (tmp_loc != -1) {
             /* We found this uniform name in the program - go ahead and send the data */
             GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, values));
@@ -258,12 +247,14 @@ void shader_glsl_load_constants(
     
     IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
     WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)stateBlock->wineD3DDevice->wineD3D)->gl_info;
-    GLhandleARB programId = stateBlock->shaderPrgId;
+    GLhandleARB *constant_locations;
+    GLhandleARB programId;
     
-    if (programId == 0) {
+    if (!stateBlock->glsl_program) {
         /* No GLSL program set - nothing to do. */
         return;
     }
+    programId = stateBlock->glsl_program->programId;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
@@ -272,16 +263,17 @@ void shader_glsl_load_constants(
         IWineD3DVertexDeclarationImpl* vertexDeclaration =
             (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
 
+        constant_locations = stateBlock->glsl_program->vuniformF_locations;
+
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants/uniforms for vertex shader */
-            shader_glsl_load_constantsF(vshader, gl_info, programId, GL_LIMITS(vshader_constantsF),
-                                        vertexDeclaration->constants, NULL);
+            shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),
+                    vertexDeclaration->constants, constant_locations, NULL);
         }
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(vshader, gl_info, programId, GL_LIMITS(vshader_constantsF),
-                                    stateBlock->vertexShaderConstantF, 
-                                    stateBlock->set.vertexShaderConstantsF);
+        shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),
+                stateBlock->vertexShaderConstantF, constant_locations, stateBlock->set.vertexShaderConstantsF);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
         shader_glsl_load_constantsI(vshader, gl_info, programId, MAX_CONST_I,
@@ -298,13 +290,14 @@ void shader_glsl_load_constants(
 
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
+        constant_locations = stateBlock->glsl_program->puniformF_locations;
+
         /* Load pixel shader samplers */
         shader_glsl_load_psamplers(gl_info, iface);
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(pshader, gl_info, programId, GL_LIMITS(pshader_constantsF),
-                                    stateBlock->pixelShaderConstantF,
-                                    stateBlock->set.pixelShaderConstantsF);
+        shader_glsl_load_constantsF(pshader, gl_info, GL_LIMITS(pshader_constantsF),
+                stateBlock->pixelShaderConstantF, constant_locations, stateBlock->set.pixelShaderConstantsF);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
         shader_glsl_load_constantsI(pshader, gl_info, programId, MAX_CONST_I,
