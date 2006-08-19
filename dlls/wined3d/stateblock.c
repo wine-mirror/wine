@@ -254,14 +254,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             if (NULL != This->vertexDecl) {
                 IWineD3DVertexDeclaration_Release(This->vertexDecl);
             }
-            
-            HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
-            HeapFree(GetProcessHeap(), 0, This->set.vertexShaderConstantsF);
-            HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
-            HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
-            HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
-            HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
- 
+
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                 if (This->textures[counter]) {
@@ -273,6 +266,14 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             }
 
         }
+
+        HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
+        HeapFree(GetProcessHeap(), 0, This->set.vertexShaderConstantsF);
+        HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
+        HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
+        HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
+        HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
+
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;
