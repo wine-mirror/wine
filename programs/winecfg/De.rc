@@ -252,3 +252,29 @@ BEGIN
     IDS_COL_DRIVEMAPPING        "Zuordnung"
     IDS_NO_DRIVE_C              "Sie haben kein Laufwerk C. Das ist nicht so gut.\n\nVergessen Sie nicht, im Laufwerke-Reiter „Hinzufügen“ zu klicken um eins zu erstellen!\n"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "Voll"
+    IDS_ACCEL_STANDARD          "Standard"
+    IDS_ACCEL_BASIC             "Einfach"
+    IDS_ACCEL_EMULATION         "Emulation"
+    IDS_DRIVER_ALSA             "ALSA-Treiber"
+    IDS_DRIVER_ARTS             "aRts-Treiber"
+    IDS_DRIVER_ESOUND           "EsounD-Treiber"
+    IDS_DRIVER_OSS              "OSS-Treiber"
+    IDS_DRIVER_JACK             "JACK-Treiber"
+    IDS_DRIVER_NAS              "NAS-Treiber"
+    IDS_DRIVER_AUDIOIO          "Audio-IO-Treiber (Solaris)"
+    IDS_DRIVER_COREAUDIO        "CoreAudio-Treiber"
+    IDS_OPEN_DRIVER_ERROR       "Konnte %s nicht öffnen!"
+    IDS_SOUNDDRIVERS            "Sound_Treiber"
+    IDS_DEVICES_WAVEOUT         "Wave-Ausgabe-Geräte"
+    IDS_DEVICES_WAVEIN          "Wave-Eingabe-Geräte"
+    IDS_DEVICES_MIDIOUT         "MIDI-Ausgabe-Geräte"
+    IDS_DEVICES_MIDIIN          "MIDI-Ausgabe-Geräte"
+    IDS_DEVICES_AUX             "Aux-Geräte"
+    IDS_DEVICES_MIXER           "Mixer-Geräte"
+    IDS_UNAVAILABLE_DRIVER      "In der Registry wurde ein Treiber gefunden, der nicht verfügbar ist!\n\nSoll „%s“ aus der Registry entfernt werden?"
+    IDS_WARNING                 "Warnung"
+END

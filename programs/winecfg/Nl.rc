@@ -253,3 +253,29 @@ BEGIN
     IDS_COL_DRIVEMAPPING        "Drive Mapping"
     IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "Full"
+    IDS_ACCEL_STANDARD          "Standard"
+    IDS_ACCEL_BASIC             "Basic"
+    IDS_ACCEL_EMULATION         "Emulation"
+    IDS_DRIVER_ALSA             "ALSA Driver"
+    IDS_DRIVER_ARTS             "aRts Driver"
+    IDS_DRIVER_ESOUND           "EsounD Driver"
+    IDS_DRIVER_OSS              "OSS Driver"
+    IDS_DRIVER_JACK             "JACK Driver"
+    IDS_DRIVER_NAS              "NAS Driver"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
+    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
+    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
+    IDS_SOUNDDRIVERS            "Sound Drivers"
+    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
+    IDS_DEVICES_WAVEIN          "Wave In Devices"
+    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
+    IDS_DEVICES_MIDIIN          "MIDI In Devices"
+    IDS_DEVICES_AUX             "Aux Devices"
+    IDS_DEVICES_MIXER           "Mixer Devices"
+    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
+    IDS_WARNING                 "Warning"
+END

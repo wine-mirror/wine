@@ -56,7 +56,7 @@ typedef struct
 
 typedef struct
 {
-  char szName[MAX_NAME_LENGTH];
+  UINT nameID;
   char szDriver[MAX_NAME_LENGTH];
 } AUDIO_DRIVER;
 

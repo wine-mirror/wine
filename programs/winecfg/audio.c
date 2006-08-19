@@ -52,12 +52,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 typedef DWORD (WINAPI * MessagePtr)(UINT, UINT, DWORD, DWORD, DWORD);
 
-static const char* DSound_HW_Accels[] = {
-  "Full",
-  "Standard",
-  "Basic",
-  "Emulation",
-  NULL
+static struct DSOUNDACCEL
+{
+  UINT displayID;
+  const char* settingStr;
+} const DSound_HW_Accels[] = {
+  {IDS_ACCEL_FULL,      "Full"},
+  {IDS_ACCEL_STANDARD,  "Standard"},
+  {IDS_ACCEL_BASIC,     "Basic"},
+  {IDS_ACCEL_EMULATION, "Emulation"},
+  {0, 0}
 };
 
 static const char* DSound_Rates[] = {
@@ -77,16 +81,15 @@ static const char* DSound_Bits[] = {
 };
 
 static const AUDIO_DRIVER sAudioDrivers[] = {
-  {"ALSA", "alsa"},
-  {"aRts", "arts"},
-  {"EsounD", "esd"},
-  {"OSS", "oss"},
-  {"JACK", "jack"},
-  {"NAS", "nas"},
-  {"Audio IO(Solaris)", "audioio"},
-  {"CoreAudio", "coreaudio"},
-  {"Disable sound", ""},
-  {"", ""}
+  {IDS_DRIVER_ALSA,      "alsa"},
+  {IDS_DRIVER_ARTS,      "arts"},
+  {IDS_DRIVER_ESOUND,    "esd"},
+  {IDS_DRIVER_OSS,       "oss"},
+  {IDS_DRIVER_JACK,      "jack"},
+  {IDS_DRIVER_NAS,       "nas"},
+  {IDS_DRIVER_AUDIOIO,   "audioio"},
+  {IDS_DRIVER_COREAUDIO, "coreaudio"},
+  {0, ""}
 };
 
 /* list of available drivers */
@@ -106,7 +109,7 @@ static void configureAudioDriver(HWND hDlg)
     if (strlen(pAudioDrv->szDriver) != 0)
     {
         HDRVR hdrvr;
-        char wine_driver[MAX_NAME_LENGTH + 8];
+        char wine_driver[MAX_NAME_LENGTH + 9];
         sprintf(wine_driver, "wine%s.drv", pAudioDrv->szDriver);
         hdrvr = OpenDriverA(wine_driver, 0, 0);
         if (hdrvr != 0)
@@ -124,9 +127,17 @@ static void configureAudioDriver(HWND hDlg)
         }
         else
         {
-            char str[1024];
-            sprintf(str, "Couldn't open %s!", wine_driver);
-            MessageBox(hDlg, str, "Fixme", MB_OK | MB_ICONERROR);
+            WCHAR wine_driverW[MAX_NAME_LENGTH+9];
+            WCHAR messageStr[256];
+            WCHAR str[1024];
+            
+            MultiByteToWideChar (CP_ACP, 0, wine_driver, -1, wine_driverW, 
+                sizeof (wine_driverW)/sizeof(wine_driverW[0])); 
+            
+            LoadStringW (GetModuleHandle (NULL), IDS_OPEN_DRIVER_ERROR, messageStr,
+                sizeof(messageStr)/sizeof(messageStr[0]));
+            wsprintfW (str, messageStr, wine_driverW);
+            MessageBoxW (hDlg, str, NULL, MB_OK | MB_ICONERROR);
         }
     }
 }
@@ -201,13 +212,13 @@ static void initAudioDeviceTree(HWND hDlg)
 {
     const AUDIO_DRIVER *pAudioDrv = NULL;
     int i, j;
-    TVINSERTSTRUCT insert;
+    TVINSERTSTRUCTW insert;
     HTREEITEM root, driver[10];
     HWND tree = NULL;
     HIMAGELIST hImageList;
     HBITMAP hBitMap;
     HCURSOR old_cursor;
-    static TCHAR driver_typeT[] = {'S','o','u','n','d',' ','D','r','i','v','e','r','s',0};
+    WCHAR driver_type[64], dev_type[64];
 
     tree = GetDlgItem(hDlg, IDC_AUDIO_TREE);
 
@@ -225,12 +236,14 @@ static void initAudioDeviceTree(HWND hDlg)
     SendMessageW( tree, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)hImageList );
 
     /* root item */
+    LoadStringW (GetModuleHandle (NULL), IDS_SOUNDDRIVERS, driver_type,
+        sizeof(driver_type)/sizeof(driver_type[0]));
     insert.hParent = TVI_ROOT;
     insert.hInsertAfter = TVI_LAST;
     insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-    insert.u.item.pszText = driver_typeT;
+    insert.u.item.pszText = driver_type;
     insert.u.item.cChildren = 1;
-    root = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+    root = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
     /* change to the wait cursor because this can take a while if there is a
      * misbehaving driver that takes a long time to open
@@ -238,13 +251,14 @@ static void initAudioDeviceTree(HWND hDlg)
     old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
     /* iterate over list of loaded drivers */
-    for (pAudioDrv = loadedAudioDrv, i = 0; *pAudioDrv->szName; i++, pAudioDrv++) {
+    for (pAudioDrv = loadedAudioDrv, i = 0; pAudioDrv->nameID; i++, pAudioDrv++) {
         HDRVR hdrv;
         char name[MAX_PATH];
-        char text[MAX_PATH];
+        WCHAR text[MAX_PATH];
 
         sprintf(name, "wine%s.drv", pAudioDrv->szDriver);
-        sprintf(text, "%s Driver", pAudioDrv->szName);
+        LoadStringW (GetModuleHandle (NULL), pAudioDrv->nameID, text,
+            sizeof(text)/sizeof(text[0]));
 
         if ((hdrv = OpenDriverA(name, 0, 0)))
         {
@@ -285,7 +299,7 @@ static void initAudioDeviceTree(HWND hDlg)
                     insert.u.item.stateMask = TVIS_STATEIMAGEMASK;
                     insert.u.item.lParam =  i + DRIVER_MASK;
 
-                    driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                    driver[i] = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                 }
                 else
                 {
@@ -303,173 +317,167 @@ static void initAudioDeviceTree(HWND hDlg)
                     else
                         insert.u.item.state = INDEXTOSTATEIMAGEMASK(1);
 
-                    driver[i] = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                    driver[i] = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                     if (num_wod)
                     {
-                        TCHAR dev_typeT[] = {'W','a','v','e',' ','O','u','t',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_WAVEOUT, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_wod; j++)
                         {
                             WAVEOUTCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             wodMessagePtr(j, WODM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
 
                     if (num_wid)
                     {
-                        TCHAR dev_typeT[] = {'W','a','v','e',' ','I','n',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_WAVEIN, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_wid; j++)
                         {
                             WAVEINCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             widMessagePtr(j, WIDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
 
                     if (num_mod)
                     {
-                        TCHAR dev_typeT[] = {'M','I','D','I',' ','O','u','t',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_MIDIOUT, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_mod; j++)
                         {
                             MIDIOUTCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             modMessagePtr(j, MODM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
 
                     if (num_mid)
                     {
-                        TCHAR dev_typeT[] = {'M','I','D','I',' ','I','n',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_MIDIIN, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_mid; j++)
                         {
                             MIDIINCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             midMessagePtr(j, MIDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
 
                     if (num_aux)
                     {
-                        TCHAR dev_typeT[] = {'A','u','x',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_AUX, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_aux; j++)
                         {
                             AUXCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             auxMessagePtr(j, AUXDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
 
                     if (num_mxd)
                     {
-                        TCHAR dev_typeT[] = {'M','i','x','e','r',' ','D','e','v','i','c','e','s',0};
+                        LoadStringW (GetModuleHandle (NULL), IDS_DEVICES_MIXER, dev_type,
+                            sizeof(dev_type)/sizeof(dev_type[0]));
 
                         insert.hParent = driver[i];
                         insert.u.item.mask = TVIF_TEXT | TVIF_CHILDREN;
-                        insert.u.item.pszText = dev_typeT;
+                        insert.u.item.pszText = dev_type;
                         insert.u.item.cChildren = 1;
 
-                        type = (HTREEITEM)SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                        type = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
 
                         for (j = 0; j < num_mxd; j++)
                         {
                             MIXERCAPSW caps;
-                            char szPname[MAXPNAMELEN];
 
                             mxdMessagePtr(j, MXDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
-                            WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
                             insert.u.item.mask = TVIF_TEXT | TVIF_PARAM;
-                            insert.u.item.pszText = szPname;
+                            insert.u.item.pszText = caps.szPname;
                             insert.u.item.lParam = j + DEVICE_MASK;
 
-                            SendDlgItemMessage(hDlg, IDC_AUDIO_TREE, TVM_INSERTITEM, 0, (LPARAM)&insert);
+                            SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                         }
                     }
                 }
@@ -502,7 +510,7 @@ static void findAudioDrivers(void)
      */
     old_cursor = SetCursor(LoadCursor(0, IDC_WAIT));
 
-    for (pAudioDrv = sAudioDrivers; *pAudioDrv->szName; pAudioDrv++)
+    for (pAudioDrv = sAudioDrivers; pAudioDrv->nameID; pAudioDrv++)
     {
         if (strlen(pAudioDrv->szDriver))
         {
@@ -550,7 +558,7 @@ start_over:
     while (token != NULL)
     {
         BOOL found = FALSE;
-        for (pAudioDrv = loadedAudioDrv; *pAudioDrv->szName; pAudioDrv++)
+        for (pAudioDrv = loadedAudioDrv; pAudioDrv->nameID; pAudioDrv++)
         {
             if (strcmp(token, pAudioDrv->szDriver) == 0)
             {
@@ -560,9 +568,19 @@ start_over:
         }
         if (found == FALSE)
         {
-            char str[1024];
-            sprintf(str, "Found driver in registry that in not available!\n\nRemove \"%s\" from registry?", token);
-            if (MessageBox(hDlg, str, "WARNING", MB_ICONWARNING | MB_YESNOCANCEL) == IDYES)
+            WCHAR tokenW[MAX_NAME_LENGTH+1];
+            WCHAR messageStr[256];
+            WCHAR str[1024];
+            WCHAR caption[64];
+            
+            MultiByteToWideChar (CP_ACP, 0, token, -1, tokenW, sizeof(tokenW)/sizeof(tokenW[0]));
+            
+            LoadStringW (GetModuleHandle (NULL), IDS_UNAVAILABLE_DRIVER, messageStr,
+                sizeof(messageStr)/sizeof(messageStr[0]));
+            wsprintfW (str, messageStr, tokenW);
+            LoadStringW (GetModuleHandle (NULL), IDS_WARNING, caption,
+                sizeof(caption)/sizeof(caption[0]));
+            if (MessageBoxW (hDlg, str, caption, MB_ICONWARNING | MB_YESNOCANCEL) == IDYES)
             {
                 removeDriver(token);
                 strcpy(tokens, curAudioDriver);
@@ -612,7 +630,7 @@ static void initAudioDlg (HWND hDlg)
         const AUDIO_DRIVER *pAudioDrv = NULL;
 
         /* select oss if available */
-        for (pAudioDrv = loadedAudioDrv; *pAudioDrv->szName; pAudioDrv++)
+        for (pAudioDrv = loadedAudioDrv; pAudioDrv->nameID; pAudioDrv++)
         {
             if (strcmp(pAudioDrv->szDriver, "oss") == 0)
             {
@@ -624,7 +642,7 @@ static void initAudioDlg (HWND hDlg)
         if (strlen(curAudioDriver) == 0)
         {
             /* select alsa if available */
-            for (pAudioDrv = loadedAudioDrv; *pAudioDrv->szName; pAudioDrv++)
+            for (pAudioDrv = loadedAudioDrv; pAudioDrv->nameID; pAudioDrv++)
             {
                 if (strcmp(pAudioDrv->szDriver, "alsa") == 0)
                 {
@@ -652,17 +670,20 @@ static void initAudioDlg (HWND hDlg)
     initAudioDeviceTree(hDlg);
 
     SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_RESETCONTENT, 0, 0);
-    for (i = 0; NULL != DSound_HW_Accels[i]; ++i) {
-      SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM) DSound_HW_Accels[i]);
+    for (i = 0; 0 != DSound_HW_Accels[i].displayID; ++i) {
+      WCHAR accelStr[64];
+      LoadStringW (GetModuleHandle (NULL), DSound_HW_Accels[i].displayID, accelStr,
+          sizeof(accelStr)/sizeof(accelStr[0]));
+      SendDlgItemMessageW (hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM)accelStr);
     }
     buf = get_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", "Full");
-    for (i = 0; NULL != DSound_HW_Accels[i]; ++i) {
-      if (strcmp(buf, DSound_HW_Accels[i]) == 0) {
+    for (i = 0; NULL != DSound_HW_Accels[i].settingStr; ++i) {
+      if (strcmp(buf, DSound_HW_Accels[i].settingStr) == 0) {
 	SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_SETCURSEL, i, 0);
 	break ;
       }
     }
-    if (NULL == DSound_HW_Accels[i]) {
+    if (NULL == DSound_HW_Accels[i].settingStr) {
       WINE_ERR("Invalid Direct Sound HW Accel read from registry (%s)\n", buf);
     }
     HeapFree(GetProcessHeap(), 0, buf);
@@ -716,7 +737,8 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      int selected_dsound_accel;
 	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 	      selected_dsound_accel = SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_GETCURSEL, 0, 0);
-	      set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", DSound_HW_Accels[selected_dsound_accel]);
+	      set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", 
+	         DSound_HW_Accels[selected_dsound_accel].settingStr);
 	    }
 	    break;
           case IDC_DSOUND_RATES:
