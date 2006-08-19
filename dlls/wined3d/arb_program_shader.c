@@ -8,6 +8,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2006 Jason Green
+ * Copyright 2006 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,48 +42,57 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /** 
  * Loads floating point constants into the currently set ARB_vertex/fragment_program.
- * When @constants_set == NULL, it will load all the constants.
+ * When constant_list == NULL, it will load all the constants.
  *  
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
-void shader_arb_load_constantsF(
-    IWineD3DBaseShaderImpl* This,
-    WineD3D_GL_Info *gl_info,
-    GLuint target_type,
-    unsigned max_constants,
-    float* constants,
-    BOOL* constants_set) {
-
+static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info, GLuint target_type,
+        unsigned int max_constants, float* constants, struct list *constant_list) {
+    constant_entry *constant;
+    local_constant* lconst;
     int i;
-    struct list* ptr;
-    
-    for (i=0; i<max_constants; ++i) {
-        if (NULL == constants_set || constants_set[i]) {
-            TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
-                  constants[i * 4 + 0], constants[i * 4 + 1],
-                  constants[i * 4 + 2], constants[i * 4 + 3]);
 
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i * 4]));
-            checkGLcall("glProgramEnvParameter4fvARB");
+    if (!constant_list) {
+        if (TRACE_ON(d3d_shader)) {
+            for (i = 0; i < max_constants; ++i) {
+                TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                        constants[i * 4 + 0], constants[i * 4 + 1],
+                        constants[i * 4 + 2], constants[i * 4 + 3]);
+            }
         }
+        for (i = 0; i < max_constants; ++i) {
+            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+        }
+        checkGLcall("glProgramEnvParameter4fvARB()");
+    } else {
+        if (TRACE_ON(d3d_shader)) {
+            LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
+                i = constant->idx;
+                TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                        constants[i * 4 + 0], constants[i * 4 + 1],
+                        constants[i * 4 + 2], constants[i * 4 + 3]);
+            }
+        }
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
+            i = constant->idx;
+            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+        }
+        checkGLcall("glProgramEnvParameter4fvARB()");
     }
 
     /* Load immediate constants */
-    ptr = list_head(&This->baseShader.constantsF);
-    while (ptr) {
-
-        local_constant* lconst = LIST_ENTRY(ptr, struct local_constant, entry);
-        unsigned int idx = lconst->idx;
-        GLfloat* values = (GLfloat*) lconst->value;
-
-        TRACE("Loading local constants %i: %f, %f, %f, %f\n", idx,
-            values[0], values[1], values[2], values[3]);
-
-        GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, idx, values));
-        checkGLcall("glProgramEnvParameter4fvARB");
-        ptr = list_next(&This->baseShader.constantsF, ptr);
+    if (TRACE_ON(d3d_shader)) {
+        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+            GLfloat* values = (GLfloat*)lconst->value;
+            TRACE("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
+                    values[0], values[1], values[2], values[3]);
+        }
     }
+    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+        GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, lconst->idx, (GLfloat*)lconst->value));
+    }
+    checkGLcall("glProgramEnvParameter4fvARB()");
 }
 
 /**
@@ -116,7 +126,7 @@ void shader_arb_load_constants(
         shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
                                    GL_LIMITS(vshader_constantsF),
                                    stateBlock->vertexShaderConstantF,
-                                   stateBlock->set.vertexShaderConstantsF);
+                                   &stateBlock->set_vconstantsF);
     }
 
     if (usePixelShader) {
@@ -127,7 +137,7 @@ void shader_arb_load_constants(
         shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, 
                                    GL_LIMITS(pshader_constantsF),
                                    stateBlock->pixelShaderConstantF,
-                                   stateBlock->set.pixelShaderConstantsF);
+                                   &stateBlock->set_pconstantsF);
     }
 }
 

@@ -1040,6 +1040,11 @@ typedef struct SAVEDSTATES {
         BOOL                     *vertexShaderConstantsF;
 } SAVEDSTATES;
 
+typedef struct {
+    struct list entry;
+    int idx;
+} constant_entry;
+
 struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
@@ -1054,6 +1059,8 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     SAVEDSTATES               set;
+    struct list               set_vconstantsF;
+    struct list               set_pconstantsF;
 
     /* Drawing - Vertex Shader or FVF related */
     DWORD                     fvf;

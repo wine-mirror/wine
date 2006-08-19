@@ -53,6 +53,9 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
     WINED3D_MEMCHECK(object->changed.vertexShaderConstantsF);
 
+    list_init(&object->set_vconstantsF);
+    list_init(&object->set_pconstantsF);
+
 #undef WINED3D_MEMCHECK
 
     return WINED3D_OK;
@@ -225,6 +228,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
 
     if (!refCount) {
+        constant_entry *constant, *constant2;
+
         /* type 0 represents the primary stateblock, so free all the resources */
         if (This->blockType == WINED3DSBT_INIT) {
             int counter;
@@ -273,6 +278,14 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
         HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
+
+        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constant_entry, entry) {
+            HeapFree(GetProcessHeap(), 0, constant);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_pconstantsF, constant_entry, entry) {
+            HeapFree(GetProcessHeap(), 0, constant);
+        }
 
         HeapFree(GetProcessHeap(), 0, This);
     }
