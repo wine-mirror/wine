@@ -3560,7 +3560,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
 
     case WINED3DRS_ZFUNC                     :
         {
-            int glParm = GL_LESS;
+            int glParm = 0;
 
             switch ((D3DCMPFUNC) Value) {
             case D3DCMP_NEVER:         glParm=GL_NEVER; break;
@@ -3574,8 +3574,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
             default:
                 FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
             }
-            glDepthFunc(glParm);
-            checkGLcall("glDepthFunc");
+            if(glParm) {
+                glDepthFunc(glParm);
+                checkGLcall("glDepthFunc");
+            }
         }
         break;
 
@@ -3644,8 +3646,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
     case WINED3DRS_ALPHAREF                  :
     case WINED3DRS_COLORKEYENABLE            :
         {
-            int glParm = 0.0;
-            float ref = GL_LESS;
+            int glParm = 0;
+            float ref;
             BOOL enable_ckey = FALSE;
 
             IWineD3DSurfaceImpl *surf;
@@ -3688,9 +3690,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                     FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]);
                 }
             }
-            This->alphafunc = glParm;
-            glAlphaFunc(glParm, ref);
-            checkGLcall("glAlphaFunc");
+            if(glParm) {
+                This->alphafunc = glParm;
+                glAlphaFunc(glParm, ref);
+                checkGLcall("glAlphaFunc");
+            }
         }
         break;
 
