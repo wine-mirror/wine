@@ -105,35 +105,43 @@ void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
     pTLData->idlLen += SourceLen;
 }
 
-void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
+void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
 {
     int lineLen = lstrlenW(wszSource);
     int newLinesNo = 0;
     WCHAR *pSourcePos = (WCHAR *)wszSource;
     WCHAR *pSourceBeg;
 
+    if(!lineLen) return;
     while(*pSourcePos)
     {
         if(*pSourcePos == *wszNewLine) newLinesNo++;
         pSourcePos += 1;
     }
+    if(*(pSourcePos - 1) != *wszNewLine) newLinesNo++;
 
     pTLData->idl = HeapReAlloc(GetProcessHeap(), 0, pTLData->idl,
             sizeof(WCHAR)*(pTLData->idlLen+lineLen+4*newLinesNo+1));
 
     pSourcePos = (WCHAR *)wszSource;
     pSourceBeg = (WCHAR *)wszSource;
-    while(*pSourcePos)
+    while(newLinesNo)
     {
-        if(*pSourcePos != *wszNewLine)
+        if(*pSourcePos != *wszNewLine && *pSourcePos)
         {
             pSourcePos += 1;
             continue;
         }
-        *pSourcePos = '\0';
-        lineLen = lstrlenW(pSourceBeg)+1;
-        *pSourcePos = '\n';
-        pSourcePos += 1;
+        newLinesNo--;
+
+        if(pSourcePos)
+        {
+            *pSourcePos = '\0';
+            lineLen = lstrlenW(pSourceBeg)+1;
+            *pSourcePos = '\n';
+            pSourcePos += 1;
+        }
+        else lineLen = lstrlenW(pSourceBeg)+1;
 
         pTLData->idl[pTLData->idlLen] = *wszSpace;
         pTLData->idl[pTLData->idlLen+1] = *wszSpace;
@@ -464,6 +472,56 @@ int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
     return 0;
 }
 
+void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
+{
+    TVITEM tvi;
+
+    hCur = TreeView_GetChild(typelib.hTree, hCur);
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_PARAM;
+
+    while(hCur)
+    {
+        tvi.hItem = hCur;
+        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
+        hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
+    }
+}
+
+void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
+{
+    HTREEITEM hCur;
+    TVITEM tvi;
+    WCHAR wszText[MAX_LOAD_STRING];
+    WCHAR wszPredefinition[] = { '/','/',' ','T','L','i','b',' ',':','\n',
+        '/','/',' ','F','o','r','w','a','r','d',' ','d','e','c','l','a','r','e',' ',
+        'a','l','l',' ','t','y','p','e','s',' ','d','e','f','i','n','e','d',' ',
+        'i','n',' ','t','h','i','s',' ','t','y','p','e','l','i','b','\0' };
+
+    hFirst = TreeView_GetChild(typelib.hTree, hFirst);
+
+    AddToTLDataStrWithTabsW(pTLData, wszPredefinition);
+
+    hCur = hFirst;
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_TEXT|TVIF_PARAM;
+    tvi.cchTextMax = MAX_LOAD_STRING;
+    tvi.pszText = wszText;
+    while(hCur)
+    {
+        tvi.hItem = hCur;
+        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        if(((TYPELIB_DATA*)(tvi.lParam))->bPredefine)
+        {
+            AddToStrW(wszText, wszSemicolon);
+            AddToTLDataStrWithTabsW(pTLData, wszText);
+        }
+        hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
+    }
+}
+
 void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
         WCHAR *wszHelpString, unsigned long ulHelpContext, TYPEATTR *pTypeAttr,
         TYPELIB_DATA *pTLData)
@@ -602,6 +660,7 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
 int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
+    TVITEM tvi;
     ITypeLib *pTypeLib;
     TLIBATTR *pTLibAttr;
     ITypeInfo *pTypeInfo, *pRefTypeInfo;
@@ -755,6 +814,7 @@ int PopulateTree(void)
                 CreateInterfaceInfo(pTypeInfo, pTypeAttr->cImplTypes, bstrName,
                         bstrData, ulHelpContext, pTypeAttr,
                         (TYPELIB_DATA*)(U(tvis).item.lParam));
+                ((TYPELIB_DATA*)(U(tvis).item.lParam))->bPredefine = TRUE;
 
                 AddToStrW(wszText, wszTKIND_INTERFACE);
                 AddToStrW(wszText, bstrName);
@@ -768,6 +828,7 @@ int PopulateTree(void)
                 AddToStrW(wszText, bstrName);
                 break;
             case TKIND_DISPATCH:
+                ((TYPELIB_DATA*)(U(tvis).item.lParam))->bPredefine = TRUE;
                 AddToStrW(wszText, wszTKIND_DISPATCH);
                 AddToStrW(wszText, bstrName);
                 if(SUCCEEDED(ITypeInfo_GetRefTypeOfImplType(pTypeInfo, -1, &hRefType)))
@@ -787,6 +848,7 @@ int PopulateTree(void)
                     CreateInterfaceInfo(pTypeInfo, pTypeAttr->cImplTypes, bstrName,
                             bstrData, ulHelpContext, pTypeAttr,
                             (TYPELIB_DATA*)(U(tvis).item.lParam));
+                    ((TYPELIB_DATA*)(U(tvis).item.lParam))->bPredefine = TRUE;
 
                     AddToStrW(wszText, wszTKIND_INTERFACE);
                     AddToStrW(wszText, bstrName);
@@ -822,6 +884,16 @@ int PopulateTree(void)
         SysFreeString(bstrData);
     }
     SendMessage(typelib.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_PARAM;
+    tvi.hItem = tvis.hParent;
+
+    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    AddPredefinitions(tvi.hItem, (TYPELIB_DATA*)(tvi.lParam));
+    AddIdlData(tvi.hItem, (TYPELIB_DATA*)(tvi.lParam));
+    AddToTLDataStrW((TYPELIB_DATA*)(tvi.lParam),
+            ((TYPELIB_DATA*)(tvi.lParam))->wszInsertAfter);
 
     ITypeLib_Release(pTypeLib);
     return 0;

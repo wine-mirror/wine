@@ -117,6 +117,7 @@ typedef struct
     WCHAR *idl;
     WCHAR wszInsertAfter[MAX_LOAD_STRING];
     INT idlLen;
+    BOOL bPredefine;
 }TYPELIB_DATA;
 
 extern GLOBALS globals;
