@@ -3685,7 +3685,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                 case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
                 case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
                 default:
-                    FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+                    FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]);
                 }
             }
             This->alphafunc = glParm;
