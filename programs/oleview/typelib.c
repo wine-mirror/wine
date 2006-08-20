@@ -21,6 +21,7 @@
 #include "main.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oleview);
 
@@ -88,6 +89,103 @@ static const WCHAR wszPARAMFLAG_FHASDEFAULT[]
     = { 'h','a','s','d','e','f','a','u','l','t','\0' };
 static const WCHAR wszPARAMFLAG_FHASCUSTDATA[]
     = { 'h','a','s','c','u','s','t','d','a','t','a','\0' };
+
+void ShowLastError(void)
+{
+    DWORD error = GetLastError();
+    LPWSTR lpMsgBuf;
+    WCHAR wszTitle[MAX_LOAD_STRING];
+
+    LoadString(globals.hMainInst, IDS_TYPELIBTITLE, wszTitle,
+            sizeof(WCHAR[MAX_LOAD_STRING]));
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL, error, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
+    MessageBox(NULL, lpMsgBuf, wszTitle, MB_OK | MB_ICONERROR);
+    LocalFree(lpMsgBuf);
+    return;
+}
+
+void SaveIdl(WCHAR *wszFileName)
+{
+    HTREEITEM hIDL;
+    TVITEM tvi;
+    HANDLE hFile;
+    DWORD dwNumWrite;
+    char *wszIdl;
+
+    hIDL = TreeView_GetChild(typelib.hTree, TVI_ROOT);
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = hIDL;
+
+    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    hFile = CreateFile(wszFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
+            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hFile == INVALID_HANDLE_VALUE)
+    {
+        ShowLastError();
+        return;
+    }
+
+    wszIdl = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(WCHAR)*((TYPELIB_DATA *)(tvi.lParam))->idlLen);
+    wine_utf8_wcstombs(((TYPELIB_DATA *)(tvi.lParam))->idl,
+            ((TYPELIB_DATA *)(tvi.lParam))->idlLen, wszIdl,
+            ((TYPELIB_DATA *)(tvi.lParam))->idlLen);
+
+    if(!WriteFile(hFile, wszIdl, ((TYPELIB_DATA *)(tvi.lParam))->idlLen,
+                &dwNumWrite, NULL))
+    {
+                ShowLastError();
+                HeapFree(GetProcessHeap(), 0, wszIdl);
+                return;
+    }
+
+    HeapFree(GetProcessHeap(), 0, wszIdl);
+    SetEndOfFile(hFile);
+    CloseHandle(hFile);
+}
+
+void GetSaveIdlAsPath(void)
+{
+    OPENFILENAME saveidl;
+    WCHAR *pFileName;
+    WCHAR wszPath[MAX_LOAD_STRING];
+    WCHAR wszDir[MAX_LOAD_STRING];
+    static const WCHAR wszDefaultExt[] = { 'i','d','l',0 };
+    static const WCHAR wszIdlFiles[] = { '*','.','i','d','l','\0','\0' };
+
+    memset(&saveidl, 0, sizeof(saveidl));
+
+    lstrcpyW(wszDir, typelib.wszFileName);
+    pFileName = wszDir + lstrlenW(wszDir);
+    while(*pFileName != '.' && *pFileName != '\\' && *pFileName != '/'
+            && pFileName > wszDir) pFileName -= 1;
+    if(*pFileName == '.')
+    {
+        *pFileName = '\0';
+        while(*pFileName != '\\' && *pFileName != '/' && pFileName > wszDir)
+            pFileName -= 1;
+    }
+    if(*pFileName == '\\' || *pFileName == '/') pFileName += 1;
+    lstrcpyW(wszPath, pFileName);
+
+    GetCurrentDirectory(MAX_LOAD_STRING, wszDir);
+
+    saveidl.lStructSize = sizeof(OPENFILENAME);
+    saveidl.hwndOwner = globals.hTypeLibWnd;
+    saveidl.hInstance = globals.hMainInst;
+    saveidl.lpstrFilter = wszIdlFiles;
+    saveidl.lpstrFile = wszPath;
+    saveidl.nMaxFile = MAX_LOAD_STRING;
+    saveidl.lpstrInitialDir = wszDir;
+    saveidl.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+    saveidl.lpstrDefExt = wszDefaultExt;
+
+    if (GetSaveFileName(&saveidl))
+        SaveIdl(wszPath);
+}
 
 void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 {
@@ -534,7 +632,7 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
     BOOL bFirst;
 
     const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
-    const WCHAR wszInterface[] = { 'I','n','t','e','r','f','a','c','e',' ','\0' };
+    const WCHAR wszInterface[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
     const WCHAR wszHelpstring[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
     const WCHAR wszHelpcontext[] = { 'h','e','l','p','c','o','n','t','e','x','t','\0' };
     const WCHAR wszTYPEFLAG_FAPPOBJECT[] = { 'a','p','p','o','b','j','e','c','t','\0' };
@@ -747,7 +845,9 @@ int PopulateTree(void)
     AddSpaces((TYPELIB_DATA*)(U(tvis).item.lParam), 4);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszHelpString);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets2);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszInvertedComa);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), bstrData);
+    AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszInvertedComa);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszCloseBrackets2);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
     AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszCloseBrackets1);
@@ -938,6 +1038,9 @@ void TypeLibMenuCommand(WPARAM wParam, HWND hWnd)
 
     switch(wParam)
     {
+        case IDM_SAVEAS:
+            GetSaveIdlAsPath();
+            break;
         case IDM_STATUSBAR:
             vis = IsWindowVisible(typelib.hStatusBar);
             ShowWindow(typelib.hStatusBar, vis ? SW_HIDE : SW_SHOW);
