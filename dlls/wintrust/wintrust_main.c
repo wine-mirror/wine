@@ -73,6 +73,20 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
 }
 
 /***********************************************************************
+ *             CryptCATAdminEnumCatalogFromHash (WINTRUST.@)
+ */
+HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
+                                                 BYTE* pbHash,
+                                                 DWORD cbHash,
+                                                 DWORD dwFlags,
+                                                 HCATINFO* phPrevCatInfo )
+{
+    FIXME("%p %p %ld %ld %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/***********************************************************************
  *		CryptCATAdminReleaseContext (WINTRUST.@)
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )

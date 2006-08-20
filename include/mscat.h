@@ -20,7 +20,7 @@
 #define __WINE_MSCAT_H
 
 typedef HANDLE HCATADMIN;
-
+typedef HANDLE HCATINFO;
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,6 +28,7 @@ extern "C" {
 
 BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
 BOOL      WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE,DWORD*,BYTE*,DWORD);
+HCATINFO  WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN,BYTE*,DWORD,DWORD,HCATINFO*);
 BOOL      WINAPI CryptCATAdminReleaseContext(HCATADMIN,DWORD);
 
 #ifdef __cplusplus
