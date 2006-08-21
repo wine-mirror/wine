@@ -150,7 +150,7 @@ Execute next assembly instruction (enters function call)
 .IP \fBnexti\fR
 Execute next assembly instruction (doesn't enter function call)
 .IP \fBfinish\fR
-Excute until return of current function is reached.
+Execute until return of current function is reached.
 .PP
 \fBcont\fR, \fBstep\fR, \fBnext\fR, \fBstepi\fR, \fBnexti\fR can be
 postfixed by a number (N), meaning that the command must be executed N
