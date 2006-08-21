@@ -1865,6 +1865,148 @@ tools/wrc/Makefile])
 
 AC_OUTPUT
 
+dnl **** Display messages about additional packages ***
+
+if test "$verbose" = "yes"
+then
+  dnl **** libcupsys-dev devel package ***
+  if test "$ac_cv_header_cups_cups_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libcups development files not found.])
+    AC_MSG_NOTICE([Wine will be built without CUPS support.])
+  fi
+
+  dnl **** libcurses devel package: see libncurses ***
+  dnl **** libdbus-1 devel package ***
+  dnl **** libdbus-1-dev is required for libhal-dev ***
+
+  dnl **** libgphoto2 devel package ***
+  if test "$ac_cv_header_gphoto2_camera_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libgphoto2 development files not found.])
+    if test "$ac_cv_header_sane_sane_h" = "yes"
+    then
+      AC_MSG_NOTICE([Wine will be built with limited Digital Camera support. (twain_32.dll)])
+    else
+      AC_MSG_NOTICE([Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)])
+    fi
+  fi
+
+  dnl **** libhal devel package ***
+  dnl **** libhal-dev depends on libdbus-1-dev ***
+  if test "$ac_cv_header_hal_libhal_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libhal development files not found.])
+    AC_MSG_NOTICE([Wine will be built without dynamic device support. (explorer.exe)])
+  fi
+
+  dnl **** libicu devel package ****
+  if test "$ac_cv_header_unicode_ubidi_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libicu development files not found.])
+    AC_MSG_NOTICE([Wine will be built without bidi (Right to Left) support. (gdi32.dll)])
+  fi
+
+  dnl **** liblcms devel package ****
+  if test "$ac_cv_header_lcms_h" != "yes" -a "$ac_cv_header_lcms_lcms_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([liblcms development files not found.])
+    AC_MSG_NOTICE([Wine will be built without Color Management support. (mscms.dll)])
+  fi
+
+  dnl **** libldap devel package ****
+  if test "$ac_cv_header_ldap_h" != "yes" -o "$ac_cv_header_lber_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libldap (OpenLDAP) development files not found.])
+    AC_MSG_NOTICE([Wine will be built without LDAP support. (wldap32.dll)])
+  fi
+
+  dnl **** libncurses / libcurses devel package ***
+  if test "x$with_curses" != "xno" -a "$ac_cv_header_ncurses_h" != "yes" -a "$ac_cv_header_curses_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([lib(n)curses development files not found.])
+    AC_MSG_NOTICE([Wine will be built without (n)curses support. (wineconsole.exe)])
+  fi
+
+  dnl **** libsane devel package ***
+  if test "$ac_cv_header_sane_sane_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libsane development files not found.])
+    AC_MSG_NOTICE([Wine will be built without Scanner support. (sane.ds/twain_32.dll)])
+  fi
+
+  dnl **** libungif devel package ***
+  if test "$ac_cv_header_gif_lib_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libungif development files not found.])
+    AC_MSG_NOTICE([Wine will be built without GIF support. (oleaut32.dll)])
+  fi
+
+  dnl **** libX11-dev includes Xlib.h and Xutil.h and depends on ***
+  dnl **** x11proto-input-dev (extensions/XInput.h) and x11proto-kb-dev (XKBlib.h) ***
+  if test "$have_x" = "yes"
+  then
+    dnl **** libX11 - extension: Xext ***
+    if test "$ac_cv_header_X11_extensions_shape_h" != "yes" -o "$ac_cv_header_X11_extensions_XShm_h" != "yes"
+    then
+      echo >&2
+      AC_MSG_NOTICE([libxext development files not found.])
+      AC_MSG_NOTICE([Wine will be built without Shm / Shape support. (winex11.drv)])
+    fi
+
+    dnl **** libX11 - extension: Xrandr ***
+    if test "$ac_cv_header_X11_extensions_Xrandr_h" != "yes"
+    then
+      echo >&2
+      AC_MSG_NOTICE([libXrandr development files not found.])
+      AC_MSG_NOTICE([Wine will be built without Xrandr support. (winex11.drv)])
+    fi
+
+    dnl **** libX11 - extension: Xrender ***
+    if test "$ac_cv_header_X11_extensions_Xrender_h" != "yes"
+    then
+      echo >&2
+      AC_MSG_NOTICE([libXrender development files not found.])
+      AC_MSG_NOTICE([Wine will be built without Xrender support. (winex11.drv)])
+    fi
+
+    dnl **** libX11 - extension: Xxf86vm ***
+    if test "$ac_cv_header_X11_extensions_xf86vmode_h" != "yes"
+    then
+      echo >&2
+      AC_MSG_NOTICE([libXxf86vm development files not found.])
+      AC_MSG_NOTICE([Wine will be built without XFree86-VidMode support. (winex11.drv)])
+    fi
+  fi
+
+  dnl **** libxml2 devel package ***
+  if test "$ac_cv_header_libxml_parser_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libxml2 development files not found.])
+    AC_MSG_NOTICE([Wine will be built without XML support. (msxml.dll)])
+  fi
+
+  dnl **** libxslt devel package ***
+  if test "$ac_cv_header_libxslt_pattern_h" != "yes" -o "$ac_cv_header_libxslt_transform_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libxslt development files not found.])
+    AC_MSG_NOTICE([Wine will be built without xslt support. (msxml.dll)])
+  fi
+fi
+
+
+dnl **** Display warnings about important packages ***
 if test "$have_x" = "no"
 then
   echo >&2

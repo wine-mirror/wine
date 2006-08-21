@@ -25564,6 +25564,156 @@ if test "$no_create" != yes; then
 fi
 
 
+
+if test "$verbose" = "yes"
+then
+    if test "$ac_cv_header_cups_cups_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libcups development files not found." >&5
+echo "$as_me: libcups development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without CUPS support." >&5
+echo "$as_me: Wine will be built without CUPS support." >&6;}
+  fi
+
+
+    if test "$ac_cv_header_gphoto2_camera_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libgphoto2 development files not found." >&5
+echo "$as_me: libgphoto2 development files not found." >&6;}
+    if test "$ac_cv_header_sane_sane_h" = "yes"
+    then
+      { echo "$as_me:$LINENO: Wine will be built with limited Digital Camera support. (twain_32.dll)" >&5
+echo "$as_me: Wine will be built with limited Digital Camera support. (twain_32.dll)" >&6;}
+    else
+      { echo "$as_me:$LINENO: Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)" >&5
+echo "$as_me: Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)" >&6;}
+    fi
+  fi
+
+      if test "$ac_cv_header_hal_libhal_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libhal development files not found." >&5
+echo "$as_me: libhal development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without dynamic device support. (explorer.exe)" >&5
+echo "$as_me: Wine will be built without dynamic device support. (explorer.exe)" >&6;}
+  fi
+
+    if test "$ac_cv_header_unicode_ubidi_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libicu development files not found." >&5
+echo "$as_me: libicu development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without bidi (Right to Left) support. (gdi32.dll)" >&5
+echo "$as_me: Wine will be built without bidi (Right to Left) support. (gdi32.dll)" >&6;}
+  fi
+
+    if test "$ac_cv_header_lcms_h" != "yes" -a "$ac_cv_header_lcms_lcms_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: liblcms development files not found." >&5
+echo "$as_me: liblcms development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without Color Management support. (mscms.dll)" >&5
+echo "$as_me: Wine will be built without Color Management support. (mscms.dll)" >&6;}
+  fi
+
+    if test "$ac_cv_header_ldap_h" != "yes" -o "$ac_cv_header_lber_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libldap (OpenLDAP) development files not found." >&5
+echo "$as_me: libldap (OpenLDAP) development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without LDAP support. (wldap32.dll)" >&5
+echo "$as_me: Wine will be built without LDAP support. (wldap32.dll)" >&6;}
+  fi
+
+    if test "x$with_curses" != "xno" -a "$ac_cv_header_ncurses_h" != "yes" -a "$ac_cv_header_curses_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: lib(n)curses development files not found." >&5
+echo "$as_me: lib(n)curses development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without (n)curses support. (wineconsole.exe)" >&5
+echo "$as_me: Wine will be built without (n)curses support. (wineconsole.exe)" >&6;}
+  fi
+
+    if test "$ac_cv_header_sane_sane_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libsane development files not found." >&5
+echo "$as_me: libsane development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&5
+echo "$as_me: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&6;}
+  fi
+
+    if test "$ac_cv_header_gif_lib_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libungif development files not found." >&5
+echo "$as_me: libungif development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without GIF support. (oleaut32.dll)" >&5
+echo "$as_me: Wine will be built without GIF support. (oleaut32.dll)" >&6;}
+  fi
+
+      if test "$have_x" = "yes"
+  then
+        if test "$ac_cv_header_X11_extensions_shape_h" != "yes" -o "$ac_cv_header_X11_extensions_XShm_h" != "yes"
+    then
+      echo >&2
+      { echo "$as_me:$LINENO: libxext development files not found." >&5
+echo "$as_me: libxext development files not found." >&6;}
+      { echo "$as_me:$LINENO: Wine will be built without Shm / Shape support. (winex11.drv)" >&5
+echo "$as_me: Wine will be built without Shm / Shape support. (winex11.drv)" >&6;}
+    fi
+
+        if test "$ac_cv_header_X11_extensions_Xrandr_h" != "yes"
+    then
+      echo >&2
+      { echo "$as_me:$LINENO: libXrandr development files not found." >&5
+echo "$as_me: libXrandr development files not found." >&6;}
+      { echo "$as_me:$LINENO: Wine will be built without Xrandr support. (winex11.drv)" >&5
+echo "$as_me: Wine will be built without Xrandr support. (winex11.drv)" >&6;}
+    fi
+
+        if test "$ac_cv_header_X11_extensions_Xrender_h" != "yes"
+    then
+      echo >&2
+      { echo "$as_me:$LINENO: libXrender development files not found." >&5
+echo "$as_me: libXrender development files not found." >&6;}
+      { echo "$as_me:$LINENO: Wine will be built without Xrender support. (winex11.drv)" >&5
+echo "$as_me: Wine will be built without Xrender support. (winex11.drv)" >&6;}
+    fi
+
+        if test "$ac_cv_header_X11_extensions_xf86vmode_h" != "yes"
+    then
+      echo >&2
+      { echo "$as_me:$LINENO: libXxf86vm development files not found." >&5
+echo "$as_me: libXxf86vm development files not found." >&6;}
+      { echo "$as_me:$LINENO: Wine will be built without XFree86-VidMode support. (winex11.drv)" >&5
+echo "$as_me: Wine will be built without XFree86-VidMode support. (winex11.drv)" >&6;}
+    fi
+  fi
+
+    if test "$ac_cv_header_libxml_parser_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libxml2 development files not found." >&5
+echo "$as_me: libxml2 development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without XML support. (msxml.dll)" >&5
+echo "$as_me: Wine will be built without XML support. (msxml.dll)" >&6;}
+  fi
+
+    if test "$ac_cv_header_libxslt_pattern_h" != "yes" -o "$ac_cv_header_libxslt_transform_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libxslt development files not found." >&5
+echo "$as_me: libxslt development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without xslt support. (msxml.dll)" >&5
+echo "$as_me: Wine will be built without xslt support. (msxml.dll)" >&6;}
+  fi
+fi
+
+
 if test "$have_x" = "no"
 then
   echo >&2
