@@ -1043,10 +1043,7 @@ static void test_condition(void)
     MsiSetProperty(hpkg, "one", "1234");
     MsiSetProperty(hpkg, "two", "1");
     r = MsiEvaluateCondition(hpkg, "one >< two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "one 1234");
     MsiSetProperty(hpkg, "two", "1");
@@ -1056,10 +1053,7 @@ static void test_condition(void)
     MsiSetProperty(hpkg, "one", "hithere");
     MsiSetProperty(hpkg, "two", "hi");
     r = MsiEvaluateCondition(hpkg, "one << two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "hi");
     MsiSetProperty(hpkg, "two", "hithere");
@@ -1069,10 +1063,7 @@ static void test_condition(void)
     MsiSetProperty(hpkg, "one", "hi");
     MsiSetProperty(hpkg, "two", "hi");
     r = MsiEvaluateCondition(hpkg, "one << two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "abcdhithere");
     MsiSetProperty(hpkg, "two", "hi");
@@ -1087,10 +1078,7 @@ static void test_condition(void)
     MsiSetProperty(hpkg, "one", "hithere");
     MsiSetProperty(hpkg, "two", "");
     r = MsiEvaluateCondition(hpkg, "one << two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "");
     MsiSetProperty(hpkg, "two", "");
@@ -1105,90 +1093,57 @@ static void test_condition(void)
     MsiSetProperty(hpkg, "one", "1234 one");
     MsiSetProperty(hpkg, "two", "1");
     r = MsiEvaluateCondition(hpkg, "one << two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "hithere");
     MsiSetProperty(hpkg, "two", "there");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "hithere");
     MsiSetProperty(hpkg, "two", "hi");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "there");
     MsiSetProperty(hpkg, "two", "hithere");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "there");
     MsiSetProperty(hpkg, "two", "there");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "abcdhithere");
     MsiSetProperty(hpkg, "two", "hi");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "");
     MsiSetProperty(hpkg, "two", "there");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "there");
     MsiSetProperty(hpkg, "two", "");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "");
     MsiSetProperty(hpkg, "two", "");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "1234");
     MsiSetProperty(hpkg, "two", "4");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_FALSE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
     MsiSetProperty(hpkg, "one", "one 1234");
     MsiSetProperty(hpkg, "two", "4");
     r = MsiEvaluateCondition(hpkg, "one >> two");
-    todo_wine
-    {
-        ok( r == MSICONDITION_TRUE, "wrong return val\n");
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
