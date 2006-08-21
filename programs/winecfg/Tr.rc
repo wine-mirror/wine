@@ -64,7 +64,7 @@ BEGIN
 
     CONTROL         "DirectX uygulamalarýnýn fareyi pencere içine kilitlemelerine izin ver",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL         "Masaüstü çift tamponlamayý etkinleþtir",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    LTEXT           "Pencereler pencere yöneticiniz tarafýndan yönetildiðinde, standart kenarlara sahip olacak, sanal masaüstünüze uygun davranacak ve pencere listenizde görünecektir. \n\nEðer pencereler yönetilmezse, pencere yöneticinizden baðýmsýz olacaklardýr. Bu, pencerelerin masaüstünüzle tam olarak bütünleþemeyeceði anlamýna gelir; ama emülasyon daha düzgün yapýlabiliceðinden bazý programlar daha iyi çalýþabilir.",
+    LTEXT           "Pencereler pencere yöneticiniz tarafýndan yönetildiðinde, standart kenarlara sahip olacak, sanal masaüstünüze uygun davranacak ve pencere listenizde görünecektir. \n\nEðer pencereler yönetilmezse, pencere yöneticinizden baðýmsýz olacaklardýr. Bu, pencerelerin masaüstünüzle tam olarak bütünleþemeyeceði anlamýna gelir; ama taklit daha düzgün yapýlabiliceðinden bazý programlar daha iyi çalýþabilir.",
     		    IDC_STATIC,15,58,228,80
     CONTROL         "Pencere yöneticisinin pencereleri yönetmesine izin ver",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
     
@@ -121,7 +121,7 @@ IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Sürücü haritalama ",IDC_STATIC,8,4,244,240
+    GROUPBOX        " Sürücü Eþleþtirmesi ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Ekle...",IDC_BUTTON_ADD,15,98,37,14
@@ -169,7 +169,7 @@ BEGIN
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Örnek Baþýna Bit Sayýsý:",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Sürücü Emülasyonu",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "Sürücü Taklidi",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -232,48 +232,48 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-    IDS_SHADER_MODE_EMULATION   "Emulated"
+    IDS_SHADER_MODE_HARDWARE    "Donaným"
+    IDS_SHADER_MODE_NONE        "Hiçbiri"
+    IDS_SHADER_MODE_EMULATION   "Taklit"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "Otomatik Algýla"
+    IDS_DRIVE_FIXED             "Yerel sabit disk"
+    IDS_DRIVE_REMOTE            "Að paylaþýmý"
+    IDS_DRIVE_REMOVABLE         "Disket sürücü"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Daha fazla sürücü ekleyemezsiniz.\n\nHer sürücünün A-Z aralýðýnda bir harfi olmalýdýr. Dolayýsýyla 26'dan fazla tanýmlayamazsýnýz."
+    IDS_SYSTEM_DRIVE_LABEL      "Sistem sürücüsü"
+    IDS_CONFIRM_DELETE_C        "C sürücüsünü silmek istediðinizden emin misiniz?\n\nÇoðu Windows uygulamasý C sürücüsünün var olmasýný bekler ve yoksa istenmeyen bir þekilde sonlanýr. Eðer devam ederseniz, daha sonra yeniden oluþturmayý unutmayýn!"
+    IDS_COL_DRIVELETTER         "Harf"
+    IDS_COL_DRIVEMAPPING        "Sürücü Eþleme"
+    IDS_NO_DRIVE_C              "C sürücünüz yok. Bu beklenen bir durum deðil.\n\nBir tane oluþturmak için Sürücüler sekmesinden Ekle'yi týklamayý unutmayýn!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_FULL              "Tam"
+    IDS_ACCEL_STANDARD          "Standart"
+    IDS_ACCEL_BASIC             "Temel"
+    IDS_ACCEL_EMULATION         "Taklit"
+    IDS_DRIVER_ALSA             "ALSA Sürücüsü"
+    IDS_DRIVER_ARTS             "aRts Sürücüsü"
+    IDS_DRIVER_ESOUND           "EsounD Sürücüsü"
+    IDS_DRIVER_OSS              "OSS Sürücüsü"
+    IDS_DRIVER_JACK             "JACK Sürücüsü"
+    IDS_DRIVER_NAS              "NAS Sürücüsü"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Sürücüsü"
+    IDS_DRIVER_COREAUDIO        "CoreAudio Sürücüsü"
+    IDS_OPEN_DRIVER_ERROR       "%s açýlamadý!"
+    IDS_SOUNDDRIVERS            "Ses Sürücüleri"
+    IDS_DEVICES_WAVEOUT         "Dalga Çýkýþ Aygýtlarý"
+    IDS_DEVICES_WAVEIN          "Dalga Giriþ Aygýtlarý"
+    IDS_DEVICES_MIDIOUT         "MIDI Çýkýþ Aygýtlarý"
+    IDS_DEVICES_MIDIIN          "MIDI Giriþ Aygýtlarý"
+    IDS_DEVICES_AUX             "Aux Aygýtlarý"
+    IDS_DEVICES_MIXER           "Mixer Aygýtlarý"
+    IDS_UNAVAILABLE_DRIVER      "Sistem kaydýnda kullanýlabilir olmayan bir sürücü bulundu!\n\n\"%s\" giriþi sistem kaydýndan silinsin mi?"
+    IDS_WARNING                 "Uyarý"
 END
