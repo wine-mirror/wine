@@ -124,9 +124,9 @@ BEGIN
     GROUPBOX        " Stasjonkartlegging ",IDC_STATIC,8,4,244,240
     CONTROL         "Listevisning",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "&Legg til . . .",IDC_BUTTON_ADD,15,98,37,14
-    PUSHBUTTON      "Fje&rn",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "&Automatisk . . .",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "&Legg til . . .",IDC_BUTTON_ADD,15,98,45,14
+    PUSHBUTTON      "Fje&rn",IDC_BUTTON_REMOVE,63,98,37,14
+    PUSHBUTTON      "&Automatisk . . .",IDC_BUTTON_AUTODETECT,190,98,56,14
 
     /* editing drive details */
     LTEXT           "&Sti:",IDC_STATIC,15,123,20,9    
@@ -234,46 +234,46 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_SHADER_MODE_HARDWARE    "Maskinvare"
     IDS_SHADER_MODE_NONE        "Ingen"
-    IDS_SHADER_MODE_EMULATION   "Emulert"
+    IDS_SHADER_MODE_EMULATION   "Emulering"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "Automatisk"
+    IDS_DRIVE_FIXED             "Lokal harddisk"
+    IDS_DRIVE_REMOTE            "Nettverksressurs"
+    IDS_DRIVE_REMOVABLE         "Diskett"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Du kan ikke legge til flere stasjoner.\n\nHver stasjon må ha en bokstav fra A til Z, så 26 stasjoner er det meste"
+    IDS_SYSTEM_DRIVE_LABEL      "Systemstasjon"
+    IDS_CONFIRM_DELETE_C        "Vil du virkelig fjerne stasjon C?\n\nDe fleste Windows-programmer forventer at C finnes, og lager bråk hvis den ikke er der. Husk å lage den på nytt hvis du fortsetter."
+    IDS_COL_DRIVELETTER         "Bokstav"
+    IDS_COL_DRIVEMAPPING        "Peker til"
+    IDS_NO_DRIVE_C              "Du har ikke en C-stasjon. Det er ikke så bra..\n\nHusk å trykke «Legg til» i stasjonsfanen for å lage en.\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ACCEL_FULL              "Full"
     IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_BASIC             "Grunnleggende"
+    IDS_ACCEL_EMULATION         "Emulering"
+    IDS_DRIVER_ALSA             "ALSA-driver"
+    IDS_DRIVER_ARTS             "aRts-driver"
+    IDS_DRIVER_ESOUND           "EsounD-driver"
+    IDS_DRIVER_OSS              "OSS-driver"
+    IDS_DRIVER_JACK             "JACK-driver"
+    IDS_DRIVER_NAS              "NAS-driver"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris)-driver"
+    IDS_DRIVER_COREAUDIO        "CoreAudio-driver"
+    IDS_OPEN_DRIVER_ERROR       "Klarte ikke åpne %s."
+    IDS_SOUNDDRIVERS            "Lyddrivere"
+    IDS_DEVICES_WAVEOUT         "Lyd ut-enheter"
+    IDS_DEVICES_WAVEIN          "Lyd inn-enheter"
+    IDS_DEVICES_MIDIOUT         "MIDI ut-enheter"
+    IDS_DEVICES_MIDIIN          "MIDI inn-enheter"
+    IDS_DEVICES_AUX             "Aux-enheter"
+    IDS_DEVICES_MIXER           "Mikserenheter"
+    IDS_UNAVAILABLE_DRIVER      "Fant driver i registeret som ikke er tilgjengelig.\n\nFjerne «%s» fra registeret?"
+    IDS_WARNING                 "Advarsel"
 END
