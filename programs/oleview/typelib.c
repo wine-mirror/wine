@@ -755,6 +755,49 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
     AddToStrW(pTLData->wszInsertAfter, wszNewLine);
 }
 
+void CreateTypedefHeader(ITypeInfo *pTypeInfo,
+        TYPEATTR *pTypeAttr, TYPELIB_DATA *pTLData)
+{
+    BOOL bFirst = TRUE;
+    WCHAR wszGuid[MAX_LOAD_STRING];
+    const WCHAR wszTypedef[] = { 't','y','p','e','d','e','f',' ','\0' };
+    const WCHAR wszPublic[] = { 'p','u','b','l','i','c','\0' };
+
+    AddToTLDataStrW(pTLData, wszTypedef);
+    if(memcmp(&pTypeAttr->guid, &GUID_NULL, sizeof(GUID)))
+    {
+        if(bFirst) AddToTLDataStrW(pTLData, wszOpenBrackets1);
+        else
+        {
+            AddToTLDataStrW(pTLData, wszComa);
+            AddToTLDataStrW(pTLData, wszSpace);
+        }
+        bFirst = FALSE;
+        AddToTLDataStrW(pTLData, wszUUID);
+        AddToTLDataStrW(pTLData, wszOpenBrackets2);
+        StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
+        wszGuid[lstrlenW(wszGuid)-1] = '\0';
+        AddToTLDataStrW(pTLData, &wszGuid[1]);
+        AddToTLDataStrW(pTLData, wszCloseBrackets2);
+    }
+    if(pTypeAttr->typekind == TKIND_ALIAS)
+    {
+        if(bFirst) AddToTLDataStrW(pTLData, wszOpenBrackets1);
+        else
+        {
+            AddToTLDataStrW(pTLData, wszComa);
+            AddToTLDataStrW(pTLData, wszSpace);
+        }
+        bFirst = FALSE;
+        AddToTLDataStrW(pTLData, wszPublic);
+    }
+    if(!bFirst)
+    {
+        AddToTLDataStrW(pTLData, wszCloseBrackets1);
+        AddToTLDataStrW(pTLData, wszNewLine);
+    }
+}
+
 int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
@@ -883,6 +926,23 @@ int PopulateTree(void)
             case TKIND_ENUM:
                 AddToStrW(wszText, wszTKIND_ENUM);
                 AddToStrW(wszText, bstrName);
+
+                CreateTypedefHeader(pTypeInfo, pTypeAttr,
+                        (TYPELIB_DATA*)(U(tvis).item.lParam));
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam),
+                        &wszTKIND_ENUM[lstrlenW(wszTKIND_ALIAS)]);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszOpenBrackets3);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam),wszNewLine);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszCloseBrackets3);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszSpace);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        bstrName);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszSemicolon);
+                AddToStrW(((TYPELIB_DATA*)(U(tvis).item.lParam))->wszInsertAfter,
+                        wszNewLine);
                 break;
             case TKIND_RECORD:
                 AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszTKIND_RECORD);
@@ -961,6 +1021,13 @@ int PopulateTree(void)
                 AddToStrW(wszText, wszSpace);
                 AddToStrW(wszText, bstrName);
                 AddToStrW(wszText, wszAfter);
+
+                CreateTypedefHeader(pTypeInfo, pTypeAttr,
+                        (TYPELIB_DATA*)(U(tvis).item.lParam));
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam),
+                        &wszText[lstrlenW(wszTKIND_ALIAS)]);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszSemicolon);
+                AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam), wszNewLine);
                 break;
             default:
                 lstrcpyW(wszText, bstrName);
