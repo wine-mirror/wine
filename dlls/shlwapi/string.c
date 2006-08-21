@@ -65,6 +65,63 @@ static  fnpConvertINetUnicodeToMultiByte pConvertINetUnicodeToMultiByte;
 static HRESULT WINAPI _SHStrDupAA(LPCSTR,LPSTR*);
 static HRESULT WINAPI _SHStrDupAW(LPCWSTR,LPSTR*);
 
+
+/*************************************************************************
+ * FormatInt   [internal]
+ *
+ * Format an integer according to the current locale
+ *
+ * RETURNS
+ *  The number of bytes written on success or 0 on failure
+ */
+static int FormatInt(LONGLONG qdwValue, LPWSTR pszBuf, int cchBuf)
+{
+  NUMBERFMTW fmt;
+  WCHAR decimal[8], thousand[8];
+  WCHAR grouping[64];
+  WCHAR buf[24];
+  WCHAR *c;
+  BOOL neg = (qdwValue < 0);
+  
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt.LeadingZero, sizeof(fmt.LeadingZero)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_INEGNUMBER|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt.LeadingZero, sizeof(fmt.NegativeOrder)/sizeof(WCHAR));
+  fmt.NumDigits = 0;
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimal, sizeof(decimal)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousand, sizeof(thousand)/sizeof(WCHAR));
+  fmt.lpThousandSep = thousand;
+  fmt.lpDecimalSep = decimal;
+  
+  /* 
+   * Converting grouping string to number as described on 
+   * http://blogs.msdn.com/oldnewthing/archive/2006/04/18/578251.aspx
+   */
+  fmt.Grouping = 0;
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, sizeof(grouping)/sizeof(WCHAR));
+  for (c = grouping; *c; c++)
+    if (*c >= '0' && *c < '9')
+    {
+      fmt.Grouping *= 10;
+      fmt.Grouping += *c - '0';
+    }
+
+  if (fmt.Grouping % 10 == 0)
+    fmt.Grouping /= 10;
+  else
+    fmt.Grouping *= 10;
+    
+  c = &buf[24];
+  *(--c) = 0;
+  do
+  {
+    *(--c) = '0' + (qdwValue%10);
+    qdwValue /= 10;
+  } while (qdwValue > 0);
+  if (neg)
+    *(--c) = '-';
+  
+  return GetNumberFormatW(LOCALE_USER_DEFAULT, 0, c, &fmt, pszBuf, cchBuf);
+}
+
 /*************************************************************************
  * SHLWAPI_ChrCmpHelperA
  *
@@ -1563,24 +1620,12 @@ HRESULT WINAPI StrRetToBSTR(STRRET *lpStrRet, LPCITEMIDLIST pidl, BSTR* pBstrOut
  */
 LPSTR WINAPI StrFormatKBSizeA(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
 {
-  char szBuff[256], *szOut = szBuff + sizeof(szBuff) - 1;
-  LONGLONG ulKB = (llBytes + 1023) >> 10;
-
-  TRACE("(0x%s,%p,%d)\n", wine_dbgstr_longlong(llBytes), lpszDest, cchMax);
-
-  *szOut-- = '\0';
-  *szOut-- = 'B';
-  *szOut-- = 'K';
-  *szOut-- = ' ';
-
-  do
-  {
-    LONGLONG ulNextDigit = ulKB % 10;
-    *szOut-- = '0' + ulNextDigit;
-    ulKB = (ulKB - ulNextDigit) / 10;
-  } while (ulKB > 0);
-
-  lstrcpynA(lpszDest, szOut + 1, cchMax);
+  WCHAR wszBuf[256];
+  
+  if (!StrFormatKBSizeW(llBytes, wszBuf, 256))
+    return NULL;
+  if (!WideCharToMultiByte(CP_ACP, 0, wszBuf, -1, lpszDest, cchMax, NULL, NULL))
+    return NULL;
   return lpszDest;
 }
 
@@ -1591,24 +1636,19 @@ LPSTR WINAPI StrFormatKBSizeA(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
  */
 LPWSTR WINAPI StrFormatKBSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 {
-  WCHAR szBuff[256], *szOut = szBuff + sizeof(szBuff)/sizeof(WCHAR) - 1;
-  LONGLONG ulKB = (llBytes + 1023) >> 10;
+  static const WCHAR kb[] = {' ','K','B',0};
+  LONGLONG llKB = (llBytes + 1023) >> 10;
+  int len;
 
   TRACE("(0x%s,%p,%d)\n", wine_dbgstr_longlong(llBytes), lpszDest, cchMax);
 
-  *szOut-- = '\0';
-  *szOut-- = 'B';
-  *szOut-- = 'K';
-  *szOut-- = ' ';
+  if (!FormatInt(llKB, lpszDest, cchMax))
+    return NULL;
 
-  do
-  {
-    LONGLONG ulNextDigit = ulKB % 10;
-    *szOut-- = '0' + ulNextDigit;
-    ulKB = (ulKB - ulNextDigit) / 10;
-  } while (ulKB > 0);
-
-  lstrcpynW(lpszDest, szOut + 1, cchMax);
+  len = lstrlenW(lpszDest);
+  if (cchMax - len < 4)
+      return NULL;
+  lstrcatW(lpszDest, kb);
   return lpszDest;
 }
 
