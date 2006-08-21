@@ -513,6 +513,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                    alphafunc;
     BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
     BOOL                    last_was_notclipped;
+    BOOL                    untransformed;
 
     /* State block related */
     BOOL                    isRecordingState;

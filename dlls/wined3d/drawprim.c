@@ -182,8 +182,13 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
         width  = This->stateBlock->viewport.Width;
         minZ   = This->stateBlock->viewport.MinZ;
         maxZ   = This->stateBlock->viewport.MaxZ;
-        TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-        glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+        if(!This->untransformed) {
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
+            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+        } else {
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
+            glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
+        }
         checkGLcall("glOrtho");
 
         /* Window Coord 0 is the middle of the first pixel, so translate by half
@@ -258,6 +263,7 @@ static void primitiveInitState(
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
+        This->untransformed = TRUE;
 
         if (!useVS && (This->last_was_rhw || !This->modelview_valid)) {
             /* Only reapply when have to */
