@@ -2082,7 +2082,7 @@ DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
     case PT_VALUE:
         dwSize = pdata->u.file.dwFileSize;
         if (pOut)
-            StrFormatByteSizeA(dwSize, pOut, uOutSize);
+            StrFormatKBSizeA(dwSize, pOut, uOutSize);
         return dwSize;
     }
     if (pOut)

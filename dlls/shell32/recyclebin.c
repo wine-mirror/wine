@@ -424,7 +424,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
             PathRemoveFileSpecW(buffer);
             break;
         case COLUMN_SIZE:
-            StrFormatByteSizeW(((LONGLONG)data.nFileSizeHigh<<32)|data.nFileSizeLow, buffer, MAX_PATH);
+            StrFormatKBSizeW(((LONGLONG)data.nFileSizeHigh<<32)|data.nFileSizeLow, buffer, MAX_PATH);
             break;
         case COLUMN_MTIME:
             FormatDateTime(buffer, MAX_PATH, data.ftLastWriteTime);
