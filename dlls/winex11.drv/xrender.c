@@ -632,6 +632,36 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     UINT ggo_format = GGO_GLYPH_INDEX;
     XRenderPictFormat pf;
 
+    switch(format) {
+    case AA_Grey:
+	ggo_format |= WINE_GGO_GRAY16_BITMAP;
+	break;
+
+    default:
+        ERR("aa = %d - not implemented\n", format);
+    case AA_None:
+        ggo_format |= GGO_BITMAP;
+	break;
+    }
+
+    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
+			      NULL);
+    if(buflen == GDI_ERROR) {
+        if(format != AA_None) {
+            format = AA_None;
+            entry->aa_default = AA_None;
+            ggo_format &= ~WINE_GGO_GRAY16_BITMAP;
+            ggo_format |= GGO_BITMAP;
+            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
+                                      NULL);
+        }
+        if(buflen == GDI_ERROR) {
+            ERR("GetGlyphOutlineW failed\n");
+            return FALSE;
+        }
+        TRACE("Turning off antialiasing for this monochrome font\n");
+    }
+
     /* If there is nothing for the current type, we create the entry. */
     if( !entry->format[format] ) {
         entry->format[format] = HeapAlloc(GetProcessHeap(),
@@ -676,35 +706,6 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	}
     }
 
-    switch(format) {
-    case AA_Grey:
-	ggo_format |= WINE_GGO_GRAY16_BITMAP;
-	break;
-
-    default:
-        ERR("aa = %d - not implemented\n", format);
-    case AA_None:
-        ggo_format |= GGO_BITMAP;
-	break;
-    }
-
-    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
-			      NULL);
-    if(buflen == GDI_ERROR) {
-        if(format != AA_None) {
-            format = AA_None;
-            entry->aa_default = AA_None;
-            ggo_format &= ~WINE_GGO_GRAY16_BITMAP;
-            ggo_format |= GGO_BITMAP;
-            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
-                                      NULL);
-        }
-        if(buflen == GDI_ERROR) {
-            ERR("GetGlyphOutlineW failed\n");
-            return FALSE;
-        }
-        TRACE("Turning off antialiasing for this monochrome font\n");
-    }
 
     if(formatEntry->glyphset == 0 && X11DRV_XRender_Installed) {
         switch(format) {
@@ -1250,6 +1251,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
 	    UploadGlyph(physDev, wstr[idx], antialias);
+            /* re-evaluate antialias since aa_default may have changed */
+            if( disable_antialias == FALSE )
+                antialias = entry->aa_default;
             formatEntry = entry->format[antialias];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
 	    UploadGlyph(physDev, wstr[idx], antialias);
