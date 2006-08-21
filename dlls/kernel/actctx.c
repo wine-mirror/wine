@@ -160,7 +160,9 @@ BOOL WINAPI FindActCtxSectionStringA(DWORD dwFlags, const GUID* lpExtGuid,
                                     ULONG ulId, LPCSTR lpSearchStr,
                                     PACTCTX_SECTION_KEYED_DATA pInfo)
 {
-  FIXME("stub!\n");
+  FIXME("%08lx %s %lu %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
+       ulId, debugstr_a(lpSearchStr), pInfo);
+  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
 
@@ -173,7 +175,9 @@ BOOL WINAPI FindActCtxSectionStringW(DWORD dwFlags, const GUID* lpExtGuid,
                                     ULONG ulId, LPCWSTR lpSearchStr,
                                     PACTCTX_SECTION_KEYED_DATA pInfo)
 {
-  FIXME("stub!\n");
+  FIXME("%08lx %s %lu %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
+       ulId, debugstr_w(lpSearchStr), pInfo);
+  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
 
@@ -186,7 +190,9 @@ BOOL WINAPI FindActCtxSectionGuid(DWORD dwFlags, const GUID* lpExtGuid,
                                   ULONG ulId, const GUID* lpSearchGuid,
                                   PACTCTX_SECTION_KEYED_DATA pInfo)
 {
-  FIXME("stub!\n");
+  FIXME("%08lx %s %lu %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
+       ulId, debugstr_guid(lpSearchGuid), pInfo);
+  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
 
@@ -199,7 +205,8 @@ BOOL WINAPI QueryActCtxW(DWORD dwFlags, HANDLE hActCtx, PVOID pvSubInst,
                          ULONG ulClass, PVOID pvBuff, SIZE_T cbBuff,
                          SIZE_T *pcbLen)
 {
-  FIXME("stub!\n");
+  FIXME("%08lx %p %p %lu %p %ld %p\n", dwFlags, hActCtx,
+       pvSubInst, ulClass, pvBuff, cbBuff, pcbLen);
   /* this makes Adobe Photoshop 7.0 happy */
   SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
