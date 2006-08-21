@@ -206,17 +206,51 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     return TRUE;
 }
 
+/***********************************************************************
+ *             CryptSIPRetrieveSubjectGuid (CRYPT32.@)
+ *
+ * Determine the right SIP GUID for the given file.
+ *
+ * PARAMS
+ *  FileName   [I] Filename.
+ *  hFileIn    [I] Optional handle to the file.
+ *  pgSubject  [O] The SIP's GUID.
+ *
+ * RETURNS
+ *  Success: TRUE. pgSubject contains the SIP GUID.
+ *  Failure: FALSE. (Look at GetLastError()).
+ *
+ */
 BOOL WINAPI CryptSIPRetrieveSubjectGuid
       (LPCWSTR FileName, HANDLE hFileIn, GUID *pgSubject)
 {
-    FIXME("stub!\n");
+    FIXME("(%s %p %p) stub!\n", wine_dbgstr_w(FileName), hFileIn, pgSubject);
     return FALSE;
 }
 
+/***********************************************************************
+ *             CryptSIPLoad (CRYPT32.@)
+ *
+ * Load the functions for the given SIP.
+ *
+ * PARAMS
+ *  pgSubject    [I] The GUID.
+ *  dwFlags      [I] Flags.
+ *  pSipDispatch [I] The loaded functions.
+ *
+ * RETURNS
+ *  Success: TRUE. pSipDispatch contains the functions.
+ *  Failure: FALSE. (Look at GetLastError()).
+ *
+ * NOTES
+ *  Testing shows that (somehow) the table of functions is cached between
+ *  calls.
+ *
+ */
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
-    FIXME("stub!\n");
+    FIXME("(%s %ld %p) stub!\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
     return FALSE;
 }
 
