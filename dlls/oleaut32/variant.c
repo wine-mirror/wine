@@ -2172,7 +2172,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     /* Zero is not a negative number */
     bNegative = pNumprs->dwOutFlags & NUMPRS_NEG && ul64 ? TRUE : FALSE;
 
-    TRACE("Integer value is %lld, bNeg %d\n", ul64, bNegative);
+    TRACE("Integer value is 0x%s, bNeg %d\n", wine_dbgstr_longlong(ul64), bNegative);
 
     /* For negative integers, try the signed types in size order */
     if (!bOverflow && bNegative)
