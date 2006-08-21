@@ -2151,7 +2151,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_EXLINEFROMCHAR:
   {
-    return ME_RowNumberFromCharOfs(editor, lParam);
+    if (lParam == -1)
+      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(editor,1));
+    else    
+      return ME_RowNumberFromCharOfs(editor, lParam);
   }
   case EM_LINEINDEX:
   {
