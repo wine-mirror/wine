@@ -203,7 +203,6 @@ AC_CHECK_HEADERS(\
 	poll.h \
 	process.h \
 	pthread.h \
-	pthread_np.h \
 	pwd.h \
 	regex.h \
 	sched.h \
@@ -297,6 +296,11 @@ AC_CHECK_HEADERS([resolv.h],,,
      #endif])
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
+
+AC_CHECK_HEADERS([pthread_np.h],,,
+[#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif])
 
 AC_CHECK_HEADERS([linux/videodev.h],,,
 [#ifdef HAVE_SYS_TIME_H
