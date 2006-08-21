@@ -113,7 +113,7 @@ static void test_RunSetupCommand()
 
     /* try to run an exe with the RSC_FLAG_INF flag */
     hexe = (HANDLE)0xdeadbeef;
-    hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(is_spapi_err(hr), "Expected a setupapi error, got %ld\n", hr);
     ok(hexe == (HANDLE)0xdeadbeef, "Expected hexe to be 0xdeadbeef\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
@@ -133,43 +133,43 @@ static void test_RunSetupCommand()
     lstrcat(path, "\\one\\test.inf");
     lstrcpy(dir, CURR_DIR);
     lstrcat(dir, "\\one");
-    hr = pRunSetupCommand(NULL, path, "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, path, "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", hr);
 
     /* try a full path to the INF, NULL working dir */
-    hr = pRunSetupCommand(NULL, path, "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, path, "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %ld\n", hr);
 
     /* try a full path to the INF, empty working dir */
-    hr = pRunSetupCommand(NULL, path, "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, path, "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", hr);
 
     /* try a relative path to the INF, with working dir provided */
-    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", hr);
 
     /* try a relative path to the INF, NULL working dir */
-    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %ld\n", hr);
 
     /* try a relative path to the INF, empty working dir */
-    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "one\\test.inf", "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", hr);
 
     /* try only the INF filename, with working dir provided */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", dir, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
 
     /* try only the INF filename, NULL working dir */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %ld\n", hr);
 
     /* try only the INF filename, empty working dir */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     todo_wine
     {
         ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -182,17 +182,17 @@ static void test_RunSetupCommand()
     create_inf_file("test.inf");
 
     /* try INF file in the current directory, working directory provided */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", CURR_DIR, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", CURR_DIR, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
 
     /* try INF file in the current directory, NULL working directory */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", NULL, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %ld\n", hr);
 
     /* try INF file in the current directory, empty working directory */
-    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", CURR_DIR, "Title", NULL, RSC_FLAG_INF, NULL);
+    hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", CURR_DIR, "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
 }
