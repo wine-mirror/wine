@@ -266,8 +266,8 @@ static void test_RtlUlonglongByteSwap(void)
 
     result = pRtlUlonglongByteSwap( ((ULONGLONG)0x76543210 << 32) | 0x87654321 );
     ok( (((ULONGLONG)0x21436587 << 32) | 0x10325476) == result,
-       "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%llx, expected 0x2143658710325476\n",
-       result);
+       "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%lx%08lx, expected 0x2143658710325476\n",
+       (DWORD)(result >> 32), (DWORD)result);
 }
 
 
@@ -490,11 +490,11 @@ static void test_RtlUniform(void)
         seed_bak = seed;
         result = pRtlUniform(&seed);
         ok(result == expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
-                num, seed_bak, result, expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
         ok(seed == expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
-                num, seed_bak, seed, expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
     } /* for */
 /*
  * Further investigation shows: In the different regions the highest bit
@@ -537,11 +537,11 @@ static void test_RtlUniform(void)
         seed_bak = seed;
         result = pRtlUniform(&seed);
         ok(result == expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
-                num, seed_bak, result, expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
         ok(seed == expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
-                num, seed_bak, seed, expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
     } /* for */
 /*
  * More tests show that RtlUniform does not return 0x7ffffffd for seed values
@@ -754,11 +754,11 @@ static void test_RtlRandom(void)
 	} /* if */
         result = pRtlRandom(&seed);
         ok(result == result_expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
-                num, seed_bak, result, result_expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, result_expected);
         ok(seed == seed_expected,
-                "test: %llu RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
-                num, seed_bak, seed, seed_expected);
+                "test: 0x%lx%08lx RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
+                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, seed_expected);
     } /* for */
 }
 
