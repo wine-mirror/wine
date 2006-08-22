@@ -110,6 +110,43 @@ static UINT create_remove_file_table( MSIHANDLE hdb )
             "PRIMARY KEY `FileKey`)" );
 }
 
+static UINT create_appsearch_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `AppSearch` ("
+            "`Property` CHAR(72) NOT NULL, "
+            "`Signature_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Property`, `Signature_`)" );
+}
+
+static UINT create_reglocator_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `RegLocator` ("
+            "`Signature_` CHAR(72) NOT NULL, "
+            "`Root` SHORT NOT NULL, "
+            "`Key` CHAR(255) NOT NULL, "
+            "`Name` CHAR(255), "
+            "`Type` SHORT "
+            "PRIMARY KEY `Signature_`)" );
+}
+
+static UINT create_signature_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `Signature` ("
+            "`Signature` CHAR(72) NOT NULL, "
+            "`FileName` CHAR(255) NOT NULL, "
+            "`MinVersion` CHAR(20), "
+            "`MaxVersion` CHAR(20), "
+            "`MinSize` LONG, "
+            "`MaxSize` LONG, "
+            "`MinDate` LONG, "
+            "`MaxDate` LONG, "
+            "`Languages` CHAR(255) "
+            "PRIMARY KEY `Signature`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -161,6 +198,55 @@ static UINT add_file_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `File` "
             "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_appsearch_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `AppSearch` "
+            "(`Property`, `Signature_`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_reglocator_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `RegLocator` "
+            "(`Signature_`, `Root`, `Key`, `Name`, `Type`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_signature_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Signature` "
+            "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
+            " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -2178,6 +2264,52 @@ static void test_removefiles(void)
     DeleteFileA(msifile);
 }
 
+static void test_appsearch(void)
+{
+    MSIHANDLE hpkg;
+    UINT r;
+    MSIHANDLE hdb;
+    CHAR prop[MAX_PATH];
+    DWORD size = MAX_PATH;
+
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n" );
+
+    r = create_appsearch_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create AppSearch table: %d\n", r );
+
+    r = add_appsearch_entry( hdb, "'WEBBROWSERPROG', 'NewSignature1'" );
+    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
+
+    r = create_reglocator_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+
+    r = add_reglocator_entry( hdb, "'NewSignature1', 0, 'htmlfile\\shell\\open\\command', '', 1" );
+    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+
+    r = create_signature_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
+
+    r = add_signature_entry( hdb, "'NewSignature1', 'FileName', '', '', '', '', '', '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
+
+    hpkg = package_from_db( hdb );
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiDoAction( hpkg, "AppSearch" );
+    ok( r == ERROR_SUCCESS, "AppSearch failed: %d\n", r);
+
+    r = MsiGetPropertyA( hpkg, "WEBBROWSERPROG", prop, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    todo_wine
+    {
+        ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
+    }
+
+    MsiCloseHandle( hpkg );
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -2193,4 +2325,5 @@ START_TEST(package)
     test_states();
     test_getproperty();
     test_removefiles();
+    test_appsearch();
 }
