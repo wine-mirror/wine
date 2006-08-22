@@ -367,6 +367,16 @@ BOOL WINAPI I_CryptUninstallAsn1Module(void *x)
     return TRUE;
 }
 
+BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
+ DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
+ const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat, DWORD *pcbFormat)
+{
+    FIXME("(%08lx, %ld, %ld, %p, %s, %p, %ld, %p, %p): stub\n",
+     dwCertEncodingType, dwFormatType, dwFormatStrType, pFormatStruct,
+     debugstr_a(lpszStructType), pbEncoded, cbEncoded, pbFormat, pcbFormat);
+    return FALSE;
+}
+
 BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
     DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
     DWORD dwFlags, DWORD* pdwMsgAndCertEncodingType, DWORD* pdwContentType,

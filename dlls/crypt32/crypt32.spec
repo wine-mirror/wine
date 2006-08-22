@@ -113,7 +113,7 @@
 @ stdcall CryptExportPublicKeyInfo(long long long ptr ptr)
 @ stdcall CryptExportPublicKeyInfoEx(long long long str long ptr ptr ptr)
 @ stdcall CryptFindOIDInfo(long ptr long)
-@ stub CryptFormatObject
+@ stdcall CryptFormatObject(long long long ptr str ptr long ptr ptr)
 @ stdcall CryptFreeOIDFunctionAddress(long long)
 @ stub CryptGetAsyncParam
 @ stdcall CryptGetDefaultOIDDllList(long long ptr ptr)
