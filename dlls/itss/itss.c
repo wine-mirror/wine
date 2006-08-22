@@ -67,32 +67,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  * ITSS ClassFactory
  */
 typedef struct {
-    IClassFactory ITF_IClassFactory;
-
-    LONG ref;
+    const IClassFactoryVtbl *lpVtbl;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } IClassFactoryImpl;
-
-struct object_creation_info
-{
-    const CLSID *clsid;
-    LPCSTR szClassName;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
-};
-
-static const struct object_creation_info object_creation[] =
-{
-    { &CLSID_ITStorage, "ITStorage", ITSS_create },
-    { &CLSID_ITSProtocol, "ITSProtocol", ITS_IParseDisplayName_create },
-};
 
 static HRESULT WINAPI
 ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IClassFactory))
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
     {
 	IClassFactory_AddRef(iface);
 	*ppobj = This;
@@ -105,22 +90,14 @@ ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 
 static ULONG WINAPI ITSSCF_AddRef(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    return InterlockedIncrement(&This->ref);
+    InterlockedIncrement(&dll_count);
+    return 2;
 }
 
 static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This);
-        InterlockedDecrement(&dll_count);
-    }
-
-    return ref;
+    InterlockedDecrement(&dll_count);
+    return 1;
 }
 
 
@@ -130,8 +107,8 @@ static HRESULT WINAPI ITSSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOut
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
-    
-    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+
+    TRACE("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
 
     *ppobj = NULL;
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
@@ -146,7 +123,7 @@ static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
     TRACE("(%p)->(%d)\n", iface, dolock);
 
-    if(dolock)
+    if (dolock)
         InterlockedIncrement(&dll_count);
     else
         InterlockedDecrement(&dll_count);
@@ -163,49 +140,29 @@ static const IClassFactoryVtbl ITSSCF_Vtbl =
     ITSSCF_LockServer
 };
 
+static const IClassFactoryImpl ITStorage_factory = { &ITSSCF_Vtbl, ITSS_create };
+static const IClassFactoryImpl ITSProtocol_factory = { &ITSSCF_Vtbl, ITS_IParseDisplayName_create };
 
 /***********************************************************************
  *		DllGetClassObject	(ITSS.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    DWORD i;
-    IClassFactoryImpl *factory;
+    const IClassFactoryImpl *factory;
 
-    TRACE("%s %s %p\n",debugstr_guid(rclsid), debugstr_guid(iid), ppv);
-    
-    if ( !IsEqualGUID( &IID_IClassFactory, iid )
-	 && ! IsEqualGUID( &IID_IUnknown, iid) )
-	return E_NOINTERFACE;
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
 
-    for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
-    {
-	if (IsEqualGUID(object_creation[i].clsid, rclsid))
-	    break;
-    }
-
-    if (i == sizeof(object_creation)/sizeof(object_creation[0]))
+    if (IsEqualGUID(&CLSID_ITStorage, rclsid))
+        factory = &ITStorage_factory;
+    else if (IsEqualGUID(&CLSID_ITSProtocol, rclsid))
+        factory = &ITSProtocol_factory;
+    else
     {
 	FIXME("%s: no class found.\n", debugstr_guid(rclsid));
 	return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    TRACE("Creating a class factory for %s\n",object_creation[i].szClassName);
-
-    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
-    if (factory == NULL) return E_OUTOFMEMORY;
-
-    factory->ITF_IClassFactory.lpVtbl = &ITSSCF_Vtbl;
-    factory->ref = 1;
-
-    factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
-
-    *ppv = &(factory->ITF_IClassFactory);
-    InterlockedIncrement(&dll_count);
-
-    TRACE("(%p) <- %p\n", ppv, &(factory->ITF_IClassFactory) );
-
-    return S_OK;
+    return IUnknown_QueryInterface( (IUnknown*) factory, iid, ppv );
 }
 
 /*****************************************************************************/
