@@ -110,6 +110,18 @@ static void test_sscanf( void )
     ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
     ok(result == -1, "Read %d, expected -1\n", result);
 
+    /* Check %i for octal and hexadecimal input */
+    result = 0;
+    strcpy(buffer,"017");
+    ret = sscanf(buffer, "%i", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 15, "Wrong number read\n");
+    result = 0;
+    strcpy(buffer,"0x17");
+    ret = sscanf(buffer, "%i", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 23, "Wrong number read\n");
+
     /* %o */
     result = 0;
     ret = sscanf("-1", "%o", &result);

@@ -169,7 +169,7 @@ _FUNCTION_ {
 		base = 10;
 		goto number;
 	    case 'i': /* generic integer */
-		base = 10;
+		base = 0;
 	    number: {
 		    /* read an integer */
 		    ULONGLONG cur = 0;
@@ -200,6 +200,9 @@ _FUNCTION_ {
 			} else if (base==0)
 			    base = 8;
 		    }
+		    /* format %i without indication of base */
+		    if (base==0)
+			base = 10;
 		    /* throw away leading zeros */
 		    while (width!=0 && nch=='0') {
                         nch = _GETC_(file);
