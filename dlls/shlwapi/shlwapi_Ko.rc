@@ -34,7 +34,8 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON L"아니오(&N)" IDNO, 160, 40, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
+
 STRINGTABLE DISCARDABLE
 {
-    IDS_BYTES_FORMAT    "%ld bytes"
+    IDS_BYTES_FORMAT    "%ld 바이트"
 }
