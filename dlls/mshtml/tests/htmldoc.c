@@ -103,6 +103,7 @@ DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(UpdateUI);
 DEFINE_EXPECT(Navigate);
 DEFINE_EXPECT(OnFrameWindowActivate);
+DEFINE_EXPECT(OnChanged_READYSTATE);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -211,6 +212,56 @@ static const IHlinkFrameVtbl HlinkFrameVtbl = {
 };
 
 static IHlinkFrame HlinkFrame = { &HlinkFrameVtbl };
+
+static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
+        REFIID riid, void**ppv)
+{
+    if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI PropertyNotifySink_AddRef(IPropertyNotifySink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
+{
+    switch(dispID) {
+    case DISPID_READYSTATE:
+        CHECK_EXPECT(OnChanged_READYSTATE);
+        return S_OK;
+    }
+
+    ok(0, "unexpected id %ld\n", dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
+    PropertyNotifySink_QueryInterface,
+    PropertyNotifySink_AddRef,
+    PropertyNotifySink_Release,
+    PropertyNotifySink_OnChanged,
+    PropertyNotifySink_OnRequestEdit
+};
+
+static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
@@ -1293,6 +1344,13 @@ static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID ri
     hres = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
     ok(hres == E_POINTER, "GetConnectionPointContainer failed: %08lx, expected E_POINTER\n", hres);
 
+    if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
+        DWORD cookie;
+
+        hres = IConnectionPoint_Advise(cp, (IUnknown*)&PropertyNotifySink, &cookie);
+        ok(hres == S_OK, "Advise failed: %08lx\n", hres);
+    }
+
     IConnectionPoint_Release(cp);
 }
 
@@ -1344,6 +1402,7 @@ static void test_Load(IPersistMoniker *persist)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_USERAGENT);
     SET_EXPECT(Invoke_AMBIENT_PALETTE);
+    SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(GetContainer);
     SET_EXPECT(LockContainer);
     SET_EXPECT(Exec_ShellDocView_37);
@@ -1367,6 +1426,7 @@ static void test_Load(IPersistMoniker *persist)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
     CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(GetContainer);
     CHECK_CALLED(LockContainer);
     CHECK_CALLED(Exec_ShellDocView_37);
@@ -1624,6 +1684,7 @@ static void test_exec_editmode(IUnknown *unk)
     SET_EXPECT(GetHostInfo);
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(OnChanged_READYSTATE);
     expect_status_text = NULL;
 
     hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
@@ -1635,6 +1696,7 @@ static void test_exec_editmode(IUnknown *unk)
     CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(OnChanged_READYSTATE);
 
     IOleCommandTarget_Release(cmdtrg);
 }
@@ -2149,6 +2211,7 @@ static void test_HTMLDocument_hlink(void)
     if(FAILED(hres))
         return;
 
+    test_ConnectionPointContainer(unk);
     test_Persist(unk);
     test_Navigate(unk);
 
@@ -2185,6 +2248,7 @@ static void test_editing_mode(void)
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08lx\n", hres);
 
+    test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
 

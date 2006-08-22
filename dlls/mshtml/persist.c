@@ -191,6 +191,8 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
+    call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
+
     HTMLDocument_LockContainer(This, TRUE);
     
     hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);

@@ -397,6 +397,8 @@ static HRESULT exec_editmode(HTMLDocument *This)
     if(This->nscontainer)
         setup_ns_editing(This->nscontainer);
 
+    call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
+
     return S_OK;
 }
 

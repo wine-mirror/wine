@@ -51,6 +51,16 @@ struct ConnectionPoint {
     IID iid;
 };
 
+void call_property_onchanged(ConnectionPoint *This, DISPID dispid)
+{
+    DWORD i;
+
+    for(i=0; i<This->sinks_size; i++) {
+        if(This->sinks[i].propnotif)
+            IPropertyNotifySink_OnChanged(This->sinks[i].propnotif, dispid);
+    }
+}
+
 #define CONPOINT_THIS(iface) DEFINE_THIS(ConnectionPoint, ConnectionPoint, iface)
 
 static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,

@@ -298,6 +298,8 @@ void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
+void call_property_onchanged(ConnectionPoint*,DISPID);
+
 void *nsalloc(size_t);
 void nsfree(void*);
 
