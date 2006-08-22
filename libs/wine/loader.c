@@ -362,7 +362,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     *nt = *nt_descr;
 
-    delta      = (BYTE *)nt_descr - addr;
+    delta      = (const BYTE *)nt_descr - addr;
     code_start = page_size;
     data_start = delta & ~page_mask;
     data_end   = (nt->OptionalHeader.SizeOfImage + delta + page_mask) & ~page_mask;
