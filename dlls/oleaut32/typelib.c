@@ -5011,6 +5011,10 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
         *vt |= VT_DISPATCH;
         break;
 
+    case TKIND_COCLASS:
+        *vt |= VT_UNKNOWN;
+        break;
+
     case TKIND_RECORD:
         FIXME("TKIND_RECORD unhandled.\n");
         hr = E_NOTIMPL;
