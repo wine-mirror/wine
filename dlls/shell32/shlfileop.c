@@ -958,17 +958,18 @@ static void copy_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, LPWS
 /* copy a file or directory to another directory */
 static void copy_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, FILE_ENTRY *feTo)
 {
-    WCHAR szDestPath[MAX_PATH];
-
     if (!PathFileExistsW(feTo->szFullPath))
         SHNotifyCreateDirectoryW(feTo->szFullPath, NULL);
 
-    PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
-
     if (IsAttribFile(feFrom->attributes))
+    {
+        WCHAR szDestPath[MAX_PATH];
+
+        PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
         SHNotifyCopyFileW(feFrom->szFullPath, szDestPath, FALSE);
+    }
     else if (!(lpFileOp->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
-        copy_dir_to_dir(lpFileOp, feFrom, szDestPath);
+        copy_dir_to_dir(lpFileOp, feFrom, feTo->szFullPath);
 }
 
 static void create_dest_dirs(LPWSTR szDestDir)
