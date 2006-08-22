@@ -21,8 +21,23 @@ LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_HTMLDISABLED    "HTML çevirisi devre dýþý."
+    IDS_HTMLDISABLED    "HTML motoru þu an devre dýþý."
     IDS_HTMLDOCUMENT    "HTML Belgesi"
+    IDS_DOWNLOADING     "Ýndiriliyor..."
+    IDS_INSTALLING      "Kuruluyor..."
+}
+
+ID_DWL_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 260, 85
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine Gecko Kurucusu"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "Bu uygulama bir HTML sayfasý göstermeye çalýþýyor. Wine, sayfanýn gösterilmesi " \
+          "için Gecko (Mozilla HTML motoru)'nun kurulu olmasýný gerektirir. Gecko motorunun " \
+          "otomatik olarak indirilmesi ve kurulmasý için Kur'u týklayýn.", ID_DWL_STATUS, 10, 10, 240, 30, SS_CENTER
+    CONTROL "Ýlerleme", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
+    PUSHBUTTON "Ýptal", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Kur", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
 }
 
 /* FIXME: This should be in shdoclc.dll */
@@ -232,8 +247,8 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "Buraya Kaydýr", IDM_SCROLLHERE
         MENUITEM SEPARATOR
-        MENUITEM "Left Edge",    IDM_LEFTEDGE
-        MENUITEM "Right Edge",   IDM_RIGHTEDGE
+        MENUITEM "Sol Kenar",    IDM_LEFTEDGE
+        MENUITEM "Sað Kenar",    IDM_RIGHTEDGE
         MENUITEM SEPARATOR
         MENUITEM "Soldaki Sayfa",   IDM_PAGELEFT
         MENUITEM "Saðdaki Sayfa",   IDM_PAGERIGHT
