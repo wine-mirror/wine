@@ -66,6 +66,38 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR,LPSTR*);
 static HRESULT WINAPI _SHStrDupAW(LPCWSTR,LPSTR*);
 
 
+static void FillNumberFmt(NUMBERFMTW *fmt, WCHAR decimal_buffer[8], WCHAR thousand_buffer[8])
+{
+  WCHAR grouping[64];
+  WCHAR *c;
+
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt->LeadingZero, sizeof(fmt->LeadingZero)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_INEGNUMBER|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt->LeadingZero, sizeof(fmt->NegativeOrder)/sizeof(WCHAR));
+  fmt->NumDigits = 0;
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimal_buffer, sizeof(decimal_buffer)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousand_buffer, sizeof(thousand_buffer)/sizeof(WCHAR));
+  fmt->lpThousandSep = thousand_buffer;
+  fmt->lpDecimalSep = decimal_buffer;
+  
+  /* 
+   * Converting grouping string to number as described on 
+   * http://blogs.msdn.com/oldnewthing/archive/2006/04/18/578251.aspx
+   */
+  fmt->Grouping = 0;
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, sizeof(grouping)/sizeof(WCHAR));
+  for (c = grouping; *c; c++)
+    if (*c >= '0' && *c < '9')
+    {
+      fmt->Grouping *= 10;
+      fmt->Grouping += *c - '0';
+    }
+
+  if (fmt->Grouping % 10 == 0)
+    fmt->Grouping /= 10;
+  else
+    fmt->Grouping *= 10;
+}
+
 /*************************************************************************
  * FormatInt   [internal]
  *
@@ -78,36 +110,11 @@ static int FormatInt(LONGLONG qdwValue, LPWSTR pszBuf, int cchBuf)
 {
   NUMBERFMTW fmt;
   WCHAR decimal[8], thousand[8];
-  WCHAR grouping[64];
   WCHAR buf[24];
   WCHAR *c;
   BOOL neg = (qdwValue < 0);
-  
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt.LeadingZero, sizeof(fmt.LeadingZero)/sizeof(WCHAR));
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_INEGNUMBER|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt.LeadingZero, sizeof(fmt.NegativeOrder)/sizeof(WCHAR));
-  fmt.NumDigits = 0;
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimal, sizeof(decimal)/sizeof(WCHAR));
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousand, sizeof(thousand)/sizeof(WCHAR));
-  fmt.lpThousandSep = thousand;
-  fmt.lpDecimalSep = decimal;
-  
-  /* 
-   * Converting grouping string to number as described on 
-   * http://blogs.msdn.com/oldnewthing/archive/2006/04/18/578251.aspx
-   */
-  fmt.Grouping = 0;
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, sizeof(grouping)/sizeof(WCHAR));
-  for (c = grouping; *c; c++)
-    if (*c >= '0' && *c < '9')
-    {
-      fmt.Grouping *= 10;
-      fmt.Grouping += *c - '0';
-    }
 
-  if (fmt.Grouping % 10 == 0)
-    fmt.Grouping /= 10;
-  else
-    fmt.Grouping *= 10;
+  FillNumberFmt(&fmt, decimal, thousand);  
     
   c = &buf[24];
   *(--c) = 0;
@@ -120,6 +127,29 @@ static int FormatInt(LONGLONG qdwValue, LPWSTR pszBuf, int cchBuf)
     *(--c) = '-';
   
   return GetNumberFormatW(LOCALE_USER_DEFAULT, 0, c, &fmt, pszBuf, cchBuf);
+}
+
+/*************************************************************************
+ * FormatDouble   [internal]
+ *
+ * Format an integer according to the current locale. Prints the specified number of digits
+ * after the decimal point
+ *
+ * RETURNS
+ *  The number of bytes written on success or 0 on failure
+ */
+static int FormatDouble(double value, int decimals, LPWSTR pszBuf, int cchBuf)
+{
+  static const WCHAR flfmt[] = {'%','f',0};
+  WCHAR buf[64];
+  NUMBERFMTW fmt;
+  WCHAR decimal[8], thousand[8];
+  
+  snprintfW(buf, 64, flfmt, value);
+
+  FillNumberFmt(&fmt, decimal, thousand);  
+  fmt.NumDigits = decimals;
+  return GetNumberFormatW(LOCALE_USER_DEFAULT, 0, buf, &fmt, pszBuf, cchBuf);
 }
 
 /*************************************************************************
@@ -2251,7 +2281,7 @@ typedef struct tagSHLWAPI_BYTEFORMATS
   LONGLONG dLimit;
   double   dDivisor;
   double   dNormaliser;
-  LPCWSTR   lpwszFormat;
+  int      nDecimals;
   WCHAR     wPrefix;
 } SHLWAPI_BYTEFORMATS;
 
@@ -2273,10 +2303,6 @@ typedef struct tagSHLWAPI_BYTEFORMATS
  */
 LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 {
-  static const WCHAR wsz3_0[] = {'%','3','.','0','f',0};
-  static const WCHAR wsz3_1[] = {'%','3','.','1','f',0};
-  static const WCHAR wsz3_2[] = {'%','3','.','2','f',0};
-
 #define KB ((ULONGLONG)1024)
 #define MB (KB*KB)
 #define GB (KB*KB*KB)
@@ -2285,24 +2311,23 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 
   static const SHLWAPI_BYTEFORMATS bfFormats[] =
   {
-    { 10*KB, 10.24, 100.0, wsz3_2, 'K' }, /* 10 KB */
-    { 100*KB, 102.4, 10.0, wsz3_1, 'K' }, /* 100 KB */
-    { 1000*KB, 1024.0, 1.0, wsz3_0, 'K' }, /* 1000 KB */
-    { 10*MB, 10485.76, 100.0, wsz3_2, 'M' }, /* 10 MB */
-    { 100*MB, 104857.6, 10.0, wsz3_1, 'M' }, /* 100 MB */
-    { 1000*MB, 1048576.0, 1.0, wsz3_0, 'M' }, /* 1000 MB */
-    { 10*GB, 10737418.24, 100.0, wsz3_2, 'G' }, /* 10 GB */
-    { 100*GB, 107374182.4, 10.0, wsz3_1, 'G' }, /* 100 GB */
-    { 1000*GB, 1073741824.0, 1.0, wsz3_0, 'G' }, /* 1000 GB */
-    { 10*TB, 10485.76, 100.0, wsz3_2, 'T' }, /* 10 TB */
-    { 100*TB, 104857.6, 10.0, wsz3_1, 'T' }, /* 100 TB */
-    { 1000*TB, 1048576.0, 1.0, wsz3_0, 'T' }, /* 1000 TB */
-    { 10*PB, 10737418.24, 100.00, wsz3_2, 'P' }, /* 10 PB */
-    { 100*PB, 107374182.4, 10.00, wsz3_1, 'P' }, /* 100 PB */
-    { 1000*PB, 1073741824.0, 1.00, wsz3_0, 'P' }, /* 1000 PB */
-    { 0, 10995116277.76, 100.00, wsz3_2, 'E' } /* EB's, catch all */
+    { 10*KB, 10.24, 100.0, 2, 'K' }, /* 10 KB */
+    { 100*KB, 102.4, 10.0, 1, 'K' }, /* 100 KB */
+    { 1000*KB, 1024.0, 1.0, 0, 'K' }, /* 1000 KB */
+    { 10*MB, 10485.76, 100.0, 2, 'M' }, /* 10 MB */
+    { 100*MB, 104857.6, 10.0, 1, 'M' }, /* 100 MB */
+    { 1000*MB, 1048576.0, 1.0, 0, 'M' }, /* 1000 MB */
+    { 10*GB, 10737418.24, 100.0, 2, 'G' }, /* 10 GB */
+    { 100*GB, 107374182.4, 10.0, 1, 'G' }, /* 100 GB */
+    { 1000*GB, 1073741824.0, 1.0, 0, 'G' }, /* 1000 GB */
+    { 10*TB, 10485.76, 100.0, 2, 'T' }, /* 10 TB */
+    { 100*TB, 104857.6, 10.0, 1, 'T' }, /* 100 TB */
+    { 1000*TB, 1048576.0, 1.0, 0, 'T' }, /* 1000 TB */
+    { 10*PB, 10737418.24, 100.00, 2, 'P' }, /* 10 PB */
+    { 100*PB, 107374182.4, 10.00, 1, 'P' }, /* 100 PB */
+    { 1000*PB, 1073741824.0, 1.00, 0, 'P' }, /* 1000 PB */
+    { 0, 10995116277.76, 100.00, 2, 'E' } /* EB's, catch all */
   };
-  WCHAR wszBuff[32];
   WCHAR wszAdd[] = {' ','?','B',0};
   double dBytes;
   UINT i = 0;
@@ -2342,10 +2367,10 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
 
   dBytes = floor(dBytes / bfFormats[i].dDivisor) / bfFormats[i].dNormaliser;
 
-  sprintfW(wszBuff, bfFormats[i].lpwszFormat, dBytes);
+  if (!FormatDouble(dBytes, bfFormats[i].nDecimals, lpszDest, cchMax))
+    return NULL;
   wszAdd[1] = bfFormats[i].wPrefix;
-  strcatW(wszBuff, wszAdd);
-  lstrcpynW(lpszDest, wszBuff, cchMax);
+  StrCatBuffW(lpszDest, wszAdd, cchMax);
   return lpszDest;
 }
 
