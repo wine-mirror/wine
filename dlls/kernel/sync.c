@@ -1831,6 +1831,7 @@ HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingComplet
 {
     FIXME("(%p, %p, %08lx, %08lx): stub.\n",
           hFileHandle, hExistingCompletionPort, CompletionKey, dwNumberOfConcurrentThreads);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
 
