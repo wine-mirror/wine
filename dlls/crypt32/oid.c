@@ -365,8 +365,8 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
             {
                 if (HIWORD(pszOID))
                 {
-                    if (HIWORD(function->entry.pszOID &&
-                     !strcasecmp(function->entry.pszOID, pszOID)))
+                    if (HIWORD(function->entry.pszOID) &&
+                     !strcasecmp(function->entry.pszOID, pszOID))
                     {
                         *ppvFuncAddr = function->entry.pvFuncAddr;
                         *phFuncAddr = NULL; /* FIXME: what should it be? */
