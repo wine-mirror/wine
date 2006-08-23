@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #define PROXY_DELEGATION
+#define COBJMACROS
 
 #include "wine/test.h"
 #include <windef.h>
@@ -426,7 +427,7 @@ const ProxyFileInfo *proxy_file_list[] = {
 };
 
 
-static void test_NdrDllGetClassObject(void)
+static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
 {
     IPSFactoryBuffer *ppsf = NULL;
     const CLSID PSDispatch = {0x20420, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46}};
@@ -524,6 +525,7 @@ todo_wine {
 #undef VTBL_TEST_ZERO
 
     ok(PSFactoryBuffer.RefCount == 1, "ref count %ld\n", PSFactoryBuffer.RefCount);
+    return ppsf;
 }
 
 static int base_buffer_invoke_called;
@@ -570,12 +572,72 @@ todo_wine {
 
 }
 
+static IRpcStubBuffer *create_stub(IPSFactoryBuffer *ppsf, REFIID iid, IUnknown *obj, HRESULT expected_result)
+{
+    IRpcStubBuffer *pstub = NULL;
+    HRESULT r;
+
+    r = IPSFactoryBuffer_CreateStub(ppsf, iid, obj, &pstub);
+    ok(r == expected_result, "CreateStub returned %08lx expected %08lx\n", r, expected_result);
+    return pstub;
+}
+
+static HRESULT WINAPI create_stub_test_QI(IUnknown *This, REFIID iid, void **ppv)
+{
+    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    *ppv = (void*)0xdeadbeef;
+    return S_OK;
+}
+
+static IUnknownVtbl create_stub_test_vtbl =
+{
+    create_stub_test_QI,
+    NULL,
+    NULL
+};
+
+static HRESULT WINAPI create_stub_test_fail_QI(IUnknown *This, REFIID iid, void **ppv)
+{
+    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static IUnknownVtbl create_stub_test_fail_vtbl =
+{
+    create_stub_test_fail_QI,
+    NULL,
+    NULL
+};
+
+static void test_CreateStub(IPSFactoryBuffer *ppsf)
+{
+    IUnknownVtbl *vtbl = &create_stub_test_vtbl;
+    IUnknown *obj = (IUnknown*)&vtbl;
+    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
+    CStdStubBuffer *cstd_stub = (CStdStubBuffer*)pstub;
+    CInterfaceStubHeader *header = ((CInterfaceStubHeader *)cstd_stub->lpVtbl) - 1;
+
+    ok(IsEqualIID(header->piid, &IID_if1), "header iid differs\n");
+    ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
+    /* 0xdeadbeef returned from create_stub_test_QI */
+    ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p", cstd_stub->pvServerObject);
+    ok(cstd_stub->pPSFactory == ppsf, "pPSFactory %p\n", cstd_stub->pPSFactory);
+
+    vtbl = &create_stub_test_fail_vtbl;
+    pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
+
+}
+    
 START_TEST( cstub )
 {
+    IPSFactoryBuffer *ppsf;
+
     OleInitialize(NULL);
 
-    test_NdrDllGetClassObject();
+    ppsf = test_NdrDllGetClassObject();
     test_NdrStubForwardingFunction();
+    test_CreateStub(ppsf);
 
     OleUninitialize();
 }

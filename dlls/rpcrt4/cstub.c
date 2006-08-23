@@ -54,7 +54,8 @@ HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
                                        LPRPCSTUBBUFFER *ppStub)
 {
   CStdStubBuffer *This;
-
+  IUnknown *pvServer;
+  HRESULT r;
   TRACE("(%p,%p,%p,%p) %s\n", pUnkServer, vtbl, pPSFactory, ppStub, name);
   TRACE("iid=%s\n", debugstr_guid(vtbl->header.piid));
   TRACE("vtbl=%p\n", &vtbl->Vtbl);
@@ -64,16 +65,22 @@ HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
     return RPC_E_UNEXPECTED;
   }
 
+  r = IUnknown_QueryInterface(pUnkServer, riid, (void**)&pvServer);
+  if(FAILED(r))
+    return r;
+
   This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(CStdStubBuffer));
-  if (!This) return E_OUTOFMEMORY;
+  if (!This) {
+    IUnknown_Release(pvServer);
+    return E_OUTOFMEMORY;
+  }
 
   This->lpVtbl = &vtbl->Vtbl;
   This->RefCount = 1;
-  This->pvServerObject = pUnkServer;
+  This->pvServerObject = pvServer;
   This->pPSFactory = pPSFactory;
   *ppStub = (LPRPCSTUBBUFFER)This;
 
-  IUnknown_AddRef(This->pvServerObject);
   IPSFactoryBuffer_AddRef(pPSFactory);
   return S_OK;
 }
