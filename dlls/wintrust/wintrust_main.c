@@ -52,6 +52,18 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
 /***********************************************************************
  *		CryptCATAdminAcquireContext (WINTRUST.@)
+ *
+ * Get a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [O] Pointer to the context handle.
+ *   sysSystem [I] Pointer to a GUID for the needed subsystem.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. catAdmin contains the context handle.
+ *   Failure: FAIL.
+ *
  */
 BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 					const GUID *sysSystem, DWORD dwFlags )
@@ -88,6 +100,17 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
 
 /***********************************************************************
  *		CryptCATAdminReleaseContext (WINTRUST.@)
+ *
+ * Release a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [I] Pointer to the context handle.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FAIL.
+ *
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 {
@@ -111,17 +134,25 @@ BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
 
 /***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
+ *
+ * Verifies an object by calling the specified trust provider.
+ *
+ * PARAMS
+ *   hwnd       [I] Handle to a caller window.
+ *   ActionID   [I] Pointer to a GUID that identifies the action to perform.
+ *   ActionData [I] Information used by the trust provider to verify the object.
+ *
+ * RETURNS
+ *   Success: Zero.
+ *   Failure: A TRUST_E_* error code.
+ *
+ * NOTES
+ *   Trust providers can be found at:
+ *   HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
     FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
-
-    /* Trust providers can be found at:
-     * HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\CertCheck\
-     *
-     * Process Explorer is now happy with ERROR_SUCCESS
-     */
-
     return ERROR_SUCCESS;
 }
 
