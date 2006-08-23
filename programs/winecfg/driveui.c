@@ -55,7 +55,7 @@ static void update_controls(HWND dialog);
 static DWORD driveui_msgbox (HWND parent, UINT messageId, DWORD flags)
 {
   WCHAR* caption = load_string (IDS_WINECFG_TITLE);
-  WCHAR* text = load_string (flags);
+  WCHAR* text = load_string (messageId);
   DWORD result = MessageBoxW (parent, text, caption, flags);
   HeapFree (GetProcessHeap(), 0, caption);
   HeapFree (GetProcessHeap(), 0, text);
