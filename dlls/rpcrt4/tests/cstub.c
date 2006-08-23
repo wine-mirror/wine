@@ -87,7 +87,7 @@ static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =
     }
 };
 
-static const MIDL_STUB_DESC Object_StubDesc = 
+static const MIDL_STUB_DESC Object_StubDesc =
     {
     NULL,
     my_alloc,
@@ -443,8 +443,6 @@ static void test_NdrDllGetClassObject(void)
     void *CStd_DebugServerQueryInterface = GetProcAddress(hmod, "CStdStubBuffer_DebugServerQueryInterface");
     void *CStd_DebugServerRelease = GetProcAddress(hmod, "CStdStubBuffer_DebugServerRelease");
 
-    OleInitialize(NULL);
-
     r = NdrDllGetClassObject(&PSDispatch, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                          &PSDispatch, &PSFactoryBuffer);
 
@@ -528,7 +526,56 @@ todo_wine {
     ok(PSFactoryBuffer.RefCount == 1, "ref count %ld\n", PSFactoryBuffer.RefCount);
 }
 
+static int base_buffer_invoke_called;
+static HRESULT WINAPI base_buffer_Invoke(IRpcStubBuffer *This, RPCOLEMESSAGE *msg, IRpcChannelBuffer *channel)
+{
+    base_buffer_invoke_called++;
+    ok(msg == (RPCOLEMESSAGE*)0xcafebabe, "msg ptr changed\n");
+    ok(channel == (IRpcChannelBuffer*)0xdeadbeef, "channel ptr changed\n");
+    return S_OK; /* returning any failure here results in an exception */
+}
+
+static IRpcStubBufferVtbl base_buffer_vtbl = {
+    (void*)0xcafebab0,
+    (void*)0xcafebab1,
+    (void*)0xcafebab2,
+    (void*)0xcafebab3,
+    (void*)0xcafebab4,
+    base_buffer_Invoke,
+    (void*)0xcafebab6,
+    (void*)0xcafebab7,
+    (void*)0xcafebab8,
+    (void*)0xcafebab9
+};
+
+static void test_NdrStubForwardingFunction(void)
+{
+    void *This[5];
+    void *real_this;
+    IRpcChannelBuffer *channel = (IRpcChannelBuffer*)0xdeadbeef;
+    RPC_MESSAGE *msg = (RPC_MESSAGE*)0xcafebabe;
+    DWORD *phase = (DWORD*)0x12345678;
+    IRpcStubBufferVtbl *base_buffer_vtbl_ptr = &base_buffer_vtbl;
+    IRpcStubBuffer *base_stub_buffer = (IRpcStubBuffer*)&base_buffer_vtbl_ptr;
+
+    memset(This, 0xcc, sizeof(This));
+    This[0] = base_stub_buffer;
+    real_this = &This[1];
+
+    NdrStubForwardingFunction( real_this, channel, msg, phase );
+
+todo_wine {
+    ok(base_buffer_invoke_called == 1, "base_buffer_invoke called %d times\n", base_buffer_invoke_called);
+}
+
+}
+
 START_TEST( cstub )
 {
+    OleInitialize(NULL);
+
     test_NdrDllGetClassObject();
+    test_NdrStubForwardingFunction();
+
+    OleUninitialize();
 }

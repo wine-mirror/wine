@@ -224,3 +224,27 @@ const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface)
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
   return STUB_HEADER(This).pServerInfo;
 }
+
+/************************************************************************
+ *           NdrStubForwardingFunction [RPCRT4.@]
+ */
+void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *This, IRpcChannelBuffer *pChannel,
+                                           PRPC_MESSAGE pMsg, DWORD *pdwStubPhase )
+{
+    /* Once stub delegation is implemented, this should call
+       IRpcStubBuffer_Invoke on the stub's base interface.  The
+       IRpcStubBuffer for this interface is stored at (void**)This-1.
+       The pChannel and pMsg parameters are passed intact
+       (RPCOLEMESSAGE is basically a RPC_MESSAGE).  If Invoke returns
+       with a failure then an exception is raised (to see this, change
+       the return value in the test).
+
+    IRpcStubBuffer *base_this = *(IRpcStubBuffer**)((void**)This - 1);
+    HRESULT r = IRpcStubBuffer_Invoke(base_this, (RPCOLEMESSAGE*)pMsg, pChannel);
+    if(FAILED(r)) RpcRaiseException(r);
+    return;
+    */
+
+    FIXME("Not implemented\n");
+    return;
+}
