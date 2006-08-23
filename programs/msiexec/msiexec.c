@@ -329,6 +329,37 @@ static DWORD DoDllUnregisterServer(LPCWSTR DllName)
 	return 0;
 }
 
+static DWORD DoRegServer(void)
+{
+    SC_HANDLE scm, service;
+    CHAR path[MAX_PATH+12];
+
+    scm = OpenSCManager(NULL, SERVICES_ACTIVE_DATABASE, SC_MANAGER_CREATE_SERVICE);
+    if (!scm)
+    {
+        fprintf(stderr, "Failed to open the service control manager.\n");
+        return 1;
+    }
+
+    GetSystemDirectory(path, MAX_PATH);
+    lstrcatA(path, "\\msiexec.exe");
+
+    service = CreateServiceA(scm, "MSIServer", "MSIServer", GENERIC_ALL,
+                             SERVICE_WIN32_SHARE_PROCESS, SERVICE_DEMAND_START,
+                             SERVICE_ERROR_NORMAL, path, NULL, NULL,
+                             NULL, NULL, NULL);
+    if (!service)
+    {
+        fprintf(stderr, "Failed to create MSI service\n");
+        CloseServiceHandle(scm);
+        return 1;
+    }
+
+     CloseServiceHandle(scm);
+     CloseServiceHandle(service);
+     return 0;
+}
+
 static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 {
 	LONG r;
@@ -808,7 +839,7 @@ int main(int argc, char **argv)
 	}
 	else if (FunctionRegServer)
 	{
-		WINE_FIXME( "/regserver not implemented yet, ignoring\n" );
+		ReturnCode = DoRegServer();
 	}
 	else if (FunctionUnregServer)
 	{
