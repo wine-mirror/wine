@@ -703,6 +703,19 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
     ok(connect_test_orig_release_called == 2, "release called %d\n", connect_test_orig_release_called);    
 }
 
+static void test_Disconnect(IPSFactoryBuffer *ppsf)
+{
+    IUnknownVtbl *orig_vtbl = &connect_test_orig_vtbl;
+    IUnknown *obj = (IUnknown*)&orig_vtbl;
+    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
+    CStdStubBuffer *cstd_stub = (CStdStubBuffer*)pstub;
+
+    connect_test_orig_release_called = 0;
+    IRpcStubBuffer_Disconnect(pstub);
+    ok(connect_test_orig_release_called == 1, "release called %d\n", connect_test_orig_release_called);
+    ok(cstd_stub->pvServerObject == NULL, "pvServerObject %p\n", cstd_stub->pvServerObject);
+}
+
 START_TEST( cstub )
 {
     IPSFactoryBuffer *ppsf;
@@ -713,6 +726,7 @@ START_TEST( cstub )
     test_NdrStubForwardingFunction();
     test_CreateStub(ppsf);
     test_Connect(ppsf);
+    test_Disconnect(ppsf);
 
     OleUninitialize();
 }

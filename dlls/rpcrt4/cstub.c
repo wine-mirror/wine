@@ -149,13 +149,14 @@ HRESULT WINAPI CStdStubBuffer_Connect(LPRPCSTUBBUFFER iface,
 
 void WINAPI CStdStubBuffer_Disconnect(LPRPCSTUBBUFFER iface)
 {
-  CStdStubBuffer *This = (CStdStubBuffer *)iface;
-  TRACE("(%p)->Disconnect()\n",This);
-  if (This->pvServerObject)
-  {
-    IUnknown_Release(This->pvServerObject);
-    This->pvServerObject = NULL;
-  }
+    CStdStubBuffer *This = (CStdStubBuffer *)iface;
+    IUnknown *old;
+    TRACE("(%p)->Disconnect()\n",This);
+
+    old = InterlockedExchangePointer((void**)&This->pvServerObject, NULL);
+
+    if(old)
+        IUnknown_Release(old);
 }
 
 HRESULT WINAPI CStdStubBuffer_Invoke(LPRPCSTUBBUFFER iface,
