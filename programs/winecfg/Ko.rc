@@ -68,7 +68,7 @@ BEGIN
 
     CONTROL	    "DirectX 프로그램들이 마우스 커서를 그들의 창안에 잡아두게 함",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
     CONTROL	    "데스크탑 이중 버퍼링을 가능하게 함",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
-    LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wine창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
+    LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wien창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
     		    IDC_STATIC,15,37,228,80
     CONTROL	    "창관리자가 Wine창을 관리하도록 함",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
     LTEXT           "당신은 모든 윈도우즈 프로그램이 가상데스크탑에서 동일한 행동을 하게 할 것인지, 서로 다른 행동을 하게 할 것인지 선택할 수 있습니다.",
@@ -236,48 +236,48 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-    IDS_SHADER_MODE_EMULATION   "Emulated"
+    IDS_SHADER_MODE_HARDWARE    "하드웨어"
+    IDS_SHADER_MODE_NONE        "없음"
+    IDS_SHADER_MODE_EMULATION   "애뮬레이트"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
-    IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+   IDS_DRIVE_UNKNOWN           "자동으로 찾기"
+   IDS_DRIVE_FIXED             "연결된 하드 디스크"
+   IDS_DRIVE_REMOTE            "네트워크 공유"
+   IDS_DRIVE_REMOVABLE         "플로피 디스크"
+   IDS_DRIVE_CDROM             "CD-ROM"
+   IDS_DRIVE_LETTERS_EXCEEDED  "당신은 더 이상 드라이브를 추가할 수 없습니다.\n\n각 드라이브는 반드시 A~Z까지의 문자를 가집니다, 그래서 당신은 26개보다 더 많이 추가할 수 없습니다"
+   IDS_SYSTEM_DRIVE_LABEL      "시스템 드라이브"
+   IDS_CONFIRM_DELETE_C        "당신은 하드 드라이브  C를 지우기를 원합니까?\n\n대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고,  없으면 다운될것입니다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
+   IDS_COL_DRIVELETTER         "문자"
+   IDS_COL_DRIVEMAPPING        "드라이브 할당"
+   IDS_NO_DRIVE_C              "당신은  C드라이브를 가지고 있지 않습니다. 이것은 좋은 일이 아닙니다.\n\n드라이브 탭에서 [추가]를 클릭해서 만드는 것을 잊지 마십시오!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+   IDS_ACCEL_FULL              "전체"
+   IDS_ACCEL_STANDARD          "표준"
+   IDS_ACCEL_BASIC             "기본"
+   IDS_ACCEL_EMULATION         "애뮬레이션"
+   IDS_DRIVER_ALSA             "ALSA 드라이버"
+   IDS_DRIVER_ARTS             "aRts 드라이버"
+   IDS_DRIVER_ESOUND           "EsounD 드라이버"
+   IDS_DRIVER_OSS              "OSS 드라이버"
+   IDS_DRIVER_JACK             "JACK 드라이버"
+   IDS_DRIVER_NAS              "NAS 드라이버"
+   IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) 드라이버"
+   IDS_DRIVER_COREAUDIO        "CoreAudio 드라이버"
+   IDS_OPEN_DRIVER_ERROR       "%s를 열 수 없습니다!"
+   IDS_SOUNDDRIVERS            "사운드 드라이버"
+   IDS_DEVICES_WAVEOUT         "Wave 출력 장치"
+   IDS_DEVICES_WAVEIN          "Wave 입력 장치"
+   IDS_DEVICES_MIDIOUT         "MIDI 출력 장치"
+   IDS_DEVICES_MIDIIN          "MIDI 입력 장치"
+   IDS_DEVICES_AUX             "Aux 장치"
+   IDS_DEVICES_MIXER           "Mixer 장치"
+   IDS_UNAVAILABLE_DRIVER      "레지스트리에서 가능하지 않은 드라이버가 발견되었습니다!\n\n %s를 레지스트리에서 지우겠습니까?"
+   IDS_WARNING                 "경고"
 END
