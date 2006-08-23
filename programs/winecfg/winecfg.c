@@ -76,7 +76,7 @@ void set_window_title(HWND dialog)
 
 WCHAR* load_string (UINT id)
 {
-    WCHAR buf[100];
+    WCHAR buf[1024];
     int len;
     WCHAR* newStr;
 
