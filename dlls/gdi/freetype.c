@@ -2898,11 +2898,25 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
 				LPWORD pgi, DWORD flags)
 {
-    INT i;
+    int i;
+    WCHAR default_char = 0;
+    TEXTMETRICW textm;
+
+    if  (flags & GGI_MARK_NONEXISTING_GLYPHS) default_char = 0x001f;  /* Indicate non existence */
 
     for(i = 0; i < count; i++)
+    {
         pgi[i] = get_glyph_index(font, lpstr[i]);
-
+        if  (pgi[i] == 0)
+        {
+            if (!default_char)
+            {
+                WineEngGetTextMetrics(font, &textm);
+                default_char = textm.tmDefaultChar;
+            }
+            pgi[i] = default_char;
+        }
+    }
     return count;
 }
 

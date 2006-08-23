@@ -391,6 +391,36 @@ static void test_text_extents(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_GetGlyphIndices()
+{
+    HDC      hdc;
+    HFONT    hfont;
+    DWORD    charcount;
+    LOGFONTA lf;
+    DWORD    flags = 0;
+    WCHAR    testtext[] = {'T','e','s','t',0xffff,0};
+    WORD     glyphs[(sizeof(testtext)/2)-1];
+    TEXTMETRIC textm;
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Symbol");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hdc = GetDC(0);
+
+    ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
+    flags |= GGI_MARK_NONEXISTING_GLYPHS;
+    charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);
+    ok(glyphs[4] == 0x001f, "GetGlyphIndices should have returned a non existant char not %04x\n", glyphs[4]);
+    flags = 0;
+    charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);
+    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n", 
+                    textm.tmDefaultChar, glyphs[4]);
+}
+
 START_TEST(font)
 {
     test_logfont();
@@ -399,4 +429,5 @@ START_TEST(font)
     test_GdiGetCharDimensions();
     test_GetCharABCWidthsW();
     test_text_extents();
+    test_GetGlyphIndices();
 }
