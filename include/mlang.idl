@@ -557,6 +557,34 @@ interface IMultiLanguage2 : IUnknown
 }
 
 [
+    object,
+    uuid(4e5868ab-b157-4623-9acc-6a1d9caebe04),
+    pointer_default(unique)
+]
+interface IMultiLanguage3 : IMultiLanguage2
+{
+    typedef [unique] IMultiLanguage3 *LPMULTILANGUAGE3;
+    HRESULT DetectOutboundCodePage(
+        [in] DWORD dwFlags,
+        [in] LPCWSTR lpWideCharStr,
+        [in] UINT cchWideChar,
+        [in] UINT *puiPreferredCodePages,
+        [in] UINT nPreferredCodePages,
+        [in] UINT *puiDetectedCodePages,
+        [in, out] UINT *pnDetectedCodePages,
+        [in] WCHAR *lpSpecialChar);
+
+    HRESULT DetectOutboundCodePageInIStream(
+        [in] DWORD dwFlags,
+        [in] IStream *pStrIn,
+        [in] UINT *puiPreferredCodePages,
+        [in] UINT nPreferredCodePages,
+        [in] UINT *puiDetectedCodePages,
+        [in, out] UINT *pnDetectedCodePages,
+        [in] WCHAR *lpSpecialChar);
+}
+
+[
     uuid(275C23E2-3747-11d0-9FEA-00AA003f8646)
 ]
 coclass CMultiLanguage
