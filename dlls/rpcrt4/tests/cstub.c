@@ -628,7 +628,81 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
 
 }
-    
+
+static HRESULT WINAPI connect_test_orig_QI(IUnknown *This, REFIID iid, void **ppv)
+{
+    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    *ppv = (void*)This;
+    return S_OK;
+}
+
+static int connect_test_orig_release_called;
+static ULONG WINAPI connect_test_orig_release(IUnknown *This)
+{
+    connect_test_orig_release_called++;
+    return 0;
+}
+
+static IUnknownVtbl connect_test_orig_vtbl =
+{
+    connect_test_orig_QI,
+    NULL,
+    connect_test_orig_release
+};
+
+static HRESULT WINAPI connect_test_new_QI(IUnknown *This, REFIID iid, void **ppv)
+{
+    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    *ppv = (void*)0xcafebabe;
+    return S_OK;
+}
+
+static IUnknownVtbl connect_test_new_vtbl =
+{
+    connect_test_new_QI,
+    NULL,
+    NULL
+};
+
+static HRESULT WINAPI connect_test_new_fail_QI(IUnknown *This, REFIID iid, void **ppv)
+{
+    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    *ppv = (void*)0xdeadbeef;
+    return E_NOINTERFACE;
+}
+
+static IUnknownVtbl connect_test_new_fail_vtbl =
+{
+    connect_test_new_fail_QI,
+    NULL,
+    NULL
+};
+
+
+static void test_Connect(IPSFactoryBuffer *ppsf)
+{
+    IUnknownVtbl *orig_vtbl = &connect_test_orig_vtbl;
+    IUnknownVtbl *new_vtbl = &connect_test_new_vtbl;
+    IUnknownVtbl *new_fail_vtbl = &connect_test_new_fail_vtbl;
+    IUnknown *obj = (IUnknown*)&orig_vtbl;
+    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
+    CStdStubBuffer *cstd_stub = (CStdStubBuffer*)pstub;
+    HRESULT r;
+
+    obj = (IUnknown*)&new_vtbl;
+    r = IRpcStubBuffer_Connect(pstub, obj);
+    ok(r == S_OK, "r %08lx\n", r);
+    ok(connect_test_orig_release_called == 1, "release called %d\n", connect_test_orig_release_called);
+    ok(cstd_stub->pvServerObject == (void*)0xcafebabe, "pvServerObject %p\n", cstd_stub->pvServerObject);
+
+    cstd_stub->pvServerObject = (IUnknown*)&orig_vtbl;
+    obj = (IUnknown*)&new_fail_vtbl;
+    r = IRpcStubBuffer_Connect(pstub, obj);
+    ok(r == E_NOINTERFACE, "r %08lx\n", r);
+    ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
+    ok(connect_test_orig_release_called == 2, "release called %d\n", connect_test_orig_release_called);    
+}
+
 START_TEST( cstub )
 {
     IPSFactoryBuffer *ppsf;
@@ -638,6 +712,7 @@ START_TEST( cstub )
     ppsf = test_NdrDllGetClassObject();
     test_NdrStubForwardingFunction();
     test_CreateStub(ppsf);
+    test_Connect(ppsf);
 
     OleUninitialize();
 }

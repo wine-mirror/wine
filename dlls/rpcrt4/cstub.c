@@ -134,10 +134,17 @@ ULONG WINAPI NdrCStdStubBuffer2_Release(LPRPCSTUBBUFFER iface,
 HRESULT WINAPI CStdStubBuffer_Connect(LPRPCSTUBBUFFER iface,
                                      LPUNKNOWN lpUnkServer)
 {
-  CStdStubBuffer *This = (CStdStubBuffer *)iface;
-  TRACE("(%p)->Connect(%p)\n",This,lpUnkServer);
-  This->pvServerObject = lpUnkServer;
-  return S_OK;
+    CStdStubBuffer *This = (CStdStubBuffer *)iface;
+    HRESULT r;
+    IUnknown *new = NULL;
+
+    TRACE("(%p)->Connect(%p)\n",This,lpUnkServer);
+
+    r = IUnknown_QueryInterface(lpUnkServer, STUB_HEADER(This).piid, (void**)&new);
+    new = InterlockedExchangePointer((void**)&This->pvServerObject, new);
+    if(new)
+        IUnknown_Release(new);
+    return r;
 }
 
 void WINAPI CStdStubBuffer_Disconnect(LPRPCSTUBBUFFER iface)
