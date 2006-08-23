@@ -258,8 +258,6 @@ static UINT_PTR CALLBACK ImportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, W
     return 0L;
 }
 
-#define MAX_CUSTOM_FILTER_SIZE 50
-TCHAR CustomFilterBuffer[MAX_CUSTOM_FILTER_SIZE];
 TCHAR FileNameBuffer[_MAX_PATH];
 TCHAR FileTitleBuffer[_MAX_PATH];
 
@@ -271,9 +269,7 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME* pofn)
     pofn->hInstance = hInst;
 
     pofn->lpstrFilter = _T("Registration Files\0*.reg\0Win9x/NT4 Registration Files (REGEDIT4)\0*.reg\0All Files (*.*)\0*.*\0\0");
-    pofn->lpstrCustomFilter = CustomFilterBuffer;
-    pofn->nMaxCustFilter = MAX_CUSTOM_FILTER_SIZE;
-    pofn->nFilterIndex = 0;
+    pofn->nFilterIndex = 1;
     pofn->lpstrFile = FileNameBuffer;
     pofn->nMaxFile = _MAX_PATH;
     pofn->lpstrFileTitle = FileTitleBuffer;
