@@ -401,12 +401,12 @@ then
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
 	    dnl Check for some problems due to old Mesa versions
-	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_version_OK,
+	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_header_version_OK,
 	      AC_TRY_COMPILE(
 		[#include <GL/gl.h>],
 		[GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
-		[wine_cv_opengl_version_OK="yes"],
-		[wine_cv_opengl_version_OK="no"]
+		[wine_cv_opengl_header_version_OK="yes"],
+		[wine_cv_opengl_header_version_OK="no"]
 	      )
             )
 
@@ -427,6 +427,9 @@ then
                     then 
                        AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
 This prevents linking to OpenGL. Delete the file and restart configure.])
+                    else
+                        dnl The compile test most likely failed because no libGL.so was found
+                        wine_cv_opengl_libs_found="no"
                     fi
 		fi
 
@@ -444,9 +447,10 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
                        [AC_SUBST(GLUT_LIBS,"-lglut -lXmu -lXi")
                         AC_SUBST(GLUT32FILES,'$(GLUT32FILES)')],,
                         $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXmu -lXi -lX11 $X_EXTRA_LIBS)
+         else
+             wine_cv_opengl_headers_found="no"
 	 fi
     fi
-
     dnl **** Check for NAS ****
     AC_SUBST(NASLIBS,"")
     AC_CHECK_HEADERS(audio/audiolib.h,
@@ -2013,11 +2017,23 @@ then
   AC_MSG_WARN([ packages of Xlib/Xfree86 at the very least.])
 fi
 
-if test "$wine_cv_opengl_version_OK" = "no"
+if test "$wine_cv_opengl_headers_found" = "no" -o "$wine_cv_opengl_header_version_OK" = "no" -o "$wine_cv_opengl_libs_found" = "no"
 then
   echo >&2
-  AC_MSG_WARN([Old Mesa headers detected. Wine will be built without Direct3D])
-  AC_MSG_WARN([support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
+  AC_MSG_WARN([Wine will be build without OpenGL or Direct3D support])
+  AC_MSG_WARN([because something is wrong with the OpenGL setup:])
+  if test "$wine_cv_opengl_headers_found" = "no"
+  then
+    AC_MSG_WARN([No OpenGL development headers were found])
+  fi
+  if test "$wine_cv_opengl_header_version_OK" = "no"
+  then
+    AC_MSG_WARN([Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
+  fi
+  if test "$wine_cv_opengl_libs_found" = "no"
+  then
+    AC_MSG_WARN([No OpenGL library found on this system.])
+  fi
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"

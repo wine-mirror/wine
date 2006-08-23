@@ -9347,7 +9347,7 @@ done
 	then
 	    	    { echo "$as_me:$LINENO: checking for up-to-date OpenGL version" >&5
 echo $ECHO_N "checking for up-to-date OpenGL version... $ECHO_C" >&6; }
-if test "${wine_cv_opengl_version_OK+set}" = set; then
+if test "${wine_cv_opengl_header_version_OK+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -9399,20 +9399,20 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  wine_cv_opengl_version_OK="yes"
+  wine_cv_opengl_header_version_OK="yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	wine_cv_opengl_version_OK="no"
+	wine_cv_opengl_header_version_OK="no"
 
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 fi
-{ echo "$as_me:$LINENO: result: $wine_cv_opengl_version_OK" >&5
-echo "${ECHO_T}$wine_cv_opengl_version_OK" >&6; }
+{ echo "$as_me:$LINENO: result: $wine_cv_opengl_header_version_OK" >&5
+echo "${ECHO_T}$wine_cv_opengl_header_version_OK" >&6; }
 
 	    if test "$wine_cv_opengl_version_OK" = "yes"
             then
@@ -9515,6 +9515,8 @@ This prevents linking to OpenGL. Delete the file and restart configure." >&5
 echo "$as_me: error: /usr/X11R6/lib/libGL.a is present on your system.
 This prevents linking to OpenGL. Delete the file and restart configure." >&2;}
    { (exit 1); exit 1; }; }
+                    else
+                                                wine_cv_opengl_libs_found="no"
                     fi
 		fi
 
@@ -9688,9 +9690,10 @@ if test $ac_cv_lib_glut_glutMainLoop = yes; then
 
 fi
 
+         else
+             wine_cv_opengl_headers_found="no"
 	 fi
     fi
-
         NASLIBS=""
 
 
@@ -25726,13 +25729,28 @@ echo "$as_me: WARNING: isn't what you want anyway. You will need to install deve
 echo "$as_me: WARNING:  packages of Xlib/Xfree86 at the very least." >&2;}
 fi
 
-if test "$wine_cv_opengl_version_OK" = "no"
+if test "$wine_cv_opengl_headers_found" = "no" -o "$wine_cv_opengl_header_version_OK" = "no" -o "$wine_cv_opengl_libs_found" = "no"
 then
   echo >&2
-  { echo "$as_me:$LINENO: WARNING: Old Mesa headers detected. Wine will be built without Direct3D" >&5
-echo "$as_me: WARNING: Old Mesa headers detected. Wine will be built without Direct3D" >&2;}
-  { echo "$as_me:$LINENO: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&5
-echo "$as_me: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&2;}
+  { echo "$as_me:$LINENO: WARNING: Wine will be build without OpenGL or Direct3D support" >&5
+echo "$as_me: WARNING: Wine will be build without OpenGL or Direct3D support" >&2;}
+  { echo "$as_me:$LINENO: WARNING: because something is wrong with the OpenGL setup:" >&5
+echo "$as_me: WARNING: because something is wrong with the OpenGL setup:" >&2;}
+  if test "$wine_cv_opengl_headers_found" = "no"
+  then
+    { echo "$as_me:$LINENO: WARNING: No OpenGL development headers were found" >&5
+echo "$as_me: WARNING: No OpenGL development headers were found" >&2;}
+  fi
+  if test "$wine_cv_opengl_header_version_OK" = "no"
+  then
+    { echo "$as_me:$LINENO: WARNING: Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&5
+echo "$as_me: WARNING: Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&2;}
+  fi
+  if test "$wine_cv_opengl_libs_found" = "no"
+  then
+    { echo "$as_me:$LINENO: WARNING: No OpenGL library found on this system." >&5
+echo "$as_me: WARNING: No OpenGL library found on this system." >&2;}
+  fi
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
