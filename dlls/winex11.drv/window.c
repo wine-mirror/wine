@@ -515,10 +515,6 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     /* size hints */
     set_size_hints( display, data, style );
-    
-    /* Dock system tray windows. */
-    if (ex_style & WS_EX_TRAYWINDOW)
-        systray_dock_window( display, data );
 
     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
     XSetWMProperties(display, data->whole_window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
@@ -1167,6 +1163,12 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         SetWindowPos( hwnd, 0, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, swFlag );
     }
+
+    /* Dock system tray windows. */
+    /* Dock after the window is created so we don't have problems calling
+     * SetWindowPos. */
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TRAYWINDOW)
+        systray_dock_window( display, data );
 
     return TRUE;
 
