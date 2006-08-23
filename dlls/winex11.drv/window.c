@@ -24,6 +24,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -57,6 +58,9 @@ static const char whole_window_prop[] = "__wine_x11_whole_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char managed_prop[]      = "__wine_x11_managed";
 static const char visual_id_prop[]    = "__wine_x11_visual_id";
+
+/* for XDG systray icons */
+#define SYSTEM_TRAY_REQUEST_DOCK    0
 
 /***********************************************************************
  *		is_window_managed
@@ -291,6 +295,97 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
     }
 }
 
+/***********************************************************************
+ *              systray_dock_window
+ *
+ * Docks the given X window with the NETWM system tray.
+ */
+static void systray_dock_window( Display *display, struct x11drv_win_data *data )
+{
+    static Atom systray_atom;
+    Window systray_window;
+
+    wine_tsx11_lock();
+    if (!systray_atom)
+    {
+        if (DefaultScreen( display ) == 0)
+            systray_atom = x11drv_atom(_NET_SYSTEM_TRAY_S0);
+        else
+        {
+            char systray_buffer[29]; /* strlen(_NET_SYSTEM_TRAY_S4294967295)+1 */
+            sprintf( systray_buffer, "_NET_SYSTEM_TRAY_S%u", DefaultScreen( display ) );
+            systray_atom = XInternAtom( display, systray_buffer, False );
+        }
+    }
+    systray_window = XGetSelectionOwner( display, systray_atom );
+    wine_tsx11_unlock();
+
+    TRACE("Docking tray icon %p\n", data->hwnd);
+
+    if (systray_window != None)
+    {
+        XEvent ev;
+        unsigned long info[2];
+                
+        /* Put the window offscreen so it isn't mapped. The window _cannot_ be 
+         * mapped if we intend to dock with an XEMBED tray. If the window is 
+         * mapped when we dock, it may become visible as a child of the root 
+         * window after it docks, which isn't the proper behavior. 
+         *
+         * For more information on this problem, see
+         * http://standards.freedesktop.org/xembed-spec/latest/ar01s04.html */
+        
+        SetWindowPos( data->hwnd, NULL, screen_width + 1, screen_height + 1, 
+                      0, 0, SWP_NOZORDER | SWP_NOSIZE );
+
+        /* set XEMBED protocol data on the window */
+        info[0] = 0; /* protocol version */
+        info[1] = 1; /* mapped = true */
+        
+        wine_tsx11_lock();
+        XChangeProperty( display, data->whole_window,
+                         x11drv_atom(_XEMBED_INFO),
+                         x11drv_atom(_XEMBED_INFO), 32, PropModeReplace,
+                         (unsigned char*)info, 2 );
+        wine_tsx11_unlock();
+    
+        /* send the docking request message */
+        ZeroMemory( &ev, sizeof(ev) ); 
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = systray_window;
+        ev.xclient.message_type = x11drv_atom( _NET_SYSTEM_TRAY_OPCODE );
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = CurrentTime;
+        ev.xclient.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
+        ev.xclient.data.l[2] = data->whole_window;
+        ev.xclient.data.l[3] = 0;
+        ev.xclient.data.l[4] = 0;
+        
+        wine_tsx11_lock();
+        XSendEvent( display, systray_window, False, NoEventMask, &ev );
+        wine_tsx11_unlock();
+
+    }
+    else
+    {
+        int val = 1;
+
+        /* fall back to he KDE hints if the WM doesn't support XEMBED'ed
+         * systrays */
+        
+        wine_tsx11_lock();
+        XChangeProperty( display, data->whole_window, 
+                         x11drv_atom(KWM_DOCKWINDOW),
+                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace,
+                         (unsigned char*)&val, 1 );
+        XChangeProperty( display, data->whole_window,
+                         x11drv_atom(_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR),
+                         XA_WINDOW, 32, PropModeReplace,
+                         (unsigned char*)&data->whole_window, 1 );
+       wine_tsx11_unlock();
+    }
+}
+
 
 /***********************************************************************
  *              set_size_hints
@@ -420,16 +515,10 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     /* size hints */
     set_size_hints( display, data, style );
-
-    /* systray properties (KDE only for now) */
+    
+    /* Dock system tray windows. */
     if (ex_style & WS_EX_TRAYWINDOW)
-    {
-        int val = 1;
-        XChangeProperty( display, data->whole_window, x11drv_atom(KWM_DOCKWINDOW),
-                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace, (unsigned char*)&val, 1 );
-        XChangeProperty( display, data->whole_window, x11drv_atom(_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR),
-                         XA_WINDOW, 32, PropModeReplace, (unsigned char*)&data->whole_window, 1 );
-    }
+        systray_dock_window( display, data );
 
     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
     XSetWMProperties(display, data->whole_window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
