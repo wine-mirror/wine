@@ -45,14 +45,14 @@ static LONG num_busy_workers;
 static struct list work_item_list = LIST_INIT(work_item_list);
 static HANDLE work_item_event;
 
-static CRITICAL_SECTION threadpool_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION threadpool_cs;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &threadpool_cs,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
     0, 0, { (DWORD_PTR)(__FILE__ ": threadpool_cs") }
 };
-static CRITICAL_SECTION threadpool_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION threadpool_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 struct work_item
 {
