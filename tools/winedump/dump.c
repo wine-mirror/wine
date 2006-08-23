@@ -79,12 +79,12 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
     printf( "\n" );
 }
 
-const char*	get_time_str(unsigned long _t)
+const char *get_time_str(const unsigned long _t)
 {
-    time_t 	t = (time_t)_t;
-    const char *str = ctime(&t);
-    size_t len;
-    static char	buf[128];
+    const time_t    t = (const time_t)_t;
+    const char      *str = ctime(&t);
+    size_t          len;
+    static char     buf[128];
 
     if (!str) /* not valid time */
     {
@@ -141,7 +141,7 @@ unsigned long Offset(const void* ptr)
 {
     if (ptr < dump_base) {printf("<<<<<ptr below\n");return 0;}
     if ((const char *)ptr >= (const char*)dump_base + dump_total_len) {printf("<<<<<ptr above\n");return 0;}
-    return (char*)ptr - (char*)dump_base;
+    return (const char *)ptr - (const char *)dump_base;
 }
 
 static	void	do_dump( enum FileSig sig, const void* pmt )
@@ -216,7 +216,7 @@ static enum FileSig check_headers(void)
             sig = SIG_UNKNOWN;
         break;
     default:
-	printf("No known main signature (%.2s/%x), aborting\n", (char*)pw, *pw);
+	printf("No known main signature (%.2s/%x), aborting\n", (const char *)pw, *pw);
 	sig = SIG_UNKNOWN;
     }
 

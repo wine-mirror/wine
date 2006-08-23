@@ -116,8 +116,8 @@ static int dump_cv_sst_module(const OMFDirEntry* omfde)
     printf("    cSeg:               %u\n", module->cSeg);
     printf("    Style:              %c%c\n", module->Style[0], module->Style[1]);
     printf("    Name:               %.*s\n",
-	   *(BYTE*)((char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg),
-	   (char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg + 1);
+	   *(const BYTE*)((const char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg),
+	   (const char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg + 1);
 
     segDesc = PRD(Offset(module + 1), sizeof(OMFSegDesc) * module->cSeg);
     if (!segDesc) {printf("Can't get the OMF-SegDesc, aborting\n"); return FALSE;}
@@ -166,7 +166,7 @@ static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
     {
 	/* Point to the next PUBSYM32 in the table.
 	 */
-	sym = (PUBSYM32*)curpos;
+	sym = (const PUBSYM32*)curpos;
 
 	if (sym->reclen < sizeof(PUBSYM32)) break;
 
@@ -264,7 +264,7 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
     if (!rawdata) {printf("Can't get srcModule subsection details, aborting\n");return FALSE;}
 
     /* FIXME: check ptr validity */
-    sourceModule = (void*)rawdata;
+    sourceModule = (const void*)rawdata;
     printf ("    Module table: Found %d file(s) and %d segment(s)\n",
 	    sourceModule->cFile, sourceModule->cSeg);
     for (i = 0; i < sourceModule->cFile; i++)
@@ -274,9 +274,9 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
     }
 
     /* FIXME: check ptr validity */
-    seg_info_dw = (void*)((char*)(sourceModule + 1) +
+    seg_info_dw = (const void*)((const char*)(sourceModule + 1) +
 			  sizeof(unsigned long) * (sourceModule->cFile - 1));
-    seg_info_w = (unsigned short*)(&seg_info_dw[sourceModule->cSeg * 2]);
+    seg_info_w = (const unsigned short*)(&seg_info_dw[sourceModule->cSeg * 2]);
     for (i = 0; i <  sourceModule->cSeg; i++)
     {
 	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, seg index = %u\n",
@@ -299,14 +299,14 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
      *	char		file name (length is previous field)
      */
     /* FIXME: check ptr validity */
-    sourceFile = (void*)(rawdata + ofs);
-    seg_info_dw = (void*)((char*)sourceFile + 2 * sizeof(unsigned short) +
+    sourceFile = (const void*)(rawdata + ofs);
+    seg_info_dw = (const void*)((const char*)sourceFile + 2 * sizeof(unsigned short) +
 			  sourceFile->cSeg * sizeof(unsigned long));
 
     ofs += 2 * sizeof(unsigned short) + 3 * sourceFile->cSeg * sizeof(unsigned long);
 
     printf("    File table: %.*s\n",
-	   *(BYTE*)((char*)sourceModule + ofs), (char*)sourceModule + ofs + 1);
+	   *(const BYTE*)((const char*)sourceModule + ofs), (const char*)sourceModule + ofs + 1);
 
     for (i = 0; i < sourceFile->cSeg; i++)
     {
@@ -314,14 +314,14 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
 		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1], sourceFile->baseSrcLn[i]);
     }
     /* add file name length */
-    ofs += *(BYTE*)((char*)sourceModule + ofs) + 1;
+    ofs += *(const BYTE*)((const char*)sourceModule + ofs) + 1;
     ofs = (ofs + 3) & ~3;
 
     for (i = 0; i < sourceModule->cSeg; i++)
     {
-	sourceLine = (void*)(rawdata + ofs);
-	seg_info_dw = (void*)((char*)sourceLine + 2 * sizeof(unsigned short));
-	seg_info_w = (void*)(&seg_info_dw[sourceLine->cLnOff]);
+        sourceLine = (const void*)(rawdata + ofs);
+        seg_info_dw = (const void*)((const char*)sourceLine + 2 * sizeof(unsigned short));
+        seg_info_w = (const void*)(&seg_info_dw[sourceLine->cLnOff]);
 
 	printf ("    Line table #%2d: Found %d line numbers for segment index %d\n",
 		i, sourceLine->cLnOff, sourceLine->Seg);
@@ -421,8 +421,8 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 
     if (memcmp(signature->Signature, "NB10", 4) == 0)
     {
-	struct {DWORD TimeStamp; DWORD  Dunno; char Name[1];}* pdb_data;
-	pdb_data = (void*)(signature + 1);
+	const struct {DWORD TimeStamp; DWORD  Dunno; char Name[1];} *pdb_data;
+	pdb_data = (const void *)(signature + 1);
 
 	printf("        TimeStamp:            %08lX (%s)\n",
 	       pdb_data->TimeStamp, get_time_str(pdb_data->TimeStamp));
@@ -485,7 +485,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     dump_codeview_all_modules(dirHeader);
 }
 
-static const char*   get_coff_name( PIMAGE_SYMBOL coff_sym, const char* coff_strtab )
+static const char *get_coff_name( const IMAGE_SYMBOL *coff_sym, const char *coff_strtab )
 {
    static       char    namebuff[9];
    const char*          nampnt;
@@ -508,21 +508,15 @@ static const char*   get_coff_name( PIMAGE_SYMBOL coff_sym, const char* coff_str
 
 void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
 {
-    PIMAGE_COFF_SYMBOLS_HEADER coff;
-    PIMAGE_SYMBOL                 coff_sym;
-    PIMAGE_SYMBOL                 coff_symbols;
-    PIMAGE_LINENUMBER             coff_linetab;
-    char                        * coff_strtab;
-    const IMAGE_SECTION_HEADER  * sectHead = pmt;
-    unsigned int i;
-    const char                  * nampnt;
-    int naux;
-
-    coff = (PIMAGE_COFF_SYMBOLS_HEADER)PRD(coffbase, len);
-
-    coff_symbols = (PIMAGE_SYMBOL) ((char *)coff + coff->LvaToFirstSymbol);
-    coff_linetab = (PIMAGE_LINENUMBER) ((char *)coff + coff->LvaToFirstLinenumber);
-    coff_strtab = (char *) (coff_symbols + coff->NumberOfSymbols);
+    const IMAGE_COFF_SYMBOLS_HEADER *coff = (const IMAGE_COFF_SYMBOLS_HEADER *)PRD(coffbase, len);
+    const IMAGE_SYMBOL              *coff_sym;
+    const IMAGE_SYMBOL              *coff_symbols =
+                                        (const IMAGE_SYMBOL *) ((const char *)coff + coff->LvaToFirstSymbol);
+    const char                      *coff_strtab = (const char *) (coff_symbols + coff->NumberOfSymbols);
+    const IMAGE_SECTION_HEADER      *sectHead = pmt;
+    unsigned int                    i;
+    const char                      *nampnt;
+    int                             naux;
 
     printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PRD(0, 0), coff);
     printf("  ID  | seg:offs    [  abs   ] | symbol/function name\n");
@@ -533,7 +527,7 @@ void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
 
       if( coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE )
         {
-	  printf("file %s\n", (char *) (coff_sym + 1));
+	  printf("file %s\n", (const char *) (coff_sym + 1));
           i += naux;
           continue;
         }
