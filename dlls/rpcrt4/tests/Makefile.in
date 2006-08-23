@@ -3,9 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = rpcrt4.dll
-IMPORTS   = rpcrt4 kernel32
+IMPORTS   = ole32 rpcrt4 kernel32
+EXTRALIBS = -luuid
 
 CTESTS = \
+	cstub.c \
 	generated.c \
 	ndr_marshall.c \
 	rpc.c
