@@ -140,7 +140,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->wait_fd         = NULL;
     thread->state           = RUNNING;
     thread->exit_code       = 0;
-    thread->priority        = THREAD_PRIORITY_NORMAL;
+    thread->priority        = 0;
     thread->affinity        = 1;
     thread->suspend         = 0;
     thread->desktop_users   = 0;
@@ -764,7 +764,7 @@ void break_thread( struct thread *thread )
 
     assert( thread->context );
 
-    data.record.ExceptionCode    = EXCEPTION_BREAKPOINT;
+    data.record.ExceptionCode    = STATUS_BREAKPOINT;
     data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     data.record.ExceptionRecord  = NULL;
     data.record.ExceptionAddress = get_context_ip( thread->context );
@@ -945,7 +945,7 @@ DECL_HANDLER(get_thread_info)
         reply->pid            = get_process_id( thread->process );
         reply->tid            = get_thread_id( thread );
         reply->teb            = thread->teb;
-        reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
+        reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
         reply->creation_time.sec  = thread->creation_time.tv_sec;
