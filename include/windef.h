@@ -355,6 +355,17 @@ typedef struct tagPOINTS
 #endif
 } POINTS, *PPOINTS, *LPPOINTS;
 
+typedef struct _FILETIME {
+#ifdef WORDS_BIGENDIAN
+    DWORD  dwHighDateTime;
+    DWORD  dwLowDateTime;
+#else
+    DWORD  dwLowDateTime;
+    DWORD  dwHighDateTime;
+#endif
+} FILETIME, *PFILETIME, *LPFILETIME;
+#define _FILETIME_
+
 /* The RECT structure */
 typedef struct tagRECT
 {
