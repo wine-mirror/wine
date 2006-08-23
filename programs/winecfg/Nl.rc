@@ -66,7 +66,7 @@ BEGIN
     CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
     CONTROL	    "Schakel \"double buffering\" in.",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
     
-    LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met u desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
+    LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met uw desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
                     IDC_STATIC,15,37,228,80
     CONTROL         "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
     
@@ -136,7 +136,7 @@ BEGIN
     PUSHBUTTON      "&Bladeren...",IDC_BUTTON_BROWSE_PATH,208,120,40,13
 
     LTEXT           "&Soort:",IDC_STATIC_TYPE,15,138,21,10
-    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_TYPE,41,135,97,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     LTEXT           "Naam en serienummer",IDC_LABELSERIAL_STATIC,15,155,131,10
 
@@ -161,9 +161,9 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Stuurprograma selectie ",IDC_STATIC,8,4,244,195
-    LTEXT	    "Geluidsbesturing: ",IDC_STATIC,15,20,227,30
-    CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,170,50,79,14
+    LTEXT           "Selecteer een geluids-stuurprogramma door het aanvinken van het gewenste stuurprogramma. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Configureer een stuurprogramma d.m.v. een rechter muisklik hierop.",IDC_STATIC,15,20,227,45
+    CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,125
+    PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,170,65,79,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -219,63 +219,63 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING "Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n. Weet u zeker dat u dit wilt doen?"
+    IDS_DLL_WARNING         "Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n. Weet u zeker dat u dit wilt doen?"
     IDS_DLL_WARNING_CAPTION "Waarschuwing: systeembibliotheek"
-    IDS_DLL_NATIVE "Native (Windows)"
-    IDS_DLL_BUILTIN "Builtin (Wine)"
-    IDS_DLL_NATIVE_BUILTIN "Native dan builtin"
-    IDS_DLL_BUILTIN_NATIVE "Builtin dan native"
-    IDS_DLL_DISABLED "Uitgeschakeld"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DLL_NATIVE          "Native (Windows)"
+    IDS_DLL_BUILTIN         "Builtin (Wine)"
+    IDS_DLL_NATIVE_BUILTIN  "Native dan builtin"
+    IDS_DLL_BUILTIN_NATIVE  "Builtin dan native"
+    IDS_DLL_DISABLED        "Uitgeschakeld"
+    IDS_DEFAULT_SETTINGS    "Standaard instellingen"
+    IDS_EXECUTABLE_FILTER   "Wine toepassingen (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Gebruike globale instellingen"
+    IDS_SELECT_EXECUTABLE   "Selecteer een uitvoerbaar bestand"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-    IDS_SHADER_MODE_EMULATION   "Emulated"
+    IDS_SHADER_MODE_NONE        "Geen"
+    IDS_SHADER_MODE_EMULATION   "Emulatie"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
+    IDS_DRIVE_UNKNOWN           "Automatisch detecteren"
+    IDS_DRIVE_FIXED             "Lokaal station"
+    IDS_DRIVE_REMOTE            "Netwerkverbinding"
     IDS_DRIVE_REMOVABLE         "Floppy disk"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
+    IDS_DRIVE_LETTERS_EXCEEDED  "U kunt geen stations meer toevoegen.\n\nElk station moet een letter, van A tot Z, hebben zodat er niet meer dan 26 kunnen zijn"
+    IDS_SYSTEM_DRIVE_LABEL      "Systeem station"
+    IDS_CONFIRM_DELETE_C        "Weet u zeker dat u station C wilt verwijderen?\nDe meeste Windows toepassingen verwachten dat station C bestaat en zullen, met onverwachte resultaten, afbreken. Als u doorgaat vergeet dan niet om station C opnieuw aan te maken!"
     IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_COL_DRIVEMAPPING        "Toewijzing"
+    IDS_NO_DRIVE_C              "U heeft geen C station. Dit kan tot problemen leiden.\n\nVergeet niet om m.b.v. de knop 'Toevoegen' in de Stations tab een C station aan te maken!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_FULL              "Volledig"
+    IDS_ACCEL_STANDARD          "Standaard"
+    IDS_ACCEL_BASIC             "Eenvoudig"
+    IDS_ACCEL_EMULATION         "Emulatie"
+    IDS_DRIVER_ALSA             "ALSA Stuurprogramma"
+    IDS_DRIVER_ARTS             "aRts Stuurprogramma"
+    IDS_DRIVER_ESOUND           "EsounD Stuurprogramma"
+    IDS_DRIVER_OSS              "OSS Stuurprogramma"
+    IDS_DRIVER_JACK             "JACK Stuurprogramma"
+    IDS_DRIVER_NAS              "NAS Stuurprogramma"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Stuurprogramma"
+    IDS_DRIVER_COREAUDIO        "CoreAudio Stuurprogramma"
+    IDS_OPEN_DRIVER_ERROR       "%s kon niet worden geopend!"
+    IDS_SOUNDDRIVERS            "Stuurprogramma's voor geluid"
+    IDS_DEVICES_WAVEOUT         "Wave Out apparaten"
+    IDS_DEVICES_WAVEIN          "Wave In apparaten"
+    IDS_DEVICES_MIDIOUT         "MIDI Out apparaten"
+    IDS_DEVICES_MIDIIN          "MIDI In apparaten"
+    IDS_DEVICES_AUX             "Aux apparaten"
+    IDS_DEVICES_MIXER           "Mixer apparaten"
+    IDS_UNAVAILABLE_DRIVER      "Stuurprogramma in de registry is niet beschikbaar!\n\nVerwijder \"%s\" uit de registry?"
+    IDS_WARNING                 "Waarschuwing"
 END
