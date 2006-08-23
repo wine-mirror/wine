@@ -1996,14 +1996,14 @@ inline static int SHLWAPI_FormatSignificant(LPWSTR lpszNum, int dwDigits)
  * Internal helper for StrFromTimeIntervalW.
  */
 static int WINAPI SHLWAPI_WriteTimeClass(LPWSTR lpszOut, DWORD dwValue,
-                                         LPCWSTR lpszClass, int iDigits)
+                                         UINT uClassStringId, int iDigits)
 {
   WCHAR szBuff[64], *szOut = szBuff + 32;
 
   szOut = SHLWAPI_WriteReverseNum(szOut, dwValue);
   iDigits = SHLWAPI_FormatSignificant(szOut + 1, iDigits);
   *szOut = ' ';
-  strcpyW(szBuff + 32, lpszClass);
+  LoadStringW(shlwapi_hInstance, uClassStringId, szBuff + 32, 32);
   strcatW(lpszOut, szOut);
   return iDigits;
 }
@@ -2064,9 +2064,6 @@ INT WINAPI StrFromTimeIntervalA(LPSTR lpszStr, UINT cchMax, DWORD dwMS,
 INT WINAPI StrFromTimeIntervalW(LPWSTR lpszStr, UINT cchMax, DWORD dwMS,
                                 int iDigits)
 {
-  static const WCHAR szHr[] = {' ','h','r','\0'};
-  static const WCHAR szMin[] = {' ','m','i','n','\0'};
-  static const WCHAR szSec[] = {' ','s','e','c','\0'};
   INT iRet = 0;
 
   TRACE("(%p,%d,%ld,%d)\n", lpszStr, cchMax, dwMS, iDigits);
@@ -2092,13 +2089,13 @@ INT WINAPI StrFromTimeIntervalW(LPWSTR lpszStr, UINT cchMax, DWORD dwMS,
     szCopy[0] = '\0';
 
     if (dwHours)
-      iDigits = SHLWAPI_WriteTimeClass(szCopy, dwHours, szHr, iDigits);
+      iDigits = SHLWAPI_WriteTimeClass(szCopy, dwHours, IDS_TIME_INTERVAL_HOURS, iDigits);
 
     if (dwMinutes && iDigits)
-      iDigits = SHLWAPI_WriteTimeClass(szCopy, dwMinutes, szMin, iDigits);
+      iDigits = SHLWAPI_WriteTimeClass(szCopy, dwMinutes, IDS_TIME_INTERVAL_MINUTES, iDigits);
 
     if (iDigits) /* Always write seconds if we have significant digits */
-      SHLWAPI_WriteTimeClass(szCopy, dwMS, szSec, iDigits);
+      SHLWAPI_WriteTimeClass(szCopy, dwMS, IDS_TIME_INTERVAL_SECONDS, iDigits);
 
     lstrcpynW(lpszStr, szCopy, cchMax);
     iRet = strlenW(lpszStr);

@@ -21,6 +21,9 @@
 #define WINE_SHLWAPI_RESOURCE_H
 
 #define IDS_BYTES_FORMAT 64
+#define IDS_TIME_INTERVAL_HOURS 65
+#define IDS_TIME_INTERVAL_MINUTES 66
+#define IDS_TIME_INTERVAL_SECONDS 67
 
 /* These numbers match native ID's and shouldn't be abitrarily changed */
 #define IDD_ERR_DIALOG    0x1200
