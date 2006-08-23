@@ -2,6 +2,7 @@
  * X11DRV OpenGL functions
  *
  * Copyright 2000 Lionel Ulmer
+ * Copyright 2006 Roderick Colenbrander
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -255,7 +256,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     int value = 0;
 
     /* Pixel type */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_RENDER_TYPE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_RENDER_TYPE, &value);
     if (value & GLX_RGBA_BIT)
       iPixelType = PFD_TYPE_RGBA;
     else
@@ -266,7 +267,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Doublebuffer */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
     if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE)) {
       if ((ppfd->dwFlags & PFD_DOUBLEBUFFER) != (dwFlags & PFD_DOUBLEBUFFER)) {
         goto choose_exit;
@@ -274,7 +275,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Stereo */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
     if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE)) {
       if ((ppfd->dwFlags & PFD_STEREO) != (dwFlags & PFD_STEREO)) {
         goto choose_exit;
@@ -282,25 +283,25 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Alpha bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_ALPHA_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_ALPHA_SIZE, &value);
     if (ppfd->iPixelType==PFD_TYPE_RGBA && ppfd->cAlphaBits && !value) {
       goto choose_exit;
     }
 
     /* Depth bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DEPTH_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_DEPTH_SIZE, &value);
     if (ppfd->cDepthBits && !value) {
       goto choose_exit;
     }
 
     /* Stencil bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STENCIL_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_STENCIL_SIZE, &value);
     if (ppfd->cStencilBits && !value) {
       goto choose_exit;
     }
 
     /* Aux buffers */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_AUX_BUFFERS, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_AUX_BUFFERS, &value);
     if (ppfd->cAuxBuffers && !value) {
       goto choose_exit;
     }
