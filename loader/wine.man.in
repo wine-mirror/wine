@@ -280,10 +280,10 @@ The most recent public version of
 can be downloaded from
 .I http://www.winehq.org/download
 .PP
-The latest snapshot of the code may be obtained via CVS.  For information
+The latest snapshot of the code may be obtained via GIT.  For information
 on how to do this, please see
 .I
-http://www.winehq.org/cvs
+http://www.winehq.org/site/git
 .PP
 WineHQ, the
 .B wine
