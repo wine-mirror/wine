@@ -1626,7 +1626,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     size_t len = wszText ? lstrlenW(wszText) : 0;
     int from, to;
     ME_Style *style;
-    TRACE("EM_SETTEXEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
+    TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
     if (pStruct->codepage != 1200) {
       FIXME("EM_SETTEXTEX only supports unicode right now!\n"); 
       return 0;

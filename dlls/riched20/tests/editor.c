@@ -50,6 +50,7 @@ struct find_s {
   int _todo_wine;
 };
 
+
 struct find_s find_tests[] = {
   /* Find in empty text */
   {0, -1, "foo", FR_DOWN, -1, 0},
@@ -1123,6 +1124,198 @@ static void test_WM_SETFONT()
   DestroyWindow(hwndRichEdit);
 }
 
+
+static DWORD CALLBACK test_EM_GETMODIFY_esCallback(DWORD_PTR dwCookie,
+                                         LPBYTE pbBuff,
+                                         LONG cb,
+                                         LONG *pcb)
+{
+  const char** str = (const char**)dwCookie;
+  int size = strlen(*str);
+  if(size > 3)  /* let's make it peice-meal for fun */
+    size = 3;
+  *pcb = cb;
+  if (*pcb > size) {
+    *pcb = size;
+  }
+  if (*pcb > 0) {
+    memcpy(pbBuff, *str, *pcb);
+    *str += *pcb;
+  }
+  return 0;
+}
+
+static void test_EM_GETMODIFY(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  LRESULT result;
+  SETTEXTEX setText;
+  WCHAR TestItem1[] = {'T', 'e', 's', 't', 
+                       'S', 'o', 'm', 'e', 
+                       'T', 'e', 'x', 't', 0}; 
+  WCHAR TestItem2[] = {'T', 'e', 's', 't', 
+                       'S', 'o', 'm', 'e', 
+                       'O', 't', 'h', 'e', 'r',
+                       'T', 'e', 'x', 't', 0}; 
+  const char* streamText = "hello world";
+  CHARFORMAT2 cf2;
+  PARAFORMAT2 pf2;
+  EDITSTREAM es;
+  
+  HFONT testFont = CreateFontA (0,0,0,0,FW_LIGHT, 0, 0, 0, ANSI_CHARSET, 
+    OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | 
+    FF_DONTCARE, "Courier");
+  
+  setText.codepage = 1200;  /* no constant for unicode */
+  setText.flags = ST_KEEPUNDO;
+  
+
+  /* modify flag shouldn't be set when richedit is first created */
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result == 0, 
+      "EM_GETMODIFY returned non-zero, instead of zero on create\n");
+  
+  /* setting modify flag should actually set it */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, TRUE, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0, 
+      "EM_GETMODIFY returned zero, instead of non-zero on EM_SETMODIFY\n");
+  
+  /* clearing modify flag should actually clear it */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result == 0, 
+      "EM_GETMODIFY returned non-zero, instead of zero on EM_SETMODIFY\n");
+ 
+  /* setting font doesn't change modify flag */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result == 0,
+      "EM_GETMODIFY returned non-zero, instead of zero on setting font\n");
+  }
+
+  /* setting text should set modify flag */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero on setting text\n");
+  
+  /* undo previous text doesn't reset modify flag */
+  SendMessage(hwndRichEdit, WM_UNDO, 0, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero on undo after setting text\n");
+  }
+  
+  /* set text with no flag to keep undo stack should not set modify flag */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result == 0,
+      "EM_GETMODIFY returned non-zero, instead of zero when setting text while not keeping undo stack\n");
+  }
+  
+  /* WM_SETTEXT doesn't modify */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem2);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result == 0,
+      "EM_GETMODIFY returned non-zero for WM_SETTEXT\n");
+  }
+  
+  /* clear the text */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, WM_CLEAR, 0, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result == 0,
+      "EM_GETMODIFY returned non-zero, instead of zero for WM_CLEAR\n");
+  
+  /* replace text */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+  SendMessage(hwndRichEdit, EM_REPLACESEL, TRUE, (LPARAM)TestItem2);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero when replacing text\n");
+  
+  /* copy/paste text 1 */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+  SendMessage(hwndRichEdit, WM_COPY, 0, 0);
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero when pasting identical text\n");
+  
+  /* copy/paste text 2 */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+  SendMessage(hwndRichEdit, WM_COPY, 0, 0);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 3);
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero when pasting different text\n");
+  
+  /* press char */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 1);
+  SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero for WM_CHAR\n");
+  
+  /* set char format */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+  cf2.dwMask = CFM_ITALIC | cf2.dwMask;
+  cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero for EM_SETCHARFORMAT\n");
+  
+  /* set para format */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  pf2.cbSize = sizeof(PARAFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETPARAFORMAT, 0,
+             (LPARAM) &pf2);
+  pf2.dwMask = PFM_ALIGNMENT | pf2.dwMask;
+  pf2.wAlignment = PFA_RIGHT;
+  SendMessage(hwndRichEdit, EM_SETPARAFORMAT, 0, (LPARAM) &pf2);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result == 0,
+      "EM_GETMODIFY returned zero, instead of non-zero for EM_SETPARAFORMAT\n");
+  }
+
+  /* EM_STREAM */
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  es.dwCookie = (DWORD_PTR)&streamText;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_GETMODIFY_esCallback;
+  SendMessage(hwndRichEdit, EM_STREAMIN, 
+              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  todo_wine {
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero for EM_STREAM\n");
+  }
+
+  
+  DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1147,6 +1340,7 @@ START_TEST( editor )
   test_EM_EXLIMITTEXT();
   test_EM_GETLIMITTEXT();
   test_WM_SETFONT();
+  test_EM_GETMODIFY();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
