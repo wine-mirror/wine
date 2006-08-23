@@ -52,6 +52,7 @@ static BOOL  g_invertSort = FALSE;
 static LPTSTR g_valueName;
 static LPTSTR g_currentPath;
 static HKEY g_currentRootKey;
+static TCHAR g_szValueNotSet[64];
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
@@ -158,15 +159,13 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
         /*        LPTSTR pszText = NULL; */
-        static TCHAR pszText[] = {'(','c','a','n','n','o','t',' ','d','i','s','p','l','a','y',' ','v','a','l','u','e',')',0};
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
             if (ValBuf) {
                 ListView_SetItemText(hwndLV, index, 2, ValBuf);
             } else {
-                static TCHAR textT[] = {'(','n','o','t',' ','s','e','t',')',0};
-                ListView_SetItemText(hwndLV, index, 2, textT);
+                ListView_SetItemText(hwndLV, index, 2, g_szValueNotSet);
             }
             break;
         case REG_DWORD: {
@@ -192,9 +191,13 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
             ListView_SetItemText(hwndLV, index, 2, ValBuf);
             break;
         default:
+          {
             /*            lpsRes = convertHexToHexCSV(lpbData, dwLen); */
-            ListView_SetItemText(hwndLV, index, 2, pszText);
+            TCHAR szText[128];
+            LoadString(hInst, IDS_REGISTRY_VALUE_CANT_DISPLAY, szText, COUNT_OF(szText));
+            ListView_SetItemText(hwndLV, index, 2, szText);
             break;
+          }
         }
     }
 }
@@ -263,9 +266,7 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
                  reg_linkT[]             = {'R','E','G','_','L','I','N','K',0},
                  reg_resource_listT[]    = {'R','E','G','_','R','E','S','O','U','R','C','E','_','L','I','S','T',0},
                  reg_noneT[]             = {'R','E','G','_','N','O','N','E',0},
-                 not_setT[]              = {'(','v','a','l','u','e',' ','n','o','t',' ','s','e','t',')',0},
                  emptyT[]                = {0};
-    static const TCHAR unknownT[] = {'u','n','k','n','o','w','n','(','%','d',')',0};
 
     plvdi->item.pszText = NULL;
     plvdi->item.cchTextMax = 0;
@@ -304,13 +305,17 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
             plvdi->item.pszText = reg_noneT;
             break;
         default:
-            wsprintf(buffer, unknownT, plvdi->item.lParam);
+          {
+            TCHAR szUnknownFmt[64];
+            LoadString(hInst, IDS_REGISTRY_UNKNOWN_TYPE, szUnknownFmt, COUNT_OF(szUnknownFmt));
+            wsprintf(buffer, szUnknownFmt, plvdi->item.lParam);
             plvdi->item.pszText = buffer;
             break;
+          }
         }
         break;
     case 2:
-        plvdi->item.pszText = not_setT;
+        plvdi->item.pszText = g_szValueNotSet;
         break;
     case 3:
         plvdi->item.pszText = emptyT;
@@ -458,6 +463,9 @@ HWND CreateListView(HWND hwndParent, int id)
 {
     RECT rcClient;
     HWND hwndLV;
+
+    /* prepare strings */
+    LoadString(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSet, COUNT_OF(g_szValueNotSet));
 
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);

@@ -90,7 +90,7 @@ extern enum OPTION_FLAGS Options;
 extern TCHAR szTitle[];
 extern TCHAR szFrameClass[];
 extern TCHAR szChildClass[];
-extern LPCTSTR g_pszDefaultValueName;
+extern TCHAR g_pszDefaultValueName[];
 
 /* about.c */
 extern void ShowAboutBox(HWND hWnd);

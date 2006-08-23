@@ -260,15 +260,18 @@ static UINT_PTR CALLBACK ImportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, W
 
 TCHAR FileNameBuffer[_MAX_PATH];
 TCHAR FileTitleBuffer[_MAX_PATH];
+TCHAR FilterBuffer[_MAX_PATH];
 
-static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME* pofn)
+static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
 {
     memset(pofn, 0, sizeof(OPENFILENAME));
     pofn->lStructSize = sizeof(OPENFILENAME);
     pofn->hwndOwner = hWnd;
     pofn->hInstance = hInst;
 
-    pofn->lpstrFilter = _T("Registration Files\0*.reg\0Win9x/NT4 Registration Files (REGEDIT4)\0*.reg\0All Files (*.*)\0*.*\0\0");
+    if (FilterBuffer[0] == 0)
+        LoadString(hInst, IDS_FILEDIALOG_FILTER, FilterBuffer, _MAX_PATH);
+    pofn->lpstrFilter = FilterBuffer;
     pofn->nFilterIndex = 1;
     pofn->lpstrFile = FileNameBuffer;
     pofn->nMaxFile = _MAX_PATH;
@@ -292,9 +295,11 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME* pofn)
 static BOOL ImportRegistryFile(HWND hWnd)
 {
     OPENFILENAME ofn;
+    TCHAR title[128];
 
     InitOpenFileName(hWnd, &ofn);
-    ofn.lpstrTitle = _T("Import Registry File");
+    LoadString(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
+    ofn.lpstrTitle = title;
     /*    ofn.lCustData = ;*/
     if (GetOpenFileName(&ofn)) {
         if (!import_registry_file(ofn.lpstrFile)) {
@@ -330,10 +335,12 @@ static BOOL ExportRegistryFile(HWND hWnd)
 {
     OPENFILENAME ofn;
     TCHAR ExportKeyPath[_MAX_PATH];
+    TCHAR title[128];
 
     ExportKeyPath[0] = _T('\0');
     InitOpenFileName(hWnd, &ofn);
-    ofn.lpstrTitle = _T("Export Registry File");
+    LoadString(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
+    ofn.lpstrTitle = title;
     /*    ofn.lCustData = ;*/
     ofn.Flags = OFN_ENABLETEMPLATE + OFN_EXPLORER;
     ofn.lpfnHook = ImportRegistryFile_OFNHookProc;

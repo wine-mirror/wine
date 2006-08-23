@@ -28,5 +28,7 @@
 
 void ShowAboutBox(HWND hWnd)
 {
-    ShellAbout(hWnd, _T("Registry Editor"), _T(""), LoadIcon(hInst, MAKEINTRESOURCE(IDI_REGEDIT)));
+    TCHAR title[64];
+    LoadString(hInst, IDS_APP_TITLE, title, COUNT_OF(title));
+    ShellAbout(hWnd, title, _T(""), LoadIcon(hInst, MAKEINTRESOURCE(IDI_REGEDIT)));
 }

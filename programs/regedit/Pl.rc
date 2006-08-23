@@ -282,6 +282,22 @@ BEGIN
     IDS_NOTFOUND            "Nie uda³o siê wyszukaæ ci¹gu '%s'"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importuj plik rejestrów"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Eksportuj plik rejestrów"
+    IDS_FILEDIALOG_FILTER         "Pliki rejestrów\0*.reg\0Pliki rejestrów Win9x/NT4 (REGEDIT4)\0*.reg\0Wszystkie pliki (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME        "Mój komputer"
+    IDS_REGISTRY_DEFAULT_VALUE    "(Domyœlna)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(wartoœæ nie ustalona)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(nie mogê wyœwietliæ wartoœci)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(nieznany: %d)"
+END
+
 /*****************************************************************/
 
 

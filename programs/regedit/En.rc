@@ -363,6 +363,22 @@ BEGIN
     IDS_NOTFOUND            "Search string '%s' not found"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Import Registry File"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Export Registry File"
+    IDS_FILEDIALOG_FILTER         "Registration Files\0*.reg\0Win9x/NT4 Registration Files (REGEDIT4)\0*.reg\0All Files (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "My Computer"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Default)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(value not set)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(cannot display value)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(unknown %d)"
+END
+
 /*****************************************************************/
 
 

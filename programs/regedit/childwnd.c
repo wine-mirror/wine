@@ -211,7 +211,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_CREATE:
         g_pChildWnd = pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
         if (!pChildWnd) return 0;
-        _tcsncpy(pChildWnd->szPath, _T("My Computer"), MAX_PATH);
+        LoadString(hInst, IDS_REGISTRY_ROOT_NAME, pChildWnd->szPath, MAX_PATH);
         pChildWnd->nSplitPos = 250;
         pChildWnd->hWnd = hWnd;
         pChildWnd->hTreeWnd = CreateTreeView(hWnd, pChildWnd->szPath, TREE_WINDOW);

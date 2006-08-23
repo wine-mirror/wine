@@ -47,6 +47,14 @@
 #define IDD_FIND                        135
 #define IDI_BIN                         136
 #define IDR_POPUP_MENUS                 137
+#define IDS_FILEDIALOG_IMPORT_TITLE     144
+#define IDS_FILEDIALOG_EXPORT_TITLE     145
+#define IDS_FILEDIALOG_FILTER           146
+#define IDS_REGISTRY_ROOT_NAME          160
+#define IDS_REGISTRY_DEFAULT_VALUE      161
+#define IDS_REGISTRY_VALUE_NOT_SET      162
+#define IDS_REGISTRY_VALUE_CANT_DISPLAY 164
+#define IDS_REGISTRY_UNKNOWN_TYPE       165
 #define IDC_LICENSE_EDIT                1029
 #define ID_REGISTRY_EXIT                32770
 #define ID_FAVORITES_ADDTOFAVORITES     32772
