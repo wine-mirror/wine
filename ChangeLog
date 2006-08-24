@@ -1,3 +1,1500 @@
+2006-08-24  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac:
+	configure: Fixed bug in previous OpenGL warning patch.
+
+2006-08-17  Robert Reif <reif@earthlink.net>
+
+	* dlls/advapi32/tests/Makefile.in, dlls/advapi32/tests/lsa.c:
+	advapi32: Output information on failed LsaQueryInformationPolicy tests.
+
+2006-08-24  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/msi/table.c:
+	msi: Fix strings with lengths that are exact multiples of 2^16.
+
+2006-08-24  Jeff Latimer <lats@yless4u.com.au>
+
+	* dlls/gdi/freetype.c, dlls/gdi/tests/font.c:
+	gdi: Add missing glyph code to GetGlyphIndices and tests.
+
+2006-08-24  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/shell32/shell32_main.h, dlls/shell32/shlfileop.c:
+	shell32: Use kernel functions in preference to libwine ones.
+
+	* dlls/shell32/tests/shlfileop.c:
+	shell32: Fix compilation of test on MSVC6.
+
+2006-08-24  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/dialog.c:
+	msi: Add an initial implementation of the PathEdit control.
+
+2006-08-23  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/opengl32/wgl.c:
+	opengl32: Fix ATI OpenGL bug.
+
+2006-08-24  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* configure, configure.ac:
+	configure: Extend the current OpenGL/Direct3D warning code.
+
+2006-08-24  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/winecfg/Ko.rc:
+	winecfg: Updated Korean Resource.
+
+2006-08-23  Benjamin Arai <me@benjaminarai.com>
+
+	* dlls/oleaut32/tests/vartest.c:
+	oleaut32: Updated conformance test return string for VT_RESERVED.
+
+2006-08-23  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* tools/winedump/debug.c, tools/winedump/dump.c:
+	winedump: Cast-qual warnings fix.
+
+2006-08-23  James Liggett <jrliggett@cox.net>
+
+	* dlls/winex11.drv/window.c:
+	winex11.drv: Fix explorer regression caused by systray patch
+	Move systray_dock_window call to X11DRV_CreateWindow so that it can
+	safely call SetWindowPos without having _CheckNotSysLevel crash the
+	explorer.
+
+2006-08-22  Clinton Stimpson <cjstimpson@afinternet.net>
+
+	* dlls/riched20/editor.c, dlls/riched20/tests/editor.c:
+	riched20: Add tests for EM_GETMODIFY.
+
+2006-08-23  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/cstub.c, dlls/rpcrt4/tests/cstub.c:
+	rpcrt4: Tests for CStdStubBuffer_Disconnect and a tidy up of the implementation.
+
+	* dlls/rpcrt4/cstub.c, dlls/rpcrt4/tests/cstub.c:
+	rpcrt4: Tests for CStdStubBuffer_Connect and fixes to make them pass.
+
+	* dlls/rpcrt4/cstub.c, dlls/rpcrt4/tests/cstub.c:
+	rpcrt4: Add tests for CreateStub and fix up CStdStubBuffer_Construct to match.
+
+	* dlls/rpcrt4/cstub.c, dlls/rpcrt4/ndr_midl.c, dlls/rpcrt4/tests/cstub.c:
+	rpcrt4: Add tests for NdrStubForwardingFunction and write a commented out
+	implementation.
+	This shows that the IRpcStubBuffer for a delegated stub's base
+	interface is stored at (void**)This-1.
+
+	* dlls/rpcrt4/tests/Makefile.in, dlls/rpcrt4/tests/cstub.c:
+	rpcrt4: Tests for NdrDllGetClassObject.
+	These show that delegated stubs need different Connect, Disconnect and
+	CountRefs methods than non-delegated stubs (ie they don't use all of
+	the CStdStubBuffer_* functions).
+
+2006-08-23  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mlang/mlang.c:
+	mlang: Added IMultiLanguage3 interface stub implementation.
+
+	* include/mlang.idl:
+	mlang.idl: Added IMultiLanguage3 declaration.
+
+2006-08-22  Andrzej Popowski <popej@friko.onet.pl>
+
+	* dlls/msvcrt/scanf.h, dlls/msvcrt/tests/scanf.c:
+	msvcrt: Fix scanf format "%i" base detection.
+
+2006-08-21  Stefan Huehner <stefan@huehner.org>
+
+	* programs/winedbg/winedbg.man.in:
+	winedbg: Fix typo in manpage.
+
+2006-08-19  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/device.c:
+	wined3d: Make the destination surface glDirty in UpdateSurface.
+
+2006-08-19  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/winspool.drv/tests/info.c:
+	winspool.drv/tests: Write-strings warnings fix.
+
+	* dlls/winspool.drv/info.c:
+	winspool.drv: Write-strings warnings fix.
+
+2006-08-18  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/wineps.drv/ppd.c, dlls/wineps.drv/psdrv.h:
+	wineps.drv: Write-strings warnings fix.
+
+	* dlls/ddraw/main.c:
+	ddraw: Write-strings warnings fix.
+
+2006-08-23  Alexandre Julliard <julliard@winehq.org>
+
+	* README, loader/wine.man.in:
+	Documentation updates.
+
+	* tools/.gitignore, tools/Makefile.in, tools/wineprefixcreate.man.in:
+	tools: Added a man page for wineprefixcreate.
+
+	* DEVELOPERS-HINTS:
+	DEVELOPERS-HINTS: Moved to the Wiki by Tom Wickline.
+
+2006-08-23  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/shlwapi/resource.h, dlls/shlwapi/shlwapi_De.rc,
+	  dlls/shlwapi/shlwapi_En.rc, dlls/shlwapi/shlwapi_Eo.rc,
+	  dlls/shlwapi/shlwapi_Es.rc, dlls/shlwapi/shlwapi_Fi.rc,
+	  dlls/shlwapi/shlwapi_Fr.rc, dlls/shlwapi/shlwapi_Hu.rc,
+	  dlls/shlwapi/shlwapi_It.rc, dlls/shlwapi/shlwapi_Ja.rc,
+	  dlls/shlwapi/shlwapi_Ko.rc, dlls/shlwapi/shlwapi_Nl.rc,
+	  dlls/shlwapi/shlwapi_No.rc, dlls/shlwapi/shlwapi_Pl.rc,
+	  dlls/shlwapi/shlwapi_Pt.rc, dlls/shlwapi/shlwapi_Tr.rc,
+	  dlls/shlwapi/string.c:
+	shlwapi: Move strings used by StrFromTimeInterval to resources.
+
+	* programs/regedit/En.rc, programs/regedit/Pl.rc,
+	  programs/regedit/about.c, programs/regedit/childwnd.c,
+	  programs/regedit/framewnd.c, programs/regedit/listview.c,
+	  programs/regedit/main.c, programs/regedit/main.h,
+	  programs/regedit/resource.h:
+	regedit: Put language-dependent strings in resources.
+
+	* programs/regedit/framewnd.c:
+	regedit: Remove custom filter from open/save dialogs.
+
+2006-08-23  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* programs/winecfg/winecfg.c:
+	winecfg: Make sure we can use a large text.
+
+	* dlls/wintrust/wintrust_main.c:
+	wintrust: Add some documentation.
+
+2006-08-23  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac:
+	configure: Remove -O2 disable hack for MacOS now that gcc is fixed.
+
+2006-08-21  Detlef Riekenberg <wine.dev@web.de>
+
+	* configure, configure.ac:
+	configure: Show messages about additional packages with --verbose.
+
+2006-08-22  James Liggett <jrliggett@cox.net>
+
+	* dlls/winex11.drv/window.c, dlls/winex11.drv/x11drv.h,
+	  dlls/winex11.drv/x11drv_main.c:
+	winex11.drv: Add XEmbed system tray support.
+	Portions of this patch based on the work of Mike Hearn and Rob
+	Shearman.
+
+2006-08-22  James Hawkins <truiken@gmail.com>
+
+	* programs/msiexec/msiexec.c:
+	msiexec: Add handling for msiexec's regserver option.
+
+2006-08-23  Mike McCormack <mike@codeweavers.com>
+
+	* server/thread.c:
+	server: Use ntdll values where possible.
+
+	* include/windef.h:
+	windef.h: Add a definition for FILETIME.
+
+	* dlls/ntdll/threadpool.c:
+	ntdll: Use RTL_CRITICAL_SECTION not CRITICAL_SECTION.
+
+2006-08-23  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* programs/winecfg/Nl.rc:
+	winecfg: Update Dutch resource.
+
+	* programs/winecfg/driveui.c:
+	winecfg: Wrong text in messagebox.
+
+2006-08-23  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* dlls/shlwapi/shlwapi_Ko.rc:
+	shlwapi: Update Korean resource.
+
+2006-08-22  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* libs/wine/loader.c:
+	libwine: Cast-qual warning fix.
+
+	* tools/winebuild/res16.c:
+	winebuild: Cast-qual warnings fix.
+
+2006-08-23  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* dlls/ntdll/tests/large_int.c, dlls/ntdll/tests/rtl.c,
+	  dlls/ntdll/tests/rtlbitmap.c, dlls/ntdll/tests/string.c:
+	ntdll/tests: Print 64bit integers as two 32 bit integers.
+
+2006-08-23  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/winex11.drv/opengl.c:
+	winex11.drv: Fix opengl pixel format bug.
+
+2006-08-22  Fatih Aşıcı <fatih.asici@gmail.com>
+
+	* dlls/mshtml/Tr.rc:
+	mshtml: Update Turkish resources.
+
+2006-08-22  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/crypt32.spec, dlls/crypt32/main.c:
+	crypt32: Add CryptFormatObject stub.
+
+2006-08-22  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/shell32/shell32_Pl.rc:
+	shell32: Pl.rc: Fix a backslash.
+
+	* dlls/shlwapi/string.c:
+	shlwapi: Make StrFormatByteSize format numbers using locale settings.
+
+2006-08-22  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/conpoint.c, dlls/mshtml/mshtml_private.h,
+	  dlls/mshtml/olecmd.c, dlls/mshtml/persist.c,
+	  dlls/mshtml/tests/htmldoc.c:
+	mshtml: Use IPropertyNotifySink connection point.
+
+2006-08-22  Robert Reif <reif@earthlink.net>
+
+	* dlls/dsound/propset.c:
+	dsound: Remove unused parameter from propset functions.
+
+2006-08-21  Gerald Pfeifer <gerald@pfeifer.com>
+
+	* configure, configure.ac:
+	configure: Try to #include <pthread.h> before checking for pthread_np.h.
+
+2006-08-21  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/drawprim.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Correctly draw transformed and untransformed vertices in the same scene.
+
+2006-08-21  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/crypt32/main.c:
+	crypt32: Print parameters and add some documentation.
+
+2006-08-21  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/tests/package.c:
+	msi: Add tests for the AppSearch action.
+
+	* dlls/msi/cond.y, dlls/msi/tests/package.c:
+	msi: Add handling for MsiEvaluateCondition's substring operators.
+
+	* dlls/msi/tests/package.c:
+	msi: Add tests for MsiEvaluateCondition's substring operators.
+
+2006-08-22  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/itss/itss.c:
+	itss: Simplify the class factory.
+
+2006-08-22  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/kernel/sync.c:
+	kernel: Set last error in CreateIoCompletionPort.
+
+2006-08-21  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/shlwapi/string.c:
+	shlwapi: Format the kilobyte file size number using locale settings.
+	The code is quite complex but I haven't found any easier way to do it
+	(passing NULL as NUMBERFMT results in two decimal places being appended).
+
+	* dlls/shell32/pidl.c, dlls/shell32/recyclebin.c:
+	shell32: Show file size in the details view in kilobytes.
+
+2006-08-22  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/shell32/shlfileop.c:
+	shell32: Don't add the directory name twice when recursing into subdirectories.
+
+2006-08-21  Benjamin Arai <me@benjaminarai.com>
+
+	* dlls/oleaut32/typelib.c:
+	oleaut32: Add support for handling TKIND_COCLASS in userdefined_to_variantvt.
+
+2006-08-21  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/oid.c:
+	crypt32: Fix a misplaced parenthesis.
+
+2006-08-21  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* dlls/oleaut32/variant.c:
+	oleaut32: Print 64bit integers with wine_dbgstr_longlong.
+
+2006-08-21  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* programs/winecfg/No.rc:
+	winecfg: Update Norwegian Bokmål resources.
+
+2006-08-21  Fatih Aşıcı <fatih.asici@gmail.com>
+
+	* programs/winecfg/Tr.rc:
+	winecfg: Update Turkish resources.
+
+2006-08-21  Matthew Finnicum <MattFinn@gmail.com>
+
+	* dlls/riched20/editor.c:
+	riched20: Make EM_EXLINEFROMCHAR handle special case of lParam == -1.
+
+2006-08-21  Piotr Caban <piotr.caban@gmail.com>
+
+	* programs/oleview/main.h, programs/oleview/typelib.c:
+	oleview: Added dispinterface handling to idl viewer.
+
+	* programs/oleview/typelib.c:
+	oleview: Added typedef handling to idl viewer.
+
+2006-08-21  Huw Davies <huw@codeweavers.com>
+
+	* dlls/winex11.drv/xrender.c:
+	winex11.drv: Fix rendering of fonts that don't support anti-aliasing.
+
+2006-08-19  Frank Richter <frank.richter@gmail.com>
+
+	* programs/winecfg/Bg.rc, programs/winecfg/De.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/Fr.rc, programs/winecfg/Hu.rc,
+	  programs/winecfg/Ja.rc, programs/winecfg/Ko.rc,
+	  programs/winecfg/Nl.rc, programs/winecfg/No.rc,
+	  programs/winecfg/Ru.rc, programs/winecfg/Tr.rc,
+	  programs/winecfg/audio.c, programs/winecfg/properties.h,
+	  programs/winecfg/resource.h:
+	winecfg: audio: Use strings from resources.
+
+2006-08-18  Frank Richter <frank.richter@gmail.com>
+
+	* programs/winecfg/Bg.rc, programs/winecfg/De.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/Fr.rc, programs/winecfg/Hu.rc,
+	  programs/winecfg/Ja.rc, programs/winecfg/Ko.rc,
+	  programs/winecfg/Nl.rc, programs/winecfg/No.rc,
+	  programs/winecfg/Ru.rc, programs/winecfg/Tr.rc,
+	  programs/winecfg/driveui.c, programs/winecfg/resource.h:
+	winecfg: driveui: Load UI strings from resources.
+
+2006-08-19  David Adam <David.Adam@math.cnrs.fr>
+
+	* programs/winecfg/Fr.rc:
+	winecfg: Update French translation.
+
+2006-08-20  Chris Robinson <chris.kcat@gmail.com>
+
+	* dlls/wined3d/device.c:
+	wined3d: Don't pass bad values to glAlphaFunc and glDepthFunc.
+
+	* dlls/wined3d/device.c:
+	wined3d: Print real unhandled D3DCMPFUNC value.
+
+2006-08-20  Piotr Caban <piotr.caban@gmail.com>
+
+	* programs/oleview/typelib.c:
+	oleview: Added idl save to file functionality.
+
+	* programs/oleview/main.h, programs/oleview/typelib.c:
+	oleview: Added idl displaying.
+	- Added idl displaying.
+	- Fixed AddToTLDataStrWithTabsW function.
+
+	* programs/oleview/typelib.c:
+	oleview: Added idl formatting.
+
+	* programs/oleview/typelib.c:
+	oleview: Added functions description to idl generation.
+
+2006-08-21  Saulius Krasuckas <saulius.krasuckas@ieee.org>
+
+	* dlls/advpack/tests/install.c:
+	advpack/tests: Make RunSetupCommand not popup dialogs.
+
+2006-08-21  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/kernel/actctx.c:
+	kernel32: Print parameters, call SetLastError() when failing.
+
+2006-08-19  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/directx.c, dlls/wined3d/wined3d_private.h,
+	  include/wine/wined3d_gl.h:
+	wined3d: Better GPU detection.
+
+2006-08-19  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/arb_program_shader.c, dlls/wined3d/device.c,
+	  dlls/wined3d/glsl_shader.c, dlls/wined3d/stateblock.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Improve float constant loading a bit.
+	- Use a list to keep track of what constants are set.
+	- Move TRACEs and checkGLcall calls out of the main constant loading loop.
+
+	* dlls/wined3d/device.c, dlls/wined3d/drawprim.c,
+	  dlls/wined3d/glsl_shader.c, dlls/wined3d/stateblock.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Lookup GLSL float uniform locations only once per program.
+
+	* dlls/wined3d/stateblock.c:
+	wined3d: Free the float constant map arrays for all stateblocks.
+
+	* dlls/wined3d/arb_program_shader.c, dlls/wined3d/glsl_shader.c:
+	wined3d: Fix indices for the float constant map.
+	Indices for the float constant map should be multiplied by 4 because
+	we're loading 4 component float vectors, not because the size of a
+	float is 4.
+
+2006-08-18  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/nsiface.idl, dlls/mshtml/olecmd.c:
+	mshtml: Added IDM_BOLD implementation.
+
+2006-08-20  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/wintrust/wintrust.spec, dlls/wintrust/wintrust_main.c,
+	  include/mscat.h:
+	wintrust: Added stubbed CryptCATAdminEnumCatalogFromHash.
+
+2006-08-19  Dan Kegel <dank@kegel.com>
+
+	* dlls/mpr/wnet.c:
+	mpr: Fix bug in ProviderOrder comma processing in wnetInit().
+
+2006-08-19  Matt Finnicum <mattfinn@gmail.com>
+
+	* dlls/riched20/editor.c:
+	riched20: Swap two lines that were in wrong order / caused notification not
+	to be sent.
+
+2006-08-19  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c, dlls/secur32/tests/ntlm.c:
+	secur32: Initial working implementation of EncryptMessage and DecryptMessage.
+
+2006-08-19  Robert Reif <reif@earthlink.net>
+
+	* dlls/kernel/environ.c, dlls/kernel/tests/environ.c:
+	kernel32: Fix ExpandEnvironmentStrings to not overflow UNICODE_STRING buffer
+	size (with test).
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: LookupAccountSid buffer size query tests.
+
+	* dlls/advapi32/security.c:
+	advapi32: LookupAccountSid buffer size query fixes.
+
+2006-08-18  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* dlls/qcap/capturegraph.c:
+	qcap: Print 64bit integers with wine_dbgstr_longlong.
+
+2006-08-18  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* programs/winecfg/No.rc:
+	winecfg: Update Norwegian Bokmål resources.
+
+	* dlls/shlwapi/shlwapi_No.rc:
+	shlwapi: Update Norwegian Bokmål resources.
+
+2006-08-18  Stefan Huehner <stefan@huehner.org>
+
+	* dlls/advpack/tests/advpack.c, dlls/advpack/tests/files.c,
+	  dlls/comctl32/tests/header.c, dlls/ddraw/tests/d3d.c,
+	  dlls/gphoto2.ds/gphoto2_i.h, dlls/gphoto2.ds/ui.c,
+	  dlls/riched20/tests/editor.c, dlls/rpcrt4/tests/ndr_marshall.c,
+	  dlls/sane.ds/sane_main.c, dlls/shell32/shellpath.c,
+	  dlls/twain_32/dsm_ctrl.c:
+	Fix some -Wstrict-prototype warnings () -> (void).
+
+2006-08-18  Oleg Krylov <oleg.krylov@gmail.com>
+
+	* dlls/comctl32/toolbar.c:
+	comctl32: Correctly map toolbar bitmap mask color in case of non-default
+	color scheme.
+
+2006-08-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/msvcrt/except.c:
+	msvcrt: Fixed access to the extra arguments of setjmp3.
+
+	* dlls/user/user_main.c:
+	user: Add .exe extension to wineboot just in case.
+
+	* programs/explorer/explorer.c:
+	explorer: Specify an explicit path when launching winefile.
+
+2006-08-18  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* dlls/quartz/filtergraph.c, dlls/quartz/systemclock.c:
+	quartz: Print 64bit integers with wine_dbgstr_longlong.
+
+2006-08-18  Sagar Mittal <sagar.mittal@gmail.com>
+
+	* dlls/quartz/dsoundrender.c:
+	quartz: DSoundRender: Do not overwrite a full buffer.
+
+2006-08-18  Frank Richter <frank.richter@gmail.com>
+
+	* dlls/shlwapi/shlwapi_De.rc:
+	shlwapi: Update German resources.
+
+	* programs/winecfg/Bg.rc, programs/winecfg/De.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/Fr.rc, programs/winecfg/Hu.rc,
+	  programs/winecfg/Ja.rc, programs/winecfg/Ko.rc,
+	  programs/winecfg/Nl.rc, programs/winecfg/No.rc,
+	  programs/winecfg/Ru.rc, programs/winecfg/Tr.rc,
+	  programs/winecfg/resource.h, programs/winecfg/x11drvdlg.c:
+	winecfg: x11drv: Load vertex shader mode strings from resources.
+
+2006-08-18  Tom Wickline <twickline@gmail.com>
+
+	* DEVELOPERS-HINTS:
+	DEVELOPERS-HINTS: Fix reference in implementing new API calls.
+
+2006-08-18  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/oleobj.c, dlls/mshtml/tests/htmldoc.c, dlls/mshtml/view.c:
+	mshtml: Added more Exec tests and fixes.
+
+2006-08-18  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/ntdll/path.c, dlls/ntdll/tests/path.c:
+	ntdll: Fix failing test on windows.
+
+2006-08-17  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/sfc/sfc_main.c:
+	sfc: Print a FIXME only once.
+
+2006-08-18  Robert Reif <reif@earthlink.net>
+
+	* dlls/dsound/tests/capture.c, dlls/dsound/tests/dsound.c,
+	  dlls/dsound/tests/dsound8.c, dlls/dsound/tests/duplex.c,
+	  dlls/dsound/tests/propset.c:
+	dsound: Add class factory tests.
+
+	* dlls/dsound/capture.c, dlls/dsound/dsound.c, dlls/dsound/dsound_main.c,
+	  dlls/dsound/dsound_private.h, dlls/dsound/duplex.c,
+	  dlls/dsound/propset.c:
+	dsound: Class factory cleanup.
+	Consolidate all class factories into a single implementation.
+	Fixes a problem discovered by oleview.
+
+2006-08-17  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/dispatcher.c, dlls/secur32/ntlm.c:
+	secur32: Gracefully handle ntlm_auth versions that don't support the new
+	commands.
+
+2006-08-17  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/shlwapi/shlwapi.rc, dlls/shlwapi/shlwapi_Pl.rc:
+	shlwapi: Add the Polish translation.
+
+	* dlls/shlwapi/resource.h, dlls/shlwapi/shlwapi_De.rc,
+	  dlls/shlwapi/shlwapi_En.rc, dlls/shlwapi/shlwapi_Eo.rc,
+	  dlls/shlwapi/shlwapi_Es.rc, dlls/shlwapi/shlwapi_Fi.rc,
+	  dlls/shlwapi/shlwapi_Fr.rc, dlls/shlwapi/shlwapi_Hu.rc,
+	  dlls/shlwapi/shlwapi_It.rc, dlls/shlwapi/shlwapi_Ja.rc,
+	  dlls/shlwapi/shlwapi_Ko.rc, dlls/shlwapi/shlwapi_Nl.rc,
+	  dlls/shlwapi/shlwapi_No.rc, dlls/shlwapi/shlwapi_Pt.rc,
+	  dlls/shlwapi/shlwapi_Tr.rc, dlls/shlwapi/string.c:
+	shlwapi: Store the "%ld bytes" string as a resource.
+
+	* dlls/shell32/trash.c:
+	shell32: Show the original file name and deletion date in the Trash folder.
+
+	* dlls/shell32/xdg.c, dlls/shell32/xdg.h:
+	shell32: Add desktop entries parsing code.
+
+	* dlls/shell32/shlfileop.c:
+	shell32: Use Yes/No instead of OK/Cancel in confirm dialogs.
+
+2006-08-18  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/kernel/locale.c:
+	kernel32: Change a FIXME to a WARN.
+
+	* dlls/msi/Makefile.in, dlls/msi/alter.c, dlls/msi/query.h,
+	  dlls/msi/sql.y, dlls/msi/tokenize.c:
+	msi: Add a stub ALTER query.
+
+2006-08-17  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/typegen.c:
+	widl: Output format-strings for interface pointers.
+
+	* tools/widl/client.c, tools/widl/proxy.c, tools/widl/server.c,
+	  tools/widl/typegen.c, tools/widl/typegen.h:
+	widl: Allow format-string functions to work with objects.
+
+2006-08-17  Robert Reif <reif@earthlink.net>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Fix test_LookupAccountSid to work on win9x.
+
+2006-08-17  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/conpoint.c:
+	mshtml: Fix Advise implementation for IPropertyNotifySink.
+
+	* dlls/mshtml/nsiface.idl, dlls/mshtml/olecmd.c:
+	mshtml: Switch nsWebBrowset to editing mode in exec_editmod.
+
+2006-08-17  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* dlls/shlwapi/string.c:
+	shlwapi: Print 64bit integers with wine_dbgstr_longlong.
+
+2006-08-17  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Remember to skip over the conformance description.
+
+2006-08-17  Oleg Krylov <oleg.krylov@gmail.com>
+
+	* dlls/comctl32/imagelist.c:
+	comctl32: Fix ImageList_Replace function to correctly apply image mask.
+
+2006-08-18  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* include/wintrust.h:
+	wintrust.h: Added some defines.
+
+2006-08-17  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/secur32/tests/Makefile.in, dlls/secur32/tests/schannel.c:
+	secur32: Make tests loadable on NT4.
+
+2006-08-17  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/user_main.c, programs/explorer/desktop.c:
+	user: Defer all ExitWindowsEx processing to wineboot.
+
+	* programs/wineboot/Makefile.in, programs/wineboot/shutdown.c,
+	  programs/wineboot/wineboot.c:
+	wineboot: Added support for doing a proper shutdown before rebooting.
+	Send WM_QUERYENDSESSION messages to all windows of a given process
+	before moving on to the next.
+	Switch option parsing to getopt.
+	Added a bunch of options to control shutdown behavior.
+
+2006-08-16  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/opengl32/wgl.c, dlls/opengl32/wgl_ext.c, dlls/opengl32/wgl_ext.h,
+	  dlls/winex11.drv/opengl.c:
+	x11drv/opengl: Pixel format rewrite.
+
+2006-08-16  Matt Finnicum <mattfinn@gmail.com>
+
+	* dlls/riched20/editor.c, dlls/riched20/editor.h, dlls/riched20/paint.c,
+	  dlls/riched20/style.c:
+	riched20: Send EN_LINK notifications. Properly underline / color links.
+
+2006-08-17  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/Makefile.in, dlls/secur32/ntlm.c,
+	  dlls/secur32/secur32_priv.h, dlls/secur32/util.c:
+	secur32: Add real signing / verifying to NTLM provider.
+
+	* dlls/secur32/ntlm.c:
+	secur32: Mask away NTLMv2 and key exchange flags so we never negotiate it
+	for now.
+
+2006-08-16  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* programs/regedit/childwnd.c:
+	regedit: Write-strings warnings fix.
+
+	* dlls/ddraw/direct3d.c:
+	ddraw: Write-strings warnings fix.
+
+	* dlls/winspool.drv/info.c:
+	winspool.drv: Write-strings warning fix.
+
+2006-08-16  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/proxy.c:
+	widl: Use typegen.c format-string functions in proxy.c.
+
+	* tools/widl/client.c, tools/widl/server.c, tools/widl/typegen.c,
+	  tools/widl/typegen.h:
+	widl: Move format-string declaration output to typegen.c.
+
+2006-08-17  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/tests/htmldoc.c:
+	mshtml: Added test of edit mode.
+
+	* dlls/mshtml/olecmd.c:
+	mshtml: Added beginning implementation of IDM_EDITMODE.
+
+	* dlls/mshtml/mshtml_private.h, dlls/mshtml/oleobj.c:
+	mshtml: Rename get_property to get_client_disp_property and make it available
+	for other files.
+
+	* include/mshtmhst.idl:
+	mshtmhst.idl: Added DOCHOSTUITYPE declaration.
+
+2006-08-16  Christian Costa <titan.costa@wanadoo.fr>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Make sure b_info structure is properly allocated and released.
+
+2006-08-16  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* tools/winedump/minidump.c:
+	winedump: Print each 64bit integers as two 32 bit integers.
+
+2006-08-17  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/winecfg/Ko.rc:
+	winecfg: Updated Korean resource.
+
+2006-08-17  Fatih Aşıcı <fatih.asici@gmail.com>
+
+	* programs/winecfg/Tr.rc:
+	winecfg: Update Turkish resource file.
+
+2006-08-16  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* programs/winecfg/No.rc:
+	winecfg: Updated Norwegian Bokmål resources.
+
+2006-08-16  Oleg Krylov <oleg.krylov@gmail.com>
+
+	* dlls/comctl32/toolbar.c:
+	comctl32: toolbar: Use HOT imagelist for buttons in CHECKED state.
+
+2006-08-16  Frank Richter <frank.richter@gmail.com>
+
+	* programs/winecfg/appdefaults.c:
+	winecfg: Fix issues with LVM_GETITEMW by removing superfluous flag.
+
+	* programs/winecfg/appdefaults.c, programs/winecfg/winecfg.c,
+	  programs/winecfg/winecfg.h:
+	winecfg: Use WCHARs for window title, current app.
+
+2006-08-16  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Add tests for NdrAllocate.
+
+2006-08-16  Frank Richter <frank.richter@gmail.com>
+
+	* programs/winecfg/Bg.rc, programs/winecfg/De.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/Fr.rc, programs/winecfg/Hu.rc,
+	  programs/winecfg/Ja.rc, programs/winecfg/Ko.rc,
+	  programs/winecfg/Nl.rc, programs/winecfg/No.rc,
+	  programs/winecfg/Ru.rc, programs/winecfg/Tr.rc:
+	winecfg: New resource strings for appdefaults.
+
+2006-08-16  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/mshtml_private.h, dlls/mshtml/nsembed.c:
+	mshtml: Added [Get|Set]ParentContentListener implementation.
+
+2006-08-16  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/advapi32/registry.c, dlls/advapi32/tests/registry.c:
+	advapi32: Add tests for RegQueryValueEx to show that it sets the data
+	size to 0 when a buffer isn't present and that it sets the type to
+	REG_NONE on Win9x.
+
+2006-08-16  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/device.c:
+	wined3d: Silence WINED3DRS_DEBUGMONITORTOKEN.
+
+2006-08-16  Robert Reif <reif@earthlink.net>
+
+	* dlls/secur32/tests/secur32.c:
+	secur32: Fix GetComputerObjectName tests based on feedback from Paul Vriens.
+
+2006-08-16  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/win.c:
+	user: Explicitly load explorer.exe from the system directory.
+
+	* tools/wine.inf:
+	wine.inf: Create a fake exe for explorer.exe.
+
+2006-08-16  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/ole32/compobj.c, dlls/ole32/ole2.c, dlls/ole32/storage32.c:
+	ole32: Move some functions out of compobj.c that don't belong there and update
+	the copyright statement.
+
+	* dlls/ole32/compobj.c, dlls/ole32/tests/compobj.c,
+	  dlls/ole32/tests/marshal.c:
+	ole32: Add some more tests for failure cases of Co* functions and make builtin
+	ole32 pass them.
+
+	* dlls/ole32/compobj.c, dlls/ole32/tests/compobj.c:
+	ole32: Add tests for the failure cases of CLSIDFromProgID and fix the function
+	to conform to these.
+
+	* dlls/rpcrt4/ndr_stubless.c:
+	rpcrt4: Move processing of the arguments from NdrClientCall2 to two new
+	functions.
+
+2006-08-16  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/wldap32/option.c:
+	wldap32: Support setting server controls.
+
+	* dlls/wldap32/option.c, dlls/wldap32/parse.c:
+	wldap32: Document ldap_{get,set}_option and the parsing functions.
+
+2006-08-16  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, dlls/Makedll.rules.in,
+	  programs/Makeprog.rules.in:
+	configure: Setting rpath should no longer be needed for dlls.
+
+2006-08-16  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/shlwapi.spec:
+	shlwapi: Ordinal 394 should load and call shell32.SHNotifyChange.
+	Makes builtin shlwapi behave better during reboot after IE6 install.
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/shlwapi.spec:
+	shlwapi: Add a stub implementation for ZoneComputePaneSize.
+	Allows IE6 to show its main window with builtin shlwapi.
+
+	* dlls/msi/tests/db.c:
+	msi: Fix a couple of memory leaks in the test code.
+
+2006-08-16  Frank Richter <frank.richter@gmail.com>
+
+	* programs/winecfg/appdefaults.c, programs/winecfg/resource.h,
+	  programs/winecfg/winecfg.h:
+	winecfg: appdefaults: Use more strings from resources, unicode.
+
+	* programs/winecfg/main.c, programs/winecfg/winecfg.c,
+	  programs/winecfg/winecfg.h:
+	winecfg: Make load_string public.
+
+	* programs/winecfg/De.rc:
+	winecfg: Tweak and update German resources.
+
+2006-08-15  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/proxy.c:
+	widl: Generate proxy code for user marshalled types.
+
+	* tools/widl/proxy.c:
+	widl: Fix out-only temporary variable generation.
+
+	* tools/widl/proxy.c:
+	widl: Fix NdrComplexStructUnmarshall calls in generated code.
+
+	* tools/widl/proxy.c:
+	widl: Fix NdrConformantArrayUnmarshall calls in generated code.
+
+	* tools/widl/header.c, tools/widl/parser.y:
+	widl: Calculate method indices in parser instead of during header generation.
+
+2006-08-15  Robert Reif <reif@earthlink.net>
+
+	* dlls/secur32/tests/Makefile.in, dlls/secur32/tests/secur32.c:
+	secur32: Add GetComputerObjectName tests.
+
+	* dlls/secur32/secur32.c:
+	secur32: Partial GetComputerObjectName implementation.
+
+	* dlls/advapi32/tests/lsa.c:
+	advapi32: Fix LsaQueryInformationPolicy test to pass on NT4.
+
+	* dlls/kernel/cpu.c, dlls/kernel/kernel32.spec, include/winbase.h:
+	kernel32: Add GetNativeSystemInfo.
+
+2006-08-15  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/install.c, dlls/msi/msi.spec, include/msiquery.h:
+	msi: Add a stub for MsiGetFeatureCost.
+
+	* dlls/msi/source.c:
+	msi: Use the bare minimum number of parameters for LookupAccountName.
+
+2006-08-15  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/wineps.drv/ps.c:
+	wineps.drv: Write-strings warnings fix and declare function static.
+
+	* dlls/crypt32/tests/oid.c:
+	crypt32/tests: Write-strings warning fix.
+
+2006-08-15  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/navigate.c, dlls/mshtml/nsio.c:
+	mshtml: Correctly handle nsILoadGroup.
+
+2006-08-15  Alexandre Julliard <julliard@winehq.org>
+
+	* server/process.c:
+	server: Store the actual process count in snapshots.
+	We can't rely on running_processes for that, since it now also counts
+	processes waiting for SIGKILL and those aren't included in snapshots.
+
+	* dlls/user/tests/cursoricon.c:
+	user/tests: Fix a compiler warning, and remove some useless casts.
+
+	* dlls/ntdll/loadorder.c:
+	ntdll: Default to native loadorder for the main exe if not in system directory.
+	Unlike dlls, executables can have the same name without necessarily
+	being the same application, so defaulting to native is more likely to
+	do the right thing.
+
+2006-08-15  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/kernel/tests/file.c:
+	kernel/tests: Wrong error code checked.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi: Make tests loadable again on NT4.
+
+	* include/winerror.h:
+	winerror.h: Added an error code.
+
+	* dlls/wintrust/wintrust.spec, dlls/wintrust/wintrust_main.c,
+	  include/wintrust.h:
+	wintrust: Added stubbed WintrustLoadFunctionPointers.
+
+2006-08-15  Mike McCormack <mike@codeweavers.com>
+
+	* configure, configure.ac, dlls/infosoft/Makefile.in,
+	  dlls/infosoft/tests/Makefile.in, dlls/infosoft/tests/infosoft.c,
+	  programs/winetest/Makefile.in:
+	infosoft: Add a test for the language neutral word breaker.
+
+2006-08-15  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* programs/winecfg/En.rc:
+	winecfg: Improve wording of virtual desktop explanation.
+
+2006-08-15  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/ddraw/main.c:
+	ddraw: Do not report DDCAPS_OVERLAY and friends since overlays are not supported.
+
+2006-08-15  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/relpath.c:
+	relpath: Properly handle a "." directory name.
+
+2006-08-15  Jeff Latimer <lats@yless4u.com.au>
+
+	* dlls/usp10/tests/usp10.c:
+	usp10: Remove unnecessary casts in test suite.
+
+2006-08-14  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/Makefile.in, dlls/crypt32/chain.c,
+	  dlls/crypt32/crypt32.spec, dlls/crypt32/tests/Makefile.in,
+	  dlls/crypt32/tests/chain.c:
+	crypt32: Implement CertCreateCertificateChainEngine and
+	CertFreeCertificateChainEngine.
+
+	* include/wincrypt.h:
+	crypt32: Implement CertCreateCertificateChainEngine and
+	CertFreeCertificateChainEngine.
+
+2006-08-15  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, include/config.h.in, loader/kthread.c:
+	loader/kthread: Remove some unneeded #ifdefs, other platforms use pthread now.
+
+	* configure, configure.ac:
+	configure: Disable optimization on MacOS because of gcc bug.
+
+	* configure, configure.ac:
+	configure: Use a platform name check for MacOS shared library support,
+	it's completely different from the others anyway.
+
+	* configure, configure.ac, include/config.h.in, libs/wine/Makefile.in:
+	configure: Moved the library checks after the function checks to avoid code
+	duplication.
+
+2006-08-15  Kai Blin <kai.blin@gmail.com>
+
+	* include/sspi.h:
+	secur32: Fix typo in ISC flags.
+
+	* dlls/secur32/ntlm.c:
+	secur32: Add handling of feature flags and session key to AcceptSecurityContext.
+
+2006-08-14  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Copy helper buffer to output buffer before reusing helper buffer.
+
+2006-08-14  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/proxy.c:
+	widl: Pass the right size to MIDL_memset in generated proxy code.
+
+2006-08-14  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/files.c:
+	msi: Non-compressed files may come before the list of compressed files in the
+	file sequence.
+
+2006-08-14  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/cabinet/tests/extract.c:
+	cabinet/tests: Write-strings warnings fix.
+
+	* dlls/dnsapi/tests/name.c:
+	dnsapi/tests: Write-strings warnings fix.
+
+2006-08-13  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* programs/winedbg/gdbproxy.c:
+	winedbg: Correctly protect system inclusion (needed for Mingw compilation).
+
+2006-08-15  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, dlls/kernel/Makefile.in,
+	  dlls/ws2_32/Makefile.in, include/config.h.in,
+	  programs/winedbg/Makefile.in, server/Makefile.in:
+	configure: Only link against libpoll where really necessary.
+
+2006-08-14  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/wintrust/wintrust.spec, dlls/wintrust/wintrust_main.c,
+	  include/wintrust.h:
+	wintrust: Added stubbed WintrustRemoveActionID.
+
+2006-08-14  Frank Richter <frank.richter@gmail.com>
+
+	* dlls/user/sysparams.c:
+	user: Fix SPI_SETICONTITLELOGFONT to check for LOGFONTW size.
+
+	* dlls/user/sysparams.c:
+	user: Initialize size of nonclients struct in load_nonclient_metrics.
+
+2006-08-14  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, libs/wine/Makefile.in:
+	libwine: Also set the current library version for MacOS.
+
+	* configure, configure.ac:
+	configure: Suppress multiple definitions warnings from the MacOS linker.
+
+	* server/request.c, server/request.h, server/signal.c:
+	server: Make sure to completely kill processes before returning from a
+	wineserver -k.
+
+	* server/process.c, server/process.h, server/thread.c:
+	server: Send a SIGKILL to processes that don't terminate properly.
+
+2006-08-14  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/ole32/ole2.c:
+	ole32: Avoid a warning for VT_FILETIME in PropVariantCopy.
+
+2006-08-13  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* programs/winedbg/symbol.c:
+	winedbg: Fixed the symbol lookup so that it can really find _foo when looking
+	for foo.
+
+	* programs/winedbg/stack.c:
+	winedbg: Native dbghelp can modify the passed debug context in StackWalk,
+	so guard against it.
+
+	* programs/winedbg/Makefile.in, programs/winedbg/tgt_active.c:
+	winedbg: Don't ask for module inspection when calling SymInitialize.
+
+2006-08-14  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Clean up AcceptSecurityContext (reduce indent and duplication).
+
+2006-08-14  Frank Richter <frank.richter@gmail.com>
+
+	* dlls/uxtheme/msstyles.c, dlls/uxtheme/system.c:
+	uxtheme: Set non-client metrics from theme.
+
+	* dlls/uxtheme/msstyles.c:
+	uxtheme: Split color handling out of MSSTYLES_ParseThemeIni into smaller
+	helper functions.
+
+	* dlls/uxtheme/msstyles.c, dlls/uxtheme/system.c:
+	uxtheme: Enable gradient captions if a theme provides colors for them.
+
+2006-08-14  Shachar Shemesh <wine@shemesh.biz>
+
+	* fonts/system.sfd:
+	fonts: Add Hebrew to the system font.
+
+2006-08-14  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/oleaut32/olepicture.c:
+	oleaut32: Put the HeapFree back in the right place.
+
+	* dlls/ole32/stg_prop.c:
+	ole32: Use PropVariantInit instead of memset.
+
+2006-08-14  Robert Reif <reif@earthlink.net>
+
+	* include/Makefile.in, include/dsgetdc.h:
+	include: Add dsgetdc.h.
+
+	* dlls/advapi32/lsa.c:
+	advapi32: Move duplicated code into function.
+
+	* dlls/advapi32/tests/lsa.c, dlls/advapi32/tests/security.c:
+	advapi32: Try again with different access mask if LsaOpenPolicy fails with
+	STATUS_ACCESS_DENIED.
+
+2006-08-14  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/dispatcher.c, dlls/secur32/ntlm.c:
+	secur32: Fix heap error.
+
+2006-08-13  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Add handling for SECPKG_CONTEXT_FLAGS to QueryContextAttributes,
+	unify indentation.
+
+2006-08-14  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Cast helper to ULONG_PTR instead of DWORD.
+
+2006-08-13  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c, dlls/secur32/tests/ntlm.c:
+	secur32: Implement simple VerifySignature.
+
+2006-08-12  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/dispatcher.c, dlls/secur32/ntlm.c,
+	  dlls/secur32/secur32_priv.h, dlls/secur32/tests/ntlm.c:
+	secur32: Implement simple MakeSignature.
+
+2006-08-14  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Make AcceptSecurityContext behaviour consistent with Windows.
+
+2006-08-13  Benjamin Arai <me@benjaminarai.com>
+
+	* dlls/oleaut32/tests/olefont.c:
+	oleaut32: Conformance test for olefont:AddRefHfont.
+
+	* dlls/oleaut32/tests/olefont.c:
+	oleaut32: Conformance test for olefont:ReleaseHfont.
+
+2006-08-14  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/oleaut32/olepicture.c:
+	oleaut32: Calculate icon data if the picture is dirty, or there's no icon data.
+
+	* dlls/oleaut32/olepicture.c:
+	oleaut32: Print an IID in the trace, not just a pointer to it.
+
+	* dlls/oleaut32/olepicture.c:
+	oleaut32: Don't complain when PICTDESC->cbSizeofstruct is 0.
+
+	* dlls/ole32/hglobalstream.c:
+	ole32: Always set pcbWritten when writing a stream.
+
+	* dlls/ole32/ole2.c:
+	ole32: FreePropVariantArray should return an error if rgvars is null.
+	As suggested by Rob Shearman.
+
+2006-08-14  Frank Richter <frank.richter@gmail.com>
+
+	* dlls/uxtheme/system.c:
+	uxtheme: Don't back up colors etc. when a theme is already active.
+
+2006-08-14  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/view/Ko.rc:
+	view: Updated Korean resource.
+
+2006-08-12  Robert Reif <reif@earthlink.net>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Add more LookupAccountSid tests.
+
+	* dlls/advapi32/security.c:
+	advapi32: Add more SIDs to AccountLookupSid.
+
+	* dlls/netapi32/access.c:
+	netapi32: NetUserModalsGet bug fixes and cleanup.
+
+2006-08-13  Phil Costin <philcostin@hotmail.com>
+
+	* dlls/wined3d/glsl_shader.c:
+	wined3d: Fix vertex shader corruption issue.
+
+2006-08-13  Stefan Leichter <Stefan.Leichter@camline.com>
+
+	* programs/winedbg/memory.c:
+	winedbg: Print 64bit integers with wine_dbgstr_longlong.
+
+2006-08-13  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/advpack/tests/files.c:
+	advpack/tests: Write-strings warnings fix.
+
+	* dlls/advapi32/tests/security.c:
+	advapi32/tests: Write-strings warnings fix.
+
+2006-08-12  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* programs/winetest/main.c:
+	winetest: Write-strings warnings fix.
+
+	* programs/taskmgr/dbgchnl.c:
+	taskmgr: Write-strings warnings fix.
+
+	* dlls/crypt32/tests/encode.c:
+	crypt32/tests: Write-strings warnings fix.
+
+2006-08-12  Piotr Caban <piotr.caban@gmail.com>
+
+	* programs/oleview/typelib.c:
+	oleview: Improved interface handling in idl viewer.
+
+2006-08-12  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/mshtml_private.h, dlls/mshtml/nsio.c:
+	mshtml: Remove no longer used get_nsIURI.
+
+	* dlls/mshtml/protocol.c, dlls/mshtml/tests/protocol.c:
+	mshtml: Return INET_E_USE_DEFAULT_PROTOCOLHANDLER in about protocol handler's
+	CombineUrl.
+
+2006-08-11  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/client.c, tools/widl/proxy.c, tools/widl/widltypes.h:
+	widl: Improve pointer null checking logic.
+
+	* tools/widl/parser.y, tools/widl/typegen.c, tools/widl/widltypes.h:
+	widl: Use ref_type to simplify some code.
+
+2006-08-11  Robert Reif <reif@earthlink.net>
+
+	* dlls/advapi32/security.c:
+	advapi32: Add some more well known SIDs.
+
+2006-08-11  Benjamin Arai <me@benjaminarai.com>
+
+	* dlls/oleaut32/tests/olefont.c:
+	oleaut32: Added test to check if olefont:IFont_QueryInterface increments
+	ref counter.
+
+2006-08-11  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/action.c, dlls/msi/tests/package.c:
+	msi: If a component's state is not local, source, or default, default to the
+	local state.
+
+2006-08-11  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/crypt32.spec, dlls/crypt32/main.c,
+	  dlls/crypt32/tests/main.c:
+	crypt32: Improve undocumented functions.
+	- Test and implement I_CryptGetDefaultCryptProv (and correct its
+	parameter list)
+	- I_CryptReadTrustedPublisherDWORDValueFromRegistry always initializes
+	its out parameter, correct and show with a test.
+
+	* dlls/msi/tokenize.c:
+	msi: Use wide char strings for token values to avoid an unnecessary
+	WideCharToMultiByte.
+
+2006-08-11  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/winebuild/build.h, tools/winebuild/import.c,
+	  tools/winebuild/main.c, tools/winebuild/relay.c,
+	  tools/winebuild/res16.c, tools/winebuild/res32.c,
+	  tools/winebuild/spec16.c, tools/winebuild/spec32.c,
+	  tools/winebuild/utils.c:
+	winebuild: Added output() function to properly deal with write errors.
+
+2006-08-11  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/client.c, tools/widl/proxy.c, tools/widl/server.c:
+	widl: Don't generate indentation spaces on empty lines.
+
+2006-08-11  Alexandre Julliard <julliard@winehq.org>
+
+	* loader/pthread.c:
+	loader: Exit the whole process when killing the last thread.
+
+2006-08-11  Kirill K. Smirnov <lich@math.spbu.ru>
+
+	* programs/winhelp/hlpfile.c:
+	winhelp: Fix LZ77 decompressor.
+
+2006-08-11  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/msi/tests/install.c, dlls/msi/tests/package.c:
+	msi/tests: Write-strings warnings fix.
+
+	* dlls/msi/files.c:
+	msi: Write-strings warning fix.
+
+	* dlls/version/install.c:
+	version: Write-strings warnings fix.
+
+2006-08-11  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/tests/main.c:
+	crypt32/tests: Only load crypt32 once.
+
+2006-08-11  Robert Reif <reif@earthlink.net>
+
+	* include/lmaccess.h:
+	lmaccess.h: Add some LOCALGROUP defines.
+
+	* dlls/kernel/kernel32.spec, dlls/kernel/process.c, include/winbase.h:
+	kernel32: Add IsWow64Process.
+
+2006-08-11  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/wldap32/ber.c, dlls/wldap32/init.c:
+	wldap32: Write-strings warnings fix.
+
+2006-08-11  Francois Gouget <fgouget@codeweavers.com>
+
+	* dlls/shdocvw/regsvr.c:
+	shdocvw: Set the CLSID_Internet shell folder's attributes.
+
+2006-08-11  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/infosoft/infosoft_main.c, dlls/infosoft/wordbreaker.c,
+	  dlls/uuid/uuid.c, include/.gitignore, include/Makefile.in,
+	  include/indexsrv.idl, include/indexsvr.idl:
+	include: Rename indexsvr.idl to indexsrv.idl.
+
+	* dlls/infosoft/wordbreaker.c:
+	infosoft: Use the pfnFillTextBuffer function to refresh the buffer.
+
+2006-08-10  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/infosoft/infosoft_main.c, dlls/infosoft/wordbreaker.c,
+	  tools/wine.inf:
+	infosoft: Implement and register the language neutral wordbreaker, not the
+	English_US one.
+
+2006-08-10  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/user/menu.c:
+	user: Implement MNS_NOTIFYBYPOS.
+
+2006-08-11  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/signal_i386.c:
+	ntdll: Remove some macros and clean up the code now that all platforms use
+	siginfo.
+
+	* dlls/ntdll/signal_i386.c:
+	ntdll: Switch linux to siginfo-style signal handling.
+
+2006-08-11  Mike McCormack <mike@codeweavers.com>
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/pstorec/Makefile.in,
+	  dlls/pstorec/pstorec.c, dlls/pstorec/pstorec.spec:
+	pstorec: Add a stub implementation.
+
+2006-08-10  Benjamin Arai <me@benjaminarai.com>
+
+	* dlls/oleaut32/olefont.c:
+	oleaut32: Removes stub message from olefont:OLEFontImpl_FindConnectionPoint.
+
+2006-08-10  Molle Bestefich <molle.bestefich@gmail.com>
+
+	* tools/bug_report.pl:
+	bug_report.pl: Use correct 'wine --version' syntax.
+
+2006-08-10  Dan Hipschman <dsh@linux.ucla.edu>
+
+	* tools/widl/client.c, tools/widl/proxy.c, tools/widl/server.c,
+	  tools/widl/widl.h:
+	widl: Fix incorrect version number in generated code.
+
+2006-08-11  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* dlls/shell32/shell32_Ko.rc:
+	shell32: Updated Korean resource.
+
+2006-08-11  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/drawprim.c:
+	wined3d: Fix opengl extension call.
+
+2006-08-10  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/files.c, dlls/msi/tests/package.c:
+	msi: Only remove a file if the version to be installed is strictly newer than
+	the old file.
+
+2006-08-10  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* programs/regedit/treeview.c:
+	regedit: Write-strings warnings fix.
+
+	* dlls/wininet/tests/http.c:
+	wininet/tests: Write-strings warnings fix.
+
+2006-08-10  Phil Krylov <phil@newstar.rinet.ru>
+
+	* dlls/riched20/editor.c:
+	riched20: Accept RTF header without a version number.
+
+	* dlls/riched20/reader.c:
+	riched20: Accept RTF group tokens inside colortbl destination.
+
+2006-08-10  Jan Zerebecki <jan.wine@zerebecki.de>
+
+	* dlls/wined3d/directx.c:
+	wined3d: Fix spelling in a comment.
+
+2006-08-10  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Implement CompleteAuthToken for NTLM.
+
+2006-08-10  Alexandre Julliard <julliard@winehq.org>
+
+	* server/fd.c, server/file.h, server/mailslot.c, server/named_pipe.c,
+	  server/process.c, server/queue.c, server/registry.c,
+	  server/request.c, server/serial.c, server/thread.c, server/timer.c,
+	  server/trace.c, server/winstation.c:
+	server: Only call gettimeofday once per poll loop.
+
+2006-08-04  Tijl Coosemans <tijl@ulyssis.org>
+
+	* dlls/kernel/tests/file.c:
+	kernel/tests: Increase requested file size in two tests to hit FreeBSD file
+	size limit.
+
+2006-08-10  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 0.9.19.
+
+----------------------------------------------------------------
 2006-08-08  Colin Pitrat <colin.pitrat@bull.net>
 
 	* tools/bug_report.pl, tools/make_authors, tools/winapi/config.pm,
