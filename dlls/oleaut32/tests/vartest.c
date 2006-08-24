@@ -210,7 +210,7 @@ static const char *vtstr(int x)
 	case 0x4000:
 		return "VT_BYREF";
 	case 0x8000:
-		return "VT_BYREF";
+		return "VT_RESERVED";
 	case 0xFFFF:
 		return "VT_ILLEGAL";
 
