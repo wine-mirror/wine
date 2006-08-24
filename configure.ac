@@ -410,7 +410,7 @@ then
 	      )
             )
 
-	    if test "$wine_cv_opengl_version_OK" = "yes"
+	    if test "$wine_cv_opengl_header_version_OK" = "yes"
             then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,

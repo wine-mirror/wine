@@ -9414,7 +9414,7 @@ fi
 { echo "$as_me:$LINENO: result: $wine_cv_opengl_header_version_OK" >&5
 echo "${ECHO_T}$wine_cv_opengl_header_version_OK" >&6; }
 
-	    if test "$wine_cv_opengl_version_OK" = "yes"
+	    if test "$wine_cv_opengl_header_version_OK" = "yes"
             then
 				{ echo "$as_me:$LINENO: checking for glXCreateContext in -lGL" >&5
 echo $ECHO_N "checking for glXCreateContext in -lGL... $ECHO_C" >&6; }
