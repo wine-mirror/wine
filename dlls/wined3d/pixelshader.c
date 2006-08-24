@@ -949,9 +949,6 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
         This->baseShader.function = NULL;
     }
 
-    /* Compile the shader. */
-    IWineD3DPixelShader_CompileShader(iface);
-
     return WINED3D_OK;
 }
 

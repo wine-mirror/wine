@@ -1796,6 +1796,13 @@ inline static void drawPrimitiveDrawStrided(
         useDrawStridedSlow = TRUE;
     }
 
+    if(usePixelShaderFunction) {
+        /* We compile the shader here because it depends on the texture stage state
+         * setup of the bound textures. If the shader is already compiled and the texture stage
+         * state setup matches the program this function will do nothing
+         */
+        IWineD3DPixelShader_CompileShader(This->stateBlock->pixelShader);
+    }
     /* If GLSL is used for either pixel or vertex shaders, make a GLSL program 
      * Otherwise set NULL, to restore fixed function */
     if ((wined3d_settings.vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
