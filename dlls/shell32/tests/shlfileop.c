@@ -22,13 +22,19 @@
 #include <stdio.h>
 
 #define WINE_NOWINSOCK
-#include "windef.h"
-#include "winbase.h"
-#include "wtypes.h"
+#include <windows.h>
 #include "shellapi.h"
 #include "shlobj.h"
 
 #include "wine/test.h"
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#endif
+
+#ifndef FOF_NORECURSION
+#define FOF_NORECURSION 0x1000
+#endif
 
 CHAR CURR_DIR[MAX_PATH];
 
