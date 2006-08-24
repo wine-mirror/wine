@@ -137,6 +137,7 @@ static const WCHAR szSelectionTree[] = {
     'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
 static const WCHAR szGroupBox[] = { 'G','r','o','u','p','B','o','x',0 };
 static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
+static const WCHAR szDirectoryCombo[] = { 'D','i','r','e','c','t','o','r','y','C','o','m','b','o',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1938,6 +1939,22 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** Directory Combo ***************************************/
+
+static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    DWORD style;
+
+    style = CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
+            WS_CHILD | WS_GROUP | WS_TABSTOP | WS_VSCROLL;
+    control = msi_dialog_add_control( dialog, rec, WC_COMBOBOXW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -1956,6 +1973,7 @@ static const struct control_handler msi_dialog_handler[] =
     { szSelectionTree, msi_dialog_selection_tree },
     { szGroupBox, msi_dialog_group_box },
     { szListBox, msi_dialog_list_box },
+    { szDirectoryCombo, msi_dialog_directory_combo },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
