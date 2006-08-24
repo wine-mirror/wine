@@ -753,6 +753,9 @@ static UINT msi_dialog_line_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     TRACE("%p %p\n", dialog, rec);
 
+    /* line is exactly 2 units in height */
+    MSI_RecordSetInteger( rec, 7, 2 );
+
     msi_dialog_add_control( dialog, rec, szStatic, SS_ETCHEDHORZ | SS_SUNKEN );
     return ERROR_SUCCESS;
 }
