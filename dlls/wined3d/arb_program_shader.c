@@ -642,8 +642,13 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   else
      reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
 
-  shader_addline(buffer, "TEX %s, %s, texture[%lu], 2D;\n",
-      reg_dest, reg_coord, reg_sampler_code);
+  if(This->wineD3DDevice->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+      shader_addline(buffer, "TXP %s, %s, texture[%lu], 2D;\n",
+          reg_dest, reg_coord, reg_sampler_code);
+  } else {
+      shader_addline(buffer, "TEX %s, %s, texture[%lu], 2D;\n",
+                     reg_dest, reg_coord, reg_sampler_code);
+  }
 }
 
 void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {

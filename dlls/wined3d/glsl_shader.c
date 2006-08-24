@@ -1377,21 +1377,40 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     }         
 
     sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
-    switch(sampler_type) {
+    if(This->wineD3DDevice->stateBlock->textureState[sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+        switch(sampler_type) {
 
-        case WINED3DSTT_2D:
-            shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, sampler_str, coord_reg);
-            break;
-        case WINED3DSTT_CUBE:
-            shader_addline(buffer, "%s = textureCube(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-            break;
-        case WINED3DSTT_VOLUME:
-            shader_addline(buffer, "%s = texture3D(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-            break;
-        default:
-            shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-            FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
-            break;
+            case WINED3DSTT_2D:
+                shader_addline(buffer, "%s = texture2DProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
+                break;
+            case WINED3DSTT_CUBE:
+                shader_addline(buffer, "%s = textureCubeProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
+                break;
+            case WINED3DSTT_VOLUME:
+                shader_addline(buffer, "%s = texture3DProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
+                break;
+            default:
+                shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+                FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
+                break;
+        }
+    } else {
+        switch(sampler_type) {
+
+            case WINED3DSTT_2D:
+                shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, sampler_str, coord_reg);
+                break;
+            case WINED3DSTT_CUBE:
+                shader_addline(buffer, "%s = textureCube(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+                break;
+            case WINED3DSTT_VOLUME:
+                shader_addline(buffer, "%s = texture3D(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+                break;
+            default:
+                shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+                FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
+                break;
+        }
     }
 }
 
