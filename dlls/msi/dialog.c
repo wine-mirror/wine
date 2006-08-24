@@ -138,6 +138,7 @@ static const WCHAR szSelectionTree[] = {
 static const WCHAR szGroupBox[] = { 'G','r','o','u','p','B','o','x',0 };
 static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
 static const WCHAR szDirectoryCombo[] = { 'D','i','r','e','c','t','o','r','y','C','o','m','b','o',0 };
+static const WCHAR szDirectoryList[] = { 'D','i','r','e','c','t','o','r','y','L','i','s','t',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1955,6 +1956,23 @@ static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** Directory List ***************************************/
+
+static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    DWORD style;
+
+    style = LVS_LIST | LVS_EDITLABELS | WS_VSCROLL | LVS_SHAREIMAGELISTS |
+            LVS_AUTOARRANGE | LVS_SINGLESEL | WS_BORDER |
+            LVS_SORTASCENDING | WS_CHILD | WS_GROUP | WS_TABSTOP;
+    control = msi_dialog_add_control( dialog, rec, WC_LISTVIEWW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -1974,6 +1992,7 @@ static const struct control_handler msi_dialog_handler[] =
     { szGroupBox, msi_dialog_group_box },
     { szListBox, msi_dialog_list_box },
     { szDirectoryCombo, msi_dialog_directory_combo },
+    { szDirectoryList, msi_dialog_directory_list },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
