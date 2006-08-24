@@ -64,6 +64,7 @@ struct msi_control_tag
     HMODULE hDll;
     float progress_current;
     float progress_max;
+    DWORD attributes;
     WCHAR name[1];
 };
 
@@ -1354,10 +1355,81 @@ static UINT msi_dialog_progress_bar( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Path Edit ********************************************/
 
+static LPWSTR msi_get_window_text( HWND hwnd )
+{
+    UINT sz, r;
+    LPWSTR buf;
+
+    sz = 0x20;
+    buf = msi_alloc( sz*sizeof(WCHAR) );
+    while ( buf )
+    {
+        r = GetWindowTextW( hwnd, buf, sz );
+        if ( r < (sz - 1) )
+            break;
+        sz *= 2;
+        buf = msi_realloc( buf, sz*sizeof(WCHAR) );
+    }
+
+    return buf;
+}
+
+static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
+                msi_control *control, WPARAM param )
+{
+    LPCWSTR prop;
+    LPWSTR buf, indirect = NULL;
+
+    if( HIWORD(param) != EN_KILLFOCUS )
+        return ERROR_SUCCESS;
+
+    prop = control->property;
+    if ( control->attributes & msidbControlAttributesIndirect )
+    {
+        indirect = msi_dup_property( dialog->package, control->property );
+        prop = indirect;
+    }
+
+    /* FIXME: verify the new path */
+    buf = msi_get_window_text( control->hwnd );
+    MSI_SetPropertyW( dialog->package, prop, buf );
+
+    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
+          debugstr_w(prop));
+
+    msi_free( buf );
+    msi_free( indirect );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    FIXME("not implemented properly\n");
-    return msi_dialog_edit_control( dialog, rec );
+    msi_control *control;
+    LPCWSTR prop;
+    LPWSTR val, indirect = NULL;
+
+    control = msi_dialog_add_control( dialog, rec, szEdit,
+                                      WS_BORDER | WS_TABSTOP );
+    control->handler = msi_dialog_pathedit_handler;
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+
+    prop = MSI_RecordGetString( rec, 9 );
+    if ( prop )
+        control->property = strdupW( prop );
+
+    if ( control->attributes & msidbControlAttributesIndirect )
+    {
+        indirect = msi_dup_property( dialog->package, control->property );
+        prop = indirect;
+    }
+
+    val = msi_dup_property( dialog->package, prop );
+    SetWindowTextW( control->hwnd, val );
+    msi_free( val );
+    msi_free( indirect );
+
+    return ERROR_SUCCESS;
 }
 
 /* radio buttons are a bit different from normal controls */
@@ -2354,7 +2426,6 @@ static UINT msi_dialog_checkbox_handler( msi_dialog *dialog,
 static UINT msi_dialog_edit_handler( msi_dialog *dialog,
                 msi_control *control, WPARAM param )
 {
-    UINT sz, r;
     LPWSTR buf;
 
     if( HIWORD(param) != EN_CHANGE )
@@ -2363,17 +2434,7 @@ static UINT msi_dialog_edit_handler( msi_dialog *dialog,
     TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
           debugstr_w(control->property));
 
-    sz = 0x20;
-    buf = msi_alloc( sz*sizeof(WCHAR) );
-    while( buf )
-    {
-        r = GetWindowTextW( control->hwnd, buf, sz );
-        if( r < (sz-1) )
-            break;
-        sz *= 2;
-        buf = msi_realloc( buf, sz*sizeof(WCHAR) );
-    }
-
+    buf = msi_get_window_text( control->hwnd );
     MSI_SetPropertyW( dialog->package, control->property, buf );
 
     msi_free( buf );
