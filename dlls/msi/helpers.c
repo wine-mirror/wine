@@ -1008,3 +1008,18 @@ WCHAR* generate_error_string(MSIPACKAGE *package, UINT error, DWORD count, ... )
     data = NULL;
     return data;
 }
+
+void msi_ui_error( DWORD msg_id, DWORD type )
+{
+    WCHAR text[2048];
+
+    static const WCHAR title[] = {
+        'W','i','n','d','o','w','s',' ','I','n','s','t','a','l','l','e','r',0
+    };
+
+    if (!MsiLoadStringW( -1, msg_id, text, sizeof(text) / sizeof(text[0]),
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) ))
+        return;
+
+    MessageBoxW( NULL, text, title, type );
+}

@@ -47,6 +47,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+extern void msi_ui_error( DWORD msg_id, DWORD type );
+
 static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
@@ -549,7 +551,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             DeleteFileW( file );
 
         if( r != ERROR_SUCCESS )
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                msi_ui_error( 4, MB_OK | MB_ICONWARNING );
+
             return r;
+        }
     }
 
     package = MSI_CreatePackage( db );
