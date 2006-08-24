@@ -200,8 +200,8 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 
 inline static void __SHCloneStrW(WCHAR ** target, const WCHAR * source)
 {
-	*target = SHAlloc( (strlenW(source)+1) * sizeof(WCHAR) );
-	strcpyW(*target, source);
+	*target = SHAlloc( (lstrlenW(source)+1) * sizeof(WCHAR) );
+	lstrcpyW(*target, source);
 }
 
 inline static WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)

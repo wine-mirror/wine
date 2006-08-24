@@ -40,7 +40,6 @@
 #include "shlwapi.h"
 #include "shell32_main.h"
 #include "undocshell.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "xdg.h"
 
@@ -781,11 +780,11 @@ static inline void grow_list(FILE_LIST *list)
  */
 static void add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile)
 {
-    DWORD dwLen = strlenW(szFile) + 1;
+    DWORD dwLen = lstrlenW(szFile) + 1;
     LPWSTR ptr;
 
     feFile->szFullPath = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
-    strcpyW(feFile->szFullPath, szFile);
+    lstrcpyW(feFile->szFullPath, szFile);
 
     ptr = StrRChrW(szFile, NULL, '\\');
     if (ptr)
@@ -794,9 +793,9 @@ static void add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile)
         feFile->szDirectory = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
         lstrcpynW(feFile->szDirectory, szFile, dwLen);
 
-        dwLen = strlenW(feFile->szFullPath) - dwLen + 1;
+        dwLen = lstrlenW(feFile->szFullPath) - dwLen + 1;
         feFile->szFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
-        strcpyW(feFile->szFilename, ptr + 1); /* skip over backslash */
+        lstrcpyW(feFile->szFilename, ptr + 1); /* skip over backslash */
     }
     feFile->bFromWildcard = FALSE;
 }
@@ -809,11 +808,11 @@ static LPWSTR wildcard_to_file(LPWSTR szWildCard, LPWSTR szFileName)
     ptr = StrRChrW(szWildCard, NULL, '\\');
     dwDirLen = ptr - szWildCard + 1;
 
-    dwFullLen = dwDirLen + strlenW(szFileName) + 1;
+    dwFullLen = dwDirLen + lstrlenW(szFileName) + 1;
     szFullPath = HeapAlloc(GetProcessHeap(), 0, dwFullLen * sizeof(WCHAR));
 
     lstrcpynW(szFullPath, szWildCard, dwDirLen + 1);
-    strcatW(szFullPath, szFileName);
+    lstrcatW(szFullPath, szFileName);
 
     return szFullPath;
 }
@@ -878,7 +877,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
         }
         else
         {
-            strcpyW(szCurFile, ptr);
+            lstrcpyW(szCurFile, ptr);
             flList->feFiles[i].bFromRelative = FALSE;
         }
 
@@ -900,7 +899,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
         }
 
         /* advance to the next string */
-        ptr += strlenW(ptr) + 1;
+        ptr += lstrlenW(ptr) + 1;
         i++;
     }
     flList->dwNumFiles = i;
@@ -939,13 +938,13 @@ static void copy_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, LPWS
     if (PathFileExistsW(szDestPath))
         PathCombineW(szTo, szDestPath, feFrom->szFilename);
     else
-        strcpyW(szTo, szDestPath);
+        lstrcpyW(szTo, szDestPath);
 
-    szTo[strlenW(szTo) + 1] = '\0';
+    szTo[lstrlenW(szTo) + 1] = '\0';
     SHNotifyCreateDirectoryW(szTo, NULL);
 
     PathCombineW(szFrom, feFrom->szFullPath, wildCardFiles);
-    szFrom[strlenW(szFrom) + 1] = '\0';
+    szFrom[lstrlenW(szFrom) + 1] = '\0';
 
     memcpy(&fileOp, lpFileOp, sizeof(fileOp));
     fileOp.pFrom = szFrom;
@@ -1181,10 +1180,10 @@ static void move_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, LPWS
     SHNotifyCreateDirectoryW(szDestPath, NULL);
 
     PathCombineW(szFrom, feFrom->szFullPath, wildCardFiles);
-    szFrom[strlenW(szFrom) + 1] = '\0';
+    szFrom[lstrlenW(szFrom) + 1] = '\0';
 
-    strcpyW(szTo, szDestPath);
-    szTo[strlenW(szDestPath) + 1] = '\0';
+    lstrcpyW(szTo, szDestPath);
+    szTo[lstrlenW(szDestPath) + 1] = '\0';
 
     memcpy(&fileOp, lpFileOp, sizeof(fileOp));
     fileOp.pFrom = szFrom;
