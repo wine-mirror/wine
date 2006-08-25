@@ -944,7 +944,8 @@ static BOOL create_full_pathW(const WCHAR *path)
     return ret;
 }
 
-static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
+static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style, 
+                           PSP_FILE_CALLBACK_W handler, PVOID context )
 {
     BOOL rc = FALSE;
     BOOL docopy = TRUE;
@@ -1011,20 +1012,32 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
 
                 if (ret)
                 {
+                    FILEPATHS_W filepaths;
+
                     TRACE("Versions: Source %li.%li target %li.%li\n",
                       SourceInfo->dwFileVersionMS, SourceInfo->dwFileVersionLS,
                       TargetInfo->dwFileVersionMS, TargetInfo->dwFileVersionLS);
 
+                    /* used in case of notification */
+                    filepaths.Target = target;
+                    filepaths.Source = source;
+                    filepaths.Win32Error = 0;
+                    filepaths.Flags = 0;
+
                     if (TargetInfo->dwFileVersionMS > SourceInfo->dwFileVersionMS)
                     {
-                        FIXME("Notify that target version is greater..\n");
-                        docopy = FALSE;
+                        if (handler)
+                            docopy = handler (context, SPFILENOTIFY_TARGETNEWER, (UINT_PTR)&filepaths, 0);
+                        else
+                            docopy = FALSE;
                     }
                     else if ((TargetInfo->dwFileVersionMS == SourceInfo->dwFileVersionMS)
                              && (TargetInfo->dwFileVersionLS > SourceInfo->dwFileVersionLS))
                     {
-                        FIXME("Notify that target version is greater..\n");
-                        docopy = FALSE;
+                        if (handler)
+                            docopy = handler (context, SPFILENOTIFY_TARGETNEWER, (UINT_PTR)&filepaths, 0);
+                        else
+                            docopy = FALSE;
                     }
                     else if ((style & SP_COPY_NEWER_ONLY) &&
                         (TargetInfo->dwFileVersionMS ==
@@ -1032,8 +1045,10 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
                         &&(TargetInfo->dwFileVersionLS ==
                         SourceInfo->dwFileVersionLS))
                     {
-                        FIXME("Notify that target version is greater..\n");
-                        docopy = FALSE;
+                        if (handler)
+                            docopy = handler (context, SPFILENOTIFY_TARGETNEWER, (UINT_PTR)&filepaths, 0);
+                        else
+                            docopy = FALSE;
                     }
                 }
             }
@@ -1169,7 +1184,7 @@ BOOL WINAPI SetupCommitFileQueueW( HWND owner, HSPFILEQ handle, PSP_FILE_CALLBAC
 		    }
 		}
                 if (do_file_copyW( op_result == FILEOP_NEWPATH ? newpath : paths.Source,
-                               paths.Target, op->style )) break;  /* success */
+                               paths.Target, op->style, handler, context )) break;  /* success */
                 /* try to extract it from the cabinet file */
                 if (op->src_tag)
                 {
