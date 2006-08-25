@@ -480,7 +480,6 @@ int   main (int argc, char *argv[])
 	}
 
 	output_makefile ();
-	output_install_script ();
 
 	if (VERBOSE)
 	    puts ("Finished, Cleaning up...");

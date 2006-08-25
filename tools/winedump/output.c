@@ -451,56 +451,6 @@ void  output_makefile (void)
 
 
 /*******************************************************************
- *         output_install_script
- *
- * Write a script to insert the DLL into Wine
- *
- * Rather than using diff/patch, several sed calls are generated
- * so the script can be re-run at any time without breaking.
- */
-void  output_install_script (void)
-{
-  FILE *install_file = open_file (OUTPUT_DLL_NAME, "_install", "w");
-
-  if (VERBOSE)
-    puts ("Creating install script");
-
-  fprintf (install_file,
-    "#!/bin/bash\n"
-    "# Generated from %s.dll by winedump.\n\n"
-    "if [ $# -ne 1 ] || [ ! -d $1 ] || [ ! -f $1/AUTHORS ]; then\n"
-    "\t[ $# -eq 1 ] && echo \"Invalid path\"\n"
-    "\techo \"Usage: $0 wine-base-dir\"\n"
-    "\texit 1\n"
-    "fi\n\n"
-    "if [ -d $1/dlls/%s ]; then\n"
-    "\techo \"DLL is already present\"\n"
-    "\texit 1\n"
-    "fi\n\n"
-    "echo Adding DLL %s to Wine build tree...\n\n"
-    "mkdir $1/dlls/%s\n"
-    "cp %s.spec $1/dlls/%s\n"
-    "cp %s_main.c $1/dlls/%s\n"
-    "cp %s_dll.h $1/dlls/%s\n"
-    "cp Makefile.in $1/dlls/%s/Makefile.in\n"
-    "echo Copied DLL files\n\n"
-    "cd $1\n\n"
-    "sed '/dlls\\/ntdll\\/Makefile/"
-        "{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac >t.tmp\n"
-    "mv -f t.tmp configure.ac\n"
-    "echo Patched configure.ac\n\n"
-    "cd $1/dlls && ./make_dlls\n\n"
-    "echo Run \\'autoconf\\', \\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
-
-  fchmod (fileno(install_file), 0755);
-  fclose (install_file);
-}
-
-
-/*******************************************************************
  *         output_prototype
  *
  * Write a C prototype for a parsed symbol

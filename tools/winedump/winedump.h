@@ -205,8 +205,6 @@ void  output_prototype (FILE *file, const parsed_symbol *sym);
 
 void  output_makefile (void);
 
-void  output_install_script (void);
-
 /* Misc functions */
 char *str_create (size_t num_str, ...);
 
