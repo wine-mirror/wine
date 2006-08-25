@@ -373,7 +373,7 @@ HANDLE WINAPI RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceNam
 BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCSTR *lpStrings, LPVOID lpRawData)
 {
-    LPCWSTR *wideStrArray;
+    LPWSTR *wideStrArray;
     UNICODE_STRING str;
     int i;
     BOOL ret;
@@ -384,17 +384,17 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
     if (wNumStrings == 0) return TRUE;
     if (!lpStrings) return TRUE;
 
-    wideStrArray = HeapAlloc(GetProcessHeap(), 0, sizeof(LPCWSTR) * wNumStrings);
+    wideStrArray = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWSTR) * wNumStrings);
     for (i = 0; i < wNumStrings; i++)
     {
         RtlCreateUnicodeStringFromAsciiz(&str, lpStrings[i]);
         wideStrArray[i] = str.Buffer;
     }
     ret = ReportEventW(hEventLog, wType, wCategory, dwEventID, lpUserSid,
-                       wNumStrings, dwDataSize, wideStrArray, lpRawData);
+                       wNumStrings, dwDataSize, (LPCWSTR *)wideStrArray, lpRawData);
     for (i = 0; i < wNumStrings; i++)
     {
-        HeapFree( GetProcessHeap(), 0, (LPSTR)wideStrArray[i] );
+        HeapFree( GetProcessHeap(), 0, wideStrArray[i] );
     }
     HeapFree(GetProcessHeap(), 0, wideStrArray);
     return ret;

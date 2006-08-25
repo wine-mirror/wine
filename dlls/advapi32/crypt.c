@@ -1819,7 +1819,8 @@ BOOL WINAPI CryptSetProviderExW (LPCWSTR pszProvName, DWORD dwProvType, DWORD *p
 		}
 		CRYPT_Free(keyname);
 		
-		if (RegSetValueExW(hTypeKey, nameW, 0, REG_SZ, (LPBYTE)pszProvName, (strlenW(pszProvName) + 1)*sizeof(WCHAR)))
+		if (RegSetValueExW(hTypeKey, nameW, 0, REG_SZ, (const BYTE *)pszProvName,
+			(strlenW(pszProvName) + 1)*sizeof(WCHAR)))
 		{
 			RegCloseKey(hTypeKey);
 			RegCloseKey(hProvKey);

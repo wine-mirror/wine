@@ -50,7 +50,7 @@ static void CRYPT_LMhash( unsigned char *dst, const unsigned char *pwd, const in
 
 NTSTATUS WINAPI SystemFunction006( LPCSTR password, LPSTR hash )
 {
-    CRYPT_LMhash( (unsigned char*)hash, (unsigned char*)password, strlen(password) );
+    CRYPT_LMhash( (unsigned char*)hash, (const unsigned char*)password, strlen(password) );
 
     return STATUS_SUCCESS;
 }
