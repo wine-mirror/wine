@@ -1244,7 +1244,7 @@ const char* debug_d3dpool(WINED3DPOOL pool);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);
-GLenum StencilFunc(DWORD func);
+GLenum CompareFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);

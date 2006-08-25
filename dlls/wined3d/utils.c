@@ -665,7 +665,7 @@ GLenum StencilOp(DWORD op) {
     }
 }
 
-GLenum StencilFunc(DWORD func) {
+GLenum CompareFunc(DWORD func) {
     switch ((D3DCMPFUNC)func) {
     case D3DCMP_NEVER        : return GL_NEVER;
     case D3DCMP_LESS         : return GL_LESS;
@@ -677,7 +677,7 @@ GLenum StencilFunc(DWORD func) {
     case D3DCMP_ALWAYS       : return GL_ALWAYS;
     default:
         FIXME("Unrecognized D3DCMPFUNC value %ld\n", func);
-        return GL_ALWAYS;
+        return 0;
     }
 }
 

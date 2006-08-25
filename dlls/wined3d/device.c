@@ -3325,9 +3325,11 @@ static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE Sta
     if( This->stateBlock->set.renderState[WINED3DRS_TWOSIDEDSTENCILMODE] )
         twosided_enable = This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE];
     if( This->stateBlock->set.renderState[WINED3DRS_STENCILFUNC] )
-        func = StencilFunc(This->stateBlock->renderState[WINED3DRS_STENCILFUNC]);
+        if( !( func = CompareFunc(This->stateBlock->renderState[WINED3DRS_STENCILFUNC]) ) )
+            func = GL_ALWAYS;
     if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILFUNC] )
-        func_ccw = StencilFunc(This->stateBlock->renderState[WINED3DRS_CCW_STENCILFUNC]);
+        if( !( func_ccw = CompareFunc(This->stateBlock->renderState[WINED3DRS_CCW_STENCILFUNC]) ) )
+            func = GL_ALWAYS;
     if( This->stateBlock->set.renderState[WINED3DRS_STENCILREF] )
         ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
     if( This->stateBlock->set.renderState[WINED3DRS_STENCILMASK] )
@@ -3353,10 +3355,12 @@ static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE Sta
             twosided_enable = Value;
             break;
         case WINED3DRS_STENCILFUNC :
-            func = StencilFunc(Value);
+            if( !( func = CompareFunc(Value) ) )
+                func = GL_ALWAYS;
             break;
         case WINED3DRS_CCW_STENCILFUNC :
-            func_ccw = StencilFunc(Value);
+            if( !( func_ccw = CompareFunc(Value) ) )
+                func_ccw = GL_ALWAYS;
             break;
         case WINED3DRS_STENCILREF :
             ref = Value;
@@ -3560,20 +3564,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
 
     case WINED3DRS_ZFUNC                     :
         {
-            int glParm = 0;
+            int glParm = CompareFunc(Value);
 
-            switch ((D3DCMPFUNC) Value) {
-            case D3DCMP_NEVER:         glParm=GL_NEVER; break;
-            case D3DCMP_LESS:          glParm=GL_LESS; break;
-            case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
-            case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
-            case D3DCMP_GREATER:       glParm=GL_GREATER; break;
-            case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
-            case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
-            case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
-            default:
-                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
-            }
             if(glParm) {
                 glDepthFunc(glParm);
                 checkGLcall("glDepthFunc");
@@ -3676,19 +3668,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                 ref = 0.0;
             } else {
                 ref = ((float) This->stateBlock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
-
-                switch ((D3DCMPFUNC) This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]) {
-                case D3DCMP_NEVER:         glParm = GL_NEVER; break;
-                case D3DCMP_LESS:          glParm = GL_LESS; break;
-                case D3DCMP_EQUAL:         glParm = GL_EQUAL; break;
-                case D3DCMP_LESSEQUAL:     glParm = GL_LEQUAL; break;
-                case D3DCMP_GREATER:       glParm = GL_GREATER; break;
-                case D3DCMP_NOTEQUAL:      glParm = GL_NOTEQUAL; break;
-                case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
-                case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
-                default:
-                    FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]);
-                }
+                glParm = CompareFunc(This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]);
             }
             if(glParm) {
                 This->alphafunc = glParm;
