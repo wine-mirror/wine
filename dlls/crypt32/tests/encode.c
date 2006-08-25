@@ -1064,7 +1064,7 @@ static void test_decodeUnicodeName(DWORD dwEncoding)
     if (buf)
     {
         ok(bufSize == sizeof(CERT_NAME_INFO),
-         "Expected bufSize %d, got %ld\n", sizeof(CERT_NAME_INFO), bufSize);
+         "Got wrong bufSize %ld\n", bufSize);
         ok(((CERT_NAME_INFO *)buf)->cRDN == 0,
          "Expected 0 RDNs in empty info, got %ld\n",
          ((CERT_NAME_INFO *)buf)->cRDN);
