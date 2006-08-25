@@ -949,6 +949,14 @@ int main(void) {
     EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
   fi
 
+  dnl Check for -Wwrite-strings
+  AC_CACHE_CHECK([for gcc -Wwrite-strings support], ac_cv_c_gcc_write_strings,
+      [WINE_TRY_CFLAGS([-Wwrite-strings],ac_cv_c_gcc_write_strings="yes", ac_cv_c_gcc_write_strings="no")])
+  if test "$ac_cv_c_gcc_write_strings" = "yes"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
+  fi
+
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
