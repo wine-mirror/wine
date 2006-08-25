@@ -65,11 +65,18 @@ dnl **** Check if we can link an empty program with special CFLAGS ****
 dnl
 dnl Usage: WINE_TRY_CFLAGS(flags,[action-if-yes,[action-if-no]])
 dnl
+dnl The default action-if-yes is to append the flags to EXTRACFLAGS.
+dnl
 AC_DEFUN([WINE_TRY_CFLAGS],
+[AS_VAR_PUSHDEF([ac_var], ac_cv_cflags_[[$1]])dnl
+AC_CACHE_CHECK([whether the compiler supports $1], ac_var,
 [ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS $1"
-AC_TRY_LINK([],[],[$2],[$3])
+AC_TRY_LINK([],[], [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved])
+AS_IF([test AS_VAR_GET(ac_var) = yes],
+      [m4_default([$2], [EXTRACFLAGS="$EXTRACFLAGS $1"])], [$3])dnl
+AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check if we can link an empty shared lib (no main) with special CFLAGS ****
 dnl

@@ -14386,9 +14386,10 @@ echo "${ECHO_T}$ac_cv_c_gcc_strength_bug" >&6; }
     EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
-    { echo "$as_me:$LINENO: checking for gcc -fshort-wchar support" >&5
-echo $ECHO_N "checking for gcc -fshort-wchar support... $ECHO_C" >&6; }
-if test "${ac_cv_c_gcc_fshort_wchar+set}" = set; then
+
+  { echo "$as_me:$LINENO: checking whether the compiler supports -fshort-wchar" >&5
+echo $ECHO_N "checking whether the compiler supports -fshort-wchar... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fshort_wchar+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -14442,32 +14443,31 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_gcc_fshort_wchar="yes"
+  ac_cv_cflags__fshort_wchar=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_gcc_fshort_wchar="no"
+	ac_cv_cflags__fshort_wchar=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_fshort_wchar" >&5
-echo "${ECHO_T}$ac_cv_c_gcc_fshort_wchar" >&6; }
-  if test "$ac_cv_c_gcc_fshort_wchar" = "yes"
-  then
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fshort_wchar" >&5
+echo "${ECHO_T}$ac_cv_cflags__fshort_wchar" >&6; }
+if test $ac_cv_cflags__fshort_wchar = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CC_FLAG_SHORT_WCHAR "-fshort-wchar"
 _ACEOF
 
-  fi
+fi
 
-    { echo "$as_me:$LINENO: checking for gcc -fno-strict-aliasing support" >&5
-echo $ECHO_N "checking for gcc -fno-strict-aliasing support... $ECHO_C" >&6; }
-if test "${ac_cv_c_gcc_no_strict_aliasing+set}" = set; then
+  { echo "$as_me:$LINENO: checking whether the compiler supports -fno-strict-aliasing" >&5
+echo $ECHO_N "checking whether the compiler supports -fno-strict-aliasing... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fno_strict_aliasing+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -14521,28 +14521,27 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_gcc_no_strict_aliasing="yes"
+  ac_cv_cflags__fno_strict_aliasing=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_gcc_no_strict_aliasing="no"
+	ac_cv_cflags__fno_strict_aliasing=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_no_strict_aliasing" >&5
-echo "${ECHO_T}$ac_cv_c_gcc_no_strict_aliasing" >&6; }
-  if test "$ac_cv_c_gcc_no_strict_aliasing" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
-  fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fno_strict_aliasing" >&5
+echo "${ECHO_T}$ac_cv_cflags__fno_strict_aliasing" >&6; }
+if test $ac_cv_cflags__fno_strict_aliasing = yes; then
+  EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
+fi
 
-    { echo "$as_me:$LINENO: checking for gcc -gstabs+ support" >&5
-echo $ECHO_N "checking for gcc -gstabs+ support... $ECHO_C" >&6; }
-if test "${ac_cv_c_gcc_gstabs+set}" = set; then
+  { echo "$as_me:$LINENO: checking whether the compiler supports -gstabs+" >&5
+echo $ECHO_N "checking whether the compiler supports -gstabs+... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__gstabsp+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -14596,28 +14595,27 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_gcc_gstabs="yes"
+  ac_cv_cflags__gstabsp=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_gcc_gstabs="no"
+	ac_cv_cflags__gstabsp=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_gstabs" >&5
-echo "${ECHO_T}$ac_cv_c_gcc_gstabs" >&6; }
-  if test "$ac_cv_c_gcc_gstabs" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
-  fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__gstabsp" >&5
+echo "${ECHO_T}$ac_cv_cflags__gstabsp" >&6; }
+if test $ac_cv_cflags__gstabsp = yes; then
+  EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
+fi
 
-    { echo "$as_me:$LINENO: checking for gcc -Wdeclaration-after-statement support" >&5
-echo $ECHO_N "checking for gcc -Wdeclaration-after-statement support... $ECHO_C" >&6; }
-if test "${ac_cv_c_gcc_decl_after_statement+set}" = set; then
+  { echo "$as_me:$LINENO: checking whether the compiler supports -Wdeclaration-after-statement" >&5
+echo $ECHO_N "checking whether the compiler supports -Wdeclaration-after-statement... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__Wdeclaration_after_statement+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -14671,28 +14669,27 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_gcc_decl_after_statement="yes"
+  ac_cv_cflags__Wdeclaration_after_statement=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_gcc_decl_after_statement="no"
+	ac_cv_cflags__Wdeclaration_after_statement=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_decl_after_statement" >&5
-echo "${ECHO_T}$ac_cv_c_gcc_decl_after_statement" >&6; }
-  if test "$ac_cv_c_gcc_decl_after_statement" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
-  fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__Wdeclaration_after_statement" >&5
+echo "${ECHO_T}$ac_cv_cflags__Wdeclaration_after_statement" >&6; }
+if test $ac_cv_cflags__Wdeclaration_after_statement = yes; then
+  EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
+fi
 
-    { echo "$as_me:$LINENO: checking for gcc -Wwrite-strings support" >&5
-echo $ECHO_N "checking for gcc -Wwrite-strings support... $ECHO_C" >&6; }
-if test "${ac_cv_c_gcc_write_strings+set}" = set; then
+  { echo "$as_me:$LINENO: checking whether the compiler supports -Wwrite-strings" >&5
+echo $ECHO_N "checking whether the compiler supports -Wwrite-strings... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__Wwrite_strings+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -14746,24 +14743,24 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_gcc_write_strings="yes"
+  ac_cv_cflags__Wwrite_strings=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_gcc_write_strings="no"
+	ac_cv_cflags__Wwrite_strings=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_gcc_write_strings" >&5
-echo "${ECHO_T}$ac_cv_c_gcc_write_strings" >&6; }
-  if test "$ac_cv_c_gcc_write_strings" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
-  fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__Wwrite_strings" >&5
+echo "${ECHO_T}$ac_cv_cflags__Wwrite_strings" >&6; }
+if test $ac_cv_cflags__Wwrite_strings = yes; then
+  EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
+fi
+
 
     saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
@@ -15519,9 +15516,9 @@ echo "${ECHO_T}$ac_cv_c_dll_gnuelf" >&6; }
     then
       LDSHARED="\$(CC) -shared"
       LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-      { echo "$as_me:$LINENO: checking whether the linker accepts soname" >&5
-echo $ECHO_N "checking whether the linker accepts soname... $ECHO_C" >&6; }
-if test "${ac_cv_c_sonames+set}" = set; then
+      { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -shared -Wl,-soname,confest.so.1" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -shared -Wl,-soname,confest.so.1... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -15575,27 +15572,26 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_sonames="yes"
+  ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_sonames="no"
+	ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_sonames" >&5
-echo "${ECHO_T}$ac_cv_c_sonames" >&6; }
-      if test "$ac_cv_c_sonames" = "yes"
-      then
-        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-      else
-        { echo "$as_me:$LINENO: checking check to see if -h soname is an alternate" >&5
-echo $ECHO_N "checking check to see if -h soname is an alternate... $ECHO_C" >&6; }
-if test "${ac_cv_c_h_sonames+set}" = set; then
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&6; }
+if test $ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1 = yes; then
+  LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+else
+  { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -15649,29 +15645,30 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_h_sonames="yes"
+  ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_h_sonames="no"
+	ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_h_sonames" >&5
-echo "${ECHO_T}$ac_cv_c_h_sonames" >&6; }
-        if test "$ac_cv_c_h_sonames" = "yes"
-        then
-          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
-        fi
-      fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&6; }
+if test $ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1 = yes; then
+  LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
+fi
 
-      { echo "$as_me:$LINENO: checking whether the linker accepts -z defs" >&5
-echo $ECHO_N "checking whether the linker accepts -z defs... $ECHO_C" >&6; }
-if test "${ac_cv_c_dll_zdefs+set}" = set; then
+fi
+
+
+      { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -shared -Wl,-Bsymbolic,-z,defs" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -shared -Wl,-Bsymbolic,-z,defs... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -15725,28 +15722,28 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_dll_zdefs="yes"
+  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_dll_zdefs="no"
+	ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_dll_zdefs" >&5
-echo "${ECHO_T}$ac_cv_c_dll_zdefs" >&6; }
-      if test "$ac_cv_c_dll_zdefs" = "yes"
-      then
-        LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
-      fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs" >&6; }
+if test $ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs = yes; then
+  LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+fi
 
-      { echo "$as_me:$LINENO: checking whether the linker accepts -init and -fini" >&5
-echo $ECHO_N "checking whether the linker accepts -init and -fini... $ECHO_C" >&6; }
-if test "${ac_cv_c_dll_init_fini+set}" = set; then
+
+      { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -15800,32 +15797,32 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_dll_init_fini="yes"
+  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_dll_init_fini="no"
+	ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_dll_init_fini" >&5
-echo "${ECHO_T}$ac_cv_c_dll_init_fini" >&6; }
-      if test "$ac_cv_c_dll_init_fini" = "yes"
-      then
-        LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
-      fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini" >&6; }
+if test $ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini = yes; then
+  LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
+fi
 
-      { echo "$as_me:$LINENO: checking whether the linker accepts version scripts" >&5
-echo $ECHO_N "checking whether the linker accepts version scripts... $ECHO_C" >&6; }
-if test "${ac_cv_c_ld_version_scripts+set}" = set; then
+
+      echo '{ global: *; };' >conftest.map
+      { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -shared -Wl,--version-script=conftest.map" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -shared -Wl,--version-script=conftest.map... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  echo '{ global: *; };' >conftest.map
-         ac_wine_try_cflags_saved=$CFLAGS
+  ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS -fPIC -shared -Wl,--version-script=conftest.map"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -15876,29 +15873,29 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_ld_version_scripts="yes"
+  ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_ld_version_scripts="no"
+	ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-         rm -f conftest.map
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_ld_version_scripts" >&5
-echo "${ECHO_T}$ac_cv_c_ld_version_scripts" >&6; }
-      if test "$ac_cv_c_ld_version_scripts" = "yes"
-      then
-        LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
-      fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&6; }
+if test $ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map = yes; then
+  LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
+fi
 
-      { echo "$as_me:$LINENO: checking whether the linker accepts --export-dynamic" >&5
-echo $ECHO_N "checking whether the linker accepts --export-dynamic... $ECHO_C" >&6; }
-if test "${ac_cv_c_export_dynamic+set}" = set; then
+      rm -f conftest.map
+
+      { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -Wl,--export-dynamic... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fPIC__Wl___export_dynamic+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -15952,29 +15949,30 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_export_dynamic="yes"
+  ac_cv_cflags__fPIC__Wl___export_dynamic=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_export_dynamic="no"
+	ac_cv_cflags__fPIC__Wl___export_dynamic=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_export_dynamic" >&5
-echo "${ECHO_T}$ac_cv_c_export_dynamic" >&6; }
-      if test "$ac_cv_c_export_dynamic" = "yes"
-      then
-        LDEXECFLAGS="-Wl,--export-dynamic"
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fPIC__Wl___export_dynamic" >&5
+echo "${ECHO_T}$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
+if test $ac_cv_cflags__fPIC__Wl___export_dynamic = yes; then
+  LDEXECFLAGS="-Wl,--export-dynamic"
 
-      fi
+fi
 
-      { echo "$as_me:$LINENO: checking whether the linker accepts --rpath" >&5
-echo $ECHO_N "checking whether the linker accepts --rpath... $ECHO_C" >&6; }
-if test "${ac_cv_ld_rpath+set}" = set; then
+
+      as_ac_var=`echo "ac_cv_cflags_-fPIC -Wl,--rpath,\$ORIGIN/../lib" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib" >&5
+echo $ECHO_N "checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -16028,31 +16026,32 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_ld_rpath="yes"
+  eval "$as_ac_var=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_ld_rpath="no"
+	eval "$as_ac_var=no"
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_ld_rpath" >&5
-echo "${ECHO_T}$ac_cv_ld_rpath" >&6; }
-      if test "$ac_cv_ld_rpath" = "yes"
-      then
-        LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
 
-      fi
+fi
+
 
       case $host_cpu in
         *i[3456789]86* | x86_64)
-          { echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
-echo $ECHO_N "checking whether we can relocate the executable to 0x7bf00000... $ECHO_C" >&6; }
-if test "${ac_cv_ld_reloc_exec+set}" = set; then
+          { echo "$as_me:$LINENO: checking whether the compiler supports -Wl,--section-start,.interp=0x7bf00400" >&5
+echo $ECHO_N "checking whether the compiler supports -Wl,--section-start,.interp=0x7bf00400... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__Wl___section_start__interp_0x7bf00400+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -16106,24 +16105,24 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_ld_reloc_exec="yes"
+  ac_cv_cflags__Wl___section_start__interp_0x7bf00400=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_ld_reloc_exec="no"
+	ac_cv_cflags__Wl___section_start__interp_0x7bf00400=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_ld_reloc_exec" >&5
-echo "${ECHO_T}$ac_cv_ld_reloc_exec" >&6; }
-          if test "$ac_cv_ld_reloc_exec" = "yes"
-          then
-            LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
-          fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__Wl___section_start__interp_0x7bf00400" >&5
+echo "${ECHO_T}$ac_cv_cflags__Wl___section_start__interp_0x7bf00400" >&6; }
+if test $ac_cv_cflags__Wl___section_start__interp_0x7bf00400 = yes; then
+  LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
+fi
+
           ;;
       esac
 

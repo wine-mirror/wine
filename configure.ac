@@ -915,47 +915,15 @@ int main(void) {
     EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
-  dnl Check for -fshort-wchar
-  AC_CACHE_CHECK([for gcc -fshort-wchar support], ac_cv_c_gcc_fshort_wchar,
-      [WINE_TRY_CFLAGS([-fshort-wchar],
-                      ac_cv_c_gcc_fshort_wchar="yes",ac_cv_c_gcc_fshort_wchar="no")])
-  if test "$ac_cv_c_gcc_fshort_wchar" = "yes"
-  then
-      AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar", [Specifies the compiler flag that forces a short wchar_t])
-  fi
+  dnl Check for some compiler flags
 
-  dnl Check for -fno-strict-aliasing
-  AC_CACHE_CHECK([for gcc -fno-strict-aliasing support], ac_cv_c_gcc_no_strict_aliasing,
-      [WINE_TRY_CFLAGS([-fno-strict-aliasing],
-                      ac_cv_c_gcc_no_strict_aliasing="yes",ac_cv_c_gcc_no_strict_aliasing="no")])
-  if test "$ac_cv_c_gcc_no_strict_aliasing" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
-  fi
-
-  dnl Check for -gstabs+ option
-  AC_CACHE_CHECK([for gcc -gstabs+ support], ac_cv_c_gcc_gstabs,
-      [WINE_TRY_CFLAGS([-gstabs+],ac_cv_c_gcc_gstabs="yes", ac_cv_c_gcc_gstabs="no")])
-  if test "$ac_cv_c_gcc_gstabs" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
-  fi
-
-  dnl Check for -Wdeclaration-after-statement option
-  AC_CACHE_CHECK([for gcc -Wdeclaration-after-statement support], ac_cv_c_gcc_decl_after_statement,
-      [WINE_TRY_CFLAGS([-Wdeclaration-after-statement],ac_cv_c_gcc_decl_after_statement="yes", ac_cv_c_gcc_decl_after_statement="no")])
-  if test "$ac_cv_c_gcc_decl_after_statement" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
-  fi
-
-  dnl Check for -Wwrite-strings
-  AC_CACHE_CHECK([for gcc -Wwrite-strings support], ac_cv_c_gcc_write_strings,
-      [WINE_TRY_CFLAGS([-Wwrite-strings],ac_cv_c_gcc_write_strings="yes", ac_cv_c_gcc_write_strings="no")])
-  if test "$ac_cv_c_gcc_write_strings" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
-  fi
+  WINE_TRY_CFLAGS([-fshort-wchar],
+                  [AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar",
+                             [Specifies the compiler flag that forces a short wchar_t])])
+  WINE_TRY_CFLAGS([-fno-strict-aliasing])
+  WINE_TRY_CFLAGS([-gstabs+])
+  WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
+  WINE_TRY_CFLAGS([-Wwrite-strings])
 
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
@@ -1079,73 +1047,31 @@ case $host_os in
     then
       LDSHARED="\$(CC) -shared"
       LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-      AC_CACHE_CHECK([whether the linker accepts soname], ac_cv_c_sonames,
-        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
-                         ac_cv_c_sonames="yes",ac_cv_c_sonames="no")])
-      if test "$ac_cv_c_sonames" = "yes"
-      then
-        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-      else
-        AC_CACHE_CHECK([check to see if -h soname is an alternate], ac_cv_c_h_sonames,
-          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
-                           ac_cv_c_h_sonames="yes",ac_cv_c_h_sonames="no")])
-        if test "$ac_cv_c_h_sonames" = "yes"
-        then
-          LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"
-        fi
-      fi
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
+                      [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"],
+                      [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
+                                       [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"])])
 
-      AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
-        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
-                         ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
-      if test "$ac_cv_c_dll_zdefs" = "yes"
-      then
-        LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
-      fi
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs], [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
 
-      AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
-        [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
-                         ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")])
-      if test "$ac_cv_c_dll_init_fini" = "yes"
-      then
-        LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
-      fi
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
+                      [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
 
-      AC_CACHE_CHECK([whether the linker accepts version scripts], ac_cv_c_ld_version_scripts,
-        [echo '{ global: *; };' >conftest.map
-         WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
-                         ac_cv_c_ld_version_scripts="yes",ac_cv_c_ld_version_scripts="no")
-         rm -f conftest.map])
-      if test "$ac_cv_c_ld_version_scripts" = "yes"
-      then
-        LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
-      fi
+      echo '{ global: *; };' >conftest.map
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
+                      [LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"])
+      rm -f conftest.map
 
-      AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
-        [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
-                         ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
-      if test "$ac_cv_c_export_dynamic" = "yes"
-      then
-        AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])
-      fi
+      WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
+                      [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
 
-      AC_CACHE_CHECK([whether the linker accepts --rpath], ac_cv_ld_rpath,
-        [WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                         ac_cv_ld_rpath="yes",ac_cv_ld_rpath="no")])
-      if test "$ac_cv_ld_rpath" = "yes"
-      then
-        AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
-      fi
+      WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
+                      [AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])])
 
       case $host_cpu in
         *i[[3456789]]86* | x86_64)
-          AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,
-            [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
-                             ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
-          if test "$ac_cv_ld_reloc_exec" = "yes"
-          then
-            LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
-          fi
+          WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
+                          [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
           ;;
       esac
 
