@@ -212,6 +212,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
     static const WCHAR szScreenFormat[] = {'%','d',0};
     static const WCHAR szIntel[] = { 'I','n','t','e','l',0 };
+    static const WCHAR szAllUsers[] = { 'A','L','L','U','S','E','R','S',0 };
     SYSTEM_INFO sys_info;
 
     /*
@@ -315,6 +316,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     /* in a wine environment the user is always admin and privileged */
     MSI_SetPropertyW(package,szAdminUser,szOne);
     MSI_SetPropertyW(package,szPriv,szOne);
+    MSI_SetPropertyW(package, szAllUsers, szOne);
 
     /* set the os things */
     OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
