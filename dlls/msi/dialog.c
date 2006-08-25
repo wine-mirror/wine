@@ -36,6 +36,8 @@
 #include "olectl.h"
 #include "richedit.h"
 #include "commctrl.h"
+#include "winreg.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1945,17 +1947,49 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory Combo ***************************************/
 
+static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOOL indirect )
+{
+    if (!property)
+        return NULL;
+
+    if (indirect)
+        return msi_dup_property( dialog->package, property );
+
+    return strdupW( property );
+}
+
 static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
+    LPWSTR path, propval;
+    BOOL indirect;
+    LPCWSTR prop;
     DWORD style;
 
-    style = CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
-            WS_CHILD | WS_GROUP | WS_TABSTOP | WS_VSCROLL;
+    /* FIXME: use CBS_OWNERDRAWFIXED and add owner draw code */
+    style = CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD |
+            WS_GROUP | WS_TABSTOP | WS_VSCROLL;
     control = msi_dialog_add_control( dialog, rec, WC_COMBOBOXW, style );
     if (!control)
         return ERROR_FUNCTION_FAILED;
 
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    propval = msi_dialog_dup_property( dialog, prop, indirect );
+    path = msi_dup_property( dialog->package, propval );
+
+    PathStripPathW( path );
+    PathRemoveBackslashW( path );
+
+    /* FIXME: Add whole directory structure to combo box */
+    SendMessageW( control->hwnd, CB_ADDSTRING, 0, (LPARAM)path );
+    SendMessageW( control->hwnd, CB_SETCURSEL, 0, 0 );
+
+    msi_free( path );
+    msi_free( propval );
     return ERROR_SUCCESS;
 }
 
