@@ -210,42 +210,6 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
       if (t->sign > 0) fprintf(h, "signed ");
       else if (t->sign < 0) fprintf(h, "unsigned ");
       switch (t->type) {
-      case RPC_FC_BYTE:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "byte");
-        break;
-      case RPC_FC_CHAR:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "char");
-        break;
-      case RPC_FC_WCHAR:
-        fprintf(h, "WCHAR");
-        break;
-      case RPC_FC_USMALL:
-      case RPC_FC_SMALL:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "small");
-        break;
-      case RPC_FC_USHORT:
-      case RPC_FC_SHORT:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "short");
-        break;
-      case RPC_FC_ULONG:
-      case RPC_FC_LONG:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "long");
-        break;
-      case RPC_FC_HYPER:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "hyper");
-        break;
-      case RPC_FC_FLOAT:
-        fprintf(h, "float");
-        break;
-      case RPC_FC_DOUBLE:
-        fprintf(h, "double");
-        break;
       case RPC_FC_ENUM16:
       case RPC_FC_ENUM32:
         if (t->defined && !t->written && !t->ignore) {
@@ -258,14 +222,6 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
           fprintf(h, "}");
         }
         else fprintf(h, "enum %s", t->name);
-        break;
-      case RPC_FC_ERROR_STATUS_T:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "error_status_t");
-        break;
-      case RPC_FC_BIND_PRIMITIVE:
-        if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "handle_t");
         break;
       case RPC_FC_STRUCT:
       case RPC_FC_CVSTRUCT:
@@ -302,7 +258,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         fprintf(h, "*");
         break;
       default:
-        fprintf(h, "(unknown-type:%d)", t->type);
+        fprintf(h, "%s", t->name);
       }
     }
     else {

@@ -207,6 +207,7 @@ struct _type_t {
   func_t *funcs;                  /* interfaces and modules */
   var_t *fields;                  /* interfaces, structures and enumerations */
   ifref_t *ifaces;                /* coclasses */
+  type_t *orig;                   /* dup'd types */
   int ignore, is_const, sign;
   int defined, written, user_types_registered;
   int typelib_idx;
@@ -296,6 +297,11 @@ struct _typelib_t {
     typelib_entry_t *entry;
     importlib_t *importlibs;
 };
+
+void init_types(void);
+
+type_t *duptype(type_t *t, int dupname);
+type_t *alias(type_t *t, const char *name);
 
 /* Get the actual type field for a type (chase down typedef references).  */
 unsigned char ref_type(const type_t *type);

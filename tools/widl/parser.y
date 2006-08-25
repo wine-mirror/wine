@@ -84,6 +84,8 @@ static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
 static type_t *make_class(char *name);
 static type_t *make_safearray(void);
+static type_t *make_builtin(char *name);
+static type_t *make_int(int sign);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
@@ -106,11 +108,6 @@ static int compute_method_indexes(type_t *iface);
 #define tsENUM   1
 #define tsSTRUCT 2
 #define tsUNION  3
-
-static type_t std_bool = { "boolean" };
-static type_t std_int = { "int" };
-static type_t std_int64 = { "__int64" };
-static type_t std_uhyper = { "MIDL_uhyper" };
 
 %}
 %union {
@@ -490,10 +487,10 @@ enum_list: enum					{ if (!$$->eval)
 
 enum:	  ident '=' expr_const			{ $$ = reg_const($1);
 						  $$->eval = $3;
-                                                  $$->type = make_type(RPC_FC_LONG, &std_int);
+                                                  $$->type = make_int(0);
 						}
 	| ident					{ $$ = reg_const($1);
-                                                  $$->type = make_type(RPC_FC_LONG, &std_int);
+                                                  $$->type = make_int(0);
 						}
 	;
 
@@ -609,8 +606,8 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	| tVERSION				{ $$ = make_var($<str>1); }
 	;
 
-base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
-	| tWCHAR				{ $$ = make_type(RPC_FC_WCHAR, NULL); }
+base_type: tBYTE				{ $$ = make_builtin($<str>1); }
+	| tWCHAR				{ $$ = make_builtin($<str>1); }
 	| int_std
 	| tSIGNED int_std			{ $$ = $2; $$->sign = 1; }
 	| tUNSIGNED int_std			{ $$ = $2; $$->sign = -1;
@@ -620,31 +617,35 @@ base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
 						  case RPC_FC_SHORT: $$->type = RPC_FC_USHORT; break;
 						  case RPC_FC_LONG:  $$->type = RPC_FC_ULONG;  break;
 						  case RPC_FC_HYPER:
-						    if (!$$->ref) { $$->ref = &std_uhyper; $$->sign = 0; }
+						    if ($$->name[0] == 'h') /* hyper, as opposed to __int64 */
+                                                    {
+                                                      $$ = alias($$, "MIDL_uhyper");
+                                                      $$->sign = 0;
+                                                    }
 						    break;
 						  default: break;
 						  }
 						}
-	| tUNSIGNED				{ $$ = make_type(RPC_FC_ULONG, &std_int); $$->sign = -1; }
-	| tFLOAT				{ $$ = make_type(RPC_FC_FLOAT, NULL); }
-	| tSINGLE				{ $$ = make_type(RPC_FC_FLOAT, NULL); }
-	| tDOUBLE				{ $$ = make_type(RPC_FC_DOUBLE, NULL); }
-	| tBOOLEAN				{ $$ = make_type(RPC_FC_BYTE, &std_bool); /* ? */ }
-	| tERRORSTATUST				{ $$ = make_type(RPC_FC_ERROR_STATUS_T, NULL); }
-	| tHANDLET				{ $$ = make_type(RPC_FC_BIND_PRIMITIVE, NULL); /* ? */ }
+	| tUNSIGNED				{ $$ = make_int(-1); }
+	| tFLOAT				{ $$ = make_builtin($<str>1); }
+	| tSINGLE				{ $$ = duptype(find_type("float", 0), 1); }
+	| tDOUBLE				{ $$ = make_builtin($<str>1); }
+	| tBOOLEAN				{ $$ = make_builtin($<str>1); }
+	| tERRORSTATUST				{ $$ = make_builtin($<str>1); }
+	| tHANDLET				{ $$ = make_builtin($<str>1); }
 	;
 
 m_int:
 	| tINT
 	;
 
-int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
-	| tSHORT m_int				{ $$ = make_type(RPC_FC_SHORT, NULL); }
-	| tSMALL				{ $$ = make_type(RPC_FC_SMALL, NULL); }
-	| tLONG m_int				{ $$ = make_type(RPC_FC_LONG, NULL); }
-	| tHYPER m_int				{ $$ = make_type(RPC_FC_HYPER, NULL); }
-	| tINT64				{ $$ = make_type(RPC_FC_HYPER, &std_int64); }
-	| tCHAR					{ $$ = make_type(RPC_FC_CHAR, NULL); }
+int_std:  tINT					{ $$ = make_builtin($<str>1); }
+	| tSHORT m_int				{ $$ = make_builtin($<str>1); }
+	| tSMALL				{ $$ = make_builtin($<str>1); }
+	| tLONG m_int				{ $$ = make_builtin($<str>1); }
+	| tHYPER m_int				{ $$ = make_builtin($<str>1); }
+	| tINT64				{ $$ = make_builtin($<str>1); }
+	| tCHAR					{ $$ = make_builtin($<str>1); }
 	;
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
@@ -861,6 +862,50 @@ version:
 	;
 
 %%
+
+static void decl_builtin(const char *name, unsigned char type)
+{
+  type_t *t = make_type(type, NULL);
+  t->name = xstrdup(name);
+  reg_type(t, name, 0);
+}
+
+static type_t *make_builtin(char *name)
+{
+  /* NAME is strdup'd in the lexer */
+  type_t *t = duptype(find_type(name, 0), 0);
+  t->name = name;
+  return t;
+}
+
+static type_t *make_int(int sign)
+{
+  type_t *t = duptype(find_type("int", 0), 1);
+
+  t->sign = sign;
+  if (sign < 0)
+    t->type = t->type == RPC_FC_LONG ? RPC_FC_ULONG : RPC_FC_USHORT;
+
+  return t;
+}
+
+void init_types(void)
+{
+  decl_builtin("byte", RPC_FC_BYTE);
+  decl_builtin("wchar_t", RPC_FC_WCHAR);
+  decl_builtin("int", RPC_FC_LONG);     /* win32 */
+  decl_builtin("short", RPC_FC_SHORT);
+  decl_builtin("small", RPC_FC_SMALL);
+  decl_builtin("long", RPC_FC_LONG);
+  decl_builtin("hyper", RPC_FC_HYPER);
+  decl_builtin("__int64", RPC_FC_HYPER);
+  decl_builtin("char", RPC_FC_CHAR);
+  decl_builtin("float", RPC_FC_FLOAT);
+  decl_builtin("double", RPC_FC_DOUBLE);
+  decl_builtin("boolean", RPC_FC_BYTE);
+  decl_builtin("error_status_t", RPC_FC_ERROR_STATUS_T);
+  decl_builtin("handle_t", RPC_FC_BIND_PRIMITIVE);
+}
 
 static attr_t *make_attr(enum attr_type type)
 {

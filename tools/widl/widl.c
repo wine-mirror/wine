@@ -379,6 +379,7 @@ int main(int argc,char *argv[])
     fprintf(idfile, "#endif\n\n");
   }
 
+  init_types();
   ret = yyparse();
 
   if(do_header) {

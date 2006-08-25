@@ -50,6 +50,29 @@ int in_typelib = 0;
 
 static typelib_t *typelib;
 
+type_t *duptype(type_t *t, int dupname)
+{
+  type_t *d = xmalloc(sizeof *d);
+
+  *d = *t;
+  if (dupname && t->name)
+    d->name = xstrdup(t->name);
+
+  d->orig = t;
+  return d;
+}
+
+type_t *alias(type_t *t, const char *name)
+{
+  type_t *a = duptype(t, 0);
+
+  a->name = xstrdup(name);
+  a->kind = TKIND_ALIAS;
+  a->attrs = NULL;
+
+  return a;
+}
+
 /* List of oleauto types that should be recognized by name.
  * (most of) these seem to be intrinsic types in mktyplib. */
 
@@ -128,14 +151,14 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_USHORT:
     return VT_UI2;
   case RPC_FC_LONG:
-    if (t->ref && match(t->ref->name, "int")) return VT_INT;
+    if (match(t->name, "int")) return VT_INT;
     return VT_I4;
   case RPC_FC_ULONG:
-    if (t->ref && match(t->ref->name, "int")) return VT_UINT;
+    if (match(t->name, "int")) return VT_UINT;
     return VT_UI4;
   case RPC_FC_HYPER:
     if (t->sign < 0) return VT_UI8;
-    if (t->ref && match(t->ref->name, "MIDL_uhyper")) return VT_UI8;
+    if (match(t->name, "MIDL_uhyper")) return VT_UI8;
     return VT_I8;
   case RPC_FC_FLOAT:
     return VT_R4;
