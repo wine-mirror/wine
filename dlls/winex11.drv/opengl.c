@@ -31,7 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
-WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #if defined(HAVE_GL_GL_H) && defined(HAVE_GL_GLX_H)
 
@@ -58,6 +57,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
