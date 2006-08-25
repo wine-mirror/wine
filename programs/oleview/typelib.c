@@ -448,7 +448,11 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
         bstrParamNames = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(BSTR*)*(pFuncDesc->cParams+1));
         if(FAILED(ITypeInfo_GetNames(pTypeInfo, pFuncDesc->memid, bstrParamNames,
-                pFuncDesc->cParams+1, &namesNo))) continue;
+                pFuncDesc->cParams+1, &namesNo)))
+        {
+            HeapFree(GetProcessHeap(), 0, bstrParamNames);
+            continue;
+        }
         SysFreeString(bstrParamNames[0]);
 
         memset(wszText, 0, sizeof(wszText));
