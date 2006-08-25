@@ -29,7 +29,7 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
 parser.tab.c parser.tab.h: parser.y
 	$(BISON) -d -t $(SRCDIR)/parser.y -o parser.tab.c

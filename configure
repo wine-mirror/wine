@@ -738,13 +738,13 @@ LDSHARED
 LDDLLFLAGS
 LIBEXT
 IMPLIBEXT
+LIBWINE_LDFLAGS
 DLLTOOL
 DLLWRAP
 COREFOUNDATIONLIB
 IOKITLIB
 LDEXECFLAGS
 COREAUDIO
-LDEXERPATH
 CROSSTEST
 CROSSCC
 CROSSWINDRES
@@ -15224,6 +15224,8 @@ LIBEXT="so"
 
 IMPLIBEXT="def"
 
+LIBWINE_LDFLAGS=""
+
 
 case $host_os in
   cygwin*|mingw32*)
@@ -15433,6 +15435,7 @@ fi
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-bundle -multiply_defined suppress"
+    LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
     STRIP="$STRIP -u -r"
         COREFOUNDATIONLIB="-framework CoreFoundation"
@@ -16042,8 +16045,7 @@ ac_res=`eval echo '${'$as_ac_var'}'`
 	       { echo "$as_me:$LINENO: result: $ac_res" >&5
 echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_var'}'` = yes; then
-  LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
-
+  LIBWINE_LDFLAGS="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
 fi
 
 
@@ -25170,13 +25172,13 @@ LDSHARED!$LDSHARED$ac_delim
 LDDLLFLAGS!$LDDLLFLAGS$ac_delim
 LIBEXT!$LIBEXT$ac_delim
 IMPLIBEXT!$IMPLIBEXT$ac_delim
+LIBWINE_LDFLAGS!$LIBWINE_LDFLAGS$ac_delim
 DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
 COREFOUNDATIONLIB!$COREFOUNDATIONLIB$ac_delim
 IOKITLIB!$IOKITLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
-LDEXERPATH!$LDEXERPATH$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
 CROSSCC!$CROSSCC$ac_delim
 CROSSWINDRES!$CROSSWINDRES$ac_delim

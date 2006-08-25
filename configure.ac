@@ -999,6 +999,7 @@ AC_SUBST(LDSHARED,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LIBEXT,"so")
 AC_SUBST(IMPLIBEXT,"def")
+AC_SUBST(LIBWINE_LDFLAGS,"")
 
 case $host_os in
   cygwin*|mingw32*)
@@ -1020,6 +1021,7 @@ case $host_os in
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-bundle -multiply_defined suppress"
+    LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME)"
     STRIP="$STRIP -u -r"
     dnl declare needed frameworks
@@ -1066,7 +1068,7 @@ case $host_os in
                       [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
 
       WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                      [AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])])
+                      [LIBWINE_LDFLAGS="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
 
       case $host_cpu in
         *i[[3456789]]86* | x86_64)
