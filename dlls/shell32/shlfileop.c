@@ -152,7 +152,7 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
         params.lpszIcon = (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id);
         params.dwStyle = MB_YESNO | MB_USERICON;
 
-	return (IDOK == MessageBoxIndirectW(&params));
+        return (IDYES == MessageBoxIndirectW(&params));
 }
 
 static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)
