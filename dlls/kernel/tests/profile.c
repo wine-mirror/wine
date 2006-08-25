@@ -135,8 +135,61 @@ static void test_profile_string(void)
     DeleteFileA( TESTFILE2);
 }
 
+static void test_profile_sections(void)
+{
+    HANDLE h;
+    int ret;
+    DWORD count;
+    char buf[100];
+    WCHAR bufW[100];
+    static const char content[]="[section1]\r\n[section2]\r\n[section3]\r\n";
+    static const char testfile3[]=".\\testwine3.ini";
+    static const WCHAR testfile3W[]={ '.','\\','t','e','s','t','w','i','n','e','3','.','i','n','i',0 };
+    DeleteFileA( testfile3 );
+    h = CreateFileA( testfile3, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+    ok( h != INVALID_HANDLE_VALUE, " cannot create %s\n", testfile3);
+    if( h == INVALID_HANDLE_VALUE) return;
+    WriteFile( h, content, sizeof(content), &count, NULL);
+    CloseHandle( h);
+
+    /* Test with sufficiently large buffer */
+    ret = GetPrivateProfileSectionNamesA( buf, 29, testfile3 );
+    ok( ret == 27, "expected return size 27, got %d\n", ret );
+    ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    /* Test with exactly fitting buffer */
+    ret = GetPrivateProfileSectionNamesA( buf, 28, testfile3 );
+    ok( ret == 26, "expected return size 26, got %d\n", ret );
+    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    /* Test with a buffer too small */
+    ret = GetPrivateProfileSectionNamesA( buf, 27, testfile3 );
+    ok( ret == 25, "expected return size 25, got %d\n", ret );
+    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    
+    /* Test with sufficiently large buffer */
+    ret = GetPrivateProfileSectionNamesW( bufW, 29, testfile3W );
+    ok( ret == 27, "expected return size 27, got %d\n", ret );
+    ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    /* Test with exactly fitting buffer */
+    ret = GetPrivateProfileSectionNamesW( bufW, 28, testfile3W );
+    ok( ret == 26, "expected return size 26, got %d\n", ret );
+    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    /* Test with a buffer too small */
+    ret = GetPrivateProfileSectionNamesW( bufW, 27, testfile3W );
+    ok( ret == 25, "expected return size 25, got %d\n", ret );
+    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    
+    DeleteFileA( testfile3 );
+}
+
 START_TEST(profile)
 {
     test_profile_int();
     test_profile_string();
+    test_profile_sections();
 }

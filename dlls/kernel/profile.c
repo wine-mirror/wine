@@ -906,7 +906,7 @@ static INT PROFILE_GetSectionNames( LPWSTR buffer, UINT len )
     while ((section!=NULL)) {
         if (section->name[0]) {
             tmplen = strlenW(section->name)+1;
-            if (tmplen > buflen) {
+            if (tmplen >= buflen) {
                 if (buflen > 0) {
                     memcpy(buf, section->name, (buflen-1) * sizeof(WCHAR));
                     buf += buflen-1;
@@ -1626,12 +1626,14 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
     retW = GetPrivateProfileSectionNamesW(bufferW, size, filenameW.Buffer);
     if (retW && size)
     {
-        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW, buffer, size, NULL, NULL);
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, retW+1, buffer, size-1, NULL, NULL);
         if (!ret)
         {
-            ret = size;
+            ret = size-2;
             buffer[size-1] = 0;
         }
+        else
+          ret = ret-1;
     }
 
     RtlFreeUnicodeString(&filenameW);
