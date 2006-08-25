@@ -878,15 +878,18 @@ static void test_sid_str(PSID * sid)
 static void test_LookupAccountSid(void)
 {
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
-    char account[MAX_PATH], domain[MAX_PATH];
-    DWORD acc_size, dom_size;
-    DWORD real_acc_size, real_dom_size;
+    CHAR accountA[MAX_PATH], domainA[MAX_PATH];
+    DWORD acc_sizeA, dom_sizeA;
+    DWORD real_acc_sizeA, real_dom_sizeA;
+    WCHAR accountW[MAX_PATH], domainW[MAX_PATH];
+    DWORD acc_sizeW, dom_sizeW;
+    DWORD real_acc_sizeW, real_dom_sizeW;
     PSID pUsersSid = NULL;
     SID_NAME_USE use;
     BOOL ret;
     DWORD size;
     MAX_SID  max_sid;
-    char *str_sid;
+    CHAR *str_sidA;
     int i;
 
     /* native windows crashes if account size, domain size, or name use is NULL */
@@ -900,68 +903,151 @@ static void test_LookupAccountSid(void)
     if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
         return;
 
-    real_acc_size = MAX_PATH;
-    real_dom_size = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &real_acc_size, domain, &real_dom_size, &use);
-    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
+    real_acc_sizeA = MAX_PATH;
+    real_dom_sizeA = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &real_acc_sizeA, domainA, &real_dom_sizeA, &use);
+    ok(ret, "LookupAccountSidA() Expected TRUE, got FALSE\n");
 
     /* try NULL account */
-    acc_size = MAX_PATH;
-    dom_size = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
-    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
+    acc_sizeA = MAX_PATH;
+    dom_sizeA = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_sizeA, domainA, &dom_sizeA, &use);
+    ok(ret, "LookupAccountSidA() Expected TRUE, got FALSE\n");
 
     /* try NULL domain */
-    acc_size = MAX_PATH;
-    dom_size = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
-    ok(ret, "LookupAccountSid() Expected TRUE, got FALSE\n");
+    acc_sizeA = MAX_PATH;
+    dom_sizeA = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, NULL, &dom_sizeA, &use);
+    ok(ret, "LookupAccountSidA() Expected TRUE, got FALSE\n");
 
     /* try a small account buffer */
-    acc_size = 1;
-    dom_size = MAX_PATH;
-    account[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
-    ok(!ret, "LookupAccountSid() Expected FALSE got TRUE\n");
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "LookupAccountSid() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+    acc_sizeA = 1;
+    dom_sizeA = MAX_PATH;
+    accountA[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
+    ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
 
     /* try a 0 sized account buffer */
-    acc_size = 0;
-    dom_size = MAX_PATH;
-    account[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    acc_sizeA = 0;
+    dom_sizeA = MAX_PATH;
+    accountA[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
-    ok(acc_size == real_acc_size, "LookupAccountSid() Expected acc_size = %lu, got %lu\n", real_acc_size, acc_size);
+    ok(acc_sizeA == real_acc_sizeA + 1,
+       "LookupAccountSidA() Expected acc_size = %lu, got %lu\n",
+       real_acc_sizeA + 1, acc_sizeA);
 
     /* try a 0 sized account buffer */
-    acc_size = 0;
-    dom_size = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_size, domain, &dom_size, &use);
+    acc_sizeA = 0;
+    dom_sizeA = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
-    ok(acc_size == real_acc_size, "LookupAccountSid() Expected acc_size = %lu, got %lu\n", real_acc_size, acc_size);
+    ok(acc_sizeA == real_acc_sizeA + 1,
+       "LookupAccountSid() Expected acc_size = %lu, got %lu\n",
+       real_acc_sizeA + 1, acc_sizeA);
 
     /* try a small domain buffer */
-    dom_size = 1;
-    acc_size = MAX_PATH;
-    account[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
-    ok(!ret, "LookupAccountSid() Expected FALSE got TRUE\n");
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "LookupAccountSid() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+    dom_sizeA = 1;
+    acc_sizeA = MAX_PATH;
+    accountA[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
+    ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
 
     /* try a 0 sized domain buffer */
-    dom_size = 0;
-    acc_size = MAX_PATH;
-    account[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, domain, &dom_size, &use);
+    dom_sizeA = 0;
+    acc_sizeA = MAX_PATH;
+    accountA[0] = 0;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
-    ok(dom_size == real_dom_size, "LookupAccountSid() Expected dom_size = %lu, got %lu\n", real_dom_size, dom_size);
+    ok(dom_sizeA == real_dom_sizeA + 1,
+       "LookupAccountSidA() Expected dom_size = %lu, got %lu\n",
+       real_dom_sizeA + 1, dom_sizeA);
 
     /* try a 0 sized domain buffer */
-    dom_size = 0;
-    acc_size = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, account, &acc_size, NULL, &dom_size, &use);
+    dom_sizeA = 0;
+    acc_sizeA = MAX_PATH;
+    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, NULL, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
-    ok(acc_size == real_acc_size, "LookupAccountSid() Expected dom_size = %lu, got %lu\n", real_dom_size, dom_size);
+    ok(dom_sizeA == real_dom_sizeA + 1,
+       "LookupAccountSidA() Expected dom_size = %lu, got %lu\n",
+       real_dom_sizeA + 1, dom_sizeA);
+
+    real_acc_sizeW = MAX_PATH;
+    real_dom_sizeW = MAX_PATH;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &real_acc_sizeW, domainW, &real_dom_sizeW, &use);
+    ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
+
+    /* try NULL account */
+    acc_sizeW = MAX_PATH;
+    dom_sizeW = MAX_PATH;
+    ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
+    ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
+
+    /* try NULL domain */
+    acc_sizeW = MAX_PATH;
+    dom_sizeW = MAX_PATH;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
+    ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
+
+    /* try a small account buffer */
+    acc_sizeW = 1;
+    dom_sizeW = MAX_PATH;
+    accountW[0] = 0;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    ok(!ret, "LookupAccountSidW() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+
+    /* try a 0 sized account buffer */
+    acc_sizeW = 0;
+    dom_sizeW = MAX_PATH;
+    accountW[0] = 0;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(acc_sizeW == real_acc_sizeW + 1,
+       "LookupAccountSidW() Expected acc_size = %lu, got %lu\n",
+       real_acc_sizeW + 1, acc_sizeW);
+
+    /* try a 0 sized account buffer */
+    acc_sizeW = 0;
+    dom_sizeW = MAX_PATH;
+    ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(acc_sizeW == real_acc_sizeW + 1,
+       "LookupAccountSidW() Expected acc_size = %lu, got %lu\n",
+       real_acc_sizeW + 1, acc_sizeW);
+
+    /* try a small domain buffer */
+    dom_sizeW = 1;
+    acc_sizeW = MAX_PATH;
+    accountW[0] = 0;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    ok(!ret, "LookupAccountSidW() Expected FALSE got TRUE\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+
+    /* try a 0 sized domain buffer */
+    dom_sizeW = 0;
+    acc_sizeW = MAX_PATH;
+    accountW[0] = 0;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(dom_sizeW == real_dom_sizeW + 1,
+       "LookupAccountSidW() Expected dom_size = %lu, got %lu\n",
+       real_dom_sizeW + 1, dom_sizeW);
+
+    /* try a 0 sized domain buffer */
+    dom_sizeW = 0;
+    acc_sizeW = MAX_PATH;
+    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
+    /* this can fail or succeed depending on OS version but the size will always be returned */
+    ok(dom_sizeW == real_dom_sizeW + 1,
+       "LookupAccountSidW() Expected dom_size = %lu, got %lu\n",
+       real_dom_sizeW + 1, dom_sizeW);
 
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
@@ -973,13 +1059,13 @@ static void test_LookupAccountSid(void)
             size = SECURITY_MAX_SID_SIZE;
             if (pCreateWellKnownSid(i, NULL, &max_sid.sid, &size))
             {
-                if (pConvertSidToStringSidA(&max_sid.sid, &str_sid))
+                if (pConvertSidToStringSidA(&max_sid.sid, &str_sidA))
                 {
-                    acc_size = MAX_PATH;
-                    dom_size = MAX_PATH;
-                    if (LookupAccountSid(NULL, &max_sid.sid, account, &acc_size, domain, &dom_size, &use))
-                        trace(" %d: %s %s\\%s %d\n", i, str_sid, domain, account, use);
-                    LocalFree(str_sid);
+                    acc_sizeA = MAX_PATH;
+                    dom_sizeA = MAX_PATH;
+                    if (LookupAccountSidA(NULL, &max_sid.sid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use))
+                        trace(" %d: %s %s\\%s %d\n", i, str_sidA, domainA, accountA, use);
+                    LocalFree(str_sidA);
                 }
             }
             else

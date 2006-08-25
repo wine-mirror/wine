@@ -1854,14 +1854,14 @@ LookupAccountSidA(
             WideCharToMultiByte( CP_ACP, 0, accountW, -1, account, len, NULL, NULL );
             *accountSize = len;
         } else
-            *accountSize = accountSizeW;
+            *accountSize = accountSizeW + 1;
 
         if (domainW && *domainSize) {
             len = WideCharToMultiByte( CP_ACP, 0, domainW, -1, NULL, 0, NULL, NULL );
             WideCharToMultiByte( CP_ACP, 0, domainW, -1, domain, len, NULL, NULL );
             *domainSize = len;
         } else
-            *domainSize = domainSizeW;
+            *domainSize = domainSizeW + 1;
     }
 
     HeapFree( GetProcessHeap(), 0, systemW );
@@ -1958,7 +1958,7 @@ LookupAccountSidW(
                         case DOMAIN_GROUP_RID_ADMINS:
                             ac = Domain_Admins;
                             break;
-                       case DOMAIN_GROUP_RID_USERS:
+                        case DOMAIN_GROUP_RID_USERS:
                             ac = Domain_Users;
                             break;
                         case DOMAIN_GROUP_RID_GUESTS:
@@ -2007,11 +2007,17 @@ LookupAccountSidW(
         }
         if (((*accountSize != 0) && (*accountSize < strlenW(ac))) ||
             ((*domainSize != 0) && (*domainSize < strlenW(dm)))) {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
             status = FALSE;
         }
-        *domainSize = strlenW(dm) + 1;
-        *accountSize = strlenW(ac) + 1;
+        if (*domainSize)
+            *domainSize = strlenW(dm);
+        else
+            *domainSize = strlenW(dm) + 1;
+        if (*accountSize)
+            *accountSize = strlenW(ac);
+        else
+            *accountSize = strlenW(ac) + 1;
         *name_use = use;
         HeapFree(GetProcessHeap(), 0, computer_name);
         return status;
