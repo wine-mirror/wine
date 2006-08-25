@@ -1995,9 +1995,35 @@ static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory List ***************************************/
 
+UINT msi_dialog_directorylist_up( msi_dialog *dialog )
+{
+    msi_control *control;
+    LPWSTR prop, path, ptr;
+    BOOL indirect;
+
+    control = msi_dialog_find_control( dialog, szDirectoryList );
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
+    path = msi_dup_property( dialog->package, prop );
+
+    /* strip off the last directory */
+    ptr = PathFindFileNameW( path );
+    if (ptr != path) *(ptr - 1) = '\0';
+    PathAddBackslashW( path );
+
+    MSI_SetPropertyW( dialog->package, prop, path );
+
+    msi_free( path );
+    msi_free( prop );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
+    LPCWSTR prop;
     DWORD style;
 
     style = LVS_LIST | LVS_EDITLABELS | WS_VSCROLL | LVS_SHAREIMAGELISTS |
@@ -2006,6 +2032,10 @@ static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
     control = msi_dialog_add_control( dialog, rec, WC_LISTVIEWW, style );
     if (!control)
         return ERROR_FUNCTION_FAILED;
+
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
     return ERROR_SUCCESS;
 }
