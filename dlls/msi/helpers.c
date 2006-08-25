@@ -71,35 +71,6 @@ LPWSTR msi_dup_record_field( MSIRECORD *row, INT index )
     return strdupW( MSI_RecordGetString(row,index) );
 }
 
-LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
-{
-    DWORD sz = 0;
-    LPWSTR str;
-    UINT r;
-
-    r = MSI_GetPropertyW(package, prop, NULL, &sz);
-    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
-        return NULL;
-
-    sz++;
-    str = msi_alloc(sz*sizeof(WCHAR));
-    r = MSI_GetPropertyW(package, prop, str, &sz);
-    if (r != ERROR_SUCCESS)
-    {
-        msi_free(str);
-        str = NULL;
-    }
-    return str;
-}
-
-int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def )
-{
-    LPWSTR str = msi_dup_property( package, prop );
-    int val = str ? atoiW( str ) : def;
-    msi_free( str );
-    return val;
-}
-
 MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 {
     MSICOMPONENT *comp;

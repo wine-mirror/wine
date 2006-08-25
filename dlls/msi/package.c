@@ -1001,7 +1001,7 @@ UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName,
 
     if ( *pchValueBuf <= len )
     {
-        TRACE("have %lu, need %lu -> ERROR_MORE_DATA\n", *pchValueBuf, len);
+        TRACE("have %lu, need %u -> ERROR_MORE_DATA\n", *pchValueBuf, len);
         r = ERROR_MORE_DATA;
     }
     else
@@ -1010,6 +1010,28 @@ UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName,
     *pchValueBuf = len;
 
     return r;
+}
+
+LPWSTR msi_dup_property( MSIPACKAGE *package, LPCWSTR szName )
+{
+    msi_property *prop;
+    LPWSTR value = NULL;
+
+    prop = msi_prop_find( package, szName );
+    if (prop)
+        value = strdupW( prop->value );
+
+    return value;
+}
+
+int msi_get_property_int( MSIPACKAGE *package, LPCWSTR name, int value )
+{
+    msi_property *prop;
+
+    prop = msi_prop_find( package, name );
+    if (prop)
+        value = atoiW( prop->value );
+    return value;
 }
 
 static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
