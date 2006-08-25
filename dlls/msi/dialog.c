@@ -2170,27 +2170,11 @@ static MSIRECORD *msi_get_dialog_record( msi_dialog *dialog )
     return rec;
 }
 
-static void msi_get_screen_resolution( msi_dialog *dialog, UINT *xres, UINT *yres )
+static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LPRECT pos )
 {
-    WCHAR num[10];
-    DWORD sz = 10;
-
     static const WCHAR szScreenX[] = {'S','c','r','e','e','n','X',0};
     static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
 
-    *xres = 0;
-    *yres = 0;
-
-    MSI_GetPropertyW( dialog->package, szScreenX, num, &sz );
-    *xres = atolW( num );
-
-    sz = 10;
-    MSI_GetPropertyW( dialog->package, szScreenY, num, &sz );
-    *yres = atolW( num );
-}
-
-static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LPRECT pos )
-{
     UINT xres, yres;
     POINT center;
     SIZE sz;
@@ -2205,7 +2189,9 @@ static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LP
     sz.cx = msi_dialog_scale_unit( dialog, sz.cx );
     sz.cy = msi_dialog_scale_unit( dialog, sz.cy );
 
-    msi_get_screen_resolution( dialog, &xres, &yres );
+    xres = msi_get_property_int( dialog->package, szScreenX, 0 );
+    yres = msi_get_property_int( dialog->package, szScreenY, 0 );
+
     center.x = MulDiv( center.x, xres, 100 );
     center.y = MulDiv( center.y, yres, 100 );
 
