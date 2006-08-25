@@ -1435,14 +1435,14 @@ AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
 
 dnl Check for the external timezone variables timezone and daylight
 AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
-               AC_TRY_LINK([#include <time.h>],[timezone;],
+               AC_TRY_LINK([#include <time.h>],[timezone = 1],
 			   ac_cv_have_timezone="yes", ac_cv_have_timezone="no"))
 if test "$ac_cv_have_timezone" = "yes"
 then
     AC_DEFINE(HAVE_TIMEZONE, 1, [Define if you have the timezone variable])
 fi
 AC_CACHE_CHECK([for daylight variable], ac_cv_have_daylight,
-               AC_TRY_LINK([#include <time.h>],[daylight;],
+               AC_TRY_LINK([#include <time.h>],[daylight = 1],
 			   ac_cv_have_daylight="yes", ac_cv_have_daylight="no"))
 if test "$ac_cv_have_daylight" = "yes"
 then

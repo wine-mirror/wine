@@ -23652,7 +23652,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-timezone;
+timezone = 1
   ;
   return 0;
 }
@@ -23727,7 +23727,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-daylight;
+daylight = 1
   ;
   return 0;
 }
