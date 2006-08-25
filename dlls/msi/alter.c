@@ -128,6 +128,7 @@ static UINT ALTER_delete( struct tagMSIVIEW *view )
     MSIALTERVIEW *av = (MSIALTERVIEW*)view;
 
     TRACE("%p\n", av );
+    msi_free( av );
 
     return ERROR_SUCCESS;
 }
