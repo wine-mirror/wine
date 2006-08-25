@@ -34,6 +34,7 @@
 #define ckidRIFF              aviFCC('R','I','F','F')
 #define ckidLIST              aviFCC('L','I','S','T')
 #define ckidJUNK              aviFCC('J','U','N','K')
+#define ckidINFO              aviFCC('I','N','F','O')
 #define ckidHEADERLIST        aviFCC('h','d','r','l')
 #define ckidAVIMOVIE          aviFCC('m','o','v','i')
 #define ckidSTREAMNAME        aviFCC('s','t','r','n')

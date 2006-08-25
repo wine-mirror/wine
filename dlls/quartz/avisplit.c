@@ -550,7 +550,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     pos += sizeof(RIFFCHUNK) + list.cb;
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
 
-    if (list.fcc == ckidJUNK)
+    while (list.fcc == ckidJUNK || (list.fcc == ckidLIST && list.fccListType == ckidINFO))
     {
         pos += sizeof(RIFFCHUNK) + list.cb;
         hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
