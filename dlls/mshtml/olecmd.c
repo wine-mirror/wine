@@ -517,6 +517,97 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
 
         if(pCmdText)
             FIXME("Set pCmdText\n");
+    }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        ULONG i;
+
+        for(i=0; i<cCmds; i++) {
+            switch(prgCmds[i].cmdID) {
+            case IDM_COPY:
+                FIXME("CGID_MSHTML: IDM_COPY\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_CUT:
+                FIXME("CGID_MSHTML: IDM_CUT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_FONTNAME:
+                FIXME("CGID_MSHTML: IDM_FONTNAME\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_FONTSIZE:
+                FIXME("CGID_MSHTML: IDM_FONTSIZE\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_PASTE:
+                FIXME("CGID_MSHTML: IDM_PASTE\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_BOLD:
+                FIXME("CGID_MSHTML: IDM_BOLD\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_FORECOLOR:
+                FIXME("CGID_MSHTML: IDM_FORECOLOR\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_ITALIC:
+                FIXME("CGID_MSHTML: IDM_ITALIC\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_JUSTIFYCENTER:
+                FIXME("CGID_MSHTML: IDM_JUSTIFYCENTER\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_JUSTIFYLEFT:
+                FIXME("CGID_MSHTML: IDM_JUSTIFYLEFT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_JUSTIFYRIGHT:
+                FIXME("CGID_MSHTML: IDM_JUSTIFYRIGHT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_UNDERLINE:
+                FIXME("CGID_MSHTML: IDM_UNDERLINE\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_HORIZONTALLINE:
+                FIXME("CGID_MSHTML: IDM_HORIZONTALLINE\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_ORDERLIST:
+                FIXME("CGID_MSHTML: IDM_ORDERLIST\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_UNORDERLIST:
+                FIXME("CGID_MSHTML: IDM_UNORDERLIST\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_INDENT:
+                FIXME("CGID_MSHTML: IDM_INDENT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_OUTDENT:
+                FIXME("CGID_MSHTML: IDM_OUTDENT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_BLOCKDIRLTR:
+                FIXME("CGID_MSHTML: IDM_BLOCKDIRLTR\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            case IDM_BLOCKDIRRTL:
+                FIXME("CGID_MSHTML: IDM_BLOCKDIRRTL\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
+            default:
+                FIXME("CGID_MSHTML: unsupported cmdID %ld\n", prgCmds[i].cmdID);
+                prgCmds[i].cmdf = 0;
+            }
+        }
+
+        hres = prgCmds[i-1].cmdf ? S_OK : OLECMDERR_E_NOTSUPPORTED;
+
+        if(pCmdText)
+            FIXME("Set pCmdText\n");
     }else {
         FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
         hres = OLECMDERR_E_UNKNOWNGROUP;
