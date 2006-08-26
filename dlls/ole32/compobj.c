@@ -1108,6 +1108,43 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
     return S_OK;
 }
 
+/* open HKCR\\AppId\\{string form of appid clsid} key */
+HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey)
+{
+    static const WCHAR szAppId[] = { 'A','p','p','I','d',0 };
+    static const WCHAR szAppIdKey[] = { 'A','p','p','I','d','\\',0 };
+    DWORD res;
+    WCHAR buf[CHARS_IN_GUID];
+    WCHAR keyname[ARRAYSIZE(szAppIdKey) + CHARS_IN_GUID];
+    DWORD size;
+    HKEY hkey;
+    DWORD type;
+    HRESULT hr;
+
+    /* read the AppID value under the class's key */
+    hr = COM_OpenKeyForCLSID(clsid, szAppId, KEY_READ, &hkey);
+    if (FAILED(hr))
+        return hr;
+
+    size = sizeof(buf);
+    res = RegQueryValueExW(hkey, NULL, NULL, &type, (LPBYTE)buf, &size);
+    RegCloseKey(hkey);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return REGDB_E_KEYMISSING;
+    else if (res != ERROR_SUCCESS || type!=REG_SZ)
+        return REGDB_E_READREGDB;
+
+    strcpyW(keyname, szAppIdKey);
+    strcatW(keyname, buf);
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, access, subkey);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return REGDB_E_KEYMISSING;
+    else if (res != ERROR_SUCCESS)
+        return REGDB_E_READREGDB;
+
+    return S_OK;
+}
+
 /******************************************************************************
  *               ProgIDFromCLSID [OLE32.@]
  *

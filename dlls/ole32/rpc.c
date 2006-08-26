@@ -796,9 +796,7 @@ static DWORD start_local_service(LPCWSTR name, DWORD num, LPCWSTR *params)
 static HRESULT create_local_service(REFCLSID rclsid)
 {
     HRESULT hres;
-    WCHAR buf[CHARS_IN_GUID], keyname[50];
-    static const WCHAR szAppId[] = { 'A','p','p','I','d',0 };
-    static const WCHAR szAppIdKey[] = { 'A','p','p','I','d','\\',0 };
+    WCHAR buf[CHARS_IN_GUID];
     static const WCHAR szLocalService[] = { 'L','o','c','a','l','S','e','r','v','i','c','e',0 };
     static const WCHAR szServiceParams[] = {'S','e','r','v','i','c','e','P','a','r','a','m','s',0};
     HKEY hkey;
@@ -807,22 +805,11 @@ static HRESULT create_local_service(REFCLSID rclsid)
 
     TRACE("Attempting to start Local service for %s\n", debugstr_guid(rclsid));
 
-    /* read the AppID value under the class's key */
-    hres = COM_OpenKeyForCLSID(rclsid, szAppId, KEY_READ, &hkey);
+    hres = COM_OpenKeyForAppIdFromCLSID(rclsid, KEY_READ, &hkey);
     if (FAILED(hres))
-        return hres;
-    sz = sizeof buf;
-    r = RegQueryValueExW(hkey, NULL, NULL, &type, (LPBYTE)buf, &sz);
-    RegCloseKey(hkey);
-    if (r!=ERROR_SUCCESS || type!=REG_SZ)
         return hres;
 
     /* read the LocalService and ServiceParameters values from the AppID key */
-    strcpyW(keyname, szAppIdKey);
-    strcatW(keyname, buf);
-    r = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &hkey);
-    if (r!=ERROR_SUCCESS)
-        return hres;
     sz = sizeof buf;
     r = RegQueryValueExW(hkey, szLocalService, NULL, &type, (LPBYTE)buf, &sz);
     if (r==ERROR_SUCCESS && type==REG_SZ)
