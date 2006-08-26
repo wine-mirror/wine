@@ -51,7 +51,8 @@ static void testGetComputerObjectNameA(void)
         rc = pGetComputerObjectNameA(formats[i], name, &size);
         ok(rc || ((formats[i] == NameUnknown) &&
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
-           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO),
+           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
+           (GetLastError() == ERROR_NO_SUCH_DOMAIN),
            "GetComputerObjectNameA(%d) failed: %ld\n",
            formats[i], GetLastError());
         if (rc)
@@ -72,9 +73,15 @@ static void testGetComputerObjectNameW(void)
         rc = pGetComputerObjectNameW(formats[i], nameW, &size);
         ok(rc || ((formats[i] == NameUnknown) &&
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
-           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO),
+           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
+           (GetLastError() == ERROR_NO_SUCH_DOMAIN),
            "GetComputerObjectNameW(%d) failed: %ld\n",
            formats[i], GetLastError());
+        if (rc) {
+            char name[256];
+            WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, sizeof(name), NULL, NULL );
+            trace("GetComputerObjectNameW() returned %s\n", name);
+        }
     }
 }
 
