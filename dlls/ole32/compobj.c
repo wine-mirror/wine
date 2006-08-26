@@ -82,6 +82,7 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
 
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(void);
+static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
 static struct list apts = LIST_INIT( apts ); /* protected by csApartment */
@@ -427,6 +428,57 @@ APARTMENT *apartment_findfromtid(DWORD tid)
     return result;
 }
 
+/* gets an apartment which has a given type. The caller must
+ * release the reference from the apartment as soon as the apartment pointer
+ * is no longer required. */
+static APARTMENT *apartment_findfromtype(BOOL multi_threaded)
+{
+    APARTMENT *result = NULL;
+    struct apartment *apt;
+
+    EnterCriticalSection(&csApartment);
+    LIST_FOR_EACH_ENTRY( apt, &apts, struct apartment, entry )
+    {
+        if (apt->multi_threaded == multi_threaded)
+        {
+            result = apt;
+            apartment_addref(result);
+            break;
+        }
+    }
+    LeaveCriticalSection(&csApartment);
+
+    return result;
+}
+
+struct host_object_params
+{
+    HKEY hkeydll;
+    CLSID clsid; /* clsid of object to marshal */
+    IID iid; /* interface to marshal */
+    IStream *stream; /* stream that the object will be marshaled into */
+};
+
+static HRESULT apartment_hostobject(const struct host_object_params *params)
+{
+    IUnknown *object;
+    HRESULT hr;
+    static const LARGE_INTEGER llZero;
+
+    TRACE("\n");
+
+    hr = get_inproc_class_object(params->hkeydll, &params->clsid, &params->iid, (void **)&object);
+    if (FAILED(hr))
+        return hr;
+
+    hr = CoMarshalInterface(params->stream, &params->iid, object, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    if (FAILED(hr))
+        IUnknown_Release(object);
+    IStream_Seek(params->stream, llZero, STREAM_SEEK_SET, NULL);
+
+    return hr;
+}
+
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
@@ -434,6 +486,8 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     case DM_EXECUTERPC:
         RPC_ExecuteCall((struct dispatch_params *)lParam);
         return 0;
+    case DM_HOSTOBJECT:
+        return apartment_hostobject((const struct host_object_params *)lParam);
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
@@ -1658,8 +1712,27 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
         APARTMENT *apt = COM_CurrentApt();
         if (apt->multi_threaded)
         {
-            FIXME("should create object %s in single-threaded apartment\n",
-                debugstr_guid(rclsid));
+            /* try to find an STA */
+            APARTMENT *host_apt = apartment_findfromtype(FALSE);
+            if (!host_apt)
+                FIXME("create a host apartment for apartment-threaded object %s\n", debugstr_guid(rclsid));
+            if (host_apt)
+            {
+                struct host_object_params params;
+                HWND hwnd = apartment_getwindow(host_apt);
+
+                params.hkeydll = hkeydll;
+                params.clsid = *rclsid;
+                params.iid = *riid;
+                hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
+                if (FAILED(hr))
+                    return hr;
+                hr = SendMessageW(hwnd, DM_HOSTOBJECT, 0, (LPARAM)&params);
+                if (SUCCEEDED(hr))
+                    hr = CoUnmarshalInterface(params.stream, riid, ppv);
+                IStream_Release(params.stream);
+                return hr;
+            }
         }
     }
     /* "Free" */
