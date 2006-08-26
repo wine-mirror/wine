@@ -196,7 +196,7 @@ CFStub_Invoke(
 
 	msg->cbBuffer = ststg.cbSize.u.LowPart;
 
-        I_RpcGetBuffer((RPC_MESSAGE *)msg);
+        IRpcChannelBuffer_GetBuffer(chanbuf, msg, &IID_IClassFactory);
         if (hres) return hres;
 
 	seekto.u.LowPart = 0;seekto.u.HighPart = 0;
@@ -546,7 +546,7 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
     /* out */
     pMsg->cbBuffer = cIids * sizeof(REMQIRESULT) + sizeof(HRESULT);
 
-    I_RpcGetBuffer((RPC_MESSAGE *)pMsg);
+    IRpcChannelBuffer_GetBuffer(pChannel, pMsg, &IID_IRemUnknown);
 
     buf = pMsg->Buffer;
     *(HRESULT *)buf = hr;
@@ -576,7 +576,7 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
     /* out */
     pMsg->cbBuffer = cIids * sizeof(HRESULT);
 
-    I_RpcGetBuffer((RPC_MESSAGE *)pMsg);
+    IRpcChannelBuffer_GetBuffer(pChannel, pMsg, &IID_IRemUnknown);
     if (!hr)
     {
         buf = pMsg->Buffer;
