@@ -1144,6 +1144,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->sign = 0;
   t->defined = FALSE;
   t->written = FALSE;
+  t->user_types_registered = FALSE;
   t->typelib_idx = -1;
   INIT_LINK(t);
   return t;
@@ -1203,6 +1204,7 @@ static var_t *make_var(char *name)
   v->name = name;
   v->ptr_level = 0;
   v->type = NULL;
+  v->args = NULL;
   v->tname = NULL;
   v->attrs = NULL;
   v->array = NULL;

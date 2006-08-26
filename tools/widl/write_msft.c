@@ -1734,6 +1734,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
     chat("create_msft_typeinfo: name %s kind %d\n", name, kind);
 
     msft_typeinfo = xmalloc(sizeof(*msft_typeinfo));
+    memset( msft_typeinfo, 0, sizeof(*msft_typeinfo) );
 
     msft_typeinfo->typelib = typelib;
 

@@ -220,6 +220,8 @@ void start_typelib(char *name, attr_t *attrs)
     typelib->name = xstrdup(name);
     typelib->filename = xstrdup(typelib_name);
     typelib->attrs = attrs;
+    typelib->entry = NULL;
+    typelib->importlibs = NULL;
 }
 
 void end_typelib(void)
@@ -373,6 +375,7 @@ static void read_msft_importlib(importlib_t *importlib, int fd)
             importlib->importinfos[i].flags |= MSFT_IMPINFO_OFFSET_IS_GUID;
             msft_read_guid(fd, &segdir, base.posguid, &importlib->importinfos[i].guid);
         }
+        else memset( &importlib->importinfos[i].guid, 0, sizeof(importlib->importinfos[i].guid));
 
         tlb_lseek(fd, segdir.pNametab.offset + base.NameOffset);
         tlb_read(fd, &nameintro, sizeof(nameintro));
@@ -431,6 +434,7 @@ void add_importlib(const char *name)
     chat("add_importlib: %s\n", name);
 
     importlib = xmalloc(sizeof(*importlib));
+    memset( importlib, 0, sizeof(*importlib) );
     importlib->name = xstrdup(name);
 
     read_importlib(importlib);

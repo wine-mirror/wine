@@ -145,7 +145,7 @@ char *dup_basename(const char *name, const char *ext)
 	namelen = strlen(name);
 
 	/* +4 for later extension and +1 for '\0' */
-	base = (char *)xmalloc(namelen +4 +1);
+	base = xmalloc(namelen +4 +1);
 	strcpy(base, name);
 	if(!strcasecmp(name + namelen-extlen, ext))
 	{
@@ -164,12 +164,7 @@ void *xmalloc(size_t size)
     {
 	error("Virtual memory exhausted.\n");
     }
-    /*
-     * We set it to 0.
-     * This is *paramount* because we depend on it
-     * just about everywhere in the rest of the code.
-     */
-    memset(res, 0, size);
+    memset(res, 0x55, size);
     return res;
 }
 
@@ -192,6 +187,6 @@ char *xstrdup(const char *str)
 	char *s;
 
 	assert(str != NULL);
-	s = (char *)xmalloc(strlen(str)+1);
+	s = xmalloc(strlen(str)+1);
 	return strcpy(s, str);
 }

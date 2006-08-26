@@ -49,7 +49,7 @@ typedef struct _typelib_t typelib_t;
   type *l_next; \
   type *l_prev
 
-#define LINK(x,y) do { x->l_next = y; if (y) y->l_prev = x; } while (0)
+#define LINK(x,y) do { x->l_next = y; x->l_prev = NULL; if (y) y->l_prev = x; } while (0)
 
 #define INIT_LINK(x) do { x->l_next = NULL; x->l_prev = NULL; } while (0)
 #define NEXT_LINK(x) ((x)->l_next)
