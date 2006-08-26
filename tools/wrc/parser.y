@@ -2285,7 +2285,7 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 /* MenuEx specific functions */
 static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 {
-	itemex_opt_t *opt = (itemex_opt_t *)xmalloc(sizeof(itemex_opt_t));
+	itemex_opt_t *opt = xmalloc(sizeof(itemex_opt_t));
 	memset( opt, 0, sizeof(*opt) );
 	opt->id = id;
 	opt->type = type;
@@ -2318,7 +2318,7 @@ static raw_data_t *load_file(string_t *filename, language_t *lang)
 	fseek(fp, 0, SEEK_SET);
 	if (rd->size)
 	{
-		rd->data = (char *)xmalloc(rd->size);
+		rd->data = xmalloc(rd->size);
 		fread(rd->data, rd->size, 1, fp);
 	}
 	else rd->data = NULL;
@@ -2338,7 +2338,7 @@ static raw_data_t *int2raw_data(int i)
 
 	rd = new_raw_data();
 	rd->size = sizeof(short);
-	rd->data = (char *)xmalloc(rd->size);
+	rd->data = xmalloc(rd->size);
 	switch(byteorder)
 	{
 #ifdef WORDS_BIGENDIAN
@@ -2365,7 +2365,7 @@ static raw_data_t *long2raw_data(int i)
 	raw_data_t *rd;
 	rd = new_raw_data();
 	rd->size = sizeof(int);
-	rd->data = (char *)xmalloc(rd->size);
+	rd->data = xmalloc(rd->size);
 	switch(byteorder)
 	{
 #ifdef WORDS_BIGENDIAN
@@ -2396,7 +2396,7 @@ static raw_data_t *str2raw_data(string_t *str)
 	raw_data_t *rd;
 	rd = new_raw_data();
 	rd->size = str->size * (str->type == str_char ? 1 : 2);
-	rd->data = (char *)xmalloc(rd->size);
+	rd->data = xmalloc(rd->size);
 	if(str->type == str_char)
 		memcpy(rd->data, str->str.cstr, rd->size);
 	else if(str->type == str_unicode)
@@ -2602,7 +2602,7 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 		for(i = 0; i < stt->nentries; )
 		{
 			newstt = new_stringtable(&stt->lvc);
-			newstt->entries = (stt_entry_t *)xmalloc(16 * sizeof(stt_entry_t));
+			newstt->entries = xmalloc(16 * sizeof(stt_entry_t));
 			memset( newstt->entries, 0, 16 * sizeof(stt_entry_t) );
 			newstt->nentries = 16;
 			newstt->idbase = stt->entries[i].id & ~0xf;

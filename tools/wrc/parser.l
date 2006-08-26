@@ -638,7 +638,7 @@ static string_t *get_buffered_cstring(void)
 
     str->size = cbufidx;
     str->type = str_char;
-    str->str.cstr = (char *)xmalloc(cbufidx+1);
+    str->str.cstr = xmalloc(cbufidx+1);
     memcpy(str->str.cstr, cbuffer, cbufidx);
     str->str.cstr[cbufidx] = '\0';
 
@@ -674,7 +674,7 @@ static string_t *make_string(char *s)
 	string_t *str = new_string();
 	str->size = strlen(s);
 	str->type = str_char;
-	str->str.cstr = (char *)xmalloc(str->size+1);
+	str->str.cstr = xmalloc(str->size+1);
 	memcpy(str->str.cstr, s, str->size+1);
 	return str;
 }

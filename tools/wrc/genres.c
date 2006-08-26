@@ -48,18 +48,18 @@
 res_t *new_res(void)
 {
 	res_t *r;
-	r = (res_t *)xmalloc(sizeof(res_t));
+	r = xmalloc(sizeof(res_t));
 	r->allocsize = RES_BLOCKSIZE;
 	r->size = 0;
 	r->dataidx = 0;
-	r->data = (char *)xmalloc(RES_BLOCKSIZE);
+	r->data = xmalloc(RES_BLOCKSIZE);
 	return r;
 }
 
 res_t *grow_res(res_t *r, unsigned int add)
 {
 	r->allocsize += add;
-	r->data = (char *)xrealloc(r->data, r->allocsize);
+	r->data = xrealloc(r->data, r->allocsize);
 	return r;
 }
 
@@ -1847,7 +1847,7 @@ char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
 	buf = prep_nid_for_label(nid);
 	nlen = strlen(buf) + strlen(lanbuf);
 	nlen += strlen(base) + 4; /* three time '_' and '\0' */
-	ret = (char *)xmalloc(nlen);
+	ret = xmalloc(nlen);
 	strcpy(ret, "_");
 	strcat(ret, base);
 	strcat(ret, "_");
