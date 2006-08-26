@@ -45,6 +45,4 @@ C_SRCS = \
 
 @MAKE_DLL_RULES@
 
-all: $(PROGRAMS)
-
 ### Dependencies:
