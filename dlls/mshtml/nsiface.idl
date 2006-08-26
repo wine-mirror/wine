@@ -40,6 +40,7 @@ typedef LPCWSTR nscwstring;
 typedef ULONG PRUint32;
 typedef LONG PRInt32;
 typedef WORD PRUint16;
+typedef INT16 PRInt16;
 typedef BYTE PRUint8;
 typedef BOOL PRBool;
 typedef LARGE_INTEGER PRInt64;
@@ -109,7 +110,6 @@ typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIDOMRange;
 typedef nsISupports nsIEditor;
-typedef nsISupports nsICommandParams;
 
 [
     object,
@@ -540,8 +540,8 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     nsresult GetAnchors(nsIDOMHTMLCollection **aAnchors);
     nsresult GetCookie(nsAString *aCookie);
     nsresult SetCookie(const nsAString *aCookie);
-    nsresult Open(void);
-    nsresult Close(void);
+    nsresult Open();
+    nsresult Close();
     nsresult Write(const nsAString *text);
     nsresult Writeln(const nsAString *text);
     nsresult GetElementsByName(const nsAString *elementName, nsIDOMNodeList **_retval);
@@ -1173,6 +1173,31 @@ interface nsIEditingSession : nsISupports
     nsresult SetupEditorOnWindow(nsIDOMWindow *window);
     nsresult TearDownEditorOnWindow(nsIDOMWindow *window);
     nsresult SetEditorOnControllers(nsIDOMWindow *aWindow, nsIEditor *aEditor);
+}
+
+[
+    object,
+    uuid(83f892cf-7ed3-490e-967a-62640f3158e1)
+]
+interface nsICommandParams : nsISupports
+{
+    nsresult GetValueType(const char *name, PRInt16 *_retval);
+    nsresult GetBooleanValue(const char *name, PRBool *_retval);
+    nsresult GetLongValue(const char *name, PRInt32 *_retval);
+    nsresult GetDoubleValue(const char *name, double *_retval);
+    nsresult GetStringValue(const char *name, nsAString *_retval);
+    nsresult GetCStringValue(const char *name, char **_retval);
+    nsresult GetISupportsValue(const char *name, nsISupports **_retval);
+    nsresult SetBooleanValue(const char *name, PRBool value);
+    nsresult SetLongValue(const char *name, PRInt32 value);
+    nsresult SetDoubleValue(const char *name, double value);
+    nsresult SetStringValue(const char *name, const nsAString *value);
+    nsresult SetCStringValue(const char *name, const char *value);
+    nsresult SetISupportsValue(const char *name, nsISupports *value);
+    nsresult RemoveValue(const char *name);
+    nsresult HasMoreElements(PRBool *_retval);
+    nsresult First();
+    nsresult GetNext(char **_retval);
 }
 
 [

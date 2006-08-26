@@ -238,7 +238,7 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
-static void do_ns_command(NSContainer *This, const char *cmd)
+static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
     nsIInterfaceRequestor *iface_req;
@@ -261,7 +261,7 @@ static void do_ns_command(NSContainer *This, const char *cmd)
         return;
     }
 
-    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, NULL, NULL);
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, NULL);
     if(NS_FAILED(nsres))
         ERR("DoCommand(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
 
@@ -273,7 +273,7 @@ static HRESULT exec_bold(HTMLDocument *This)
     TRACE("(%p)\n", This);
 
     if(This->nscontainer)
-        do_ns_command(This->nscontainer, "cmd_bold");
+        do_ns_command(This->nscontainer, "cmd_bold", NULL);
 
     return S_OK;
 }
