@@ -99,24 +99,24 @@ static void test_set_value(void)
 {
     DWORD ret;
 
-    const WCHAR name1W[] =   {'C','l','e','a','n','S','i','n','g','l','e','S','t','r','i','n','g', 0};
-    const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
-    const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
-    const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 0 ,'L','o','t', 0 , 0 , 0 , 0};
+    static const WCHAR name1W[] =   {'C','l','e','a','n','S','i','n','g','l','e','S','t','r','i','n','g', 0};
+    static const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
+    static const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
+    static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 0 ,'L','o','t', 0 , 0 , 0 , 0};
 
-    const char name1A[] =   "CleanSingleString";
-    const char name2A[] =   "SomeIntraZeroedString";
-    const char string1A[] = "ThisNeverBreaks";
-    const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
+    static const char name1A[] =   "CleanSingleString";
+    static const char name2A[] =   "SomeIntraZeroedString";
+    static const char string1A[] = "ThisNeverBreaks";
+    static const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
 
     /* test RegSetValueExA with normal string */
-    ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (LPBYTE)string1A, sizeof(string1A));
+    ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)string1A, sizeof(string1A));
     ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 
     /* test RegSetValueExA with intrazeroed string */
-    ret = RegSetValueExA(hkey_main, name2A, 0, REG_SZ, (LPBYTE)string2A, sizeof(string2A));
+    ret = RegSetValueExA(hkey_main, name2A, 0, REG_SZ, (const BYTE *)string2A, sizeof(string2A));
     ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
@@ -125,13 +125,13 @@ static void test_set_value(void)
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return; 
 
     /* test RegSetValueExW with normal string */
-    ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (LPBYTE)string1W, sizeof(string1W));
+    ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (const BYTE *)string1W, sizeof(string1W));
     ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 
     /* test RegSetValueExW with intrazeroed string */
-    ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (LPBYTE)string2W, sizeof(string2W));
+    ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (const BYTE *)string2W, sizeof(string2W));
     ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
@@ -139,22 +139,22 @@ static void test_set_value(void)
 
 static void create_test_entries(void)
 {
-    DWORD qw[2] = { 0x12345678, 0x87654321 };
+    static const DWORD qw[2] = { 0x12345678, 0x87654321 };
 
     SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
     SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
-    ok(!RegSetValueExA(hkey_main,"TP1_EXP_SZ",0,REG_EXPAND_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP1_EXP_SZ",0,REG_EXPAND_SZ, (const BYTE *)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"TP1_SZ",0,REG_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP1_SZ",0,REG_SZ, (const BYTE *)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"TP2_EXP_SZ",0,REG_EXPAND_SZ, (LPBYTE)sTestpath2, strlen(sTestpath2)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP2_EXP_SZ",0,REG_EXPAND_SZ, (const BYTE *)sTestpath2, strlen(sTestpath2)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (LPBYTE)qw, 4),
+    ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (const BYTE *)qw, 4),
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"BIN32",0,REG_BINARY, (LPBYTE)qw, 4),
+    ok(!RegSetValueExA(hkey_main,"BIN32",0,REG_BINARY, (const BYTE *)qw, 4),
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"BIN64",0,REG_BINARY, (LPBYTE)qw, 8),
+    ok(!RegSetValueExA(hkey_main,"BIN64",0,REG_BINARY, (const BYTE *)qw, 8),
         "RegSetValueExA failed\n");
 }
         
@@ -184,7 +184,7 @@ static void test_enum_value(void)
     res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
 
-    res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
+    res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (const BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %ld\n", res );
 
     /* overflow both name and data */
