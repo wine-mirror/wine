@@ -1662,7 +1662,8 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         }
         ret = 0;
     }
-    TRACE("cp %d %s -> %s\n", page, debugstr_w(src), debugstr_a(dst));
+    TRACE("cp %d %s -> %s, ret = %d\n",
+          page, debugstr_wn(src, srclen), debugstr_an(dst, ret), ret);
     return ret;
 }
 
