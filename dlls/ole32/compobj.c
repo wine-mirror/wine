@@ -85,6 +85,7 @@ static void COM_RevokeAllClasses(void);
 static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
+static APARTMENT *MainApartment; /* the first STA apartment */
 static struct list apts = LIST_INIT( apts ); /* protected by csApartment */
 
 static CRITICAL_SECTION csApartment;
@@ -217,7 +218,7 @@ static void COM_TlsDestroy(void)
  */
 
 /* allocates memory and fills in the necessary fields for a new apartment
- * object */
+ * object. must be called inside apartment cs */
 static APARTMENT *apartment_construct(DWORD model)
 {
     APARTMENT *apt;
@@ -252,11 +253,7 @@ static APARTMENT *apartment_construct(DWORD model)
 
     TRACE("Created apartment on OXID %s\n", wine_dbgstr_longlong(apt->oxid));
 
-    /* the locking here is not currently needed for the MTA case, but it
-     * doesn't hurt and makes the code simpler */
-    EnterCriticalSection(&csApartment);
     list_add_head(&apts, &apt->entry);
-    LeaveCriticalSection(&csApartment);
 
     return apt;
 }
@@ -272,8 +269,17 @@ static APARTMENT *apartment_get_or_create(DWORD model)
     {
         if (model & COINIT_APARTMENTTHREADED)
         {
+            EnterCriticalSection(&csApartment);
+
             apt = apartment_construct(model);
-            COM_CurrentInfo()->apt = apt;
+            if (!MainApartment)
+            {
+                MainApartment = apt;
+                apt->main = TRUE;
+                TRACE("Created main-threaded apartment with OXID %s\n", wine_dbgstr_longlong(apt->oxid));
+            }
+
+            LeaveCriticalSection(&csApartment);
         }
         else
         {
@@ -291,10 +297,10 @@ static APARTMENT *apartment_get_or_create(DWORD model)
                 MTA = apartment_construct(model);
 
             apt = MTA;
-            COM_CurrentInfo()->apt = apt;
 
             LeaveCriticalSection(&csApartment);
         }
+        COM_CurrentInfo()->apt = apt;
     }
 
     return apt;
@@ -324,6 +330,7 @@ DWORD apartment_release(struct apartment *apt)
     if (ret == 0)
     {
         if (apt == MTA) MTA = NULL;
+        else if (apt == MainApartment) MainApartment = NULL;
         list_remove(&apt->entry);
     }
 
@@ -431,12 +438,21 @@ APARTMENT *apartment_findfromtid(DWORD tid)
 /* gets an apartment which has a given type. The caller must
  * release the reference from the apartment as soon as the apartment pointer
  * is no longer required. */
-static APARTMENT *apartment_findfromtype(BOOL multi_threaded)
+static APARTMENT *apartment_findfromtype(BOOL multi_threaded, BOOL main_apartment)
 {
     APARTMENT *result = NULL;
     struct apartment *apt;
 
     EnterCriticalSection(&csApartment);
+
+    if (!multi_threaded && main_apartment)
+    {
+        result = MainApartment;
+        if (result) apartment_addref(result);
+        LeaveCriticalSection(&csApartment);
+        return result;
+    }
+
     LIST_FOR_EACH_ENTRY( apt, &apts, struct apartment, entry )
     {
         if (apt->multi_threaded == multi_threaded)
@@ -1750,7 +1766,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
         if (apt->multi_threaded)
         {
             /* try to find an STA */
-            APARTMENT *host_apt = apartment_findfromtype(FALSE);
+            APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
             if (!host_apt)
                 FIXME("create a host apartment for apartment-threaded object %s\n", debugstr_guid(rclsid));
             if (host_apt)
@@ -1785,9 +1801,37 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     /* everything except "Apartment", "Free" and "Both" */
     else if (strcmpiW(threading_model, wszBoth))
     {
+        APARTMENT *apt = COM_CurrentApt();
+
         /* everything else is main-threaded */
-        FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
-            debugstr_w(threading_model), debugstr_guid(rclsid));
+        if (threading_model[0])
+            FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
+                debugstr_w(threading_model), debugstr_guid(rclsid));
+
+        if (apt->multi_threaded || !apt->main)
+        {
+            /* try to find an STA */
+            APARTMENT *host_apt = apartment_findfromtype(FALSE, TRUE);
+            if (!host_apt)
+                FIXME("create a host apartment for main-threaded object %s\n", debugstr_guid(rclsid));
+            if (host_apt)
+            {
+                struct host_object_params params;
+                HWND hwnd = apartment_getwindow(host_apt);
+
+                params.hkeydll = hkeydll;
+                params.clsid = *rclsid;
+                params.iid = *riid;
+                hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
+                if (FAILED(hr))
+                    return hr;
+                hr = SendMessageW(hwnd, DM_HOSTOBJECT, 0, (LPARAM)&params);
+                if (SUCCEEDED(hr))
+                    hr = CoUnmarshalInterface(params.stream, riid, ppv);
+                IStream_Release(params.stream);
+                return hr;
+            }
+        }
     }
 
     if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)

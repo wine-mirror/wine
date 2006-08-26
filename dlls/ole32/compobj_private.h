@@ -145,9 +145,7 @@ struct apartment
   DWORD tid;               /* thread id (RO) */
   OXID oxid;               /* object exporter ID (RO) */
   LONG ipidc;              /* interface pointer ID counter, starts at 1 (LOCK) */
-  HWND win;                /* message window (LOCK) */
   CRITICAL_SECTION cs;     /* thread safety */
-  LPMESSAGEFILTER filter;  /* message filter (CS cs) */
   struct list proxies;     /* imported objects (CS cs) */
   struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
   BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
@@ -156,6 +154,11 @@ struct apartment
 
   /* FIXME: OID's should be given out by RPCSS */
   OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
+
+  /* STA-only fields */
+  HWND win;                /* message window (LOCK) */
+  LPMESSAGEFILTER filter;  /* message filter (CS cs) */
+  BOOL main;               /* is this a main-threaded-apartment? (RO) */
 };
 
 /* this is what is stored in TEB->ReservedForOle */
