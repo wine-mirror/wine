@@ -1627,13 +1627,58 @@ static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *v
 	return ret;
 }
 
+static void get_threading_model(HKEY key, LPWSTR value, DWORD len)
+{
+    static const WCHAR wszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+    DWORD keytype;
+    DWORD ret;
+    DWORD dwLength = len * sizeof(WCHAR);
+
+    ret = RegQueryValueExW(key, wszThreadingModel, NULL, &keytype, (LPBYTE)value, &dwLength);
+    if ((ret != ERROR_SUCCESS) || (keytype != REG_SZ))
+        value[0] = '\0';
+}
+
 static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv)
 {
+    static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
+    static const WCHAR wszFree[] = {'F','r','e','e',0};
+    static const WCHAR wszBoth[] = {'B','o','t','h',0};
     HINSTANCE hLibrary;
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
     WCHAR dllpath[MAX_PATH+1];
+    WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
     HRESULT hr;
+
+    get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
+    /* "Apartment" */
+    if (!strcmpiW(threading_model, wszApartment))
+    {
+        APARTMENT *apt = COM_CurrentApt();
+        if (apt->multi_threaded)
+        {
+            FIXME("should create object %s in single-threaded apartment\n",
+                debugstr_guid(rclsid));
+        }
+    }
+    /* "Free" */
+    else if (!strcmpiW(threading_model, wszFree))
+    {
+        APARTMENT *apt = COM_CurrentApt();
+        if (!apt->multi_threaded)
+        {
+            FIXME("should create object %s in multi-threaded apartment\n",
+                debugstr_guid(rclsid));
+        }
+    }
+    /* everything except "Apartment", "Free" and "Both" */
+    else if (strcmpiW(threading_model, wszBoth))
+    {
+        /* everything else is main-threaded */
+        FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
+            debugstr_w(threading_model), debugstr_guid(rclsid));
+    }
 
     if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
