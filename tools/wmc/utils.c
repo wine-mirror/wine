@@ -148,12 +148,7 @@ void *xmalloc(size_t size)
     {
 	error("Virtual memory exhausted.\n");
     }
-    /*
-     * We set it to 0.
-     * This is *paramount* because we depend on it
-     * just about everywhere in the rest of the code.
-     */
-    memset(res, 0, size);
+    memset(res, 0x55, size);
     return res;
 }
 

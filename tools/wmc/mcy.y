@@ -389,7 +389,7 @@ lines	: tLINE		{ $$ = $1; }
 /*----------------------------------------------------------------------
  * Helper rules
  */
-token	: tIDENT	{ $$ = xmalloc(sizeof(token_t)); $$->name = $1; }
+token	: tIDENT	{ $$ = xmalloc(sizeof(token_t)); memset($$,0,sizeof(*$$)); $$->name = $1; }
 	| tTOKEN	{ $$ = $1; }
 	;
 
@@ -451,7 +451,10 @@ static msg_t *add_lanmsg(msg_t *msg, lanmsg_t *lanmsg)
 {
 	int i;
 	if(!msg)
+	{
 		msg = xmalloc(sizeof(msg_t));
+		memset( msg, 0, sizeof(*msg) );
+	}
 	msg->msgs = xrealloc(msg->msgs, (msg->nmsgs+1) * sizeof(*(msg->msgs)));
 	msg->msgs[msg->nmsgs] = lanmsg;
 	msg->nmsgs++;
@@ -489,7 +492,8 @@ static msg_t *complete_msg(msg_t *mp, int id)
 
 static void add_node(node_e type, void *p)
 {
-	node_t *ndp = (node_t *)xmalloc(sizeof(node_t));
+	node_t *ndp = xmalloc(sizeof(node_t));
+	memset( ndp, 0, sizeof(*ndp) );
 	ndp->type = type;
 	ndp->u.all = p;
 
@@ -601,7 +605,7 @@ static lan_blk_t *block_messages(node_t *head)
 	for(nl = 0; nl < msgtab[0]->nmsgs; nl++)	/* This should be equal for all after check_languages() */
 	{
 		lbp = xmalloc(sizeof(lan_blk_t));
-
+		memset( lbp, 0, sizeof(*lbp) );
 		if(!lblktail)
 		{
 			lblkhead = lblktail = lbp;
