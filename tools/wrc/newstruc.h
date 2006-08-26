@@ -26,7 +26,9 @@
 #define __NEW_STRUCT_FUNC(p)	\
 	p##_t *new_##p(void)\
 	{\
-		return (p##_t *)xmalloc(sizeof(p##_t));\
+		p##_t * ret = xmalloc(sizeof(*ret)); \
+		memset( ret, 0, sizeof(*ret) ); \
+		return ret; \
 	}
 
 #define __NEW_STRUCT_PROTO(p)	p##_t *new_##p(void)

@@ -2286,6 +2286,7 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 {
 	itemex_opt_t *opt = (itemex_opt_t *)xmalloc(sizeof(itemex_opt_t));
+	memset( opt, 0, sizeof(*opt) );
 	opt->id = id;
 	opt->type = type;
 	opt->state = state;
@@ -2602,6 +2603,7 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 		{
 			newstt = new_stringtable(&stt->lvc);
 			newstt->entries = (stt_entry_t *)xmalloc(16 * sizeof(stt_entry_t));
+			memset( newstt->entries, 0, 16 * sizeof(stt_entry_t) );
 			newstt->nentries = 16;
 			newstt->idbase = stt->entries[i].id & ~0xf;
 			for(j = 0; j < 16 && i < stt->nentries; j++)
@@ -2823,6 +2825,7 @@ static resource_t *build_fontdirs(resource_t *tail)
 
 	/* Copy space */
 	lanfnt = xmalloc(nfnt * sizeof(*lanfnt));
+	memset( lanfnt, 0, nfnt * sizeof(*lanfnt));
 
 	/* Get all fonts covered by fontdirs */
 	for(i = 0; i < nfnd; i++)

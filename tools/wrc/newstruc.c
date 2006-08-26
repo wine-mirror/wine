@@ -76,6 +76,7 @@ __NEW_STRUCT_FUNC(ani_any)
 resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan)
 {
 	resource_t *r = (resource_t *)xmalloc(sizeof(resource_t));
+	memset( r, 0, sizeof(*r) );
 	r->type = t;
 	r->res.overlay = res;
 	r->memopt = memopt;
@@ -1145,6 +1146,7 @@ stringtable_t *new_stringtable(lvc_t *lvc)
 {
 	stringtable_t *stt = (stringtable_t *)xmalloc(sizeof(stringtable_t));
 
+	memset( stt, 0, sizeof(*stt) );
 	if(lvc)
 		stt->lvc = *lvc;
 
@@ -1154,6 +1156,7 @@ stringtable_t *new_stringtable(lvc_t *lvc)
 toolbar_t *new_toolbar(int button_width, int button_height, toolbar_item_t *items, int nitems)
 {
 	toolbar_t *tb = (toolbar_t *)xmalloc(sizeof(toolbar_t));
+	memset( tb, 0, sizeof(*tb) );
 	tb->button_width = button_width;
 	tb->button_height = button_height;
 	tb->nitems = nitems;

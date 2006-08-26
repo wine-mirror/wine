@@ -51,6 +51,7 @@ res_t *new_res(void)
 	r = (res_t *)xmalloc(sizeof(res_t));
 	r->allocsize = RES_BLOCKSIZE;
 	r->size = 0;
+	r->dataidx = 0;
 	r->data = (char *)xmalloc(RES_BLOCKSIZE);
 	return r;
 }
