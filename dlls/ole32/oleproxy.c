@@ -601,6 +601,7 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
 
     /* out */
     pMsg->cbBuffer = 0;
+    IRpcChannelBuffer_GetBuffer(pChannel, pMsg, &IID_IRemUnknown);
     break;
   }
   }
