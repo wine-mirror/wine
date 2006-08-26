@@ -62,27 +62,11 @@ lib$(BASEMODULE).a: $(SPEC_DEF) $(IMPLIB_OBJS)
 
 $(SUBDIRS): implib
 
-# Rules for checking that no imports are missing
-
-.PHONY: checklink16 $(WIN16_FILES:%=__checklink16__%)
-
-$(WIN16_FILES:%=__checklink16__%): checklink16
-
-checklink16:: $(MAINSPEC).o $(OBJS) dummy
-	$(CC) -o checklink -Wl,-rpath,$(TOPOBJDIR)/libs $(TOPSRCDIR)/dlls/checklink.c $(MAINSPEC).o $(OBJS) -L$(DLLDIR) $(ALL_LIBS) -lwinecrt0 -lm && $(RM) checklink $(MAINSPEC).o
-
-checklink:: $(WIN16_FILES:%=__checklink16__%)
-
 # Rules for testing
 
 check test:: $(SUBDIRS:%=%/__test__)
 
 crosstest:: $(SUBDIRS:%=%/__crosstest__)
-
-# Rule to explicitly generate the .spec.s for debugging
-
-$(MAINSPEC).s $(MAINSPEC).o: $(MAINSPEC) $(ALL_OBJS)
-	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --export $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(ALL_OBJS) $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-d%) $(DLLDIR)/libwinecrt0.a
 
 # Rules for auto documentation
 

@@ -107,8 +107,6 @@ $(SUBDIRS:%=%/__depend__): tools include
 
 # Test rules
 
-checklink:: $(TESTSUBDIRS:%=%/__checklink__)
-
 check test:: $(TESTSUBDIRS:%=%/__test__)
 $(TESTSUBDIRS:%=%/__test__): wine
 

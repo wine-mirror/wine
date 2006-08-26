@@ -981,6 +981,4 @@ check test:: $(BUILDSUBDIRS:%=%/__test__)
 
 crosstest:: $(BUILDSUBDIRS:%=%/__crosstest__)
 
-checklink:: $(BUILDSUBDIRS:%=%/__checklink__)
-
 ### Dependencies:

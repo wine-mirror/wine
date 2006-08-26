@@ -263,13 +263,6 @@ $(INSTALLDIRS):
 	$(SUBDIRS:%=%/__install__) $(SUBDIRS:%=%/__uninstall__) \
 	$(SUBDIRS:%=%/__install-lib__) $(SUBDIRS:%=%/__install-dev__)
 
-# Rules for checking that no imports are missing
-
-$(SUBDIRS:%=%/__checklink__): dummy
-	@cd `dirname $@` && $(MAKE) checklink
-
-.PHONY: checklink $(SUBDIRS:%=%/__checklink__)
-
 # Rules for testing
 
 $(SUBDIRS:%=%/__test__): dummy
