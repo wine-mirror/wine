@@ -631,7 +631,8 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
 
 static HRESULT WINAPI connect_test_orig_QI(IUnknown *This, REFIID iid, void **ppv)
 {
-    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    ok(IsEqualIID(iid, &IID_if1) ||
+       IsEqualIID(iid, &IID_if2), "incorrect iid\n");
     *ppv = (void*)This;
     return S_OK;
 }
@@ -652,7 +653,8 @@ static IUnknownVtbl connect_test_orig_vtbl =
 
 static HRESULT WINAPI connect_test_new_QI(IUnknown *This, REFIID iid, void **ppv)
 {
-    ok(IsEqualIID(iid, &IID_if1), "incorrect iid\n");
+    ok(IsEqualIID(iid, &IID_if1) ||
+       IsEqualIID(iid, &IID_if2), "incorrect iid\n");
     *ppv = (void*)0xcafebabe;
     return S_OK;
 }
@@ -678,6 +680,27 @@ static IUnknownVtbl connect_test_new_fail_vtbl =
     NULL
 };
 
+static int connect_test_base_Connect_called;
+static HRESULT WINAPI connect_test_base_Connect(IRpcStubBuffer *pstub, IUnknown *obj)
+{
+    connect_test_base_Connect_called++;
+    ok(*(void**)obj == (void*)0xbeefcafe, "unexpected obj %p\n", obj);
+    return S_OK;
+}
+
+static IRpcStubBufferVtbl connect_test_base_stub_buffer_vtbl =
+{
+    (void*)0xcafebab0,
+    (void*)0xcafebab1,
+    (void*)0xcafebab2,
+    connect_test_base_Connect,
+    (void*)0xcafebab4,
+    (void*)0xcafebab5,
+    (void*)0xcafebab6,
+    (void*)0xcafebab7,
+    (void*)0xcafebab8,
+    (void*)0xcafebab9
+};
 
 static void test_Connect(IPSFactoryBuffer *ppsf)
 {
@@ -685,8 +708,9 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
     IUnknownVtbl *new_vtbl = &connect_test_new_vtbl;
     IUnknownVtbl *new_fail_vtbl = &connect_test_new_fail_vtbl;
     IUnknown *obj = (IUnknown*)&orig_vtbl;
-    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
+    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK); 
     CStdStubBuffer *cstd_stub = (CStdStubBuffer*)pstub;
+    IRpcStubBufferVtbl *base_stub_buf_vtbl = &connect_test_base_stub_buffer_vtbl;
     HRESULT r;
 
     obj = (IUnknown*)&new_vtbl;
@@ -701,6 +725,31 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
     ok(r == E_NOINTERFACE, "r %08lx\n", r);
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(connect_test_orig_release_called == 2, "release called %d\n", connect_test_orig_release_called);    
+
+    /* Now use a delegated stub.
+
+       We know from the NdrStubForwardFunction test that
+       (void**)pstub-1 is the base interface stub buffer.  This shows
+       that (void**)pstub-2 contains the address of a vtable that gets
+       passed to the base interface's Connect method.  Note that
+       (void**)pstub-2 itself gets passed to Connect and not
+       *((void**)pstub-2), so it should contain the vtable ptr and not
+       an interface ptr. */
+
+    obj = (IUnknown*)&orig_vtbl;
+    pstub = create_stub(ppsf, &IID_if2, obj, S_OK);
+    *((void**)pstub-1) = &base_stub_buf_vtbl;
+    *((void**)pstub-2) = (void*)0xbeefcafe;
+
+    obj = (IUnknown*)&new_vtbl;
+    r = IRpcStubBuffer_Connect(pstub, obj);
+todo_wine {
+    ok(connect_test_base_Connect_called == 1, "connect_test_bsae_Connect called %d times\n",
+       connect_test_base_Connect_called);
+ }
+    ok(connect_test_orig_release_called == 3, "release called %d\n", connect_test_orig_release_called);
+    cstd_stub = (CStdStubBuffer*)pstub;
+    ok(cstd_stub->pvServerObject == (void*)0xcafebabe, "pvServerObject %p\n", cstd_stub->pvServerObject);
 }
 
 static void test_Disconnect(IPSFactoryBuffer *ppsf)
