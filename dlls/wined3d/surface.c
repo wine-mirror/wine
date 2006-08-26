@@ -2026,7 +2026,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     char *textureRow;
     IWineD3DSwapChain *swapChain = NULL;
     int width, height;
-    GLuint tmpTexture;
+    GLuint tmpTexture = 0;
     DWORD color;
     /*FIXME:
     Textures my not be stored in ->allocatedgMemory and a GlTexture
