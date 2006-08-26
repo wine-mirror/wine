@@ -437,7 +437,7 @@ static void do_add_token(tok_e type, token_t *tok, const char *code)
 
 static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg)
 {
-	lanmsg_t *lmp = (lanmsg_t *)xmalloc(sizeof(lanmsg_t));
+	lanmsg_t *lmp = xmalloc(sizeof(lanmsg_t));
 	lmp->lan = lcp->language;
 	lmp->cp  = lcp->codepage;
 	lmp->msg = msg;
