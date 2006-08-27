@@ -173,41 +173,69 @@ sym_not_found:
     return FALSE;
 }
 
-static BOOL get_fbconfig_from_main_visual(int *fmt_id, int *fmt_index)
+/* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
+ * In our WGL implementation we only support a subset of these formats namely the format of
+ * Wine's main visual and offscreen formats (if they are available).
+ * This function converts a WGL format to its corresponding GLX one. It returns the index (zero-based)
+ * into the GLX FB config table and it returns the number of supported WGL formats in fmt_count.
+ */
+static BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_index, int *fmt_count)
 {
+  int res = FALSE;
+  int i = 0;
+  GLXFBConfig* cfgs = NULL;
   int nCfgs = 0;
   int tmp_fmt_id = 0;
   int tmp_vis_id = 0;
-  int i = 0;
-  GLXFBConfig* cfgs = NULL;
+  int nFormats = 1; /* Start at 1 as we allways have a main visual */
+  VisualID visualid = 0;
 
-  /* Retrieve the visualid from our main visual */
-  VisualID visualid = XVisualIDFromVisual(visual);
+  /* Request to look up the format of the main visual when iPixelFormat = 1 */
+  if(iPixelFormat == 1) visualid = XVisualIDFromVisual(visual);
 
-  cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), NULL, &nCfgs);
+  /* As mentioned in various parts of the code only the format of the main visual can be used for onscreen rendering.
+   * Next to this format there are also so called offscreen rendering formats (used for pbuffers) which can be supported
+   * because they don't need a visual. Below we use glXGetFBConfigs instead of glXChooseFBConfig to enumerate the fb configurations
+   * bas this call lists both types of formats instead of only onscreen ones. */
+  cfgs = pglXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
   if (NULL == cfgs || 0 == nCfgs) {
-    ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
+    ERR("glXChooseFBConfig returns NULL\n");
     if(cfgs != NULL) XFree(cfgs);
     return FALSE;
   }
 
-  /* Walk through all FB configurations to retrieve the FB configuration matching our visual */
+  /* Find the requested offscreen format and count the number of offscreen formats */
   for(i=0; i<nCfgs; i++) {
-    pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
-    pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
-    if(tmp_vis_id == visualid) {
-      *fmt_id = tmp_fmt_id;
-      *fmt_index = i + 1; /* Use a one based index, iPixelFormat uses that too */
-      TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", *fmt_id, *fmt_index, tmp_vis_id);
-      if(cfgs != NULL) XFree(cfgs);
-      return TRUE;
+    pglXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
+    pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
+
+    /* We are looking up the GLX index of our main visual and have found it :) */
+    if(iPixelFormat == 1 && visualid == tmp_vis_id) {
+      *fmt_index = i;
+      TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", tmp_fmt_id, *fmt_index, tmp_vis_id);
+      res = TRUE;
+    }
+    /* We found an offscreen rendering format :) */
+    else if(tmp_vis_id == 0) {
+      nFormats++;
+      TRACE("Checking offscreen format FBCONFIG_ID 0x%x at index %d\n", tmp_fmt_id, i);
+
+      if(iPixelFormat == nFormats) {
+        *fmt_index = i;
+        TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, iPixelFormat, i);
+        res = TRUE;
+      }
     }
   }
-
-  ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visualid);
+  *fmt_count = nFormats;
+  TRACE("Number of offscreen formats: %d; returning index: %d\n", *fmt_count, *fmt_index);
 
   if(cfgs != NULL) XFree(cfgs);
-  return FALSE;
+
+  if(res == FALSE && iPixelFormat == 1)
+    ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visualid);
+
+  return res;
 }
 
 /**
@@ -220,7 +248,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   GLXFBConfig* cfgs = NULL;
   int ret = 0;
   int nCfgs = 0;
-  int fmt_id = 0;
+  int value = 0;
   int fmt_index = 0;
 
   if (!has_opengl()) {
@@ -248,7 +276,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   }
 
   /* In case an fbconfig was found, check if it matches to the requirements of the ppfd */
-  if(!get_fbconfig_from_main_visual(&fmt_id, &fmt_index)) {
+  if(!ConvertPixelFormatWGLtoGLX(gdi_display, 1 /* main visual */, &fmt_index, &value)) {
     ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visual->visualid);
   } else {
     int dwFlags = 0;
@@ -256,7 +284,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     int value = 0;
 
     /* Pixel type */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_RENDER_TYPE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_RENDER_TYPE, &value);
     if (value & GLX_RGBA_BIT)
       iPixelType = PFD_TYPE_RGBA;
     else
@@ -267,7 +295,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Doublebuffer */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
     if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE)) {
       if ((ppfd->dwFlags & PFD_DOUBLEBUFFER) != (dwFlags & PFD_DOUBLEBUFFER)) {
         goto choose_exit;
@@ -275,7 +303,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Stereo */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
     if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE)) {
       if ((ppfd->dwFlags & PFD_STEREO) != (dwFlags & PFD_STEREO)) {
         goto choose_exit;
@@ -283,25 +311,25 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
 
     /* Alpha bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_ALPHA_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_ALPHA_SIZE, &value);
     if (ppfd->iPixelType==PFD_TYPE_RGBA && ppfd->cAlphaBits && !value) {
       goto choose_exit;
     }
 
     /* Depth bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_DEPTH_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DEPTH_SIZE, &value);
     if (ppfd->cDepthBits && !value) {
       goto choose_exit;
     }
 
     /* Stencil bits */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_STENCIL_SIZE, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STENCIL_SIZE, &value);
     if (ppfd->cStencilBits && !value) {
       goto choose_exit;
     }
 
     /* Aux buffers */
-    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index - 1], GLX_AUX_BUFFERS, &value);
+    pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_AUX_BUFFERS, &value);
     if (ppfd->cAuxBuffers && !value) {
       goto choose_exit;
     }
@@ -337,6 +365,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   GLXFBConfig cur;
   int nCfgs = 0;
   int ret = 0;
+  int fmt_index = 0;
 
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
@@ -382,13 +411,13 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   }
 
   /* Retrieve the index in the FBConfig table corresponding to the visual ID from the main visual */
-  if(!get_fbconfig_from_main_visual(&value, &iPixelFormat)) {
+  if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &value)) {
       ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
       return 0;
   }
 
   ret = nCfgs;
-  cur = cfgs[iPixelFormat - 1];
+  cur = cfgs[fmt_index];
 
   memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
   ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -508,8 +537,9 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     GLXFBConfig cur_cfg;
     int value;
     int gl_test = 0;
+    int fmt_index = 0;
 
-    if(!get_fbconfig_from_main_visual(&value, &iPixelFormat)) {
+    if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &value)) {
       ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
       return TRUE; /* Return true because the SetPixelFormat stuff itself passed */
     }
@@ -531,7 +561,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     TRACE(" - HEIGHT as %d\n", tmp);
     */
     cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
-    cur_cfg = cfgs_fmt[iPixelFormat - 1];
+    cur_cfg = cfgs_fmt[fmt_index];
     gl_test = pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_FBCONFIG_ID, &value);
     if (gl_test) {
       ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
