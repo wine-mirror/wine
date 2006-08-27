@@ -369,6 +369,16 @@ static HRESULT exec_bold(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_italic(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, "cmd_italic", NULL);
+
+    return S_OK;
+}
+
 static HRESULT exec_browsemode(HTMLDocument *This)
 {
     WARN("(%p)\n", This);
@@ -734,6 +744,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_bold(This);
+        case IDM_ITALIC:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_italic(This);
         case IDM_BROWSEMODE:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
