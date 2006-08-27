@@ -1599,7 +1599,8 @@ extern HRESULT shader_get_registers_used(
     shader_reg_maps* reg_maps,
     semantic* semantics_in,
     semantic* semantics_out,
-    CONST DWORD* pToken);
+    CONST DWORD* pToken,
+    IWineD3DStateBlockImpl *stateBlock);
 
 extern void shader_generate_glsl_declarations(
     IWineD3DBaseShader *iface,

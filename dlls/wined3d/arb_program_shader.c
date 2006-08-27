@@ -621,8 +621,10 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     char reg_dest[40];
     char reg_coord[40];
+    const char *tex_type;
     DWORD reg_dest_code;
     DWORD reg_sampler_code;
+    DWORD sampler_type;
 
     /* All versions have a destination register */
     reg_dest_code = dst & D3DSP_REGNUM_MASK;
@@ -642,12 +644,35 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   else
      reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
 
+  sampler_type = arg->reg_maps->samplers[reg_sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
+  switch(sampler_type) {
+     case WINED3DSTT_1D:
+         tex_type = "1D";
+         break;
+
+     case WINED3DSTT_2D:
+         tex_type = "2D";
+         break;
+
+     case WINED3DSTT_VOLUME:
+         tex_type = "3D";
+         break;
+
+     case WINED3DSTT_CUBE:
+         tex_type = "CUBE";
+         break;
+
+     default:
+         ERR("Unexpected texture type %ld\n", sampler_type);
+         tex_type = "2D";
+  }
+
   if(This->wineD3DDevice->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
-      shader_addline(buffer, "TXP %s, %s, texture[%lu], 2D;\n",
-          reg_dest, reg_coord, reg_sampler_code);
+      shader_addline(buffer, "TXP %s, %s, texture[%lu], %s;\n",
+          reg_dest, reg_coord, reg_sampler_code, tex_type);
   } else {
-      shader_addline(buffer, "TEX %s, %s, texture[%lu], 2D;\n",
-                     reg_dest, reg_coord, reg_sampler_code);
+      shader_addline(buffer, "TEX %s, %s, texture[%lu], %s;\n",
+                     reg_dest, reg_coord, reg_sampler_code, tex_type);
   }
 }
 

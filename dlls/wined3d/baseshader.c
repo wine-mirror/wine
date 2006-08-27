@@ -180,7 +180,8 @@ HRESULT shader_get_registers_used(
     shader_reg_maps* reg_maps,
     semantic* semantics_in,
     semantic* semantics_out,
-    CONST DWORD* pToken) {
+    CONST DWORD* pToken,
+    IWineD3DStateBlockImpl *stateBlock) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
 
@@ -299,8 +300,35 @@ HRESULT shader_get_registers_used(
 
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
-                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
-                
+
+                if(!stateBlock->textures[sampler_code]) {
+                    ERR("No texture bound to sampler %ld\n", sampler_code);
+                    reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
+                } else {
+                    int texType = IWineD3DBaseTexture_GetTextureDimensions(stateBlock->textures[sampler_code]);
+                    switch(texType) {
+                        case GL_TEXTURE_1D:
+                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_1D;
+                            break;
+
+                        case GL_TEXTURE_2D:
+                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
+                            break;
+
+                        case GL_TEXTURE_3D:
+                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_VOLUME;
+                            break;
+
+                        case GLTEXTURECUBEMAP:
+                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
+                            break;
+
+                        default:
+                            ERR("Unexpected gl texture type found: %d\n", texType);
+                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
+                    }
+                }
+
             } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
                 (D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
                  D3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {

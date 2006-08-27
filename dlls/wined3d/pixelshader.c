@@ -917,8 +917,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
-    HRESULT hr;
-    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
@@ -930,13 +928,6 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsF);
     list_init(&This->baseShader.constantsB);
     list_init(&This->baseShader.constantsI);
-
-    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    memset(reg_maps, 0, sizeof(shader_reg_maps));
-    hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-        This->semantics_in, NULL, pFunction);
-    if (hr != WINED3D_OK) return hr;
-    /* FIXME: validate reg_maps against OpenGL */
 
     This->baseShader.shader_mode = wined3d_settings.ps_selected_mode;
 
@@ -955,6 +946,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     CONST DWORD *function = This->baseShader.function;
+    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    HRESULT hr;
 
     TRACE("(%p) : function %p\n", iface, function);
 
@@ -966,6 +959,13 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         This->baseShader.is_compiled = TRUE;
         return WINED3D_OK;
     }
+
+    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+    memset(reg_maps, 0, sizeof(shader_reg_maps));
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
+                                    This->semantics_in, NULL, This->baseShader.function, This->wineD3DDevice->stateBlock);
+    if (hr != WINED3D_OK) return hr;
+    /* FIXME: validate reg_maps against OpenGL */
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
