@@ -473,6 +473,17 @@ typedef void (APIENTRY * PGLFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint leve
 #define GL_DOT3_RGB_EXT                   0x8740
 #define GL_DOT3_RGBA_EXT                  0x8741
 #endif
+/* GL_ARB_texture_float */
+#ifndef GL_ARB_texture_float
+#define GL_ARB_texture_float 1
+#define GL_RGBA32F_ARB                    0x8814
+#define GL_RGBA16F_ARB                    0x881A
+#endif
+/* GL_ARB_half_float_pixel */
+#ifndef GL_ARB_half_float_pixel
+#define GL_ARB_half_float_pixel
+#define GL_HALF_FLOAT_ARB                 0x140B
+#endif
 /* GL_ARB_vertex_program */
 #ifndef GL_ARB_vertex_program
 #define GL_ARB_vertex_program 1
@@ -1407,6 +1418,8 @@ typedef enum _GL_SupportedExt {
   ARB_TEXTURE_ENV_ADD,
   ARB_TEXTURE_ENV_COMBINE,
   ARB_TEXTURE_ENV_DOT3,
+  ARB_TEXTURE_FLOAT,
+  ARB_HALF_FLOAT_PIXEL,
   ARB_TEXTURE_BORDER_CLAMP,
   ARB_TEXTURE_MIRRORED_REPEAT,
   ARB_VERTEX_PROGRAM,

@@ -576,6 +576,12 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Dot3 support\n");
                 gl_info->supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_texture_float") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Float texture support\n");
+                gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_half_float_pixel") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Half-float pixel support\n");
+                gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture border clamp support\n");
                 gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
@@ -1639,6 +1645,21 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
+    if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+
+        BOOL half_pixel_support = GL_SUPPORT(ARB_HALF_FLOAT_PIXEL);
+
+        switch (CheckFormat) {
+            case D3DFMT_A16B16G16R16F:
+                if (!half_pixel_support) break;
+            case D3DFMT_A32B32G32R32F:
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            default:
+                break; /* Avoid compiler warnings */
+        }
+    }
+
     /* This format is nothing special and it is supported perfectly.
      * However, ati and nvidia driver on windows do not mark this format
      * supported(tested with the dxCapsViewer) and pretending to
@@ -1729,10 +1750,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          */
         case WINED3DFMT_R16F:
         case WINED3DFMT_G16R16F:
-        case WINED3DFMT_A16B16G16R16F:
         case WINED3DFMT_R32F:
         case WINED3DFMT_G32R32F:
-        case WINED3DFMT_A32B32G32R32F:
         case WINED3DFMT_CxV8U8:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return WINED3DERR_NOTAVAILABLE;
