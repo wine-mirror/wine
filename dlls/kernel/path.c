@@ -481,7 +481,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         tmplen = p - (longpath + lp);
         lstrcpynW(tmpshortpath + sp, longpath + lp, tmplen + 1);
         /* Check, if the current element is a valid dos name */
-        if (tmplen <= 8+1+3+1)
+        if (tmplen <= 8+1+3)
         {
             BOOLEAN spaces;
             memcpy(ustr_buf, longpath + lp, tmplen * sizeof(WCHAR));
