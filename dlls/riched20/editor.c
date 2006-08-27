@@ -1602,13 +1602,30 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_EXSETSEL:
   {
-    CHARRANGE *pRange = (CHARRANGE *)lParam;
-    TRACE("EM_EXSETSEL (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
+    int start, end;
+    CHARRANGE range = *(CHARRANGE *)lParam;
+
+    TRACE("EM_EXSETSEL (%ld,%ld)\n", range.cpMin, range.cpMax);
+
+    /* if cpMin < 0, then selection is deselected and caret moved to end of
+     * the current selection  */
+    if (range.cpMin < 0)
+    {
+        ME_GetSelection(editor, &start, &end);
+        range.cpMin = end;
+        range.cpMax = end;
+    }  
+    else if (range.cpMax > ME_GetTextLength(editor) +1)
+    {
+      range.cpMax = ME_GetTextLength(editor) + 1;
+    }
+
     ME_InvalidateSelection(editor);
-    ME_SetSelection(editor, pRange->cpMin, pRange->cpMax);
+    ME_SetSelection(editor, range.cpMin, range.cpMax);
     ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
-    return 0;
+    
+    return range.cpMax;
   }
   case EM_SHOWSCROLLBAR:
   {

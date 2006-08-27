@@ -1316,6 +1316,57 @@ static void test_EM_GETMODIFY(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_EXSETSEL(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    long result;
+    CHARRANGE cr;
+    int start,end;
+
+    /* sending some text to the window */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "testing selection");
+    /*                                                 01234567890123456*/
+    /*                                                          10      */
+
+    /* EM_EXSETSEL returns (cr.cpMax < strlen+1 ? cr.cpMax:strlen+1 if cpMin is positive */
+    cr.cpMin = 0;
+    cr.cpMax = 100;
+    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+    ok(result == 18, "EM_EXSETSEL: expected: 18 actual: %ld\n", result);
+    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
+
+    /* FIXME: EM_GETSEL needs to return proper ending value */
+    todo_wine
+    {
+        ok(start == 0 && end == 18, "EM_EXSETSEL: expected (0,18) actual:(%d,%d)\n", start,end);
+    }
+
+    cr.cpMin = 5;
+    cr.cpMax = 10;
+    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+    ok(result == 10, "EM_EXSETSEL: expected: 10 actual: %ld\n", result);
+    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
+    ok(start == 5 && end == 10, "EM_EXSETSEL: expected (5,10) actual:(%d,%d)\n", start,end);
+
+    cr.cpMin = 15;
+    cr.cpMax = 17;
+    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+    ok(result == 17, "EM_EXSETSEL: expected: 17 actual: %ld\n", result);
+    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
+    ok(start == 15 && end == 17, "EM_EXSETSEL: expected (15,17) actual:(%d,%d)\n", start,end);
+
+    /* bug 4462 - the following values get used in FileZilla */
+    /* when min < 0, selection is deselected and caret is moved to end of last selection */
+    cr.cpMin = -3;
+    cr.cpMax = 0;
+    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+    ok(result == 17, "EM_EXSETSEL: expected: 17 actual: %ld\n", result);
+    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
+    ok(start == 17 && end == 17, "EM_EXSETSEL: expected (17,17) actual:(%d,%d)\n", start,end);
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1341,6 +1392,7 @@ START_TEST( editor )
   test_EM_GETLIMITTEXT();
   test_WM_SETFONT();
   test_EM_GETMODIFY();
+  test_EM_EXSETSEL();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
