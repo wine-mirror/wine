@@ -37,7 +37,7 @@
 #include "wine/wined3d_interface.h"
 
 /* Device caps */
-#define MAX_SHADERS        64
+#define INITIAL_SHADER_HANDLE_TABLE_SIZE        64
 
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
@@ -162,6 +162,9 @@ extern const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
  */
+
+typedef void * shader_handle;
+
 struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
@@ -169,7 +172,11 @@ struct IDirect3DDevice8Impl
     LONG                         ref;
 /* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */
     IWineD3DDevice               *WineD3DDevice;
-    IDirect3DVertexShader8Impl   *vShaders[MAX_SHADERS];
+    DWORD                         shader_handle_table_size;
+    DWORD                         allocated_shader_handles;
+    shader_handle                *shader_handles;
+    shader_handle                *free_shader_handles;
+
 /* FIXME: Move *baseVertexIndex somewhere sensible like wined3d */
     UINT                          baseVertexIndex;
 };
@@ -531,6 +538,7 @@ struct IDirect3DVertexShader8Impl {
   const IDirect3DVertexShader8Vtbl *lpVtbl;
   LONG ref;
 
+  shader_handle                    *handle;
   IWineD3DVertexShader             *wineD3DVertexShader;
 };
 
