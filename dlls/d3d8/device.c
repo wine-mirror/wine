@@ -1262,6 +1262,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
     IDirect3DPixelShader8Impl *object;
     HRESULT hrc = D3D_OK;
 
+    TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
+
     if (NULL == ppShader) {
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
@@ -1280,20 +1282,37 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
             HeapFree(GetProcessHeap(), 0 , object);
             *ppShader = 0;
         } else {
-            *ppShader = (DWORD)object;
+            shader_handle *handle = alloc_shader_handle(This);
+            if (!handle) {
+                ERR("Failed to allocate shader handle\n");
+                IDirect3DVertexShader8_Release((IUnknown *)object);
+                hrc = E_OUTOFMEMORY;
+            } else {
+                object->handle = handle;
+                *handle = object;
+                *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+            }
         }
 
     }
 
-    TRACE("(%p) : returning %p\n", This, (void *)*ppShader);
+    TRACE("(%p) : returning %p (handle %#lx)\n", This, object, *ppShader);
     return hrc;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DPixelShader8Impl *shader = (IDirect3DPixelShader8Impl *)pShader;
-    TRACE("(%p) Relay\n", This);
+    IDirect3DPixelShader8Impl *shader = NULL;
 
+    TRACE("(%p) : pShader %#lx\n", This, pShader);
+
+    if (pShader > VS_HIGHESTFIXEDFXF && This->allocated_shader_handles > pShader - (VS_HIGHESTFIXEDFXF + 1)) {
+        shader = This->shader_handles[pShader - (VS_HIGHESTFIXEDFXF + 1)];
+    } else if (pShader) {
+        ERR("Trying to set an invalid handle.\n");
+    }
+
+    TRACE("(%p) : Setting shader %p\n", This, shader);
     return IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader == NULL ? NULL :shader->wineD3DPixelShader);
 }
 
@@ -1310,23 +1329,31 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 ifac
 
     hrc = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
     if (D3D_OK == hrc && NULL != object) {
-       hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)ppShader);
-       IWineD3DPixelShader_Release(object);
+        IDirect3DPixelShader8Impl *d3d8_shader;
+        hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)&d3d8_shader);
+        IWineD3DPixelShader_Release(object);
+        *ppShader = (d3d8_shader->handle - This->shader_handles) + (VS_HIGHESTFIXEDFXF + 1);
     } else {
         *ppShader = (DWORD)NULL;
     }
 
-    TRACE("(%p) : returning %p\n", This, (void *)*ppShader);
+    TRACE("(%p) : returning %#lx\n", This, *ppShader);
     return hrc;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DPixelShader8Impl *shader = (IDirect3DPixelShader8Impl *)pShader;
-    TRACE("(%p) Relay\n", This);
 
-    if (NULL != shader) {
+    TRACE("(%p) : pShader %#lx\n", This, pShader);
+
+    if (pShader <= VS_HIGHESTFIXEDFXF || This->allocated_shader_handles <= pShader - (VS_HIGHESTFIXEDFXF + 1)) {
+        ERR("(%p) : Trying to delete an invalid handle\n", This);
+        return D3DERR_INVALIDCALL;
+    } else {
+        shader_handle *handle = &This->shader_handles[pShader - (VS_HIGHESTFIXEDFXF + 1)];
+        IDirect3DPixelShader8Impl *shader = *handle;
         while(IUnknown_Release((IUnknown *)shader));
+        free_shader_handle(This, handle);
     }
 
     return D3D_OK;

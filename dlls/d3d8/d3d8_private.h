@@ -560,6 +560,7 @@ typedef struct IDirect3DPixelShader8Impl {
     const IDirect3DPixelShader8Vtbl *lpVtbl;
     LONG                             ref;
 
+    shader_handle                   *handle;
     /* The device, to be replaced by an IDirect3DDeviceImpl */
     IWineD3DPixelShader             *wineD3DPixelShader;
 } IDirect3DPixelShader8Impl;
