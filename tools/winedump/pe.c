@@ -1076,6 +1076,36 @@ static void dump_dir_resource(void)
     printf( "\n\n" );
 }
 
+static void dump_debug(void)
+{
+    const char* stabs = NULL;
+    unsigned    szstabs = 0;
+    const char* stabstr = NULL;
+    unsigned    szstr = 0;
+    unsigned    i;
+    const IMAGE_SECTION_HEADER*	sectHead;
+
+    sectHead = (const IMAGE_SECTION_HEADER*)
+        ((const char*)PE_nt_headers + sizeof(DWORD) +
+         sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+
+    for (i = 0; i < PE_nt_headers->FileHeader.NumberOfSections; i++, sectHead++)
+    {
+        if (!strcmp((const char *)sectHead->Name, ".stab"))
+        {
+            stabs = RVA(sectHead->VirtualAddress, sectHead->Misc.VirtualSize); 
+            szstabs = sectHead->Misc.VirtualSize;
+        }
+        if (!strncmp((const char *)sectHead->Name, ".stabstr", 8))
+        {
+            stabstr = RVA(sectHead->VirtualAddress, sectHead->Misc.VirtualSize);
+            szstr = sectHead->Misc.VirtualSize;
+        }
+    }
+    if (stabs && stabstr)
+        dump_stabs(stabs, szstabs, stabstr, szstr);
+}
+
 void pe_dump(const void* pmt)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
@@ -1118,6 +1148,8 @@ void pe_dump(const void* pmt)
 	    dump_dir_reloc();
 #endif
     }
+    if (globals.do_debug)
+        dump_debug();
 }
 
 typedef struct _dll_symbol {

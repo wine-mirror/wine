@@ -80,6 +80,9 @@ Dumps everything.
 This command prints all available information about the
 file. You may wish to pipe the output through more/less or
 into a file, since a lot of output will be produced.
+.IP \fB-G\fR
+Dumps contents of debug section if any (for now, only stabs
+information is supported).
 .PP
 .B Spec mode:
 .IP \fI<dll>\fR

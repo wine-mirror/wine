@@ -192,6 +192,11 @@ static void do_dumpsect (const char* arg)
     globals.dumpsect = arg;
 }
 
+static void do_rawdebug (void)
+{
+    globals.do_debug = 1;
+}
+
 static void do_dumpall(void)
 {
     globals.do_dumpheader = 1;
@@ -228,6 +233,7 @@ static const struct my_option option_table[] = {
   {"dump",  DUMP, 0, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
+  {"-G",    DUMP, 0, do_rawdebug, "-G           Dumps raw debug information"},
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls)"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
   {"emf",   EMF,  0, do_dumpemf,  "emf          Dumps an Enhanced Meta File"},

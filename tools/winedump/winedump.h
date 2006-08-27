@@ -123,6 +123,7 @@ typedef struct __globals
   /* Options: dump mode */
   int   do_demangle;        /* -d */
   int   do_dumpheader;      /* -f */
+  int   do_debug;           /* -G == 1, -g == 2 */
 
   /* Option arguments: spec mode */
   int   start_ordinal;     /* -s */
@@ -237,6 +238,8 @@ void            dump_unicode_str( const unsigned short *str, int len );
 void            ne_dump( const void *exe, size_t exe_size );
 void            le_dump( const void *exe, size_t exe_size );
 void            mdmp_dump( void );
+
+void dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 
 FILE *open_file (const char *name, const char *ext, const char *mode);
 

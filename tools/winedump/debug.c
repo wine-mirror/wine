@@ -582,3 +582,116 @@ void	dump_frame_pointer_omission(unsigned long base, unsigned long len)
 	/* FPO is used to describe nonstandard stack frames */
 	printf("FIXME: FPO (frame pointer omission) debug symbol dumping not implemented yet.\n");
 }
+
+struct stab_nlist
+{
+    union
+    {
+        char*                   n_name;
+        struct stab_nlist*      n_next;
+        long                    n_strx;
+    } n_un;
+    unsigned char       n_type;
+    char                n_other;
+    short               n_desc;
+    unsigned long       n_value;
+};
+
+static const char* stabs_defs[] = {
+    NULL,NULL,NULL,NULL,                /* 00 */
+    NULL,NULL,NULL,NULL,                /* 08 */
+    NULL,NULL,NULL,NULL,                /* 10 */
+    NULL,NULL,NULL,NULL,                /* 18 */
+    "GSYM","FNAME","FUN","STSYM",       /* 20 */
+    "LCSYM","MAIN","ROSYM","PC",        /* 28 */
+    NULL,"NSYMS","NOMAP",NULL,          /* 30 */
+    "OBJ",NULL,"OPT",NULL,              /* 38 */
+    "RSYM","M2C","SLINE","DSLINE",      /* 40 */
+    "BSLINE","DEFD","FLINE",NULL,       /* 48 */
+    "EHDECL",NULL,"CATCH",NULL,         /* 50 */
+    NULL,NULL,NULL,NULL,                /* 58 */
+    "SSYM","ENDM","SO",NULL,            /* 60 */
+    NULL,NULL,NULL,NULL,                /* 68 */
+    NULL,NULL,NULL,NULL,                /* 70 */
+    NULL,NULL,NULL,NULL,                /* 78 */
+    "LSYM","BINCL","SOL",NULL,          /* 80 */
+    NULL,NULL,NULL,NULL,                /* 88 */
+    NULL,NULL,NULL,NULL,                /* 90 */
+    NULL,NULL,NULL,NULL,                /* 98 */
+    "PSYM","EINCL","ENTRY",NULL,        /* a0 */
+    NULL,NULL,NULL,NULL,                /* a8 */
+    NULL,NULL,NULL,NULL,                /* b0 */
+    NULL,NULL,NULL,NULL,                /* b8 */
+    "LBRAC","EXCL","SCOPE",NULL,        /* c0 */
+    NULL,NULL,NULL,NULL,                /* c8 */
+    NULL,NULL,NULL,NULL,                /* d0 */
+    NULL,NULL,NULL,NULL,                /* d8 */
+    "RBRAC","BCOMM","ECOMM",NULL,       /* e0 */
+    "ECOML","WITH",NULL,NULL,           /* e8 */
+    "NBTEXT","NBDATA","NBBSS","NBSTS",  /* f0 */
+    "NBLCS",NULL,NULL,NULL              /* f8 */
+};
+
+void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr)
+{
+    int                         i;
+    int                         nstab;
+    const char*                 ptr;
+    char*                       stabbuff;
+    unsigned int                stabbufflen;
+    const struct stab_nlist*    stab_ptr = pv_stabs;
+    const char*                 strs_end;
+    char                        n_buffer[16];
+
+    nstab = szstabs / sizeof(struct stab_nlist);
+    strs_end = stabstr + szstr;
+
+    /*
+     * Allocate a buffer into which we can build stab strings for cases
+     * where the stab is continued over multiple lines.
+     */
+    stabbufflen = 65536;
+    stabbuff = malloc(stabbufflen);
+
+    stabbuff[0] = '\0';
+
+    printf("#Sym n_type n_othr   n_desc n_value  n_strx String\n");
+
+    for (i = 0; i < nstab; i++, stab_ptr++)
+    {
+        ptr = stabstr + stab_ptr->n_un.n_strx;
+        if ((ptr > strs_end) || (ptr + strlen(ptr) > strs_end))
+        {
+            ptr = "[[*** bad string ***]]";
+        }
+        else if (ptr[strlen(ptr) - 1] == '\\')
+        {
+            /*
+             * Indicates continuation.  Append this to the buffer, and go onto the
+             * next record.  Repeat the process until we find a stab without the
+             * '/' character, as this indicates we have the whole thing.
+             */
+            unsigned    len = strlen(ptr);
+            if (strlen(stabbuff) + len > stabbufflen)
+            {
+                stabbufflen += 65536;
+                stabbuff = realloc(stabbuff, stabbufflen);
+            }
+            strncat(stabbuff, ptr, len - 1);
+            continue;
+        }
+        else if (stabbuff[0] != '\0')
+        {
+            strcat(stabbuff, ptr);
+            ptr = stabbuff;
+        }
+        if ((stab_ptr->n_type & 1) || !stabs_defs[stab_ptr->n_type / 2])
+            sprintf(n_buffer, "<0x%02x>", stab_ptr->n_type);
+        else
+            sprintf(n_buffer, "%-6s", stabs_defs[stab_ptr->n_type / 2]);
+        printf("%4d %s %-8x % 6d %-8lx %-6lx %s\n", 
+               i, n_buffer, stab_ptr->n_other, stab_ptr->n_desc, stab_ptr->n_value,
+               stab_ptr->n_un.n_strx, ptr);
+    }
+    free(stabbuff);
+}
