@@ -324,10 +324,12 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         switch (bt)
         {
         case btInt:
+        case btLong:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             dbg_printf("%s", wine_dbgstr_longlong(val_int));
             break;
         case btUInt:
+        case btULong:
             if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
             dbg_printf("%s", wine_dbgstr_longlong(val_int));
             break;
