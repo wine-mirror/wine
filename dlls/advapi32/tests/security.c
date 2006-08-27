@@ -102,7 +102,12 @@ static void test_str_sid(const char *str_sid)
         }
     }
     else
-        trace("%s couldn't be converted, returned %ld\n", str_sid, GetLastError());
+    {
+        if (GetLastError() != ERROR_INVALID_SID)
+            trace(" %s: couldn't be converted, returned %ld\n", str_sid, GetLastError());
+        else
+            trace(" %s: couldn't be converted\n", str_sid);
+    }
 }
 
 static void test_sid(void)
@@ -870,7 +875,7 @@ static void test_sid_str(PSID * sid)
         if (ret)
             trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
         else if (GetLastError() == ERROR_NONE_MAPPED)
-            trace(" %s Couldn't me mapped\n", str_sid);
+            trace(" %s couldn't be mapped\n", str_sid);
         LocalFree(str_sid);
     }
 }
@@ -981,17 +986,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &real_acc_sizeW, domainW, &real_dom_sizeW, &use);
     ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
 
-    /* try NULL account */
-    acc_sizeW = MAX_PATH;
-    dom_sizeW = MAX_PATH;
-    ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
-    ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
-
-    /* try NULL domain */
-    acc_sizeW = MAX_PATH;
-    dom_sizeW = MAX_PATH;
-    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
-    ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
+    /* native windows crashes if domainW or accountW is NULL */
 
     /* try a small account buffer */
     acc_sizeW = 1;
@@ -1069,7 +1064,12 @@ static void test_LookupAccountSid(void)
                 }
             }
             else
-                trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError());
+            {
+                if (GetLastError() != ERROR_INVALID_PARAMETER)
+                    trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError());
+                else
+                    trace(" %d: not supported\n", i);
+            }
         }
 
         pLsaQueryInformationPolicy = (fnLsaQueryInformationPolicy)GetProcAddress( hmod, "LsaQueryInformationPolicy");
