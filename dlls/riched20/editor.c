@@ -2630,10 +2630,6 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
   y = (short)HIWORD(lParam);
   ME_FindPixelPos(editor, x, y, &tmpCursor, &bNothing);
   tmpRun = &tmpCursor.pRun->member.run;
-  if (tmpRun->style->fmt.dwMask & CFM_UNDERLINE)
-    FIXME("CFM_UNDERLINE! GASP!\n");
-  if (tmpRun->style->fmt.dwEffects & CFE_UNDERLINE)
-    FIXME("CFE_UNDERLINE! GASP!\n");
 	
   if ((tmpRun->style->fmt.dwMask & CFM_LINK) 
     && (tmpRun->style->fmt.dwEffects & CFE_LINK))
