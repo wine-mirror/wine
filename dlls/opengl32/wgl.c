@@ -583,7 +583,7 @@ static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
   int attribList[3] = { GLX_FBCONFIG_ID, 0, None };
   GLXFBConfig *fbCfgs;
 
-  if (3 > wine_glx.version || NULL == wine_glx.p_glXQueryDrawable)  {
+  if (wine_glx.p_glXQueryDrawable == NULL)  {
     /** glXQueryDrawable not available so returns not supported */
     return -1;
   }
@@ -1302,6 +1302,10 @@ static void wgl_initialize_glx(Display *display, int screen, glXGetProcAddressAR
    * The versioning checks below try to take into account the comments from above.
    */
 
+  TRACE("Server GLX version: %s\n", server_glx_version);
+  TRACE("Client GLX version: %s\n", client_glx_version);
+  TRACE("Direct rendering eanbled: %s\n", glx_direct ? "True" : "False");
+
   /* Based on the default opengl context we decide whether direct or indirect rendering is used.
    * In case of indirect rendering we check if the GLX version of the server is 1.2 and else
    * the client version is checked.
@@ -1326,7 +1330,6 @@ static void wgl_initialize_glx(Display *display, int screen, glXGetProcAddressAR
     wine_glx.p_glXGetVisualFromFBConfig = proc( (const GLubyte *) "glXGetVisualFromFBConfig");
 
     /*wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");*/
-    wine_glx.p_glXQueryDrawable = proc( (const GLubyte *) "glXQueryDrawable");
   } else {
     if (NULL != strstr(glx_extensions, "GLX_SGIX_fbconfig")) {
       wine_glx.p_glXChooseFBConfig = proc( (const GLubyte *) "glXChooseFBConfigSGIX");
@@ -1336,6 +1339,15 @@ static void wgl_initialize_glx(Display *display, int screen, glXGetProcAddressAR
       ERR(" glx_version as %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", client_glx_version);
     }
   }
+
+  /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
+   * enable this function when the Xserver understand GLX 1.3 or newer
+   */  
+  if (!strcmp("1.2", server_glx_version))
+    wine_glx.p_glXQueryDrawable = NULL;
+  else
+    wine_glx.p_glXQueryDrawable = proc( (const GLubyte *) "glXQueryDrawable");
+  
   /** try anyway to retrieve that calls, maybe they works using glx client tricks */
   wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");
   wine_glx.p_glXMakeContextCurrent = proc( (const GLubyte *) "glXMakeContextCurrent");
