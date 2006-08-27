@@ -312,6 +312,7 @@ PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
 void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
+nsICommandParams *create_nscommand_params(void);
 
 BSCallback *create_bscallback(HTMLDocument*,IMoniker*);
 HRESULT start_binding(BSCallback*);

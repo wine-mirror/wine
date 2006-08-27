@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "ole2.h"
 #include "shlguid.h"
 #include "mshtmdid.h"
@@ -266,6 +267,96 @@ static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *
         ERR("DoCommand(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
 
     nsICommandManager_Release(cmdmgr);
+}
+
+static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+{
+    nsICommandManager *cmdmgr;
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08lx\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
+                                               (void**)&cmdmgr);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsICommandManager: %08lx\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, NULL, nsparam);
+    if(NS_FAILED(nsres))
+        ERR("GetCommandState(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
+
+    nsICommandManager_Release(cmdmgr);
+    return nsres;
+}
+
+static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(!This->nscontainer)
+        return E_FAIL;
+
+    if(in) {
+        nsICommandParams *nsparam = create_nscommand_params();
+        char *stra;
+        DWORD len;
+
+        if(V_VT(in) != VT_BSTR) {
+            FIXME("Unsupported vt=%d\n", V_VT(out));
+            return E_INVALIDARG;
+        }
+
+        len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
+        stra = mshtml_alloc(len);
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
+        nsICommandParams_SetCStringValue(nsparam, "state_attribute", stra);
+        mshtml_free(stra);
+
+        do_ns_command(This->nscontainer, "cmd_fontFace", nsparam);
+
+        nsICommandParams_Release(nsparam);
+    }
+
+    if(out) {
+        nsICommandParams *nsparam;
+        LPWSTR strw;
+        char *stra;
+        DWORD len;
+        nsresult nsres;
+
+        if(V_VT(out) != VT_BSTR) {
+            FIXME("Unsupported vt=%d\n", V_VT(out));
+            return E_INVALIDARG;
+        }
+
+        nsparam = create_nscommand_params();
+
+        nsres = get_ns_command_state(This->nscontainer, "cmd_fontFace", nsparam);
+        if(NS_FAILED(nsres))
+            return S_OK;
+
+        nsICommandParams_GetCStringValue(nsparam, "state_attribute", &stra);
+        nsICommandParams_Release(nsparam);
+
+        len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
+        strw = mshtml_alloc(len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
+        nsfree(stra);
+
+        V_BSTR(out) = SysAllocString(strw);
+        mshtml_free(strw);
+    }
+
+    return S_OK;
 }
 
 static HRESULT exec_bold(HTMLDocument *This)
@@ -637,6 +728,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
         switch(nCmdID) {
+        case IDM_FONTNAME:
+            return exec_fontname(This, pvaIn, pvaOut);
         case IDM_BOLD:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");

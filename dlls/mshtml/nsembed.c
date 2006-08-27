@@ -40,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_PROFILE_CONTRACTID "@mozilla.org/profile/manager;1"
 #define NS_MEMORY_CONTRACTID "@mozilla.org/xpcom/memory-service;1"
 #define NS_STRINGSTREAM_CONTRACTID "@mozilla.org/io/string-input-stream;1"
+#define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -445,6 +446,23 @@ nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
     }
 
     return (nsIInputStream*)ret;
+}
+
+nsICommandParams *create_nscommand_params(void)
+{
+    nsICommandParams *ret = NULL;
+    nsresult nsres;
+
+    if(!pCompMgr)
+        return NULL;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_COMMANDPARAMS_CONTRACTID, NULL, &IID_nsICommandParams,
+            (void**)&ret);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsICommandParams\n");
+
+    return ret;
 }
 
 void close_gecko()
