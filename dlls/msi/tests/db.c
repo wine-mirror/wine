@@ -1376,12 +1376,7 @@ static void test_handle_limit(void)
         r = MsiDatabaseOpenView(hdb, szQueryBuf, &hviews[i]);
         ok( r == ERROR_SUCCESS, "failed to open query %d\n", i);
         ok( hviews[i] != 0xdeadbeeb, "no handle set\n");
-        if (i < 0xef)
-            ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
-        else
-            todo_wine {
-                ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
-            }
+        ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
         if (!hviews[i])
             break;
         ok( (i == 0 || (hviews[i] != hviews[i-1])),
