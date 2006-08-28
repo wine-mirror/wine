@@ -93,6 +93,36 @@ replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
 
 
 ################################################################
+# update the tests list in programs/winetest/Makefile.in
+
+my %modules = ( "kernel" => "kernel32", "gdi" => "gdi32", "user" => "user32" );
+my %tests;
+my @lines = ( "TESTBINS =" );
+
+foreach my $file (sort grep /^dlls\/.*\/tests\/Makefile/, @makefiles)
+{
+    if ($file =~ /^dlls\/(.*)\/tests\/Makefile/)
+    {
+        my $dir = $1;
+        my $mod = $modules{$dir} || $dir;
+        $tests{$mod} = $dir;
+        push @lines, " \\\n\t${mod}_test.exe\$(DLLEXT)";
+    }
+}
+push @lines, "\n\n";
+
+foreach my $test (sort keys %tests)
+{
+    my $dir = $tests{$test};
+    push @lines, "${test}_test.exe\$(DLLEXT): \$(DLLDIR)/$dir/tests/${test}_test.exe\$(DLLEXT)\n";
+    push @lines, "\tcp \$(DLLDIR)/$dir/tests/${test}_test.exe\$(DLLEXT) \$\@ && \$(STRIP) \$\@\n";
+}
+push @lines, "\n# Special rules\n";
+
+replace_in_file( "programs/winetest/Makefile.in", '^TESTBINS\s*=', '^# Special rules', @lines );
+
+
+################################################################
 # update dlls/Makefile.in
 
 my @dll_makefiles = grep /^dlls\//, @makefiles;
