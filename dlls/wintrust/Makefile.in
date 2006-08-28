@@ -6,7 +6,9 @@ MODULE    = wintrust.dll
 IMPORTLIB = libwintrust.$(IMPLIBEXT)
 IMPORTS   = crypt32 kernel32
 
-C_SRCS = wintrust_main.c
+C_SRCS = \
+	register.c \
+	wintrust_main.c
 
 RC_SRCS = \
         version.rc

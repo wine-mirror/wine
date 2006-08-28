@@ -188,27 +188,6 @@ CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData)
 }
 
 /***********************************************************************
- *		WintrustAddActionID (WINTRUST.@)
- */
-BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
-                                 CRYPT_REGISTER_ACTIONID* psProvInfo)
-{
-    FIXME("%p %lx %p\n", pgActionID, fdwFlags, psProvInfo);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *              WintrustRemoveActionID (WINTRUST.@)
- */
-BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
-{
-    FIXME("(%s)\n", debugstr_guid(pgActionID));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *              WintrustLoadFunctionPointers (WINTRUST.@)
  */
 BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
@@ -235,22 +214,4 @@ BOOL WINAPI WintrustSetRegPolicyFlags( DWORD dwPolicyFlags)
 {
     FIXME("stub: %lx\n", dwPolicyFlags);
     return TRUE;
-}
-
-/***********************************************************************
-  *             DllRegisterServer (WINTRUST.@)
-  */
-HRESULT WINAPI DllRegisterServer(void)
-{
-     FIXME("stub\n");
-     return S_OK;
-}
-
-/***********************************************************************
-  *             DllUnregisterServer (WINTRUST.@)
-  */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-     FIXME("stub\n");
-     return S_OK;
 }
