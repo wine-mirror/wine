@@ -1138,12 +1138,12 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
     HRESULT hr;
 
     /* read the AppID value under the class's key */
-    hr = COM_OpenKeyForCLSID(clsid, szAppId, KEY_READ, &hkey);
+    hr = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &hkey);
     if (FAILED(hr))
         return hr;
 
     size = sizeof(buf);
-    res = RegQueryValueExW(hkey, NULL, NULL, &type, (LPBYTE)buf, &size);
+    res = RegQueryValueExW(hkey, szAppId, NULL, &type, (LPBYTE)buf, &size);
     RegCloseKey(hkey);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
