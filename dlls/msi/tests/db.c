@@ -1356,6 +1356,49 @@ static void test_markers(void)
     DeleteFileA(msifile);
 }
 
+#define MY_NVIEWS 4000    /* Largest installer I've seen uses < 2k */
+static void test_handle_limit(void)
+{
+    int i;
+    MSIHANDLE hdb;
+    MSIHANDLE hviews[MY_NVIEWS];
+    UINT r;
+
+    /* create an empty db */
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    memset(hviews, 0, sizeof(hviews));
+
+    for (i=0; i<MY_NVIEWS; i++) {
+        static char szQueryBuf[256] = "SELECT * from `_Tables`";
+        hviews[i] = 0xdeadbeeb;
+        r = MsiDatabaseOpenView(hdb, szQueryBuf, &hviews[i]);
+        ok( r == ERROR_SUCCESS, "failed to open query %d\n", i);
+        ok( hviews[i] != 0xdeadbeeb, "no handle set\n");
+        if (i < 0xef)
+            ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
+        else
+            todo_wine {
+                ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
+            }
+        if (!hviews[i])
+            break;
+        ok( (i == 0 || (hviews[i] != hviews[i-1])),
+            "got handle %p twice\n", (void *) hviews[i] );
+    }
+
+    for (i=0; i<MY_NVIEWS; i++) {
+        if (hviews[i] != 0 && hviews[i] != 0xdeadbeeb) {
+            r = MsiCloseHandle(hviews[i]);
+            ok( r == ERROR_SUCCESS, "failed to close view handle %d\n", i);
+        }
+    }
+
+    r = MsiCloseHandle(hdb);
+    ok( r == ERROR_SUCCESS, "failed to close database\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -1371,4 +1414,5 @@ START_TEST(db)
     test_where();
     test_msiimport();
     test_markers();
+    test_handle_limit();
 }
