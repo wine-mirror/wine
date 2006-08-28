@@ -22,10 +22,7 @@
 #include <windows.h>
 #include <ctype.h>
 
-#include <wine/debug.h>
 #include "explorer_private.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 typedef struct parametersTAG {
     BOOL    explorer_mode;

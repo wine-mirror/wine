@@ -36,10 +36,6 @@
 
 #include "main.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(regedit);
-
 /* spaces dividing hex and ASCII */
 #define DIV_SPACES 4
 

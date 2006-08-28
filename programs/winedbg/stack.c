@@ -28,10 +28,7 @@
 #include "debugger.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/debug.h"
 #include "tlhelp32.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /***********************************************************************
  *           stack_info

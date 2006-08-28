@@ -26,11 +26,7 @@
 
 #include "main.h"
 
-#include "wine/debug.h"
 #include "wine/unicode.h"
-                                                                                                                             
-WINE_DEFAULT_DEBUG_CHANNEL(regedit);
-
 static INT Image_String;
 static INT Image_Binary;
 

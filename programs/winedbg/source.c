@@ -27,9 +27,6 @@
 #endif
 
 #include "debugger.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 struct search_list
 {

@@ -23,9 +23,6 @@
 #include <string.h>
 
 #include "debugger.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /* needs to be power of 2, search for MARK to see why :) */
 #define DISPTAB_DELTA 8
