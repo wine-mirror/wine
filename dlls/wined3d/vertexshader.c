@@ -735,8 +735,18 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         }
         
         /* Write the final position.
-         * Account for any inverted textures (render to texture case) by reversing the y coordinate
-         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices) */
+         *
+         * OpenGL coordinates specify the center of the pixel while d3d coords specify
+         * the corner. For that reason a translation is done with the projection matrix,
+         * which sets the offsets to move in the w coords of the matrix(see glTranslate manpage)
+         * Add the w coordinates to x and y, this avoids the need for a full matrix
+         * multiplication. The matrix is set up in drawprim.c, primitiveInitState.
+         */
+        shader_addline(&buffer, "gl_Position.x = gl_Position.x + gl_ProjectionMatrix[3][0];\n");
+        shader_addline(&buffer, "gl_Position.y = gl_Position.y + gl_ProjectionMatrix[3][1];\n");
+        /* Account for any inverted textures (render to texture case) by reversing the y coordinate
+         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
+         */
         shader_addline(&buffer, "gl_Position.y = gl_Position.y * gl_ProjectionMatrix[1][1];\n");
 
         shader_addline(&buffer, "}\n\0");
@@ -763,7 +773,8 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
         
         /* We need the projection matrix to correctly render upside-down objects (render to texture) */
-        shader_addline(&buffer, "PARAM PROJECTION = state.matrix.projection.row[1];\n");
+        shader_addline(&buffer, "PARAM PROJECTIONX = state.matrix.projection.row[0];\n");
+        shader_addline(&buffer, "PARAM PROJECTIONY = state.matrix.projection.row[1];\n");
 
         if (reg_maps->fog) {
             This->usesFog = 1;
@@ -777,11 +788,21 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         if (reg_maps->fog)
             shader_addline(&buffer, "MAX result.fogcoord, TMP_FOG, 0.0;\n");
 
-        /* Write the final position.
-         * Account for any inverted textures (render to texture case) by reversing the y coordinate
-         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices) */
         shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
-        shader_addline(&buffer, "MUL result.position.y, TMP_OUT.y, PROJECTION.y;\n");
+        /* Write the final position.
+         *
+         * OpenGL coordinates specify the center of the pixel while d3d coords specify
+         * the corner. For that reason a translation is done with the projection matrix,
+         * which sets the offsets to move in the w coords of the matrix(see glTranslate manpage)
+         * Add the w coordinates to x and y, this avoids the need for a full matrix
+         * multiplication. The matrix is set up in drawprim.c, primitiveInitState.
+         */
+        shader_addline(&buffer, "ADD result.position.x, TMP_OUT.x, PROJECTIONX.w;\n");
+        shader_addline(&buffer, "ADD result.position.y, TMP_OUT.y, PROJECTIONY.w;\n");
+        /* Account for any inverted textures (render to texture case) by reversing the y coordinate
+         *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
+         */
+        shader_addline(&buffer, "MUL result.position.y, TMP_OUT.y, PROJECTIONY.y;\n");
         
         shader_addline(&buffer, "END\n\0"); 
 
