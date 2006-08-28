@@ -39,7 +39,9 @@
 
 #include "ndr_misc.h"
 #include "rpcndr.h"
+#include "rpcproxy.h"
 #include "wine/rpcfc.h"
+#include "cpsf.h"
 
 #include "wine/debug.h"
 
@@ -363,4 +365,28 @@ void WINAPI NdrOleFree(void *NodeToFree)
 {
   if (!LoadCOM()) return;
   COM_MemFree(NodeToFree);
+}
+
+/***********************************************************************
+ * Helper function to create a stub.
+ * This probably looks very much like NdrpCreateStub.
+ */
+HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub)
+{
+    CLSID clsid;
+    IPSFactoryBuffer *psfac;
+    HRESULT r;
+
+    if(!LoadCOM()) return E_FAIL;
+
+    r = COM_GetPSClsid( iid, &clsid );
+    if(FAILED(r)) return r;
+
+    r = COM_GetClassObject( &clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IPSFactoryBuffer, (void**)&psfac );
+    if(FAILED(r)) return r;
+
+    r = IPSFactoryBuffer_CreateStub(psfac, iid, pUnk, ppstub);
+
+    IPSFactoryBuffer_Release(psfac);
+    return r;
 }

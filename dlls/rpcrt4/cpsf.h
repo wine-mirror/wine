@@ -44,4 +44,6 @@ const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface);
 
 const IRpcStubBufferVtbl CStdStubBuffer_Vtbl;
 
+HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub);
+
 #endif  /* __WINE_CPSF_H */
