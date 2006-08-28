@@ -1793,7 +1793,6 @@ programs/wordpad/Makefile
 server/Makefile
 tools/Makefile
 tools/widl/Makefile
-tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile
 tools/winegcc/Makefile

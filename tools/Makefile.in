@@ -39,9 +39,9 @@ INSTALLSUBDIRS = \
 	wmc \
 	wrc
 
-SUBDIRS = \
-	$(INSTALLSUBDIRS) \
-	winapi
+SUBDIRS = $(INSTALLSUBDIRS)
+
+EXTRASUBDIRS = winapi
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
