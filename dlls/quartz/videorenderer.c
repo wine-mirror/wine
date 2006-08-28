@@ -318,7 +318,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         This->WindowPos.left = 0;
         This->WindowPos.top = 0;
         This->WindowPos.right = width;
-        This->WindowPos.bottom = height;
+        This->WindowPos.bottom = abs(height);
         GetClientRect(This->hWnd, &This->DestRect);
         This->init  = TRUE;
     }
