@@ -461,7 +461,6 @@ VOID WINAPI GetSystemInfo(
 			if (sscanf( value, "%lf", &cmz ) == 1) {
 				/* SYSTEMINFO doesn't have a slot for cpu speed, so store in a global */
 				cpuHz = cmz * 1000 * 1000;
-				TRACE("CPU speed read as %lld\n", cpuHz);
 			}
 			continue;
 		}
