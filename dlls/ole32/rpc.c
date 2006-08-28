@@ -833,12 +833,17 @@ static HRESULT create_local_service(REFCLSID rclsid)
             RegQueryValueExW(hkey, szServiceParams, NULL, &type, (LPBYTE)args[0], &sz);
         }
         r = start_local_service(buf, num_args, (LPCWSTR *)args);
-        if (r==ERROR_SUCCESS)
-            hres = S_OK;
+        if (r != ERROR_SUCCESS)
+            hres = REGDB_E_CLASSNOTREG; /* FIXME: check retval */
         HeapFree(GetProcessHeap(),0,args[0]);
     }
+    else
+    {
+        WARN("No LocalService value\n");
+        hres = REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+    }
     RegCloseKey(hkey);
-        
+
     return hres;
 }
 
