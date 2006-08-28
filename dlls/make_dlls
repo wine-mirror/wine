@@ -62,9 +62,10 @@ sub update_file($)
 # if we are inside the dlls dir, go up one level
 if (! -f "configure.ac" && -f "../configure.ac") { chdir(".."); }
 
-my $makefiles = `find dlls -name Makefile.in -print`;
+my @args = @ARGV;
+if (!@args) { @args = split /\s/, `find dlls -name Makefile.in -print`; }
 
-foreach my $i (split(/\s/,$makefiles))
+foreach my $i (@args)
 {
     if ($i =~ /dlls\/(.*)\/tests\/Makefile.in/)
     {
@@ -72,7 +73,7 @@ foreach my $i (split(/\s/,$makefiles))
         next;
     }
 
-    open MAKE,$i;
+    open MAKE, $i or die "cannot open $i\n";
 
     my $module = undef;
     my $dir = $i;
@@ -365,8 +366,6 @@ check test:: \$(BUILDSUBDIRS:%=%/__test__)
 
 crosstest:: \$(BUILDSUBDIRS:%=%/__crosstest__)
 
-checklink:: \$(BUILDSUBDIRS:%=%/__checklink__)
-
 ### Dependencies:
 EOF
 
@@ -409,31 +408,3 @@ print GITIGNORE join("\n", sort @ignores) . "\n";
 
 close GITIGNORE;
 update_file("dlls/.gitignore");
-
-################################################################
-# configure.ac file
-
-open OLD_CONFIG, "configure.ac" or die "cannot open configure.ac";
-open NEW_CONFIG, ">configure.ac.new" or die "cannot create configure.ac.new";
-
-while (<OLD_CONFIG>)
-{
-    print NEW_CONFIG $_;
-    last if /^dlls\/Makefile/;
-}
-
-foreach my $dir (sort (values %directories, values %staticlib_dirs, values %testdirs))
-{
-    print NEW_CONFIG "dlls/$dir/Makefile\n";
-}
-
-my $skip=1;
-while (<OLD_CONFIG>)
-{
-    $skip = 0 unless /^dlls\//;
-    print NEW_CONFIG $_ unless $skip;
-}
-
-close OLD_CONFIG;
-close NEW_CONFIG;
-update_file("configure.ac");

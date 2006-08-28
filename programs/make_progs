@@ -71,9 +71,10 @@ sub update_file($)
 # if we are inside the programs dir, go up one level
 if (! -f "configure.ac" && -f "../configure.ac") { chdir(".."); }
 
-my $makefiles = `find programs -name Makefile.in -print`;
+my @args = @ARGV;
+if (!@args) { @args = split /\s/, `find programs -name Makefile.in -print`; }
 
-foreach my $i (split(/\s/,$makefiles))
+foreach my $i (@args)
 {
     my $module;
 
@@ -225,31 +226,3 @@ print GITIGNORE join("\n", sort @ignores) . "\n";
 
 close GITIGNORE;
 update_file("programs/.gitignore");
-
-################################################################
-# configure.ac file
-
-open OLD_CONFIG, "configure.ac" or die "cannot open configure.ac";
-open NEW_CONFIG, ">configure.ac.new" or die "cannot create configure.ac.new";
-
-while (<OLD_CONFIG>)
-{
-    print NEW_CONFIG $_;
-    last if /^programs\/Makefile/;
-}
-
-foreach my $dir (sort values %directories)
-{
-    print NEW_CONFIG "programs/$dir/Makefile\n";
-}
-
-my $skip=1;
-while (<OLD_CONFIG>)
-{
-    $skip = 0 unless /^programs\//;
-    print NEW_CONFIG $_ unless $skip;
-}
-
-close OLD_CONFIG;
-close NEW_CONFIG;
-update_file("configure.ac");

@@ -1,0 +1,106 @@
+#!/usr/bin/perl -w
+#
+# Build the auto-generated parts of the Wine makefiles.
+#
+# Copyright 2006 Alexandre Julliard
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+# update a file if changed
+sub update_file($)
+{
+    my $file = shift;
+    my $ret = system "cmp $file $file.new >/dev/null";
+    if (!$ret)
+    {
+        unlink "$file.new";
+        print "$file is unchanged\n";
+    }
+    else
+    {
+        rename "$file.new", "$file";
+        print "$file updated\n";
+    }
+    return $ret;
+}
+
+# replace some lines in a file between two markers
+sub replace_in_file($$$@)
+{
+    my $file = shift;
+    my $start = shift;
+    my $end = shift;
+
+    open OLD_FILE, "$file" or die "cannot open $file";
+    open NEW_FILE, ">$file.new" or die "cannot create $file.new";
+
+    while (<OLD_FILE>)
+    {
+        last if /$start/;
+        print NEW_FILE $_;
+    }
+
+    print NEW_FILE @_;
+
+    if (defined($end))
+    {
+        my $skip=1;
+        while (<OLD_FILE>)
+        {
+            print NEW_FILE $_ unless $skip;
+            $skip = 0 if /$end/;
+        }
+    }
+
+    close OLD_FILE;
+    close NEW_FILE;
+    return update_file($file);
+}
+
+my (@makefiles, @makerules);
+
+if (-d ".git")
+{
+    @makefiles = map { s/\.in$//; $_; } split /\s/, `git ls-files -c Makefile.in \\*/Makefile.in`;
+    @makerules = map { s/\.in$//; $_; } split /\s/, `git ls-files -c Make\\*rules.in \\*/Make\\*rules.in`;
+}
+else
+{
+    @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
+    @makerules = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Make\\*.rules.in -print`);
+}
+
+
+################################################################
+# update the makefile list in configure.ac
+
+replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
+                 "AC_CONFIG_FILES([\n",
+                 join ("\n", (sort @makerules), (sort @makefiles) ), "])\n" );
+
+
+################################################################
+# update dlls/Makefile.in
+
+my @dll_makefiles = grep /^dlls\//, @makefiles;
+system "dlls/make_dlls", @dll_makefiles;
+
+
+################################################################
+# update programs/Makefile.in
+
+my @prog_makefiles = grep /^programs\//, @makefiles;
+system "programs/make_progs", @prog_makefiles;
