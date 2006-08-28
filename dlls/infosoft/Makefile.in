@@ -11,8 +11,6 @@ C_SRCS = \
 	infosoft_main.c \
 	wordbreaker.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

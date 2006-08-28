@@ -21,8 +21,6 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

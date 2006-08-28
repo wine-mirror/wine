@@ -55,8 +55,6 @@ RC_BINARIES = \
 EXTRA_SRCS = sql.y cond.y
 EXTRA_OBJS = sql.tab.o cond.tab.o
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 sql.tab.c sql.tab.h: sql.y

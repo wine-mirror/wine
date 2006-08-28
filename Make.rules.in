@@ -225,18 +225,13 @@ depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
 $(SUBDIRS:%=%/__clean__): dummy
 	@cd `dirname $@` && $(MAKE) clean
 
-$(SUBDIRS:%=%/__testclean__): dummy
-	@cd `dirname $@` && $(MAKE) testclean
-
 $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
-
-testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 	$(RM) $(CLEAN_FILES) $(IDL_SRCS:.idl=.h) $(IDL_SRCS:.idl=_c.c) $(IDL_SRCS:.idl=_i.c) $(IDL_SRCS:.idl=_p.c) $(IDL_SRCS:.idl=_s.c) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
 
-.PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
+.PHONY: clean $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 
 # Rules for installing
 
@@ -265,13 +260,39 @@ $(INSTALLDIRS):
 
 # Rules for testing
 
-$(SUBDIRS:%=%/__test__): dummy
+$(TESTSUBDIRS:%=%/__test__): dummy
 	@cd `dirname $@` && $(MAKE) test
 
-$(SUBDIRS:%=%/__crosstest__): dummy
+$(TESTSUBDIRS:%=%/__crosstest__): dummy
 	@cd `dirname $@` && $(MAKE) crosstest
 
-.PHONY: check test crosstest $(SUBDIRS:%=%/__test__) $(SUBDIRS:%=%/__crosstest__)
+$(TESTSUBDIRS:%=%/__testclean__): dummy
+	@cd `dirname $@` && $(MAKE) testclean
+
+check test:: $(TESTSUBDIRS:%=%/__test__)
+
+crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
+
+testclean:: $(TESTSUBDIRS:%=%/__testclean__)
+
+.PHONY: check test testclean crosstest $(TESTSUBDIRS:%=%/__test__) $(TESTSUBDIRS:%=%/__crosstest__) $(TESTSUBDIRS:%=%/__testclean__) 
+
+# Rules for auto documentation
+
+$(DOCSUBDIRS:%=%/__man__): dummy
+	@cd `dirname $@` && $(MAKE) man
+
+$(DOCSUBDIRS:%=%/__doc_html__): dummy
+	@cd `dirname $@` && $(MAKE) doc-html
+
+$(DOCSUBDIRS:%=%/__doc_sgml__): dummy
+	@cd `dirname $@` && $(MAKE) doc-sgml
+
+man: $(DOCSUBDIRS:%=%/__man__)
+doc-html: $(DOCSUBDIRS:%=%/__doc_html__)
+doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
+
+.PHONY: man doc-html doc-sgml $(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__)
 
 # Misc. rules
 

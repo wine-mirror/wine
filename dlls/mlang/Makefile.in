@@ -12,8 +12,6 @@ C_SRCS = \
 	mlang.c \
 	regsvr.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

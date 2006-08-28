@@ -49,7 +49,7 @@ depend: $(TESTLIST)
 
 # Rules for testing
 
-check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)
+check test:: $(TESTRESULTS)
 
 $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 

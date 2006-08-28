@@ -26,8 +26,6 @@ C_SRCS = \
 	rpcrt4_main.c \
 	rpcss_np_client.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

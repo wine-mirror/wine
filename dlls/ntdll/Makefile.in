@@ -54,8 +54,6 @@ C_SRCS = \
 
 EXTRA_OBJS = relay32.o
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 relay32.o: $(WINEBUILD)

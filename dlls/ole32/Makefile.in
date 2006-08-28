@@ -71,8 +71,6 @@ RC_BINARIES = \
 IDL_SRCS = \
 	dcom.idl
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

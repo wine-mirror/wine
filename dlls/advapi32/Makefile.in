@@ -22,8 +22,6 @@ C_SRCS = \
 	security.c \
 	service.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

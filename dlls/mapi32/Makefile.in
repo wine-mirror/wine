@@ -14,8 +14,6 @@ C_SRCS = \
 	sendmail.c \
 	util.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

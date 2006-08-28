@@ -107,10 +107,7 @@ $(SUBDIRS:%=%/__depend__): tools include
 
 # Test rules
 
-check test:: $(TESTSUBDIRS:%=%/__test__)
 $(TESTSUBDIRS:%=%/__test__): wine
-
-crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
 $(TESTSUBDIRS:%=%/__crosstest__): tools include
 
 # Misc rules

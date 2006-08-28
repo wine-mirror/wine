@@ -62,8 +62,6 @@ C_SRCS16 = \
 RC_SRCS = version.rc
 RC_SRCS16 = version16.rc
 
-SUBDIRS = tests
-
 EXTRASUBDIRS = \
 	enhmfdrv \
 	mfdrv

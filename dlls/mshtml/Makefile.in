@@ -42,8 +42,6 @@ RC_SRCS = rsrc.rc
 
 IDL_SRCS = nsiface.idl
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 rsrc.res: mshtml.inf blank.htm

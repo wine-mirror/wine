@@ -64,8 +64,6 @@ RC_BINARIES = \
 	idi_tt_warn_sm.ico \
 	idt_check.bmp
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -207,18 +207,73 @@ IMPLIBSUBDIRS = \
 	uuid \
 	winecrt0
 
+TESTSUBDIRS = \
+	advapi32/tests \
+	advpack/tests \
+	cabinet/tests \
+	comcat/tests \
+	comctl32/tests \
+	comdlg32/tests \
+	crypt32/tests \
+	d3d8/tests \
+	d3d9/tests \
+	ddraw/tests \
+	dinput/tests \
+	dnsapi/tests \
+	dsound/tests \
+	gdi/tests \
+	hlink/tests \
+	infosoft/tests \
+	iphlpapi/tests \
+	kernel/tests \
+	lz32/tests \
+	mapi32/tests \
+	mlang/tests \
+	msacm32/tests \
+	mscms/tests \
+	mshtml/tests \
+	msi/tests \
+	msvcrt/tests \
+	msvcrtd/tests \
+	msxml3/tests \
+	netapi32/tests \
+	ntdll/tests \
+	ole32/tests \
+	oleaut32/tests \
+	psapi/tests \
+	quartz/tests \
+	riched20/tests \
+	rpcrt4/tests \
+	rsabase/tests \
+	rsaenh/tests \
+	secur32/tests \
+	setupapi/tests \
+	shdocvw/tests \
+	shell32/tests \
+	shlwapi/tests \
+	urlmon/tests \
+	user/tests \
+	usp10/tests \
+	uxtheme/tests \
+	version/tests \
+	wininet/tests \
+	winmm/tests \
+	winspool.drv/tests \
+	ws2_32/tests
+
 SUBDIRS = \
 	$(BASEDIRS) \
 	$(IMPLIBSUBDIRS) \
+	$(TESTSUBDIRS) \
 	glu32 \
 	glut32 \
 	opengl32 \
 	wined3d \
 	winex11.drv
 
-BUILDSUBDIRS = $(BASEDIRS) $(EXTRADIRS)
-
-INSTALLSUBDIRS = $(BUILDSUBDIRS) $(IMPLIBSUBDIRS)
+BUILDSUBDIRS   = $(BASEDIRS) $(EXTRADIRS) $(TESTSUBDIRS)
+INSTALLSUBDIRS = $(BASEDIRS) $(EXTRADIRS) $(IMPLIBSUBDIRS)
+DOCSUBDIRS     = $(BASEDIRS) $(EXTRADIRS)
 
 @MAKE_RULES@
 
@@ -946,25 +1001,6 @@ strmiids/libstrmiids.a: strmiids
 uuid/libuuid.a: uuid
 winecrt0/libwinecrt0.a: winecrt0
 
-# Rules for auto documentation
-
-$(SUBDIRS:%=%/__man__): dummy
-	cd `dirname $@` && $(MAKE) man
-
-man: $(SUBDIRS:%=%/__man__)
-
-$(SUBDIRS:%=%/__doc_html__): dummy
-	cd `dirname $@` && $(MAKE) doc-html
-
-doc-html: $(SUBDIRS:%=%/__doc_html__)
-
-$(SUBDIRS:%=%/__doc_sgml__): dummy
-	cd `dirname $@` && $(MAKE) doc-sgml
-
-doc-sgml: $(SUBDIRS:%=%/__doc_sgml__)
-
-.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
-
 # Misc rules
 
 install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
@@ -976,9 +1012,5 @@ uninstall::
 
 clean::
 	$(RM) $(IMPORT_SYMLINKS) $(WIN16_FILES)
-
-check test:: $(BUILDSUBDIRS:%=%/__test__)
-
-crosstest:: $(BUILDSUBDIRS:%=%/__crosstest__)
 
 ### Dependencies:

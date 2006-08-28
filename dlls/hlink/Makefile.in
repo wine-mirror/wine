@@ -13,8 +13,6 @@ C_SRCS = \
 	hlink_main.c \
 	link.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

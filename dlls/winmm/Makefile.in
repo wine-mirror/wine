@@ -28,8 +28,6 @@ SPEC_SRCS16 = \
 
 RC_SRCS = winmm_res.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

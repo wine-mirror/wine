@@ -31,10 +31,4 @@ install-lib::
 uninstall::
 	$(RM) $(DESTDIR)$(dlldir)/$(MODULE)
 
-# Misc. rules
-
-.PHONY: man doc-html doc-sgml
-
-man doc-html doc-sgml:
-
 # End of global library rules

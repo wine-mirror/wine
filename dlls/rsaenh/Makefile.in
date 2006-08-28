@@ -18,8 +18,6 @@ C_SRCS = \
 	rsa.c \
 	rsaenh.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -93,7 +93,7 @@ MC_SRCS = \
 	messages/winerr_enu.mc
 
 EXTRA_OBJS   = relay16asm.o
-SUBDIRS      = tests
+
 EXTRASUBDIRS = messages nls
 
 @MAKE_DLL_RULES@

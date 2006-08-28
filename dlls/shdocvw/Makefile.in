@@ -30,8 +30,6 @@ C_SRCS = \
 RC_SRCS = shdocvw.rc
 IDL_TLB_SRCS = shdocvw_v1.tlb
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

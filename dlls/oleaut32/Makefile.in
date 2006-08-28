@@ -39,8 +39,6 @@ SPEC_SRCS16 = \
 
 RC_SRCS = oleaut32.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

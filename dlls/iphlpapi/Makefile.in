@@ -12,8 +12,6 @@ C_SRCS = \
 	iphlpapi_main.c \
 	ipstats.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -33,8 +33,6 @@ SPEC_SRCS16 = setupx.spec
 
 RC_SRCS= setupapi.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

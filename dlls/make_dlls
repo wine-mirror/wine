@@ -56,6 +56,10 @@ sub update_file($)
     {
         rename "$file.new", "$file";
         print "$file updated\n";
+        if (-x "./config.status" && $file =~ /(.*Makefile)\.in$/)
+        {
+            system "./config.status", $1;
+        }
     }
 }
 
@@ -63,17 +67,17 @@ sub update_file($)
 if (! -f "configure.ac" && -f "../configure.ac") { chdir(".."); }
 
 my @args = @ARGV;
-if (!@args) { @args = split /\s/, `find dlls -name Makefile.in -print`; }
+if (!@args) { @args = map { s/^(.*)\.in/$1/; $_; } split(/\s/,`find dlls -name Makefile.in -print`); }
 
 foreach my $i (@args)
 {
-    if ($i =~ /dlls\/(.*)\/tests\/Makefile.in/)
+    if ($i =~ /dlls\/(.*)\/tests\/Makefile/)
     {
         $testdirs{$1} = "$1/tests";
         next;
     }
 
-    open MAKE, $i or die "cannot open $i\n";
+    open MAKE, "$i.in" or die "cannot open $i.in\n";
 
     my $module = undef;
     my $dir = $i;
@@ -165,23 +169,21 @@ foreach my $dir (sort values %directories)
     printf NEWMAKE " \\\n\t%s", $dir;
 }
 
-printf NEWMAKE "\n\nIMPLIBSUBDIRS =";
-foreach my $dir (sort values %staticlib_dirs)
-{
-    printf NEWMAKE " \\\n\t%s", $dir;
-}
+print NEWMAKE "\n\nIMPLIBSUBDIRS = \\\n\t";
+print NEWMAKE join " \\\n\t", sort values %staticlib_dirs;
 
-printf NEWMAKE "\n\nSUBDIRS = \\\n\t\$(BASEDIRS) \\\n\t\$(IMPLIBSUBDIRS)";
-foreach my $dir (sort keys %special_dlls)
-{
-    printf NEWMAKE " \\\n\t%s", $dir;
-}
-printf NEWMAKE <<EOF;
+print NEWMAKE "\n\nTESTSUBDIRS = \\\n\t";
+print NEWMAKE join " \\\n\t", sort values %testdirs;
+
+print NEWMAKE "\n\nSUBDIRS = \\\n\t";
+print NEWMAKE join " \\\n\t", "\$(BASEDIRS)", "\$(IMPLIBSUBDIRS)", "\$(TESTSUBDIRS)",
+                              sort keys %special_dlls;
+print NEWMAKE <<EOF;
 
 
-BUILDSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS)
-
-INSTALLSUBDIRS = \$(BUILDSUBDIRS) \$(IMPLIBSUBDIRS)
+BUILDSUBDIRS   = \$(BASEDIRS) \$(EXTRADIRS) \$(TESTSUBDIRS)
+INSTALLSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS) \$(IMPLIBSUBDIRS)
+DOCSUBDIRS     = \$(BASEDIRS) \$(EXTRADIRS)
 EOF
 
 ################################################################
@@ -331,25 +333,6 @@ foreach my $mod (sort keys %staticlib_dirs)
 
 print NEWMAKE <<EOF;
 
-# Rules for auto documentation
-
-\$(SUBDIRS:%=%/__man__): dummy
-	cd `dirname \$@` && \$(MAKE) man
-
-man: \$(SUBDIRS:%=%/__man__)
-
-\$(SUBDIRS:%=%/__doc_html__): dummy
-	cd `dirname \$@` && \$(MAKE) doc-html
-
-doc-html: \$(SUBDIRS:%=%/__doc_html__)
-
-\$(SUBDIRS:%=%/__doc_sgml__): dummy
-	cd `dirname \$@` && \$(MAKE) doc-sgml
-
-doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
-
-.PHONY: man doc-html doc-sgml \$(SUBDIRS:%=%/__man__) \$(SUBDIRS:%=%/__doc_html__) \$(SUBDIRS:%=%/__doc_sgml__)
-
 # Misc rules
 
 install-lib:: \$(INSTALLSUBDIRS:%=%/__install-lib__)
@@ -361,10 +344,6 @@ uninstall::
 
 clean::
 	\$(RM) \$(IMPORT_SYMLINKS) \$(WIN16_FILES)
-
-check test:: \$(BUILDSUBDIRS:%=%/__test__)
-
-crosstest:: \$(BUILDSUBDIRS:%=%/__crosstest__)
 
 ### Dependencies:
 EOF

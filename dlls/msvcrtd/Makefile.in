@@ -11,8 +11,6 @@ EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 C_SRCS = \
 	debug.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

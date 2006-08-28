@@ -78,8 +78,6 @@ C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
 SPEC_SRCS16 = shell.spec
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 # Special rules for 16-bit resource files

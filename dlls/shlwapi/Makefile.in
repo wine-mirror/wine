@@ -28,8 +28,6 @@ C_SRCS = \
 RC_SRCS = \
 	shlwapi.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

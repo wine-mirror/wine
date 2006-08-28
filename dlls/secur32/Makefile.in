@@ -18,8 +18,6 @@ C_SRCS = \
 	util.c \
 	wrapper.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

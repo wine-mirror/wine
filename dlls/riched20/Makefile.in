@@ -26,8 +26,6 @@ C_SRCS = \
 	wrap.c \
 	writer.c
 
-SUBDIRS = tests
-
 RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@

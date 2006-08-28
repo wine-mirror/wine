@@ -144,8 +144,6 @@ RC_SRCS16 = \
 	resources/mouse.rc \
 	resources/version16.rc
 
-SUBDIRS = tests
-
 EXTRASUBDIRS = resources
 
 @MAKE_DLL_RULES@

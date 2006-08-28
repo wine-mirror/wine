@@ -12,8 +12,6 @@ C_SRCS = \
 	install.c \
 	reg.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

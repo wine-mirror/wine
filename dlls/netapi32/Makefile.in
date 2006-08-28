@@ -21,8 +21,6 @@ C_SRCS = \
 	share.c \
 	wksta.c
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

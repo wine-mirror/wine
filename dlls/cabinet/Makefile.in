@@ -13,8 +13,6 @@ C_SRCS = \
 
 RC_SRCS = cabinet.rc
 
-SUBDIRS = tests
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:
