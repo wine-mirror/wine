@@ -60,8 +60,8 @@
 @ stub SoftpubCheckCert
 @ stub SoftpubCleanup
 @ stub SoftpubDefCertInit
-@ stub SoftpubDllRegisterServer
-@ stub SoftpubDllUnregisterServer
+@ stdcall SoftpubDllRegisterServer()
+@ stdcall SoftpubDllUnregisterServer()
 @ stub SoftpubDumpStructure
 @ stub SoftpubFreeDefUsageCallData
 @ stub SoftpubInitialize
@@ -118,7 +118,7 @@
 @ stdcall WintrustLoadFunctionPointers(ptr ptr)
 @ stdcall WintrustRemoveActionID(ptr)
 @ stdcall WintrustSetRegPolicyFlags(long)
-@ stub mscat32DllRegisterServer
-@ stub mscat32DllUnregisterServer
-@ stub mssip32DllRegisterServer
-@ stub mssip32DllUnregisterServer
+@ stdcall mscat32DllRegisterServer()
+@ stdcall mscat32DllUnregisterServer()
+@ stdcall mssip32DllRegisterServer()
+@ stdcall mssip32DllUnregisterServer()

@@ -54,8 +54,8 @@ BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
 }
 
 /***********************************************************************
-  *             DllRegisterServer (WINTRUST.@)
-  */
+ *              DllRegisterServer (WINTRUST.@)
+ */
 HRESULT WINAPI DllRegisterServer(void)
 {
      FIXME("stub\n");
@@ -63,9 +63,63 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
-  *             DllUnregisterServer (WINTRUST.@)
-  */
+ *              DllUnregisterServer (WINTRUST.@)
+ */
 HRESULT WINAPI DllUnregisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              SoftpubDllRegisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI SoftpubDllRegisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              SoftpubDllUnregisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI SoftpubDllUnregisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              mscat32DllRegisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI mscat32DllRegisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              mscat32DllUnregisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI mscat32DllUnregisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              mssip32DllRegisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI mssip32DllRegisterServer(void)
+{
+     FIXME("stub\n");
+     return S_OK;
+}
+
+/***********************************************************************
+ *              mssip32DllUnregisterServer (WINTRUST.@)
+ */
+HRESULT WINAPI mssip32DllUnregisterServer(void)
 {
      FIXME("stub\n");
      return S_OK;
