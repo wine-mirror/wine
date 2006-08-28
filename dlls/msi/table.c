@@ -765,7 +765,7 @@ end:
 
 static UINT save_string_table( MSIDATABASE *db )
 {
-    UINT i, count, datasize, poolsize, sz, used, r, codepage;
+    UINT i, count, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
     UINT ret = ERROR_FUNCTION_FAILED;
     static const WCHAR szStringData[] = {
         '_','S','t','r','i','n','g','D','a','t','a',0 };
@@ -777,8 +777,9 @@ static UINT save_string_table( MSIDATABASE *db )
     TRACE("\n");
 
     /* construct the new table in memory first */
-    datasize = msi_string_totalsize( db->strings, &count );
-    poolsize = (count + 1)*2*sizeof(USHORT);
+    count = msi_string_totalsize( db->strings, &datasize, &poolsize );
+
+    TRACE("%u %u %u\n", count, datasize, poolsize );
 
     pool = msi_alloc( poolsize );
     if( ! pool )
@@ -797,6 +798,7 @@ static UINT save_string_table( MSIDATABASE *db )
     codepage = msi_string_get_codepage( db->strings );
     pool[0]=codepage&0xffff;
     pool[1]=(codepage>>16);
+    n = 1;
     for( i=1; i<count; i++ )
     {
         sz = datasize - used;
@@ -808,9 +810,20 @@ static UINT save_string_table( MSIDATABASE *db )
         }
         if( sz && (sz < (datasize - used ) ) )
             sz--;
-        TRACE("adding %u bytes %s\n", sz, debugstr_a(data+used) );
-        pool[ i*2 ] = sz;
-        pool[ i*2 + 1 ] = msi_id_refcount( db->strings, i );
+
+        pool[ n*2 + 1 ] = msi_id_refcount( db->strings, i );
+        if (sz < 0x10000)
+        {
+            pool[ n*2 ] = sz;
+            n++;
+        }
+        else
+        {
+            pool[ n*2 ] = 0;
+            pool[ n*2 + 2 ] = sz&0xffff;
+            pool[ n*2 + 3 ] = (sz>>16);
+            n += 2;
+        }
         used += sz;
         if( used > datasize  )
         {

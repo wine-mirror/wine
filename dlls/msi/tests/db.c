@@ -940,9 +940,7 @@ static void test_longstrings(void)
 
     r = MsiRecordGetString(hrec, 2, NULL, &len);
     ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
-    todo_wine {
     ok(len == STRING_LENGTH, "string length wrong\n");
-    }
 
     MsiCloseHandle(hrec);
     MsiCloseHandle(hdb);

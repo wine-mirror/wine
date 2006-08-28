@@ -328,7 +328,7 @@ extern string_table *msi_init_stringtable( int entries, UINT codepage );
 extern VOID msi_destroy_stringtable( string_table *st );
 extern UINT msi_string_count( string_table *st );
 extern UINT msi_id_refcount( string_table *st, UINT i );
-extern UINT msi_string_totalsize( string_table *st, UINT *last );
+extern UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize );
 extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
 extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern UINT msi_string_get_codepage( string_table *st );
