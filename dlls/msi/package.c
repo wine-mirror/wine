@@ -365,6 +365,10 @@ static UINT msi_get_word_count( MSIPACKAGE *package )
     MSIHANDLE suminfo;
     MSIHANDLE hdb = alloc_msihandle( &package->db->hdr );
 
+    if (!hdb) {
+        ERR("Unable to allocate handle\n");
+        return 0;
+    }
     rc = MsiGetSummaryInformationW( hdb, NULL, 0, &suminfo );
     MsiCloseHandle(hdb);
     if (rc != ERROR_SUCCESS)
@@ -584,6 +588,8 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
     if( ret == ERROR_SUCCESS )
     {
         *phPackage = alloc_msihandle( &package->hdr );
+        if (! *phPackage)
+            ret = ERROR_NOT_ENOUGH_MEMORY;
         msiobj_release( &package->hdr );
     }
 

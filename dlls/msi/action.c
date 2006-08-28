@@ -3146,6 +3146,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     /* FIXME: Need to write more keys to the user registry */
   
     hDb= alloc_msihandle( &package->db->hdr );
+    if (!hDb) {
+        rc = ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
     rc = MsiGetSummaryInformationW(hDb, NULL, 0, &hSumInfo); 
     MsiCloseHandle(hDb);
     if (rc == ERROR_SUCCESS)

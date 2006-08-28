@@ -124,6 +124,8 @@ UINT WINAPI MsiOpenProductW( LPCWSTR szProduct, MSIHANDLE *phProduct )
    if( r == ERROR_SUCCESS )
    {
        *phProduct = alloc_msihandle( &package->hdr );
+       if (! *phProduct)
+           r = ERROR_NOT_ENOUGH_MEMORY;
        msiobj_release( &package->hdr );
    }
    return r;

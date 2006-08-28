@@ -190,6 +190,8 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
     if( ret == ERROR_SUCCESS )
     {
         *phDB = alloc_msihandle( &db->hdr );
+        if (! *phDB)
+            ret = ERROR_NOT_ENOUGH_MEMORY;
         msiobj_release( &db->hdr );
     }
 
