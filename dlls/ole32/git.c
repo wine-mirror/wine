@@ -391,7 +391,7 @@ static const IGlobalInterfaceTableVtbl StdGlobalInterfaceTableImpl_Vtbl =
 };
 
 /** This function constructs the GIT. It should only be called once **/
-void* StdGlobalInterfaceTable_Construct()
+void* StdGlobalInterfaceTable_Construct(void)
 {
   StdGlobalInterfaceTableImpl* newGIT;
 

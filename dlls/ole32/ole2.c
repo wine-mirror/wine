@@ -1814,7 +1814,7 @@ void WINAPI ReleaseStgMedium(
  *
  * Initializes the OLE drag and drop data structures.
  */
-static void OLEDD_Initialize()
+static void OLEDD_Initialize(void)
 {
     WNDCLASSA wndClass;
 
@@ -2160,7 +2160,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
  * a button state mask equivalent to the one passed in the
  * WM_MOUSEMOVE wParam.
  */
-static DWORD OLEDD_GetButtonState()
+static DWORD OLEDD_GetButtonState(void)
 {
   BYTE  keyboardState[256];
   DWORD keyMask = 0;

@@ -2347,7 +2347,7 @@ HRESULT WINAPI CoFileTimeNow( FILETIME *lpFileTime )
     return S_OK;
 }
 
-static void COM_RevokeAllClasses()
+static void COM_RevokeAllClasses(void)
 {
   EnterCriticalSection( &csRegisteredClassList );
 
