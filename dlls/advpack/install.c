@@ -327,7 +327,7 @@ static HRESULT spapi_install(ADVInfo *info)
     SetupTermDefaultQueueCallback(context);
 
     ret = SetupInstallFromInfSectionW(NULL, info->hinf, info->install_sec,
-                                      SPINST_INIFILES | SPINST_REGISTRY,
+                                      SPINST_INIFILES | SPINST_REGISTRY | SPINST_REGSVR,
                                       HKEY_LOCAL_MACHINE, NULL, 0,
                                       NULL, NULL, NULL, NULL);
     if (!ret)
