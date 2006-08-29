@@ -72,6 +72,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
     case DLL_PROCESS_DETACH:
         msi_dialog_unregister_class();
+        msi_free_handle_table();
         break;
     }
     return TRUE;

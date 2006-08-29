@@ -60,6 +60,13 @@ typedef struct msi_handle_info_t
 static msi_handle_info *msihandletable = NULL;
 static int msihandletable_size = 0;
 
+void msi_free_handle_table(void)
+{
+    msi_free( msihandletable );
+    msihandletable = NULL;
+    msihandletable_size = 0;
+}
+
 MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
 {
     MSIHANDLE ret = 0;
@@ -80,12 +87,12 @@ MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
             newsize = 256;
             p = msi_alloc_zero(newsize*sizeof(msi_handle_info));
         }
-        else 
-	{
+        else
+        {
             newsize = msihandletable_size * 2;
             p = msi_realloc_zero(msihandletable,
                             newsize*sizeof(msi_handle_info));
-	}
+        }
         if (!p)
             goto out;
         msihandletable = p;
