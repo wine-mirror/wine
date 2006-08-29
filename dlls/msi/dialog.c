@@ -1979,6 +1979,27 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory Combo ***************************************/
 
+static void msi_dialog_update_directory_combo( msi_dialog *dialog )
+{
+    msi_control *control;
+    LPWSTR prop, path;
+    BOOL indirect;
+
+    control = msi_dialog_find_control( dialog, szDirectoryCombo );
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+    path = msi_dup_property( dialog->package, prop );
+
+    PathStripPathW( path );
+    PathRemoveBackslashW( path );
+
+    SendMessageW( control->hwnd, CB_INSERTSTRING, 0, (LPARAM)path );
+    SendMessageW( control->hwnd, CB_SETCURSEL, 0, 0 );
+
+    msi_free( path );
+    msi_free( prop );
+}
+
 static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -2035,6 +2056,7 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
 
     MSI_SetPropertyW( dialog->package, prop, path );
 
+    msi_dialog_update_directory_combo( dialog );
     msi_dialog_update_pathedit( dialog );
 
     msi_free( path );
