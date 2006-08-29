@@ -74,6 +74,7 @@ TESTBINS = \
 	wininet_test.exe$(DLLEXT) \
 	winmm_test.exe$(DLLEXT) \
 	winspool.drv_test.exe$(DLLEXT) \
+	wintrust_test.exe$(DLLEXT) \
 	ws2_32_test.exe$(DLLEXT)
 
 advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
@@ -178,6 +179,8 @@ winmm_test.exe$(DLLEXT): $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT)
 	cp $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT) $@ && $(STRIP) $@
 winspool.drv_test.exe$(DLLEXT): $(DLLDIR)/winspool.drv/tests/winspool.drv_test.exe$(DLLEXT)
 	cp $(DLLDIR)/winspool.drv/tests/winspool.drv_test.exe$(DLLEXT) $@ && $(STRIP) $@
+wintrust_test.exe$(DLLEXT): $(DLLDIR)/wintrust/tests/wintrust_test.exe$(DLLEXT)
+	cp $(DLLDIR)/wintrust/tests/wintrust_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ws2_32_test.exe$(DLLEXT): $(DLLDIR)/ws2_32/tests/ws2_32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ws2_32/tests/ws2_32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 

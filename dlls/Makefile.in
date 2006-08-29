@@ -259,6 +259,7 @@ TESTSUBDIRS = \
 	wininet/tests \
 	winmm/tests \
 	winspool.drv/tests \
+	wintrust/tests \
 	ws2_32/tests
 
 SUBDIRS = \
