@@ -393,7 +393,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
            9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'G','u','l','i','m','\0'},
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   CHINESEBIG5_CHARSET,
@@ -437,7 +437,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
            8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','M','i','n','g','l','i','u','\0'} /* FIXME: Is this correct? */
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
 };
