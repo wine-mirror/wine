@@ -263,3 +263,32 @@ void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *This, IRpcChannelBuff
     FIXME("Not implemented\n");
     return;
 }
+
+/***********************************************************************
+ *           NdrStubInitialize [RPCRT4.@]
+ */
+void WINAPI NdrStubInitialize(PRPC_MESSAGE pRpcMsg,
+                             PMIDL_STUB_MESSAGE pStubMsg,
+                             PMIDL_STUB_DESC pStubDescriptor,
+                             LPRPCCHANNELBUFFER pRpcChannelBuffer)
+{
+  TRACE("(%p,%p,%p,%p)\n", pRpcMsg, pStubMsg, pStubDescriptor, pRpcChannelBuffer);
+  NdrServerInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor);
+  pStubMsg->pRpcChannelBuffer = pRpcChannelBuffer;
+}
+
+/***********************************************************************
+ *           NdrStubGetBuffer [RPCRT4.@]
+ */
+void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER This,
+                            LPRPCCHANNELBUFFER pRpcChannelBuffer,
+                            PMIDL_STUB_MESSAGE pStubMsg)
+{
+  TRACE("(%p,%p)\n", This, pStubMsg);
+  pStubMsg->pRpcChannelBuffer = pRpcChannelBuffer;
+  pStubMsg->RpcMsg->BufferLength = pStubMsg->BufferLength;
+  I_RpcGetBuffer(pStubMsg->RpcMsg); /* ? */
+  pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
+  pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
+  pStubMsg->Buffer = pStubMsg->BufferStart;
+}

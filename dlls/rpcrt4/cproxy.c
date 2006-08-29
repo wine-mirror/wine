@@ -285,8 +285,8 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl =
   StdProxy_Disconnect
 };
 
-HRESULT WINAPI StdProxy_GetChannel(LPVOID iface,
-                                  LPRPCCHANNELBUFFER *ppChannel)
+static HRESULT StdProxy_GetChannel(LPVOID iface,
+                                   LPRPCCHANNELBUFFER *ppChannel)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->GetChannel(%p) %s\n",This,ppChannel,This->name);
@@ -295,8 +295,8 @@ HRESULT WINAPI StdProxy_GetChannel(LPVOID iface,
   return S_OK;
 }
 
-HRESULT WINAPI StdProxy_GetIID(LPVOID iface,
-                              const IID **ppiid)
+static HRESULT StdProxy_GetIID(LPVOID iface,
+                               const IID **ppiid)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->GetIID(%p) %s\n",This,ppiid,This->name);
@@ -338,6 +338,108 @@ ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
 #else /* object refcounting */
   return IUnknown_Release(This->pUnkOuter);
 #endif
+}
+
+/***********************************************************************
+ *           NdrProxyInitialize [RPCRT4.@]
+ */
+void WINAPI NdrProxyInitialize(void *This,
+                              PRPC_MESSAGE pRpcMsg,
+                              PMIDL_STUB_MESSAGE pStubMsg,
+                              PMIDL_STUB_DESC pStubDescriptor,
+                              unsigned int ProcNum)
+{
+  HRESULT hr;
+
+  TRACE("(%p,%p,%p,%p,%d)\n", This, pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
+  NdrClientInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
+  if (This) StdProxy_GetChannel(This, &pStubMsg->pRpcChannelBuffer);
+  if (pStubMsg->pRpcChannelBuffer) {
+    hr = IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
+                                     &pStubMsg->dwDestContext,
+                                     &pStubMsg->pvDestContext);
+  }
+  TRACE("channel=%p\n", pStubMsg->pRpcChannelBuffer);
+}
+
+/***********************************************************************
+ *           NdrProxyGetBuffer [RPCRT4.@]
+ */
+void WINAPI NdrProxyGetBuffer(void *This,
+                             PMIDL_STUB_MESSAGE pStubMsg)
+{
+  HRESULT hr;
+  const IID *riid = NULL;
+
+  TRACE("(%p,%p)\n", This, pStubMsg);
+  pStubMsg->RpcMsg->BufferLength = pStubMsg->BufferLength;
+  pStubMsg->dwStubPhase = PROXY_GETBUFFER;
+  hr = StdProxy_GetIID(This, &riid);
+  hr = IRpcChannelBuffer_GetBuffer(pStubMsg->pRpcChannelBuffer,
+                                  (RPCOLEMESSAGE*)pStubMsg->RpcMsg,
+                                  riid);
+  pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
+  pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
+  pStubMsg->Buffer = pStubMsg->BufferStart;
+  pStubMsg->dwStubPhase = PROXY_MARSHAL;
+}
+
+/***********************************************************************
+ *           NdrProxySendReceive [RPCRT4.@]
+ */
+void WINAPI NdrProxySendReceive(void *This,
+                               PMIDL_STUB_MESSAGE pStubMsg)
+{
+  ULONG Status = 0;
+  HRESULT hr;
+
+  TRACE("(%p,%p)\n", This, pStubMsg);
+
+  if (!pStubMsg->pRpcChannelBuffer)
+  {
+    WARN("Trying to use disconnected proxy %p\n", This);
+    RpcRaiseException(RPC_E_DISCONNECTED);
+  }
+
+  pStubMsg->dwStubPhase = PROXY_SENDRECEIVE;
+  hr = IRpcChannelBuffer_SendReceive(pStubMsg->pRpcChannelBuffer,
+                                    (RPCOLEMESSAGE*)pStubMsg->RpcMsg,
+                                    &Status);
+  pStubMsg->dwStubPhase = PROXY_UNMARSHAL;
+  pStubMsg->BufferLength = pStubMsg->RpcMsg->BufferLength;
+  pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
+  pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
+  pStubMsg->Buffer = pStubMsg->BufferStart;
+
+  /* raise exception if call failed */
+  if (hr == RPC_S_CALL_FAILED) RpcRaiseException(*(DWORD*)pStubMsg->Buffer);
+  else if (FAILED(hr)) RpcRaiseException(hr);
+}
+
+/***********************************************************************
+ *           NdrProxyFreeBuffer [RPCRT4.@]
+ */
+void WINAPI NdrProxyFreeBuffer(void *This,
+                              PMIDL_STUB_MESSAGE pStubMsg)
+{
+  HRESULT hr;
+
+  TRACE("(%p,%p)\n", This, pStubMsg);
+  hr = IRpcChannelBuffer_FreeBuffer(pStubMsg->pRpcChannelBuffer,
+                                   (RPCOLEMESSAGE*)pStubMsg->RpcMsg);
+}
+
+/***********************************************************************
+ *           NdrProxyErrorHandler [RPCRT4.@]
+ */
+HRESULT WINAPI NdrProxyErrorHandler(DWORD dwExceptionCode)
+{
+  WARN("(0x%08lx): a proxy call failed\n", dwExceptionCode);
+
+  if (FAILED(dwExceptionCode))
+    return dwExceptionCode;
+  else
+    return HRESULT_FROM_WIN32(dwExceptionCode);
 }
 
 HRESULT WINAPI

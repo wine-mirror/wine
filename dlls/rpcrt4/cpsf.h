@@ -28,10 +28,6 @@ HRESULT WINAPI StdProxy_Construct(REFIID riid,
 				  LPPSFACTORYBUFFER pPSFactory,
 				  LPRPCPROXYBUFFER *ppProxy,
 				  LPVOID *ppvObj);
-HRESULT WINAPI StdProxy_GetChannel(LPVOID iface,
-				   LPRPCCHANNELBUFFER *ppChannel);
-HRESULT WINAPI StdProxy_GetIID(LPVOID iface,
-			       const IID **piid);
 
 HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
 					LPUNKNOWN pUnkServer,
