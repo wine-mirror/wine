@@ -197,6 +197,17 @@ static LPWSTR msi_get_deformatted_field( MSIPACKAGE *package, MSIRECORD *rec, in
     return ret;
 }
 
+static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOOL indirect )
+{
+    if (!property)
+        return NULL;
+
+    if (indirect)
+        return msi_dup_property( dialog->package, property );
+
+    return strdupW( property );
+}
+
 /*
  * msi_dialog_get_style
  *
@@ -1411,6 +1422,23 @@ static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
     return ERROR_SUCCESS;
 }
 
+static void msi_dialog_update_pathedit( msi_dialog *dialog )
+{
+    msi_control *control;
+    LPWSTR prop, path;
+    BOOL indirect;
+
+    control = msi_dialog_find_control( dialog, szPathEdit );
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
+    path = msi_dup_property( dialog->package, prop );
+    SetWindowTextW( control->hwnd, path );
+
+    msi_free( path );
+    msi_free( prop );
+}
+
 static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -1951,17 +1979,6 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory Combo ***************************************/
 
-static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOOL indirect )
-{
-    if (!property)
-        return NULL;
-
-    if (indirect)
-        return msi_dup_property( dialog->package, property );
-
-    return strdupW( property );
-}
-
 static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -2017,6 +2034,8 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     PathAddBackslashW( path );
 
     MSI_SetPropertyW( dialog->package, prop, path );
+
+    msi_dialog_update_pathedit( dialog );
 
     msi_free( path );
     msi_free( prop );
