@@ -29,7 +29,7 @@ extern void add_coclass(type_t *cls);
 extern void add_module(type_t *module);
 extern void add_struct(type_t *structure);
 extern void add_enum(type_t *enumeration);
-extern void add_typedef(type_t *tdef, var_t *name);
+extern void add_typedef(type_t *tdef);
 extern void add_importlib(const char *name);
 
 /* Copied from wtypes.h. Not included directly because that would create a

@@ -88,7 +88,7 @@ static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
-static type_t *reg_types(type_t *type, var_t *names, int t);
+static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs);
 static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
@@ -105,6 +105,7 @@ static void write_iid(type_t *iface);
 
 static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
+static void process_typedefs(var_t *names);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -214,7 +215,7 @@ static char *gen_name(void);
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
-%type <type> enumdef structdef typedef uniondef
+%type <type> enumdef structdef uniondef
 %type <ifref> gbl_statements coclass_ints coclass_int
 %type <tref> type
 %type <var> m_args no_args args arg
@@ -811,7 +812,7 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, ts
                                                 }
 	;
 
-type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }
+type:	  tVOID					{ $$ = make_tref(NULL, duptype(find_type("void", 0), 1)); }
 	| aKNOWNTYPE				{ $$ = make_tref($1, find_type($1, 0)); }
 	| base_type				{ $$ = make_tref(NULL, $1); }
 	| tCONST type				{ $$ = uniq_tref($2); $$->ref->is_const = TRUE; }
@@ -824,26 +825,8 @@ type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_tref(NULL, make_safearray()); }
 	;
 
-typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3);
-						  type_t *t;
-						  $4->tname = tref->name;
-						  tref->name = NULL;
-						  $$ = type_ref(tref);
-						  t = $$->ref;
-						  if ((t->kind == TKIND_ENUM || t->kind == TKIND_RECORD
-						       || t->kind == TKIND_UNION) && ! t->name && ! parse_only)
-						  {
-						    attr_t *a = make_attr(ATTR_PUBLIC);
-						    LINK(a, $2);
-						    $2 = a;
-						    t->name = gen_name();
-						  }
-						  $$->attrs = $2;
-						  if (!parse_only && do_header)
-						    write_typedef($$, $4);
-						  if (in_typelib && $$->attrs)
-						    add_typedef($$, $4);
-						  reg_types($$, $4, 0);
+typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs(type_ref($3), $4, $2);
+						  process_typedefs($4);
 						}
 	;
 
@@ -902,6 +885,7 @@ static type_t *make_int(int sign)
 
 void init_types(void)
 {
+  decl_builtin("void", 0);
   decl_builtin("byte", RPC_FC_BYTE);
   decl_builtin("wchar_t", RPC_FC_WCHAR);
   decl_builtin("int", RPC_FC_LONG);     /* win32 */
@@ -1147,6 +1131,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->type = type;
   t->ref = ref;
   t->attrs = NULL;
+  t->orig = NULL;
   t->funcs = NULL;
   t->fields = NULL;
   t->ifaces = NULL;
@@ -1175,8 +1160,15 @@ static typeref_t *uniq_tref(typeref_t *ref)
   typeref_t *t = ref;
   type_t *tp;
   if (t->uniq) return t;
-  tp = make_type(0, t->ref);
-  tp->name = t->name;
+
+  if (t->name)
+  {
+    tp = duptype(t->ref, 0);
+    tp->name = t->name;
+  }
+  else
+    tp = duptype(t->ref, 1);
+
   t->name = NULL;
   t->ref = tp;
   t->uniq = 1;
@@ -1311,10 +1303,26 @@ static unsigned char get_pointer_type( type_t *type )
   return RPC_FC_FP;
 }
 
-static type_t *reg_types(type_t *type, var_t *names, int t)
+static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
 {
   type_t *ptr = type;
   int ptrc = 0;
+
+  /* We must generate names for tagless enum, struct or union.
+     Typedef-ing a tagless enum, struct or union means we want the typedef
+     to be included in a library whether it has other attributes or not,
+     hence the public attribute.  */
+  if ((type->kind == TKIND_ENUM || type->kind == TKIND_RECORD
+       || type->kind == TKIND_UNION) && ! type->name && ! parse_only)
+  {
+    if (! is_attr(attrs, ATTR_PUBLIC))
+    {
+      attr_t *new_attrs = make_attr(ATTR_PUBLIC);
+      LINK(new_attrs, attrs);
+      attrs = new_attrs;
+    }
+    type->name = gen_name();
+  }
 
   while (names) {
     var_t *next = NEXT_LINK(names);
@@ -1323,8 +1331,7 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
       int cptr = names->ptr_level;
       if (cptr > ptrc) {
         while (cptr > ptrc) {
-          int t = get_pointer_type( cur );
-          cur = ptr = make_type(t, cur);
+          cur = ptr = make_type(RPC_FC_RP, cur);
           ptrc++;
         }
       } else {
@@ -1333,9 +1340,12 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
           cptr++;
         }
       }
-      reg_type(cur, names->name, t);
+      cur = alias(cur, names->name);
+      cur->attrs = attrs;
+      if (cur->ref)
+        cur->type = get_pointer_type(cur);
+      reg_type(cur, cur->name, 0);
     }
-    free(names);
     names = next;
   }
   return type;
@@ -1649,4 +1659,22 @@ static char *gen_name(void)
   name = xmalloc(size);
   sprintf(name, format, file_id, n++);
   return name;
+}
+
+static void process_typedefs(var_t *names)
+{
+  END_OF_LIST(names);
+  while (names)
+  {
+    var_t *next = PREV_LINK(names);
+    type_t *type = find_type(names->name, 0);
+
+    if (! parse_only && do_header)
+      write_typedef(type);
+    if (in_typelib && type->attrs)
+      add_typedef(type);
+
+    free(names);
+    names = next;
+  }
 }

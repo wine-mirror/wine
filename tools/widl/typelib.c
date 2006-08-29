@@ -137,6 +137,9 @@ unsigned short get_type_vt(type_t *t)
     if (vt) return vt;
   }
 
+  if (t->kind == TKIND_ALIAS && t->attrs)
+    return VT_USERDEFINED;
+
   switch (t->type) {
   case RPC_FC_BYTE:
   case RPC_FC_USMALL:
@@ -189,9 +192,7 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_BOGUS_STRUCT:
     return VT_USERDEFINED;
   case 0:
-    if(t->attrs)
-        return VT_USERDEFINED;
-    return 0;
+    return t->kind == TKIND_PRIMITIVE ? VT_VOID : VT_USERDEFINED;
   default:
     error("get_type_vt: unknown type: 0x%02x\n", t->type);
   }
@@ -300,18 +301,15 @@ void add_enum(type_t *enumeration)
      typelib->entry = entry;
 }
 
-void add_typedef(type_t *tdef, var_t *name)
+void add_typedef(type_t *tdef)
 {
      typelib_entry_t *entry;
      if (!typelib) return;
 
-     chat("add typedef: %s\n", name->name);
+     chat("add typedef: %s\n", tdef->name);
      entry = xmalloc(sizeof(*entry));
      entry->kind = TKIND_ALIAS;
-     entry->u.tdef = xmalloc(sizeof(*entry->u.tdef));
-     memcpy(entry->u.tdef, name, sizeof(*name));
-     entry->u.tdef->type = tdef;
-     entry->u.tdef->name = xstrdup(name->name);
+     entry->u.tdef = tdef;
      LINK(entry, typelib->entry);
      typelib->entry = entry;
 }

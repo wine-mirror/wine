@@ -203,13 +203,14 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
 {
   int c;
 
+  if (t->is_const) fprintf(h, "const ");
+
   if (n) fprintf(h, "%s", n);
+  else if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
   else {
-    if (t->is_const) fprintf(h, "const ");
-    if (t->type) {
-      if (t->sign > 0) fprintf(h, "signed ");
-      else if (t->sign < 0) fprintf(h, "unsigned ");
-      switch (t->type) {
+    if (t->sign > 0) fprintf(h, "signed ");
+    else if (t->sign < 0) fprintf(h, "unsigned ");
+    switch (t->type) {
       case RPC_FC_ENUM16:
       case RPC_FC_ENUM32:
         if (t->defined && !t->written && !t->ignore) {
@@ -262,13 +263,6 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         break;
       default:
         fprintf(h, "%s", t->name);
-      }
-    }
-    else {
-      if (t->ref) {
-        write_type(h, t->ref, NULL, t->name);
-      }
-      else fprintf(h, "void");
     }
   }
   if (v) {
@@ -299,9 +293,9 @@ static int user_type_registered(const char *name)
 static void check_for_user_types(const var_t *v)
 {
   while (v) {
-    type_t *type = v->type;
-    const char *name = v->tname;
-    for (type = v->type; type; type = type->ref) {
+    type_t *type;
+    for (type = v->type; type; type = type->kind == TKIND_ALIAS ? type->orig : type->ref) {
+      const char *name = type->name;
       if (type->user_types_registered) continue;
       type->user_types_registered = 1;
       if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
@@ -322,10 +316,6 @@ static void check_for_user_types(const var_t *v)
         while (NEXT_LINK(fields)) fields = NEXT_LINK(fields);
         check_for_user_types(fields);
       }
-      /* the wire_marshal attribute is always at least one reference away
-       * from the name of the type, so update it after the rest of the
-       * processing above */
-      if (type->name) name = type->name;
     }
     v = PREV_LINK(v);
   }
@@ -344,22 +334,11 @@ void write_user_types(void)
   }
 }
 
-void write_typedef(type_t *type, const var_t *names)
+void write_typedef(type_t *type)
 {
-  const char *tname = names->tname;
-  const var_t *lname;
-  while (NEXT_LINK(names)) names = NEXT_LINK(names);
-  lname = names;
   fprintf(header, "typedef ");
-  write_type(header, type, NULL, tname);
-  fprintf(header, " ");
-  while (names) {
-    write_pident(header, names);
-    if (PREV_LINK(names))
-      fprintf(header, ", ");
-    names = PREV_LINK(names);
-  }
-  fprintf(header, ";\n");
+  write_type(header, type->orig, NULL, NULL);
+  fprintf(header, " %s;\n", type->name);
 }
 
 void write_expr(FILE *h, const expr_t *e, int brackets)

@@ -944,6 +944,11 @@ static int encode_type(
     case VT_USERDEFINED:
       {
         int typeinfo_offset;
+
+        /* typedef'd types without attributes aren't included in the typelib */
+        while (type->typelib_idx < 0 && type->kind == TKIND_ALIAS && ! type->attrs)
+          type = type->orig;
+
         chat("encode_type: VT_USERDEFINED - type %p name = %s type->type %d idx %d\n", type,
              type->name, type->type, type->typelib_idx);
 
@@ -2048,23 +2053,19 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     }
 }
 
-static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
+static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)
 {
     msft_typeinfo_t *msft_typeinfo;
     int alignment;
-    const attr_t *attrs;
 
-    if (-1 < tdef->type->typelib_idx)
+    if (-1 < tdef->typelib_idx)
         return;
 
-    tdef->type->typelib_idx = typelib->typelib_header.nrtypeinfos;
-    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->type->attrs,
+    tdef->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->attrs,
                                          typelib->typelib_header.nrtypeinfos);
-    attrs = tdef->type->attrs;
-    tdef->type->attrs = NULL;
-    encode_var(typelib, tdef, &msft_typeinfo->typeinfo->datatype1, &msft_typeinfo->typeinfo->size,
+    encode_type(typelib, get_type_vt(tdef->orig), tdef->orig, &msft_typeinfo->typeinfo->datatype1, &msft_typeinfo->typeinfo->size,
                &alignment, &msft_typeinfo->typeinfo->datatype2);
-    tdef->type->attrs = attrs;
     msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
 }
 
