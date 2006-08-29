@@ -291,7 +291,7 @@ void file_set_error(void)
     case ENOENT:    set_error( STATUS_NO_SUCH_FILE ); break;
     case EISDIR:    set_error( STATUS_FILE_IS_A_DIRECTORY ); break;
     case ENFILE:
-    case EMFILE:    set_error( STATUS_NO_MORE_FILES ); break;
+    case EMFILE:    set_error( STATUS_TOO_MANY_OPENED_FILES ); break;
     case EEXIST:    set_error( STATUS_OBJECT_NAME_COLLISION ); break;
     case EINVAL:    set_error( STATUS_INVALID_PARAMETER ); break;
     case ESPIPE:    set_win32_error( ERROR_SEEK ); break;
