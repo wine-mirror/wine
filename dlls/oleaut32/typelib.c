@@ -2210,6 +2210,7 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
             *ppTypeLib = (ITypeLib2*)entry;
             ITypeLib_AddRef(*ppTypeLib);
             LeaveCriticalSection(&cache_section);
+            FreeLibrary(hinstDLL);
             return S_OK;
         }
     }
