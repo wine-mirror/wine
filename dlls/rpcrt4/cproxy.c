@@ -44,7 +44,7 @@ struct StublessThunk;
 typedef struct {
   const IRpcProxyBufferVtbl *lpVtbl;
   LPVOID *PVtbl;
-  DWORD RefCount;
+  LONG RefCount;
   const MIDL_STUBLESS_PROXY_INFO *stubless;
   const IID* piid;
   LPUNKNOWN pUnkOuter;
@@ -222,13 +222,13 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
   if (IsEqualGUID(&IID_IUnknown,riid) ||
       IsEqualGUID(This->piid,riid)) {
     *obj = &This->PVtbl;
-    This->RefCount++;
+    InterlockedIncrement(&This->RefCount);
     return S_OK;
   }
 
   if (IsEqualGUID(&IID_IRpcProxyBuffer,riid)) {
     *obj = &This->lpVtbl;
-    This->RefCount++;
+    InterlockedIncrement(&This->RefCount);
     return S_OK;
   }
 
@@ -240,19 +240,19 @@ static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
   ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
   TRACE("(%p)->AddRef()\n",This);
 
-  return ++(This->RefCount);
+  return InterlockedIncrement(&This->RefCount);
 }
 
 static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
 {
+  ULONG refs;
   ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
   TRACE("(%p)->Release()\n",This);
 
-  if (!--(This->RefCount)) {
+  refs = InterlockedDecrement(&This->RefCount);
+  if (!refs)
     StdProxy_Destruct((LPRPCPROXYBUFFER)&This->lpVtbl);
-    return 0;
-  }
-  return This->RefCount;
+  return refs;
 }
 
 static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
