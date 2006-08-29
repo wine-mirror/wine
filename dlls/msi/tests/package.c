@@ -30,6 +30,10 @@
 
 static const char msifile[] = "winetest.msi";
 
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#endif
+
 static UINT run_query( MSIHANDLE hdb, const char *query )
 {
     MSIHANDLE hview = 0;
