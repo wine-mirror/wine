@@ -253,7 +253,10 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
         }
         else fprintf(h, "union %s", t->name);
         break;
+      case RPC_FC_RP:
+      case RPC_FC_UP:
       case RPC_FC_FP:
+      case RPC_FC_OP:
         if (t->ref) write_type(h, t->ref, NULL, t->name);
         fprintf(h, "*");
         break;
