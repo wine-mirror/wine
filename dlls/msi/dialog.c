@@ -1434,6 +1434,9 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 
     val = msi_dup_property( dialog->package, prop );
     SetWindowTextW( control->hwnd, val );
+
+    SendMessageW( control->hwnd, EM_SETSEL, 0, -1 );
+
     msi_free( val );
     msi_free( indirect );
 
