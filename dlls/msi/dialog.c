@@ -1434,6 +1434,7 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog )
 
     path = msi_dup_property( dialog->package, prop );
     SetWindowTextW( control->hwnd, path );
+    SendMessageW( control->hwnd, EM_SETSEL, 0, -1 );
 
     msi_free( path );
     msi_free( prop );
@@ -1443,7 +1444,6 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     LPCWSTR prop;
-    LPWSTR val, indirect = NULL;
 
     control = msi_dialog_add_control( dialog, rec, szEdit,
                                       WS_BORDER | WS_TABSTOP );
@@ -1454,19 +1454,7 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     if ( prop )
         control->property = strdupW( prop );
 
-    if ( control->attributes & msidbControlAttributesIndirect )
-    {
-        indirect = msi_dup_property( dialog->package, control->property );
-        prop = indirect;
-    }
-
-    val = msi_dup_property( dialog->package, prop );
-    SetWindowTextW( control->hwnd, val );
-
-    SendMessageW( control->hwnd, EM_SETSEL, 0, -1 );
-
-    msi_free( val );
-    msi_free( indirect );
+    msi_dialog_update_pathedit( dialog );
 
     return ERROR_SUCCESS;
 }
@@ -2003,8 +1991,6 @@ static void msi_dialog_update_directory_combo( msi_dialog *dialog )
 static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
-    LPWSTR path, propval;
-    BOOL indirect;
     LPCWSTR prop;
     DWORD style;
 
@@ -2019,19 +2005,8 @@ static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
-    indirect = control->attributes & msidbControlAttributesIndirect;
-    propval = msi_dialog_dup_property( dialog, prop, indirect );
-    path = msi_dup_property( dialog->package, propval );
+    msi_dialog_update_directory_combo( dialog );
 
-    PathStripPathW( path );
-    PathRemoveBackslashW( path );
-
-    /* FIXME: Add whole directory structure to combo box */
-    SendMessageW( control->hwnd, CB_ADDSTRING, 0, (LPARAM)path );
-    SendMessageW( control->hwnd, CB_SETCURSEL, 0, 0 );
-
-    msi_free( path );
-    msi_free( propval );
     return ERROR_SUCCESS;
 }
 
