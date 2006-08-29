@@ -170,11 +170,8 @@ static void test_RunSetupCommand()
 
     /* try only the INF filename, empty working dir */
     hr = pRunSetupCommand(NULL, "test.inf", "DefaultInstall", "", "Title", NULL, RSC_FLAG_INF | RSC_FLAG_QUIET, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
 
     DeleteFileA("one\\test.inf");
     RemoveDirectoryA("one");
@@ -224,10 +221,7 @@ static void test_LaunchINFSection()
 
     /* try just the INF filename */
     hr = pLaunchINFSection(NULL, NULL, file, 0);
-    todo_wine
-    {
-        ok(hr == 0, "Expected 0, got %ld\n", hr);
-    }
+    ok(hr == 0, "Expected 0, got %ld\n", hr);
 
     DeleteFileA("test.inf");
 }
