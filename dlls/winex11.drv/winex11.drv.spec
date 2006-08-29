@@ -127,3 +127,11 @@
 
 # XIM
 @ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset
+
+# OpenGL
+@ cdecl wglCreateContext(long) X11DRV_wglCreateContext
+@ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
+@ cdecl wglGetCurrentContext() X11DRV_wglGetCurrentContext
+@ cdecl wglGetCurrentDC() X11DRV_wglGetCurrentDC
+@ cdecl wglGetCurrentReadDCARB() X11DRV_wglGetCurrentReadDCARB
+@ cdecl wglGetIntegerv(long ptr) X11DRV_wglGetIntegerv

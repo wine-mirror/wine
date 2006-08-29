@@ -59,8 +59,19 @@ typedef struct wine_glx_s {
   Bool         (*p_glXMakeContextCurrent) (Display *, GLXDrawable, GLXDrawable, GLXContext);
 } wine_glx_t;
 
+typedef struct wine_wgl_s {
+    HGLRC WINAPI (*p_wglCreateContext)(HDC hdc);
+    BOOL WINAPI  (*p_wglDeleteContext)(HGLRC hglrc);
+    HGLRC WINAPI (*p_wglGetCurrentContext)(void);
+    HDC WINAPI   (*p_wglGetCurrentDC)(void);
+    HDC WINAPI   (*p_wglGetCurrentReadDCARB)(void);
+    void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
+} wine_wgl_t;
+
 /** global glx object */
 static wine_glx_t wine_glx;
+/** global wgl object */
+static wine_wgl_t wine_wgl;
 
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
@@ -101,15 +112,6 @@ typedef struct wine_glcontext {
   struct wine_glcontext *next;
   struct wine_glcontext *prev;
 } Wine_GLContext;
-static Wine_GLContext *context_list;
-
-static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
-{
-    Wine_GLContext *ret;
-    if (!ctx) return NULL;
-    for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
-    return ret;
-}
 
 void enter_gl(void)
 {
@@ -123,35 +125,6 @@ void enter_gl(void)
 
     wine_tsx11_lock_ptr();
     return;
-}
-
-static inline void free_context(Wine_GLContext *context)
-{
-  if (context->next != NULL) context->next->prev = context->prev;
-  if (context->prev != NULL) context->prev->next = context->next;
-  else context_list = context->next;
-
-  HeapFree(GetProcessHeap(), 0, context);
-}
-
-static inline Wine_GLContext *alloc_context(void)
-{
-  Wine_GLContext *ret;
-
-  if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext))))
-  {
-      ret->next = context_list;
-      if (context_list) context_list->prev = ret;
-      context_list = ret;
-  }
-  return ret;
-}
-
-inline static BOOL is_valid_context( Wine_GLContext *ctx )
-{
-    Wine_GLContext *ptr;
-    for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;
-    return (ptr != NULL);
 }
 
 /* retrieve the X display to use on a given DC */
@@ -175,18 +148,6 @@ inline static Drawable get_drawable( HDC hdc )
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
     return drawable;
-}
-
-/** for use of wglGetCurrentReadDCARB */
-inline static HDC get_hdc_from_Drawable(GLXDrawable d)
-{
-  Wine_GLContext *ret;
-  for (ret = context_list; ret; ret = ret->next) {  
-    if (d == get_drawable( ret->hdc )) {
-      return ret->hdc;
-    }
-  }
-  return NULL;
 }
 
 /* retrieve the X font to use on a given DC */
@@ -267,64 +228,8 @@ BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_ind
  */
 HGLRC WINAPI wglCreateContext(HDC hdc)
 {
-  Wine_GLContext *ret;
-  Display *display = get_display( hdc );
-  int hdcPF = 1; /* We can only use the Wine's main visual which has an index of 1 */
-  int tmp = 0;
-  int fmt_index = 0;
-  GLXFBConfig cur_cfg;
-
-  TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
-
-  /* First, get the visual in use by the X11DRV */
-  if (!display) return 0;
-
-  /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the correspondig GLX format.
-   * If this fails something is very wrong on the system. */
-  if(!ConvertPixelFormatWGLtoGLX(display, hdcPF, &tmp, &fmt_index)) {
-    ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
-    SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-    return NULL;
-  }
-
-  {
-    int nCfgs_fmt = 0;
-    GLXFBConfig* cfgs_fmt = NULL;
-    int value;
-    int gl_test = 0;
-    cfgs_fmt = wine_glx.p_glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
-    if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
-      ERR("Cannot get FB Configs, expect problems.\n");
-      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-      return NULL;
-    }
-    if (nCfgs_fmt < fmt_index) {
-      ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, fmt_index, nCfgs_fmt);
-      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-      return NULL;
-    }
-    cur_cfg = cfgs_fmt[fmt_index];
-    gl_test = wine_glx.p_glXGetFBConfigAttrib(display, cur_cfg, GLX_FBCONFIG_ID, &value);
-    if (gl_test) {
-      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-      SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-      return NULL;
-    }
-    XFree(cfgs_fmt);
-  }
-
-  /* The context will be allocated in the wglMakeCurrent call */
-  ENTER_GL();
-  ret = alloc_context();
-  LEAVE_GL();
-  ret->hdc = hdc;
-  ret->display = display;
-  ret->fb_conf = cur_cfg;
-  /*ret->vis = vis;*/
-  ret->vis = wine_glx.p_glXGetVisualFromFBConfig(display, cur_cfg);
-
-  TRACE(" creating context %p (GL context creation delayed)\n", ret);
-  return (HGLRC) ret;
+    TRACE("(%p)\n", hdc);
+    return wine_wgl.p_wglCreateContext(hdc);
 }
 
 /***********************************************************************
@@ -358,28 +263,8 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
  */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc)
 {
-  Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-  BOOL ret = TRUE;
-
-  TRACE("(%p)\n", hglrc);
-
-  ENTER_GL();
-  /* A game (Half Life not to name it) deletes twice the same context,
-   * so make sure it is valid first */
-  if (is_valid_context( ctx ))
-  {
-      if (ctx->ctx) glXDestroyContext(ctx->display, ctx->ctx);
-      free_context(ctx);
-  }
-  else
-  {
-    WARN("Error deleting context !\n");
-    SetLastError(ERROR_INVALID_HANDLE);
-    ret = FALSE;
-  }
-  LEAVE_GL();
-
-  return ret;
+    TRACE("(%p)\n", hglrc);
+    return wine_wgl.p_wglDeleteContext(hglrc);
 }
 
 /***********************************************************************
@@ -399,42 +284,16 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
  *		wglGetCurrentContext (OPENGL32.@)
  */
 HGLRC WINAPI wglGetCurrentContext(void) {
-  GLXContext gl_ctx;
-  Wine_GLContext *ret;
-
-  TRACE("()\n");
-
-  ENTER_GL();
-  gl_ctx = glXGetCurrentContext();
-  ret = get_context_from_GLXContext(gl_ctx);
-  LEAVE_GL();
-
-  TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
-
-  return (HGLRC)ret;
+    TRACE("\n");
+    return wine_wgl.p_wglGetCurrentContext();
 }
 
 /***********************************************************************
  *		wglGetCurrentDC (OPENGL32.@)
  */
 HDC WINAPI wglGetCurrentDC(void) {
-  GLXContext gl_ctx;
-  Wine_GLContext *ret;
-
-  TRACE("()\n");
-
-  ENTER_GL();
-  gl_ctx = glXGetCurrentContext();
-  ret = get_context_from_GLXContext(gl_ctx);
-  LEAVE_GL();
-
-  if (ret) {
-    TRACE(" returning %p (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
-    return ret->hdc;
-  } else {
-    TRACE(" no Wine context found for GLX context %p\n", gl_ctx);
-    return 0;
-  }
+    TRACE("\n");
+    return wine_wgl.p_wglGetCurrentDC();
 }
 
 /***********************************************************************
@@ -703,21 +562,9 @@ BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
  */
 HDC WINAPI wglGetCurrentReadDCARB(void) 
 {
-  GLXDrawable gl_d;
-  HDC ret;
-
-  TRACE("()\n");
-
-  ENTER_GL();
-  gl_d = glXGetCurrentReadDrawable();
-  ret = get_hdc_from_Drawable(gl_d);
-  LEAVE_GL();
-
-  TRACE(" returning %p (GL drawable %lu)\n", ret, gl_d);
-  return ret;
+    TRACE("\n");
+    return wine_wgl.p_wglGetCurrentReadDCARB();
 }
-
-
 
 /***********************************************************************
  *		wglRealizeLayerPalette (OPENGL32.@)
@@ -1240,29 +1087,10 @@ const GLubyte * internal_glGetString(GLenum name) {
 }
 
 void internal_glGetIntegerv(GLenum pname, GLint* params) {
+  TRACE("pname: 0x%x, params %p\n", pname, params);
   glGetIntegerv(pname, params);
-  if (pname == GL_DEPTH_BITS) { 
-    GLXContext gl_ctx = glXGetCurrentContext();
-    Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
-    /*TRACE("returns Wine Ctx as %p\n", ret);*/
-    /** 
-     * if we cannot find a Wine Context
-     * we only have the default wine desktop context, 
-     * so if we have only a 24 depth say we have 32
-     */
-    if (NULL == ret && 24 == *params) { 
-      *params = 32;
-    }
-    TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
-  }
-  if (pname == GL_ALPHA_BITS) {
-    GLint tmp;
-    GLXContext gl_ctx = glXGetCurrentContext();
-    Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
-    glXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, &tmp);
-    TRACE("returns GL_ALPHA_BITS as '%d'\n", tmp);
-    *params = tmp;
-  }
+  /* A few parameters like GL_DEPTH_BITS differ between WGL and GLX, the wglGetIntegerv helper function handles those */
+  wine_wgl.p_wglGetIntegerv(pname, params);
 }
 
 
@@ -1377,6 +1205,14 @@ static BOOL process_attach(void)
 
   wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
+
+  /* Load WGL function pointers from winex11.drv */
+  wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod, "wglCreateContext");
+  wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod, "wglDeleteContext");
+  wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod, "wglGetCurrentContext");
+  wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod, "wglGetCurrentDC");
+  wine_wgl.p_wglGetCurrentReadDCARB = (void *)GetProcAddress(mod, "wglGetCurrentReadDCARB");
+  wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");
 
   hdc = GetDC(0);
   default_display = get_display( hdc );

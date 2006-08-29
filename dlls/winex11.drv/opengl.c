@@ -59,6 +59,18 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
+typedef struct wine_glcontext {
+  HDC hdc;
+  Display *display;
+  XVisualInfo *vis;
+  GLXFBConfig fb_conf;
+  GLXContext ctx;
+  BOOL do_escape;
+  struct wine_glcontext *next;
+  struct wine_glcontext *prev;
+} Wine_GLContext;
+static Wine_GLContext *context_list;
+
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
   TRACE("  - dwFlags : ");
@@ -125,8 +137,13 @@ MAKE_FUNCPTR(glXQueryExtension)
 MAKE_FUNCPTR(glXGetFBConfigs)
 MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
+MAKE_FUNCPTR(glXGetVisualFromFBConfig)
 MAKE_FUNCPTR(glXCreateGLXPixmap)
 MAKE_FUNCPTR(glXDestroyGLXPixmap)
+MAKE_FUNCPTR(glXCreateContext)
+MAKE_FUNCPTR(glXDestroyContext)
+MAKE_FUNCPTR(glXGetCurrentContext)
+MAKE_FUNCPTR(glXGetCurrentReadDrawable)
 /* MAKE_FUNCPTR(glXQueryDrawable) */
 #undef MAKE_FUNCPTR
 
@@ -153,8 +170,13 @@ LOAD_FUNCPTR(glXQueryExtension)
 LOAD_FUNCPTR(glXGetFBConfigs)
 LOAD_FUNCPTR(glXChooseFBConfig)
 LOAD_FUNCPTR(glXGetFBConfigAttrib)
+LOAD_FUNCPTR(glXGetVisualFromFBConfig)
 LOAD_FUNCPTR(glXCreateGLXPixmap)
 LOAD_FUNCPTR(glXDestroyGLXPixmap)
+LOAD_FUNCPTR(glXCreateContext)
+LOAD_FUNCPTR(glXDestroyContext)
+LOAD_FUNCPTR(glXGetCurrentContext)
+LOAD_FUNCPTR(glXGetCurrentReadDrawable)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
@@ -171,6 +193,66 @@ sym_not_found:
     wine_dlclose(opengl_handle, NULL, 0);
     opengl_handle = NULL;
     return FALSE;
+}
+
+static inline Wine_GLContext *alloc_context(void)
+{
+    Wine_GLContext *ret;
+
+    if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLContext))))
+    {
+        ret->next = context_list;
+        if (context_list) context_list->prev = ret;
+        context_list = ret;
+    }
+    return ret;
+}
+
+static inline void free_context(Wine_GLContext *context)
+{
+    if (context->next != NULL) context->next->prev = context->prev;
+    if (context->prev != NULL) context->prev->next = context->next;
+    else context_list = context->next;
+
+    HeapFree(GetProcessHeap(), 0, context);
+}
+
+static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
+{
+    Wine_GLContext *ret;
+    if (!ctx) return NULL;
+    for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
+    return ret;
+}
+
+/* retrieve the GLX drawable to use on a given DC */
+inline static Drawable get_drawable( HDC hdc )
+{
+    GLXDrawable drawable;
+    enum x11drv_escape_codes escape = X11DRV_GET_GLX_DRAWABLE;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
+    return drawable;
+}
+
+/** for use of wglGetCurrentReadDCARB */
+inline static HDC get_hdc_from_Drawable(GLXDrawable d)
+{
+    Wine_GLContext *ret;
+    for (ret = context_list; ret; ret = ret->next) {
+        if (d == get_drawable( ret->hdc )) {
+            return ret->hdc;
+        }
+    }
+    return NULL;
+}
+
+inline static BOOL is_valid_context( Wine_GLContext *ctx )
+{
+    Wine_GLContext *ptr;
+    for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;
+    return (ptr != NULL);
 }
 
 /* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
@@ -530,7 +612,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   }
 
   physDev->current_pf = iPixelFormat;
-  
+
   if (TRACE_ON(opengl)) {
     int nCfgs_fmt = 0;
     GLXFBConfig* cfgs_fmt = NULL;
@@ -576,6 +658,177 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     XFree(cfgs_fmt);
   }
   return TRUE;
+}
+
+/* OpenGL32 wglCreateContext */
+HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc)
+{
+    Wine_GLContext *ret;
+    GLXFBConfig* cfgs_fmt = NULL;
+    GLXFBConfig cur_cfg;
+    int hdcPF = 1; /* We can only use the Wine's main visual which has an index of 1 */
+    int tmp = 0;
+    int fmt_index = 0;
+    int nCfgs_fmt = 0;
+    int value = 0;
+    int gl_test = 0;
+
+    TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
+
+    /* First, get the visual in use by the X11DRV */
+    if (!gdi_display) return 0;
+
+    /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the correspondig GLX format.
+    * If this fails something is very wrong on the system. */
+    if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &tmp, &fmt_index)) {
+        ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+
+    cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
+    if (NULL == cfgs_fmt || 0 == nCfgs_fmt) {
+        ERR("Cannot get FB Configs, expect problems.\n");
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+
+    if (nCfgs_fmt < fmt_index) {
+        ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, fmt_index, nCfgs_fmt);
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+
+    cur_cfg = cfgs_fmt[fmt_index];
+    gl_test = pglXGetFBConfigAttrib(gdi_display, cur_cfg, GLX_FBCONFIG_ID, &value);
+    if (gl_test) {
+        ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+    XFree(cfgs_fmt);
+
+    /* The context will be allocated in the wglMakeCurrent call */
+    wine_tsx11_lock();
+    ret = alloc_context();
+    wine_tsx11_unlock();
+    ret->hdc = hdc;
+    ret->display = gdi_display;
+    ret->fb_conf = cur_cfg;
+    /*ret->vis = vis;*/
+    ret->vis = pglXGetVisualFromFBConfig(gdi_display, cur_cfg);
+
+    TRACE(" creating context %p (GL context creation delayed)\n", ret);
+    return (HGLRC) ret;
+}
+
+/* OpenGL32 wglDeleteContext */
+BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
+{
+    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+    BOOL ret = TRUE;
+
+    TRACE("(%p)\n", hglrc);
+
+    wine_tsx11_lock();
+    /* A game (Half Life not to name it) deletes twice the same context,
+    * so make sure it is valid first */
+    if (is_valid_context( ctx ))
+    {
+        if (ctx->ctx) pglXDestroyContext(ctx->display, ctx->ctx);
+        free_context(ctx);
+    }
+    else
+    {
+        WARN("Error deleting context !\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        ret = FALSE;
+    }
+    wine_tsx11_unlock();
+
+    return ret;
+}
+
+/* OpenGL32 wglGetCurrentContext() */
+HGLRC WINAPI X11DRV_wglGetCurrentContext(void) {
+    GLXContext gl_ctx;
+    Wine_GLContext *ret;
+
+    TRACE("()\n");
+
+    wine_tsx11_lock();
+    gl_ctx = pglXGetCurrentContext();
+    ret = get_context_from_GLXContext(gl_ctx);
+    wine_tsx11_unlock();
+
+    TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
+
+    return (HGLRC)ret;
+}
+
+/* OpenGL32 wglGetCurrentDC */
+HDC WINAPI X11DRV_wglGetCurrentDC(void) {
+    GLXContext gl_ctx;
+    Wine_GLContext *ret;
+
+    TRACE("()\n");
+
+    wine_tsx11_lock();
+    gl_ctx = pglXGetCurrentContext();
+    ret = get_context_from_GLXContext(gl_ctx);
+    wine_tsx11_unlock();
+
+    if (ret) {
+        TRACE(" returning %p (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
+        return ret->hdc;
+    } else {
+        TRACE(" no Wine context found for GLX context %p\n", gl_ctx);
+        return 0;
+    }
+}
+
+/* OpenGL32 wglGetCurrentReadDCARB */
+HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
+{
+    GLXDrawable gl_d;
+    HDC ret;
+
+    TRACE("()\n");
+
+    wine_tsx11_lock();
+    gl_d = pglXGetCurrentReadDrawable();
+    ret = get_hdc_from_Drawable(gl_d);
+    wine_tsx11_unlock();
+
+    TRACE(" returning %p (GL drawable %lu)\n", ret, gl_d);
+    return ret;
+}
+
+/* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
+void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
+    TRACE("pname: 0x%x, params: %p\n", pname, params);
+    if (pname == GL_DEPTH_BITS) { 
+        GLXContext gl_ctx = pglXGetCurrentContext();
+        Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+        /*TRACE("returns Wine Ctx as %p\n", ret);*/
+        /** 
+        * if we cannot find a Wine Context
+        * we only have the default wine desktop context, 
+        * so if we have only a 24 depth say we have 32
+        */
+        if (NULL == ret && 24 == *params) { 
+            *params = 32;
+        }
+        TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
+    }
+    if (pname == GL_ALPHA_BITS) {
+        GLint tmp;
+        GLXContext gl_ctx = pglXGetCurrentContext();
+        Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+        pglXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, &tmp);
+        TRACE("returns GL_ALPHA_BITS as '%d'\n", tmp);
+        *params = tmp;
+    }
 }
 
 static XID create_glxpixmap(X11DRV_PDEVICE *physDev)
@@ -763,6 +1016,35 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ERR_(opengl)("No OpenGL support compiled in.\n");
 
   return FALSE;
+}
+
+/* OpenGL32 wglCreateContext */
+HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return NULL;
+}
+
+/* OpenGL32 wglDeleteContext */
+BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/* OpenGL32 wglGetCurrentContext() */
+HGLRC WINAPI X11DRV_wglGetCurrentContext(void) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return NULL;
+}
+
+/* OpenGL32 wglGetCurrentDC */
+HDC WINAPI X11DRV_wglGetCurrentDC(void) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return 0;
+}
+
+/* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
+void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
 }
 
 XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
