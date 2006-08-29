@@ -128,23 +128,9 @@ static void clear_output_vars( var_t *arg )
   }
 }
 
-int is_pointer(var_t *arg)
+int is_var_ptr(var_t *v)
 {
-  if (arg->ptr_level)
-    return 1;
-
-  switch (ref_type(arg->type))
-  {
-  case RPC_FC_RP:
-  case RPC_FC_C_CSTRING:
-  case RPC_FC_C_WSTRING:
-  case RPC_FC_FP:
-  case RPC_FC_OP:
-  case RPC_FC_UP:
-    return 1;
-  }
-
-  return 0;
+  return v->ptr_level || is_ptr(v->type);
 }
 
 int cant_be_null(var_t *v)
@@ -213,7 +199,7 @@ static void proxy_check_pointers( var_t *arg )
 {
   END_OF_LIST(arg);
   while (arg) {
-    if (is_pointer(arg) && cant_be_null(arg)) {
+    if (is_var_ptr(arg) && cant_be_null(arg)) {
         print_proxy( "if(!%s)\n", arg->name );
         indent++;
         print_proxy( "RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");

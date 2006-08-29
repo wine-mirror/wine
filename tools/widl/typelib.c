@@ -73,6 +73,17 @@ type_t *alias(type_t *t, const char *name)
   return a;
 }
 
+int is_ptr(type_t *t)
+{
+  unsigned char c = t->type;
+  return c == RPC_FC_RP
+      || c == RPC_FC_UP
+      || c == RPC_FC_FP
+      || c == RPC_FC_OP
+      || c == RPC_FC_C_CSTRING
+      || c == RPC_FC_C_WSTRING;
+}
+
 /* List of oleauto types that should be recognized by name.
  * (most of) these seem to be intrinsic types in mktyplib. */
 

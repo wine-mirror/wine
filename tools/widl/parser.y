@@ -1342,7 +1342,7 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
       }
       cur = alias(cur, names->name);
       cur->attrs = attrs;
-      if (cur->ref)
+      if (is_ptr(cur))
         cur->type = get_pointer_type(cur);
       reg_type(cur, cur->name, 0);
     }

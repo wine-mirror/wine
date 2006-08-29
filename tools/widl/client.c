@@ -91,7 +91,7 @@ static void check_pointers(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        if (is_pointer(var) && cant_be_null(var))
+        if (is_var_ptr(var) && cant_be_null(var))
         {
             print_client("if (!%s)\n", var->name);
             print_client("{\n");
