@@ -13,9 +13,9 @@ C_SRCS = \
 	cproxy.c \
 	cpsf.c \
 	cstub.c \
+	ndr_clientserver.c \
 	ndr_fullpointer.c \
 	ndr_marshall.c \
-	ndr_midl.c \
 	ndr_ole.c \
 	ndr_stubless.c \
 	rpc_binding.c \
