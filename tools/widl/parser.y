@@ -253,24 +253,24 @@ gbl_statements:					{ $$ = NULL; }
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| gbl_statements coclassdef		{ $$ = $1;
-						  add_coclass($2);
+						  add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| gbl_statements moduledef		{ $$ = $1; add_module($2); }
+	| gbl_statements moduledef		{ $$ = $1; add_typelib_entry($2); }
 	| gbl_statements librarydef		{ $$ = $1; }
 	| gbl_statements statement		{ $$ = $1; }
 	;
 
 imp_statements:					{}
-	| imp_statements interfacedec		{ if (!parse_only) add_interface($2); }
-	| imp_statements interfacedef		{ if (!parse_only) add_interface($2); }
+	| imp_statements interfacedec		{ if (!parse_only) add_typelib_entry($2); }
+	| imp_statements interfacedef		{ if (!parse_only) add_typelib_entry($2); }
 	| imp_statements coclass ';'		{ reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
-	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2);
+	| imp_statements coclassdef		{ if (!parse_only) add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
+	| imp_statements moduledef		{ if (!parse_only) add_typelib_entry($2); }
 	| imp_statements statement		{}
 	| imp_statements importlib		{}
 	;
@@ -501,7 +501,7 @@ enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM
 						  $$->fields = $4;
 						  $$->defined = TRUE;
                                                   if(in_typelib)
-                                                      add_enum($$);
+                                                      add_typelib_entry($$);
 						}
 	;
 
@@ -808,7 +808,7 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, ts
 						  $$->fields = $4;
 						  $$->defined = TRUE;
                                                   if(in_typelib)
-                                                      add_struct($$);
+                                                      add_typelib_entry($$);
                                                 }
 	;
 
@@ -1672,7 +1672,7 @@ static void process_typedefs(var_t *names)
     if (! parse_only && do_header)
       write_typedef(type);
     if (in_typelib && type->attrs)
-      add_typedef(type);
+      add_typelib_entry(type);
 
     free(names);
     names = next;

@@ -234,84 +234,16 @@ void end_typelib(void)
     return;
 }
 
-void add_interface(type_t *iface)
+void add_typelib_entry(type_t *t)
 {
     typelib_entry_t *entry;
     if (!typelib) return;
 
-    chat("add interface: %s\n", iface->name);
+    chat("add kind %i: %s\n", t->kind, t->name);
     entry = xmalloc(sizeof(*entry));
-    entry->kind = TKIND_INTERFACE;
-    entry->u.interface = iface;
+    entry->type = t;
     LINK(entry, typelib->entry);
     typelib->entry = entry;
-}
-
-void add_coclass(type_t *cls)
-{
-    typelib_entry_t *entry;
-
-    if (!typelib) return;
-
-    chat("add coclass: %s\n", cls->name);
-
-    entry = xmalloc(sizeof(*entry));
-    entry->kind = TKIND_COCLASS;
-    entry->u.class = cls;
-    LINK(entry, typelib->entry);
-    typelib->entry = entry;
-}
-
-void add_module(type_t *module)
-{
-    typelib_entry_t *entry;
-    if (!typelib) return;
-
-    chat("add module: %s\n", module->name);
-    entry = xmalloc(sizeof(*entry));
-    entry->kind = TKIND_MODULE;
-    entry->u.module = module;
-    LINK(entry, typelib->entry);
-    typelib->entry = entry;
-}
-
-void add_struct(type_t *structure)
-{
-     typelib_entry_t *entry;
-     if (!typelib) return;
-
-     chat("add struct: %s\n", structure->name);
-     entry = xmalloc(sizeof(*entry));
-     entry->kind = TKIND_RECORD;
-     entry->u.structure = structure;
-     LINK(entry, typelib->entry);
-     typelib->entry = entry;
-}
-
-void add_enum(type_t *enumeration)
-{
-     typelib_entry_t *entry;
-     if (!typelib) return;
-
-     chat("add enum: %s\n", enumeration->name);
-     entry = xmalloc(sizeof(*entry));
-     entry->kind = TKIND_ENUM;
-     entry->u.enumeration = enumeration;
-     LINK(entry, typelib->entry);
-     typelib->entry = entry;
-}
-
-void add_typedef(type_t *tdef)
-{
-     typelib_entry_t *entry;
-     if (!typelib) return;
-
-     chat("add typedef: %s\n", tdef->name);
-     entry = xmalloc(sizeof(*entry));
-     entry->kind = TKIND_ALIAS;
-     entry->u.tdef = tdef;
-     LINK(entry, typelib->entry);
-     typelib->entry = entry;
 }
 
 static void tlb_read(int fd, void *buf, size_t count)

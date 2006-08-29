@@ -253,15 +253,7 @@ struct _ifref_t {
 };
 
 struct _typelib_entry_t {
-    enum type_kind kind;
-    union {
-        type_t *class;
-        type_t *interface;
-        type_t *module;
-        type_t *structure;
-        type_t *enumeration;
-        type_t *tdef;
-    } u;
+    type_t *type;
     DECL_LINK(typelib_entry_t);
 };
 

@@ -2180,33 +2180,34 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 
 static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 {
-    switch(entry->kind) {
+    switch(entry->type->kind) {
     case TKIND_INTERFACE:
-        add_interface_typeinfo(typelib, entry->u.interface);
+    case TKIND_DISPATCH:
+        add_interface_typeinfo(typelib, entry->type);
         break;
 
     case TKIND_RECORD:
-        add_structure_typeinfo(typelib, entry->u.structure);
+        add_structure_typeinfo(typelib, entry->type);
         break;
 
     case TKIND_ENUM:
-        add_enum_typeinfo(typelib, entry->u.enumeration);
+        add_enum_typeinfo(typelib, entry->type);
         break;
 
     case TKIND_ALIAS:
-        add_typedef_typeinfo(typelib, entry->u.tdef);
+        add_typedef_typeinfo(typelib, entry->type);
         break;
 
     case TKIND_COCLASS:
-        add_coclass_typeinfo(typelib, entry->u.class);
+        add_coclass_typeinfo(typelib, entry->type);
         break;
 
     case TKIND_MODULE:
-        add_module_typeinfo(typelib, entry->u.module);
+        add_module_typeinfo(typelib, entry->type);
         break;
 
     default:
-        error("add_entry: unhandled type %d\n", entry->kind);
+        error("add_entry: unhandled type %d\n", entry->type->kind);
         break;
     }
 }
