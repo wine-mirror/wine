@@ -106,6 +106,7 @@ static void write_iid(type_t *iface);
 static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
 static void process_typedefs(var_t *names);
+static void check_arg(var_t *arg);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -319,8 +320,8 @@ m_args:						{ $$ = NULL; }
 no_args:  tVOID					{ $$ = NULL; }
 	;
 
-args:	  arg
-	| args ',' arg				{ LINK($3, $1); $$ = $3; }
+args:	  arg					{ check_arg($1); $$ = $1; }
+	| args ',' arg				{ check_arg($3); LINK($3, $1); $$ = $3; }
 	| no_args
 	;
 
@@ -1677,4 +1678,12 @@ static void process_typedefs(var_t *names)
     free(names);
     names = next;
   }
+}
+
+static void check_arg(var_t *arg)
+{
+  type_t *t = arg->type;
+
+  if (t->type == 0 && ! is_var_ptr(arg))
+    yyerror("argument '%s' has void type", arg->name);
 }
