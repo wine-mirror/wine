@@ -2011,7 +2011,10 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           IPersistFolder2_Release(ppf2);
 	  if( ! COMDLG32_PIDL_ILIsEqual(pidlCurrent, fodInfos->ShellInfos.pidlAbsCurrent))
 	  {
-	    IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE);
+            if (SUCCEEDED(IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE)))
+            {
+              SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
+            }
 	  }
 	  else if( nOpenAction == ONOPEN_SEARCH )
 	  {
