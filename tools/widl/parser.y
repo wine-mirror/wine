@@ -104,6 +104,7 @@ static void write_diid(type_t *iface);
 static void write_iid(type_t *iface);
 
 static int compute_method_indexes(type_t *iface);
+static char *gen_name(void);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -824,9 +825,19 @@ type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }
 	;
 
 typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3);
+						  type_t *t;
 						  $4->tname = tref->name;
 						  tref->name = NULL;
 						  $$ = type_ref(tref);
+						  t = $$->ref;
+						  if ((t->kind == TKIND_ENUM || t->kind == TKIND_RECORD
+						       || t->kind == TKIND_UNION) && ! t->name && ! parse_only)
+						  {
+						    attr_t *a = make_attr(ATTR_PUBLIC);
+						    LINK(a, $2);
+						    $2 = a;
+						    t->name = gen_name();
+						  }
 						  $$->attrs = $2;
 						  if (!parse_only && do_header)
 						    write_typedef($$, $4);
@@ -1613,4 +1624,29 @@ static int compute_method_indexes(type_t *iface)
       f->idx = idx++;
 
   return idx;
+}
+
+static char *gen_name(void)
+{
+  static const char format[] = "__WIDL_%s_generated_name_%08lX";
+  static unsigned long n = 0;
+  static const char *file_id;
+  static size_t size;
+  char *name;
+
+  if (! file_id)
+  {
+    char *dst = dup_basename(input_name, ".idl");
+    file_id = dst;
+
+    for (; *dst; ++dst)
+      if (! isalnum((unsigned char) *dst))
+        *dst = '_';
+
+    size = sizeof format - 7 + strlen(file_id) + 8;
+  }
+
+  name = xmalloc(size);
+  sprintf(name, format, file_id, n++);
+  return name;
 }
