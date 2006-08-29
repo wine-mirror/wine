@@ -199,6 +199,11 @@ static void write_enums(FILE *h, var_t *v)
   fprintf(h, "\n");
 }
 
+int needs_space_after(type_t *t)
+{
+  return t->kind == TKIND_ALIAS || ! is_ptr(t);
+}
+
 void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
 {
   int c;
@@ -259,7 +264,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
       case RPC_FC_FP:
       case RPC_FC_OP:
         if (t->ref) write_type(h, t->ref, NULL, t->name);
-        fprintf(h, "*");
+        fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
         break;
       default:
         fprintf(h, "%s", t->name);
@@ -338,7 +343,7 @@ void write_typedef(type_t *type)
 {
   fprintf(header, "typedef ");
   write_type(header, type->orig, NULL, NULL);
-  fprintf(header, " %s;\n", type->name);
+  fprintf(header, "%s%s;\n", needs_space_after(type->orig) ? " " : "", type->name);
 }
 
 void write_expr(FILE *h, const expr_t *e, int brackets)
@@ -585,7 +590,8 @@ void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent
     }
     else
     {
-      fprintf(h, " ");
+      if (needs_space_after(arg->type))
+        fprintf(h, " ");
       write_name(h, arg);
     }
     write_array(h, arg->array, 0);
