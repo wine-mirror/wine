@@ -130,7 +130,7 @@ static void test_AddRem_ActionID(void)
     todo_wine
     {
         ok (ret, "Expected WintrustAddActionID to succeed.\n");
-        ok (GetLastError() == ERROR_INVALID_PARAMETER /* W2K */,
+        ok (GetLastError() == ERROR_INVALID_PARAMETER,
             "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
     }
 
@@ -152,7 +152,7 @@ static void test_AddRem_ActionID(void)
     todo_wine
     {
         ok (ret, "Expected WintrustAddActionID to succeed.\n");
-        ok (GetLastError() == 0xdeadbeef /* W2K */,
+        ok (GetLastError() == 0xdeadbeef,
             "Expected 0xdeadbeef, got %ld.\n", GetLastError());
     }
 
@@ -162,6 +162,26 @@ static void test_AddRem_ActionID(void)
     {
         ok ( ret, "WintrustRemoveActionID failed : 0x%08lx\n", GetLastError());
         ok ( GetLastError() == 0xdeadbeef, "Last error should not have been changed: 0x%08lx\n", GetLastError());
+    }
+
+    /* NULL input */
+    SetLastError(0xdeadbeef);
+    ret = pWintrustRemoveActionID(NULL);
+    todo_wine
+    {
+        ok (ret, "Expected WintrustRemoveActionID to succeed.\n");
+        ok (GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    }
+
+    /* The passed GUID is removed by a previous call, so it's basically a test with a non-existent Trust provider */ 
+    SetLastError(0xdeadbeef);
+    ret = pWintrustRemoveActionID(&ActionID);
+    todo_wine
+    {
+        ok (ret, "Expected WintrustRemoveActionID to succeed.\n");
+        ok (GetLastError() == 0xdeadbeef,
+            "Expected 0xdeadbeef, got %ld.\n", GetLastError());
     }
 }
 
