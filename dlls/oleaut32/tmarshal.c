@@ -1630,6 +1630,7 @@ typedef struct _TMStubImpl {
     ITypeInfo			*tinfo;
     IID				iid;
     IRpcStubBuffer		*dispatch_stub;
+    BOOL			dispatch_derivative;
 } TMStubImpl;
 
 static HRESULT WINAPI
@@ -1667,6 +1668,8 @@ TMStubImpl_Release(LPRPCSTUBBUFFER iface)
     {
         IRpcStubBuffer_Disconnect(iface);
         ITypeInfo_Release(This->tinfo);
+        if (This->dispatch_stub)
+            IRpcStubBuffer_Release(This->dispatch_stub);
         CoTaskMemFree(This);
     }
     return refCount;
@@ -1727,8 +1730,20 @@ TMStubImpl_Invoke(
         return E_UNEXPECTED;
     }
 
-    if (This->dispatch_stub && xmsg->iMethod < sizeof(IDispatchVtbl)/sizeof(void *))
+    if (This->dispatch_derivative && xmsg->iMethod < sizeof(IDispatchVtbl)/sizeof(void *))
+    {
+        IPSFactoryBuffer *factory_buffer;
+        hres = get_facbuf_for_iid(&IID_IDispatch, &factory_buffer);
+        if (hres == S_OK)
+        {
+            hres = IPSFactoryBuffer_CreateStub(factory_buffer, &IID_IDispatch,
+                This->pUnk, &This->dispatch_stub);
+            IPSFactoryBuffer_Release(factory_buffer);
+        }
+        if (hres != S_OK)
+            return hres;
         return IRpcStubBuffer_Invoke(This->dispatch_stub, xmsg, rpcchanbuf);
+    }
 
     memset(&buf,0,sizeof(buf));
     buf.size	= xmsg->cbBuffer;
@@ -1915,6 +1930,7 @@ PSFacBuf_CreateStub(
     stub->ref		= 1;
     stub->tinfo		= tinfo;
     stub->dispatch_stub = NULL;
+    stub->dispatch_derivative = FALSE;
     memcpy(&(stub->iid),riid,sizeof(*riid));
     hres = IRpcStubBuffer_Connect((LPRPCSTUBBUFFER)stub,pUnkServer);
     *ppStub 		= (LPRPCSTUBBUFFER)stub;
@@ -1927,16 +1943,7 @@ PSFacBuf_CreateStub(
     if (hres == S_OK)
     {
         if (typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE)
-        {
-            IPSFactoryBuffer *factory_buffer;
-            hres = get_facbuf_for_iid(&IID_IDispatch, &factory_buffer);
-            if (hres == S_OK)
-            {
-                hres = IPSFactoryBuffer_CreateStub(factory_buffer, &IID_IDispatch,
-                    pUnkServer, &stub->dispatch_stub);
-                IPSFactoryBuffer_Release(factory_buffer);
-            }
-        }
+            stub->dispatch_derivative = TRUE;
         ITypeInfo_ReleaseTypeAttr(tinfo, typeattr);
     }
 
