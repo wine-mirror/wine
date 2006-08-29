@@ -34,6 +34,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
 /***********************************************************************
  *		WintrustAddActionID (WINTRUST.@)
+ *
+ * Add the definitions of the actions a Trust provider can perform to
+ * the registry.
+ *
+ * PARAMS
+ *   pgActionID [I] Pointer to a GUID for the Trust provider.
+ *   fdwFlags   [I] Flag to indicate whether registry errors are passed on.
+ *   psProvInfo [I] Pointer to a structure with information about DLL
+ *                  name and functions.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE. (Use GetLastError() for more information)
+ *
+ * NOTES
+ *   Adding a Trust provider is basically only adding relevant information
+ *   to the registry. No verification takes place whether a DLL or it's
+ *   entrypoints exist.
+ *   Information in the registry will always be overwritten.
  */
 BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
                                  CRYPT_REGISTER_ACTIONID* psProvInfo)
@@ -45,6 +64,21 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
 
 /***********************************************************************
  *              WintrustRemoveActionID (WINTRUST.@)
+ *
+ * Remove the definitions of the actions a Trust provider can perform
+ * from the registry.
+ *
+ * PARAMS
+ *   pgActionID [I] Pointer to a GUID for the Trust provider.
+ *
+ * RETURNS
+ *   Success: TRUE. (Use GetLastError() for more information)
+ *   Failure: FALSE. (Use GetLastError() for more information)
+ *
+ * NOTES
+ *   Testing shows that WintrustRemoveActionID always returns TRUE and
+ *   that a possible error should be retrieved via GetLastError().
+ *   There are no checks if the definitions are in the registry.
  */
 BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
 {
