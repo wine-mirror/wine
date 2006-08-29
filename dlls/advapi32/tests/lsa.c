@@ -40,6 +40,7 @@ static NTSTATUS (WINAPI *pLsaClose)(LSA_HANDLE);
 static NTSTATUS (WINAPI *pLsaFreeMemory)(PVOID);
 static NTSTATUS (WINAPI *pLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 static NTSTATUS (WINAPI *pLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
+static BOOL     (WINAPI *pConvertSidToStringSidA)(PSID pSid, LPSTR *str);
 
 static BOOL init(void)
 {
@@ -50,8 +51,9 @@ static BOOL init(void)
         pLsaFreeMemory = (void*)GetProcAddress(hadvapi32, "LsaFreeMemory");
         pLsaOpenPolicy = (void*)GetProcAddress(hadvapi32, "LsaOpenPolicy");
         pLsaQueryInformationPolicy = (void*)GetProcAddress(hadvapi32, "LsaQueryInformationPolicy");
+        pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
 
-        if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy)
+        if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy && pConvertSidToStringSidA)
             return TRUE;
     }
 
@@ -96,7 +98,7 @@ static void test_lsa(void)
             ok(primary_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
             if (primary_domain_info->Sid) {
                 LPSTR strsid;
-                if (ConvertSidToStringSidA(primary_domain_info->Sid, &strsid))
+                if (pConvertSidToStringSidA(primary_domain_info->Sid, &strsid))
                 {
                     if (primary_domain_info->Name.Buffer) {
                         LPSTR name = NULL;
@@ -138,7 +140,7 @@ static void test_lsa(void)
                 WCHAR guidstrW[64];
                 UINT len;
                 guidstrW[0] = '\0';
-                ConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
+                pConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
                 StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, sizeof(guidstrW)/sizeof(WCHAR));
                 len = WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, NULL, 0, NULL, NULL );
                 guidstr = LocalAlloc( 0, len );
