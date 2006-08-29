@@ -65,6 +65,10 @@ typedef struct wine_wgl_s {
     HGLRC WINAPI (*p_wglGetCurrentContext)(void);
     HDC WINAPI   (*p_wglGetCurrentDC)(void);
     HDC WINAPI   (*p_wglGetCurrentReadDCARB)(void);
+    BOOL WINAPI  (*p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
+    BOOL WINAPI  (*p_wglMakeContextCurrentARB)(HDC hDrawDC, HDC hReadDC, HGLRC hglrc); 
+    BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
+
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl_t;
 
@@ -136,18 +140,6 @@ inline static Display *get_display( HDC hdc )
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(display), (LPSTR)&display )) display = NULL;
     return display;
-}
-
-
-/* retrieve the GLX drawable to use on a given DC */
-inline static Drawable get_drawable( HDC hdc )
-{
-    GLXDrawable drawable;
-    enum x11drv_escape_codes escape = X11DRV_GET_GLX_DRAWABLE;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
-    return drawable;
 }
 
 /* retrieve the X font to use on a given DC */
@@ -424,105 +416,12 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   }
 }
 
-static int describeContext(Wine_GLContext* ctx) {
-  int tmp;
-  int ctx_vis_id;
-  TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
-  wine_glx.p_glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
-  TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
-  wine_glx.p_glXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
-  TRACE(" - VISUAL_ID 0x%x\n", tmp);
-  ctx_vis_id = tmp;
-  return ctx_vis_id;
-}
-
-static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
-  int tmp;
-  int nElements;
-  int attribList[3] = { GLX_FBCONFIG_ID, 0, None };
-  GLXFBConfig *fbCfgs;
-
-  if (wine_glx.p_glXQueryDrawable == NULL)  {
-    /** glXQueryDrawable not available so returns not supported */
-    return -1;
-  }
-
-  TRACE(" Drawable %p have :\n", (void*) drawable);
-  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
-  TRACE(" - WIDTH as %d\n", tmp);
-  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
-  TRACE(" - HEIGHT as %d\n", tmp);
-  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
-  TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
-
-  attribList[1] = tmp;
-  fbCfgs = wine_glx.p_glXChooseFBConfig(ctx->display, DefaultScreen(ctx->display), attribList, &nElements);
-  if (fbCfgs == NULL) {
-    return -1;
-  }
- 
-  wine_glx.p_glXGetFBConfigAttrib(ctx->display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
-  TRACE(" - VISUAL_ID as 0x%x\n", tmp);
-
-  XFree(fbCfgs);
- 
-  return tmp;
-}
-
 /***********************************************************************
  *		wglMakeCurrent (OPENGL32.@)
  */
-BOOL WINAPI wglMakeCurrent(HDC hdc,
-			   HGLRC hglrc) {
-  BOOL ret;
-  DWORD type = GetObjectType(hdc);
-
-  TRACE("(%p,%p)\n", hdc, hglrc);
-
-  ENTER_GL();
-  if (hglrc == NULL) {
-      ret = glXMakeCurrent(default_display, None, NULL);
-      NtCurrentTeb()->glContext = NULL;
-  } else {
-      Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-      Drawable drawable = get_drawable( hdc );
-      if (ctx->ctx == NULL) {
-	int draw_vis_id, ctx_vis_id;
-        VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
-	TRACE(" Wine desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
-	draw_vis_id = describeDrawable(ctx, drawable);
-	ctx_vis_id = describeContext(ctx);
-
-	if (-1 == draw_vis_id || (draw_vis_id == visualid && draw_vis_id != ctx_vis_id)) {
-	  /**
-	   * Inherits from root window so reuse desktop visual
-	   */
-	  XVisualInfo template;
-	  XVisualInfo *vis;
-	  int num;
-	  template.visualid = visualid;
-	  vis = XGetVisualInfo(ctx->display, VisualIDMask, &template, &num);
-
-	  TRACE(" Creating GLX Context\n");
-	  ctx->ctx = glXCreateContext(ctx->display, vis, NULL, type == OBJ_MEMDC ? False : True);
-	} else {
-	  TRACE(" Creating GLX Context\n");
-	  ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
-	}
-	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
-      }
-      TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
-      ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
-      NtCurrentTeb()->glContext = ctx;
-      if(ret && type == OBJ_MEMDC)
-      {
-          ctx->do_escape = TRUE;
-          glDrawBuffer(GL_FRONT_LEFT);
-      }
-  }
-  LEAVE_GL();
-  TRACE(" returning %s\n", (ret ? "True" : "False"));
-  return ret;
+BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc) {
+    TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
+    return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
 }
 
 /***********************************************************************
@@ -530,31 +429,8 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
  */
 BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
 {
-  BOOL ret;
-  TRACE("(%p,%p,%p)\n", hDrawDC, hReadDC, hglrc);
-
-  ENTER_GL();
-  if (hglrc == NULL) {
-    ret = glXMakeCurrent(default_display, None, NULL);
-  } else {
-    if (NULL == wine_glx.p_glXMakeContextCurrent) {
-      ret = FALSE;
-    } else {
-      Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-      Drawable d_draw = get_drawable( hDrawDC );
-      Drawable d_read = get_drawable( hReadDC );
-      
-      if (ctx->ctx == NULL) {
-        ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDC) == OBJ_MEMDC ? False : True);
-        TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
-      }
-      ret = wine_glx.p_glXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
-    }
-  }
-  LEAVE_GL();
-  
-  TRACE(" returning %s\n", (ret ? "True" : "False"));
-  return ret;
+    TRACE("hDrawDC: (%p), hReadDC: (%p), hglrc: (%p)\n", hDrawDC, hReadDC, hglrc);
+    return wine_wgl.p_wglMakeContextCurrentARB(hDrawDC, hReadDC, hglrc);
 }
 
 /***********************************************************************
@@ -593,35 +469,9 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
 /***********************************************************************
  *		wglShareLists (OPENGL32.@)
  */
-BOOL WINAPI wglShareLists(HGLRC hglrc1,
-			  HGLRC hglrc2) {
-  Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
-  Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
-
-  TRACE("(%p, %p)\n", org, dest);
-
-  if (NULL != dest && dest->ctx != NULL) {
-    ERR("Could not share display lists, context already created !\n");
-    return FALSE;
-  } else {
-    if (org->ctx == NULL) {
-      ENTER_GL();
-      describeContext(org);
-      org->ctx = glXCreateContext(org->display, org->vis, NULL, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
-      LEAVE_GL();
-      TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
-    }
-    if (NULL != dest) {
-      ENTER_GL();
-      describeContext(dest);
-      /* Create the destination context with display lists shared */
-      dest->ctx = glXCreateContext(org->display, dest->vis, org->ctx, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
-      LEAVE_GL();
-      TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
-      return TRUE;
-    }
-  }
-  return FALSE;
+BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+    TRACE("(%p, %p)\n", hglrc1, hglrc2);
+    return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
 }
 
 /***********************************************************************
@@ -1212,6 +1062,10 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod, "wglGetCurrentContext");
   wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod, "wglGetCurrentDC");
   wine_wgl.p_wglGetCurrentReadDCARB = (void *)GetProcAddress(mod, "wglGetCurrentReadDCARB");
+  wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod, "wglMakeCurrent");
+  wine_wgl.p_wglMakeContextCurrentARB = (void *)GetProcAddress(mod, "wglMakeContextCurrentARB");
+  wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
+  /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");
 
   hdc = GetDC(0);

@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "x11drv.h"
+#include "winternl.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -133,6 +134,7 @@ MAKE_FUNCPTR(glXChooseVisual)
 MAKE_FUNCPTR(glXGetConfig)
 MAKE_FUNCPTR(glXSwapBuffers)
 MAKE_FUNCPTR(glXQueryExtension)
+MAKE_FUNCPTR(glXQueryServerString)
 
 MAKE_FUNCPTR(glXGetFBConfigs)
 MAKE_FUNCPTR(glXChooseFBConfig)
@@ -144,13 +146,18 @@ MAKE_FUNCPTR(glXCreateContext)
 MAKE_FUNCPTR(glXDestroyContext)
 MAKE_FUNCPTR(glXGetCurrentContext)
 MAKE_FUNCPTR(glXGetCurrentReadDrawable)
-/* MAKE_FUNCPTR(glXQueryDrawable) */
+MAKE_FUNCPTR(glXMakeCurrent)
+MAKE_FUNCPTR(glXMakeContextCurrent)
+MAKE_FUNCPTR(glXQueryDrawable)
+
+MAKE_FUNCPTR(glDrawBuffer)
 #undef MAKE_FUNCPTR
 
 static BOOL has_opengl(void)
 {
     static int init_done;
     static void *opengl_handle;
+    const char *server_glx_version;
 
     int error_base, event_base;
 
@@ -166,6 +173,7 @@ LOAD_FUNCPTR(glXChooseVisual)
 LOAD_FUNCPTR(glXGetConfig)
 LOAD_FUNCPTR(glXSwapBuffers)
 LOAD_FUNCPTR(glXQueryExtension)
+LOAD_FUNCPTR(glXQueryServerString)
 
 LOAD_FUNCPTR(glXGetFBConfigs)
 LOAD_FUNCPTR(glXChooseFBConfig)
@@ -177,15 +185,31 @@ LOAD_FUNCPTR(glXCreateContext)
 LOAD_FUNCPTR(glXDestroyContext)
 LOAD_FUNCPTR(glXGetCurrentContext)
 LOAD_FUNCPTR(glXGetCurrentReadDrawable)
+LOAD_FUNCPTR(glXMakeCurrent)
+LOAD_FUNCPTR(glXMakeContextCurrent)
+
+/* Standard OpenGL call, need in wglMakeCurrent */
+LOAD_FUNCPTR(glDrawBuffer)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
     if (pglXQueryExtension(gdi_display, &error_base, &event_base) == True) {
-	TRACE("GLX is up and running error_base = %d\n", error_base);
+        TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
         wine_dlclose(opengl_handle, NULL, 0);
-	opengl_handle = NULL;
+        opengl_handle = NULL;
     }
+
+    server_glx_version = pglXQueryServerString(gdi_display, DefaultScreen(gdi_display), GLX_VERSION);
+    TRACE("Server GLX version: %s\n", server_glx_version);
+    /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
+    * enable this function when the Xserver understand GLX 1.3 or newer
+    */ 
+    if (!strcmp("1.2", server_glx_version))
+        pglXQueryDrawable = NULL;
+    else
+        pglXQueryDrawable = wine_dlsym(RTLD_DEFAULT, "glXQueryDrawable", NULL, 0);
+
     wine_tsx11_unlock();
     return (opengl_handle != NULL);
 
@@ -253,6 +277,51 @@ inline static BOOL is_valid_context( Wine_GLContext *ctx )
     Wine_GLContext *ptr;
     for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;
     return (ptr != NULL);
+}
+
+static int describeContext(Wine_GLContext* ctx) {
+    int tmp;
+    int ctx_vis_id;
+    TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
+    pglXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
+    TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
+    pglXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
+    TRACE(" - VISUAL_ID 0x%x\n", tmp);
+    ctx_vis_id = tmp;
+    return ctx_vis_id;
+}
+
+static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
+    int tmp;
+    int nElements;
+    int attribList[3] = { GLX_FBCONFIG_ID, 0, None };
+    GLXFBConfig *fbCfgs;
+
+    if (pglXQueryDrawable == NULL)  {
+        /** glXQueryDrawable not available so returns not supported */
+        return -1;
+    }
+
+    TRACE(" Drawable %p have :\n", (void*) drawable);
+    pglXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
+    TRACE(" - WIDTH as %d\n", tmp);
+    pglXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
+    TRACE(" - HEIGHT as %d\n", tmp);
+    pglXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
+    TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+
+    attribList[1] = tmp;
+    fbCfgs = pglXChooseFBConfig(ctx->display, DefaultScreen(ctx->display), attribList, &nElements);
+    if (fbCfgs == NULL) {
+        return -1;
+    }
+
+    pglXGetFBConfigAttrib(ctx->display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
+    TRACE(" - VISUAL_ID as 0x%x\n", tmp);
+
+    XFree(fbCfgs);
+
+    return tmp;
 }
 
 /* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
@@ -804,6 +873,121 @@ HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
     return ret;
 }
 
+/* OpenGL32 wglMakeCurrent */
+BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
+    BOOL ret;
+    DWORD type = GetObjectType(hdc);
+
+    TRACE("(%p,%p)\n", hdc, hglrc);
+
+    wine_tsx11_lock();
+    if (hglrc == NULL) {
+        ret = pglXMakeCurrent(gdi_display, None, NULL);
+        NtCurrentTeb()->glContext = NULL;
+    } else {
+        Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+        Drawable drawable = get_drawable( hdc );
+        if (ctx->ctx == NULL) {
+            int draw_vis_id, ctx_vis_id;
+            VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+            TRACE(" Wine desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
+            draw_vis_id = describeDrawable(ctx, drawable);
+            ctx_vis_id = describeContext(ctx);
+
+            if (-1 == draw_vis_id || (draw_vis_id == visualid && draw_vis_id != ctx_vis_id)) {
+                /**
+                * Inherits from root window so reuse desktop visual
+                */
+                XVisualInfo template;
+                XVisualInfo *vis;
+                int num;
+                template.visualid = visualid;
+                vis = XGetVisualInfo(ctx->display, VisualIDMask, &template, &num);
+
+                TRACE(" Creating GLX Context\n");
+                ctx->ctx = pglXCreateContext(ctx->display, vis, NULL, type == OBJ_MEMDC ? False : True);
+            } else {
+                TRACE(" Creating GLX Context\n");
+                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
+            }
+            TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+        }
+        TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
+        ret = pglXMakeCurrent(ctx->display, drawable, ctx->ctx);
+        NtCurrentTeb()->glContext = ctx;
+        if(ret && type == OBJ_MEMDC)
+        {
+            ctx->do_escape = TRUE;
+            pglDrawBuffer(GL_FRONT_LEFT);
+        }
+    }
+    wine_tsx11_unlock();
+    TRACE(" returning %s\n", (ret ? "True" : "False"));
+    return ret;
+}
+
+/* OpenGL32 wglMakeContextCurrentARB */
+BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
+{
+    BOOL ret;
+    TRACE("(%p,%p,%p)\n", hDrawDC, hReadDC, hglrc);
+
+    wine_tsx11_lock();
+    if (hglrc == NULL) {
+        ret = pglXMakeCurrent(gdi_display, None, NULL);
+    } else {
+        if (NULL == pglXMakeContextCurrent) {
+            ret = FALSE;
+        } else {
+            Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+            Drawable d_draw = get_drawable( hDrawDC );
+            Drawable d_read = get_drawable( hReadDC );
+
+            if (ctx->ctx == NULL) {
+                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDC) == OBJ_MEMDC ? False : True);
+                TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+            }
+            ret = pglXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
+        }
+    }
+    wine_tsx11_unlock();
+
+    TRACE(" returning %s\n", (ret ? "True" : "False"));
+    return ret;
+}
+
+/* OpenGL32 wglShaderLists */
+BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+    Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
+    Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
+
+    TRACE("(%p, %p)\n", org, dest);
+
+    if (NULL != dest && dest->ctx != NULL) {
+        ERR("Could not share display lists, context already created !\n");
+        return FALSE;
+    } else {
+        if (org->ctx == NULL) {
+            wine_tsx11_lock();
+            describeContext(org);
+            org->ctx = pglXCreateContext(org->display, org->vis, NULL, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
+            wine_tsx11_unlock();
+            TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
+        }
+        if (NULL != dest) {
+            wine_tsx11_lock();
+            describeContext(dest);
+            /* Create the destination context with display lists shared */
+            dest->ctx = pglXCreateContext(org->display, dest->vis, org->ctx, GetObjectType(org->hdc) == OBJ_MEMDC ? False : True);
+            wine_tsx11_unlock();
+            TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
 void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
     TRACE("pname: 0x%x, params: %p\n", pname, params);
@@ -1040,6 +1224,25 @@ HGLRC WINAPI X11DRV_wglGetCurrentContext(void) {
 HDC WINAPI X11DRV_wglGetCurrentDC(void) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return 0;
+}
+
+/* OpenGL32 wglMakeCurrent */
+BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/* OpenGL32 wglMakeContextCurrentARB */
+BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
+{
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/* OpenGL32 wglShaderLists */
+BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
