@@ -852,7 +852,7 @@ static UINT msi_prop_makehash( const WCHAR *str )
 
     while( *str )
     {
-        hash ^= tolowerW( *str++ );
+        hash ^= *str++;
         hash *= 53;
         hash = (hash<<5) | (hash>>27);
     }
@@ -865,7 +865,7 @@ static msi_property *msi_prop_find( MSIPACKAGE *package, LPCWSTR key )
     msi_property *prop;
 
     LIST_FOR_EACH_ENTRY( prop, &package->props[hash], msi_property, entry )
-        if (!lstrcmpiW( prop->key, key ))
+        if (!lstrcmpW( prop->key, key ))
             return prop;
     return NULL;
 }

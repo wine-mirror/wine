@@ -1354,6 +1354,27 @@ static void test_props(void)
     ok( !strcmp(buffer,"xy"), "buffer was not changed\n");
     ok( sz == 3, "wrong size returned\n");
 
+    r = MsiSetProperty(hpkg, "SourceDir", "foo");
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    sz = 4;
+    r = MsiGetProperty(hpkg, "SOURCEDIR", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,""), "buffer wrong\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    sz = 4;
+    r = MsiGetProperty(hpkg, "SOMERANDOMNAME", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,""), "buffer wrong\n");
+    ok( sz == 0, "wrong size returned\n");
+
+    sz = 4;
+    r = MsiGetProperty(hpkg, "SourceDir", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+    ok( !strcmp(buffer,"foo"), "buffer wrong\n");
+    ok( sz == 3, "wrong size returned\n");
+
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
 }
