@@ -280,14 +280,24 @@ void WINAPI NdrStubInitialize(PRPC_MESSAGE pRpcMsg,
 /***********************************************************************
  *           NdrStubGetBuffer [RPCRT4.@]
  */
-void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER This,
+void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER iface,
                             LPRPCCHANNELBUFFER pRpcChannelBuffer,
                             PMIDL_STUB_MESSAGE pStubMsg)
 {
-  TRACE("(%p,%p)\n", This, pStubMsg);
-  pStubMsg->pRpcChannelBuffer = pRpcChannelBuffer;
+  CStdStubBuffer *This = (CStdStubBuffer *)iface;
+  HRESULT hr;
+
+  TRACE("(%p, %p, %p)\n", This, pRpcChannelBuffer, pStubMsg);
+
   pStubMsg->RpcMsg->BufferLength = pStubMsg->BufferLength;
-  I_RpcGetBuffer(pStubMsg->RpcMsg); /* ? */
+  hr = IRpcChannelBuffer_GetBuffer(pRpcChannelBuffer,
+    (RPCOLEMESSAGE *)pStubMsg->RpcMsg, STUB_HEADER(This).piid);
+  if (FAILED(hr))
+  {
+    RpcRaiseException(hr);
+    return;
+  }
+
   pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
   pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
   pStubMsg->Buffer = pStubMsg->BufferStart;
