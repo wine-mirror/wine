@@ -1396,18 +1396,14 @@ static LPWSTR msi_get_window_text( HWND hwnd )
 static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
                 msi_control *control, WPARAM param )
 {
-    LPCWSTR prop;
-    LPWSTR buf, indirect = NULL;
+    LPWSTR buf, prop;
+    BOOL indirect;
 
     if( HIWORD(param) != EN_KILLFOCUS )
         return ERROR_SUCCESS;
 
-    prop = control->property;
-    if ( control->attributes & msidbControlAttributesIndirect )
-    {
-        indirect = msi_dup_property( dialog->package, control->property );
-        prop = indirect;
-    }
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
     /* FIXME: verify the new path */
     buf = msi_get_window_text( control->hwnd );
@@ -1417,7 +1413,7 @@ static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
           debugstr_w(prop));
 
     msi_free( buf );
-    msi_free( indirect );
+    msi_free( prop );
 
     return ERROR_SUCCESS;
 }
@@ -1449,10 +1445,8 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
                                       WS_BORDER | WS_TABSTOP );
     control->handler = msi_dialog_pathedit_handler;
     control->attributes = MSI_RecordGetInteger( rec, 8 );
-
     prop = MSI_RecordGetString( rec, 9 );
-    if ( prop )
-        control->property = strdupW( prop );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
     msi_dialog_update_pathedit( dialog );
 
