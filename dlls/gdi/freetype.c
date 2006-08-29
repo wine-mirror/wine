@@ -2242,10 +2242,11 @@ static BOOL create_child_font_list(GdiFont font)
 GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
     GdiFont ret;
-    Face *face, *best;
+    Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
     struct list *family_elem_ptr, *face_elem_ptr;
     INT height, width = 0;
+    unsigned int score = 0, new_score;
     signed int diff = 0, newdiff;
     BOOL bd, it, can_use_bitmap;
     LOGFONTW lf;
@@ -2432,57 +2433,41 @@ found:
     height = GDI_ROUND( (FLOAT)lf.lfHeight * dc->xformWorld2Vport.eM22 );
     height = lf.lfHeight < 0 ? -abs(height) : abs(height);
 
-    face = best = NULL;
-    LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-        face = LIST_ENTRY(face_elem_ptr, Face, entry);
-        if(!(face->Italic ^ it) && !(face->Bold ^ bd) &&
-           ((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])) {
-            if(face->scalable)
-                break;
-            if(height > 0)
-                newdiff = height - (signed int)(face->size.height);
-            else
-                newdiff = -height - ((signed int)(face->size.height) - face->size.internal_leading);
-            if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
-               (diff < 0 && newdiff > diff)) {
-                TRACE("%d is better for %d diff was %d\n", face->size.height, height, diff);
-                diff = newdiff;
+    face = best = best_bitmap = NULL;
+    LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+    {
+        if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])
+        {
+            new_score = (face->Italic ^ it) + (face->Bold ^ bd);
+            if(!best || new_score <= score)
+            {
+                TRACE("(it=%d, bd=%d) is selected for (it=%d, bd=%d)\n",
+                      face->Italic, face->Bold, it, bd);
+                score = new_score;
                 best = face;
-                if(diff == 0)
-                    break;
-            }
-        }
-        face = NULL;
-    }
-    if(!face && best)
-        face = best;
-    else if(!face) {
-        best = NULL;
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0]) {
-                if(face->scalable)
-                    break;
-                if(height > 0)
-                    newdiff = height - (signed int)(face->size.height);
-                else
-                    newdiff = -height - ((signed int)(face->size.height) - face->size.internal_leading);
-                if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
-                   (diff < 0 && newdiff > diff)) {
-                    TRACE("%d is better for %d diff was %d\n", face->size.height, height, diff);
-                    diff = newdiff;
-                    best = face;
-                    if(diff == 0)
-                        break;
+                if(best->scalable  && score == 0) break;
+                if(!best->scalable)
+                {
+                    if(height > 0)
+                        newdiff = height - (signed int)(best->size.height);
+                    else
+                        newdiff = -height - ((signed int)(best->size.height) - best->size.internal_leading);
+                    if(!best_bitmap || new_score < score ||
+                       (diff > 0 && newdiff < diff && newdiff >= 0) || (diff < 0 && newdiff > diff))
+                    {
+                        TRACE("%d is better for %d diff was %d\n", best->size.height, height, diff);
+                        diff = newdiff;
+                        best_bitmap = best;
+                        if(score == 0 && diff == 0) break;
+                    }
                 }
             }
-            face = NULL;
         }
-        if(!face && best)
-            face = best;
-	if(it && !face->Italic) ret->fake_italic = TRUE;
-	if(bd && !face->Bold) ret->fake_bold = TRUE;
     }
+    if(best)
+        face = best->scalable ? best : best_bitmap;
+    ret->fake_italic = (it && !face->Italic);
+    ret->fake_bold = (bd && !face->Bold);
 
     memcpy(&ret->fs, &face->fs, sizeof(FONTSIGNATURE));
 
