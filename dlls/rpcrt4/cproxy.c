@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  * 
  * TODO: Handle non-i386 architectures
- *       Get rid of #if 0'ed code.
  */
 
 #include <stdarg.h>
@@ -318,26 +317,14 @@ ULONG WINAPI IUnknown_AddRef_Proxy(LPUNKNOWN iface)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->AddRef() %s\n",This,This->name);
-#if 0 /* interface refcounting */
-  return ++(This->RefCount);
-#else /* object refcounting */
   return IUnknown_AddRef(This->pUnkOuter);
-#endif
 }
 
 ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->Release() %s\n",This,This->name);
-#if 0 /* interface refcounting */
-  if (!--(This->RefCount)) {
-    StdProxy_Destruct((LPRPCPROXYBUFFER)&This->lpVtbl);
-    return 0;
-  }
-  return This->RefCount;
-#else /* object refcounting */
   return IUnknown_Release(This->pUnkOuter);
-#endif
 }
 
 /***********************************************************************
