@@ -1425,6 +1425,8 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog )
     BOOL indirect;
 
     control = msi_dialog_find_control( dialog, szPathEdit );
+    if (!control)
+        return;
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
