@@ -963,7 +963,7 @@ INT16       WINAPI lstrcmpi16(LPCSTR,LPCSTR);
 
 typedef VOID (*SYSTEMTIMERPROC)(WORD);
 
-void        WINAPI ConvertDialog32To16(LPVOID,DWORD,LPVOID);
+void        WINAPI ConvertDialog32To16(LPCVOID,DWORD,LPVOID);
 WORD        WINAPI CreateSystemTimer(WORD,SYSTEMTIMERPROC);
 VOID        WINAPI DisableSystemTimers16(void);
 VOID        WINAPI EnableSystemTimers16(void);
