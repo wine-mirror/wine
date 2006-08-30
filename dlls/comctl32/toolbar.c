@@ -3301,7 +3301,7 @@ TOOLBAR_Customize (HWND hwnd)
 	return FALSE;
 
     ret = DialogBoxIndirectParamW ((HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE),
-                                   (LPDLGTEMPLATEW)template,
+                                   (LPCDLGTEMPLATEW)template,
                                    hwnd,
                                    TOOLBAR_CustomizeDialogProc,
                                    (LPARAM)&custInfo);
