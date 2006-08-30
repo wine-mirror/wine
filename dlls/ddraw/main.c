@@ -96,6 +96,8 @@ DDRAW_Create(GUID *guid,
 
     TRACE("(%s,%p,%p)\n", debugstr_guid(guid), DD, UnkOuter);
 
+    *DD = NULL;
+
     /* We don't care about this guids. Well, there's no special guid anyway
      * OK, we could
      */
@@ -164,7 +166,7 @@ DDRAW_Create(GUID *guid,
     if (!hWineD3D)
     {
         ERR("Couldn't load WineD3D - OpenGL libs not present?\n");
-        hr = E_NOTIMPL;
+        hr = DDERR_NODIRECTDRAWSUPPORT;
         goto err_out;
     }
 

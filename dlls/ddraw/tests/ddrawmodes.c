@@ -59,12 +59,17 @@ static void createwindow(void)
     
 }
 
-static void createdirectdraw(void)
+static BOOL createdirectdraw(void)
 {
     HRESULT rc;
 
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK,"DirectDrawCreate returned: %lx\n",rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    if (!lpDD) {
+        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
@@ -319,7 +324,8 @@ static void testcooperativelevels_exclusive(void)
 START_TEST(ddrawmodes)
 {
     createwindow();
-    createdirectdraw();
+    if (!createdirectdraw())
+        return;
     enumdisplaymodes();
     testdisplaymodes();
     flushdisplaymodes();

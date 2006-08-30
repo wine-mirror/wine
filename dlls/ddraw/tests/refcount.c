@@ -304,7 +304,7 @@ static void test_d3d_ifaces(void)
     long ref;
 
     hr = DirectDrawCreate(NULL, &DDraw1, NULL);
-    ok(hr == DD_OK, "DirectDrawCreate returned %08lx\n", hr);
+    ok(hr == DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", hr);
     if(!DDraw1)
     {
         trace("DirectDrawCreate failed with %08lx\n", hr);

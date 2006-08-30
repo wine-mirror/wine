@@ -26,15 +26,21 @@
 
 static LPDIRECTDRAW lpDD = NULL;
 
-static void CreateDirectDraw(void)
+static BOOL CreateDirectDraw(void)
 {
     HRESULT rc;
 
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK,"DirectDrawCreate returned: %lx\n",rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    if (!lpDD) {
+        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        return FALSE;
+    }
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
     ok(rc==DD_OK,"SetCooperativeLevel returned: %lx\n",rc);
+
+    return TRUE;
 }
 
 
@@ -250,7 +256,8 @@ static void QueryInterface(void)
 
 START_TEST(dsurface)
 {
-    CreateDirectDraw();
+    if (!CreateDirectDraw())
+        return;
     MipMapCreationTest();
     SrcColorKey32BlitTest();
     QueryInterface();
