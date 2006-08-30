@@ -159,11 +159,6 @@ void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces, int for_objec
     print_file(f, indent, "\n");
 }
 
-static inline int type_has_ref(const type_t *type)
-{
-    return (type->type == 0 && type->ref);
-}
-
 static inline int is_base_type(unsigned char type)
 {
     switch (type)
@@ -192,14 +187,6 @@ static inline int is_base_type(unsigned char type)
     }
 }
 
-unsigned char ref_type(const type_t *type)
-{
-    while (type_has_ref(type))
-        type = type->ref;
-
-    return type->type;
-}
-
 static size_t write_procformatstring_var(FILE *file, int indent,
     const var_t *var, int is_return, unsigned int *type_offset)
 {
@@ -211,9 +198,6 @@ static size_t write_procformatstring_var(FILE *file, int indent,
     int is_out = is_attr(var->attrs, ATTR_OUT);
 
     if (!is_in && !is_out) is_in = TRUE;
-
-    if (ptr_level == 0 && type_has_ref(type))
-        type = type->ref;
 
     if (ptr_level == 0 && !var->array && is_base_type(type->type))
     {
@@ -454,7 +438,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             correlation_type = RPC_FC_TOP_LEVEL_CONFORMANCE;
         }
 
-        correlation_variable_type = ref_type(correlation_variable);
+        correlation_variable_type = correlation_variable->type;
 
         switch (correlation_variable_type)
         {
@@ -570,9 +554,6 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
     if (ptr_level)
         return sizeof(void *);
 
-    if (type_has_ref(t))
-        return type_memsize(t->ref, 0 /* FIXME */, NULL);
-
     switch (t->type)
     {
     case RPC_FC_BYTE:
@@ -650,10 +631,6 @@ static int write_pointers(FILE *file, const attr_t *attrs,
         error("write_pointers: Writing type format string for pointer is unimplemented\n");
         return 1;
     }
-
-    /* FIXME: search through all refs for pointers too */
-    while(type_has_ref(type))
-        type = type->ref;
 
     switch (type->type)
     {
@@ -753,7 +730,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     if (!get_attrp(attrs, ATTR_SIZEIS))
         flags |= RPC_FC_P_SIMPLEPOINTER;
 
-    rtype = ref_type(type);
+    rtype = type->type;
 
     if ((rtype != RPC_FC_BYTE) && (rtype != RPC_FC_CHAR) && (rtype != RPC_FC_WCHAR))
     {
@@ -1040,7 +1017,7 @@ static size_t write_struct_members(FILE *file, const type_t *type)
     while (NEXT_LINK(field)) field = NEXT_LINK(field);
     for (; field; field = PREV_LINK(field))
     {
-        unsigned char rtype = ref_type(field->type);
+        unsigned char rtype = field->type->type;
 
         if (is_base_type(rtype))
         {
@@ -1324,14 +1301,6 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
         if (ptr_level == 0)
         {
-            /* follow reference if the type has one */
-            if (type_has_ref(type))
-            {
-                type = type->ref;
-                /* FIXME: get new ptr_level from type */
-                continue;
-            }
-
             /* basic types don't need a type format string */
             if (is_base_type(type->type))
                 return 0;
@@ -1356,7 +1325,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                 error("write_typeformatstring_var: Unsupported type 0x%x for variable %s\n", type->type, var->name);
             }
         }
-        else if (ptr_level == 1 && !type_has_ref(type))
+        else if (ptr_level == 1)
         {
             size_t start_offset = *typeformat_offset;
             int in_attr = is_attr(var->attrs, ATTR_IN);
@@ -1473,7 +1442,7 @@ static unsigned int get_required_buffer_size_type(
     const char *name, unsigned int *alignment)
 {
     *alignment = 0;
-    if (ptr_level == 0 && !array && !type_has_ref(type))
+    if (ptr_level == 0 && !array)
     {
         switch (type->type)
         {
@@ -1525,8 +1494,6 @@ static unsigned int get_required_buffer_size_type(
             return 0;
         }
     }
-    if (ptr_level == 0 && type_has_ref(type))
-        return get_required_buffer_size_type(type->ref, 0 /* FIXME */, array, name, alignment);
     return 0;
 }
 
@@ -1547,8 +1514,6 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment,
         if (out_attr && var->ptr_level > 0)
         {
             type_t *type = var->type;
-            while (type->type == 0 && type->ref)
-                type = type->ref;
 
             if (type->type == RPC_FC_STRUCT)
             {
@@ -1570,11 +1535,9 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment,
     {
         if ((!out_attr || in_attr) && !has_size && !is_attr(var->attrs, ATTR_STRING) && !var->array)
         {
-            if (var->ptr_level > 0 || (var->ptr_level == 0 && type_has_ref(var->type)))
+            if (var->ptr_level > 0)
             {
                 type_t *type = var->type;
-                while (type->type == 0 && type->ref)
-                    type = type->ref;
 
                 if (is_base_type(type->type))
                 {
@@ -1650,7 +1613,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     if (phase != PHASE_MARSHAL && phase != PHASE_UNMARSHAL)
         return;
 
-    rtype = ref_type(type);
+    rtype = type->type;
 
     switch (rtype)
     {
@@ -1781,7 +1744,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             break;
         }
 
-        rtype = ref_type(type);
+        rtype = type->type;
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {

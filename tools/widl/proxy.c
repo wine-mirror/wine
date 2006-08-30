@@ -65,15 +65,6 @@ static int print_proxy( const char *format, ... )
   return r;
 }
 
-
-static type_t *get_base_type( var_t *arg )
-{
-  type_t *t = arg->type;
-  while( (t->type == 0) && t->ref )
-    t = t->ref;
-  return t;
-}
-
 static void write_stubdescproto(void)
 {
   print_proxy( "extern const MIDL_STUB_DESC Object_StubDesc;\n");
@@ -212,7 +203,7 @@ static void proxy_check_pointers( var_t *arg )
 static void marshall_size_arg( var_t *arg )
 {
   int index = 0;
-  const type_t *type = get_base_type(arg);
+  const type_t *type = arg->type;
   expr_t *expr;
 
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
@@ -311,7 +302,7 @@ static void proxy_gen_marshall_size( var_t *arg )
 static void marshall_copy_arg( var_t *arg )
 {
   int index = 0;
-  type_t *type = get_base_type(arg);
+  type_t *type = arg->type;
   expr_t *expr;
 
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
@@ -420,7 +411,7 @@ static void gen_marshall( var_t *arg )
 static void unmarshall_copy_arg( var_t *arg )
 {
   int index = 0;
-  type_t *type = get_base_type(arg);
+  type_t *type = arg->type;
   expr_t *expr;
 
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
@@ -529,7 +520,7 @@ static void free_variable( var_t *arg )
     return;
   }
 
-  type = get_base_type(arg);
+  type = arg->type;
   switch( type->type )
   {
   case RPC_FC_BYTE:
@@ -703,7 +694,7 @@ static void stub_unmarshall( var_t *arg )
       fprintf(proxy,"\n");
     }
     else if (is_attr(arg->attrs, ATTR_OUT)) {
-      type_t *type = get_base_type(arg);
+      type_t *type = arg->type;
       switch( type->type )
       {
       case RPC_FC_STRUCT:

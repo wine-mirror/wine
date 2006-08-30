@@ -295,8 +295,6 @@ void init_types(void);
 type_t *duptype(type_t *t, int dupname);
 type_t *alias(type_t *t, const char *name);
 
-/* Get the actual type field for a type (chase down typedef references).  */
-unsigned char ref_type(const type_t *type);
 int is_ptr(type_t *t);
 int is_var_ptr(var_t *v);
 int cant_be_null(var_t *v);

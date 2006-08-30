@@ -1291,7 +1291,7 @@ static unsigned char get_pointer_type( type_t *type )
   int t;
   if (is_attr( type->attrs, ATTR_STRING ))
   {
-    switch( ref_type( type ) )
+    switch( type->ref->type )
     {
     case RPC_FC_CHAR:
       return RPC_FC_C_CSTRING;
@@ -1418,10 +1418,6 @@ static int get_struct_type(var_t *field)
   for (; field; field = NEXT_LINK(field))
   {
     type_t *t = field->type;
-
-    /* get the base type */
-    while( (t->type == 0) && t->ref )
-      t = t->ref;
 
     if (field->ptr_level > 0)
     {
