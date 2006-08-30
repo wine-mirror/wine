@@ -92,12 +92,14 @@ HRESULT WINAPI CStdStubBuffer_QueryInterface(LPRPCSTUBBUFFER iface,
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
   TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(riid),obj);
 
-  if (IsEqualGUID(&IID_IUnknown,riid) ||
-      IsEqualGUID(&IID_IRpcStubBuffer,riid)) {
-    *obj = This;
-    This->RefCount++;
+  if (IsEqualIID(&IID_IUnknown, riid) ||
+      IsEqualIID(&IID_IRpcStubBuffer, riid))
+  {
+    IUnknown_AddRef(iface);
+    *obj = iface;
     return S_OK;
   }
+  *obj = NULL;
   return E_NOINTERFACE;
 }
 
