@@ -105,23 +105,26 @@ ULONG WINAPI CStdStubBuffer_AddRef(LPRPCSTUBBUFFER iface)
 {
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
   TRACE("(%p)->AddRef()\n",This);
-  return ++(This->RefCount);
+  return InterlockedIncrement(&This->RefCount);
 }
 
 ULONG WINAPI NdrCStdStubBuffer_Release(LPRPCSTUBBUFFER iface,
                                       LPPSFACTORYBUFFER pPSF)
 {
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
+  ULONG refs;
+
   TRACE("(%p)->Release()\n",This);
 
-  if (!--(This->RefCount)) {
+  refs = InterlockedDecrement(&This->RefCount);
+  if (!refs)
+  {
     IRpcStubBuffer_Disconnect(iface);
     if(This->pPSFactory)
         IPSFactoryBuffer_Release(This->pPSFactory);
     HeapFree(GetProcessHeap(),0,This);
-    return 0;
   }
-  return This->RefCount;
+  return refs;
 }
 
 ULONG WINAPI NdrCStdStubBuffer2_Release(LPRPCSTUBBUFFER iface,
