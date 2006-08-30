@@ -121,9 +121,11 @@ ULONG WINAPI NdrCStdStubBuffer_Release(LPRPCSTUBBUFFER iface,
   refs = InterlockedDecrement(&This->RefCount);
   if (!refs)
   {
+    /* test_Release shows that native doesn't call Disconnect here.
+       We'll leave it in for the time being. */
     IRpcStubBuffer_Disconnect(iface);
-    if(This->pPSFactory)
-        IPSFactoryBuffer_Release(This->pPSFactory);
+
+    IPSFactoryBuffer_Release(pPSF);
     HeapFree(GetProcessHeap(),0,This);
   }
   return refs;
