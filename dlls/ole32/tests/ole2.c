@@ -759,6 +759,37 @@ static void test_OleCreate(IStorage *pStorage)
     trace("end\n");
 }
 
+static void test_OleLoad(IStorage *pStorage)
+{
+    HRESULT hr;
+    IOleObject *pObject;
+
+    static const char *methods_oleload[] =
+    {
+        "OleObject_QueryInterface",
+        "OleObject_AddRef",
+        "OleObject_QueryInterface",
+        "OleObject_AddRef",
+        "OleObject_GetMiscStatus",
+        "OleObject_QueryInterface",
+        "OleObjectPersistStg_AddRef",
+        "OleObjectPersistStg_Load",
+        "OleObjectPersistStg_Release",
+        "OleObject_SetClientSite",
+        "OleObject_Release",
+        "OleObject_QueryInterface",
+        "OleObject_Release",
+        NULL
+    };
+
+    expected_method_list = methods_oleload;
+    trace("OleLoad:\n");
+    hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
+    ok_ole_success(hr, "OleLoad");
+    IOleObject_Release(pObject);
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -779,6 +810,8 @@ START_TEST(ole2)
     hr = IStorage_Stat(pStorage, &statstg, STATFLAG_NONAME);
     ok_ole_success(hr, "IStorage_Stat");
     ok(IsEqualCLSID(&CLSID_Equation3, &statstg.clsid), "Wrong CLSID in storage\n");
+
+    test_OleLoad(pStorage);
 
     IStorage_Release(pStorage);
 
