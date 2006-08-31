@@ -234,6 +234,18 @@ static void test_msirecord(void)
     ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
     i = MsiRecordGetInteger(h, 0);
     ok(i == 1, "should get one\n");
+    i = MsiRecordSetString(h,0,"foo");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get zero\n");
+    i = MsiRecordSetString(h,0,"");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get zero\n");
+    i = MsiRecordSetString(h,0,"+1");
+    ok(i == ERROR_SUCCESS, "Failed to set string at 0\n");
+    i = MsiRecordGetInteger(h, 0);
+    ok(i == MSI_NULL_INTEGER, "should get zero\n");
 
     /* same record, try converting integers to strings */
     r = MsiRecordSetInteger(h, 0, 32);
