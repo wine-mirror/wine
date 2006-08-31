@@ -1007,6 +1007,7 @@ void RPC_StartLocalServer(REFCLSID clsid, IStream *stream)
 
     lsp->clsid = *clsid;
     lsp->stream = stream;
+    IStream_AddRef(stream);
 
     thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
     CloseHandle(thread);
