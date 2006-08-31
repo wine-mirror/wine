@@ -2299,8 +2299,9 @@ HRESULT WINAPI OleCreate(
 	LPSTORAGE pStg,
 	LPVOID* ppvObj)
 {
-    HRESULT hres, hres1;
+    HRESULT hres;
     IUnknown * pUnk = NULL;
+    IOleObject *pOleObject = NULL;
 
     FIXME("\n\t%s\n\t%s semi-stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
 
@@ -2309,27 +2310,35 @@ HRESULT WINAPI OleCreate(
     if (SUCCEEDED(hres))
         hres = IStorage_SetClass(pStg, rclsid);
 
+    if (pClientSite && SUCCEEDED(hres))
+        hres = IUnknown_QueryInterface(pUnk, &IID_IOleObject, (LPVOID*)&pOleObject);
+
     if (SUCCEEDED(hres))
     {
-        if (pClientSite)
+        IPersistStorage * pPS;
+        if (SUCCEEDED((hres = IUnknown_QueryInterface(pUnk, &IID_IPersistStorage, (LPVOID*)&pPS))))
         {
-            IOleObject * pOE;
-            IPersistStorage * pPS;
-            if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IOleObject, (LPVOID*)&pOE))))
-            {
-                TRACE("trying to set clientsite %p\n", pClientSite);
-                hres1 = IOleObject_SetClientSite(pOE, pClientSite);
-                TRACE("-- result 0x%08lx\n", hres1);
-                IOleObject_Release(pOE);
-            }
-            if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IPersistStorage, (LPVOID*)&pPS))))
-            {
-                TRACE("trying to set stg %p\n", pStg);
-                hres1 = IPersistStorage_InitNew(pPS, pStg);
-                TRACE("-- result 0x%08lx\n", hres1);
-                IPersistStorage_Release(pPS);
-            }
+            TRACE("trying to set stg %p\n", pStg);
+            hres = IPersistStorage_InitNew(pPS, pStg);
+            TRACE("-- result 0x%08lx\n", hres);
+            IPersistStorage_Release(pPS);
         }
+    }
+
+    if (pClientSite && SUCCEEDED(hres))
+    {
+        TRACE("trying to set clientsite %p\n", pClientSite);
+        hres = IOleObject_SetClientSite(pOleObject, pClientSite);
+        TRACE("-- result 0x%08lx\n", hres);
+    }
+
+    if (pOleObject)
+        IOleObject_Release(pOleObject);
+    
+    if (FAILED(hres))
+    {
+        IUnknown_Release(pUnk);
+        pUnk = NULL;
     }
 
     *ppvObj = pUnk;
