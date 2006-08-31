@@ -728,9 +728,6 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 
   if (This->Connections[index].sink != NULL) {
     IAdviseSink_AddRef(This->Connections[index].sink);
-    if(advf & ADVF_PRIMEFIRST) {
-      IDataAdviseHolder_SendOnDataChange(iface, pDataObject, 0, advf);
-    }
 
     /* if we are already connected advise the remote object */
     if (This->delegate)
@@ -748,6 +745,10 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
         }
         This->Connections[index].advf |= WINE_ADVF_REMOTE;
     }
+    else if(advf & ADVF_PRIMEFIRST)
+      /* only do this if we have no delegate, since in the above case the
+       * delegate will do the priming for us */
+      IDataAdviseHolder_SendOnDataChange(iface, pDataObject, 0, advf);
   }
   /*
    * Return the index as the cookie.
