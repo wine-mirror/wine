@@ -1388,6 +1388,13 @@ static UINT msi_dialog_progress_bar( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Path Edit ********************************************/
 
+struct msi_pathedit_info
+{
+    msi_dialog *dialog;
+    msi_control *control;
+    WNDPROC oldproc;
+};
+
 static LPWSTR msi_get_window_text( HWND hwnd )
 {
     UINT sz, r;
@@ -1407,38 +1414,13 @@ static LPWSTR msi_get_window_text( HWND hwnd )
     return buf;
 }
 
-static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
-                msi_control *control, WPARAM param )
-{
-    LPWSTR buf, prop;
-    BOOL indirect;
-
-    if( HIWORD(param) != EN_KILLFOCUS )
-        return ERROR_SUCCESS;
-
-    indirect = control->attributes & msidbControlAttributesIndirect;
-    prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    /* FIXME: verify the new path */
-    buf = msi_get_window_text( control->hwnd );
-    MSI_SetPropertyW( dialog->package, prop, buf );
-
-    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
-          debugstr_w(prop));
-
-    msi_free( buf );
-    msi_free( prop );
-
-    return ERROR_SUCCESS;
-}
-
 static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control )
 {
     LPWSTR prop, path;
     BOOL indirect;
 
-    if (!control && !(control = msi_dialog_find_control_by_type( dialog, szPathEdit ) ))
-        return;
+    if (!control && !(control = msi_dialog_find_control_by_type( dialog, szPathEdit )))
+       return;
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
@@ -1451,17 +1433,100 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control
     msi_free( prop );
 }
 
+/* FIXME: test when this should fail */
+static BOOL msi_dialog_verify_path( LPWSTR path )
+{
+    if ( !lstrlenW( path ) )
+        return FALSE;
+
+    if ( PathIsRelativeW( path ) )
+        return FALSE;
+
+    return TRUE;
+}
+
+/* returns TRUE if the path is valid, FALSE otherwise */
+static BOOL msi_dialog_onkillfocus( msi_dialog *dialog, msi_control *control )
+{
+    LPWSTR buf, prop;
+    BOOL indirect;
+    BOOL valid;
+
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
+    buf = msi_get_window_text( control->hwnd );
+
+    if ( !msi_dialog_verify_path( buf ) )
+    {
+        /* FIXME: display an error message box */
+        ERR("Invalid path %s\n", debugstr_w( buf ));
+        valid = FALSE;
+        SetFocus( control->hwnd );
+    }
+    else
+    {
+        valid = TRUE;
+        MSI_SetPropertyW( dialog->package, prop, buf );
+    }
+
+    msi_dialog_update_pathedit( dialog, control );
+
+    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
+          debugstr_w(prop));
+
+    msi_free( buf );
+    msi_free( prop );
+
+    return valid;
+}
+
+static LRESULT WINAPI MSIPathEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_pathedit_info *info = GetPropW(hWnd, szButtonData);
+    LRESULT r = 0;
+
+    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+
+    if ( msg == WM_KILLFOCUS )
+    {
+        /* if the path is invalid, don't handle this message */
+        if ( !msi_dialog_onkillfocus( info->dialog, info->control ) )
+            return 0;
+    }
+
+    r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
+
+    if ( msg == WM_NCDESTROY )
+    {
+        msi_free( info );
+        RemovePropW( hWnd, szButtonData );
+    }
+
+    return r;
+}
+
 static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
+    struct msi_pathedit_info *info;
     msi_control *control;
     LPCWSTR prop;
 
+    info = msi_alloc( sizeof *info );
+    if (!info)
+        return ERROR_FUNCTION_FAILED;
+
     control = msi_dialog_add_control( dialog, rec, szEdit,
                                       WS_BORDER | WS_TABSTOP );
-    control->handler = msi_dialog_pathedit_handler;
     control->attributes = MSI_RecordGetInteger( rec, 8 );
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    info->dialog = dialog;
+    info->control = control;
+    info->oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                                 (LONG_PTR)MSIPathEdit_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
 
     msi_dialog_update_pathedit( dialog, control );
 
