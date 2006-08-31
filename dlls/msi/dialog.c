@@ -1418,15 +1418,14 @@ static UINT msi_dialog_pathedit_handler( msi_dialog *dialog,
     return ERROR_SUCCESS;
 }
 
-static void msi_dialog_update_pathedit( msi_dialog *dialog )
+static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control )
 {
-    msi_control *control;
     LPWSTR prop, path;
     BOOL indirect;
 
-    control = msi_dialog_find_control( dialog, szPathEdit );
-    if (!control)
+    if (!control && !(control = msi_dialog_find_control( dialog, szPathEdit ) ))
         return;
+
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
@@ -1450,7 +1449,7 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
-    msi_dialog_update_pathedit( dialog );
+    msi_dialog_update_pathedit( dialog, control );
 
     return ERROR_SUCCESS;
 }
@@ -1963,13 +1962,14 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory Combo ***************************************/
 
-static void msi_dialog_update_directory_combo( msi_dialog *dialog )
+static void msi_dialog_update_directory_combo( msi_dialog *dialog, msi_control *control )
 {
-    msi_control *control;
     LPWSTR prop, path;
     BOOL indirect;
 
-    control = msi_dialog_find_control( dialog, szDirectoryCombo );
+    if (!control && !(control = msi_dialog_find_control( dialog, szDirectoryCombo )))
+        return;
+
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
     path = msi_dup_property( dialog->package, prop );
@@ -2001,7 +2001,7 @@ static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
-    msi_dialog_update_directory_combo( dialog );
+    msi_dialog_update_directory_combo( dialog, control );
 
     return ERROR_SUCCESS;
 }
@@ -2027,8 +2027,8 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
 
     MSI_SetPropertyW( dialog->package, prop, path );
 
-    msi_dialog_update_directory_combo( dialog );
-    msi_dialog_update_pathedit( dialog );
+    msi_dialog_update_directory_combo( dialog, NULL );
+    msi_dialog_update_pathedit( dialog, NULL );
 
     msi_free( path );
     msi_free( prop );
