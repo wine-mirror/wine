@@ -972,6 +972,9 @@ static HRESULT WINAPI DefaultHandler_GetData(
 
   IDataObject_Release(cacheDataObject);
 
+  if (FAILED(hres) && This->pDataDelegate)
+    hres = IDataObject_GetData(This->pDataDelegate, pformatetcIn, pmedium);
+
   return hres;
 }
 
@@ -1014,6 +1017,9 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
 				  pformatetc);
 
   IDataObject_Release(cacheDataObject);
+
+  if (FAILED(hres) && This->pDataDelegate)
+    hres = IDataObject_QueryGetData(This->pDataDelegate, pformatetc);
 
   return hres;
 }
