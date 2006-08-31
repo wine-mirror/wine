@@ -2311,7 +2311,14 @@ HRESULT WINAPI OleCreate(
         hres = IStorage_SetClass(pStg, rclsid);
 
     if (pClientSite && SUCCEEDED(hres))
+    {
         hres = IUnknown_QueryInterface(pUnk, &IID_IOleObject, (LPVOID*)&pOleObject);
+        if (SUCCEEDED(hres))
+        {
+            DWORD dwStatus;
+            hres = IOleObject_GetMiscStatus(pOleObject, DVASPECT_CONTENT, &dwStatus);
+        }
+    }
 
     if (SUCCEEDED(hres))
     {
