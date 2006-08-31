@@ -2341,7 +2341,30 @@ HRESULT WINAPI OleCreate(
 
     if (pOleObject)
         IOleObject_Release(pOleObject);
-    
+
+    if (((renderopt == OLERENDER_DRAW) || (renderopt == OLERENDER_FORMAT)) &&
+        SUCCEEDED(hres))
+    {
+        IRunnableObject *pRunnable;
+        IOleCache *pOleCache;
+
+        hres = IUnknown_QueryInterface(pUnk, &IID_IRunnableObject, (void **)&pRunnable);
+        if (SUCCEEDED(hres))
+        {
+            hres = IRunnableObject_Run(pRunnable, NULL);
+            IRunnableObject_Release(pRunnable);
+        }
+
+        if (SUCCEEDED(hres))
+            hres = IUnknown_QueryInterface(pUnk, &IID_IOleCache, (void **)&pOleCache);
+        if (SUCCEEDED(hres))
+        {
+            DWORD dwConnection;
+            hres = IOleCache_Cache(pOleCache, pFormatEtc, ADVF_PRIMEFIRST, &dwConnection);
+            IOleCache_Release(pOleCache);
+        }
+    }
+
     if (FAILED(hres))
     {
         IUnknown_Release(pUnk);
