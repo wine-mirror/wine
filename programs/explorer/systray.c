@@ -33,6 +33,7 @@
 #define UNICODE
 #define _WIN32_IE 0x500
 #include <windows.h>
+#include <commctrl.h>
 
 #include <wine/debug.h>
 #include <wine/list.h>
@@ -60,6 +61,7 @@ struct icon
     HICON          image;    /* the image to render */
     HWND           owner;    /* the HWND passed in to the Shell_NotifyIcon call */
     HWND           window;   /* the adaptor window */
+    HWND           tooltip;  /* Icon tooltip */
     UINT           id;       /* the unique id given by the app */
     UINT           callback_message;
 };
@@ -160,7 +162,26 @@ static struct icon *get_icon(HWND owner, UINT id)
     return NULL;
 }
 
-static void modify_icon(const NOTIFYICONDATAW *nid)
+static void set_tooltip(struct icon *icon, WCHAR *szTip, BOOL modify)
+{
+    TTTOOLINFOW ti;
+
+    ti.cbSize = sizeof(TTTOOLINFOW);
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = icon->window;
+    ti.hinst = 0;
+    ti.uId = (UINT_PTR)icon->window;
+    ti.lpszText = szTip;
+    ti.lParam = 0;
+    ti.lpReserved = NULL;
+
+    if (modify)
+        SendMessageW(icon->tooltip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
+    else
+        SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
+}
+
+static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
 {
     struct icon    *icon;
 
@@ -186,13 +207,18 @@ static void modify_icon(const NOTIFYICONDATAW *nid)
     {
         icon->callback_message = nid->uCallbackMessage;
     }
+    if (nid->uFlags & NIF_TIP)
+    {
+        set_tooltip(icon, nid->szTip, modify_tooltip);
+    }
 }
 
-static void add_icon(const NOTIFYICONDATAW *nid)
+static void add_icon(NOTIFYICONDATAW *nid)
 {
     RECT rect;
     struct icon  *icon;
     static const WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
+    static BOOL tooltps_initialized = FALSE;
 
     WINE_TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
 
@@ -230,9 +256,29 @@ static void add_icon(const NOTIFYICONDATAW *nid)
     if (!hide_systray)
         ShowWindow(icon->window, SW_SHOWNA);
 
+    /* create icon tooltip */
+
+    /* Register tooltip classes if this is the first icon */
+    if (!tooltps_initialized)
+    {
+        INITCOMMONCONTROLSEX init_tooltip;
+
+        init_tooltip.dwSize = sizeof(INITCOMMONCONTROLSEX);
+        init_tooltip.dwICC = ICC_TAB_CLASSES;
+
+        InitCommonControlsEx(&init_tooltip);
+        tooltps_initialized = TRUE;
+    }
+
+    icon->tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+                                   WS_POPUP | TTS_ALWAYSTIP,
+                                   CW_USEDEFAULT, CW_USEDEFAULT,
+                                   CW_USEDEFAULT, CW_USEDEFAULT,
+                                   icon->window, NULL, NULL, NULL);
+
     list_add_tail(&tray.icons, &icon->entry);
 
-    modify_icon(nid);
+    modify_icon(nid, FALSE);
 }
 
 static void delete_icon(const NOTIFYICONDATAW *nid)
@@ -247,6 +293,7 @@ static void delete_icon(const NOTIFYICONDATAW *nid)
         return;
     }
 
+    DestroyWindow(icon->tooltip);
     DestroyWindow(icon->window);
 }
 
@@ -304,7 +351,7 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         delete_icon(&nid);
         break;
     case NIM_MODIFY:
-        modify_icon(&nid);
+        modify_icon(&nid, TRUE);
         break;
     default:
         WINE_FIXME("unhandled tray message: %ld\n", cds->dwData);
