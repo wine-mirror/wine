@@ -231,6 +231,8 @@ typedef struct tagMSIPACKAGE
     UINT CurrentInstallState;
     msi_dialog *dialog;
     LPWSTR next_dialog;
+    float center_x;
+    float center_y;
 
     UINT WordCount;
 

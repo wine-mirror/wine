@@ -86,6 +86,7 @@ struct msi_dialog_tag
     BOOL finished;
     INT scale;
     DWORD attributes;
+    SIZE size;
     HWND hwnd;
     LPWSTR default_font;
     msi_font *font_list;
@@ -2373,10 +2374,27 @@ static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LP
     center.y = MulDiv( center.y, yres, 100 );
 
     /* turn the client pos into the window rectangle */
-    pos->left = center.x - sz.cx/2;
-    pos->right = pos->left + sz.cx;
-    pos->top = center.y - sz.cy/2;
-    pos->bottom = pos->top + sz.cy;
+    if (dialog->package->center_x && dialog->package->center_y)
+    {
+        pos->left = dialog->package->center_x - sz.cx / 2.0;
+        pos->right = pos->left + sz.cx;
+        pos->top = dialog->package->center_y - sz.cy / 2.0;
+        pos->bottom = pos->top + sz.cy;
+    }
+    else
+    {
+        pos->left = center.x - sz.cx/2;
+        pos->right = pos->left + sz.cx;
+        pos->top = center.y - sz.cy/2;
+        pos->bottom = pos->top + sz.cy;
+
+        /* save the center */
+        dialog->package->center_x = center.x;
+        dialog->package->center_y = center.y;
+    }
+
+    dialog->size.cx = sz.cx;
+    dialog->size.cy = sz.cy;
 
     TRACE("%lu %lu %lu %lu\n", pos->left, pos->top, pos->right, pos->bottom);
 
@@ -2709,6 +2727,11 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
 
     switch (msg)
     {
+    case WM_MOVE:
+        dialog->package->center_x = LOWORD(lParam) + dialog->size.cx / 2.0;
+        dialog->package->center_y = HIWORD(lParam) + dialog->size.cy / 2.0;
+        break;
+        
     case WM_CREATE:
         return msi_dialog_oncreate( hwnd, (LPCREATESTRUCTW)lParam );
 
