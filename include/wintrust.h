@@ -297,6 +297,7 @@ typedef struct _CRYPT_PROVUI_FUNCS {
 
 #include <poppack.h>
 
+#define WT_ADD_ACTION_ID_RET_RESULT_FLAG 1
 
 #ifdef __cplusplus
 extern "C" {

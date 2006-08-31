@@ -70,47 +70,35 @@ static void test_AddRem_ActionID(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(NULL, 0, NULL);
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
-    todo_wine
-    {
-        ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
-            GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-            "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
-    }
+    ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
+        GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
 
     /* NULL functions */
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(&ActionID, 0, NULL);
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
-    todo_wine
-    {
-        ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
-            GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-            "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
-    }
+    ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
+        GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
 
     /* All OK (although no functions defined), except cbStruct is not set in ActionIDFunctions */
     SetLastError(0xdeadbeef);
     memset(&ActionIDFunctions, 0, sizeof(CRYPT_REGISTER_ACTIONID));
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
-    todo_wine
-    {
-        ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
-            GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-            "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
-    }
+    ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
+        GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %ld.\n", GetLastError());
 
     /* All OK (although no functions defined) and cbStruct is set now */
     SetLastError(0xdeadbeef);
     memset(&ActionIDFunctions, 0, sizeof(CRYPT_REGISTER_ACTIONID));
     ActionIDFunctions.cbStruct = sizeof(CRYPT_REGISTER_ACTIONID);
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
-    todo_wine
-    {
-        ok (ret, "Expected WintrustAddActionID to succeed.\n");
-        ok (GetLastError() == ERROR_INVALID_PARAMETER /* W2K */,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
-    }
+    ok (ret, "Expected WintrustAddActionID to succeed.\n");
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* All OK and all (but 1) functions are correctly defined. The DLL and entrypoints
      * are not present.
@@ -127,12 +115,9 @@ static void test_AddRem_ActionID(void)
     ActionIDFunctions.sCleanupProvider = DummyProvider;
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
-    todo_wine
-    {
-        ok (ret, "Expected WintrustAddActionID to succeed.\n");
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
-    }
+    ok (ret, "Expected WintrustAddActionID to succeed.\n");
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* All OK and all functions are correctly defined. The DLL and entrypoints
      * are not present.
@@ -149,12 +134,9 @@ static void test_AddRem_ActionID(void)
     ActionIDFunctions.sCleanupProvider = DummyProvider;
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
-    todo_wine
-    {
-        ok (ret, "Expected WintrustAddActionID to succeed.\n");
-        ok (GetLastError() == 0xdeadbeef,
-            "Expected 0xdeadbeef, got %ld.\n", GetLastError());
-    }
+    ok (ret, "Expected WintrustAddActionID to succeed.\n");
+    ok (GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got %ld.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(&ActionID);
