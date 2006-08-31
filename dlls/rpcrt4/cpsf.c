@@ -138,6 +138,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
   *ppv = NULL;
   if (!pPSFactoryBuffer->lpVtbl) {
     const ProxyFileInfo **pProxyFileList2;
+    int max_delegating_vtbl_size = 0;
     pPSFactoryBuffer->lpVtbl = &CStdPSFactory_Vtbl;
     pPSFactoryBuffer->RefCount = 0;
     pPSFactoryBuffer->pProxyFileList = pProxyFileList;
@@ -150,11 +151,18 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
         void **pRpcStubVtbl = (void **)&(*pProxyFileList2)->pStubVtblList[i]->Vtbl;
         int j;
 
+        if ((*pProxyFileList2)->pDelegatedIIDs && (*pProxyFileList2)->pDelegatedIIDs[i]) {
+          if ((*pProxyFileList2)->pStubVtblList[i]->header.DispatchTableCount > max_delegating_vtbl_size)
+            max_delegating_vtbl_size = (*pProxyFileList2)->pStubVtblList[i]->header.DispatchTableCount;
+        }
+
         for (j = 0; j < sizeof(IRpcStubBufferVtbl)/sizeof(void *); j++)
           if (!pRpcStubVtbl[j])
             pRpcStubVtbl[j] = pSrcRpcStubVtbl[j];
       }
     }
+    if(max_delegating_vtbl_size > 0)
+      create_delegating_vtbl(max_delegating_vtbl_size);
   }
   if (IsEqualGUID(rclsid, pclsid))
     return IPSFactoryBuffer_QueryInterface((LPPSFACTORYBUFFER)pPSFactoryBuffer, iid, ppv);

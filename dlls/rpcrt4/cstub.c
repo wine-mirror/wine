@@ -46,6 +46,18 @@ static WINE_EXCEPTION_FILTER(stub_filter)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+typedef struct
+{
+    IUnknownVtbl *base_obj;
+    IRpcStubBuffer *base_stub;
+    CStdStubBuffer stub_buffer;
+} cstdstubbuffer_delegating_t;
+
+static inline cstdstubbuffer_delegating_t *impl_from_delegating( IRpcStubBuffer *iface )
+{
+    return (cstdstubbuffer_delegating_t*)((char *)iface - FIELD_OFFSET(cstdstubbuffer_delegating_t, stub_buffer));
+}
+
 HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
                                        LPUNKNOWN pUnkServer,
                                        PCInterfaceName name,
@@ -83,6 +95,161 @@ HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
 
   IPSFactoryBuffer_AddRef(pPSFactory);
   return S_OK;
+}
+
+static CRITICAL_SECTION delegating_vtbl_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &delegating_vtbl_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": delegating_vtbl_section") }
+};
+static CRITICAL_SECTION delegating_vtbl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+typedef struct
+{
+    DWORD ref;
+    IUnknownVtbl vtbl;
+} ref_counted_vtbl;
+
+static struct
+{
+    ref_counted_vtbl *table;
+    DWORD size;
+} current_vtbl;
+
+
+static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
+{
+    *ppv = (void *)pUnk;
+    return S_OK;
+}
+
+static ULONG WINAPI delegating_AddRef(IUnknown *pUnk)
+{
+    return 1;
+}
+
+static ULONG WINAPI delegating_Release(IUnknown *pUnk)
+{
+    return 1;
+}
+
+#if defined(__i386__)
+
+/* The idea here is to replace the first param on the stack
+   ie. This (which will point to cstdstubbuffer_delegating_t)
+   with This->stub_buffer.pvServerObject and then jump to the
+   relevant offset in This->stub_buffer.pvServerObject's vtbl.
+*/
+#include "pshpack1.h"
+typedef struct {
+    DWORD mov1;    /* mov 0x4(%esp), %eax      8b 44 24 04 */
+    WORD mov2;     /* mov 0x10(%eax), %eax     8b 40 */
+    BYTE sixteen;  /*                          10   */
+    DWORD mov3;    /* mov %eax, 0x4(%esp)      89 44 24 04 */
+    WORD mov4;     /* mov (%eax), %eax         8b 00 */
+    WORD mov5;     /* mov offset(%eax), %eax   8b 80 */
+    DWORD offset;  /*                          xx xx xx xx */
+    WORD jmp;      /* jmp *%eax                ff e0 */
+    BYTE pad[3];   /* lea 0x0(%esi), %esi      8d 76 00 */
+} vtbl_method_t;
+#include "poppack.h"
+
+static void fill_table(IUnknownVtbl *vtbl, DWORD num)
+{
+    vtbl_method_t *method;
+    void **entry;
+    DWORD i;
+
+    vtbl->QueryInterface = delegating_QueryInterface;
+    vtbl->AddRef = delegating_AddRef;
+    vtbl->Release = delegating_Release;
+
+    method = (vtbl_method_t*)((void **)vtbl + num);
+    entry = (void**)(vtbl + 1);
+
+    for(i = 3; i < num; i++)
+    {
+        *entry = method;
+        method->mov1 = 0x0424448b;
+        method->mov2 = 0x408b;
+        method->sixteen = 0x10;
+        method->mov3 = 0x04244489;
+        method->mov4 = 0x008b;
+        method->mov5 = 0x808b;
+        method->offset = i << 2;
+        method->jmp = 0xe0ff;
+        method->pad[0] = 0x8d;
+        method->pad[1] = 0x76;
+        method->pad[2] = 0x00;
+
+        method++;
+        entry++;
+    }
+}
+
+#else  /* __i386__ */
+
+typedef struct {int dummy;} vtbl_method_t;
+static void fill_table(IUnknownVtbl *vtbl, DWORD num)
+{
+    ERR("delegated stubs are not supported on this architecture\n");
+}
+
+#endif  /* __i386__ */
+
+void create_delegating_vtbl(DWORD num_methods)
+{
+    TRACE("%ld\n", num_methods);
+    if(num_methods <= 3)
+    {
+        ERR("should have more than %ld methods\n", num_methods);
+        return;
+    }
+
+    EnterCriticalSection(&delegating_vtbl_section);
+    if(num_methods > current_vtbl.size)
+    {
+        DWORD size;
+        if(current_vtbl.table && current_vtbl.table->ref == 0)
+        {
+            TRACE("freeing old table\n");
+            HeapFree(GetProcessHeap(), 0, current_vtbl.table);
+        }
+        size = sizeof(DWORD) + num_methods * sizeof(void*) + (num_methods - 3) * sizeof(vtbl_method_t);
+        current_vtbl.table = HeapAlloc(GetProcessHeap(), 0, size);
+        fill_table(&current_vtbl.table->vtbl, num_methods);
+        current_vtbl.table->ref = 0;
+        current_vtbl.size = num_methods;
+    }
+    LeaveCriticalSection(&delegating_vtbl_section);
+}
+
+static IUnknownVtbl *get_delegating_vtbl(void)
+{
+    IUnknownVtbl *ret;
+
+    EnterCriticalSection(&delegating_vtbl_section);
+    current_vtbl.table->ref++;
+    ret = &current_vtbl.table->vtbl;
+    LeaveCriticalSection(&delegating_vtbl_section);
+    return ret;
+}
+
+static void release_delegating_vtbl(IUnknownVtbl *vtbl)
+{
+    ref_counted_vtbl *table = (ref_counted_vtbl*)((DWORD *)vtbl - 1);
+
+    EnterCriticalSection(&delegating_vtbl_section);
+    table->ref--;
+    TRACE("ref now %ld\n", table->ref);
+    if(table->ref == 0 && table != current_vtbl.table)
+    {
+        TRACE("... and we're not current so free'ing\n");
+        HeapFree(GetProcessHeap(), 0, table);
+    }
+    LeaveCriticalSection(&delegating_vtbl_section);
 }
 
 HRESULT WINAPI CStdStubBuffer_QueryInterface(LPRPCSTUBBUFFER iface,
@@ -250,19 +417,19 @@ const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface)
 /************************************************************************
  *           NdrStubForwardingFunction [RPCRT4.@]
  */
-void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *This, IRpcChannelBuffer *pChannel,
+void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *iface, IRpcChannelBuffer *pChannel,
                                            PRPC_MESSAGE pMsg, DWORD *pdwStubPhase )
 {
     /* Once stub delegation is implemented, this should call
        IRpcStubBuffer_Invoke on the stub's base interface.  The
-       IRpcStubBuffer for this interface is stored at (void**)This-1.
+       IRpcStubBuffer for this interface is stored at (void**)iface-1.
        The pChannel and pMsg parameters are passed intact
        (RPCOLEMESSAGE is basically a RPC_MESSAGE).  If Invoke returns
        with a failure then an exception is raised (to see this, change
        the return value in the test).
 
-    IRpcStubBuffer *base_this = *(IRpcStubBuffer**)((void**)This - 1);
-    HRESULT r = IRpcStubBuffer_Invoke(base_this, (RPCOLEMESSAGE*)pMsg, pChannel);
+    cstdstubbuffer_delegating_t *This = impl_from_delegating(iface);
+    HRESULT r = IRpcStubBuffer_Invoke(This->base_stub, (RPCOLEMESSAGE*)pMsg, pChannel);
     if(FAILED(r)) RpcRaiseException(r);
     return;
     */
