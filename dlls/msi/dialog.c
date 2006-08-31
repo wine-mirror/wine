@@ -63,6 +63,7 @@ struct msi_control_tag
     HBITMAP hBitmap;
     HICON hIcon;
     LPWSTR tabnext;
+    LPWSTR type;
     HMODULE hDll;
     float progress_current;
     float progress_max;
@@ -173,6 +174,18 @@ static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
         return NULL;
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( !strcmpW( control->name, name ) ) /* FIXME: case sensitive? */
+            return control;
+    return NULL;
+}
+
+static msi_control *msi_dialog_find_control_by_type( msi_dialog *dialog, LPCWSTR type )
+{
+    msi_control *control;
+
+    if( !type )
+        return NULL;
+    LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
+        if( !strcmpW( control->type, type ) ) /* FIXME: case sensitive? */
             return control;
     return NULL;
 }
@@ -359,6 +372,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->hIcon = NULL;
     control->hDll = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
+    control->type = strdupW( MSI_RecordGetString( rec, 3 ) );
     control->progress_current = 0;
     control->progress_max = 100;
 
@@ -1423,7 +1437,7 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control
     LPWSTR prop, path;
     BOOL indirect;
 
-    if (!control && !(control = msi_dialog_find_control( dialog, szPathEdit ) ))
+    if (!control && !(control = msi_dialog_find_control_by_type( dialog, szPathEdit ) ))
         return;
 
     indirect = control->attributes & msidbControlAttributesIndirect;
@@ -1967,7 +1981,7 @@ static void msi_dialog_update_directory_combo( msi_dialog *dialog, msi_control *
     LPWSTR prop, path;
     BOOL indirect;
 
-    if (!control && !(control = msi_dialog_find_control( dialog, szDirectoryCombo )))
+    if (!control && !(control = msi_dialog_find_control_by_type( dialog, szDirectoryCombo )))
         return;
 
     indirect = control->attributes & msidbControlAttributesIndirect;
@@ -2014,7 +2028,7 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     LPWSTR prop, path, ptr;
     BOOL indirect;
 
-    control = msi_dialog_find_control( dialog, szDirectoryList );
+    control = msi_dialog_find_control_by_type( dialog, szDirectoryList );
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
@@ -2863,6 +2877,7 @@ void msi_dialog_destroy( msi_dialog *dialog )
         if( t->hIcon )
             DestroyIcon( t->hIcon );
         msi_free( t->tabnext );
+        msi_free( t->type );
         msi_free( t );
         if (t->hDll)
             FreeLibrary( t->hDll );
