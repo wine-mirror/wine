@@ -284,24 +284,22 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl =
   StdProxy_Disconnect
 };
 
-static HRESULT StdProxy_GetChannel(LPVOID iface,
+static void StdProxy_GetChannel(LPVOID iface,
                                    LPRPCCHANNELBUFFER *ppChannel)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->GetChannel(%p) %s\n",This,ppChannel,This->name);
 
   *ppChannel = This->pChannel;
-  return S_OK;
 }
 
-static HRESULT StdProxy_GetIID(LPVOID iface,
+static void StdProxy_GetIID(LPVOID iface,
                                const IID **ppiid)
 {
   ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
   TRACE("(%p)->GetIID(%p) %s\n",This,ppiid,This->name);
 
   *ppiid = This->piid;
-  return S_OK;
 }
 
 HRESULT WINAPI IUnknown_QueryInterface_Proxy(LPUNKNOWN iface,
@@ -336,16 +334,12 @@ void WINAPI NdrProxyInitialize(void *This,
                               PMIDL_STUB_DESC pStubDescriptor,
                               unsigned int ProcNum)
 {
-  HRESULT hr;
-
   TRACE("(%p,%p,%p,%p,%d)\n", This, pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
   NdrClientInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
-  if (This) StdProxy_GetChannel(This, &pStubMsg->pRpcChannelBuffer);
-  if (pStubMsg->pRpcChannelBuffer) {
-    hr = IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
-                                     &pStubMsg->dwDestContext,
-                                     &pStubMsg->pvDestContext);
-  }
+  StdProxy_GetChannel(This, &pStubMsg->pRpcChannelBuffer);
+  IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
+                               &pStubMsg->dwDestContext,
+                               &pStubMsg->pvDestContext);
   TRACE("channel=%p\n", pStubMsg->pRpcChannelBuffer);
 }
 
@@ -361,10 +355,15 @@ void WINAPI NdrProxyGetBuffer(void *This,
   TRACE("(%p,%p)\n", This, pStubMsg);
   pStubMsg->RpcMsg->BufferLength = pStubMsg->BufferLength;
   pStubMsg->dwStubPhase = PROXY_GETBUFFER;
-  hr = StdProxy_GetIID(This, &riid);
+  StdProxy_GetIID(This, &riid);
   hr = IRpcChannelBuffer_GetBuffer(pStubMsg->pRpcChannelBuffer,
                                   (RPCOLEMESSAGE*)pStubMsg->RpcMsg,
                                   riid);
+  if (FAILED(hr))
+  {
+    RpcRaiseException(hr);
+    return;
+  }
   pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
   pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
   pStubMsg->Buffer = pStubMsg->BufferStart;
