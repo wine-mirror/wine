@@ -1007,12 +1007,13 @@ HRESULT WINAPI OleLoad(
     }
   }
 
-  /*
-   * Initialize the object with it's IPersistStorage interface.
-   */
-  hres = IOleObject_QueryInterface(pUnk,
-				   &IID_IPersistStorage,
-				   (void**)&persistStorage);
+  if (SUCCEEDED(hres))
+    /*
+     * Initialize the object with it's IPersistStorage interface.
+     */
+    hres = IOleObject_QueryInterface(pUnk,
+				     &IID_IPersistStorage,
+				     (void**)&persistStorage);
 
   if (SUCCEEDED(hres))
   {
@@ -1033,6 +1034,18 @@ HRESULT WINAPI OleLoad(
    */
   if (pOleObject)
     IOleObject_Release(pOleObject);
+
+  if (SUCCEEDED(hres))
+  {
+    IOleLink *pOleLink;
+    HRESULT hres1;
+    hres1 = IUnknown_QueryInterface(pUnk, &IID_IOleLink, (void **)&pOleLink);
+    if (SUCCEEDED(hres1))
+    {
+      FIXME("handle OLE link\n");
+      IOleLink_Release(pOleLink);
+    }
+  }
 
   if (FAILED(hres))
   {
