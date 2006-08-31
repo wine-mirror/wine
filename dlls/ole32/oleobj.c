@@ -723,8 +723,18 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
    * Store the new sink
    */
   This->Connections[index].sink = pAdvise;
-  memcpy(&(This->Connections[index].fmat), pFetc, sizeof(FORMATETC));
   This->Connections[index].advf = advf & ~WINE_ADVF_REMOTE;
+  memcpy(&(This->Connections[index].fmat), pFetc, sizeof(FORMATETC));
+  if (pFetc->ptd)
+  {
+    This->Connections[index].fmat.ptd = CoTaskMemAlloc(pFetc->ptd->tdSize);
+    if (!This->Connections[index].fmat.ptd)
+    {
+      IDataAdviseHolder_Unadvise(iface, index + 1);
+      return E_OUTOFMEMORY;
+    }
+    memcpy(This->Connections[index].fmat.ptd, pFetc->ptd, pFetc->ptd->tdSize);
+  }
 
   if (This->Connections[index].sink != NULL) {
     IAdviseSink_AddRef(This->Connections[index].sink);
