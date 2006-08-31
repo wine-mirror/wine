@@ -1203,6 +1203,13 @@ static void test_markers(void)
     r = run_query(hdb, rec, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    /* verify that we just created a table called '?', not 'Fable' */
+    r = try_query(hdb, "SELECT * from `Fable`");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    r = try_query(hdb, "SELECT * from `?`");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     /* try table name as marker without backticks */
     MsiRecordSetString(rec, 1, "Mable");
     query = "CREATE TABLE ? ( `One` SHORT NOT NULL, `Two` CHAR(255) PRIMARY KEY `One`)";
@@ -1232,10 +1239,7 @@ static void test_markers(void)
     MsiRecordSetString(rec, 3, "One");
     query = "CREATE TABLE `Mable` ( `?` SHORT NOT NULL, `?` CHAR(255) PRIMARY KEY `?`)";
     r = run_query(hdb, rec, query);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
 
     /* try names with backticks, minus definitions */
     query = "CREATE TABLE `Mable` ( `?`, `?` PRIMARY KEY `?`)";
@@ -1269,6 +1273,9 @@ static void test_markers(void)
     /* try a legit insert */
     query = "INSERT INTO `Table` ( `One`, `Two` ) VALUES ( 5, 'hello' )";
     r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = try_query(hdb, "SELECT * from `Table`");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try values as markers */
