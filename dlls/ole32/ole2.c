@@ -2304,7 +2304,12 @@ HRESULT WINAPI OleCreate(
 
     FIXME("\n\t%s\n\t%s semi-stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
 
-    if (SUCCEEDED((hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER|CLSCTX_LOCAL_SERVER , riid, (LPVOID*)&pUnk))))
+    hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER|CLSCTX_LOCAL_SERVER , riid, (LPVOID*)&pUnk);
+
+    if (SUCCEEDED(hres))
+        hres = IStorage_SetClass(pStg, rclsid);
+
+    if (SUCCEEDED(hres))
     {
         if (pClientSite)
         {
