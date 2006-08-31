@@ -952,11 +952,14 @@ HRESULT WINAPI OleLoad(
   LPVOID*         ppvObj)
 {
   IPersistStorage* persistStorage = NULL;
-  IOleObject*      oleObject      = NULL;
+  IUnknown*        pUnk;
+  IOleObject*      pOleObject      = NULL;
   STATSTG          storageInfo;
   HRESULT          hres;
 
   TRACE("(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
+
+  *ppvObj = NULL;
 
   /*
    * TODO, Conversion ... OleDoAutoConvert
@@ -973,8 +976,8 @@ HRESULT WINAPI OleLoad(
   hres = CoCreateInstance(&storageInfo.clsid,
 			  NULL,
 			  CLSCTX_INPROC_HANDLER,
-			  &IID_IOleObject,
-			  (void**)&oleObject);
+			  riid,
+			  (void**)&pUnk);
 
   /*
    * If that fails, as it will most times, load the default
@@ -984,8 +987,8 @@ HRESULT WINAPI OleLoad(
   {
     hres = OleCreateDefaultHandler(&storageInfo.clsid,
 				   NULL,
-				   &IID_IOleObject,
-				   (void**)&oleObject);
+				   riid,
+				   (void**)&pUnk);
   }
 
   /*
@@ -994,35 +997,50 @@ HRESULT WINAPI OleLoad(
   if (FAILED(hres))
     return hres;
 
-  /*
-   * Inform the new object of it's client site.
-   */
-  hres = IOleObject_SetClientSite(oleObject, pClientSite);
+  if (pClientSite)
+  {
+    hres = IUnknown_QueryInterface(pUnk, &IID_IOleObject, (void **)&pOleObject);
+    if (SUCCEEDED(hres))
+    {
+        DWORD dwStatus;
+        hres = IOleObject_GetMiscStatus(pOleObject, DVASPECT_CONTENT, &dwStatus);
+    }
+  }
 
   /*
    * Initialize the object with it's IPersistStorage interface.
    */
-  hres = IOleObject_QueryInterface(oleObject,
+  hres = IOleObject_QueryInterface(pUnk,
 				   &IID_IPersistStorage,
 				   (void**)&persistStorage);
 
   if (SUCCEEDED(hres))
   {
-    IPersistStorage_Load(persistStorage, pStg);
+    hres = IPersistStorage_Load(persistStorage, pStg);
 
     IPersistStorage_Release(persistStorage);
     persistStorage = NULL;
   }
 
-  /*
-   * Return the requested interface to the caller.
-   */
-  hres = IOleObject_QueryInterface(oleObject, riid, ppvObj);
+  if (SUCCEEDED(hres) && pClientSite)
+    /*
+     * Inform the new object of it's client site.
+     */
+    hres = IOleObject_SetClientSite(pOleObject, pClientSite);
 
   /*
    * Cleanup interfaces used internally
    */
-  IOleObject_Release(oleObject);
+  if (pOleObject)
+    IOleObject_Release(pOleObject);
+
+  if (FAILED(hres))
+  {
+    IUnknown_Release(pUnk);
+    pUnk = NULL;
+  }
+
+  *ppvObj = pUnk;
 
   return hres;
 }
