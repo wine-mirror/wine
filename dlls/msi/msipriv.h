@@ -334,8 +334,6 @@ extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern UINT msi_string_get_codepage( string_table *st );
 
 
-extern UINT VIEW_find_column( MSIVIEW *view, LPCWSTR name, UINT *n );
-
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
 
 extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
@@ -393,6 +391,9 @@ extern UINT MSI_DatabaseGetPrimaryKeys( MSIDATABASE *, LPCWSTR, MSIRECORD ** );
 extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
 extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
 extern UINT MSI_ViewClose( MSIQUERY* );
+extern UINT MSI_ViewGetColumnInfo(MSIQUERY *, MSICOLINFO, MSIRECORD **);
+extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, UINT * );
+
 
 /* install internals */
 extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );
