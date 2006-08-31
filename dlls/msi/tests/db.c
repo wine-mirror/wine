@@ -856,7 +856,6 @@ static void test_msiexport(void)
 
     GetCurrentDirectory(MAX_PATH, path);
 
-    todo_wine {
     r = MsiDatabaseExport(hdb, "phone", path, file);
     ok(r == ERROR_SUCCESS, "MsiDatabaseExport failed\n");
 
@@ -880,7 +879,6 @@ static void test_msiexport(void)
 
     ok( length == strlen(expected), "length of data wrong\n");
     ok( !lstrcmp(buffer, expected), "data doesn't match\n");
-    }
     DeleteFile(msifile);
 }
 
