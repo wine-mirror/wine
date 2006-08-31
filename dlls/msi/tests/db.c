@@ -1323,10 +1323,7 @@ static void test_markers(void)
     MsiRecordSetString(rec, 3, "haha");
     query = "INSERT INTO `?` ( `One`, `Two` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
 
     /* try all markers */
     MsiCloseHandle(rec);
