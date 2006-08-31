@@ -162,16 +162,11 @@ static void test_msiinsert(void)
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
 
-    todo_wine {
     /* now try a few bad INSERT xqueries */
     query = "INSERT INTO `phone` ( `id`, `name`, `number` )"
         "VALUES(?, ?)";
     r = MsiDatabaseOpenView(hdb, query, &hview);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "MsiDatabaseOpenView failed\n");
-
-    if (r == ERROR_SUCCESS)
-        r = MsiCloseHandle(hview);
-    }
 
     /* construct a record to insert */
     hrec = MsiCreateRecord(4);
