@@ -945,10 +945,25 @@ static void test_longstrings(void)
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
+
+static void create_file(const CHAR *name)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, name, strlen(name), &written, NULL);
+    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+    CloseHandle(file);
+}
  
 static void test_streamtable(void)
 {
-    MSIHANDLE hdb = 0, rec;
+    MSIHANDLE hdb = 0, rec, view;
+    char file[MAX_PATH];
+    char buf[MAX_PATH];
+    DWORD size;
     UINT r;
 
     hdb = create_db();
@@ -980,6 +995,79 @@ static void test_streamtable(void)
     }
 
     MsiCloseHandle( rec );
+
+    /* insert a file into the _Streams table */
+    create_file( "test.txt" );
+
+    rec = MsiCreateRecord( 2 );
+    MsiRecordSetString( rec, 1, "data" );
+
+    r = MsiRecordSetStream( rec, 2, "test.txt" );
+    ok( r == ERROR_SUCCESS, "Failed to add stream data to the record: %d\n", r);
+
+    DeleteFile("test.txt");
+
+    r = MsiDatabaseOpenView( hdb,
+            "INSERT INTO `_Streams` ( `Name`, `Data` ) VALUES ( ?, ? )", &view );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
+    }
+
+    r = MsiViewExecute( view, rec );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
+    }
+
+    MsiCloseHandle( rec );
+    MsiCloseHandle( view );
+
+    r = MsiDatabaseOpenView( hdb,
+            "SELECT `Name`, `Data` FROM `_Streams`", &view );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
+    }
+
+    r = MsiViewExecute( view, 0 );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
+    }
+
+    r = MsiViewFetch( view, &rec );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to fetch record: %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( rec, 1, file, &size );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
+        ok( !lstrcmp(file, "data"), "Expected 'data', got %s\n", file);
+    }
+
+    size = MAX_PATH;
+    memset(buf, 0, MAX_PATH);
+    r = MsiRecordReadStream( rec, 2, buf, &size );
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
+        ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf);
+    }
+
+    MsiCloseHandle( rec );
+
+    r = MsiViewFetch( view, &rec );
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+
+    MsiCloseHandle( view );
     MsiCloseHandle( hdb );
     DeleteFile(msifile);
 }
