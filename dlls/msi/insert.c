@@ -66,7 +66,6 @@ static MSIRECORD *INSERT_merge_record( UINT fields, column_info *vl, MSIRECORD *
 {
     MSIRECORD *merged;
     DWORD wildcard_count = 1, i;
-    const WCHAR *str;
 
     merged = MSI_CreateRecord( fields );
     for( i=1; i <= fields; i++ )
@@ -88,10 +87,7 @@ static MSIRECORD *INSERT_merge_record( UINT fields, column_info *vl, MSIRECORD *
         case EXPR_WILDCARD:
             if( !rec )
                 goto err;
-            if( MSI_RecordIsNull( rec, wildcard_count ) )
-                goto err;
-            str = MSI_RecordGetString( rec, wildcard_count );
-            MSI_RecordSetStringW( merged, i, str );
+            MSI_RecordCopyField( rec, wildcard_count, merged, i );
             wildcard_count++;
             break;
         default:

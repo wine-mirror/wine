@@ -371,6 +371,7 @@ extern UINT MSI_RecordSetStreamW( MSIRECORD *, unsigned int, LPCWSTR );
 extern UINT MSI_RecordSetStreamA( MSIRECORD *, unsigned int, LPCSTR );
 extern UINT MSI_RecordDataSize( MSIRECORD *, unsigned int );
 extern UINT MSI_RecordStreamToFile( MSIRECORD *, unsigned int, LPCWSTR );
+extern UINT MSI_RecordCopyField( MSIRECORD *, unsigned int, MSIRECORD *, unsigned int );
 
 /* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
