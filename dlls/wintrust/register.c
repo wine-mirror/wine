@@ -50,6 +50,23 @@ static const WCHAR DiagnosticPolicy[] = {'D','i','a','g','n','o','s','t','i','c'
 static const WCHAR Cleanup[]          = {'C','l','e','a','n','u','p','\\', 0};
 
 /***********************************************************************
+ *              WINTRUST_guid2wstr
+ *
+ * Create a wide-string from a GUID
+ *
+ */
+static void WINTRUST_Guid2Wstr(GUID* pgActionID, WCHAR* GuidString)
+{ 
+    static const WCHAR wszFormat[] = {'{','%','0','8','l','X','-','%','0','4','X','-','%','0','4','X','-',
+                                      '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2',
+                                      'X','%','0','2','X','%','0','2','X','}', 0};
+
+    wsprintfW(GuidString, wszFormat, pgActionID->Data1, pgActionID->Data2, pgActionID->Data3,
+        pgActionID->Data4[0], pgActionID->Data4[1], pgActionID->Data4[2], pgActionID->Data4[3],
+        pgActionID->Data4[4], pgActionID->Data4[5], pgActionID->Data4[6], pgActionID->Data4[7]);
+}
+
+/***********************************************************************
  *              WINTRUST_WriteProviderToReg
  *
  * Helper function for WintrustAddActionID
@@ -118,10 +135,6 @@ error_close_key:
 BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
                                  CRYPT_REGISTER_ACTIONID* psProvInfo)
 {
-    static const WCHAR wszFormat[] = {'{','%','0','8','l','X','-','%','0','4','X','-','%','0','4','X','-',
-                                      '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2',
-                                      'X','%','0','2','X','%','0','2','X','}', 0};
-
     WCHAR GuidString[39];
     LONG Res;
     LONG WriteActionError = ERROR_SUCCESS;
@@ -141,9 +154,8 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
     }
 
     /* Create this string only once, instead of in the helper function */
-    wsprintfW(GuidString, wszFormat, pgActionID->Data1, pgActionID->Data2, pgActionID->Data3,
-        pgActionID->Data4[0], pgActionID->Data4[1], pgActionID->Data4[2], pgActionID->Data4[3],
-        pgActionID->Data4[4], pgActionID->Data4[5], pgActionID->Data4[6], pgActionID->Data4[7]);
+    WINTRUST_Guid2Wstr( pgActionID, GuidString);
+    
 
     /* Write the information to the registry */
     Res = WINTRUST_WriteProviderToReg(GuidString, Initialization  , psProvInfo->sInitProvider);
@@ -223,10 +235,6 @@ static void WINTRUST_RemoveProviderFromReg(WCHAR* GuidString,
  */
 BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
 {
-    static const WCHAR wszFormat[] = {'{','%','0','8','l','X','-','%','0','4','X','-','%','0','4','X','-',
-                                      '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2',
-                                      'X','%','0','2','X','%','0','2','X','}', 0};
-
     WCHAR GuidString[39];
 
     TRACE("(%s)\n", debugstr_guid(pgActionID));
@@ -238,9 +246,7 @@ BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
     }
 
     /* Create this string only once, instead of in the helper function */
-    wsprintfW(GuidString, wszFormat, pgActionID->Data1, pgActionID->Data2, pgActionID->Data3,
-        pgActionID->Data4[0], pgActionID->Data4[1], pgActionID->Data4[2], pgActionID->Data4[3],
-        pgActionID->Data4[4], pgActionID->Data4[5], pgActionID->Data4[6], pgActionID->Data4[7]);
+    WINTRUST_Guid2Wstr( pgActionID, GuidString);
 
     /* We don't care about success or failure */
     WINTRUST_RemoveProviderFromReg(GuidString, Initialization);
