@@ -252,6 +252,58 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
     LeaveCriticalSection(&delegating_vtbl_section);
 }
 
+HRESULT WINAPI CStdStubBuffer_Delegating_Construct(REFIID riid,
+                                                   LPUNKNOWN pUnkServer,
+                                                   PCInterfaceName name,
+                                                   CInterfaceStubVtbl *vtbl,
+                                                   REFIID delegating_iid,
+                                                   LPPSFACTORYBUFFER pPSFactory,
+                                                   LPRPCSTUBBUFFER *ppStub)
+{
+    cstdstubbuffer_delegating_t *This;
+    IUnknown *pvServer;
+    HRESULT r;
+
+    TRACE("(%p,%p,%p,%p) %s\n", pUnkServer, vtbl, pPSFactory, ppStub, name);
+    TRACE("iid=%s delegating to %s\n", debugstr_guid(vtbl->header.piid), debugstr_guid(delegating_iid));
+    TRACE("vtbl=%p\n", &vtbl->Vtbl);
+
+    if (!IsEqualGUID(vtbl->header.piid, riid))
+    {
+        ERR("IID mismatch during stub creation\n");
+        return RPC_E_UNEXPECTED;
+    }
+
+    r = IUnknown_QueryInterface(pUnkServer, riid, (void**)&pvServer);
+    if(FAILED(r)) return r;
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    if (!This)
+    {
+        IUnknown_Release(pvServer);
+        return E_OUTOFMEMORY;
+    }
+
+    This->base_obj = get_delegating_vtbl();
+    r = create_stub(delegating_iid, (IUnknown*)&This->base_obj, &This->base_stub);
+    if(FAILED(r))
+    {
+        release_delegating_vtbl(This->base_obj);
+        HeapFree(GetProcessHeap(), 0, This);
+        IUnknown_Release(pvServer);
+        return r;
+    }
+
+    This->stub_buffer.lpVtbl = &vtbl->Vtbl;
+    This->stub_buffer.RefCount = 1;
+    This->stub_buffer.pvServerObject = pvServer;
+    This->stub_buffer.pPSFactory = pPSFactory;
+    *ppStub = (LPRPCSTUBBUFFER)&This->stub_buffer;
+
+    IPSFactoryBuffer_AddRef(pPSFactory);
+    return S_OK;
+}
+
 HRESULT WINAPI CStdStubBuffer_QueryInterface(LPRPCSTUBBUFFER iface,
                                             REFIID riid,
                                             LPVOID *obj)
@@ -301,8 +353,26 @@ ULONG WINAPI NdrCStdStubBuffer_Release(LPRPCSTUBBUFFER iface,
 ULONG WINAPI NdrCStdStubBuffer2_Release(LPRPCSTUBBUFFER iface,
                                         LPPSFACTORYBUFFER pPSF)
 {
-    FIXME("Not implemented\n");
-    return 0;
+    cstdstubbuffer_delegating_t *This = impl_from_delegating( iface );
+    ULONG refs;
+
+    TRACE("(%p)->Release()\n", This);
+
+    refs = InterlockedDecrement(&This->stub_buffer.RefCount);
+    if (!refs)
+    {
+        /* Just like NdrCStdStubBuffer_Release, we shouldn't call
+           Disconnect here */
+        IRpcStubBuffer_Disconnect((IRpcStubBuffer *)&This->stub_buffer);
+
+        IRpcStubBuffer_Release(This->base_stub);
+        release_delegating_vtbl(This->base_obj);
+
+        IPSFactoryBuffer_Release(pPSF);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refs;
 }
 
 HRESULT WINAPI CStdStubBuffer_Connect(LPRPCSTUBBUFFER iface,
@@ -408,6 +478,55 @@ const IRpcStubBufferVtbl CStdStubBuffer_Vtbl =
     CStdStubBuffer_DebugServerRelease
 };
 
+static HRESULT WINAPI CStdStubBuffer_Delegating_Connect(LPRPCSTUBBUFFER iface,
+                                                        LPUNKNOWN lpUnkServer)
+{
+    cstdstubbuffer_delegating_t *This = impl_from_delegating(iface);
+    HRESULT r;
+    TRACE("(%p)->Connect(%p)\n", This, lpUnkServer);
+
+    r = CStdStubBuffer_Connect(iface, lpUnkServer);
+    if(SUCCEEDED(r))
+        r = IRpcStubBuffer_Connect(This->base_stub, (IUnknown*)&This->base_obj);
+
+    return r;
+}
+
+static void WINAPI CStdStubBuffer_Delegating_Disconnect(LPRPCSTUBBUFFER iface)
+{
+    cstdstubbuffer_delegating_t *This = impl_from_delegating(iface);
+    TRACE("(%p)->Disconnect()\n", This);
+
+    IRpcStubBuffer_Disconnect(This->base_stub);
+    CStdStubBuffer_Disconnect(iface);
+}
+
+static ULONG WINAPI CStdStubBuffer_Delegating_CountRefs(LPRPCSTUBBUFFER iface)
+{
+    cstdstubbuffer_delegating_t *This = impl_from_delegating(iface);
+    ULONG ret;
+    TRACE("(%p)->CountRefs()\n", This);
+
+    ret = CStdStubBuffer_CountRefs(iface);
+    ret += IRpcStubBuffer_CountRefs(This->base_stub);
+
+    return ret;
+}
+
+const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl =
+{
+    CStdStubBuffer_QueryInterface,
+    CStdStubBuffer_AddRef,
+    NULL,
+    CStdStubBuffer_Delegating_Connect,
+    CStdStubBuffer_Delegating_Disconnect,
+    CStdStubBuffer_Invoke,
+    CStdStubBuffer_IsIIDSupported,
+    CStdStubBuffer_Delegating_CountRefs,
+    CStdStubBuffer_DebugServerQueryInterface,
+    CStdStubBuffer_DebugServerRelease
+};
+
 const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface)
 {
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
@@ -420,21 +539,11 @@ const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface)
 void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *iface, IRpcChannelBuffer *pChannel,
                                            PRPC_MESSAGE pMsg, DWORD *pdwStubPhase )
 {
-    /* Once stub delegation is implemented, this should call
-       IRpcStubBuffer_Invoke on the stub's base interface.  The
-       IRpcStubBuffer for this interface is stored at (void**)iface-1.
-       The pChannel and pMsg parameters are passed intact
-       (RPCOLEMESSAGE is basically a RPC_MESSAGE).  If Invoke returns
-       with a failure then an exception is raised (to see this, change
-       the return value in the test).
+    /* Note pMsg is passed intact since RPCOLEMESSAGE is basically a RPC_MESSAGE. */
 
     cstdstubbuffer_delegating_t *This = impl_from_delegating(iface);
     HRESULT r = IRpcStubBuffer_Invoke(This->base_stub, (RPCOLEMESSAGE*)pMsg, pChannel);
     if(FAILED(r)) RpcRaiseException(r);
-    return;
-    */
-
-    FIXME("Not implemented\n");
     return;
 }
 

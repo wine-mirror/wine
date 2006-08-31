@@ -36,9 +36,18 @@ HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
 					LPPSFACTORYBUFFER pPSFactory,
 					LPRPCSTUBBUFFER *ppStub);
 
+HRESULT WINAPI CStdStubBuffer_Delegating_Construct(REFIID riid,
+                                                   LPUNKNOWN pUnkServer,
+                                                   PCInterfaceName name,
+                                                   CInterfaceStubVtbl *vtbl,
+                                                   REFIID delegating_iid,
+                                                   LPPSFACTORYBUFFER pPSFactory,
+                                                   LPRPCSTUBBUFFER *ppStub);
+
 const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface);
 
 const IRpcStubBufferVtbl CStdStubBuffer_Vtbl;
+const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl;
 
 void create_delegating_vtbl(DWORD num_methods);
 

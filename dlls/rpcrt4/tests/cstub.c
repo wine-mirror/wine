@@ -480,15 +480,11 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
     VTBL_TEST_CHANGE_TO(QueryInterface, 1);
     VTBL_TEST_CHANGE_TO(AddRef, 1);
     VTBL_TEST_NOT_CHANGE_TO(Release, 1);
-todo_wine {
     VTBL_TEST_NOT_CHANGE_TO(Connect, 1);
     VTBL_TEST_NOT_CHANGE_TO(Disconnect, 1);
-}
     VTBL_TEST_CHANGE_TO(Invoke, 1);
     VTBL_TEST_CHANGE_TO(IsIIDSupported, 1);
-todo_wine {
     VTBL_TEST_NOT_CHANGE_TO(CountRefs, 1);
-}
     VTBL_TEST_CHANGE_TO(DebugServerQueryInterface, 1);
     VTBL_TEST_CHANGE_TO(DebugServerRelease, 1);
 
@@ -506,15 +502,11 @@ todo_wine {
     VTBL_TEST_CHANGE_TO(QueryInterface, 3);
     VTBL_TEST_CHANGE_TO(AddRef, 3);
     VTBL_TEST_ZERO(Release, 3);
-todo_wine {
     VTBL_TEST_NOT_CHANGE_TO(Connect, 3);
     VTBL_TEST_NOT_CHANGE_TO(Disconnect, 3);
-}
     VTBL_TEST_CHANGE_TO(Invoke, 3);
     VTBL_TEST_CHANGE_TO(IsIIDSupported, 3);
-todo_wine {
     VTBL_TEST_NOT_CHANGE_TO(CountRefs, 3);
-}
     VTBL_TEST_CHANGE_TO(DebugServerQueryInterface, 3);
     VTBL_TEST_CHANGE_TO(DebugServerRelease, 3);
 
@@ -565,10 +557,7 @@ static void test_NdrStubForwardingFunction(void)
     real_this = &This[1];
 
     NdrStubForwardingFunction( real_this, channel, msg, phase );
-
-todo_wine {
     ok(base_buffer_invoke_called == 1, "base_buffer_invoke called %d times\n", base_buffer_invoke_called);
-}
 
 }
 
@@ -743,10 +732,8 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
 
     obj = (IUnknown*)&new_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-todo_wine {
     ok(connect_test_base_Connect_called == 1, "connect_test_bsae_Connect called %d times\n",
        connect_test_base_Connect_called);
- }
     ok(connect_test_orig_release_called == 3, "release called %d\n", connect_test_orig_release_called);
     cstd_stub = (CStdStubBuffer*)pstub;
     ok(cstd_stub->pvServerObject == (void*)0xcafebabe, "pvServerObject %p\n", cstd_stub->pvServerObject);
@@ -810,6 +797,92 @@ todo_wine {
     ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
 }
 
+static HRESULT WINAPI delegating_invoke_test_QI(ITypeLib *pUnk, REFIID iid, void** ppv)
+{
+
+    *ppv = pUnk;
+    return S_OK;
+}
+
+static ULONG WINAPI delegating_invoke_test_addref(ITypeLib *pUnk)
+{
+    return 1;
+}
+
+static ULONG WINAPI delegating_invoke_test_release(ITypeLib *pUnk)
+{
+    return 1;
+}
+
+static UINT WINAPI delegating_invoke_test_get_type_info_count(ITypeLib *pUnk)
+{
+    return 0xabcdef;
+}
+
+static ITypeLibVtbl delegating_invoke_test_obj_vtbl =
+{
+    delegating_invoke_test_QI,
+    delegating_invoke_test_addref,
+    delegating_invoke_test_release,
+    delegating_invoke_test_get_type_info_count,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static HRESULT WINAPI delegating_invoke_test_get_buffer(IRpcChannelBuffer *pchan,
+                                                        RPCOLEMESSAGE *msg,
+                                                        REFIID iid)
+{
+    msg->Buffer = HeapAlloc(GetProcessHeap(), 0, msg->cbBuffer);
+    return S_OK;
+}
+
+static IRpcChannelBufferVtbl delegating_invoke_test_rpc_chan_vtbl =
+{
+    NULL,
+    NULL,
+    NULL,
+    delegating_invoke_test_get_buffer,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
+{
+    ITypeLibVtbl *obj_vtbl = &delegating_invoke_test_obj_vtbl;
+    IUnknown *obj = (IUnknown*)&obj_vtbl;
+    IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if2, obj, S_OK);
+    IRpcChannelBufferVtbl *pchan_vtbl = &delegating_invoke_test_rpc_chan_vtbl;
+    IRpcChannelBuffer *pchan = (IRpcChannelBuffer *)&pchan_vtbl;
+    HRESULT r = E_FAIL;
+    RPCOLEMESSAGE msg;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
+    msg.iMethod = 3;
+#if 0 /* FIXME: Figure out why this fails in Windows */
+    r = IRpcStubBuffer_Invoke(pstub, &msg, pchan);
+    ok(r == S_OK, "ret %08lx\n", r);
+#else
+    pchan = NULL; /* stop compiler waring */
+#endif
+    if(r == S_OK)
+    {
+        ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08lx\n", *(DWORD*)msg.Buffer);
+        ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08lx\n", *((DWORD*)msg.Buffer + 1));
+    }
+    IRpcStubBuffer_Release(pstub);
+}
+
 START_TEST( cstub )
 {
     IPSFactoryBuffer *ppsf;
@@ -822,6 +895,7 @@ START_TEST( cstub )
     test_Connect(ppsf);
     test_Disconnect(ppsf);
     test_Release(ppsf);
+    test_delegating_Invoke(ppsf);
 
     OleUninitialize();
 }

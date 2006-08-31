@@ -110,6 +110,12 @@ static HRESULT WINAPI CStdPSFactory_CreateStub(LPPSFACTORYBUFFER iface,
        pUnkServer,ppStub);
   if (!FindProxyInfo(This->pProxyFileList,riid,&ProxyInfo,&Index))
     return E_NOINTERFACE;
+
+  if(ProxyInfo->pDelegatedIIDs && ProxyInfo->pDelegatedIIDs[Index])
+    return  CStdStubBuffer_Delegating_Construct(riid, pUnkServer, ProxyInfo->pNamesArray[Index],
+                                                ProxyInfo->pStubVtblList[Index], ProxyInfo->pDelegatedIIDs[Index],
+                                                iface, ppStub);
+
   return CStdStubBuffer_Construct(riid, pUnkServer, ProxyInfo->pNamesArray[Index],
                                   ProxyInfo->pStubVtblList[Index], iface, ppStub);
 }
@@ -152,6 +158,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
         int j;
 
         if ((*pProxyFileList2)->pDelegatedIIDs && (*pProxyFileList2)->pDelegatedIIDs[i]) {
+          pSrcRpcStubVtbl = (void * const *)&CStdStubBuffer_Delegating_Vtbl;
           if ((*pProxyFileList2)->pStubVtblList[i]->header.DispatchTableCount > max_delegating_vtbl_size)
             max_delegating_vtbl_size = (*pProxyFileList2)->pStubVtblList[i]->header.DispatchTableCount;
         }
