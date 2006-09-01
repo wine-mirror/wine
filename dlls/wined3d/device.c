@@ -494,18 +494,6 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
         checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 
-    /* Note the D3DRS value applies to all textures, but GL has one
-     *  per texture, so apply it now ready to be used!
-     */
-    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
-    /* Set the default alpha blend color */
-    if (GL_SUPPORT(ARB_IMAGING)) {
-        GL_EXTCALL(glBlendColor(col[0], col[1], col[2], col[3]));
-        checkGLcall("glBlendColor");
-    } else {
-        WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
-    }
-
     D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
@@ -3756,13 +3744,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                GL_TEXTURE_ENV_COLOR applies to active only */
             float col[4];
             D3DCOLORTOGLFLOAT4(Value, col);
-            /* Set the default alpha blend color */
-            if (GL_SUPPORT(ARB_IMAGING)) {
-                GL_EXTCALL(glBlendColor(col[0], col[1], col[2], col[3]));
-                checkGLcall("glBlendColor");
-            } else {
-                WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
-            }
 
             if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
                 /* And now the default texture color as well */
