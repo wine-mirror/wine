@@ -1371,21 +1371,22 @@ static void test_handle_limit(void)
         static char szQueryBuf[256] = "SELECT * from `_Tables`";
         hviews[i] = 0xdeadbeeb;
         r = MsiDatabaseOpenView(hdb, szQueryBuf, &hviews[i]);
-        ok( r == ERROR_SUCCESS, "failed to open query %d\n", i);
-        ok( hviews[i] != 0xdeadbeeb, "no handle set\n");
-        ok( hviews[i] != 0, "%d'th handle is NULL\n", i);
-        if (!hviews[i])
+        if( r != ERROR_SUCCESS || hviews[i] == 0xdeadbeeb || 
+            hviews[i] == 0 || (i && (hviews[i] == hviews[i-1])))
             break;
-        ok( (i == 0 || (hviews[i] != hviews[i-1])),
-            "got handle %p twice\n", (void *) hviews[i] );
     }
+
+    ok( i == MY_NVIEWS, "problem opening views\n");
 
     for (i=0; i<MY_NVIEWS; i++) {
         if (hviews[i] != 0 && hviews[i] != 0xdeadbeeb) {
             r = MsiCloseHandle(hviews[i]);
-            ok( r == ERROR_SUCCESS, "failed to close view handle %d\n", i);
+            if (r != ERROR_SUCCESS)
+                break;
         }
     }
+
+    ok( i == MY_NVIEWS, "problem closing views\n");
 
     r = MsiCloseHandle(hdb);
     ok( r == ERROR_SUCCESS, "failed to close database\n");
