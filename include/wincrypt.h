@@ -2514,6 +2514,9 @@ typedef struct _CRL_FIND_ISSUED_FOR_PARA
 #ifndef szOID_SERVER_GATED_CRYPTO
 #define szOID_SERVER_GATED_CRYPTO            "1.3.6.1.4.1.311.10.3.3"
 #endif
+#ifndef szOID_SGC_NETSCAPE
+#define szOID_SGC_NETSCAPE                   "2.16.840.1.113730.4.1"
+#endif
 #define szOID_KP_EFS                         "1.3.6.1.4.1.311.10.3.4"
 #define szOID_EFS_RECOVERY                   "1.3.6.1.4.1.311.10.3.4.1"
 #define szOID_WHQL_CRYPTO                    "1.3.6.1.4.1.311.10.3.5"
