@@ -1473,8 +1473,10 @@ static int get_struct_type(var_t *field)
     case RPC_FC_ENUM32:
       break;
 
+    case RPC_FC_RP:
     case RPC_FC_UP:
     case RPC_FC_FP:
+    case RPC_FC_OP:
       has_pointer = 1;
       break;
     case RPC_FC_CARRAY:
