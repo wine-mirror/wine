@@ -408,6 +408,24 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     return control;
 }
 
+static LPWSTR msi_dialog_get_uitext( msi_dialog *dialog, LPCWSTR key )
+{
+    MSIRECORD *rec;
+    LPWSTR text;
+
+    static const WCHAR query[] = {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ','`','U','I','T','e','x','t','`',' ',
+        'w','h','e','r','e',' ','`','K','e','y','`',' ','=',' ','\'','%','s','\'',0
+    };
+
+    rec = MSI_QueryGetRecord( dialog->package->db, query, key );
+    if (!rec) return NULL;
+    text = strdupW( MSI_RecordGetString( rec, 2 ) );
+    msiobj_release( &rec->hdr );
+    return text;
+}
+
 static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
 {
     static const WCHAR query[] = {
@@ -2138,6 +2156,71 @@ static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** VolumeCost List ***************************************/
 
+static BOOL str_is_number( LPCWSTR str )
+{
+    int i;
+
+    for (i = 0; i < lstrlenW( str ); i++)
+        if (!isdigitW(str[i]))
+            return FALSE;
+
+    return TRUE;
+}
+
+WCHAR column_keys[][80] =
+{
+    {'V','o','l','u','m','e','C','o','s','t','V','o','l','u','m','e',0},
+    {'V','o','l','u','m','e','C','o','s','t','S','i','z','e',0},
+    {'V','o','l','u','m','e','C','o','s','t','A','v','a','i','l','a','b','l','e',0},
+    {'V','o','l','u','m','e','C','o','s','t','R','e','q','u','i','r','e','d',0},
+    {'V','o','l','u','m','e','C','o','s','t','D','i','f','f','e','r','e','n','c','e',0}
+};
+
+static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control, MSIRECORD *rec )
+{
+    LPCWSTR text = MSI_RecordGetString( rec, 10 );
+    LPCWSTR begin = text, end;
+    WCHAR num[10];
+    LVCOLUMNW lvc;
+    DWORD count = 0;
+    LRESULT r;
+
+    static const WCHAR zero[] = {'0',0};
+    static const WCHAR negative[] = {'-',0};
+
+    while ((begin = strchrW( begin, '{' )) && count < 5)
+    {
+        if (!(end = strchrW( begin, '}' )))
+            return;
+
+        lstrcpynW( num, begin + 1, end - begin );
+        begin += end - begin + 1;
+
+        /* empty braces or '0' hides the column */ 
+        if ( !num[0] || !lstrcmpW( num, zero ) )
+        {
+            count++;
+            continue;
+        }
+
+        /* the width must be a positive number
+         * if a width is invalid, all remaining columns are hidden
+         */
+        if ( !strncmpW( num, negative, 1 ) || !str_is_number( num ) )
+            return;
+
+        lvc.mask = LVCF_FMT | LVCF_ORDER | LVCF_WIDTH | LVCF_TEXT;
+        lvc.iOrder = count; 
+        lvc.pszText = msi_dialog_get_uitext( dialog, column_keys[count++] );
+        lvc.cx = atolW( num );
+        lvc.fmt = LVCFMT_LEFT;
+
+        r = SendMessageW( control->hwnd,  LVM_INSERTCOLUMNW, 0, (LPARAM)&lvc );
+        msi_free( lvc.pszText );
+        if ( r ) return;
+    }
+}
+
 static UINT msi_dialog_volumecost_list( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -2149,6 +2232,8 @@ static UINT msi_dialog_volumecost_list( msi_dialog *dialog, MSIRECORD *rec )
     control = msi_dialog_add_control( dialog, rec, WC_LISTVIEWW, style );
     if (!control)
         return ERROR_FUNCTION_FAILED;
+
+    msi_dialog_vcl_add_columns( dialog, control, rec );
 
     return ERROR_SUCCESS;
 }
