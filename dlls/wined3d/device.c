@@ -3608,6 +3608,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                 This->srcBlend = newVal;
                 This->dstBlend = newVal;
                 break;
+            case D3DBLEND_BLENDFACTOR        : newVal = GL_CONSTANT_COLOR;   break;
+            case D3DBLEND_INVBLENDFACTOR     : newVal = GL_ONE_MINUS_CONSTANT_COLOR;  break;
             default:
                 FIXME("Unrecognized src/dest blend value %ld (%d)\n", Value, State);
             }
@@ -4534,8 +4536,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
 
     case WINED3DRS_BLENDFACTOR               :
     {
-        if(0xFFFFFFFF != Value)
-            ERR("(%p)->(%s,%ld) not yet implemented. Missing of cap D3DPBLENDCAPS_BLENDFACTOR wasn't honored?\n", This, debug_d3drenderstate(State), Value);
+        float col[4];
+        if (GL_SUPPORT(ARB_IMAGING)) {
+
+            TRACE("Setting BlendFactor to %ld", Value);
+
+            D3DCOLORTOGLFLOAT4(Value, col);
+            if (0xFFFFFFFF != Value) {
+                glEnable(GL_BLEND);
+                checkGLcall("glEnable(GL_BLEND)");
+            }
+            else {
+               glDisable(GL_BLEND);
+               checkGLcall("glDisable(GL_BLEND)");
+            }
+            glBlendColor (col[0],col[1],col[2],col[3]);
+        } else {
+           WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
+        }
         break;
     }
 
