@@ -2106,6 +2106,58 @@ static UINT msi_dialog_directory_combo( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Directory List ***************************************/
 
+static void msi_dialog_update_directory_list( msi_dialog *dialog, msi_control *control )
+{
+    WCHAR dir_spec[MAX_PATH];
+    WIN32_FIND_DATAW wfd;
+    LPWSTR prop, path;
+    BOOL indirect;
+    LVITEMW item;
+    HANDLE file;
+
+    static const WCHAR asterisk[] = {'*',0};
+    static const WCHAR dot[] = {'.',0};
+    static const WCHAR dotdot[] = {'.','.',0};
+
+    if (!control && !(control = msi_dialog_find_control_by_type( dialog, szDirectoryList )))
+        return;
+
+    /* clear the list-view */
+    SendMessageW( control->hwnd, LVM_DELETEALLITEMS, 0, 0 );
+
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+    path = msi_dup_property( dialog->package, prop );
+
+    lstrcpyW( dir_spec, path );
+    lstrcatW( dir_spec, asterisk );
+
+    file = FindFirstFileW( dir_spec, &wfd );
+    if ( file == INVALID_HANDLE_VALUE )
+        return;
+
+    do
+    {
+        if ( wfd.dwFileAttributes != FILE_ATTRIBUTE_DIRECTORY )
+            continue;
+
+        if ( !lstrcmpW( wfd.cFileName, dot ) || !lstrcmpW( wfd.cFileName, dotdot ) )
+            continue;
+
+        item.mask = LVIF_TEXT;
+        item.cchTextMax = MAX_PATH;
+        item.iItem = 0;
+        item.iSubItem = 0;
+        item.pszText = wfd.cFileName;
+
+        SendMessageW( control->hwnd, LVM_INSERTITEMW, 0, (LPARAM)&item );
+    } while ( FindNextFileW( file, &wfd ) );
+
+    msi_free( prop );
+    msi_free( path );
+    FindClose( file );
+}
+
 UINT msi_dialog_directorylist_up( msi_dialog *dialog )
 {
     msi_control *control;
@@ -2125,6 +2177,7 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
 
     MSI_SetPropertyW( dialog->package, prop, path );
 
+    msi_dialog_update_directory_list( dialog, NULL );
     msi_dialog_update_directory_combo( dialog, NULL );
     msi_dialog_update_pathedit( dialog, NULL );
 
@@ -2150,6 +2203,8 @@ static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
     control->attributes = MSI_RecordGetInteger( rec, 8 );
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    msi_dialog_update_directory_list( dialog, control );
 
     return ERROR_SUCCESS;
 }
