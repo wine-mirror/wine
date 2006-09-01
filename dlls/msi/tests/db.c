@@ -26,6 +26,12 @@
 #include "wine/test.h"
 
 static const char *msifile = "winetest.msi";
+static const char *msifile2 = "winetst2.msi";
+static const char *mstfile = "winetst.mst";
+
+#ifndef ERROR_INSTALL_TRANSFORM_FAILURE
+#define ERROR_INSTALL_TRANSFORM_FAILURE 1624
+#endif
 
 static void test_msidatabase(void)
 {
@@ -1392,6 +1398,65 @@ static void test_handle_limit(void)
     ok( r == ERROR_SUCCESS, "failed to close database\n");
 }
 
+static void test_generate_transform(void)
+{
+    MSIHANDLE hdb1, hdb2;
+    LPCSTR query;
+    UINT r;
+
+    DeleteFile(msifile);
+    DeleteFile(msifile2);
+    DeleteFile(mstfile);
+
+    /* create an empty database */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb1 );
+    ok( r == ERROR_SUCCESS , "Failed to create database\n" );
+
+    r = MsiDatabaseCommit( hdb1 );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    /* create another empty database */
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_CREATE, &hdb2 );
+    ok( r == ERROR_SUCCESS , "Failed to create database\n" );
+
+    r = MsiDatabaseCommit( hdb2 );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    /* the transform between two empty database should be empty */
+    r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
+    todo_wine {
+    ok( r == ERROR_NO_DATA, "return code %d, should be ERROR_NO_DATA\n", r );
+    }
+
+    query = "CREATE TABLE `AAR` ( `BAR` SHORT NOT NULL, `CAR` CHAR(255) PRIMARY KEY `CAR`)";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    todo_wine {
+    r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
+    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    r = MsiDatabaseGenerateTransform(hdb1, hdb2, mstfile, 0, 0);
+    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    MsiCloseHandle( hdb1 );
+
+    r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
+    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    /* apply the same transform again? */
+    r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
+    ok( r == ERROR_INSTALL_TRANSFORM_FAILURE,
+       "return code %d, should be ERROR_INSTALL_TRANSFORM_FAILURE\n", r );
+    }
+
+    MsiCloseHandle( hdb2 );
+
+    DeleteFile(msifile);
+    DeleteFile(msifile2);
+    DeleteFile(mstfile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -1408,4 +1473,5 @@ START_TEST(db)
     test_msiimport();
     test_markers();
     test_handle_limit();
+    test_generate_transform();
 }
