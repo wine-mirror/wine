@@ -314,6 +314,9 @@ CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
  DWORD idxCounterSigner);
 CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData);
 
+#define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE \
+     { 0x64b9d180, 0x8da2, 0x11cf, { 0x87,0x36,0x00,0xaa,0x00,0xa4,0x85,0xeb }}
+
 #ifdef __cplusplus
 }
 #endif
