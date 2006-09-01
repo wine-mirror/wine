@@ -402,6 +402,14 @@ static void test_GetGlyphIndices()
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRIC textm;
 
+    typedef BOOL (WINAPI *fnGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+    fnGetGlyphIndicesW GetGlyphIndicesW = (fnGetGlyphIndicesW)GetProcAddress(LoadLibrary("gdi32"), 
+                                           "GetGlyphIndicesW");
+    if (!GetGlyphIndicesW) {
+        trace("GetGlyphIndices not available on platform\n");
+        return;
+    }
+
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Symbol");
     lf.lfHeight = 20;
