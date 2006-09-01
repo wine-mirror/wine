@@ -79,9 +79,7 @@ int is_ptr(type_t *t)
   return c == RPC_FC_RP
       || c == RPC_FC_UP
       || c == RPC_FC_FP
-      || c == RPC_FC_OP
-      || c == RPC_FC_C_CSTRING
-      || c == RPC_FC_C_WSTRING;
+      || c == RPC_FC_OP;
 }
 
 /* List of oleauto types that should be recognized by name.

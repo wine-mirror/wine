@@ -1285,29 +1285,26 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   return type;
 }
 
-/* determine pointer type from attrs */
-static unsigned char get_pointer_type( type_t *type )
-{
-  int t;
-  if (is_attr( type->attrs, ATTR_STRING ))
-  {
-    switch( type->ref->type )
-    {
-    case RPC_FC_CHAR:
-      return RPC_FC_C_CSTRING;
-    case RPC_FC_WCHAR:
-      return RPC_FC_C_WSTRING;
-    }
-  }
-  t = get_attrv( type->attrs, ATTR_POINTERTYPE );
-  if (t) return t;
-  return RPC_FC_FP;
-}
-
 static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
 {
   type_t *ptr = type;
   int ptrc = 0;
+  int is_str = is_attr(attrs, ATTR_STRING);
+  unsigned char ptr_type = get_attrv(attrs, ATTR_POINTERTYPE);
+
+  if (is_str)
+  {
+    type_t *t = type;
+    unsigned char c;
+
+    while (is_ptr(t))
+      t = t->ref;
+
+    c = t->type;
+    if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
+      yyerror("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays",
+              names->name);
+  }
 
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
@@ -1343,8 +1340,18 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
       }
       cur = alias(cur, names->name);
       cur->attrs = attrs;
-      if (is_ptr(cur))
-        cur->type = get_pointer_type(cur);
+      if (ptr_type)
+      {
+        if (is_ptr(cur))
+          cur->type = ptr_type;
+        else
+          yyerror("'%s': pointer attribute applied to non-pointer type",
+                  cur->name);
+      }
+      else if (is_str && ! is_ptr(cur))
+        yyerror("'%s': [string] attribute applied to non-pointer type",
+                cur->name);
+
       reg_type(cur, cur->name, 0);
     }
     names = next;
@@ -1484,11 +1491,6 @@ static int get_struct_type(var_t *field)
       if (PREV_LINK(field))
           yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
-      break;
-    case RPC_FC_C_CSTRING:
-    case RPC_FC_C_WSTRING:
-      has_conformance = 1;
-      has_variance = 1;
       break;
 
     /*

@@ -224,6 +224,12 @@ static void marshall_size_arg( var_t *arg )
     return;
   }
 
+  if (is_string_type(arg->attrs, arg->ptr_level, arg->array))
+  {
+    print_proxy("NdrConformantStringBufferSize( &_StubMsg, (unsigned char*)s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index);
+  }
+
   switch( type->type )
   {
   case RPC_FC_BYTE:
@@ -249,8 +255,6 @@ static void marshall_size_arg( var_t *arg )
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index );
     break;
 
-  case RPC_FC_C_CSTRING:
-  case RPC_FC_C_WSTRING:
   case RPC_FC_CARRAY:
     print_proxy( "NdrConformantArrayBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
@@ -323,6 +327,12 @@ static void marshall_copy_arg( var_t *arg )
     return;
   }
 
+  if (is_string_type(arg->attrs, arg->ptr_level, arg->array))
+  {
+    print_proxy("NdrConformantStringMarshall( &_StubMsg, (unsigned char*)s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index);
+  }
+
   switch( type->type )
   {
   case RPC_FC_BYTE:
@@ -348,8 +358,6 @@ static void marshall_copy_arg( var_t *arg )
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
     break;
 
-  case RPC_FC_C_CSTRING:
-  case RPC_FC_C_WSTRING:
   case RPC_FC_CARRAY:
     break;
 
@@ -429,6 +437,12 @@ static void unmarshall_copy_arg( var_t *arg )
     return;
   }
 
+  if (is_string_type(arg->attrs, arg->ptr_level, arg->array))
+  {
+    print_proxy("NdrConformantStringUnmarshall( &_StubMsg, (unsigned char**)&s, ", arg->name);
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0 );\n", index);
+  }
+
   switch( type->type )
   {
   case RPC_FC_BYTE:
@@ -453,8 +467,6 @@ static void unmarshall_copy_arg( var_t *arg )
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
     break;
 
-  case RPC_FC_C_CSTRING:
-  case RPC_FC_C_WSTRING:
   case RPC_FC_CARRAY:
     print_proxy( "NdrConformantArrayUnmarshall( &_StubMsg, (unsigned char**)&%s, ", arg->name );
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
