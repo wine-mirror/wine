@@ -400,7 +400,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
     HGLOBAL16 hGlobal16 = 0;
     BOOL16 bRet = FALSE;
-    LPCVOID template;
+    LPVOID template;
     FARPROC16 ptr;
 
     TRACE("ChooseColor\n");
@@ -458,7 +458,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
             GlobalFree16(hGlobal16);
             return FALSE;
         }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        ConvertDialog32To16(template32, size, template);
         hDlgTmpl16 = hGlobal16;
     }
 

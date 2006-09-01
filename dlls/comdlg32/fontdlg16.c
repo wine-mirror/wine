@@ -167,7 +167,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
     HGLOBAL16 hGlobal16 = 0;
     BOOL16 bRet = FALSE;
-    LPCVOID template;
+    LPVOID template;
     FARPROC16 ptr;
     CHOOSEFONTW cf32w;
     LOGFONTW lf32w;
@@ -241,7 +241,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
             GlobalFree16(hGlobal16);
             return FALSE;
         }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        ConvertDialog32To16(template32, size, template);
         hDlgTmpl16 = hGlobal16;
 
     }

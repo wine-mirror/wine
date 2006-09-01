@@ -89,7 +89,7 @@ static BOOL FD16_GetTemplate(PFD31_DATA lfs)
 {
     PFD16_PRIVATE priv = (PFD16_PRIVATE) lfs->private1632;
     LPOPENFILENAME16 ofn16 = priv->ofn16;
-    LPCVOID template;
+    LPVOID template;
     HGLOBAL16 hGlobal16 = 0;
 
     if (ofn16->Flags & OFN_ENABLETEMPLATEHANDLE)
@@ -146,7 +146,7 @@ static BOOL FD16_GetTemplate(PFD31_DATA lfs)
             GlobalFree16(hGlobal16);
             return FALSE;
         }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        ConvertDialog32To16(template32, size, template);
         priv->hDlgTmpl16 = hGlobal16;
         priv->hGlobal16 = hGlobal16;
     }

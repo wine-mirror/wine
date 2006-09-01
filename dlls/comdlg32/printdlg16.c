@@ -260,7 +260,7 @@ static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(LPCSTR PrintResourceName)
             GlobalFree16(hGlobal16);
             return 0;
         }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        ConvertDialog32To16(template32, size, template);
         GlobalUnlock16(hGlobal16);
         return hGlobal16;
 }

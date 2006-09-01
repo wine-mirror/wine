@@ -137,7 +137,7 @@ static BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
             GlobalFree16(hGlobal16);
             return FALSE;
         }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)lfr->template);
+        ConvertDialog32To16(template32, size, (LPVOID)lfr->template);
         lfr->hDlgTmpl16 = hGlobal16;
         lfr->hGlobal16 = hGlobal16;
     }
