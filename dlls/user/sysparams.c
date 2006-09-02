@@ -2964,6 +2964,9 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
 LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
+    /* make sure the desktop window is created before mode changing */
+    GetDesktopWindow();
+
     return USER_Driver->pChangeDisplaySettingsEx( devname, devmode, hwnd, flags, lparam );
 }
 
