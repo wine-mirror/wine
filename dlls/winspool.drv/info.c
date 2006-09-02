@@ -66,6 +66,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
+/* ############################### */
+
+static CRITICAL_SECTION monitor_handles_cs;
+static CRITICAL_SECTION_DEBUG monitor_handles_cs_debug = 
+{
+    0, 0, &monitor_handles_cs,
+    { &monitor_handles_cs_debug.ProcessLocksList, &monitor_handles_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": monitor_handles_cs") }
+};
+static CRITICAL_SECTION monitor_handles_cs = { &monitor_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+
 static CRITICAL_SECTION printer_handles_cs;
 static CRITICAL_SECTION_DEBUG printer_handles_cs_debug = 
 {
@@ -78,6 +90,7 @@ static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0,
 /* ############################### */
 
 typedef struct {
+    struct list     entry;
     LPWSTR          name;
     LPWSTR          dllname;
     PMONITORUI      monitorUI;
@@ -120,6 +133,8 @@ typedef struct {
 } printenv_t;
 
 /* ############################### */
+
+static struct list monitor_handles = LIST_INIT( monitor_handles );
 
 static opened_printer_t **printer_handles;
 static int nb_printer_handles;
@@ -833,10 +848,18 @@ static void monitor_unload(monitor_t * pm)
 {
     TRACE("%p (refcount: %ld) %s\n", pm, pm->refcount, debugstr_w(pm->name));
 
-    FreeLibrary(pm->hdll);
-    HeapFree(GetProcessHeap(), 0, pm->name);
-    HeapFree(GetProcessHeap(), 0, pm->dllname);
-    HeapFree(GetProcessHeap(), 0, pm);
+    EnterCriticalSection(&monitor_handles_cs);
+
+    if (pm->refcount) pm->refcount--;
+
+    if (pm->refcount == 0) {
+        list_remove(&pm->entry);
+        FreeLibrary(pm->hdll);
+        HeapFree(GetProcessHeap(), 0, pm->name);
+        HeapFree(GetProcessHeap(), 0, pm->dllname);
+        HeapFree(GetProcessHeap(), 0, pm);
+    }
+    LeaveCriticalSection(&monitor_handles_cs);
 }
 
 /******************************************************************
@@ -857,15 +880,28 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
     DWORD (WINAPI *pInitializeMonitor)  (LPWSTR);
 
     monitor_t * pm = NULL;
+    monitor_t * cursor;
     LPWSTR  regroot = NULL;
     LPWSTR  driver = dllname;
 
     TRACE("(%s, %s)\n", debugstr_w(name), debugstr_w(dllname));
     /* Is the Monitor already loaded? */
+    EnterCriticalSection(&monitor_handles_cs);
 
+    LIST_FOR_EACH_ENTRY(cursor, &monitor_handles, monitor_t, entry)
+    {
+        if (lstrcmpW(name, cursor->name) == 0) {
+            pm = cursor;
+            break;
+        }
+    }
 
+    if (pm == NULL) {
         pm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(monitor_t));
         if (pm == NULL) goto cleanup;
+        list_add_tail(&monitor_handles, &pm->entry);
+    }
+    pm->refcount++;
 
     if (pm->name == NULL) {
         /* Load the monitor */
@@ -961,6 +997,7 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
         }
     }
 cleanup:
+    LeaveCriticalSection(&monitor_handles_cs);
     if (driver != dllname) HeapFree(GetProcessHeap(), 0, driver);
     HeapFree(GetProcessHeap(), 0, regroot);
     TRACE("=> %p\n", pm);
