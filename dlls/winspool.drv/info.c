@@ -61,6 +61,7 @@
 #include "heap.h"
 #include "winnls.h"
 
+#include "ddk/winsplp.h"
 #include "wspool.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winspool);
@@ -73,6 +74,18 @@ static CRITICAL_SECTION_DEBUG printer_handles_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": printer_handles_cs") }
 };
 static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+/* ############################### */
+
+typedef struct {
+    LPWSTR          name;
+    LPWSTR          dllname;
+    PMONITORUI      monitorUI;
+    LPMONITOR       monitor;
+    HMODULE         hdll;
+    DWORD           refcount;
+    DWORD           dwMonitorSize;
+} monitor_t;
 
 typedef struct {
     DWORD job_id;
@@ -811,6 +824,150 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
 }
 
 /******************************************************************
+ * monitor_unload [internal]
+ *
+ * release a printmonitor and unload it from memory, when needed
+ *
+ */
+static void monitor_unload(monitor_t * pm)
+{
+    TRACE("%p (refcount: %ld) %s\n", pm, pm->refcount, debugstr_w(pm->name));
+
+    FreeLibrary(pm->hdll);
+    HeapFree(GetProcessHeap(), 0, pm->name);
+    HeapFree(GetProcessHeap(), 0, pm->dllname);
+    HeapFree(GetProcessHeap(), 0, pm);
+}
+
+/******************************************************************
+ * monitor_load [internal]
+ *
+ * load a printmonitor, get the dllname from the registry, when needed 
+ * initialize the monitor and dump found function-pointers
+ *
+ * On failure, SetLastError() is called and NULL is returned
+ */
+
+static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
+{
+    LPMONITOR2  (WINAPI *pInitializePrintMonitor2) (PMONITORINIT, LPHANDLE);
+    PMONITORUI  (WINAPI *pInitializePrintMonitorUI)(VOID);
+    LPMONITOREX (WINAPI *pInitializePrintMonitor)  (LPWSTR);
+    DWORD (WINAPI *pInitializeMonitorEx)(LPWSTR, LPMONITOR);
+    DWORD (WINAPI *pInitializeMonitor)  (LPWSTR);
+
+    monitor_t * pm = NULL;
+    LPWSTR  regroot = NULL;
+    LPWSTR  driver = dllname;
+
+    TRACE("(%s, %s)\n", debugstr_w(name), debugstr_w(dllname));
+    /* Is the Monitor already loaded? */
+
+
+        pm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(monitor_t));
+        if (pm == NULL) goto cleanup;
+
+    if (pm->name == NULL) {
+        /* Load the monitor */
+        LPMONITOREX pmonitorEx;
+        DWORD   len;
+
+        len = lstrlenW(MonitorsW) + lstrlenW(name) + 2; 
+        regroot = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        if (regroot) {
+            lstrcpyW(regroot, MonitorsW);
+            lstrcatW(regroot, name);
+            /* Get the Driver from the Registry */
+        }
+
+        pm->name = strdupW(name);
+        pm->dllname = strdupW(driver);
+
+        if (!regroot || !pm->name || !pm->dllname) {
+            monitor_unload(pm);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            pm = NULL;
+            goto cleanup;
+        }
+
+        pm->hdll = LoadLibraryW(driver);
+        TRACE("%p: LoadLibrary(%s) => %ld\n", pm->hdll, debugstr_w(driver), GetLastError());
+
+        if (pm->hdll == NULL) {
+            monitor_unload(pm);
+            SetLastError(ERROR_MOD_NOT_FOUND);
+            pm = NULL;
+            goto cleanup;
+        }
+
+        pInitializePrintMonitor2  = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor2");
+        pInitializePrintMonitorUI = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitorUI");
+        pInitializePrintMonitor   = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor");
+        pInitializeMonitorEx = (void *)GetProcAddress(pm->hdll, "InitializeMonitorEx");
+        pInitializeMonitor   = (void *)GetProcAddress(pm->hdll, "InitializeMonitor");
+
+
+        TRACE("%p: %s,pInitializePrintMonitor2\n", pInitializePrintMonitor2, debugstr_w(driver));
+        TRACE("%p: %s,pInitializePrintMonitorUI\n", pInitializePrintMonitorUI, debugstr_w(driver));
+        TRACE("%p: %s,pInitializePrintMonitor\n", pInitializePrintMonitor, debugstr_w(driver));
+        TRACE("%p: %s,pInitializeMonitorEx\n", pInitializeMonitorEx, debugstr_w(driver));
+        TRACE("%p: %s,pInitializeMonitor\n", pInitializeMonitor, debugstr_w(driver));
+
+        if (pInitializePrintMonitorUI  != NULL) {
+            pm->monitorUI = pInitializePrintMonitorUI();
+            TRACE("%p: MONITORUI from %s,InitializePrintMonitorUI()\n", pm->monitorUI, debugstr_w(driver)); 
+            if (pm->monitorUI) {
+                TRACE(  "0x%08lx: dwMonitorSize (%ld) => %ld Functions\n",
+                        pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize,
+                        (pm->monitorUI->dwMonitorUISize - sizeof(DWORD) ) / sizeof(VOID *));
+
+            }
+        }
+
+        if (pInitializePrintMonitor != NULL) {
+            pmonitorEx = pInitializePrintMonitor(regroot);
+            TRACE(  "%p: LPMONITOREX from %s,InitializePrintMonitor(%s)\n", 
+                    pmonitorEx, debugstr_w(driver), debugstr_w(regroot)); 
+
+            if (pmonitorEx) {
+                pm->dwMonitorSize = pmonitorEx->dwMonitorSize;
+                pm->monitor = &(pmonitorEx->Monitor);
+            }
+        }
+
+        if (pm->monitor) {
+            TRACE(  "0x%08lx: dwMonitorSize (%ld) => %ld Functions\n", 
+                    pm->dwMonitorSize, pm->dwMonitorSize,
+                    (pm->dwMonitorSize) / sizeof(VOID *) );
+
+        }
+
+        if (!pm->monitor) {
+            if (pInitializePrintMonitor2 != NULL) {
+                FIXME("%s,InitializePrintMonitor2 not implemented\n", debugstr_w(driver));
+            }
+            if (pInitializeMonitorEx != NULL) {
+                FIXME("%s,InitializeMonitorEx not implemented\n", debugstr_w(driver));
+            }
+            if (pInitializeMonitor != NULL) {
+                FIXME("%s,InitializeMonitor not implemented\n", debugstr_w(driver));
+            }
+        }
+        if (!pm->monitor && !pm->monitorUI) {
+            monitor_unload(pm);
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            pm = NULL;
+        }
+    }
+cleanup:
+    if (driver != dllname) HeapFree(GetProcessHeap(), 0, driver);
+    HeapFree(GetProcessHeap(), 0, regroot);
+    TRACE("=> %p\n", pm);
+    return pm;
+}
+
+/******************************************************************
  *  get_opened_printer_entry
  *  Get the first place empty in the opened printer table
  *
@@ -1448,10 +1605,10 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
  */
 BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
+    monitor_t * pm = NULL;
     LPMONITOR_INFO_2W mi2w;
     HKEY    hroot = NULL;
     HKEY    hentry = NULL;
-    HMODULE hdll = NULL;
     DWORD   disposition;
     BOOL    res = FALSE;
 
@@ -1496,10 +1653,11 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         return FALSE;
     }
 
-    if ((hdll = LoadLibraryW(mi2w->pDLLName)) == NULL) {
+    /* Load and initialize the monitor. SetLastError() is called on failure */
+    if ((pm = monitor_load(mi2w->pName, mi2w->pDLLName)) == NULL) {
         return FALSE;
     }
-    FreeLibrary(hdll);
+    monitor_unload(pm);
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) != ERROR_SUCCESS) {
         ERR("unable to create key %s\n", debugstr_w(MonitorsW));

@@ -284,14 +284,12 @@ static void test_AddMonitor(void)
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_PROC_NOT_FOUND,  9x: ERROR_INVALID_PARAMETER */
-    todo_wine {
     ok( !res &&
         ((GetLastError() == ERROR_PROC_NOT_FOUND) ||
         (GetLastError() == ERROR_INVALID_PARAMETER)),
         "returned %ld with %ld (expected '0' with: ERROR_PROC_NOT_FOUND or " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
     if (res) DeleteMonitorA(NULL, entry->env, winetest_monitor); 
-    }
 
    /* Test AddMonitor with real options */
     mi2a.pDLLName = entry->dllname;
