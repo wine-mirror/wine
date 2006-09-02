@@ -389,7 +389,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
         }
         /* create an absolute pidl */
         pidlTmp = COMDLG32_PIDL_ILCombine(fodInfos->ShellInfos.pidlAbsCurrent,
-                                                        (LPITEMIDLIST)pidl);
+                                                        (LPCITEMIDLIST)pidl);
     }
     else if(wFlags & SBSP_PARENT)
     {
@@ -401,7 +401,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     else /* SBSP_ABSOLUTE is 0x0000 */
     {
         /* An absolute pidl (relative from the desktop) */
-        pidlTmp =  COMDLG32_PIDL_ILClone((LPITEMIDLIST)pidl);
+        pidlTmp =  COMDLG32_PIDL_ILClone((LPCITEMIDLIST)pidl);
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
 

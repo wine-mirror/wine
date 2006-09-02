@@ -167,7 +167,7 @@ static BOOL FD31_ScanDir(HWND hWnd, LPWSTR newPath)
  * 				FD31_GetFileType		[internal]
  */
 
-static LPWSTR FD31_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
+static LPCWSTR FD31_GetFileType(LPCWSTR cfptr, LPCWSTR fptr, const WORD index)
 {
   int n, i;
   i = 0;
@@ -187,7 +187,7 @@ static LPWSTR FD31_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
 	  return fptr;
 	fptr += lstrlenW(fptr) + 1;
     }
-  return (LPWSTR) FILE_star; /* FIXME */
+  return FILE_star; /* FIXME */
 }
 
 /***********************************************************************
@@ -743,7 +743,7 @@ void FD31_MapOfnStructA(const LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL o
             ofnW->lpTemplateName = usBuffer.Buffer;
         }
         else /* numbered resource */
-            ofnW->lpTemplateName = (LPWSTR) ofnA->lpTemplateName;
+            ofnW->lpTemplateName = (LPCWSTR) ofnA->lpTemplateName;
     }
 }
 

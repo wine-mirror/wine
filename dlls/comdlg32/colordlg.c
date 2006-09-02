@@ -1344,7 +1344,7 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 	  lpcc->lpTemplateName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
 	  MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, (LPWSTR)lpcc->lpTemplateName, len );
       } else {
-	  lpcc->lpTemplateName = (LPWSTR)lpChCol->lpTemplateName;
+	  lpcc->lpTemplateName = (LPCWSTR)lpChCol->lpTemplateName;
       }
   }
 

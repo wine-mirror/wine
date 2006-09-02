@@ -341,7 +341,7 @@ static INT WINAPI FontFamilyEnumProc(const ENUMLOGFONTEXW *lpElfex,
 {
     LPCFn_ENUMSTRUCT e;
     e=(LPCFn_ENUMSTRUCT)lParam;
-    return AddFontFamily( lpElfex, (NEWTEXTMETRICEXW *) metrics,
+    return AddFontFamily( lpElfex, (const NEWTEXTMETRICEXW *) metrics,
             dwFontType, e->lpcf32w, e->hWnd1, e);
 }
 

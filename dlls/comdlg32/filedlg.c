@@ -293,7 +293,7 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
                                      (LPARAM) fodInfos);
     else
       lRes = DialogBoxIndirectParamA(COMDLG32_hInstance,
-                                     (LPDLGTEMPLATEA) template,
+                                     (LPCDLGTEMPLATEA) template,
                                      fodInfos->ofnInfos->hwndOwner,
                                      FileOpenDlgProc95,
                                      (LPARAM) fodInfos);
