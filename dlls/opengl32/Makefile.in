@@ -11,8 +11,7 @@ EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 C_SRCS = \
 	opengl_ext.c \
 	opengl_norm.c \
-	wgl.c \
-	wgl_ext.c
+	wgl.c
 
 RC_SRCS = version.rc
 

@@ -34,7 +34,6 @@
 #include "winternl.h"
 #include "winnt.h"
 
-#include "wgl_ext.h"
 #include "opengl_ext.h"
 #ifdef HAVE_GL_GLU_H
 #undef far
@@ -46,18 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
-
-typedef struct wine_glx_s {
-  unsigned     version;
-  /** SGIX / 1.3 */
-  GLXFBConfig* (*p_glXChooseFBConfig) (Display *dpy, int screen, const int *attrib_list, int *nelements);
-  int          (*p_glXGetFBConfigAttrib) (Display *dpy, GLXFBConfig config, int attribute, int *value);
-  XVisualInfo* (*p_glXGetVisualFromFBConfig) (Display *dpy, GLXFBConfig config); 
-  /** 1.3 */
-  GLXFBConfig* (*p_glXGetFBConfigs) (Display *dpy, int screen, int *nelements);
-  void         (*p_glXQueryDrawable) (Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
-  Bool         (*p_glXMakeContextCurrent) (Display *, GLXDrawable, GLXDrawable, GLXContext);
-} wine_glx_t;
 
 typedef struct wine_wgl_s {
     HGLRC WINAPI (*p_wglCreateContext)(HDC hdc);
@@ -73,8 +60,6 @@ typedef struct wine_wgl_s {
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl_t;
 
-/** global glx object */
-static wine_glx_t wine_glx;
 /** global wgl object */
 static wine_wgl_t wine_wgl;
 
@@ -102,7 +87,7 @@ static Display *default_display;  /* display to use for default context */
 
 static HMODULE opengl32_handle;
 
-static glXGetProcAddressARB_t p_glXGetProcAddressARB = NULL;
+static void* (*p_glXGetProcAddressARB)(const GLubyte *);
 
 static char  internal_gl_disabled_extensions[512];
 static char* internal_gl_extensions = NULL;
@@ -152,68 +137,6 @@ inline static Font get_font( HDC hdc )
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(font), (LPSTR)&font )) font = 0;
     return font;
-}
-
-/* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
- * In our WGL implementation we only support a subset of these formats namely the format of
- * Wine's main visual and offscreen formats (if they are available).
- * This function converts a WGL format to its corresponding GLX one. It returns the index (zero-based)
- * into the GLX FB config table and it returns the number of supported WGL formats in fmt_count.
- */
-BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_index, int *fmt_count)
-{
-  int res = FALSE;
-  int i = 0;
-  GLXFBConfig* cfgs = NULL;
-  int nCfgs = 0;
-  int tmp_fmt_id = 0;
-  int tmp_vis_id = 0;
-  int nFormats = 1; /* Start at 1 as we always have a main visual */
-  VisualID visualid = 0;
-
-  /* Request to look up the format of the main visual when iPixelFormat = 1 */
-  if(iPixelFormat == 1) visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
-
-  /* As mentioned in various parts of the code only the format of the main visual can be used for onscreen rendering.
-   * Next to this format there are also so called offscreen rendering formats (used for pbuffers) which can be supported
-   * because they don't need a visual. Below we use glXGetFBConfigs instead of glXChooseFBConfig to enumerate the fb configurations
-   * bas this call lists both types of formats instead of only onscreen ones. */
-  cfgs = wine_glx.p_glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
-  if (NULL == cfgs || 0 == nCfgs) {
-    ERR("glXChooseFBConfig returns NULL\n");
-    if(cfgs != NULL) XFree(cfgs);
-    return FALSE;
-  }
-
-  /* Find the requested offscreen format and count the number of offscreen formats */
-  for(i=0; i<nCfgs; i++) {
-    wine_glx.p_glXGetFBConfigAttrib(display, cfgs[i], GLX_VISUAL_ID, &tmp_vis_id);
-    wine_glx.p_glXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &tmp_fmt_id);
-
-    /* We are looking up the GLX index of our main visual and have found it :) */
-    if(iPixelFormat == 1 && visualid == tmp_vis_id) {
-      *fmt_index = i;
-      TRACE("Found FBCONFIG_ID 0x%x at index %d for VISUAL_ID 0x%x\n", tmp_fmt_id, *fmt_index, tmp_vis_id);
-      res = TRUE;
-    }
-    /* We found an offscreen rendering format :) */
-    else if(tmp_vis_id == 0) {
-      nFormats++;
-      TRACE("Checking offscreen format FBCONFIG_ID 0x%x at index %d\n", tmp_fmt_id, i);
-
-      if(iPixelFormat == nFormats) {
-        *fmt_index = i;
-        TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, iPixelFormat, i);
-        res = TRUE;
-      }
-    }
-  }
-  *fmt_count = nFormats;
-  TRACE("Number of offscreen formats: %d; returning index: %d\n", *fmt_count, *fmt_index);
-
-  if(cfgs != NULL) XFree(cfgs);
-
-  return res;
 }
 
 /***********************************************************************
@@ -910,86 +833,6 @@ void internal_glGetIntegerv(GLenum pname, GLint* params) {
 #define SONAME_LIBGL "libGL.so"
 #endif
 
-static void wgl_initialize_glx(Display *display, int screen, glXGetProcAddressARB_t proc) 
-{
-  const char *server_glx_version = glXQueryServerString(display, screen, GLX_VERSION);
-  const char *client_glx_version = glXGetClientString(display, GLX_VERSION);
-  const char *glx_extensions = NULL;
-  BOOL glx_direct = glXIsDirect(display, default_cx);
-
-  memset(&wine_glx, 0, sizeof(wine_glx));
-
-  /* In case of GLX you have direct and indirect rendering. Most of the time direct rendering is used
-   * as in general only that is hardware accelerated. In some cases like in case of remote X indirect
-   * rendering is used.
-   *
-   * The main problem for our OpenGL code is that we need certain GLX calls but their presence
-   * depends on the reported GLX client / server version and on the client / server extension list.
-   * Those don't have to be the same.
-   *
-   * In general the server GLX information should be used in case of indirect rendering. When direct
-   * rendering is used, the OpenGL client library is responsible for which GLX calls are available.
-   * Nvidia's OpenGL drivers are the best in terms of GLX features. At the moment of writing their
-   * 8762 drivers support 1.3 for the server and 1.4 for the client and they support lots of extensions.
-   * Unfortunately it is much more complicated for Mesa/DRI-based drivers and ATI's drivers.
-   * Both sets of drivers report a server version of 1.2 and the client version can be 1.3 or 1.4.
-   * Further in case of at least ATI's drivers one crucial extension needed for our pixel format code
-   * is only available in the list of server extensions and not in the client list.
-   *
-   * The version checks below try to take into account the comments from above.
-   */
-
-  TRACE("Server GLX version: %s\n", server_glx_version);
-  TRACE("Client GLX version: %s\n", client_glx_version);
-  TRACE("Direct rendering eanbled: %s\n", glx_direct ? "True" : "False");
-
-  /* Based on the default opengl context we decide whether direct or indirect rendering is used.
-   * In case of indirect rendering we check if the GLX version of the server is 1.2 and else
-   * the client version is checked.
-   */
-  if ( (!glx_direct && !strcmp("1.2", server_glx_version)) || (glx_direct && !strcmp("1.2", client_glx_version)) ) {
-    wine_glx.version = 2;
-  } else {
-    wine_glx.version = 3;
-  }
-
-  /* Depending on the use of direct or indirect rendering we need either the list of extensions
-   * exported by the client or by the server.
-   */
-  if(glx_direct)
-    glx_extensions = glXGetClientString(display, GLX_EXTENSIONS);
-  else
-    glx_extensions = glXQueryServerString(display, screen, GLX_EXTENSIONS);
-
-  if (2 < wine_glx.version) {
-    wine_glx.p_glXChooseFBConfig = proc( (const GLubyte *) "glXChooseFBConfig");
-    wine_glx.p_glXGetFBConfigAttrib = proc( (const GLubyte *) "glXGetFBConfigAttrib");
-    wine_glx.p_glXGetVisualFromFBConfig = proc( (const GLubyte *) "glXGetVisualFromFBConfig");
-
-    /*wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");*/
-  } else {
-    if (NULL != strstr(glx_extensions, "GLX_SGIX_fbconfig")) {
-      wine_glx.p_glXChooseFBConfig = proc( (const GLubyte *) "glXChooseFBConfigSGIX");
-      wine_glx.p_glXGetFBConfigAttrib = proc( (const GLubyte *) "glXGetFBConfigAttribSGIX");
-      wine_glx.p_glXGetVisualFromFBConfig = proc( (const GLubyte *) "glXGetVisualFromFBConfigSGIX");
-    } else {
-      ERR(" glx_version as %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", client_glx_version);
-    }
-  }
-
-  /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
-   * enable this function when the Xserver understand GLX 1.3 or newer
-   */  
-  if (!strcmp("1.2", server_glx_version))
-    wine_glx.p_glXQueryDrawable = NULL;
-  else
-    wine_glx.p_glXQueryDrawable = proc( (const GLubyte *) "glXQueryDrawable");
-  
-  /** try anyway to retrieve that calls, maybe they works using glx client tricks */
-  wine_glx.p_glXGetFBConfigs = proc( (const GLubyte *) "glXGetFBConfigs");
-  wine_glx.p_glXMakeContextCurrent = proc( (const GLubyte *) "glXMakeContextCurrent");
-}
-
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
 static BOOL process_attach(void)
@@ -1080,11 +923,6 @@ static BOOL process_attach(void)
 
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
-  }
-  else
-  {
-    /* After context initialize also the list of supported WGL extensions. */
-    wgl_initialize_glx(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB);
   }
   return TRUE;
 }
