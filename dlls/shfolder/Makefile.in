@@ -8,6 +8,8 @@ IMPORTS   = shell32 kernel32
 
 C_SRCS = shfolder_main.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
