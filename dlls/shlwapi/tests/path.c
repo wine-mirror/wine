@@ -488,6 +488,7 @@ static void test_UrlCanonicalize(void)
     unsigned int i;
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     DWORD dwSize;
+    HRESULT hr;
 
     for(i=0; i<sizeof(TEST_CANONICALIZE)/sizeof(TEST_CANONICALIZE[0]); i++) {
         test_url_canonicalize(TEST_CANONICALIZE[i].url, TEST_CANONICALIZE[i].flags,
@@ -499,6 +500,14 @@ static void test_UrlCanonicalize(void)
     ok(UrlCanonicalizeA("c:\\tests\\foo bar", szReturnUrl, &dwSize, 0) == S_OK, "UrlCanonicalizeA didn't return 0x%08lx\n", S_OK);
     todo_wine {
         ok(strcmp(szReturnUrl,"file:///c:/tests/foo%20bar")==0, "UrlCanonicalizeA got %s\n", szReturnUrl);
+    }
+
+    dwSize = sizeof szReturnUrl;
+    /*LimeWire online installer calls this*/
+    hr = UrlCanonicalizeA("/uri-res/N2R?urn:sha1:B3K", szReturnUrl, &dwSize,URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/);
+    ok(hr==S_OK,"UrlCanonicalizeA returned 0x%08lx instead of S_OK\n", hr);
+    todo_wine {
+        ok(strcmp(szReturnUrl,"/uri-res/N2R?urn:sha1:B3K")==0, "UrlCanonicalizeA got \"%s\"  instead of \"/uri-res/N2R?urn:sha1:B3K\"\n", szReturnUrl);
     }
 }
 
