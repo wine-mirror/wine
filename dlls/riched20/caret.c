@@ -90,6 +90,14 @@ void ME_SetSelection(ME_TextEditor *editor, int from, int to)
     ME_ClearTempStyle(editor);
     return;
   }
+  if (from == -1 && to == -1)	/*-1,-1 means put the selection at the end of the text */
+  {
+    editor->pCursors[1].pRun = editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+    editor->pCursors[1].nOffset = editor->pCursors[0].nOffset = 0;
+    ME_InvalidateSelection(editor);
+    ME_ClearTempStyle(editor);
+    return;
+  }
   if (from == -1)
   {
     editor->pCursors[1] = editor->pCursors[0]; 
