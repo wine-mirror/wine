@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface - batch interface.
+ * CMD - Wine-compatible command line interface - batch interface.
  *
  * Copyright (C) 1999 D A Pickles
  *

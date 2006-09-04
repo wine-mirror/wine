@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface - built-in functions.
+ * CMD - Wine-compatible command line interface - built-in functions.
  *
  * Copyright (C) 1999 D A Pickles
  *

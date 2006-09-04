@@ -7,6 +7,7 @@ VPATH     = @srcdir@
 
 SUBDIRS = \
 	clock \
+	cmd \
 	cmdlgtst \
 	control \
 	eject \
@@ -27,7 +28,6 @@ SUBDIRS = \
 	taskmgr \
 	uninstaller \
 	view \
-	wcmd \
 	wineboot \
 	winebrowser \
 	winecfg \
@@ -46,6 +46,7 @@ SUBDIRS = \
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
 	clock \
+	cmd \
 	control \
 	eject \
 	expand \
@@ -64,7 +65,6 @@ INSTALLSUBDIRS = \
 	start \
 	taskmgr \
 	uninstaller \
-	wcmd \
 	wineboot \
 	winebrowser \
 	winecfg \
@@ -87,7 +87,6 @@ INSTALLPROGS = \
 	regedit \
 	regsvr32 \
 	uninstaller \
-	wcmd \
 	wineboot \
 	winebrowser \
 	winecfg \

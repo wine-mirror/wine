@@ -1756,6 +1756,7 @@ libs/wpp/Makefile
 loader/Makefile
 programs/Makefile
 programs/clock/Makefile
+programs/cmd/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/eject/Makefile
@@ -1776,7 +1777,6 @@ programs/start/Makefile
 programs/taskmgr/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile
-programs/wcmd/Makefile
 programs/wineboot/Makefile
 programs/winebrowser/Makefile
 programs/winecfg/Makefile

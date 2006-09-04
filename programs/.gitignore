@@ -3,6 +3,7 @@
 /wineapploader
 /winelauncher
 clock/clock
+cmd/cmd
 cmdlgtst/cmdlgtst
 control/control
 eject/eject
@@ -23,7 +24,6 @@ start/start
 taskmgr/taskmgr
 uninstaller/uninstaller
 view/view
-wcmd/wcmd
 wineboot/wineboot
 winebrowser/winebrowser
 winecfg/winecfg

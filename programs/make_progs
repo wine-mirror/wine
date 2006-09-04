@@ -33,7 +33,6 @@ my %bin_install =
   "regedit" => 1,
   "regsvr32" => 1,
   "uninstaller" => 1,
-  "wcmd" => 1,
   "wineboot" => 1,
   "winebrowser" => 1,
   "winecfg" => 1,
@@ -72,13 +71,13 @@ sub update_file($)
 if (! -f "configure.ac" && -f "../configure.ac") { chdir(".."); }
 
 my @args = @ARGV;
-if (!@args) { @args = split /\s/, `find programs -name Makefile.in -print`; }
+if (!@args) { @args = map { s/^(.*)\.in/$1/; $_; } split(/\s/,`find programs -name Makefile.in -print`); }
 
 foreach my $i (@args)
 {
     my $module;
 
-    open MAKE,$i;
+    open MAKE, "$i.in" or die "cannot open $i.in\n";
 
     $module = undef;
     while (<MAKE>)

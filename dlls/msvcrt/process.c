@@ -531,7 +531,7 @@ MSVCRT_intptr_t CDECL _spawnvp(int flags, const char* name, const char* const* a
  */
 MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 {
-  static const char wcmd[] = "wcmd", cmdFlag[] = " /C ", comSpec[] = "COMSPEC";
+  static const char wcmd[] = "cmd", cmdFlag[] = " /C ", comSpec[] = "COMSPEC";
   MSVCRT_FILE *ret;
   BOOL readPipe = TRUE;
   int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fdStdErr = -1;

@@ -1,4 +1,4 @@
-WCMD - A Command-Line Interface for WINE
+CMD - A Command-Line Interface for WINE
 Copyright (C) 1999 D Pickles (davep@nugate.demon.co.uk)
 Open Source software published under the Wine Licence and Warranty.
 
@@ -34,13 +34,13 @@ with an absolute or relative path but no wildcards or partial filenames.
 - Redirection is implemented as a command line is parsed. This means that ">"
 and "<" symbols cannot appear in command arguments even within quotes.
 - In many cases parsing and syntax checking is less rigorous than DOS. Thus an
-existing DOS batch file will probably run unchanged under Wcmd but the reverse
-may not be the case.
+existing DOS batch file will probably run unchanged under wine's cmd but the 
+reverse may not be the case.
 
 WINE OR WIN32 BINARY?
-Wcmd can be built as a Wine binary, or (using a Win32 compiler) as a Win32 .EXE
+cmd can be built as a Wine binary, or (using a Win32 compiler) as a Win32 .EXE
 image. The Wine binary is simpler to invoke from the U**x command line or from
 a GUI such as KDE, however it is not possible to invoke a second shell using the
-"WCMD /C filename" syntax. Conversely a Win32 application can be invoked from a
+"CMD /C filename" syntax. Conversely a Win32 application can be invoked from a
 Win32 GUI such as Program Manager but that needs starting under Wine first.
 

@@ -197,6 +197,7 @@ WINE COMPONENTS
 ~~~~~~~~~~~~~~~
 
    * Executable Files
+	- cmd  : Wine's command line interpreter, a cmd.exe replacement.
 	- notepad : The windows Notepad replacement.
 	- progman : A Program Manager replacement.
 	- regedit : A graphical tool to edit your registry or for
@@ -207,7 +208,6 @@ WINE COMPONENTS
 		managing running Windows and Winlib processes.
 	- uninstaller: A program to uninstall installed Windows programs.
 		Like the Add/Remove Program in the windows control panel.
-	- wcmd :  Wine's command line interpreter, a cmd.exe replacement.
 	- widl : Wine IDL compiler compiles (MS-RPC and DCOM) Interface
 		Definition Language files.
 	- wine :  The main Wine executable. This program will load a Windows
@@ -454,7 +454,6 @@ You will need to package the files:
 	$prefix/bin/regedit
 	$prefix/bin/rundll32
 	$prefix/bin/regsvr32
-	$prefix/bin/wcmd
 	$prefix/bin/widl
 	$prefix/bin/winhelp
 

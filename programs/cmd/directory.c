@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface - Directory functions.
+ * CMD - Wine-compatible command line interface - Directory functions.
  *
  * Copyright (C) 1999 D A Pickles
  *

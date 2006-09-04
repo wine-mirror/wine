@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wcmd.exe
+MODULE    = cmd.exe
 APPMODE   = -mconsole
 IMPORTS   = shell32 user32 kernel32
 

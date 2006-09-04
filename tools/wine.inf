@@ -226,7 +226,7 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For DirectPlay,"Path",,"dpmodemx.dll"
 
 [Environment]
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\wcmd.exe"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\cmd.exe"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",2,"%11%;%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
@@ -2124,7 +2124,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wintrust.dll,1
 
 [FakeDllsSection]
-11,,explorer.exe
 10,,notepad.exe
 10,,regedit.exe
 10,,rundll32.exe
@@ -2133,6 +2132,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,command,start.exe
 11,,advapi32.dll
 11,,advpack.dll
+11,,cmd.exe
 11,,comctl32.dll
 11,,comdlg32.dll
 11,,control.exe
@@ -2140,6 +2140,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,d3d8.dll
 11,,dbghelp.dll
 11,,ddraw.dll
+11,,explorer.exe
 11,,gdi32.dll
 11,,hhctrl.ocx
 11,,imaadp32.acm
@@ -2152,10 +2153,10 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msvcrt.dll
 11,,notepad.exe
 11,,ntdll.dll
-11,,opengl32.dll
 11,,ole32.dll
 11,,oleaut32.dll
 11,,olepro32.dll
+11,,opengl32.dll
 11,,progman.exe
 11,,regsvr32.exe
 11,,riched20.dll
@@ -2168,7 +2169,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,urlmon.dll
 11,,user32.dll
 11,,version.dll
-11,,wcmd.exe
 11,,wininet.dll
 11,,winmm.dll
 11,,winspool.drv

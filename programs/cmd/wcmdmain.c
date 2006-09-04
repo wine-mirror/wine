@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface.
+ * CMD - Wine-compatible command line interface.
  *
  * Copyright (C) 1999 - 2001 D A Pickles
  *
@@ -40,7 +40,7 @@ int echo_mode = 1, verify_mode = 0;
 static int opt_c, opt_k, opt_s;
 const char nyi[] = "Not Yet Implemented\n\n";
 const char newline[] = "\n";
-const char version_string[] = "WCMD Version " PACKAGE_VERSION "\n\n";
+const char version_string[] = "CMD Version " PACKAGE_VERSION "\n\n";
 const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
@@ -973,7 +973,7 @@ char *p;
 char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[1024];
 
   GetTempPath (sizeof(temp_path), temp_path);
-  GetTempFileName (temp_path, "WCMD", 0, temp_file);
+  GetTempFileName (temp_path, "CMD", 0, temp_file);
   p = strchr(command, '|');
   *p++ = '\0';
   wsprintf (temp_cmd, "%s > %s", command, temp_file);
@@ -981,7 +981,7 @@ char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[10
   command = p;
   while ((p = strchr(command, '|'))) {
     *p++ = '\0';
-    GetTempFileName (temp_path, "WCMD", 0, temp_file2);
+    GetTempFileName (temp_path, "CMD", 0, temp_file2);
     wsprintf (temp_cmd, "%s < %s > %s", command, temp_file, temp_file2);
     WCMD_process_command (temp_cmd);
     DeleteFile (temp_file);
