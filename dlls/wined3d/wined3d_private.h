@@ -860,7 +860,6 @@ struct IWineD3DSurfaceImpl
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl      *palette;
 
-    UINT                      textureName;
     UINT                      bytesPerPixel;
 
     /* TODO: move this off into a management class(maybe!) */
