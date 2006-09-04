@@ -5437,6 +5437,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     WineDirect3DVertexStridedData strided;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%ld\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
 
+    if (!SrcImpl) {
+        WARN("NULL source vertex buffer\n");
+        return WINED3DERR_INVALIDCALL;
+    }
     /* We don't need the source vbo because this buffer is only used as
      * a source for ProcessVertices. Avoid wasting resources by converting the
      * buffer and loading the VBO
