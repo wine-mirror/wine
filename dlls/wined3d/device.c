@@ -7317,15 +7317,149 @@ static HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IW
 }
 #endif
 
+/* Reapply the device stateblock */
+static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
+
+    BOOL oldRecording;  
+    IWineD3DStateBlockImpl *oldUpdateStateBlock;
+
+    /* Disable recording */
+    oldUpdateStateBlock = This->updateStateBlock;
+    oldRecording= This->isRecordingState;
+    This->isRecordingState = FALSE;
+    This->updateStateBlock = This->stateBlock;
+
+    /* Reapply the state block */ 
+    IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
+
+    /* Restore recording */
+    This->isRecordingState = oldRecording;
+    This->updateStateBlock = oldUpdateStateBlock;
+}
+
+/* Set the device to render to a texture, or not.
+ * This involves changing renderUpsideDown */
+
+static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
+
+    DWORD cullMode;
+    BOOL oldRecording;
+    IWineD3DStateBlockImpl *oldUpdateStateBlock;
+
+    /* Disable recording */
+    oldUpdateStateBlock = This->updateStateBlock;
+    oldRecording= This->isRecordingState;
+    This->isRecordingState = FALSE;
+    This->updateStateBlock = This->stateBlock;
+
+    /* Set upside-down rendering, and update the cull mode */
+    /* The surface must be rendered upside down to cancel the flip produced by glCopyTexImage */
+    This->renderUpsideDown = isTexture;
+    This->last_was_rhw = FALSE;
+    This->proj_valid = FALSE;
+    IWineD3DDevice_GetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, &cullMode);
+    IWineD3DDevice_SetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, cullMode);
+
+    /* Restore recording */
+    This->isRecordingState = oldRecording;
+    This->updateStateBlock = oldUpdateStateBlock;
+}
+
+/* Returns an array of compatible FBconfig(s).
+ * The array must be freed with XFree. Requires ENTER_GL() */
+
+static GLXFBConfig* device_find_fbconfigs(
+    IWineD3DDeviceImpl* This,
+    IWineD3DSwapChainImpl* implicitSwapchainImpl,
+    IWineD3DSurface* RenderSurface) {
+
+    GLXFBConfig* cfgs = NULL;
+    int nCfgs = 0;
+    int attribs[256];
+    int nAttribs = 0;
+
+    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
+    D3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
+    D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
+
+    /**TODO:
+        if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off, 
+        it StencilSurface != NULL && zBufferTarget == NULL switch it on
+    */
+
+#define PUSH1(att)        attribs[nAttribs++] = (att);
+#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
+
+    /* PUSH2(GLX_BIND_TO_TEXTURE_RGBA_ATI, True); examples of this are few and far between (but I've got a nice working one!)*/
+
+    PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
+    PUSH2(GLX_X_RENDERABLE,  TRUE);
+    PUSH2(GLX_DOUBLEBUFFER,  TRUE);
+    TRACE("calling makeglcfg\n");
+    D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, FALSE /* alternate */);
+    PUSH1(None);
+    TRACE("calling chooseFGConfig\n");
+    cfgs = glXChooseFBConfig(implicitSwapchainImpl->display,
+                             DefaultScreen(implicitSwapchainImpl->display),
+                             attribs, &nCfgs);
+    if (cfgs == NULL) {
+        /* OK we didn't find the exact config, so use any reasonable match */
+        /* TODO: fill in the 'requested' and 'current' depths, also make sure that's
+           why we failed and only show this message once! */
+        MESSAGE("Failed to find exact match, finding alternative but you may "
+            "suffer performance issues, try changing xfree's depth to match the requested depth\n");
+        nAttribs = 0;
+        PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT);
+        /* PUSH2(GLX_X_RENDERABLE,  TRUE); */
+        PUSH2(GLX_RENDER_TYPE,   GLX_RGBA_BIT);
+        PUSH2(GLX_DOUBLEBUFFER, FALSE);
+        TRACE("calling makeglcfg\n");
+        D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, TRUE /* alternate */);
+        PUSH1(None);
+        cfgs = glXChooseFBConfig(implicitSwapchainImpl->display,
+                                 DefaultScreen(implicitSwapchainImpl->display),
+                                 attribs, &nCfgs);
+    }
+                                                                                                                                                                      
+    if (cfgs == NULL) {
+        ERR("Could not get a valid FBConfig for (%u,%s)/(%u,%s)\n",
+            BackBufferFormat, debug_d3dformat(BackBufferFormat),
+            StencilBufferFormat, debug_d3dformat(StencilBufferFormat));
+    } else {
+#ifdef EXTRA_TRACES
+        int i;
+        for (i = 0; i < nCfgs; ++i) {
+            TRACE("for (%u,%s)/(%u,%s) found config[%d]@%p\n", BackBufferFormat,
+            debug_d3dformat(BackBufferFormat), StencilBufferFormat,
+            debug_d3dformat(StencilBufferFormat), i, cfgs[i]);
+        }
+        if (NULL != This->renderTarget) {
+            glFlush();
+            vcheckGLcall("glFlush");
+            /** This is only useful if the old render target was a swapchain,
+            * we need to supercede this with a function that displays
+            * the current buffer on the screen. This is easy to do in glx1.3 but
+            * we need to do copy-write pixels in glx 1.2.
+            ************************************************/
+            glXSwapBuffers(implicitSwapChainImpl->display,
+                           implicitSwapChainImpl->drawable);
+            printf("Hit Enter to get next frame ...\n");
+            getchar();
+        }
+#endif
+    }
+#undef PUSH1
+#undef PUSH2
+
+   return cfgs;
+}
+
 /** FIXME: This is currently used called whenever SetRenderTarget or SetStencilBuffer are called
 * the functionality needs splitting up so that we don't do more than we should do.
 * this only seems to impact performance a little.
  ******************************/
 static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                IWineD3DSurface *RenderSurface) {
-    HRESULT ret =  WINED3DERR_INVALIDCALL;
-    BOOL oldRecording;
-    IWineD3DStateBlockImpl *oldUpdateStateBlock;
 
     /**
     * Currently only active for GLX >= 1.3
@@ -7345,102 +7479,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 #if defined(GL_VERSION_1_3)
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
     IWineD3DSurface *tmp;
-    /** TODO: we only need to look up the configuration !IF! we are setting the target to a texture **/
     GLXFBConfig* cfgs = NULL;
-    int nCfgs = 0;
-    int attribs[256];
-    int nAttribs = 0;
     IWineD3DSwapChain     *currentSwapchain;
-    IWineD3DSwapChainImpl *swapchain;
-    /** TODO: get rid of Impl usage we should always create a zbuffer/stencil with our contexts if possible,
-    * but switch them off if the StencilSurface is set to NULL
-    ** *********************************************************/
-    D3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
-    D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
+    IWineD3DSwapChainImpl *currentSwapchainImpl;
+    IWineD3DSwapChain     *implicitSwapchain;
+    IWineD3DSwapChainImpl *implicitSwapchainImpl;
+    IWineD3DSwapChain     *renderSurfaceSwapchain;
+    IWineD3DSwapChainImpl *renderSurfaceSwapchainImpl;
 
-    /**TODO:
-        if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off,
-        it StencilSurface != NULL && zBufferTarget == NULL switch it on
-    */
+    /* Obtain a reference to the device implicit swapchain,
+     * the swapchain of the current render target,
+     * and the swapchain of the new render target.
+     * Fallback to device implicit swapchain if the current render target doesn't have one */
+    IWineD3DDevice_GetSwapChain(iface, 0, &implicitSwapchain);
+    IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void**) &renderSurfaceSwapchain);
+    IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain);
+    if (currentSwapchain == NULL)
+        IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
-
-    /* PUSH2(GLX_BIND_TO_TEXTURE_RGBA_ATI, True); examples of this are few and far between (but I've got a nice working one!)*/
-
-    /** TODO: remove the reff to Impl (context manager should fix this!) **/
-    IWineD3DSwapChainImpl *impSwapChain;
-    IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **)&impSwapChain);
-    if (NULL == impSwapChain) { /* NOTE: This should NEVER fail */
-        ERR("(%p) Failed to get a the implicit swapchain\n", iface);
-    }
+    currentSwapchainImpl = (IWineD3DSwapChainImpl*) currentSwapchain;
+    implicitSwapchainImpl = (IWineD3DSwapChainImpl*) implicitSwapchain;
+    renderSurfaceSwapchainImpl = (IWineD3DSwapChainImpl*) renderSurfaceSwapchain;
 
     ENTER_GL();
-
-    PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
-    PUSH2(GLX_X_RENDERABLE,  TRUE);
-    PUSH2(GLX_DOUBLEBUFFER,  TRUE);
-    TRACE("calling makeglcfg\n");
-    D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, FALSE /* alternate */);
-    PUSH1(None);
-
-    TRACE("calling chooseFGConfig\n");
-    cfgs = glXChooseFBConfig(impSwapChain->display, DefaultScreen(impSwapChain->display),
-                                                     attribs, &nCfgs);
-
-    if (!cfgs) { /* OK we didn't find the exact config, so use any reasonable match */
-        /* TODO: fill in the 'requested' and 'current' depths, also make sure that's
-           why we failed and only show this message once! */
-        MESSAGE("Failed to find exact match, finding alternative but you may suffer performance issues, try changing xfree's depth to match the requested depth\n"); /**/
-        nAttribs = 0;
-        PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT);
-       /* PUSH2(GLX_X_RENDERABLE,  TRUE); */
-        PUSH2(GLX_RENDER_TYPE,   GLX_RGBA_BIT);
-        PUSH2(GLX_DOUBLEBUFFER, FALSE);
-        TRACE("calling makeglcfg\n");
-        D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, TRUE /* alternate */);
-        PUSH1(None);
-        cfgs = glXChooseFBConfig(impSwapChain->display, DefaultScreen(impSwapChain->display),
-                                                        attribs, &nCfgs);
-    }
-
-    if (NULL != cfgs) {
-#ifdef EXTRA_TRACES
-        int i;
-        for (i = 0; i < nCfgs; ++i) {
-            TRACE("for (%u,%s)/(%u,%s) found config[%d]@%p\n", BackBufferFormat,
-            debug_d3dformat(BackBufferFormat), StencilBufferFormat,
-            debug_d3dformat(StencilBufferFormat), i, cfgs[i]);
-        }
-
-        if (NULL != This->renderTarget) {
-            glFlush();
-            vcheckGLcall("glFlush");
-            /** This is only useful if the old render target was a swapchain,
-            * we need to supercede this with a function that displays
-            * the current buffer on the screen. This is easy to do in glx1.3 but
-            * we need to do copy-write pixels in glx 1.2.
-            ************************************************/
-            glXSwapBuffers(impSwapChain->display, impSwapChain->drawable);
-
-            printf("Hit Enter to get next frame ...\n");
-            getchar();
-        }
-#endif
-    }
-
-    if (IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain) != WINED3D_OK) {
-        /* the selected render target doesn't belong to a swapchain, so use the devices implicit swapchain */
-        IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
-    }
 
     /**
     * TODO: remove the use of IWineD3DSwapChainImpl, a context manager will help since it will replace the
     *  renderTarget = swapchain->backBuffer[i] bit and anything to do with *glContexts
      **********************************************************************/
-    if (IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void **)&swapchain) == WINED3D_OK) {
+    if (renderSurfaceSwapchain != NULL) {
+
         /* We also need to make sure that the lights &co are also in the context of the swapchains */
         /* FIXME: If the render target gets sent to the frontBuffer should be be presenting it raw? */
         TRACE("making swapchain active\n");
@@ -7448,8 +7517,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             BOOL backbuf = FALSE;
             int i;
 
-            for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
-                if(RenderSurface == swapchain->backBuffer[i]) {
+            for(i = 0; i < renderSurfaceSwapchainImpl->presentParms.BackBufferCount; i++) {
+                if(RenderSurface == renderSurfaceSwapchainImpl->backBuffer[i]) {
                     backbuf = TRUE;
                     break;
                 }
@@ -7460,19 +7529,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                 /* This could be flagged so that some operations work directly with the front buffer */
                 FIXME("Attempting to set the  renderTarget to the frontBuffer\n");
             }
-            if (glXMakeCurrent(swapchain->display, swapchain->win, swapchain->glCtx)
-            == False) {
+            if (glXMakeCurrent(renderSurfaceSwapchainImpl->display,
+                               renderSurfaceSwapchainImpl->win,
+                               renderSurfaceSwapchainImpl->glCtx) == False) {
+
                 TRACE("Error in setting current context: context %p drawable %ld !\n",
-                       impSwapChain->glCtx, impSwapChain->win);
+                       implicitSwapchainImpl->glCtx, implicitSwapchainImpl->win);
             }
+            checkGLcall("glXMakeContextCurrent");
 
-            IWineD3DDeviceImpl_CleanRender(iface, (IWineD3DSwapChainImpl *)currentSwapchain);
+            /* Clean up the old context */
+            IWineD3DDeviceImpl_CleanRender(iface, currentSwapchainImpl);
+
+            /* Reapply the stateblock, and set the device not to render to texture */
+            device_reapply_stateblock(This);
+            device_render_to_texture(This, FALSE);
         }
-        checkGLcall("glXMakeContextCurrent");
 
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-    }
-    else if (pbuffer_support && cfgs != NULL /* && some test to make sure that opengl supports pbuffers */) {
+    /* Offscreen rendering: PBuffers (currently disabled).
+     * Also note that this path is never reached if FBOs are supported */
+    } else if (pbuffer_support &&
+               (cfgs = device_find_fbconfigs(This, implicitSwapchainImpl, RenderSurface)) != NULL) {
 
         /** ********************************************************************
         * This is a quickly hacked out implementation of offscreen textures.
@@ -7504,13 +7581,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         /* TODO: This should really be part of findGlContext */
         if (NULL == newContext->context) {
 
-            TRACE("making new buffer\n");
-            nAttribs = 0;
-            PUSH2(GLX_PBUFFER_WIDTH,  newContext->Width);
-            PUSH2(GLX_PBUFFER_HEIGHT, newContext->Height);
-            PUSH1(None);
+            int attribs[256];
+            int nAttribs = 0;
 
-            newContext->drawable  = glXCreatePbuffer(impSwapChain->display, cfgs[0], attribs);
+            TRACE("making new buffer\n");
+            attribs[nAttribs++] = GLX_PBUFFER_WIDTH; 
+            attribs[nAttribs++] = newContext->Width;
+            attribs[nAttribs++] = GLX_PBUFFER_HEIGHT;
+            attribs[nAttribs++] = newContext->Height;
+            attribs[nAttribs++] = None;
+
+            newContext->drawable = glXCreatePbuffer(implicitSwapchainImpl->display, cfgs[0], attribs);
 
             /** ****************************************
             *GLX1.3 isn't supported by XFree 'yet' until that point ATI emulates pBuffers
@@ -7520,12 +7601,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             *    so until then we have to use glXGetVisualFromFBConfig &co..
             ********************************************/
 
-
-            visinfo = glXGetVisualFromFBConfig(impSwapChain->display, cfgs[0]);
+            visinfo = glXGetVisualFromFBConfig(implicitSwapchainImpl->display, cfgs[0]);
             if (!visinfo) {
                 ERR("Error: couldn't get an RGBA, double-buffered visual\n");
             } else {
-                newContext->context = glXCreateContext(impSwapChain->display, visinfo, impSwapChain->glCtx,  GL_TRUE);
+                newContext->context = glXCreateContext(
+                    implicitSwapchainImpl->display, visinfo,
+                    implicitSwapchainImpl->glCtx, GL_TRUE);
+
                 XFree(visinfo);
             }
         }
@@ -7533,84 +7616,40 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             ERR("(%p) : Failed to find a context for surface %p\n", iface, RenderSurface);
         } else {
             /* Debug logging, (this function leaks), change to a TRACE when the leak is plugged */
-            if (glXMakeCurrent(impSwapChain->display, newContext->drawable, newContext->context) == False) {
-                TRACE("Error in setting current context: context %p drawable %ld\n", newContext->context, newContext->drawable);
+            if (glXMakeCurrent(implicitSwapchainImpl->display,
+                newContext->drawable, newContext->context) == False) {
+
+                TRACE("Error in setting current context: context %p drawable %ld\n",
+                    newContext->context, newContext->drawable);
             }
+            checkGLcall("glXMakeContextCurrent");
 
             /* Clean up the old context */
-            IWineD3DDeviceImpl_CleanRender(iface, (IWineD3DSwapChainImpl *)currentSwapchain);
+            IWineD3DDeviceImpl_CleanRender(iface, currentSwapchainImpl);
+
+            /* Reapply stateblock, and set device to render to a texture */
+            device_reapply_stateblock(This);
+            device_render_to_texture(This, TRUE);
+
             /* Set the current context of the swapchain to the new context */
-            impSwapChain->drawable   = newContext->drawable;
-            impSwapChain->render_ctx = newContext->context;
+            implicitSwapchainImpl->drawable   = newContext->drawable;
+            implicitSwapchainImpl->render_ctx = newContext->context;
         }
     }
 
-    /* Disable recording, and apply the stateblock to the new context 
-     * FIXME: This is a bit of a hack, each context should know it's own state,
-     * the directX current directX state should then be applied to the context */
-    oldUpdateStateBlock = This->updateStateBlock;
-    oldRecording= This->isRecordingState;
-    This->isRecordingState = FALSE;
-    This->updateStateBlock = This->stateBlock;
-    IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
-
-    /* clean up the current rendertargets swapchain (if it belonged to one) */
-    if (currentSwapchain != NULL) {
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)currentSwapchain);
-    }
-
-    /* Were done with the opengl context management, setup the rendertargets */
-
+    /* Replace the render target */
     tmp = This->renderTarget;
     This->renderTarget = RenderSurface;
     IWineD3DSurface_AddRef(This->renderTarget);
     IWineD3DSurface_Release(tmp);
 
-    {
-        DWORD value;
-
-        /* The surface must be rendered upside down to cancel the flip produce by glCopyTexImage */
-        /* Check that the container is not a swapchain member */
-
-        IWineD3DSwapChain *tmpSwapChain;
-        if (WINED3D_OK != IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmpSwapChain)) {
-            This->renderUpsideDown = TRUE;
-        }else{
-            This->renderUpsideDown = FALSE;
-            IWineD3DSwapChain_Release(tmpSwapChain);
-        }
-        /* Force updating the cull mode */
-        TRACE("setting render state\n");
-        IWineD3DDevice_GetRenderState(iface, WINED3DRS_CULLMODE, &value);
-        IWineD3DDevice_SetRenderState(iface, WINED3DRS_CULLMODE, value);
-
-        /* Force updating projection matrix */
-        This->last_was_rhw = FALSE;
-        This->proj_valid = FALSE;
-    }
-
-    /* Restore recording state */
-    This->isRecordingState = oldRecording;
-    This->updateStateBlock = oldUpdateStateBlock;
-
-    ret = WINED3D_OK;
-
-    if (cfgs != NULL) {
-        XFree(cfgs);
-    } else {
-        ERR("cannot get valides GLXFBConfig for (%u,%s)/(%u,%s)\n", BackBufferFormat,
-            debug_d3dformat(BackBufferFormat), StencilBufferFormat, debug_d3dformat(StencilBufferFormat));
-    }
-
-#undef PUSH1
-#undef PUSH2
-    if ( NULL != impSwapChain) {
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)impSwapChain);
-    }
+    if (cfgs != NULL)                   XFree(cfgs);
+    if (implicitSwapchain != NULL)       IWineD3DSwapChain_Release(implicitSwapchain);
+    if (currentSwapchain != NULL)       IWineD3DSwapChain_Release(currentSwapchain);
+    if (renderSurfaceSwapchain != NULL) IWineD3DSwapChain_Release(renderSurfaceSwapchain);
     LEAVE_GL();
-
 #endif
-    return ret;
+    return WINED3D_OK;
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, UINT XHotSpot,
