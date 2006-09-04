@@ -2187,13 +2187,60 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_dialog_dirlist_handler( msi_dialog *dialog,
+                                        msi_control *control, WPARAM param )
+{
+    LPNMHDR nmhdr = (LPNMHDR)param;
+    WCHAR new_path[MAX_PATH];
+    WCHAR text[MAX_PATH];
+    LPWSTR path, prop;
+    BOOL indirect;
+    LVITEMW item;
+    int index;
+
+    static const WCHAR backslash[] = {'\\',0};
+
+    if (nmhdr->code != LVN_ITEMACTIVATE)
+        return ERROR_SUCCESS;
+
+    index = SendMessageW( control->hwnd, LVM_GETNEXTITEM, -1, LVNI_SELECTED );
+    if ( index < 0 )
+    {
+        ERR("No list-view item selected!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    item.iSubItem = 0;
+    item.pszText = text;
+    item.cchTextMax = MAX_PATH;
+    SendMessageW( control->hwnd, LVM_GETITEMTEXTW, index, (LPARAM)&item );
+
+    indirect = control->attributes & msidbControlAttributesIndirect;
+    prop = msi_dialog_dup_property( dialog, control->property, indirect );
+    path = msi_dup_property( dialog->package, prop );
+
+    lstrcpyW( new_path, path );
+    lstrcatW( new_path, text );
+    lstrcatW( new_path, backslash );
+
+    MSI_SetPropertyW( dialog->package, prop, new_path );
+
+    msi_dialog_update_directory_list( dialog, NULL );
+    msi_dialog_update_directory_combo( dialog, NULL );
+    msi_dialog_update_pathedit( dialog, NULL );
+
+    msi_free( prop );
+    msi_free( path );
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     LPCWSTR prop;
     DWORD style;
 
-    style = LVS_LIST | LVS_EDITLABELS | WS_VSCROLL | LVS_SHAREIMAGELISTS |
+    style = LVS_LIST | WS_VSCROLL | LVS_SHAREIMAGELISTS |
             LVS_AUTOARRANGE | LVS_SINGLESEL | WS_BORDER |
             LVS_SORTASCENDING | WS_CHILD | WS_GROUP | WS_TABSTOP;
     control = msi_dialog_add_control( dialog, rec, WC_LISTVIEWW, style );
@@ -2201,8 +2248,13 @@ static UINT msi_dialog_directory_list( msi_dialog *dialog, MSIRECORD *rec )
         return ERROR_FUNCTION_FAILED;
 
     control->attributes = MSI_RecordGetInteger( rec, 8 );
+    control->handler = msi_dialog_dirlist_handler;
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    /* double click to activate an item in the list */
+    SendMessageW( control->hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE,
+                  0, LVS_EX_TWOCLICKACTIVATE );
 
     msi_dialog_update_directory_list( dialog, control );
 
@@ -2848,6 +2900,19 @@ static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd
     return 0;
 }
 
+static LRESULT msi_dialog_onnotify( msi_dialog *dialog, LPARAM param )
+{
+    LPNMHDR nmhdr = (LPNMHDR) param;
+    msi_control *control = msi_dialog_find_control_by_hwnd( dialog, nmhdr->hwndFrom );
+
+    TRACE("%p %p", dialog, nmhdr->hwndFrom);
+
+    if ( control && control->handler )
+        control->handler( dialog, control, param );
+
+    return 0;
+}
+
 static void msi_dialog_setfocus( msi_dialog *dialog )
 {
     HWND hwnd = dialog->hWndFocus;
@@ -2896,6 +2961,8 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
     case WM_DESTROY:
         dialog->hwnd = NULL;
         return 0;
+    case WM_NOTIFY:
+        return msi_dialog_onnotify( dialog, lParam );
     }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
