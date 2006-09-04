@@ -272,6 +272,7 @@ WINDOWS_INCLUDES = \
 	sqltypes.h \
 	sspi.h \
 	storage.h \
+	svrapi.h \
 	tapi.h \
 	tchar.h \
 	textserv.h \

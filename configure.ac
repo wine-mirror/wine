@@ -1690,6 +1690,7 @@ dlls/stdole2.tlb/Makefile
 dlls/stdole32.tlb/Makefile
 dlls/sti/Makefile
 dlls/strmiids/Makefile
+dlls/svrapi/Makefile
 dlls/tapi32/Makefile
 dlls/twain_32/Makefile
 dlls/unicows/Makefile
