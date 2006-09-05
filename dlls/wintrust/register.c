@@ -53,6 +53,10 @@ static CRYPT_TRUST_REG_ENTRY HTTPSFinalProv;
 static CRYPT_TRUST_REG_ENTRY OfficeInitializePolicy;
 static CRYPT_TRUST_REG_ENTRY OfficeCleanupPolicy;
 
+static CRYPT_TRUST_REG_ENTRY DriverInitializePolicy;
+static CRYPT_TRUST_REG_ENTRY DriverFinalPolicy;
+static CRYPT_TRUST_REG_ENTRY DriverCleanupPolicy;
+
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'C','r','y','p','t','o','g','r','a','p','h','y','\\',
@@ -99,6 +103,9 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(HTTPSFinalProv, SP_POLICY_PROVIDER_DLL_NAME, HTTPS_FINALPOLICY_FUNCTION)
     WINTRUST_INITREGENTRY(OfficeInitializePolicy, OFFICE_POLICY_PROVIDER_DLL_NAME, OFFICE_INITPROV_FUNCTION)
     WINTRUST_INITREGENTRY(OfficeCleanupPolicy, OFFICE_POLICY_PROVIDER_DLL_NAME, OFFICE_CLEANUPPOLICY_FUNCTION)
+    WINTRUST_INITREGENTRY(DriverInitializePolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_INITPROV_FUNCTION)
+    WINTRUST_INITREGENTRY(DriverFinalPolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_FINALPOLPROV_FUNCTION)
+    WINTRUST_INITREGENTRY(DriverCleanupPolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_CLEANUPPOLICY_FUNCTION)
 
 #undef WINTRUST_INITREGENTRY
 }
@@ -128,6 +135,9 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(HTTPSFinalProv);
     WINTRUST_FREEREGENTRY(OfficeInitializePolicy);
     WINTRUST_FREEREGENTRY(OfficeCleanupPolicy);
+    WINTRUST_FREEREGENTRY(DriverInitializePolicy);
+    WINTRUST_FREEREGENTRY(DriverFinalPolicy);
+    WINTRUST_FREEREGENTRY(DriverCleanupPolicy);
 
 #undef WINTRUST_FREEREGENTRY
 }
@@ -623,6 +633,35 @@ static void WINTRUST_RegisterOfficeSignVerify(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , OfficeCleanupPolicy);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterDriverVerify
+ *
+ * Register DRIVER_ACTION_VERIFY actions and usages.
+ *
+ * NOTES
+ *   DRIVER_ACTION_VERIFY ({F750E6C3-38EE-11D1-85E5-00C04FC295EE})
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterDriverVerify(void)
+{
+    static const GUID ProvGUID = DRIVER_ACTION_VERIFY;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register DRIVER_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{F750E6C3-38EE-11D1-85E5-00C04FC295EE} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, DriverInitializePolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , DriverFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , DriverCleanupPolicy);
+}
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -667,6 +706,7 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_RegisterTrustProviderTest();
     WINTRUST_RegisterHttpsProv();
     WINTRUST_RegisterOfficeSignVerify();
+    WINTRUST_RegisterDriverVerify();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
