@@ -396,6 +396,35 @@ static void WINTRUST_RegisterGenVerifyV2(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterPublishedSoftware
+ *
+ * Register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE actions and usages.
+ *
+ * NOTES
+ *   WIN_SPUB_ACTION_PUBLISHED_SOFTWARE ({64B9D180-8DA2-11CF-8736-00AA00A485EB})
+ *   is defined in wintrust.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterPublishedSoftware(void)
+{
+    static const GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{64B9D180-8DA2-11CF-8736-00AA00A485EB} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+}
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -432,8 +461,9 @@ HRESULT WINAPI DllRegisterServer(void)
         Res = S_FALSE;
     RegCloseKey(Key);
 
-    /* Register WINTRUST_ACTION_GENERIC_VERIFY_V2 */
+    /* Register several Trust Provider actions */
     WINTRUST_RegisterGenVerifyV2();
+    WINTRUST_RegisterPublishedSoftware();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
