@@ -50,6 +50,9 @@ static CRYPT_TRUST_REG_ENTRY SoftpubDumpStructure;
 static CRYPT_TRUST_REG_ENTRY HTTPSCertificateTrust;
 static CRYPT_TRUST_REG_ENTRY HTTPSFinalProv;
 
+static CRYPT_TRUST_REG_ENTRY OfficeInitializePolicy;
+static CRYPT_TRUST_REG_ENTRY OfficeCleanupPolicy;
+
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'C','r','y','p','t','o','g','r','a','p','h','y','\\',
@@ -94,6 +97,8 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(SoftpubDumpStructure, SP_POLICY_PROVIDER_DLL_NAME, SP_TESTDUMPPOLICY_FUNCTION_TEST)
     WINTRUST_INITREGENTRY(HTTPSCertificateTrust, SP_POLICY_PROVIDER_DLL_NAME, HTTPS_CERTTRUST_FUNCTION)
     WINTRUST_INITREGENTRY(HTTPSFinalProv, SP_POLICY_PROVIDER_DLL_NAME, HTTPS_FINALPOLICY_FUNCTION)
+    WINTRUST_INITREGENTRY(OfficeInitializePolicy, OFFICE_POLICY_PROVIDER_DLL_NAME, OFFICE_INITPROV_FUNCTION)
+    WINTRUST_INITREGENTRY(OfficeCleanupPolicy, OFFICE_POLICY_PROVIDER_DLL_NAME, OFFICE_CLEANUPPOLICY_FUNCTION)
 
 #undef WINTRUST_INITREGENTRY
 }
@@ -121,6 +126,8 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(SoftpubDumpStructure);
     WINTRUST_FREEREGENTRY(HTTPSCertificateTrust);
     WINTRUST_FREEREGENTRY(HTTPSFinalProv);
+    WINTRUST_FREEREGENTRY(OfficeInitializePolicy);
+    WINTRUST_FREEREGENTRY(OfficeCleanupPolicy);
 
 #undef WINTRUST_FREEREGENTRY
 }
@@ -587,6 +594,34 @@ static void WINTRUST_RegisterHttpsProv(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterOfficeSignVerify
+ *
+ * Register OFFICESIGN_ACTION_VERIFY actions and usages.
+ *
+ * NOTES
+ *   OFFICESIGN_ACTION_VERIFY ({5555C2CD-17FB-11D1-85C4-00C04FC295EE})
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterOfficeSignVerify(void)
+{
+    static const GUID ProvGUID = OFFICESIGN_ACTION_VERIFY;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register OFFICESIGN_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{5555C2CD-17FB-11D1-85C4-00C04FC295EE} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, OfficeInitializePolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , OfficeCleanupPolicy);
+}
 
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
@@ -631,6 +666,7 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_RegisterGenCertVerify();
     WINTRUST_RegisterTrustProviderTest();
     WINTRUST_RegisterHttpsProv();
+    WINTRUST_RegisterOfficeSignVerify();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
