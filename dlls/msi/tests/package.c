@@ -308,7 +308,7 @@ static UINT set_summary_info(MSIHANDLE hdb)
 }
 
 
-MSIHANDLE create_package_db(void)
+static MSIHANDLE create_package_db(void)
 {
     MSIHANDLE hdb = 0;
     UINT res;
@@ -337,7 +337,7 @@ MSIHANDLE create_package_db(void)
     return hdb;
 }
 
-MSIHANDLE package_from_db(MSIHANDLE hdb)
+static MSIHANDLE package_from_db(MSIHANDLE hdb)
 {
     UINT res;
     CHAR szPackage[10];

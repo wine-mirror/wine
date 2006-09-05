@@ -26,6 +26,280 @@
 
 #include "wine/test.h"
 
+static const char msifile[] = "winetest.msi";
+
+static UINT run_query( MSIHANDLE hdb, const char *query )
+{
+    MSIHANDLE hview = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = MsiViewExecute(hview, 0);
+    if( r == ERROR_SUCCESS )
+        r = MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    return r;
+}
+
+static UINT create_feature_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `Feature` ( "
+            "`Feature` CHAR(38) NOT NULL, "
+            "`Feature_Parent` CHAR(38), "
+            "`Title` CHAR(64), "
+            "`Description` CHAR(255), "
+            "`Display` SHORT NOT NULL, "
+            "`Level` SHORT NOT NULL, "
+            "`Directory_` CHAR(72), "
+            "`Attributes` SHORT NOT NULL "
+            "PRIMARY KEY `Feature`)" );
+}
+
+static UINT create_component_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `Component` ( "
+            "`Component` CHAR(72) NOT NULL, "
+            "`ComponentId` CHAR(38), "
+            "`Directory_` CHAR(72) NOT NULL, "
+            "`Attributes` SHORT NOT NULL, "
+            "`Condition` CHAR(255), "
+            "`KeyPath` CHAR(72) "
+            "PRIMARY KEY `Component`)" );
+}
+
+static UINT create_feature_components_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `FeatureComponents` ( "
+            "`Feature_` CHAR(38) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Feature_`, `Component_` )" );
+}
+
+static UINT create_file_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `File` ("
+            "`File` CHAR(72) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL, "
+            "`FileName` CHAR(255) NOT NULL, "
+            "`FileSize` LONG NOT NULL, "
+            "`Version` CHAR(72), "
+            "`Language` CHAR(20), "
+            "`Attributes` SHORT, "
+            "`Sequence` SHORT NOT NULL "
+            "PRIMARY KEY `File`)" );
+}
+
+static UINT create_custom_action_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `CustomAction` ("
+            "`Action` CHAR(72) NOT NULL, "
+            "`Type` SHORT NOT NULL, "
+            "`Source` CHAR(75), "
+            "`Target` CHAR(255) "
+            "PRIMARY KEY `Action`)" );
+}
+
+static UINT add_feature_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Feature` (`Feature`, `Feature_Parent`, "
+                    "`Title`, `Description`, `Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_component_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Component`  "
+            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_feature_components_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `FeatureComponents` "
+            "(`Feature_`, `Component_`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_file_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `File` "
+            "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_directory_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Directory` (`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_custom_action_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `CustomAction` (`Action`, `Type`, `Source`, "
+                    "`Target`) VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT set_summary_info(MSIHANDLE hdb)
+{
+    UINT res;
+    MSIHANDLE suminfo;
+
+    /* build summmary info */
+    res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to open summaryinfo\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,2, VT_LPSTR, 0,NULL,
+                        "Installation Database");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,3, VT_LPSTR, 0,NULL,
+                        "Installation Database");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,4, VT_LPSTR, 0,NULL,
+                        "Wine Hackers");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,7, VT_LPSTR, 0,NULL,
+                    ";1033");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo,9, VT_LPSTR, 0,NULL,
+                    "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}");
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo, 14, VT_I4, 100, NULL, NULL);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoSetProperty(suminfo, 15, VT_I4, 0, NULL, NULL);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
+
+    res = MsiSummaryInfoPersist(suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to make summary info persist\n" );
+
+    res = MsiCloseHandle( suminfo);
+    ok( res == ERROR_SUCCESS , "Failed to close suminfo\n" );
+
+    return res;
+}
+
+static MSIHANDLE create_package_db(void)
+{
+    MSIHANDLE hdb = 0;
+    UINT res;
+
+    DeleteFile(msifile);
+
+    /* create an empty database */
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    if( res != ERROR_SUCCESS )
+        return hdb;
+
+    res = MsiDatabaseCommit( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    res = set_summary_info(hdb);
+
+    res = run_query( hdb,
+            "CREATE TABLE `Directory` ( "
+            "`Directory` CHAR(255) NOT NULL, "
+            "`Directory_Parent` CHAR(255), "
+            "`DefaultDir` CHAR(255) NOT NULL "
+            "PRIMARY KEY `Directory`)" );
+    ok( res == ERROR_SUCCESS , "Failed to create directory table\n" );
+
+    return hdb;
+}
+
+static MSIHANDLE package_from_db(MSIHANDLE hdb)
+{
+    UINT res;
+    CHAR szPackage[10];
+    MSIHANDLE hPackage;
+
+    sprintf(szPackage,"#%li",hdb);
+    res = MsiOpenPackage(szPackage,&hPackage);
+    ok( res == ERROR_SUCCESS , "Failed to open package\n" );
+
+    res = MsiCloseHandle(hdb);
+    ok( res == ERROR_SUCCESS , "Failed to close db handle\n" );
+
+    return hPackage;
+}
+
+static void create_test_file(const CHAR *name)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, name, strlen(name), &written, NULL);
+    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+    CloseHandle(file);
+}
+
 static MSIHANDLE helper_createpackage( const char *szName )
 {
     MSIHANDLE hdb = 0;
@@ -1360,6 +1634,250 @@ static void test_formatrecord_package(void)
     DeleteFile( filename );
 }
 
+static void test_formatrecord_tables(void)
+{
+    MSIHANDLE hdb, hpkg, hrec;
+    CHAR buf[MAX_PATH];
+    CHAR curr_dir[MAX_PATH];
+    CHAR expected[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    GetCurrentDirectory( MAX_PATH, curr_dir );
+
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n");
+
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
+    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r);
+
+    r = add_directory_entry( hdb, "'ReallyLongDir', 'TARGETDIR', "
+                             "'I am a really long directory'" );
+    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r);
+
+    r = create_feature_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Feature table: %d\n", r);
+
+    r = add_feature_entry( hdb, "'occipitofrontalis', '', '', '', 2, 1, '', 0" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
+    r = create_component_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r);
+
+    r = add_component_entry( hdb, "'frontal', '', 'TARGETDIR', 0, '', 'frontal_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r);
+
+    r = add_component_entry( hdb, "'parietal', '', 'TARGETDIR', 1, '', 'parietal_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r);
+
+    r = add_component_entry( hdb, "'temporal', '', 'ReallyLongDir', 0, '', 'temporal_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r);
+
+    r = create_feature_components_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r);
+
+    r = add_feature_components_entry( hdb, "'occipitofrontalis', 'frontal'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r);
+
+    r = add_feature_components_entry( hdb, "'occipitofrontalis', 'parietal'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r);
+
+    r = add_feature_components_entry( hdb, "'occipitofrontalis', 'temporal'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r);
+
+    r = create_file_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r);
+
+    r = add_file_entry( hdb, "'frontal_file', 'frontal', 'frontal.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'parietal_file', 'parietal', 'parietal.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'temporal_file', 'temporal', 'temporal.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = create_custom_action_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create CustomAction table: %d\n", r);
+
+    r = add_custom_action_entry( hdb, "'MyCustom', 51, 'prop', '[!temporal_file]'" );
+    ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
+
+    hpkg = package_from_db( hdb );
+    ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle( hdb );
+
+    r = MsiSetPropertyA( hpkg, "imaprop", "ringer" );
+    ok( r == ERROR_SUCCESS, "cannot set property: %d\n", r);
+
+    hrec = MsiCreateRecord( 1 );
+
+    /* property doesn't exist */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[idontexist]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+    }
+
+    /* property exists */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[imaprop]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
+    }
+
+    /* environment variable doesn't exist */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[%idontexist]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+    }
+
+    /* environment variable exists */
+    size = MAX_PATH;
+    SetEnvironmentVariable( "crazyvar", "crazyval" );
+    MsiRecordSetString( hrec, 1, "[%crazyvar]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: crazyval " ), "Expected '1: crazyval ', got %s\n", buf );
+    }
+
+    /* file key before CostInitialize */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[#frontal_file]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+    }
+
+    r = MsiDoAction(hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "CostInitialize failed: %d\n", r);
+
+    r = MsiDoAction(hpkg, "FileCost");
+    ok( r == ERROR_SUCCESS, "FileCost failed: %d\n", r);
+
+    r = MsiDoAction(hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "CostFinalize failed: %d\n", r);
+
+    /* frontal full file key */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[#frontal_file]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
+    }
+
+    /* frontal short file key */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[!frontal_file]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
+    }
+
+    /* temporal full file key */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[#temporal_file]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
+            "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
+    }
+
+    /* temporal short file key */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[!temporal_file]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
+            "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
+    }
+
+    /* custom action 51, files don't exist */
+    r = MsiDoAction( hpkg, "MyCustom" );
+    ok( r == ERROR_SUCCESS, "MyCustom failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "C:\\I am a really long directory\\temporal.txt" ),
+            "Expected 'C:\\I am a really long directory\\temporal.txt', got %s\n", buf);
+    }
+
+    CreateDirectory( "C:\\I am a really long directory", NULL );
+    create_test_file( "C:\\I am a really long directory\\temporal.txt" );
+
+    /* custom action 51, files exist */
+    r = MsiDoAction( hpkg, "MyCustom" );
+    ok( r == ERROR_SUCCESS, "MyCustom failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "C:\\I am a really long directory\\temporal.txt" ),
+            "Expected 'C:\\I am a really long directory\\temporal.txt', got %s\n", buf);
+    }
+
+    /* component with INSTALLSTATE_LOCAL */
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[$temporal]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\ " ),
+            "Expected '1: C:\\I am a really long directory\\ ', got %s\n", buf);
+    }
+
+    r = MsiSetComponentState( hpkg, "temporal", INSTALLSTATE_SOURCE );
+    ok( r == ERROR_SUCCESS, "failed to set install state: %d\n", r);
+
+    /* component with INSTALLSTATE_SOURCE */
+    lstrcpy( expected, "1: " );
+    lstrcat( expected, curr_dir );
+    lstrcat( expected, "\\ " );
+    size = MAX_PATH;
+    MsiRecordSetString( hrec, 1, "[$parietal]" );
+    r = MsiFormatRecord( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmp( buf, expected ), "Expected '%s', got %s\n", buf, expected);
+    }
+
+    DeleteFile( "C:\\I am a really long directory\\temporal.txt" );
+    RemoveDirectory( "C:\\I am a really long directory" );
+
+    MsiCloseHandle( hpkg );
+    DeleteFile( msifile );
+}
+
 static void test_processmessage(void)
 {
     static const CHAR filename[] = "winetest.msi";
@@ -1390,5 +1908,6 @@ START_TEST(format)
     test_createpackage();
     test_formatrecord();
     test_formatrecord_package();
+    test_formatrecord_tables();
     test_processmessage();
 }
