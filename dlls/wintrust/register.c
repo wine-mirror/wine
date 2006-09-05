@@ -45,6 +45,8 @@ static CRYPT_TRUST_REG_ENTRY SoftpubCleanup;
 
 static CRYPT_TRUST_REG_ENTRY SoftpubDefCertInit;
 
+static CRYPT_TRUST_REG_ENTRY SoftpubDumpStructure;
+
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'C','r','y','p','t','o','g','r','a','p','h','y','\\',
@@ -85,6 +87,7 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(SoftpubFinalPolicy, SP_POLICY_PROVIDER_DLL_NAME, SP_FINALPOLICY_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubCleanup, SP_POLICY_PROVIDER_DLL_NAME, SP_CLEANUPPOLICY_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubDefCertInit, SP_POLICY_PROVIDER_DLL_NAME, SP_GENERIC_CERT_INIT_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubDumpStructure, SP_POLICY_PROVIDER_DLL_NAME, SP_TESTDUMPPOLICY_FUNCTION_TEST)
 
 #undef WINTRUST_INITREGENTRY
 }
@@ -109,6 +112,7 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(SoftpubFinalPolicy);
     WINTRUST_FREEREGENTRY(SoftpubCleanup);
     WINTRUST_FREEREGENTRY(SoftpubDefCertInit);
+    WINTRUST_FREEREGENTRY(SoftpubDumpStructure);
 
 #undef WINTRUST_FREEREGENTRY
 }
@@ -489,6 +493,36 @@ static void WINTRUST_RegisterGenCertVerify(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterTrustProviderTest
+ *
+ * Register WINTRUST_ACTION_TRUSTPROVIDER_TEST actions and usages.
+ *
+ * NOTES
+ *   WINTRUST_ACTION_TRUSTPROVIDER_TEST ({573E31F8-DDBA-11D0-8CCB-00C04FC295EE})
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterTrustProviderTest(void)
+{
+    static const GUID ProvGUID = WINTRUST_ACTION_TRUSTPROVIDER_TEST;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register WINTRUST_ACTION_TRUSTPROVIDER_TEST : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{573E31F8-DDBA-11D0-8CCB-00C04FC295EE} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization  , SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message         , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature       , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate     , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck       , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy     , SoftpubFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, DiagnosticPolicy, SoftpubDumpStructure);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup         , SoftpubCleanup);
+}
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -530,6 +564,7 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_RegisterPublishedSoftware();
     WINTRUST_RegisterPublishedSoftwareNoBadUi();
     WINTRUST_RegisterGenCertVerify();
+    WINTRUST_RegisterTrustProviderTest();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
