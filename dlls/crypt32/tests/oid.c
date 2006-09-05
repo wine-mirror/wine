@@ -430,7 +430,7 @@ static void test_enumOIDInfo(void)
 
 static void test_findOIDInfo(void)
 {
-    static const WCHAR sha1[] = { 's','h','a','1',0 };
+    static WCHAR sha1[] = { 's','h','a','1',0 };
     static CHAR oid_rsa_md5[] = szOID_RSA_MD5;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
@@ -447,7 +447,7 @@ static void test_findOIDInfo(void)
         ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
            U(*info).Algid);
     }
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_NAME_KEY, (void *)sha1, 0);
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_NAME_KEY, sha1, 0);
     ok(info != NULL, "Expected to find sha1\n");
     if (info)
     {
