@@ -47,6 +47,9 @@ static CRYPT_TRUST_REG_ENTRY SoftpubDefCertInit;
 
 static CRYPT_TRUST_REG_ENTRY SoftpubDumpStructure;
 
+static CRYPT_TRUST_REG_ENTRY HTTPSCertificateTrust;
+static CRYPT_TRUST_REG_ENTRY HTTPSFinalProv;
+
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'C','r','y','p','t','o','g','r','a','p','h','y','\\',
@@ -63,6 +66,7 @@ static const WCHAR DiagnosticPolicy[] = {'D','i','a','g','n','o','s','t','i','c'
 static const WCHAR Cleanup[]          = {'C','l','e','a','n','u','p','\\', 0};
 
 static const WCHAR DefaultId[]        = {'D','e','f','a','u','l','t','I','d', 0};
+static const WCHAR Dll[]              = {'$','D','L','L', 0};
 
 /***********************************************************************
  *              WINTRUST_InitRegStructs
@@ -88,6 +92,8 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(SoftpubCleanup, SP_POLICY_PROVIDER_DLL_NAME, SP_CLEANUPPOLICY_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubDefCertInit, SP_POLICY_PROVIDER_DLL_NAME, SP_GENERIC_CERT_INIT_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubDumpStructure, SP_POLICY_PROVIDER_DLL_NAME, SP_TESTDUMPPOLICY_FUNCTION_TEST)
+    WINTRUST_INITREGENTRY(HTTPSCertificateTrust, SP_POLICY_PROVIDER_DLL_NAME, HTTPS_CERTTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(HTTPSFinalProv, SP_POLICY_PROVIDER_DLL_NAME, HTTPS_FINALPOLICY_FUNCTION)
 
 #undef WINTRUST_INITREGENTRY
 }
@@ -113,6 +119,8 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(SoftpubCleanup);
     WINTRUST_FREEREGENTRY(SoftpubDefCertInit);
     WINTRUST_FREEREGENTRY(SoftpubDumpStructure);
+    WINTRUST_FREEREGENTRY(HTTPSCertificateTrust);
+    WINTRUST_FREEREGENTRY(HTTPSFinalProv);
 
 #undef WINTRUST_FREEREGENTRY
 }
@@ -144,7 +152,6 @@ static LONG WINTRUST_WriteProviderToReg(WCHAR* GuidString,
                                         const WCHAR* FunctionType,
                                         CRYPT_TRUST_REG_ENTRY RegEntry)
 {
-    static const WCHAR Dll[]      = {'$','D','L','L', 0};
     static const WCHAR Function[] = {'$','F','u','n','c','t','i','o','n', 0};
     WCHAR ProvKey[MAX_PATH];
     HKEY Key;
@@ -523,6 +530,64 @@ static void WINTRUST_RegisterTrustProviderTest(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup         , SoftpubCleanup);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterHttpsProv
+ *
+ * Register HTTPSPROV_ACTION actions and usages.
+ *
+ * NOTES
+ *   HTTPSPROV_ACTION ({573E31F8-AABA-11D0-8CCB-00C04FC295EE})
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterHttpsProv(void)
+{
+    static WCHAR SoftpubLoadUsage[] = {'S','o','f','t','p','u','b','L','o','a','d','D','e','f','U','s','a','g','e','C','a','l','l','D','a','t','a', 0};
+    static WCHAR SoftpubFreeUsage[] = {'S','o','f','t','p','u','b','F','r','e','e','D','e','f','U','s','a','g','e','C','a','l','l','D','a','t','a', 0};
+    static const WCHAR CBAlloc[]    = {'C','a','l','l','b','a','c','k','A','l','l','o','c','F','u','n','c','t','i','o','n', 0};
+    static const WCHAR CBFree[]     = {'C','a','l','l','b','a','c','k','F','r','e','e','F','u','n','c','t','i','o','n', 0};
+    static const GUID ProvGUID = HTTPSPROV_ACTION;
+    WCHAR GuidString[39];
+    WCHAR ProvDllName[sizeof(SP_POLICY_PROVIDER_DLL_NAME)];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register HTTPSPROV_ACTION : %s\n", wine_dbgstr_w(GuidString));
+
+    lstrcpyW(ProvDllName, SP_POLICY_PROVIDER_DLL_NAME); \
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.1 */
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, Dll, ProvDllName);
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, CBAlloc, SoftpubLoadUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, CBFree, SoftpubFreeUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, DefaultId, GuidString );
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.2 */
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, Dll, ProvDllName);
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, CBAlloc, SoftpubLoadUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, CBFree, SoftpubFreeUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, DefaultId, GuidString );
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.4.1.311.10.3.3 */
+    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, Dll, ProvDllName);
+    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, CBAlloc, SoftpubLoadUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, CBFree, SoftpubFreeUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, DefaultId, GuidString );
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\2.16.840.1.113730.4.1 */
+    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, Dll, ProvDllName);
+    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, CBAlloc, SoftpubLoadUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, CBFree, SoftpubFreeUsage );
+    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, DefaultId, GuidString );
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{573E31F8-AABA-11D0-8CCB-00C04FC295EE} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , HTTPSCertificateTrust);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , HTTPSFinalProv);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+}
+
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -565,6 +630,7 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_RegisterPublishedSoftwareNoBadUi();
     WINTRUST_RegisterGenCertVerify();
     WINTRUST_RegisterTrustProviderTest();
+    WINTRUST_RegisterHttpsProv();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
