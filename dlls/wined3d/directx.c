@@ -1650,8 +1650,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         BOOL half_pixel_support = GL_SUPPORT(ARB_HALF_FLOAT_PIXEL);
 
         switch (CheckFormat) {
+            case D3DFMT_R16F:
             case D3DFMT_A16B16G16R16F:
                 if (!half_pixel_support) break;
+            case D3DFMT_R32F:
             case D3DFMT_A32B32G32R32F:
                 TRACE_(d3d_caps)("[OK]\n");
                 return WINED3D_OK;
@@ -1748,9 +1750,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         /*****
          *  Float formats: Not supported right now
          */
-        case WINED3DFMT_R16F:
         case WINED3DFMT_G16R16F:
-        case WINED3DFMT_R32F:
         case WINED3DFMT_G32R32F:
         case WINED3DFMT_CxV8U8:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */

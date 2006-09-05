@@ -477,7 +477,9 @@ typedef void (APIENTRY * PGLFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint leve
 #ifndef GL_ARB_texture_float
 #define GL_ARB_texture_float 1
 #define GL_RGBA32F_ARB                    0x8814
+#define GL_RGB32F_ARB                     0x8815
 #define GL_RGBA16F_ARB                    0x881A
+#define GL_RGB16F_ARB                     0x881B
 #endif
 /* GL_ARB_half_float_pixel */
 #ifndef GL_ARB_half_float_pixel

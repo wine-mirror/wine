@@ -47,13 +47,13 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_G8R8_G8B8   ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
     {WINED3DFMT_R8G8_B8G8   ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
     /* IEEE formats */
-    {WINED3DFMT_R32F        ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,0                      ,0                  ,0                              },
+    {WINED3DFMT_R32F        ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_RGB32F_ARB         ,GL_RED             ,GL_FLOAT                       },
     {WINED3DFMT_G32R32F     ,0x0        ,0x0        ,0x0        ,0x0        ,8      ,FALSE      ,0                      ,0                  ,0                              },
     {WINED3DFMT_A32B32G32R32F,0x0       ,0x0        ,0x0        ,0x0        ,16     ,FALSE      ,GL_RGBA32F_ARB         ,GL_RGBA            ,GL_FLOAT                       },
     /* Hmm? */
     {WINED3DFMT_CxV8U8      ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,0                      ,0                  ,0                              },
     /* Float */
-    {WINED3DFMT_R16F        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,0                      ,0                  ,0                              },
+    {WINED3DFMT_R16F        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_RGB16F_ARB         ,GL_RED             ,GL_HALF_FLOAT_ARB              },
     {WINED3DFMT_G16R16F     ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,0                      ,0                  ,0                              },
     {WINED3DFMT_A16B16G16R16F,0x0       ,0x0        ,0x0        ,0x0        ,8      ,FALSE      ,GL_RGBA16F_ARB         ,GL_RGBA            ,GL_HALF_FLOAT_ARB              },
     /* Palettized formats */
