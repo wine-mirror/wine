@@ -572,7 +572,7 @@ static DWORD CRYPT_GetNextValueW(LPCWSTR str, DWORD dwFlags, LPCWSTR separators,
 
             while (*separators)
                 map[*separators++] = 1;
-            while (*str && (*str >= 0xff || !map[*(unsigned short *)str]))
+            while (*str && (*str >= 0xff || !map[*(const unsigned short *)str]))
                 str++;
             token->end = str;
         }

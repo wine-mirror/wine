@@ -1019,7 +1019,7 @@ static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
 
     __TRY
     {
-        const CERT_NAME_VALUE *value = (CERT_NAME_VALUE *)pvStructInfo;
+        const CERT_NAME_VALUE *value = (const CERT_NAME_VALUE *)pvStructInfo;
 
         switch (value->dwValueType)
         {
@@ -1159,7 +1159,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
 
 static int BLOBComp(const void *l, const void *r)
 {
-    CRYPT_DER_BLOB *a = (CRYPT_DER_BLOB *)l, *b = (CRYPT_DER_BLOB *)r;
+    const CRYPT_DER_BLOB *a = (const CRYPT_DER_BLOB *)l, *b = (const CRYPT_DER_BLOB *)r;
     int ret;
 
     if (!(ret = memcmp(a->pbData, b->pbData, min(a->cbData, b->cbData))))
@@ -1564,7 +1564,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUnicodeNameValue(DWORD dwCertEncodingType,
 
     __TRY
     {
-        const CERT_NAME_VALUE *value = (CERT_NAME_VALUE *)pvStructInfo;
+        const CERT_NAME_VALUE *value = (const CERT_NAME_VALUE *)pvStructInfo;
 
         switch (value->dwValueType)
         {

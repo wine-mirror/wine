@@ -555,7 +555,7 @@ void free_protect_data(struct protect_data_t * pInfo)
 
 /* copies a string into a data blob */
 static
-BYTE * convert_str_to_blob(char* str, DATA_BLOB* blob)
+BYTE *convert_str_to_blob(LPCSTR str, DATA_BLOB *blob)
 {
     if (!str || !blob) return NULL;
 
@@ -590,11 +590,11 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
 
     pInfo->count0=0x0001;
 
-    convert_str_to_blob((char*)crypt_magic_str,&pInfo->info0);
+    convert_str_to_blob(crypt_magic_str, &pInfo->info0);
 
     pInfo->count1=0x0001;
 
-    convert_str_to_blob((char*)crypt_magic_str,&pInfo->info1);
+    convert_str_to_blob(crypt_magic_str, &pInfo->info1);
 
     pInfo->null0=0x0000;
 
@@ -606,7 +606,7 @@ BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
     pInfo->unknown0=0x0000;
     pInfo->unknown1=0x0000;
 
-    convert_str_to_blob((char*)crypt_magic_str,&pInfo->data0);
+    convert_str_to_blob(crypt_magic_str, &pInfo->data0);
 
     pInfo->null1=0x0000;
     pInfo->unknown2=0x0000;
