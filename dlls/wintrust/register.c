@@ -425,6 +425,37 @@ static void WINTRUST_RegisterPublishedSoftware(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
 }
 
+#define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI { 0xc6b2e8d0, 0xe005, 0x11cf, { 0xa1,0x34,0x00,0xc0,0x4f,0xd7,0xbf,0x43 }}
+
+/***************************************************************************
+ *              WINTRUST_RegisterPublishedSoftwareNoBadUi
+ *
+ * Register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI actions and usages.
+ *
+ * NOTES
+ *   WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI ({C6B2E8D0-E005-11CF-A134-00C04FD7BF43})
+ *   is not defined in any include file. (FIXME: Find out if the name is correct).
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
+{
+    static const GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{C6B2E8D0-E005-11CF-A134-00C04FD7BF43} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+}
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -464,6 +495,7 @@ HRESULT WINAPI DllRegisterServer(void)
     /* Register several Trust Provider actions */
     WINTRUST_RegisterGenVerifyV2();
     WINTRUST_RegisterPublishedSoftware();
+    WINTRUST_RegisterPublishedSoftwareNoBadUi();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
