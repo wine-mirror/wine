@@ -57,6 +57,9 @@ static CRYPT_TRUST_REG_ENTRY DriverInitializePolicy;
 static CRYPT_TRUST_REG_ENTRY DriverFinalPolicy;
 static CRYPT_TRUST_REG_ENTRY DriverCleanupPolicy;
 
+static CRYPT_TRUST_REG_ENTRY GenericChainCertificateTrust;
+static CRYPT_TRUST_REG_ENTRY GenericChainFinalProv;
+
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'C','r','y','p','t','o','g','r','a','p','h','y','\\',
@@ -106,6 +109,8 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(DriverInitializePolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_INITPROV_FUNCTION)
     WINTRUST_INITREGENTRY(DriverFinalPolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_FINALPOLPROV_FUNCTION)
     WINTRUST_INITREGENTRY(DriverCleanupPolicy, SP_POLICY_PROVIDER_DLL_NAME, DRIVER_CLEANUPPOLICY_FUNCTION)
+    WINTRUST_INITREGENTRY(GenericChainCertificateTrust, SP_POLICY_PROVIDER_DLL_NAME, GENERIC_CHAIN_CERTTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(GenericChainFinalProv, SP_POLICY_PROVIDER_DLL_NAME, GENERIC_CHAIN_FINALPOLICY_FUNCTION)
 
 #undef WINTRUST_INITREGENTRY
 }
@@ -138,6 +143,8 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(DriverInitializePolicy);
     WINTRUST_FREEREGENTRY(DriverFinalPolicy);
     WINTRUST_FREEREGENTRY(DriverCleanupPolicy);
+    WINTRUST_FREEREGENTRY(GenericChainCertificateTrust);
+    WINTRUST_FREEREGENTRY(GenericChainFinalProv);
 
 #undef WINTRUST_FREEREGENTRY
 }
@@ -662,6 +669,35 @@ static void WINTRUST_RegisterDriverVerify(void)
     WINTRUST_WriteProviderToReg(GuidString, Cleanup       , DriverCleanupPolicy);
 }
 
+/***************************************************************************
+ *              WINTRUST_RegisterGenChainVerify
+ *
+ * Register WINTRUST_ACTION_GENERIC_CHAIN_VERIFY actions and usages.
+ *
+ * NOTES
+ *   WINTRUST_ACTION_GENERIC_CHAIN_VERIFY ({FC451C16-AC75-11D1-B4B8-00C04FB66EA0})
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterGenChainVerify(void)
+{
+    static const GUID ProvGUID = WINTRUST_ACTION_GENERIC_CHAIN_VERIFY;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register WINTRUST_ACTION_GENERIC_CHAIN_VERIFY : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{FC451C16-AC75-11D1-B4B8-00C04FB66EA0} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , GenericChainCertificateTrust);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , GenericChainFinalProv);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+}
+
 /***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
@@ -707,6 +743,7 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_RegisterHttpsProv();
     WINTRUST_RegisterOfficeSignVerify();
     WINTRUST_RegisterDriverVerify();
+    WINTRUST_RegisterGenChainVerify();
 
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
