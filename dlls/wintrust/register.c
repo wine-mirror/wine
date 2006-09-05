@@ -25,6 +25,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winnls.h"
 
 #include "guiddef.h"
 #include "wintrust.h"
@@ -33,6 +34,14 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
+
+static CRYPT_TRUST_REG_ENTRY SoftpubInitialization;
+static CRYPT_TRUST_REG_ENTRY SoftpubMessage;
+static CRYPT_TRUST_REG_ENTRY SoftpubSignature;
+static CRYPT_TRUST_REG_ENTRY SoftpubCertficate;
+static CRYPT_TRUST_REG_ENTRY SoftpubCertCheck;
+static CRYPT_TRUST_REG_ENTRY SoftpubFinalPolicy;
+static CRYPT_TRUST_REG_ENTRY SoftpubCleanup;
 
 static const WCHAR Trust[]            = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
@@ -49,13 +58,64 @@ static const WCHAR FinalPolicy[]      = {'F','i','n','a','l','P','o','l','i','c'
 static const WCHAR DiagnosticPolicy[] = {'D','i','a','g','n','o','s','t','i','c','P','o','l','i','c','y','\\', 0};
 static const WCHAR Cleanup[]          = {'C','l','e','a','n','u','p','\\', 0};
 
+static const WCHAR DefaultId[]        = {'D','e','f','a','u','l','t','I','d', 0};
+
+/***********************************************************************
+ *              WINTRUST_InitRegStructs
+ *
+ * Helper function to allocate and initialize the members of the
+ * CRYPT_TRUST_REG_ENTRY structs.
+ */
+static void WINTRUST_InitRegStructs(void)
+{
+#define WINTRUST_INITREGENTRY( action, dllname, functionname ) \
+    action.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY); \
+    action.pwszDLLName = HeapAlloc(GetProcessHeap(), 0, sizeof(dllname)); \
+    lstrcpyW(action.pwszDLLName, dllname); \
+    action.pwszFunctionName = HeapAlloc(GetProcessHeap(), 0, sizeof(functionname)); \
+    lstrcpyW(action.pwszFunctionName, functionname);
+
+    WINTRUST_INITREGENTRY(SoftpubInitialization, SP_POLICY_PROVIDER_DLL_NAME, SP_INIT_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubMessage, SP_POLICY_PROVIDER_DLL_NAME, SP_OBJTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubSignature, SP_POLICY_PROVIDER_DLL_NAME, SP_SIGTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubCertficate, SP_POLICY_PROVIDER_DLL_NAME, WT_PROVIDER_CERTTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubCertCheck, SP_POLICY_PROVIDER_DLL_NAME, SP_CHKCERT_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubFinalPolicy, SP_POLICY_PROVIDER_DLL_NAME, SP_FINALPOLICY_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubCleanup, SP_POLICY_PROVIDER_DLL_NAME, SP_CLEANUPPOLICY_FUNCTION)
+
+#undef WINTRUST_INITREGENTRY
+}
+
+/***********************************************************************
+ *              WINTRUST_FreeRegStructs
+ *
+ * Helper function to free 2 members of the CRYPT_TRUST_REG_ENTRY
+ * structs.
+ */
+static void WINTRUST_FreeRegStructs(void)
+{
+#define WINTRUST_FREEREGENTRY( action ) \
+    HeapFree(GetProcessHeap(), 0, action.pwszDLLName); \
+    HeapFree(GetProcessHeap(), 0, action.pwszFunctionName);
+
+    WINTRUST_FREEREGENTRY(SoftpubInitialization);
+    WINTRUST_FREEREGENTRY(SoftpubMessage);
+    WINTRUST_FREEREGENTRY(SoftpubSignature);
+    WINTRUST_FREEREGENTRY(SoftpubCertficate);
+    WINTRUST_FREEREGENTRY(SoftpubCertCheck);
+    WINTRUST_FREEREGENTRY(SoftpubFinalPolicy);
+    WINTRUST_FREEREGENTRY(SoftpubCleanup);
+
+#undef WINTRUST_FREEREGENTRY
+}
+
 /***********************************************************************
  *              WINTRUST_guid2wstr
  *
  * Create a wide-string from a GUID
  *
  */
-static void WINTRUST_Guid2Wstr(GUID* pgActionID, WCHAR* GuidString)
+static void WINTRUST_Guid2Wstr(const GUID* pgActionID, WCHAR* GuidString)
 { 
     static const WCHAR wszFormat[] = {'{','%','0','8','l','X','-','%','0','4','X','-','%','0','4','X','-',
                                       '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2',
@@ -155,7 +215,6 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
 
     /* Create this string only once, instead of in the helper function */
     WINTRUST_Guid2Wstr( pgActionID, GuidString);
-    
 
     /* Write the information to the registry */
     Res = WINTRUST_WriteProviderToReg(GuidString, Initialization  , psProvInfo->sInitProvider);
@@ -177,7 +236,6 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
 
     /* Testing (by restricting access to the registry for some keys) shows that the last failing function
      * will be used for last error.
-     * an error is the one used to propagate the last error. 
      * If the flag WT_ADD_ACTION_ID_RET_RESULT_FLAG is set and there are errors when adding the action
      * we have to return FALSE. Errors includes both invalid entries as well as registry errors.
      * Testing also showed that one error doesn't stop the registry writes. Every action will be dealt with.
@@ -262,12 +320,125 @@ BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
 }
 
 /***********************************************************************
+ *              WINTRUST_WriteSingleUsageEntry
+ *
+ * Write a single value and its data to:
+ *
+ * HKLM\Software\Microsoft\Cryptography\Trust\Usages\<OID>
+ */
+static LONG WINTRUST_WriteSingleUsageEntry(LPCSTR OID,
+                                           const WCHAR* Value,
+                                           WCHAR* Data)
+{
+    static const WCHAR Usages[] = {'U','s','a','g','e','s','\\', 0};
+    WCHAR* UsageKey;
+    HKEY Key;
+    LONG Res = ERROR_SUCCESS;
+    WCHAR* OIDW;
+    DWORD Len;
+
+    /* Turn OID into a wide-character string */
+    Len = MultiByteToWideChar( CP_ACP, 0, OID, -1, NULL, 0 );
+    OIDW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, OID, -1, OIDW, Len );
+
+    /* Allocate the needed space for UsageKey */
+    UsageKey = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(Trust) + lstrlenW(Usages) + Len) * sizeof(WCHAR));
+    /* Create the key string */
+    lstrcpyW(UsageKey, Trust);
+    lstrcatW(UsageKey, Usages);
+    lstrcatW(UsageKey, OIDW);
+
+    Res = RegCreateKeyExW(HKEY_LOCAL_MACHINE, UsageKey, 0, NULL, 0, KEY_WRITE, NULL, &Key, NULL);
+    if (Res == ERROR_SUCCESS)
+    {
+        /* Create the Value entry */
+        Res = RegSetValueExW(Key, Value, 0, REG_SZ, (BYTE*)Data,
+                             (lstrlenW(Data) + 1)*sizeof(WCHAR));
+    }
+    RegCloseKey(Key);
+
+    HeapFree(GetProcessHeap(), 0, OIDW);
+    HeapFree(GetProcessHeap(), 0, UsageKey);
+
+    return Res;
+}
+
+/***************************************************************************
+ *              WINTRUST_RegisterGenVerifyV2
+ *
+ * Register WINTRUST_ACTION_GENERIC_VERIFY_V2 actions and usages.
+ *
+ * NOTES
+ *   WINTRUST_ACTION_GENERIC_VERIFY_V2 ({00AAC56B-CD44-11D0-8CC2-00C04FC295EE}
+ *   is defined in softpub.h
+ *   We don't care about failures (see comments in DllRegisterServer)
+ */
+static void WINTRUST_RegisterGenVerifyV2(void)
+{
+    static const GUID ProvGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    WCHAR GuidString[39];
+
+    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+
+    TRACE("Going to register WINTRUST_ACTION_GENERIC_VERIFY_V2 : %s\n", wine_dbgstr_w(GuidString));
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.3 */
+    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CODE_SIGNING, DefaultId, GuidString);
+
+    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{00AAC56B-CD44-11D0-8CC2-00C04FC295EE} */
+    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
+    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
+    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
+    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
+    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
+    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
+    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+}
+
+/***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-     FIXME("stub\n");
-     return S_OK;
+    HRESULT Res = S_OK;
+    HKEY Key;
+
+    TRACE("\n");
+
+    /* Create the necessary action registry structures */
+    WINTRUST_InitRegStructs();
+
+    /* FIXME:
+     * 
+     * A short list of stuff that should be done here:
+     *
+     * - Several calls to CryptRegisterOIDFunction
+     * - Several action registrations (NOT through WintrustAddActionID)
+     * - Several calls to CryptSIPAddProvider
+     * - One call to CryptSIPRemoveProvider (do we need that?)
+     */
+
+    /* Testing on W2K3 shows:
+     * If we cannot open HKLM\Software\Microsoft\Cryptography\Providers\Trust
+     * for writing, DllRegisterServer returns S_FALSE. If the key can be opened 
+     * there is no check whether the actions can be written in the registry.
+     * As the previous list shows, there are several calls after these registrations.
+     * If they fail they will overwrite the returnvalue of DllRegisterServer.
+     */
+
+    /* Check if we can open/create HKLM\Software\Microsoft\Cryptography\Providers\Trust */
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, Trust, 0, NULL, 0, KEY_WRITE, NULL, &Key, NULL) != ERROR_SUCCESS)
+        Res = S_FALSE;
+    RegCloseKey(Key);
+
+    /* Register WINTRUST_ACTION_GENERIC_VERIFY_V2 */
+    WINTRUST_RegisterGenVerifyV2();
+
+    /* Free the registry structures */
+    WINTRUST_FreeRegStructs();
+
+    return Res;
 }
 
 /***********************************************************************

@@ -2121,6 +2121,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,shdocvw.dll,1
 11,,shell32.dll,1
 11,,urlmon.dll,1
+11,,wintrust.dll,1
 
 [FakeDllsSection]
 11,,explorer.exe
