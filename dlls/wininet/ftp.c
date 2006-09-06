@@ -2420,6 +2420,7 @@ static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs)
 	    if (connect(nsocket, (struct sockaddr *)&dataSocketAddress, sizeof(dataSocketAddress)))
             {
 	        ERR("can't connect passive FTP data port.\n");
+                closesocket(nsocket);
 	        goto lend;
             }
 	    lpwfs->pasvSocket = nsocket;
