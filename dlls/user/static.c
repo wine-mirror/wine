@@ -760,9 +760,11 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
             iconRect.right = iconRect.left + info->nWidth;
             iconRect.bottom = iconRect.top + info->nHeight;
         }
+        else
+            iconRect = rc;
         FillRect( hdc, &rc, hbrush );
-        DrawIconEx( hdc, rc.left, rc.top, hIcon, rc.right - rc.left,
-                    rc.bottom - rc.top, 0, NULL, DI_NORMAL );
+        DrawIconEx( hdc, iconRect.left, iconRect.top, hIcon, iconRect.right - iconRect.left,
+                    iconRect.bottom - iconRect.top, 0, NULL, DI_NORMAL );
     }
     if (info) GlobalUnlock16(HICON_16(hIcon));
 }
