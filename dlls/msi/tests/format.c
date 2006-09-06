@@ -1835,14 +1835,11 @@ static void test_formatrecord_tables(void)
 
     /* component with INSTALLSTATE_LOCAL */
     size = MAX_PATH;
-    MsiRecordSetString( hrec, 0, "[$temporal]" );
+    MsiRecordSetString( hrec, 1, "[$temporal]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\ " ),
-            "Expected '1: C:\\I am a really long directory\\ ', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\ " ),
+        "Expected '1: C:\\I am a really long directory\\ ', got %s\n", buf);
 
     r = MsiSetComponentState( hpkg, "temporal", INSTALLSTATE_SOURCE );
     ok( r == ERROR_SUCCESS, "failed to set install state: %d\n", r);
@@ -1857,7 +1854,7 @@ static void test_formatrecord_tables(void)
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
     todo_wine
     {
-        ok( !lstrcmp( buf, expected ), "Expected '%s', got %s\n", buf, expected);
+        ok( !lstrcmp( buf, expected ), "Expected '%s', got %s\n", expected, buf);
     }
 
     DeleteFile( "C:\\I am a really long directory\\temporal.txt" );
