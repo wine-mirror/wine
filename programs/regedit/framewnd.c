@@ -795,7 +795,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_VIEW_REFRESH:
         RefreshTreeView(g_pChildWnd->hTreeWnd);
-        /*RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL); */
+        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
         break;
    /*case ID_OPTIONS_TOOLBAR:*/
    /*	toggle_child(hWnd, LOWORD(wParam), hToolBar);*/
