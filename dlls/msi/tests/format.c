@@ -1804,11 +1804,8 @@ static void test_formatrecord_tables(void)
     MsiRecordSetString( hrec, 1, "[!temporal_file]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
-            "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
+        "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
 
     /* custom action 51, files don't exist */
     r = MsiDoAction( hpkg, "MyCustom" );
@@ -1817,11 +1814,8 @@ static void test_formatrecord_tables(void)
     size = MAX_PATH;
     r = MsiGetProperty( hpkg, "prop", buf, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "C:\\I am a really long directory\\temporal.txt" ),
-            "Expected 'C:\\I am a really long directory\\temporal.txt', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "C:\\I am a really long directory\\temporal.txt" ),
+        "Expected 'C:\\I am a really long directory\\temporal.txt', got %s\n", buf);
 
     CreateDirectory( "C:\\I am a really long directory", NULL );
     create_test_file( "C:\\I am a really long directory\\temporal.txt" );
