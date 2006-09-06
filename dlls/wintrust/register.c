@@ -708,9 +708,6 @@ HRESULT WINAPI DllRegisterServer(void)
 
     TRACE("\n");
 
-    /* Create the necessary action registry structures */
-    WINTRUST_InitRegStructs();
-
     /* FIXME:
      * 
      * A short list of stuff that should be done here:
@@ -731,22 +728,33 @@ HRESULT WINAPI DllRegisterServer(void)
 
     /* Check if we can open/create HKLM\Software\Microsoft\Cryptography\Providers\Trust */
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, Trust, 0, NULL, 0, KEY_WRITE, NULL, &Key, NULL) != ERROR_SUCCESS)
+    {
+        /* If the opening/creation of the key fails, there is no need to do the action registrations as they
+         * will fail as well.
+         */
         Res = S_FALSE;
-    RegCloseKey(Key);
+    }
+    else
+    {
+        RegCloseKey(Key);
 
-    /* Register several Trust Provider actions */
-    WINTRUST_RegisterGenVerifyV2();
-    WINTRUST_RegisterPublishedSoftware();
-    WINTRUST_RegisterPublishedSoftwareNoBadUi();
-    WINTRUST_RegisterGenCertVerify();
-    WINTRUST_RegisterTrustProviderTest();
-    WINTRUST_RegisterHttpsProv();
-    WINTRUST_RegisterOfficeSignVerify();
-    WINTRUST_RegisterDriverVerify();
-    WINTRUST_RegisterGenChainVerify();
+        /* Create the necessary action registry structures */
+        WINTRUST_InitRegStructs();
 
-    /* Free the registry structures */
-    WINTRUST_FreeRegStructs();
+        /* Register several Trust Provider actions */
+        WINTRUST_RegisterGenVerifyV2();
+        WINTRUST_RegisterPublishedSoftware();
+        WINTRUST_RegisterPublishedSoftwareNoBadUi();
+        WINTRUST_RegisterGenCertVerify();
+        WINTRUST_RegisterTrustProviderTest();
+        WINTRUST_RegisterHttpsProv();
+        WINTRUST_RegisterOfficeSignVerify();
+        WINTRUST_RegisterDriverVerify();
+        WINTRUST_RegisterGenChainVerify();
+
+        /* Free the registry structures */
+        WINTRUST_FreeRegStructs();
+    }
 
     return Res;
 }
