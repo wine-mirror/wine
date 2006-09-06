@@ -1501,6 +1501,24 @@ static void test_formatrecord_package(void)
     ok( sz == 51, "size wrong (%li)\n",sz);
     ok( 0 == strcmp(buffer,"1:  2:  3:  4:  5:  6:  7:  8:  9:  10:  11:  12:  "), "wrong output(%s)\n",buffer);
 
+    r = MsiSetProperty(package, "prop", "val");
+    ok( r == ERROR_SUCCESS, "failed to set propertY: %d\n", r);
+
+    r = MsiRecordSetString(hrec, 0, NULL);
+    r = MsiRecordSetString(hrec, 1, "[2]");
+    r = MsiRecordSetString(hrec, 2, "stuff");
+    r = MsiRecordSetString(hrec, 3, "prop");
+    r = MsiRecordSetString(hrec, 4, "[prop]");
+    r = MsiRecordSetString(hrec, 5, "[noprop]");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(package, hrec, buffer, &sz);
+    ok( r == ERROR_SUCCESS, "format failed with empty buffer (%i)\n",r);
+    todo_wine
+    {
+        ok( sz == 66, "size wrong (%li)\n",sz);
+        ok( 0 == strcmp(buffer,"1: [2] 2: stuff 3: prop 4: val 5:  6:  7:  8:  9:  10:  11:  12:  "), "wrong output(%s)\n",buffer);
+    }
+
     /* now put play games with escaping */
     r = MsiRecordSetString(hrec, 0, "[1] [2] [\\3asdf]");
     r = MsiRecordSetString(hrec, 1, "boo");
@@ -1715,33 +1733,25 @@ static void test_formatrecord_tables(void)
 
     /* property doesn't exist */
     size = MAX_PATH;
+    /*MsiRecordSetString( hrec, 0, "[1]" ); */
     MsiRecordSetString( hrec, 1, "[idontexist]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
-    }
+    ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
 
     /* property exists */
     size = MAX_PATH;
     MsiRecordSetString( hrec, 1, "[imaprop]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
-    }
+    ok( !lstrcmp( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
 
     /* environment variable doesn't exist */
     size = MAX_PATH;
     MsiRecordSetString( hrec, 1, "[%idontexist]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
-    }
+    ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
 
     /* environment variable exists */
     size = MAX_PATH;
@@ -1749,20 +1759,14 @@ static void test_formatrecord_tables(void)
     MsiRecordSetString( hrec, 1, "[%crazyvar]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: crazyval " ), "Expected '1: crazyval ', got %s\n", buf );
-    }
+    ok( !lstrcmp( buf, "1: crazyval " ), "Expected '1: crazyval ', got %s\n", buf );
 
     /* file key before CostInitialize */
     size = MAX_PATH;
     MsiRecordSetString( hrec, 1, "[#frontal_file]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
-    }
+    ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
 
     r = MsiDoAction(hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "CostInitialize failed: %d\n", r);
@@ -1778,31 +1782,22 @@ static void test_formatrecord_tables(void)
     MsiRecordSetString( hrec, 1, "[#frontal_file]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
 
     /* frontal short file key */
     size = MAX_PATH;
     MsiRecordSetString( hrec, 1, "[!frontal_file]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "1: C:\\frontal.txt " ), "Expected '1: C:\\frontal.txt ', got %s\n", buf);
 
     /* temporal full file key */
     size = MAX_PATH;
     MsiRecordSetString( hrec, 1, "[#temporal_file]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
-            "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
-    }
+    ok( !lstrcmp( buf, "1: C:\\I am a really long directory\\temporal.txt " ),
+        "Expected '1: C:\\I am a really long directory\\temporal.txt ', got %s\n", buf);
 
     /* temporal short file key */
     size = MAX_PATH;
@@ -1846,7 +1841,7 @@ static void test_formatrecord_tables(void)
 
     /* component with INSTALLSTATE_LOCAL */
     size = MAX_PATH;
-    MsiRecordSetString( hrec, 1, "[$temporal]" );
+    MsiRecordSetString( hrec, 0, "[$temporal]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
     todo_wine
