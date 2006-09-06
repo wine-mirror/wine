@@ -3335,49 +3335,6 @@ static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE Sta
     if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILPASS] )
         stencilPass_ccw = StencilOp(This->stateBlock->renderState[WINED3DRS_CCW_STENCILPASS]);
 
-    switch(State) {
-        case WINED3DRS_STENCILENABLE :
-            onesided_enable = Value;
-            break;
-        case WINED3DRS_TWOSIDEDSTENCILMODE :
-            twosided_enable = Value;
-            break;
-        case WINED3DRS_STENCILFUNC :
-            if( !( func = CompareFunc(Value) ) )
-                func = GL_ALWAYS;
-            break;
-        case WINED3DRS_CCW_STENCILFUNC :
-            if( !( func_ccw = CompareFunc(Value) ) )
-                func_ccw = GL_ALWAYS;
-            break;
-        case WINED3DRS_STENCILREF :
-            ref = Value;
-            break;
-        case WINED3DRS_STENCILMASK :
-            mask = Value;
-            break;
-        case WINED3DRS_STENCILFAIL :
-            stencilFail = StencilOp(Value);
-            break;
-        case WINED3DRS_STENCILZFAIL :
-            depthFail = StencilOp(Value);
-            break;
-        case WINED3DRS_STENCILPASS :
-            stencilPass = StencilOp(Value);
-            break;
-        case WINED3DRS_CCW_STENCILFAIL :
-            stencilFail_ccw = StencilOp(Value);
-            break;
-        case WINED3DRS_CCW_STENCILZFAIL :
-            depthFail_ccw = StencilOp(Value);
-            break;
-        case WINED3DRS_CCW_STENCILPASS :
-            stencilPass_ccw = StencilOp(Value);
-            break;
-        default :
-            ERR("This should not happen!");
-    }
-
     TRACE("(onesided %ld, twosided %ld, ref %x, mask %x,  \
         GL_FRONT: func: %x, fail %x, zfail %x, zpass %x  \
         GL_BACK: func: %x, fail %x, zfail %x, zpass %x )\n",
