@@ -1797,8 +1797,9 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     MCI_UnLoadMciDriver(wmd);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify((HWND)lpParms->dwCallback, wDevID,
-                        (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+        mciDriverNotify(lpParms ? (HWND)lpParms->dwCallback : 0,
+                        wDevID,
+                        dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
 
     return dwRet;
 }
