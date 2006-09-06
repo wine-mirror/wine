@@ -449,15 +449,24 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     r = RegCreateKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
     CryptMemFree(szKey);
+
+    /* Testing on native shows that registry errors are reported */
     if(r != ERROR_SUCCESS)
+    {
+        SetLastError(r);
         return FALSE;
+    }
 
     /* write the values */
     if (pszOverrideFuncName)
-        RegSetValueExA(hKey, "FuncName", 0, REG_SZ,
-         (const BYTE*)pszOverrideFuncName, lstrlenA(pszOverrideFuncName) + 1);
-    RegSetValueExW(hKey, DllW, 0, REG_SZ, (const BYTE*) pwszDll,
-     (lstrlenW(pwszDll) + 1) * sizeof (WCHAR));
+    {
+        r = RegSetValueExA(hKey, "FuncName", 0, REG_SZ,
+             (const BYTE*)pszOverrideFuncName, lstrlenA(pszOverrideFuncName) + 1);
+        if (r != ERROR_SUCCESS) SetLastError(r);
+    }
+    r = RegSetValueExW(hKey, DllW, 0, REG_SZ, (const BYTE*) pwszDll,
+         (lstrlenW(pwszDll) + 1) * sizeof (WCHAR));
+    if (r != ERROR_SUCCESS) SetLastError(r);
 
     RegCloseKey(hKey);
     return TRUE;
