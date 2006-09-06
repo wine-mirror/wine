@@ -2941,11 +2941,11 @@ static void format_bytes(LPTSTR buffer, LONGLONG bytes)
 	float fBytes = (float)bytes;
 
 	if (bytes >= 1073741824)	/* 1 GB */
-		wsprintf(buffer, sFmtGB, fBytes/1073741824.f+.5f);
+		_stprintf(buffer, sFmtGB, fBytes/1073741824.f+.5f);
 	else if (bytes >= 1048576)	/* 1 MB */
-		wsprintf(buffer, sFmtMB, fBytes/1048576.f+.5f);
+		_stprintf(buffer, sFmtMB, fBytes/1048576.f+.5f);
 	else if (bytes >= 1024)		/* 1 kB */
-		wsprintf(buffer, sFmtkB, fBytes/1024.f+.5f);
+		_stprintf(buffer, sFmtkB, fBytes/1024.f+.5f);
 	else
 		_stprintf(buffer, sLongNumFmt, bytes);
 }
