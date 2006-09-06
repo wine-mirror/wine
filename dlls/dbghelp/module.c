@@ -473,8 +473,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08lx for %s\n", Flags, ImageName);
 
-    return SymLoadModule(hProcess, hFile, (char*)ImageName, (char*)ModuleName,
-                         (DWORD)BaseOfDll, DllSize);
+    return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, DllSize);
 }
 
 /***********************************************************************

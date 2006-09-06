@@ -100,9 +100,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
 
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
-    if (SymFindFileInPath(pcs->handle, NULL, (char*)dbg_name, 
-                          NULL, 0, 0, 0,
-                          tmp, dbg_match, NULL) &&
+    if (SymFindFileInPath(pcs->handle, NULL, dbg_name, NULL, 0, 0, 0, tmp, dbg_match, NULL) &&
         (hFile = CreateFileA(tmp, GENERIC_READ, FILE_SHARE_READ, NULL, 
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
         ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
@@ -142,7 +140,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
     else
         WINE_ERR("-Unable to peruse .DBG file %s (%s)\n", dbg_name, debugstr_a(tmp));
 
-    if (dbg_mapping) UnmapViewOfFile((void*)dbg_mapping);
+    if (dbg_mapping) UnmapViewOfFile(dbg_mapping);
     if (hMap) CloseHandle(hMap);
     if (hFile != NULL) CloseHandle(hFile);
     return ret;
