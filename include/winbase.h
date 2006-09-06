@@ -2008,7 +2008,7 @@ BOOL        WINAPI TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION,LPSYS
 BOOL        WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 BOOL        WINAPI UnlockFileEx(HANDLE,DWORD,DWORD,DWORD,LPOVERLAPPED);
 #define     UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
-BOOL        WINAPI UnmapViewOfFile(LPVOID);
+BOOL        WINAPI UnmapViewOfFile(LPCVOID);
 BOOL        WINAPI UnregisterWait(HANDLE);
 BOOL        WINAPI UnregisterWaitEx(HANDLE,HANDLE);
 BOOL        WINAPI UpdateResourceA(HANDLE,LPCSTR,LPCSTR,WORD,LPVOID,DWORD);

@@ -546,12 +546,10 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
  *	Success: TRUE.
  *	Failure: FALSE.
  *
- * NOTES
- *	Should addr be an LPCVOID?
  */
-BOOL WINAPI UnmapViewOfFile( LPVOID addr )
+BOOL WINAPI UnmapViewOfFile( LPCVOID addr )
 {
-    NTSTATUS status = NtUnmapViewOfSection( GetCurrentProcess(), addr );
+    NTSTATUS status = NtUnmapViewOfSection( GetCurrentProcess(), (void *)addr );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
