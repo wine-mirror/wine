@@ -25645,6 +25645,15 @@ fi
 
 if test "$verbose" = "yes"
 then
+    if test "$ac_cv_header_capi20_h" != "yes" -o "$ac_cv_header_linux_capi_h" != "yes"
+  then
+    echo >&2
+    { echo "$as_me:$LINENO: libcapi20 development files not found." >&5
+echo "$as_me: libcapi20 development files not found." >&6;}
+    { echo "$as_me:$LINENO: Wine will be built without ISDN support. (capi2032.dll)" >&5
+echo "$as_me: Wine will be built without ISDN support. (capi2032.dll)" >&6;}
+  fi
+
     if test "$ac_cv_header_cups_cups_h" != "yes"
   then
     echo >&2

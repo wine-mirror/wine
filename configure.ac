@@ -1806,6 +1806,14 @@ dnl **** Display messages about additional packages ***
 
 if test "$verbose" = "yes"
 then
+  dnl **** libcapi20-dev devel package ***
+  if test "$ac_cv_header_capi20_h" != "yes" -o "$ac_cv_header_linux_capi_h" != "yes"
+  then
+    echo >&2
+    AC_MSG_NOTICE([libcapi20 development files not found.])
+    AC_MSG_NOTICE([Wine will be built without ISDN support. (capi2032.dll)])
+  fi
+
   dnl **** libcupsys-dev devel package ***
   if test "$ac_cv_header_cups_cups_h" != "yes"
   then
