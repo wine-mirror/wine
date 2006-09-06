@@ -260,7 +260,7 @@ LRESULT OSS_MidiInit(void)
 	 */
 
 	if (sinfo.capabilities & SYNTH_CAP_INPUT) {
-	    FIXME("Synthesizer support MIDI in. Not supported yet (please report)\n");
+	    FIXME("Synthesizer supports MIDI in. Not yet supported.\n");
 	}
 
 	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
