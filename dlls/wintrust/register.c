@@ -703,6 +703,28 @@ static void WINTRUST_RegisterGenChainVerify(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    static const CHAR WVTAsn1SpcPeImageDataEncode[]           = "WVTAsn1SpcPeImageDataEncode";
+    static const CHAR WVTAsn1SpcPeImageDataDecode[]           = "WVTAsn1SpcPeImageDataDecode";
+    static const CHAR WVTAsn1SpcLinkEncode[]                  = "WVTAsn1SpcLinkEncode";
+    static const CHAR WVTAsn1SpcLinkDecode[]                  = "WVTAsn1SpcLinkDecode";
+    static const CHAR WVTAsn1SpcSigInfoEncode[]               = "WVTAsn1SpcSigInfoEncode";
+    static const CHAR WVTAsn1SpcSigInfoDecode[]               = "WVTAsn1SpcSigInfoDecode";
+    static const CHAR WVTAsn1SpcIndirectDataContentEncode[]   = "WVTAsn1SpcIndirectDataContentEncode";
+    static const CHAR WVTAsn1SpcIndirectDataContentDecode[]   = "WVTAsn1SpcIndirectDataContentDecode";
+    static const CHAR WVTAsn1SpcSpAgencyInfoEncode[]          = "WVTAsn1SpcSpAgencyInfoEncode";
+    static const CHAR WVTAsn1SpcSpAgencyInfoDecode[]          = "WVTAsn1SpcSpAgencyInfoDecode";
+    static const CHAR WVTAsn1SpcMinimalCriteriaInfoEncode[]   = "WVTAsn1SpcMinimalCriteriaInfoEncode";
+    static const CHAR WVTAsn1SpcMinimalCriteriaInfoDecode[]   = "WVTAsn1SpcMinimalCriteriaInfoDecode";
+    static const CHAR WVTAsn1SpcFinancialCriteriaInfoEncode[] = "WVTAsn1SpcFinancialCriteriaInfoEncode";
+    static const CHAR WVTAsn1SpcFinancialCriteriaInfoDecode[] = "WVTAsn1SpcFinancialCriteriaInfoDecode";
+    static const CHAR WVTAsn1SpcStatementTypeEncode[]         = "WVTAsn1SpcStatementTypeEncode";
+    static const CHAR WVTAsn1SpcStatementTypeDecode[]         = "WVTAsn1SpcStatementTypeDecode";
+    static const CHAR WVTAsn1CatNameValueEncode[]             = "WVTAsn1CatNameValueEncode";
+    static const CHAR WVTAsn1CatNameValueDecode[]             = "WVTAsn1CatNameValueDecode";
+    static const CHAR WVTAsn1CatMemberInfoEncode[]            = "WVTAsn1CatMemberInfoEncode";
+    static const CHAR WVTAsn1CatMemberInfoDecode[]            = "WVTAsn1CatMemberInfoDecode";
+    static const CHAR WVTAsn1SpcSpOpusInfoEncode[]            = "WVTAsn1SpcSpOpusInfoEncode";
+    static const CHAR WVTAsn1SpcSpOpusInfoDecode[]            = "WVTAsn1SpcSpOpusInfoDecode";
     HRESULT Res = S_OK;
     HKEY Key;
 
@@ -717,6 +739,39 @@ HRESULT WINAPI DllRegisterServer(void)
      * - Several calls to CryptSIPAddProvider
      * - One call to CryptSIPRemoveProvider (do we need that?)
      */
+
+#define WINTRUST_REGISTEROID( oid, encode_funcname, decode_funcname ) \
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, encode_funcname); \
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, decode_funcname)
+
+    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_OBJID, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
+    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_STRUCT, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
+    WINTRUST_REGISTEROID(SPC_CAB_DATA_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_CAB_DATA_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_LINK_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_LINK_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_SIGINFO_OBJID, WVTAsn1SpcSigInfoEncode, WVTAsn1SpcSigInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SIGINFO_STRUCT, WVTAsn1SpcSigInfoEncode, WVTAsn1SpcSigInfoDecode);
+    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_OBJID, WVTAsn1SpcIndirectDataContentEncode, WVTAsn1SpcIndirectDataContentDecode);
+    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_CONTENT_STRUCT, WVTAsn1SpcIndirectDataContentEncode, WVTAsn1SpcIndirectDataContentDecode);
+    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_OBJID, WVTAsn1SpcSpAgencyInfoEncode, WVTAsn1SpcSpAgencyInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_STRUCT, WVTAsn1SpcSpAgencyInfoEncode, WVTAsn1SpcSpAgencyInfoDecode);
+    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_OBJID, WVTAsn1SpcMinimalCriteriaInfoEncode, WVTAsn1SpcMinimalCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_STRUCT, WVTAsn1SpcMinimalCriteriaInfoEncode, WVTAsn1SpcMinimalCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_OBJID, WVTAsn1SpcFinancialCriteriaInfoEncode, WVTAsn1SpcFinancialCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_STRUCT, WVTAsn1SpcFinancialCriteriaInfoEncode, WVTAsn1SpcFinancialCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_OBJID, WVTAsn1SpcStatementTypeEncode, WVTAsn1SpcStatementTypeDecode);
+    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_STRUCT, WVTAsn1SpcStatementTypeEncode, WVTAsn1SpcStatementTypeDecode);
+    WINTRUST_REGISTEROID(CAT_NAMEVALUE_OBJID, WVTAsn1CatNameValueEncode, WVTAsn1CatNameValueDecode);
+    WINTRUST_REGISTEROID(CAT_NAMEVALUE_STRUCT, WVTAsn1CatNameValueEncode, WVTAsn1CatNameValueDecode);
+    WINTRUST_REGISTEROID(CAT_MEMBERINFO_OBJID, WVTAsn1CatMemberInfoEncode, WVTAsn1CatMemberInfoDecode);
+    WINTRUST_REGISTEROID(CAT_MEMBERINFO_STRUCT, WVTAsn1CatMemberInfoEncode, WVTAsn1CatMemberInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_OBJID, WVTAsn1SpcSpOpusInfoEncode, WVTAsn1SpcSpOpusInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_STRUCT, WVTAsn1SpcSpOpusInfoEncode, WVTAsn1SpcSpOpusInfoDecode);
+
+#undef WINTRUST_REGISTEROID
 
     /* Testing on W2K3 shows:
      * If we cannot open HKLM\Software\Microsoft\Cryptography\Providers\Trust
