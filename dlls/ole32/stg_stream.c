@@ -187,7 +187,7 @@ static void StgStreamImpl_OpenBlockChain(
         StgStreamImpl* This)
 {
   StgProperty    curProperty;
-  BOOL         readSucessful;
+  BOOL         readSuccessful;
 
   /*
    * Make sure no old object is left over.
@@ -207,11 +207,11 @@ static void StgStreamImpl_OpenBlockChain(
   /*
    * Read the information from the property.
    */
-  readSucessful = StorageImpl_ReadProperty(This->parentStorage->ancestorStorage,
+  readSuccessful = StorageImpl_ReadProperty(This->parentStorage->ancestorStorage,
 					     This->ownerProperty,
 					     &curProperty);
 
-  if (readSucessful)
+  if (readSuccessful)
   {
     This->streamSize = curProperty.size;
 
@@ -803,7 +803,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   StgProperty    curProperty;
-  BOOL         readSucessful;
+  BOOL         readSuccessful;
 
   TRACE("%p %p %ld\n", This, pstatstg, grfStatFlag);
 
@@ -817,11 +817,11 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   /*
    * Read the information from the property.
    */
-  readSucessful = StorageImpl_ReadProperty(This->parentStorage->ancestorStorage,
+  readSuccessful = StorageImpl_ReadProperty(This->parentStorage->ancestorStorage,
 					     This->ownerProperty,
 					     &curProperty);
 
-  if (readSucessful)
+  if (readSuccessful)
   {
     StorageUtl_CopyPropertyToSTATSTG(pstatstg,
 				     &curProperty,
