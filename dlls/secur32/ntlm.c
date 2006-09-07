@@ -1445,6 +1445,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
         PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
+    SECURITY_STATUS ret;
+    ULONG ntlmssp_flags_save;
     PNegoHelper helper;
     TRACE("(%p %p %ld %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
@@ -1475,7 +1477,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
                 pMessage->pBuffers[1].pvBuffer, pMessage->pBuffers[1].cbBuffer);
     }
 
-    return ntlm_VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
+    /* Make sure we use a session key for the signature check, EncryptMessage
+     * always does that, even in the dummy case */
+    ntlmssp_flags_save = helper->neg_flags;
+
+    helper->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+    ret = ntlm_VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
+
+    helper->neg_flags = ntlmssp_flags_save;
+
+    return ret;
 }
 
 static SecurityFunctionTableA ntlmTableA = {

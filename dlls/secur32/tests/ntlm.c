@@ -819,10 +819,9 @@ static void testSignSeal()
         memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
 
         sec_status = pDecryptMessage(client.ctxt, crypt, 0, &qop);
-        todo_wine {
+
         ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
-        }
         ok(!memcmp(crypt->pBuffers[1].pvBuffer, message_binary,
                    crypt->pBuffers[1].cbBuffer),
                 "Failed to decrypt message correctly.\n");
