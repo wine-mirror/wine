@@ -413,6 +413,26 @@ BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
     return FALSE;
 }
 
+/***********************************************************************
+ *             CryptRegisterOIDFunction (CRYPT32.@)
+ *
+ * Register the DLL and the functions it uses to cover the combination
+ * of encoding type, functionname and OID.
+ *
+ * PARAMS
+ *  dwEncodingType       [I] Encoding type to be used.
+ *  pszFuncName          [I] Name of the function to be registered.
+ *  pszOID               [I] OID of the function (numeric or string).
+ *  pwszDll              [I] The DLL that is to be registered.
+ *  pszOverrideFuncName  [I] Name of the function in the DLL.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. (Look at GetLastError()).
+ *
+ * NOTES
+ *  Registry errors are always reported via SetLastError().
+ */
 BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
                   LPCSTR pszOID, LPCWSTR pwszDll, LPCSTR pszOverrideFuncName)
 {
