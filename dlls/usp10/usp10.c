@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "usp10.h"
 
 #include "wine/debug.h"
@@ -169,22 +170,112 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
 /***********************************************************************
  *      ScriptRecordDigitSubstitution (USP10.@)
  *
+ *  Record digit substitution settings for a given locale.
+ *
+ *  PARAMS
+ *   locale [I] Locale identifier.
+ *   sds    [I] Structure to record substitution settings.
+ *
+ *  RETURNS
+ *   Success: S_OK
+ *   Failure: E_POINTER if sds is NULL, E_INVALIDARG otherwise.
+ *
+ *  SEE ALSO
+ *   http://blogs.msdn.com/michkap/archive/2006/02/22/536877.aspx
  */
-HRESULT WINAPI ScriptRecordDigitSubstitution(LCID Locale,SCRIPT_DIGITSUBSTITUTE *psds)
+HRESULT WINAPI ScriptRecordDigitSubstitution(LCID locale, SCRIPT_DIGITSUBSTITUTE *sds)
 {
-    FIXME("%ld,%p\n",Locale,psds);
-    return E_NOTIMPL;
+    DWORD plgid, sub;
+
+    TRACE("0x%lx, %p\n", locale, sds);
+
+    /* This implementation appears to be correct for all languages, but it's
+     * not clear if sds->DigitSubstitute is ever set to anything except 
+     * CONTEXT or NONE in reality */
+
+    if (!sds) return E_POINTER;
+    
+    locale = ConvertDefaultLocale(locale);
+
+    if (!IsValidLocale(locale, LCID_INSTALLED))
+        return E_INVALIDARG;
+    
+    plgid = PRIMARYLANGID(LANGIDFROMLCID(locale));
+    sds->TraditionalDigitLanguage = plgid;
+
+    if (plgid == LANG_ARABIC || plgid == LANG_FARSI)
+        sds->NationalDigitLanguage = plgid;
+    else
+        sds->NationalDigitLanguage = LANG_ENGLISH;
+
+    if (!GetLocaleInfoW(locale, LOCALE_IDIGITSUBSTITUTION | LOCALE_RETURN_NUMBER,
+                        (LPWSTR)&sub, sizeof(sub)/sizeof(WCHAR))) return E_INVALIDARG;
+
+    switch (sub)
+    {
+    case 0: 
+        if (plgid == LANG_ARABIC || plgid == LANG_FARSI)
+            sds->DigitSubstitute = SCRIPT_DIGITSUBSTITUTE_CONTEXT;
+        else
+            sds->DigitSubstitute = SCRIPT_DIGITSUBSTITUTE_NONE;
+        break;
+    case 1:
+        sds->DigitSubstitute = SCRIPT_DIGITSUBSTITUTE_NONE;
+        break;
+    case 2:
+        sds->DigitSubstitute = SCRIPT_DIGITSUBSTITUTE_NATIONAL;
+        break;
+    default:
+        sds->DigitSubstitute = SCRIPT_DIGITSUBSTITUTE_TRADITIONAL;
+        break;
+    }
+
+    sds->dwReserved = 0;
+    return S_OK;
 }
 
 /***********************************************************************
  *      ScriptApplyDigitSubstitution (USP10.@)
  *
+ *  Apply digit substitution settings.
+ *
+ *  PARAMS
+ *   sds [I] Structure with recorded substitution settings.
+ *   sc  [I] Script control structure.
+ *   ss  [I] Script state structure.
+ *
+ *  RETURNS
+ *   Success: S_OK
+ *   Failure: E_INVALIDARG if sds is invalid. Otherwise an HRESULT.
  */
-HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE* psds, 
-                                            SCRIPT_CONTROL* psc, SCRIPT_STATE* pss)
+HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE *sds, 
+                                            SCRIPT_CONTROL *sc, SCRIPT_STATE *ss)
 {
-    FIXME("%p,%p,%p\n",psds,psc,pss);
-    return E_NOTIMPL;
+    SCRIPT_DIGITSUBSTITUTE psds;
+
+    TRACE("%p, %p, %p\n", sds, sc, ss);
+
+    if (!sc || !ss) return E_POINTER;
+    if (!sds)
+    {
+        sds = &psds;
+        if (ScriptRecordDigitSubstitution(LOCALE_USER_DEFAULT, &psds) != S_OK)
+            return E_INVALIDARG;
+    }
+
+    sc->uDefaultLanguage = LANG_ENGLISH;
+    sc->fContextDigits = 0;
+    ss->fDigitSubstitute = 0;
+
+    switch (sds->DigitSubstitute) {
+        case SCRIPT_DIGITSUBSTITUTE_CONTEXT:
+        case SCRIPT_DIGITSUBSTITUTE_NATIONAL:
+        case SCRIPT_DIGITSUBSTITUTE_NONE:
+        case SCRIPT_DIGITSUBSTITUTE_TRADITIONAL:
+            return S_OK;
+        default:
+            return E_INVALIDARG;
+    }
 }
 
 /***********************************************************************
