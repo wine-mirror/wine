@@ -159,8 +159,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_named_pipe )
         {
             req->access = access;
-            req->attributes = (attr) ? attr->Attributes : 0;
-            req->rootdir = attr ? attr->RootDirectory : 0;
+            req->attributes = attr->Attributes;
+            req->rootdir = attr->RootDirectory;
             req->flags = options;
             wine_server_add_data( req, attr->ObjectName->Buffer,
                                   attr->ObjectName->Length );
@@ -179,8 +179,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_mailslot )
         {
             req->access = access & GENERIC_WRITE;
-            req->attributes = (attr) ? attr->Attributes : 0;
-            req->rootdir = attr ? attr->RootDirectory : 0;
+            req->attributes = attr->Attributes;
+            req->rootdir = attr->RootDirectory;
             req->sharing = sharing;
             wine_server_add_data( req, attr->ObjectName->Buffer,
                                   attr->ObjectName->Length );
