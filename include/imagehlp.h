@@ -90,7 +90,7 @@ typedef enum _IMAGEHLP_STATUS_REASON {
 #define CHECKSUM_MAPVIEW_FAILURE 3
 #define CHECKSUM_UNICODE_FAILURE 4
 
-typedef enum _ADRESS_MODE {
+typedef enum _ADDRESS_MODE {
   AddrMode1616,
   AddrMode1632,
   AddrModeReal,
