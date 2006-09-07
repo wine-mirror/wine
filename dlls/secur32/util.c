@@ -106,7 +106,7 @@ ULONG ComputeCrc32(const BYTE *pData, INT iLen)
   return ~crc;
 }
 
-SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(const char* password, PBYTE session_key)
+SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE session_key)
 {
     MD4_CTX ctx;
     BYTE ntlm_hash[16];
@@ -114,7 +114,7 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(const char* password, PBYTE sessi
     TRACE("(%p, %p)\n", password, session_key);
 
     MD4Init(&ctx);
-    MD4Update(&ctx, (const unsigned char*) password, lstrlenA(password));
+    MD4Update(&ctx, (const unsigned char*) password, len);
     MD4Final(&ctx);
 
     memcpy(ntlm_hash, ctx.digest, 0x10);

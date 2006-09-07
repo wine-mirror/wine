@@ -648,7 +648,24 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
             /*Generate the dummy session key = MD4(MD4(password))*/
             if(helper->password)
-                SECUR32_CreateNTLMv1SessionKey(helper->password, helper->session_key);
+            {
+                SEC_WCHAR *unicode_password;
+                int passwd_lenW;
+
+                TRACE("Converting password to unicode.\n");
+                passwd_lenW = MultiByteToWideChar(CP_ACP, 0,
+                        (LPCSTR)helper->password, helper->pwlen,
+                        NULL, 0);
+                unicode_password = HeapAlloc(GetProcessHeap(), 0,
+                        passwd_lenW * sizeof(SEC_WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)helper->password,
+                        helper->pwlen, unicode_password, passwd_lenW);
+
+                SECUR32_CreateNTLMv1SessionKey((PBYTE)unicode_password,
+                        lstrlenW(unicode_password) * sizeof(SEC_WCHAR), helper->session_key);
+
+                HeapFree(GetProcessHeap(), 0, unicode_password);
+            }
             else
                 memset(helper->session_key, 0, 16);
         }

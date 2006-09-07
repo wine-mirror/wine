@@ -807,12 +807,11 @@ static void testSignSeal()
         sec_status = pEncryptMessage(client.ctxt, 0, crypt, 0);
         ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
-        todo_wine{
+
         ok(!memcmp(crypt->pBuffers[0].pvBuffer, crypt_trailer_client,
                    crypt->pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
         ok(!memcmp(crypt->pBuffers[1].pvBuffer, crypt_message_client,
                    crypt->pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
-        }
 
         data[0].cbBuffer = sizeof(crypt_trailer_server);
         data[1].cbBuffer = sizeof(crypt_message_server);
@@ -823,10 +822,10 @@ static void testSignSeal()
         todo_wine {
         ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
+        }
         ok(!memcmp(crypt->pBuffers[1].pvBuffer, message_binary,
                    crypt->pBuffers[1].cbBuffer),
                 "Failed to decrypt message correctly.\n");
-        }
 
 end:
         cleanupBuffers(&client);
