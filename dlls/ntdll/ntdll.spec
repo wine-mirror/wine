@@ -626,6 +626,7 @@
 @ stdcall RtlGetLastNtStatus()
 @ stdcall RtlGetLastWin32Error()
 # @ stub RtlGetLengthWithoutLastFullDosOrNtPathElement
+# Yes, Microsoft really misspelled this one!
 # @ stub RtlGetLengthWithoutTrailingPathSeperators
 @ stdcall RtlGetLongestNtPathLength()
 # @ stub RtlGetNativeSystemInformation
