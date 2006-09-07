@@ -485,7 +485,7 @@ HMENU WINAPI FileMenu_FindSubMenuByPidl(
 int WINAPI FileMenu_AppendFilesForPidl(
 	HMENU	hmenu,
 	LPCITEMIDLIST	pidl,
-	BOOL	bAddSeperator)
+	BOOL	bAddSeparator)
 {
 	LPFMINFO	menudata;
 
@@ -495,10 +495,10 @@ int WINAPI FileMenu_AppendFilesForPidl(
 
 	FM_InitMenuPopup(hmenu, pidl);
 
-	if (bAddSeperator)
+	if (bAddSeparator)
 	  FileMenu_AppendItemW (hmenu, FM_SEPARATOR, 0, 0, 0, FM_DEFAULT_HEIGHT);
 
-	TRACE("%p %p 0x%08x\n",hmenu, pidl,bAddSeperator);
+	TRACE("%p %p 0x%08x\n",hmenu, pidl,bAddSeparator);
 
 	return 0;
 }
