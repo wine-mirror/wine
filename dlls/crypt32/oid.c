@@ -440,8 +440,8 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     HKEY hKey;
     LPSTR szKey;
 
-    TRACE("(%lx, %s, %s, %s, %s)\n", dwEncodingType, pszFuncName, pszOID,
-     debugstr_w(pwszDll), pszOverrideFuncName);
+    TRACE("(%lx, %s, %s, %s, %s)\n", dwEncodingType, pszFuncName,
+     debugstr_a(pszOID), debugstr_w(pwszDll), pszOverrideFuncName);
 
     /* This only registers functions for encoding certs, not messages */
     if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
@@ -470,25 +470,28 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     r = RegCreateKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
     CryptMemFree(szKey);
 
-    /* Testing on native shows that registry errors are reported */
-    if(r != ERROR_SUCCESS)
-    {
-        SetLastError(r);
-        return FALSE;
-    }
+    if (r != ERROR_SUCCESS) goto error_close_key;
 
     /* write the values */
     if (pszOverrideFuncName)
     {
         r = RegSetValueExA(hKey, "FuncName", 0, REG_SZ,
              (const BYTE*)pszOverrideFuncName, lstrlenA(pszOverrideFuncName) + 1);
-        if (r != ERROR_SUCCESS) SetLastError(r);
+        if (r != ERROR_SUCCESS) goto error_close_key;
     }
     r = RegSetValueExW(hKey, DllW, 0, REG_SZ, (const BYTE*) pwszDll,
          (lstrlenW(pwszDll) + 1) * sizeof (WCHAR));
-    if (r != ERROR_SUCCESS) SetLastError(r);
+
+error_close_key:
 
     RegCloseKey(hKey);
+
+    if (r != ERROR_SUCCESS) 
+    {
+        SetLastError(r);
+        return FALSE;
+    }
+
     return TRUE;
 }
 
