@@ -229,6 +229,7 @@
 @ stdcall QueryRegistryValue(long wstr ptr ptr ptr)
 @ stub ReadAsciiOrUnicodeTextFile
 @ stdcall RegistryDelnode(long long)
+# Yes, Microsoft really misspelled this one!
 @ stdcall RetreiveFileSecurity(wstr ptr)
 @ stub RetrieveServiceConfig
 @ stub SearchForInfFile
