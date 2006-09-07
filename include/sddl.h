@@ -41,6 +41,7 @@ extern "C" {
 /*
  * SDDL Separators - character version
  */
+/* SDDL_SEPERATORC is not a typo, as per Microsoft's headers */
 #define SDDL_SEPERATORC                     TEXT(";")
 #define SDDL_DELIMINATORC                   TEXT(":")
 #define SDDL_ACE_BEGINC                     TEXT("(")
@@ -49,6 +50,7 @@ extern "C" {
 /*
  * SDDL Separators - string version
  */
+/* SDDL_SEPERATOR is not a typo, as per Microsoft's headers */
 #define SDDL_SEPERATOR                     TEXT(";")
 #define SDDL_DELIMINATOR                   TEXT(":")
 #define SDDL_ACE_BEGIN                     TEXT("(")
