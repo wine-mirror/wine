@@ -507,7 +507,7 @@ unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
  * RETURNS
  *
  *  S_OK if successful.
- *  S_OUT_OF_MEMORY if unsucessful.
+ *  S_OUT_OF_MEMORY if unsuccessful.
  */
 RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 {
@@ -533,7 +533,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
  * Converts a UUID to a string.
  *
  *  S_OK if successful.
- *  S_OUT_OF_MEMORY if unsucessful.
+ *  S_OUT_OF_MEMORY if unsuccessful.
  */
 RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, unsigned short** StringUuid)
 {

@@ -187,7 +187,7 @@ static BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *
   int nCfgs = 0;
   int tmp_fmt_id = 0;
   int tmp_vis_id = 0;
-  int nFormats = 1; /* Start at 1 as we allways have a main visual */
+  int nFormats = 1; /* Start at 1 as we always have a main visual */
   VisualID visualid = 0;
 
   /* Request to look up the format of the main visual when iPixelFormat = 1 */
@@ -336,7 +336,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 
     /* When we pass all the checks we have found a matching format :) */
     ret = 1;
-    TRACE("Succesfully found a matching mode, returning index: %d\n", ret);
+    TRACE("Successfully found a matching mode, returning index: %d\n", ret);
   }
 
 choose_exit:
@@ -383,7 +383,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     return 0; /* unespected error */
   }
 
-  /* This function allways reports the total number of supported pixel formats.
+  /* This function always reports the total number of supported pixel formats.
    * At the moment we only support the pixel format corresponding to the main
    * visual which got created at x11drv initialization. More formats could be
    * supported if there was a way to recreate x11 windows in x11drv. 

@@ -115,7 +115,7 @@ static inline PWSTR CRYPT_GetTypeKeyName(DWORD dwType, BOOL user)
  * str - pointer to ANSI string
  * strsize - size of buffer pointed to by str or -1 if we have to do the allocation
  *
- * returns TRUE if unsuccessfull, FALSE otherwise.
+ * returns TRUE if unsuccessful, FALSE otherwise.
  * if wstr is NULL, returns TRUE and sets str to NULL! Value of str should be checked after call
  */
 static inline BOOL CRYPT_UnicodeToANSI(LPCWSTR wstr, LPSTR* str, int strsize)

@@ -4230,7 +4230,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                 }
                 else
                 {
-                    /* caller wants to translate an AdressString into a SOCKADDR */
+                    /* caller wants to translate an AddressString into a SOCKADDR */
                     if (lpAddress)
                     {
                         memset(lpAddress,0,sizeof(SOCKADDR_IN));

@@ -851,7 +851,7 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
   int tmp_vis_id;
 
   int pfmt_it = 0;
-  int offscreen_index = 1; /* Start at one because we allways have a main visual at iPixelFormat=1 */
+  int offscreen_index = 1; /* Start at one because we always have a main visual at iPixelFormat=1 */
 
   TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
   if (NULL != pfAttribFList) {
@@ -925,7 +925,7 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
       /* The format of Wine's main visual is stored at index 1 of our WGL format table.
        * At higher indices we store offscreen rendering formats (visualid=0). Below we calculate
        * the index of the offscreen format. We do this by counting the number of offscreen formats
-       * which we see upto reaching our target format. */ 
+       * which we see up to our target format. */ 
       if(tmp_vis_id == 0)
         offscreen_index++;
 

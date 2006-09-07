@@ -58,7 +58,7 @@ BOOL InitApplication(HINSTANCE hInstance)
   wc.lpszMenuName  = szAppName;                       /* Menu name from .rc */
   wc.lpszClassName = szAppName;                      /* Name to register as */
 
-  /* Register the window class and return FALSE if unsuccesful */
+  /* Register the window class and return FALSE if unsuccessful */
 
   if (!RegisterClassEx(&wc))
     {

@@ -776,8 +776,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
      * than 200 GPUs just for Nvidia. Various cards share the same renderer string, so the amount of code might
      * be 'small' but there are quite a number of exceptions which would make this a pain to maintain.
      * Another way would be to query the PCI id from the operating system (assuming this is the videocard which
-     * is used for rendering which doesn't allways the case). This would work but it is not very portable. Second
-     * it would not work well in lets say a remote X situation in which the amount of 3d features which can be used
+     * is used for rendering which is not always the case). This would work but it is not very portable. Second
+     * it would not work well in, let's say, a remote X situation in which the amount of 3d features which can be used
      * is limited.
      *
      * As said most games only use the PCI id to get an indication of the capabilities of the card.
@@ -786,7 +786,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
      *
      * The code below checks the OpenGL capabilities of a videocard and matches that to a certain level of
      * Direct3D functionality. Once a card passes the Direct3D9 check, we know that the card (in case of Nvidia)
-     * is atleast a GeforceFX. To give a better estimate we do a basic check on the renderer string but if that
+     * is at least a GeforceFX. To give a better estimate we do a basic check on the renderer string but if that
      * won't pass we return a default card. This way is better than maintaining a full card database as even
      * without a full database we can return a card with similar features. Second the size of the database
      * can be made quite small because when you know what type of 3d functionality a card has, you know to which
@@ -795,8 +795,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
      */
     switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
-            /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two typs have more
-             * shader capabilities, so we use the shader capabilities to distinct between FX and 6xxx/7xxx.
+            /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
+             * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
                 if (strstr(gl_info->gl_renderer, "7800") ||
@@ -1060,7 +1060,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
                    if (min(DevModeW.dmBitsPerPel, bpp) == 16) i++;
                    break;
             default:
-                   /* Skip other modes as they do not match requested format */
+                   /* Skip other modes as they do not match the requested format */
                    break;
             }
         }
@@ -1481,7 +1481,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         XFree(cfgs);
         cfgs = NULL;
     } else {
-        /* If there's a corrent context then we cannot create a fake one so pass everything */
+        /* If there's a current context then we cannot create a fake one so pass everything */
         hr = WINED3D_OK;
     }
 
@@ -1663,9 +1663,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     }
 
     /* This format is nothing special and it is supported perfectly.
-     * However, ati and nvidia driver on windows do not mark this format
-     * supported(tested with the dxCapsViewer) and pretending to
-     * support this format uncovers a bug in Battlefield 1942(fonts are missing)
+     * However, ati and nvidia driver on windows do not mark this format as
+     * supported (tested with the dxCapsViewer) and pretending to
+     * support this format uncovers a bug in Battlefield 1942 (fonts are missing)
      * So do the same as Windows drivers and pretend not to support it on dx8 and 9
      * Enable it on dx7. It will need additional checking on dx10 when we support it.
      */
@@ -2228,7 +2228,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if (This->dxVersion > 8) {
         FIXME("Caps support for directx9 is nonexistent at the moment!\n");
         *pCaps->DevCaps2                          = 0;
-        /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES and VS3.0 needs atleast D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
+        /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES and VS3.0 needs at least D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
         *pCaps->MaxNpatchTessellationLevel        = 0;
         *pCaps->MasterAdapterOrdinal              = 0;
         *pCaps->AdapterOrdinalInGroup             = 0;
@@ -2267,7 +2267,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->VS20Caps.NumTemps                 = max(32, This->gl_info.vs_arb_max_temps);
             *pCaps->VS20Caps.StaticFlowControlDepth   = D3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
 
-            *pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs atleast 65535, some cards even use 2^32-1 */
+            *pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
             *pCaps->MaxVertexShader30InstructionSlots = max(512, This->gl_info.vs_arb_max_instructions);
         } else if(*pCaps->VertexShaderVersion == D3DVS_VERSION(2,0)) {
             *pCaps->VS20Caps.Caps                     = 0;

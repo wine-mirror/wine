@@ -150,7 +150,7 @@ static void test_AddRem_ActionID(void)
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
-    /* The passed GUID is removed by a previous call, so it's basically a test with a non-existent Trust provider */ 
+    /* The passed GUID is removed by a previous call, so it's basically a test with a nonexistent Trust provider */ 
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(&ActionID);
     ok (ret, "Expected WintrustRemoveActionID to succeed.\n");

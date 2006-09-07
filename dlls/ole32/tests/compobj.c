@@ -37,7 +37,7 @@ HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const CLSID CLSID_CDeviceMoniker = { 0x4315d437, 0x5b8c, 0x11d0, { 0xbd, 0x3b, 0x00, 0xa0, 0xc9, 0x11, 0xce, 0x86 } };
 static const WCHAR devicedotone[] = {'d','e','v','i','c','e','.','1',0};
-static const WCHAR wszNonExistant[] = {'N','o','n','E','x','i','s','t','a','n','t',0};
+static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
 static const WCHAR wszCLSID_CDeviceMoniker[] =
 {
     '{',
@@ -91,15 +91,15 @@ static void test_CLSIDFromProgID(void)
 
     /* test some failure cases */
 
-    hr = CLSIDFromProgID(wszNonExistant, NULL);
+    hr = CLSIDFromProgID(wszNonExistent, NULL);
     ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
 
     hr = CLSIDFromProgID(NULL, &clsid);
     ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
 
     memset(&clsid, 0xcc, sizeof(clsid));
-    hr = CLSIDFromProgID(wszNonExistant, &clsid);
-    ok(hr == CO_E_CLASSSTRING, "CLSIDFromProgID on non-existant ProgID should have returned CO_E_CLASSSTRING instead of 0x%08lx\n", hr);
+    hr = CLSIDFromProgID(wszNonExistent, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "CLSIDFromProgID on nonexistent ProgID should have returned CO_E_CLASSSTRING instead of 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "CLSIDFromProgID should have set clsid to all-zeros on failure\n");
 }
 

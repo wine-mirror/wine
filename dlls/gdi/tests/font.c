@@ -413,7 +413,7 @@ static void test_GetGlyphIndices()
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
     charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);
-    ok(glyphs[4] == 0x001f, "GetGlyphIndices should have returned a non existant char not %04x\n", glyphs[4]);
+    ok(glyphs[4] == 0x001f, "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
     flags = 0;
     charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);

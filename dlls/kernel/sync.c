@@ -1293,7 +1293,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
  *   nTimeOut [I] How long to wait in ms
  *
  *  RETURNS
- *   TRUE: Success, named pipe can be opened with CreteFile
+ *   TRUE: Success, named pipe can be opened with CreateFile
  *   FALSE: Failure, GetLastError can be called for further details
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
