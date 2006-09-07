@@ -76,6 +76,126 @@ static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
     return ret;
 }
 
+static UINT run_query( MSIHANDLE hdb, MSIHANDLE hrec, const char *query )
+{
+    MSIHANDLE hview = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = MsiViewExecute(hview, hrec);
+    if( r == ERROR_SUCCESS )
+        r = MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    return r;
+}
+
+static UINT create_component_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `Component` ( "
+            "`Component` CHAR(72) NOT NULL, "
+            "`ComponentId` CHAR(38), "
+            "`Directory_` CHAR(72) NOT NULL, "
+            "`Attributes` SHORT NOT NULL, "
+            "`Condition` CHAR(255), "
+            "`KeyPath` CHAR(72) "
+            "PRIMARY KEY `Component`)" );
+}
+
+static UINT create_feature_components_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `FeatureComponents` ( "
+            "`Feature_` CHAR(38) NOT NULL, "
+            "`Component_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Feature_`, `Component_` )" );
+}
+
+static UINT create_std_dlls_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `StdDlls` ( "
+            "`File` CHAR(255) NOT NULL, "
+            "`Binary_` CHAR(72) NOT NULL "
+            "PRIMARY KEY `File` )" );
+}
+
+static UINT create_binary_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `Binary` ( "
+            "`Name` CHAR(72) NOT NULL, "
+            "`Data` CHAR(72) NOT NULL "
+            "PRIMARY KEY `Name` )" );
+}
+
+static UINT add_component_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Component`  "
+            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, 0, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_feature_components_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `FeatureComponents` "
+            "(`Feature_`, `Component_`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, 0, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_std_dlls_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `StdDlls` "
+            "(`File`, `Binary_`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, 0, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_binary_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Binary` "
+            "(`Name`, `Data`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, 0, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
 static void test_msiinsert(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
@@ -456,22 +576,6 @@ static void test_msibadqueries(void)
 
     r = DeleteFile( msifile );
     ok(r == TRUE, "file didn't exist after commit\n");
-}
-
-static UINT run_query( MSIHANDLE hdb, MSIHANDLE hrec, const char *query )
-{
-    MSIHANDLE hview = 0;
-    UINT r;
-
-    r = MsiDatabaseOpenView(hdb, query, &hview);
-    if( r != ERROR_SUCCESS )
-        return r;
-
-    r = MsiViewExecute(hview, hrec);
-    if( r == ERROR_SUCCESS )
-        r = MsiViewClose(hview);
-    MsiCloseHandle(hview);
-    return r;
 }
 
 static void test_viewmodify(void)
@@ -1545,6 +1649,235 @@ static void test_generate_transform(void)
     DeleteFile(mstfile);
 }
 
+struct join_res
+{
+    const CHAR one[MAX_PATH];
+    const CHAR two[MAX_PATH];
+};
+
+static const struct join_res join_res_first[] =
+{
+    { "alveolar", "procerus" },
+    { "septum", "procerus" },
+    { "septum", "nasalis" },
+    { "ramus", "nasalis" },
+    { "malar", "mentalis" },
+};
+
+static const struct join_res join_res_second[] =
+{
+    { "nasal", "septum" },
+    { "mandible", "ramus" },
+};
+
+static const struct join_res join_res_third[] =
+{
+    { "msvcp.dll", "abcdefgh" },
+    { "msvcr.dll", "ijklmnop" },
+};
+
+static void test_join(void)
+{
+    MSIHANDLE hdb, hview, hrec;
+    LPCSTR query;
+    CHAR buf[MAX_PATH];
+    UINT r, count;
+    DWORD size, i;
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    r = create_component_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
+
+    r = add_component_entry( hdb, "'zygomatic', 'malar', 'INSTALLDIR', 0, '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'maxilla', 'alveolar', 'INSTALLDIR', 0, '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'nasal', 'septum', 'INSTALLDIR', 0, '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = add_component_entry( hdb, "'mandible', 'ramus', 'INSTALLDIR', 0, '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    r = create_feature_components_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'procerus', 'maxilla'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'procerus', 'nasal'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'nasalis', 'nasal'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'nasalis', 'mandible'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'nasalis', 'notacomponent'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'mentalis', 'zygomatic'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = create_std_dlls_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create StdDlls table: %d\n", r );
+
+    r = add_std_dlls_entry( hdb, "'msvcp.dll', 'msvcp.dll.01234'" );
+    ok( r == ERROR_SUCCESS, "cannot add std dlls: %d\n", r );
+
+    r = add_std_dlls_entry( hdb, "'msvcr.dll', 'msvcr.dll.56789'" );
+    ok( r == ERROR_SUCCESS, "cannot add std dlls: %d\n", r );
+
+    r = create_binary_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Binary table: %d\n", r );
+
+    r = add_binary_entry( hdb, "'msvcp.dll.01234', 'abcdefgh'" );
+    ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
+
+    r = add_binary_entry( hdb, "'msvcr.dll.56789', 'ijklmnop'" );
+    ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
+
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` "
+            "WHERE `Component`.`Component` = `FeatureComponents`.`Component_` "
+            "ORDER BY `Feature_`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        if (i == 2 || i == 3) todo_wine
+        {
+            ok( !lstrcmp( buf, join_res_first[i].one ),
+                "Expected '%s', got %s\n", join_res_first[i].one, buf );
+        }
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        if (i == 3) todo_wine
+        {
+            ok( !lstrcmp( buf, join_res_first[i].two ),
+                "Expected '%s', got %s\n", join_res_first[i].two, buf );
+        }
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT DISTINCT Component, ComponentId FROM FeatureComponents, Component "
+            "WHERE FeatureComponents.Component_=Component.Component "
+            "AND (Feature_='nasalis') ORDER BY Feature_";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_second[i].one ),
+            "Expected '%s', got %s\n", join_res_second[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_second[i].two ),
+            "Expected '%s', got %s\n", join_res_second[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT `StdDlls`.`File`, `Binary`.`Data` "
+            "FROM `StdDlls`, `Binary` "
+            "WHERE `StdDlls`.`Binary_` = `Binary`.`Name` "
+            "ORDER BY `File`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_third[i].one ),
+            "Expected '%s', got %s\n", join_res_third[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_third[i].two ),
+            "Expected '%s', got %s\n", join_res_third[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    MsiCloseHandle(hdb);
+    DeleteFile(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -1562,4 +1895,5 @@ START_TEST(db)
     test_markers();
     test_handle_limit();
     test_generate_transform();
+    test_join();
 }
