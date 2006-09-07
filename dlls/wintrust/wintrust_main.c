@@ -150,7 +150,7 @@ BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
  *   Trust providers can be found at:
  *   HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\
  */
-LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
+LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
 {
     FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
     return ERROR_SUCCESS;
