@@ -721,8 +721,16 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     int has_size = size_is && (size_is->type != EXPR_VOID);
     size_t start_offset = *typestring_offset;
     unsigned char flags = 0;
-    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    int pointer_type;
     unsigned char rtype;
+
+    if (is_ptr(type))
+    {
+        pointer_type = type->type;
+        type = type->ref;
+    }
+    else
+        pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
 
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
@@ -1226,12 +1234,11 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     }
 }
 
-static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, size_t offset, unsigned int *typeformat_offset)
+static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, int pointer_type,
+                                   unsigned char flags, size_t offset,
+                                   unsigned int *typeformat_offset)
 {
     int in_attr, out_attr;
-    unsigned char flags = 0;
-    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
-    if (!pointer_type) pointer_type = RPC_FC_RP;
     in_attr = is_attr(attrs, ATTR_IN);
     out_attr = is_attr(attrs, ATTR_OUT);
     if (!in_attr && !out_attr) in_attr = 1;
@@ -1239,11 +1246,19 @@ static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, size_t offse
     if (out_attr && !in_attr && pointer_type == RPC_FC_RP)
         flags |= 0x04;
 
-    print_file(file, 2, "0x%x, 0x%x,\t\t/* %s%s */\n",
+    print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
                pointer_type,
                flags,
-               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"),
-               (flags & 0x04) ? " [allocated_on_stack]" : "");
+               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+    if (file)
+    {
+        if (flags & 0x04)
+            fprintf(file, " [allocated_on_stack]");
+        if (flags & 0x10)
+            fprintf(file, " [pointer_deref]");
+        fprintf(file, " */\n");
+    }
+
     print_file(file, 2, "NdrFcShort(0x%x),    /* %d */\n", offset, offset);
     *typeformat_offset += 4;
 }
@@ -1281,19 +1296,71 @@ static size_t write_ip_tfs(FILE *file, const attr_t *attrs, const type_t *type,
     return start_offset;
 }
 
+static int get_ptr_attr(const type_t *t, int def_type)
+{
+    while (TRUE)
+    {
+        int ptr_attr = get_attrv(t->attrs, ATTR_POINTERTYPE);
+        if (ptr_attr)
+            return ptr_attr;
+        if (t->kind != TKIND_ALIAS)
+            return def_type;
+        t = t->orig;
+    }
+}
+
 static size_t write_typeformatstring_var(FILE *file, int indent,
                                          const var_t *var, unsigned int *typeformat_offset)
 {
     const type_t *type = var->type;
-    int ptr_level = var->ptr_level;
+    int var_ptrs = var->ptr_level, type_ptrs = 0;
+    int is_str = is_attr(var->attrs, ATTR_STRING);
 
     chat("write_typeformatstring_var: %s\n", var->name);
 
     while (TRUE)
     {
+        is_str = is_str || is_attr(type->attrs, ATTR_STRING);
+        if (type->kind == TKIND_ALIAS)
+            type = type->orig;
+        else if (is_ptr(type))
+        {
+            ++type_ptrs;
+            type = type->ref;
+        }
+        else
+        {
+            type = var->type;
+            break;
+        }
+    }
+
+    while (TRUE)
+    {
+        int ptr_level = var_ptrs + type_ptrs;
+        int pointer_type = 0;
+
         chat("write_typeformatstring: type->type = 0x%x, type->name = %s, ptr_level = %d\n", type->type, type->name, ptr_level);
 
-        if (is_string_type(var->attrs, ptr_level, var->array))
+        /* var attrs only effect the rightmost pointer  */
+        if ((0 < var->ptr_level && var_ptrs == var->ptr_level)
+            || (var->ptr_level == 0 && type == var->type))
+        {
+            int pointer_attr = get_attrv(var->attrs, ATTR_POINTERTYPE);
+            if (pointer_attr)
+            {
+                if (! ptr_level)
+                    error("'%s': pointer attribute applied to non-pointer type",
+                          var->name);
+                pointer_type = pointer_attr;
+            }
+            else
+                pointer_type = RPC_FC_RP;
+        }
+        else                            /* pointers below other pointers default to unique */
+            pointer_type = var_ptrs ? RPC_FC_UP : get_ptr_attr(type, RPC_FC_UP);
+
+        if (is_str && ptr_level + (var->array != NULL) == 1)
             return write_string_tfs(file, var->attrs, type, var->array, var->name, typeformat_offset);
 
         if (is_array_type(var->attrs, ptr_level, var->array))
@@ -1330,16 +1397,15 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             size_t start_offset = *typeformat_offset;
             int in_attr = is_attr(var->attrs, ATTR_IN);
             int out_attr = is_attr(var->attrs, ATTR_OUT);
-            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-            if (!pointer_type) pointer_type = RPC_FC_RP;
+            const type_t *base = is_ptr(type) ? type->ref : type;
 
-            if (type->type == RPC_FC_IP)
+            if (base->type == RPC_FC_IP)
             {
-                return write_ip_tfs(file, type->attrs, type, type->name, typeformat_offset);
+                return write_ip_tfs(file, base->attrs, base, base->name, typeformat_offset);
             }
 
             /* special case for pointers to base types */
-            switch (type->type)
+            switch (base->type)
             {
 #define CASE_BASETYPE(fctype) \
             case RPC_##fctype: \
@@ -1377,9 +1443,17 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
         if (file)
             fprintf(file, "/* %2u */\n", *typeformat_offset);
-        write_pointer_only_tfs(file, var->attrs, 2, typeformat_offset);
+        write_pointer_only_tfs(file, var->attrs, pointer_type,
+                               1 < ptr_level ? 0x10 : 0,
+                               2, typeformat_offset);
 
-        ptr_level--;
+        if (var_ptrs)
+            --var_ptrs;
+        else
+        {
+            --type_ptrs;
+            type = type->ref;
+        }
     }
 }
 

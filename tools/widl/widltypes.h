@@ -295,7 +295,7 @@ void init_types(void);
 type_t *duptype(type_t *t, int dupname);
 type_t *alias(type_t *t, const char *name);
 
-int is_ptr(type_t *t);
+int is_ptr(const type_t *t);
 int is_var_ptr(var_t *v);
 int cant_be_null(var_t *v);
 

@@ -73,7 +73,7 @@ type_t *alias(type_t *t, const char *name)
   return a;
 }
 
-int is_ptr(type_t *t)
+int is_ptr(const type_t *t)
 {
   unsigned char c = t->type;
   return c == RPC_FC_RP
