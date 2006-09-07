@@ -51,7 +51,7 @@ typedef struct tagMODEMSETTINGS {
        DWORD dwInactivityTimeout;
        DWORD dwSpeakerVolume;
        DWORD dwSpeakerMode;
-       DWORD dwPreferedModemOptions;
+       DWORD dwPreferredModemOptions;
        DWORD dwNegotiatedModemOptions;
        DWORD dwNegotiatedDCERate;
        BYTE  abVariablePortion[1];
