@@ -548,8 +548,8 @@ static HRESULT (WINAPI *pExtract)(EXTRACTdest*, LPCSTR);
 static LPSTR convert_file_list(LPCSTR FileList, DWORD *dwNumFiles)
 {
     DWORD dwLen;
-    char *first = (char *)FileList;
-    char *last = (char *)FileList + strlen(FileList) - 1;
+    const char *first = FileList;
+    const char *last = FileList + strlen(FileList) - 1;
     LPSTR szConvertedList, temp;
     
     /* any number of these chars before the list is OK */
