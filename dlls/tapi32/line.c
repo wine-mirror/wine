@@ -188,7 +188,7 @@ DWORD WINAPI lineDrop(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 /***********************************************************************
  *		lineForward (TAPI32.@)
  */
-DWORD WINAPI lineForwardA(HLINE hLine, DWORD bAllAddress, DWORD dwAdressID, LPLINEFORWARDLIST lpForwardList, DWORD dwNumRingsNoAnswer, LPHCALL lphConsultCall, LPLINECALLPARAMS lpCallParams)
+DWORD WINAPI lineForwardA(HLINE hLine, DWORD bAllAddress, DWORD dwAddressID, LPLINEFORWARDLIST lpForwardList, DWORD dwNumRingsNoAnswer, LPHCALL lphConsultCall, LPLINECALLPARAMS lpCallParams)
 {
     FIXME("stub.\n");
     return 1;
