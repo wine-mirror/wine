@@ -117,11 +117,11 @@ typedef struct tagVARIANT_NUMBER_CHARS
   WCHAR cNegativeSymbol;
   WCHAR cPositiveSymbol;
   WCHAR cDecimalPoint;
-  WCHAR cDigitSeperator;
+  WCHAR cDigitSeparator;
   WCHAR cCurrencyLocal;
   WCHAR cCurrencyLocal2;
   WCHAR cCurrencyDecimalPoint;
-  WCHAR cCurrencyDigitSeperator;
+  WCHAR cCurrencyDigitSeparator;
 } VARIANT_NUMBER_CHARS;
 
 void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS*,LCID,DWORD);

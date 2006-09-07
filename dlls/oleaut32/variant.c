@@ -1475,9 +1475,9 @@ void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, D
   GET_NUMBER_TEXT(LOCALE_SNEGATIVESIGN, cNegativeSymbol);
   GET_NUMBER_TEXT(LOCALE_SPOSITIVESIGN, cPositiveSymbol);
   GET_NUMBER_TEXT(LOCALE_SDECIMAL, cDecimalPoint);
-  GET_NUMBER_TEXT(LOCALE_STHOUSAND, cDigitSeperator);
+  GET_NUMBER_TEXT(LOCALE_STHOUSAND, cDigitSeparator);
   GET_NUMBER_TEXT(LOCALE_SMONDECIMALSEP, cCurrencyDecimalPoint);
-  GET_NUMBER_TEXT(LOCALE_SMONTHOUSANDSEP, cCurrencyDigitSeperator);
+  GET_NUMBER_TEXT(LOCALE_SMONTHOUSANDSEP, cCurrencyDigitSeparator);
 
   /* Local currency symbols are often 2 characters */
   lpChars->cCurrencyLocal2 = '\0';
@@ -1597,7 +1597,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       lpszStr++;
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
-      chars.cDigitSeperator = chars.cCurrencyDigitSeperator;
+      chars.cDigitSeparator = chars.cCurrencyDigitSeparator;
     }
     else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
              !(pNumprs->dwOutFlags & NUMPRS_PARENS))
@@ -1614,7 +1614,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   {
     /* Only accept non-currency characters */
     chars.cCurrencyDecimalPoint = chars.cDecimalPoint;
-    chars.cCurrencyDigitSeperator = chars.cDigitSeperator;
+    chars.cCurrencyDigitSeparator = chars.cDigitSeparator;
   }
 
   if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
@@ -1706,7 +1706,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         cchUsed++;
       }
     }
-    else if (*lpszStr == chars.cDigitSeperator && pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+    else if (*lpszStr == chars.cDigitSeparator && pNumprs->dwInFlags & NUMPRS_THOUSANDS)
     {
       pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
       cchUsed++;
