@@ -51,6 +51,9 @@
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #include "windef.h"
 #include "thread.h"
@@ -1301,6 +1304,15 @@ BOOL SIGNAL_Init(void)
 
 #ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
+
+#ifdef __APPLE__
+    int mib[2], val = 1;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_THALTSTACK;
+    sysctl( mib, 2, NULL, NULL, &val, sizeof(val) );
+#endif
+
     ss.ss_sp    = get_signal_stack();
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
