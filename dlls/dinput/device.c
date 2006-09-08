@@ -219,9 +219,9 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
 /* Conversion between internal data buffer and external data buffer */
 void fill_DataFormat(void *out, const void *in, DataFormat *df) {
     int i;
-    char *in_c = (char *) in;
+    const char *in_c = in;
     char *out_c = (char *) out;
-    
+
     if (df->dt == NULL) {
 	/* This means that the app uses Wine's internal data format */
 	memcpy(out, in, df->internal_format_size);
@@ -231,22 +231,22 @@ void fill_DataFormat(void *out, const void *in, DataFormat *df) {
 		switch (df->dt[i].size) {
 		    case 1:
 		        TRACE("Copying (c) to %d from %d (value %d)\n",
-			      df->dt[i].offset_out, df->dt[i].offset_in, *((char *) (in_c + df->dt[i].offset_in)));
-			*((char *) (out_c + df->dt[i].offset_out)) = *((char *) (in_c + df->dt[i].offset_in));
+                              df->dt[i].offset_out, df->dt[i].offset_in, *(in_c + df->dt[i].offset_in));
+			*(out_c + df->dt[i].offset_out) = *(in_c + df->dt[i].offset_in);
 			break;
-		    
+
 		    case 2:
 			TRACE("Copying (s) to %d from %d (value %d)\n",
-			      df->dt[i].offset_out, df->dt[i].offset_in, *((short *) (in_c + df->dt[i].offset_in)));
-			*((short *) (out_c + df->dt[i].offset_out)) = *((short *) (in_c + df->dt[i].offset_in));
+			      df->dt[i].offset_out, df->dt[i].offset_in, *((const short *)(in_c + df->dt[i].offset_in)));
+			*((short *)(out_c + df->dt[i].offset_out)) = *((const short *)(in_c + df->dt[i].offset_in));
 			break;
-		    
+
 		    case 4:
 			TRACE("Copying (i) to %d from %d (value %d)\n",
-			      df->dt[i].offset_out, df->dt[i].offset_in, *((int *) (in_c + df->dt[i].offset_in)));
-			*((int *) (out_c + df->dt[i].offset_out)) = *((int *) (in_c + df->dt[i].offset_in));
+                              df->dt[i].offset_out, df->dt[i].offset_in, *((const int *)(in_c + df->dt[i].offset_in)));
+                        *((int *)(out_c + df->dt[i].offset_out)) = *((const int *)(in_c + df->dt[i].offset_in));
 			break;
-		    
+
 		    default:
 			memcpy((out_c + df->dt[i].offset_out), (in_c + df->dt[i].offset_in), df->dt[i].size);
 			break;
@@ -256,7 +256,7 @@ void fill_DataFormat(void *out, const void *in, DataFormat *df) {
 		    case 1:
 		        TRACE("Copying (c) to %d default value %d\n",
 			      df->dt[i].offset_out, df->dt[i].value);
-			*((char *) (out_c + df->dt[i].offset_out)) = (char) df->dt[i].value;
+			*(out_c + df->dt[i].offset_out) = (char) df->dt[i].value;
 			break;
 			
 		    case 2:
