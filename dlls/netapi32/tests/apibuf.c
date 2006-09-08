@@ -39,6 +39,7 @@ static void run_apibuf_tests(void)
 {
     VOID *p;
     DWORD dwSize;
+    NET_API_STATUS res;
 
     if (!pNetApiBufferAllocate)
         return;
@@ -76,6 +77,20 @@ static void run_apibuf_tests(void)
     ok(pNetApiBufferSize(p, &dwSize) == NERR_Success, "Got size\n");
     ok((dwSize >= 0) && (dwSize < 0xFFFFFFFF),"The size of the 0-length buffer\n");
     ok(pNetApiBufferFree(p) == NERR_Success, "Freed\n");
+
+    /* NULL-Pointer */
+    /* NT: ERROR_INVALID_PARAMETER, lasterror is untouched) */
+    SetLastError(0xdeadbeef);
+    res = pNetApiBufferAllocate(0, (LPVOID *)NULL);
+    ok( (res == ERROR_INVALID_PARAMETER) && (GetLastError() == 0xdeadbeef),
+        "returned %ld with 0x%lx (expected ERROR_INVALID_PARAMETER with " \
+        "0xdeadbeef)\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pNetApiBufferAllocate(1024, (LPVOID *)NULL);    
+    ok( (res == ERROR_INVALID_PARAMETER) && (GetLastError() == 0xdeadbeef),
+        "returned %ld with 0x%lx (expected ERROR_INVALID_PARAMETER with " \
+        "0xdeadbeef)\n", res, GetLastError());
 }
 
 START_TEST(apibuf)

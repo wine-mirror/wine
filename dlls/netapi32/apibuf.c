@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 NET_API_STATUS WINAPI NetApiBufferAllocate(DWORD ByteCount, LPVOID* Buffer)
 {
     TRACE("(%ld, %p)\n", ByteCount, Buffer);
+
+    if (Buffer == NULL) return ERROR_INVALID_PARAMETER;
     *Buffer = HeapAlloc(GetProcessHeap(), 0, ByteCount);
     if (*Buffer)
         return NERR_Success;
