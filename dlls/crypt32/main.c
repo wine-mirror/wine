@@ -93,6 +93,22 @@ HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
     return h;
 }
 
+/***********************************************************************
+ *             CryptSIPRemoveProvider (CRYPT32.@)
+ *
+ * Remove a SIP provider and its functions from the registry.
+ *
+ * PARAMS
+ *  pgProv     [I] Pointer to a GUID for this SIP provider
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. (Look at GetLastError()).
+ *
+ * NOTES
+ *  Registry errors are always reported via SetLastError(). Every registry
+ *  deletion will be tried.
+ */
 BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 {
     FIXME("stub!\n");
