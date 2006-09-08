@@ -1676,6 +1676,11 @@ static const struct join_res join_res_third[] =
     { "msvcr.dll", "ijklmnop" },
 };
 
+static const struct join_res join_res_fourth[] =
+{
+    { "msvcp.dll.01234", "single.dll.31415" },
+};
+
 static void test_join(void)
 {
     MSIHANDLE hdb, hview, hrec;
@@ -1739,6 +1744,9 @@ static void test_join(void)
     ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
 
     r = add_binary_entry( hdb, "'msvcr.dll.56789', 'ijklmnop'" );
+    ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
+
+    r = add_binary_entry( hdb, "'single.dll.31415', 'msvcp.dll'" );
     ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
 
     query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
@@ -1834,16 +1842,10 @@ static void test_join(void)
             "WHERE `StdDlls`.`Binary_` = `Binary`.`Name` "
             "ORDER BY `File`";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
@@ -1867,10 +1869,44 @@ static void test_join(void)
         MsiCloseHandle(hrec);
     }
 
-    todo_wine
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT `StdDlls`.`Binary_`, `Binary`.`Name` "
+            "FROM `StdDlls`, `Binary` "
+            "WHERE `StdDlls`.`File` = `Binary`.`Data` "
+            "ORDER BY `Name`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
     {
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_fourth[i].one ),
+            "Expected '%s', got %s\n", join_res_fourth[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_fourth[i].two ),
+            "Expected '%s', got %s\n", join_res_fourth[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
     }
+
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
