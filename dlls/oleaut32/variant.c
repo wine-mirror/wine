@@ -2872,80 +2872,188 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
  */
 HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
-    HRESULT rc = E_FAIL;
+    HRESULT hres = S_OK;
+    VARTYPE resvt = VT_EMPTY;
+    VARTYPE leftvt,rightvt;
+    VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
+    VARIANT varLeft, varRight;
+
+    VariantInit(&varLeft);
+    VariantInit(&varRight);
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
 
-    if ((V_VT(left)&VT_TYPEMASK) == VT_BOOL &&
-        (V_VT(right)&VT_TYPEMASK) == VT_BOOL) {
+    leftvt = V_VT(left)&VT_TYPEMASK;
+    rightvt = V_VT(right)&VT_TYPEMASK;
+    leftExtraFlags = V_VT(left)&(~VT_TYPEMASK);
+    rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
 
-        V_VT(result) = VT_BOOL;
-        if (V_BOOL(left) && V_BOOL(right)) {
-            V_BOOL(result) = VARIANT_TRUE;
-        } else {
-            V_BOOL(result) = VARIANT_FALSE;
-        }
-        rc = S_OK;
+    if (leftExtraFlags != rightExtraFlags)
+        return DISP_E_BADVARTYPE;
+    ExtraFlags = leftExtraFlags;
 
-    } else {
-        /* Integers */
-        BOOL         lOk        = TRUE;
-        BOOL         rOk        = TRUE;
-        LONGLONG     lVal = -1;
-        LONGLONG     rVal = -1;
-        LONGLONG     res  = -1;
-        int          resT = 0; /* Testing has shown I2 & I2 == I2, all else
-                                  becomes I4, even unsigned ints (incl. UI2) */
+    /* Native VarAnd always returns a error when using any extra
+     * flags or if the variant combination is I8 and INT.
+     */
+    if ((leftvt == VT_I8 && rightvt == VT_INT) ||
+        (leftvt == VT_INT && rightvt == VT_I8) ||
+        ExtraFlags != 0)
+        return DISP_E_BADVARTYPE;
 
-        lOk = TRUE;
-        switch (V_VT(left)&VT_TYPEMASK) {
-        case VT_I1   : lVal = V_I1(left);  resT=VT_I4; break;
-        case VT_I2   : lVal = V_I2(left);  resT=VT_I2; break;
-        case VT_I4   :
-        case VT_INT  : lVal = V_I4(left);  resT=VT_I4; break;
-        case VT_UI1  : lVal = V_UI1(left);  resT=VT_I4; break;
-        case VT_UI2  : lVal = V_UI2(left); resT=VT_I4; break;
-        case VT_UI4  :
-        case VT_UINT : lVal = V_UI4(left); resT=VT_I4; break;
-        case VT_BOOL : rVal = V_BOOL(left); resT=VT_I4; break;
-        default: lOk = FALSE;
-        }
+    /* Determine return type */
+    else if (leftvt == VT_I8 || rightvt == VT_I8)
+        resvt = VT_I8;
+    else if (leftvt == VT_I4 || rightvt == VT_I4 ||
+        leftvt == VT_UINT || rightvt == VT_UINT ||
+        leftvt == VT_INT || rightvt == VT_INT ||
+        leftvt == VT_UINT || rightvt == VT_UINT ||
+        leftvt == VT_R4 || rightvt == VT_R4 ||
+        leftvt == VT_R8 || rightvt == VT_R8 ||
+        leftvt == VT_CY || rightvt == VT_CY ||
+        leftvt == VT_DATE || rightvt == VT_DATE ||
+        leftvt == VT_I1 || rightvt == VT_I1 ||
+        leftvt == VT_UI2 || rightvt == VT_UI2 ||
+        leftvt == VT_UI4 || rightvt == VT_UI4 ||
+        leftvt == VT_UI8 || rightvt == VT_UI8 ||
+        leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+        resvt = VT_I4;
+    else if (leftvt == VT_UI1 || rightvt == VT_UI1 ||
+        leftvt == VT_I2 || rightvt == VT_I2 ||
+        leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+        if ((leftvt == VT_NULL && rightvt == VT_UI1) ||
+            (leftvt == VT_UI1 && rightvt == VT_NULL) ||
+            (leftvt == VT_UI1 && rightvt == VT_UI1))
+            resvt = VT_UI1;
+        else
+            resvt = VT_I2;
+    else if (leftvt == VT_BOOL || rightvt == VT_BOOL ||
+        (leftvt == VT_BSTR && rightvt == VT_BSTR))
+        resvt = VT_BOOL;
+    else if (leftvt == VT_NULL || rightvt == VT_NULL ||
+        leftvt == VT_BSTR || rightvt == VT_BSTR)
+        resvt = VT_NULL;
+    else
+        return DISP_E_BADVARTYPE;
 
-        rOk = TRUE;
-        switch (V_VT(right)&VT_TYPEMASK) {
-        case VT_I1   : rVal = V_I1(right);  resT=VT_I4; break;
-        case VT_I2   : rVal = V_I2(right);  resT=max(VT_I2, resT); break;
-        case VT_I4   :
-        case VT_INT  : rVal = V_I4(right);  resT=VT_I4; break;
-        case VT_UI1  : rVal = V_UI1(right);  resT=VT_I4; break;
-        case VT_UI2  : rVal = V_UI2(right); resT=VT_I4; break;
-        case VT_UI4  :
-        case VT_UINT : rVal = V_UI4(right); resT=VT_I4; break;
-        case VT_BOOL : rVal = V_BOOL(right); resT=VT_I4; break;
-        default: rOk = FALSE;
-        }
-
-        if (lOk && rOk) {
-            res = (lVal & rVal);
-            V_VT(result) = resT;
-            switch (resT) {
-            case VT_I2   : V_I2(result)  = res; break;
-            case VT_I4   : V_I4(result)  = res; break;
-            default:
-                FIXME("Unexpected result variant type %x\n", resT);
-                V_I4(result)  = res;
+    if (leftvt == VT_NULL || rightvt == VT_NULL)
+    {
+        /*
+         * Special cases for when left variant is VT_NULL
+         * (NULL & 0 = NULL, NULL & value = value)
+         */
+        if (leftvt == VT_NULL)
+        {
+            VARIANT_BOOL b;
+            switch(rightvt)
+            {
+            case VT_I1:   if (V_I1(right)) resvt = VT_NULL; break;
+            case VT_UI1:  if (V_UI1(right)) resvt = VT_NULL; break;
+            case VT_I2:   if (V_I2(right)) resvt = VT_NULL; break;
+            case VT_UI2:  if (V_UI2(right)) resvt = VT_NULL; break;
+            case VT_I4:   if (V_I4(right)) resvt = VT_NULL; break;
+            case VT_UI4:  if (V_UI4(right)) resvt = VT_NULL; break;
+            case VT_I8:   if (V_I8(right)) resvt = VT_NULL; break;
+            case VT_UI8:  if (V_UI8(right)) resvt = VT_NULL; break;
+            case VT_INT:  if (V_INT(right)) resvt = VT_NULL; break;
+            case VT_UINT: if (V_UINT(right)) resvt = VT_NULL; break;
+            case VT_BOOL: if (V_BOOL(right)) resvt = VT_NULL; break;
+            case VT_R4:   if (V_R4(right)) resvt = VT_NULL; break;
+            case VT_R8:   if (V_R8(right)) resvt = VT_NULL; break;
+            case VT_CY:
+                if(V_CY(right).int64)
+                    resvt = VT_NULL;
+                break;
+            case VT_DECIMAL:
+                if (DEC_HI32(&V_DECIMAL(right)) ||
+                    DEC_LO64(&V_DECIMAL(right)))
+                    resvt = VT_NULL;
+                break;
+            case VT_BSTR:
+                hres = VarBoolFromStr(V_BSTR(right),
+                LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &b);
+                if (FAILED(hres))
+                    return hres;
+                else if (b)
+                    V_VT(result) = VT_NULL;
+                else
+                {
+                    V_VT(result) = VT_BOOL;
+                    V_BOOL(result) = b;
+                }
+                goto VarAnd_Exit;
             }
-            rc = S_OK;
-
-        } else {
-            FIXME("VarAnd stub\n");
         }
+        V_VT(result) = resvt;
+        goto VarAnd_Exit;
     }
 
-    TRACE("returning 0x%8lx (%s%s),%ld\n", rc, debugstr_VT(result),
-          debugstr_VF(result), V_VT(result) == VT_I4 ? V_I4(result) : V_I2(result));
-    return rc;
+    hres = VariantCopy(&varLeft, left);
+    if (FAILED(hres)) goto VarAnd_Exit;
+
+    hres = VariantCopy(&varRight, right);
+    if (FAILED(hres)) goto VarAnd_Exit;
+
+    if (resvt == VT_I4 && V_VT(&varLeft) == VT_UI4)
+        V_VT(&varLeft) = VT_I4; /* Don't overflow */
+    else
+    {
+        double d;
+
+        if (V_VT(&varLeft) == VT_BSTR &&
+            FAILED(VarR8FromStr(V_BSTR(&varLeft),
+            LOCALE_USER_DEFAULT, 0, &d)))
+            hres = VariantChangeType(&varLeft,&varLeft,
+            VARIANT_LOCALBOOL, VT_BOOL);
+            if (SUCCEEDED(hres) && V_VT(&varLeft) != resvt)
+                hres = VariantChangeType(&varLeft,&varLeft,0,resvt);
+            if (FAILED(hres)) goto VarAnd_Exit;
+    }
+
+    if (resvt == VT_I4 && V_VT(&varRight) == VT_UI4)
+        V_VT(&varRight) = VT_I4; /* Don't overflow */
+    else
+    {
+        double d;
+
+        if (V_VT(&varRight) == VT_BSTR &&
+            FAILED(VarR8FromStr(V_BSTR(&varRight),
+            LOCALE_USER_DEFAULT, 0, &d)))
+            hres = VariantChangeType(&varRight, &varRight,
+                VARIANT_LOCALBOOL, VT_BOOL);
+        if (SUCCEEDED(hres) && V_VT(&varRight) != resvt)
+            hres = VariantChangeType(&varRight, &varRight, 0, resvt);
+        if (FAILED(hres)) goto VarAnd_Exit;
+    }
+
+    V_VT(result) = resvt;
+    switch(resvt)
+    {
+    case VT_I8:
+        V_I8(result) = V_I8(&varLeft) & V_I8(&varRight);
+        break;
+    case VT_I4:
+        V_I4(result) = V_I4(&varLeft) & V_I4(&varRight);
+        break;
+    case VT_I2:
+        V_I2(result) = V_I2(&varLeft) & V_I2(&varRight);
+        break;
+    case VT_UI1:
+        V_UI1(result) = V_UI1(&varLeft) & V_UI1(&varRight);
+        break;
+    case VT_BOOL:
+        V_BOOL(result) = V_BOOL(&varLeft) & V_BOOL(&varRight);
+        break;
+    default:
+        FIXME("Couldn't bitwise AND variant types %d,%d\n",
+            leftvt,rightvt);
+    }
+
+VarAnd_Exit:
+    VariantClear(&varLeft);
+    VariantClear(&varRight);
+
+    return hres;
 }
 
 /**********************************************************************
