@@ -415,12 +415,9 @@ static void test_AddRemoveProvider(void)
     /* Dummy provider should be deleted */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
-    todo_wine
-    {
-        ok ( ret, "CryptSIPRemoveProvider should have succeeded\n");
-        ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n",
-         GetLastError());
-    }
+    ok ( ret, "CryptSIPRemoveProvider should have succeeded\n");
+    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n",
+     GetLastError());
 }
 
 START_TEST(main)

@@ -285,11 +285,12 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
         return FALSE;
     }
 
-    TRACE("%s %s %s %s\n",
+    TRACE("%s %s %s %s %s\n",
           debugstr_guid( psNewProv->pgSubject ),
           debugstr_w( psNewProv->pwszDLLFileName ),
           debugstr_w( psNewProv->pwszMagicNumber ),
-          debugstr_w( psNewProv->pwszIsFunctionName ) );
+          debugstr_w( psNewProv->pwszIsFunctionName ),
+          debugstr_w( psNewProv->pwszIsFunctionNameFmt2 ) );
 
 #define CRYPT_SIPADDPROV( key, field ) \
     r = CRYPT_SIPWriteFunction( psNewProv->pgSubject, key, \
@@ -301,7 +302,8 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     CRYPT_SIPADDPROV( szRemoveSigned, pwszRemoveFuncName );
     CRYPT_SIPADDPROV( szCreate, pwszCreateFuncName );
     CRYPT_SIPADDPROV( szVerify, pwszVerifyFuncName );
-    CRYPT_SIPADDPROV( szIsMyFile, pwszIsFunctionNameFmt2 );
+    CRYPT_SIPADDPROV( szIsMyFile, pwszIsFunctionName );
+    CRYPT_SIPADDPROV( szIsMyFile2, pwszIsFunctionNameFmt2 );
 
 #undef CRYPT_SIPADDPROV
 
