@@ -5049,21 +5049,70 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
     HRESULT hr;
     VARIANT dl,dr;
+    VARTYPE resvt = VT_EMPTY;
+    VARTYPE leftvt,rightvt;
+    VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left), debugstr_VF(left),
           right, debugstr_VT(right), debugstr_VF(right), result);
 
-    hr = VariantChangeType(&dl,left,0,VT_R8);
+    VariantInit(&dl);
+    VariantInit(&dr);
+
+    leftvt = V_VT(left)&VT_TYPEMASK;
+    rightvt = V_VT(right)&VT_TYPEMASK;
+    leftExtraFlags = V_VT(left)&(~VT_TYPEMASK);
+    rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
+
+    if (leftExtraFlags != rightExtraFlags)
+        return DISP_E_BADVARTYPE;
+    ExtraFlags = leftExtraFlags;
+
+    /* Native VarPow always returns a error when using any extra flags */
+    if (ExtraFlags != 0)
+        return DISP_E_BADVARTYPE;
+
+    /* Determine return type */
+    else if (leftvt == VT_NULL || rightvt == VT_NULL) {
+        V_VT(result) = VT_NULL;
+        return S_OK;
+    }
+    else if ((leftvt == VT_EMPTY || leftvt == VT_I2 ||
+        leftvt == VT_I4 || leftvt == VT_R4 ||
+        leftvt == VT_R8 || leftvt == VT_CY ||
+        leftvt == VT_DATE || leftvt == VT_BSTR ||
+        leftvt == VT_BOOL || leftvt == VT_DECIMAL ||
+        (leftvt >= VT_I1 && leftvt <= VT_UINT)) &&
+        (rightvt == VT_EMPTY || rightvt == VT_I2 ||
+        rightvt == VT_I4 || rightvt == VT_R4 ||
+        rightvt == VT_R8 || rightvt == VT_CY ||
+        rightvt == VT_DATE || rightvt == VT_BSTR ||
+        rightvt == VT_BOOL || rightvt == VT_DECIMAL ||
+        (rightvt >= VT_I1 && rightvt <= VT_UINT)))
+        resvt = VT_R8;
+    else
+        return DISP_E_BADVARTYPE;
+
+    hr = VariantChangeType(&dl,left,0,resvt);
     if (!SUCCEEDED(hr)) {
         ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
+        VariantClear(&dl);
         return E_FAIL;
     }
-    hr = VariantChangeType(&dr,right,0,VT_R8);
+
+    hr = VariantChangeType(&dr,right,0,resvt);
     if (!SUCCEEDED(hr)) {
         ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
+        VariantClear(&dl);
+        VariantClear(&dr);
         return E_FAIL;
     }
+
     V_VT(result) = VT_R8;
     V_R8(result) = pow(V_R8(&dl),V_R8(&dr));
+
+    VariantClear(&dl);
+    VariantClear(&dr);
+
     return S_OK;
 }
