@@ -262,13 +262,13 @@ static IDirectDrawSurfaceImpl *
 get_sub_mimaplevel(IDirectDrawSurfaceImpl *tex_ptr)
 {
     /* Now go down the mipmap chain to the next surface */
-    static const DDSCAPS2 mipmap_caps = { DDSCAPS_MIPMAP | DDSCAPS_TEXTURE, 0, 0, 0 };
+    static DDSCAPS2 mipmap_caps = { DDSCAPS_MIPMAP | DDSCAPS_TEXTURE, 0, 0, 0 };
     LPDIRECTDRAWSURFACE7 next_level;
     IDirectDrawSurfaceImpl *surf_ptr;
     HRESULT hr;
 
     hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(tex_ptr, IDirectDrawSurface7),
-                                                (DDSCAPS2 *) &mipmap_caps, &next_level);
+                                                &mipmap_caps, &next_level);
     if (FAILED(hr)) return NULL;
 
     surf_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, next_level);
