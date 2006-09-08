@@ -198,6 +198,7 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     static const WCHAR szVerify[] = {
        'V','e','r','i','f','y',
        'I','n','d','i','r','e','c','t','D','a','t','a',0};
+    LONG r = ERROR_SUCCESS;
 
     TRACE("%p\n", psNewProv);
 
@@ -220,8 +221,9 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
           debugstr_w( psNewProv->pwszIsFunctionName ) );
 
 #define CRYPT_SIPADDPROV( key, field ) \
-    CRYPT_SIPWriteFunction( psNewProv->pgSubject, key, \
-           psNewProv->pwszDLLFileName, psNewProv->field)
+    r = CRYPT_SIPWriteFunction( psNewProv->pgSubject, key, \
+           psNewProv->pwszDLLFileName, psNewProv->field); \
+    if (r != ERROR_SUCCESS) goto end_function
 
     CRYPT_SIPADDPROV( szPutSigned, pwszPutFuncName );
     CRYPT_SIPADDPROV( szGetSigned, pwszGetFuncName );
@@ -231,6 +233,14 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     CRYPT_SIPADDPROV( szIsMyFile, pwszIsFunctionNameFmt2 );
 
 #undef CRYPT_SIPADDPROV
+
+end_function:
+
+    if (r != ERROR_SUCCESS)
+    {
+        SetLastError(r);
+        return FALSE;
+    }
 
     return TRUE;
 }
