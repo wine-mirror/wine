@@ -181,8 +181,17 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
 
     TRACE("%p\n", psNewProv);
 
-    if( !psNewProv )
+    if (!psNewProv ||
+        psNewProv->cbStruct != sizeof(SIP_ADD_NEWPROVIDER) ||
+        !psNewProv->pwszGetFuncName ||
+        !psNewProv->pwszPutFuncName ||
+        !psNewProv->pwszCreateFuncName ||
+        !psNewProv->pwszVerifyFuncName ||
+        !psNewProv->pwszRemoveFuncName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
 
     TRACE("%s %s %s %s\n",
           debugstr_guid( psNewProv->pgSubject ),
