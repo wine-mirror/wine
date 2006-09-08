@@ -926,20 +926,7 @@ static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count )
 
 LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
 {
-    UINT sz=0, r;
-    LPWSTR str;
-
-    r = msi_id2stringW( db->strings, stringid, NULL, &sz );
-    if( r != ERROR_SUCCESS )
-        return NULL;
-    str = msi_alloc( sz*sizeof (WCHAR) );
-    if( !str )
-        return str;
-    r = msi_id2stringW( db->strings, stringid, str, &sz );
-    if( r == ERROR_SUCCESS )
-        return str;
-    msi_free( str );
-    return NULL;
+    return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
 
 static UINT get_tablecolumns( MSIDATABASE *db, 
@@ -1116,7 +1103,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT ival = 0, refcol = 0, r;
-    LPWSTR sval;
+    LPCWSTR sval;
     LPWSTR full_name;
     DWORD len;
     static const WCHAR szDot[] = { '.', 0 };
@@ -1140,7 +1127,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
         return r;
 
     /* lookup the string value from the string table */
-    sval = MSI_makestring( tv->db, refcol );
+    sval = msi_string_lookup_id( tv->db->strings, refcol );
     if( !sval )
         return ERROR_INVALID_PARAMETER;
 
@@ -1154,7 +1141,6 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( r )
         ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
     msi_free( full_name );
-    msi_free( sval );
 
     return r;
 }
