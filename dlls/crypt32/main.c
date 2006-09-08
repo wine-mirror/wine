@@ -163,6 +163,24 @@ error_close_key:
     return r;
 }
 
+/***********************************************************************
+ *             CryptSIPAddProvider (CRYPT32.@)
+ *
+ * Add a SIP provider and its functions to the registry.
+ *
+ * PARAMS
+ *  psNewProv       [I] Pointer to a structure with information about
+ *                      the functions this SIP provider can perform.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. (Look at GetLastError()).
+ *
+ * NOTES
+ *  Registry errors are always reported via SetLastError(). If a
+ *  registry error occurs the rest of the registry write operations
+ *  will be skipped.
+ */
 BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
 {
     static const WCHAR szCreate[] = {
