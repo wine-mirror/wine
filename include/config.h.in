@@ -212,12 +212,6 @@
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
 
-/* Define if you have usable GIF headers */
-#undef HAVE_GIF
-
-/* Define to 1 if you have the <gif_lib.h> header file. */
-#undef HAVE_GIF_LIB_H
-
 /* Define to 1 if you have the <GL/glext.h> header file. */
 #undef HAVE_GL_GLEXT_H
 
@@ -992,9 +986,6 @@
 /* Define to the soname of the libfreetype library. */
 #undef SONAME_LIBFREETYPE
 
-/* Define to the soname of the libgif library. */
-#undef SONAME_LIBGIF
-
 /* Define to the soname of the libGL library. */
 #undef SONAME_LIBGL
 
@@ -1015,9 +1006,6 @@
 
 /* Define to the soname of the libtxc_dxtn library. */
 #undef SONAME_LIBTXC_DXTN
-
-/* Define to the soname of the libungif library. */
-#undef SONAME_LIBUNGIF
 
 /* Define to the soname of the libX11 library. */
 #undef SONAME_LIBX11

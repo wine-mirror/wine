@@ -7661,7 +7661,6 @@ done
 
 
 
-
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	CoreAudio/CoreAudio.h \
@@ -7679,7 +7678,6 @@ for ac_header in \
 	float.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
-	gif_lib.h \
 	ieeefp.h \
 	io.h \
 	jack/jack.h \
@@ -14245,73 +14243,6 @@ fi
 fi
 
 
-if test "$ac_cv_header_gif_lib_h" = "yes"
-then
-    cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <gif_lib.h>
-int
-main ()
-{
-static typeof(DGifOpen) * func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GIF 1
-_ACEOF
-
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
 EXTRACFLAGS=""
 
 if test "x${GCC}" = "xyes"
@@ -18144,190 +18075,6 @@ if test "${ac_cv_lib_soname_jpeg+set}" = set; then
 
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBJPEG "$ac_cv_lib_soname_jpeg"
-_ACEOF
-
-fi
-
-  { echo "$as_me:$LINENO: checking for -lungif soname" >&5
-echo $ECHO_N "checking for -lungif soname... $ECHO_C" >&6; }
-if test "${ac_cv_lib_soname_ungif+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_get_soname_save_LIBS=$LIBS
-LIBS="-lungif  $LIBS"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char DGifOpen ();
-int
-main ()
-{
-return DGifOpen ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  case "$LIBEXT" in
-    dylib) ac_cv_lib_soname_ungif=`otool -L conftest$ac_exeext | grep libungif\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libungif\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    so) ac_cv_lib_soname_ungif=`$ac_cv_path_LDD conftest$ac_exeext | grep libungif\\.so | sed -e "s/^.*\(libungif\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-  if test "x$ac_cv_lib_soname_ungif" = "x"
-  then
-     ac_cv_lib_soname_ungif="libungif.$LIBEXT"
-  fi
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_soname_ungif="libungif.$LIBEXT"
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_get_soname_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ungif" >&5
-echo "${ECHO_T}$ac_cv_lib_soname_ungif" >&6; }
-if test "${ac_cv_lib_soname_ungif+set}" = set; then
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBUNGIF "$ac_cv_lib_soname_ungif"
-_ACEOF
-
-fi
-
-  { echo "$as_me:$LINENO: checking for -lgif soname" >&5
-echo $ECHO_N "checking for -lgif soname... $ECHO_C" >&6; }
-if test "${ac_cv_lib_soname_gif+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_get_soname_save_LIBS=$LIBS
-LIBS="-lgif  $LIBS"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char DGifOpen ();
-int
-main ()
-{
-return DGifOpen ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  case "$LIBEXT" in
-    dylib) ac_cv_lib_soname_gif=`otool -L conftest$ac_exeext | grep libgif\\.[0-9A-Za-z.]*dylib | sed -e "s/^.*\/\(libgif\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    so) ac_cv_lib_soname_gif=`$ac_cv_path_LDD conftest$ac_exeext | grep libgif\\.so | sed -e "s/^.*\(libgif\.so[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-  if test "x$ac_cv_lib_soname_gif" = "x"
-  then
-     ac_cv_lib_soname_gif="libgif.$LIBEXT"
-  fi
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_soname_gif="libgif.$LIBEXT"
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_get_soname_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_soname_gif" >&5
-echo "${ECHO_T}$ac_cv_lib_soname_gif" >&6; }
-if test "${ac_cv_lib_soname_gif+set}" = set; then
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBGIF "$ac_cv_lib_soname_gif"
 _ACEOF
 
 fi
@@ -25732,15 +25479,6 @@ echo "$as_me: Wine will be built without (n)curses support. (wineconsole.exe)" >
 echo "$as_me: libsane development files not found." >&6;}
     { echo "$as_me:$LINENO: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&5
 echo "$as_me: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&6;}
-  fi
-
-    if test "$ac_cv_header_gif_lib_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libungif development files not found." >&5
-echo "$as_me: libungif development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without GIF support. (oleaut32.dll)" >&5
-echo "$as_me: Wine will be built without GIF support. (oleaut32.dll)" >&6;}
   fi
 
       if test "$have_x" = "yes"

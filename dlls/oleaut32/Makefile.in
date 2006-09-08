@@ -24,6 +24,7 @@ C_SRCS = \
 	tmarshal.c \
 	typelib.c \
 	typelib2.c \
+	ungif.c \
 	usrmarshal.c \
 	varformat.c \
 	variant.c \

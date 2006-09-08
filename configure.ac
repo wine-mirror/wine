@@ -166,7 +166,6 @@ AC_CHECK_HEADERS(\
 	float.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
-	gif_lib.h \
 	ieeefp.h \
 	io.h \
 	jack/jack.h \
@@ -878,14 +877,6 @@ then
     AC_CHECK_LIB(capi20,capi20_register,[AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])])
 fi
 
-dnl **** Check for gif header usability ****
-
-if test "$ac_cv_header_gif_lib_h" = "yes"
-then
-    AC_TRY_COMPILE([#include <gif_lib.h>],[static typeof(DGifOpen) * func;],
-        AC_DEFINE(HAVE_GIF, 1, [Define if you have usable GIF headers]))
-fi
-
 dnl **** Check for gcc specific options ****
 
 AC_SUBST(EXTRACFLAGS,"")
@@ -1170,8 +1161,6 @@ then
   WINE_GET_SONAME(ncurses,waddch)
   WINE_GET_SONAME(curses,waddch)
   WINE_GET_SONAME(jpeg,jpeg_start_decompress)
-  WINE_GET_SONAME(ungif,DGifOpen)
-  WINE_GET_SONAME(gif,DGifOpen)
   WINE_GET_SONAME(capi20,capi20_isinstalled)
 fi
 
@@ -1887,14 +1876,6 @@ then
     echo >&2
     AC_MSG_NOTICE([libsane development files not found.])
     AC_MSG_NOTICE([Wine will be built without Scanner support. (sane.ds/twain_32.dll)])
-  fi
-
-  dnl **** libungif devel package ***
-  if test "$ac_cv_header_gif_lib_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libungif development files not found.])
-    AC_MSG_NOTICE([Wine will be built without GIF support. (oleaut32.dll)])
   fi
 
   dnl **** libX11-dev includes Xlib.h and Xutil.h and depends on ***

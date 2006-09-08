@@ -48,16 +48,6 @@
 /* Must be before wine includes, the header has things conflicting with
  * WINE headers.
  */
-#ifdef HAVE_GIF_LIB_H
-# include <gif_lib.h>
-# ifndef SONAME_LIBUNGIF
-#  define SONAME_LIBUNGIF "libungif.so"
-# endif
-# ifndef SONAME_LIBGIF
-#  define SONAME_LIBGIF "libgif.so"
-# endif
-#endif
-
 #define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -91,6 +81,8 @@
 #define SONAME_LIBJPEG "libjpeg.so"
 #endif
 #endif
+
+#include "ungif.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -989,40 +981,11 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
 #endif /* HAVE_JPEGLIB_H */
 
-#ifdef HAVE_GIF
-
-static void *libungif_handle;
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(DGifOpen);
-MAKE_FUNCPTR(DGifSlurp);
-MAKE_FUNCPTR(DGifCloseFile);
-#undef MAKE_FUNCPTR
-
 struct gifdata {
     unsigned char *data;
     unsigned int curoff;
     unsigned int len;
 };
-
-static void *load_libungif(void)
-{
-    if(((libungif_handle = wine_dlopen(SONAME_LIBUNGIF, RTLD_NOW, NULL, 0)) != NULL) ||
-       ((libungif_handle = wine_dlopen(SONAME_LIBGIF  , RTLD_NOW, NULL, 0)) != NULL)
-    ) {
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libungif_handle, #f, NULL, 0)) == NULL) { \
-        libungif_handle = NULL; \
-        return NULL; \
-    }
-
-        LOAD_FUNCPTR(DGifOpen);
-        LOAD_FUNCPTR(DGifSlurp);
-        LOAD_FUNCPTR(DGifCloseFile);
-#undef LOAD_FUNCPTR
-    }
-    return libungif_handle;
-}
 
 static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     struct gifdata *gd = (struct gifdata*)gif->UserData;
@@ -1036,12 +999,9 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     return len;
 }
 
-#endif  /* HAVE_GIF */
-
 
 static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
 {
-#ifdef HAVE_GIF
     struct gifdata 	gd;
     GifFileType 	*gif;
     BITMAPINFO		*bmi;
@@ -1055,18 +1015,11 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     ExtensionBlock      *eb;
     int                 padding;
 
-    if(!libungif_handle) {
-        if(!load_libungif()) {
-            FIXME("Failed reading GIF because unable to find %s/%s\n", SONAME_LIBUNGIF, SONAME_LIBGIF);
-            return E_FAIL;
-        }
-    }
-
     gd.data   = xbuf;
     gd.curoff = 0;
     gd.len    = xread;
-    gif = pDGifOpen((void*)&gd, _gif_inputfunc);
-    ret = pDGifSlurp(gif);
+    gif = DGifOpen((void*)&gd, _gif_inputfunc);
+    ret = DGifSlurp(gif);
     if (ret == GIF_ERROR) {
       FIXME("Failed reading GIF using libgif.\n");
       return E_FAIL;
@@ -1238,13 +1191,9 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     DeleteDC(hdcref);
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
-    pDGifCloseFile(gif);
+    DGifCloseFile(gif);
     HeapFree(GetProcessHeap(),0,bytes);
     return S_OK;
-#else
-    FIXME("Trying to load GIF, but no support for libgif/libungif compiled in.\n");
-    return E_FAIL;
-#endif
 }
 
 static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
