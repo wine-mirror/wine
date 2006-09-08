@@ -36,6 +36,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static HCRYPTPROV hDefProv;
 
+static const WCHAR szOID[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'C','r','y','p','t','o','g','r','a','p','h','y','\\',
+    'O','I','D','\\',
+    'E','n','c','o','d','i','n','g','T','y','p','e',' ','0','\\',
+    'C','r','y','p','t','S','I','P','D','l','l', 0 };
+
+static const WCHAR szBackSlash[] = { '\\', 0 };
+
+static const WCHAR szPutSigned[] = {
+    'P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+static const WCHAR szGetSigned[] = {
+    'G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+static const WCHAR szRemoveSigned[] = {
+    'R','e','m','o','v','e','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+static const WCHAR szCreate[] = {
+    'C','r','e','a','t','e','I','n','d','i','r','e','c','t','D','a','t','a',0};
+static const WCHAR szVerify[] = {
+    'V','e','r','i','f','y','I','n','d','i','r','e','c','t','D','a','t','a',0};
+static const WCHAR szIsMyFile[] = {
+    'I','s','M','y','F','i','l','e','T','y','p','e', 0 };
+static const WCHAR szIsMyFile2[] = {
+    'I','s','M','y','F','i','l','e','T','y','p','e','2', 0};
+
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 {
     switch (fdwReason)
@@ -93,6 +118,40 @@ HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
     return h;
 }
 
+/* convert a guid to a wide character string */
+static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
+{
+    char str[40];
+
+    sprintf(str, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+           guid->Data1, guid->Data2, guid->Data3,
+           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, 40 );
+}
+
+/***********************************************************************
+ *              CRYPT_SIPDeleteFunction
+ *
+ * Helper function for CryptSIPRemoveProvider
+ */
+static LONG CRYPT_SIPDeleteFunction( LPGUID guid, LPCWSTR szKey )
+{
+    WCHAR szFullKey[ 0x100 ];
+    LONG r = ERROR_SUCCESS;
+
+    /* max length of szFullKey depends on our code only, so we won't overrun */
+    lstrcpyW( szFullKey, szOID );
+    lstrcatW( szFullKey, szKey );
+    lstrcatW( szFullKey, szBackSlash );
+    CRYPT_guid2wstr( guid, &szFullKey[ lstrlenW( szFullKey ) ] );
+    lstrcatW( szFullKey, szBackSlash );
+
+    r = RegDeleteKeyW(HKEY_LOCAL_MACHINE, szFullKey);
+
+    return r;
+}
+
 /***********************************************************************
  *             CryptSIPRemoveProvider (CRYPT32.@)
  *
@@ -111,20 +170,39 @@ HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
  */
 BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 {
-    FIXME("stub!\n");
-    return FALSE;
-}
+    LONG r = ERROR_SUCCESS;
+    LONG remove_error = ERROR_SUCCESS;
 
-/* convert a guid to a wide character string */
-static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
-{
-    char str[40];
+    TRACE("%s\n", debugstr_guid(pgProv));
 
-    sprintf(str, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-           guid->Data1, guid->Data2, guid->Data3,
-           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, 40 );
+    if (!pgProv)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+
+#define CRYPT_SIPREMOVEPROV( key ) \
+    r = CRYPT_SIPDeleteFunction( pgProv, key); \
+    if (r != ERROR_SUCCESS) remove_error = r
+
+    CRYPT_SIPREMOVEPROV( szPutSigned);
+    CRYPT_SIPREMOVEPROV( szGetSigned);
+    CRYPT_SIPREMOVEPROV( szRemoveSigned);
+    CRYPT_SIPREMOVEPROV( szCreate);
+    CRYPT_SIPREMOVEPROV( szVerify);
+    CRYPT_SIPREMOVEPROV( szIsMyFile);
+    CRYPT_SIPREMOVEPROV( szIsMyFile2);
+
+#undef CRYPT_SIPREMOVEPROV
+
+    if (remove_error != ERROR_SUCCESS)
+    {
+        SetLastError(remove_error);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /*
@@ -136,14 +214,6 @@ static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
 static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey, 
               LPCWSTR szDll, LPCWSTR szFunction )
 {
-    static const WCHAR szOID[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'C','r','y','p','t','o','g','r','a','p','h','y','\\',
-        'O','I','D','\\',
-        'E','n','c','o','d','i','n','g','T','y','p','e',' ','0','\\',
-        'C','r','y','p','t','S','I','P','D','l','l', 0 };
-    static const WCHAR szBackSlash[] = { '\\', 0 };
     static const WCHAR szDllName[] = { 'D','l','l',0 };
     static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
     WCHAR szFullKey[ 0x100 ];
@@ -199,21 +269,6 @@ error_close_key:
  */
 BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
 {
-    static const WCHAR szCreate[] = {
-       'C','r','e','a','t','e',
-       'I','n','d','i','r','e','c','t','D','a','t','a',0};
-    static const WCHAR szGetSigned[] = {
-       'G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    static const WCHAR szIsMyFile[] = {
-       'I','s','M','y','F','i','l','e','T','y','p','e', 0 };
-    static const WCHAR szPutSigned[] = {
-       'P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    static const WCHAR szRemoveSigned[] = {
-       'R','e','m','o','v','e',
-       'S','i','g','n','e','d','D','a','t','a','M','s','g',0};
-    static const WCHAR szVerify[] = {
-       'V','e','r','i','f','y',
-       'I','n','d','i','r','e','c','t','D','a','t','a',0};
     LONG r = ERROR_SUCCESS;
 
     TRACE("%p\n", psNewProv);
