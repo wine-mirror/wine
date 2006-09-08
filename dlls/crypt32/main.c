@@ -205,11 +205,11 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     CRYPT_SIPWriteFunction( psNewProv->pgSubject, key, \
            psNewProv->pwszDLLFileName, psNewProv->field)
 
-    CRYPT_SIPADDPROV( szGetSigned, pwszGetFuncName );
     CRYPT_SIPADDPROV( szPutSigned, pwszPutFuncName );
+    CRYPT_SIPADDPROV( szGetSigned, pwszGetFuncName );
+    CRYPT_SIPADDPROV( szRemoveSigned, pwszRemoveFuncName );
     CRYPT_SIPADDPROV( szCreate, pwszCreateFuncName );
     CRYPT_SIPADDPROV( szVerify, pwszVerifyFuncName );
-    CRYPT_SIPADDPROV( szRemoveSigned, pwszRemoveFuncName );
     CRYPT_SIPADDPROV( szIsMyFile, pwszIsFunctionNameFmt2 );
 
 #undef CRYPT_SIPADDPROV
