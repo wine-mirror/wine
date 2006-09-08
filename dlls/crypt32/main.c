@@ -131,7 +131,7 @@ static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey,
     static const WCHAR szDllName[] = { 'D','l','l',0 };
     static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
     WCHAR szFullKey[ 0x100 ];
-    LONG r;
+    LONG r = ERROR_SUCCESS;
     HKEY hKey;
 
     if( !szFunction )
@@ -147,18 +147,20 @@ static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey,
     TRACE("key is %s\n", debugstr_w( szFullKey ) );
 
     r = RegCreateKeyW( HKEY_LOCAL_MACHINE, szFullKey, &hKey );
-    if( r != ERROR_SUCCESS )
-        return r;
+    if( r != ERROR_SUCCESS ) goto error_close_key;
 
     /* write the values */
-    RegSetValueExW( hKey, szFuncName, 0, REG_SZ, (const BYTE*) szFunction,
-                    ( lstrlenW( szFunction ) + 1 ) * sizeof (WCHAR) );
-    RegSetValueExW( hKey, szDllName, 0, REG_SZ, (const BYTE*) szDll,
-                    ( lstrlenW( szDll ) + 1) * sizeof (WCHAR) );
+    r = RegSetValueExW( hKey, szFuncName, 0, REG_SZ, (const BYTE*) szFunction,
+                        ( lstrlenW( szFunction ) + 1 ) * sizeof (WCHAR) );
+    if( r != ERROR_SUCCESS ) goto error_close_key;
+    r = RegSetValueExW( hKey, szDllName, 0, REG_SZ, (const BYTE*) szDll,
+                        ( lstrlenW( szDll ) + 1) * sizeof (WCHAR) );
+
+error_close_key:
 
     RegCloseKey( hKey );
 
-    return ERROR_SUCCESS;
+    return r;
 }
 
 BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
