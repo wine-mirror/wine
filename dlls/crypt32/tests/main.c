@@ -25,6 +25,7 @@
 #include <winerror.h>
 #include <wincrypt.h>
 #include <winreg.h>
+#include <mssip.h>
 
 #include "wine/test.h"
 
@@ -343,6 +344,85 @@ static void test_getDefaultCryptProv(void)
     CryptReleaseContext(prov, 0);
 }
 
+static void test_AddRemoveProvider(void)
+{
+    BOOL ret;
+    SIP_ADD_NEWPROVIDER newprov;
+    GUID actionid = { 0xdeadbe, 0xefde, 0xadbe, { 0xef,0xde,0xad,0xbe,0xef,0xde,0xad,0xbe }};
+    static WCHAR dummydll[]      = {'d','e','a','d','b','e','e','f','.','d','l','l',0 };
+    static WCHAR dummyfunction[] = {'d','u','m','m','y','f','u','n','c','t','i','o','n',0 };
+
+    /* NULL check */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPRemoveProvider(NULL);
+    ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+
+    /* nonexistent provider should result in a registry error */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPRemoveProvider(&actionid);
+    ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
+    ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+        "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
+
+    /* Everything OK, pwszIsFunctionName and pwszIsFunctionNameFmt2 are left NULL
+     * as allowed */
+
+    memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
+    newprov.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
+    newprov.pgSubject = &actionid;
+    newprov.pwszDLLFileName = dummydll;
+    newprov.pwszGetFuncName = dummyfunction;
+    newprov.pwszPutFuncName = dummyfunction;
+    newprov.pwszCreateFuncName = dummyfunction;
+    newprov.pwszVerifyFuncName = dummyfunction;
+    newprov.pwszRemoveFuncName = dummyfunction;
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPAddProvider(&newprov);
+    ok ( ret, "CryptSIPAddProvider should have succeeded\n");
+    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n",
+     GetLastError());
+
+    /* Dummy provider will be deleted, but the function still fails because
+     * pwszIsFunctionName and pwszIsFunctionNameFmt2 are not present in the
+     * registry.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPRemoveProvider(&actionid);
+    ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
+    ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+        "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
+
+    /* Everything OK */
+    memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
+    newprov.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
+    newprov.pgSubject = &actionid;
+    newprov.pwszDLLFileName = dummydll;
+    newprov.pwszGetFuncName = dummyfunction;
+    newprov.pwszPutFuncName = dummyfunction;
+    newprov.pwszCreateFuncName = dummyfunction;
+    newprov.pwszVerifyFuncName = dummyfunction;
+    newprov.pwszRemoveFuncName = dummyfunction;
+    newprov.pwszIsFunctionNameFmt2 = dummyfunction;
+    newprov.pwszIsFunctionName = dummyfunction;
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPAddProvider(&newprov);
+    ok ( ret, "CryptSIPAddProvider should have succeeded\n");
+    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n",
+     GetLastError());
+
+    /* Dummy provider should be deleted */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPRemoveProvider(&actionid);
+    todo_wine
+    {
+        ok ( ret, "CryptSIPRemoveProvider should have succeeded\n");
+        ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n",
+         GetLastError());
+    }
+}
+
 START_TEST(main)
 {
     hCrypt = LoadLibraryA("crypt32.dll");
@@ -354,4 +434,5 @@ START_TEST(main)
     test_cryptTls();
     test_readTrustedPublisherDWORD();
     test_getDefaultCryptProv();
+    test_AddRemoveProvider();
 }
