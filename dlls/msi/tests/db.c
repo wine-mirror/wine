@@ -1917,9 +1917,11 @@ static void test_join(void)
 static void test_temporary_table(void)
 {
     MSICONDITION cond;
-    MSIHANDLE hdb;
+    MSIHANDLE hdb = 0, view = 0, rec;
     const char *query;
     UINT r;
+    char buf[0x10];
+    DWORD sz;
 
     cond = MsiDatabaseIsTablePersistent(0, NULL);
     todo_wine ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
@@ -1992,6 +1994,42 @@ static void test_temporary_table(void)
     query = "CREATE TABLE `T5` ( `B` SHORT NOT NULL TEMP, `C` CHAR(255) TEMP PRIMARY KEY `C`) HOLD";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to add table\n");
+
+    query = "select * from `T`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "failed to query table\n");
+    r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    ok(r == ERROR_SUCCESS, "failed to get column info\n");
+
+    sz = sizeof buf;
+    r = MsiRecordGetString(rec, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to get string\n");
+    todo_wine ok( 0 == strcmp("G255", buf), "wrong column type\n");
+
+    sz = sizeof buf;
+    r = MsiRecordGetString(rec, 2, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to get string\n");
+    todo_wine ok( 0 == strcmp("j2", buf), "wrong column type\n");
+
+    MsiCloseHandle( rec );
+    MsiCloseHandle( view );
+
+    /* query the table data */
+    rec = 0;
+    r = do_query(hdb, "select * from `_Tables` where `Name` = 'T'", &rec);
+    ok( r == ERROR_SUCCESS, "temporary table exists in _Tables\n");
+    MsiCloseHandle( rec );
+
+    todo_wine {
+    /* query the column data */
+    rec = 0;
+    r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'B'", &rec);
+    ok( r == ERROR_NO_MORE_ITEMS, "temporary table exists in _Columns\n");
+
+    r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'C'", &rec);
+    ok( r == ERROR_NO_MORE_ITEMS, "temporary table exists in _Columns\n");
+    }
+
     MsiCloseHandle( hdb );
 
     DeleteFile(msifile);
