@@ -293,132 +293,6 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
 }
 
 /*************************************************************************
- *	Shell Memory Allocator
- */
-
-/* set the vtable later */
-static const IMallocVtbl VT_Shell_IMalloc32;
-
-/* this is the static object instance */
-typedef struct {
-	const IMallocVtbl *lpVtbl;
-	DWORD dummy;
-} _ShellMalloc;
-
-static _ShellMalloc Shell_Malloc = { &VT_Shell_IMalloc32,1};
-
-/* this is the global allocator of shell32 */
-static IMalloc * ShellTaskAllocator = NULL;
-
-/******************************************************************************
- *              IShellMalloc_QueryInterface        [VTABLE]
- */
-static HRESULT WINAPI IShellMalloc_fnQueryInterface(LPMALLOC iface, REFIID refiid, LPVOID *obj)
-{
-	TRACE("(%s,%p)\n",shdebugstr_guid(refiid),obj);
-	if (IsEqualIID(refiid, &IID_IUnknown) || IsEqualIID(refiid, &IID_IMalloc)) {
-		*obj = (LPMALLOC) &Shell_Malloc;
-		return S_OK;
-	}
-	return E_NOINTERFACE;
-}
-
-/******************************************************************************
- *              IShellMalloc_AddRefRelease        [VTABLE]
- */
-static ULONG WINAPI IShellMalloc_fnAddRefRelease(LPMALLOC iface)
-{
-        return 1;
-}
-
-/******************************************************************************
- *		IShellMalloc_Alloc [VTABLE]
- */
-static LPVOID WINAPI IShellMalloc_fnAlloc(LPMALLOC iface, DWORD cb)
-{
-        LPVOID addr;
-
-	addr = (LPVOID) LocalAlloc(LMEM_ZEROINIT, cb);
-        TRACE("(%p,%ld);\n",addr,cb);
-        return addr;
-}
-
-/******************************************************************************
- *		IShellMalloc_Realloc [VTABLE]
- */
-static LPVOID WINAPI IShellMalloc_fnRealloc(LPMALLOC iface, LPVOID pv, DWORD cb)
-{
-        LPVOID addr;
-
-	if (pv) {
-		if (cb) {
-			addr = (LPVOID) LocalReAlloc((HANDLE) pv, cb, LMEM_ZEROINIT | LMEM_MOVEABLE);
-		} else {
-			LocalFree((HANDLE) pv);
-			addr = NULL;
-		}
-	} else {
-		if (cb) {
-			addr = (LPVOID) LocalAlloc(LMEM_ZEROINIT, cb);
-		} else {
-			addr = NULL;
-		}
-	}
-
-        TRACE("(%p->%p,%ld)\n",pv,addr,cb);
-        return addr;
-}
-
-/******************************************************************************
- *		IShellMalloc_Free [VTABLE]
- */
-static VOID WINAPI IShellMalloc_fnFree(LPMALLOC iface, LPVOID pv)
-{
-        TRACE("(%p)\n",pv);
-	LocalFree((HANDLE) pv);
-}
-
-/******************************************************************************
- *		IShellMalloc_GetSize [VTABLE]
- */
-static DWORD WINAPI IShellMalloc_fnGetSize(LPMALLOC iface, LPVOID pv)
-{
-        DWORD cb = (DWORD) LocalSize((HANDLE)pv);
-        TRACE("(%p,%ld)\n", pv, cb);
-	return cb;
-}
-
-/******************************************************************************
- *		IShellMalloc_DidAlloc [VTABLE]
- */
-static INT WINAPI IShellMalloc_fnDidAlloc(LPMALLOC iface, LPVOID pv)
-{
-        TRACE("(%p)\n",pv);
-        return -1;
-}
-
-/******************************************************************************
- * 		IShellMalloc_HeapMinimize [VTABLE]
- */
-static VOID WINAPI IShellMalloc_fnHeapMinimize(LPMALLOC iface)
-{
-	TRACE("()\n");
-}
-
-static const IMallocVtbl VT_Shell_IMalloc32 =
-{
-	IShellMalloc_fnQueryInterface,
-	IShellMalloc_fnAddRefRelease,
-	IShellMalloc_fnAddRefRelease,
-	IShellMalloc_fnAlloc,
-	IShellMalloc_fnRealloc,
-	IShellMalloc_fnFree,
-	IShellMalloc_fnGetSize,
-	IShellMalloc_fnDidAlloc,
-	IShellMalloc_fnHeapMinimize
-};
-
-/*************************************************************************
  *			 SHGetMalloc			[SHELL32.@]
  *
  * Equivalent to CoGetMalloc(MEMCTX_TASK, ...). Under Windows 9x this function
@@ -432,37 +306,13 @@ static const IMallocVtbl VT_Shell_IMalloc32 =
  *  Success: S_OK. lpmal contains the shells IMalloc interface.
  *  Failure. An HRESULT error code.
  *
- * NOTES
- *  wine contains an implementation of an allocator to use when ole32.dll is not
- *  loaded but it is never used as ole32 is imported by shlwapi which is imported by
- *  shell32
- *
  * SEE ALSO
  *  CoGetMalloc, SHLoadOLE
  */
 HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
 {
 	TRACE("(%p)\n", lpmal);
-
-	if (!ShellTaskAllocator)
-	{
-		HMODULE hOle32 = GetModuleHandleA("OLE32.DLL");
-		/* this is very suspect. we should not being using a different
-		 * allocator from deallocator based on something undeterministic
-		 * like whether ole32 is loaded. as it happens currently, they
-		 * both map to the same allocator deep down, but this could
-		 * change in the future. */
-		if(hOle32) {
-			CoGetMalloc(MEMCTX_TASK, &ShellTaskAllocator);
-			TRACE("got ole32 IMalloc\n");
-		}
-		if(!ShellTaskAllocator) {
-			ShellTaskAllocator = (IMalloc* ) &Shell_Malloc;
-			TRACE("use fallback allocator\n");
-		}
-	}
-	*lpmal = ShellTaskAllocator;
-	return  S_OK;
+	return CoGetMalloc(MEMCTX_TASK, lpmal);
 }
 
 /*************************************************************************
@@ -480,14 +330,11 @@ HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
  */
 LPVOID WINAPI SHAlloc(DWORD len)
 {
-	IMalloc * ppv;
-	LPBYTE ret;
+	LPVOID ret;
 
-	if (!ShellTaskAllocator) SHGetMalloc(&ppv);
-
-	ret = (LPVOID) IMalloc_Alloc(ShellTaskAllocator, len);
+	ret = CoTaskMemAlloc(len);
 	TRACE("%lu bytes at %p\n",len, ret);
-	return (LPVOID)ret;
+	return ret;
 }
 
 /*************************************************************************
@@ -505,11 +352,8 @@ LPVOID WINAPI SHAlloc(DWORD len)
  */
 void WINAPI SHFree(LPVOID pv)
 {
-	IMalloc * ppv;
-
 	TRACE("%p\n",pv);
-	if (!ShellTaskAllocator) SHGetMalloc(&ppv);
-	IMalloc_Free(ShellTaskAllocator, pv);
+	CoTaskMemFree(pv);
 }
 
 /*************************************************************************
