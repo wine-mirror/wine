@@ -1135,7 +1135,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->nScrollPosY = 0;
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;
   ed->bHideSelection = FALSE;
@@ -1150,11 +1149,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
     ed->pFontCache[i].nAge = 0;
     ed->pFontCache[i].hFont = NULL;
   }
-  
-  if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
-    FIXME("WS_HSCROLL requested, but horizontal scrolling isn't implemented yet.\n");
-  ed->bScrollX = 0;  
-  ed->bScrollY = GetWindowLongW(hWnd, GWL_STYLE) & WS_VSCROLL;
   
   ME_CheckCharOffsets(ed);
   
@@ -1410,7 +1404,6 @@ get_msg_name(UINT msg)
  *        RichEditANSIWndProc (RICHED20.10)
  */
 LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  SCROLLINFO si;
   ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
   
   TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
@@ -1583,9 +1576,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SETSCROLLPOS:
   {
     POINT *point = (POINT *)lParam;
-    /* Native behavior when point->y is too large is very odd / dosn't follow MSDN.
-       This seems to be a pretty close approximation of what it does. */
-    ME_Scroll(editor, 0, -(min(point->y, (editor->nTotalLength - 1)) - editor->nScrollPosY));
+    ME_ScrollAbs(editor, point->y);
     return 0;
   }
   case EM_AUTOURLDETECT:
@@ -1599,7 +1590,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_GETAUTOURLDETECT:
   {
-	return editor->AutoURLDetect_bEnable;
+    return editor->AutoURLDetect_bEnable;
   }
   case EM_EXSETSEL:
   {
@@ -1630,11 +1621,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_SHOWSCROLLBAR:
   {
-    if (wParam == SB_VERT)
-      editor->bScrollY = lParam;
-    else if (wParam == SB_HORZ)
-      editor->bScrollX = lParam;
-    ME_UpdateScrollBar(editor);
+    ShowScrollBar(editor->hWnd, wParam, lParam);
     return 0;
   }
   case EM_SETTEXTEX:
@@ -1769,7 +1756,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETFIRSTVISIBLELINE:
   {
     ME_DisplayItem *p = editor->pBuffer->pFirst;
-    int y = editor->nScrollPosY;
+    int y = ME_GetYScrollPos(editor);
     int ypara = 0;
     int count = 0;
     int ystart, yend;
@@ -1798,22 +1785,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_LINESCROLL:
   {
-    int nPos = editor->nScrollPosY, nEnd= editor->nTotalLength - editor->sizeWindow.cy;
-    nPos += 8 * lParam; /* FIXME follow the original */
-    if (nPos>=nEnd)
-      nPos = nEnd;
-    if (nPos<0)
-      nPos = 0;
-    if (nPos != editor->nScrollPosY) {
-      int dy = editor->nScrollPosY - nPos;
-      editor->nScrollPosY = nPos;
-      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
-      if (editor->bRedraw)
-      {
-        ScrollWindow(hWnd, 0, dy, NULL, NULL);
-        UpdateWindow(hWnd);
-      }
-    }
+    ME_ScrollDown(editor, lParam * 8); /* FIXME follow the original */
     return TRUE; /* Should return false if a single line richedit control */
   }
   case WM_CLEAR:
@@ -1853,36 +1825,19 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SCROLLCARET:
   {
     int top, bottom; /* row's edges relative to document top */
+    int nPos;
     ME_DisplayItem *para, *row;
-
+    
+    nPos = ME_GetYScrollPos(editor);
     row = ME_RowStart(editor->pCursors[0].pRun);
     para = ME_GetParagraph(row);
     top = para->member.para.nYPos + row->member.row.nYPos;
     bottom = top + row->member.row.nHeight;
-
-    if ((top < editor->nScrollPosY)
-        || (editor->nScrollPosY + editor->sizeWindow.cy < bottom))
-    {
-      int dy;
-      int prevScrollPosY = editor->nScrollPosY;
-
-      if (top < editor->nScrollPosY) /* caret above window */
-        editor->nScrollPosY = top;
-      else /* caret below window */
-        editor->nScrollPosY = bottom - editor->sizeWindow.cy;
-
-      if (editor->nScrollPosY < 0)
-        editor->nScrollPosY = 0;
-
-      dy = prevScrollPosY - editor->nScrollPosY;
-      SetScrollPos(hWnd, SB_VERT, editor->nScrollPosY, TRUE);
-      if (editor->bRedraw)
-      {
-        ScrollWindow(hWnd, 0, dy, NULL, NULL);
-        UpdateWindow(hWnd);
-      }
-    }
-
+    
+    if (top < nPos) /* caret above window */
+      ME_ScrollAbs(editor,  top);
+    else if (nPos + editor->sizeWindow.cy < bottom) /*below*/
+      ME_ScrollAbs(editor, bottom - editor->sizeWindow.cy);
     return 0;
   }
   case WM_SETFONT:
@@ -2066,7 +2021,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   {
       POINT *point = (POINT *)lParam;
       point->x = 0; /* FIXME side scrolling not implemented */
-      point->y = editor->nScrollPosY;
+      point->y = ME_GetYScrollPos(editor);
       return 1;
   }
   case EM_GETTEXTRANGE:
@@ -2300,13 +2255,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_CREATE:
     if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
     { /* Squelch the default horizontal scrollbar it would make */
-      si.cbSize = sizeof(SCROLLINFO);
-      si.fMask = SIF_POS | SIF_RANGE;
-      si.nMax = 0;
-      si.nMin = 0;
-      si.nPos = 0;
-      SetScrollInfo(hWnd, SB_HORZ, &si, FALSE);
-    }	  
+      ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
+    }
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
@@ -2428,79 +2378,51 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SCROLL: /* fall through */
   case WM_VSCROLL: 
   {
-    int nEnd;
-    int nPos = editor->nScrollPosY;
-    int origNPos = nPos;
-    int lineHeight = 24;
-    si.cbSize = sizeof(SCROLLINFO);
-    si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE|SIF_TRACKPOS;
-    GetScrollInfo(hWnd, SB_VERT, &si);
+    int origNPos;
+    int lineHeight;
+    
+    origNPos = ME_GetYScrollPos(editor);
+    lineHeight = 24;
+    
     if (editor && editor->pBuffer && editor->pBuffer->pDefaultStyle)
-        lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
+      lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
     if (lineHeight <= 0) lineHeight = 24;
-    switch(LOWORD(wParam)) {
-    case SB_LINEUP:
-      nPos -= lineHeight;
-      if (nPos<0) nPos = 0;
-      break;
-    case SB_LINEDOWN:
+    
+    switch(LOWORD(wParam)) 
     {
-      nEnd = editor->nTotalLength - editor->sizeWindow.cy;
-      if (nEnd < 0) nEnd = 0;
-      nPos += lineHeight;
-      if (nPos>=nEnd) nPos = nEnd;
-      break;
-    }
-    case SB_PAGEUP:
-      nPos -= editor->sizeWindow.cy;
-      if (nPos<0) nPos = 0;
-      break;
-    case SB_PAGEDOWN:
-      nEnd = editor->nTotalLength - editor->sizeWindow.cy;
-      if (nEnd < 0) nEnd = 0;
-      nPos += editor->sizeWindow.cy;
-      if (nPos>=nEnd) nPos = nEnd;
-      break;
-    case SB_THUMBTRACK:
-    case SB_THUMBPOSITION:
-      nPos = si.nTrackPos;
-      break;
-    }
-    if (nPos != editor->nScrollPosY) {
-      int dy = editor->nScrollPosY - nPos;
-      editor->nScrollPosY = nPos;
-      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
-      if (editor->bRedraw)
-      {
-        ScrollWindow(hWnd, 0, dy, NULL, NULL);
-        UpdateWindow(hWnd);
-      }
+      case SB_LINEUP:
+        ME_ScrollUp(editor,lineHeight);
+        break;
+      case SB_LINEDOWN:
+        ME_ScrollDown(editor,lineHeight);
+        break;
+      case SB_PAGEUP:
+        ME_ScrollUp(editor,editor->sizeWindow.cy);
+        break;
+      case SB_PAGEDOWN:
+        ME_ScrollDown(editor,editor->sizeWindow.cy);
+        break;
+      case SB_THUMBTRACK:
+      case SB_THUMBPOSITION:
+        ME_ScrollAbs(editor,HIWORD(wParam));
+        break;
     }
     if (msg == EM_SCROLL)
-      return 0x00010000 | (((nPos - origNPos)/lineHeight) & 0xffff);
+      return 0x00010000 | (((ME_GetYScrollPos(editor) - origNPos)/lineHeight) & 0xffff);
     break;
   }
   case WM_MOUSEWHEEL:
   {
-    int gcWheelDelta = 0, nPos = editor->nScrollPosY, nEnd = editor->nTotalLength - editor->sizeWindow.cy; 
+    int gcWheelDelta;
     UINT pulScrollLines;
+    
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
-    gcWheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
+    gcWheelDelta = -GET_WHEEL_DELTA_WPARAM(wParam);
+    
     if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
-      nPos += pulScrollLines * (gcWheelDelta / WHEEL_DELTA) * 8; /* FIXME follow the original */
-    if (nPos>=nEnd)
-      nPos = nEnd;
-    if (nPos<0)
-      nPos = 0;
-    if (nPos != editor->nScrollPosY) {
-      int dy = editor->nScrollPosY - nPos;
-      editor->nScrollPosY = nPos;
-      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
-      if (editor->bRedraw)
-      {
-        ScrollWindow(hWnd, 0, dy, NULL, NULL);
-        UpdateWindow(hWnd);
-      }
+    {
+      /* FIXME follow the original */
+      ME_ScrollDown(editor,pulScrollLines * (gcWheelDelta / WHEEL_DELTA) * 8); 
     }
     break;
   }
@@ -2933,7 +2855,7 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
         url.cpMin=text_pos;
         url.cpMax=car_pos-1;
         ME_SetCharFormat(editor, text_pos, (URLmax-text_pos), &link);
-        ME_Repaint(editor);
+        ME_RewrapRepaint(editor);
         break;
       }
     }

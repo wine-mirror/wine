@@ -96,36 +96,42 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpda
 
 void ME_Repaint(ME_TextEditor *editor)
 {
-  ME_Cursor *pCursor = &editor->pCursors[0];
-
-  if (ME_WrapMarkedParagraphs(editor)) {
-    ME_UpdateScrollBar(editor);
-  }
-  if (editor->bRedraw)
+  if (ME_WrapMarkedParagraphs(editor))
   {
-    ME_EnsureVisible(editor, pCursor->pRun);
-    UpdateWindow(editor->hWnd);
+    ME_UpdateScrollBar(editor);
+    FIXME("ME_Repaint had to call ME_WrapMarkedParagraphs\n");
   }
+  ME_SendOldNotify(editor, EN_UPDATE);
+  UpdateWindow(editor->hWnd);
 }
 
 void ME_UpdateRepaint(ME_TextEditor *editor)
 {
-/*
-  InvalidateRect(editor->hWnd, NULL, TRUE);
-  */
+  /* Should be called whenever the contents of the control have changed */
+  ME_Cursor *pCursor;
+  
+  if (ME_WrapMarkedParagraphs(editor))
+    ME_UpdateScrollBar(editor);
+  
+  /* Ensure that the cursor is visible */
+  pCursor = &editor->pCursors[0];
+  ME_EnsureVisible(editor, pCursor->pRun);
+  
   ME_SendOldNotify(editor, EN_CHANGE);
   ME_Repaint(editor);
-  ME_SendOldNotify(editor, EN_UPDATE);
   ME_SendSelChange(editor);
 }
 
-
 void
 ME_RewrapRepaint(ME_TextEditor *editor)
-{
+{ 
+  /* RewrapRepaint should be called whenever the control has changed in
+   * looks, but not content. Like resizing. */
+  
   ME_MarkAllForWrapping(editor);
   ME_WrapMarkedParagraphs(editor);
   ME_UpdateScrollBar(editor);
+  
   ME_Repaint(editor);
 }
 
@@ -375,88 +381,118 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   SetTextAlign(c->hDC, align);
 }
 
-void ME_Scroll(ME_TextEditor *editor, int cx, int cy)
+void ME_ScrollAbs(ME_TextEditor *editor, int absY)
 {
-  SCROLLINFO si;
-  HWND hWnd = editor->hWnd;
-
-  si.cbSize = sizeof(SCROLLINFO);
-  si.fMask = SIF_POS;
-  GetScrollInfo(hWnd, SB_VERT, &si);
-  si.nPos = editor->nScrollPosY -= cy;
-  SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
-  if (editor->bRedraw)
-  {
-    if (abs(cy) > editor->sizeWindow.cy)
-      InvalidateRect(editor->hWnd, NULL, TRUE);
-    else
-      ScrollWindowEx(hWnd, cx, cy, NULL, NULL, NULL, NULL, SW_ERASE|SW_INVALIDATE);
-  }
+  ME_Scroll(editor, absY, 1);
 }
 
-void ME_UpdateScrollBar(ME_TextEditor *editor)
+void ME_ScrollUp(ME_TextEditor *editor, int cy)
 {
-  HWND hWnd = editor->hWnd;
+  ME_Scroll(editor, cy, 2);
+}
+
+void ME_ScrollDown(ME_TextEditor *editor, int cy)
+{ 
+  ME_Scroll(editor, cy, 3);
+}
+
+void ME_Scroll(ME_TextEditor *editor, int value, int type)
+{
   SCROLLINFO si;
-  BOOL bUpdateScrollBars;
-  si.cbSize = sizeof(si);
-  si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
-  GetScrollInfo(hWnd, SB_VERT, &si);
-  bUpdateScrollBars = (editor->bScrollY)&& ((si.nMax != editor->nTotalLength) || (si.nPage != editor->sizeWindow.cy));
-	
-  if (editor->bScrollY != (si.nMax > 0))
-  { /* The scroll bar needs to be shown or hidden */
-    si.fMask = SIF_RANGE | SIF_PAGE;
-    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
-      si.fMask |= SIF_DISABLENOSCROLL;
+  int nOrigPos, nNewPos, nActualScroll;
+
+  nOrigPos = ME_GetYScrollPos(editor);
   
-    si.nMin = 0;
-    si.nPage = editor->sizeWindow.cy;
-	  
-    if (editor->bScrollY)
-      si.nMax = editor->nTotalLength;
+  si.cbSize = sizeof(SCROLLINFO);
+  si.fMask = SIF_POS;
+  
+  switch (type)
+  {
+    case 1:
+      /*Scroll absolutly*/
+      si.nPos = value;
+      break;
+    case 2:
+      /* Scroll up - towards the beginning of the document */
+      si.nPos = nOrigPos - value;
+      break;
+    case 3:
+      /* Scroll down - towards the end of the document */
+      si.nPos = nOrigPos + value;
+      break;
+    default:
+      FIXME("ME_Scroll called incorrectly\n");
+      si.nPos = 0;
+  }
+  
+  nNewPos = SetScrollInfo(editor->hWnd, SB_VERT, &si, editor->bRedraw);
+  nActualScroll = nOrigPos - nNewPos;
+  if (editor->bRedraw)
+  {
+    if (abs(nActualScroll) > editor->sizeWindow.cy)
+      InvalidateRect(editor->hWnd, NULL, TRUE);
     else
-      si.nMax = 0;
-    
-    SetScrollInfo(hWnd, SB_VERT, &si, FALSE);
+      ScrollWindowEx(editor->hWnd, 0, nActualScroll, NULL, NULL, NULL, NULL, SW_INVALIDATE);
+    ME_Repaint(editor);
+  }
+  
+  ME_UpdateScrollBar(editor);
+}
+
+ 
+ void ME_UpdateScrollBar(ME_TextEditor *editor)
+{ 
+  /* Note that this is the only funciton that should ever call SetScrolLInfo 
+   * with SIF_PAGE or SIF_RANGE. SetScrollPos and SetScrollRange should never
+   * be used at all. */
+  
+  HWND hWnd;
+  SCROLLINFO si;
+  BOOL bScrollBarWasVisible,bScrollBarWillBeVisible;
+  
+  if (ME_WrapMarkedParagraphs(editor))
+    FIXME("ME_UpdateScrollBar had to call ME_WrapMarkedParagraphs\n");
+  
+  hWnd = editor->hWnd;
+  si.cbSize = sizeof(si);
+  bScrollBarWasVisible = ME_GetYScrollVisible(editor);
+  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy;
+  
+  if (bScrollBarWasVisible != bScrollBarWillBeVisible)
+  {
+    ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
     ME_MarkAllForWrapping(editor);
     ME_WrapMarkedParagraphs(editor);
-    
-    bUpdateScrollBars = TRUE;
   }
-  if (bUpdateScrollBars) 
-  {
-    int nScroll = 0;
-    si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
-      si.fMask |= SIF_DISABLENOSCROLL;
-    if (editor->bScrollY)
-    {
-      si.nMax = editor->nTotalLength;
-      si.nPage = editor->sizeWindow.cy;
-      if (si.nPos > si.nMax-si.nPage) 
-      {
-        nScroll = (si.nMax-si.nPage)-si.nPos;
-        si.nPos = si.nMax-si.nPage;
-      }
-    }
-    else 
-    {
-      si.nMax = 0;
-      si.nPage = 0;
-      si.nPos = 0;
-    }
-    TRACE("min=%d max=%d page=%d pos=%d shift=%d\n", si.nMin, si.nMax, si.nPage, si.nPos, nScroll);
-    editor->nScrollPosY = si.nPos;
-    SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
-    if (nScroll)
-      ScrollWindow(hWnd, 0, -nScroll, NULL, NULL);
-  }
+  
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+    si.fMask |= SIF_DISABLENOSCROLL;
+  
+  si.nMin = 0;  
+  si.nMax = editor->nTotalLength;
+  
+  si.nPage = editor->sizeWindow.cy;
+     
+  TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
+  SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
 }
 
 int ME_GetYScrollPos(ME_TextEditor *editor)
 {
-  return editor->nScrollPosY;
+  SCROLLINFO si;
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_POS;
+  GetScrollInfo(editor->hWnd, SB_VERT, &si);
+  return si.nPos;
+}
+
+BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
+{ /* Returns true if the scrollbar is visible */
+  SCROLLBARINFO sbi;
+  sbi.cbSize = sizeof(sbi);
+  GetScrollBarInfo(editor->hWnd, OBJID_VSCROLL, &sbi);
+  return ((sbi.rgstate[0] & STATE_SYSTEM_INVISIBLE) == 0);
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
@@ -464,7 +500,6 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
   ME_DisplayItem *pRow = ME_FindItemBack(pRun, diStartRow);
   ME_DisplayItem *pPara = ME_FindItemBack(pRun, diParagraph);
   int y, yrel, yheight, yold;
-  HWND hWnd = editor->hWnd;
   
   assert(pRow);
   assert(pPara);
@@ -473,24 +508,11 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
   yheight = pRow->member.row.nHeight;
   yold = ME_GetYScrollPos(editor);
   yrel = y - yold;
-  if (yrel < 0) {
-    editor->nScrollPosY = y;
-    SetScrollPos(hWnd, SB_VERT, y, TRUE);
-    if (editor->bRedraw)
-    {
-      ScrollWindow(hWnd, 0, -yrel, NULL, NULL);
-      UpdateWindow(hWnd);
-    }
-  } else if (yrel + yheight > editor->sizeWindow.cy) {
-    int newy = y+yheight-editor->sizeWindow.cy;
-    editor->nScrollPosY = newy;
-    SetScrollPos(hWnd, SB_VERT, newy, TRUE);
-    if (editor->bRedraw)
-    {
-      ScrollWindow(hWnd, 0, -(newy-yold), NULL, NULL);
-      UpdateWindow(hWnd);
-    }
-  }
+  
+  if (y < yold)
+    ME_ScrollAbs(editor,y);
+  else if (yrel + yheight > editor->sizeWindow.cy) 
+    ME_ScrollAbs(editor,y+yheight-editor->sizeWindow.cy);
 }
 
 

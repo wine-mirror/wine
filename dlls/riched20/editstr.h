@@ -306,8 +306,6 @@ typedef struct tagME_TextEditor
   int nLastSelStart, nLastSelEnd;
   ME_DisplayItem *pLastSelStartPara, *pLastSelEndPara;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
-  BOOL bScrollX, bScrollY;
-  int nScrollPosY;
   int nZoomNumerator, nZoomDenominator;
   RECT rcFormat;
   BOOL bRedraw;

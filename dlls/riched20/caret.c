@@ -948,9 +948,9 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
     ME_EnsureVisible(editor, ME_FindItemFwd(editor->pBuffer->pFirst, diRun));
     ME_Repaint(editor);
   }
-  else {
-    ME_Scroll(editor, 0, ys-yprev);
-    ME_Repaint(editor);
+  else 
+  {
+    ME_ScrollUp(editor, ys-yprev);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
@@ -1001,9 +1001,9 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
     ME_EnsureVisible(editor, ME_FindItemBack(editor->pBuffer->pLast, diRun));
     ME_Repaint(editor);
   }
-  else {
-    ME_Scroll(editor, 0, ys-yprev);
-    ME_Repaint(editor);
+  else 
+  {
+    ME_ScrollUp(editor,ys-yprev);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);

@@ -173,7 +173,6 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y);
 void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
-void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W *pFmt);
 BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
@@ -228,14 +227,21 @@ void ME_Repaint(ME_TextEditor *editor);
 void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
-void ME_UpdateScrollBar(ME_TextEditor *editor);
-int ME_GetYScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
-void ME_Scroll(ME_TextEditor *editor, int cx, int cy);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
+
+/* scroll functions in paint.c */
+
+void ME_ScrollAbs(ME_TextEditor *editor, int absY);
+void ME_ScrollUp(ME_TextEditor *editor, int cy);
+void ME_ScrollDown(ME_TextEditor *editor, int cy);
+void ME_Scroll(ME_TextEditor *editor, int value, int type);
+void ME_UpdateScrollBar(ME_TextEditor *editor);
+int ME_GetYScrollPos(ME_TextEditor *editor);
+BOOL ME_GetYScrollVisible(ME_TextEditor *editor);
 
 /* richole.c */
 extern LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
