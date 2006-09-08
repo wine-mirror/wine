@@ -438,8 +438,15 @@ int WINAPIV ShellMessageBoxA(
 /*************************************************************************
  * SHRegisterDragDrop				[SHELL32.86]
  *
+ * Probably equivalent to RegisterDragDrop but under Windows 9x it could use the
+ * shell32 built-in "mini-COM" without the need to load ole32.dll - see SHLoadOLE
+ * for details
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     RegisterDragDrop, SHLoadOLE
  */
 HRESULT WINAPI SHRegisterDragDrop(
 	HWND hWnd,
@@ -452,8 +459,15 @@ HRESULT WINAPI SHRegisterDragDrop(
 /*************************************************************************
  * SHRevokeDragDrop				[SHELL32.87]
  *
+ * Probably equivalent to RevokeDragDrop but under Windows 9x it could use the
+ * shell32 built-in "mini-COM" without the need to load ole32.dll - see SHLoadOLE
+ * for details
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     RevokeDragDrop, SHLoadOLE
  */
 HRESULT WINAPI SHRevokeDragDrop(HWND hWnd)
 {
@@ -464,8 +478,15 @@ HRESULT WINAPI SHRevokeDragDrop(HWND hWnd)
 /*************************************************************************
  * SHDoDragDrop					[SHELL32.88]
  *
+ * Probably equivalent to DoDragDrop but under Windows 9x it could use the
+ * shell32 built-in "mini-COM" without the need to load ole32.dll - see SHLoadOLE
+ * for details
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     DoDragDrop, SHLoadOLE
  */
 HRESULT WINAPI SHDoDragDrop(
 	HWND hWnd,
@@ -1054,12 +1075,20 @@ HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
 /*************************************************************************
  * SHFreeUnusedLibraries			[SHELL32.123]
  *
+ * Probably equivalent to CoFreeUnusedLibraries but under Windows 9x it could use
+ * the shell32 built-in "mini-COM" without the need to load ole32.dll - see SHLoadOLE
+ * for details
+ *
  * NOTES
- *  exported by name
+ *     exported by ordinal
+ *
+ * SEE ALSO
+ *     CoFreeUnusedLibraries, SHLoadOLE
  */
 void WINAPI SHFreeUnusedLibraries (void)
 {
 	FIXME("stub\n");
+	CoFreeUnusedLibraries();
 }
 /*************************************************************************
  * DAD_AutoScroll				[SHELL32.129]
@@ -1284,9 +1313,25 @@ HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
 {	FIXME("hwnd=%p 0x%04lx stub\n",u,v );
 	return 0;
 }
+
 /*************************************************************************
  * SHLoadOLE					[SHELL32.151]
  *
+ * To reduce the memory usage of Windows 95 it's shell32 contained an
+ * internal implementation of a part of COM (see e.g. SHGetMalloc, SHCoCreateInstance,
+ * SHRegisterDragDrop etc.) that allowed to use in-process STA objects without
+ * the need to load OLE32.DLL. If OLE32.DLL was already loaded, the SH* function
+ * would just call the Co* functions.
+ *
+ * The SHLoadOLE was called when OLE32.DLL was being loaded to transfer all the
+ * informations from the shell32 "mini-COM" to ole32.dll.
+ *
+ * See http://blogs.msdn.com/oldnewthing/archive/2004/07/05/173226.aspx for a
+ * detailed description.
+ *
+ * Under wine ole32.dll is always loaded as it is imported by shlwapi.dll which is
+ * imported by shell32 and no "mini-COM" is used (except for the "LoadWithoutCOM"
+ * hack in SHCoCreateInstance)
  */
 HRESULT WINAPI SHLoadOLE(LPARAM lParam)
 {	FIXME("0x%04lx stub\n",lParam);

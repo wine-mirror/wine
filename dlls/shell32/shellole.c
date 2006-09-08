@@ -78,12 +78,6 @@ static const struct {
 	{NULL,NULL}
 };
 
-/*************************************************************************
- * SHCoCreateInstance [SHELL32.102]
- *
- * NOTES
- *     exported by ordinal
- */
 
 /* FIXME: this should be SHLWAPI.24 since we can't yet import by ordinal */
 
@@ -103,8 +97,22 @@ DWORD WINAPI __SHGUIDToStringW (REFGUID guid, LPWSTR str)
 
 }
 
-/************************************************************************/
-
+/*************************************************************************
+ * SHCoCreateInstance [SHELL32.102]
+ *
+ * Equivalent to CoCreateInstance. Under Windows 9x this function could sometimes
+ * use the shell32 built-in "mini-COM" without the need to load ole32.dll - see
+ * SHLoadOLE for details.
+ *
+ * Under wine if a "LoadWithoutCOM" value is present or the object resides in
+ * shell32.dll the function will load the object manually without the help of ole32
+ *
+ * NOTES
+ *     exported by ordinal
+ *
+ * SEE ALSO
+ *     CoCreateInstace, SHLoadOLE
+ */
 HRESULT WINAPI SHCoCreateInstance(
 	LPCWSTR aclsid,
 	const CLSID *clsid,
@@ -253,8 +261,16 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 /*************************************************************************
  * SHCLSIDFromString				[SHELL32.147]
  *
+ * Under Windows 9x this was an ANSI version of CLSIDFromString. It also allowed
+ * to avoid dependency on ole32.dll (see SHLoadOLE for details).
+ *
+ * Under Windows NT/2000/XP this is equivalent to CLSIDFromString
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     CLSIDFromString, SHLoadOLE
  */
 DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id)
 {
@@ -405,7 +421,9 @@ static const IMallocVtbl VT_Shell_IMalloc32 =
 /*************************************************************************
  *			 SHGetMalloc			[SHELL32.@]
  *
- * Return the shell IMalloc interface.
+ * Equivalent to CoGetMalloc(MEMCTX_TASK, ...). Under Windows 9x this function
+ * could use the shell32 built-in "mini-COM" without the need to load ole32.dll -
+ * see SHLoadOLE for details. 
  *
  * PARAMS
  *  lpmal [O] Destination for IMalloc interface.
@@ -415,8 +433,12 @@ static const IMallocVtbl VT_Shell_IMalloc32 =
  *  Failure. An HRESULT error code.
  *
  * NOTES
- *  This function will use CoGetMalloc() if OLE32.DLL is already loaded.
- *  If not it uses an internal implementation as a fallback.
+ *  wine contains an implementation of an allocator to use when ole32.dll is not
+ *  loaded but it is never used as ole32 is imported by shlwapi which is imported by
+ *  shell32
+ *
+ * SEE ALSO
+ *  CoGetMalloc, SHLoadOLE
  */
 HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
 {
@@ -446,8 +468,15 @@ HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
 /*************************************************************************
  * SHAlloc					[SHELL32.196]
  *
+ * Equivalent to CoTaskMemAlloc. Under Windows 9x this function could use
+ * the shell32 built-in "mini-COM" without the need to load ole32.dll -
+ * see SHLoadOLE for details. 
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     CoTaskMemAlloc, SHLoadOLE
  */
 LPVOID WINAPI SHAlloc(DWORD len)
 {
@@ -464,8 +493,15 @@ LPVOID WINAPI SHAlloc(DWORD len)
 /*************************************************************************
  * SHFree					[SHELL32.195]
  *
+ * Equivalent to CoTaskMemFree. Under Windows 9x this function could use
+ * the shell32 built-in "mini-COM" without the need to load ole32.dll -
+ * see SHLoadOLE for details. 
+ *
  * NOTES
  *     exported by ordinal
+ *
+ * SEE ALSO
+ *     CoTaskMemFree, SHLoadOLE
  */
 void WINAPI SHFree(LPVOID pv)
 {
