@@ -6225,6 +6225,463 @@ static void test_VarCmp(void)
     SysFreeString(bstr1few);
 }
 
+static HRESULT (WINAPI *pVarPow)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarPowFail = "VarPow(%s,%s): expected 0x0,%s,%d, got 0x%lX,%s,%d\n";
+
+#define VARPOW(vt1,val1,vt2,val2,rvt,rval)                             \
+    V_VT(&left) = VT_##vt1; V_VT(&right) = VT_##vt2;                   \
+    V_##vt1(&left) = val1; V_##vt2(&right) = val2;                     \
+    memset(&result,0,sizeof(result));                                  \
+    hres = pVarPow(&left,&right,&result);                              \
+    ok(hres == S_OK && V_VT(&result) == VT_##rvt &&                    \
+        EQ_DOUBLE(V_##rvt(&result),(rval)),                            \
+        szVarPowFail, vtstr(VT_##vt1), vtstr(VT_##vt2),                \
+        vtstr(VT_##rvt), (int)(rval), hres, vtstr(V_VT(&result)),      \
+        (int)V_##rvt(&result));
+
+/* Skip any type that is not defined or produces a error for every case */
+#define SKIPTESTPOW(a)                            \
+    if (a == VT_ERROR || a == VT_VARIANT ||       \
+        a == VT_DISPATCH || a == VT_UNKNOWN ||    \
+        a == VT_RECORD || a > VT_UINT ||          \
+        a == 15 /*not defined*/)                  \
+        continue;
+
+static void test_VarPow(void)
+{
+    static const WCHAR str2[] = { '2','\0' };
+    static const WCHAR str3[] = { '3','\0' };
+    VARIANT left, right, result, cy, dec;
+    BSTR num2_str, num3_str;
+    VARTYPE i;
+    HRESULT hres;
+
+    CHECKPTR(VarPow);
+
+    num2_str = SysAllocString(str2);
+    num3_str = SysAllocString(str3);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            SKIPTESTPOW(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+                SKIPTESTPOW(rightvt);
+
+                /* Native crashes with VT_BYREF */
+                if (ExtraFlags[i] == VT_BYREF)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_EMPTY;
+
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = num2_str;
+                if (rightvt == VT_BSTR)
+                    V_BSTR(&right) = num2_str;
+
+                /* Native VarPow always returns a error when using any extra flags */
+                if (ExtraFlags[i] != 0)
+                    bFail = TRUE;
+
+                /* Determine return type */
+                else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                    resvt = VT_NULL;
+                else if ((leftvt == VT_EMPTY || leftvt == VT_I2 ||
+                    leftvt == VT_I4 || leftvt == VT_R4 ||
+                    leftvt == VT_R8 || leftvt == VT_CY ||
+                    leftvt == VT_DATE || leftvt == VT_BSTR ||
+                    leftvt == VT_BOOL || leftvt == VT_DECIMAL ||
+                    (leftvt >= VT_I1 && leftvt <= VT_UINT)) &&
+                    (rightvt == VT_EMPTY || rightvt == VT_I2 ||
+                    rightvt == VT_I4 || rightvt == VT_R4 ||
+                    rightvt == VT_R8 || rightvt == VT_CY ||
+                    rightvt == VT_DATE || rightvt == VT_BSTR ||
+                    rightvt == VT_BOOL || rightvt == VT_DECIMAL ||
+                    (rightvt >= VT_I1 && rightvt <= VT_UINT)))
+                    resvt = VT_R8;
+                else
+                    bFail = TRUE;
+
+                hres = pVarPow(&left, &right, &result);
+
+                /* Check expected HRESULT and if result variant type is correct */
+                if (bFail)
+                    ok (hres == DISP_E_BADVARTYPE || hres == DISP_E_TYPEMISMATCH,
+                        "VarPow: %s|0x%X, %s|0x%X: got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i],
+                        vtstr(V_VT(&result)), hres);
+                else
+                    ok (hres == S_OK && resvt == V_VT(&result),
+                        "VarPow: %s|0x%X, %s|0x%X: expected vt %s hr 0x%lX, got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i], vtstr(resvt),
+                        S_OK, vtstr(V_VT(&result)), hres);
+            }
+        }
+    }
+
+    /* Check return values for valid variant type combinations */
+    VARPOW(EMPTY,0,EMPTY,0,R8,1.0);
+    VARPOW(EMPTY,0,NULL,0,NULL,0);
+    VARPOW(EMPTY,0,I2,3,R8,0.0);
+    VARPOW(EMPTY,0,I4,3,R8,0.0);
+    VARPOW(EMPTY,0,R4,3.0,R8,0.0);
+    VARPOW(EMPTY,0,R8,3.0,R8,0.0);
+    VARPOW(EMPTY,0,DATE,3,R8,0.0);
+    VARPOW(EMPTY,0,BSTR,num3_str,R8,0.0);
+    VARPOW(EMPTY,0,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(EMPTY,0,I1,3,R8,0.0);
+    VARPOW(EMPTY,0,UI1,3,R8,0.0);
+    VARPOW(EMPTY,0,UI2,3,R8,0.0);
+    VARPOW(EMPTY,0,UI4,3,R8,0.0);
+    VARPOW(EMPTY,0,I8,3,R8,0.0);
+    VARPOW(EMPTY,0,UI8,3,R8,0.0);
+    VARPOW(EMPTY,0,INT,3,R8,0.0);
+    VARPOW(EMPTY,0,UINT,3,R8,0.0);
+    VARPOW(NULL,0,EMPTY,0,NULL,0);
+    VARPOW(NULL,0,NULL,0,NULL,0);
+    VARPOW(NULL,0,I2,3,NULL,0);
+    VARPOW(NULL,0,I4,3,NULL,0);
+    VARPOW(NULL,0,R4,3.0,NULL,0);
+    VARPOW(NULL,0,R8,3.0,NULL,0);
+    VARPOW(NULL,0,DATE,3,NULL,0);
+    VARPOW(NULL,0,BSTR,num3_str,NULL,0);
+    VARPOW(NULL,0,BOOL,VARIANT_TRUE,NULL,0);
+    VARPOW(NULL,0,I1,3,NULL,0);
+    VARPOW(NULL,0,UI1,3,NULL,0);
+    VARPOW(NULL,0,UI2,3,NULL,0);
+    VARPOW(NULL,0,UI4,3,NULL,0);
+    VARPOW(NULL,0,I8,3,NULL,0);
+    VARPOW(NULL,0,UI8,3,NULL,0);
+    VARPOW(NULL,0,INT,3,NULL,0);
+    VARPOW(NULL,0,UINT,3,NULL,0);
+    VARPOW(I2,2,EMPTY,0,R8,1.0);
+    VARPOW(I2,2,NULL,0,NULL,0);
+    VARPOW(I2,2,I2,3,R8,8.0);
+    VARPOW(I2,2,I4,3,R8,8.0);
+    VARPOW(I2,2,R4,3.0,R8,8.0);
+    VARPOW(I2,2,R8,3.0,R8,8.0);
+    VARPOW(I2,2,DATE,3,R8,8.0);
+    VARPOW(I2,2,BSTR,num3_str,R8,8.0);
+    VARPOW(I2,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(I2,2,I1,3,R8,8.0);
+    VARPOW(I2,2,UI1,3,R8,8.0);
+    VARPOW(I2,2,UI2,3,R8,8.0);
+    VARPOW(I2,2,UI4,3,R8,8.0);
+    VARPOW(I2,2,I8,3,R8,8.0);
+    VARPOW(I2,2,UI8,3,R8,8.0);
+    VARPOW(I2,2,INT,3,R8,8.0);
+    VARPOW(I2,2,UINT,3,R8,8.0);
+    VARPOW(I4,2,EMPTY,0,R8,1.0);
+    VARPOW(I4,2,NULL,0,NULL,0);
+    VARPOW(I4,2,I2,3,R8,8.0);
+    VARPOW(I4,2,I4,3,R8,8.0);
+    VARPOW(I4,2,R4,3.0,R8,8.0);
+    VARPOW(I4,2,R8,3.0,R8,8.0);
+    VARPOW(I4,2,DATE,3,R8,8.0);
+    VARPOW(I4,2,BSTR,num3_str,R8,8.0);
+    VARPOW(I4,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(I4,2,I1,3,R8,8.0);
+    VARPOW(I4,2,UI1,3,R8,8.0);
+    VARPOW(I4,2,UI2,3,R8,8.0);
+    VARPOW(I4,2,UI4,3,R8,8.0);
+    VARPOW(I4,2,I8,3,R8,8.0);
+    VARPOW(I4,2,UI8,3,R8,8.0);
+    VARPOW(I4,2,INT,3,R8,8.0);
+    VARPOW(I4,2,UINT,3,R8,8.0);
+    VARPOW(R4,2,EMPTY,0,R8,1.0);
+    VARPOW(R4,2,NULL,0,NULL,0);
+    VARPOW(R4,2,I2,3,R8,8.0);
+    VARPOW(R4,2,I4,3,R8,8.0);
+    VARPOW(R4,2,R4,3.0,R8,8.0);
+    VARPOW(R4,2,R8,3.0,R8,8.0);
+    VARPOW(R4,2,DATE,3,R8,8.0);
+    VARPOW(R4,2,BSTR,num3_str,R8,8.0);
+    VARPOW(R4,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(R4,2,I1,3,R8,8.0);
+    VARPOW(R4,2,UI1,3,R8,8.0);
+    VARPOW(R4,2,UI2,3,R8,8.0);
+    VARPOW(R4,2,UI4,3,R8,8.0);
+    VARPOW(R4,2,I8,3,R8,8.0);
+    VARPOW(R4,2,UI8,3,R8,8.0);
+    VARPOW(R4,2,INT,3,R8,8.0);
+    VARPOW(R4,2,UINT,3,R8,8.0);
+    VARPOW(R8,2,EMPTY,0,R8,1.0);
+    VARPOW(R8,2,NULL,0,NULL,0);
+    VARPOW(R8,2,I2,3,R8,8.0);
+    VARPOW(R8,2,I4,3,R8,8.0);
+    VARPOW(R8,2,R4,3.0,R8,8.0);
+    VARPOW(R8,2,R8,3.0,R8,8.0);
+    VARPOW(R8,2,DATE,3,R8,8.0);
+    VARPOW(R8,2,BSTR,num3_str,R8,8.0);
+    VARPOW(R8,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(R8,2,I1,3,R8,8.0);
+    VARPOW(R8,2,UI1,3,R8,8.0);
+    VARPOW(R8,2,UI2,3,R8,8.0);
+    VARPOW(R8,2,UI4,3,R8,8.0);
+    VARPOW(R8,2,I8,3,R8,8.0);
+    VARPOW(R8,2,UI8,3,R8,8.0);
+    VARPOW(R8,2,INT,3,R8,8.0);
+    VARPOW(R8,2,UINT,3,R8,8.0);
+    VARPOW(DATE,2,EMPTY,0,R8,1.0);
+    VARPOW(DATE,2,NULL,0,NULL,0);
+    VARPOW(DATE,2,I2,3,R8,8.0);
+    VARPOW(DATE,2,I4,3,R8,8.0);
+    VARPOW(DATE,2,R4,3.0,R8,8.0);
+    VARPOW(DATE,2,R8,3.0,R8,8.0);
+    VARPOW(DATE,2,DATE,3,R8,8.0);
+    VARPOW(DATE,2,BSTR,num3_str,R8,8.0);
+    VARPOW(DATE,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(DATE,2,I1,3,R8,8.0);
+    VARPOW(DATE,2,UI1,3,R8,8.0);
+    VARPOW(DATE,2,UI2,3,R8,8.0);
+    VARPOW(DATE,2,UI4,3,R8,8.0);
+    VARPOW(DATE,2,I8,3,R8,8.0);
+    VARPOW(DATE,2,UI8,3,R8,8.0);
+    VARPOW(DATE,2,INT,3,R8,8.0);
+    VARPOW(DATE,2,UINT,3,R8,8.0);
+    VARPOW(BSTR,num2_str,EMPTY,0,R8,1.0);
+    VARPOW(BSTR,num2_str,NULL,0,NULL,0);
+    VARPOW(BSTR,num2_str,I2,3,R8,8.0);
+    VARPOW(BSTR,num2_str,I4,3,R8,8.0);
+    VARPOW(BSTR,num2_str,R4,3.0,R8,8.0);
+    VARPOW(BSTR,num2_str,R8,3.0,R8,8.0);
+    VARPOW(BSTR,num2_str,DATE,3,R8,8.0);
+    VARPOW(BSTR,num2_str,BSTR,num3_str,R8,8.0);
+    VARPOW(BSTR,num2_str,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(BSTR,num2_str,I1,3,R8,8.0);
+    VARPOW(BSTR,num2_str,UI1,3,R8,8.0);
+    VARPOW(BSTR,num2_str,UI2,3,R8,8.0);
+    VARPOW(BSTR,num2_str,UI4,3,R8,8.0);
+    VARPOW(BSTR,num2_str,I8,3,R8,8.0);
+    VARPOW(BSTR,num2_str,UI8,3,R8,8.0);
+    VARPOW(BSTR,num2_str,INT,3,R8,8.0);
+    VARPOW(BSTR,num2_str,UINT,3,R8,8.0);
+    VARPOW(BOOL,VARIANT_TRUE,EMPTY,0,R8,1.0);
+    VARPOW(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
+    VARPOW(BOOL,VARIANT_TRUE,I2,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,I4,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,R4,3.0,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,R8,3.0,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,DATE,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,BSTR,num3_str,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,I1,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,UI1,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,UI2,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,UI4,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,I8,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,UI8,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,INT,3,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,UINT,3,R8,-1.0);
+    VARPOW(I1,2,EMPTY,0,R8,1.0);
+    VARPOW(I1,2,NULL,0,NULL,0);
+    VARPOW(I1,2,I2,3,R8,8.0);
+    VARPOW(I1,2,I4,3,R8,8.0);
+    VARPOW(I1,2,R4,3.0,R8,8.0);
+    VARPOW(I1,2,R8,3.0,R8,8.0);
+    VARPOW(I1,2,DATE,3,R8,8.0);
+    VARPOW(I1,2,BSTR,num3_str,R8,8.0);
+    VARPOW(I1,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(I1,2,I1,3,R8,8.0);
+    VARPOW(I1,2,UI1,3,R8,8.0);
+    VARPOW(I1,2,UI2,3,R8,8.0);
+    VARPOW(I1,2,UI4,3,R8,8.0);
+    VARPOW(I1,2,I8,3,R8,8.0);
+    VARPOW(I1,2,UI8,3,R8,8.0);
+    VARPOW(I1,2,INT,3,R8,8.0);
+    VARPOW(I1,2,UINT,3,R8,8.0);
+    VARPOW(UI1,2,EMPTY,0,R8,1.0);
+    VARPOW(UI1,2,NULL,0,NULL,0);
+    VARPOW(UI1,2,I2,3,R8,8.0);
+    VARPOW(UI1,2,I4,3,R8,8.0);
+    VARPOW(UI1,2,R4,3.0,R8,8.0);
+    VARPOW(UI1,2,R8,3.0,R8,8.0);
+    VARPOW(UI1,2,DATE,3,R8,8.0);
+    VARPOW(UI1,2,BSTR,num3_str,R8,8.0);
+    VARPOW(UI1,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(UI1,2,I1,3,R8,8.0);
+    VARPOW(UI1,2,UI1,3,R8,8.0);
+    VARPOW(UI1,2,UI2,3,R8,8.0);
+    VARPOW(UI1,2,UI4,3,R8,8.0);
+    VARPOW(UI1,2,I8,3,R8,8.0);
+    VARPOW(UI1,2,UI8,3,R8,8.0);
+    VARPOW(UI1,2,INT,3,R8,8.0);
+    VARPOW(UI1,2,UINT,3,R8,8.0);
+    VARPOW(UI2,2,EMPTY,0,R8,1.0);
+    VARPOW(UI2,2,NULL,0,NULL,0);
+    VARPOW(UI2,2,I2,3,R8,8.0);
+    VARPOW(UI2,2,I4,3,R8,8.0);
+    VARPOW(UI2,2,R4,3.0,R8,8.0);
+    VARPOW(UI2,2,R8,3.0,R8,8.0);
+    VARPOW(UI2,2,DATE,3,R8,8.0);
+    VARPOW(UI2,2,BSTR,num3_str,R8,8.0);
+    VARPOW(UI2,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(UI2,2,I1,3,R8,8.0);
+    VARPOW(UI2,2,UI1,3,R8,8.0);
+    VARPOW(UI2,2,UI2,3,R8,8.0);
+    VARPOW(UI2,2,UI4,3,R8,8.0);
+    VARPOW(UI2,2,I8,3,R8,8.0);
+    VARPOW(UI2,2,UI8,3,R8,8.0);
+    VARPOW(UI2,2,INT,3,R8,8.0);
+    VARPOW(UI2,2,UINT,3,R8,8.0);
+    VARPOW(UI4,2,EMPTY,0,R8,1.0);
+    VARPOW(UI4,2,NULL,0,NULL,0);
+    VARPOW(UI4,2,I2,3,R8,8.0);
+    VARPOW(UI4,2,I4,3,R8,8.0);
+    VARPOW(UI4,2,R4,3.0,R8,8.0);
+    VARPOW(UI4,2,R8,3.0,R8,8.0);
+    VARPOW(UI4,2,DATE,3,R8,8.0);
+    VARPOW(UI4,2,BSTR,num3_str,R8,8.0);
+    VARPOW(UI4,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(UI4,2,I1,3,R8,8.0);
+    VARPOW(UI4,2,UI1,3,R8,8.0);
+    VARPOW(UI4,2,UI2,3,R8,8.0);
+    VARPOW(UI4,2,UI4,3,R8,8.0);
+    VARPOW(UI4,2,I8,3,R8,8.0);
+    VARPOW(UI4,2,UI8,3,R8,8.0);
+    VARPOW(UI4,2,INT,3,R8,8.0);
+    VARPOW(UI4,2,UINT,3,R8,8.0);
+    VARPOW(I8,2,EMPTY,0,R8,1.0);
+    VARPOW(I8,2,NULL,0,NULL,0);
+    VARPOW(I8,2,I2,3,R8,8.0);
+    VARPOW(I8,2,I4,3,R8,8.0);
+    VARPOW(I8,2,R4,3.0,R8,8.0);
+    VARPOW(I8,2,R8,3.0,R8,8.0);
+    VARPOW(I8,2,DATE,3,R8,8.0);
+    VARPOW(I8,2,BSTR,num3_str,R8,8.0);
+    VARPOW(I8,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(I8,2,I1,3,R8,8.0);
+    VARPOW(I8,2,UI1,3,R8,8.0);
+    VARPOW(I8,2,UI2,3,R8,8.0);
+    VARPOW(I8,2,UI4,3,R8,8.0);
+    VARPOW(I8,2,I8,3,R8,8.0);
+    VARPOW(I8,2,UI8,3,R8,8.0);
+    VARPOW(I8,2,INT,3,R8,8.0);
+    VARPOW(I8,2,UINT,3,R8,8.0);
+    VARPOW(UI8,2,EMPTY,0,R8,1.0);
+    VARPOW(UI8,2,NULL,0,NULL,0);
+    VARPOW(UI8,2,I2,3,R8,8.0);
+    VARPOW(UI8,2,I4,3,R8,8.0);
+    VARPOW(UI8,2,R4,3.0,R8,8.0);
+    VARPOW(UI8,2,R8,3.0,R8,8.0);
+    VARPOW(UI8,2,DATE,3,R8,8.0);
+    VARPOW(UI8,2,BSTR,num3_str,R8,8.0);
+    VARPOW(UI8,2,I1,3,R8,8.0);
+    VARPOW(UI8,2,UI1,3,R8,8.0);
+    VARPOW(UI8,2,UI2,3,R8,8.0);
+    VARPOW(UI8,2,UI4,3,R8,8.0);
+    VARPOW(UI8,2,I8,3,R8,8.0);
+    VARPOW(UI8,2,UI8,3,R8,8.0);
+    VARPOW(UI8,2,INT,3,R8,8.0);
+    VARPOW(UI8,2,UINT,3,R8,8.0);
+    VARPOW(INT,2,EMPTY,0,R8,1.0);
+    VARPOW(INT,2,NULL,0,NULL,0);
+    VARPOW(INT,2,I2,3,R8,8.0);
+    VARPOW(INT,2,I4,3,R8,8.0);
+    VARPOW(INT,2,R4,3.0,R8,8.0);
+    VARPOW(INT,2,R8,3.0,R8,8.0);
+    VARPOW(INT,2,DATE,3,R8,8.0);
+    VARPOW(INT,2,BSTR,num3_str,R8,8.0);
+    VARPOW(INT,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(INT,2,I1,3,R8,8.0);
+    VARPOW(INT,2,UI1,3,R8,8.0);
+    VARPOW(INT,2,UI2,3,R8,8.0);
+    VARPOW(INT,2,UI4,3,R8,8.0);
+    VARPOW(INT,2,I8,3,R8,8.0);
+    VARPOW(INT,2,UI8,3,R8,8.0);
+    VARPOW(INT,2,INT,3,R8,8.0);
+    VARPOW(INT,2,UINT,3,R8,8.0);
+    VARPOW(UINT,2,EMPTY,0,R8,1.0);
+    VARPOW(UINT,2,NULL,0,NULL,0);
+    VARPOW(UINT,2,I2,3,R8,8.0);
+    VARPOW(UINT,2,I4,3,R8,8.0);
+    VARPOW(UINT,2,R4,3.0,R8,8.0);
+    VARPOW(UINT,2,R8,3.0,R8,8.0);
+    VARPOW(UINT,2,DATE,3,R8,8.0);
+    VARPOW(UINT,2,BSTR,num3_str,R8,8.0);
+    VARPOW(UINT,2,BOOL,VARIANT_FALSE,R8,1.0);
+    VARPOW(UINT,2,I1,3,R8,8.0);
+    VARPOW(UINT,2,UI1,3,R8,8.0);
+    VARPOW(UINT,2,UI2,3,R8,8.0);
+    VARPOW(UINT,2,UI4,3,R8,8.0);
+    VARPOW(UINT,2,I8,3,R8,8.0);
+    VARPOW(UINT,2,UI8,3,R8,8.0);
+    VARPOW(UINT,2,INT,3,R8,8.0);
+    VARPOW(UINT,2,UINT,3,R8,8.0);
+
+    /* Manually test some VT_CY, VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(2, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(2.0, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = 100;
+    V_VT(&right) = VT_I8;
+    V_UI1(&right) = 2;
+
+    hres = pVarPow(&cy, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        "VARPOW: CY value %f, expected %f\n", V_R8(&result), 4.0);
+
+    hres = pVarPow(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        "VARPOW: CY value %f, expected %f\n", V_R8(&result), 4.0);
+
+    hres = pVarPow(&left, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 10000.0),
+        "VARPOW: CY value %f, expected %f\n", V_R8(&result), 10000.0);
+
+    hres = pVarPow(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result),10000.0),
+        "VARPOW: DECIMAL value %f, expected %f\n", V_R8(&result), 10000.0);
+
+    hres = pVarPow(&dec, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        "VARPOW: DECIMAL value %f, expected %f\n", V_R8(&result), 4.0);
+
+    hres = pVarPow(&dec, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARPOW: expected coerced hres 0x%lX type VT_R8, got hres 0x%lX type%s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        "VARPOW: DECIMAL value %f, expected %f\n", V_R8(&result), 4.0);
+
+    SysFreeString(num2_str);
+    SysFreeString(num3_str);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -6251,6 +6708,7 @@ START_TEST(vartest)
   test_VarRound();
   test_VarXor();
   test_VarOr();
+  test_VarPow();
   test_VarEqv();
   test_VarMul();
   test_VarAdd();
