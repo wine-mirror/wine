@@ -1354,7 +1354,7 @@ static void checkConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL m
          case MM_ISOTROPIC:   mm_str = "MM_ISOTROPIC"; break;
          default:             mm_str = "Unexpected";
       }
-      snprintf(buf, 64, "mm=%s, xExt=%ld, yExt=%ld", mm_str, xExt, yExt);
+      sprintf(buf, "mm=%s, xExt=%ld, yExt=%ld", mm_str, xExt, yExt);
       msg = buf;
     }
 
