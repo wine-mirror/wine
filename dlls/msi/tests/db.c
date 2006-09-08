@@ -1914,6 +1914,84 @@ static void test_join(void)
     DeleteFile(msifile);
 }
 
+static void test_temporary_table(void)
+{
+    MSICONDITION cond;
+    MSIHANDLE hdb;
+    const char *query;
+    UINT r;
+
+    cond = MsiDatabaseIsTablePersistent(0, NULL);
+    todo_wine ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    todo_wine {
+    cond = MsiDatabaseIsTablePersistent(hdb, NULL);
+    ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "_Tables");
+    ok( cond == MSICONDITION_NONE, "wrong return condition\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "_Columns");
+    ok( cond == MSICONDITION_NONE, "wrong return condition\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "_Streams");
+    ok( cond == MSICONDITION_NONE, "wrong return condition\n");
+    }
+
+    query = "CREATE TABLE `P` ( `B` SHORT NOT NULL, `C` CHAR(255) PRIMARY KEY `C`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "P");
+    todo_wine ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
+
+    query = "CREATE TABLE `P2` ( `B` SHORT NOT NULL, `C` CHAR(255) PRIMARY KEY `C`) HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    todo_wine {
+    cond = MsiDatabaseIsTablePersistent(hdb, "P");
+    ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
+
+    query = "CREATE TABLE `T` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`) HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+    }
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "T");
+    ok( cond == MSICONDITION_FALSE, "wrong return condition\n");
+
+    todo_wine {
+    query = "CREATE TABLE `T2` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "T2");
+    ok( cond == MSICONDITION_NONE, "wrong return condition\n");
+
+    query = "CREATE TABLE `T3` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) PRIMARY KEY `C`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "T3");
+    ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
+
+    query = "CREATE TABLE `T4` ( `B` SHORT NOT NULL, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_FUNCTION_FAILED, "failed to add table\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "T4");
+    ok( cond == MSICONDITION_NONE, "wrong return condition\n");
+    }
+
+    MsiCloseHandle( hdb );
+
+    DeleteFile(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -1932,4 +2010,5 @@ START_TEST(db)
     test_handle_limit();
     test_generate_transform();
     test_join();
+    test_temporary_table();
 }
