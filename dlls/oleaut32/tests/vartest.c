@@ -5287,6 +5287,681 @@ static void test_VarCat(void)
     VariantClear(&expected);
 }
 
+static HRESULT (WINAPI *pVarAnd)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarAndFail = "VarAnd(%s,%s): expected 0x0,%s,%d, got 0x%lX,%s,%d\n";
+
+#define VARAND(vt1,val1,vt2,val2,rvt,rval)                                                \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;                                    \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2;                                  \
+        memset(&result,0,sizeof(result)); hres = pVarAnd(&left,&right,&result);           \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval),       \
+        szVarAndFail, vtstr(VT_##vt1), vtstr(VT_##vt2),                                   \
+        vtstr(VT_##rvt), (int)(rval), hres, vtstr(V_VT(&result)), (int)V_##rvt(&result));
+#define VARANDCY(vt1,val1,val2,rvt,rval)                                                  \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;                                    \
+        V_VT(&right) = VT_CY; V_CY(&right).int64 = val2;                                  \
+        memset(&result,0,sizeof(result)); hres = pVarAnd(&left,&right,&result);           \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval),       \
+        szVarAndFail, vtstr(VT_##vt1), vtstr(VT_CY),                                      \
+        vtstr(VT_##rvt), (int)(rval), hres, vtstr(V_VT(&result)), (int)V_##rvt(&result));
+
+/* Skip any type that is not defined or produces a error for every case */
+#define SKIPTESTAND(a)                                \
+        if (a == VT_ERROR || a == VT_VARIANT ||       \
+            a == VT_DISPATCH || a == VT_UNKNOWN ||    \
+            a > VT_UINT || a == 15 /*not defined*/)   \
+            continue;
+
+static void test_VarAnd(void)
+{
+    static const WCHAR szFalse[] = { '#','F','A','L','S','E','#','\0' };
+    static const WCHAR szTrue[] = { '#','T','R','U','E','#','\0' };
+    VARIANT left, right, result;
+    BSTR false_str, true_str;
+    VARTYPE i;
+    HRESULT hres;
+
+    true_str = SysAllocString(szTrue);
+    false_str = SysAllocString(szFalse);
+
+    CHECKPTR(VarAnd);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            SKIPTESTAND(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+                SKIPTESTAND(rightvt);
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_EMPTY;
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = true_str;
+                if (rightvt == VT_BSTR)
+                    V_BSTR(&right) = true_str;
+
+                /* Native VarAnd always returns a error when using any extra
+                 * flags or if the variant combination is I8 and INT.
+                 */
+                if ((leftvt == VT_I8 && rightvt == VT_INT) ||
+                    (leftvt == VT_INT && rightvt == VT_I8) ||
+                    ExtraFlags[i] != 0)
+                    bFail = TRUE;
+
+                /* Determine return type */
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                    resvt = VT_I8;
+                else if (leftvt == VT_I4 || rightvt == VT_I4 ||
+                    leftvt == VT_UINT || rightvt == VT_UINT ||
+                    leftvt == VT_INT || rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT ||
+                    leftvt == VT_R4 || rightvt == VT_R4 ||
+                    leftvt == VT_R8 || rightvt == VT_R8 ||
+                    leftvt == VT_CY || rightvt == VT_CY ||
+                    leftvt == VT_DATE || rightvt == VT_DATE ||
+                    leftvt == VT_I1 || rightvt == VT_I1 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+                    resvt = VT_I4;
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1 ||
+                    leftvt == VT_I2 || rightvt == VT_I2 ||
+                    leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+                    if ((leftvt == VT_NULL && rightvt == VT_UI1) ||
+                        (leftvt == VT_UI1 && rightvt == VT_NULL) ||
+                        (leftvt == VT_UI1 && rightvt == VT_UI1))
+                        resvt = VT_UI1;
+                    else
+                        resvt = VT_I2;
+                else if (leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                    (leftvt == VT_BSTR && rightvt == VT_BSTR))
+                    resvt = VT_BOOL;
+                else if (leftvt == VT_NULL || rightvt == VT_NULL ||
+                    leftvt == VT_BSTR || rightvt == VT_BSTR)
+                    resvt = VT_NULL;
+                else
+                    bFail = TRUE;
+
+                hres = pVarAnd(&left, &right, &result);
+
+                /* Check expected HRESULT and if result variant type is correct */
+                if (bFail)
+                    ok (hres == DISP_E_BADVARTYPE || hres == DISP_E_TYPEMISMATCH,
+                        "VarAnd: %s|0x%X, %s|0x%X: got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i],
+                        vtstr(V_VT(&result)), hres);
+                else
+                    ok (hres == S_OK && resvt == V_VT(&result),
+                        "VarAnd: %s|0x%X, %s|0x%X: expected vt %s hr 0x%lX, got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i], vtstr(resvt),
+                        S_OK, vtstr(V_VT(&result)), hres);
+            }
+        }
+    }
+
+    /*
+     * Test returned values. Since we know the returned type is correct
+     * and that we handle all combinations of invalid types, just check
+     * that good type combinations produce the desired value.
+     * FIXME: Test VT_DECIMAL
+     */
+    VARAND(EMPTY,0,EMPTY,0,I2,0);
+    VARAND(EMPTY,1,EMPTY,0,I2,0);
+    VARAND(EMPTY,1,EMPTY,1,I2,0);
+    VARAND(EMPTY,0,NULL,0,I2,0);
+    VARAND(EMPTY,1,NULL,0,I2,0);
+    VARAND(EMPTY,1,NULL,1,I2,0);
+    VARAND(EMPTY,0,I1,0,I4,0);
+    VARAND(EMPTY,0,I1,1,I4,0);
+    VARAND(EMPTY,1,I1,1,I4,0);
+    VARAND(EMPTY,0,UI1,0,I2,0);
+    VARAND(EMPTY,0,UI1,1,I2,0);
+    VARAND(EMPTY,1,UI1,1,I2,0);
+    VARAND(EMPTY,0,I2,0,I2,0);
+    VARAND(EMPTY,0,I2,1,I2,0);
+    VARAND(EMPTY,1,I2,1,I2,0);
+    VARAND(EMPTY,0,UI2,0,I4,0);
+    VARAND(EMPTY,0,UI2,1,I4,0);
+    VARAND(EMPTY,1,UI2,1,I4,0);
+    VARAND(EMPTY,0,I4,0,I4,0);
+    VARAND(EMPTY,0,I4,1,I4,0);
+    VARAND(EMPTY,1,I4,1,I4,0);
+    VARAND(EMPTY,0,UI4,0,I4,0);
+    VARAND(EMPTY,0,UI4,1,I4,0);
+    VARAND(EMPTY,1,UI4,1,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(EMPTY,0,I8,0,I8,0);
+        VARAND(EMPTY,0,I8,1,I8,0);
+        VARAND(EMPTY,1,I8,1,I8,0);
+        VARAND(EMPTY,0,UI8,0,I4,0);
+        VARAND(EMPTY,0,UI8,1,I4,0);
+        VARAND(EMPTY,1,UI8,1,I4,0);
+    }
+    VARAND(EMPTY,0,INT,0,I4,0);
+    VARAND(EMPTY,0,INT,1,I4,0);
+    VARAND(EMPTY,1,INT,1,I4,0);
+    VARAND(EMPTY,0,UINT,0,I4,0);
+    VARAND(EMPTY,0,UINT,1,I4,0);
+    VARAND(EMPTY,1,UINT,1,I4,0);
+    VARAND(EMPTY,0,BOOL,0,I2,0);
+    VARAND(EMPTY,0,BOOL,1,I2,0);
+    VARAND(EMPTY,1,BOOL,1,I2,0);
+    VARAND(EMPTY,0,R4,0,I4,0);
+    VARAND(EMPTY,0,R4,1,I4,0);
+    VARAND(EMPTY,1,R4,1,I4,0);
+    VARAND(EMPTY,0,R8,0,I4,0);
+    VARAND(EMPTY,0,R8,1,I4,0);
+    VARAND(EMPTY,1,R8,1,I4,0);
+    VARAND(EMPTY,0,BSTR,false_str,I2,0);
+    VARAND(EMPTY,0,BSTR,true_str,I2,0);
+    VARANDCY(EMPTY,0,10000,I4,0);
+
+    /* NULL OR 0 = NULL. NULL OR n = n */
+    VARAND(NULL,0,NULL,0,NULL,0);
+    VARAND(NULL,1,NULL,0,NULL,0);
+    VARAND(NULL,0,I1,0,I4,0);
+    VARAND(NULL,0,I1,1,NULL,0);
+    VARAND(NULL,0,UI1,0,UI1,0);
+    VARAND(NULL,0,UI1,1,NULL,0);
+    VARAND(NULL,0,I2,0,I2,0);
+    VARAND(NULL,0,I2,1,NULL,0);
+    VARAND(NULL,0,UI2,0,I4,0);
+    VARAND(NULL,0,UI2,1,NULL,0);
+    VARAND(NULL,0,I4,0,I4,0);
+    VARAND(NULL,0,I4,1,NULL,0);
+    VARAND(NULL,0,UI4,0,I4,0);
+    VARAND(NULL,0,UI4,1,NULL,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(NULL,0,I8,0,I8,0);
+        VARAND(NULL,0,I8,1,NULL,0);
+        VARAND(NULL,0,UI8,0,I4,0);
+        VARAND(NULL,0,UI8,1,NULL,0);
+    }
+    VARAND(NULL,0,INT,0,I4,0);
+    VARAND(NULL,0,INT,1,NULL,0);
+    VARAND(NULL,0,UINT,0,I4,0);
+    VARAND(NULL,0,UINT,1,NULL,0);
+    VARAND(NULL,0,BOOL,0,BOOL,0);
+    VARAND(NULL,0,BOOL,1,NULL,0);
+    VARAND(NULL,0,R4,0,I4,0);
+    VARAND(NULL,0,R4,1,NULL,0);
+    VARAND(NULL,0,R8,0,I4,0);
+    VARAND(NULL,0,R8,1,NULL,0);
+    VARAND(NULL,0,BSTR,false_str,BOOL,0);
+    VARAND(NULL,0,BSTR,true_str,NULL,VARIANT_FALSE);
+    VARANDCY(NULL,0,10000,NULL,0);
+    VARANDCY(NULL,0,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VARAND(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE);
+    VARAND(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
+    VARAND(BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE);
+
+    /* Assume x,y & y,x are the same from now on to reduce the number of tests */
+    VARAND(BOOL,VARIANT_TRUE,I1,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,I1,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,I1,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,UI1,255,I2,255);
+    VARAND(BOOL,VARIANT_TRUE,UI1,0,I2,0);
+    VARAND(BOOL,VARIANT_FALSE,UI1,0,I2,0);
+    VARAND(BOOL,VARIANT_TRUE,I2,-1,I2,-1);
+    VARAND(BOOL,VARIANT_TRUE,I2,0,I2,0);
+    VARAND(BOOL,VARIANT_FALSE,I2,0,I2,0);
+    VARAND(BOOL,VARIANT_TRUE,UI2,65535,I4,65535);
+    VARAND(BOOL,VARIANT_TRUE,UI2,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,UI2,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,I4,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,I4,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,I4,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,UI4,0xffffffff,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,UI4,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,UI4,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,R4,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,R4,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,R4,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,R8,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,R8,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,R8,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,DATE,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,DATE,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(BOOL,VARIANT_TRUE,I8,-1,I8,-1);
+        VARAND(BOOL,VARIANT_TRUE,I8,0,I8,0);
+        VARAND(BOOL,VARIANT_FALSE,I8,0,I8,0);
+        VARAND(BOOL,VARIANT_TRUE,UI8,0,I4,0);
+        VARAND(BOOL,VARIANT_FALSE,UI8,0,I4,0);
+    }
+    VARAND(BOOL,VARIANT_TRUE,INT,-1,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,INT,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,INT,0,I4,0);
+    VARAND(BOOL,VARIANT_TRUE,UINT,0xffffffff,I4,-1);
+    VARAND(BOOL,VARIANT_TRUE,UINT,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,UINT,0,I4,0);
+    VARAND(BOOL,VARIANT_FALSE,BSTR,false_str,BOOL,VARIANT_FALSE);
+    VARAND(BOOL,VARIANT_TRUE,BSTR,false_str,BOOL,VARIANT_FALSE);
+    VARAND(BOOL,VARIANT_FALSE,BSTR,true_str,BOOL,VARIANT_FALSE);
+    VARAND(BOOL,VARIANT_TRUE,BSTR,true_str,BOOL,VARIANT_TRUE);
+    VARANDCY(BOOL,VARIANT_TRUE,10000,I4,1);
+    VARANDCY(BOOL,VARIANT_TRUE,0,I4,0);
+    VARANDCY(BOOL,VARIANT_FALSE,0,I4,0);
+    VARAND(I1,-1,I1,-1,I4,-1);
+    VARAND(I1,-1,I1,0,I4,0);
+    VARAND(I1,0,I1,0,I4,0);
+    VARAND(I1,-1,UI1,255,I4,255);
+    VARAND(I1,-1,UI1,0,I4,0);
+    VARAND(I1,0,UI1,0,I4,0);
+    VARAND(I1,-1,I2,-1,I4,-1);
+    VARAND(I1,-1,I2,0,I4,0);
+    VARAND(I1,0,I2,0,I4,0);
+    VARAND(I1,-1,UI2,65535,I4,65535);
+    VARAND(I1,-1,UI2,0,I4,0);
+    VARAND(I1,0,UI2,0,I4,0);
+    VARAND(I1,-1,I4,-1,I4,-1);
+    VARAND(I1,-1,I4,0,I4,0);
+    VARAND(I1,0,I4,0,I4,0);
+    VARAND(I1,-1,UI4,0xffffffff,I4,-1);
+    VARAND(I1,-1,UI4,0,I4,0);
+    VARAND(I1,0,UI4,0,I4,0);
+    VARAND(I1,-1,R4,-1,I4,-1);
+    VARAND(I1,-1,R4,0,I4,0);
+    VARAND(I1,0,R4,0,I4,0);
+    VARAND(I1,-1,R8,-1,I4,-1);
+    VARAND(I1,-1,R8,0,I4,0);
+    VARAND(I1,0,R8,0,I4,0);
+    VARAND(I1,-1,DATE,-1,I4,-1);
+    VARAND(I1,-1,DATE,0,I4,0);
+    VARAND(I1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(I1,-1,I8,-1,I8,-1);
+        VARAND(I1,-1,I8,0,I8,0);
+        VARAND(I1,0,I8,0,I8,0);
+        VARAND(I1,-1,UI8,0,I4,0);
+        VARAND(I1,0,UI8,0,I4,0);
+    }
+    VARAND(I1,-1,INT,-1,I4,-1);
+    VARAND(I1,-1,INT,0,I4,0);
+    VARAND(I1,0,INT,0,I4,0);
+    VARAND(I1,-1,UINT,0xffffffff,I4,-1);
+    VARAND(I1,-1,UINT,0,I4,0);
+    VARAND(I1,0,UINT,0,I4,0);
+    VARAND(I1,0,BSTR,false_str,I4,0);
+    VARAND(I1,-1,BSTR,false_str,I4,0);
+    VARAND(I1,0,BSTR,true_str,I4,0);
+    VARAND(I1,-1,BSTR,true_str,I4,-1);
+    VARANDCY(I1,-1,10000,I4,1);
+    VARANDCY(I1,-1,0,I4,0);
+    VARANDCY(I1,0,0,I4,0);
+
+    VARAND(UI1,255,UI1,255,UI1,255);
+    VARAND(UI1,255,UI1,0,UI1,0);
+    VARAND(UI1,0,UI1,0,UI1,0);
+    VARAND(UI1,255,I2,-1,I2,255);
+    VARAND(UI1,255,I2,0,I2,0);
+    VARAND(UI1,0,I2,0,I2,0);
+    VARAND(UI1,255,UI2,65535,I4,255);
+    VARAND(UI1,255,UI2,0,I4,0);
+    VARAND(UI1,0,UI2,0,I4,0);
+    VARAND(UI1,255,I4,-1,I4,255);
+    VARAND(UI1,255,I4,0,I4,0);
+    VARAND(UI1,0,I4,0,I4,0);
+    VARAND(UI1,255,UI4,0xffffffff,I4,255);
+    VARAND(UI1,255,UI4,0,I4,0);
+    VARAND(UI1,0,UI4,0,I4,0);
+    VARAND(UI1,255,R4,-1,I4,255);
+    VARAND(UI1,255,R4,0,I4,0);
+    VARAND(UI1,0,R4,0,I4,0);
+    VARAND(UI1,255,R8,-1,I4,255);
+    VARAND(UI1,255,R8,0,I4,0);
+    VARAND(UI1,0,R8,0,I4,0);
+    VARAND(UI1,255,DATE,-1,I4,255);
+    VARAND(UI1,255,DATE,0,I4,0);
+    VARAND(UI1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(UI1,255,I8,-1,I8,255);
+        VARAND(UI1,255,I8,0,I8,0);
+        VARAND(UI1,0,I8,0,I8,0);
+        VARAND(UI1,255,UI8,0,I4,0);
+        VARAND(UI1,0,UI8,0,I4,0);
+    }
+    VARAND(UI1,255,INT,-1,I4,255);
+    VARAND(UI1,255,INT,0,I4,0);
+    VARAND(UI1,0,INT,0,I4,0);
+    VARAND(UI1,255,UINT,0xffffffff,I4,255);
+    VARAND(UI1,255,UINT,0,I4,0);
+    VARAND(UI1,0,UINT,0,I4,0);
+    VARAND(UI1,0,BSTR,false_str,I2,0);
+    VARAND(UI1,255,BSTR,false_str,I2,0);
+    VARAND(UI1,0,BSTR,true_str,I2,0);
+    VARAND(UI1,255,BSTR,true_str,I2,255);
+    VARANDCY(UI1,255,10000,I4,1);
+    VARANDCY(UI1,255,0,I4,0);
+    VARANDCY(UI1,0,0,I4,0);
+
+    VARAND(I2,-1,I2,-1,I2,-1);
+    VARAND(I2,-1,I2,0,I2,0);
+    VARAND(I2,0,I2,0,I2,0);
+    VARAND(I2,-1,UI2,65535,I4,65535);
+    VARAND(I2,-1,UI2,0,I4,0);
+    VARAND(I2,0,UI2,0,I4,0);
+    VARAND(I2,-1,I4,-1,I4,-1);
+    VARAND(I2,-1,I4,0,I4,0);
+    VARAND(I2,0,I4,0,I4,0);
+    VARAND(I2,-1,UI4,0xffffffff,I4,-1);
+    VARAND(I2,-1,UI4,0,I4,0);
+    VARAND(I2,0,UI4,0,I4,0);
+    VARAND(I2,-1,R4,-1,I4,-1);
+    VARAND(I2,-1,R4,0,I4,0);
+    VARAND(I2,0,R4,0,I4,0);
+    VARAND(I2,-1,R8,-1,I4,-1);
+    VARAND(I2,-1,R8,0,I4,0);
+    VARAND(I2,0,R8,0,I4,0);
+    VARAND(I2,-1,DATE,-1,I4,-1);
+    VARAND(I2,-1,DATE,0,I4,0);
+    VARAND(I2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(I2,-1,I8,-1,I8,-1);
+        VARAND(I2,-1,I8,0,I8,0);
+        VARAND(I2,0,I8,0,I8,0);
+        VARAND(I2,-1,UI8,0,I4,0);
+        VARAND(I2,0,UI8,0,I4,0);
+    }
+    VARAND(I2,-1,INT,-1,I4,-1);
+    VARAND(I2,-1,INT,0,I4,0);
+    VARAND(I2,0,INT,0,I4,0);
+    VARAND(I2,-1,UINT,0xffffffff,I4,-1);
+    VARAND(I2,-1,UINT,0,I4,0);
+    VARAND(I2,0,UINT,0,I4,0);
+    VARAND(I2,0,BSTR,false_str,I2,0);
+    VARAND(I2,-1,BSTR,false_str,I2,0);
+    VARAND(I2,0,BSTR,true_str,I2,0);
+    VARAND(I2,-1,BSTR,true_str,I2,-1);
+    VARANDCY(I2,-1,10000,I4,1);
+    VARANDCY(I2,-1,0,I4,0);
+    VARANDCY(I2,0,0,I4,0);
+
+    VARAND(UI2,65535,UI2,65535,I4,65535);
+    VARAND(UI2,65535,UI2,0,I4,0);
+    VARAND(UI2,0,UI2,0,I4,0);
+    VARAND(UI2,65535,I4,-1,I4,65535);
+    VARAND(UI2,65535,I4,0,I4,0);
+    VARAND(UI2,0,I4,0,I4,0);
+    VARAND(UI2,65535,UI4,0xffffffff,I4,65535);
+    VARAND(UI2,65535,UI4,0,I4,0);
+    VARAND(UI2,0,UI4,0,I4,0);
+    VARAND(UI2,65535,R4,-1,I4,65535);
+    VARAND(UI2,65535,R4,0,I4,0);
+    VARAND(UI2,0,R4,0,I4,0);
+    VARAND(UI2,65535,R8,-1,I4,65535);
+    VARAND(UI2,65535,R8,0,I4,0);
+    VARAND(UI2,0,R8,0,I4,0);
+    VARAND(UI2,65535,DATE,-1,I4,65535);
+    VARAND(UI2,65535,DATE,0,I4,0);
+    VARAND(UI2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(UI2,65535,I8,-1,I8,65535);
+        VARAND(UI2,65535,I8,0,I8,0);
+        VARAND(UI2,0,I8,0,I8,0);
+        VARAND(UI2,65535,UI8,0,I4,0);
+        VARAND(UI2,0,UI8,0,I4,0);
+    }
+    VARAND(UI2,65535,INT,-1,I4,65535);
+    VARAND(UI2,65535,INT,0,I4,0);
+    VARAND(UI2,0,INT,0,I4,0);
+    VARAND(UI2,65535,UINT,0xffffffff,I4,65535);
+    VARAND(UI2,65535,UINT,0,I4,0);
+    VARAND(UI2,0,UINT,0,I4,0);
+    VARAND(UI2,0,BSTR,false_str,I4,0);
+    VARAND(UI2,65535,BSTR,false_str,I4,0);
+    VARAND(UI2,0,BSTR,true_str,I4,0);
+    VARAND(UI2,65535,BSTR,true_str,I4,65535);
+    VARANDCY(UI2,65535,10000,I4,1);
+    VARANDCY(UI2,65535,0,I4,0);
+    VARANDCY(UI2,0,0,I4,0);
+
+    VARAND(I4,-1,I4,-1,I4,-1);
+    VARAND(I4,-1,I4,0,I4,0);
+    VARAND(I4,0,I4,0,I4,0);
+    VARAND(I4,-1,UI4,0xffffffff,I4,-1);
+    VARAND(I4,-1,UI4,0,I4,0);
+    VARAND(I4,0,UI4,0,I4,0);
+    VARAND(I4,-1,R4,-1,I4,-1);
+    VARAND(I4,-1,R4,0,I4,0);
+    VARAND(I4,0,R4,0,I4,0);
+    VARAND(I4,-1,R8,-1,I4,-1);
+    VARAND(I4,-1,R8,0,I4,0);
+    VARAND(I4,0,R8,0,I4,0);
+    VARAND(I4,-1,DATE,-1,I4,-1);
+    VARAND(I4,-1,DATE,0,I4,0);
+    VARAND(I4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(I4,-1,I8,-1,I8,-1);
+        VARAND(I4,-1,I8,0,I8,0);
+        VARAND(I4,0,I8,0,I8,0);
+        VARAND(I4,-1,UI8,0,I4,0);
+        VARAND(I4,0,UI8,0,I4,0);
+    }
+    VARAND(I4,-1,INT,-1,I4,-1);
+    VARAND(I4,-1,INT,0,I4,0);
+    VARAND(I4,0,INT,0,I4,0);
+    VARAND(I4,-1,UINT,0xffffffff,I4,-1);
+    VARAND(I4,-1,UINT,0,I4,0);
+    VARAND(I4,0,UINT,0,I4,0);
+    VARAND(I4,0,BSTR,false_str,I4,0);
+    VARAND(I4,-1,BSTR,false_str,I4,0);
+    VARAND(I4,0,BSTR,true_str,I4,0);
+    VARAND(I4,-1,BSTR,true_str,I4,-1);
+    VARANDCY(I4,-1,10000,I4,1);
+    VARANDCY(I4,-1,0,I4,0);
+    VARANDCY(I4,0,0,I4,0);
+
+    VARAND(UI4,0xffffffff,UI4,0xffffffff,I4,-1);
+    VARAND(UI4,0xffffffff,UI4,0,I4,0);
+    VARAND(UI4,0,UI4,0,I4,0);
+    VARAND(UI4,0xffffffff,R4,-1,I4,-1);
+    VARAND(UI4,0xffffffff,R4,0,I4,0);
+    VARAND(UI4,0,R4,0,I4,0);
+    VARAND(UI4,0xffffffff,R8,-1,I4,-1);
+    VARAND(UI4,0xffffffff,R8,0,I4,0);
+    VARAND(UI4,0,R8,0,I4,0);
+    VARAND(UI4,0xffffffff,DATE,-1,I4,-1);
+    VARAND(UI4,0xffffffff,DATE,0,I4,0);
+    VARAND(UI4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(UI4,0xffffffff,I8,0,I8,0);
+        VARAND(UI4,0,I8,0,I8,0);
+        VARAND(UI4,0xffffffff,UI8,0,I4,0);
+        VARAND(UI4,0,UI8,0,I4,0);
+    }
+    VARAND(UI4,0xffffffff,INT,-1,I4,-1);
+    VARAND(UI4,0xffffffff,INT,0,I4,0);
+    VARAND(UI4,0,INT,0,I4,0);
+    VARAND(UI4,0xffffffff,UINT,0xffffffff,I4,-1);
+    VARAND(UI4,0xffffffff,UINT,0,I4,0);
+    VARAND(UI4,0,UINT,0,I4,0);
+    VARAND(UI4,0,BSTR,false_str,I4,0);
+    VARAND(UI4,0xffffffff,BSTR,false_str,I4,0);
+    VARAND(UI4,0,BSTR,true_str,I4,0);
+    VARAND(UI4,0xffffffff,BSTR,true_str,I4,-1);
+    VARANDCY(UI4,0xffffffff,10000,I4,1);
+    VARANDCY(UI4,0xffffffff,0,I4,0);
+    VARANDCY(UI4,0,0,I4,0);
+
+    VARAND(R4,-1,R4,-1,I4,-1);
+    VARAND(R4,-1,R4,0,I4,0);
+    VARAND(R4,0,R4,0,I4,0);
+    VARAND(R4,-1,R8,-1,I4,-1);
+    VARAND(R4,-1,R8,0,I4,0);
+    VARAND(R4,0,R8,0,I4,0);
+    VARAND(R4,-1,DATE,-1,I4,-1);
+    VARAND(R4,-1,DATE,0,I4,0);
+    VARAND(R4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(R4,-1,I8,-1,I8,-1);
+        VARAND(R4,-1,I8,0,I8,0);
+        VARAND(R4,0,I8,0,I8,0);
+        VARAND(R4,-1,UI8,0,I4,0);
+        VARAND(R4,0,UI8,0,I4,0);
+    }
+    VARAND(R4,-1,INT,-1,I4,-1);
+    VARAND(R4,-1,INT,0,I4,0);
+    VARAND(R4,0,INT,0,I4,0);
+    VARAND(R4,-1,UINT,0xffffffff,I4,-1);
+    VARAND(R4,-1,UINT,0,I4,0);
+    VARAND(R4,0,UINT,0,I4,0);
+    VARAND(R4,0,BSTR,false_str,I4,0);
+    VARAND(R4,-1,BSTR,false_str,I4,0);
+    VARAND(R4,0,BSTR,true_str,I4,0);
+    VARAND(R4,-1,BSTR,true_str,I4,-1);
+    VARANDCY(R4,-1,10000,I4,1);
+    VARANDCY(R4,-1,0,I4,0);
+    VARANDCY(R4,0,0,I4,0);
+
+    VARAND(R8,-1,R8,-1,I4,-1);
+    VARAND(R8,-1,R8,0,I4,0);
+    VARAND(R8,0,R8,0,I4,0);
+    VARAND(R8,-1,DATE,-1,I4,-1);
+    VARAND(R8,-1,DATE,0,I4,0);
+    VARAND(R8,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(R8,-1,I8,-1,I8,-1);
+        VARAND(R8,-1,I8,0,I8,0);
+        VARAND(R8,0,I8,0,I8,0);
+        VARAND(R8,-1,UI8,0,I4,0);
+        VARAND(R8,0,UI8,0,I4,0);
+    }
+    VARAND(R8,-1,INT,-1,I4,-1);
+    VARAND(R8,-1,INT,0,I4,0);
+    VARAND(R8,0,INT,0,I4,0);
+    VARAND(R8,-1,UINT,0xffffffff,I4,-1);
+    VARAND(R8,-1,UINT,0,I4,0);
+    VARAND(R8,0,UINT,0,I4,0);
+    VARAND(R8,0,BSTR,false_str,I4,0);
+    VARAND(R8,-1,BSTR,false_str,I4,0);
+    VARAND(R8,0,BSTR,true_str,I4,0);
+    VARAND(R8,-1,BSTR,true_str,I4,-1);
+    VARANDCY(R8,-1,10000,I4,1);
+    VARANDCY(R8,-1,0,I4,0);
+    VARANDCY(R8,0,0,I4,0);
+
+    VARAND(DATE,-1,DATE,-1,I4,-1);
+    VARAND(DATE,-1,DATE,0,I4,0);
+    VARAND(DATE,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(DATE,-1,I8,-1,I8,-1);
+        VARAND(DATE,-1,I8,0,I8,0);
+        VARAND(DATE,0,I8,0,I8,0);
+        VARAND(DATE,-1,UI8,0,I4,0);
+        VARAND(DATE,0,UI8,0,I4,0);
+    }
+    VARAND(DATE,-1,INT,-1,I4,-1);
+    VARAND(DATE,-1,INT,0,I4,0);
+    VARAND(DATE,0,INT,0,I4,0);
+    VARAND(DATE,-1,UINT,0xffffffff,I4,-1);
+    VARAND(DATE,-1,UINT,0,I4,0);
+    VARAND(DATE,0,UINT,0,I4,0);
+    VARAND(DATE,0,BSTR,false_str,I4,0);
+    VARAND(DATE,-1,BSTR,false_str,I4,0);
+    VARAND(DATE,0,BSTR,true_str,I4,0);
+    VARAND(DATE,-1,BSTR,true_str,I4,-1);
+    VARANDCY(DATE,-1,10000,I4,1);
+    VARANDCY(DATE,-1,0,I4,0);
+    VARANDCY(DATE,0,0,I4,0);
+
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARAND(I8,-1,I8,-1,I8,-1);
+        VARAND(I8,-1,I8,0,I8,0);
+        VARAND(I8,0,I8,0,I8,0);
+        VARAND(I8,-1,UI8,0,I8,0);
+        VARAND(I8,0,UI8,0,I8,0);
+        VARAND(I8,-1,UINT,0,I8,0);
+        VARAND(I8,0,UINT,0,I8,0);
+        VARAND(I8,0,BSTR,false_str,I8,0);
+        VARAND(I8,-1,BSTR,false_str,I8,0);
+        VARAND(I8,0,BSTR,true_str,I8,0);
+        VARAND(I8,-1,BSTR,true_str,I8,-1);
+        VARANDCY(I8,-1,10000,I8,1);
+        VARANDCY(I8,-1,0,I8,0);
+        VARANDCY(I8,0,0,I8,0);
+
+        VARAND(UI8,0xffff,UI8,0xffff,I4,0xffff);
+        VARAND(UI8,0xffff,UI8,0,I4,0);
+        VARAND(UI8,0,UI8,0,I4,0);
+        VARAND(UI8,0xffff,INT,-1,I4,65535);
+        VARAND(UI8,0xffff,INT,0,I4,0);
+        VARAND(UI8,0,INT,0,I4,0);
+        VARAND(UI8,0xffff,UINT,0xffff,I4,0xffff);
+        VARAND(UI8,0xffff,UINT,0,I4,0);
+        VARAND(UI8,0,UINT,0,I4,0);
+        VARAND(UI8,0,BSTR,false_str,I4,0);
+        VARAND(UI8,0xffff,BSTR,false_str,I4,0);
+        VARAND(UI8,0,BSTR,true_str,I4,0);
+        VARAND(UI8,0xffff,BSTR,true_str,I4,65535);
+        VARANDCY(UI8,0xffff,10000,I4,1);
+        VARANDCY(UI8,0xffff,0,I4,0);
+        VARANDCY(UI8,0,0,I4,0);
+    }
+
+    VARAND(INT,-1,INT,-1,I4,-1);
+    VARAND(INT,-1,INT,0,I4,0);
+    VARAND(INT,0,INT,0,I4,0);
+    VARAND(INT,-1,UINT,0xffff,I4,65535);
+    VARAND(INT,-1,UINT,0,I4,0);
+    VARAND(INT,0,UINT,0,I4,0);
+    VARAND(INT,0,BSTR,false_str,I4,0);
+    VARAND(INT,-1,BSTR,false_str,I4,0);
+    VARAND(INT,0,BSTR,true_str,I4,0);
+    VARAND(INT,-1,BSTR,true_str,I4,-1);
+    VARANDCY(INT,-1,10000,I4,1);
+    VARANDCY(INT,-1,0,I4,0);
+    VARANDCY(INT,0,0,I4,0);
+
+    VARAND(UINT,0xffff,UINT,0xffff,I4,0xffff);
+    VARAND(UINT,0xffff,UINT,0,I4,0);
+    VARAND(UINT,0,UINT,0,I4,0);
+    VARAND(UINT,0,BSTR,false_str,I4,0);
+    VARAND(UINT,0xffff,BSTR, false_str,I4,0);
+    VARAND(UINT,0,BSTR,true_str,I4,0);
+    VARAND(UINT,0xffff,BSTR,true_str,I4,65535);
+    VARANDCY(UINT,0xffff,10000,I4,1);
+    VARANDCY(UINT,0xffff,0,I4,0);
+    VARANDCY(UINT,0,0,I4,0);
+
+    VARAND(BSTR,false_str,BSTR,false_str,BOOL,0);
+    VARAND(BSTR,true_str,BSTR,false_str,BOOL,VARIANT_FALSE);
+    VARAND(BSTR,true_str,BSTR,true_str,BOOL,VARIANT_TRUE);
+    VARANDCY(BSTR,true_str,10000,I4,1);
+    VARANDCY(BSTR,false_str,10000,I4,0);
+
+    SysFreeString(true_str);
+    SysFreeString(false_str);
+}
+
 static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
 
 /* ERROR from wingdi.h is interfering here */
@@ -5581,4 +6256,5 @@ START_TEST(vartest)
   test_VarAdd();
   test_VarCat();
   test_VarCmp();
+  test_VarAnd();
 }
