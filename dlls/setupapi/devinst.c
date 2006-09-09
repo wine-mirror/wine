@@ -1453,7 +1453,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
     if (UuidToStringW((UUID*)ClassGuid, &lpGuidString) != RPC_S_OK)
     {
 	RegCloseKey(hClassesKey);
-	return FALSE;
+	return INVALID_HANDLE_VALUE;
     }
 
     if (RegOpenKeyExW(hClassesKey,
@@ -1464,7 +1464,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
     {
 	RpcStringFreeW(&lpGuidString);
 	RegCloseKey(hClassesKey);
-	return FALSE;
+	return INVALID_HANDLE_VALUE;
     }
 
     RpcStringFreeW(&lpGuidString);

@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "guiddef.h"
 #include "setupapi.h"
 
 #include "wine/test.h"
@@ -34,6 +35,7 @@
 static HMODULE hSetupAPI;
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
+static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 
 static void init_function_pointers(void)
 {
@@ -43,6 +45,7 @@ static void init_function_pointers(void)
     {
         pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
         pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
+        pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     }
 }
 
@@ -79,6 +82,20 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     ok(ret, "SetupDiDestroyDeviceInfoList failed : %ld\n", error);
 }
 
+static void test_SetupDiOpenClassRegKeyExA(void)
+{
+    /* This is a unique guid for testing purposes */
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    HKEY hkey;
+
+    /* Check return value for non-existent key */
+    hkey = SetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
+        DIOCR_INSTALLER, NULL, NULL);
+    ok(hkey == INVALID_HANDLE_VALUE,
+        "returned %p (expected INVALID_HANDLE_VALUE)\n", hkey);
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -88,5 +105,10 @@ START_TEST(devinst)
     if (pSetupDiCreateDeviceInfoListExW && pSetupDiDestroyDeviceInfoList)
         test_SetupDiCreateDeviceInfoListEx();
     else
-        trace("Needed calls not all available, skipping tests.\n");
+        trace("Needed calls for SetupDiCreateDeviceInfoListEx not all available, skipping test.\n");
+
+    if (pSetupDiOpenClassRegKeyExA)
+        test_SetupDiOpenClassRegKeyExA();
+    else
+        trace("Needed call for SetupDiOpenClassRegKeyExA not available, skipping test.\n");
 }
