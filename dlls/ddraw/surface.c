@@ -1984,6 +1984,7 @@ IDirectDrawSurfaceImpl_GetPalette(IDirectDrawSurface7 *iface,
     else
     {
         *Pal = NULL;
+        hr = DDERR_NOPALETTEATTACHED;
     }
 
     return hr;
@@ -2055,7 +2056,7 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
 
     /* Find the old palette */
     hr = IDirectDrawSurface_GetPalette(iface, &oldPal);
-    if(hr != DD_OK) return hr;
+    if(hr != DD_OK && hr != DDERR_NOPALETTEATTACHED) return hr;
     if(oldPal) IDirectDrawPalette_Release(oldPal);  /* For the GetPalette */
 
     /* Set the new Palette */
