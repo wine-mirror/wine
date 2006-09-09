@@ -2,7 +2,7 @@
  *  Task Manager
  *  French Language Support
  *
- *  Copyright 2005 Jonathan Ernst
+ *  Copyright 2005-2006 Jonathan Ernst
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ BEGIN
     BEGIN
         MENUITEM "Rubriques d'aide du Gestionnaire des tâches",   ID_HELP_TOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&A propos du Gestionnaire des tâches",         ID_HELP_ABOUT
+        MENUITEM "À &propos du Gestionnaire des tâches",         ID_HELP_ABOUT
     END
 END
 

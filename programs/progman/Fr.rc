@@ -4,6 +4,7 @@
  * Copyright 1996 Ulrich Schmid
  * French Fr.rc by Pablo Saratxaga
  * Copyright 2002 Sylvain Petreolle
+ * Copyright 2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +61,7 @@ MAIN_MENU MENU
    POPUP "&Info..." {
      MENUITEM "&Licence",        PM_LICENSE
      MENUITEM "AUCUNE &GARANTIE",    PM_NO_WARRANTY
-     MENUITEM "&A propos de WINE",     PM_ABOUT_WINE
+     MENUITEM "À &propos de Wine",     PM_ABOUT_WINE
    }
  }
 }
@@ -86,11 +87,11 @@ DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Déplacer un programme"
 {
-LTEXT         "Déplacer le programme :",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Déplacer le programme :",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "À partir du groupe :", IDIGNORE,            5, 13,  90, 15
+LTEXT         "À partir du groupe :", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
@@ -103,11 +104,11 @@ DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Copier un programme"
 {
-LTEXT         "Copier le programme :",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Copier le programme :",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "À partir du groupe :", IDIGNORE,            5, 13,  90, 15
+LTEXT         "À partir du groupe :", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
@@ -122,7 +123,7 @@ CAPTION "Propriétés de groupe"
 {
 LTEXT     "&Nom :", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Fichier du groupe :",        PM_FILE_TXT,          05, 38,  50, 10
+LTEXT     "&Fichier du groupe :",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
@@ -135,13 +136,13 @@ DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Propriétés de programme"
 {
-LTEXT         "&Nom :",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "&Nom :",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "&Ligne de commande :", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+LTEXT         "&Ligne de commande :", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "Répertoire de tra&vail :",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+LTEXT         "Répertoire de tra&vail :",    PM_DIRECTORY_TXT,     05, 40,  60, 10
 EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "&Touche de raccourci :",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+LTEXT         "&Touche de raccourci :",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
@@ -159,9 +160,9 @@ DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Changer l'icône"
 {
-LTEXT     "&Nom du fichier :",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "&Nom du fichier :",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "Icône a&ctuelle :", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "Icône a&ctuelle :", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
@@ -176,7 +177,7 @@ DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Exécuter un programme"
 {
-LTEXT     "&Ligne de commande :", IDIGNORE,   05, 15, 120, 10
+LTEXT     "&Ligne de commande :", IDIGNORE,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
 LTEXT         "Réduire à l'&utilisation",   IDIGNORE,   20, 45, 120, 10
@@ -195,20 +196,20 @@ IDS_ERROR,			"ERREUR"
 IDS_WARNING,			"ATTENTION"
 IDS_INFO,			"Information"
 IDS_DELETE,			"Supprimer"
-IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe '%s'?"
-IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme '%s'?"
+IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe « %s » ?"
+IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme « %s » ?"
 IDS_NOT_IMPLEMENTED,		"Non implementé"
-IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir '%s'."
-IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer '%s'."
+IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir « %s »."
+IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer « %s »."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Impossible d'ouvrir le groupe '%s'.\n\
+Impossible d'ouvrir le groupe « %s ».\n\
 Voulez-vous que le Gestionnaire de programmes essaie\n\
-de l'ouvrir dans les prochaines sessions?"
+de l'ouvrir dans les prochaines sessions ?"
 IDS_OUT_OF_MEMORY,		"Mémoire insuffisante."
 IDS_WINHELP_ERROR,		"Impossible d'afficher l'aide."
 IDS_UNKNOWN_FEATURE_s,		"Caractéristique inconnue dans %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier `%s' existe. Non écrasé."
-IDS_SAVE_GROUP_AS_s,		"Groupe enregistré sous `%s' pour éviter l'écrasement du fichier original."
+IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier « %s » existe. Non écrasé."
+IDS_SAVE_GROUP_AS_s,		"Groupe enregistré sous « %s » pour éviter l'écrasement du fichier original."
 IDS_NO_HOT_KEY,			"Aucun"
 IDS_ALL_FILES,			"Tous fichiers (*.*)"
 IDS_PROGRAMS,			"Programmes"

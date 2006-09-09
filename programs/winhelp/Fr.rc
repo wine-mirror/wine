@@ -47,7 +47,7 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
    MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "&A propos de WINE", MNID_HELP_WINE
+   MENUITEM "À &propos de WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -60,7 +60,7 @@ STID_WHERROR, 		"ERREUR"
 STID_WARNING,  		"ATTENTION"
 STID_INFO,  		"Information"
 STID_NOT_IMPLEMENTED, 	"Non implémenté"
-STID_HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide `%s'"
+STID_HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide « %s »"
 STID_CONTENTS, 		"&Index"
 STID_SEARCH, 		"&Rechercher"
 STID_BACK, 		"&Précédent"

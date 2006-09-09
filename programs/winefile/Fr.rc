@@ -6,7 +6,7 @@
  * Copyright 2002 Steven Edwards
  * Copyright 2002 Alexandre Julliard
  * Copyright 2003 Sylvain Petreolle
- * Copyright 2005 Jonathan Ernst
+ * Copyright 2005-2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -142,9 +142,9 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Rechercher dans l'aide\tF1", ID_HELP
         MENUITEM "&Utiliser l'aide\tF1",        ID_HELP_USING
         MENUITEM SEPARATOR
-        MENUITEM "&A propos de Winefile...",    ID_ABOUT
+        MENUITEM "À &propos de Winefile",    ID_ABOUT
 #ifdef __WINE__
-        MENUITEM "A propos de &Wine...",        ID_ABOUT_WINE
+        MENUITEM "À propos de &Wine",        ID_ABOUT_WINE
 #endif
     }
 }
@@ -170,11 +170,11 @@ CAPTION "Sélectionner la destination"
 FONT 8, "MS Shell Dlg"
 {
     CONTROL         "", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
-    CONTROL         "&Dossier:", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
+    CONTROL         "&Dossier :", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
     EDITTEXT        201, 3, 29, 134, 12, ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK", 1, 158, 6, 47, 14
     PUSHBUTTON      "Annuler", 2, 158, 23, 47, 14
-    PUSHBUTTON      "Pa&rcourir...", 254, 158, 43, 47, 14
+    PUSHBUTTON      "&Parcourir...", 254, 158, 43, 47, 14
 }
 
 IDD_DIALOG_VIEW_TYPE DIALOG DISCARDABLE 15, 13, 161, 97
@@ -206,17 +206,17 @@ FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,191,7,50,14
     PUSHBUTTON      "Annuler",IDCANCEL,191,29,50,14
-    LTEXT           "Nom du &fichier:",-1,7,7,59,9
+    LTEXT           "Nom du &fichier :",-1,7,7,59,9
     EDITTEXT        IDC_STATIC_PROP_FILENAME,71,7,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
-    LTEXT           "Chemin com&plet:",-1,7,18,59,9
+    LTEXT           "Chemin com&plet :",-1,7,18,59,9
     EDITTEXT        IDC_STATIC_PROP_PATH,71,18,120,9, ES_READONLY | NOT WS_BORDER | WS_TABSTOP
-    LTEXT           "Modification:",-1,7,29,59,9
+    LTEXT           "Modification :",-1,7,29,59,9
     EDITTEXT        IDC_STATIC_PROP_LASTCHANGE,71,29,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
-    LTEXT           "Version:",-1,7,40,59,9
+    LTEXT           "Version :",-1,7,40,59,9
     EDITTEXT        IDC_STATIC_PROP_VERSION,71,40,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
     LTEXT           "Cop&yright:",-1,7,51,59,9
     EDITTEXT        IDC_STATIC_PROP_COPYRIGHT,71,51,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
-    LTEXT           "Taille:",-1,7,62,59,9
+    LTEXT           "Taille :",-1,7,62,59,9
     EDITTEXT        IDC_STATIC_PROP_SIZE,71,62,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
     GROUPBOX        "Attributs",-1,7,79,158,46
     CONTROL         "Lectu&re seule",IDC_CHECK_READONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,91,68,9
@@ -242,7 +242,7 @@ STRINGTABLE
     IDS_ERROR               "Erreur"
     IDS_ROOT_FS             "root fs"
     IDS_UNIXFS              "unixfs"
-    IDS_DESKTOP             "Desktop"
+    IDS_DESKTOP             "Bureau"
     IDS_SHELL               "Shell"
     IDS_TITLEFMT            "%s - %s"
     IDS_NO_IMPL             "Pas encore implémenté"

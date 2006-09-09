@@ -58,7 +58,7 @@ CmdlgtstMenu MENU
  POPUP "Aid&e"
  {
   MENUITEM "&Usage", CM_H_USAGE
-  MENUITEM "&A propos...", CM_H_ABOUT
+  MENUITEM "À &propos", CM_H_ABOUT
  }
 
 }

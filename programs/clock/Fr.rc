@@ -39,7 +39,7 @@ MAIN_MENU MENU
  POPUP "Inf&o" {
   MENUITEM "&Licence...", IDM_LICENSE
   MENUITEM "AUCUNE &GARANTIE...", IDM_NOWARRANTY
-  MENUITEM "&A propos de Horloge...", IDM_ABOUT
+  MENUITEM "À &propos de l'horloge", IDM_ABOUT
  }
 }
 

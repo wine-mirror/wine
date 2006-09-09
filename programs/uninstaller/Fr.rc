@@ -1,7 +1,7 @@
 /*
  * Uninstaller (French Resources)
  *
- * Copyright 2005 Jonathan Ernst
+ * Copyright 2005-2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,23 +22,23 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Application Uninstaller"
+CAPTION "Désinstalleur d'applications de Wine"
 FONT 10, "MS Sans Serif"
 BEGIN
-    LTEXT           "Veuillez sélectionner l'application à désinstaller:",IDC_PLEASESELECT,10,10,250,14
+    LTEXT           "Veuillez sélectionner l'application à désinstaller :",IDC_PLEASESELECT,10,10,250,14
     EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
     LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
                     LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Supprimer",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&A propos",IDC_ABOUT,270,65,50,14
+    PUSHBUTTON      "À &propos",IDC_ABOUT,270,65,50,14
     PUSHBUTTON      "&Quitter",IDC_EXIT,270,81,50,14
 END
 
 
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Désinstalleur d'applications de Wine"
-     IDS_ABOUT, "Désinstalleur d'applications de Wine (C) 2005 par Andreas Mohr, Hannu Valtonen et Jonathan Ernst"
-     IDS_ABOUTTITLE, "A propos du désinstalleur"
+     IDS_ABOUT, "Désinstalleur d'applications de Wine (C) 2005 par Andreas Mohr, Hannu Valtonen et Jonathan Ernst."
+     IDS_ABOUTTITLE, "À propos du désinstalleur"
      IDS_REGISTRYKEYNOTAVAILABLE, "Clé de dsinstallation non disponible dans la base de registre (actuellement). Il n'y a rien  faire !"
-     IDS_UNINSTALLFAILED, "Erreur lors de l'excution de la commande de désinstallation '%s'. L'exécutable ne peut peut être pas être trouvé.\r\nSouhaitez-vous supprimmer l'entrée de la base de registre ?"
+     IDS_UNINSTALLFAILED, "Erreur lors de l'excution de la commande de désinstallation « %s ». L'exécutable ne peut peut être pas être trouvé.\r\nSouhaitez-vous supprimmer l'entrée de la base de registre ?"
 }
