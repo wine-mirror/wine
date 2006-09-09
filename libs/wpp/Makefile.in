@@ -8,8 +8,8 @@ C_SRCS = \
 	preproc.c \
 	wpp.c
 
-EXTRA_SRCS = ppy.y ppl.l
-EXTRA_OBJS = ppy.tab.o @LEX_OUTPUT_ROOT@.o
+LEX_SRCS   = ppl.l
+BISON_SRCS = ppy.y
 
 all: $(MODULE)
 
@@ -20,16 +20,7 @@ $(MODULE): $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-ppy.tab.c ppy.tab.h: ppy.y
-	$(BISON) -d $(SRCDIR)/ppy.y -o ppy.tab.c
-
-# hack to allow parallel make
-ppy.tab.h: ppy.tab.c
-ppy.tab.o: ppy.tab.h
-
-@LEX_OUTPUT_ROOT@.c: ppl.l
-	$(LEX) -o$@ $(SRCDIR)/ppl.l
-
-@LEX_OUTPUT_ROOT@.o: ppy.tab.h
-
 ### Dependencies:
+
+ppy.tab.o: ppy.tab.c
+ppl.yy.o: ppl.yy.c ppy.tab.h

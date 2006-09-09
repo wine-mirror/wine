@@ -10,6 +10,7 @@
 *.so
 *.tab.[ch]
 *.tlb
+*.yy.c
 *_[cips].c
 *~
 /Make.rules
@@ -21,4 +22,3 @@
 /tags
 /wine
 Makefile
-lex.yy.c

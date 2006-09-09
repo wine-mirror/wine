@@ -28,26 +28,14 @@ C_SRCS = \
 	types.c \
 	winedbg.c
 
-EXTRA_SRCS = dbg.y debug.l
-EXTRA_OBJS = dbg.tab.o @LEX_OUTPUT_ROOT@.o
+LEX_SRCS   = debug.l
+BISON_SRCS = dbg.y
 
 MANPAGES = winedbg.man
 
 @MAKE_PROG_RULES@
 
 all: $(MANPAGES)
-
-dbg.tab.c dbg.tab.h: dbg.y
-	$(BISON) -d -t $(SRCDIR)/dbg.y -o dbg.tab.c
-
-# hack to allow parallel make
-dbg.tab.h: dbg.tab.c
-dbg.tab.o: dbg.tab.h
-
-@LEX_OUTPUT_ROOT@.c: debug.l
-	$(LEX) $(SRCDIR)/debug.l
-
-@LEX_OUTPUT_ROOT@.o: dbg.tab.h
 
 install:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) winedbg.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
@@ -56,3 +44,6 @@ uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 ### Dependencies:
+
+dbg.tab.o: dbg.tab.c
+debug.yy.o: debug.yy.c dbg.tab.h

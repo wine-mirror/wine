@@ -13,8 +13,7 @@ C_SRCS = \
 	string.c \
 	winhelp.c
 
-EXTRA_SRCS = macro.lex.l
-EXTRA_OBJS = @LEX_OUTPUT_ROOT@.o
+LEX_SRCS = macro.lex.l
 
 EXTRARCFLAGS = -DWINELIB
 
@@ -22,7 +21,6 @@ RC_SRCS = rsrc.rc
 
 @MAKE_PROG_RULES@
 
-@LEX_OUTPUT_ROOT@.c: macro.lex.l
-	$(LEX) $(SRCDIR)/macro.lex.l
-
 ### Dependencies:
+
+macro.lex.yy.o: macro.lex.yy.c

@@ -109,22 +109,31 @@ prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.res *.mc.rc *.tab.[ch] @LEX_OUTPUT_ROOT@.c core
+                  *.flc *.res *.mc.rc *.tab.[ch] *.yy.c core
 
-OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(EXTRA_OBJS)
 
 RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
 
 .s.o:
 	$(AS) -o $@ $<
+
+.y.tab.c:
+	$(BISON) $(BISONFLAGS) -o $@ $<
+
+.y.tab.h:
+	$(BISON) $(BISONFLAGS) --defines=$@ -o /dev/null $<
+
+.l.yy.c:
+	$(LEX) $(LEXFLAGS) -t $< >$@ || ($(RM) $@ && exit 1)
 
 .mc.mc.rc:
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
@@ -212,11 +221,13 @@ winapi_check:: dummy
 
 # Rules for dependencies
 
+DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+
 $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
 
 depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(EXTRA_SRCS)
+	$(MAKEDEP) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)
 

@@ -19,8 +19,8 @@ C_SRCS = \
 	wrc.c \
 	writeres.c
 
-EXTRA_SRCS = parser.y parser.l
-EXTRA_OBJS = parser.tab.o @LEX_OUTPUT_ROOT@.o
+LEX_SRCS   = parser.l
+BISON_SRCS = parser.y
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
@@ -31,18 +31,6 @@ all: $(PROGRAMS) $(MANPAGES)
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
-parser.tab.c parser.tab.h: parser.y
-	$(BISON) -d -t $(SRCDIR)/parser.y -o parser.tab.c
-
-# hack to allow parallel make
-parser.tab.h: parser.tab.c
-parser.tab.o: parser.tab.h
-
-@LEX_OUTPUT_ROOT@.c: parser.l
-	$(LEX) $(SRCDIR)/parser.l
-
-@LEX_OUTPUT_ROOT@.o: parser.tab.h
-
 install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
@@ -51,3 +39,6 @@ uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 
 ### Dependencies:
+
+parser.tab.o: parser.tab.c
+parser.yy.o: parser.yy.c parser.tab.h

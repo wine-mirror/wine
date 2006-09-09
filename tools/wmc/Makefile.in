@@ -15,26 +15,16 @@ C_SRCS = \
 	wmc.c \
 	write.c
 
-EXTRA_SRCS = mcy.y
-EXTRA_OBJS = mcy.tab.o
+BISON_SRCS = mcy.y
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 all: $(PROGRAMS) $(MANPAGES)
 
-mcl.o: mcy.tab.h
-
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
-
-mcy.tab.c mcy.tab.h: mcy.y
-	$(BISON) -d -t $(SRCDIR)/mcy.y -o mcy.tab.c
-
-# hack to allow parallel make
-mcy.tab.h: mcy.tab.c
-mcy.tab.o: mcy.tab.h
 
 install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
@@ -44,3 +34,6 @@ uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 
 ### Dependencies:
+
+mcy.tab.o: mcy.tab.c
+mcl.o: mcy.tab.h

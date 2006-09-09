@@ -45,6 +45,10 @@ C_SRCS = \
 	upgrade.c \
 	where.c
 
+BISON_SRCS = \
+	cond.y \
+	sql.y
+
 RC_SRCS = msi.rc
 RC_BINSRC = msi.rc
 RC_BINARIES = \
@@ -52,23 +56,10 @@ RC_BINARIES = \
 	instadvert.bmp \
 	instlocal.bmp
 
-EXTRA_SRCS = sql.y cond.y
-EXTRA_OBJS = sql.tab.o cond.tab.o
-
 @MAKE_DLL_RULES@
 
-sql.tab.c sql.tab.h: sql.y
-	$(BISON) -d $(SRCDIR)/sql.y -o sql.tab.c
-
-cond.tab.c cond.tab.h: cond.y
-	$(BISON) -d $(SRCDIR)/cond.y -o cond.tab.c
-
-# hack to allow parallel make
-sql.tab.h: sql.tab.c
-sql.tab.o: sql.tab.h
-cond.tab.h: cond.tab.c
-cond.tab.o: cond.tab.h
-
-tokenize.o: sql.tab.h
-
 ### Dependencies:
+
+cond.tab.o: cond.tab.c
+sql.tab.o: sql.tab.c
+tokenize.o: sql.tab.h
