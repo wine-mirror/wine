@@ -118,7 +118,7 @@ TAGS etags:
 tags ctags:
 	find $(TOPSRCDIR)/ -name '*.[ch]' -print | ctags --c-types=+px -L -
 
-manpages htmlpages sgmlpages:
+manpages htmlpages sgmlpages: dummy
 	@cd documentation && $(MAKE) $@
 
 clean::
