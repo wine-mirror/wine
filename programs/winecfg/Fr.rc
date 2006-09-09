@@ -37,7 +37,7 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    LTEXT           "Cette bibliothèque est un logiciel libre ; vous pouvez la redistribuer et/ou la modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation ; version 2.1 de la licence, ou encore (à votre choix) toute version ultérieure."
                     IDC_STATIC,119,44,124,72
 END
 
@@ -206,7 +206,7 @@ BEGIN
     IDS_TAB_GRAPHICS        "Affichage"
     IDS_TAB_DESKTOP_INTEGRATION "Intégration avec le bureau"
     IDS_TAB_AUDIO           "Audio"
-    IDS_TAB_ABOUT           "A propos"
+    IDS_TAB_ABOUT           "À propos"
     IDS_WINECFG_TITLE       "Configuration de Wine"
     IDS_WINECFG_TITLE_APP   "Configuration de Wine pour %s"
     IDS_THEMEFILE           "Fichiers de thèmes"
@@ -225,56 +225,56 @@ BEGIN
     IDS_DLL_NATIVE_BUILTIN  "native, inclue"
     IDS_DLL_BUILTIN_NATIVE  "inclue, native"
     IDS_DLL_DISABLED        "désactivée"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DEFAULT_SETTINGS    "Paramètres par défaut"
+    IDS_EXECUTABLE_FILTER   "Programmes de Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Utiliser les paramètres globaux"
+    IDS_SELECT_EXECUTABLE   "Sélectionnez un fichier exécutable"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_SHADER_MODE_HARDWARE    "Matériel"
     IDS_SHADER_MODE_NONE        "Aucun"
-    IDS_SHADER_MODE_EMULATION   "Emulation"
+    IDS_SHADER_MODE_EMULATION   "Émulation"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "Détection auto."
+    IDS_DRIVE_FIXED             "Disque dur local"
+    IDS_DRIVE_REMOTE            "Partage réseau"
+    IDS_DRIVE_REMOVABLE         "Lecteur de disquette"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Vous ne pouvez pas ajouter plus de lecteurs.\n\nUne lettre de A à Z doit être assignée à chaque lecteur ; vous ne pouvez donc pas en avoir plus de 26."
+    IDS_SYSTEM_DRIVE_LABEL      "Lecteur système"
+    IDS_CONFIRM_DELETE_C        "Êtes-vous sûr de vouloir supprimer le lecteur C ?\n\nLa plupart des applications Windows comptent sur l'existence de ce lecteur et ne fonctionneront pas s'il n'existe pas. Si vous continuez, n'oubliez pas de le recréer !"
+    IDS_COL_DRIVELETTER         "Lettre"
+    IDS_COL_DRIVEMAPPING        "Assignation"
+    IDS_NO_DRIVE_C              "Vous ne disposez pas de lecteur C ce qui peut poser des problèmes.\n\nN'oubliez pas d'en recréer un en cliquant sur le bouton « Ajouter » dans l'onglet « Lecteurs » !\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
+    IDS_ACCEL_FULL              "Complète"
     IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_BASIC             "Basique"
+    IDS_ACCEL_EMULATION         "Émulation"
+    IDS_DRIVER_ALSA             "Pilote ALSA"
+    IDS_DRIVER_ARTS             "Pilote aRts"
+    IDS_DRIVER_ESOUND           "Pilote EsounD"
+    IDS_DRIVER_OSS              "Pilote OSS"
+    IDS_DRIVER_JACK             "Pilote JACK"
+    IDS_DRIVER_NAS              "Pilote NAS"
+    IDS_DRIVER_AUDIOIO          "Pilote Audio IO (Solaris)"
+    IDS_DRIVER_COREAUDIO        "Pilote CoreAudio"
+    IDS_OPEN_DRIVER_ERROR       "Impossible d'ouvrir %s !"
+    IDS_SOUNDDRIVERS            "Pilotes audio"
+    IDS_DEVICES_WAVEOUT         "Périphériques de sortie Wave"
+    IDS_DEVICES_WAVEIN          "Périphériques d'entrée Wave"
+    IDS_DEVICES_MIDIOUT         "Périphériques de sortie MIDI"
+    IDS_DEVICES_MIDIIN          "Périphériques d'entrée MIDI"
+    IDS_DEVICES_AUX             "Périphériques Aux"
+    IDS_DEVICES_MIXER           "Périphériques de mixage"
+    IDS_UNAVAILABLE_DRIVER      "Un pilote non disponible a été trouvé dans la base de registre !\n\nSouhaitez-vous supprimer « %s » de la base de registre ?"
+    IDS_WARNING                 "Attention"
 END
