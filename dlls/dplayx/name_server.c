@@ -96,21 +96,20 @@ static DPQ_DECL_COMPARECB( cbUglyPig, GUID )
 }
 
 /* Store the given NS remote address for future reference */
-/* FIXME: LPDPMSG_ENUMSESSIONSREPLY should be const */
-void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
-                                       DWORD                     dwHdrSize,
-                                       LPDPMSG_ENUMSESSIONSREPLY lpMsg,
-                                       LPVOID                    lpNSInfo )
+void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr,
+                                       DWORD                        dwHdrSize,
+                                       LPCDPMSG_ENUMSESSIONSREPLY   lpcMsg,
+                                       LPVOID                       lpNSInfo )
 {
   DWORD len;
   lpNSCache     lpCache = (lpNSCache)lpNSInfo;
   lpNSCacheData lpCacheNode;
 
-  TRACE( "%p, %p, %p\n", lpcNSAddrHdr, lpMsg, lpNSInfo );
+  TRACE( "%p, %p, %p\n", lpcNSAddrHdr, lpcMsg, lpNSInfo );
 
   /* See if we can find this session. If we can, remove it as it's a dup */
   DPQ_REMOVE_ENTRY_CB( lpCache->first, next, data->guidInstance, cbUglyPig,
-                       lpMsg->sd.guidInstance, lpCacheNode );
+                       lpcMsg->sd.guidInstance, lpCacheNode );
 
   if( lpCacheNode != NULL )
   {
@@ -140,11 +139,11 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
     return;
   }
 
-  CopyMemory( lpCacheNode->data, &lpMsg->sd, sizeof( *lpCacheNode->data ) );
-  len = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1, NULL, 0, NULL, NULL );
+  CopyMemory( lpCacheNode->data, &lpcMsg->sd, sizeof( *lpCacheNode->data ) );
+  len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
   if ((lpCacheNode->data->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
   {
-      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1,
+      WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1,
                            lpCacheNode->data->u1.lpszSessionNameA, len, NULL, NULL );
   }
 

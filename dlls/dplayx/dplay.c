@@ -691,7 +691,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
       /* No reply expected */
       NS_AddRemoteComputerAsNameServer( lpcMessageHeader,
                                         This->dp2->spData.dwSPHeaderSize,
-                                        (LPDPMSG_ENUMSESSIONSREPLY)lpcMessageBody,
+                                        lpcMessageBody,
                                         This->dp2->lpNameServerData );
       break;
     }
@@ -742,7 +742,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 #if 1
     case DPMSGCMD_JUSTENVELOPE:
     {
-      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", lpcMessageHeader, ((LPDWORD)lpcMessageHeader)[1] );
+      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", lpcMessageHeader, ((const DWORD *)lpcMessageHeader)[1] );
       NS_SetLocalAddr( This->dp2->lpNameServerData, lpcMessageHeader, 20 );
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
     }
