@@ -45,7 +45,7 @@ dbg.tab.h: dbg.tab.c
 dbg.tab.o: dbg.tab.h
 
 @LEX_OUTPUT_ROOT@.c: debug.l
-	$(LEX) -8 -I $(SRCDIR)/debug.l
+	$(LEX) $(SRCDIR)/debug.l
 
 @LEX_OUTPUT_ROOT@.o: dbg.tab.h
 
