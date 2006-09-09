@@ -58,185 +58,173 @@ all: $(FONTS)
 
 @MAKE_RULES@
 
-courier.ttf: courier.sfd
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
-
-ms_sans_serif.ttf: ms_sans_serif.sfd
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
-
-small_fonts.ttf: small_fonts.sfd
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
-
-system.ttf: system.sfd
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
-
 courier-1252-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1252 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1252 96 128 8
 
 courier-1250-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1250 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1250 96 128 8
 
 courier-1251-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1251 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1251 96 128 8
 
 courier-1253-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1253 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1253 96 128 8
 
 courier-1254-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1254 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1254 96 128 8
 
 courier-1255-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1255 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1255 96 128 8
 
 courier-1256-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1256 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1256 96 128 8
 
 courier-1257-96-13.fnt: courier.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1257 96 128 8
+	$(LDPATH) $(SFNT2FNT) courier.ttf 13 1257 96 128 8
 
 ms_sans_serif-1252-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1252 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1252 96 129 5
 
 ms_sans_serif-1252-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1252 96 129 7
 
 ms_sans_serif-1252-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1252 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1252 96 129 8
 
 ms_sans_serif-1250-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1250 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1250 96 129 5
 
 ms_sans_serif-1250-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1250 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1250 96 129 7
 
 ms_sans_serif-1251-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1251 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1251 96 129 5
 
 ms_sans_serif-1251-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1251 96 129 7
 
 ms_sans_serif-1251-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1251 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1251 96 129 8
 
 ms_sans_serif-1253-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1253 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1253 96 129 5
 
 ms_sans_serif-1253-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1253 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1253 96 129 7
 
 ms_sans_serif-1253-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1253 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1253 96 129 8
 
 ms_sans_serif-1254-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1254 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1254 96 129 5
 
 ms_sans_serif-1254-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1254 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1254 96 129 7
 
 ms_sans_serif-1254-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1254 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1254 96 129 8
 
 ms_sans_serif-1255-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1255 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1255 96 129 5
 
 ms_sans_serif-1255-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1255 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1255 96 129 7
 
 ms_sans_serif-1255-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1255 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1255 96 129 8
 
 ms_sans_serif-1256-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1256 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1256 96 129 5
 
 ms_sans_serif-1256-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1256 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1256 96 129 7
 
 ms_sans_serif-1256-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1256 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1256 96 129 8
 
 ms_sans_serif-1257-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 1257 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 1257 96 129 5
 
 ms_sans_serif-1257-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1257 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 1257 96 129 7
 
 ms_sans_serif-1257-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 1257 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 1257 96 129 8
 
 ms_sans_serif-874-96-13.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 13 874 96 129 5
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 13 874 96 129 5
 
 ms_sans_serif-874-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 874 96 129 7
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 16 874 96 129 7
 
 ms_sans_serif-874-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 20 874 96 129 8
+	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf 20 874 96 129 8
 
 small_fonts-1252-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1252 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1252 96 128 5
 
 small_fonts-1250-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1250 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1250 96 128 5
 
 small_fonts-1251-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1251 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1251 96 128 5
 
 small_fonts-1253-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1253 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1253 96 128 5
 
 small_fonts-1254-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1254 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1254 96 128 5
 
 small_fonts-1255-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1255 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1255 96 128 5
 
 small_fonts-1256-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1256 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1256 96 128 5
 
 small_fonts-1257-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 1257 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 1257 96 128 5
 
 small_fonts-932-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 11 932 96 128 5
+	$(LDPATH) $(SFNT2FNT) small_fonts.ttf 11 932 96 128 5
 
 system-1252-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1252 96 128 7
 
 system-1250-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1250 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1250 96 128 7
 
 system-1251-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1251 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1251 96 128 7
 
 system-1253-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1253 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1253 96 128 7
 
 system-1254-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1254 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1254 96 128 7
 
 system-1255-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1255 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1255 96 128 7
 
 system-1256-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1256 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1256 96 128 7
 
 system-1257-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 1257 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 1257 96 128 7
 
 system-874-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 874 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 874 96 128 7
 
 system-932-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 932 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 932 96 128 7
 
 system-936-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 936 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 936 96 128 7
 
 system-949-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 949 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 949 96 128 7
 
 system-950-96-16.fnt: system.ttf $(SFNT2FNT)
-	$(LDPATH) $(SFNT2FNT) $< 16 950 96 128 7
+	$(LDPATH) $(SFNT2FNT) system.ttf 16 950 96 128 7
 
 coure.fon: courier-1252-96-13.fnt $(FNT2FON)
 	$(FNT2FON) courier-1252-96-13.fnt $@
