@@ -222,12 +222,27 @@ static void testdisplaymodes(void)
 static void testcooperativelevels_normal(void)
 {
     HRESULT rc;
+    DDSURFACEDESC surfacedesc;
+    IDirectDrawSurface *surface = (IDirectDrawSurface *) 0xdeadbeef;
+
+    memset(&surfacedesc, 0, sizeof(surfacedesc));
+    surfacedesc.dwSize = sizeof(surfacedesc);
+    surfacedesc.ddpfPixelFormat.dwSize = sizeof(surfacedesc.ddpfPixelFormat);
+    surfacedesc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surfacedesc.dwBackBufferCount = 1;
+    surfacedesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
     /* Do some tests with DDSCL_NORMAL mode */
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %lx\n",rc);
+
+    /* Try creating a double buffered primary in normal mode */
+    rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
+    ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08lx\n", rc);
+    ok(surface == NULL, "Returned surface pointer is %p\n", surface);
+    if(surface) IDirectDrawSurface_Release(surface);
 
     /* Set the focus window */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,

@@ -2132,6 +2132,14 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         DDSD->dwFlags &= ~DDSD_LPSURFACE;
     }
 
+    if((DDSD->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE) &&
+       !(This->cooperative_level & DDSCL_EXCLUSIVE))
+    {
+        TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n", This);
+        *Surf = NULL;
+        return DDERR_NOEXCLUSIVEMODE;
+    }
+
     if (Surf == NULL)
     {
         FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);

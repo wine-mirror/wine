@@ -45,7 +45,7 @@
 
 /* Given an object and interface name, returns a pointer to that interface. */
 #define ICOM_INTERFACE(implobj, iface) \
-	(&((implobj)->ICOM_VFIELD_MULTI_NAME(iface)))
+	(implobj == NULL ? NULL :&((implobj)->ICOM_VFIELD_MULTI_NAME(iface)))
 
 #define ICOM_INIT_INTERFACE(implobj, ifacename, vtblname) \
 	do { \
