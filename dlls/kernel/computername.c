@@ -269,13 +269,12 @@ void COMPUTERNAME_Init (void)
         if ( NtSetValueKey( hsubkey, &nameW, 0, REG_SZ, computer_name, len ) != STATUS_SUCCESS )
             WARN ( "failed to set ComputerName\n" );
     }
-    else if ( st == STATUS_SUCCESS)
+    else
     {
         len = (len - offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
         TRACE( "found in registry\n" );
     }
-    else goto out;
-    
+
     NtClose( hsubkey );
     TRACE(" ComputerName: %s (%lu)\n", debugstr_w ( computer_name ), len / sizeof(WCHAR));
 
