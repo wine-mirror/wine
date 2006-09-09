@@ -113,6 +113,8 @@ int char_number = 1;		/* The current char pos within the line */
 char *cmdline;			/* The entire commandline */
 time_t now;			/* The time of start of wmc */
 
+int yydebug;
+
 int getopt (int argc, char *const *argv, const char *optstring);
 static void segvhandler(int sig);
 
