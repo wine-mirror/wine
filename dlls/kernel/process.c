@@ -914,7 +914,9 @@ void __wine_kernel_init(void)
         DWORD error = GetLastError();
 
         /* if Win16/DOS format, or unavailable address, exec a new process with the proper setup */
-        if (error == ERROR_BAD_EXE_FORMAT || error == ERROR_INVALID_ADDRESS)
+        if (error == ERROR_BAD_EXE_FORMAT ||
+            error == ERROR_INVALID_ADDRESS ||
+            error == ERROR_NOT_ENOUGH_MEMORY)
         {
             if (!getenv("WINEPRELOADRESERVE")) exec_process( main_exe_name );
             /* if we get back here, it failed */
