@@ -102,6 +102,7 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
 %}
 
 %pure-parser
+%name-prefix="COND_"
 
 %union
 {

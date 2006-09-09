@@ -58,10 +58,10 @@ EXTRA_OBJS = sql.tab.o cond.tab.o
 @MAKE_DLL_RULES@
 
 sql.tab.c sql.tab.h: sql.y
-	$(BISON) -p SQL_ -d $(SRCDIR)/sql.y -o sql.tab.c
+	$(BISON) -d $(SRCDIR)/sql.y -o sql.tab.c
 
 cond.tab.c cond.tab.h: cond.y
-	$(BISON) -p COND_ -d $(SRCDIR)/cond.y -o cond.tab.c
+	$(BISON) -d $(SRCDIR)/cond.y -o cond.tab.c
 
 # hack to allow parallel make
 sql.tab.h: sql.tab.c

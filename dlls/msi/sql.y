@@ -67,6 +67,7 @@ static struct expr * EXPR_wildcard( void *info );
 %}
 
 %pure-parser
+%name-prefix="SQL_"
 
 %union
 {
