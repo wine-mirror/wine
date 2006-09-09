@@ -1,4 +1,3 @@
-DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
