@@ -23,6 +23,6 @@ RC_SRCS = rsrc.rc
 @MAKE_PROG_RULES@
 
 @LEX_OUTPUT_ROOT@.c: macro.lex.l
-	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
+	$(LEX) $(SRCDIR)/macro.lex.l
 
 ### Dependencies:
