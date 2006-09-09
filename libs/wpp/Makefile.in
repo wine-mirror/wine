@@ -21,7 +21,7 @@ $(MODULE): $(OBJS)
 	$(RANLIB) $@
 
 ppy.tab.c ppy.tab.h: ppy.y
-	$(BISON) -ppp -d -t $(SRCDIR)/ppy.y -o ppy.tab.c
+	$(BISON) -d $(SRCDIR)/ppy.y -o ppy.tab.c
 
 # hack to allow parallel make
 ppy.tab.h: ppy.tab.c

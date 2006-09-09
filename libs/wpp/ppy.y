@@ -123,6 +123,8 @@ static int	nmacro_args;
 
 %}
 
+%name-prefix="pp"
+
 %union{
 	int		sint;
 	unsigned int	uint;
