@@ -576,6 +576,7 @@ typedef struct IWineD3DDeviceImpl
     IWineD3DSurface *ddraw_primary;
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
+    BOOL ddraw_fullscreen;
 
     /* List of GLSL shader programs and their associated vertex & pixel shaders */
     struct list glsl_shader_progs;

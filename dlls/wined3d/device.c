@@ -2175,6 +2175,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     return WINED3D_OK;
 }
 
+static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL fullscreen) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    TRACE("(%p) Setting DDraw fullscreen mode to %s\n", This, fullscreen ? "true" : "false");
+
+    /* DirectDraw apps can change between fullscreen and windowed mode after device creation with
+     * IDirectDraw7::SetCooperativeLevel. The GDI surface implementation needs to know this.
+     * DDraw doesn't necessarilly have a swapchain, so we have to store the fullscreen flag
+     * seperately.
+     */
+    This->ddraw_fullscreen = fullscreen;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT pixelformat, LPVOID context, D3DCB_ENUMDISPLAYMODESCALLBACK callback) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -7965,6 +7977,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** Odd functions **/
     IWineD3DDeviceImpl_Init3D,
     IWineD3DDeviceImpl_Uninit3D,
+    IWineD3DDeviceImpl_SetFullscreen,
     IWineD3DDeviceImpl_EnumDisplayModes,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
