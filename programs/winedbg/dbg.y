@@ -24,6 +24,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -508,10 +509,6 @@ void	parser_handle(HANDLE input)
     BOOL 	        ret_ok;
     HANDLE              in_copy  = dbg_parser_input;
     HANDLE              out_copy = dbg_parser_output;
-
-#ifdef YYDEBUG
-    yydebug = 0;
-#endif
 
     ret_ok = FALSE;
 
