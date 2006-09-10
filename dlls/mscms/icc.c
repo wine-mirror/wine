@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/debug.h"
 
 #include <stdarg.h>
 
@@ -33,8 +32,6 @@
 #include "icm.h"
 
 #include "mscms_priv.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 #ifdef HAVE_LCMS
 

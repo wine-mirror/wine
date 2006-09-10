@@ -38,10 +38,6 @@
 #include "wine/unicode.h"
 #include "kernel_private.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(atom);
-
 #define MAX_ATOM_LEN 255
 
 /******************************************************************

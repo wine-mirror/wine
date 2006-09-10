@@ -28,9 +28,7 @@
 #include "wingdi.h"
 #include "winspool.h"
 #include "wspool.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 HINSTANCE WINSPOOL_hInstance = NULL;
 
 /******************************************************************************

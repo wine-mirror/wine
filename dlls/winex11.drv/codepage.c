@@ -27,9 +27,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "x11font.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(text);
 
 /***********************************************************************
  *           IsLegalDBCSChar for cp932/936/949/950/euc

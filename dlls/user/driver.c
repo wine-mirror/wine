@@ -23,11 +23,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-
-#include "user_private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(user);
+#include "user_private.h"
 
 static const USER_DRIVER null_driver, lazy_load_driver;
 

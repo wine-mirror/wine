@@ -28,8 +28,6 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
-
 BOOL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
                     INT width, INT height, DWORD rop )
 {

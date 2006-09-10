@@ -22,9 +22,6 @@
 #include <string.h>
 
 #include "psdrv.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 DWORD RLE_encode(BYTE *in_buf, DWORD len, BYTE *out_buf)
 {

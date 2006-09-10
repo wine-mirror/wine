@@ -38,10 +38,6 @@
 #include "wine/unicode.h"
 #include "excpt.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(resource);
-
 
 /***********************************************************************
  *           CharNextA   (USER32.@)

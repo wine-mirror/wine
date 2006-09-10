@@ -32,10 +32,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "wine/unicode.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
-
 
 /*********************************************************************
  *           _wcsicmp    (NTDLL.@)

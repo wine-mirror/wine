@@ -38,8 +38,6 @@
 #include "wine/debug.h"
 #include "resource.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(twain);
-
 static HBITMAP static_bitmap;
 
 static INT_PTR CALLBACK ConnectingProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

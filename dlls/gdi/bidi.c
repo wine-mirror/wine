@@ -55,11 +55,11 @@ BOOL BIDI_Reorder(
                 UINT *lpOrder /* [out] Logical -> Visual order map */
     )
 {
-#ifdef HAVE_ICU
     TRACE("%s, %d, 0x%08lx lpOutString=%p, lpOrder=%p\n",
           debugstr_wn(lpString, uCount), uCount, dwFlags,
           lpOutString, lpOrder);
 
+#ifdef HAVE_ICU
     if ((dwFlags & GCP_REORDER) != 0) {
         UBiDi *bidi;
         UErrorCode err=0;

@@ -38,9 +38,6 @@
 #include "winsock2.h"
 
 #include "wine/unicode.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 /*****************************************************************************
  *          inet_network       [WSOCK32.1100]

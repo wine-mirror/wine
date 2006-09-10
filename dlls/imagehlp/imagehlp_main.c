@@ -26,8 +26,6 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
-
 /**********************************************************************/
 HANDLE IMAGEHLP_hHeap = NULL;
 

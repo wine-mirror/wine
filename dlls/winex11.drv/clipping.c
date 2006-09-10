@@ -23,9 +23,6 @@
 #include <stdio.h>
 
 #include "x11drv.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /***********************************************************************
  *           X11DRV_GetRegionData

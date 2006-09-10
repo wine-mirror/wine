@@ -24,7 +24,6 @@
 
 #include "wine/port.h"
 #include "wine/library.h"
-#include "wine/debug.h"
 
 #include "windef.h"
 #include "wincrypt.h"
@@ -32,8 +31,6 @@
 #include "implglue.h"
 
 #include <stdio.h>
-
-WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 /* Function prototypes copied from dlls/advapi32/crypt_md4.c */
 VOID WINAPI MD4Init( MD4_CTX *ctx );
