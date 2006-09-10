@@ -32,9 +32,15 @@
 #define MAGIC_DEAD  0xdeadbeef
 #define DEFAULT_PRINTER_SIZE 1000
 
-static char env_x86[] = "Windows NT x86";
-static char env_win9x_case[] = "windowS 4.0";
-static char winetest_monitor[] = "winetest";
+static CHAR does_not_exist_dll[]= "does_not_exists.dll";
+static CHAR empty[]             = "";
+static CHAR env_x86[]           = "Windows NT x86";
+static CHAR env_win9x_case[]    = "windowS 4.0";
+static CHAR illegal_name[]      = "illegal,name";
+static CHAR invalid_env[]       = "invalid_env";
+static CHAR invalid_server[]    = "\\invalid_server";
+static CHAR version_dll[]       = "version.dll";
+static CHAR winetest_monitor[]  = "winetest";
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
@@ -176,9 +182,6 @@ static void test_AddMonitor(void)
 {
     MONITOR_INFO_2A mi2a; 
     struct  monitor_entry * entry = NULL;
-    static CHAR empty[]              = "",
-                does_not_exist_dll[] = "does_not_exists.dll",
-                version_dll[]        = "version.dll";
     DWORD   res;
 
     entry = find_installed_monitor();
@@ -325,8 +328,7 @@ static void test_DeleteMonitor(void)
     MONITOR_INFO_2A         mi2a;
     struct monitor_entry  * entry = NULL;
     DWORD                   res;
-    static CHAR             empty[]   = "",
-                            bad_env[] = "bad_env";
+
 
     entry = find_installed_monitor();
 
@@ -369,7 +371,7 @@ static void test_DeleteMonitor(void)
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, bad_env, winetest_monitor);
+    res = DeleteMonitorA(NULL, invalid_env, winetest_monitor);
     ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
 
     /* the monitor-name */
@@ -700,7 +702,7 @@ static void test_GetPrinterDriverDirectory(void)
     LPBYTE      buffer = NULL;
     DWORD       cbBuf = 0, pcbNeeded = 0;
     BOOL        res;
-    static CHAR empty[] = "";
+
 
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
@@ -850,9 +852,7 @@ static void test_GetPrintProcessorDirectory(void)
     DWORD       cbBuf = 0;
     DWORD       pcbNeeded = 0;
     BOOL        res;
-    static CHAR empty[]          = "",
-                invalid_env[]    = "invalid_env",
-                invalid_server[] = "\\invalid_server";
+
 
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
@@ -982,8 +982,7 @@ static void test_OpenPrinter(void)
     DWORD               size;
     CHAR                buffer[DEFAULT_PRINTER_SIZE];
     LPSTR               ptr;
-    static CHAR         empty[]        = "",
-                        illegal_name[] = "illegal,name";
+
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
