@@ -52,8 +52,6 @@ extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
 extern DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) ;
 extern void release_DataFormat(DataFormat *df) ;
 
-extern HHOOK set_dinput_hook(int hook_id, LPVOID proc);
-
 /* Used to fill events in the queue */
 #define GEN_EVENT(offset,data,xtime,seq)					\
 {										\
