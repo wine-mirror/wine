@@ -103,7 +103,7 @@ fonts/__install__ loader/__install__ server/__install__: libs tools
 programs/__install__: libs tools include dlls/__install-lib__
 tools/__install-lib__ tools/__install-dev__: tools
 
-$(SUBDIRS:%=%/__depend__): tools include
+$(SUBDIRS:%=%/__depend__): tools
 
 # Test rules
 

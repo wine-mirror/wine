@@ -226,7 +226,7 @@ DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRC
 $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
 
-depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__) dummy
+depend: $(SUBDIRS:%=%/__depend__) dummy
 	$(MAKEDEP) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)

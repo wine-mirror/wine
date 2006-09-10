@@ -42,6 +42,7 @@ typedef struct _INCL_FILE
     struct list        entry;
     char              *name;
     char              *filename;
+    char              *sourcename;    /* source file name for generated headers */
     struct _INCL_FILE *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     int                system;        /* is it a system include (#include <name>) */
@@ -107,7 +108,7 @@ static void *xmalloc( size_t size )
 /*******************************************************************
  *         xrealloc
  */
-void *xrealloc (void *ptr, size_t size)
+static void *xrealloc (void *ptr, size_t size)
 {
     void *res;
     assert( size );
@@ -130,7 +131,7 @@ static char *xstrdup( const char *str )
 /*******************************************************************
  *         strmake
  */
-char *strmake( const char* fmt, ... )
+static char *strmake( const char* fmt, ... )
 {
     int n;
     size_t size = 100;
@@ -149,6 +150,17 @@ char *strmake( const char* fmt, ... )
     }
 }
 
+
+/*******************************************************************
+ *         strendswith
+ */
+static int strendswith( const char* str, const char* end )
+{
+    int l = strlen(str);
+    int m = strlen(end);
+
+    return l >= m && strcmp(str + l - m, end) == 0;
+}
 
 /*******************************************************************
  *         get_extension
@@ -203,23 +215,6 @@ static char *get_line( FILE *file )
         }
         return buffer;
     }
-}
-
-/*******************************************************************
- *         is_generated
- *
- * Test if a given file type is generated during the make process
- */
-static int is_generated( const char *name )
-{
-    static const char * const extensions[] = { ".tab.h", ".mc.rc" };
-    size_t i, len = strlen(name);
-    for (i = 0; i < sizeof(extensions)/sizeof(extensions[0]); i++)
-    {
-        if (len <= strlen(extensions[i])) continue;
-        if (!strcmp( name + len - strlen(extensions[i]), extensions[i] )) return 1;
-    }
-    return 0;
 }
 
 /*******************************************************************
@@ -304,7 +299,7 @@ static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int
     include->name = xstrdup(name);
     include->included_by = pFile;
     include->included_line = line;
-    include->system = system || pFile->system;
+    include->system = system;
     list_add_tail( &includes, &include->entry );
 found:
     pFile->files[pos] = include;
@@ -351,6 +346,66 @@ static FILE *open_include_file( INCL_FILE *pFile )
 
     errno = ENOENT;
 
+    /* check for generated bison header */
+
+    if (strendswith( pFile->name, ".tab.h" ))
+    {
+        if (src_dir)
+            filename = strmake( "%s/%.*s.y", src_dir, strlen(pFile->name) - 6, pFile->name );
+        else
+            filename = strmake( "%.*s.y", strlen(pFile->name) - 6, pFile->name );
+
+        if ((file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = xstrdup( pFile->name );
+            /* don't bother to parse it */
+            fclose( file );
+            return NULL;
+        }
+        free( filename );
+    }
+
+    /* check for generated message resource */
+
+    if (strendswith( pFile->name, ".mc.rc" ))
+    {
+        if (src_dir)
+            filename = strmake( "%s/%s", src_dir, pFile->name );
+        else
+            filename = xstrdup( pFile->name );
+
+        filename[strlen(filename) - 3] = 0;
+
+        if ((file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = xstrdup( pFile->name );
+            /* don't bother to parse it */
+            fclose( file );
+            return NULL;
+        }
+        free( filename );
+    }
+
+    /* check for corresponding idl file in source dir */
+
+    if (strendswith( pFile->name, ".h" ))
+    {
+        if (src_dir)
+            filename = strmake( "%s/%.*s.idl", src_dir, strlen(pFile->name) - 2, pFile->name );
+        else
+            filename = strmake( "%.*s.idl", strlen(pFile->name) - 2, pFile->name );
+
+        if ((file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = xstrdup( pFile->name );
+            return file;
+        }
+        free( filename );
+    }
+
     /* first try name as is */
     if ((file = fopen( pFile->name, "r" )))
     {
@@ -363,6 +418,28 @@ static FILE *open_include_file( INCL_FILE *pFile )
     {
         filename = strmake( "%s/%s", src_dir, pFile->name );
         if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
+    }
+
+    /* check for corresponding idl file in global includes */
+
+    if (strendswith( pFile->name, ".h" ))
+    {
+        if (top_src_dir)
+            filename = strmake( "%s/include/%.*s.idl",
+                                top_src_dir, strlen(pFile->name) - 2, pFile->name );
+        else if (top_obj_dir)
+            filename = strmake( "%s/include/%.*s.idl",
+                                top_obj_dir, strlen(pFile->name) - 2, pFile->name );
+        else
+            filename = NULL;
+
+        if (filename && (file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            return file;
+        }
         free( filename );
     }
 
@@ -400,13 +477,13 @@ static FILE *open_include_file( INCL_FILE *pFile )
         free( filename );
     }
 
-    if (pFile->included_by->system) return NULL;  /* ignore if included by a system file */
-
     perror( pFile->name );
     while (pFile->included_by)
     {
+        const char *parent = pFile->included_by->sourcename;
+        if (!parent) parent = pFile->included_by->name;
         fprintf( stderr, "  %s was first included from %s:%d\n",
-                 pFile->name, pFile->included_by->name, pFile->included_line );
+                 pFile->name, parent, pFile->included_line );
         pFile = pFile->included_by;
     }
     exit(1);
@@ -419,10 +496,20 @@ found:
 
 /*******************************************************************
  *         parse_idl_file
+ *
+ * If for_h_file is non-zero, it means we are not interested in the idl file
+ * itself, but only in the contents of the .h file that will be generated from it.
  */
-static void parse_idl_file( INCL_FILE *pFile, FILE *file )
+static void parse_idl_file( INCL_FILE *pFile, FILE *file, int for_h_file )
 {
     char *buffer, *include;
+
+    if (for_h_file)
+    {
+        /* generated .h file always includes these */
+        add_include( pFile, "rpc.h", 0, 1 );
+        add_include( pFile, "rpcndr.h", 0, 1 );
+    }
 
     input_line = 0;
     while ((buffer = get_line( file )))
@@ -435,24 +522,62 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file )
         {
             p += 6;
             while (*p && isspace(*p)) p++;
-            if (*p != '\"') continue;
+            if (*p != '"') continue;
+            include = ++p;
+            while (*p && (*p != '"')) p++;
+            if (!*p) fatal_error( "%s:%d: Malformed import directive\n", pFile->filename, input_line );
+            *p = 0;
+            if (for_h_file && strendswith( include, ".idl" )) strcpy( p - 4, ".h" );
+            add_include( pFile, include, input_line, 0 );
+            continue;
         }
-        else
+
+        if (for_h_file)  /* only check for #include inside cpp_quote */
         {
+            if (strncmp( p, "cpp_quote", 9 )) continue;
+            p += 9;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '(') continue;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '"') continue;
             if (*p++ != '#') continue;
             while (*p && isspace(*p)) p++;
             if (strncmp( p, "include", 7 )) continue;
             p += 7;
             while (*p && isspace(*p)) p++;
-            if (*p != '\"' && *p != '<' ) continue;
+            if (*p == '\\' && p[1] == '"')
+            {
+                p += 2;
+                quote = '"';
+            }
+            else
+            {
+                if (*p++ != '<' ) continue;
+                quote = '>';
+            }
+            include = p;
+            while (*p && (*p != quote)) p++;
+            if (!*p || (quote == '"' && p[-1] != '\\'))
+                fatal_error( "%s:%d: Malformed #include directive inside cpp_quote\n",
+                             pFile->filename, input_line );
+            if (quote == '"') p--;  /* remove backslash */
+            *p = 0;
+            add_include( pFile, include, input_line, (quote == '>') );
+            continue;
         }
 
+        /* check for normal #include */
+        if (*p++ != '#') continue;
+        while (*p && isspace(*p)) p++;
+        if (strncmp( p, "include", 7 )) continue;
+        p += 7;
+        while (*p && isspace(*p)) p++;
+        if (*p != '\"' && *p != '<' ) continue;
         quote = *p++;
         if (quote == '<') quote = '>';
         include = p;
         while (*p && (*p != quote)) p++;
-        if (!*p) fatal_error( "%s:%d: Malformed #include or import directive\n",
-                              pFile->filename, input_line );
+        if (!*p) fatal_error( "%s:%d: Malformed #include directive\n", pFile->filename, input_line );
         *p = 0;
         add_include( pFile, include, input_line, (quote == '>') );
     }
@@ -494,21 +619,17 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
  */
 static void parse_file( INCL_FILE *pFile, int src )
 {
-    char *ext;
     FILE *file;
-
-    if (is_generated( pFile->name ))
-    {
-        /* file is generated during make, don't try to open it */
-        pFile->filename = xstrdup( pFile->name );
-        return;
-    }
 
     file = src ? open_src_file( pFile ) : open_include_file( pFile );
     if (!file) return;
-    ext = get_extension( pFile->name );
-    if (ext && !strcmp( ext, ".idl" )) parse_idl_file( pFile, file );
-    else parse_c_file( pFile, file );
+
+    if (pFile->sourcename && strendswith( pFile->sourcename, ".idl" ))
+        parse_idl_file( pFile, file, 1 );
+    else if (strendswith( pFile->filename, ".idl" ))
+        parse_idl_file( pFile, file, 0 );
+    else
+        parse_c_file( pFile, file );
     fclose(file);
 }
 
