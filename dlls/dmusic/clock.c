@@ -72,13 +72,13 @@ static HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFER
 
 static HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie) {
 	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
-	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, baseTime, streamTime, hEvent, pdwAdviseCookie);
+	FIXME("(%p, 0x%s, 0x%s, %p, %p): stub\n", This, wine_dbgstr_longlong(baseTime), wine_dbgstr_longlong(streamTime), hEvent, pdwAdviseCookie);
 	return S_OK;
 }
 
 static HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie) {
 	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
-	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, startTime, periodTime, hSemaphore, pdwAdviseCookie);
+	FIXME("(%p, 0x%s, 0x%s, %p, %p): stub\n", This, wine_dbgstr_longlong(startTime), wine_dbgstr_longlong(periodTime), hSemaphore, pdwAdviseCookie);
 	return S_OK;
 }
 

@@ -76,13 +76,13 @@ static HRESULT WINAPI IDirectMusicBufferImpl_TotalTime (LPDIRECTMUSICBUFFER ifac
 
 static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, %lli, %ld, %ld): stub\n", This, rt, dwChannelGroup, dwChannelMessage);
+	FIXME("(%p, 0x%s, %ld, %ld): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, dwChannelMessage);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, %lli, %ld, %ld, %p): stub\n", This, rt, dwChannelGroup, cb, lpb);
+	FIXME("(%p, 0x%s, %ld, %ld, %p): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, cb, lpb);
 	return S_OK;
 }
 
@@ -130,7 +130,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat (LPDIRECTMUSICBUFFE
 
 static HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, %lli): stub\n", This, rt);
+	FIXME("(%p, 0x%s): stub\n", This, wine_dbgstr_longlong(rt));
 	return S_OK;
 }
 
