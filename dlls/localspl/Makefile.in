@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = localspl.dll
+IMPORTS   = kernel32
+
+C_SRCS = \
+	localspl_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

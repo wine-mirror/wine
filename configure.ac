@@ -1577,6 +1577,7 @@ dlls/iphlpapi/tests/Makefile
 dlls/itss/Makefile
 dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
+dlls/localspl/Makefile
 dlls/lz32/Makefile
 dlls/lz32/tests/Makefile
 dlls/mapi32/Makefile

@@ -81,6 +81,7 @@ BASEDIRS = \
 	iphlpapi \
 	itss \
 	kernel \
+	localspl \
 	lz32 \
 	mapi32 \
 	mciavi32 \
