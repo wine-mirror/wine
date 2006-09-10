@@ -40,7 +40,7 @@ HICON TrayIcon_GetProcessorUsageIcon(void)
     HDC            hScreenDC = NULL;
     HDC            hDC = NULL;
     HBITMAP        hBitmap = NULL;
-    HBITMAP        hOldBitmap = NULL;
+    HBITMAP        hOldBitmap;
     HBITMAP        hBitmapMask = NULL;
     ICONINFO    iconInfo;
     ULONG        ProcessorUsage;
@@ -108,8 +108,7 @@ HICON TrayIcon_GetProcessorUsageIcon(void)
      * old bitmap back.
      */
     SelectObject(hDC, hOldBitmap);
-    hOldBitmap = NULL;
-    
+
     iconInfo.fIcon = TRUE;
     iconInfo.xHotspot = 0;
     iconInfo.yHotspot = 0;
@@ -124,8 +123,6 @@ done:
      */
     if (hScreenDC)
         ReleaseDC(NULL, hScreenDC);
-    if (hOldBitmap)
-        SelectObject(hDC, hOldBitmap);
     if (hDC)
         DeleteDC(hDC);
     if (hBitmapBrush)
