@@ -7,6 +7,7 @@ IMPORTS   = user32 kernel32
 EXTRALIBS = -ldxerr8
 
 CTESTS = \
+	d3d8_main.c \
 	device.c
 
 @MAKE_TEST_RULES@

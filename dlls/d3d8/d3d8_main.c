@@ -72,13 +72,32 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv) {
 /***********************************************************************
  *		ValidateVertexShader (D3D8.@)
  *
- * PARAMS
+ * I've seen reserved1 and reserved2 always passed as 0's
+ * bool seems always passed as 0 or 1, but other values work as well.... 
  * toto       result?
  */
-BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
-{
-  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
-  return TRUE;
+HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD* reserved2, int bool, DWORD* toto)
+{ 
+  HRESULT ret;
+  FIXME("(%p %p %p %d %p): stub\n", vertexshader, reserved1, reserved2, bool, toto);
+
+  if (!vertexshader)
+      return E_FAIL;
+
+  if (reserved1 || reserved2)
+      return E_FAIL;
+
+  switch(*vertexshader) {
+        case 0xFFFE0101:
+        case 0xFFFE0100: 
+            ret=S_OK;
+            break;
+        default:
+            ERR("vertexshader version mismatch\n");
+            ret=E_FAIL;
+        }
+
+  return ret;
 }
 
 /***********************************************************************
