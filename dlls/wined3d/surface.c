@@ -49,6 +49,137 @@ typedef enum {
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
+static void surface_download_data(IWineD3DSurfaceImpl *This) {
+    if (This->resource.format == WINED3DFMT_DXT1 ||
+            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
+            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
+        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* We can assume this as the texture would not have been created otherwise */
+            FIXME("(%p) : Attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
+        } else {
+            TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
+                This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+
+            ENTER_GL();
+
+            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, This->resource.allocatedMemory));
+            checkGLcall("glGetCompressedTexImageARB()");
+
+            LEAVE_GL();
+        }
+    } else {
+        TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
+                This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+
+        ENTER_GL();
+
+        glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
+                This->glDescription.glType, This->resource.allocatedMemory);
+        checkGLcall("glGetTexImage()");
+
+        LEAVE_GL();
+
+        if (wined3d_settings.nonpower2_mode == NP2_REPACK) {
+            /*
+             * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
+             * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
+             * repack the texture so that the bpp * width pitch can be used instead of bpp * pow2width.
+             *
+             * We're doing this...
+             *
+             * instead of boxing the texture :
+             * |<-texture width ->|  -->pow2width|   /\
+             * |111111111111111111|              |   |
+             * |222 Texture 222222| boxed empty  | texture height
+             * |3333 Data 33333333|              |   |
+             * |444444444444444444|              |   \/
+             * -----------------------------------   |
+             * |     boxed  empty | boxed empty  | pow2height
+             * |                  |              |   \/
+             * -----------------------------------
+             *
+             *
+             * we're repacking the data to the expected texture width
+             *
+             * |<-texture width ->|  -->pow2width|   /\
+             * |111111111111111111222222222222222|   |
+             * |222333333333333333333444444444444| texture height
+             * |444444                           |   |
+             * |                                 |   \/
+             * |                                 |   |
+             * |            empty                | pow2height
+             * |                                 |   \/
+             * -----------------------------------
+             *
+             * == is the same as
+             *
+             * |<-texture width ->|    /\
+             * |111111111111111111|
+             * |222222222222222222|texture height
+             * |333333333333333333|
+             * |444444444444444444|    \/
+             * --------------------
+             *
+             * this also means that any references to allocatedMemory should work with the data as if were a
+             * standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
+             *
+             * internally the texture is still stored in a boxed format so any references to textureName will
+             * get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
+             */
+
+            if (This->Flags & SFLAG_NONPOW2) {
+                LPBYTE src_data, dst_data;
+                int src_pitch = This->bytesPerPixel * This->pow2Width;
+                int dst_pitch = This->bytesPerPixel * This->currentDesc.Width;
+                int y;
+
+                src_data = dst_data = This->resource.allocatedMemory;
+                FIXME("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, src_pitch, dst_pitch);
+                for (y = 1 ; y < This->currentDesc.Height; y++) {
+                    /* skip the first row */
+                    src_data += src_pitch;
+                    dst_data += dst_pitch;
+                    memcpy(dst_data, src_data, dst_pitch);
+                }
+            }
+        }
+    }
+}
+
+static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
+    if (This->resource.format == WINED3DFMT_DXT1 ||
+            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
+            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
+        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+            FIXME("Using DXT1/3/5 without advertized support\n");
+        } else {
+            TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
+            ENTER_GL();
+            GL_EXTCALL(glCompressedTexSubImage2DARB(This->glDescription.target, This->glDescription.level, 0, 0, width, height,
+                    This->glDescription.glFormatInternal, This->resource.size, data));
+            checkGLcall("glCompressedTexSubImage2D");
+            LEAVE_GL();
+        }
+    } else {
+        TRACE("(%p) : Calling glTexSubImage2D w %d,  h %d, data, %p\n", This, width, height, data);
+        ENTER_GL();
+        glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, data);
+        checkGLcall("glTexSubImage2D");
+        LEAVE_GL();
+    }
+}
+
+static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
+    TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
+            This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);
+
+    ENTER_GL();
+
+    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type, NULL);
+    checkGLcall("glTexImage2D");
+
+    LEAVE_GL();
+}
+
 /* *******************************************
    IWineD3DSurface IUnknown parts follow
    ******************************************* */
@@ -162,23 +293,19 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
      IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
 #endif
     glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
-    if (This->glDescription.level == 0 &&  This->glDescription.textureName == 0) {
-          glGenTextures(1, &This->glDescription.textureName);
-          checkGLcall("glGenTextures");
-          TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
-          glBindTexture(This->glDescription.target, This->glDescription.textureName);
-          checkGLcall("glBindTexture");
-          IWineD3DSurface_LoadTexture(iface);
-          /* This is where we should be reducing the amount of GLMemoryUsed */
-    } else {
-        if (This->glDescription.level == 0) {
-          glBindTexture(This->glDescription.target, This->glDescription.textureName);
-          checkGLcall("glBindTexture");
-          IWineD3DSurface_LoadTexture(iface);
-        } else  if (This->glDescription.textureName != 0) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
-            /* assume this is a coding error not a real error for now */
-            FIXME("Mipmap surface has a glTexture bound to it!\n");
+    if (!This->glDescription.level) {
+        if (!This->glDescription.textureName) {
+            glGenTextures(1, &This->glDescription.textureName);
+            checkGLcall("glGenTextures");
+            TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
         }
+        glBindTexture(This->glDescription.target, This->glDescription.textureName);
+        checkGLcall("glBindTexture");
+        IWineD3DSurface_LoadTexture(iface);
+        /* This is where we should be reducing the amount of GLMemoryUsed */
+    } else if (This->glDescription.textureName) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
+        /* assume this is a coding error not a real error for now */
+        FIXME("Mipmap surface has a glTexture bound to it!\n");
     }
     if (This->resource.pool == WINED3DPOOL_DEFAULT) {
        /* Tell opengl to try and keep this texture in video ram (well mostly) */
@@ -528,95 +655,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 /* Now I have to copy thing bits back */
                 This->Flags |= SFLAG_ACTIVELOCK; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
                 /* TODO: make activeLock a bit more intelligent, maybe implement a method to purge the texture memory. */
-                ENTER_GL();
-    
+
                 /* Make sure that the texture is loaded */
                 IWineD3DSurface_PreLoad(iface); /* Make sure there is a texture to bind! */
-    
-                TRACE("(%p) glGetTexImage level(%d), fmt(%d), typ(%d), mem(%p)\n" , This, This->glDescription.level,  This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
-    
-                if (This->resource.format == WINED3DFMT_DXT1 ||
-                    This->resource.format == WINED3DFMT_DXT2 ||
-                    This->resource.format == WINED3DFMT_DXT3 ||
-                    This->resource.format == WINED3DFMT_DXT4 ||
-                    This->resource.format == WINED3DFMT_DXT5) {
-                    TRACE("Locking a compressed texture\n");
-                    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* we can assume this as the texture would not have been created otherwise */
-                        GL_EXTCALL(glGetCompressedTexImageARB)(This->glDescription.target,
-                                                            This->glDescription.level,
-                                                            This->resource.allocatedMemory);
-    
-                    } else {
-                        FIXME("(%p) attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
-                    }
-                } else {
-                    glGetTexImage(This->glDescription.target,
-                                This->glDescription.level,
-                                This->glDescription.glFormat,
-                                This->glDescription.glType,
-                                This->resource.allocatedMemory);
-                    vcheckGLcall("glGetTexImage");
-                    if (NP2_REPACK == wined3d_settings.nonpower2_mode) {
-                        /* some games (e.g. warhammer 40k) don't work with the odd pitchs properly, preventing
-                        the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
-                        repack the texture so that the bpp * width pitch can be used instead of the bpp * pow2width.
-        
-                        Were doing this...
-        
-                        instead of boxing the texture :
-                        |<-texture width ->|  -->pow2width|   /\
-                        |111111111111111111|              |   |
-                        |222 Texture 222222| boxed empty  | texture height
-                        |3333 Data 33333333|              |   |
-                        |444444444444444444|              |   \/
-                        -----------------------------------   |
-                        |     boxed  empty | boxed empty  | pow2height
-                        |                  |              |   \/
-                        -----------------------------------
-        
-        
-                        were repacking the data to the expected texture width
-        
-                        |<-texture width ->|  -->pow2width|   /\
-                        |111111111111111111222222222222222|   |
-                        |222333333333333333333444444444444| texture height
-                        |444444                           |   |
-                        |                                 |   \/
-                        |                                 |   |
-                        |            empty                | pow2height
-                        |                                 |   \/
-                        -----------------------------------
-        
-                        == is the same as
-        
-                        |<-texture width ->|    /\
-                        |111111111111111111|
-                        |222222222222222222|texture height
-                        |333333333333333333|
-                        |444444444444444444|    \/
-                        --------------------
-        
-                        this also means that any references to allocatedMemory should work with the data as if were a standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
-        
-                        internally the texture is still stored in a boxed format so any references to textureName will get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
-                        */
-                        if (This->Flags & SFLAG_NONPOW2) {
-                            BYTE* dataa, *datab;
-                            int pitcha = 0, pitchb = 0;
-                            int y;
-                            pitcha = This->bytesPerPixel * This->currentDesc.Width;
-                            pitchb = This->bytesPerPixel * This->pow2Width;
-                            datab = dataa = This->resource.allocatedMemory;
-                            FIXME("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, pitcha, pitchb);
-                            for (y = 1 ; y < This->currentDesc.Height; y++) {
-                                dataa += pitcha; /* skip the first row */
-                                datab += pitchb;
-                                memcpy(dataa, datab, pitcha);
-                            }
-                        }
-                    }
-                }
-                LEAVE_GL();
+
+                surface_download_data(This);
             }
         } else { /* Nothing to do */
             TRACE("Memory %p already allocted for texture\n",  This->resource.allocatedMemory);
@@ -1750,6 +1793,11 @@ void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    GLenum format, internal, type;
+    CONVERT_TYPES convert;
+    int bpp;
+    int pitch;
+    BYTE *mem;
 
     if (This->Flags & SFLAG_INTEXTURE) {
         TRACE("Surface already in texture\n");
@@ -1785,8 +1833,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     }
 
     if (This->Flags & SFLAG_INPBUFFER) {
-        ENTER_GL();
-
         if (This->glDescription.level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
         else if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
@@ -1796,6 +1842,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             FIXME("Format %d not supported\n", This->resource.format);
         else {
             GLint prevRead;
+
+            ENTER_GL();
+
             glGetIntegerv(GL_READ_BUFFER, &prevRead);
             vcheckGLcall("glGetIntegerv");
             glReadBuffer(GL_BACK);
@@ -1813,204 +1862,93 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             checkGLcall("glCopyTexImage2D");
             glReadBuffer(prevRead);
             vcheckGLcall("glReadBuffer");
+
+            LEAVE_GL();
+
             TRACE("Updating target %d\n", This->glDescription.target);
             This->Flags |= SFLAG_INTEXTURE;
         }
-        LEAVE_GL();
         return WINED3D_OK;
     }
 
-    /* TODO: Compressed non-power 2 support */
+    if(This->CKeyFlags & DDSD_CKSRCBLT) {
+        This->Flags |= SFLAG_GLCKEY;
+        This->glCKey = This->SrcBltCKey;
+    }
+    else This->Flags &= ~SFLAG_GLCKEY;
 
-    if (This->resource.format == WINED3DFMT_DXT1 ||
-        This->resource.format == WINED3DFMT_DXT2 ||
-        This->resource.format == WINED3DFMT_DXT3 ||
-        This->resource.format == WINED3DFMT_DXT4 ||
-        This->resource.format == WINED3DFMT_DXT5) {
-        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
-            FIXME("Using DXT1/3/5 without advertized support\n");
-        } else if (This->resource.allocatedMemory) {
-            TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
-                  This->glDescription.target,
-                  This->glDescription.level,
-                  This->glDescription.glFormatInternal,
-                  This->currentDesc.Width,
-                  This->currentDesc.Height,
-                  0,
-                  This->resource.size,
-                  This->resource.allocatedMemory);
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
-            ENTER_GL();
+    /* The pitch is in 'length' not in bytes */
+    if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+        pitch = This->currentDesc.Width;
+    else
+        pitch = This->pow2Width;
 
-            GL_EXTCALL(glCompressedTexImage2DARB)(This->glDescription.target,
-                                                  This->glDescription.level,
-                                                  This->glDescription.glFormatInternal,
-                                                  This->currentDesc.Width,
-                                                  This->currentDesc.Height,
-                                                  0,
-                                                  This->resource.size,
-                                                  This->resource.allocatedMemory);
-            checkGLcall("glCommpressedTexImage2D");
+    if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
+        int height = This->glRect.bottom - This->glRect.top;
 
-            LEAVE_GL();
+        mem = HeapAlloc(GetProcessHeap(), 0, pitch * height * bpp);
+        if(!mem) {
+            ERR("Out of memory %d, %d!\n", pitch, height);
+            return WINED3DERR_OUTOFVIDEOMEMORY;
+        }
+        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch * height, convert, This);
 
-            if(!(This->Flags & SFLAG_DONOTFREE)){
-                HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
-                This->resource.allocatedMemory = NULL;
-            }
+        This->Flags |= SFLAG_CONVERTED;
+    } else if (This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
+        d3dfmt_p8_upload_palette(iface, convert);
+        This->Flags &= ~SFLAG_CONVERTED;
+        mem = This->resource.allocatedMemory;
+    } else {
+        This->Flags &= ~SFLAG_CONVERTED;
+        mem = This->resource.allocatedMemory;
+    }
+
+    /* Make sure the correct pitch is used */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
+
+    if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
+        TRACE("non power of two support\n");
+        surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
+        if (mem) {
+            surface_upload_data(This, This->pow2Width, This->pow2Height, format, type, mem);
         }
     } else {
-        GLenum format, internal, type;
-        CONVERT_TYPES convert;
-        int bpp;
-        int pitch;
-        BYTE *mem;
-
-        if(This->CKeyFlags & DDSD_CKSRCBLT) { 
-            This->Flags |= SFLAG_GLCKEY;
-            This->glCKey = This->SrcBltCKey;
+        surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
+        if (mem) {
+            surface_upload_data(This, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
         }
-        else This->Flags &= ~SFLAG_GLCKEY;
-        d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
+    }
 
-        /* The pitch is in 'length' not in bytes */
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            pitch = This->currentDesc.Width;
-        else
-            pitch = This->pow2Width;
+    /* Restore the default pitch */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
-        if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
-            int height = This->glRect.bottom - This->glRect.top;
-
-            mem = HeapAlloc(GetProcessHeap(), 0, pitch * height * bpp);
-            if(!mem) {
-                ERR("Out of memory %d, %d!\n", pitch, height);
-                return WINED3DERR_OUTOFVIDEOMEMORY;
-            }
-            d3dfmt_convert_surface(This->resource.allocatedMemory,
-                                    mem,
-                                    pitch*height,
-                                    convert,
-                                    This);
-
-            This->Flags |= SFLAG_CONVERTED;
-        } else if(This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
-            d3dfmt_p8_upload_palette(iface, convert);
-            This->Flags &= ~SFLAG_CONVERTED;
-            mem = This->resource.allocatedMemory;
-        } else {
-            This->Flags &= ~SFLAG_CONVERTED;
-            mem = This->resource.allocatedMemory;
-        }
-
-        /* Make sure the correct pitch is used */
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
-
-       /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE) ) {
-
-
-            TRACE("non power of two support\n");
-            ENTER_GL();
-            TRACE("(%p) Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n", This,
-                This->glDescription.target,
-                This->glDescription.level,
-                debug_d3dformat(This->resource.format),
-                This->glDescription.glFormatInternal,
-                This->pow2Width,
-                This->pow2Height,
-                0,
-                This->glDescription.glFormat,
-                This->glDescription.glType,
-                NULL);
-
-            glTexImage2D(This->glDescription.target,
-                         This->glDescription.level,
-                         This->glDescription.glFormatInternal,
-                         This->pow2Width,
-                         This->pow2Height,
-                         0/*border*/,
-                         This->glDescription.glFormat,
-                         This->glDescription.glType,
-                         NULL);
-
-            checkGLcall("glTexImage2D");
-            if (This->resource.allocatedMemory != NULL) {
-                TRACE("(%p) Calling glTexSubImage2D w(%d) h(%d) mem(%p)\n", This, This->currentDesc.Width, This->currentDesc.Height, This->resource.allocatedMemory);
-                /* And map the non-power two data into the top left corner */
-                glTexSubImage2D(
-                    This->glDescription.target,
-                    This->glDescription.level,
-                    0 /* xoffset */,
-                    0 /* ysoffset */ ,
-                    This->currentDesc.Width,
-                    This->currentDesc.Height,
-                    This->glDescription.glFormat,
-                    This->glDescription.glType,
-                    This->resource.allocatedMemory
-                );
-                checkGLcall("glTexSubImage2D");
-            }
-            LEAVE_GL();
-
-        } else {
-
-            TRACE("Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%ld, h=%ld,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-                This->glDescription.target,
-                This->glDescription.level,
-                debug_d3dformat(This->resource.format),
-                This->glDescription.glFormatInternal,
-                This->glRect.right - This->glRect.left,
-                This->glRect.bottom - This->glRect.top,
-                0,
-                This->glDescription.glFormat,
-                This->glDescription.glType,
-                mem);
-
-            ENTER_GL();
-
-            /* OK, create the texture */
-            glTexImage2D(This->glDescription.target,
-                        This->glDescription.level,
-                        internal,
-                        This->glRect.right - This->glRect.left,
-                        This->glRect.bottom - This->glRect.top,
-                        0 /* border */,
-                        format,
-                        type,
-                        mem);
-
-            checkGLcall("glTexImage2D");
-
-            LEAVE_GL();
-        }
-        if(mem != This->resource.allocatedMemory)
-            HeapFree(GetProcessHeap(), 0, mem);
+    if (mem != This->resource.allocatedMemory)
+        HeapFree(GetProcessHeap(), 0, mem);
 
 #if 0
-        {
-            static unsigned int gen = 0;
-            char buffer[4096];
-            ++gen;
-            if ((gen % 10) == 0) {
-                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
-                IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
-            }
-            /*
-             * debugging crash code
-            if (gen == 250) {
-              void** test = NULL;
-              *test = 0;
-            }
-            */
+    {
+        static unsigned int gen = 0;
+        char buffer[4096];
+        ++gen;
+        if ((gen % 10) == 0) {
+            snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
+            IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
         }
+        /*
+         * debugging crash code
+         if (gen == 250) {
+         void** test = NULL;
+         *test = 0;
+         }
+         */
+    }
 #endif
-        if(!(This->Flags & SFLAG_DONOTFREE)){
-            HeapFree(GetProcessHeap(),0,This->resource.allocatedMemory);
-            This->resource.allocatedMemory = NULL;
-        }
 
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    if (!(This->Flags & SFLAG_DONOTFREE)) {
+        HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        This->resource.allocatedMemory = NULL;
     }
 
     return WINED3D_OK;
