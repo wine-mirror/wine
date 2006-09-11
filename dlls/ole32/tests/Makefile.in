@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 CTESTS = \
 	clipboard.c \
 	compobj.c \
+	hglobalstream.c \
 	marshal.c \
 	moniker.c \
 	ole2.c \
