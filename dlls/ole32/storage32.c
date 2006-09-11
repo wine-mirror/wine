@@ -3557,7 +3557,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   ULARGE_INTEGER size, offset;
   ULONG cbRead, cbWritten, cbTotalRead, cbTotalWritten;
   ULONG propertyIndex;
-  HRESULT resWrite;
+  HRESULT resWrite = S_OK;
   HRESULT resRead;
   StgProperty chainProperty;
   BYTE *buffer;
@@ -3593,7 +3593,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   {
     resRead = SmallBlockChainStream_ReadAt(*ppsbChain,
                                            offset,
-                                           DEF_SMALL_BLOCK_SIZE,
+                                           This->smallBlockSize,
                                            buffer,
                                            &cbRead);
     if (FAILED(resRead))
@@ -3618,7 +3618,12 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   } while (cbRead > 0);
   HeapFree(GetProcessHeap(),0,buffer);
 
-  assert(cbTotalRead == cbTotalWritten);
+  if (FAILED(resRead) || FAILED(resWrite))
+  {
+    ERR("conversion failed: resRead = 0x%08lx, resWrite = 0x%08lx\n", resRead, resWrite);
+    BlockChainStream_Destroy(bbTempChain);
+    return NULL;
+  }
 
   /*
    * Destroy the small block chain.
@@ -5319,8 +5324,6 @@ HRESULT SmallBlockChainStream_ReadAt(
     if (FAILED(rc))
       return rc;
 
-    assert(bytesReadFromBigBlockFile == bytesToReadInBuffer);
-
     /*
      * Step to the next big block.
      */
@@ -5328,10 +5331,10 @@ HRESULT SmallBlockChainStream_ReadAt(
     if(FAILED(rc))
       return STG_E_DOCFILECORRUPT;
 
-    bufferWalker += bytesToReadInBuffer;
-    size         -= bytesToReadInBuffer;
-    *bytesRead   += bytesToReadInBuffer;
-    offsetInBlock = 0;  /* There is no offset on the next block */
+    bufferWalker += bytesReadFromBigBlockFile;
+    size         -= bytesReadFromBigBlockFile;
+    *bytesRead   += bytesReadFromBigBlockFile;
+    offsetInBlock = (offsetInBlock + bytesReadFromBigBlockFile) % This->parentStorage->smallBlockSize;
   }
 
   return (size == 0) ? S_OK : STG_E_READFAULT;
@@ -5358,7 +5361,7 @@ HRESULT SmallBlockChainStream_WriteAt(
   ULONG offsetInBlock = offset.u.LowPart % This->parentStorage->smallBlockSize;
   ULONG bytesToWriteInBuffer;
   ULONG blockIndex;
-  ULONG bytesWrittenFromBigBlockFile;
+  ULONG bytesWrittenToBigBlockFile;
   const BYTE* bufferWalker;
   HRESULT res;
 
@@ -5412,11 +5415,9 @@ HRESULT SmallBlockChainStream_WriteAt(
       offsetInBigBlockFile,
       bytesToWriteInBuffer,
       bufferWalker,
-      &bytesWrittenFromBigBlockFile);
+      &bytesWrittenToBigBlockFile);
     if (FAILED(res))
       return res;
-
-    assert(bytesWrittenFromBigBlockFile == bytesToWriteInBuffer);
 
     /*
      * Step to the next big block.
@@ -5424,10 +5425,10 @@ HRESULT SmallBlockChainStream_WriteAt(
     if(FAILED(SmallBlockChainStream_GetNextBlockInChain(This, blockIndex,
 							&blockIndex)))
       return FALSE;
-    bufferWalker  += bytesToWriteInBuffer;
-    size          -= bytesToWriteInBuffer;
-    *bytesWritten += bytesToWriteInBuffer;
-    offsetInBlock  = 0;     /* There is no offset on the next block */
+    bufferWalker  += bytesWrittenToBigBlockFile;
+    size          -= bytesWrittenToBigBlockFile;
+    *bytesWritten += bytesWrittenToBigBlockFile;
+    offsetInBlock  = (offsetInBlock + bytesWrittenToBigBlockFile) % This->parentStorage->smallBlockSize;
   }
 
   return (size == 0) ? S_OK : STG_E_WRITEFAULT;
