@@ -3303,20 +3303,20 @@ BOOL StorageImpl_ReadProperty(
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   ULARGE_INTEGER offsetInPropSet;
-  BOOL         readSuccessful;
+  HRESULT        readRes;
   ULONG          bytesRead;
 
   offsetInPropSet.u.HighPart = 0;
   offsetInPropSet.u.LowPart  = index * PROPSET_BLOCK_SIZE;
 
-  readSuccessful = BlockChainStream_ReadAt(
+  readRes = BlockChainStream_ReadAt(
                     This->rootBlockChain,
                     offsetInPropSet,
                     PROPSET_BLOCK_SIZE,
                     currentProperty,
                     &bytesRead);
 
-  if (readSuccessful)
+  if (SUCCEEDED(readRes))
   {
     /* replace the name of root entry (often "Root Entry") by the file name */
     WCHAR *propName = (index == This->base.rootPropertySetIndex) ?
@@ -3389,7 +3389,7 @@ BOOL StorageImpl_ReadProperty(
     buffer->size.u.HighPart = 0;
   }
 
-  return readSuccessful;
+  return SUCCEEDED(readRes) ? TRUE : FALSE;
 }
 
 /*********************************************************************
@@ -3402,7 +3402,7 @@ BOOL StorageImpl_WriteProperty(
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   ULARGE_INTEGER offsetInPropSet;
-  BOOL         writeSuccessful;
+  HRESULT        writeRes;
   ULONG          bytesWritten;
 
   offsetInPropSet.u.HighPart = 0;
@@ -3472,12 +3472,12 @@ BOOL StorageImpl_WriteProperty(
       OFFSET_PS_SIZE,
       buffer->size.u.LowPart);
 
-  writeSuccessful = BlockChainStream_WriteAt(This->rootBlockChain,
-                                            offsetInPropSet,
-                                            PROPSET_BLOCK_SIZE,
-                                            currentProperty,
-                                            &bytesWritten);
-  return writeSuccessful;
+  writeRes = BlockChainStream_WriteAt(This->rootBlockChain,
+                                      offsetInPropSet,
+                                      PROPSET_BLOCK_SIZE,
+                                      currentProperty,
+                                      &bytesWritten);
+  return SUCCEEDED(writeRes) ? TRUE : FALSE;
 }
 
 static BOOL StorageImpl_ReadBigBlock(
@@ -3557,8 +3557,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   ULARGE_INTEGER size, offset;
   ULONG cbRead, cbWritten, cbTotalRead, cbTotalWritten;
   ULONG propertyIndex;
-  BOOL successWrite;
-  HRESULT successRead;
+  HRESULT resWrite;
+  HRESULT resRead;
   StgProperty chainProperty;
   BYTE *buffer;
   BlockChainStream *bbTempChain = NULL;
@@ -3591,25 +3591,25 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   buffer = HeapAlloc(GetProcessHeap(),0,DEF_SMALL_BLOCK_SIZE);
   do
   {
-    successRead = SmallBlockChainStream_ReadAt(*ppsbChain,
-                                               offset,
-                                               DEF_SMALL_BLOCK_SIZE,
-                                               buffer,
-                                               &cbRead);
-    if (FAILED(successRead))
+    resRead = SmallBlockChainStream_ReadAt(*ppsbChain,
+                                           offset,
+                                           DEF_SMALL_BLOCK_SIZE,
+                                           buffer,
+                                           &cbRead);
+    if (FAILED(resRead))
         break;
 
     if (cbRead > 0)
     {
         cbTotalRead += cbRead;
 
-        successWrite = BlockChainStream_WriteAt(bbTempChain,
+        resWrite = BlockChainStream_WriteAt(bbTempChain,
                                             offset,
                                             cbRead,
                                             buffer,
                                             &cbWritten);
 
-        if (!successWrite)
+        if (FAILED(resWrite))
             break;
 
         cbTotalWritten += cbWritten;
@@ -4516,7 +4516,7 @@ static ULONG BlockChainStream_GetCount(BlockChainStream* This)
  * bytesRead may be NULL.
  * Failure will be returned if the specified number of bytes has not been read.
  */
-BOOL BlockChainStream_ReadAt(BlockChainStream* This,
+HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
   ULARGE_INTEGER offset,
   ULONG          size,
   void*          buffer,
@@ -4551,12 +4551,12 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
   {
     if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex, &blockIndex)))
-      return FALSE;
+      return STG_E_DOCFILECORRUPT;
     blockNoInSequence--;
   }
 
   if ((blockNoInSequence > 0) && (blockIndex == BLOCK_END_OF_CHAIN))
-      return FALSE; /* We failed to find the starting block */
+      return STG_E_DOCFILECORRUPT; /* We failed to find the starting block */
 
   This->lastBlockNoInSequenceIndex = blockIndex;
 
@@ -4580,7 +4580,7 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
     bigBlockBuffer =
       StorageImpl_GetROBigBlock(This->parentStorage, blockIndex);
     if (!bigBlockBuffer)
-        return FALSE;
+        return STG_E_READFAULT;
 
     memcpy(bufferWalker, bigBlockBuffer + offsetInBlock, bytesToReadInBuffer);
 
@@ -4590,7 +4590,7 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
      * Step to the next big block.
      */
     if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex, &blockIndex)))
-      return FALSE;
+      return STG_E_DOCFILECORRUPT;
 
     bufferWalker += bytesToReadInBuffer;
     size         -= bytesToReadInBuffer;
@@ -4599,7 +4599,7 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
 
   }
 
-  return (size == 0);
+  return (size == 0) ? S_OK : STG_E_READFAULT;
 }
 
 /******************************************************************************
@@ -4609,7 +4609,7 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
  * bytesWritten may be NULL.
  * Will fail if not all specified number of bytes have been written.
  */
-BOOL BlockChainStream_WriteAt(BlockChainStream* This,
+HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
   ULARGE_INTEGER    offset,
   ULONG             size,
   const void*       buffer,
@@ -4645,7 +4645,7 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
   {
     if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex,
 					      &blockIndex)))
-      return FALSE;
+      return STG_E_DOCFILECORRUPT;
     blockNoInSequence--;
   }
 
@@ -4680,14 +4680,14 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
      */
     if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex,
 					      &blockIndex)))
-      return FALSE;
+      return STG_E_DOCFILECORRUPT;
     bufferWalker  += bytesToWrite;
     size          -= bytesToWrite;
     *bytesWritten += bytesToWrite;
     offsetInBlock  = 0;      /* There is no offset on the next block */
   }
 
-  return (size == 0);
+  return (size == 0) ? S_OK : STG_E_WRITEFAULT;
 }
 
 /******************************************************************************
@@ -5010,7 +5010,7 @@ static HRESULT SmallBlockChainStream_GetNextBlockInChain(
   ULARGE_INTEGER offsetOfBlockInDepot;
   DWORD  buffer;
   ULONG  bytesRead;
-  BOOL success;
+  HRESULT res;
 
   *nextBlockInChain = BLOCK_END_OF_CHAIN;
 
@@ -5020,20 +5020,20 @@ static HRESULT SmallBlockChainStream_GetNextBlockInChain(
   /*
    * Read those bytes in the buffer from the small block file.
    */
-  success = BlockChainStream_ReadAt(
+  res = BlockChainStream_ReadAt(
               This->parentStorage->smallBlockDepotChain,
               offsetOfBlockInDepot,
               sizeof(DWORD),
               &buffer,
               &bytesRead);
 
-  if (success)
+  if (SUCCEEDED(res))
   {
     StorageUtl_ReadDWord((BYTE *)&buffer, 0, nextBlockInChain);
     return S_OK;
   }
 
-  return STG_E_READFAULT;
+  return res;
 }
 
 /******************************************************************************
@@ -5096,7 +5096,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
   ULONG bytesRead;
   ULONG blockIndex = 0;
   ULONG nextBlockIndex = BLOCK_END_OF_CHAIN;
-  BOOL success = TRUE;
+  HRESULT res = S_OK;
   ULONG smallBlocksPerBigBlock;
 
   offsetOfBlockInDepot.u.HighPart = 0;
@@ -5108,7 +5108,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
   {
     offsetOfBlockInDepot.u.LowPart = blockIndex * sizeof(ULONG);
 
-    success = BlockChainStream_ReadAt(
+    res = BlockChainStream_ReadAt(
                 This->parentStorage->smallBlockDepotChain,
                 offsetOfBlockInDepot,
                 sizeof(DWORD),
@@ -5118,7 +5118,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
     /*
      * If we run out of space for the small block depot, enlarge it
      */
-    if (success)
+    if (SUCCEEDED(res))
     {
       StorageUtl_ReadDWord((BYTE *)&buffer, 0, &nextBlockIndex);
 
@@ -5310,12 +5310,14 @@ HRESULT SmallBlockChainStream_ReadAt(
      * The small block has already been identified so it shouldn't fail
      * unless the file is corrupt.
      */
-    if (!BlockChainStream_ReadAt(This->parentStorage->smallBlockRootChain,
+    rc = BlockChainStream_ReadAt(This->parentStorage->smallBlockRootChain,
       offsetInBigBlockFile,
       bytesToReadInBuffer,
       bufferWalker,
-      &bytesReadFromBigBlockFile))
-      return STG_E_DOCFILECORRUPT;
+      &bytesReadFromBigBlockFile);
+
+    if (FAILED(rc))
+      return rc;
 
     assert(bytesReadFromBigBlockFile == bytesToReadInBuffer);
 
@@ -5324,7 +5326,7 @@ HRESULT SmallBlockChainStream_ReadAt(
      */
     rc = SmallBlockChainStream_GetNextBlockInChain(This, blockIndex, &blockIndex);
     if(FAILED(rc))
-      return rc;
+      return STG_E_DOCFILECORRUPT;
 
     bufferWalker += bytesToReadInBuffer;
     size         -= bytesToReadInBuffer;
@@ -5332,7 +5334,7 @@ HRESULT SmallBlockChainStream_ReadAt(
     offsetInBlock = 0;  /* There is no offset on the next block */
   }
 
-  return rc;
+  return (size == 0) ? S_OK : STG_E_READFAULT;
 }
 
 /******************************************************************************
@@ -5342,7 +5344,7 @@ HRESULT SmallBlockChainStream_ReadAt(
  * bytesWritten may be NULL.
  * Will fail if not all specified number of bytes have been written.
  */
-BOOL SmallBlockChainStream_WriteAt(
+HRESULT SmallBlockChainStream_WriteAt(
   SmallBlockChainStream* This,
   ULARGE_INTEGER offset,
   ULONG          size,
@@ -5358,6 +5360,7 @@ BOOL SmallBlockChainStream_WriteAt(
   ULONG blockIndex;
   ULONG bytesWrittenFromBigBlockFile;
   const BYTE* bufferWalker;
+  HRESULT res;
 
   /*
    * This should never happen on a small block file.
@@ -5372,7 +5375,7 @@ BOOL SmallBlockChainStream_WriteAt(
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
   {
     if(FAILED(SmallBlockChainStream_GetNextBlockInChain(This, blockIndex, &blockIndex)))
-      return FALSE;
+      return STG_E_DOCFILECORRUPT;
     blockNoInSequence--;
   }
 
@@ -5404,11 +5407,14 @@ BOOL SmallBlockChainStream_WriteAt(
     /*
      * Write those bytes in the buffer to the small block file.
      */
-    BlockChainStream_WriteAt(This->parentStorage->smallBlockRootChain,
+    res = BlockChainStream_WriteAt(
+      This->parentStorage->smallBlockRootChain,
       offsetInBigBlockFile,
       bytesToWriteInBuffer,
       bufferWalker,
       &bytesWrittenFromBigBlockFile);
+    if (FAILED(res))
+      return res;
 
     assert(bytesWrittenFromBigBlockFile == bytesToWriteInBuffer);
 
@@ -5424,7 +5430,7 @@ BOOL SmallBlockChainStream_WriteAt(
     offsetInBlock  = 0;     /* There is no offset on the next block */
   }
 
-  return (size == 0);
+  return (size == 0) ? S_OK : STG_E_WRITEFAULT;
 }
 
 /******************************************************************************

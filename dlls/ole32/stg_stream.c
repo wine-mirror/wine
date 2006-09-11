@@ -302,15 +302,11 @@ static HRESULT WINAPI StgStreamImpl_Read(
   }
   else if (This->bigBlockChain!=0)
   {
-    BOOL success = BlockChainStream_ReadAt(This->bigBlockChain,
-                                           This->currentPosition,
-                                           bytesToReadFromBuffer,
-                                           pv,
-                                           pcbRead);
-    if (success)
-      res = S_OK;
-    else
-      res = STG_E_READFAULT;
+    res = BlockChainStream_ReadAt(This->bigBlockChain,
+                 This->currentPosition,
+                 bytesToReadFromBuffer,
+                 pv,
+                 pcbRead);
   }
   else
   {
@@ -363,6 +359,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
 
   ULARGE_INTEGER newSize;
   ULONG bytesWritten = 0;
+  HRESULT res;
 
   TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbWritten);
@@ -427,7 +424,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
    */
   if (This->smallBlockChain!=0)
   {
-    SmallBlockChainStream_WriteAt(This->smallBlockChain,
+    res = SmallBlockChainStream_WriteAt(This->smallBlockChain,
 				  This->currentPosition,
 				  cb,
 				  pv,
@@ -436,13 +433,15 @@ static HRESULT WINAPI StgStreamImpl_Write(
   }
   else if (This->bigBlockChain!=0)
   {
-    BlockChainStream_WriteAt(This->bigBlockChain,
+    res = BlockChainStream_WriteAt(This->bigBlockChain,
 			     This->currentPosition,
 			     cb,
 			     pv,
 			     pcbWritten);
   }
   else
+    /* this should never happen because the IStream_SetSize call above will
+     * make sure a big or small block chain is created */
     assert(FALSE);
 
   /*
@@ -451,7 +450,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
   This->currentPosition.u.LowPart += *pcbWritten;
 
   TRACE("<-- S_OK, written %lu\n", *pcbWritten);
-  return S_OK;
+  return res;
 }
 
 /***

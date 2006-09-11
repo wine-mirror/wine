@@ -455,14 +455,14 @@ BlockChainStream* BlockChainStream_Construct(
 void BlockChainStream_Destroy(
 		BlockChainStream* This);
 
-BOOL BlockChainStream_ReadAt(
+HRESULT BlockChainStream_ReadAt(
 		BlockChainStream* This,
 		ULARGE_INTEGER offset,
 		ULONG          size,
 		void*          buffer,
 		ULONG*         bytesRead);
 
-BOOL BlockChainStream_WriteAt(
+HRESULT BlockChainStream_WriteAt(
 		BlockChainStream* This,
 		ULARGE_INTEGER offset,
 		ULONG          size,
@@ -502,7 +502,7 @@ HRESULT SmallBlockChainStream_ReadAt(
 	       void*          buffer,
 	       ULONG*         bytesRead);
 
-BOOL SmallBlockChainStream_WriteAt(
+HRESULT SmallBlockChainStream_WriteAt(
 	       SmallBlockChainStream* This,
 	       ULARGE_INTEGER offset,
 	       ULONG          size,
