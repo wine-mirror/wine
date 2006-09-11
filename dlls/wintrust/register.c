@@ -238,7 +238,7 @@ BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
     LONG Res;
     LONG WriteActionError = ERROR_SUCCESS;
 
-    TRACE("%p %lx %p\n", debugstr_guid(pgActionID), fdwFlags, psProvInfo);
+    TRACE("%s %lx %p\n", debugstr_guid(pgActionID), fdwFlags, psProvInfo);
 
     /* Some sanity checks.
      * We use the W2K3 last error as it makes more sense (W2K leaves the last error
