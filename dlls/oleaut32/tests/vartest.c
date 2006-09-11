@@ -6682,6 +6682,353 @@ static void test_VarPow(void)
     SysFreeString(num3_str);
 }
 
+static HRESULT (WINAPI *pVarDiv)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarDivFail = "VarDiv(%s,%s): expected 0x0,%s,%d, got 0x%lX,%s,%d\n";
+
+#define VARDIV(vt1,val1,vt2,val2,rvt,rval)                             \
+    V_VT(&left) = VT_##vt1; V_VT(&right) = VT_##vt2;                   \
+    V_##vt1(&left) = val1; V_##vt2(&right) = val2;                     \
+    memset(&result,0,sizeof(result));                                  \
+    hres = pVarDiv(&left,&right,&result);                              \
+    ok(hres == S_OK && V_VT(&result) == VT_##rvt &&                    \
+        EQ_DOUBLE(V_##rvt(&result),(rval)),                            \
+        szVarDivFail, vtstr(VT_##vt1), vtstr(VT_##vt2),                \
+        vtstr(VT_##rvt), (int)(rval), hres, vtstr(V_VT(&result)),      \
+        (int)V_##rvt(&result));
+
+/* Skip any type that is not defined or produces a error for every case */
+#define SKIPTESTDIV(a)                            \
+    if (a == VT_ERROR || a == VT_VARIANT ||       \
+        a == VT_DISPATCH || a == VT_UNKNOWN ||    \
+        a == VT_RECORD || a > VT_UINT ||          \
+        a == VT_I1 || a == VT_UI8 ||              \
+        a == VT_INT || a == VT_UINT ||            \
+        a == VT_UI2 || a == VT_UI4 ||             \
+        a == 15 /*not defined*/)                  \
+        continue;
+
+static void test_VarDiv(void)
+{
+    static const WCHAR str1[] = { '1','\0' };
+    static const WCHAR str2[] = { '2','\0' };
+    VARIANT left, right, result, cy, dec;
+    BSTR num1_str, num2_str;
+    VARTYPE i;
+    HRESULT hres, expectedhres;
+    double r;
+
+    num1_str = SysAllocString(str1);
+    num2_str = SysAllocString(str2);
+
+    CHECKPTR(VarDiv);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            SKIPTESTDIV(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+                SKIPTESTDIV(rightvt);
+
+                /* Native crashes with VT_BYREF */
+                if (ExtraFlags[i] == VT_BYREF)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_EMPTY;
+                expectedhres = S_OK;
+
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = num2_str;
+                else if (leftvt == VT_DECIMAL)
+                {
+                    VarDecFromR8(2.0, &V_DECIMAL(&left));
+                    V_VT(&left) = leftvt | ExtraFlags[i];
+                }
+
+                /* Division by 0 is undefined */
+                switch(rightvt)
+                {
+                case VT_BSTR:
+                    V_BSTR(&right) = num2_str;
+                    break;
+                case VT_DECIMAL:
+                    VarDecFromR8(2.0, &V_DECIMAL(&right));
+                    V_VT(&right) = rightvt | ExtraFlags[i];
+                    break;
+                case VT_BOOL:
+                    V_BOOL(&right) = VARIANT_TRUE;
+                    break;
+                case VT_I2: V_I2(&right) = 2; break;
+                case VT_I4: V_I4(&right) = 2; break;
+                case VT_R4: V_R4(&right) = 2.0; break;
+                case VT_R8: V_R8(&right) = 2.0; break;
+                case VT_CY: V_CY(&right).int64 = 2; break;
+                case VT_DATE: V_DATE(&right) = 2; break;
+                case VT_UI1: V_UI1(&right) = 2; break;
+                case VT_I8: V_I8(&right) = 2; break;
+                default: break;
+                }
+
+                /* Determine return type */
+                if (!(rightvt == VT_EMPTY))
+                {
+                    if (leftvt == VT_NULL || rightvt == VT_NULL)
+                        resvt = VT_NULL;
+                    else if (leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+                        resvt = VT_DECIMAL;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8 ||
+                        leftvt == VT_CY || rightvt == VT_CY ||
+                        leftvt == VT_DATE || rightvt == VT_DATE ||
+                        leftvt == VT_I4 || rightvt == VT_I4 ||
+                        leftvt == VT_BSTR || rightvt == VT_BSTR ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                        leftvt == VT_R8 || rightvt == VT_R8 ||
+                        leftvt == VT_UI1 || rightvt == VT_UI1)
+                    {
+                        if ((leftvt == VT_UI1 && rightvt == VT_R4) ||
+                            (leftvt == VT_R4 && rightvt == VT_UI1))
+                            resvt = VT_R4;
+                        else if ((leftvt == VT_R4 && (rightvt == VT_BOOL ||
+                            rightvt == VT_I2)) || (rightvt == VT_R4 &&
+                            (leftvt == VT_BOOL || leftvt == VT_I2)))
+                            resvt = VT_R4;
+                        else
+                            resvt = VT_R8;
+                    }
+                    else if (leftvt == VT_R4 || rightvt == VT_R4)
+                        resvt = VT_R4;
+                }
+                else if (leftvt == VT_NULL && rightvt == VT_EMPTY)
+                    resvt = VT_NULL;
+                else
+                    bFail = TRUE;
+
+                /* Native VarDiv always returns a error when using any extra flags */
+                if (ExtraFlags[i] != 0)
+                    bFail = TRUE;
+
+                hres = pVarDiv(&left, &right, &result);
+
+                /* Check expected HRESULT and if result variant type is correct */
+                if (bFail)
+                    ok (hres == DISP_E_BADVARTYPE || hres == DISP_E_TYPEMISMATCH ||
+                        hres == DISP_E_OVERFLOW || hres == DISP_E_DIVBYZERO,
+                        "VarDiv: %s|0x%X, %s|0x%X: got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i],
+                        vtstr(V_VT(&result)), hres);
+                else
+                    ok (hres == S_OK && resvt == V_VT(&result),
+                        "VarDiv: %s|0x%X, %s|0x%X: expected vt %s hr 0x%lX, got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i], vtstr(resvt),
+                        S_OK, vtstr(V_VT(&result)), hres);
+            }
+        }
+    }
+
+    /* Test return values for all the good cases */
+    VARDIV(EMPTY,0,NULL,0,NULL,0);
+    VARDIV(EMPTY,0,I2,2,R8,0.0);
+    VARDIV(EMPTY,0,I4,2,R8,0.0);
+    VARDIV(EMPTY,0,R4,2.0,R4,0.0);
+    VARDIV(EMPTY,0,R8,2.0,R8,0.0);
+    VARDIV(EMPTY,0,DATE,2.0,R8,0.0);
+    VARDIV(EMPTY,0,BSTR,num2_str,R8,0.0);
+    VARDIV(EMPTY,0,BOOL,VARIANT_TRUE,R8,0.0);
+    VARDIV(EMPTY,0,UI1,2,R8,0.0);
+    VARDIV(EMPTY,0,I8,2,R8,0.0);
+    VARDIV(NULL,0,EMPTY,0,NULL,0);
+    VARDIV(NULL,0,NULL,0,NULL,0);
+    VARDIV(NULL,0,I2,2,NULL,0);
+    VARDIV(NULL,0,I4,2,NULL,0);
+    VARDIV(NULL,0,R4,2.0,NULL,0);
+    VARDIV(NULL,0,R8,2.0,NULL,0);
+    VARDIV(NULL,0,DATE,2,NULL,0);
+    VARDIV(NULL,0,BSTR,num2_str,NULL,0);
+    VARDIV(NULL,0,BOOL,VARIANT_TRUE,NULL,0);
+    VARDIV(NULL,0,UI1,2,NULL,0);
+    VARDIV(NULL,0,I8,2,NULL,0);
+    VARDIV(I2,2,NULL,0,NULL,0);
+    VARDIV(I2,1,I2,2,R8,0.5);
+    VARDIV(I2,1,I4,2,R8,0.5);
+    VARDIV(I2,1,R4,2,R4,0.5);
+    VARDIV(I2,1,R8,2.0,R8,0.5);
+    VARDIV(I2,1,DATE,2,R8,0.5);
+    VARDIV(I2,1,BOOL,VARIANT_TRUE,R8,-1.0);
+    VARDIV(I2,1,UI1,2,R8,0.5);
+    VARDIV(I2,1,I8,2,R8,0.5);
+    VARDIV(I4,1,NULL,0,NULL,0);
+    VARDIV(I4,1,I2,2,R8,0.5);
+    VARDIV(I4,1,I4,2,R8,0.5);
+    VARDIV(I4,1,R4,2.0,R8,0.5);
+    VARDIV(I4,1,R8,2.0,R8,0.5);
+    VARDIV(I4,1,DATE,2,R8,0.5);
+    VARDIV(I4,1,BSTR,num2_str,R8,0.5);
+    VARDIV(I4,1,BOOL,VARIANT_TRUE,R8,-1.0);
+    VARDIV(I4,1,UI1,2,R8,0.5);
+    VARDIV(I4,1,I8,2.0,R8,0.5);
+    VARDIV(R4,1.0,NULL,0,NULL,0);
+    VARDIV(R4,1.0,I2,2,R4,0.5);
+    VARDIV(R4,1.0,I4,2,R8,0.5);
+    VARDIV(R4,1.0,R4,2.0,R4,0.5);
+    VARDIV(R4,1.0,R8,2.0,R8,0.5);
+    VARDIV(R4,1.0,DATE,2,R8,0.5);
+    VARDIV(R4,1.0,BSTR,num2_str,R8,0.5);
+    VARDIV(R4,1.0,BOOL,VARIANT_TRUE,R4,-1);
+    VARDIV(R4,1.0,UI1,2,R4,0.5);
+    VARDIV(R4,1.0,I8,2,R8,0.5);
+    VARDIV(R8,1.0,NULL,0,NULL,0);
+    VARDIV(R8,1.0,I2,2,R8,0.5);
+    VARDIV(R8,1.0,I4,2,R8,0.5);
+    VARDIV(R8,1.0,R4,2.0,R8,0.5);
+    VARDIV(R8,1.0,R8,2.0,R8,0.5);
+    VARDIV(R8,1.0,DATE,2,R8,0.5);
+    VARDIV(R8,1.0,BSTR,num2_str,R8,0.5);
+    VARDIV(R8,1.0,BOOL,VARIANT_TRUE,R8,-1.0);
+    VARDIV(R8,1.0,UI1,2,R8,0.5);
+    VARDIV(R8,1.0,I8,2,R8,0.5);
+    VARDIV(DATE,1,NULL,0,NULL,0);
+    VARDIV(DATE,1,I2,2,R8,0.5);
+    VARDIV(DATE,1,I4,2,R8,0.5);
+    VARDIV(DATE,1,R4,2.0,R8,0.5);
+    VARDIV(DATE,1,R8,2.0,R8,0.5);
+    VARDIV(DATE,1,DATE,2,R8,0.5);
+    VARDIV(DATE,1,BSTR,num2_str,R8,0.5);
+    VARDIV(DATE,1,BOOL,VARIANT_TRUE,R8,-1.0);
+    VARDIV(DATE,1,UI1,2,R8,0.5);
+    VARDIV(DATE,1,I8,2,R8,0.5);
+    VARDIV(BSTR,num1_str,NULL,0,NULL,0);
+    VARDIV(BSTR,num1_str,I2,2,R8,0.5);
+    VARDIV(BSTR,num1_str,I4,2,R8,0.5);
+    VARDIV(BSTR,num1_str,R4,2.0,R8,0.5);
+    VARDIV(BSTR,num1_str,R8,2.0,R8,0.5);
+    VARDIV(BSTR,num1_str,DATE,2,R8,0.5);
+    VARDIV(BSTR,num1_str,BSTR,num2_str,R8,0.5);
+    VARDIV(BSTR,num1_str,BOOL,VARIANT_TRUE,R8,-1);
+    VARDIV(BSTR,num1_str,UI1,2,R8,0.5);
+    VARDIV(BSTR,num1_str,I8,2.0,R8,0.5);
+    VARDIV(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
+    VARDIV(BOOL,VARIANT_TRUE,I2,1,R8,-1.0);
+    VARDIV(BOOL,VARIANT_FALSE,I2,1,R8,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,I4,1,R8,-1.0);
+    VARDIV(BOOL,VARIANT_FALSE,I4,1,R8,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,R4,1,R4,-1.0);
+    VARDIV(BOOL,VARIANT_FALSE,R4,1,R4,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,R8,1.0,R8,-1.0);
+    VARDIV(BOOL,VARIANT_FALSE,R8,1.0,R8,0.0);
+    VARDIV(BOOL,VARIANT_FALSE,DATE,2,R8,0.0);
+    VARDIV(BOOL,VARIANT_FALSE,BSTR,num2_str,R8,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,R8,1.0);
+    VARDIV(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,R8,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,UI1,1,R8,-1.0);
+    VARDIV(BOOL,VARIANT_TRUE,I8,1,R8,-1.0);
+    VARDIV(UI1,1,NULL,0,NULL,0);
+    VARDIV(UI1,1,I2,2,R8,0.5);
+    VARDIV(UI1,1,I4,2,R8,0.5);
+    VARDIV(UI1,1,R4,2.0,R4,0.5);
+    VARDIV(UI1,1,R8,2.0,R8,0.5);
+    VARDIV(UI1,1,DATE,2,R8,0.5);
+    VARDIV(UI1,1,BSTR,num2_str,R8,0.5);
+    VARDIV(UI1,1,BOOL,VARIANT_TRUE,R8,-1);
+    VARDIV(UI1,1,UI1,2,R8,0.5);
+    VARDIV(UI1,1,I8,2,R8,0.5);
+    VARDIV(I8,1,NULL,0,NULL,0);
+    VARDIV(I8,1,I2,2,R8,0.5);
+    VARDIV(I8,1,I4,2,R8,0.5);
+    VARDIV(I8,1,R4,2.0,R8,0.5);
+    VARDIV(I8,1,R8,2.0,R8,0.5);
+    VARDIV(I8,1,DATE,2,R8,0.5);
+    VARDIV(I8,1,BSTR,num2_str,R8,0.5);
+    VARDIV(I8,1,BOOL,VARIANT_TRUE,R8,-1);
+    VARDIV(I8,1,UI1,2,R8,0.5);
+    VARDIV(I8,1,I8,2,R8,0.5);
+
+    /* Manually test some VT_CY, VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(10000, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(2.0, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = 100;
+    V_VT(&right) = VT_UI1;
+    V_UI1(&right) = 2;
+
+    hres = pVarDiv(&cy, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARDIV: expected coerced type VT_R8, got %s!\n", vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 1.0),
+        "VARDIV: CY value %f, expected %f\n", V_R8(&result), (double)1.0);
+
+    hres = pVarDiv(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARDIV: expected coerced type VT_R8, got %s!\n", vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 5000.0),
+        "VARDIV: CY value %f, expected %f\n", V_R8(&result), (double)5000.0);
+
+    hres = pVarDiv(&left, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_R8,
+        "VARDIV: expected coerced type VT_R8, got %s!\n", vtstr(V_VT(&result)));
+    ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 0.01),
+        "VARDIV: CY value %f, expected %f\n", V_R8(&result), (double)0.01);
+
+    hres = pVarDiv(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL,
+        "VARDIV: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 50.0),
+        "VARDIV: DECIMAL value %f, expected %f\n", r, (double)50.0);
+
+    hres = pVarDiv(&dec, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL,
+        "VARDIV: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 1.0),
+        "VARDIV: DECIMAL value %f, expected %f\n", r, (double)1.0);
+
+    hres = pVarDiv(&dec, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL,
+        "VARDIV: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 1.0),
+        "VARDIV: DECIMAL value %f, expected %f\n", r, (double)1.0);
+
+    /* Check for division by zero and overflow */
+    V_VT(&left) = VT_R8;
+    V_I4(&left) = 1.0;
+    V_VT(&right) = VT_R8;
+    V_I4(&right) = 0.0;
+    hres = pVarDiv(&left, &right, &result);
+    ok(hres == DISP_E_DIVBYZERO && V_VT(&result) == VT_EMPTY,
+        "VARDIV: Division by (1.0/0.0) should result in DISP_E_DIVBYZERO but got 0x%lX\n", hres);
+
+    V_VT(&left) = VT_R8;
+    V_I4(&left) = 0.0;
+    V_VT(&right) = VT_R8;
+    V_I4(&right) = 0.0;
+    hres = pVarDiv(&left, &right, &result);
+    ok(hres == DISP_E_OVERFLOW && V_VT(&result) == VT_EMPTY,
+        "VARDIV: Division by (0.0/0.0) should result in DISP_E_OVERFLOW but got 0x%lX\n", hres);
+
+    SysFreeString(num1_str);
+    SysFreeString(num2_str);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -6715,4 +7062,5 @@ START_TEST(vartest)
   test_VarCat();
   test_VarCmp();
   test_VarAnd();
+  test_VarDiv();
 }
