@@ -703,28 +703,28 @@ static void WINTRUST_RegisterGenChainVerify(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    static const CHAR WVTAsn1SpcPeImageDataEncode[]           = "WVTAsn1SpcPeImageDataEncode";
-    static const CHAR WVTAsn1SpcPeImageDataDecode[]           = "WVTAsn1SpcPeImageDataDecode";
-    static const CHAR WVTAsn1SpcLinkEncode[]                  = "WVTAsn1SpcLinkEncode";
-    static const CHAR WVTAsn1SpcLinkDecode[]                  = "WVTAsn1SpcLinkDecode";
-    static const CHAR WVTAsn1SpcSigInfoEncode[]               = "WVTAsn1SpcSigInfoEncode";
-    static const CHAR WVTAsn1SpcSigInfoDecode[]               = "WVTAsn1SpcSigInfoDecode";
-    static const CHAR WVTAsn1SpcIndirectDataContentEncode[]   = "WVTAsn1SpcIndirectDataContentEncode";
-    static const CHAR WVTAsn1SpcIndirectDataContentDecode[]   = "WVTAsn1SpcIndirectDataContentDecode";
-    static const CHAR WVTAsn1SpcSpAgencyInfoEncode[]          = "WVTAsn1SpcSpAgencyInfoEncode";
-    static const CHAR WVTAsn1SpcSpAgencyInfoDecode[]          = "WVTAsn1SpcSpAgencyInfoDecode";
-    static const CHAR WVTAsn1SpcMinimalCriteriaInfoEncode[]   = "WVTAsn1SpcMinimalCriteriaInfoEncode";
-    static const CHAR WVTAsn1SpcMinimalCriteriaInfoDecode[]   = "WVTAsn1SpcMinimalCriteriaInfoDecode";
-    static const CHAR WVTAsn1SpcFinancialCriteriaInfoEncode[] = "WVTAsn1SpcFinancialCriteriaInfoEncode";
-    static const CHAR WVTAsn1SpcFinancialCriteriaInfoDecode[] = "WVTAsn1SpcFinancialCriteriaInfoDecode";
-    static const CHAR WVTAsn1SpcStatementTypeEncode[]         = "WVTAsn1SpcStatementTypeEncode";
-    static const CHAR WVTAsn1SpcStatementTypeDecode[]         = "WVTAsn1SpcStatementTypeDecode";
-    static const CHAR WVTAsn1CatNameValueEncode[]             = "WVTAsn1CatNameValueEncode";
-    static const CHAR WVTAsn1CatNameValueDecode[]             = "WVTAsn1CatNameValueDecode";
-    static const CHAR WVTAsn1CatMemberInfoEncode[]            = "WVTAsn1CatMemberInfoEncode";
-    static const CHAR WVTAsn1CatMemberInfoDecode[]            = "WVTAsn1CatMemberInfoDecode";
-    static const CHAR WVTAsn1SpcSpOpusInfoEncode[]            = "WVTAsn1SpcSpOpusInfoEncode";
-    static const CHAR WVTAsn1SpcSpOpusInfoDecode[]            = "WVTAsn1SpcSpOpusInfoDecode";
+    static const CHAR SpcPeImageDataEncode[]           = "WVTAsn1SpcPeImageDataEncode";
+    static const CHAR SpcPeImageDataDecode[]           = "WVTAsn1SpcPeImageDataDecode";
+    static const CHAR SpcLinkEncode[]                  = "WVTAsn1SpcLinkEncode";
+    static const CHAR SpcLinkDecode[]                  = "WVTAsn1SpcLinkDecode";
+    static const CHAR SpcSigInfoEncode[]               = "WVTAsn1SpcSigInfoEncode";
+    static const CHAR SpcSigInfoDecode[]               = "WVTAsn1SpcSigInfoDecode";
+    static const CHAR SpcIndirectDataContentEncode[]   = "WVTAsn1SpcIndirectDataContentEncode";
+    static const CHAR SpcIndirectDataContentDecode[]   = "WVTAsn1SpcIndirectDataContentDecode";
+    static const CHAR SpcSpAgencyInfoEncode[]          = "WVTAsn1SpcSpAgencyInfoEncode";
+    static const CHAR SpcSpAgencyInfoDecode[]          = "WVTAsn1SpcSpAgencyInfoDecode";
+    static const CHAR SpcMinimalCriteriaInfoEncode[]   = "WVTAsn1SpcMinimalCriteriaInfoEncode";
+    static const CHAR SpcMinimalCriteriaInfoDecode[]   = "WVTAsn1SpcMinimalCriteriaInfoDecode";
+    static const CHAR SpcFinancialCriteriaInfoEncode[] = "WVTAsn1SpcFinancialCriteriaInfoEncode";
+    static const CHAR SpcFinancialCriteriaInfoDecode[] = "WVTAsn1SpcFinancialCriteriaInfoDecode";
+    static const CHAR SpcStatementTypeEncode[]         = "WVTAsn1SpcStatementTypeEncode";
+    static const CHAR SpcStatementTypeDecode[]         = "WVTAsn1SpcStatementTypeDecode";
+    static const CHAR CatNameValueEncode[]             = "WVTAsn1CatNameValueEncode";
+    static const CHAR CatNameValueDecode[]             = "WVTAsn1CatNameValueDecode";
+    static const CHAR CatMemberInfoEncode[]            = "WVTAsn1CatMemberInfoEncode";
+    static const CHAR CatMemberInfoDecode[]            = "WVTAsn1CatMemberInfoDecode";
+    static const CHAR SpcSpOpusInfoEncode[]            = "WVTAsn1SpcSpOpusInfoEncode";
+    static const CHAR SpcSpOpusInfoDecode[]            = "WVTAsn1SpcSpOpusInfoDecode";
     HRESULT Res = S_OK;
     HKEY Key;
 
@@ -760,32 +760,32 @@ HRESULT WINAPI DllRegisterServer(void)
         }                                                               \
     } while (0)
 
-    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_OBJID, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
-    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_STRUCT, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
-    WINTRUST_REGISTEROID(SPC_CAB_DATA_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_CAB_DATA_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_LINK_OBJID, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_LINK_STRUCT, WVTAsn1SpcLinkEncode, WVTAsn1SpcLinkDecode);
-    WINTRUST_REGISTEROID(SPC_SIGINFO_OBJID, WVTAsn1SpcSigInfoEncode, WVTAsn1SpcSigInfoDecode);
-    WINTRUST_REGISTEROID(SPC_SIGINFO_STRUCT, WVTAsn1SpcSigInfoEncode, WVTAsn1SpcSigInfoDecode);
-    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_OBJID, WVTAsn1SpcIndirectDataContentEncode, WVTAsn1SpcIndirectDataContentDecode);
-    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_CONTENT_STRUCT, WVTAsn1SpcIndirectDataContentEncode, WVTAsn1SpcIndirectDataContentDecode);
-    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_OBJID, WVTAsn1SpcSpAgencyInfoEncode, WVTAsn1SpcSpAgencyInfoDecode);
-    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_STRUCT, WVTAsn1SpcSpAgencyInfoEncode, WVTAsn1SpcSpAgencyInfoDecode);
-    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_OBJID, WVTAsn1SpcMinimalCriteriaInfoEncode, WVTAsn1SpcMinimalCriteriaInfoDecode);
-    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_STRUCT, WVTAsn1SpcMinimalCriteriaInfoEncode, WVTAsn1SpcMinimalCriteriaInfoDecode);
-    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_OBJID, WVTAsn1SpcFinancialCriteriaInfoEncode, WVTAsn1SpcFinancialCriteriaInfoDecode);
-    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_STRUCT, WVTAsn1SpcFinancialCriteriaInfoEncode, WVTAsn1SpcFinancialCriteriaInfoDecode);
-    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_OBJID, WVTAsn1SpcStatementTypeEncode, WVTAsn1SpcStatementTypeDecode);
-    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_STRUCT, WVTAsn1SpcStatementTypeEncode, WVTAsn1SpcStatementTypeDecode);
-    WINTRUST_REGISTEROID(CAT_NAMEVALUE_OBJID, WVTAsn1CatNameValueEncode, WVTAsn1CatNameValueDecode);
-    WINTRUST_REGISTEROID(CAT_NAMEVALUE_STRUCT, WVTAsn1CatNameValueEncode, WVTAsn1CatNameValueDecode);
-    WINTRUST_REGISTEROID(CAT_MEMBERINFO_OBJID, WVTAsn1CatMemberInfoEncode, WVTAsn1CatMemberInfoDecode);
-    WINTRUST_REGISTEROID(CAT_MEMBERINFO_STRUCT, WVTAsn1CatMemberInfoEncode, WVTAsn1CatMemberInfoDecode);
-    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_OBJID, WVTAsn1SpcSpOpusInfoEncode, WVTAsn1SpcSpOpusInfoDecode);
-    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_STRUCT, WVTAsn1SpcSpOpusInfoEncode, WVTAsn1SpcSpOpusInfoDecode);
+    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_OBJID, SpcPeImageDataEncode, SpcPeImageDataDecode);
+    WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_STRUCT, SpcPeImageDataEncode, SpcPeImageDataDecode);
+    WINTRUST_REGISTEROID(SPC_CAB_DATA_OBJID, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_CAB_DATA_STRUCT, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_OBJID, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_JAVA_CLASS_DATA_STRUCT, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_LINK_OBJID, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_LINK_STRUCT, SpcLinkEncode, SpcLinkDecode);
+    WINTRUST_REGISTEROID(SPC_SIGINFO_OBJID, SpcSigInfoEncode, SpcSigInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SIGINFO_STRUCT, SpcSigInfoEncode, SpcSigInfoDecode);
+    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_OBJID, SpcIndirectDataContentEncode, SpcIndirectDataContentDecode);
+    WINTRUST_REGISTEROID(SPC_INDIRECT_DATA_CONTENT_STRUCT, SpcIndirectDataContentEncode, SpcIndirectDataContentDecode);
+    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_OBJID, SpcSpAgencyInfoEncode, SpcSpAgencyInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_AGENCY_INFO_STRUCT, SpcSpAgencyInfoEncode, SpcSpAgencyInfoDecode);
+    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_OBJID, SpcMinimalCriteriaInfoEncode, SpcMinimalCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_MINIMAL_CRITERIA_STRUCT, SpcMinimalCriteriaInfoEncode, SpcMinimalCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_OBJID, SpcFinancialCriteriaInfoEncode, SpcFinancialCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_FINANCIAL_CRITERIA_STRUCT, SpcFinancialCriteriaInfoEncode, SpcFinancialCriteriaInfoDecode);
+    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_OBJID, SpcStatementTypeEncode, SpcStatementTypeDecode);
+    WINTRUST_REGISTEROID(SPC_STATEMENT_TYPE_STRUCT, SpcStatementTypeEncode, SpcStatementTypeDecode);
+    WINTRUST_REGISTEROID(CAT_NAMEVALUE_OBJID, CatNameValueEncode, CatNameValueDecode);
+    WINTRUST_REGISTEROID(CAT_NAMEVALUE_STRUCT, CatNameValueEncode, CatNameValueDecode);
+    WINTRUST_REGISTEROID(CAT_MEMBERINFO_OBJID, CatMemberInfoEncode, CatMemberInfoDecode);
+    WINTRUST_REGISTEROID(CAT_MEMBERINFO_STRUCT, CatMemberInfoEncode, CatMemberInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_OBJID, SpcSpOpusInfoEncode, SpcSpOpusInfoDecode);
+    WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_STRUCT, SpcSpOpusInfoEncode,  SpcSpOpusInfoDecode);
 
 #undef WINTRUST_REGISTEROID
 
