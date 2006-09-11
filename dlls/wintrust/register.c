@@ -415,7 +415,16 @@ static LONG WINTRUST_WriteSingleUsageEntry(LPCSTR OID,
  */
 static void WINTRUST_RegisterGenVerifyV2(void)
 {
-    static const GUID ProvGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    static GUID ProvGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
@@ -425,14 +434,7 @@ static void WINTRUST_RegisterGenVerifyV2(void)
     /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.3 */
     WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CODE_SIGNING, DefaultId, GuidString);
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{00AAC56B-CD44-11D0-8CC2-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -447,21 +449,23 @@ static void WINTRUST_RegisterGenVerifyV2(void)
  */
 static void WINTRUST_RegisterPublishedSoftware(void)
 {
-    static const GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE;
+    static GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{64B9D180-8DA2-11CF-8736-00AA00A485EB} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 #define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI { 0xc6b2e8d0, 0xe005, 0x11cf, { 0xa1,0x34,0x00,0xc0,0x4f,0xd7,0xbf,0x43 }}
@@ -478,21 +482,23 @@ static void WINTRUST_RegisterPublishedSoftware(void)
  */
 static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
 {
-    static const GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI;
+    static GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{C6B2E8D0-E005-11CF-A134-00C04FD7BF43} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -507,21 +513,23 @@ static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
  */
 static void WINTRUST_RegisterGenCertVerify(void)
 {
-    static const GUID ProvGUID = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
+    static GUID ProvGUID = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubDefCertInit,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register WINTRUST_ACTION_GENERIC_CERT_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{189A3842-3041-11D1-85E1-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubDefCertInit);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -536,22 +544,23 @@ static void WINTRUST_RegisterGenCertVerify(void)
  */
 static void WINTRUST_RegisterTrustProviderTest(void)
 {
-    static const GUID ProvGUID = WINTRUST_ACTION_TRUSTPROVIDER_TEST;
+    static GUID ProvGUID = WINTRUST_ACTION_TRUSTPROVIDER_TEST;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         SoftpubDumpStructure,
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register WINTRUST_ACTION_TRUSTPROVIDER_TEST : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{573E31F8-DDBA-11D0-8CCB-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization  , SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message         , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature       , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate     , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck       , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy     , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, DiagnosticPolicy, SoftpubDumpStructure);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup         , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -570,7 +579,16 @@ static void WINTRUST_RegisterHttpsProv(void)
     static WCHAR SoftpubFreeUsage[] = {'S','o','f','t','p','u','b','F','r','e','e','D','e','f','U','s','a','g','e','C','a','l','l','D','a','t','a', 0};
     static const WCHAR CBAlloc[]    = {'C','a','l','l','b','a','c','k','A','l','l','o','c','F','u','n','c','t','i','o','n', 0};
     static const WCHAR CBFree[]     = {'C','a','l','l','b','a','c','k','F','r','e','e','F','u','n','c','t','i','o','n', 0};
-    static const GUID ProvGUID = HTTPSPROV_ACTION;
+    static GUID ProvGUID = HTTPSPROV_ACTION;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         HTTPSCertificateTrust,
+                                         SoftpubCertCheck,
+                                         HTTPSFinalProv,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
     WCHAR ProvDllName[sizeof(SP_POLICY_PROVIDER_DLL_NAME)];
 
@@ -601,14 +619,7 @@ static void WINTRUST_RegisterHttpsProv(void)
     WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, CBFree, SoftpubFreeUsage );
     WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, DefaultId, GuidString );
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{573E31F8-AABA-11D0-8CCB-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , HTTPSCertificateTrust);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , HTTPSFinalProv);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -623,21 +634,23 @@ static void WINTRUST_RegisterHttpsProv(void)
  */
 static void WINTRUST_RegisterOfficeSignVerify(void)
 {
-    static const GUID ProvGUID = OFFICESIGN_ACTION_VERIFY;
+    static GUID ProvGUID = OFFICESIGN_ACTION_VERIFY;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         OfficeInitializePolicy,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         SoftpubFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         OfficeCleanupPolicy };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register OFFICESIGN_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{5555C2CD-17FB-11D1-85C4-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, OfficeInitializePolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , SoftpubFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , OfficeCleanupPolicy);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -652,21 +665,23 @@ static void WINTRUST_RegisterOfficeSignVerify(void)
  */
 static void WINTRUST_RegisterDriverVerify(void)
 {
-    static const GUID ProvGUID = DRIVER_ACTION_VERIFY;
+    static GUID ProvGUID = DRIVER_ACTION_VERIFY;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         DriverInitializePolicy,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         SoftpubCertficate,
+                                         SoftpubCertCheck,
+                                         DriverFinalPolicy,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         DriverCleanupPolicy };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register DRIVER_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{F750E6C3-38EE-11D1-85E5-00C04FC295EE} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, DriverInitializePolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , SoftpubCertficate);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , DriverFinalPolicy);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , DriverCleanupPolicy);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***************************************************************************
@@ -681,21 +696,23 @@ static void WINTRUST_RegisterDriverVerify(void)
  */
 static void WINTRUST_RegisterGenChainVerify(void)
 {
-    static const GUID ProvGUID = WINTRUST_ACTION_GENERIC_CHAIN_VERIFY;
+    static GUID ProvGUID = WINTRUST_ACTION_GENERIC_CHAIN_VERIFY;
+    CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
+                                         SoftpubInitialization,
+                                         SoftpubMessage,
+                                         SoftpubSignature,
+                                         GenericChainCertificateTrust,
+                                         SoftpubCertCheck,
+                                         GenericChainFinalProv,
+                                         { 0, NULL, NULL }, /* No diagnostic policy */
+                                         SoftpubCleanup };
     WCHAR GuidString[39];
 
     WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
 
     TRACE("Going to register WINTRUST_ACTION_GENERIC_CHAIN_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Provider\*\{FC451C16-AC75-11D1-B4B8-00C04FB66EA0} */
-    WINTRUST_WriteProviderToReg(GuidString, Initialization, SoftpubInitialization);
-    WINTRUST_WriteProviderToReg(GuidString, Message       , SoftpubMessage);
-    WINTRUST_WriteProviderToReg(GuidString, Signature     , SoftpubSignature);
-    WINTRUST_WriteProviderToReg(GuidString, Certificate   , GenericChainCertificateTrust);
-    WINTRUST_WriteProviderToReg(GuidString, CertCheck     , SoftpubCertCheck);
-    WINTRUST_WriteProviderToReg(GuidString, FinalPolicy   , GenericChainFinalProv);
-    WINTRUST_WriteProviderToReg(GuidString, Cleanup       , SoftpubCleanup);
+    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
 /***********************************************************************
