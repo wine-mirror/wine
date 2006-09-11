@@ -459,11 +459,6 @@ static void WINTRUST_RegisterPublishedSoftware(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -492,12 +487,6 @@ static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI : %s\n", wine_dbgstr_w(GuidString));
-
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
@@ -523,11 +512,6 @@ static void WINTRUST_RegisterGenCertVerify(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WINTRUST_ACTION_GENERIC_CERT_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -554,11 +538,6 @@ static void WINTRUST_RegisterTrustProviderTest(void)
                                          SoftpubFinalPolicy,
                                          SoftpubDumpStructure,
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WINTRUST_ACTION_TRUSTPROVIDER_TEST : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -644,11 +623,6 @@ static void WINTRUST_RegisterOfficeSignVerify(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          OfficeCleanupPolicy };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register OFFICESIGN_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -675,11 +649,6 @@ static void WINTRUST_RegisterDriverVerify(void)
                                          DriverFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          DriverCleanupPolicy };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register DRIVER_ACTION_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -706,11 +675,6 @@ static void WINTRUST_RegisterGenChainVerify(void)
                                          GenericChainFinalProv,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WINTRUST_ACTION_GENERIC_CHAIN_VERIFY : %s\n", wine_dbgstr_w(GuidString));
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
