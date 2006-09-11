@@ -655,7 +655,8 @@ VOID WINAPI GetSystemInfo(
 	unsigned long long longVal;
 	int value;
 	int cputype;
-	    
+        char buffer[256];
+
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
 	{
@@ -675,13 +676,13 @@ VOID WINAPI GetSystemInfo(
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
 	{
-	    valSize = sizeof(int);
-	    if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
-	    {
-		switch (cputype)
-		{
-		    case CPU_TYPE_POWERPC:
-			cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC;
+            switch (cputype)
+            {
+            case CPU_TYPE_POWERPC:
+                cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC;
+                valSize = sizeof(int);
+                if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
+                {
 			switch (value)
 			{
 			    case CPU_SUBTYPE_POWERPC_601:
@@ -724,38 +725,42 @@ VOID WINAPI GetSystemInfo(
 				break;
 			    default: break;
 			}
-			break; /* CPU_TYPE_POWERPC */
-		    case CPU_TYPE_I386:
-			cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
-			switch (value)
-			{
-			    case CPU_SUBTYPE_386:
-				cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
-				cachedsi.wProcessorLevel = 3;
-				break;
-			    case CPU_SUBTYPE_486:
-			    case CPU_SUBTYPE_486SX:
-				cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
-				cachedsi.wProcessorLevel = 4;
-				break;
-			    case CPU_SUBTYPE_586:
-			    case CPU_SUBTYPE_PENTPRO:
-				cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-				cachedsi.wProcessorLevel = 5;
-				break;
-			    case CPU_SUBTYPE_PENTII_M3:
-			    case CPU_SUBTYPE_PENTII_M5:
-				cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-				cachedsi.wProcessorLevel = 5;
-				/* this should imply MMX */
-				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-				break;
-			    default: break;
-			}
-			break; /* CPU_TYPE_I386 */
-		    default: break;
-		} /* switch (cputype) */
-	    }
+                }
+                break; /* CPU_TYPE_POWERPC */
+            case CPU_TYPE_I386:
+                cachedsi.u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.family", &value, &valSize, NULL, 0) == 0)
+                {
+                    cachedsi.wProcessorLevel = value;
+                    switch (value)
+                    {
+                    case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386; break;
+                    case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486; break;
+                    default: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
+                    }
+                }
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.model", &value, &valSize, NULL, 0) == 0)
+                    cachedsi.wProcessorRevision = (value << 8);
+                valSize = sizeof(int);
+                if (sysctlbyname ("machdep.cpu.stepping", &value, &valSize, NULL, 0) == 0)
+                    cachedsi.wProcessorRevision |= value;
+                valSize = sizeof(buffer);
+                if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
+                {
+                    cachedsi.wProcessorRevision |= value;
+                    if (strstr(buffer,"CX8"))  PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                    if (strstr(buffer,"MMX"))   PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"TSC"))   PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"3DNOW")) PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"SSE"))   PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"SSE2"))  PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer,"PAE"))   PF[PF_PAE_ENABLED] = TRUE;
+                }
+                break; /* CPU_TYPE_I386 */
+            default: break;
+            } /* switch (cputype) */
 	}
 	valSize = sizeof(longVal);
 	if (!sysctlbyname("hw.cpufrequency", &longVal, &valSize, NULL, 0))
