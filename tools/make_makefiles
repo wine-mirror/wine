@@ -93,7 +93,7 @@ replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
 
 
 ################################################################
-# update the tests list in programs/winetest/Makefile.in
+# update the tests list in programs/winetest/Makefile.in and programs/winetest/winetest.rc
 
 my %modules = ( "kernel" => "kernel32", "gdi" => "gdi32", "user" => "user32" );
 my %tests;
@@ -106,7 +106,7 @@ foreach my $file (sort grep /^dlls\/.*\/tests\/Makefile/, @makefiles)
         my $dir = $1;
         my $mod = $modules{$dir} || $dir;
         $tests{$mod} = $dir;
-        push @lines, " \\\n\t${mod}_test.exe\$(DLLEXT)";
+        push @lines, " \\\n\t${mod}_test.exe";
     }
 }
 push @lines, "\n\n";
@@ -114,13 +114,20 @@ push @lines, "\n\n";
 foreach my $test (sort keys %tests)
 {
     my $dir = $tests{$test};
-    push @lines, "${test}_test.exe\$(DLLEXT): \$(DLLDIR)/$dir/tests/${test}_test.exe\$(DLLEXT)\n";
+    push @lines, "${test}_test.exe: \$(DLLDIR)/$dir/tests/${test}_test.exe\$(DLLEXT)\n";
     push @lines, "\tcp \$(DLLDIR)/$dir/tests/${test}_test.exe\$(DLLEXT) \$\@ && \$(STRIP) \$\@\n";
 }
 push @lines, "\n# Special rules\n";
 
 replace_in_file( "programs/winetest/Makefile.in", '^TESTBINS\s*=', '^# Special rules', @lines );
 
+@lines = ();
+foreach my $test (sort keys %tests)
+{
+    push @lines, "${test}_test.exe TESTRES \"${test}_test.exe\"\n";
+}
+
+replace_in_file( "programs/winetest/winetest.rc", ' TESTRES ', undef, @lines );
 
 ################################################################
 # update dlls/Makefile.in

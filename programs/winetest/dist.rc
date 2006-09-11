@@ -19,6 +19,7 @@
  */
 
 #include "winetest.rc"
+#include "tests.rc"
 
 WINE_BUILD STRINGRES "build.id"
 BUILD_INFO STRINGRES "build.nfo"

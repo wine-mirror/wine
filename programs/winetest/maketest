@@ -4,7 +4,6 @@ TOPSRCDIR="$1"
 shift
 
 echo "/* Automatically generated -- do not edit! */"
-echo "#include \"resource.h\""
 echo "STRINGTABLE {"
 
 i=0
@@ -24,8 +23,3 @@ while read line; do
 done
 
 echo "}"
-
-for test
-do
-    echo "$test TESTRES \"$test\""
-done
