@@ -4656,6 +4656,14 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
 
   This->lastBlockNoInSequenceIndex = blockIndex;
 
+  /* BlockChainStream_SetSize should have already been called to ensure we have
+   * enough blocks in the chain to write into */
+  if (blockIndex == BLOCK_END_OF_CHAIN)
+  {
+    ERR("not enough blocks in chain to write data\n");
+    return STG_E_DOCFILECORRUPT;
+  }
+
   /*
    * Here, I'm casting away the constness on the buffer variable
    * This is OK since we don't intend to modify that buffer.
