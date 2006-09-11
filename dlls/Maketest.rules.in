@@ -13,16 +13,16 @@ DLLFLAGS     = @DLLFLAGS@
 DEFS         = $(EXTRADEFS)
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
-TESTLIST     = testlist.c
 TESTRESULTS  = $(CTESTS:.c=.ok)
 TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
-C_SRCS       = $(CTESTS) $(TESTLIST)
+C_SRCS       = $(CTESTS)
 ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
+EXTRA_OBJS   = testlist.o
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o)
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) testlist.cross.o
 CROSSCC      = @CROSSCC@
 CROSSWINDRES = @CROSSWINDRES@
 
@@ -42,10 +42,10 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 
 # Rules for building test list
 
-$(TESTLIST): Makefile.in $(MAKECTESTS)
+testlist.c: Makefile.in $(MAKECTESTS)
 	$(MAKECTESTS) -o $@ $(CTESTS)
 
-depend: $(TESTLIST)
+testlist.o: testlist.c $(TOPSRCDIR)/include/wine/test.h
 
 # Rules for testing
 
@@ -74,4 +74,4 @@ testclean::
 	$(RM) $(TESTRESULTS)
 
 clean::
-	$(RM) $(MODULE) $(TESTLIST) $(TESTRESULTS) $(CROSSTEST)
+	$(RM) testlist.c $(MODULE) $(TESTRESULTS) $(CROSSTEST)
