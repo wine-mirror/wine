@@ -71,9 +71,7 @@ static void test_streamonhglobal(IStream *pStream)
     ok_ole_success(hr, "IStream_Revert");
 
     hr = IStream_LockRegion(pStream, ull, ull, LOCK_WRITE);
-    todo_wine {
     ok(hr == STG_E_INVALIDFUNCTION, "IStream_LockRegion should have returned STG_E_INVALIDFUNCTION instead of 0x%08lx\n", hr);
-    }
 
     hr = IStream_Stat(pStream, &statstg, STATFLAG_DEFAULT);
     ok_ole_success(hr, "IStream_Stat");

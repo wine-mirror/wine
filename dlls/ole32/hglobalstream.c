@@ -563,7 +563,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_LockRegion(
 		  ULARGE_INTEGER cb,          /* [in] */
 		  DWORD          dwLockType)  /* [in] */
 {
-  return S_OK;
+  return STG_E_INVALIDFUNCTION;
 }
 
 /*
