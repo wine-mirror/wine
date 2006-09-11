@@ -4851,33 +4851,132 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
  */
 HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
-    VARIANT lv, rv;
-    HRESULT hr;
-    
+    HRESULT hres = S_OK;
+    VARTYPE resvt = VT_EMPTY;
+    VARTYPE leftvt,rightvt;
+    VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
+    VARIANT lv,rv;
+
+    leftvt = V_VT(left)&VT_TYPEMASK;
+    rightvt = V_VT(right)&VT_TYPEMASK;
+    leftExtraFlags = V_VT(left)&(~VT_TYPEMASK);
+    rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
+
+    if (leftExtraFlags != rightExtraFlags)
+        return DISP_E_BADVARTYPE;
+    ExtraFlags = leftExtraFlags;
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
+          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* Native VarIdiv always returns a error when using any extra
+     * flags or if the variant combination is I8 and INT.
+     */
+    if ((leftvt == VT_I8 && rightvt == VT_INT) ||
+        (leftvt == VT_INT && rightvt == VT_I8) ||
+        (rightvt == VT_EMPTY && leftvt != VT_NULL) ||
+        ExtraFlags != 0)
+        return DISP_E_BADVARTYPE;
+
+    /* Determine variant type */
+    else if (leftvt == VT_NULL || rightvt == VT_NULL)
+    {
+        V_VT(result) = VT_NULL;
+        return S_OK;
+    }
+    else if (leftvt == VT_I8 || rightvt == VT_I8)
+        resvt = VT_I8;
+    else if (leftvt == VT_I4 || rightvt == VT_I4 ||
+        leftvt == VT_INT || rightvt == VT_INT ||
+        leftvt == VT_UINT || rightvt == VT_UINT ||
+        leftvt == VT_UI8 || rightvt == VT_UI8 ||
+        leftvt == VT_UI4 || rightvt == VT_UI4 ||
+        leftvt == VT_UI2 || rightvt == VT_UI2 ||
+        leftvt == VT_I1 || rightvt == VT_I1 ||
+        leftvt == VT_BSTR || rightvt == VT_BSTR ||
+        leftvt == VT_DATE || rightvt == VT_DATE ||
+        leftvt == VT_CY || rightvt == VT_CY ||
+        leftvt == VT_DECIMAL || rightvt == VT_DECIMAL ||
+        leftvt == VT_R8 || rightvt == VT_R8 ||
+        leftvt == VT_R4 || rightvt == VT_R4)
+        resvt = VT_I4;
+    else if (leftvt == VT_I2 || rightvt == VT_I2 ||
+        leftvt == VT_BOOL || rightvt == VT_BOOL ||
+        leftvt == VT_EMPTY)
+        resvt = VT_I2;
+    else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+        resvt = VT_UI1;
+    else
+        return DISP_E_BADVARTYPE;
+
     VariantInit(&lv);
     VariantInit(&rv);
 
-    if ((V_VT(left) == VT_NULL) || (V_VT(right) == VT_NULL)) {
-        hr = VariantChangeType(result, result, 0, VT_NULL);
-        if (FAILED(hr)) {
-            /* This should never happen */
-            FIXME("Failed to convert return value to VT_NULL.\n");
-            return hr;
-        }
-        return S_OK;
+    /* coerce to the result type */
+    hres = VariantChangeType(&lv, left, 0, resvt);
+    if (hres != S_OK)
+    {
+        VariantClear(&lv);
+        VariantClear(&rv);
+        return hres;
+    }
+    hres = VariantChangeType(&rv, right, 0, resvt);
+    if (hres != S_OK)
+    {
+        VariantClear(&lv);
+        VariantClear(&rv);
+        return hres;
     }
 
-    hr = VariantChangeType(&lv, left, 0, VT_I4);
-    if (FAILED(hr)) {
-	return hr;
+    /* do the math */
+    V_VT(result) = resvt;
+    switch (resvt)
+    {
+    case VT_UI1:
+    if (V_UI1(&rv) == 0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
     }
-    hr = VariantChangeType(&rv, right, 0, VT_I4);
-    if (FAILED(hr)) {
-	return hr;
+    else
+        V_UI1(result) = V_UI1(&lv) / V_UI1(&rv);
+    break;
+    case VT_I2:
+    if (V_I2(&rv) == 0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
+    }
+    else
+        V_I2(result) = V_I2(&lv) / V_I2(&rv);
+    break;
+    case VT_I4:
+    if (V_I4(&rv) == 0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
+    }
+    else
+        V_I4(result) = V_I4(&lv) / V_I4(&rv);
+    break;
+    case VT_I8:
+    if (V_I8(&rv) == 0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
+    }
+    else
+        V_I8(result) = V_I8(&lv) / V_I8(&rv);
+    break;
+    default:
+        FIXME("Couldn't integer divide variant types %d,%d\n",
+            leftvt,rightvt);
     }
 
-    hr = VarDiv(&lv, &rv, result);
-    return hr;
+    VariantClear(&lv);
+    VariantClear(&rv);
+
+    return hres;
 }
 
 
