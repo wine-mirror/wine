@@ -20,6 +20,8 @@ $(MODULE): $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
+ppy.tab.c: ppy.tab.h   # for parallel makes
+
 ### Dependencies:
 
 ppy.tab.o: ppy.tab.c

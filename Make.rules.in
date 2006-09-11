@@ -130,7 +130,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(BISON) $(BISONFLAGS) -o $@ $<
 
 .y.tab.h:
-	$(BISON) $(BISONFLAGS) --defines=$@ -o /dev/null $<
+	$(BISON) $(BISONFLAGS) -o $*.tab.c -d $<
 
 .l.yy.c:
 	$(LEX) $(LEXFLAGS) -t $< >$@ || ($(RM) $@ && exit 1)

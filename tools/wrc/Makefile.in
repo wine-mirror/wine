@@ -38,6 +38,8 @@ install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 
+parser.tab.c: parser.tab.h   # for parallel makes
+
 ### Dependencies:
 
 parser.tab.o: parser.tab.c

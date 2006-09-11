@@ -58,6 +58,8 @@ RC_BINARIES = \
 
 @MAKE_DLL_RULES@
 
+sql.tab.c: sql.tab.h   # for parallel makes
+
 ### Dependencies:
 
 cond.tab.o: cond.tab.c

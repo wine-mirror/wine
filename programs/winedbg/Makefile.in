@@ -43,6 +43,8 @@ install:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
 uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
+dbg.tab.c: dbg.tab.h   # for parallel makes
+
 ### Dependencies:
 
 dbg.tab.o: dbg.tab.c
