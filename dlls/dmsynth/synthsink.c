@@ -89,13 +89,13 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate (LPDIRECTMUSICSYNTHSINK
 
 static HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime (LPDIRECTMUSICSYNTHSINK iface, LONGLONG llSampleTime, REFERENCE_TIME* prfTime) {
 	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
-	FIXME("(%p, %lli, %p): stub\n", This, llSampleTime, prfTime);
+	FIXME("(%p, 0x%s, %p): stub\n", This, wine_dbgstr_longlong(llSampleTime), prfTime);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSYNTHSINK iface, REFERENCE_TIME rfTime, LONGLONG* pllSampleTime) {
 	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
-	FIXME("(%p, %lli, %p): stub\n", This, rfTime, pllSampleTime );
+	FIXME("(%p, 0x%s, %p): stub\n", This, wine_dbgstr_longlong(rfTime), pllSampleTime );
 	return S_OK;
 }
 

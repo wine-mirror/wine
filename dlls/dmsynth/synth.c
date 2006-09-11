@@ -96,7 +96,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Unload (LPDIRECTMUSICSYNTH8 iface, 
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_PlayBuffer (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, LPBYTE pbBuffer, DWORD cbBuffer) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %lli, %p, %ld): stub\n", This, rt, pbBuffer, cbBuffer);
+	FIXME("(%p, 0x%s, %p, %ld): stub\n", This, wine_dbgstr_longlong(rt), pbBuffer, cbBuffer);
 	return S_OK;
 }
 
@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink (LPDIRECTMUSICSYNTH8 i
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Render (LPDIRECTMUSICSYNTH8 iface, short* pBuffer, DWORD dwLength, LONGLONG llPosition) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %p, %ld, %lli): stub\n", This, pBuffer, dwLength, llPosition);
+	FIXME("(%p, %p, %ld, 0x%s): stub\n", This, pBuffer, dwLength, wine_dbgstr_longlong(llPosition));
 	return S_OK;
 }
 
@@ -174,13 +174,15 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend (LPDIRECTMUSICSYNTH8 ifac
 /* IDirectMusicSynth8Impl IDirectMusicSynth8 part: */
 static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %lli, %ld, %ld, %ld, %ld, %li, %li,%lli, %lli, %lli): stub\n", This, rt, dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume, stVoiceStart, stLoopStart, stLoopEnd);
+	FIXME("(%p, 0x%s, %ld, %ld, %ld, %ld, %li, %li,0x%s, 0x%s, 0x%s): stub\n",
+	    This, wine_dbgstr_longlong(rt), dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume,
+	    wine_dbgstr_longlong(stVoiceStart), wine_dbgstr_longlong(stLoopStart), wine_dbgstr_longlong(stLoopEnd));
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_StopVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %lli, %ld): stub\n", This, rt, dwVoiceId);
+	FIXME("(%p, 0x%s, %ld): stub\n", This, wine_dbgstr_longlong(rt), dwVoiceId);
 	return S_OK;
 }
 
