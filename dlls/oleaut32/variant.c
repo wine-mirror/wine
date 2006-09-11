@@ -3435,65 +3435,130 @@ end:
  */
 HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
-    HRESULT rc = E_FAIL;
-    VARTYPE lvt,rvt,resvt;
+    HRESULT hres = S_OK;
+    VARTYPE resvt = VT_EMPTY;
+    VARTYPE leftvt,rightvt;
+    VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
     VARIANT lv,rv;
-    BOOL found;
+
+    leftvt = V_VT(left)&VT_TYPEMASK;
+    rightvt = V_VT(right)&VT_TYPEMASK;
+    leftExtraFlags = V_VT(left)&(~VT_TYPEMASK);
+    rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
+
+    if (leftExtraFlags != rightExtraFlags)
+        return DISP_E_BADVARTYPE;
+    ExtraFlags = leftExtraFlags;
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
 
-    VariantInit(&lv);VariantInit(&rv);
-    lvt = V_VT(left)&VT_TYPEMASK;
-    rvt = V_VT(right)&VT_TYPEMASK;
-    found = FALSE;resvt = VT_VOID;
-    if (((1<<lvt) | (1<<rvt)) & (VTBIT_R4|VTBIT_R8|VTBIT_CY)) {
-	found = TRUE;
-	resvt = VT_R8;
+    /* Native VarPow always returns a error when using any extra flags */
+    if (ExtraFlags != 0)
+        return DISP_E_BADVARTYPE;
+
+    /* Determine return type */
+    if (!(rightvt == VT_EMPTY))
+    {
+        if (leftvt == VT_NULL || rightvt == VT_NULL)
+        {
+            V_VT(result) = VT_NULL;
+            return S_OK;
+        }
+        else if (leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+            resvt = VT_DECIMAL;
+        else if (leftvt == VT_I8 || rightvt == VT_I8 ||
+            leftvt == VT_CY || rightvt == VT_CY ||
+            leftvt == VT_DATE || rightvt == VT_DATE ||
+            leftvt == VT_I4 || rightvt == VT_I4 ||
+            leftvt == VT_BSTR || rightvt == VT_BSTR ||
+            leftvt == VT_I2 || rightvt == VT_I2 ||
+            leftvt == VT_BOOL || rightvt == VT_BOOL ||
+            leftvt == VT_R8 || rightvt == VT_R8 ||
+            leftvt == VT_UI1 || rightvt == VT_UI1)
+        {
+            if ((leftvt == VT_UI1 && rightvt == VT_R4) ||
+                (leftvt == VT_R4 && rightvt == VT_UI1))
+                resvt = VT_R4;
+            else if ((leftvt == VT_R4 && (rightvt == VT_BOOL ||
+                rightvt == VT_I2)) || (rightvt == VT_R4 &&
+                (leftvt == VT_BOOL || leftvt == VT_I2)))
+                resvt = VT_R4;
+            else
+                resvt = VT_R8;
+        }
+        else if (leftvt == VT_R4 || rightvt == VT_R4)
+            resvt = VT_R4;
     }
-    if (!found && (((1<<lvt) | (1<<rvt)) & (VTBIT_DECIMAL))) {
-	found = TRUE;
-	resvt = VT_DECIMAL;
+    else if (leftvt == VT_NULL && rightvt == VT_EMPTY)
+    {
+        V_VT(result) = VT_NULL;
+        return S_OK;
     }
-    if (!found && (((1<<lvt) | (1<<rvt)) & (VTBIT_I1|VTBIT_I2|VTBIT_UI1|VTBIT_UI2|VTBIT_I4|VTBIT_UI4|VTBIT_INT|VTBIT_UINT))) {
-	found = TRUE;
-	resvt = VT_I4;
+    else
+        return DISP_E_BADVARTYPE;
+
+    VariantInit(&lv);
+    VariantInit(&rv);
+
+    /* coerce to the result type */
+    hres = VariantChangeType(&lv, left, 0, resvt);
+    if (hres != S_OK)
+    {
+        VariantClear(&lv);
+        VariantClear(&rv);
+        return hres;
     }
-    if (!found) {
-	FIXME("can't expand vt %d vs %d to a target type.\n",lvt,rvt);
-	return E_FAIL;
+
+    hres = VariantChangeType(&rv, right, 0, resvt);
+    if (hres != S_OK)
+    {
+        VariantClear(&lv);
+        VariantClear(&rv);
+        return hres;
     }
-    rc = VariantChangeType(&lv, left, 0, resvt);
-    if (FAILED(rc)) {
-	FIXME("Could not convert 0x%x to %d?\n",V_VT(left),resvt);
-	return rc;
+
+    /* do the math */
+    V_VT(result) = resvt;
+    switch (resvt)
+    {
+    case VT_R4:
+    if (V_R4(&lv) == 0.0 && V_R4(&rv) == 0.0)
+    {
+        hres = DISP_E_OVERFLOW;
+        V_VT(result) = VT_EMPTY;
     }
-    rc = VariantChangeType(&rv, right, 0, resvt);
-    if (FAILED(rc)) {
-	FIXME("Could not convert 0x%x to %d?\n",V_VT(right),resvt);
-	return rc;
+    else if (V_R4(&rv) == 0.0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
     }
-    switch (resvt) {
+    else
+        V_R4(result) = V_R4(&lv) / V_R4(&rv);
+    break;
     case VT_R8:
-	if (V_R8(&rv) == 0) return DISP_E_DIVBYZERO;
-	V_VT(result) = resvt;
-	V_R8(result) = V_R8(&lv) / V_R8(&rv);
-	rc = S_OK;
-	break;
-    case VT_DECIMAL:
-	rc = VarDecDiv(&(V_DECIMAL(&lv)), &(V_DECIMAL(&rv)), &(V_DECIMAL(result)));
-	V_VT(result) = resvt;
-	break;
-    case VT_I4:
-	if (V_I4(&rv) == 0) return DISP_E_DIVBYZERO;
-	V_VT(result) = resvt;
-	V_I4(result) = V_I4(&lv) / V_I4(&rv);
-	rc = S_OK;
-	break;
+    if (V_R8(&lv) == 0.0 && V_R8(&rv) == 0.0)
+    {
+        hres = DISP_E_OVERFLOW;
+        V_VT(result) = VT_EMPTY;
     }
-    TRACE("returning 0x%8lx (%s%s),%g\n", rc, debugstr_VT(result),
-          debugstr_VF(result), V_VT(result) == VT_R8 ? V_R8(result) : (double)V_I4(result));
-    return rc;
+    else if (V_R8(&rv) == 0.0)
+    {
+        hres = DISP_E_DIVBYZERO;
+        V_VT(result) = VT_EMPTY;
+    }
+    else
+        V_R8(result) = V_R8(&lv) / V_R8(&rv);
+    break;
+    case VT_DECIMAL:
+    hres = VarDecDiv(&(V_DECIMAL(&lv)), &(V_DECIMAL(&rv)), &(V_DECIMAL(result)));
+    break;
+    }
+
+    VariantClear(&lv);
+    VariantClear(&rv);
+
+    return hres;
 }
 
 /**********************************************************************
