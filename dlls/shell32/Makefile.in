@@ -10,7 +10,6 @@ DELAYIMPORTS = ole32 oleaut32
 EXTRALIBS = -luuid
 
 C_SRCS = \
-	authors.c \
 	autocomplete.c \
 	brsfolder.c \
 	changenotify.c \
@@ -78,6 +77,8 @@ C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
 SPEC_SRCS16 = shell.spec
 
+EXTRA_OBJS = authors.o
+
 @MAKE_DLL_RULES@
 
 # Special rules for 16-bit resource files
@@ -92,8 +93,6 @@ authors.c: $(TOPSRCDIR)/AUTHORS
 	(LC_ALL=C; export LC_ALL; echo 'const char * const SHELL_Authors[] = {' && \
 	 sed -e '1,2d' -e 's/\(.*\)/  \"\1\",/' $(TOPSRCDIR)/AUTHORS && \
 	 echo '  0 };') >$@ || ($(RM) $@ && false)
-
-depend: authors.c
 
 clean::
 	$(RM) authors.c
