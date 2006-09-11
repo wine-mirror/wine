@@ -40,6 +40,8 @@ int yyerror(const char*);
 
 %}
 
+%name-prefix="yy"
+
 %union
 {
     struct dbg_lvalue   lvalue;

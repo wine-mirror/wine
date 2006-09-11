@@ -95,6 +95,7 @@ static cp_xlat_t *find_cpxlat(int lan);
 
 %}
 
+%name-prefix="yy"
 
 %union {
 	WCHAR		*str;

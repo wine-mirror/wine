@@ -127,10 +127,10 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(AS) -o $@ $<
 
 .y.tab.c:
-	$(BISON) $(BISONFLAGS) -o $@ $<
+	$(BISON) $(BISONFLAGS) -p $*_ -o $@ $<
 
 .y.tab.h:
-	$(BISON) $(BISONFLAGS) -o $*.tab.c -d $<
+	$(BISON) $(BISONFLAGS) -p $*_ -o $*.tab.c -d $<
 
 .l.yy.c:
 	$(LEX) $(LEXFLAGS) -t $< >$@ || ($(RM) $@ && exit 1)

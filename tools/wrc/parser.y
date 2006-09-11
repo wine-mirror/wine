@@ -282,6 +282,8 @@ static int rsrcid_to_token(int lookahead);
 	ani_any_t	*ani;
 }
 
+%name-prefix="yy"
+
 %token tNL
 %token <num> tNUMBER tLNUMBER
 %token <str> tSTRING tIDENT tFILENAME
