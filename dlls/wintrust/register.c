@@ -740,9 +740,25 @@ HRESULT WINAPI DllRegisterServer(void)
      * - One call to CryptSIPRemoveProvider (do we need that?)
      */
 
+    /* Testing on native shows that when an error is encountered in one of the CryptRegisterOIDFunction calls
+     * the rest of these calls is skipped. Registering is however continued for the trust providers.
+     *
+     * We are not totally in line with native as there all decoding functions are registered after all encoding
+     * functions.
+     */
 #define WINTRUST_REGISTEROID( oid, encode_funcname, decode_funcname ) \
-    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, encode_funcname); \
-    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, decode_funcname)
+    do { \
+        if (!CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, encode_funcname)) \
+        {                                                               \
+            Res = HRESULT_FROM_WIN32(GetLastError());                   \
+            goto add_trust_providers;                                   \
+        }                                                               \
+        if (!CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, decode_funcname)) \
+        {                                                               \
+            Res = HRESULT_FROM_WIN32(GetLastError());                   \
+            goto add_trust_providers;                                   \
+        }                                                               \
+    } while (0)
 
     WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_OBJID, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
     WINTRUST_REGISTEROID(SPC_PE_IMAGE_DATA_STRUCT, WVTAsn1SpcPeImageDataEncode, WVTAsn1SpcPeImageDataDecode);
@@ -772,6 +788,8 @@ HRESULT WINAPI DllRegisterServer(void)
     WINTRUST_REGISTEROID(SPC_SP_OPUS_INFO_STRUCT, WVTAsn1SpcSpOpusInfoEncode, WVTAsn1SpcSpOpusInfoDecode);
 
 #undef WINTRUST_REGISTEROID
+
+add_trust_providers:
 
     /* Testing on W2K3 shows:
      * If we cannot open HKLM\Software\Microsoft\Cryptography\Providers\Trust
