@@ -255,14 +255,11 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
   GlobalUnlock(This->supportHandle);
 
   /*
-   * The function returns S_OK if the buffer was filled completely
-   * it returns S_FALSE if the end of the stream is reached before the
+   * Always returns S_OK even if the end of the stream is reached before the
    * buffer is filled
    */
-  if(*pcbRead == cb)
-    return S_OK;
 
-  return S_FALSE;
+  return S_OK;
 }
 
 /***
