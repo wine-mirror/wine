@@ -8,13 +8,6 @@ echo "#include \"resource.h\""
 echo "STRINGTABLE {"
 
 i=0
-for test
-do
-    echo "$i \"$test\""
-    i=`expr $i + 1`
-done
-
-i=0
 cd $TOPSRCDIR
 if [ -d .git ]
 then
@@ -32,9 +25,7 @@ done
 
 echo "}"
 
-i=0
 for test
 do
-    echo "$i TESTRES \"$test\""
-    i=`expr $i + 1`
+    echo "$test TESTRES \"$test\""
 done

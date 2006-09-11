@@ -30,6 +30,7 @@ void fatal (const char* msg);
 void warning (const char* msg);
 void *xmalloc (size_t len);
 void *xrealloc (void *op, size_t len);
+char *xstrdup( const char *str );
 void xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
 char *strmake (size_t *lenp, ...);

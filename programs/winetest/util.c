@@ -40,6 +40,13 @@ void *xrealloc (void *op, size_t len)
     return p;
 }
 
+char *xstrdup( const char *str )
+{
+    char *res = strdup( str );
+    if (!res) report (R_FATAL, "Out of memory.");
+    return res;
+}
+
 static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
 {
     size_t size = 1000;

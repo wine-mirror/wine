@@ -57,6 +57,7 @@ struct rev_info
 
 char *tag = NULL;
 static struct wine_test *wine_tests;
+static int nr_of_files, nr_of_tests;
 static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
 
@@ -220,13 +221,13 @@ static void extract_rev_infos (void)
     }
 }
 
-static void* extract_rcdata (int id, int type, DWORD* size)
+static void* extract_rcdata (LPTSTR name, int type, DWORD* size)
 {
     HRSRC rsrc;
     HGLOBAL hdl;
     LPVOID addr;
     
-    if (!(rsrc = FindResource (NULL, (LPTSTR)id, MAKEINTRESOURCE(type))) ||
+    if (!(rsrc = FindResource (NULL, name, MAKEINTRESOURCE(type))) ||
         !(*size = SizeofResource (0, rsrc)) ||
         !(hdl = LoadResource (0, rsrc)) ||
         !(addr = LockResource (hdl)))
@@ -236,24 +237,18 @@ static void* extract_rcdata (int id, int type, DWORD* size)
 
 /* Fills in the name and exename fields */
 static void
-extract_test (struct wine_test *test, const char *dir, int id)
+extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
 {
     BYTE* code;
     DWORD size;
     FILE* fout;
-    int strlen, bufflen = 128;
     char *exepos;
 
-    code = extract_rcdata (id, TESTRES, &size);
-    if (!code) report (R_FATAL, "Can't find test resource %d: %d",
-                       id, GetLastError ());
-    test->name = xmalloc (bufflen);
-    while ((strlen = LoadStringA (NULL, id, test->name, bufflen))
-           == bufflen - 1) {
-        bufflen *= 2;
-        test->name = xrealloc (test->name, bufflen);
-    }
-    if (!strlen) report (R_FATAL, "Can't read name of test %d.", id);
+    code = extract_rcdata (res_name, TESTRES, &size);
+    if (!code) report (R_FATAL, "Can't find test resource %s: %d",
+                       res_name, GetLastError ());
+    test->name = xstrdup( res_name );
+    CharLowerA( test->name );
     test->exename = strmake (NULL, "%s/%s", dir, test->name);
     exepos = strstr (test->name, "_test.exe");
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
@@ -351,7 +346,7 @@ run_ex (char *cmd, const char *out, DWORD ms)
 }
 
 static void
-get_subtests (const char *tempdir, struct wine_test *test, int id)
+get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 {
     char *subname, *cmd;
     FILE *subfile;
@@ -365,7 +360,7 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     subname = tempnam (0, "sub");
     if (!subname) report (R_FATAL, "Can't name subtests file.");
 
-    extract_test (test, tempdir, id);
+    extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
     run_ex (cmd, subname, 5000);
     free (cmd);
@@ -437,10 +432,21 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
     return TRUE;
 }
 
+static BOOL CALLBACK
+extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
+                   LPTSTR lpszName, LONG_PTR lParam)
+{
+    const char *tempdir = (const char *)lParam;
+    get_subtests( tempdir, &wine_tests[nr_of_files], lpszName );
+    nr_of_tests += wine_tests[nr_of_files].subtest_count;
+    nr_of_files++;
+    return TRUE;
+}
+
 static char *
 run_tests (char *logname)
 {
-    int nr_of_files = 0, nr_of_tests = 0, i;
+    int i;
     char *tempdir, *shorttempdir;
     int logfile;
     char *strres, *eol, *nextline;
@@ -481,17 +487,17 @@ run_tests (char *logname)
     report (R_DIR, tempdir);
 
     xprintf ("Version 3\n");
-    strres = extract_rcdata (WINE_BUILD, STRINGRES, &strsize);
+    strres = extract_rcdata (MAKEINTRESOURCE(WINE_BUILD), STRINGRES, &strsize);
     xprintf ("Tests from build ");
     if (strres) xprintf ("%.*s", strsize, strres);
     else xprintf ("-\n");
-    strres = extract_rcdata (TESTS_URL, STRINGRES, &strsize);
+    strres = extract_rcdata (MAKEINTRESOURCE(TESTS_URL), STRINGRES, &strsize);
     xprintf ("Archive: ");
     if (strres) xprintf ("%.*s", strsize, strres);
     else xprintf ("-\n");
     xprintf ("Tag: %s\n", tag);
     xprintf ("Build info:\n");
-    strres = extract_rcdata (BUILD_INFO, STRINGRES, &strsize);
+    strres = extract_rcdata (MAKEINTRESOURCE(BUILD_INFO), STRINGRES, &strsize);
     while (strres) {
         eol = memchr (strres, '\n', strsize);
         if (!eol) {
@@ -518,10 +524,13 @@ run_tests (char *logname)
 
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);
-    for (i = 0; i < nr_of_files; i++) {
-        get_subtests (tempdir, wine_tests+i, i);
-        nr_of_tests += wine_tests[i].subtest_count;
-    }
+    nr_of_files = 0;
+    nr_of_tests = 0;
+    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES),
+                            extract_test_proc, (LPARAM)tempdir))
+        report (R_FATAL, "Can't enumerate test files: %d",
+                GetLastError ());
+
     report (R_DELTA, 0, "Extracting: Done");
 
     report (R_STATUS, "Running tests");
