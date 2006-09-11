@@ -60,9 +60,7 @@ static void test_streamonhglobal(IStream *pStream)
     ull.HighPart = -1;
     ull.LowPart = 0;
     hr = IStream_SetSize(pStream, ull);
-    todo_wine {
     ok_ole_success(hr, "IStream_SetSize");
-    }
 
     hr = IStream_Commit(pStream, STGC_DEFAULT);
     ok_ole_success(hr, "IStream_Commit");

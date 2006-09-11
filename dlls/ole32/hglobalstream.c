@@ -414,10 +414,8 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
   TRACE("(%p, %ld)\n", iface, libNewSize.u.LowPart);
 
   /*
-   * As documented.
+   * HighPart is ignored as shown in tests
    */
-  if (libNewSize.u.HighPart != 0)
-    return STG_E_INVALIDFUNCTION;
 
   if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
     return S_OK;
