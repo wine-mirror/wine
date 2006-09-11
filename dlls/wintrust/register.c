@@ -596,7 +596,7 @@ static void WINTRUST_RegisterHttpsProv(void)
 
     TRACE("Going to register HTTPSPROV_ACTION : %s\n", wine_dbgstr_w(GuidString));
 
-    lstrcpyW(ProvDllName, SP_POLICY_PROVIDER_DLL_NAME); \
+    lstrcpyW(ProvDllName, SP_POLICY_PROVIDER_DLL_NAME);
 
     /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.1 */
     WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, Dll, ProvDllName);
