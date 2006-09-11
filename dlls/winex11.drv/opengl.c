@@ -1226,6 +1226,13 @@ HDC WINAPI X11DRV_wglGetCurrentDC(void) {
     return 0;
 }
 
+/* OpenGL32 wglGetCurrentReadDCARB */
+HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
+{
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return 0;
+}
+
 /* OpenGL32 wglMakeCurrent */
 BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
@@ -1246,7 +1253,7 @@ BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
-void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
+void X11DRV_wglGetIntegerv(int pname, int* params) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
 }
 
