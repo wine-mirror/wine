@@ -55,12 +55,6 @@
 # include <sys/statfs.h>
 #endif
 
-#ifdef HAVE_IOKIT_IOKITLIB_H
-# include <IOKit/IOKitLib.h>
-# include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
-# include <paths.h>
-#endif
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"
@@ -1629,7 +1623,7 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
             break;
         }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__APPLE__)
         struct statfs stfs;
 
         /* The proper way to do this in FreeBSD seems to be with the
@@ -1638,23 +1632,15 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
          */
         if (fstatfs( fd, &stfs ) < 0)
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-        else if (!strncmp("cd9660", stfs.f_fstypename,
-                          sizeof(stfs.f_fstypename)))
+        else if (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
+                 !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)))
         {
             info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-            /* Don't assume read-only, let the mount options set it
-             * below
-             */
+            /* Don't assume read-only, let the mount options set it below */
             info->Characteristics |= FILE_REMOVABLE_MEDIA;
         }
-        else if (!strncmp("nfs", stfs.f_fstypename,
-                          sizeof(stfs.f_fstypename)))
-        {
-            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-            info->Characteristics |= FILE_REMOTE_DEVICE;
-        }
-        else if (!strncmp("nwfs", stfs.f_fstypename,
-                          sizeof(stfs.f_fstypename)))
+        else if (!strncmp("nfs", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
+                 !strncmp("nwfs", stfs.f_fstypename, sizeof(stfs.f_fstypename)))
         {
             info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
             info->Characteristics |= FILE_REMOTE_DEVICE;
@@ -1670,65 +1656,6 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
         {
             info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
             info->Characteristics |= FILE_REMOTE_DEVICE;
-        }
-#elif defined (__APPLE__)
-        struct statfs stfs;
-        kern_return_t kernResult = KERN_FAILURE;
-        mach_port_t masterPort;
-        char bsdName[6]; /* disk#\0 */
-        const char *name;
-
-        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-
-        if (fstatfs( fd, &stfs ) < 0) return FILE_GetNtStatus();
-
-        /* stfs.f_type is reserved (always set to 0) so use IOKit */
-        name = stfs.f_mntfromname + strlen(_PATH_DEV);
-        memcpy( bsdName, name, min(strlen(name)+1,sizeof(bsdName)) );
-        bsdName[sizeof(bsdName)-1] = 0;
-
-        kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
-
-        if (kernResult == KERN_SUCCESS)
-        {
-            CFMutableDictionaryRef matching = IOBSDNameMatching(masterPort, 0, bsdName);
-
-            if (matching)
-            {
-                CFStringRef type;
-                CFMutableDictionaryRef properties;
-                io_service_t devService = IOServiceGetMatchingService(masterPort, matching);
-
-                if (IORegistryEntryCreateCFProperties(devService,
-                                                      &properties,
-                                                      kCFAllocatorDefault, 0) != KERN_SUCCESS)
-                    return FILE_GetNtStatus();  /* FIXME */
-                if ( CFEqual(
-                         CFDictionaryGetValue(properties, CFSTR("Removable")),
-                         kCFBooleanTrue)
-                    ) info->Characteristics |= FILE_REMOVABLE_MEDIA;
-
-                if ( CFEqual(
-                         CFDictionaryGetValue(properties, CFSTR("Writable")),
-                         kCFBooleanFalse)
-                    ) info->Characteristics |= FILE_READ_ONLY_DEVICE;
-
-                /*
-                  NB : mounted disk image (.img/.dmg) don't provide specific type
-                */
-                if ( (type = CFDictionaryGetValue(properties, CFSTR("Type"))) )
-                {
-                    if ( CFStringCompare(type, CFSTR("CD-ROM"), 0) == kCFCompareEqualTo
-                         || CFStringCompare(type, CFSTR("DVD-ROM"), 0) == kCFCompareEqualTo
-                        )
-                    {
-                        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-                    }
-                }
-
-                if (properties)
-                    CFRelease(properties);
-            }
         }
 #elif defined(sun)
         /* Use dkio to work out device types */
