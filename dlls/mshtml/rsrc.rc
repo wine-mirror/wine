@@ -22,6 +22,16 @@
 
 #include "resource.h"
 
+#define WINE_OLESELFREGISTER
+#define WINE_FILEDESCRIPTION_STR "Wine HTML Viewer"
+#define WINE_FILENAME_STR "mshtml.dll"
+#define WINE_FILEVERSION 6,0,2800,1106
+#define WINE_FILEVERSION_STR "6.0.2800.1106"
+#define WINE_PRODUCTVERSION 6,0,2800,1106
+#define WINE_PRODUCTVERSION_STR "6.0.2800.1106"
+
+#include "wine/wine_common_ver.rc"
+
 #include "Bg.rc"
 #include "De.rc"
 #include "En.rc"
