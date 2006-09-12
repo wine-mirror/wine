@@ -608,13 +608,7 @@ ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR lpStr)
 
   while (*str)
   {
-    ULONG newLoWord = 0, i;
-
-    /* Cumulative prime multiplication (*37) with modulo 2^32 wrap-around */
-    for (i = 0; i < 37; i++)
-      newLoWord += nLoWord;
-
-    nLoWord = newLoWord + pnLookup[*str > 0x7f && nMask ? *str + 0x80 : *str];
+    nLoWord = 37 * nLoWord + pnLookup[*str > 0x7f && nMask ? *str + 0x80 : *str];
     str++;
   }
   /* Constrain to a prime modulo and sizeof(WORD) */
