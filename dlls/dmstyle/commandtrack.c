@@ -176,19 +176,22 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_Clone (LPDIRECT
 
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID) {
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %lli, %lli, %lli, %ld, %p, %p, %ld): stub\n", This, pStateData, rtStart, rtEnd, rtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
+	    wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags) {
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %lli, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType), rtTime, prtNext, pParam, pStateData, dwFlags);
+	FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+	    wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags) {
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %lli, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType), rtTime, pParam, pStateData, dwFlags);
+	FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+	    wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
 	return S_OK;
 }
 
