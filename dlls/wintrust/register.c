@@ -412,10 +412,10 @@ static LONG WINTRUST_WriteSingleUsageEntry(LPCSTR OID,
  * NOTES
  *   WINTRUST_ACTION_GENERIC_VERIFY_V2 ({00AAC56B-CD44-11D0-8CC2-00C04FC295EE}
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterGenVerifyV2(void)
+static BOOL WINTRUST_RegisterGenVerifyV2(void)
 {
+    BOOL RegisteredOK = TRUE;
     static GUID ProvGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
                                          SoftpubInitialization,
@@ -432,9 +432,13 @@ static void WINTRUST_RegisterGenVerifyV2(void)
                                             NULL,   /* No load callback function */
                                             NULL }; /* No free callback function */
 
-    WintrustAddDefaultForUsage(szOID_PKIX_KP_CODE_SIGNING, &DefUsage);
+    if (!WintrustAddDefaultForUsage(szOID_PKIX_KP_CODE_SIGNING, &DefUsage))
+        RegisteredOK = FALSE;
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        RegisteredOK = FALSE;
+
+    return RegisteredOK;
 }
 
 /***************************************************************************
@@ -445,9 +449,8 @@ static void WINTRUST_RegisterGenVerifyV2(void)
  * NOTES
  *   WIN_SPUB_ACTION_PUBLISHED_SOFTWARE ({64B9D180-8DA2-11CF-8736-00AA00A485EB})
  *   is defined in wintrust.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterPublishedSoftware(void)
+static BOOL WINTRUST_RegisterPublishedSoftware(void)
 {
     static GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -460,7 +463,10 @@ static void WINTRUST_RegisterPublishedSoftware(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 #define WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI { 0xc6b2e8d0, 0xe005, 0x11cf, { 0xa1,0x34,0x00,0xc0,0x4f,0xd7,0xbf,0x43 }}
@@ -473,9 +479,8 @@ static void WINTRUST_RegisterPublishedSoftware(void)
  * NOTES
  *   WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI ({C6B2E8D0-E005-11CF-A134-00C04FD7BF43})
  *   is not defined in any include file. (FIXME: Find out if the name is correct).
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
+static BOOL WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
 {
     static GUID ProvGUID = WIN_SPUB_ACTION_PUBLISHED_SOFTWARE_NOBADUI;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -488,7 +493,10 @@ static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***************************************************************************
@@ -499,9 +507,8 @@ static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
  * NOTES
  *   WINTRUST_ACTION_GENERIC_CERT_VERIFY ({189A3842-3041-11D1-85E1-00C04FC295EE})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterGenCertVerify(void)
+static BOOL WINTRUST_RegisterGenCertVerify(void)
 {
     static GUID ProvGUID = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -514,7 +521,10 @@ static void WINTRUST_RegisterGenCertVerify(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***************************************************************************
@@ -525,9 +535,8 @@ static void WINTRUST_RegisterGenCertVerify(void)
  * NOTES
  *   WINTRUST_ACTION_TRUSTPROVIDER_TEST ({573E31F8-DDBA-11D0-8CCB-00C04FC295EE})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterTrustProviderTest(void)
+static BOOL WINTRUST_RegisterTrustProviderTest(void)
 {
     static GUID ProvGUID = WINTRUST_ACTION_TRUSTPROVIDER_TEST;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -540,7 +549,10 @@ static void WINTRUST_RegisterTrustProviderTest(void)
                                          SoftpubDumpStructure,
                                          SoftpubCleanup };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***************************************************************************
@@ -551,10 +563,10 @@ static void WINTRUST_RegisterTrustProviderTest(void)
  * NOTES
  *   HTTPSPROV_ACTION ({573E31F8-AABA-11D0-8CCB-00C04FC295EE})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterHttpsProv(void)
+static BOOL WINTRUST_RegisterHttpsProv(void)
 {
+    BOOL RegisteredOK = TRUE;
     static CHAR SoftpubLoadUsage[] = "SoftpubLoadDefUsageCallData";
     static CHAR SoftpubFreeUsage[] = "SoftpubFreeDefUsageCallData";
     static GUID ProvGUID = HTTPSPROV_ACTION;
@@ -576,14 +588,21 @@ static void WINTRUST_RegisterHttpsProv(void)
     DefUsage.pwszDllName = HeapAlloc(GetProcessHeap(), 0, sizeof(SP_POLICY_PROVIDER_DLL_NAME));
     lstrcpyW(DefUsage.pwszDllName, SP_POLICY_PROVIDER_DLL_NAME);
 
-    WintrustAddDefaultForUsage(szOID_PKIX_KP_SERVER_AUTH, &DefUsage);
-    WintrustAddDefaultForUsage(szOID_PKIX_KP_CLIENT_AUTH, &DefUsage);
-    WintrustAddDefaultForUsage(szOID_SERVER_GATED_CRYPTO, &DefUsage);
-    WintrustAddDefaultForUsage(szOID_SGC_NETSCAPE, &DefUsage);
+    if (!WintrustAddDefaultForUsage(szOID_PKIX_KP_SERVER_AUTH, &DefUsage))
+        RegisteredOK = FALSE;
+    if (!WintrustAddDefaultForUsage(szOID_PKIX_KP_CLIENT_AUTH, &DefUsage))
+        RegisteredOK = FALSE;
+    if (!WintrustAddDefaultForUsage(szOID_SERVER_GATED_CRYPTO, &DefUsage))
+        RegisteredOK = FALSE;
+    if (!WintrustAddDefaultForUsage(szOID_SGC_NETSCAPE, &DefUsage))
+        RegisteredOK = FALSE;
 
     HeapFree(GetProcessHeap(), 0, DefUsage.pwszDllName);
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        RegisteredOK = FALSE;
+
+    return RegisteredOK;
 }
 
 /***************************************************************************
@@ -594,9 +613,8 @@ static void WINTRUST_RegisterHttpsProv(void)
  * NOTES
  *   OFFICESIGN_ACTION_VERIFY ({5555C2CD-17FB-11D1-85C4-00C04FC295EE})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterOfficeSignVerify(void)
+static BOOL WINTRUST_RegisterOfficeSignVerify(void)
 {
     static GUID ProvGUID = OFFICESIGN_ACTION_VERIFY;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -609,7 +627,10 @@ static void WINTRUST_RegisterOfficeSignVerify(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          OfficeCleanupPolicy };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***************************************************************************
@@ -620,9 +641,8 @@ static void WINTRUST_RegisterOfficeSignVerify(void)
  * NOTES
  *   DRIVER_ACTION_VERIFY ({F750E6C3-38EE-11D1-85E5-00C04FC295EE})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterDriverVerify(void)
+static BOOL WINTRUST_RegisterDriverVerify(void)
 {
     static GUID ProvGUID = DRIVER_ACTION_VERIFY;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -635,7 +655,10 @@ static void WINTRUST_RegisterDriverVerify(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          DriverCleanupPolicy };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***************************************************************************
@@ -646,9 +669,8 @@ static void WINTRUST_RegisterDriverVerify(void)
  * NOTES
  *   WINTRUST_ACTION_GENERIC_CHAIN_VERIFY ({FC451C16-AC75-11D1-B4B8-00C04FB66EA0})
  *   is defined in softpub.h
- *   We don't care about failures (see comments in DllRegisterServer)
  */
-static void WINTRUST_RegisterGenChainVerify(void)
+static BOOL WINTRUST_RegisterGenChainVerify(void)
 {
     static GUID ProvGUID = WINTRUST_ACTION_GENERIC_CHAIN_VERIFY;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
@@ -661,7 +683,10 @@ static void WINTRUST_RegisterGenChainVerify(void)
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
 
-    WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
+    if (!WintrustAddActionID(&ProvGUID, 0, &ProvInfo))
+        return FALSE;
+
+    return TRUE;
 }
 
 /***********************************************************************
