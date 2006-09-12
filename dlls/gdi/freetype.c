@@ -1025,6 +1025,7 @@ static BOOL init_system_links(void)
     FONTSIGNATURE fs;
     Family *family;
     Face *face;
+    FontSubst *psub;
 
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
     {
@@ -1040,7 +1041,8 @@ static BOOL init_system_links(void)
 
             memset(&fs, 0, sizeof(fs));
             font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
-            font_link->font_name = strdupW(value);
+            psub = get_font_subst(&font_subst_list, value, -1);
+            font_link->font_name = (psub)? strdupW(psub->to.name) : strdupW(value);
             list_init(&font_link->links);
             for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
             {
@@ -1057,6 +1059,10 @@ static BOOL init_system_links(void)
                     *face_name++ = 0;
                     while(isspaceW(*face_name))
                         face_name++;
+
+                    psub = get_font_subst(&font_subst_list, face_name, -1);
+                    if(psub)
+                        face_name = psub->to.name;
                 }
                 face = find_face_from_filename(entry, face_name);
                 if(!face)
