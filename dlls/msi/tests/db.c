@@ -1760,6 +1760,28 @@ static const struct join_res join_res_fourth[] =
     { "msvcp.dll.01234", "single.dll.31415" },
 };
 
+static const struct join_res join_res_fifth[] =
+{
+    { "malar", "procerus" },
+};
+
+static const struct join_res join_res_sixth[] =
+{
+    { "malar", "procerus" },
+    { "malar", "procerus" },
+    { "malar", "nasalis" },
+    { "malar", "nasalis" },
+    { "malar", "nasalis" },
+    { "malar", "mentalis" },
+};
+
+static const struct join_res join_res_seventh[] =
+{
+    { "malar", "nasalis" },
+    { "malar", "nasalis" },
+    { "malar", "nasalis" },
+};
+
 static void test_join(void)
 {
     MSIHANDLE hdb, hview, hrec;
@@ -1986,6 +2008,146 @@ static void test_join(void)
     }
 
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` "
+            "WHERE `Component`.`Component` = 'zygomatic' "
+            "AND `FeatureComponents`.`Component_` = 'maxilla' "
+            "ORDER BY `Feature_`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_fifth[i].one ),
+            "Expected '%s', got %s\n", join_res_fifth[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_fifth[i].two ),
+            "Expected '%s', got %s\n", join_res_fifth[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` "
+            "WHERE `Component` = 'zygomatic' "
+            "ORDER BY `Feature_`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_sixth[i].one ),
+            "Expected '%s', got %s\n", join_res_sixth[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_sixth[i].two ),
+            "Expected '%s', got %s\n", join_res_sixth[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` "
+            "WHERE `Component` = 'zygomatic' "
+            "AND `Feature_` = 'nasalis' "
+            "ORDER BY `Feature_`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_seventh[i].one ),
+            "Expected '%s', got %s\n", join_res_seventh[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_seventh[i].two ),
+            "Expected '%s', got %s\n", join_res_seventh[i].two, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
