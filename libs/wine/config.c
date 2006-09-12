@@ -190,7 +190,7 @@ static void init_paths(void)
     }
     if (!user)
     {
-        sprintf( uid_str, "%u", getuid() );
+        sprintf( uid_str, "%lu", (unsigned long)getuid() );
         user = uid_str;
     }
 #else  /* HAVE_GETPWUID */
