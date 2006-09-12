@@ -135,6 +135,15 @@ typedef struct _CRYPT_REGISTER_ACTIONID
     CRYPT_TRUST_REG_ENTRY sCleanupProvider;
 } CRYPT_REGISTER_ACTIONID, *PCRYPT_REGISTER_ACTIONID;
 
+typedef struct _CRYPT_PROVIDER_REGDEFUSAGE
+{
+    DWORD cbStruct;
+    GUID  *pgActionID;
+    WCHAR *pwszDllName;
+    char  *pwszLoadCallbackDataFunctionName;
+    char  *pwszFreeCallbackDataFunctionName;
+} CRYPT_PROVIDER_REGDEFUSAGE, *PCRYPT_PROVIDER_REGDEFUSAGE;
+
 typedef struct _CRYPT_PROVUI_DATA {
     DWORD cbStruct;
     DWORD dwFinalError;
@@ -316,6 +325,7 @@ static const WCHAR WT_PROVIDER_CERTTRUST_FUNCTION[] = \
 BOOL      WINAPI WintrustAddActionID(GUID*,DWORD,CRYPT_REGISTER_ACTIONID*);
 BOOL      WINAPI WintrustRemoveActionID(GUID*);
 BOOL      WINAPI WintrustLoadFunctionPointers(GUID*,CRYPT_PROVIDER_FUNCTIONS*);
+BOOL      WINAPI WintrustAddDefaultForUsage(const CHAR*,CRYPT_PROVIDER_REGDEFUSAGE*);
 void      WINAPI WintrustGetRegPolicyFlags(DWORD*);
 LONG      WINAPI WinVerifyTrust(HWND,GUID*,LPVOID);
 HRESULT   WINAPI WinVerifyTrustEx(HWND,GUID*,WINTRUST_DATA*);

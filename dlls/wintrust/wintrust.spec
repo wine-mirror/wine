@@ -111,7 +111,7 @@
 @ stdcall WinVerifyTrust(long ptr ptr)
 @ stdcall WinVerifyTrustEx(long ptr ptr)
 @ stdcall WintrustAddActionID(ptr long ptr)
-@ stub WintrustAddDefaultForUsage
+@ stdcall WintrustAddDefaultForUsage(ptr ptr)
 @ stub WintrustCertificateTrust
 @ stub WintrustGetDefaultForUsage
 @ stdcall WintrustGetRegPolicyFlags(ptr)

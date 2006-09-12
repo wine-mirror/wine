@@ -680,6 +680,16 @@ static void WINTRUST_RegisterGenChainVerify(void)
 }
 
 /***********************************************************************
+ *              WintrustAddDefaultForUsage (WINTRUST.@)
+ */
+BOOL WINAPI WintrustAddDefaultForUsage(const CHAR *pszUsageOID,
+                                       CRYPT_PROVIDER_REGDEFUSAGE *psDefUsage)
+{
+     FIXME("(%s %p) stub\n", debugstr_a(pszUsageOID), psDefUsage);
+     return FALSE;
+}
+
+/***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
