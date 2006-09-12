@@ -35,7 +35,7 @@ static const char *mstfile = "winetst.mst";
 
 static void test_msidatabase(void)
 {
-    MSIHANDLE hdb = 0;
+    MSIHANDLE hdb = 0, hdb2 = 0;
     UINT res;
 
     DeleteFile(msifile);
@@ -47,9 +47,61 @@ static void test_msidatabase(void)
     res = MsiDatabaseCommit( hdb );
     ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
+    ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile ), "database should exist\n");
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+    todo_wine {
+    res = MsiOpenDatabase( msifile, msifile2, &hdb2 );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile2 ), "database should exist\n");
+
+    res = MsiDatabaseCommit( hdb2 );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+    }
+    res = MsiCloseHandle( hdb2 );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    res = MsiOpenDatabase( msifile, MSIDBOPEN_READONLY, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to open database\n" );
+
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
+    res = MsiOpenDatabase( msifile, MSIDBOPEN_DIRECT, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to open database\n" );
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    res = MsiOpenDatabase( msifile, MSIDBOPEN_TRANSACT, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to open database\n" );
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+    todo_wine {
+    ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile2 ), "database should exist\n");
+
+    /* MSIDBOPEN_CREATE deletes the database if MsiCommitDatabase isn't called */
+    res = MsiOpenDatabase( msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to open database\n" );
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    res = MsiOpenDatabase( msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to open database\n" );
+
+    res = MsiDatabaseCommit( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    res = MsiCloseHandle( hdb );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    res = DeleteFile( msifile2 );
+    ok( res == TRUE, "Failed to delete database\n" );
+    }
     res = DeleteFile( msifile );
     ok( res == TRUE, "Failed to delete database\n" );
 }
