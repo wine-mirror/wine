@@ -440,9 +440,12 @@ static HRESULT WINAPI StgStreamImpl_Write(
 			     pcbWritten);
   }
   else
+  {
     /* this should never happen because the IStream_SetSize call above will
      * make sure a big or small block chain is created */
     assert(FALSE);
+    res = 0;
+  }
 
   /*
    * Advance the position pointer for the number of positions written.
