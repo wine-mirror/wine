@@ -28,7 +28,7 @@
 #include "wpp_private.h"
 #include "wine/wpp.h"
 
-int ppdebug, pp_flex_debug;
+int ppy_debug, pp_flex_debug;
 
 struct define
 {
@@ -126,7 +126,7 @@ void wpp_add_cmdline_define( const char *value )
 void wpp_set_debug( int lex_debug, int parser_debug, int msg_debug )
 {
     pp_flex_debug   = lex_debug;
-    ppdebug         = parser_debug;
+    ppy_debug       = parser_debug;
     pp_status.debug = msg_debug;
 }
 
@@ -149,8 +149,8 @@ int wpp_parse( const char *input, FILE *output )
     add_cmdline_defines();
     add_special_defines();
 
-    if (!input) ppin = stdin;
-    else if (!(ppin = fopen(input, "rt")))
+    if (!input) ppy_in = stdin;
+    else if (!(ppy_in = fopen(input, "rt")))
     {
         fprintf(stderr,"Could not open %s\n", input);
         exit(2);
@@ -158,12 +158,12 @@ int wpp_parse( const char *input, FILE *output )
 
     pp_status.input = input;
 
-    ppout = output;
-    fprintf(ppout, "# 1 \"%s\" 1\n", input ? input : "");
+    ppy_out = output;
+    fprintf(ppy_out, "# 1 \"%s\" 1\n", input ? input : "");
 
-    ret = ppparse();
+    ret = ppy_parse();
 
-    if (input) fclose(ppin);
+    if (input) fclose(ppy_in);
     pp_pop_define_state();
     return ret;
 }

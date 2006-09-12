@@ -203,7 +203,7 @@ void pp_del_define(const char *name)
 	if((ppp = pplookup(name)) == NULL)
 	{
 		if(pp_status.pedantic)
-			ppwarning("%s was not defined", name);
+			ppy_warning("%s was not defined", name);
 		return;
 	}
 
@@ -223,7 +223,7 @@ pp_entry_t *pp_add_define(char *def, char *text)
 	if((ppp = pplookup(def)) != NULL)
 	{
 		if(pp_status.pedantic)
-			ppwarning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
+			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
 		pp_del_define(def);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
@@ -265,7 +265,7 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	if((ppp = pplookup(id)) != NULL)
 	{
 		if(pp_status.pedantic)
-			ppwarning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
+			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
 		pp_del_define(id);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
@@ -524,7 +524,7 @@ void pp_push_if(pp_if_state_t s)
 pp_if_state_t pp_pop_if(void)
 {
 	if(if_stack_idx <= 0)
-		pperror("#{endif,else,elif} without #{if,ifdef,ifndef} (#if-stack underflow)");
+		ppy_error("#{endif,else,elif} without #{if,ifdef,ifndef} (#if-stack underflow)");
 
 	switch(pp_if_state())
 	{
@@ -606,21 +606,21 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 	fprintf(stderr, "\n");
 }
 
-int pperror(const char *s, ...)
+int ppy_error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Error", pptext, ap);
+	generic_msg(s, "Error", ppy_text, ap);
 	va_end(ap);
 	exit(1);
 	return 1;
 }
 
-int ppwarning(const char *s, ...)
+int ppy_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Warning", pptext, ap);
+	generic_msg(s, "Warning", ppy_text, ap);
 	va_end(ap);
 	return 0;
 }

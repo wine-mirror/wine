@@ -217,8 +217,8 @@ int pp_get_if_depth(void);
 #define __attribute__(x)  /*nothing*/
 #endif
 
-int pperror(const char *s, ...) __attribute__((format (printf, 1, 2)));
-int ppwarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int ppy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int ppy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
 
 /* current preprocessor state */
@@ -239,11 +239,11 @@ extern includelogicentry_t *pp_includelogiclist;
 /*
  * From ppl.l
  */
-extern FILE *ppin;
-extern FILE *ppout;
-extern char *pptext;
+extern FILE *ppy_in;
+extern FILE *ppy_out;
+extern char *ppy_text;
 extern int pp_flex_debug;
-int pplex(void);
+int ppy_lex(void);
 
 void pp_do_include(char *fname, int type);
 void pp_push_ignore_state(void);
@@ -253,7 +253,7 @@ void pp_pop_ignore_state(void);
 /*
  * From ppy.y
  */
-int ppparse(void);
-extern int ppdebug;
+int ppy_parse(void);
+extern int ppy_debug;
 
 #endif  /* __WINE_WPP_PRIVATE_H */
