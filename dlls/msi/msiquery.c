@@ -753,6 +753,12 @@ UINT WINAPI MsiDatabaseCommit( MSIHANDLE hdb )
 
     msiobj_release( &db->hdr );
 
+    if (r == ERROR_SUCCESS)
+    {
+        msi_free( db->deletefile );
+        db->deletefile = NULL;
+    }
+
     return r;
 }
 

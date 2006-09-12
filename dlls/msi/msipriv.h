@@ -71,6 +71,7 @@ typedef struct tagMSIDATABASE
     MSIOBJECTHDR hdr;
     IStorage *storage;
     string_table *strings;
+    LPWSTR deletefile;
     LPCWSTR mode;
     struct list tables;
     struct list transforms;
