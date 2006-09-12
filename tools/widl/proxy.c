@@ -936,7 +936,7 @@ static void write_proxy(type_t *iface)
       gen_proxy(iface, cur, idx);
       gen_stub(iface, cur, cname);
       if (midx == -1) midx = idx;
-      else if (midx != idx) yyerror("method index mismatch in write_proxy");
+      else if (midx != idx) parser_error("method index mismatch in write_proxy");
       midx++;
     }
     cur = PREV_LINK(cur);

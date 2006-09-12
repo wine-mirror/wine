@@ -716,7 +716,7 @@ static void write_method_proto(const type_t *iface)
         fprintf(header, ");\n");
       }
       else {
-        yywarning("invalid call_as attribute (%s -> %s)\n", get_name(def), cas->name);
+        parser_warning("invalid call_as attribute (%s -> %s)\n", get_name(def), cas->name);
       }
     }
 
@@ -802,7 +802,7 @@ static void write_coclass_guid(type_t *cocl)
 static void write_com_interface(type_t *iface)
 {
   if (!iface->funcs && !iface->ref) {
-    yywarning("%s has no methods", iface->name);
+    parser_warning("%s has no methods", iface->name);
     return;
   }
 

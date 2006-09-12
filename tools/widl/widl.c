@@ -84,7 +84,7 @@ static const char version_string[] = "Wine IDL Compiler version " PACKAGE_VERSIO
 
 int win32 = 1;
 int debuglevel = DEBUGLEVEL_NONE;
-int yydebug, yy_flex_debug;
+int parser_debug, yy_flex_debug;
 
 int pedantic = 0;
 static int do_everything = 1;
@@ -271,7 +271,7 @@ int main(int argc,char *argv[])
     setbuf(stderr,0);
   }
 
-  yydebug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
+  parser_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
   yy_flex_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
 
   wpp_set_debug( (debuglevel & DEBUGLEVEL_PPLEX) != 0,
@@ -330,13 +330,13 @@ int main(int argc,char *argv[])
 
     if(ret) exit(1);
     if(preprocess_only) exit(0);
-    if(!(yyin = fopen(temp_name, "r"))) {
+    if(!(parser_in = fopen(temp_name, "r"))) {
       fprintf(stderr, "Could not open %s for input\n", temp_name);
       return 1;
     }
   }
   else {
-    if(!(yyin = fopen(input_name, "r"))) {
+    if(!(parser_in = fopen(input_name, "r"))) {
       fprintf(stderr, "Could not open %s for input\n", input_name);
       return 1;
     }
@@ -380,7 +380,7 @@ int main(int argc,char *argv[])
   }
 
   init_types();
-  ret = yyparse();
+  ret = parser_parse();
 
   if(do_header) {
     fprintf(header, "/* Begin additional prototypes for all interfaces */\n");
@@ -405,7 +405,7 @@ int main(int argc,char *argv[])
     fclose(idfile);
   }
 
-  fclose(yyin);
+  fclose(parser_in);
 
   if(ret) {
     exit(1);

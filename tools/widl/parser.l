@@ -20,7 +20,7 @@
 
 %option stack
 %option nounput noyy_top_state
-%option 8bit never-interactive
+%option 8bit never-interactive prefix="parser_"
 
 nl	\r?\n
 ws	[ \f\t\r]
@@ -110,14 +110,14 @@ static UUID* parse_uuid(const char*u)
                             yy_pop_state();
                             lineno = (int)strtol(yytext, &cptr, 10);
                             if(!lineno)
-                                yyerror("Malformed '#...' line-directive; invalid linenumber");
+                                parser_error("Malformed '#...' line-directive; invalid linenumber");
                             fname = strchr(cptr, '"');
                             if(!fname)
-                                yyerror("Malformed '#...' line-directive; missing filename");
+                                parser_error("Malformed '#...' line-directive; missing filename");
                             fname++;
                             cptr = strchr(fname, '"');
                             if(!cptr)
-                                yyerror("Malformed '#...' line-directive; missing terminating \"");
+                                parser_error("Malformed '#...' line-directive; missing terminating \"");
                             *cptr = '\0';
                             line_number = lineno - 1;  /* We didn't read the newline */
                             free( input_name );
@@ -126,7 +126,7 @@ static UUID* parse_uuid(const char*u)
 \"			yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
-				yylval.str = get_buffered_cstring();
+				parser_lval.str = get_buffered_cstring();
 				return aSTRING;
 			}
 <QUOTE>\\\\		|
@@ -134,15 +134,15 @@ static UUID* parse_uuid(const char*u)
 <QUOTE>\\.		addcchar('\\'); addcchar(yytext[1]);
 <QUOTE>.		addcchar(yytext[0]);
 {uuid}			{
-				yylval.uuid = parse_uuid(yytext);
+				parser_lval.uuid = parse_uuid(yytext);
 				return aUUID;
 			}
 {hex}			{
-				yylval.num = strtoul(yytext, NULL, 0);
+				parser_lval.num = strtoul(yytext, NULL, 0);
 				return aHEXNUM;
 			}
 {int}			{
-				yylval.num = strtoul(yytext, NULL, 0);
+				parser_lval.num = strtoul(yytext, NULL, 0);
 				return aNUM;
 			}
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
@@ -161,8 +161,8 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 			}
 %%
 
-#ifndef yywrap
-int yywrap(void)
+#ifndef parser_wrap
+int parser_wrap(void)
 {
 	return 1;
 }
@@ -338,10 +338,10 @@ static int kw_token(const char *kw)
 	}
 #endif
 	if (kwp) {
-		yylval.str = (char*)kwp->kw;
+		parser_lval.str = (char*)kwp->kw;
 		return kwp->token;
 	}
-	yylval.str = xstrdup(kw);
+	parser_lval.str = xstrdup(kw);
 	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
 }
 
@@ -352,7 +352,7 @@ static void addcchar(char c)
 		cbufalloc += 1024;
 		cbuffer = xrealloc(cbuffer, cbufalloc * sizeof(cbuffer[0]));
 		if(cbufalloc > 65536)
-			yywarning("Reallocating string buffer larger than 64kB");
+			parser_warning("Reallocating string buffer larger than 64kB");
 	}
 	cbuffer[cbufidx++] = c;
 }
@@ -414,7 +414,7 @@ int do_import(char *fname)
 	first_import = import;
 
         if (!(path = wpp_find_include( fname, input_name )))
-            yyerror("Unable to open include file %s", fname);
+            parser_error("Unable to open include file %s", fname);
 
 	import_stack[ptr].temp_name = temp_name;
 	import_stack[ptr].input_name = input_name;
@@ -427,7 +427,7 @@ int do_import(char *fname)
         if (ret) exit(1);
 
 	if((f = fopen(temp_name, "r")) == NULL)
-		yyerror("Unable to open %s", temp_name);
+		parser_error("Unable to open %s", temp_name);
 
 	import_stack[ptr].state = YY_CURRENT_BUFFER;
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));

@@ -126,8 +126,6 @@ static void check_arg(var_t *arg);
 	unsigned int num;
 }
 
-%name-prefix="yy"
-
 %token <str> aIDENTIFIER
 %token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM

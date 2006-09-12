@@ -68,21 +68,21 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 }
 
 
-int yyerror(const char *s, ...)
+int parser_error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Error", yytext, ap);
+	generic_msg(s, "Error", parser_text, ap);
 	va_end(ap);
 	exit(1);
 	return 1;
 }
 
-int yywarning(const char *s, ...)
+int parser_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Warning", yytext, ap);
+	generic_msg(s, "Warning", parser_text, ap);
 	va_end(ap);
 	return 0;
 }
