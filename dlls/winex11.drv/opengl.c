@@ -25,6 +25,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -103,7 +104,6 @@ typedef struct wine_glextension {
         const char *funcName;
         void *funcAddress;
     } extEntryPoints[8];
-    int extNumEntryPoints;
 } WineGLExtension;
 
 struct WineGLInfo {
@@ -130,9 +130,11 @@ static int use_render_texture_emulation = 0;
 static int use_render_texture_ati = 0;
 static int swap_interval = 1;
 
-static WineGLExtension *WineGLExtensionList = NULL;
-long WineGLExtensionListSize = 0;
-void X11DRV_WineGL_LoadExtensions();
+#define MAX_EXTENSIONS 16
+static const WineGLExtension *WineGLExtensionList[MAX_EXTENSIONS];
+static int WineGLExtensionListSize;
+
+static void X11DRV_WineGL_LoadExtensions(void);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
@@ -1314,7 +1316,7 @@ HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 {
     int i, j;
-    WineGLExtension *ext;
+    const WineGLExtension *ext;
 
     int padding = 32 - strlen(lpszProc);
     if (padding < 0)
@@ -1322,8 +1324,8 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 
     TRACE("('%s'):%*s", lpszProc, padding, " ");
     for (i = 0; i < WineGLExtensionListSize; ++i) {
-        ext = &WineGLExtensionList[i];
-        for (j = 0; j < ext->extNumEntryPoints; ++j) {
+        ext = WineGLExtensionList[i];
+        for (j = 0; ext->extEntryPoints[j].funcName; ++j) {
             if (strcmp(ext->extEntryPoints[j].funcName, lpszProc) == 0) {
                 TRACE("(%p) - WineGL\n", ext->extEntryPoints[j].funcAddress);
                 return ext->extEntryPoints[j].funcAddress;
@@ -2309,28 +2311,19 @@ static BOOL glxRequireExtension(const char *requiredExtension)
     return TRUE;
 }
 
-BOOL X11DRV_WineGL_RegisterExtension(const WineGLExtension * ext)
+static BOOL register_extension(const WineGLExtension * ext)
 {
     int i;
 
-    if (WineGLExtensionListSize == 0)
-    {
-        WineGLExtensionList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineGLExtension));
-    }
-    else
-    {
-        WineGLExtensionList = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, WineGLExtensionList, (WineGLExtensionListSize + 1) * sizeof(WineGLExtension));
-    }
-
-    WineGLExtensionList[WineGLExtensionListSize] = *ext;
-    ++WineGLExtensionListSize;
+    assert( WineGLExtensionListSize < MAX_EXTENSIONS );
+    WineGLExtensionList[WineGLExtensionListSize++] = ext;
 
     strcat(WineGLInfo.wglExtensions, " ");
     strcat(WineGLInfo.wglExtensions, ext->extName);
 
     TRACE("'%s'\n", ext->extName);
 
-    for (i = 0; i < ext->extNumEntryPoints; ++i)
+    for (i = 0; ext->extEntryPoints[i].funcName; ++i)
         TRACE("    - '%s'\n", ext->extEntryPoints[i].funcName);
 
     return TRUE;
@@ -2344,12 +2337,6 @@ static const WineGLExtension WGL_ARB_extensions_string =
   }
 };
 
-/* WGL_ARB_extensions_string */
-static void WineGLExtension__WGL_ARB_extensions_string()
-{
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_extensions_string);
-}
-
 static const WineGLExtension WGL_ARB_make_current_read =
 {
   "WGL_ARB_make_current_read",
@@ -2359,28 +2346,10 @@ static const WineGLExtension WGL_ARB_make_current_read =
   }
 };
 
-/* WGL_ARB_make_current_read */
-static void WineGLExtension__WGL_ARB_make_current_read()
-{
-    if (glxRequireVersion(3) == FALSE)
-        return;
-
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_make_current_read);
-}
-
 static const WineGLExtension WGL_ARB_multisample =
 {
   "WGL_ARB_multisample",
 };
-
-/* WGL_ARB_multisample */
-static void WineGLExtension__WGL_ARB_multisample()
-{
-    if (glxRequireExtension("GLX_ARB_multisample") == FALSE)
-        return;
-
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_multisample);
-}
 
 static const WineGLExtension WGL_ARB_pbuffer =
 {
@@ -2395,15 +2364,6 @@ static const WineGLExtension WGL_ARB_pbuffer =
   }
 };
 
-/* WGL_ARB_pbuffer */
-static void WineGLExtension__WGL_ARB_pbuffer()
-{
-    if ((glxRequireVersion(3) == FALSE) || (glxRequireExtension("GLX_SGIX_pbuffer") == FALSE))
-        return;
-
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_pbuffer);
-}
-
 static const WineGLExtension WGL_ARB_pixel_format =
 {
   "WGL_ARB_pixel_format",
@@ -2414,12 +2374,6 @@ static const WineGLExtension WGL_ARB_pixel_format =
   }
 };
 
-/* WGL_ARB_pixel_format */
-static void WineGLExtension__WGL_ARB_pixel_format()
-{
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_pixel_format);
-}
-
 static const WineGLExtension WGL_ARB_render_texture =
 {
   "WGL_ARB_render_texture",
@@ -2429,16 +2383,6 @@ static const WineGLExtension WGL_ARB_render_texture =
   }
 };
 
-/* WGL_ARB_render_texture */
-static void WineGLExtension__WGL_ARB_render_texture()
-{
-    if (glxRequireExtension("GLX_ATI_render_texture") == FALSE &&
-        glxRequireExtension("GLX_ARB_render_texture") == FALSE)
-        return;
-
-    X11DRV_WineGL_RegisterExtension(&WGL_ARB_render_texture);
-}
-
 static const WineGLExtension WGL_EXT_extensions_string =
 {
   "WGL_EXT_extensions_string",
@@ -2446,12 +2390,6 @@ static const WineGLExtension WGL_EXT_extensions_string =
     { "wglGetExtensionsStringEXT", X11DRV_wglGetExtensionsStringEXT },
   }
 };
-
-/* WGL_EXT_extensions_string */
-static void WineGLExtension__WGL_EXT_extensions_string()
-{
-    X11DRV_WineGL_RegisterExtension(&WGL_EXT_extensions_string);
-}
 
 static const WineGLExtension WGL_EXT_swap_control =
 {
@@ -2462,33 +2400,39 @@ static const WineGLExtension WGL_EXT_swap_control =
   }
 };
 
-/* WGL_EXT_swap_control */
-static void WineGLExtension__WGL_EXT_swap_control()
-{
-    if (glxRequireExtension("GLX_SGI_swap_control") == FALSE)
-        return;
-
-    X11DRV_WineGL_RegisterExtension(&WGL_EXT_swap_control);
-}
-
 
 /**
  * X11DRV_WineGL_LoadExtensions
  */
-void X11DRV_WineGL_LoadExtensions(void)
+static void X11DRV_WineGL_LoadExtensions(void)
 {
     WineGLInfo.wglExtensions[0] = 0;
+
     /* ARB Extensions */
-    WineGLExtension__WGL_ARB_extensions_string();
-    WineGLExtension__WGL_ARB_make_current_read();
-    WineGLExtension__WGL_ARB_multisample();
-    WineGLExtension__WGL_ARB_pbuffer();
-    WineGLExtension__WGL_ARB_pixel_format();
-    WineGLExtension__WGL_ARB_render_texture();
+
+    register_extension(&WGL_ARB_extensions_string);
+
+    if (glxRequireVersion(3))
+        register_extension(&WGL_ARB_make_current_read);
+
+    if (glxRequireExtension("GLX_ARB_multisample"))
+        register_extension(&WGL_ARB_multisample);
+
+    if (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer"))
+        register_extension(&WGL_ARB_pbuffer);
+
+    register_extension(&WGL_ARB_pixel_format);
+
+    if (glxRequireExtension("GLX_ATI_render_texture") ||
+        glxRequireExtension("GLX_ARB_render_texture"))
+        register_extension(&WGL_ARB_render_texture);
 
     /* EXT Extensions */
-    WineGLExtension__WGL_EXT_extensions_string();
-    WineGLExtension__WGL_EXT_swap_control();
+
+    register_extension(&WGL_EXT_extensions_string);
+
+    if (glxRequireExtension("GLX_SGI_swap_control"))
+        register_extension(&WGL_EXT_swap_control);
 }
 
 
