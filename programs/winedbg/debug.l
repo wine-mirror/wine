@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-%option nounput interactive 8bit
+%option nounput interactive 8bit prefix="dbg_"
 
 %{
 #include <stdlib.h>
@@ -104,7 +104,7 @@ STRING     \"[^\n"]+\"
                                         /* This rule must precede the ones below, */
                                         /* otherwise paths like '/' or '0x9' would */
                                         /* get parsed as an operator or tNUM */
-<PATH_EXPECTED>{PATHNAME}		{ yylval.string = lexeme_alloc(yytext); return tPATH; }
+<PATH_EXPECTED>{PATHNAME}		{ dbg_lval.string = lexeme_alloc(yytext); return tPATH; }
 
 "||"					{ return OP_LOR; }
 "&&"					{ return OP_LAND; }
@@ -120,19 +120,19 @@ STRING     \"[^\n"]+\"
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
 
-"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%x", &yylval.integer); return tNUM; }
-{DIGIT}+             			{ sscanf(yytext, "%d", &yylval.integer); return tNUM; }
+"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%x", &dbg_lval.integer); return tNUM; }
+{DIGIT}+             			{ sscanf(yytext, "%d", &dbg_lval.integer); return tNUM; }
 
 <FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
-                                          yylval.integer = strtol(yytext+1, &last, 0) << 8;
-                                          yylval.integer |= *last;
+                                          dbg_lval.integer = strtol(yytext+1, &last, 0) << 8;
+                                          dbg_lval.integer |= *last;
                                           return tFORMAT; }
 
-<FORMAT_EXPECTED>"/"{FORMAT}          	{ yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
+<FORMAT_EXPECTED>"/"{FORMAT}          	{ dbg_lval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-{STRING} 				{ yylval.string = lexeme_alloc(yytext + 1); yylval.string[strlen(yylval.string) - 1] = '\0'; return tSTRING; }
+{STRING} 				{ dbg_lval.string = lexeme_alloc(yytext + 1); dbg_lval.string[strlen(dbg_lval.string) - 1] = '\0'; return tSTRING; }
 <ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
-                                          yylval.string = lexeme_alloc(p); return tSTRING; }
+                                          dbg_lval.string = lexeme_alloc(p); return tSTRING; }
 
 <INITIAL,NOPROCESS>info|inf|in		{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
@@ -214,8 +214,8 @@ union					{ return tUNION; }
 enum					{ return tENUM; }
 all                                     { return tALL; }
 
-{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
-"$"{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext+1); return tINTVAR; }
+{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
+"$"{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext+1); return tINTVAR; }
 
 <*>[ \t\r]+                             /* Eat up whitespace and DOS LF */
 
@@ -223,8 +223,8 @@ all                                     { return tALL; }
 <*>.                                    { if (syntax_error == 0) { syntax_error++; dbg_printf("Syntax Error (%s)\n", yytext); } }
 %%
 
-#ifndef yywrap
-int yywrap(void) { return 1; }
+#ifndef dbg_wrap
+int dbg_wrap(void) { return 1; }
 #endif
 
 static char** local_lexemes /* = NULL */;

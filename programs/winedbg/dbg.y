@@ -35,12 +35,10 @@
 #include "wine/exception.h"
 #include "expr.h"
 
-int yylex(void);
-int yyerror(const char*);
+int dbg_lex(void);
+static int dbg_error(const char*);
 
 %}
-
-%name-prefix="yy"
 
 %union
 {
@@ -530,7 +528,7 @@ void	parser_handle(HANDLE input)
        __TRY
        {
 	  ret_ok = TRUE;
-	  yyparse();
+	  dbg_parse();
        }
        __EXCEPT(wine_dbg_cmd)
        {
@@ -554,7 +552,7 @@ void parser(const char* filename)
     }
 }
 
-int yyerror(const char* s)
+int dbg_error(const char* s)
 {
     dbg_printf("%s\n", s);
     return 0;
