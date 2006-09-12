@@ -1461,7 +1461,7 @@ AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/kernel/nls)
+WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)

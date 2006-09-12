@@ -23769,7 +23769,7 @@ ac_config_commands="$ac_config_commands dlls/gdi/enhmfdrv"
 
 ac_config_commands="$ac_config_commands dlls/gdi/mfdrv"
 
-ac_config_commands="$ac_config_commands dlls/kernel/nls"
+ac_config_commands="$ac_config_commands dlls/kernel32/nls"
 
 ac_config_commands="$ac_config_commands dlls/user/resources"
 
@@ -24343,7 +24343,7 @@ do
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "dlls/gdi/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
     "dlls/gdi/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
-    "dlls/kernel/nls") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/nls" ;;
+    "dlls/kernel32/nls") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel32/nls" ;;
     "dlls/user/resources") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
     "dlls/wineps.drv/data") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps.drv/data" ;;
     "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
@@ -25350,8 +25350,8 @@ echo "$as_me: executing $ac_file commands" >&6;}
 echo "$as_me: creating dlls/gdi/enhmfdrv" >&6;} && mkdir "dlls/gdi/enhmfdrv") ;;
     "dlls/gdi/mfdrv":C) test -d "dlls/gdi/mfdrv" || ({ echo "$as_me:$LINENO: creating dlls/gdi/mfdrv" >&5
 echo "$as_me: creating dlls/gdi/mfdrv" >&6;} && mkdir "dlls/gdi/mfdrv") ;;
-    "dlls/kernel/nls":C) test -d "dlls/kernel/nls" || ({ echo "$as_me:$LINENO: creating dlls/kernel/nls" >&5
-echo "$as_me: creating dlls/kernel/nls" >&6;} && mkdir "dlls/kernel/nls") ;;
+    "dlls/kernel32/nls":C) test -d "dlls/kernel32/nls" || ({ echo "$as_me:$LINENO: creating dlls/kernel32/nls" >&5
+echo "$as_me: creating dlls/kernel32/nls" >&6;} && mkdir "dlls/kernel32/nls") ;;
     "dlls/user/resources":C) test -d "dlls/user/resources" || ({ echo "$as_me:$LINENO: creating dlls/user/resources" >&5
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
     "dlls/wineps.drv/data":C) test -d "dlls/wineps.drv/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps.drv/data" >&5
