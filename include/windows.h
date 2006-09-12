@@ -28,6 +28,9 @@
 # pragma warning(disable:4116)
 #endif
 
+#ifndef _INC_WINDOWS
+#define _INC_WINDOWS
+
 #if defined(RC_INVOKED) && !defined(NOWINRES)
 #include <winresrc.h>
 #else /* RC_INVOKED && !NOWINRES */
@@ -100,4 +103,5 @@
 #endif /* !NOIMM */
 
 #endif  /* RC_INVOKED && !NOWINRES */
+#endif /* _INC_WINDOWS */
 #endif  /* __WINE_WINDOWS_H */
