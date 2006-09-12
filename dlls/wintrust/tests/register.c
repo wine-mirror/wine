@@ -176,17 +176,15 @@ static void test_AddDefaultForUsage(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(NULL, NULL);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    todo_wine
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* NULL defusage */
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(oid, NULL);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    todo_wine
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* NULL oid and proper defusage */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -198,9 +196,8 @@ static void test_AddDefaultForUsage(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(NULL, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    todo_wine
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* Just the ActionID */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -208,8 +205,7 @@ static void test_AddDefaultForUsage(void)
     DefUsage.pgActionID = &ActionID;
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
-    todo_wine
-        ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
+    ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
     ok (GetLastError() == 0xdeadbeef,
         "Last error should not have been changed: 0x%08lx\n", GetLastError());
    
@@ -221,9 +217,8 @@ static void test_AddDefaultForUsage(void)
     DefUsage.pwszFreeCallbackDataFunctionName = DummyFunction;
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    todo_wine
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* cbStruct set to 0 */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -235,9 +230,8 @@ static void test_AddDefaultForUsage(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    todo_wine
-        ok (GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
     /* All OK */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -248,8 +242,7 @@ static void test_AddDefaultForUsage(void)
     DefUsage.pwszFreeCallbackDataFunctionName = DummyFunction;
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
-    todo_wine
-        ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
+    ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
     ok (GetLastError() == 0xdeadbeef,
         "Last error should not have been changed: 0x%08lx\n", GetLastError());
 

@@ -681,12 +681,83 @@ static void WINTRUST_RegisterGenChainVerify(void)
 
 /***********************************************************************
  *              WintrustAddDefaultForUsage (WINTRUST.@)
+ *
+ * Write OID and callback functions to the registry.
+ *
+ * PARAMS
+ *   pszUsageOID [I] Pointer to a GUID.
+ *   psDefUsage  [I] Pointer to a structure that specifies the callback functions.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
+ *
+ * NOTES
+ *   WintrustAddDefaultForUsage will only return TRUE or FALSE, no last 
+ *   error is set, not even when the registry cannot be written to.
  */
 BOOL WINAPI WintrustAddDefaultForUsage(const CHAR *pszUsageOID,
                                        CRYPT_PROVIDER_REGDEFUSAGE *psDefUsage)
 {
-     FIXME("(%s %p) stub\n", debugstr_a(pszUsageOID), psDefUsage);
-     return FALSE;
+    static const WCHAR CBAlloc[]    = {'C','a','l','l','b','a','c','k','A','l','l','o','c','F','u','n','c','t','i','o','n', 0};
+    static const WCHAR CBFree[]     = {'C','a','l','l','b','a','c','k','F','r','e','e','F','u','n','c','t','i','o','n', 0};
+    LONG Res = ERROR_SUCCESS;
+    LONG WriteUsageError = ERROR_SUCCESS;
+    DWORD Len;
+    WCHAR GuidString[39];
+
+    TRACE("(%s %p)\n", debugstr_a(pszUsageOID), psDefUsage);
+
+    /* Some sanity checks. */
+    if (!pszUsageOID ||
+        !psDefUsage ||
+        !psDefUsage->pgActionID ||
+        (psDefUsage->cbStruct != sizeof(CRYPT_PROVIDER_REGDEFUSAGE)))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (psDefUsage->pwszDllName)
+    {
+        Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, Dll, psDefUsage->pwszDllName);
+        if (Res != ERROR_SUCCESS) WriteUsageError = Res;
+    }
+    if (psDefUsage->pwszLoadCallbackDataFunctionName)
+    {
+        WCHAR* CallbackW;
+
+        Len = MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszLoadCallbackDataFunctionName, -1, NULL, 0 );
+        CallbackW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszLoadCallbackDataFunctionName, -1, CallbackW, Len );
+
+        Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, CBAlloc, CallbackW);
+        if (Res != ERROR_SUCCESS) WriteUsageError = Res;
+
+        HeapFree(GetProcessHeap(), 0, CallbackW);
+    }
+    if (psDefUsage->pwszFreeCallbackDataFunctionName)
+    {
+        WCHAR* CallbackW;
+
+        Len = MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszFreeCallbackDataFunctionName, -1, NULL, 0 );
+        CallbackW = HeapAlloc( GetProcessHeap(), 0, Len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, psDefUsage->pwszFreeCallbackDataFunctionName, -1, CallbackW, Len );
+
+        Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, CBFree, CallbackW);
+        if (Res != ERROR_SUCCESS) WriteUsageError = Res;
+
+        HeapFree(GetProcessHeap(), 0, CallbackW);
+    }
+
+    WINTRUST_Guid2Wstr(psDefUsage->pgActionID, GuidString);
+    Res = WINTRUST_WriteSingleUsageEntry(pszUsageOID, DefaultId, GuidString);
+    if (Res != ERROR_SUCCESS) WriteUsageError = Res;
+
+    if (WriteUsageError != ERROR_SUCCESS)
+        return FALSE;
+
+    return TRUE;
 }
 
 /***********************************************************************
