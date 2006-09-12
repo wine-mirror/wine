@@ -49,7 +49,7 @@ static void generic_msg(const char *s, const char *t, va_list ap)
  * The extra routine 'xyyerror' is used to exit after giving a real
  * message.
  */
-int yyerror(const char *s, ...)
+int mcy_error(const char *s, ...)
 {
 #ifndef SUPPRESS_YACC_ERROR_MESSAGE
 	va_list ap;
@@ -70,7 +70,7 @@ int xyyerror(const char *s, ...)
 	return 1;
 }
 
-int yywarning(const char *s, ...)
+int mcy_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
@@ -215,7 +215,7 @@ int unistricmp(const WCHAR *s1, const WCHAR *s2)
 			if(!once)
 			{
 				once++;
-				yywarning(warn);
+				mcy_warning(warn);
 			}
 			i = *s1++ - *s2++;
 		}
@@ -228,7 +228,7 @@ int unistricmp(const WCHAR *s1, const WCHAR *s2)
 	if((*s1 & 0xffff) > 0x7f || (*s2 & 0xffff) > 0x7f)
 	{
 		if(!once)
-			yywarning(warn);
+			mcy_warning(warn);
 		return *s1 - *s2;
 	}
 	else

@@ -113,7 +113,7 @@ int char_number = 1;		/* The current char pos within the line */
 char *cmdline;			/* The entire commandline */
 time_t now;			/* The time of start of wmc */
 
-int yydebug;
+int mcy_debug;
 
 int getopt (int argc, char *const *argv, const char *optstring);
 static void segvhandler(int sig);
@@ -239,7 +239,7 @@ int main(int argc,char *argv[])
 		return 1;
 	}
 
-	yydebug = dodebug;
+	mcy_debug = dodebug;
 	if(dodebug)
 	{
 		setbuf(stdout, 0);
@@ -273,7 +273,7 @@ int main(int argc,char *argv[])
 	else
 		yyin = stdin;
 
-	ret = yyparse();
+	ret = mcy_parse();
 
 	if(input_name)
 		fclose(yyin);

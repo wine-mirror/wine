@@ -33,9 +33,9 @@ char *xstrdup(const char *str);
 #define __attribute__(X)
 #endif
 
-int yyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int mcy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int xyyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
-int yywarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int mcy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));

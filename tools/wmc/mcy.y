@@ -95,8 +95,6 @@ static cp_xlat_t *find_cpxlat(int lan);
 
 %}
 
-%name-prefix="yy"
-
 %union {
 	WCHAR		*str;
 	unsigned	num;
@@ -231,7 +229,7 @@ lmap	: token '=' tNUMBER setfile ':' tFILE optcp {
 		$1->codepage = $7;
 		do_add_token(tok_language, $1, "language");
 		if(!find_language($3) && !find_cpxlat($3))
-			yywarning("Language 0x%x not built-in, using codepage %d; use explicit codepage to override", $3, WMC_DEFAULT_CODEPAGE);
+			mcy_warning("Language 0x%x not built-in, using codepage %d; use explicit codepage to override", $3, WMC_DEFAULT_CODEPAGE);
 	}
 	| token '=' tNUMBER setfile ':' error	{ xyyerror("Filename expected"); }
 	| token '=' tNUMBER error		{ xyyerror(err_colon); }
@@ -421,7 +419,7 @@ static void do_add_token(tok_e type, token_t *tok, const char *code)
 	if(tp)
 	{
 		if(tok->type != type)
-			yywarning("Type change in token");
+			mcy_warning("Type change in token");
 		if(tp != tok)
 			xyyerror("Overlapping token not the same");
 		/* else its already defined and changed */
@@ -444,7 +442,7 @@ static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg)
 	lmp->msg = msg;
 	lmp->len = unistrlen(msg) + 1;	/* Include termination */
 	if(lmp->len > 4096)
-		yywarning("Message exceptionally long; might be a missing termination");
+		mcy_warning("Message exceptionally long; might be a missing termination");
 	return lmp;
 }
 

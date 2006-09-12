@@ -56,15 +56,15 @@ extern time_t now;
 extern int line_number;
 extern int char_number;
 
-int yyparse(void);
-extern int yydebug;
+int mcy_parse(void);
+extern int mcy_debug;
 extern int want_nl;
 extern int want_line;
 extern int want_file;
 extern node_t *nodehead;
 extern lan_blk_t *lanblockhead;
 
-int yylex(void);
+int mcy_lex(void);
 FILE *yyin;
 void set_codepage(int cp);
 

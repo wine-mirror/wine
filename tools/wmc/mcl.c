@@ -302,7 +302,7 @@ try_again:
 
 	if(!n)
 	{
-		yywarning("Re-read line (input was or converted to zilch)");
+		mcy_warning("Re-read line (input was or converted to zilch)");
 		goto try_again;	/* Should not happen, but could be due to stdin reading and a signal */
 	}
 
@@ -490,7 +490,7 @@ static int scan_number(int ch)
 			else
 			{
 				unget_unichar(ch);
-				yylval.num = 0;
+				mcy_lval.num = 0;
 				return tNUMBER;
 			}
 			break;
@@ -535,7 +535,7 @@ static int scan_number(int ch)
 finish:
 	unget_unichar(ch);
 	push_char(0);
-	yylval.num = strtoul(get_char_stack(), NULL, base);
+	mcy_lval.num = strtoul(get_char_stack(), NULL, base);
 	return tNUMBER;
 }
 
@@ -586,7 +586,7 @@ void get_tokentable(token_t **tab, int *len)
  * The scanner
  *
  */
-int yylex(void)
+int mcy_lex(void)
 {
 	static const WCHAR ustr_dot1[] = { '.', '\n', 0 };
 	static const WCHAR ustr_dot2[] = { '.', '\r', '\n', 0 };
@@ -639,7 +639,7 @@ int yylex(void)
 				set_codepage(WMC_DEFAULT_CODEPAGE);
 				return tMSGEND;
 			}
-			yylval.str = xunistrdup(get_unichar_stack());
+			mcy_lval.str = xunistrdup(get_unichar_stack());
 			return tLINE;
 		}
 
@@ -677,7 +677,7 @@ int yylex(void)
 				unget_unichar(ch);
 				push_unichar(0);
 				want_file = 0;
-				yylval.str = xunistrdup(get_unichar_stack());
+				mcy_lval.str = xunistrdup(get_unichar_stack());
 				return tFILE;
 			}
 
@@ -693,7 +693,7 @@ int yylex(void)
 				push_unichar(0);
 				if(!(tok = lookup_token(get_unichar_stack())))
 				{
-					yylval.str = xunistrdup(get_unichar_stack());
+					mcy_lval.str = xunistrdup(get_unichar_stack());
 					return tIDENT;
 				}
 				switch(tok->type)
@@ -706,7 +706,7 @@ int yylex(void)
 					/* Fall through */
 				case tok_severity:
 				case tok_facility:
-					yylval.tok = tok;
+					mcy_lval.tok = tok;
 					return tTOKEN;
 
 				default:
@@ -738,7 +738,7 @@ int yylex(void)
 			newline();
 			push_unichar(ch);	/* Include the newline */
 			push_unichar(0);
-			yylval.str = xunistrdup(get_unichar_stack());
+			mcy_lval.str = xunistrdup(get_unichar_stack());
 			return tCOMMENT;
 		default:
 			xyyerror("Invalid character '%c' (0x%04x)", isisochar(ch) && isprint(ch) ? ch : '.', ch);
