@@ -451,7 +451,6 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
     const char *file;
     DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, NULL, 0, NULL, NULL);
     char *file_nameA = HeapAlloc(GetProcessHeap(), 0, len);
-    Face *ret = NULL;
 
     WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, file_nameA, len, NULL, NULL);
     TRACE("looking for file %s name %s\n", debugstr_a(file_nameA), debugstr_w(face_name));
@@ -467,13 +466,15 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
                 file = face->file;
             else
                 file++;
-            if(!strcmp(file, file_nameA))
-                ret = face;
-            break;
+            if(!strcasecmp(file, file_nameA))
+            {
+                HeapFree(GetProcessHeap(), 0, file_nameA);
+                return face;
+            }
 	}
     }
     HeapFree(GetProcessHeap(), 0, file_nameA);
-    return ret;
+    return NULL;
 }
 
 static Family *find_family_from_name(const WCHAR *name)
