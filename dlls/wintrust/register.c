@@ -797,8 +797,8 @@ HRESULT WINAPI DllRegisterServer(void)
     static const CHAR CatMemberInfoDecode[]            = "WVTAsn1CatMemberInfoDecode";
     static const CHAR SpcSpOpusInfoEncode[]            = "WVTAsn1SpcSpOpusInfoEncode";
     static const CHAR SpcSpOpusInfoDecode[]            = "WVTAsn1SpcSpOpusInfoDecode";
-    HRESULT Res = S_OK;
-    HKEY Key;
+    HRESULT CryptRegisterRes = S_OK;
+    HRESULT TrustProviderRes = S_OK;
 
     TRACE("\n");
 
@@ -822,12 +822,12 @@ HRESULT WINAPI DllRegisterServer(void)
     do { \
         if (!CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, encode_funcname)) \
         {                                                               \
-            Res = HRESULT_FROM_WIN32(GetLastError());                   \
+            CryptRegisterRes = HRESULT_FROM_WIN32(GetLastError());      \
             goto add_trust_providers;                                   \
         }                                                               \
         if (!CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC, oid, SP_POLICY_PROVIDER_DLL_NAME, decode_funcname)) \
         {                                                               \
-            Res = HRESULT_FROM_WIN32(GetLastError());                   \
+            CryptRegisterRes = HRESULT_FROM_WIN32(GetLastError());      \
             goto add_trust_providers;                                   \
         }                                                               \
     } while (0)
@@ -864,44 +864,44 @@ HRESULT WINAPI DllRegisterServer(void)
 add_trust_providers:
 
     /* Testing on W2K3 shows:
-     * If we cannot open HKLM\Software\Microsoft\Cryptography\Providers\Trust
-     * for writing, DllRegisterServer returns S_FALSE. If the key can be opened 
-     * there is no check whether the actions can be written in the registry.
-     * As the previous list shows, there are several calls after these registrations.
-     * If they fail they will overwrite the returnvalue of DllRegisterServer.
+     * All registry writes are tried. If one fails this part will return S_FALSE
+     * but only if the first (CryptRegisterOIDFunction calls) and the third 
+     * (CryptSIPAddProvider calls) part succeed.
+     *
+     * Last error is set to the last error encountered, regardless if the first
+     * part failed or not.
      */
 
-    /* Check if we can open/create HKLM\Software\Microsoft\Cryptography\Providers\Trust */
-    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, Trust, 0, NULL, 0, KEY_WRITE, NULL, &Key, NULL) != ERROR_SUCCESS)
-    {
-        /* If the opening/creation of the key fails, there is no need to do the action registrations as they
-         * will fail as well.
-         */
-        Res = S_FALSE;
-    }
-    else
-    {
-        RegCloseKey(Key);
+    /* Create the necessary action registry structures */
+    WINTRUST_InitRegStructs();
 
-        /* Create the necessary action registry structures */
-        WINTRUST_InitRegStructs();
+    /* Register several Trust Provider actions */
+    if (!WINTRUST_RegisterGenVerifyV2())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterPublishedSoftware())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterPublishedSoftwareNoBadUi())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterGenCertVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterTrustProviderTest())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterHttpsProv())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterOfficeSignVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterDriverVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterGenChainVerify())
+        TrustProviderRes = S_FALSE;
 
-        /* Register several Trust Provider actions */
-        WINTRUST_RegisterGenVerifyV2();
-        WINTRUST_RegisterPublishedSoftware();
-        WINTRUST_RegisterPublishedSoftwareNoBadUi();
-        WINTRUST_RegisterGenCertVerify();
-        WINTRUST_RegisterTrustProviderTest();
-        WINTRUST_RegisterHttpsProv();
-        WINTRUST_RegisterOfficeSignVerify();
-        WINTRUST_RegisterDriverVerify();
-        WINTRUST_RegisterGenChainVerify();
+    /* Free the registry structures */
+    WINTRUST_FreeRegStructs();
 
-        /* Free the registry structures */
-        WINTRUST_FreeRegStructs();
-    }
+    if (CryptRegisterRes == S_OK)
+        return TrustProviderRes;
 
-    return Res;
+    return CryptRegisterRes;
 }
 
 /***********************************************************************
