@@ -145,7 +145,7 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
 static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szFilePath, const WCHAR* szFileName) {
   HRESULT hr = S_OK;
   /**/
-  static const WCHAR szSlashSep[] = {'\\',0};
+  static WCHAR szSlashSep[] = {'\\',0};
   static const WCHAR szPath[] = {'s','z','P','a','t','h',0};
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
   static const WCHAR szVersion[] = {'s','z','V','e','r','s','i','o','n',0};
@@ -179,7 +179,7 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   retval = GetFileVersionInfoSizeW(szFile, &hdl);
   pVersionInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
   hr = GetFileVersionInfoW(szFile, 0, retval, pVersionInfo); 
-  boolret = VerQueryValueW(pVersionInfo, (LPWSTR) szSlashSep, (LPVOID) &pFileInfo, &uiLength);
+  boolret = VerQueryValueW(pVersionInfo, szSlashSep, (LPVOID) &pFileInfo, &uiLength);
 
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFile);
   hr = IDxDiagContainerImpl_AddProp(pSubCont, szPath, &v);
