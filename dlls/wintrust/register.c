@@ -361,7 +361,8 @@ BOOL WINAPI WintrustRemoveActionID( GUID* pgActionID )
 /***********************************************************************
  *              WINTRUST_WriteSingleUsageEntry
  *
- * Write a single value and its data to:
+ * Helper for WintrustAddDefaultForUsage, writes a single value and its
+ * data to:
  *
  * HKLM\Software\Microsoft\Cryptography\Trust\Usages\<OID>
  */
@@ -425,14 +426,13 @@ static void WINTRUST_RegisterGenVerifyV2(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
+    CRYPT_PROVIDER_REGDEFUSAGE DefUsage = { sizeof(CRYPT_PROVIDER_REGDEFUSAGE),
+                                            &ProvGUID,
+                                            NULL,   /* No Dll provided */
+                                            NULL,   /* No load callback function */
+                                            NULL }; /* No free callback function */
 
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
-
-    TRACE("Going to register WINTRUST_ACTION_GENERIC_VERIFY_V2 : %s\n", wine_dbgstr_w(GuidString));
-
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.3 */
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CODE_SIGNING, DefaultId, GuidString);
+    WintrustAddDefaultForUsage(szOID_PKIX_KP_CODE_SIGNING, &DefUsage);
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
@@ -487,6 +487,7 @@ static void WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
                                          SoftpubFinalPolicy,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
+
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
 
@@ -554,10 +555,8 @@ static void WINTRUST_RegisterTrustProviderTest(void)
  */
 static void WINTRUST_RegisterHttpsProv(void)
 {
-    static WCHAR SoftpubLoadUsage[] = {'S','o','f','t','p','u','b','L','o','a','d','D','e','f','U','s','a','g','e','C','a','l','l','D','a','t','a', 0};
-    static WCHAR SoftpubFreeUsage[] = {'S','o','f','t','p','u','b','F','r','e','e','D','e','f','U','s','a','g','e','C','a','l','l','D','a','t','a', 0};
-    static const WCHAR CBAlloc[]    = {'C','a','l','l','b','a','c','k','A','l','l','o','c','F','u','n','c','t','i','o','n', 0};
-    static const WCHAR CBFree[]     = {'C','a','l','l','b','a','c','k','F','r','e','e','F','u','n','c','t','i','o','n', 0};
+    static CHAR SoftpubLoadUsage[] = "SoftpubLoadDefUsageCallData";
+    static CHAR SoftpubFreeUsage[] = "SoftpubFreeDefUsageCallData";
     static GUID ProvGUID = HTTPSPROV_ACTION;
     CRYPT_REGISTER_ACTIONID ProvInfo = { sizeof(CRYPT_REGISTER_ACTIONID),
                                          SoftpubInitialization,
@@ -568,35 +567,21 @@ static void WINTRUST_RegisterHttpsProv(void)
                                          HTTPSFinalProv,
                                          { 0, NULL, NULL }, /* No diagnostic policy */
                                          SoftpubCleanup };
-    WCHAR GuidString[39];
-    WCHAR ProvDllName[sizeof(SP_POLICY_PROVIDER_DLL_NAME)];
+    CRYPT_PROVIDER_REGDEFUSAGE DefUsage = { sizeof(CRYPT_PROVIDER_REGDEFUSAGE),
+                                            &ProvGUID,
+                                            NULL, /* Will be filled later */
+                                            SoftpubLoadUsage,
+                                            SoftpubFreeUsage };
 
-    WINTRUST_Guid2Wstr(&ProvGUID , GuidString);
+    DefUsage.pwszDllName = HeapAlloc(GetProcessHeap(), 0, sizeof(SP_POLICY_PROVIDER_DLL_NAME));
+    lstrcpyW(DefUsage.pwszDllName, SP_POLICY_PROVIDER_DLL_NAME);
 
-    TRACE("Going to register HTTPSPROV_ACTION : %s\n", wine_dbgstr_w(GuidString));
+    WintrustAddDefaultForUsage(szOID_PKIX_KP_SERVER_AUTH, &DefUsage);
+    WintrustAddDefaultForUsage(szOID_PKIX_KP_CLIENT_AUTH, &DefUsage);
+    WintrustAddDefaultForUsage(szOID_SERVER_GATED_CRYPTO, &DefUsage);
+    WintrustAddDefaultForUsage(szOID_SGC_NETSCAPE, &DefUsage);
 
-    lstrcpyW(ProvDllName, SP_POLICY_PROVIDER_DLL_NAME);
-
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.1 */
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, Dll, ProvDllName);
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, CBAlloc, SoftpubLoadUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, CBFree, SoftpubFreeUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_SERVER_AUTH, DefaultId, GuidString );
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.5.5.7.3.2 */
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, Dll, ProvDllName);
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, CBAlloc, SoftpubLoadUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, CBFree, SoftpubFreeUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_PKIX_KP_CLIENT_AUTH, DefaultId, GuidString );
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\1.3.6.1.4.1.311.10.3.3 */
-    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, Dll, ProvDllName);
-    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, CBAlloc, SoftpubLoadUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, CBFree, SoftpubFreeUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_SERVER_GATED_CRYPTO, DefaultId, GuidString );
-    /* HKLM\Software\Microsoft\Cryptography\Trust\Usages\2.16.840.1.113730.4.1 */
-    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, Dll, ProvDllName);
-    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, CBAlloc, SoftpubLoadUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, CBFree, SoftpubFreeUsage );
-    WINTRUST_WriteSingleUsageEntry(szOID_SGC_NETSCAPE, DefaultId, GuidString );
+    HeapFree(GetProcessHeap(), 0, DefUsage.pwszDllName);
 
     WintrustAddActionID(&ProvGUID, 0, &ProvInfo);
 }
