@@ -308,6 +308,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     TRACE_(d3d_caps)("(%p, %p)\n", gl_info, display);
 
     gl_string = (const char *) glGetString(GL_RENDERER);
+    if (NULL == gl_string)
+	gl_string = "None";
     strcpy(gl_info->gl_renderer, gl_string);
 
     /* Fill in the GL info retrievable depending on the display */
