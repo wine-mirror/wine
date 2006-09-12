@@ -166,7 +166,7 @@ int char_number = 1;		/* The current char pos within the line */
 char *cmdline;			/* The entire commandline */
 time_t now;			/* The time of start of wrc */
 
-int yydebug, yy_flex_debug;
+int parser_debug, yy_flex_debug;
 
 resource_t *resource_top;	/* The top of the parsed resources */
 
@@ -424,7 +424,7 @@ int main(int argc,char *argv[])
 		setbuf(stderr,0);
 	}
 
-	yydebug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
+	parser_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
 	yy_flex_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
 
         wpp_set_debug( (debuglevel & DEBUGLEVEL_PPLEX) != 0,
@@ -486,12 +486,12 @@ int main(int argc,char *argv[])
 	/* Go from .rc to .res */
 	chat("Starting parse");
 
-	if(!(yyin = fopen(input_name, "rb")))
+	if(!(parser_in = fopen(input_name, "rb")))
 		error("Could not open %s for input\n", input_name);
 
-	ret = yyparse();
+	ret = parser_parse();
 
-	if(input_name) fclose(yyin);
+	if(input_name) fclose(parser_in);
 
 	if(ret) exit(1); /* Error during parse */
 

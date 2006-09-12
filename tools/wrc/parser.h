@@ -22,18 +22,18 @@
 #define __WRC_PARSER_H
 
 /* From parser.y */
-extern int yydebug;
+extern int parser_debug;
 extern int want_nl;		/* Set when getting line-numers */
 extern int want_id;		/* Set when getting the resource name */
 
-int yyparse(void);
+int parser_parse(void);
 
 /* From parser.l */
-extern FILE *yyin;
-extern char *yytext;
+extern FILE *parser_in;
+extern char *parser_text;
 extern int yy_flex_debug;
 
-int yylex(void);
+int parser_lex(void);
 
 #endif
 
