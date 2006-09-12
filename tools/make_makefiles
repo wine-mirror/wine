@@ -95,7 +95,7 @@ replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
 ################################################################
 # update the tests list in programs/winetest/Makefile.in and programs/winetest/winetest.rc
 
-my %modules = ( "kernel" => "kernel32", "gdi" => "gdi32", "user" => "user32" );
+my %modules = ( "gdi" => "gdi32", "user" => "user32" );
 my %tests;
 my @lines = ( "TESTBINS =" );
 

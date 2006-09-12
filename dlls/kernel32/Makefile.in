@@ -90,11 +90,11 @@ RC_SRCS16 = \
 	version16.rc
 
 MC_SRCS = \
-	messages/winerr_enu.mc
+	nls/winerr_enu.mc
 
 EXTRA_OBJS   = relay16asm.o
 
-EXTRASUBDIRS = messages nls
+EXTRASUBDIRS = nls
 
 @MAKE_DLL_RULES@
 

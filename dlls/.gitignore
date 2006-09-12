@@ -18,7 +18,6 @@
 /keyboard.drv16
 /krnl386.exe16
 /libgdi32.def
-/libkernel32.def
 /libuser32.def
 /libwinspool.def
 /lzexpand.dll16
@@ -100,7 +99,7 @@ icmp/libicmp.def
 imagehlp/libimagehlp.def
 imm32/libimm32.def
 iphlpapi/libiphlpapi.def
-kernel/libkernel32.def
+kernel32/libkernel32.def
 lz32/liblz32.def
 mapi32/libmapi32.def
 mlang/libmlang.def

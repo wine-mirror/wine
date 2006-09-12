@@ -111,8 +111,8 @@ infosoft_test.exe: $(DLLDIR)/infosoft/tests/infosoft_test.exe$(DLLEXT)
 	cp $(DLLDIR)/infosoft/tests/infosoft_test.exe$(DLLEXT) $@ && $(STRIP) $@
 iphlpapi_test.exe: $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
-kernel32_test.exe: $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
-	cp $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+kernel32_test.exe: $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 lz32_test.exe: $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mapi32_test.exe: $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)

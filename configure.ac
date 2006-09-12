@@ -1461,7 +1461,7 @@ AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
+WINE_CONFIG_EXTRA_DIR(dlls/kernel/nls)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
@@ -1575,8 +1575,8 @@ dlls/inseng/Makefile
 dlls/iphlpapi/Makefile
 dlls/iphlpapi/tests/Makefile
 dlls/itss/Makefile
-dlls/kernel/Makefile
-dlls/kernel/tests/Makefile
+dlls/kernel32/Makefile
+dlls/kernel32/tests/Makefile
 dlls/localspl/Makefile
 dlls/lz32/Makefile
 dlls/lz32/tests/Makefile

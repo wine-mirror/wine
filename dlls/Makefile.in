@@ -80,7 +80,7 @@ BASEDIRS = \
 	inseng \
 	iphlpapi \
 	itss \
-	kernel \
+	kernel32 \
 	localspl \
 	lz32 \
 	mapi32 \
@@ -227,7 +227,7 @@ TESTSUBDIRS = \
 	hlink/tests \
 	infosoft/tests \
 	iphlpapi/tests \
-	kernel/tests \
+	kernel32/tests \
 	lz32/tests \
 	mapi32/tests \
 	mlang/tests \
@@ -337,7 +337,6 @@ SYMLINKS_SO = \
 	@WIN16_FILES@ \
 	gdi32.dll.so \
 	joystick.drv.so \
-	kernel32.dll.so \
 	user32.dll.so \
 	winealsa.drv.so \
 	winearts.drv.so \
@@ -365,9 +364,6 @@ gdi32.dll.so: gdi/gdi32.dll.so
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
-
-kernel32.dll.so: kernel/kernel32.dll.so
-	$(RM) $@ && $(LN_S) kernel/kernel32.dll.so $@
 
 user32.dll.so: user/user32.dll.so
 	$(RM) $@ && $(LN_S) user/user32.dll.so $@
@@ -485,7 +481,6 @@ STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
 	libgdi32.$(IMPLIBEXT) \
-	libkernel32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libwinspool.$(IMPLIBEXT)
 
@@ -541,7 +536,7 @@ IMPORT_LIBS = \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
-	kernel/libkernel32.$(IMPLIBEXT) \
+	kernel32/libkernel32.$(IMPLIBEXT) \
 	lz32/liblz32.$(IMPLIBEXT) \
 	mapi32/libmapi32.$(IMPLIBEXT) \
 	mlang/libmlang.$(IMPLIBEXT) \
@@ -749,8 +744,8 @@ imm32/libimm32.$(IMPLIBEXT): imm32/imm32.spec $(WINEBUILD)
 iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
 	@cd iphlpapi && $(MAKE) libiphlpapi.$(IMPLIBEXT)
 
-kernel/libkernel32.$(IMPLIBEXT): kernel/kernel32.spec $(WINEBUILD)
-	@cd kernel && $(MAKE) libkernel32.$(IMPLIBEXT)
+kernel32/libkernel32.$(IMPLIBEXT): kernel32/kernel32.spec $(WINEBUILD)
+	@cd kernel32 && $(MAKE) libkernel32.$(IMPLIBEXT)
 
 lz32/liblz32.$(IMPLIBEXT): lz32/lz32.spec $(WINEBUILD)
 	@cd lz32 && $(MAKE) liblz32.$(IMPLIBEXT)
@@ -971,9 +966,6 @@ wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) gdi/libgdi32.$(IMPLIBEXT) $@
 
-libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) kernel/libkernel32.$(IMPLIBEXT) $@
-
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
@@ -987,7 +979,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 gdi/gdi32.dll.so: gdi
 winmm/joystick/joystick.drv.so: winmm/joystick
-kernel/kernel32.dll.so: kernel
 user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
