@@ -104,7 +104,7 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
 
         /* Whoops, we shouldn't get here. Big badaboom.*/
         write(STDOUT_FILENO, "BH\n", 3);
-        exit(1);
+        _exit(1);
     }
     else
     {
