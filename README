@@ -42,7 +42,7 @@ in the future.
 Linux info:
   While Linux 2.2.x should still work and Linux 2.0.x may still work
   (older 2.0.x versions had thread-related crashes),
-  it's best to have a current kernel such as 2.4.x.
+  it's best to have a current kernel such as 2.4.x or 2.6.x.
 
 FreeBSD info:
   Wine should build on FreeBSD 4.x and FreeBSD 5.x, but versions before
