@@ -199,7 +199,7 @@ static void test_decodeInt(DWORD dwEncoding)
     static const BYTE bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
     static const BYTE testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
     static const BYTE longForm[] = { 2, 0x81, 0x01, 0x01 };
-    static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 };
+    /* static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 }; */
     BYTE *buf = NULL;
     DWORD bufSize = 0;
     int i;
@@ -324,10 +324,12 @@ static void test_decodeInt(DWORD dwEncoding)
     /* This will try to decode the buffer and overflow it, check that it's
      * caught.
      */
+#if 0  /* a large buffer isn't guaranteed to crash, it depends on memory allocation order */
     ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, bigBogus,
      0x01ffffff, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
      "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+#endif
 }
 
 static const BYTE bin18[] = {0x0a,0x01,0x01};
