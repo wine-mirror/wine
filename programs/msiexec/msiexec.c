@@ -333,6 +333,7 @@ static DWORD DoRegServer(void)
 {
     SC_HANDLE scm, service;
     CHAR path[MAX_PATH+12];
+    DWORD ret = 0;
 
     scm = OpenSCManager(NULL, SERVICES_ACTIVE_DATABASE, SC_MANAGER_CREATE_SERVICE);
     if (!scm)
@@ -348,16 +349,15 @@ static DWORD DoRegServer(void)
                              SERVICE_WIN32_SHARE_PROCESS, SERVICE_DEMAND_START,
                              SERVICE_ERROR_NORMAL, path, NULL, NULL,
                              NULL, NULL, NULL);
-    if (!service)
+
+    if (service) CloseServiceHandle(service);
+    else if (GetLastError() != ERROR_SERVICE_EXISTS)
     {
         fprintf(stderr, "Failed to create MSI service\n");
-        CloseServiceHandle(scm);
-        return 1;
+        ret = 1;
     }
-
-     CloseServiceHandle(scm);
-     CloseServiceHandle(service);
-     return 0;
+    CloseServiceHandle(scm);
+    return ret;
 }
 
 static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
