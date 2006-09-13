@@ -8253,6 +8253,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
 {
   LVHITTESTINFO lvHitTestInfo;
   static BOOL bGroupSelect = TRUE;
+  BOOL bReceivedFocus = FALSE;
   POINT pt = { x, y };
   INT nItem;
 
@@ -8261,7 +8262,11 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   /* send NM_RELEASEDCAPTURE notification */
   if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
 
-  if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
+  if (!infoPtr->bFocus)
+  {
+    bReceivedFocus = TRUE;
+    SetFocus(infoPtr->hwndSelf);
+  }
 
   /* set left button down flag and record the click position */
   infoPtr->bLButtonDown = TRUE;
@@ -8348,6 +8353,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
     LISTVIEW_DeselectAll(infoPtr);
     ReleaseCapture();
   }
+  
+  if (bReceivedFocus)
+    infoPtr->nEditLabelItem = -1;
 
   return 0;
 }
