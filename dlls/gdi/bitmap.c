@@ -439,7 +439,7 @@ LONG WINAPI SetBitmapBits(
             {
                 dest -= dib->dsBm.bmWidthBytes;
                 memcpy( dest, bits, min( count, dib->dsBm.bmWidthBytes ) );
-                bits = (char *)bits + dib->dsBm.bmWidthBytes;
+                bits = (const char *)bits + dib->dsBm.bmWidthBytes;
                 count -= dib->dsBm.bmWidthBytes;
             }
         }

@@ -129,7 +129,7 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
         colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
         return sizeof(BITMAPCOREHEADER) + colors *
              ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
@@ -168,7 +168,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
         *width  = core->bcWidth;
         *height = core->bcHeight;
         *planes = core->bcPlanes;
@@ -179,7 +179,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPV4HEADER))
     {
-        BITMAPV4HEADER *v4hdr = (BITMAPV4HEADER *)header;
+        const BITMAPV4HEADER *v4hdr = (const BITMAPV4HEADER *)header;
         *width  = v4hdr->bV4Width;
         *height = v4hdr->bV4Height;
         *planes = v4hdr->bV4Planes;
@@ -190,7 +190,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPV5HEADER))
     {
-        BITMAPV5HEADER *v5hdr = (BITMAPV5HEADER *)header;
+        const BITMAPV5HEADER *v5hdr = (const BITMAPV5HEADER *)header;
         *width  = v5hdr->bV5Width;
         *height = v5hdr->bV5Height;
         *planes = v5hdr->bV5Planes;
