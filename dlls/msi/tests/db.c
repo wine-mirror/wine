@@ -2281,6 +2281,50 @@ static void test_temporary_table(void)
     DeleteFile(msifile);
 }
 
+static void test_alter(void)
+{
+    MSICONDITION cond;
+    MSIHANDLE hdb = 0;
+    const char *query;
+    UINT r;
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    query = "CREATE TABLE `T` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`) HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    cond = MsiDatabaseIsTablePersistent(hdb, "T");
+    ok( cond == MSICONDITION_FALSE, "wrong return condition\n");
+
+    todo_wine {
+    query = "ALTER TABLE `T` HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to hold table %d\n", r);
+
+    query = "ALTER TABLE `T` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to free table\n");
+
+    query = "ALTER TABLE `T` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to free table\n");
+    }
+
+    query = "ALTER TABLE `T` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to free table\n");
+
+    query = "ALTER TABLE `T` HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to hold table %d\n", r);
+
+    MsiCloseHandle( hdb );
+
+    DeleteFile(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -2300,4 +2344,5 @@ START_TEST(db)
     test_generate_transform();
     test_join();
     test_temporary_table();
+    test_alter();
 }
