@@ -255,7 +255,7 @@ void add_typelib_entry(type_t *t)
     typelib->entry = entry;
 }
 
-static void tlb_read(int fd, void *buf, size_t count)
+static void tlb_read(int fd, void *buf, int count)
 {
     if(read(fd, buf, count) < count)
         error("error while reading importlib.\n");
