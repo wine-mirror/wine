@@ -420,6 +420,81 @@ static void test_AddRemoveProvider(void)
      GetLastError());
 }
 
+static void test_SIPLoad(void)
+{
+    BOOL ret;
+    GUID subject;
+    static GUID dummySubject = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
+    static GUID unknown      = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    SIP_DISPATCH_INFO sdi;
+
+    /* All NULL */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPLoad(NULL, 0, NULL);
+    ok ( !ret, "Expected CryptSIPLoad to fail\n");
+    todo_wine
+        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
+
+    /* Only pSipDispatch NULL */
+    SetLastError(0xdeadbeef);
+    ret = CryptSIPLoad(&subject, 0, NULL);
+    ok ( !ret, "Expected CryptSIPLoad to fail\n");
+    todo_wine
+        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
+
+    /* No NULLs, but nonexistent pgSubject */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    ret = CryptSIPLoad(&dummySubject, 0, &sdi);
+    ok ( !ret, "Expected CryptSIPLoad to fail\n");
+    todo_wine
+        ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
+            "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+
+    /* cbSize not initialized */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    ret = CryptSIPLoad(&dummySubject, 0, &sdi);
+    ok ( !ret, "Expected CryptSIPLoad to fail\n");
+    todo_wine
+        ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
+            "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+
+    /* cbSize not initialized, but valid subject (named unknown but registered by wintrust) */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    ret = CryptSIPLoad(&unknown, 0, &sdi);
+    todo_wine
+    {
+        ok ( ret, "Expected CryptSIPLoad to succeed\n");
+        ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
+            "Expected ERROR_PROC_NOT_FOUND, got 0x%08lx\n", GetLastError());
+    }
+
+    /* All OK */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    ret = CryptSIPLoad(&unknown, 0, &sdi);
+    todo_wine
+        ok ( ret, "Expected CryptSIPLoad to succeed\n");
+    ok ( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08lx\n", GetLastError());
+
+    /* Reserved parameter not 0 */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    ret = CryptSIPLoad(&unknown, 1, &sdi);
+    ok ( !ret, "Expected CryptSIPLoad to fail\n");
+    todo_wine
+        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
+}
+
 START_TEST(main)
 {
     hCrypt = LoadLibraryA("crypt32.dll");
@@ -432,4 +507,5 @@ START_TEST(main)
     test_readTrustedPublisherDWORD();
     test_getDefaultCryptProv();
     test_AddRemoveProvider();
+    test_SIPLoad();
 }
