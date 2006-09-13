@@ -30,6 +30,7 @@
 #include "guiddef.h"
 #include "wintrust.h"
 #include "softpub.h"
+#include "mssip.h"
 
 #include "wine/debug.h"
 
@@ -771,6 +772,49 @@ BOOL WINAPI WintrustAddDefaultForUsage(const CHAR *pszUsageOID,
 }
 
 /***********************************************************************
+ *              WINTRUST_SIPPAddProvider
+ *
+ * Helper for DllRegisterServer.
+ */
+static BOOL WINTRUST_SIPPAddProvider(GUID* Subject, WCHAR* MagicNumber)
+{
+    static WCHAR CryptSIPGetSignedDataMsg[] =
+        {'C','r','y','p','t','S','I','P','G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g', 0};
+    static WCHAR CryptSIPPutSignedDataMsg[] =
+        {'C','r','y','p','t','S','I','P','P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g', 0};
+    static WCHAR CryptSIPCreateIndirectData[] =
+        {'C','r','y','p','t','S','I','P','C','r','e','a','t','e','I','n','d','i','r','e','c','t','D','a','t','a', 0};
+    static WCHAR CryptSIPVerifyIndirectData[] =
+        {'C','r','y','p','t','S','I','P','V','e','r','i','f','y','I','n','d','i','r','e','c','t','D','a','t','a', 0};
+    static WCHAR CryptSIPRemoveSignedDataMsg[] =
+        {'C','r','y','p','t','S','I','P','R','e','m','o','v','e','S','i','g','n','e','d','D','a','t','a','M','s','g', 0};
+    SIP_ADD_NEWPROVIDER NewProv;
+    BOOL Ret;
+
+    /* Clear and initialize the structure */
+    memset(&NewProv, 0, sizeof(SIP_ADD_NEWPROVIDER));
+    NewProv.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
+    NewProv.pwszDLLFileName = HeapAlloc(GetProcessHeap(), 0, sizeof(SP_POLICY_PROVIDER_DLL_NAME));
+    /* Fill the structure */
+    NewProv.pgSubject              = Subject;
+    lstrcpyW(NewProv.pwszDLLFileName, SP_POLICY_PROVIDER_DLL_NAME);
+    NewProv.pwszMagicNumber        = MagicNumber;
+    NewProv.pwszIsFunctionName     = NULL;
+    NewProv.pwszGetFuncName        = CryptSIPGetSignedDataMsg;
+    NewProv.pwszPutFuncName        = CryptSIPPutSignedDataMsg;
+    NewProv.pwszCreateFuncName     = CryptSIPCreateIndirectData;
+    NewProv.pwszVerifyFuncName     = CryptSIPVerifyIndirectData;
+    NewProv.pwszRemoveFuncName     = CryptSIPRemoveSignedDataMsg;
+    NewProv.pwszIsFunctionNameFmt2 = NULL;
+
+    Ret = CryptSIPAddProvider(&NewProv);
+
+    HeapFree(GetProcessHeap(), 0, NewProv.pwszDLLFileName);
+ 
+    return Ret;
+}
+
+/***********************************************************************
  *              DllRegisterServer (WINTRUST.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
@@ -797,20 +841,21 @@ HRESULT WINAPI DllRegisterServer(void)
     static const CHAR CatMemberInfoDecode[]            = "WVTAsn1CatMemberInfoDecode";
     static const CHAR SpcSpOpusInfoEncode[]            = "WVTAsn1SpcSpOpusInfoEncode";
     static const CHAR SpcSpOpusInfoDecode[]            = "WVTAsn1SpcSpOpusInfoDecode";
+    static GUID Unknown1 = { 0xDE351A42, 0x8E59, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID Unknown2 = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID Unknown3 = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID Unknown4 = { 0xC689AAB9, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID Unknown5 = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID Unknown6 = { 0x9BA61D3F, 0xE73A, 0x11D0, { 0x8C,0xD2,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static WCHAR MagicNumber2[] = {'M','S','C','F', 0};
+    static WCHAR MagicNumber3[] = {'0','x','0','0','0','0','4','5','5','0', 0};
+    static WCHAR CafeBabe[] = {'0','x','c','a','f','e','b','a','b','e', 0};
+
     HRESULT CryptRegisterRes = S_OK;
     HRESULT TrustProviderRes = S_OK;
+    HRESULT SIPAddProviderRes = S_OK;
 
     TRACE("\n");
-
-    /* FIXME:
-     * 
-     * A short list of stuff that should be done here:
-     *
-     * - Several calls to CryptRegisterOIDFunction
-     * - Several action registrations (NOT through WintrustAddActionID)
-     * - Several calls to CryptSIPAddProvider
-     * - One call to CryptSIPRemoveProvider (do we need that?)
-     */
 
     /* Testing on native shows that when an error is encountered in one of the CryptRegisterOIDFunction calls
      * the rest of these calls is skipped. Registering is however continued for the trust providers.
@@ -864,9 +909,7 @@ HRESULT WINAPI DllRegisterServer(void)
 add_trust_providers:
 
     /* Testing on W2K3 shows:
-     * All registry writes are tried. If one fails this part will return S_FALSE
-     * but only if the first (CryptRegisterOIDFunction calls) and the third 
-     * (CryptSIPAddProvider calls) part succeed.
+     * All registry writes are tried. If one fails this part will return S_FALSE.
      *
      * Last error is set to the last error encountered, regardless if the first
      * part failed or not.
@@ -898,10 +941,43 @@ add_trust_providers:
     /* Free the registry structures */
     WINTRUST_FreeRegStructs();
 
-    if (CryptRegisterRes == S_OK)
-        return TrustProviderRes;
+    /* Testing on W2K3 shows:
+     * All registry writes are tried. If one fails this part will return S_FALSE.
+     *
+     * Last error is set to the last error encountered, regardless if the previous
+     * parts failed or not.
+     */
 
-    return CryptRegisterRes;
+    if (!WINTRUST_SIPPAddProvider(&Unknown1, NULL))
+        SIPAddProviderRes = S_FALSE;
+    if (!WINTRUST_SIPPAddProvider(&Unknown2, MagicNumber2))
+        SIPAddProviderRes = S_FALSE;
+    if (!WINTRUST_SIPPAddProvider(&Unknown3, MagicNumber3))
+        SIPAddProviderRes = S_FALSE;
+    if (!WINTRUST_SIPPAddProvider(&Unknown4, CafeBabe))
+        SIPAddProviderRes = S_FALSE;
+    if (!WINTRUST_SIPPAddProvider(&Unknown5, CafeBabe))
+        SIPAddProviderRes = S_FALSE;
+    if (!WINTRUST_SIPPAddProvider(&Unknown6, CafeBabe))
+        SIPAddProviderRes = S_FALSE;
+
+    /* Native does a CryptSIPRemoveProvider here for {941C2937-1292-11D1-85BE-00C04FC295EE}.
+     * This SIP Provider is however not found on up-to-date window install and native will
+     * set the last error to ERROR_FILE_NOT_FOUND.
+     * Wine has the last error set to ERROR_INVALID_PARAMETER. There shouldn't be an app
+     * depending on this last error though so there is no need to imitate native to the full extent.
+     *
+     * (The ERROR_INVALID_PARAMETER for Wine it totally valid as we (and native) do register
+     * a trust provider without a diagnostic policy).
+     */
+
+    /* If CryptRegisterRes is not S_OK it will always overrule the return value. */
+    if (CryptRegisterRes != S_OK)
+        return CryptRegisterRes;
+    else if (SIPAddProviderRes == S_OK)
+        return TrustProviderRes;
+    else 
+        return SIPAddProviderRes;
 }
 
 /***********************************************************************
