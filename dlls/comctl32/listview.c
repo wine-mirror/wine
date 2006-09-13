@@ -240,6 +240,12 @@ typedef struct tagITERATOR
   INT index;
 } ITERATOR;
 
+typedef struct tagDELAYED_ITEM_EDIT
+{
+  BOOL fEnabled;
+  INT iItem;
+} DELAYED_ITEM_EDIT;
+
 typedef struct tagLISTVIEW_INFO
 {
   HWND hwndSelf;
@@ -310,6 +316,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bIsDrawing;
   INT nMeasureItemHeight;
   INT xTrackLine;               /* The x coefficient of the track line or -1 if none */
+  DELAYED_ITEM_EDIT itemEdit;   /* Pointer to this structure will be the timer ID */
 } LISTVIEW_INFO;
 
 /*
@@ -7615,7 +7622,32 @@ static BOOL LISTVIEW_DrawTrackLine(LISTVIEW_INFO *infoPtr)
     return TRUE;
 }
 
-	
+/***
+ * DESCRIPTION:
+ * Called when an edit control should be displayed. This function is called after
+ * we are sure that there was a single click - not a double click (this is a TIMERPROC).
+ *
+ * PARAMETER(S):
+ * [I] hwnd : Handle to the listview
+ * [I] uMsg : WM_TIMER (ignored)
+ * [I] idEvent : The timer ID interpreted as a pointer to a DELAYED_EDIT_ITEM struct
+ * [I] dwTimer : The elapsed time (ignored)
+ *
+ * RETURN:
+ *   None.
+ */
+static CALLBACK VOID LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    DELAYED_ITEM_EDIT *editItem = (DELAYED_ITEM_EDIT *)idEvent;
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
+
+    KillTimer(hwnd, idEvent);
+    editItem->fEnabled = FALSE;
+    /* check if the item is still selected */
+    if (infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, editItem->iItem, LVIS_SELECTED))
+        LISTVIEW_EditLabelT(infoPtr, editItem->iItem, TRUE);
+}
+
 /***
  * DESCRIPTION:
  * Creates the listview control.
@@ -7668,6 +7700,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->dwHoverTime = -1; /* default system hover time */
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
+  infoPtr->itemEdit.fEnabled = FALSE;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -8220,6 +8253,13 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, 
     LVHITTESTINFO htInfo;
 
     TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
+    
+    /* Cancel the item edition if any */
+    if (infoPtr->itemEdit.fEnabled)
+    {
+      KillTimer(infoPtr->hwndSelf, (UINT_PTR)&infoPtr->itemEdit);
+      infoPtr->itemEdit.fEnabled = FALSE;
+    }
 
     /* send NM_RELEASEDCAPTURE notification */
     if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
@@ -8392,7 +8432,17 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 
     /* if we clicked on a selected item, edit the label */
     if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && (lvHitTestInfo.flags & LVHT_ONITEMLABEL))
-        LISTVIEW_EditLabelT(infoPtr, lvHitTestInfo.iItem, TRUE);
+    {
+        /* we want to make sure the user doesn't want to do a double click. So we will
+         * delay the edit. WM_LBUTTONDBLCLICK will cancel the timer
+         */
+        infoPtr->itemEdit.fEnabled = TRUE;
+        infoPtr->itemEdit.iItem = lvHitTestInfo.iItem;
+        SetTimer(infoPtr->hwndSelf,
+            (UINT_PTR)&infoPtr->itemEdit,
+            GetDoubleClickTime(),
+            LISTVIEW_DelayedEditItem);
+    }
 
     return 0;
 }
