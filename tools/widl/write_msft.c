@@ -329,7 +329,6 @@ static int ctl2_encode_name(
  *  safe in the slightest.
  */
 static int ctl2_encode_string(
-	msft_typelib_t *typelib,   /* [I] The typelib to operate against (not used?). */
 	const char *string,        /* [I] The string to encode. */
 	char **result)             /* [O] A pointer to a pointer to receive the encoded string. */
 {
@@ -559,7 +558,7 @@ static int ctl2_alloc_string(
     char *string_space;
     char *encoded_string;
 
-    length = ctl2_encode_string(typelib, string, &encoded_string);
+    length = ctl2_encode_string(string, &encoded_string);
 
     for (offset = 0; offset < typelib->typelib_segdir[MSFT_SEG_STRING].length;
 	 offset += ((((typelib->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) & 0xff)
@@ -633,7 +632,7 @@ static int alloc_importfile(
     MSFT_ImpFile *importfile;
     char *encoded_string;
 
-    length = ctl2_encode_string(typelib, filename, &encoded_string);
+    length = ctl2_encode_string(filename, &encoded_string);
 
     encoded_string[0] <<= 2;
     encoded_string[0] |= 1;
