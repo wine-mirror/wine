@@ -89,9 +89,10 @@ Vorausgesetzte Build-Tools:
   Wenn Sie RedHat oder Debian benutzen, installieren Sie bitte die flex-
   und bison-Pakete.
 
-Optionale Support-Libraries:
-  Wenn Sie CUPS Drucker-Unterstützung haben wollen, installieren Sie bitte
-  die Pakete cups und cups-devel.
+Optionale Support-Bibliotheken:
+  Der ./configure Aufruf zeigt am Ende optionale Bibliotheken an,
+  die von Wine benutzt werden können, aber auf dem System nicht vorhanden
+  sind.
 
 4. KOMPILIEREN
 
