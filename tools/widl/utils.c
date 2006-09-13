@@ -34,10 +34,9 @@
 #include "utils.h"
 #include "parser.h"
 
-/* #define WANT_NEAR_INDICATION */
+static const int want_near_indication = 0;
 
-#ifdef WANT_NEAR_INDICATION
-void make_print(char *str)
+static void make_print(char *str)
 {
 	while(*str)
 	{
@@ -46,13 +45,13 @@ void make_print(char *str)
 		str++;
 	}
 }
-#endif
 
 static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 {
 	fprintf(stderr, "%s:%d: %s: ", input_name ? input_name : "stdin", line_number, t);
 	vfprintf(stderr, s, ap);
-#ifdef WANT_NEAR_INDICATION
+
+	if (want_near_indication)
 	{
 		char *cpy;
 		if(n)
@@ -63,7 +62,7 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 			free(cpy);
 		}
 	}
-#endif
+
 	fprintf(stderr, "\n");
 }
 
