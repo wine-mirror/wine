@@ -1271,7 +1271,7 @@ static size_t write_union_tfs(FILE *file, const attr_t *attrs,
     return *typeformat_offset;
 }
 
-static size_t write_ip_tfs(FILE *file, const attr_t *attrs, const type_t *type,
+static size_t write_ip_tfs(FILE *file, const attr_t *attrs,
                            const char *name, unsigned int *typeformat_offset)
 {
     size_t i;
@@ -1401,7 +1401,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
             if (base->type == RPC_FC_IP)
             {
-                return write_ip_tfs(file, base->attrs, base, base->name, typeformat_offset);
+                return write_ip_tfs(file, base->attrs, base->name, typeformat_offset);
             }
 
             /* special case for pointers to base types */
