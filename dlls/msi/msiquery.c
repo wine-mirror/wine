@@ -898,6 +898,18 @@ MSICONDITION WINAPI MsiDatabaseIsTablePersistentA(
 MSICONDITION WINAPI MsiDatabaseIsTablePersistentW(
               MSIHANDLE hDatabase, LPCWSTR szTableName)
 {
-    FIXME("%lx %s\n", hDatabase, debugstr_w(szTableName));
-    return MSICONDITION_FALSE;
+    MSIDATABASE *db;
+    MSICONDITION r;
+
+    TRACE("%lx %s\n", hDatabase, debugstr_w(szTableName));
+
+    db = msihandle2msiinfo( hDatabase, MSIHANDLETYPE_DATABASE );
+    if( !db )
+        return MSICONDITION_ERROR;
+
+    r = MSI_DatabaseIsTablePersistent( db, szTableName );
+
+    msiobj_release( &db->hdr );
+
+    return r;
 }

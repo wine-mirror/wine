@@ -2170,15 +2170,15 @@ static void test_temporary_table(void)
     DWORD sz;
 
     cond = MsiDatabaseIsTablePersistent(0, NULL);
-    todo_wine ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
+    ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
 
     hdb = create_db();
     ok( hdb, "failed to create db\n");
 
-    todo_wine {
     cond = MsiDatabaseIsTablePersistent(hdb, NULL);
     ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
 
+    todo_wine {
     cond = MsiDatabaseIsTablePersistent(hdb, "_Tables");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");
 
