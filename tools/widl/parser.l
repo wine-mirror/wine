@@ -171,7 +171,6 @@ int parser_wrap(void)
 static struct keyword {
 	const char *kw;
 	int token;
-	int val;
 } keywords[] = {
 	{"FALSE",			tFALSE},
 	{"TRUE",			tTRUE},
