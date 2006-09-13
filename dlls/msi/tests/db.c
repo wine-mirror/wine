@@ -109,13 +109,16 @@ static void test_msidatabase(void)
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
     ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile ), "database should exist\n");
 
-    todo_wine {
     /* MSIDBOPEN_CREATE deletes the database if MsiCommitDatabase isn't called */
     res = MsiOpenDatabase( msifile, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
 
+    ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile ), "database should exist\n");
+
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
+
+    ok( INVALID_FILE_ATTRIBUTES == GetFileAttributes( msifile ), "database should exist\n");
 
     res = MsiOpenDatabase( msifile, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to open database\n" );
@@ -123,9 +126,11 @@ static void test_msidatabase(void)
     res = MsiDatabaseCommit( hdb );
     ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
+    ok( INVALID_FILE_ATTRIBUTES != GetFileAttributes( msifile ), "database should exist\n");
+
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
-    }
+
     res = DeleteFile( msifile2 );
     ok( res == TRUE, "Failed to delete database\n" );
 
