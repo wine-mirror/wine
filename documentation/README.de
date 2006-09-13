@@ -45,7 +45,7 @@ Linux-Info:
   Obwohl Linux 2.2.x immer noch funktionieren sollte und Linux 2.0.x
   vielleicht auch noch funktioniert (ältere 2.0.x-Versionen verzeichneten
   Abstürze im Zusammenhang mit Threads), sollte man am besten einen
-  aktuellen Kernel wie 2.4.x verwenden.
+  aktuellen Kernel wie 2.4.x oder 2.6.x verwenden.
 
 FreeBSD-Info:
   Stellen Sie sicher, dass Sie die Optionen USER_LDT, SYSVSHM, SYSVSEM und
