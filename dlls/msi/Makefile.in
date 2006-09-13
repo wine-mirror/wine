@@ -20,6 +20,7 @@ C_SRCS = \
 	distinct.c \
 	events.c \
 	files.c \
+	font.c \
 	format.c \
 	handle.c \
 	helpers.c \
