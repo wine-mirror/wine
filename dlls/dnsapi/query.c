@@ -485,6 +485,7 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
     FIND_NAME_HEADER *header;
     DNS_RECORDA *record = NULL;
     unsigned int i, len;
+    DNS_STATUS status = ERROR_INVALID_NAME;
 
     len = strlen( name );
     if (len >= NCBNAMSZ) return DNS_ERROR_RCODE_NAME_ERROR;
@@ -509,7 +510,7 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
         record = dns_zero_alloc( sizeof(DNS_RECORDA) );
         if (!record)
         {
-            ret = ERROR_NOT_ENOUGH_MEMORY;
+            status = ERROR_NOT_ENOUGH_MEMORY;
             goto exit;
         }
         else
@@ -517,7 +518,7 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
             record->pName = dns_strdup_u( name );
             if (!record->pName)
             {
-                ret = ERROR_NOT_ENOUGH_MEMORY;
+                status = ERROR_NOT_ENOUGH_MEMORY;
                 goto exit;
             }
 
@@ -536,12 +537,12 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
 exit:
     DNS_RRSET_TERMINATE( rrset );
 
-    if (ret != ERROR_SUCCESS)
+    if (status != ERROR_SUCCESS)
         DnsRecordListFree( rrset.pFirstRR, DnsFreeRecordList );
     else
         *recp = (DNS_RECORDA *)rrset.pFirstRR;
 
-    return ret;
+    return status;
 }
 
 /*  The resolver lock must be held and res_init() must have been
@@ -816,7 +817,7 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PWSTR adap
         LOCK_RESOLVER();
 
         res_init();
-        ret = dns_get_serverlist( (IP4_ARRAY *)buffer, len );
+        ret = dns_get_serverlist( buffer, len );
 
         UNLOCK_RESOLVER();
         break;

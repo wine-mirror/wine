@@ -115,9 +115,9 @@ const char *dns_type_to_str( unsigned short type )
 static int dns_strcmpX( LPCVOID str1, LPCVOID str2, BOOL wide )
 {
     if (wide)
-        return lstrcmpiW( (LPCWSTR)str1, (LPCWSTR)str2 );
+        return lstrcmpiW( str1, str2 );
     else
-        return lstrcmpiA( (LPCSTR)str1, (LPCSTR)str2 );
+        return lstrcmpiA( str1, str2 );
 }
 
 /******************************************************************************
