@@ -539,7 +539,7 @@
 @ stub pSetupAppendStringToMultiSz
 @ stub pSetupDestroyRunOnceNodeList
 @ stub pSetupDirectoryIdToPath
-@ stub pSetupGetField
+@ stdcall pSetupGetField(ptr long)
 @ stdcall pSetupGetGlobalFlags()
 @ stub pSetupGetOsLoaderDriveAndPath
 @ stub pSetupGetQueueFlags

@@ -30,6 +30,19 @@
 
 #include "wine/test.h"
 
+/* function pointers */
+static HMODULE hSetupAPI;
+static LPCWSTR (WINAPI *pSetupGetField)(PINFCONTEXT,DWORD);
+
+static void init_function_pointers(void)
+{
+    hSetupAPI = LoadLibraryA("setupapi.dll");
+    if (!hSetupAPI)
+        return;
+
+    pSetupGetField = (void *)GetProcAddress(hSetupAPI, "pSetupGetField"); 
+}
+
 static const char tmpfile[] = ".\\tmp.inf";
 
 /* some large strings */
@@ -394,11 +407,69 @@ static void test_close_inf_file(void)
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 }
 
+static const char *contents = "[Version]\n"
+                              "Signature=\"$Windows NT$\"\n"
+                              "FileVersion=5.1.1.2\n"
+                              "[FileBranchInfo]\n"
+                              "RTMQFE=\"%RTMGFE_NAME%\",SP1RTM,"A4097"\n"
+                              "[Strings]\n"
+                              "RTMQFE_NAME = \"RTMQFE\"\n";
+
+static const WCHAR getfield_res[][20] =
+{
+    {'R','T','M','Q','F','E',0},
+    {'%','R','T','M','G','F','E','_','N','A','M','E','%',0},
+    {'S','P','1','R','T','M',0},
+};
+
+static void test_pSetupGetField(void)
+{
+    UINT err;
+    BOOL ret;
+    HINF hinf;
+    LPCWSTR field;
+    INFCONTEXT context;
+    int i;
+
+    hinf = test_file_contents( contents, &err );
+    ok( hinf != NULL, "Expected valid INF file\n" );
+
+    ret = SetupFindFirstLine( hinf, "FileBranchInfo", NULL, &context );
+    ok( ret, "Failed to find first line\n" );
+
+    /* native Windows crashes if a NULL context is sent in */
+
+    for ( i = 0; i < 3; i++ )
+    {
+        field = pSetupGetField( &context, i );
+        ok( field != NULL, "Failed to get field %i\n", i );
+        ok( !lstrcmpW( getfield_res[i], field ), "Wrong string returned\n" );
+
+        ret = HeapFree( GetProcessHeap(), 0, (LPVOID)field );
+        ok( !ret, "Expected HeapFree to fail\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError() );
+    }
+
+    field = pSetupGetField( &context, 3 );
+    ok( field != NULL, "Failed to get field 3\n" );
+    ok( lstrlenW( field ) == 511, "Expected 511, got %d\n", lstrlenW( field ) );
+
+    field = pSetupGetField( &context, 4 );
+    ok( field == NULL, "Expected NULL, got %p\n", field );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError() );
+
+    SetupCloseInfFile( hinf );
+}
+
 START_TEST(parser)
 {
+    init_function_pointers();
     test_invalid_files();
     test_section_names();
     test_key_names();
     test_close_inf_file();
+    test_pSetupGetField();
     DeleteFileA( tmpfile );
 }
