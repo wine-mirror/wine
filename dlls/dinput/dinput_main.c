@@ -76,6 +76,8 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
     return TRUE;
 }
 
+static BOOL create_hook_thread(void);
+static void release_hook_thread(void);
 
 /******************************************************************************
  *	DirectInputCreateEx (DINPUT.@)
@@ -118,6 +120,7 @@ HRESULT WINAPI DirectInputCreateEx(
         res = DI_OK;
     }
 
+    if (res == DI_OK && !create_hook_thread()) res = DIERR_GENERIC;
     if (res == DI_OK)
     {
         This = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectInputImpl));
@@ -255,7 +258,10 @@ static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 	ULONG ref;
 	ref = InterlockedDecrement(&(This->ref));
 	if (ref == 0)
-		HeapFree(GetProcessHeap(),0,This);
+        {
+            HeapFree(GetProcessHeap(), 0, This);
+            release_hook_thread();
+        }
 	return ref;
 }
 
@@ -732,15 +738,21 @@ static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wPar
                 return res;
             }
         }
+        else if (!wParam && !lParam)
+            DestroyWindow(hWnd);
+
         return 0;
 
     case WM_DESTROY:
+        if (kbd_hook) UnhookWindowsHookEx(kbd_hook);
+        if (mouse_hook) UnhookWindowsHookEx(mouse_hook);
         PostQuitMessage(0);
     }
     return DefWindowProcW(hWnd, message, wParam, lParam);
 }
 
-static HANDLE signal_event;
+static HWND hook_thread_hwnd;
+static LONG hook_thread_refcount;
 
 static DWORD WINAPI hook_thread_proc(void *param)
 {
@@ -757,9 +769,9 @@ static DWORD WINAPI hook_thread_proc(void *param)
 
     if (!RegisterClassExW(&wcex)) ERR("Error registering window class\n");
     hwnd = CreateWindowExW(0, classW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, 0);
-    *(HWND*)param = hwnd;
+    hook_thread_hwnd = hwnd;
 
-    SetEvent(signal_event);
+    SetEvent(*(LPHANDLE)param);
     if (hwnd)
     {
         while (GetMessageW(&msg, 0, 0, 0))
@@ -767,10 +779,10 @@ static DWORD WINAPI hook_thread_proc(void *param)
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
+        DestroyWindow(hwnd);
     }
     else ERR("Error creating message window\n");
 
-    DestroyWindow(hwnd);
     UnregisterClassW(wcex.lpszClassName, wcex.hInstance);
     return 0;
 }
@@ -784,41 +796,57 @@ static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
 };
 static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
 
-static HWND get_thread_hwnd(void)
+static BOOL create_hook_thread(void)
 {
-    static HANDLE hook_thread;
-    static HWND   hook_thread_hwnd;
+    LONG ref;
 
     EnterCriticalSection(&dinput_hook_crit);
-    if (!hook_thread)
+    ref = ++hook_thread_refcount;
+    TRACE("Refcount %ld\n", ref);
+    if (ref == 1)
     {
         DWORD tid;
-        HWND hwnd;
+        HANDLE thread, event;
 
-        signal_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        hook_thread = CreateThread(NULL, 0, hook_thread_proc, &hwnd, 0, &tid);
-        if (signal_event && hook_thread)
+        event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        thread = CreateThread(NULL, 0, hook_thread_proc, &event, 0, &tid);
+        if (event && thread)
         {
             HANDLE handles[2];
-            handles[0] = signal_event;
-            handles[1] = hook_thread;
+            handles[0] = event;
+            handles[1] = thread;
             WaitForMultipleObjects(2, handles, FALSE, INFINITE);
         }
-        CloseHandle(signal_event);
-
-        if (!(hook_thread_hwnd = hwnd))
-        {
-            /* Thread failed to create window - reset things so we could try again later */
-            CloseHandle(hook_thread);
-            hook_thread = 0;
-        }
+        CloseHandle(event);
+        CloseHandle(thread);
     }
     LeaveCriticalSection(&dinput_hook_crit);
 
-    return hook_thread_hwnd;
+    return hook_thread_hwnd != 0;
+}
+
+static void release_hook_thread(void)
+{
+    LONG ref;
+
+    EnterCriticalSection(&dinput_hook_crit);
+    ref = --hook_thread_refcount;
+    TRACE("Releasing to %ld\n", ref);
+    if (ref == 0) 
+    {
+        HWND hwnd = hook_thread_hwnd;
+        hook_thread_hwnd = 0;
+        SendMessageW(hwnd, WM_USER+0x10, 0, 0);
+    }
+    LeaveCriticalSection(&dinput_hook_crit);
 }
 
 HHOOK set_dinput_hook(int hook_id, LPVOID proc)
 {
-    return (HHOOK)SendMessageW(get_thread_hwnd(), WM_USER+0x10, (WPARAM)hook_id, (LPARAM)proc);
+    HWND hwnd;
+
+    EnterCriticalSection(&dinput_hook_crit);
+    hwnd = hook_thread_hwnd;
+    LeaveCriticalSection(&dinput_hook_crit);
+    return (HHOOK)SendMessageW(hwnd, WM_USER+0x10, (WPARAM)hook_id, (LPARAM)proc);
 }
