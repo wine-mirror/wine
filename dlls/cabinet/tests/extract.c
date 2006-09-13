@@ -23,14 +23,6 @@
 #include "fci.h"
 #include "wine/test.h"
 
-#ifndef INVALID_FILE_ATTRIBUTES
-#define INVALID_FILE_ATTRIBUTES 0xffffffff
-#endif
-
-#ifndef INVALID_SET_FILE_POINTER
-#define INVALID_SET_FILE_POINTER 0xffffffff
-#endif
-
 /* make the max size large so there is only one cab file */
 #define MEDIA_SIZE          999999999
 #define FOLDER_THRESHOLD    900000

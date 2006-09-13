@@ -36,6 +36,13 @@
 #error wine/debug.h should not be used in Wine tests
 #endif
 
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES  ((DWORD)~0UL)
+#endif
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER ((DWORD)~0UL)
+#endif
+
 /* debug level */
 extern int winetest_debug;
 
