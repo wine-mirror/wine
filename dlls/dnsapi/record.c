@@ -748,3 +748,25 @@ PDNS_RECORD WINAPI DnsRecordSetCopyEx( PDNS_RECORD src_set, DNS_CHARSET in, DNS_
     DNS_RRSET_TERMINATE( dst_set );
     return dst_set.pFirstRR;
 }
+
+/******************************************************************************
+ * DnsRecordSetDetach                      [DNSAPI.@]
+ *
+ */
+PDNS_RECORD WINAPI DnsRecordSetDetach( PDNS_RECORD set )
+{
+    DNS_RECORD *r, *s;
+
+    TRACE( "(%p)\n", set );
+
+    for (r = set; (set = r); r = set->pNext)
+    {
+        if (r->pNext && !r->pNext->pNext)
+        {
+            s = r->pNext;
+            r->pNext = NULL;
+            return s;
+        }
+    }
+    return NULL;
+}

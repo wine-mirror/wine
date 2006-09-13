@@ -32,6 +32,7 @@ static HMODULE dnsapi;
 
 static BOOL        (WINAPI *pDnsRecordCompare)(PDNS_RECORD,PDNS_RECORD);
 static BOOL        (WINAPI *pDnsRecordSetCompare)(PDNS_RECORD,PDNS_RECORD,PDNS_RECORD*,PDNS_RECORD*);
+static DNS_RECORD* (WINAPI *pDnsRecordSetDetach)(PDNS_RECORD);
 
 #define GETFUNCPTR(func) p##func = (void *)GetProcAddress( dnsapi, #func ); \
     if (!p##func) return FALSE;
@@ -40,6 +41,7 @@ static BOOL init_function_ptrs( void )
 {
     GETFUNCPTR( DnsRecordCompare )
     GETFUNCPTR( DnsRecordSetCompare )
+    GETFUNCPTR( DnsRecordSetDetach )
     return TRUE;
 }
 
@@ -48,6 +50,7 @@ static char name2[] = "LOCALHOST";
 
 static DNS_RECORDA r1 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 1200, 0, { { 0xffffffff } } };
 static DNS_RECORDA r2 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 1200, 0, { { 0xffffffff } } };
+static DNS_RECORDA r3 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 1200, 0, { { 0xffffffff } } };
 
 static void test_DnsRecordCompare( void )
 {
@@ -123,6 +126,27 @@ static void test_DnsRecordSetCompare( void )
     ok( pDnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
 }
 
+static void test_DnsRecordSetDetach( void )
+{
+    DNS_RRSET rr;
+    DNS_RECORDA *r, *s;
+
+    DNS_RRSET_INIT( rr );
+    DNS_RRSET_ADD( rr, &r1 );
+    DNS_RRSET_ADD( rr, &r2 );
+    DNS_RRSET_ADD( rr, &r3 );
+    DNS_RRSET_TERMINATE( rr );
+
+    ok( !pDnsRecordSetDetach( NULL ), "succeeded unexpectedly\n" );
+
+    r = rr.pFirstRR;
+    s = pDnsRecordSetDetach( r );
+
+    ok( s == &r3, "failed unexpectedly: got %p, expected %p\n", s, &r3 );
+    ok( r == &r1, "failed unexpectedly: got %p, expected %p\n", r, &r1 );
+    ok( !r2.pNext, "failed unexpectedly\n" );
+}
+
 START_TEST(record)
 {
     dnsapi = LoadLibraryA( "dnsapi.dll" );
@@ -136,6 +160,7 @@ START_TEST(record)
 
     test_DnsRecordCompare();
     test_DnsRecordSetCompare();
+    test_DnsRecordSetDetach();
 
     FreeLibrary( dnsapi );
 }
