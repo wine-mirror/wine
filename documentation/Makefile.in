@@ -24,5 +24,3 @@ install:: manpages $(DESTDIR)$(mandir)/man$(api_manext)
 
 clean::
 	$(RM) -r html api-guide man$(api_manext)
-
-### Dependencies:

@@ -196,8 +196,6 @@ clean::
 # Rules for testing
 
 check test:: \$(SUBDIRS:%=%/__test__)
-
-### Dependencies:
 EOF
 
 close NEWMAKE;

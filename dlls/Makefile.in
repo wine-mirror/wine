@@ -1006,5 +1006,3 @@ uninstall::
 
 clean::
 	$(RM) $(IMPORT_SYMLINKS) $(WIN16_FILES)
-
-### Dependencies:

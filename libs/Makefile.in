@@ -22,5 +22,3 @@ install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
 # Directory dependencies
 
 wine wine/__install__ wine/__install-lib__: port
-
-### Dependencies:

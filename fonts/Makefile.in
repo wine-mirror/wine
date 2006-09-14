@@ -352,5 +352,3 @@ uninstall::
 
 clean::
 	$(RM) *.fon *.fnt *.ttf
-
-### Dependencies:

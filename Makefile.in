@@ -133,5 +133,3 @@ distclean: clean
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 .PHONY: manpages htmlpages sgmlpages distclean
-
-### Dependencies:
