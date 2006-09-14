@@ -215,7 +215,7 @@ static inline BOOL is_dib_monochrome( const BITMAPINFO* info )
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
-        RGBTRIPLE *rgb = ((BITMAPCOREINFO *) info)->bmciColors;
+        const RGBTRIPLE *rgb = ((const BITMAPCOREINFO *) info)->bmciColors;
 
         /* Check if the first color is black */
         if ((rgb->rgbtRed == 0) && (rgb->rgbtGreen == 0) && (rgb->rgbtBlue == 0))
@@ -734,14 +734,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       break;
     case EMR_GDICOMMENT:
       {
-        PEMRGDICOMMENT lpGdiComment = (PEMRGDICOMMENT)mr;
+        const EMRGDICOMMENT *lpGdiComment = (const EMRGDICOMMENT *)mr;
         /* In an enhanced metafile, there can be both public and private GDI comments */
         GdiComment( hdc, lpGdiComment->cbData, lpGdiComment->Data );
         break;
       }
     case EMR_SETMAPMODE:
       {
-	PEMRSETMAPMODE pSetMapMode = (PEMRSETMAPMODE) mr;
+        const EMRSETMAPMODE *pSetMapMode = (const EMRSETMAPMODE *)mr;
 
         if(info->mode == pSetMapMode->iMode && (info->mode == MM_ISOTROPIC || info->mode == MM_ANISOTROPIC))
             break;
@@ -751,43 +751,43 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETBKMODE:
       {
-	PEMRSETBKMODE pSetBkMode = (PEMRSETBKMODE) mr;
+        const EMRSETBKMODE *pSetBkMode = (const EMRSETBKMODE *)mr;
 	SetBkMode(hdc, pSetBkMode->iMode);
 	break;
       }
     case EMR_SETBKCOLOR:
       {
-       	PEMRSETBKCOLOR pSetBkColor = (PEMRSETBKCOLOR) mr;
+        const EMRSETBKCOLOR *pSetBkColor = (const EMRSETBKCOLOR *)mr;
 	SetBkColor(hdc, pSetBkColor->crColor);
 	break;
       }
     case EMR_SETPOLYFILLMODE:
       {
-	PEMRSETPOLYFILLMODE pSetPolyFillMode = (PEMRSETPOLYFILLMODE) mr;
+        const EMRSETPOLYFILLMODE *pSetPolyFillMode = (const EMRSETPOLYFILLMODE *)mr;
 	SetPolyFillMode(hdc, pSetPolyFillMode->iMode);
 	break;
       }
     case EMR_SETROP2:
       {
-	PEMRSETROP2 pSetROP2 = (PEMRSETROP2) mr;
+        const EMRSETROP2 *pSetROP2 = (const EMRSETROP2 *)mr;
 	SetROP2(hdc, pSetROP2->iMode);
 	break;
       }
     case EMR_SETSTRETCHBLTMODE:
       {
-	PEMRSETSTRETCHBLTMODE pSetStretchBltMode = (PEMRSETSTRETCHBLTMODE) mr;
+	const EMRSETSTRETCHBLTMODE *pSetStretchBltMode = (const EMRSETSTRETCHBLTMODE *)mr;
 	SetStretchBltMode(hdc, pSetStretchBltMode->iMode);
 	break;
       }
     case EMR_SETTEXTALIGN:
       {
-	PEMRSETTEXTALIGN pSetTextAlign = (PEMRSETTEXTALIGN) mr;
+	const EMRSETTEXTALIGN *pSetTextAlign = (const EMRSETTEXTALIGN *)mr;
 	SetTextAlign(hdc, pSetTextAlign->iMode);
 	break;
       }
     case EMR_SETTEXTCOLOR:
       {
-	PEMRSETTEXTCOLOR pSetTextColor = (PEMRSETTEXTCOLOR) mr;
+	const EMRSETTEXTCOLOR *pSetTextColor = (const EMRSETTEXTCOLOR *)mr;
 	SetTextColor(hdc, pSetTextColor->crColor);
 	break;
       }
@@ -798,14 +798,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_RESTOREDC:
       {
-	PEMRRESTOREDC pRestoreDC = (PEMRRESTOREDC) mr;
+	const EMRRESTOREDC *pRestoreDC = (const EMRRESTOREDC *)mr;
         TRACE("EMR_RESTORE: %ld\n", pRestoreDC->iRelative);
 	RestoreDC(hdc, pRestoreDC->iRelative);
 	break;
       }
     case EMR_INTERSECTCLIPRECT:
       {
-	PEMRINTERSECTCLIPRECT pClipRect = (PEMRINTERSECTCLIPRECT) mr;
+	const EMRINTERSECTCLIPRECT *pClipRect = (const EMRINTERSECTCLIPRECT *)mr;
         TRACE("EMR_INTERSECTCLIPRECT: rect %ld,%ld - %ld, %ld\n",
               pClipRect->rclClip.left, pClipRect->rclClip.top,
               pClipRect->rclClip.right, pClipRect->rclClip.bottom);
@@ -815,7 +815,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SELECTOBJECT:
       {
-	PEMRSELECTOBJECT pSelectObject = (PEMRSELECTOBJECT) mr;
+	const EMRSELECTOBJECT *pSelectObject = (const EMRSELECTOBJECT *)mr;
 	if( pSelectObject->ihObject & 0x80000000 ) {
 	  /* High order bit is set - it's a stock object
 	   * Strip the high bit to get the index.
@@ -833,14 +833,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_DELETEOBJECT:
       {
-	PEMRDELETEOBJECT pDeleteObject = (PEMRDELETEOBJECT) mr;
+	const EMRDELETEOBJECT *pDeleteObject = (const EMRDELETEOBJECT *)mr;
 	DeleteObject( (handletable->objectHandle)[pDeleteObject->ihObject]);
 	(handletable->objectHandle)[pDeleteObject->ihObject] = 0;
 	break;
       }
     case EMR_SETWINDOWORGEX:
       {
-    	PEMRSETWINDOWORGEX pSetWindowOrgEx = (PEMRSETWINDOWORGEX) mr;
+    	const EMRSETWINDOWORGEX *pSetWindowOrgEx = (const EMRSETWINDOWORGEX *)mr;
 
         info->wndOrgX = pSetWindowOrgEx->ptlOrigin.x;
         info->wndOrgY = pSetWindowOrgEx->ptlOrigin.y;
@@ -850,7 +850,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETWINDOWEXTEX:
       {
-	PEMRSETWINDOWEXTEX pSetWindowExtEx = (PEMRSETWINDOWEXTEX) mr;
+	const EMRSETWINDOWEXTEX *pSetWindowExtEx = (const EMRSETWINDOWEXTEX *)mr;
 	
         if(info->mode != MM_ISOTROPIC && info->mode != MM_ANISOTROPIC)
 	    break;
@@ -864,7 +864,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETVIEWPORTORGEX:
       {
-	PEMRSETVIEWPORTORGEX pSetViewportOrgEx = (PEMRSETVIEWPORTORGEX) mr;
+	const EMRSETVIEWPORTORGEX *pSetViewportOrgEx = (const EMRSETVIEWPORTORGEX *)mr;
         enum_emh_data *info = ENUM_GET_PRIVATE_DATA(handletable);
 
         info->vportOrgX = pSetViewportOrgEx->ptlOrigin.x;
@@ -874,7 +874,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_SETVIEWPORTEXTEX:
       {
-	PEMRSETVIEWPORTEXTEX pSetViewportExtEx = (PEMRSETVIEWPORTEXTEX) mr;
+	const EMRSETVIEWPORTEXTEX *pSetViewportExtEx = (const EMRSETVIEWPORTEXTEX *)mr;
         enum_emh_data *info = ENUM_GET_PRIVATE_DATA(handletable);
 
         if(info->mode != MM_ISOTROPIC && info->mode != MM_ANISOTROPIC)
@@ -888,14 +888,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_CREATEPEN:
       {
-	PEMRCREATEPEN pCreatePen = (PEMRCREATEPEN) mr;
+	const EMRCREATEPEN *pCreatePen = (const EMRCREATEPEN *)mr;
 	(handletable->objectHandle)[pCreatePen->ihPen] =
 	  CreatePenIndirect(&pCreatePen->lopn);
 	break;
       }
     case EMR_EXTCREATEPEN:
       {
-	PEMREXTCREATEPEN pPen = (PEMREXTCREATEPEN) mr;
+	const EMREXTCREATEPEN *pPen = (const EMREXTCREATEPEN *)mr;
 	LOGBRUSH lb;
 	lb.lbStyle = pPen->elp.elpBrushStyle;
 	lb.lbColor = pPen->elp.elpColor;
@@ -911,7 +911,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_CREATEBRUSHINDIRECT:
       {
-	PEMRCREATEBRUSHINDIRECT pBrush = (PEMRCREATEBRUSHINDIRECT) mr;
+	const EMRCREATEBRUSHINDIRECT *pBrush = (const EMRCREATEBRUSHINDIRECT *)mr;
         LOGBRUSH brush;
         brush.lbStyle = pBrush->lb.lbStyle;
         brush.lbColor = pBrush->lb.lbColor;
@@ -921,40 +921,40 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_EXTCREATEFONTINDIRECTW:
       {
-	PEMREXTCREATEFONTINDIRECTW pFont = (PEMREXTCREATEFONTINDIRECTW) mr;
+	const EMREXTCREATEFONTINDIRECTW *pFont = (const EMREXTCREATEFONTINDIRECTW *)mr;
 	(handletable->objectHandle)[pFont->ihFont] =
 	  CreateFontIndirectW(&pFont->elfw.elfLogFont);
 	break;
       }
     case EMR_MOVETOEX:
       {
-	PEMRMOVETOEX pMoveToEx = (PEMRMOVETOEX) mr;
+	const EMRMOVETOEX *pMoveToEx = (const EMRMOVETOEX *)mr;
 	MoveToEx(hdc, pMoveToEx->ptl.x, pMoveToEx->ptl.y, NULL);
 	break;
       }
     case EMR_LINETO:
       {
-	PEMRLINETO pLineTo = (PEMRLINETO) mr;
+	const EMRLINETO *pLineTo = (const EMRLINETO *)mr;
         LineTo(hdc, pLineTo->ptl.x, pLineTo->ptl.y);
 	break;
       }
     case EMR_RECTANGLE:
       {
-	PEMRRECTANGLE pRect = (PEMRRECTANGLE) mr;
+	const EMRRECTANGLE *pRect = (const EMRRECTANGLE *)mr;
 	Rectangle(hdc, pRect->rclBox.left, pRect->rclBox.top,
 		  pRect->rclBox.right, pRect->rclBox.bottom);
 	break;
       }
     case EMR_ELLIPSE:
       {
-	PEMRELLIPSE pEllipse = (PEMRELLIPSE) mr;
+	const EMRELLIPSE *pEllipse = (const EMRELLIPSE *)mr;
 	Ellipse(hdc, pEllipse->rclBox.left, pEllipse->rclBox.top,
 		pEllipse->rclBox.right, pEllipse->rclBox.bottom);
 	break;
       }
     case EMR_POLYGON16:
       {
-	PEMRPOLYGON16 pPoly = (PEMRPOLYGON16) mr;
+	const EMRPOLYGON16 *pPoly = (const EMRPOLYGON16 *)mr;
 	/* Shouldn't use Polygon16 since pPoly->cpts is DWORD */
 	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
 				pPoly->cpts * sizeof(POINT) );
@@ -970,7 +970,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYLINE16:
       {
-	PEMRPOLYLINE16 pPoly = (PEMRPOLYLINE16) mr;
+	const EMRPOLYLINE16 *pPoly = (const EMRPOLYLINE16 *)mr;
 	/* Shouldn't use Polyline16 since pPoly->cpts is DWORD */
 	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
 				pPoly->cpts * sizeof(POINT) );
@@ -986,7 +986,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYLINETO16:
       {
-	PEMRPOLYLINETO16 pPoly = (PEMRPOLYLINETO16) mr;
+	const EMRPOLYLINETO16 *pPoly = (const EMRPOLYLINETO16 *)mr;
 	/* Shouldn't use PolylineTo16 since pPoly->cpts is DWORD */
 	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
 				pPoly->cpts * sizeof(POINT) );
@@ -1002,7 +1002,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYBEZIER16:
       {
-	PEMRPOLYBEZIER16 pPoly = (PEMRPOLYBEZIER16) mr;
+	const EMRPOLYBEZIER16 *pPoly = (const EMRPOLYBEZIER16 *)mr;
 	/* Shouldn't use PolyBezier16 since pPoly->cpts is DWORD */
 	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
 				pPoly->cpts * sizeof(POINT) );
@@ -1018,7 +1018,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYBEZIERTO16:
       {
-	PEMRPOLYBEZIERTO16 pPoly = (PEMRPOLYBEZIERTO16) mr;
+	const EMRPOLYBEZIERTO16 *pPoly = (const EMRPOLYBEZIERTO16 *)mr;
 	/* Shouldn't use PolyBezierTo16 since pPoly->cpts is DWORD */
 	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
 				pPoly->cpts * sizeof(POINT) );
@@ -1034,7 +1034,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYPOLYGON16:
       {
-        PEMRPOLYPOLYGON16 pPolyPoly = (PEMRPOLYPOLYGON16) mr;
+        const EMRPOLYPOLYGON16 *pPolyPoly = (const EMRPOLYPOLYGON16 *)mr;
 	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
 	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
 
@@ -1052,7 +1052,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_POLYPOLYLINE16:
       {
-        PEMRPOLYPOLYLINE16 pPolyPoly = (PEMRPOLYPOLYLINE16) mr;
+        const EMRPOLYPOLYLINE16 *pPolyPoly = (const EMRPOLYPOLYLINE16 *)mr;
 	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
 	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
 
@@ -1071,7 +1071,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_STRETCHDIBITS:
       {
-	EMRSTRETCHDIBITS *pStretchDIBits = (EMRSTRETCHDIBITS *)mr;
+	const EMRSTRETCHDIBITS *pStretchDIBits = (const EMRSTRETCHDIBITS *)mr;
 
 	StretchDIBits(hdc,
 		      pStretchDIBits->xDest,
@@ -1091,7 +1091,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXTTEXTOUTA:
     {
-	PEMREXTTEXTOUTA pExtTextOutA = (PEMREXTTEXTOUTA)mr;
+	const EMREXTTEXTOUTA *pExtTextOutA = (const EMREXTTEXTOUTA *)mr;
 	RECT rc;
         INT *dx = NULL;
 
@@ -1119,7 +1119,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXTTEXTOUTW:
     {
-	PEMREXTTEXTOUTW pExtTextOutW = (PEMREXTTEXTOUTW)mr;
+	const EMREXTTEXTOUTW *pExtTextOutW = (const EMREXTTEXTOUTW *)mr;
 	RECT rc;
         INT *dx = NULL;
 
@@ -1147,7 +1147,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_CREATEPALETTE:
       {
-	PEMRCREATEPALETTE lpCreatePal = (PEMRCREATEPALETTE)mr;
+	const EMRCREATEPALETTE *lpCreatePal = (const EMRCREATEPALETTE *)mr;
 
 	(handletable->objectHandle)[ lpCreatePal->ihPal ] =
 		CreatePalette( &lpCreatePal->lgpl );
@@ -1157,7 +1157,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SELECTPALETTE:
       {
-	PEMRSELECTPALETTE lpSelectPal = (PEMRSELECTPALETTE)mr;
+	const EMRSELECTPALETTE *lpSelectPal = (const EMRSELECTPALETTE *)mr;
 
 	if( lpSelectPal->ihPal & 0x80000000 ) {
 		SelectPalette( hdc, GetStockObject(lpSelectPal->ihPal & 0x7fffffff), TRUE);
@@ -1176,7 +1176,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_EXTSELECTCLIPRGN:
       {
 #if 0
-	PEMREXTSELECTCLIPRGN lpRgn = (PEMREXTSELECTCLIPRGN)mr;
+	const EMREXTSELECTCLIPRGN lpRgn = (const EMREXTSELECTCLIPRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, lpRgn->cbRgnData, (RGNDATA *)lpRgn->RgnData);
 
 	ExtSelectClipRgn(hdc, hRgn, (INT)(lpRgn->iMode));
@@ -1195,35 +1195,35 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETWORLDTRANSFORM:
       {
-        PEMRSETWORLDTRANSFORM lpXfrm = (PEMRSETWORLDTRANSFORM)mr;
+        const EMRSETWORLDTRANSFORM *lpXfrm = (const EMRSETWORLDTRANSFORM *)mr;
         info->world_transform = lpXfrm->xform;
         break;
       }
 
     case EMR_POLYBEZIER:
       {
-        PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr;
+        const EMRPOLYBEZIER *lpPolyBez = (const EMRPOLYBEZIER *)mr;
         PolyBezier(hdc, (const POINT*)lpPolyBez->aptl, (UINT)lpPolyBez->cptl);
         break;
       }
 
     case EMR_POLYGON:
       {
-        PEMRPOLYGON lpPoly = (PEMRPOLYGON)mr;
+        const EMRPOLYGON *lpPoly = (const EMRPOLYGON *)mr;
         Polygon( hdc, (const POINT*)lpPoly->aptl, (UINT)lpPoly->cptl );
         break;
       }
 
     case EMR_POLYLINE:
       {
-        PEMRPOLYLINE lpPolyLine = (PEMRPOLYLINE)mr;
+        const EMRPOLYLINE *lpPolyLine = (const EMRPOLYLINE *)mr;
         Polyline(hdc, (const POINT*)lpPolyLine->aptl, (UINT)lpPolyLine->cptl);
         break;
       }
 
     case EMR_POLYBEZIERTO:
       {
-        PEMRPOLYBEZIERTO lpPolyBezierTo = (PEMRPOLYBEZIERTO)mr;
+        const EMRPOLYBEZIERTO *lpPolyBezierTo = (const EMRPOLYBEZIERTO *)mr;
         PolyBezierTo( hdc, (const POINT*)lpPolyBezierTo->aptl,
 		      (UINT)lpPolyBezierTo->cptl );
         break;
@@ -1231,7 +1231,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYLINETO:
       {
-        PEMRPOLYLINETO lpPolyLineTo = (PEMRPOLYLINETO)mr;
+        const EMRPOLYLINETO *lpPolyLineTo = (const EMRPOLYLINETO *)mr;
         PolylineTo( hdc, (const POINT*)lpPolyLineTo->aptl,
 		    (UINT)lpPolyLineTo->cptl );
         break;
@@ -1239,7 +1239,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYPOLYLINE:
       {
-        PEMRPOLYPOLYLINE pPolyPolyline = (PEMRPOLYPOLYLINE) mr;
+        const EMRPOLYPOLYLINE *pPolyPolyline = (const EMRPOLYPOLYLINE *)mr;
 	/* NB Points at pPolyPolyline->aPolyCounts + pPolyPolyline->nPolys */
 
         PolyPolyline(hdc, (LPPOINT)(pPolyPolyline->aPolyCounts +
@@ -1252,7 +1252,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYPOLYGON:
       {
-        PEMRPOLYPOLYGON pPolyPolygon = (PEMRPOLYPOLYGON) mr;
+        const EMRPOLYPOLYGON *pPolyPolygon = (const EMRPOLYPOLYGON *)mr;
 
 	/* NB Points at pPolyPolygon->aPolyCounts + pPolyPolygon->nPolys */
 
@@ -1264,7 +1264,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETBRUSHORGEX:
       {
-        PEMRSETBRUSHORGEX lpSetBrushOrgEx = (PEMRSETBRUSHORGEX)mr;
+        const EMRSETBRUSHORGEX *lpSetBrushOrgEx = (const EMRSETBRUSHORGEX *)mr;
 
         SetBrushOrgEx( hdc,
                        (INT)lpSetBrushOrgEx->ptlOrigin.x,
@@ -1276,7 +1276,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETPIXELV:
       {
-        PEMRSETPIXELV lpSetPixelV = (PEMRSETPIXELV)mr;
+        const EMRSETPIXELV *lpSetPixelV = (const EMRSETPIXELV *)mr;
 
         SetPixelV( hdc,
                    (INT)lpSetPixelV->ptlPixel.x,
@@ -1288,7 +1288,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETMAPPERFLAGS:
       {
-        PEMRSETMAPPERFLAGS lpSetMapperFlags = (PEMRSETMAPPERFLAGS)mr;
+        const EMRSETMAPPERFLAGS *lpSetMapperFlags = (const EMRSETMAPPERFLAGS *)mr;
 
         SetMapperFlags( hdc, lpSetMapperFlags->dwFlags );
 
@@ -1297,7 +1297,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETCOLORADJUSTMENT:
       {
-        PEMRSETCOLORADJUSTMENT lpSetColorAdjust = (PEMRSETCOLORADJUSTMENT)mr;
+        const EMRSETCOLORADJUSTMENT *lpSetColorAdjust = (const EMRSETCOLORADJUSTMENT *)mr;
 
         SetColorAdjustment( hdc, &lpSetColorAdjust->ColorAdjustment );
 
@@ -1306,7 +1306,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_OFFSETCLIPRGN:
       {
-        PEMROFFSETCLIPRGN lpOffsetClipRgn = (PEMROFFSETCLIPRGN)mr;
+        const EMROFFSETCLIPRGN *lpOffsetClipRgn = (const EMROFFSETCLIPRGN *)mr;
 
         OffsetClipRgn( hdc,
                        (INT)lpOffsetClipRgn->ptlOffset.x,
@@ -1318,7 +1318,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXCLUDECLIPRECT:
       {
-        PEMREXCLUDECLIPRECT lpExcludeClipRect = (PEMREXCLUDECLIPRECT)mr;
+        const EMREXCLUDECLIPRECT *lpExcludeClipRect = (const EMREXCLUDECLIPRECT *)mr;
 
         ExcludeClipRect( hdc,
                          lpExcludeClipRect->rclClip.left,
@@ -1332,7 +1332,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SCALEVIEWPORTEXTEX:
       {
-        PEMRSCALEVIEWPORTEXTEX lpScaleViewportExtEx = (PEMRSCALEVIEWPORTEXTEX)mr;
+        const EMRSCALEVIEWPORTEXTEX *lpScaleViewportExtEx = (const EMRSCALEVIEWPORTEXTEX *)mr;
 
         if ((info->mode != MM_ISOTROPIC) && (info->mode != MM_ANISOTROPIC))
 	    break;
@@ -1357,7 +1357,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SCALEWINDOWEXTEX:
       {
-        PEMRSCALEWINDOWEXTEX lpScaleWindowExtEx = (PEMRSCALEWINDOWEXTEX)mr;
+        const EMRSCALEWINDOWEXTEX *lpScaleWindowExtEx = (const EMRSCALEWINDOWEXTEX *)mr;
 
         if ((info->mode != MM_ISOTROPIC) && (info->mode != MM_ANISOTROPIC))
 	    break;
@@ -1382,7 +1382,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_MODIFYWORLDTRANSFORM:
       {
-        PEMRMODIFYWORLDTRANSFORM lpModifyWorldTrans = (PEMRMODIFYWORLDTRANSFORM)mr;
+        const EMRMODIFYWORLDTRANSFORM *lpModifyWorldTrans = (const EMRMODIFYWORLDTRANSFORM *)mr;
 
         switch(lpModifyWorldTrans->iMode) {
         case MWT_IDENTITY:
@@ -1407,7 +1407,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ANGLEARC:
       {
-        PEMRANGLEARC lpAngleArc = (PEMRANGLEARC)mr;
+        const EMRANGLEARC *lpAngleArc = (const EMRANGLEARC *)mr;
 
         AngleArc( hdc,
                  (INT)lpAngleArc->ptlCenter.x, (INT)lpAngleArc->ptlCenter.y,
@@ -1419,7 +1419,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ROUNDRECT:
       {
-        PEMRROUNDRECT lpRoundRect = (PEMRROUNDRECT)mr;
+        const EMRROUNDRECT *lpRoundRect = (const EMRROUNDRECT *)mr;
 
         RoundRect( hdc,
                    lpRoundRect->rclBox.left,
@@ -1434,7 +1434,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ARC:
       {
-        PEMRARC lpArc = (PEMRARC)mr;
+        const EMRARC *lpArc = (const EMRARC *)mr;
 
         Arc( hdc,
              (INT)lpArc->rclBox.left,
@@ -1451,7 +1451,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_CHORD:
       {
-        PEMRCHORD lpChord = (PEMRCHORD)mr;
+        const EMRCHORD *lpChord = (const EMRCHORD *)mr;
 
         Chord( hdc,
              (INT)lpChord->rclBox.left,
@@ -1468,7 +1468,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_PIE:
       {
-        PEMRPIE lpPie = (PEMRPIE)mr;
+        const EMRPIE *lpPie = (const EMRPIE *)mr;
 
         Pie( hdc,
              (INT)lpPie->rclBox.left,
@@ -1485,7 +1485,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ARCTO:
       {
-        PEMRARC lpArcTo = (PEMRARC)mr;
+        const EMRARC *lpArcTo = (const EMRARC *)mr;
 
         ArcTo( hdc,
                (INT)lpArcTo->rclBox.left,
@@ -1502,7 +1502,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXTFLOODFILL:
       {
-        PEMREXTFLOODFILL lpExtFloodFill = (PEMREXTFLOODFILL)mr;
+        const EMREXTFLOODFILL *lpExtFloodFill = (const EMREXTFLOODFILL *)mr;
 
         ExtFloodFill( hdc,
                       (INT)lpExtFloodFill->ptlStart.x,
@@ -1515,7 +1515,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYDRAW:
       {
-        PEMRPOLYDRAW lpPolyDraw = (PEMRPOLYDRAW)mr;
+        const EMRPOLYDRAW *lpPolyDraw = (const EMRPOLYDRAW *)mr;
         PolyDraw( hdc,
                   (const POINT*)lpPolyDraw->aptl,
                   lpPolyDraw->abTypes,
@@ -1526,14 +1526,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETARCDIRECTION:
       {
-        PEMRSETARCDIRECTION lpSetArcDirection = (PEMRSETARCDIRECTION)mr;
+        const EMRSETARCDIRECTION *lpSetArcDirection = (const EMRSETARCDIRECTION *)mr;
         SetArcDirection( hdc, (INT)lpSetArcDirection->iArcDirection );
         break;
       }
 
     case EMR_SETMITERLIMIT:
       {
-        PEMRSETMITERLIMIT lpSetMiterLimit = (PEMRSETMITERLIMIT)mr;
+        const EMRSETMITERLIMIT *lpSetMiterLimit = (const EMRSETMITERLIMIT *)mr;
         SetMiterLimit( hdc, lpSetMiterLimit->eMiterLimit, NULL );
         break;
       }
@@ -1558,21 +1558,21 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_FILLPATH:
       {
-        /*PEMRFILLPATH lpFillPath = (PEMRFILLPATH)mr;*/
+        /*const EMRFILLPATH lpFillPath = (const EMRFILLPATH *)mr;*/
         FillPath( hdc );
         break;
       }
 
     case EMR_STROKEANDFILLPATH:
       {
-        /*PEMRSTROKEANDFILLPATH lpStrokeAndFillPath = (PEMRSTROKEANDFILLPATH)mr;*/
+        /*const EMRSTROKEANDFILLPATH lpStrokeAndFillPath = (const EMRSTROKEANDFILLPATH *)mr;*/
         StrokeAndFillPath( hdc );
         break;
       }
 
     case EMR_STROKEPATH:
       {
-        /*PEMRSTROKEPATH lpStrokePath = (PEMRSTROKEPATH)mr;*/
+        /*const EMRSTROKEPATH lpStrokePath = (const EMRSTROKEPATH *)mr;*/
         StrokePath( hdc );
         break;
       }
@@ -1591,7 +1591,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SELECTCLIPPATH:
       {
-        PEMRSELECTCLIPPATH lpSelectClipPath = (PEMRSELECTCLIPPATH)mr;
+        const EMRSELECTCLIPPATH *lpSelectClipPath = (const EMRSELECTCLIPPATH *)mr;
         SelectClipPath( hdc, (INT)lpSelectClipPath->iMode );
         break;
       }
@@ -1612,7 +1612,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETCOLORSPACE:
       {
-        PEMRSETCOLORSPACE lpSetColorSpace = (PEMRSETCOLORSPACE)mr;
+        const EMRSETCOLORSPACE *lpSetColorSpace = (const EMRSETCOLORSPACE *)mr;
         SetColorSpace( hdc,
                        (handletable->objectHandle)[lpSetColorSpace->ihCS] );
         break;
@@ -1620,14 +1620,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_DELETECOLORSPACE:
       {
-        PEMRDELETECOLORSPACE lpDeleteColorSpace = (PEMRDELETECOLORSPACE)mr;
+        const EMRDELETECOLORSPACE *lpDeleteColorSpace = (const EMRDELETECOLORSPACE *)mr;
         DeleteColorSpace( (handletable->objectHandle)[lpDeleteColorSpace->ihCS] );
         break;
       }
 
     case EMR_SETICMMODE:
       {
-        PEMRSETICMMODE lpSetICMMode = (PEMRSETICMMODE)mr;
+        const EMRSETICMMODE *lpSetICMMode = (const EMRSETICMMODE *)mr;
         SetICMMode( hdc, (INT)lpSetICMMode->iMode );
         break;
       }
@@ -1635,7 +1635,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_PIXELFORMAT:
       {
         INT iPixelFormat;
-        PEMRPIXELFORMAT lpPixelFormat = (PEMRPIXELFORMAT)mr;
+        const EMRPIXELFORMAT *lpPixelFormat = (const EMRPIXELFORMAT *)mr;
 
         iPixelFormat = ChoosePixelFormat( hdc, &lpPixelFormat->pfd );
         SetPixelFormat( hdc, iPixelFormat, &lpPixelFormat->pfd );
@@ -1645,7 +1645,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETPALETTEENTRIES:
       {
-        PEMRSETPALETTEENTRIES lpSetPaletteEntries = (PEMRSETPALETTEENTRIES)mr;
+        const EMRSETPALETTEENTRIES *lpSetPaletteEntries = (const EMRSETPALETTEENTRIES *)mr;
 
         SetPaletteEntries( (handletable->objectHandle)[lpSetPaletteEntries->ihPal],
                            (UINT)lpSetPaletteEntries->iStart,
@@ -1657,7 +1657,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_RESIZEPALETTE:
       {
-        PEMRRESIZEPALETTE lpResizePalette = (PEMRRESIZEPALETTE)mr;
+        const EMRRESIZEPALETTE *lpResizePalette = (const EMRRESIZEPALETTE *)mr;
 
         ResizePalette( (handletable->objectHandle)[lpResizePalette->ihPal],
                        (UINT)lpResizePalette->cEntries );
@@ -1667,7 +1667,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_CREATEDIBPATTERNBRUSHPT:
       {
-        PEMRCREATEDIBPATTERNBRUSHPT lpCreate = (PEMRCREATEDIBPATTERNBRUSHPT)mr;
+        const EMRCREATEDIBPATTERNBRUSHPT *lpCreate = (const EMRCREATEDIBPATTERNBRUSHPT *)mr;
         LPVOID lpPackedStruct;
 
         /* check that offsets and data are contained within the record */
@@ -1707,7 +1707,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_CREATEMONOBRUSH:
     {
-        PEMRCREATEMONOBRUSH pCreateMonoBrush = (PEMRCREATEMONOBRUSH)mr;
+        const EMRCREATEMONOBRUSH *pCreateMonoBrush = (const EMRCREATEMONOBRUSH *)mr;
         BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
         HBITMAP hBmp;
 
@@ -1753,7 +1753,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_BITBLT:
     {
-	PEMRBITBLT pBitBlt = (PEMRBITBLT)mr;
+	const EMRBITBLT *pBitBlt = (const EMRBITBLT *)mr;
 
         if(pBitBlt->offBmiSrc == 0) { /* Record is a PatBlt */
             PatBlt(hdc, pBitBlt->xDest, pBitBlt->yDest, pBitBlt->cxDest, pBitBlt->cyDest,
@@ -1790,7 +1790,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_STRETCHBLT:
     {
-	PEMRSTRETCHBLT pStretchBlt= (PEMRSTRETCHBLT)mr;
+	const EMRSTRETCHBLT *pStretchBlt = (const EMRSTRETCHBLT *)mr;
 
         TRACE("EMR_STRETCHBLT: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld. rop %08lx offBitsSrc %ld\n",
 	       pStretchBlt->xSrc, pStretchBlt->ySrc, pStretchBlt->cxSrc, pStretchBlt->cySrc,
@@ -1833,7 +1833,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ALPHABLEND:
     {
-	PEMRALPHABLEND pAlphaBlend= (PEMRALPHABLEND)mr;
+	const EMRALPHABLEND *pAlphaBlend = (const EMRALPHABLEND *)mr;
 
         TRACE("EMR_ALPHABLEND: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld. blendfn %08lx offBitsSrc %ld\n",
 	       pAlphaBlend->xSrc, pAlphaBlend->ySrc, pAlphaBlend->cxSrc, pAlphaBlend->cySrc,
@@ -1873,7 +1873,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_MASKBLT:
     {
-	PEMRMASKBLT pMaskBlt= (PEMRMASKBLT)mr;
+	const EMRMASKBLT *pMaskBlt = (const EMRMASKBLT *)mr;
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
@@ -1920,7 +1920,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_PLGBLT:
     {
-	PEMRPLGBLT pPlgBlt= (PEMRPLGBLT)mr;
+	const EMRPLGBLT *pPlgBlt = (const EMRPLGBLT *)mr;
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
@@ -1970,7 +1970,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETDIBITSTODEVICE:
     {
-	PEMRSETDIBITSTODEVICE pSetDIBitsToDevice = (PEMRSETDIBITSTODEVICE)mr;
+	const EMRSETDIBITSTODEVICE *pSetDIBitsToDevice = (const EMRSETDIBITSTODEVICE *)mr;
 
 	SetDIBitsToDevice(hdc,
 			  pSetDIBitsToDevice->xDest,
@@ -1989,7 +1989,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYTEXTOUTA:
     {
-	PEMRPOLYTEXTOUTA pPolyTextOutA = (PEMRPOLYTEXTOUTA)mr;
+	const EMRPOLYTEXTOUTA *pPolyTextOutA = (const EMRPOLYTEXTOUTA *)mr;
 	POLYTEXTA *polytextA = HeapAlloc(GetProcessHeap(), 0, pPolyTextOutA->cStrings * sizeof(POLYTEXTA));
 	LONG i;
 	XFORM xform, xformOld;
@@ -2030,7 +2030,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYTEXTOUTW:
     {
-	PEMRPOLYTEXTOUTW pPolyTextOutW = (PEMRPOLYTEXTOUTW)mr;
+	const EMRPOLYTEXTOUTW *pPolyTextOutW = (const EMRPOLYTEXTOUTW *)mr;
 	POLYTEXTW *polytextW = HeapAlloc(GetProcessHeap(), 0, pPolyTextOutW->cStrings * sizeof(POLYTEXTW));
 	LONG i;
 	XFORM xform, xformOld;
@@ -2071,7 +2071,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_FILLRGN:
     {
-	PEMRFILLRGN pFillRgn = (PEMRFILLRGN)mr;
+	const EMRFILLRGN *pFillRgn = (const EMRFILLRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pFillRgn->cbRgnData, (RGNDATA *)pFillRgn->RgnData);
 	FillRgn(hdc,
 		hRgn,
@@ -2082,7 +2082,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_FRAMERGN:
     {
-	PEMRFRAMERGN pFrameRgn = (PEMRFRAMERGN)mr;
+	const EMRFRAMERGN *pFrameRgn = (const EMRFRAMERGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pFrameRgn->cbRgnData, (RGNDATA *)pFrameRgn->RgnData);
 	FrameRgn(hdc,
 		 hRgn,
@@ -2095,7 +2095,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_INVERTRGN:
     {
-	PEMRINVERTRGN pInvertRgn = (PEMRINVERTRGN)mr;
+	const EMRINVERTRGN *pInvertRgn = (const EMRINVERTRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pInvertRgn->cbRgnData, (RGNDATA *)pInvertRgn->RgnData);
 	InvertRgn(hdc, hRgn);
 	DeleteObject(hRgn);
@@ -2104,7 +2104,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_PAINTRGN:
     {
-	PEMRPAINTRGN pPaintRgn = (PEMRPAINTRGN)mr;
+	const EMRPAINTRGN *pPaintRgn = (const EMRPAINTRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, pPaintRgn->cbRgnData, (RGNDATA *)pPaintRgn->RgnData);
 	PaintRgn(hdc, hRgn);
 	DeleteObject(hRgn);
@@ -2113,14 +2113,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETTEXTJUSTIFICATION:
     {
-	PEMRSETTEXTJUSTIFICATION pSetTextJust = (PEMRSETTEXTJUSTIFICATION)mr;
+	const EMRSETTEXTJUSTIFICATION *pSetTextJust = (const EMRSETTEXTJUSTIFICATION *)mr;
 	SetTextJustification(hdc, pSetTextJust->nBreakExtra, pSetTextJust->nBreakCount);
 	break;
     }
 
     case EMR_SETLAYOUT:
     {
-	PEMRSETLAYOUT pSetLayout = (PEMRSETLAYOUT)mr;
+	const EMRSETLAYOUT *pSetLayout = (const EMRSETLAYOUT *)mr;
 	SetLayout(hdc, pSetLayout->iMode);
 	break;
     }
@@ -2534,14 +2534,14 @@ static INT CALLBACK cbEnhPaletteCopy( HDC a,
 
   if ( lpEMR->iType == EMR_EOF )
   {
-    PEMREOF lpEof = (PEMREOF)lpEMR;
+    const EMREOF *lpEof = (const EMREOF *)lpEMR;
     EMF_PaletteCopy* info = (EMF_PaletteCopy*)lpData;
     DWORD dwNumPalToCopy = min( lpEof->nPalEntries, info->cEntries );
 
     TRACE( "copying 0x%08lx palettes\n", dwNumPalToCopy );
 
     memcpy( (LPVOID)info->lpPe,
-            (LPVOID)(((LPSTR)lpEof) + lpEof->offPalEntries),
+            (LPCVOID)(((LPCSTR)lpEof) + lpEof->offPalEntries),
             sizeof( *(info->lpPe) ) * dwNumPalToCopy );
 
     /* Update the passed data as a return code */
