@@ -179,7 +179,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
-all: Makefile
+all:
 
 filter: dummy
 	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
@@ -192,12 +192,6 @@ $(RC_BINARIES): $(BIN2RES) $(RC_BINSRC)
 	$(BIN2RES) -f -o $@ $(SRCDIR)/$(RC_BINSRC)
 
 $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES) $(IDL_TLB_SRCS:.idl=.tlb)
-
-# Rules for makefile
-
-Makefile: Makefile.in $(TOPSRCDIR)/configure
-	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
-	@exit 1
 
 # Rule for linting
 

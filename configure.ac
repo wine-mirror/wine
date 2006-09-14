@@ -1459,6 +1459,11 @@ dnl **** Generate output files ****
 
 AC_SUBST(DEPENDENCIES,"### Dependencies:
 
+.INIT: Makefile
+.BEGIN: Makefile
+Makefile: dummy
+	-\$(MAKEDEP) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)
+
 \$(ALL_OBJS): \$(IDL_SRCS:.idl=.h)
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
 \$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)")

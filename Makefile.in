@@ -103,10 +103,22 @@ fonts/__install__ loader/__install__ server/__install__: libs tools
 programs/__install__: libs tools include dlls/__install-lib__
 tools/__install-lib__ tools/__install-dev__: tools
 
-depend $(SUBDIRS:%=%/__depend__): $(MAKEDEP)
+RECURSE_TARGETS = \
+	$(SUBDIRS) \
+	$(SUBDIRS:%=%/__clean__) \
+	$(SUBDIRS:%=%/__depend__) \
+	$(SUBDIRS:%=%/__install-dev__) \
+	$(SUBDIRS:%=%/__install-lib__) \
+	$(SUBDIRS:%=%/__install__) \
+	$(SUBDIRS:%=%/__uninstall__) \
+	$(TESTSUBDIRS:%=%/__crosstest__) \
+	$(TESTSUBDIRS:%=%/__test__) \
+	$(TESTSUBDIRS:%=%/__testclean__)
+
+depend $(RECURSE_TARGETS): $(MAKEDEP)
 
 $(MAKEDEP):
-	@cd $(TOOLSDIR)/tools && $(MAKE) makedep
+	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(EXEEXT)
 
 # Test rules
 
