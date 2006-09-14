@@ -18,7 +18,7 @@
 @ stub CryptCATCDFEnumMembersByCDFTagEx
 @ stub CryptCATCDFOpen
 @ stub CryptCATCatalogInfoFromContext
-@ stub CryptCATClose
+@ stdcall CryptCATClose(long)
 @ stub CryptCATEnumerateAttr
 @ stub CryptCATEnumerateCatAttr
 @ stdcall CryptCATEnumerateMember(long ptr)

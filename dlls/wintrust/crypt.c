@@ -99,6 +99,15 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 }
 
 /***********************************************************************
+ *      CryptCATClose  (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATClose(HANDLE hCatalog)
+{
+    FIXME("(%p) stub\n", hCatalog);
+    return TRUE;
+}
+
+/***********************************************************************
  *      CryptCATEnumerateMember  (WINTRUST.@)
  */
 CRYPTCATMEMBER *WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER* pPrevMember)
