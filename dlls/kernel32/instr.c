@@ -125,36 +125,36 @@ static void store_reg( CONTEXT86 *context, BYTE regmodrm, const BYTE *addr, int 
     switch((regmodrm >> 3) & 7)
     {
     case 0:
-        if (long_op) context->Eax = *(DWORD *)addr;
-        else SET_LOWORD(context->Eax,*(WORD *)addr);
+        if (long_op) context->Eax = *(const DWORD *)addr;
+        else SET_LOWORD(context->Eax, *(const WORD *)addr);
         break;
     case 1:
-        if (long_op) context->Ecx = *(DWORD *)addr;
-        else SET_LOWORD(context->Ecx,*(WORD *)addr);
+        if (long_op) context->Ecx = *(const DWORD *)addr;
+        else SET_LOWORD(context->Ecx, *(const WORD *)addr);
         break;
     case 2:
-        if (long_op) context->Edx = *(DWORD *)addr;
-        else SET_LOWORD(context->Edx,*(WORD *)addr);
+        if (long_op) context->Edx = *(const DWORD *)addr;
+        else SET_LOWORD(context->Edx, *(const WORD *)addr);
         break;
     case 3:
-        if (long_op) context->Ebx = *(DWORD *)addr;
-        else SET_LOWORD(context->Ebx,*(WORD *)addr);
+        if (long_op) context->Ebx = *(const DWORD *)addr;
+        else SET_LOWORD(context->Ebx, *(const WORD *)addr);
         break;
     case 4:
-        if (long_op) context->Esp = *(DWORD *)addr;
-        else SET_LOWORD(context->Esp,*(WORD *)addr);
+        if (long_op) context->Esp = *(const DWORD *)addr;
+        else SET_LOWORD(context->Esp, *(const WORD *)addr);
         break;
     case 5:
-        if (long_op) context->Ebp = *(DWORD *)addr;
-        else SET_LOWORD(context->Ebp,*(WORD *)addr);
+        if (long_op) context->Ebp = *(const DWORD *)addr;
+        else SET_LOWORD(context->Ebp, *(const WORD *)addr);
         break;
     case 6:
-        if (long_op) context->Esi = *(DWORD *)addr;
-        else SET_LOWORD(context->Esi,*(WORD *)addr);
+        if (long_op) context->Esi = *(const DWORD *)addr;
+        else SET_LOWORD(context->Esi, *(const WORD *)addr);
         break;
     case 7:
-        if (long_op) context->Edi = *(DWORD *)addr;
-        else SET_LOWORD(context->Edi,*(WORD *)addr);
+        if (long_op) context->Edi = *(const DWORD *)addr;
+        else SET_LOWORD(context->Edi, *(const WORD *)addr);
         break;
     }
 }
