@@ -690,6 +690,13 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define INFINFO_REVERSE_DEFAULT_SEARCH  4
 #define INFINFO_INF_PATH_LIST_SEARCH    5
 
+#define LogSeverity         DWORD
+#define LogSevInformation   0x00000000
+#define LogSevWarning       0x00000001
+#define LogSevError         0x00000002
+#define LogSevFatalError    0x00000003
+#define LogSevMaximum       0x00000004
+
 LONG     WINAPI AddTagToGroupOrderList(PCWSTR lpGroupName, DWORD dwUnknown2, DWORD dwUnknown3);
 DWORD    WINAPI CaptureAndConvertAnsiArg(PCSTR lpSrc, PWSTR *lpDst);
 DWORD    WINAPI CaptureStringArg(PCWSTR lpSrc, PWSTR *lpDst);

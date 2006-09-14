@@ -247,7 +247,7 @@
 @ stub SetupCancelTemporarySourceList
 @ stdcall SetupCloseFileQueue(ptr)
 @ stdcall SetupCloseInfFile(long)
-@ stub SetupCloseLog
+@ stdcall SetupCloseLog()
 @ stdcall SetupCommitFileQueue(long long ptr ptr) SetupCommitFileQueueW
 @ stdcall SetupCommitFileQueueA(long long ptr ptr)
 @ stdcall SetupCommitFileQueueW(long long ptr ptr)
@@ -442,7 +442,7 @@
 @ stdcall SetupIterateCabinetA(str long ptr ptr)
 @ stdcall SetupIterateCabinetW(wstr long ptr ptr)
 @ stub SetupLogErrorA
-@ stub SetupLogErrorW
+@ stdcall SetupLogErrorW(wstr long)
 @ stub SetupLogFileA
 @ stub SetupLogFileW
 @ stdcall SetupOpenAppendInfFileA(str long ptr)
@@ -450,6 +450,7 @@
 @ stdcall SetupOpenFileQueue()
 @ stdcall SetupOpenInfFileA(str str long ptr)
 @ stdcall SetupOpenInfFileW(wstr wstr long ptr)
+@ stdcall SetupOpenLog(long)
 @ stdcall SetupOpenMasterInf()
 @ stub SetupPromptForDiskA
 @ stub SetupPromptForDiskW

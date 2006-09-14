@@ -196,3 +196,29 @@ BOOL WINAPI RegistryDelnode(DWORD x, DWORD y)
     FIXME("%08lx %08lx: stub\n", x, y);
     return FALSE;
 }
+
+/***********************************************************************
+ *      SetupCloseLog(SETUPAPI.@)
+ */
+void WINAPI SetupCloseLog()
+{
+    FIXME("() stub\n");
+}
+
+/***********************************************************************
+ *      SetupLogErrorW(SETUPAPI.@)
+ */
+BOOL WINAPI SetupLogErrorW(PCWSTR MessageString, LogSeverity Severity)
+{
+    FIXME("(%s, %ld) stub\n", debugstr_w(MessageString), Severity);
+    return TRUE;
+}
+
+/***********************************************************************
+ *      SetupOpenLog(SETUPAPI.@)
+ */
+BOOL WINAPI SetupOpenLog(BOOL Reserved)
+{
+    FIXME("(%d) stub\n", Reserved);
+    return TRUE;
+}
