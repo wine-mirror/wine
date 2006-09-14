@@ -245,7 +245,7 @@ static void FONT_LogFontWToA( const LOGFONTW *fontW, LPLOGFONTA fontA )
 
 static void FONT_EnumLogFontExWTo16( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEX16 font16 )
 {
-    FONT_LogFontWTo16( (LPLOGFONTW)fontW, (LPLOGFONT16)font16);
+    FONT_LogFontWTo16( (const LOGFONTW *)fontW, (LPLOGFONT16)font16);
 
     WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
 			 (LPSTR) font16->elfFullName, LF_FULLFACESIZE, NULL, NULL );
@@ -260,7 +260,7 @@ static void FONT_EnumLogFontExWTo16( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTE
 
 static void FONT_EnumLogFontExWToA( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEXA fontA )
 {
-    FONT_LogFontWToA( (LPLOGFONTW)fontW, (LPLOGFONTA)fontA);
+    FONT_LogFontWToA( (const LOGFONTW *)fontW, (LPLOGFONTA)fontA);
 
     WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
 			 (LPSTR) fontA->elfFullName, LF_FULLFACESIZE, NULL, NULL );
@@ -332,7 +332,7 @@ static void FONT_NewTextMetricExWTo16(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMET
 
 static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRICEXA *ptmA )
 {
-    FONT_TextMetricWToA((LPTEXTMETRICW)ptmW, (LPTEXTMETRICA)ptmA);
+    FONT_TextMetricWToA((const TEXTMETRICW *)ptmW, (LPTEXTMETRICA)ptmA);
     ptmA->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
     ptmA->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
     ptmA->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;

@@ -452,7 +452,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 {
     int fd=-1;
     char psCmd[1024];
-    char *psCmdP = psCmd;
+    const char *psCmdP = psCmd;
     HKEY hkey;
 
     /* TTD convert the 'output device' into a spool file name */
@@ -474,7 +474,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
     if (!*psCmd)
-        psCmdP = (char *)pszOutput;
+        psCmdP = pszOutput;
     else
     {
         while (*psCmdP && isspace(*psCmdP))
