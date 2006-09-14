@@ -952,6 +952,12 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define SM_SERVERR2           89
 #define SM_CMETRICS           90
 
+#define SM_REMOTESESSION        0x1000
+#define SM_SHUTTINGDOWN         0x2000
+#define SM_REMOTECONTROL        0x2001
+#define SM_CARETBLINKINGENABLED 0x2002
+
+#define PMB_ACTIVE      0x00000001
 
 /* Messages */
 
@@ -1122,6 +1128,16 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_UPDATEUISTATE    0x0128
 #define WM_QUERYUISTATE     0x0129
 
+/* UI flags for WM_*UISTATE */
+/* for low-order word of wparam */
+#define UIS_SET                         1
+#define UIS_CLEAR                       2
+#define UIS_INITIALIZE                  3
+/* for hi-order word of wparam */
+#define UISF_HIDEFOCUS                  0x1
+#define UISF_HIDEACCEL                  0x2
+#define UISF_ACTIVE                     0x4
+
 #define WM_LBTRACKPOINT     0x0131
 
   /* Win32 CTLCOLOR messages */
@@ -1132,6 +1148,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_CTLCOLORDLG       0x0136
 #define WM_CTLCOLORSCROLLBAR 0x0137
 #define WM_CTLCOLORSTATIC    0x0138
+
+#define MN_GETHMENU          0x01E1
 
   /* Mouse messages */
 #define WM_MOUSEMOVE	    0x0200
@@ -1198,6 +1216,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define PBT_APMOEMEVENT           0x000B
 #define PBT_APMRESUMEAUTOMATIC    0x0012
 
+#define PBTF_APMRESUMEFROMFAILURE       0x00000001
+
   /* MDI messages */
 #define WM_MDICREATE	    0x0220
 #define WM_MDIDESTROY	    0x0221
@@ -1239,6 +1259,11 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_IME_KEYDOWN              0x0290
 #define WM_IME_KEYUP                0x0291
 
+#define WM_WTSSESSION_CHANGE        0x02B1
+
+#define WM_TABLET_FIRST             0x02c0
+#define WM_TABLET_LAST              0x02df
+
 /* Clipboard command messages */
 #define WM_CUT               0x0300
 #define WM_COPY              0x0301
@@ -1268,9 +1293,14 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_PRINT             0x0317
 #define WM_PRINTCLIENT       0x0318
 
+#define WM_HANDHELDFIRST     0x0358
+#define WM_HANDHELDLAST      0x035F
+
+#define WM_AFXFIRST          0x0360
+#define WM_AFXLAST           0x037F
+
 #define WM_PENWINFIRST      0x0380
 #define WM_PENWINLAST       0x038F
-
 
 #define WM_APP               0x8000
 
@@ -1303,6 +1333,10 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define IDHELP              9
 #define IDTRYAGAIN         10
 #define IDCONTINUE         11
+
+#ifndef IDTIMEOUT
+#define IDTIMEOUT       32000
+#endif
 
 /* Used for EnumDisplaySettingsEx */
 #define ENUM_CURRENT_SETTINGS  ((DWORD) -1)
@@ -3734,11 +3768,12 @@ typedef struct tagTRACKMOUSEEVENT {
 #define LR_SHARED		0x8000
 
 /* Flags for DrawIconEx.  */
-#define DI_MASK                 1
-#define DI_IMAGE                2
+#define DI_MASK                 0x0001
+#define DI_IMAGE                0x0002
 #define DI_NORMAL               (DI_MASK | DI_IMAGE)
-#define DI_COMPAT               4
-#define DI_DEFAULTSIZE          8
+#define DI_COMPAT               0x0004
+#define DI_DEFAULTSIZE          0x0008
+#define DI_NOMIRROR             0x0010
 
 /* WM_NOTIFYFORMAT commands and return values */
 #define NFR_ANSI	    1
