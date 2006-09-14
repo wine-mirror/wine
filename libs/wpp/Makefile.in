@@ -22,7 +22,6 @@ $(MODULE): $(OBJS)
 
 ppy.tab.c: ppy.tab.h   # for parallel makes
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
 
-ppy.tab.o: ppy.tab.c
-ppl.yy.o: ppl.yy.c ppy.tab.h
+ppl.yy.o: ppy.tab.h

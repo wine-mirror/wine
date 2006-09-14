@@ -7,4 +7,4 @@ IMPORTS   = secur32 kernel32
 
 @MAKE_DLL_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

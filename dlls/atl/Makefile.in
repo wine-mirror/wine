@@ -20,7 +20,4 @@ IDL_SRCS = \
 
 rsrc.res: atl.rgs
 
-### Dependencies:
-
-# note: this will get overwritten by make depend
-$(ALL_OBJS): $(IDL_SRCS:.idl=.h)
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

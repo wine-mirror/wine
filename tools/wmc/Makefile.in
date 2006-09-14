@@ -35,7 +35,6 @@ uninstall::
 
 mcy.tab.c: mcy.tab.h   # for parallel makes
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
 
-mcy.tab.o: mcy.tab.c
 mcl.o: mcy.tab.h

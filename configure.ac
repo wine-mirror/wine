@@ -1457,6 +1457,12 @@ esac
 
 dnl **** Generate output files ****
 
+AC_SUBST(DEPENDENCIES,"### Dependencies:
+
+\$(ALL_OBJS): \$(IDL_SRCS:.idl=.h)
+\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
+\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)")
+
 AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)

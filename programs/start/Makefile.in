@@ -12,4 +12,4 @@ RC_SRCS = rsrc.rc
 
 @MAKE_PROG_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

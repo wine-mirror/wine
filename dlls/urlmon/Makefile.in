@@ -27,4 +27,4 @@ RC_SRCS = rsrc.rc
 
 rsrc.res: urlmon.inf
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

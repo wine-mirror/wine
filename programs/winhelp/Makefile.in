@@ -21,6 +21,4 @@ RC_SRCS = rsrc.rc
 
 @MAKE_PROG_RULES@
 
-### Dependencies:
-
-macro.lex.yy.o: macro.lex.yy.c
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

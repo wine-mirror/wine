@@ -76,4 +76,4 @@ gdi.exe.spec.o: gdi.exe.spec version16.res
 version16.res: version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

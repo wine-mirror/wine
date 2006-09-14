@@ -13,4 +13,4 @@ RC_SRCS= serialui_rc.rc
 
 @MAKE_DLL_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

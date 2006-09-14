@@ -41,4 +41,4 @@ install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

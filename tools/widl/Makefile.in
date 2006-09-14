@@ -41,7 +41,6 @@ uninstall::
 
 parser.tab.c: parser.tab.h   # for parallel makes
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
 
-parser.tab.o: parser.tab.c
-parser.yy.o: parser.yy.c parser.tab.h
+parser.yy.o: parser.tab.h

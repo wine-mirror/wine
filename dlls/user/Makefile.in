@@ -168,4 +168,4 @@ resources/mouse.res: resources/mouse.rc
 resources/version16.res: resources/version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/resources/version16.rc
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

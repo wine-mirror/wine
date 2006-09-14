@@ -61,8 +61,6 @@ RC_BINARIES = \
 
 sql.tab.c: sql.tab.h   # for parallel makes
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
 
-cond.tab.o: cond.tab.c
-sql.tab.o: sql.tab.c
 tokenize.o: sql.tab.h

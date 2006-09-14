@@ -59,4 +59,4 @@ EXTRA_OBJS = relay32.o
 relay32.o: $(WINEBUILD)
 	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay32
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

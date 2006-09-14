@@ -211,4 +211,4 @@ tests.rc: maketest Makefile.in
 
 dist.res: winetest.rc tests.rc build.id build.nfo tests.url $(TESTBINS) $(RC_BINARIES)
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

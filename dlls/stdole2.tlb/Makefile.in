@@ -10,4 +10,4 @@ IDL_TLB_SRCS = std_ole_v2.idl
 
 @MAKE_DLL_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

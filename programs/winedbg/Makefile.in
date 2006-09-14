@@ -45,7 +45,6 @@ uninstall::
 
 dbg.tab.c: dbg.tab.h   # for parallel makes
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
 
-dbg.tab.o: dbg.tab.c
-debug.yy.o: debug.yy.c dbg.tab.h
+debug.yy.o: dbg.tab.h

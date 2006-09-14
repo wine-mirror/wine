@@ -21,4 +21,4 @@ $(IMPORTLIB): $(MAINSPEC)
 clean::
 	$(RM) $(IMPORTLIB)
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

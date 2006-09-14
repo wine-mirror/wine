@@ -410,4 +410,4 @@ uninstall::
 	-cd $(DESTDIR)$(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS)
 	-rmdir $(INSTALLDIRS)
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

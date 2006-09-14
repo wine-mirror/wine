@@ -756,6 +756,7 @@ EXTRA_BINARIES
 LDD
 LIBDL
 LIBPOLL
+DEPENDENCIES
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files='MAKE_RULES
@@ -23762,6 +23763,13 @@ fi
 esac
 
 
+DEPENDENCIES="### Dependencies:
+
+\$(ALL_OBJS): \$(IDL_SRCS:.idl=.h)
+\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
+\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"
+
+
 
 
 
@@ -24939,11 +24947,12 @@ EXTRA_BINARIES!$EXTRA_BINARIES$ac_delim
 LDD!$LDD$ac_delim
 LIBDL!$LIBDL$ac_delim
 LIBPOLL!$LIBPOLL$ac_delim
+DEPENDENCIES!$DEPENDENCIES$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -9,4 +9,4 @@ IMPORTS   = avicap32 msvfw32 oledlg comdlg32 shell32 winmm winspool \
 
 @MAKE_DLL_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

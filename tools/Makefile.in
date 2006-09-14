@@ -94,4 +94,4 @@ uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

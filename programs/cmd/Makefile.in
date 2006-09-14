@@ -18,4 +18,4 @@ RC_BINARIES = wcmd.ico
 
 @MAKE_PROG_RULES@
 
-### Dependencies:
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
