@@ -732,7 +732,7 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER lpAlloc, LPFREEBUFFER lpFree,
  */
 ULONG WINAPI UlFromSzHex(LPCWSTR lpszHex)
 {
-    LPSTR lpStr = (LPSTR)lpszHex;
+    LPCSTR lpStr = (LPCSTR)lpszHex;
     ULONG ulRet = 0;
 
     TRACE("(%s)\n", debugstr_a(lpStr));
