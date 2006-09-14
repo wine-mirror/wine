@@ -386,13 +386,14 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTW *lplf)
         hf=SelectObject(hdc,hf);
         DeleteObject(hf);
                 /* font successful created ? */
-        if (tm.tmWeight==fontstyles[i].weight &&
+        if (((fontstyles[i].weight == FW_NORMAL && tm.tmWeight <= FW_MEDIUM) ||
+             (fontstyles[i].weight == FW_BOLD && tm.tmWeight > FW_MEDIUM)) &&
             ((tm.tmItalic != 0)==fontstyles[i].italic))
         {
             j=SendMessageW(hwnd,CB_ADDSTRING,0,(LPARAM)fontstyles[i].stname );
             if (j==CB_ERR) return 1;
             j=SendMessageW(hwnd, CB_SETITEMDATA, j,
-                           MAKELONG(fontstyles[i].weight,fontstyles[i].italic));
+                           MAKELONG(tm.tmWeight,fontstyles[i].italic));
             if (j==CB_ERR) return 1;
         }
     }
