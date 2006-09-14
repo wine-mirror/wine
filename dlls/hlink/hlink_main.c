@@ -382,8 +382,8 @@ static HRESULT register_clsid(LPCGUID guid)
     if (r != ERROR_SUCCESS)
         return E_FAIL;
 
-    RegSetValueExW(key, NULL, 0, REG_SZ, (LPBYTE)hlink, sizeof hlink);
-    RegSetValueExW(key, threading_model, 0, REG_SZ, (LPBYTE)apartment, sizeof apartment);
+    RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE *)hlink, sizeof hlink);
+    RegSetValueExW(key, threading_model, 0, REG_SZ, (const BYTE *)apartment, sizeof apartment);
     RegCloseKey(key);
 
     return S_OK;
