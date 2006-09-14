@@ -157,7 +157,7 @@ static const IMAGE_DOS_HEADER *find_dll_descr( const char *dllname, const char *
     int i;
     const IMAGE_DOS_HEADER *mz_header;
     const IMAGE_OS2_HEADER *ne_header;
-    BYTE *name_table;
+    const BYTE *name_table;
 
     for (i = 0; i < MAX_DLLS; i++)
     {
@@ -165,7 +165,7 @@ static const IMAGE_DOS_HEADER *find_dll_descr( const char *dllname, const char *
         if (mz_header)
         {
             ne_header = (const IMAGE_OS2_HEADER *)((const char *)mz_header + mz_header->e_lfanew);
-            name_table = (BYTE *)ne_header + ne_header->ne_restab;
+            name_table = (const BYTE *)ne_header + ne_header->ne_restab;
 
             /* check the dll file name */
             if (!NE_strcasecmp( builtin_dlls[i].file_name, dllname ) ||
@@ -605,7 +605,7 @@ static void *build_bundle_data( NE_MODULE *pModule, void *dest, const BYTE *tabl
                     entry->flags  = *table++;
                     table += sizeof(WORD);
                     entry->segnum = *table++;
-                    entry->offs   = *(WORD *)table;
+                    entry->offs   = *(const WORD *)table;
                     table += sizeof(WORD);
                     entry++;
                 }
@@ -617,7 +617,7 @@ static void *build_bundle_data( NE_MODULE *pModule, void *dest, const BYTE *tabl
                     entry->type   = type;
                     entry->flags  = *table++;
                     entry->segnum = type;
-                    entry->offs   = *(WORD *)table;
+                    entry->offs   = *(const WORD *)table;
                     table += sizeof(WORD);
                     entry++;
                 }
@@ -1414,7 +1414,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
 
     pModule->ne_magic = pModule->self = 0;
     if (pModule->owner32) FreeLibrary( pModule->owner32 );
-    else if (pModule->mapping) UnmapViewOfFile( (void *)pModule->mapping );
+    else if (pModule->mapping) UnmapViewOfFile( pModule->mapping );
 
       /* Remove it from the linked list */
 
