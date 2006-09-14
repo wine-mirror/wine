@@ -23,10 +23,80 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wintrust.h"
+#include "mscat.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
+
+/***********************************************************************
+ *      CryptCATAdminAcquireContext (WINTRUST.@)
+ *
+ * Get a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [O] Pointer to the context handle.
+ *   sysSystem [I] Pointer to a GUID for the needed subsystem.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. catAdmin contains the context handle.
+ *   Failure: FAIL.
+ *
+ */
+BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
+                    const GUID *sysSystem, DWORD dwFlags )
+{
+    FIXME("%p %s %lx\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
+                                                BYTE* pbHash, DWORD dwFlags )
+{
+    FIXME("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptCATAdminEnumCatalogFromHash (WINTRUST.@)
+ */
+HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
+                                                 BYTE* pbHash,
+                                                 DWORD cbHash,
+                                                 DWORD dwFlags,
+                                                 HCATINFO* phPrevCatInfo )
+{
+    FIXME("%p %p %ld %ld %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATAdminReleaseContext (WINTRUST.@)
+ *
+ * Release a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [I] Pointer to the context handle.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FAIL.
+ *
+ */
+BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
+{
+    FIXME("%p %lx\n", hCatAdmin, dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /***********************************************************************
  *      CryptCATOpen  (WINTRUST.@)
