@@ -26,7 +26,7 @@
 @ stub CryptCATGetCatAttrInfo
 @ stub CryptCATGetMemberInfo
 @ stub CryptCATHandleFromStore
-@ stub CryptCATOpen
+@ stdcall CryptCATOpen(wstr long long long long)
 @ stub CryptCATPersistStore
 @ stub CryptCATPutAttrInfo
 @ stub CryptCATPutCatAttrInfo
