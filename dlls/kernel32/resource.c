@@ -270,12 +270,12 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR l
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
-    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
     {
         if (et[i].u1.s1.NameIsString)
         {
-            str = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].u1.s1.NameOffset);
             newlen = WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
             if (newlen + 1 > len)
             {
@@ -320,12 +320,12 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR l
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
-    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
     {
         if (et[i].u1.s1.NameIsString)
         {
-            str = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)resdir + et[i].u1.s1.NameOffset);
             if (str->Length + 1 > len)
             {
                 len = str->Length + 1;
@@ -375,12 +375,12 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
         goto done;
 
-    et = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
     {
         if (et[i].u1.s1.NameIsString)
         {
-            str = (IMAGE_RESOURCE_DIR_STRING_U *) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
             newlen = WideCharToMultiByte(CP_ACP, 0, str->NameString, str->Length, NULL, 0, NULL, NULL);
             if (newlen + 1 > len)
             {
@@ -437,12 +437,12 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
         goto done;
 
-    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries; i++)
     {
         if (et[i].u1.s1.NameIsString)
         {
-            str = (IMAGE_RESOURCE_DIR_STRING_U *) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
+            str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const BYTE *)basedir + et[i].u1.s1.NameOffset);
             if (str->Length + 1 > len)
             {
                 len = str->Length + 1;
@@ -500,7 +500,7 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
         goto done;
 
-    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
     {
         ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
@@ -543,7 +543,7 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 2, &resdir )) != STATUS_SUCCESS)
         goto done;
 
-    et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
     for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
     {
         ret = lpfun( hmod, type, name, et[i].u1.s2.Id, lparam );
