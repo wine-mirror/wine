@@ -416,7 +416,7 @@ DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION tzinfo )
 BOOL WINAPI SetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 {
     NTSTATUS status;
-    status = RtlSetTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION*) tzinfo );
+    status = RtlSetTimeZoneInformation( (const RTL_TIME_ZONE_INFORMATION *)tzinfo );
     if ( status != STATUS_SUCCESS )
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;

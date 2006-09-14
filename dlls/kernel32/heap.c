@@ -303,7 +303,7 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
 #define MAGIC_GLOBAL_USED 0x5342
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
 #define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
-#define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-2))
+#define POINTER_TO_HANDLE(p) (*(((const HGLOBAL *)(p))-2))
 #define ISHANDLE(h)          (((ULONG_PTR)(h)&2)!=0)
 #define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)
 /* align the storage needed for the HGLOBAL on an 8byte boundary thus
