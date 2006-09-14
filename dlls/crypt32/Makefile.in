@@ -19,6 +19,7 @@ C_SRCS = \
 	proplist.c \
 	protectdata.c \
 	serialize.c \
+	sip.c \
 	store.c \
 	str.c \
 	main.c
