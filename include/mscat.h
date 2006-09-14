@@ -26,6 +26,20 @@ typedef HANDLE HCATINFO;
 extern "C" {
 #endif
 
+typedef struct CRYPTCATMEMBER_ {
+    DWORD cbStruct;
+    LPWSTR pwszReferenceTag;
+    LPWSTR pwszFileName;
+    GUID gSubjectType;
+    DWORD fdwMemberFlags;
+    struct SIP_INDIRECT_DATA_* pIndirectData;
+    DWORD dwCertVersion;
+    DWORD dwReserved;
+    HANDLE hReserved;
+    CRYPT_ATTR_BLOB sEncodedIndirectData;
+    CRYPT_ATTR_BLOB sEncodedMemberInfo;
+} CRYPTCATMEMBER;
+
 BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
 BOOL      WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE,DWORD*,BYTE*,DWORD);
 HCATINFO  WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN,BYTE*,DWORD,DWORD,HCATINFO*);

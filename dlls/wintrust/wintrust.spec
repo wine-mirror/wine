@@ -21,7 +21,7 @@
 @ stub CryptCATClose
 @ stub CryptCATEnumerateAttr
 @ stub CryptCATEnumerateCatAttr
-@ stub CryptCATEnumerateMember
+@ stdcall CryptCATEnumerateMember(long ptr)
 @ stub CryptCATGetAttrInfo
 @ stub CryptCATGetCatAttrInfo
 @ stub CryptCATGetMemberInfo
