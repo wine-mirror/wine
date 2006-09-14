@@ -154,9 +154,14 @@
 @ stdcall CryptRegisterOIDFunction(long str str wstr str)
 @ stub CryptRegisterOIDInfo
 @ stdcall CryptSIPAddProvider(ptr)
+@ stub CryptSIPCreateIndirectData
+@ stub CryptSIPGetSignedDataMsg
 @ stdcall CryptSIPLoad(ptr long ptr)
+@ stub CryptSIPPutSignedDataMsg
 @ stdcall CryptSIPRemoveProvider(ptr)
+@ stub CryptSIPRemoveSignedDataMsg
 @ stdcall CryptSIPRetrieveSubjectGuid(wstr long ptr)
+@ stub CryptSIPVerifyIndirectData
 @ stub CryptSetAsyncParam
 @ stdcall CryptSetOIDFunctionValue(long str str wstr long ptr long)
 @ stub CryptSetProviderU
