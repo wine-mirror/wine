@@ -68,8 +68,7 @@ INSTALLDIRS = $(DESTDIR)$(datadir)/aclocal
 @MAKE_RULES@
 
 config.status: configure
-	@echo configure is newer than config.status, please rerun ./configure!
-	@exit 1
+	@./config.status --recheck
 
 wine: $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
