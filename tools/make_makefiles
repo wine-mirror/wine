@@ -130,6 +130,49 @@ foreach my $test (sort keys %tests)
 replace_in_file( "programs/winetest/winetest.rc", ' TESTRES ', undef, @lines );
 
 ################################################################
+# update the makefile list in Makefile.in
+
+my @targets;
+my @depends;
+
+foreach my $file (sort @makerules)
+{
+    push @targets, $file;
+    if ($file eq "Make.rules") { push @depends, "$file: $file.in"; }
+    else { push @depends, "$file: $file.in Make.rules"; }
+}
+
+foreach my $file (sort @makefiles)
+{
+    push @targets, $file unless $file eq "Makefile";
+
+    # find the right rules file (FIXME: should parse the Makefile.in instead)
+    my $dep = "Make.rules";
+    if ($file =~ /^programs\/.*\/Makefile/) { $dep = "programs/Makeprog.rules"; }
+    elsif ($file =~ /^dlls\/.*\/tests\/Makefile/) { $dep = "dlls/Maketest.rules"; }
+    elsif ($file =~ /^dlls\/(.*)\/Makefile/)
+    {
+        $dep = ($1 eq "dxerr8" || $1 eq "dxerr9" || $1 eq "dxguid" ||
+                $1 eq "strmiids" || $1 eq "uuid" || $1 eq "winecrt0") ?
+                "dlls/Makeimplib.rules" : "dlls/Makedll.rules";
+    }
+    push @depends, "$file: $file.in $dep";
+}
+
+@lines = ();
+push @lines, "ALL_MAKEFILES = \\\n\t";
+push @lines, join (" \\\n\t", @targets ), "\n\n";
+push @lines, "Makefile \$(ALL_MAKEFILES): config.status\n";
+push @lines, "\t\@./config.status \$\@\n\n";
+push @lines, "\$(RECURSE_TARGETS) \$(MAKEDEP): \$(ALL_MAKEFILES)\n\n";
+push @lines, "distclean::\n";
+push @lines, "\t\$(RM) Makefile \$(ALL_MAKEFILES)\n\n";
+push @lines, join ("\n", @depends ), "\n";
+
+replace_in_file( "Makefile.in", '^ALL_MAKEFILES\s*=', undef, @lines );
+
+
+################################################################
 # update dlls/Makefile.in
 
 my @dll_makefiles = grep /^dlls\//, @makefiles;
