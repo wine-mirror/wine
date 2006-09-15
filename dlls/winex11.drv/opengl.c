@@ -410,17 +410,17 @@ LOAD_FUNCPTR(glGetString)
     if ((!WineGLInfo.glxDirect && !strcmp("1.2", WineGLInfo.glxServerVersion)) ||
         (WineGLInfo.glxDirect && !strcmp("1.2", WineGLInfo.glxClientVersion)))
     {
-        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
-        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
-        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
-    } else {
         if (NULL != strstr(glx_extensions, "GLX_SGIX_fbconfig")) {
             pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
             pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
             pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
         } else {
-            ERR(" glx_version as %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxClientVersion);
+            ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxClientVersion);
         }
+    } else {
+        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
+        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
+        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
     }
 
     /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
