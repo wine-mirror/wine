@@ -1644,6 +1644,7 @@ dlls/msvidc32/Makefile
 dlls/mswsock/Makefile
 dlls/msxml3/Makefile
 dlls/msxml3/tests/Makefile
+dlls/nddeapi/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile
 dlls/newdev/Makefile

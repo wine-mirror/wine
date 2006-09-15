@@ -117,6 +117,7 @@ msvcrt40/libmsvcrt40.def
 msvcrtd/libmsvcrtd.def
 msvfw32/libmsvfw32.def
 mswsock/libmswsock.def
+nddeapi/libnddeapi.def
 netapi32/libnetapi32.def
 newdev/libnewdev.def
 ntdll/libntdll.def

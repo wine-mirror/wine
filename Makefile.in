@@ -285,6 +285,7 @@ ALL_MAKEFILES = \
 	dlls/mswsock/Makefile \
 	dlls/msxml3/Makefile \
 	dlls/msxml3/tests/Makefile \
+	dlls/nddeapi/Makefile \
 	dlls/netapi32/Makefile \
 	dlls/netapi32/tests/Makefile \
 	dlls/newdev/Makefile \
@@ -602,6 +603,7 @@ dlls/msvidc32/Makefile: dlls/msvidc32/Makefile.in dlls/Makedll.rules
 dlls/mswsock/Makefile: dlls/mswsock/Makefile.in dlls/Makedll.rules
 dlls/msxml3/Makefile: dlls/msxml3/Makefile.in dlls/Makedll.rules
 dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules
+dlls/nddeapi/Makefile: dlls/nddeapi/Makefile.in dlls/Makedll.rules
 dlls/netapi32/Makefile: dlls/netapi32/Makefile.in dlls/Makedll.rules
 dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in dlls/Maketest.rules
 dlls/newdev/Makefile: dlls/newdev/Makefile.in dlls/Makedll.rules

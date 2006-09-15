@@ -115,6 +115,7 @@ BASEDIRS = \
 	msvidc32 \
 	mswsock \
 	msxml3 \
+	nddeapi \
 	netapi32 \
 	newdev \
 	ntdll \
@@ -554,6 +555,7 @@ IMPORT_LIBS = \
 	msvcrtd/libmsvcrtd.$(IMPLIBEXT) \
 	msvfw32/libmsvfw32.$(IMPLIBEXT) \
 	mswsock/libmswsock.$(IMPLIBEXT) \
+	nddeapi/libnddeapi.$(IMPLIBEXT) \
 	netapi32/libnetapi32.$(IMPLIBEXT) \
 	newdev/libnewdev.$(IMPLIBEXT) \
 	ntdll/libntdll.$(IMPLIBEXT) \
@@ -797,6 +799,9 @@ msvfw32/libmsvfw32.$(IMPLIBEXT): msvfw32/msvfw32.spec $(WINEBUILD)
 
 mswsock/libmswsock.$(IMPLIBEXT): mswsock/mswsock.spec $(WINEBUILD)
 	@cd mswsock && $(MAKE) libmswsock.$(IMPLIBEXT)
+
+nddeapi/libnddeapi.$(IMPLIBEXT): nddeapi/nddeapi.spec $(WINEBUILD)
+	@cd nddeapi && $(MAKE) libnddeapi.$(IMPLIBEXT)
 
 netapi32/libnetapi32.$(IMPLIBEXT): netapi32/netapi32.spec $(WINEBUILD)
 	@cd netapi32 && $(MAKE) libnetapi32.$(IMPLIBEXT)
