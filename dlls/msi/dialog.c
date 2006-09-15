@@ -2290,7 +2290,6 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
     WCHAR num[10];
     LVCOLUMNW lvc;
     DWORD count = 0;
-    LRESULT r;
 
     static const WCHAR zero[] = {'0',0};
     static const WCHAR negative[] = {'-',0};
@@ -2316,20 +2315,20 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
         if ( !strncmpW( num, negative, 1 ) || !str_is_number( num ) )
             return;
 
-        lvc.mask = LVCF_FMT | LVCF_ORDER | LVCF_WIDTH | LVCF_TEXT;
-        lvc.iOrder = count; 
-        lvc.pszText = msi_dialog_get_uitext( dialog, column_keys[count++] );
+        ZeroMemory( &lvc, sizeof(lvc) );
+        lvc.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
         lvc.cx = atolW( num );
-        lvc.fmt = LVCFMT_LEFT;
+        lvc.pszText = msi_dialog_get_uitext( dialog, column_keys[count] );
 
-        r = SendMessageW( control->hwnd,  LVM_INSERTCOLUMNW, 0, (LPARAM)&lvc );
+        SendMessageW( control->hwnd,  LVM_INSERTCOLUMNW, count++, (LPARAM)&lvc );
         msi_free( lvc.pszText );
-        if ( r ) return;
     }
 }
 
 static void msi_dialog_vcl_add_drives( msi_dialog *dialog, msi_control *control )
 {
+    ULARGE_INTEGER total, free;
+    WCHAR size_text[MAX_PATH];
     LPWSTR drives, ptr;
     LVITEMW lvitem;
     DWORD size;
@@ -2352,6 +2351,20 @@ static void msi_dialog_vcl_add_drives( msi_dialog *dialog, msi_control *control 
         lvitem.pszText = ptr;
         lvitem.cchTextMax = lstrlenW(ptr) + 1;
         SendMessageW( control->hwnd, LVM_INSERTITEMW, 0, (LPARAM)&lvitem );
+
+        GetDiskFreeSpaceExW(ptr, &free, &total, NULL);
+
+        StrFormatByteSizeW(total.QuadPart, size_text, MAX_PATH);
+        lvitem.iSubItem = 1;
+        lvitem.pszText = size_text;
+        lvitem.cchTextMax = lstrlenW(size_text) + 1;
+        SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
+
+        StrFormatByteSizeW(free.QuadPart, size_text, MAX_PATH);
+        lvitem.iSubItem = 2;
+        lvitem.pszText = size_text;
+        lvitem.cchTextMax = lstrlenW(size_text) + 1;
+        SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
 
         ptr += lstrlenW(ptr) + 1;
         i++;
