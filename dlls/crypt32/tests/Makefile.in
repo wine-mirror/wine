@@ -14,6 +14,7 @@ CTESTS = \
 	main.c \
 	oid.c \
 	protectdata.c \
+	sip.c \
 	store.c \
 	str.c
 
