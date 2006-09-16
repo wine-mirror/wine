@@ -363,14 +363,23 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 	TRACE(" cooperative level : ");
 	_dump_cooperativelevel_DI(dwflags);
     }
+
+    if ((dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == 0 ||
+        (dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE) ||
+        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == 0 ||
+        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == (DISCL_FOREGROUND | DISCL_BACKGROUND))
+        return DIERR_INVALIDPARAM;
     
+    if (dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
+        hwnd = GetDesktopWindow();
+
+    if (!hwnd) return E_HANDLE;
+
     if (dwflags & DISCL_EXCLUSIVE && dwflags & DISCL_BACKGROUND) {
         return DIERR_UNSUPPORTED;
     }
-    
+
     /* Store the window which asks for the mouse */
-    if (!hwnd)
-	hwnd = GetDesktopWindow();
     This->win = hwnd;
     This->dwCoopLevel = dwflags;
     
