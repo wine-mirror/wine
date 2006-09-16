@@ -1700,14 +1700,18 @@ msi_seltree_feature_from_item( HWND hwnd, HTREEITEM hItem )
 static LRESULT
 msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
 {
+    struct msi_selection_tree_info *info;
     MSIFEATURE *feature;
-    ComponentList *cl;
+    MSIPACKAGE *package;
     union {
         RECT rc;
         POINT pt[2];
         HTREEITEM hItem;
     } u;
     UINT r;
+
+    info = GetPropW(hwnd, szButtonData);
+    package = info->dialog->package;
 
     feature = msi_seltree_feature_from_item( hwnd, hItem );
     if (!feature)
@@ -1737,13 +1741,7 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
 
     /* update */
     msi_seltree_sync_item_state( hwnd, feature, hItem );
-
-    /* update the feature's components */
-    LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
-    {
-        cl->component->Action = feature->Action;
-        cl->component->ActionRequest = feature->ActionRequest;
-    }
+    ACTION_UpdateComponentStates( package, feature->Feature );
 
     return 0;
 }
