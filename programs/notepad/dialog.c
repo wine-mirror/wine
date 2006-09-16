@@ -597,6 +597,7 @@ VOID DIALOG_EditTimeDate(VOID)
 
 VOID DIALOG_EditWrap(VOID)
 {
+    BOOL modify = FALSE;
     static const WCHAR editW[] = { 'e','d','i','t',0 };
     DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
                     ES_AUTOVSCROLL | ES_MULTILINE;
@@ -612,6 +613,7 @@ VOID DIALOG_EditWrap(VOID)
         return;
     }
     GetWindowText(Globals.hEdit, pTemp, size);
+    modify = SendMessage(Globals.hEdit, EM_GETMODIFY, 0, 0);
     DestroyWindow(Globals.hEdit);
     GetClientRect(Globals.hMainWnd, &rc);
     if( Globals.bWrapLongLines ) dwStyle |= WS_HSCROLL | ES_AUTOHSCROLL;
@@ -620,6 +622,7 @@ VOID DIALOG_EditWrap(VOID)
                          NULL, Globals.hInstance, NULL);
     SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
     SetWindowTextW(Globals.hEdit, pTemp);
+    SendMessage(Globals.hEdit, EM_SETMODIFY, (WPARAM)modify, 0);
     SetFocus(Globals.hEdit);
     HeapFree(GetProcessHeap(), 0, pTemp);
     
