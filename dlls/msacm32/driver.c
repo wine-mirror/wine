@@ -671,9 +671,9 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
                 if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL) {
                     return MMSYSERR_NOTSUPPORTED;
                 }
-                if (dwPriority != 1 && dwPriority != -1) {
+                if (dwPriority != 1 && dwPriority != (DWORD)-1) {
                     FIXME("unexpected priority %ld, using sign only\n", dwPriority);
-                    if (dwPriority < 0) dwPriority = -1;
+                    if ((signed)dwPriority < 0) dwPriority = (DWORD)-1;
                     if (dwPriority > 0) dwPriority = 1;
                 }
                 
@@ -681,7 +681,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
                     (padid->pPrevACMDriverID->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))) {
                     /* do nothing - driver is first of list, or first after last
                        local driver */
-                } else if (dwPriority == -1 && padid->pNextACMDriverID == NULL) {
+                } else if (dwPriority == (DWORD)-1 && padid->pNextACMDriverID == NULL) {
                     /* do nothing - driver is last of list */
                 } else {
                     MSACM_RePositionDriver(padid, dwPriority);
