@@ -34,6 +34,27 @@
 NOTEPAD_GLOBALS Globals;
 static ATOM aFINDMSGSTRING;
 
+static const WCHAR notepad_reg_key[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'M','i','c','r','o','s','o','f','t','\\','N','o','t','e','p','a','d','\0'};
+static const WCHAR value_fWrap[]            = {'f','W','r','a','p','\0'};
+static const WCHAR value_iPointSize[]       = {'i','P','o','i','n','t','S','i','z','e','\0'};
+static const WCHAR value_iWindowPosDX[]     = {'i','W','i','n','d','o','w','P','o','s','D','X','\0'};
+static const WCHAR value_iWindowPosDY[]     = {'i','W','i','n','d','o','w','P','o','s','D','Y','\0'};
+static const WCHAR value_iWindowPosX[]      = {'i','W','i','n','d','o','w','P','o','s','X','\0'};
+static const WCHAR value_iWindowPosY[]      = {'i','W','i','n','d','o','w','P','o','s','Y','\0'};
+static const WCHAR value_lfCharSet[]        = {'l','f','C','h','a','r','S','e','t','\0'};
+static const WCHAR value_lfClipPrecision[]  = {'l','f','C','l','i','p','P','r','e','c','i','s','i','o','n','\0'};
+static const WCHAR value_lfEscapement[]     = {'l','f','E','s','c','a','p','e','m','e','n','t','\0'};
+static const WCHAR value_lfItalic[]         = {'l','f','I','t','a','l','i','c','\0'};
+static const WCHAR value_lfOrientation[]    = {'l','f','O','r','i','e','n','t','a','t','i','o','n','\0'};
+static const WCHAR value_lfOutPrecision[]   = {'l','f','O','u','t','P','r','e','c','i','s','i','o','n','\0'};
+static const WCHAR value_lfPitchAndFamily[] = {'l','f','P','i','t','c','h','A','n','d','F','a','m','i','l','y','\0'};
+static const WCHAR value_lfQuality[]        = {'l','f','Q','u','a','l','i','t','y','\0'};
+static const WCHAR value_lfStrikeOut[]      = {'l','f','S','t','r','i','k','e','O','u','t','\0'};
+static const WCHAR value_lfUnderline[]      = {'l','f','U','n','d','e','r','l','i','n','e','\0'};
+static const WCHAR value_lfWeight[]         = {'l','f','W','e','i','g','h','t','\0'};
+static const WCHAR value_lfFaceName[]       = {'l','f','F','a','c','e','N','a','m','e','\0'};
+
 /***********************************************************************
  *
  *           SetFileName
@@ -47,34 +68,158 @@ VOID SetFileName(LPCWSTR szFileName)
     GetFileTitle(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle));
 }
 
+/******************************************************************************
+ *      get_dpi
+ *
+ * Get the dpi from registry HKCC\Software\Fonts\LogPixels.
+ */
+static DWORD get_dpi(void)
+{
+    static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+    DWORD dpi = 96;
+    HKEY hkey;
+
+    if (RegOpenKey(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
+    {
+        DWORD type, size, new_dpi;
+
+        size = sizeof(new_dpi);
+        if(RegQueryValueEx(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
+        {
+            if(type == REG_DWORD && new_dpi != 0)
+                dpi = new_dpi;
+        }
+        RegCloseKey(hkey);
+    }
+    return dpi;
+}
+
 /***********************************************************************
  *
- *           NOTEPAD_InitFont
+ *           NOTEPAD_SaveSettingToRegistry
  *
- *  Initialize font for the edit window
+ *  Save settring to registry HKCU\Software\Microsoft\Notepad.
  */
-static VOID NOTEPAD_InitFont(void)
+static VOID NOTEPAD_SaveSettingToRegistry(void)
 {
-    LOGFONT *lf = &Globals.lfFont;
-    static const WCHAR systemW[] = { 'S','y','s','t','e','m',0 };
+    HKEY hkey;
+    DWORD disp;
 
-    lf->lfHeight        = -40;
-    lf->lfWidth         = 0;
-    lf->lfEscapement    = 0;
-    lf->lfOrientation   = 0;
-    lf->lfWeight        = FW_REGULAR;
-    lf->lfItalic        = FALSE;
-    lf->lfUnderline     = FALSE;
-    lf->lfStrikeOut     = FALSE;
-    lf->lfCharSet       = DEFAULT_CHARSET;
-    lf->lfOutPrecision  = OUT_DEFAULT_PRECIS;
-    lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    lf->lfQuality       = DEFAULT_QUALITY;
-    lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-    lstrcpy(lf->lfFaceName, systemW);
+    if(RegCreateKeyEx(HKEY_CURRENT_USER, notepad_reg_key, 0, NULL,
+                REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disp) == ERROR_SUCCESS)
+    {
+        DWORD data;
+        RECT rect;
+        
+        GetWindowRect(Globals.hMainWnd, &rect);
+        Globals.iWindowPosX  = rect.left;
+        Globals.iWindowPosY  = rect.top;
+        Globals.iWindowPosDX = rect.right - rect.left;
+        Globals.iWindowPosDY = rect.bottom - rect.top;
+
+#define SET_NOTEPAD_REG(hkey, value_name, value_data) do { DWORD data = (DWORD)value_data; RegSetValueEx(hkey, value_name, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD)); }while(0)
+        SET_NOTEPAD_REG(hkey, value_fWrap,            Globals.bWrapLongLines);
+        SET_NOTEPAD_REG(hkey, value_iWindowPosX,      Globals.iWindowPosX);
+        SET_NOTEPAD_REG(hkey, value_iWindowPosY,      Globals.iWindowPosY);
+        SET_NOTEPAD_REG(hkey, value_iWindowPosDX,     Globals.iWindowPosDX);
+        SET_NOTEPAD_REG(hkey, value_iWindowPosDY,     Globals.iWindowPosDY);
+        SET_NOTEPAD_REG(hkey, value_lfCharSet,        Globals.lfFont.lfCharSet);
+        SET_NOTEPAD_REG(hkey, value_lfClipPrecision,  Globals.lfFont.lfClipPrecision);
+        SET_NOTEPAD_REG(hkey, value_lfEscapement,     Globals.lfFont.lfEscapement);
+        SET_NOTEPAD_REG(hkey, value_lfItalic,         Globals.lfFont.lfItalic);
+        SET_NOTEPAD_REG(hkey, value_lfOrientation,    Globals.lfFont.lfOrientation);
+        SET_NOTEPAD_REG(hkey, value_lfOutPrecision,   Globals.lfFont.lfOutPrecision);
+        SET_NOTEPAD_REG(hkey, value_lfPitchAndFamily, Globals.lfFont.lfPitchAndFamily);
+        SET_NOTEPAD_REG(hkey, value_lfQuality,        Globals.lfFont.lfQuality);
+        SET_NOTEPAD_REG(hkey, value_lfStrikeOut,      Globals.lfFont.lfStrikeOut);
+        SET_NOTEPAD_REG(hkey, value_lfUnderline,      Globals.lfFont.lfUnderline);
+        SET_NOTEPAD_REG(hkey, value_lfWeight,         Globals.lfFont.lfWeight);
+#undef SET_NOTEPAD_REG
+
+        data = (DWORD)(abs(Globals.lfFont.lfHeight) * 72 / get_dpi() * 10); /* method of native notepad.exe */
+        RegSetValueEx(hkey, value_iPointSize, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD));
+
+        RegSetValueEx(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
+                      lstrlen(Globals.lfFont.lfFaceName) * sizeof(Globals.lfFont.lfFaceName[0]));
+
+        RegCloseKey(hkey);
+    }
+}
+
+/***********************************************************************
+ *
+ *           NOTEPAD_LoadSettingFromRegistry
+ *
+ *  Load setting from registry HKCU\Software\Microsoft\Notepad.
+ */
+static VOID NOTEPAD_LoadSettingFromRegistry(void)
+{
+    static const WCHAR systemW[] = { 'S','y','s','t','e','m','\0' };
+    HKEY hkey;
+    INT base_length;
+
+    base_length = (GetSystemMetrics(SM_CXSCREEN) > GetSystemMetrics(SM_CYSCREEN))?
+        GetSystemMetrics(SM_CYSCREEN) : GetSystemMetrics(SM_CXSCREEN);
+
+    Globals.iWindowPosX  = 0;
+    Globals.iWindowPosY  = 0;
+    Globals.iWindowPosDX = base_length * .95;
+    Globals.iWindowPosDY = Globals.iWindowPosDX * 3 / 4;
+
+    Globals.bWrapLongLines  = TRUE;
     
-    Globals.hFont = CreateFontIndirect(lf);
-    SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
+    Globals.lfFont.lfHeight         = -12;
+    Globals.lfFont.lfWidth          = 0;
+    Globals.lfFont.lfEscapement     = 0;
+    Globals.lfFont.lfOrientation    = 0;
+    Globals.lfFont.lfWeight         = FW_REGULAR;
+    Globals.lfFont.lfItalic         = FALSE;
+    Globals.lfFont.lfUnderline      = FALSE;
+    Globals.lfFont.lfStrikeOut      = FALSE;
+    Globals.lfFont.lfCharSet        = DEFAULT_CHARSET;
+    Globals.lfFont.lfOutPrecision   = OUT_DEFAULT_PRECIS;
+    Globals.lfFont.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
+    Globals.lfFont.lfQuality        = DEFAULT_QUALITY;
+    Globals.lfFont.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+    lstrcpy(Globals.lfFont.lfFaceName, systemW);
+
+    if(RegOpenKey(HKEY_CURRENT_USER, notepad_reg_key, &hkey) == ERROR_SUCCESS)
+    {
+        WORD  data_lfFaceName[LF_FACESIZE];
+        DWORD type, data, size;
+
+#define QUERY_NOTEPAD_REG(hkey, value_name, ret) do { DWORD type, data; DWORD size = sizeof(DWORD); if(RegQueryValueEx(hkey, value_name, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS) if(type == REG_DWORD) ret = (typeof(ret))data; } while(0)
+        QUERY_NOTEPAD_REG(hkey, value_fWrap,            Globals.bWrapLongLines);
+        QUERY_NOTEPAD_REG(hkey, value_iWindowPosX,      Globals.iWindowPosX);
+        QUERY_NOTEPAD_REG(hkey, value_iWindowPosY,      Globals.iWindowPosY);
+        QUERY_NOTEPAD_REG(hkey, value_iWindowPosDX,     Globals.iWindowPosDX);
+        QUERY_NOTEPAD_REG(hkey, value_iWindowPosDY,     Globals.iWindowPosDY);
+        QUERY_NOTEPAD_REG(hkey, value_lfCharSet,        Globals.lfFont.lfCharSet);
+        QUERY_NOTEPAD_REG(hkey, value_lfClipPrecision,  Globals.lfFont.lfClipPrecision);
+        QUERY_NOTEPAD_REG(hkey, value_lfEscapement,     Globals.lfFont.lfEscapement);
+        QUERY_NOTEPAD_REG(hkey, value_lfItalic,         Globals.lfFont.lfItalic);
+        QUERY_NOTEPAD_REG(hkey, value_lfOrientation,    Globals.lfFont.lfOrientation);
+        QUERY_NOTEPAD_REG(hkey, value_lfOutPrecision,   Globals.lfFont.lfOutPrecision);
+        QUERY_NOTEPAD_REG(hkey, value_lfPitchAndFamily, Globals.lfFont.lfPitchAndFamily);
+        QUERY_NOTEPAD_REG(hkey, value_lfQuality,        Globals.lfFont.lfQuality);
+        QUERY_NOTEPAD_REG(hkey, value_lfStrikeOut,      Globals.lfFont.lfStrikeOut);
+        QUERY_NOTEPAD_REG(hkey, value_lfUnderline,      Globals.lfFont.lfUnderline);
+        QUERY_NOTEPAD_REG(hkey, value_lfWeight,         Globals.lfFont.lfWeight);
+#undef QUERY_NOTEPAD_REG
+
+        size = sizeof(DWORD);
+        if(RegQueryValueEx(hkey, value_iPointSize, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS)
+            if(type == REG_DWORD)
+                Globals.lfFont.lfHeight = (LONG)(-abs(data / 10 * get_dpi() / 72)); /* method of native notepad.exe */
+
+        size = sizeof(Globals.lfFont.lfFaceName);
+        if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_lfFaceName, &size) == ERROR_SUCCESS)
+            if(type == REG_SZ)
+                lstrcpy(Globals.lfFont.lfFaceName, data_lfFaceName);
+        
+        RegCloseKey(hkey);
+    }
 }
 
 /***********************************************************************
@@ -192,7 +337,9 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                              dwStyle,
                              0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
-        NOTEPAD_InitFont();
+
+        Globals.hFont = CreateFontIndirect(&Globals.lfFont);
+        SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
         break;
     }
 
@@ -217,6 +364,8 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case WM_DESTROY:
+        NOTEPAD_SaveSettingToRegistry();
+
         PostQuitMessage(0);
         break;
 
@@ -377,7 +526,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     ZeroMemory(&Globals, sizeof(Globals));
     Globals.hInstance       = hInstance;
-    Globals.bWrapLongLines  = TRUE;
+    NOTEPAD_LoadSettingFromRegistry();
 
     ZeroMemory(&class, sizeof(class));
     class.cbSize        = sizeof(class);
@@ -395,7 +544,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     Globals.hMainWnd =
         CreateWindow(className, winName, WS_OVERLAPPEDWINDOW,
-                     CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+                     Globals.iWindowPosX, Globals.iWindowPosY,
+                     Globals.iWindowPosDX, Globals.iWindowPosDY,
                      NULL, NULL, Globals.hInstance, NULL);
     if (!Globals.hMainWnd)
     {
