@@ -869,20 +869,21 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             /*if any other feature wants is local we need to set it local*/
             LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
             {
-                if ( component->ActionRequest != INSTALLSTATE_LOCAL )
+                if ( f->ActionRequest != INSTALLSTATE_LOCAL &&
+                     f->ActionRequest != INSTALLSTATE_SOURCE )
+                {
                     break;
+                }
 
                 LIST_FOR_EACH_ENTRY( clist, &f->Components, ComponentList, entry )
                 {
-                    if ( clist->component == component )
+                    if ( clist->component == component &&
+                         (f->ActionRequest == INSTALLSTATE_LOCAL ||
+                          f->ActionRequest == INSTALLSTATE_SOURCE) )
                     {
-                        if (f->ActionRequest == INSTALLSTATE_LOCAL)
-                        {
-                            TRACE("Saved by %s\n", debugstr_w(f->Feature));
-                            component->ActionRequest = INSTALLSTATE_LOCAL;
-                            component->Action = INSTALLSTATE_LOCAL;
-                        }
-                        break;
+                        TRACE("Saved by %s\n", debugstr_w(f->Feature));
+                        component->ActionRequest = f->ActionRequest;
+                        component->Action = f->ActionRequest;
                     }
                 }
             }
