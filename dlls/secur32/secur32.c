@@ -545,7 +545,12 @@ static void SECUR32_initializeProviders(void)
     InitializeCriticalSection(&cs);
     /* First load built-in providers */
     SECUR32_initSchannelSP();
+    /* Do not load Negotiate yet. This breaks for some user on the wine-users
+     * mailing list as of 2006-09-12. Without Negotiate, applications should
+     * fall back to NTLM and that should work.*/
+#if 0
     SECUR32_initNegotiateSP();
+#endif
     SECUR32_initNTLMSP();
     /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
