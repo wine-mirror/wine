@@ -264,6 +264,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice->wine_df->internal_format_size = Wine_InternalMouseFormat.dwDataSize;
     newDevice->wine_df->dt = NULL;
     newDevice->dinput = dinput;
+    newDevice->dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     return newDevice;
 }
@@ -424,7 +425,6 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
 /* low-level mouse hook */
 static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lparam )
 {
-    LRESULT ret;
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = (SysMouseImpl*) current_lock;
     DWORD dwCoop;
@@ -544,14 +544,11 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     
     LeaveCriticalSection(&(This->crit));
     
-    if (dwCoop & DISCL_NONEXCLUSIVE) {
-	/* Pass the events down to previous handlers (e.g. win32 input) */
-	ret = CallNextHookEx( 0, code, wparam, lparam );
-    } else {
-	/* Ignore message */
-	ret = 1;
-    }
-    return ret;
+    /* Ignore message */
+    if (dwCoop & DISCL_EXCLUSIVE) return 1;
+
+    /* Pass the events down to previous handlers (e.g. win32 input) */
+    return CallNextHookEx( 0, code, wparam, lparam );
 }
 
 static void dinput_window_check(SysMouseImpl* This) {
