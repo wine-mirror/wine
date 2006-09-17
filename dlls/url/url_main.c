@@ -66,7 +66,7 @@ BOOL WINAPI InetIsOffline(void)
 
 HRESULT WINAPI FileProtocolHandlerA(HWND hWnd, LPCSTR pszUrl,int nShowCmd)
 {
-    LPSTR pszPath = NULL;
+    CHAR pszPath[MAX_PATH];
     DWORD size = MAX_PATH;
     HRESULT createpath = PathCreateFromUrlA(pszUrl,pszPath,&size,0);
 

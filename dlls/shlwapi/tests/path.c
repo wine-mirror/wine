@@ -738,6 +738,12 @@ static void test_PathCreateFromUrl(void)
     DWORD len, ret;
     WCHAR ret_pathW[INTERNET_MAX_URL_LENGTH];
     WCHAR *pathW, *urlW;
+    static const char url[] = "http://www.winehq.org";
+
+    /* Check ret_path = NULL */
+    len = sizeof(url);
+    ret = PathCreateFromUrlA(url, NULL, &len, 0); 
+    ok ( ret == E_INVALIDARG, "got 0x%08lx expected E_INVALIDARG\n", ret);
 
     for(i = 0; i < sizeof(TEST_PATHFROMURL) / sizeof(TEST_PATHFROMURL[0]); i++) {
         len = INTERNET_MAX_URL_LENGTH;
