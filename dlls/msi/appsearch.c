@@ -254,7 +254,7 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
     switch (regType)
     {
         case REG_SZ:
-            if (*(LPWSTR)value == '#')
+            if (*(LPCWSTR)value == '#')
             {
                 /* escape leading pound with another */
                 *appValue = msi_alloc(sz + sizeof(WCHAR));

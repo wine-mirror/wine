@@ -334,7 +334,7 @@ LPWSTR msi_version_dword_to_str(DWORD version)
 LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
 {
     DWORD len = value ? (lstrlenW(value) + 1) * sizeof (WCHAR) : 0;
-    return RegSetValueExW( hkey, name, 0, REG_SZ, (LPBYTE)value, len );
+    return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, len );
 }
 
 LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
@@ -342,7 +342,7 @@ LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
     LPCWSTR p = value;
     while (*p) p += lstrlenW(p) + 1;
     return RegSetValueExW( hkey, name, 0, REG_MULTI_SZ,
-                           (LPBYTE)value, (p + 1 - value) * sizeof(WCHAR) );
+                           (const BYTE *)value, (p + 1 - value) * sizeof(WCHAR) );
 }
 
 LONG msi_reg_set_val_dword( HKEY hkey, LPCWSTR name, DWORD val )

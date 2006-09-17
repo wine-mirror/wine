@@ -333,7 +333,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
             rc = RegSetValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHW, 0,
-                    REG_SZ, (LPBYTE)szValue, size);
+                    REG_SZ, (const BYTE *)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
@@ -345,7 +345,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
             rc = RegSetValueExW(key, INSTALLPROPERTY_DISKPROMPTW, 0,
-                    REG_SZ, (LPBYTE)szValue, size);
+                    REG_SZ, (const BYTE *)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
@@ -383,7 +383,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     {
         DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
         rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0,
-                REG_SZ, (LPBYTE)szValue, size);
+                REG_SZ, (const BYTE *)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
     }
@@ -532,7 +532,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         current_index ++;
         sprintfW(source_struct.szIndex,fmt,current_index);
         rc = RegSetValueExW(typekey, source_struct.szIndex, 0, REG_EXPAND_SZ, 
-                (LPBYTE)szSource, size);
+                (const BYTE *)szSource, size);
     }
 
     RegCloseKey(typekey);

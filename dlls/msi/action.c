@@ -364,6 +364,7 @@ static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
 
 static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
 {
+    LPCWSTR pc;
     LPWSTR p, *ret = NULL;
     UINT count = 0;
 
@@ -371,11 +372,11 @@ static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
         return ret;
 
     /* count the number of substrings */
-    for ( p = (LPWSTR)str, count = 0; p; count++ )
+    for ( pc = str, count = 0; pc; count++ )
     {
-        p = strchrW( p, sep );
-        if (p)
-            p++;
+        pc = strchrW( pc, sep );
+        if (pc)
+            pc++;
     }
 
     /* allocate space for an array of substring pointers and the substrings */
