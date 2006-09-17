@@ -1619,5 +1619,10 @@ void SECUR32_initNTLMSP(void)
         SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
         SECUR32_addPackages(provider, 1L, &infoA, &infoW);
     }
+    else
+    {
+        ERR("ntlm_auth was not found or is outdated. "
+            "Make sure that ntlm_auth >= 3.x is in your path.\n");
+    }
     cleanup_helper(helper);
 }
