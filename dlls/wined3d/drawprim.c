@@ -441,7 +441,12 @@ void primitiveDeclarationConvertToStridedData(
         unsigned int idx;
 
         element = vertexDeclaration->pDeclarationWine + i;
-        TRACE("%p Elements %p %d or %d\n", vertexDeclaration->pDeclarationWine, element,  i, vertexDeclaration->declarationWNumElements);
+        TRACE("%p Element %p (%d of %d)\n", vertexDeclaration->pDeclarationWine,
+            element,  i + 1, vertexDeclaration->declarationWNumElements - 1);
+
+        if (This->stateBlock->streamSource[element->Stream] == NULL)
+            continue;
+
         if (This->stateBlock->streamIsUP) {
             TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             streamVBO = 0;
