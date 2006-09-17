@@ -299,6 +299,13 @@ HKLM,%MciExtStr%,"wvx",,"MPEGVideo"
 [Misc]
 HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,9000
 HKLM,Software\Microsoft\Advanced INF Setup,,,""
+HKLM,Software\Microsoft\Rpc\SecurityService,1,2,"secur32.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,10,2,"secur32.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,14,2,"schannel.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,16,2,"secur32.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,18,2,"secur32.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,68,2,"netlogon.dll"
+HKLM,Software\Microsoft\Rpc\SecurityService,9,2,"secur32.dll"
 HKLM,System\CurrentControlSet\Control\Session Manager,,,""
 HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKLM,System\CurrentControlSet\Services\VxD\MSTCP,,,""
