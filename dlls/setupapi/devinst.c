@@ -351,7 +351,7 @@ BOOL WINAPI SetupDiClassGuidsFromNameExA(
     if (ClassNameW == NULL)
         return FALSE;
 
-    if (MachineNameW)
+    if (MachineName)
     {
         MachineNameW = MultiByteToUnicode(MachineName, CP_ACP);
         if (MachineNameW == NULL)
