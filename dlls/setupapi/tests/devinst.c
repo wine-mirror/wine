@@ -90,7 +90,7 @@ static void test_SetupDiOpenClassRegKeyExA(void)
     HKEY hkey;
 
     /* Check return value for non-existent key */
-    hkey = SetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
+    hkey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
         DIOCR_INSTALLER, NULL, NULL);
     ok(hkey == INVALID_HANDLE_VALUE,
         "returned %p (expected INVALID_HANDLE_VALUE)\n", hkey);
