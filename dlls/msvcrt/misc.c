@@ -82,7 +82,7 @@ void* CDECL _lfind(const void* match, const void* start,
     {
       if (cf(match, start) == 0)
         return (void *)start; /* found */
-      start = (char*)start + elem_size;
+      start = (const char *)start + elem_size;
     } while (--size);
   return NULL;
 }

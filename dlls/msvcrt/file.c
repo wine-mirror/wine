@@ -1980,7 +1980,8 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
   else
   {
       unsigned int i, j, nr_lf;
-      char *s =(char*)buf, *buf_start=(char*)buf, *p;
+      char *p;
+      const char *s = (const char *)buf, *buf_start = (const char *)buf;
       /* find number of \n ( without preceding \r ) */
       for ( nr_lf=0,i = 0; i <count; i++)
       {
@@ -1994,7 +1995,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
       {
           if ((p = MSVCRT_malloc(count + nr_lf)))
           {
-              for(s=(char*)buf, i=0, j=0; i<count; i++)
+              for (s = (const char *)buf, i = 0, j = 0; i < count; i++)
               {
                   if (s[i]== '\n')
                   {
