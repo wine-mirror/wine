@@ -2261,8 +2261,11 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(DVD_LAYER_DESCRIPTOR);
         if (lpInBuffer == NULL || nInBufferSize != sizeof(DVD_READ_STRUCTURE)) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        TRACE("doing DVD_READ_STRUCTURE\n");
-        status = DVD_ReadStructure(fd, (PDVD_READ_STRUCTURE)lpInBuffer, (PDVD_LAYER_DESCRIPTOR)lpOutBuffer);
+        else
+        {
+            TRACE("doing DVD_READ_STRUCTURE\n");
+            status = DVD_ReadStructure(fd, (PDVD_READ_STRUCTURE)lpInBuffer, (PDVD_LAYER_DESCRIPTOR)lpOutBuffer);
+        }
         break;
 
     case IOCTL_SCSI_GET_INQUIRY_DATA:
