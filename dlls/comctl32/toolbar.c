@@ -2751,17 +2751,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("Number of bitmap infos: %d\n", infoPtr->nNumBitmapInfos);
 
-    if (infoPtr->nNumBitmapInfos == 0)
-    {
-        infoPtr->bitmaps = Alloc(sizeof(TBITMAP_INFO));
-    }
-    else
-    {
-        TBITMAP_INFO *oldBitmaps = infoPtr->bitmaps;
-        infoPtr->bitmaps = Alloc((infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
-        memcpy(&infoPtr->bitmaps[0], &oldBitmaps[0], infoPtr->nNumBitmapInfos * sizeof(TBITMAP_INFO));
-    }
-
+    infoPtr->bitmaps = ReAlloc(infoPtr->bitmaps, (infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
     infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nButtons = nButtons;
     infoPtr->bitmaps[infoPtr->nNumBitmapInfos].hInst = lpAddBmp->hInst;
     infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nID = lpAddBmp->nID;
@@ -5672,6 +5662,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* delete temporary buffer for tooltip text */
     Free (infoPtr->pszTooltipText);
+    Free (infoPtr->bitmaps);            /* bitmaps list */
 
     /* delete button data */
     if (infoPtr->buttons)
