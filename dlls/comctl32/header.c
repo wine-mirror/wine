@@ -1105,13 +1105,14 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
         {
             memmove(&infoPtr->order[iOrder], &infoPtr->order[iOrder + 1],
                    (infoPtr->uNumItem - iOrder) * sizeof(INT));
-            for (i = 0; i < infoPtr->uNumItem; i++)
-            {
-                if (infoPtr->order[i] > iItem)
-                    infoPtr->order[i]--;
-                if (i >= iOrder)
-                    infoPtr->items[infoPtr->order[i]].iOrder = infoPtr->order[i];
-            }
+        }
+            
+        for (i = 0; i < infoPtr->uNumItem; i++)
+        {
+            if (infoPtr->order[i] > iItem)
+                infoPtr->order[i]--;
+            if (i >= iOrder)
+                infoPtr->items[infoPtr->order[i]].iOrder = i;
         }
 
         for (i = 0; i < infoPtr->uNumItem; i++)
@@ -1343,7 +1344,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     {
         if (i != iOrder && infoPtr->order[i] >= nItem)
             infoPtr->order[i]++;
-        infoPtr->items[infoPtr->order[i]].iOrder = infoPtr->order[i];
+        infoPtr->items[infoPtr->order[i]].iOrder = i;
     }
 
     lpItem = &infoPtr->items[nItem];

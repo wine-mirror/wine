@@ -479,6 +479,86 @@ static void test_header_control (void)
 }
 
 
+static void check_order(const int expected_id[], const int expected_order[],
+                        int count, const char *type)
+{
+    int i;
+    HDITEMA hdi;
+
+    ok(getItemCount(hWndHeader) == count, "Invalid item count in order tests\n");
+    for (i = 0; i < count; i++)
+    {
+        hdi.mask = HDI_LPARAM|HDI_ORDER;
+        SendMessage(hWndHeader, HDM_GETITEMA, i, (LPARAM)&hdi);
+        ok(hdi.lParam == expected_id[i],
+            "Invalid item ids after '%s'- item %d has lParam %d\n", type, i, (int)hdi.lParam);
+        ok(hdi.iOrder == expected_order[i],
+            "Invalid item order after '%s'- item %d has iOrder %d\n", type, i, hdi.iOrder);
+    }
+}
+
+static void test_header_order (void)
+{
+    const int rand1[] = {0, 1, 1, 0, 4};
+    const int rand2[] = {4, 5, 6, 7, 4};
+    const int rand3[] = {5, 5, 1, 6, 1};
+    const int rand4[] = {1, 5, 2, 7, 6, 1, 4, 2, 3, 2};
+    const int rand5[] = {7, 8, 5, 6, 7, 2, 1, 9, 10, 10};
+    const int rand6[] = {2, 8, 3, 4, 0};
+
+    const int ids1[] = {3, 0, 2, 1, 4};
+    const int ord1[] = {0, 1, 2, 3, 4};
+    const int ids2[] = {3, 9, 7, 0, 2, 1, 4, 8, 6, 5};
+    const int ord2[] = {0, 4, 7, 1, 2, 3, 9, 8, 6, 5};
+    const int ord3[] = {0, 3, 9, 2, 1, 8, 7, 6, 5, 4};
+    const int ids4[] = {9, 0, 1, 8, 6};
+    const int ord4[] = {1, 0, 4, 3, 2};
+
+    char buffer[20];
+    HDITEMA hdi;
+    int i;
+
+    hWndHeader = create_header_control();
+
+    ZeroMemory(&hdi, sizeof(HDITEMA));
+    hdi.mask = HDI_TEXT | HDI_LPARAM;
+    hdi.pszText = buffer;
+    strcpy(buffer, "test");
+
+    for (i = 0; i < 5; i++)
+    {
+        hdi.lParam = i;
+        SendMessage(hWndHeader, HDM_INSERTITEMA, rand1[i], (LPARAM)&hdi);
+        rand();
+    }
+    check_order(ids1, ord1, 5, "insert without iOrder");
+
+    hdi.mask |= HDI_ORDER;
+    for (i = 0; i < 5; i++)
+    {
+        hdi.lParam = i + 5;
+        hdi.iOrder = rand2[i];
+        SendMessage(hWndHeader, HDM_INSERTITEMA, rand3[i], (LPARAM)&hdi);
+        rand(); rand();
+    }
+    check_order(ids2, ord2, 10, "insert with order");
+
+    hdi.mask = HDI_ORDER;
+    for (i=0; i<10; i++)
+    {
+        hdi.iOrder = rand5[i];
+        SendMessage(hWndHeader, HDM_SETITEMA, rand4[i], (LPARAM)&hdi);
+        rand(); rand();
+    }
+    check_order(ids2, ord3, 10, "setitems changing order");
+
+    for (i=0; i<5; i++)
+        SendMessage(hWndHeader, HDM_DELETEITEM, rand6[i], 0);
+    check_order(ids4, ord4, 5, "deleteitem");
+
+    DestroyWindow(hWndHeader);
+}
+
 LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -545,6 +625,7 @@ START_TEST(header)
     init();
 
     test_header_control();
+    test_header_order();
 
     DestroyWindow(hHeaderParentWnd);
 }
