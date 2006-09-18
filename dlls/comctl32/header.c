@@ -1060,54 +1060,40 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(hwnd);
     INT iItem = (INT)wParam;
+    INT iOrder;
+    INT i;
 
     TRACE("[iItem=%d]\n", iItem);
 
     if ((iItem < 0) || (iItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
-    if (infoPtr->uNumItem == 1) {
-        TRACE("Simple delete!\n");
-        HEADER_DisposeItem(&infoPtr->items[0]);
-        Free (infoPtr->items);
-        Free(infoPtr->order);
-        infoPtr->items = 0;
-        infoPtr->order = 0;
-        infoPtr->uNumItem = 0;
-    }
-    else {
-        INT i;
-        INT iOrder;
-        TRACE("Complex delete! [iItem=%d]\n", iItem);
+    for (i = 0; i < infoPtr->uNumItem; i++)
+       TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
 
-        for (i = 0; i < infoPtr->uNumItem; i++)
-           TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
-        HEADER_DisposeItem(&infoPtr->items[iItem]);
-        iOrder = infoPtr->items[iItem].iOrder;
+    iOrder = infoPtr->items[iItem].iOrder;
+    HEADER_DisposeItem(&infoPtr->items[iItem]);
 
-        infoPtr->uNumItem--;
-        memmove(&infoPtr->items[iItem], &infoPtr->items[iItem + 1],
-                (infoPtr->uNumItem - iItem) * sizeof(HEADER_ITEM));
-        memmove(&infoPtr->order[iOrder], &infoPtr->order[iOrder + 1],
-                (infoPtr->uNumItem - iOrder) * sizeof(INT));
-        infoPtr->items = ReAlloc(infoPtr->items, sizeof(HEADER_ITEM) * infoPtr->uNumItem);
-        infoPtr->order = ReAlloc(infoPtr->order, sizeof(INT) * infoPtr->uNumItem);
+    infoPtr->uNumItem--;
+    memmove(&infoPtr->items[iItem], &infoPtr->items[iItem + 1],
+            (infoPtr->uNumItem - iItem) * sizeof(HEADER_ITEM));
+    memmove(&infoPtr->order[iOrder], &infoPtr->order[iOrder + 1],
+            (infoPtr->uNumItem - iOrder) * sizeof(INT));
+    infoPtr->items = ReAlloc(infoPtr->items, sizeof(HEADER_ITEM) * infoPtr->uNumItem);
+    infoPtr->order = ReAlloc(infoPtr->order, sizeof(INT) * infoPtr->uNumItem);
         
-        /* Correct the orders */
-        for (i = 0; i < infoPtr->uNumItem; i++)
-        {
-            if (infoPtr->order[i] > iItem)
-                infoPtr->order[i]--;
-            if (i >= iOrder)
-                infoPtr->items[infoPtr->order[i]].iOrder = i;
-        }
-
-        for (i = 0; i < infoPtr->uNumItem; i++)
-           TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
+    /* Correct the orders */
+    for (i = 0; i < infoPtr->uNumItem; i++)
+    {
+        if (infoPtr->order[i] > iItem)
+            infoPtr->order[i]--;
+        if (i >= iOrder)
+            infoPtr->items[infoPtr->order[i]].iOrder = i;
     }
+    for (i = 0; i < infoPtr->uNumItem; i++)
+       TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
 
     HEADER_SetItemBounds (hwnd);
-
     InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
