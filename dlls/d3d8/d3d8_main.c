@@ -106,8 +106,28 @@ HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD
  * PARAMS
  * toto       result?
  */
-BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
+HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, int bool, DWORD* toto)
 {
-  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
-  return TRUE;
+  HRESULT ret;
+  FIXME("(%p %p %d %p): stub\n", pixelshader, reserved1, bool, toto);
+  
+  if (!pixelshader)
+      return E_FAIL;
+
+  if (reserved1)
+      return E_FAIL;   
+
+  switch(*pixelshader) {
+        case 0xFFFF0100:
+        case 0xFFFF0101:
+        case 0xFFFF0102:
+        case 0xFFFF0103:
+        case 0xFFFF0104:
+            ret=S_OK;
+            break;
+        default:
+            ERR("pixelshader version mismatch\n");
+            ret=E_FAIL;
+        }
+  return ret;
 }

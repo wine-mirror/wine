@@ -19,6 +19,7 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI *ValidateVertexShader)(DWORD*,DWORD*,DWORD*,int,DWORD*);
+static HRESULT (WINAPI *ValidatePixelShader)(DWORD*,DWORD*,int,DWORD*);
 
 static void test_ValidateVertexShader(void)
 {
@@ -64,9 +65,49 @@ static void test_ValidateVertexShader(void)
     ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
 }
 
+static void test_ValidatePixelShader(void)
+{ 
+    HRESULT ret;
+    static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
+        0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+        0x00000042, 0xB00F0000,                                                 /* tex t0                       */
+        0x00000008, 0x800F0000, 0xA0E40001, 0xA0E40000,                         /* dp3 r0, c1, c0               */
+        0x00000005, 0x800F0000, 0x90E40000, 0x80E40000,                         /* mul r0, v0, r0               */
+        0x00000005, 0x800F0000, 0xB0E40000, 0x80E40000,                         /* mul r0, t0, r0               */
+        0x0000FFFF};                                                            /* END                          */
+
+    ret=ValidatePixelShader(0,0,0,0);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+
+    ret=ValidatePixelShader(0,0,1,0);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+
+    ret=ValidatePixelShader(simple_ps,0,0,0);
+    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+
+    ret=ValidatePixelShader(simple_ps,0,1,0);
+    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    /* seems to do some version checking */
+    *simple_ps=0xFFFF0105;             /* bogus version  */
+    ret=ValidatePixelShader(simple_ps,0,1,0);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    /* I've seen that applications pass 2nd parameter always as 0;simple test with non-zero parameter */
+    *simple_ps=0xFFFF0101;             /* ps_1_1         */
+    ret=ValidatePixelShader(simple_ps,simple_ps,1,0);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    /* I've seen 3rd parameter is always passed as either 0 or 1, but passing other values doesn't seem to hurt*/
+    ret=ValidatePixelShader(simple_ps,0,12345,0);
+    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    /* What is 4th parameter ???? Following works ok */
+    ret=ValidatePixelShader(simple_ps,0,1,simple_ps);
+    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+}
+
 START_TEST(d3d8_main)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
     ValidateVertexShader = (void*)GetProcAddress (d3d8_handle, "ValidateVertexShader" );
+    ValidatePixelShader = (void*)GetProcAddress (d3d8_handle, "ValidatePixelShader" );
     test_ValidateVertexShader();
+    test_ValidatePixelShader();
 }
