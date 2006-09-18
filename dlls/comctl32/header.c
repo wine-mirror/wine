@@ -1076,7 +1076,6 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
         infoPtr->uNumItem = 0;
     }
     else {
-        HEADER_ITEM *oldItems = infoPtr->items;
         INT i;
         INT iOrder;
         TRACE("Complex delete! [iItem=%d]\n", iItem);
@@ -1087,26 +1086,14 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
         iOrder = infoPtr->items[iItem].iOrder;
 
         infoPtr->uNumItem--;
-        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
-        /* pre delete copy */
-        if (iItem > 0) {
-            memcpy (&infoPtr->items[0], &oldItems[0],
-                    iItem * sizeof(HEADER_ITEM));
-        }
-
-        /* post delete copy */
-        if (iItem < infoPtr->uNumItem) {
-            memcpy (&infoPtr->items[iItem], &oldItems[iItem+1],
-                    (infoPtr->uNumItem - iItem) * sizeof(HEADER_ITEM));
-        }
-
+        memmove(&infoPtr->items[iItem], &infoPtr->items[iItem + 1],
+                (infoPtr->uNumItem - iItem) * sizeof(HEADER_ITEM));
+        memmove(&infoPtr->order[iOrder], &infoPtr->order[iOrder + 1],
+                (infoPtr->uNumItem - iOrder) * sizeof(INT));
+        infoPtr->items = ReAlloc(infoPtr->items, sizeof(HEADER_ITEM) * infoPtr->uNumItem);
+        infoPtr->order = ReAlloc(infoPtr->order, sizeof(INT) * infoPtr->uNumItem);
+        
         /* Correct the orders */
-        if (iOrder < infoPtr->uNumItem)
-        {
-            memmove(&infoPtr->order[iOrder], &infoPtr->order[iOrder + 1],
-                   (infoPtr->uNumItem - iOrder) * sizeof(INT));
-        }
-            
         for (i = 0; i < infoPtr->uNumItem; i++)
         {
             if (infoPtr->order[i] > iItem)
@@ -1117,7 +1104,6 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 
         for (i = 0; i < infoPtr->uNumItem; i++)
            TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
-        Free (oldItems);
     }
 
     HEADER_SetItemBounds (hwnd);
@@ -1300,46 +1286,18 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     else if (infoPtr->uNumItem < iOrder)
         iOrder = infoPtr->uNumItem;
 
-    if (infoPtr->uNumItem == 0) {
-        infoPtr->items = Alloc (sizeof (HEADER_ITEM));
-        infoPtr->order = Alloc(sizeof(INT));
-        infoPtr->uNumItem++;
-    }
-    else {
-        HEADER_ITEM *oldItems = infoPtr->items;
-        INT *oldOrder = infoPtr->order;
+    infoPtr->uNumItem++;
+    infoPtr->items = ReAlloc(infoPtr->items, sizeof(HEADER_ITEM) * infoPtr->uNumItem);
+    infoPtr->order = ReAlloc(infoPtr->order, sizeof(INT) * infoPtr->uNumItem);
+    
+    /* make space for the new item */
+    memmove(&infoPtr->items[nItem + 1], &infoPtr->items[nItem],
+            (infoPtr->uNumItem - nItem - 1) * sizeof(HEADER_ITEM));
+    memmove(&infoPtr->order[iOrder + 1], &infoPtr->order[iOrder],
+           (infoPtr->uNumItem - iOrder - 1) * sizeof(INT));
 
-        infoPtr->uNumItem++;
-        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
-        if (nItem == 0) {
-            memcpy (&infoPtr->items[1], &oldItems[0],
-                    (infoPtr->uNumItem-1) * sizeof(HEADER_ITEM));
-        }
-        else
-        {
-              /* pre insert copy */
-            if (nItem > 0) {
-                 memcpy (&infoPtr->items[0], &oldItems[0],
-                         nItem * sizeof(HEADER_ITEM));
-            }
-
-            /* post insert copy */
-            if (nItem < infoPtr->uNumItem - 1) {
-                memcpy (&infoPtr->items[nItem+1], &oldItems[nItem],
-                        (infoPtr->uNumItem - nItem - 1) * sizeof(HEADER_ITEM));
-            }
-        }
-
-        infoPtr->order = Alloc(sizeof(INT) * infoPtr->uNumItem);
-        memcpy(infoPtr->order, oldOrder, iOrder * sizeof(INT));
-        infoPtr->order[iOrder] = nItem;
-        memcpy(&infoPtr->order[iOrder + 1], &oldOrder[iOrder],
-               (infoPtr->uNumItem - iOrder - 1) * sizeof(INT));
-
-        Free (oldItems);
-        Free(oldOrder);
-    }
-
+    /* update the order array */
+    infoPtr->order[iOrder] = nItem;
     for (i = 0; i < infoPtr->uNumItem; i++)
     {
         if (i != iOrder && infoPtr->order[i] >= nItem)
@@ -1352,6 +1310,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     /* cxy, fmt and lParam are copied even if not in the HDITEM mask */
     copyMask = phdi->mask | HDI_WIDTH | HDI_FORMAT | HDI_LPARAM;
     HEADER_StoreHDItemInHeader(lpItem, copyMask, phdi, bUnicode);
+    lpItem->iOrder = iOrder;
 
     /* set automatically some format bits */
     if (phdi->mask & HDI_TEXT)
@@ -1367,10 +1326,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_IMAGE)
         lpItem->fmt |= HDF_IMAGE;
 
-    lpItem->iOrder = iOrder;
-
     HEADER_SetItemBounds (hwnd);
-
     InvalidateRect(hwnd, NULL, FALSE);
 
     return nItem;
