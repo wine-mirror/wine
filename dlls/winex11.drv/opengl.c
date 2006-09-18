@@ -299,7 +299,10 @@ BOOL X11DRV_WineGL_InitOpenglInfo()
 
     wine_tsx11_unlock();
     if(vis) XFree(vis);
-    if(ctx) pglXDestroyContext(gdi_display, ctx);
+    if(ctx) {
+        pglXMakeCurrent(gdi_display, None, NULL);    
+        pglXDestroyContext(gdi_display, ctx);
+    }
     return TRUE;
 }
 
