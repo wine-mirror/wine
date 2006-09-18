@@ -103,6 +103,7 @@ static NTSTATUS (WINAPI * pRtlUnicodeStringToAnsiString)(PSTRING, PUNICODE_STRIN
 static NTSTATUS (WINAPI * pRtlFreeHeap)(PVOID, ULONG, PVOID);
 static NTSTATUS (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
+static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*);
 
 static HMODULE hntdll = 0;
 static int CurrentTest = 0;
@@ -146,6 +147,7 @@ static BOOL InitFunctionPtrs(void)
         NTDLL_GET_PROC(RtlFreeHeap)
         NTDLL_GET_PROC(RtlAllocateHeap)
         NTDLL_GET_PROC(RtlZeroMemory)
+        NTDLL_GET_PROC(RtlpNtQueryValueKey)
     }
     return TRUE;
 }
@@ -445,6 +447,14 @@ static void test_NtDeleteKey(void)
     ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08lx\n", status);
 }
 
+static void test_RtlpNtQueryValueKey(void)
+{
+    NTSTATUS status;
+
+    status = pRtlpNtQueryValueKey(NULL, NULL, NULL, NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t','\\',0};
@@ -463,6 +473,7 @@ START_TEST(reg)
     test_RtlCheckRegistryKey();
     test_RtlOpenCurrentUser();
     test_RtlQueryRegistryValues();
+    test_RtlpNtQueryValueKey();
     test_NtFlushKey();
     test_NtDeleteKey();
 

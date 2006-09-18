@@ -517,7 +517,7 @@ NTSTATUS WINAPI RtlpNtQueryValueKey( HANDLE handle, ULONG *result_type, PBYTE de
     UNICODE_STRING name;
     NTSTATUS ret;
     DWORD dwResultLen;
-    DWORD dwLen = sizeof (KEY_VALUE_PARTIAL_INFORMATION) + result_len ? *result_len : 0;
+    DWORD dwLen = sizeof (KEY_VALUE_PARTIAL_INFORMATION) + (result_len ? *result_len : 0);
 
     info = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
