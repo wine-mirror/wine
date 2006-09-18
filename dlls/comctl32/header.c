@@ -4,6 +4,7 @@
  *  Copyright 1998 Eric Kohl
  *  Copyright 2000 Eric Kohl for CodeWeavers
  *  Copyright 2003 Maxime Bellenge
+ *  Copyright 2006 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,15 +21,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  *  TODO:
- *   - Imagelist support (partially).
- *   - Callback items (under construction).
- *   - Hottrack support (partially).
- *   - Custom draw support (including Notifications).
- *   - Drag and Drop support (including Notifications).
- *   - New messages.
- *   - Use notification format
- *   - Correct the order maintenance code to preserve valid order
- *
+ *   - Imagelist support (completed?)
+ *   - Hottrack support (completed?)
+ *   - Custom draw support (completed?)
+ *   - Filters support (HDS_FILTER, HDI_FILTER, HDM_*FILTER*, HDN_*FILTER*)
+ *   - New Windows Vista features
  */
 
 #include <stdarg.h>
