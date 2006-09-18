@@ -84,7 +84,6 @@ typedef struct
     INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
-    INT       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
     INT       iHotItem;		/* index of hot item (cursor is over this item) */
     INT       iHotDivider;      /* index of the hot divider (used while dragging an item or by HDM_SETHOTDIVIDER) */
     INT       iMargin;          /* width of the margin that surrounds a bitmap */
@@ -1581,7 +1580,6 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    infoPtr->bCaptured = TRUE;
 	    infoPtr->bTracking = TRUE;
 	    infoPtr->iMoveItem = nItem;
-	    infoPtr->nOldWidth = iCurrWidth;
 	    infoPtr->xTrackOffset = infoPtr->items[nItem].rect.right - pt.x;
 
 	    if (!(dwStyle & HDS_FULLDRAG)) {
@@ -1674,11 +1672,8 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
             ReleaseDC (hwnd, hdc);
         }
           
-        if (HEADER_SendNotifyWithIntFieldT(hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, iNewWidth))
-	{
-	    infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
-	}
-	else {
+        if (!HEADER_SendNotifyWithIntFieldT(hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, iNewWidth))
+        {
             infoPtr->items[infoPtr->iMoveItem].cxy = iNewWidth;
             HEADER_SendNotifyWithIntFieldT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH, iNewWidth);
         }
