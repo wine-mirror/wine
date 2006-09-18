@@ -1483,6 +1483,20 @@ UINT WINAPI GetOutlineTextMetricsA(
     if(output != lpOTM) {
         memcpy(lpOTM, output, cbData);
         HeapFree(GetProcessHeap(), 0, output);
+
+        /* check if the string offsets really fit into the provided size */
+        /* FIXME: should we check string length as well? */
+        if ((UINT_PTR)lpOTM->otmpFamilyName >= lpOTM->otmSize)
+            lpOTM->otmpFamilyName = 0; /* doesn't fit */
+
+        if ((UINT_PTR)lpOTM->otmpFaceName >= lpOTM->otmSize)
+            lpOTM->otmpFaceName = 0; /* doesn't fit */
+
+        if ((UINT_PTR)lpOTM->otmpStyleName >= lpOTM->otmSize)
+            lpOTM->otmpStyleName = 0; /* doesn't fit */
+
+        if ((UINT_PTR)lpOTM->otmpFullName >= lpOTM->otmSize)
+            lpOTM->otmpFullName = 0; /* doesn't fit */
     }
 
 end:
