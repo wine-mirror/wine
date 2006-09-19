@@ -1893,6 +1893,11 @@ static void test_join(void)
         MsiCloseHandle(hrec);
     }
 
+    todo_wine
+    {
+        ok( i == 5, "Expected 5 rows, got %ld\n", i );
+    }
+
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
@@ -1937,6 +1942,11 @@ static void test_join(void)
 
     todo_wine
     {
+        ok( i == 2, "Expected 2 rows, got %ld\n", i );
+    }
+
+    todo_wine
+    {
         ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
     }
 
@@ -1975,6 +1985,8 @@ static void test_join(void)
         MsiCloseHandle(hrec);
     }
 
+    ok( i == 2, "Expected 2 rows, got %ld\n", i );
+
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
@@ -2011,6 +2023,8 @@ static void test_join(void)
         i++;
         MsiCloseHandle(hrec);
     }
+
+    ok( i == 1, "Expected 1 rows, got %ld\n", i );
 
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
@@ -2054,6 +2068,11 @@ static void test_join(void)
 
         i++;
         MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( i == 1, "Expected 1 rows, got %ld\n", i );
     }
 
     todo_wine
@@ -2104,6 +2123,11 @@ static void test_join(void)
 
     todo_wine
     {
+        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+    }
+
+    todo_wine
+    {
         ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
     }
 
@@ -2147,6 +2171,11 @@ static void test_join(void)
 
         i++;
         MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( i == 3, "Expected 3 rows, got %ld\n", i );
     }
 
     todo_wine
