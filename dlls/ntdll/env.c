@@ -419,8 +419,8 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
                                             const UNICODE_STRING *ShellInfo,
                                             const UNICODE_STRING *RuntimeInfo )
 {
-    static const WCHAR empty[] = {0};
-    static const UNICODE_STRING empty_str = { 0, sizeof(empty), (WCHAR *)empty };
+    static WCHAR empty[] = {0};
+    static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
     static const UNICODE_STRING null_str = { 0, 0, NULL };
 
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
