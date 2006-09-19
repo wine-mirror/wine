@@ -163,7 +163,7 @@ const NBNameCacheEntry *NBNameCacheFindEntry(struct NBNameCache *cache,
         NBNameCacheNode **node;
 
         EnterCriticalSection(&cache->cs);
-        node = NBNameCacheWalk(cache, (char*)name);
+        node = NBNameCacheWalk(cache, (const char *)name);
         if (node)
             ret = (*node)->entry;
         else
@@ -185,7 +185,7 @@ BOOL NBNameCacheUpdateNBName(struct NBNameCache *cache,
         NBNameCacheNode **node;
 
         EnterCriticalSection(&cache->cs);
-        node = NBNameCacheWalk(cache, (char*)name);
+        node = NBNameCacheWalk(cache, (const char *)name);
         if (node && *node && (*node)->entry)
         {
             memcpy((*node)->entry->nbname, nbname, NCBNAMSZ);
