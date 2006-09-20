@@ -1715,12 +1715,27 @@ static const BYTE selfSignedCert[] = {
  0x0a, 0x8c, 0xb4, 0x5c, 0x34, 0x78, 0xe0, 0x3c, 0x9c, 0xe9, 0xf3, 0x30, 0x9f,
  0xa8, 0x76, 0x57, 0x92, 0x36 };
 
+static const BYTE exportedPublicKeyBlob[] = {
+0x06,0x02,0x00,0x00,0x00,0xa4,0x00,0x00,0x52,0x53,0x41,0x31,0x00,0x02,0x00,0x00,
+0x01,0x00,0x01,0x00,0x79,0x10,0x1c,0xd0,0x6b,0x10,0x18,0x30,0x94,0x61,0xdc,0x0e,
+0xcb,0x96,0x4e,0x21,0x3f,0x79,0xcd,0xa9,0x17,0x62,0xbc,0xbb,0x61,0x4c,0xe0,0x75,
+0x38,0x6c,0xf3,0xde,0x60,0x86,0x03,0x97,0x65,0xeb,0x1e,0x6b,0xdb,0x53,0x85,0xad,
+0x68,0x21,0xf1,0x5d,0xe7,0x1f,0xe6,0x53,0xb4,0xbb,0x59,0x3e,0x14,0x27,0xb1,0x83,
+0xa7,0x3a,0x54,0xe2 };
+
+static const BYTE asnEncodedPublicKey[] = {
+0x30,0x48,0x02,0x41,0x00,0xe2,0x54,0x3a,0xa7,0x83,0xb1,0x27,0x14,0x3e,0x59,0xbb,
+0xb4,0x53,0xe6,0x1f,0xe7,0x5d,0xf1,0x21,0x68,0xad,0x85,0x53,0xdb,0x6b,0x1e,0xeb,
+0x65,0x97,0x03,0x86,0x60,0xde,0xf3,0x6c,0x38,0x75,0xe0,0x4c,0x61,0xbb,0xbc,0x62,
+0x17,0xa9,0xcd,0x79,0x3f,0x21,0x4e,0x96,0xcb,0x0e,0xdc,0x61,0x94,0x30,0x18,0x10,
+0x6b,0xd0,0x1c,0x10,0x79,0x02,0x03,0x01,0x00,0x01 };
+
 static void testAcquireCertPrivateKey(void)
 {
     BOOL ret;
     PCCERT_CONTEXT cert;
     HCRYPTPROV csp;
-    DWORD keySpec;
+    DWORD size, keySpec;
     BOOL callerFree;
     CRYPT_KEY_PROV_INFO keyProvInfo;
     HCRYPTKEY key;
@@ -1832,6 +1847,58 @@ static void testAcquireCertPrivateKey(void)
          GetLastError());
 
         CryptDestroyKey(key);
+    }
+
+    /* Some sanity-checking on public key exporting */
+    ret = CryptImportPublicKeyInfo(csp, X509_ASN_ENCODING,
+     &cert->pCertInfo->SubjectPublicKeyInfo, &key);
+    ok(ret, "CryptImportPublicKeyInfo failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, NULL, &size);
+        ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
+        if (ret)
+        {
+            LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size), encodedKey;
+
+            ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, buf, &size);
+            ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
+            ok(size == sizeof(exportedPublicKeyBlob), "Unexpected size %ld\n",
+             size);
+            ok(!memcmp(buf, exportedPublicKeyBlob, size), "Unexpected value\n");
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, RSA_CSP_PUBLICKEYBLOB,
+             buf, CRYPT_ENCODE_ALLOC_FLAG, NULL, &encodedKey, &size);
+            ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+            if (ret)
+            {
+                ok(size == sizeof(asnEncodedPublicKey), "Unexpected size %ld\n",
+                 size);
+                ok(!memcmp(encodedKey, asnEncodedPublicKey, size),
+                 "Unexpected value\n");
+                LocalFree(encodedKey);
+            }
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        CryptDestroyKey(key);
+    }
+    ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
+     NULL, 0, NULL, NULL, &size);
+    ok(ret, "CryptExportPublicKeyInfoEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        PCERT_PUBLIC_KEY_INFO info = HeapAlloc(GetProcessHeap(), 0, size);
+
+        ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
+         NULL, 0, NULL, info, &size);
+        ok(ret, "CryptExportPublicKeyInfoEx failed: %08lx\n", GetLastError());
+        if (ret)
+        {
+            ok(info->PublicKey.cbData == sizeof(asnEncodedPublicKey),
+             "Unexpected size %ld\n", info->PublicKey.cbData);
+            ok(!memcmp(info->PublicKey.pbData, asnEncodedPublicKey,
+             info->PublicKey.cbData), "Unexpected value\n");
+        }
+        HeapFree(GetProcessHeap(), 0, info);
     }
 
     CryptReleaseContext(csp, 0);
