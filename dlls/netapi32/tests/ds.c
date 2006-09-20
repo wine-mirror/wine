@@ -59,7 +59,7 @@ static void test_get(void)
 
     SetLastError(0xdeadbeef);
     ret = pDsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, (PBYTE *)&dpdi);
-    todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%ld)\n", ret); }
+    ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%ld)\n", ret);
     pDsRoleFreeMemory(&dpdi);
 
     SetLastError(0xdeadbeef);
