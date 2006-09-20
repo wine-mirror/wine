@@ -41,22 +41,20 @@ static const WCHAR szOID[] = {
     'E','n','c','o','d','i','n','g','T','y','p','e',' ','0','\\',
     'C','r','y','p','t','S','I','P','D','l','l', 0 };
 
-static const WCHAR szBackSlash[] = { '\\', 0 };
-
 static const WCHAR szPutSigned[] = {
-    'P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+    'P','u','t','S','i','g','n','e','d','D','a','t','a','M','s','g','\\',0};
 static const WCHAR szGetSigned[] = {
-    'G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+    'G','e','t','S','i','g','n','e','d','D','a','t','a','M','s','g','\\',0};
 static const WCHAR szRemoveSigned[] = {
-    'R','e','m','o','v','e','S','i','g','n','e','d','D','a','t','a','M','s','g',0};
+    'R','e','m','o','v','e','S','i','g','n','e','d','D','a','t','a','M','s','g','\\',0};
 static const WCHAR szCreate[] = {
-    'C','r','e','a','t','e','I','n','d','i','r','e','c','t','D','a','t','a',0};
+    'C','r','e','a','t','e','I','n','d','i','r','e','c','t','D','a','t','a','\\',0};
 static const WCHAR szVerify[] = {
-    'V','e','r','i','f','y','I','n','d','i','r','e','c','t','D','a','t','a',0};
+    'V','e','r','i','f','y','I','n','d','i','r','e','c','t','D','a','t','a','\\',0};
 static const WCHAR szIsMyFile[] = {
-    'I','s','M','y','F','i','l','e','T','y','p','e', 0 };
+    'I','s','M','y','F','i','l','e','T','y','p','e','\\',0};
 static const WCHAR szIsMyFile2[] = {
-    'I','s','M','y','F','i','l','e','T','y','p','e','2', 0};
+    'I','s','M','y','F','i','l','e','T','y','p','e','2','\\',0};
 
 /* convert a guid to a wide character string */
 static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
@@ -83,9 +81,7 @@ static LONG CRYPT_SIPDeleteFunction( LPGUID guid, LPCWSTR szKey )
     /* max length of szFullKey depends on our code only, so we won't overrun */
     lstrcpyW( szFullKey, szOID );
     lstrcatW( szFullKey, szKey );
-    lstrcatW( szFullKey, szBackSlash );
     CRYPT_guid2wstr( guid, &szFullKey[ lstrlenW( szFullKey ) ] );
-    lstrcatW( szFullKey, szBackSlash );
 
     r = RegDeleteKeyW(HKEY_LOCAL_MACHINE, szFullKey);
 
@@ -166,9 +162,7 @@ static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey,
     /* max length of szFullKey depends on our code only, so we won't overrun */
     lstrcpyW( szFullKey, szOID );
     lstrcatW( szFullKey, szKey );
-    lstrcatW( szFullKey, szBackSlash );
     CRYPT_guid2wstr( guid, &szFullKey[ lstrlenW( szFullKey ) ] );
-    lstrcatW( szFullKey, szBackSlash );
 
     TRACE("key is %s\n", debugstr_w( szFullKey ) );
 
