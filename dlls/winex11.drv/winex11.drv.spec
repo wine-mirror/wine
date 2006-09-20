@@ -139,3 +139,5 @@
 @ cdecl wglMakeContextCurrentARB(long long long) X11DRV_wglMakeContextCurrentARB
 @ cdecl wglMakeCurrent(long long) X11DRV_wglMakeCurrent
 @ cdecl wglShareLists(long long) X11DRV_wglShareLists
+@ cdecl wglUseFontBitmapsA(long long long long) X11DRV_wglUseFontBitmapsA
+@ cdecl wglUseFontBitmapsW(long long long long) X11DRV_wglUseFontBitmapsW

@@ -209,6 +209,7 @@ MAKE_FUNCPTR(glXMakeCurrent)
 MAKE_FUNCPTR(glXSwapBuffers)
 MAKE_FUNCPTR(glXQueryExtension)
 MAKE_FUNCPTR(glXQueryVersion)
+MAKE_FUNCPTR(glXUseXFont)
 
 /* GLX 1.1 */
 MAKE_FUNCPTR(glXGetClientString)
@@ -235,12 +236,16 @@ static int   (*pglXSwapIntervalSGI)(int);
 
 /* Standard OpenGL */
 MAKE_FUNCPTR(glBindTexture)
+MAKE_FUNCPTR(glBitmap)
 MAKE_FUNCPTR(glCopyTexSubImage1D)
 MAKE_FUNCPTR(glCopyTexSubImage2D)
 MAKE_FUNCPTR(glDrawBuffer)
+MAKE_FUNCPTR(glEndList)
 MAKE_FUNCPTR(glGetError)
 MAKE_FUNCPTR(glGetIntegerv)
 MAKE_FUNCPTR(glGetString)
+MAKE_FUNCPTR(glNewList)
+MAKE_FUNCPTR(glPixelStorei)
 #undef MAKE_FUNCPTR
 
 BOOL X11DRV_WineGL_InitOpenglInfo()
@@ -340,6 +345,7 @@ LOAD_FUNCPTR(glXMakeCurrent)
 LOAD_FUNCPTR(glXSwapBuffers)
 LOAD_FUNCPTR(glXQueryExtension)
 LOAD_FUNCPTR(glXQueryVersion)
+LOAD_FUNCPTR(glXUseXFont)
 
 /* GLX 1.1 */
 LOAD_FUNCPTR(glXGetClientString)
@@ -355,12 +361,16 @@ LOAD_FUNCPTR(glXGetFBConfigs)
 
 /* Standard OpenGL calls */
 LOAD_FUNCPTR(glBindTexture)
+LOAD_FUNCPTR(glBitmap)
+LOAD_FUNCPTR(glEndList)
 LOAD_FUNCPTR(glCopyTexSubImage1D)
 LOAD_FUNCPTR(glCopyTexSubImage2D)
 LOAD_FUNCPTR(glDrawBuffer)
 LOAD_FUNCPTR(glGetError)
 LOAD_FUNCPTR(glGetIntegerv)
 LOAD_FUNCPTR(glGetString)
+LOAD_FUNCPTR(glNewList)
+LOAD_FUNCPTR(glPixelStorei)
 #undef LOAD_FUNCPTR
 
     if(!X11DRV_WineGL_InitOpenglInfo()) {
@@ -503,6 +513,17 @@ inline static void set_drawable( HDC hdc, Drawable drawable )
     escape.drawable_org.x = escape.drawable_org.y = 0;
 
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
+}
+
+/* retrieve the X font to use on a given DC */
+inline static Font get_font( HDC hdc )
+{
+    Font font;
+    enum x11drv_escape_codes escape = X11DRV_GET_FONT;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(font), (LPSTR)&font )) font = 0;
+    return font;
 }
 
 /** for use of wglGetCurrentReadDCARB */
@@ -1456,6 +1477,151 @@ BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     return FALSE;
 }
 
+static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD listBase, DWORD (WINAPI GetGlyphOutline_ptr)(HDC,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*))
+{
+     /* We are running using client-side rendering fonts... */
+     GLYPHMETRICS gm;
+     unsigned int glyph;
+     int size = 0;
+     void *bitmap = NULL, *gl_bitmap = NULL;
+     int org_alignment;
+
+     wine_tsx11_lock();
+     pglGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
+     pglPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+     wine_tsx11_unlock();
+
+     for (glyph = first; glyph < first + count; glyph++) {
+         unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
+         int height, width_int;
+
+         TRACE("Glyph : %3d / List : %ld\n", glyph, listBase);
+         if (needed_size == GDI_ERROR) {
+             TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
+             goto error;
+         } else {
+             TRACE("  - needed size : %d\n", needed_size);
+         }
+
+         if (needed_size > size) {
+             size = needed_size;
+             HeapFree(GetProcessHeap(), 0, bitmap);
+             HeapFree(GetProcessHeap(), 0, gl_bitmap);
+             bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+             gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+         }
+         if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
+         if (TRACE_ON(opengl)) {
+             unsigned int height, width, bitmask;
+             unsigned char *bitmap_ = (unsigned char *) bitmap;
+
+             TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
+             TRACE("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
+             if (needed_size != 0) {
+                 TRACE("  - bitmap :\n");
+                 for (height = 0; height < gm.gmBlackBoxY; height++) {
+                     TRACE("      ");
+                     for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
+                         if (bitmask == 0) {
+                             bitmap_ += 1;
+                             bitmask = 0x80;
+                         }
+                         if (*bitmap_ & bitmask)
+                             TRACE("*");
+                         else
+                             TRACE(" ");
+                     }
+                     bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
+                     TRACE("\n");
+                 }
+             }
+         }
+
+         /* In OpenGL, the bitmap is drawn from the bottom to the top... So we need to invert the
+         * glyph for it to be drawn properly.
+         */
+         if (needed_size != 0) {
+             width_int = (gm.gmBlackBoxX + 31) / 32;
+             for (height = 0; height < gm.gmBlackBoxY; height++) {
+                 int width;
+                 for (width = 0; width < width_int; width++) {
+                     ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
+                     ((int *) bitmap)[height * width_int + width];
+                 }
+             }
+         }
+
+         wine_tsx11_lock();
+         pglNewList(listBase++, GL_COMPILE);
+         if (needed_size != 0) {
+             pglBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
+                     0 - (int) gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - (int) gm.gmptGlyphOrigin.y,
+                     gm.gmCellIncX, gm.gmCellIncY,
+                     gl_bitmap);
+         } else {
+             /* This is the case of 'empty' glyphs like the space character */
+             pglBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+         }
+         pglEndList();
+         wine_tsx11_unlock();
+     }
+
+     wine_tsx11_lock();
+     pglPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+     wine_tsx11_unlock();
+
+     HeapFree(GetProcessHeap(), 0, bitmap);
+     HeapFree(GetProcessHeap(), 0, gl_bitmap);
+     return TRUE;
+
+  error:
+     wine_tsx11_lock();
+     pglPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+     wine_tsx11_unlock();
+
+     HeapFree(GetProcessHeap(), 0, bitmap);
+     HeapFree(GetProcessHeap(), 0, gl_bitmap);
+     return FALSE;
+}
+
+/* OpenGL32 wglUseFontBitmapsA */
+BOOL WINAPI X11DRV_wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+     Font fid = get_font( hdc );
+
+     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+
+     if (fid == 0) {
+         return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineA);
+     }
+
+     wine_tsx11_lock();
+     /* I assume that the glyphs are at the same position for X and for Windows */
+     pglXUseXFont(fid, first, count, listBase);
+     wine_tsx11_unlock();
+     return TRUE;
+}
+
+/* OpenGL32 wglUseFontBitmapsW */
+BOOL WINAPI X11DRV_wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+     Font fid = get_font( hdc );
+
+     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+
+     if (fid == 0) {
+         return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineW);
+     }
+
+     WARN("Using the glX API for the WCHAR variant - some characters may come out incorrectly !\n");
+
+     wine_tsx11_lock();
+     /* I assume that the glyphs are at the same position for X and for Windows */
+     pglXUseXFont(fid, first, count, listBase);
+     wine_tsx11_unlock();
+     return TRUE;
+}
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
 void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
@@ -2678,6 +2844,20 @@ BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglr
 
 /* OpenGL32 wglShaderLists */
 BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/* OpenGL32 wglUseFontBitmapsA */
+BOOL WINAPI X11DRV_wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/* OpenGL32 wglUseFontBitmapsW */
+BOOL WINAPI X11DRV_wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }

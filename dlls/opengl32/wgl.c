@@ -56,6 +56,8 @@ typedef struct wine_wgl_s {
     BOOL WINAPI  (*p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     BOOL WINAPI  (*p_wglMakeContextCurrentARB)(HDC hDrawDC, HDC hReadDC, HGLRC hglrc); 
     BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
+    BOOL WINAPI  (*p_wglUseFontBitmapsA)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
+    BOOL WINAPI  (*p_wglUseFontBitmapsW)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
 
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl_t;
@@ -126,17 +128,6 @@ inline static Display *get_display( HDC hdc )
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(display), (LPSTR)&display )) display = NULL;
     return display;
-}
-
-/* retrieve the X font to use on a given DC */
-inline static Font get_font( HDC hdc )
-{
-    Font font;
-    enum x11drv_escape_codes escape = X11DRV_GET_FONT;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(font), (LPSTR)&font )) font = 0;
-    return font;
 }
 
 /***********************************************************************
@@ -375,118 +366,6 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   return TRUE;
 }
 
-static BOOL internal_wglUseFontBitmaps(HDC hdc,
-				       DWORD first,
-				       DWORD count,
-				       DWORD listBase,
-				       DWORD (WINAPI *GetGlyphOutline_ptr)(HDC,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*))
-{
-    /* We are running using client-side rendering fonts... */
-    GLYPHMETRICS gm;
-    unsigned int glyph;
-    int size = 0;
-    void *bitmap = NULL, *gl_bitmap = NULL;
-    int org_alignment;
-
-    ENTER_GL();
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    LEAVE_GL();
-
-    for (glyph = first; glyph < first + count; glyph++) {
-	unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
-	int height, width_int;
-
-	TRACE("Glyph : %3d / List : %ld\n", glyph, listBase);
-	if (needed_size == GDI_ERROR) {
-	    TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
-	    goto error;
-	} else {
-	    TRACE("  - needed size : %d\n", needed_size);
-	}
-
-	if (needed_size > size) {
-	    size = needed_size;
-            HeapFree(GetProcessHeap(), 0, bitmap);
-            HeapFree(GetProcessHeap(), 0, gl_bitmap);
-	    bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	    gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	}
-	if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
-	if (TRACE_ON(opengl)) {
-	    unsigned int height, width, bitmask;
-	    unsigned char *bitmap_ = (unsigned char *) bitmap;
-	    
-	    TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-	    TRACE("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
-	    TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
-	    if (needed_size != 0) {
-		TRACE("  - bitmap :\n");
-		for (height = 0; height < gm.gmBlackBoxY; height++) {
-		    TRACE("      ");
-		    for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
-			if (bitmask == 0) {
-			    bitmap_ += 1;
-			    bitmask = 0x80;
-			}
-			if (*bitmap_ & bitmask)
-			    TRACE("*");
-			else
-			    TRACE(" ");
-		    }
-		    bitmap_ += (4 - ((UINT_PTR)bitmap_ & 0x03));
-		    TRACE("\n");
-		}
-	    }
-	}
-	
-	/* In OpenGL, the bitmap is drawn from the bottom to the top... So we need to invert the
-	 * glyph for it to be drawn properly.
-	 */
-	if (needed_size != 0) {
-	    width_int = (gm.gmBlackBoxX + 31) / 32;
-	    for (height = 0; height < gm.gmBlackBoxY; height++) {
-		int width;
-		for (width = 0; width < width_int; width++) {
-		    ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
-			((int *) bitmap)[height * width_int + width];
-		}
-	    }
-	}
-	
-	ENTER_GL();
-	glNewList(listBase++, GL_COMPILE);
-	if (needed_size != 0) {
-	    glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-		     0 - (int) gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - (int) gm.gmptGlyphOrigin.y,
-		     gm.gmCellIncX, gm.gmCellIncY,
-		     gl_bitmap);
-	} else {
-	    /* This is the case of 'empty' glyphs like the space character */
-	    glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
-	}
-	glEndList();
-	LEAVE_GL();
-    }
-    
-    ENTER_GL();
-    glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-    LEAVE_GL();
-    
-    HeapFree(GetProcessHeap(), 0, bitmap);
-    HeapFree(GetProcessHeap(), 0, gl_bitmap);
-    return TRUE;
-
-  error:
-    ENTER_GL();
-    glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-    LEAVE_GL();
-
-    HeapFree(GetProcessHeap(), 0, bitmap);
-    HeapFree(GetProcessHeap(), 0, gl_bitmap);
-    return FALSE;    
-}
-
 /***********************************************************************
  *		wglUseFontBitmapsA (OPENGL32.@)
  */
@@ -495,19 +374,8 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 			       DWORD count,
 			       DWORD listBase)
 {
-  Font fid = get_font( hdc );
-
-  TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
-
-  if (fid == 0) {
-      return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineA);
-  }
-
-  ENTER_GL();
-  /* I assume that the glyphs are at the same position for X and for Windows */
-  glXUseXFont(fid, first, count, listBase);
-  LEAVE_GL();
-  return TRUE;
+    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+    return wine_wgl.p_wglUseFontBitmapsA(hdc, first, count, listBase);
 }
 
 /***********************************************************************
@@ -518,21 +386,8 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc,
 			       DWORD count,
 			       DWORD listBase)
 {
-  Font fid = get_font( hdc );
-
-  TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
-
-  if (fid == 0) {
-      return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineW);
-  }
-
-  WARN("Using the glX API for the WCHAR variant - some characters may come out incorrectly !\n");
-  
-  ENTER_GL();
-  /* I assume that the glyphs are at the same position for X and for Windows */
-  glXUseXFont(fid, first, count, listBase);
-  LEAVE_GL();
-  return TRUE;
+    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+    return wine_wgl.p_wglUseFontBitmapsW(hdc, first, count, listBase);
 }
 
 #ifdef HAVE_GL_GLU_H
@@ -868,6 +723,9 @@ static BOOL process_attach(void)
   wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod, "wglMakeCurrent");
   wine_wgl.p_wglMakeContextCurrentARB = (void *)GetProcAddress(mod, "wglMakeContextCurrentARB");
   wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
+  wine_wgl.p_wglUseFontBitmapsA = (void*)GetProcAddress(mod, "wglUseFontBitmapsA");
+  wine_wgl.p_wglUseFontBitmapsW = (void*)GetProcAddress(mod, "wglUseFontBitmapsW");
+
   /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");
 
