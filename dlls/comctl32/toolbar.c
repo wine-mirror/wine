@@ -2578,7 +2578,8 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBADDBITMAP lpAddBmp = (LPTBADDBITMAP)lParam;
-    INT nIndex = 0, nButtons, nCount;
+    TBITMAP_INFO info;
+    INT nIndex = 0, nCount;
     HBITMAP hbmLoad;
     HIMAGELIST himlDef;
 
@@ -2588,16 +2589,38 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpAddBmp->hInst == HINST_COMMCTRL)
     {
-	if ((lpAddBmp->nID & ~1) == IDB_STD_SMALL_COLOR)
-	    nButtons = 15;
-	else if ((lpAddBmp->nID & ~1) == IDB_VIEW_SMALL_COLOR)
-	    nButtons = 12;
-	else if ((lpAddBmp->nID & ~1) == IDB_HIST_SMALL_COLOR)
-	    nButtons = 5;
-	else
-	    return -1;
+        info.hInst = COMCTL32_hModule;
+        switch (lpAddBmp->nID)
+        {
+            case IDB_STD_SMALL_COLOR:
+	        info.nButtons = 15;
+	        info.nID = IDB_STD_SMALL;
+	        break;
+            case IDB_STD_LARGE_COLOR:
+	        info.nButtons = 15;
+	        info.nID = IDB_STD_LARGE;
+	        break;
+            case IDB_VIEW_SMALL_COLOR:
+	        info.nButtons = 12;
+	        info.nID = IDB_VIEW_SMALL;
+	        break;
+            case IDB_VIEW_LARGE_COLOR:
+	        info.nButtons = 12;
+	        info.nID = IDB_VIEW_LARGE;
+	        break;
+            case IDB_HIST_SMALL_COLOR:
+	        info.nButtons = 5;
+	        info.nID = IDB_HIST_SMALL;
+	        break;
+            case IDB_HIST_LARGE_COLOR:
+	        info.nButtons = 5;
+	        info.nID = IDB_HIST_LARGE;
+	        break;
+	    default:
+	        return -1;
+	}
 
-	TRACE ("adding %d internal bitmaps!\n", nButtons);
+	TRACE ("adding %d internal bitmaps!\n", info.nButtons);
 
 	/* Windows resize all the buttons to the size of a newly added standard image */
 	if (lpAddBmp->nID & 1)
@@ -2624,8 +2647,10 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     else
     {
-	nButtons = (INT)wParam;
-	TRACE ("adding %d bitmaps!\n", nButtons);
+	info.nButtons = (INT)wParam;
+	info.hInst = lpAddBmp->hInst;
+	info.nID = lpAddBmp->nID;
+	TRACE("adding %d bitmaps!\n", info.nButtons);
     }
 
     if (!infoPtr->cimlDef) {
@@ -2633,7 +2658,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE ("creating default image list!\n");
 
         himlDef = ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
-                                    ILC_COLORDDB | ILC_MASK, nButtons, 2);
+                                    ILC_COLORDDB | ILC_MASK, info.nButtons, 2);
 	TOOLBAR_InsertImageList(&infoPtr->himlDef, &infoPtr->cimlDef, himlDef, 0);
         infoPtr->himlInt = himlDef;
     }
@@ -2649,7 +2674,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nCount = ImageList_GetImageCount(himlDef);
 
     /* Add bitmaps to the default image list */
-    if (lpAddBmp->hInst == NULL)
+    if (lpAddBmp->hInst == NULL)         /* a handle was passed */
     {
        BITMAP  bmp;
        HBITMAP hOldBitmapBitmap, hOldBitmapLoad;
@@ -2676,83 +2701,16 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
        SelectObject (hdcBitmap, hOldBitmapBitmap);
        DeleteDC (hdcImage);
        DeleteDC (hdcBitmap);
-
-       nIndex = ImageList_AddMasked (himlDef, hbmLoad, comctl32_color.clrBtnFace);
-       DeleteObject (hbmLoad);
-    }
-    else if (lpAddBmp->hInst == HINST_COMMCTRL)
-    {
-	/* Add system bitmaps */
-	switch (lpAddBmp->nID)
-    {
-	    case IDB_STD_SMALL_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_STD_SMALL, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    case IDB_STD_LARGE_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_STD_LARGE, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    case IDB_VIEW_SMALL_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_VIEW_SMALL, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    case IDB_VIEW_LARGE_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_VIEW_LARGE, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    case IDB_HIST_SMALL_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_HIST_SMALL, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    case IDB_HIST_LARGE_COLOR:
-		hbmLoad = CreateMappedBitmap (COMCTL32_hModule,
-                                              IDB_HIST_LARGE, 0, NULL, 0);
-		nIndex = ImageList_AddMasked (himlDef,
-					      hbmLoad, comctl32_color.clrBtnFace);
-		DeleteObject (hbmLoad);
-		break;
-
-	    default:
-	nIndex = ImageList_GetImageCount (himlDef);
-		ERR ("invalid imagelist!\n");
-		break;
-	}
     }
     else
-    {
-        hbmLoad = CreateMappedBitmap(lpAddBmp->hInst, lpAddBmp->nID, 0, NULL, 0);
-	nIndex = ImageList_AddMasked (himlDef, hbmLoad, comctl32_color.clrBtnFace);
-	DeleteObject (hbmLoad);
-    }
+        hbmLoad = CreateMappedBitmap(info.hInst, info.nID, 0, NULL, 0);
+    
+    nIndex = ImageList_AddMasked(himlDef, hbmLoad, comctl32_color.clrBtnFace);
+    DeleteObject(hbmLoad);
 
     TRACE("Number of bitmap infos: %d\n", infoPtr->nNumBitmapInfos);
-
     infoPtr->bitmaps = ReAlloc(infoPtr->bitmaps, (infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
-    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nButtons = nButtons;
-    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].hInst = lpAddBmp->hInst;
-    infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nID = lpAddBmp->nID;
-
+    infoPtr->bitmaps[infoPtr->nNumBitmapInfos] = info;
     infoPtr->nNumBitmapInfos++;
     TRACE("Number of bitmap infos: %d\n", infoPtr->nNumBitmapInfos);
 
@@ -2760,14 +2718,14 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
         INT imagecount = ImageList_GetImageCount(himlDef);
         INT added =  imagecount - nCount;
-        if (nButtons == 0) /* wParam == 0 is special and means add only one image */
+        if (info.nButtons == 0) /* wParam == 0 is special and means add only one image */
         {
             ImageList_SetImageCount(himlDef, nCount + 1);
-        } else if (added < nButtons) {    /* if not enough buttons, grow the list */
-            ImageList_SetImageCount(himlDef, nCount + nButtons);
-        } else if (added > nButtons) {
-            TRACE("Added more images than wParam: Previous image number %i added %i while nButtons %i. Images in list %i\n",
-                nCount, added, nButtons, imagecount);
+        } else if (added < (INT)info.nButtons) {    /* if not enough buttons, grow the list */
+            ImageList_SetImageCount(himlDef, nCount + info.nButtons);
+        } else if (added > (INT)info.nButtons) {
+            TRACE("Added more images than wParam: Previous image number %i added %i while wParam %i. Images in list %i\n",
+                nCount, added, info.nButtons, imagecount);
         }
 
         infoPtr->nNumBitmaps += added;
