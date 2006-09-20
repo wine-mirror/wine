@@ -258,7 +258,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %p, %ld, %lli, %p): stub\n", This, pSegment, dwFlags, i64StartTime, ppSegmentState);
+	FIXME("(%p, %p, %ld, 0x%s, %p): stub\n", This, pSegment, dwFlags,
+	    wine_dbgstr_longlong(i64StartTime), ppSegmentState);
 	return S_OK;
 }
 
@@ -369,7 +370,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToReferenceTime (LPDIREC
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_ReferenceToMusicTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtTime, MUSIC_TIME* pmtTime) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %lli, %p): stub\n", This, rtTime, pmtTime);
+	FIXME("(%p, 0x%s, %p): stub\n", This, wine_dbgstr_longlong(rtTime), pmtTime);
 	return S_OK;
 }
 
@@ -477,7 +478,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph (LPDIRECTMUSICPERFOR
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_SetNotificationHandle (LPDIRECTMUSICPERFORMANCE8 iface, HANDLE hNotification, REFERENCE_TIME rtMinimum) {
   IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-  FIXME("(%p, %p, %lli): stub\n", This, hNotification, rtMinimum);
+  FIXME("(%p, %p, 0x%s): stub\n", This, hNotification, wine_dbgstr_longlong(rtMinimum));
   This->hNotification = hNotification;
   if (rtMinimum) This->rtMinimum = rtMinimum;
   return S_OK;
@@ -677,7 +678,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_GetQueueTime (LPDIRECTMUSICPE
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_AdjustTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtAmount) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %lli): stub\n", This, rtAmount);
+	FIXME("(%p, 0x%s): stub\n", This, wine_dbgstr_longlong(rtAmount));
 	return S_OK;
 }
 
@@ -702,7 +703,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown (LPDIRECTMUSICPERFO
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetResolvedTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME rtTime, REFERENCE_TIME* prtResolved, DWORD dwTimeResolveFlags) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %lli, %p, %ld): stub\n", This, rtTime, prtResolved, dwTimeResolveFlags);
+	FIXME("(%p, 0x%s, %p, %ld): stub\n", This, wine_dbgstr_longlong(rtTime),
+	    prtResolved, dwTimeResolveFlags);
 	return S_OK;
 }
 
@@ -793,13 +795,15 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio (LPDIRECTMUSICPERFO
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegmentEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pSource, WCHAR* pwzSegmentName, IUnknown* pTransition, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState, IUnknown* pFrom, IUnknown* pAudioPath) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %p, %p, %p, %ld, %lli, %p, %p, %p): stub\n", This, pSource, pwzSegmentName, pTransition, dwFlags, i64StartTime, ppSegmentState, pFrom, pAudioPath);
+	FIXME("(%p, %p, %p, %p, %ld, 0x%s, %p, %p, %p): stub\n", This, pSource, pwzSegmentName,
+	    pTransition, dwFlags, wine_dbgstr_longlong(i64StartTime), ppSegmentState, pFrom, pAudioPath);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_StopEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pObjectToStop, __int64 i64StopTime, DWORD dwFlags) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %p, %lli, %ld): stub\n", This, pObjectToStop, i64StopTime, dwFlags);
+	FIXME("(%p, %p, 0x%s, %ld): stub\n", This, pObjectToStop,
+	    wine_dbgstr_longlong(i64StopTime), dwFlags);
 	return S_OK;
 }
 

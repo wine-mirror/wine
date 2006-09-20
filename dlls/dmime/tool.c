@@ -94,7 +94,7 @@ static HRESULT WINAPI IDirectMusicTool8Impl_ProcessPMsg (LPDIRECTMUSICTOOL8 ifac
 
 static HRESULT WINAPI IDirectMusicTool8Impl_Flush (LPDIRECTMUSICTOOL8 iface, IDirectMusicPerformance* pPerf, DMUS_PMSG* pPMSG, REFERENCE_TIME rtTime) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
-	FIXME("(%p, %p, %p, %lli): stub\n", This, pPerf, pPMSG, rtTime);
+	FIXME("(%p, %p, %p, 0x%s): stub\n", This, pPerf, pPMSG, wine_dbgstr_longlong(rtTime));
 	return S_OK;
 }
 
