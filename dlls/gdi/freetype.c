@@ -2,6 +2,7 @@
  * FreeType font engine interface
  *
  * Copyright 2001 Huw D M Davies for CodeWeavers.
+ * Copyright 2006 Dmitry Timoshkov for CodeWeavers.
  *
  * This file contains the WineEng* functions.
  *
@@ -134,6 +135,7 @@ MAKE_FUNCPTR(FT_Vector_Transform);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
+static FT_ULong (*pFT_Get_Next_Char)(FT_Face,FT_ULong,FT_UInt*);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
@@ -268,6 +270,8 @@ struct tagGdiFont {
     SHORT yMax;
     SHORT yMin;
     OUTLINETEXTMETRICW *potm;
+    DWORD total_kern_pairs;
+    KERNINGPAIR *kern_pairs;
     FONTSIGNATURE fs;
     GdiFont base_font;
     struct list child_fonts;
@@ -1652,6 +1656,7 @@ BOOL WineEngInit(void)
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
+    pFT_Get_Next_Char = wine_dlsym(ft_handle, "FT_Get_Next_Char", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
@@ -1938,6 +1943,8 @@ static GdiFont alloc_font(void)
 			ret->gmsize * sizeof(*ret->gm));
     ret->potm = NULL;
     ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
+    ret->total_kern_pairs = (DWORD)-1;
+    ret->kern_pairs = NULL;
     list_init(&ret->hfontlist);
     list_init(&ret->child_fonts);
     return ret;
@@ -1966,6 +1973,7 @@ static void free_font(GdiFont font)
     }
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
+    HeapFree(GetProcessHeap(), 0, font->kern_pairs);
     HeapFree(GetProcessHeap(), 0, font->potm);
     HeapFree(GetProcessHeap(), 0, font->name);
     HeapFree(GetProcessHeap(), 0, font->gm);
@@ -4096,6 +4104,228 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     return TRUE;
 }
 
+/*************************************************************************
+ * Kerning support for TrueType fonts
+ */
+#define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
+
+struct TT_kern_table
+{
+    USHORT version;
+    USHORT nTables;
+};
+
+struct TT_kern_subtable
+{
+    USHORT version;
+    USHORT length;
+    union
+    {
+        USHORT word;
+        struct
+        {
+            USHORT horizontal : 1;
+            USHORT minimum : 1;
+            USHORT cross_stream: 1;
+            USHORT override : 1;
+            USHORT reserved1 : 4;
+            USHORT format : 8;
+        } bits;
+    } coverage;
+};
+
+struct TT_format0_kern_subtable
+{
+    USHORT nPairs;
+    USHORT searchRange;
+    USHORT entrySelector;
+    USHORT rangeShift;
+};
+
+struct TT_kern_pair
+{
+    USHORT left;
+    USHORT right;
+    short  value;
+};
+
+static DWORD parse_format0_kern_subtable(GdiFont font,
+                                         const struct TT_format0_kern_subtable *tt_f0_ks,
+                                         const USHORT *glyph_to_char,
+                                         KERNINGPAIR *kern_pair, DWORD cPairs)
+{
+    USHORT i, nPairs;
+    const struct TT_kern_pair *tt_kern_pair;
+
+    TRACE("font height %ld, units_per_EM %d\n", font->ppem, font->ft_face->units_per_EM);
+
+    nPairs = GET_BE_WORD(tt_f0_ks->nPairs);
+
+    TRACE("nPairs %u, searchRange %u, entrySelector %u, rangeShift %u\n",
+           nPairs, GET_BE_WORD(tt_f0_ks->searchRange),
+           GET_BE_WORD(tt_f0_ks->entrySelector), GET_BE_WORD(tt_f0_ks->rangeShift));
+
+    if (!kern_pair || !cPairs)
+        return nPairs;
+
+    tt_kern_pair = (const struct TT_kern_pair *)(tt_f0_ks + 1);
+
+    nPairs = min(nPairs, cPairs);
+
+    for (i = 0; i < nPairs; i++)
+    {
+        kern_pair->wFirst = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].left)];
+        kern_pair->wSecond = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].right)];
+        kern_pair->iKernAmount = MulDiv((short)GET_BE_WORD(tt_kern_pair[i].value), font->ppem, font->ft_face->units_per_EM);
+
+        TRACE("left %u right %u value %d\n",
+               kern_pair->wFirst, kern_pair->wSecond, kern_pair->iKernAmount);
+
+        kern_pair++;
+    }
+    TRACE("copied %u entries\n", nPairs);
+    return nPairs;
+}
+
+DWORD WineEngGetKerningPairs(GdiFont font, DWORD cPairs, KERNINGPAIR *kern_pair)
+{
+    DWORD length;
+    void *buf;
+    const struct TT_kern_table *tt_kern_table;
+    const struct TT_kern_subtable *tt_kern_subtable;
+    USHORT i, nTables;
+    USHORT *glyph_to_char;
+
+    if (font->total_kern_pairs != (DWORD)-1)
+    {
+        if (cPairs && kern_pair)
+        {
+            cPairs = min(cPairs, font->total_kern_pairs);
+            memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
+            return cPairs;
+        }
+        return font->total_kern_pairs;
+    }
+
+    font->total_kern_pairs = 0;
+
+    length = WineEngGetFontData(font, MS_KERN_TAG, 0, NULL, 0);
+
+    if (length == GDI_ERROR)
+    {
+        TRACE("no kerning data in the font\n");
+        return 0;
+    }
+
+    buf = HeapAlloc(GetProcessHeap(), 0, length);
+    if (!buf)
+    {
+        WARN("Out of memory\n");
+        return 0;
+    }
+
+    WineEngGetFontData(font, MS_KERN_TAG, 0, buf, length);
+
+    /* build a glyph index to char code map */
+    glyph_to_char = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
+    if (!glyph_to_char)
+    {
+        WARN("Out of memory allocating a glyph index to char code map\n");
+        HeapFree(GetProcessHeap(), 0, buf);
+        return 0;
+    }
+
+    if (font->ft_face->charmap->encoding == FT_ENCODING_UNICODE && pFT_Get_First_Char)
+    {
+        FT_UInt glyph_code;
+        FT_ULong char_code;
+
+        glyph_code = 0;
+        char_code = pFT_Get_First_Char(font->ft_face, &glyph_code);
+
+        TRACE("face encoding FT_ENCODING_UNICODE, number of glyphs %ld, first glyph %u, first char %lu\n",
+               font->ft_face->num_glyphs, glyph_code, char_code);
+
+        while (glyph_code)
+        {
+            /*TRACE("Char %04lX -> Index %u%s\n", char_code, glyph_code, glyph_to_char[glyph_code] ? "  !" : "" );*/
+
+            /* FIXME: This doesn't match what Windows does: it does some fancy
+             * things with duplicate glyph index to char code mappings, while
+             * we just avoid overriding existing entries.
+             */
+            if (glyph_code <= 65535 && !glyph_to_char[glyph_code])
+                glyph_to_char[glyph_code] = (USHORT)char_code;
+
+            char_code = pFT_Get_Next_Char(font->ft_face, char_code, &glyph_code);
+        }
+    }
+    else
+    {
+        ULONG n;
+
+        FIXME("encoding %u not supported\n", font->ft_face->charmap->encoding);
+        for (n = 0; n <= 65535; n++)
+            glyph_to_char[n] = (USHORT)n;
+    }
+
+    tt_kern_table = buf;
+    nTables = GET_BE_WORD(tt_kern_table->nTables);
+    TRACE("version %u, nTables %u\n",
+           GET_BE_WORD(tt_kern_table->version), nTables);
+
+    tt_kern_subtable = (const struct TT_kern_subtable *)(tt_kern_table + 1);
+
+    for (i = 0; i < nTables; i++)
+    {
+        struct TT_kern_subtable tt_kern_subtable_copy;
+
+        tt_kern_subtable_copy.version = GET_BE_WORD(tt_kern_subtable->version);
+        tt_kern_subtable_copy.length = GET_BE_WORD(tt_kern_subtable->length);
+        tt_kern_subtable_copy.coverage.word = GET_BE_WORD(tt_kern_subtable->coverage.word);
+
+        TRACE("version %u, length %u, coverage %u, subtable format %u\n",
+               tt_kern_subtable_copy.version, tt_kern_subtable_copy.length,
+               tt_kern_subtable_copy.coverage.word, tt_kern_subtable_copy.coverage.bits.format);
+
+        /* According to the TrueType specification this is the only format
+         * that will be properly interpreted by Windows and OS/2
+         */
+        if (tt_kern_subtable_copy.coverage.bits.format == 0)
+        {
+            DWORD new_chunk, old_total = font->total_kern_pairs;
+
+            new_chunk = parse_format0_kern_subtable(font, (const struct TT_format0_kern_subtable *)(tt_kern_subtable + 1),
+                                                    glyph_to_char, NULL, 0);
+            font->total_kern_pairs += new_chunk;
+
+            if (!font->kern_pairs)
+                font->kern_pairs = HeapAlloc(GetProcessHeap(), 0,
+                                             font->total_kern_pairs * sizeof(*font->kern_pairs));
+            else
+                font->kern_pairs = HeapReAlloc(GetProcessHeap(), 0, font->kern_pairs,
+                                               font->total_kern_pairs * sizeof(*font->kern_pairs));
+
+            parse_format0_kern_subtable(font, (const struct TT_format0_kern_subtable *)(tt_kern_subtable + 1),
+                        glyph_to_char, font->kern_pairs + old_total, new_chunk);
+        }
+        else
+            TRACE("skipping kerning table format %u\n", tt_kern_subtable_copy.coverage.bits.format);
+
+        tt_kern_subtable = (const struct TT_kern_subtable *)((const char *)tt_kern_subtable + tt_kern_subtable_copy.length);
+    }
+
+    HeapFree(GetProcessHeap(), 0, glyph_to_char);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    if (cPairs && kern_pair)
+    {
+        cPairs = min(cPairs, font->total_kern_pairs);
+        memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
+        return cPairs;
+    }
+    return font->total_kern_pairs;
+}
 
 #else /* HAVE_FREETYPE */
 
@@ -4231,6 +4461,12 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     lprs->wFlags = 0;
     lprs->nLanguageID = 0;
     return TRUE;
+}
+
+DWORD WineEngGetKerningPairs(GdiFont font, DWORD cPairs, KERNINGPAIR *kern_pair)
+{
+    ERR("called but we don't have FreeType\n");
+    return 0;
 }
 
 #endif /* HAVE_FREETYPE */

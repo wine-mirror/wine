@@ -2514,11 +2514,68 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
  *             GetKerningPairsA   (GDI32.@)
  */
 DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
-                               LPKERNINGPAIR lpKerningPairs )
+                               LPKERNINGPAIR kern_pairA )
 {
-    return GetKerningPairsW( hDC, cPairs, lpKerningPairs );
-}
+    INT charset;
+    CHARSETINFO csi;
+    CPINFO cpi;
+    DWORD i, total_kern_pairs, kern_pairs_copied = 0;
+    KERNINGPAIR *kern_pairW;
 
+    if (!cPairs && kern_pairA)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    charset = GetTextCharset(hDC);
+    if (!TranslateCharsetInfo((DWORD *)charset, &csi, TCI_SRCCHARSET))
+    {
+        FIXME("Can't find codepage for charset %d\n", charset);
+        return 0;
+    }
+    if (!GetCPInfo(csi.ciACP, &cpi))
+    {
+        FIXME("Can't find codepage %u info\n", csi.ciACP);
+        return 0;
+    }
+    TRACE("charset %d => codepage %u\n", charset, csi.ciACP);
+
+    total_kern_pairs = GetKerningPairsW(hDC, 0, NULL);
+    if (!total_kern_pairs) return 0;
+
+    kern_pairW = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pairW));
+    GetKerningPairsW(hDC, total_kern_pairs, kern_pairW);
+
+    for (i = 0; i < total_kern_pairs; i++)
+    {
+        char first, second;
+
+        if (!WideCharToMultiByte(csi.ciACP, 0, &kern_pairW[i].wFirst, 1, &first, 1, NULL, NULL))
+            continue;
+
+        if (!WideCharToMultiByte(csi.ciACP, 0, &kern_pairW[i].wSecond, 1, &second, 1, NULL, NULL))
+            continue;
+
+        if (first == cpi.DefaultChar[0] || second == cpi.DefaultChar[0])
+            continue;
+
+        if (kern_pairA)
+        {
+            if (kern_pairs_copied >= cPairs) break;
+
+            kern_pairA->wFirst = (BYTE)first;
+            kern_pairA->wSecond = (BYTE)second;
+            kern_pairA->iKernAmount = kern_pairW[i].iKernAmount;
+            kern_pairA++;
+        }
+        kern_pairs_copied++;
+    }
+
+    HeapFree(GetProcessHeap(), 0, kern_pairW);
+
+    return kern_pairs_copied;
+}
 
 /*************************************************************************
  *             GetKerningPairsW   (GDI32.@)
@@ -2526,15 +2583,18 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
 DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
                                  LPKERNINGPAIR lpKerningPairs )
 {
-    unsigned int i;
-    FIXME("(%p,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
+    DC *dc = DC_GetDCPtr(hDC);
+    DWORD ret = 0;
 
-    if(!lpKerningPairs) /* return the number of kerning pairs */
-        return 0;
+    TRACE("(%p,%ld,%p)\n", hDC, cPairs, lpKerningPairs);
 
-    for (i = 0; i < cPairs; i++)
-        lpKerningPairs[i].iKernAmount = 0;
-    return 0;
+    if (!dc) return 0;
+
+    if (dc->gdiFont)
+        ret = WineEngGetKerningPairs(dc->gdiFont, cPairs, lpKerningPairs);
+
+    GDI_ReleaseObj(hDC);
+    return ret;
 }
 
 /*************************************************************************
