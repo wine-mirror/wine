@@ -1,6 +1,7 @@
-/* Resources for the unit test suite for property sheet control.
+/*
+ * Resource IDs
  *
- * Copyright 2006 Huw Davies
+ * Copyright 2006 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,13 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winuser.h"
+#ifndef __WINE_COMCTL32_TEST_RESOURCES_H
+#define __WINE_COMCTL32_TEST_RESOURCES_H
 
-PROP_PAGE1 DIALOG LOADONCALL MOVEABLE DISCARDABLE 5, 43, 227, 215
-STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
-CAPTION "Page1"
-FONT 8, "MS Shell Dlg"
-{
- LTEXT "Test", -1, 10, 6, 100, 8
-}
+#define IDB_BITMAP_128x15       10
+#define IDB_BITMAP_80x15        11
+
+#endif  /* __WINE_COMCTL32_TEST_RESOURCES_H */

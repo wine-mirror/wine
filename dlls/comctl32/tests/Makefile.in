@@ -22,7 +22,11 @@ CTESTS = \
 	treeview.c \
 	updown.c
 
-RC_SRCS = propsheet.rc
+RC_SRCS = rsrc.rc
+RC_BINSRC = rsrc.rc
+RC_BINARIES = \
+	bmp128x15.bmp \
+	bmp80x15.bmp
 
 @MAKE_TEST_RULES@
 
