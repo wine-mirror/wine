@@ -302,7 +302,7 @@ HANDLE thread_init(void)
     return exe_file;
 }
 
-typedef ULONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
+typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
 static PUNHANDLED_EXCEPTION_FILTER get_unhandled_exception_filter(void)
 {
     static PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter;

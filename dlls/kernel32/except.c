@@ -440,7 +440,7 @@ inline static BOOL check_no_exec( void *addr )
 /*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.@)
  */
-DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
+LONG WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
 
@@ -469,7 +469,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 
         if (top_filter)
         {
-            DWORD ret = top_filter( epointers );
+            LONG ret = top_filter( epointers );
             if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
         }
 
