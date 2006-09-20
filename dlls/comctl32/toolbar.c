@@ -2580,6 +2580,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPTBADDBITMAP lpAddBmp = (LPTBADDBITMAP)lParam;
     TBITMAP_INFO info;
     INT nIndex = 0, nCount;
+    INT iSumButtons, i;
     HBITMAP hbmLoad;
     HIMAGELIST himlDef;
 
@@ -2651,6 +2652,16 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	info.hInst = lpAddBmp->hInst;
 	info.nID = lpAddBmp->nID;
 	TRACE("adding %d bitmaps!\n", info.nButtons);
+    }
+    
+    /* check if the bitmap is already loaded and compute iSumButtons */
+    iSumButtons = 0;
+    for (i = 0; i < infoPtr->nNumBitmapInfos; i++)
+    {
+        if (infoPtr->bitmaps[i].hInst == info.hInst &&
+            infoPtr->bitmaps[i].nID == info.nID)
+            return iSumButtons;
+        iSumButtons += infoPtr->bitmaps[i].nButtons;
     }
 
     if (!infoPtr->cimlDef) {
@@ -2733,7 +2744,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     InvalidateRect(hwnd, NULL, TRUE);
 
-    return nIndex;
+    return iSumButtons;
 }
 
 

@@ -173,22 +173,22 @@ static void test_add_bitmap(void)
     CHECK_IMAGELIST(13, 16, 15);
     /* adding the same bitmap will simply return the index of the already loaded block */
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 8, (LPARAM)&bmp128);
-    todo_wine ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST_TODO_COUNT(13, 16, 15);
+    ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(13, 16, 15);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80);
-    todo_wine ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST_TODO_COUNT(13, 16, 15);
+    ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(13, 16, 15);
     /* even if we increase the wParam */
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 55, (LPARAM)&bmp80);
-    todo_wine ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST_TODO_COUNT(13, 16, 15);
+    ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(13, 16, 15);
 
     /* when the wParam is smaller than the bitmaps count but non-zero, all the bitmaps will be added*/
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 3, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(8, 16, 15);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80);
-    todo_wine ok(ret == 3, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    ok(ret == 3, "TB_ADDBITMAP - unexpected return %d\n", ret);
     /* the returned value is misleading - id 8 is the id of the first icon from bmp80 */
     CHECK_IMAGELIST(13, 16, 15);
 
@@ -198,7 +198,7 @@ static void test_add_bitmap(void)
     ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
     CHECK_IMAGELIST(8, 16, 15);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp80);
-    todo_wine ok(ret == -143, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    ok(ret == -143, "TB_ADDBITMAP - unexpected return %d\n", ret);
     CHECK_IMAGELIST(13, 16, 15);
 
     /* for zero only one bitmap will be added */
@@ -230,14 +230,14 @@ static void test_add_bitmap(void)
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(6, 20, 20);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp80);
-    todo_wine ok(ret == 1, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    ok(ret == 1, "TB_ADDBITMAP - unexpected return %d\n", ret);
     CHECK_IMAGELIST(10, 20, 20);
     /* the icons can be resized - an UpdateWindow is needed as this probably happens during WM_PAINT */
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST_TODO_COUNT_SIZE(26, 8, 8);
     /* loading a standard bitmaps automatically resizes the icons */
-    todo_wine ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&stdsmall) == 2, "TB_ADDBITMAP - unexpected return\n");
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&stdsmall) == 2, "TB_ADDBITMAP - unexpected return\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST_TODO_COUNT_SIZE(28, 16, 15);
 
