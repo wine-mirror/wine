@@ -970,7 +970,8 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
         {
-            if ((rec->ExceptionInformation[0] == 8) && check_atl_thunk( rec, context )) goto done;
+            if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT && check_atl_thunk( rec, context ))
+                goto done;
             rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] );
         }
         break;

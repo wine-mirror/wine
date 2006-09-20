@@ -307,7 +307,8 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         case EXCEPTION_ACCESS_VIOLATION:
             if (rec->NumberParameters == 2)
                 dbg_printf("page fault on %s access to 0x%08lx",
-                           rec->ExceptionInformation[0] ? "write" : "read",
+                           rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
+                           rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
                            rec->ExceptionInformation[1]);
             else
                 dbg_printf("page fault");

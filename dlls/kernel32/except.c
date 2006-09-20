@@ -117,8 +117,9 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
             len = snprintf( buffer, size, "Unhandled page fault on %s access to 0x%08lx",
-                     rec->ExceptionInformation[0] ? "write" : "read",
-                     rec->ExceptionInformation[1]);
+                            rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
+                            rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
+                            rec->ExceptionInformation[1]);
         else
             len = snprintf( buffer, size, "Unhandled page fault");
         break;
@@ -448,11 +449,11 @@ LONG WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     {
         switch(rec->ExceptionInformation[0])
         {
-        case 1:  /* write access */
+        case EXCEPTION_WRITE_FAULT:
             if (check_resource_write( (void *)rec->ExceptionInformation[1] ))
                 return EXCEPTION_CONTINUE_EXECUTION;
             break;
-        case 8:  /* execute access */
+        case EXCEPTION_EXECUTE_FAULT:
             if (check_no_exec( (void *)rec->ExceptionInformation[1] ))
                 return EXCEPTION_CONTINUE_EXECUTION;
             break;

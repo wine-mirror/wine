@@ -4359,7 +4359,7 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
     if (!found) return EXCEPTION_CONTINUE_SEARCH;
 
     X11DRV_DIB_Lock( physBitmap, DIB_Status_None, FALSE );
-    if (ep->ExceptionRecord->ExceptionInformation[0]) {
+    if (ep->ExceptionRecord->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT) {
         /* the app tried to write the DIB bits */
         X11DRV_DIB_Coerce( physBitmap, DIB_Status_AppMod, FALSE );
     } else {
