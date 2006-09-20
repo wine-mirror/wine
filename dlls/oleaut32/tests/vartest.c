@@ -7537,6 +7537,513 @@ static void test_VarIdiv(void)
     SysFreeString(num2_str);
 }
 
+
+static HRESULT (WINAPI *pVarImp)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarImpFail = "VarImp(%s,%s): expected 0x0,%s,%d, got 0x%lX,%s,%d\n";
+
+#define VARIMP(vt1,val1,vt2,val2,rvt,rval)                             \
+    V_VT(&left) = VT_##vt1; V_VT(&right) = VT_##vt2;                   \
+    V_##vt1(&left) = val1; V_##vt2(&right) = val2;                     \
+    memset(&result,0,sizeof(result));                                  \
+    hres = pVarImp(&left,&right,&result);                              \
+    ok(hres == S_OK && V_VT(&result) == VT_##rvt &&                    \
+        V_##rvt(&result) == (rval),                                    \
+        szVarImpFail, vtstr(VT_##vt1), vtstr(VT_##vt2),                \
+        vtstr(VT_##rvt), (int)(rval), hres, vtstr(V_VT(&result)),      \
+        (int)V_##rvt(&result));
+
+/* Skip any type that is not defined or produces a error for every case */
+#define SKIPTESTIMP(a)                            \
+    if (a == VT_ERROR || a == VT_VARIANT ||       \
+        a == VT_DISPATCH || a == VT_UNKNOWN ||    \
+        a == VT_RECORD || a > VT_UINT ||          \
+        a == 15 /*not defined*/)                  \
+        continue;
+
+static void test_VarImp(void)
+{
+    static const WCHAR szFalse[] = { '#','F','A','L','S','E','#','\0' };
+    static const WCHAR szTrue[] = { '#','T','R','U','E','#','\0' };
+    VARIANT left, right, result, cy, dec;
+    BSTR true_str, false_str;
+    VARTYPE i;
+    HRESULT hres;
+
+    CHECKPTR(VarImp);
+
+    true_str = SysAllocString(szTrue);
+    false_str = SysAllocString(szFalse);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            SKIPTESTIMP(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+                SKIPTESTIMP(rightvt);
+
+                /* Native crashes using the the extra flag VT_BYREF
+                 * or with the following VT combinations
+                 */
+                if ((leftvt == VT_UI4 && rightvt == VT_BSTR) ||
+                    (leftvt == VT_UI8 && rightvt == VT_BSTR) ||
+                    ExtraFlags[i] == VT_BYREF)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_EMPTY;
+
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = true_str;
+
+                /* This allows us to test return types that are not NULL
+                 * (NULL Imp value = n, NULL Imp 0 = NULL)
+                 */
+                switch(rightvt)
+                {
+                case VT_BSTR:
+                    V_BSTR(&right) = true_str;
+                    break;
+                case VT_DECIMAL:
+                    VarDecFromR8(2.0, &V_DECIMAL(&right));
+                    V_VT(&right) = rightvt | ExtraFlags[i];
+                    break;
+                case VT_BOOL:
+                    V_BOOL(&right) = VARIANT_TRUE;
+                    break;
+                case VT_I1: V_I1(&right) = 2; break;
+                case VT_I2: V_I2(&right) = 2; break;
+                case VT_I4: V_I4(&right) = 2; break;
+                case VT_R4: V_R4(&right) = 2.0; break;
+                case VT_R8: V_R8(&right) = 2.0; break;
+                case VT_CY: V_CY(&right).int64 = 10000; break;
+                case VT_DATE: V_DATE(&right) = 2; break;
+                case VT_I8: V_I8(&right) = 2; break;
+                case VT_INT: V_INT(&right) = 2; break;
+                case VT_UINT: V_UINT(&right) = 2; break;
+                case VT_UI1: V_UI1(&right) = 2; break;
+                case VT_UI2: V_UI2(&right) = 2; break;
+                case VT_UI4: V_UI4(&right) = 2; break;
+                case VT_UI8: V_UI8(&right) = 2; break;
+                default: break;
+                }
+
+                /* Native VarImp always returns a error when using any extra
+                 * flags or if the variants are I8 and INT.
+                 */
+                if ((leftvt == VT_I8 && rightvt == VT_INT) ||
+                    ExtraFlags[i] != 0)
+                    bFail = TRUE;
+
+                /* Determine result type */
+                else if ((leftvt == VT_BSTR && rightvt == VT_NULL) ||
+                    (leftvt == VT_NULL && rightvt == VT_NULL) ||
+                    (leftvt == VT_NULL && rightvt == VT_EMPTY))
+                    resvt = VT_NULL;
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                    resvt = VT_I8;
+                else if (leftvt == VT_I4 || rightvt == VT_I4 ||
+                    leftvt == VT_INT || rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_DECIMAL || rightvt == VT_DECIMAL ||
+                    leftvt == VT_DATE || rightvt == VT_DATE ||
+                    leftvt == VT_CY || rightvt == VT_CY ||
+                    leftvt == VT_R8 || rightvt == VT_R8 ||
+                    leftvt == VT_R4 || rightvt == VT_R4 ||
+                    leftvt == VT_I1 || rightvt == VT_I1)
+                    resvt = VT_I4;
+                else if ((leftvt == VT_UI1 && rightvt == VT_UI1) ||
+                    (leftvt == VT_UI1 && rightvt == VT_NULL) ||
+                    (leftvt == VT_NULL && rightvt == VT_UI1))
+                    resvt = VT_UI1;
+                else if (leftvt == VT_EMPTY || rightvt == VT_EMPTY ||
+                    leftvt == VT_I2 || rightvt == VT_I2 ||
+                    leftvt == VT_UI1 || rightvt == VT_UI1)
+                    resvt = VT_I2;
+                else if (leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                    leftvt == VT_BSTR || rightvt == VT_BSTR)
+                    resvt = VT_BOOL;
+
+                hres = pVarImp(&left, &right, &result);
+
+                /* Check expected HRESULT and if result variant type is correct */
+                if (bFail)
+                    ok (hres == DISP_E_BADVARTYPE || hres == DISP_E_TYPEMISMATCH,
+                        "VarImp: %s|0x%X, %s|0x%X: got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i],
+                        vtstr(V_VT(&result)), hres);
+                else
+                    ok (hres == S_OK && resvt == V_VT(&result),
+                        "VarImp: %s|0x%X, %s|0x%X: expected vt %s hr 0x%lX, got vt %s hr 0x%lX\n",
+                        vtstr(leftvt), ExtraFlags[i], vtstr(rightvt), ExtraFlags[i], vtstr(resvt),
+                        S_OK, vtstr(V_VT(&result)), hres);
+            }
+        }
+    }
+
+    VARIMP(EMPTY,0,EMPTY,0,I2,-1);
+    VARIMP(EMPTY,0,NULL,0,I2,-1);
+    VARIMP(EMPTY,0,I2,-1,I2,-1);
+    VARIMP(EMPTY,0,I4,-1,I4,-1);
+    VARIMP(EMPTY,0,R4,0.0,I4,-1);
+    VARIMP(EMPTY,0,R8,-1.0,I4,-1);
+    VARIMP(EMPTY,0,DATE,0,I4,-1);
+    VARIMP(EMPTY,0,BSTR,true_str,I2,-1);
+    VARIMP(EMPTY,0,BOOL,VARIANT_FALSE,I2,-1);
+    VARIMP(EMPTY,0,I1,0,I4,-1);
+    VARIMP(EMPTY,0,UI1,1,I2,-1);
+    VARIMP(EMPTY,0,UI2,1,I4,-1);
+    VARIMP(EMPTY,0,UI4,1,I4,-1);
+    VARIMP(EMPTY,0,I8,1,I8,-1);
+    VARIMP(EMPTY,0,UI8,1,I4,-1);
+    VARIMP(EMPTY,0,INT,-1,I4,-1);
+    VARIMP(EMPTY,0,UINT,1,I4,-1);
+    VARIMP(NULL,0,EMPTY,0,NULL,0);
+    VARIMP(NULL,0,NULL,0,NULL,0);
+    VARIMP(NULL,0,I2,-1,I2,-1);
+    VARIMP(NULL,0,I4,-1,I4,-1);
+    VARIMP(NULL,0,R4,0.0,NULL,0);
+    VARIMP(NULL,0,R8,-1.0,I4,-1);
+    VARIMP(NULL,0,DATE,0,NULL,0);
+    VARIMP(NULL,0,BSTR,true_str,BOOL,-1);
+    VARIMP(NULL,0,BOOL,VARIANT_FALSE,NULL,0);
+    VARIMP(NULL,0,I1,0,NULL,0);
+    VARIMP(NULL,0,UI1,1,UI1,1);
+    VARIMP(NULL,0,UI2,1,I4,1);
+    VARIMP(NULL,0,UI4,1,I4,1);
+    VARIMP(NULL,0,I8,1,I8,1);
+    VARIMP(NULL,0,UI8,1,I4,1);
+    VARIMP(NULL,0,INT,-1,I4,-1);
+    VARIMP(NULL,0,UINT,1,I4,1);
+    VARIMP(I2,-1,EMPTY,0,I2,0);
+    VARIMP(I2,-1,I2,-1,I2,-1);
+    VARIMP(I2,-1,I4,-1,I4,-1);
+    VARIMP(I2,-1,R4,0.0,I4,0);
+    VARIMP(I2,-1,R8,-1.0,I4,-1);
+    VARIMP(I2,-1,DATE,0,I4,0);
+    VARIMP(I2,-1,BSTR,true_str,I2,-1);
+    VARIMP(I2,-1,BOOL,VARIANT_FALSE,I2,0);
+    VARIMP(I2,-1,I1,0,I4,0);
+    VARIMP(I2,-1,UI1,1,I2,1);
+    VARIMP(I2,-1,UI2,1,I4,1);
+    VARIMP(I2,-1,UI4,1,I4,1);
+    VARIMP(I2,-1,I8,1,I8,1);
+    VARIMP(I2,-1,UI8,1,I4,1);
+    VARIMP(I2,-1,INT,-1,I4,-1);
+    VARIMP(I2,-1,UINT,1,I4,1);
+    VARIMP(I4,2,EMPTY,0,I4,-3);
+    VARIMP(I4,2,NULL,0,I4,-3);
+    VARIMP(I4,2,I2,-1,I4,-1);
+    VARIMP(I4,2,I4,-1,I4,-1);
+    VARIMP(I4,2,R4,0.0,I4,-3);
+    VARIMP(I4,2,R8,-1.0,I4,-1);
+    VARIMP(I4,2,DATE,0,I4,-3);
+    VARIMP(I4,2,BSTR,true_str,I4,-1);
+    VARIMP(I4,2,BOOL,VARIANT_FALSE,I4,-3);
+    VARIMP(I4,2,I1,0,I4,-3);
+    VARIMP(I4,2,UI1,1,I4,-3);
+    VARIMP(I4,2,UI2,1,I4,-3);
+    VARIMP(I4,2,UI4,1,I4,-3);
+    VARIMP(I4,2,I8,1,I8,-3);
+    VARIMP(I4,2,UI8,1,I4,-3);
+    VARIMP(I4,2,INT,-1,I4,-1);
+    VARIMP(I4,2,UINT,1,I4,-3);
+    VARIMP(R4,-1.0,EMPTY,0,I4,0);
+    VARIMP(R4,-1.0,NULL,0,NULL,0);
+    VARIMP(R4,-1.0,I2,-1,I4,-1);
+    VARIMP(R4,-1.0,I4,-1,I4,-1);
+    VARIMP(R4,-1.0,R4,0.0,I4,0);
+    VARIMP(R4,-1.0,R8,-1.0,I4,-1);
+    VARIMP(R4,-1.0,DATE,1,I4,1);
+    VARIMP(R4,-1.0,BSTR,true_str,I4,-1);
+    VARIMP(R4,-1.0,BOOL,VARIANT_FALSE,I4,0);
+    VARIMP(R4,-1.0,I1,0,I4,0);
+    VARIMP(R4,-1.0,UI1,1,I4,1);
+    VARIMP(R4,-1.0,UI2,1,I4,1);
+    VARIMP(R4,-1.0,UI4,1,I4,1);
+    VARIMP(R4,-1.0,I8,1,I8,1);
+    VARIMP(R4,-1.0,UI8,1,I4,1);
+    VARIMP(R4,-1.0,INT,-1,I4,-1);
+    VARIMP(R4,-1.0,UINT,1,I4,1);
+    VARIMP(R8,1.0,EMPTY,0,I4,-2);
+    VARIMP(R8,1.0,NULL,0,I4,-2);
+    VARIMP(R8,1.0,I2,-1,I4,-1);
+    VARIMP(R8,1.0,I4,-1,I4,-1);
+    VARIMP(R8,1.0,R4,0.0,I4,-2);
+    VARIMP(R8,1.0,R8,-1.0,I4,-1);
+    VARIMP(R8,1.0,DATE,0,I4,-2);
+    VARIMP(R8,1.0,BSTR,true_str,I4,-1);
+    VARIMP(R8,1.0,BOOL,VARIANT_FALSE,I4,-2);
+    VARIMP(R8,1.0,I1,0,I4,-2);
+    VARIMP(R8,1.0,UI1,1,I4,-1);
+    VARIMP(R8,1.0,UI2,1,I4,-1);
+    VARIMP(R8,1.0,UI4,1,I4,-1);
+    VARIMP(R8,1.0,I8,1,I8,-1);
+    VARIMP(R8,1.0,UI8,1,I4,-1);
+    VARIMP(R8,1.0,INT,-1,I4,-1);
+    VARIMP(R8,1.0,UINT,1,I4,-1);
+    VARIMP(DATE,0,EMPTY,0,I4,-1);
+    VARIMP(DATE,0,NULL,0,I4,-1);
+    VARIMP(DATE,0,I2,-1,I4,-1);
+    VARIMP(DATE,0,I4,-1,I4,-1);
+    VARIMP(DATE,0,R4,0.0,I4,-1);
+    VARIMP(DATE,0,R8,-1.0,I4,-1);
+    VARIMP(DATE,0,DATE,0,I4,-1);
+    VARIMP(DATE,0,BSTR,true_str,I4,-1);
+    VARIMP(DATE,0,BOOL,VARIANT_FALSE,I4,-1);
+    VARIMP(DATE,0,I1,0,I4,-1);
+    VARIMP(DATE,0,UI1,1,I4,-1);
+    VARIMP(DATE,0,UI2,1,I4,-1);
+    VARIMP(DATE,0,UI4,1,I4,-1);
+    VARIMP(DATE,0,I8,1,I8,-1);
+    VARIMP(DATE,0,UI8,1,I4,-1);
+    VARIMP(DATE,0,INT,-1,I4,-1);
+    VARIMP(DATE,0,UINT,1,I4,-1);
+    VARIMP(BSTR,false_str,EMPTY,0,I2,-1);
+    VARIMP(BSTR,false_str,NULL,0,BOOL,-1);
+    VARIMP(BSTR,false_str,I2,-1,I2,-1);
+    VARIMP(BSTR,false_str,I4,-1,I4,-1);
+    VARIMP(BSTR,false_str,R4,0.0,I4,-1);
+    VARIMP(BSTR,false_str,R8,-1.0,I4,-1);
+    VARIMP(BSTR,false_str,DATE,0,I4,-1);
+    VARIMP(BSTR,false_str,BSTR,true_str,BOOL,-1);
+    VARIMP(BSTR,false_str,BOOL,VARIANT_FALSE,BOOL,-1);
+    VARIMP(BSTR,false_str,I1,0,I4,-1);
+    VARIMP(BSTR,false_str,UI1,1,I2,-1);
+    VARIMP(BSTR,false_str,UI2,1,I4,-1);
+    VARIMP(BSTR,false_str,UI4,1,I4,-1);
+    VARIMP(BSTR,false_str,I8,1,I8,-1);
+    VARIMP(BSTR,false_str,UI8,1,I4,-1);
+    VARIMP(BSTR,false_str,INT,-1,I4,-1);
+    VARIMP(BSTR,false_str,UINT,1,I4,-1);
+    VARIMP(BOOL,VARIANT_TRUE,EMPTY,0,I2,0);
+    VARIMP(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
+    VARIMP(BOOL,VARIANT_TRUE,I2,-1,I2,-1);
+    VARIMP(BOOL,VARIANT_TRUE,I4,-1,I4,-1);
+    VARIMP(BOOL,VARIANT_TRUE,R4,0.0,I4,0);
+    VARIMP(BOOL,VARIANT_TRUE,R8,-1.0,I4,-1);
+    VARIMP(BOOL,VARIANT_TRUE,DATE,0,I4,0);
+    VARIMP(BOOL,VARIANT_TRUE,BSTR,true_str,BOOL,-1);
+    VARIMP(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE,BOOL,0);
+    VARIMP(BOOL,VARIANT_TRUE,I1,0,I4,0);
+    VARIMP(BOOL,VARIANT_TRUE,UI1,1,I2,1);
+    VARIMP(BOOL,VARIANT_TRUE,UI2,1,I4,1);
+    VARIMP(BOOL,VARIANT_TRUE,UI4,1,I4,1);
+    VARIMP(BOOL,VARIANT_TRUE,I8,1,I8,1);
+    VARIMP(BOOL,VARIANT_TRUE,UI8,1,I4,1);
+    VARIMP(BOOL,VARIANT_TRUE,INT,-1,I4,-1);
+    VARIMP(BOOL,VARIANT_TRUE,UINT,1,I4,1);
+    VARIMP(I1,-1,EMPTY,0,I4,0);
+    VARIMP(I1,-1,NULL,0,NULL,0);
+    VARIMP(I1,-1,I2,-1,I4,-1);
+    VARIMP(I1,-1,I4,-1,I4,-1);
+    VARIMP(I1,-1,R4,0.0,I4,0);
+    VARIMP(I1,-1,R8,-1.0,I4,-1);
+    VARIMP(I1,-1,DATE,0,I4,0);
+    VARIMP(I1,-1,BSTR,true_str,I4,-1);
+    VARIMP(I1,-1,BOOL,VARIANT_FALSE,I4,0);
+    VARIMP(I1,-1,I1,0,I4,0);
+    VARIMP(I1,-1,UI1,1,I4,1);
+    VARIMP(I1,-1,UI2,1,I4,1);
+    VARIMP(I1,-1,UI4,1,I4,1);
+    VARIMP(I1,-1,I8,1,I8,1);
+    VARIMP(I1,-1,UI8,1,I4,1);
+    VARIMP(I1,-1,INT,-1,I4,-1);
+    VARIMP(I1,-1,UINT,1,I4,1);
+    VARIMP(UI1,0,EMPTY,0,I2,-1);
+    VARIMP(UI1,0,NULL,0,UI1,255);
+    VARIMP(UI1,0,I2,-1,I2,-1);
+    VARIMP(UI1,0,I4,-1,I4,-1);
+    VARIMP(UI1,0,R4,0.0,I4,-1);
+    VARIMP(UI1,0,R8,-1.0,I4,-1);
+    VARIMP(UI1,0,DATE,0,I4,-1);
+    VARIMP(UI1,0,BSTR,true_str,I2,-1);
+    VARIMP(UI1,0,BOOL,VARIANT_FALSE,I2,-1);
+    VARIMP(UI1,0,I1,0,I4,-1);
+    VARIMP(UI1,0,UI1,1,UI1,255);
+    VARIMP(UI1,0,UI2,1,I4,-1);
+    VARIMP(UI1,0,UI4,1,I4,-1);
+    VARIMP(UI1,0,I8,1,I8,-1);
+    VARIMP(UI1,0,UI8,1,I4,-1);
+    VARIMP(UI1,0,INT,-1,I4,-1);
+    VARIMP(UI1,0,UINT,1,I4,-1);
+    VARIMP(UI2,0,EMPTY,0,I4,-1);
+    VARIMP(UI2,0,NULL,0,I4,-1);
+    VARIMP(UI2,0,I2,-1,I4,-1);
+    VARIMP(UI2,0,I4,-1,I4,-1);
+    VARIMP(UI2,0,R4,0.0,I4,-1);
+    VARIMP(UI2,0,R8,-1.0,I4,-1);
+    VARIMP(UI2,0,DATE,0,I4,-1);
+    VARIMP(UI2,0,BSTR,true_str,I4,-1);
+    VARIMP(UI2,0,BOOL,VARIANT_FALSE,I4,-1);
+    VARIMP(UI2,0,I1,0,I4,-1);
+    VARIMP(UI2,0,UI1,1,I4,-1);
+    VARIMP(UI2,0,UI2,1,I4,-1);
+    VARIMP(UI2,0,UI4,1,I4,-1);
+    VARIMP(UI2,0,I8,1,I8,-1);
+    VARIMP(UI2,0,UI8,1,I4,-1);
+    VARIMP(UI2,0,INT,-1,I4,-1);
+    VARIMP(UI2,0,UINT,1,I4,-1);
+    VARIMP(UI4,0,EMPTY,0,I4,-1);
+    VARIMP(UI4,0,NULL,0,I4,-1);
+    VARIMP(UI4,0,I2,-1,I4,-1);
+    VARIMP(UI4,0,I4,-1,I4,-1);
+    VARIMP(UI4,0,R4,0.0,I4,-1);
+    VARIMP(UI4,0,R8,-1.0,I4,-1);
+    VARIMP(UI4,0,DATE,0,I4,-1);
+    VARIMP(UI4,0,BSTR,true_str,I4,-1);
+    VARIMP(UI4,0,BOOL,VARIANT_FALSE,I4,-1);
+    VARIMP(UI4,0,I1,0,I4,-1);
+    VARIMP(UI4,0,UI1,1,I4,-1);
+    VARIMP(UI4,0,UI2,1,I4,-1);
+    VARIMP(UI4,0,UI4,1,I4,-1);
+    VARIMP(UI4,0,I8,1,I8,-1);
+    VARIMP(UI4,0,UI8,1,I4,-1);
+    VARIMP(UI4,0,INT,-1,I4,-1);
+    VARIMP(UI4,0,UINT,1,I4,-1);
+    VARIMP(I8,-1,EMPTY,0,I8,0);
+    VARIMP(I8,-1,NULL,0,NULL,0);
+    VARIMP(I8,-1,I2,-1,I8,-1);
+    VARIMP(I8,-1,I4,-1,I8,-1);
+    VARIMP(I8,-1,R4,0.0,I8,0);
+    VARIMP(I8,-1,R8,-1.0,I8,-1);
+    VARIMP(I8,-1,DATE,0,I8,0);
+    VARIMP(I8,-1,BSTR,true_str,I8,-1);
+    VARIMP(I8,-1,BOOL,VARIANT_FALSE,I8,0);
+    VARIMP(I8,-1,I1,0,I8,0);
+    VARIMP(I8,-1,UI1,1,I8,1);
+    VARIMP(I8,-1,UI2,1,I8,1);
+    VARIMP(I8,-1,UI4,1,I8,1);
+    VARIMP(I8,-1,I8,1,I8,1);
+    VARIMP(I8,-1,UI8,1,I8,1);
+    VARIMP(I8,-1,UINT,1,I8,1);
+    VARIMP(UI8,0,EMPTY,0,I4,-1);
+    VARIMP(UI8,0,NULL,0,I4,-1);
+    VARIMP(UI8,0,I2,-1,I4,-1);
+    VARIMP(UI8,0,I4,-1,I4,-1);
+    VARIMP(UI8,0,R4,0.0,I4,-1);
+    VARIMP(UI8,0,R8,-1.0,I4,-1);
+    VARIMP(UI8,0,DATE,0,I4,-1);
+    VARIMP(UI8,0,BSTR,true_str,I4,-1);
+    VARIMP(UI8,0,BOOL,VARIANT_FALSE,I4,-1);
+    VARIMP(UI8,0,I1,0,I4,-1);
+    VARIMP(UI8,0,UI1,1,I4,-1);
+    VARIMP(UI8,0,UI2,1,I4,-1);
+    VARIMP(UI8,0,UI4,1,I4,-1);
+    VARIMP(UI8,0,I8,1,I8,-1);
+    VARIMP(UI8,0,UI8,1,I4,-1);
+    VARIMP(UI8,0,INT,-1,I4,-1);
+    VARIMP(UI8,0,UINT,1,I4,-1);
+    VARIMP(INT,-1,EMPTY,0,I4,0);
+    VARIMP(INT,-1,NULL,0,NULL,0);
+    VARIMP(INT,-1,I2,-1,I4,-1);
+    VARIMP(INT,-1,I4,-1,I4,-1);
+    VARIMP(INT,-1,R4,0.0,I4,0);
+    VARIMP(INT,-1,R8,-1.0,I4,-1);
+    VARIMP(INT,-1,DATE,0,I4,0);
+    VARIMP(INT,-1,BSTR,true_str,I4,-1);
+    VARIMP(INT,-1,BOOL,VARIANT_FALSE,I4,0);
+    VARIMP(INT,-1,I1,0,I4,0);
+    VARIMP(INT,-1,UI1,1,I4,1);
+    VARIMP(INT,-1,UI2,1,I4,1);
+    VARIMP(INT,-1,UI4,1,I4,1);
+    VARIMP(INT,-1,I8,1,I8,1);
+    VARIMP(INT,-1,UI8,1,I4,1);
+    VARIMP(INT,-1,INT,-1,I4,-1);
+    VARIMP(INT,-1,UINT,1,I4,1);
+    VARIMP(UINT,1,EMPTY,0,I4,-2);
+    VARIMP(UINT,1,NULL,0,I4,-2);
+    VARIMP(UINT,1,I2,-1,I4,-1);
+    VARIMP(UINT,1,I4,-1,I4,-1);
+    VARIMP(UINT,1,R4,0.0,I4,-2);
+    VARIMP(UINT,1,R8,-1.0,I4,-1);
+    VARIMP(UINT,1,DATE,0,I4,-2);
+    VARIMP(UINT,1,BSTR,true_str,I4,-1);
+    VARIMP(UINT,1,BOOL,VARIANT_FALSE,I4,-2);
+    VARIMP(UINT,1,I1,0,I4,-2);
+    VARIMP(UINT,1,UI1,1,I4,-1);
+    VARIMP(UINT,1,UI2,1,I4,-1);
+    VARIMP(UINT,1,UI4,1,I4,-1);
+    VARIMP(UINT,1,I8,1,I8,-1);
+    VARIMP(UINT,1,UI8,1,I4,-1);
+    VARIMP(UINT,1,INT,-1,I4,-1);
+    VARIMP(UINT,1,UINT,1,I4,-1);
+
+    /* Manually test some VT_CY, VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(1, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(2.0, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = 0;
+    V_VT(&right) = VT_I8;
+    V_UI1(&right) = 0;
+
+    hres = pVarImp(&cy, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I4,
+        "VARIMP: expected coerced hres 0x%lX type VT_I4, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I4(&result) == -1,
+        "VARIMP: CY value %ld, expected %d\n", V_I4(&result), -1);
+
+    hres = pVarImp(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I8,
+        "VARIMP: expected coerced hres 0x%lX type VT_I8, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I8(&result) == -2,
+        "VARIMP: CY value %lx%08lx, expected %d\n",
+        (DWORD)((V_I8(&result)) >> 32), (DWORD)(V_I8(&result)), -2);
+
+    hres = pVarImp(&left, &cy, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I4,
+        "VARIMP: expected coerced hres 0x%lX type VT_I4, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I4(&result) == -1,
+        "VARIMP: CY value %ld, expected %d\n", V_I4(&result), -1);
+
+    hres = pVarImp(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I4,
+        "VARIMP: expected coerced hres 0x%lX type VT_I4, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I4(&result) == -1,
+        "VARIMP: DECIMAL value %ld, expected %d\n", V_I4(&result), -1);
+
+    hres = pVarImp(&dec, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I4,
+        "VARIMP: expected coerced hres 0x%lX type VT_I4, got hres 0x%lX type %s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I4(&result) == -1,
+        "VARIMP: DECIMAL value %ld, expected %d\n", V_I4(&result), -1);
+
+    hres = pVarImp(&dec, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_I8,
+        "VARIMP: expected coerced hres 0x%lX type VT_I8, got hres 0x%lX type%s!\n",
+        S_OK, hres, vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_I8(&result) == -3,
+        "VARIMP: DECIMAL value %lld, expected %d\n", V_I8(&result), -3);
+
+    SysFreeString(false_str);
+    SysFreeString(true_str);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -7572,4 +8079,5 @@ START_TEST(vartest)
   test_VarAnd();
   test_VarDiv();
   test_VarIdiv();
+  test_VarImp();
 }
