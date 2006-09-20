@@ -110,12 +110,13 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
-#if (defined(_MSC_VER) || defined(__MINGW_H)) && !defined(_BSD_TYPES_DEFINED)
+#if (defined(_MSC_VER) || defined(__MINGW_H) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef unsigned int  u_int;
 typedef unsigned long u_long;
+#define _BSDTYPES_DEFINED
 #endif
 
 #ifdef USE_WS_PREFIX

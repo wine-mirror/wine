@@ -52,12 +52,12 @@ typedef long time_t;
 #define _TIME_T_DEFINED
 #endif
 
-#ifndef _BSD_TYPES_DEFINED
+#ifndef _BSDTYPES_DEFINED
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef unsigned int  u_int;
 typedef unsigned long u_long;
-#define _BSD_TYPES_DEFINED
+#define _BSDTYPES_DEFINED
 #endif
 
 #define dev_t _dev_t
