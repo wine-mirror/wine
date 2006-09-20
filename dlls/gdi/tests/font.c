@@ -29,6 +29,23 @@
 
 #include "wine/test.h"
 
+static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    return 0;
+}
+
+static BOOL is_font_installed(const char *name)
+{
+    HDC hdc = GetDC(0);
+    BOOL ret = FALSE;
+
+    if(!EnumFontFamiliesA(hdc, name, is_font_installed_proc, 0))
+        ret = TRUE;
+
+    ReleaseDC(0, hdc);
+    return ret;
+}
+
 static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
 {
     LOGFONTA getobj_lf;
@@ -407,6 +424,12 @@ static void test_GetGlyphIndices()
                                            "GetGlyphIndicesW");
     if (!GetGlyphIndicesW) {
         trace("GetGlyphIndices not available on platform\n");
+        return;
+    }
+
+    if(!is_font_installed("Symbol"))
+    {
+        trace("Symbol is not installed so skipping this test\n");
         return;
     }
 
