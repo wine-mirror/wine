@@ -218,7 +218,7 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                             NULL, NULL, NULL)) == ERROR_FILE_NOT_FOUND)
                     {
                         if ((reg_ret = RegSetValueExA (hDrivers, desc, 0,
-                                REG_SZ, (LPBYTE)"Installed", 10)) != ERROR_SUCCESS)
+                                REG_SZ, (const BYTE *)"Installed", 10)) != ERROR_SUCCESS)
                         {
                             TRACE ("Error %ld replicating driver %s\n",
                                     reg_ret, desc);
