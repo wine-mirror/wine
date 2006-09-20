@@ -327,6 +327,14 @@ static BOOL DoTest1(void)
     /* remove one extra */
     ok(!ImageList_Remove(himl,0),"removed nonexistent icon\n");
 
+    /* check SetImageCount/GetImageCount */
+    ok(ImageList_SetImageCount(himl, 3), "couldn't increase image count\n");
+    ok(ImageList_GetImageCount(himl) == 3, "invalid image count after increase\n");
+    ok(ImageList_SetImageCount(himl, 1), "couldn't decrease image count\n");
+    ok(ImageList_GetImageCount(himl) == 1, "invalid image count after decrease to 1\n");
+    ok(ImageList_SetImageCount(himl, 0), "couldn't decrease image count\n");
+    ok(ImageList_GetImageCount(himl) == 0, "invalid image count after decrease to 0\n");
+
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
