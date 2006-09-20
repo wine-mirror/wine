@@ -1776,6 +1776,14 @@ struct join_res
     const CHAR two[MAX_PATH];
 };
 
+struct join_res_4col
+{
+    const CHAR one[MAX_PATH];
+    const CHAR two[MAX_PATH];
+    const CHAR three[MAX_PATH];
+    const CHAR four[MAX_PATH];
+};
+
 static const struct join_res join_res_first[] =
 {
     { "alveolar", "procerus" },
@@ -1822,6 +1830,16 @@ static const struct join_res join_res_seventh[] =
     { "malar", "nasalis" },
     { "malar", "nasalis" },
     { "malar", "nasalis" },
+};
+
+static const struct join_res_4col join_res_eighth[] =
+{
+    { "msvcp.dll", "msvcp.dll.01234", "msvcp.dll.01234", "abcdefgh" },
+    { "msvcr.dll", "msvcr.dll.56789", "msvcp.dll.01234", "abcdefgh" },
+    { "msvcp.dll", "msvcp.dll.01234", "msvcr.dll.56789", "ijklmnop" },
+    { "msvcr.dll", "msvcr.dll.56789", "msvcr.dll.56789", "ijklmnop" },
+    { "msvcp.dll", "msvcp.dll.01234", "single.dll.31415", "msvcp.dll" },
+    { "msvcr.dll", "msvcr.dll.56789", "single.dll.31415", "msvcp.dll" },
 };
 
 static void test_join(void)
@@ -2222,6 +2240,52 @@ static void test_join(void)
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
+
+    query = "SELECT `StdDlls`.`File`, `Binary`.`Data` "
+            "FROM `StdDlls`, `Binary` ";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 2, "Expected 2 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].one ),
+            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].four ),
+            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
