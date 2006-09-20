@@ -1457,7 +1457,19 @@ esac
 
 dnl **** Generate output files ****
 
-AC_SUBST(DEPENDENCIES,"### Dependencies:
+dnl autoconf versions before 2.59d need backslashes to escape newlines in subst variables
+AC_SUBST(DEPENDENCIES,m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59d]), -1,
+["### Dependencies:\\
+\\
+.INIT: Makefile\\
+.BEGIN: Makefile\\
+Makefile: dummy\\
+	-\$(MAKEDEP) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)\\
+\\
+\$(ALL_OBJS): \$(IDL_SRCS:.idl=.h)\\
+\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)\\
+\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"],
+["### Dependencies:
 
 .INIT: Makefile
 .BEGIN: Makefile
@@ -1466,7 +1478,7 @@ Makefile: dummy
 
 \$(ALL_OBJS): \$(IDL_SRCS:.idl=.h)
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
-\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)")
+\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"]))
 
 AH_TOP([#define __WINE_CONFIG_H])
 
