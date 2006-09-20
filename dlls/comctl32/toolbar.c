@@ -2625,9 +2625,6 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
     {
 	nButtons = (INT)wParam;
-	if (nButtons <= 0)
-	    return -1;
-
 	TRACE ("adding %d bitmaps!\n", nButtons);
     }
 
@@ -2761,18 +2758,19 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (nIndex != -1)
     {
-       INT imagecount = ImageList_GetImageCount(himlDef);
+        INT imagecount = ImageList_GetImageCount(himlDef);
+        INT added =  imagecount - nCount;
+        if (nButtons == 0) /* wParam == 0 is special and means add only one image */
+        {
+            ImageList_SetImageCount(himlDef, nCount + 1);
+        } else if (added < nButtons) {    /* if not enough buttons, grow the list */
+            ImageList_SetImageCount(himlDef, nCount + nButtons);
+        } else if (added > nButtons) {
+            TRACE("Added more images than wParam: Previous image number %i added %i while nButtons %i. Images in list %i\n",
+                nCount, added, nButtons, imagecount);
+        }
 
-       if (infoPtr->nNumBitmaps + nButtons != imagecount)
-       {
-         WARN("Desired images do not match received images : Previous image number %i Previous images in list %i added %i expecting total %i, Images in list %i\n",
-	      infoPtr->nNumBitmaps, nCount, imagecount - nCount,
-	      infoPtr->nNumBitmaps+nButtons,imagecount);
-
-	 infoPtr->nNumBitmaps = imagecount;
-       }
-       else
-         infoPtr->nNumBitmaps += nButtons;
+        infoPtr->nNumBitmaps += added;
     }
 
     InvalidateRect(hwnd, NULL, TRUE);

@@ -194,25 +194,25 @@ static void test_add_bitmap(void)
     /* the same for negative wParam */
     rebuild_toolbar(&hToolbar);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, -143, (LPARAM)&bmp128);
-    todo_wine ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    todo_wine CHECK_IMAGELIST(8, 16, 15);
+    ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(8, 16, 15);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp80);
     todo_wine ok(ret == -143, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST_TODO_COUNT(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 15);
 
     /* for zero only one bitmap will be added */
     rebuild_toolbar(&hToolbar);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&bmp80);
-    todo_wine ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    todo_wine CHECK_IMAGELIST(1, 16, 15);
+    ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(1, 16, 15);
 
     /* if wParam is larger than the amount of icons, the list is grown */
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp80) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST_TODO_COUNT(100, 16, 15);
+    CHECK_IMAGELIST(100, 16, 15);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp128);
-    todo_wine ok(ret == 100, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST_TODO_COUNT(200, 16, 15);
+    ok(ret == 100, "TB_ADDBITMAP - unexpected return %d\n", ret);
+    CHECK_IMAGELIST(200, 16, 15);
 
     /* adding built-in items - the wParam is ignored */
     rebuild_toolbar(&hToolbar);
