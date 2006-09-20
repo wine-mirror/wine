@@ -2092,6 +2092,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
 		    }
 		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
 		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+                    ppem = GET_BE_WORD(vTable[i * 3]);
                     TRACE("ppem %ld found; height=%ld  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
