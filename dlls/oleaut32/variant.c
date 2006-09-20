@@ -5280,3 +5280,230 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 
     return S_OK;
 }
+
+/**********************************************************************
+ *              VarImp [OLEAUT32.154]
+ *
+ * Bitwise implication of two variants.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
+ */
+HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT hres = S_OK;
+    VARTYPE resvt = VT_EMPTY;
+    VARTYPE leftvt,rightvt;
+    VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
+    VARIANT lv,rv;
+    double d;
+
+    leftvt = V_VT(left)&VT_TYPEMASK;
+    rightvt = V_VT(right)&VT_TYPEMASK;
+    leftExtraFlags = V_VT(left)&(~VT_TYPEMASK);
+    rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
+
+    if (leftExtraFlags != rightExtraFlags)
+        return DISP_E_BADVARTYPE;
+    ExtraFlags = leftExtraFlags;
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
+          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* Native VarImp always returns a error when using any extra
+     * flags or if the variants are I8 and INT.
+     */
+    if ((leftvt == VT_I8 && rightvt == VT_INT) ||
+        ExtraFlags != 0)
+        return DISP_E_BADVARTYPE;
+
+    /* Determine result type */
+    else if ((leftvt == VT_NULL && rightvt == VT_NULL) ||
+        (leftvt == VT_NULL && rightvt == VT_EMPTY))
+    {
+        V_VT(result) = VT_NULL;
+        return S_OK;
+    }
+    else if (leftvt == VT_I8 || rightvt == VT_I8)
+        resvt = VT_I8;
+    else if (leftvt == VT_I4 || rightvt == VT_I4 ||
+        leftvt == VT_INT || rightvt == VT_INT ||
+        leftvt == VT_UINT || rightvt == VT_UINT ||
+        leftvt == VT_UI4 || rightvt == VT_UI4 ||
+        leftvt == VT_UI8 || rightvt == VT_UI8 ||
+        leftvt == VT_UI2 || rightvt == VT_UI2 ||
+        leftvt == VT_DECIMAL || rightvt == VT_DECIMAL ||
+        leftvt == VT_DATE || rightvt == VT_DATE ||
+        leftvt == VT_CY || rightvt == VT_CY ||
+        leftvt == VT_R8 || rightvt == VT_R8 ||
+        leftvt == VT_R4 || rightvt == VT_R4 ||
+        leftvt == VT_I1 || rightvt == VT_I1)
+        resvt = VT_I4;
+    else if ((leftvt == VT_UI1 && rightvt == VT_UI1) ||
+        (leftvt == VT_UI1 && rightvt == VT_NULL) ||
+        (leftvt == VT_NULL && rightvt == VT_UI1))
+        resvt = VT_UI1;
+    else if (leftvt == VT_EMPTY || rightvt == VT_EMPTY ||
+        leftvt == VT_I2 || rightvt == VT_I2 ||
+        leftvt == VT_UI1 || rightvt == VT_UI1)
+        resvt = VT_I2;
+    else if (leftvt == VT_BOOL || rightvt == VT_BOOL ||
+        leftvt == VT_BSTR || rightvt == VT_BSTR)
+        resvt = VT_BOOL;
+
+    VariantInit(&lv);
+    VariantInit(&rv);
+
+    /* VT_NULL requires special handling for when the opposite
+     * variant is equal to something other than -1.
+     * (NULL Imp 0 = NULL, NULL Imp n = n)
+     */
+    if (leftvt == VT_NULL)
+    {
+        VARIANT_BOOL b;
+        switch(rightvt)
+        {
+        case VT_I1:   if (!V_I1(right)) resvt = VT_NULL; break;
+        case VT_UI1:  if (!V_UI1(right)) resvt = VT_NULL; break;
+        case VT_I2:   if (!V_I2(right)) resvt = VT_NULL; break;
+        case VT_UI2:  if (!V_UI2(right)) resvt = VT_NULL; break;
+        case VT_I4:   if (!V_I4(right)) resvt = VT_NULL; break;
+        case VT_UI4:  if (!V_UI4(right)) resvt = VT_NULL; break;
+        case VT_I8:   if (!V_I8(right)) resvt = VT_NULL; break;
+        case VT_UI8:  if (!V_UI8(right)) resvt = VT_NULL; break;
+        case VT_INT:  if (!V_INT(right)) resvt = VT_NULL; break;
+        case VT_UINT: if (!V_UINT(right)) resvt = VT_NULL; break;
+        case VT_BOOL: if (!V_BOOL(right)) resvt = VT_NULL; break;
+        case VT_R4:   if (!V_R4(right)) resvt = VT_NULL; break;
+        case VT_R8:   if (!V_R8(right)) resvt = VT_NULL; break;
+        case VT_DATE: if (!V_DATE(right)) resvt = VT_NULL; break;
+        case VT_CY:   if (!V_CY(right).int64) resvt = VT_NULL; break;
+        case VT_DECIMAL:
+            if (!(DEC_HI32(&V_DECIMAL(right)) || DEC_LO64(&V_DECIMAL(right))))
+                resvt = VT_NULL;
+            break;
+        case VT_BSTR:
+            hres = VarBoolFromStr(V_BSTR(right),LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &b);
+            if (FAILED(hres)) goto VarImp_Exit;
+            else if (!b)
+                V_VT(result) = VT_NULL;
+            else
+            {
+                V_VT(result) = VT_BOOL;
+                V_BOOL(result) = b;
+            }
+            goto VarImp_Exit;
+        }
+        if (resvt == VT_NULL)
+        {
+            V_VT(result) = resvt;
+            goto VarImp_Exit;
+        }
+        else
+        {
+            hres = VariantChangeType(result,right,0,resvt);
+            goto VarImp_Exit;
+        }
+    }
+
+    /* Special handling is required when NULL is the right variant.
+     * (-1 Imp NULL = NULL, n Imp NULL = n Imp 0)
+     */
+    else if (rightvt == VT_NULL)
+    {
+        VARIANT_BOOL b;
+        switch(leftvt)
+        {
+        case VT_I1:     if (V_I1(left) == -1) resvt = VT_NULL; break;
+        case VT_UI1:    if (V_UI1(left) == 0xff) resvt = VT_NULL; break;
+        case VT_I2:     if (V_I2(left) == -1) resvt = VT_NULL; break;
+        case VT_UI2:    if (V_UI2(left) == 0xffff) resvt = VT_NULL; break;
+        case VT_INT:    if (V_INT(left) == -1) resvt = VT_NULL; break;
+        case VT_UINT:   if (V_UINT(left) == ~0u) resvt = VT_NULL; break;
+        case VT_I4:     if (V_I4(left) == -1) resvt = VT_NULL; break;
+        case VT_UI4:    if (V_UI4(left) == ~0u) resvt = VT_NULL; break;
+        case VT_I8:     if (V_I8(left) == -1) resvt = VT_NULL; break;
+        case VT_UI8:    if (V_UI8(left) == ~(ULONGLONG)0) resvt = VT_NULL; break;
+        case VT_BOOL:   if (V_BOOL(left) == VARIANT_TRUE) resvt = VT_NULL; break;
+        case VT_R4:     if (V_R4(left) == -1.0) resvt = VT_NULL; break;
+        case VT_R8:     if (V_R8(left) == -1.0) resvt = VT_NULL; break;
+        case VT_CY:     if (V_CY(left).int64 == -1) resvt = VT_NULL; break;
+        case VT_DECIMAL:
+            if (DEC_HI32(&V_DECIMAL(left)) == 0xffffffff)
+                resvt = VT_NULL;
+            break;
+        case VT_BSTR:
+            hres = VarBoolFromStr(V_BSTR(left),LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &b);
+            if (FAILED(hres)) goto VarImp_Exit;
+            else if (b == VARIANT_TRUE)
+                resvt = VT_NULL;
+        }
+        if (resvt == VT_NULL)
+        {
+            V_VT(result) = resvt;
+            goto VarImp_Exit;
+        }
+    }
+
+    hres = VariantCopy(&lv, left);
+    if (FAILED(hres)) goto VarImp_Exit;
+
+    if (rightvt == VT_NULL)
+        V_VT(&rv) = resvt;
+    else
+    {
+        hres = VariantCopy(&rv, right);
+        if (FAILED(hres)) goto VarImp_Exit;
+    }
+
+    if (V_VT(&lv) == VT_BSTR &&
+        FAILED(VarR8FromStr(V_BSTR(&lv),LOCALE_USER_DEFAULT, 0, &d)))
+        hres = VariantChangeType(&lv,&lv,VARIANT_LOCALBOOL, VT_BOOL);
+    if (SUCCEEDED(hres) && V_VT(&lv) != resvt)
+        hres = VariantChangeType(&lv,&lv,0,resvt);
+    if (FAILED(hres)) goto VarImp_Exit;
+
+    if (V_VT(&rv) == VT_BSTR &&
+        FAILED(VarR8FromStr(V_BSTR(&rv),LOCALE_USER_DEFAULT, 0, &d)))
+        hres = VariantChangeType(&rv, &rv,VARIANT_LOCALBOOL, VT_BOOL);
+    if (SUCCEEDED(hres) && V_VT(&rv) != resvt)
+        hres = VariantChangeType(&rv, &rv, 0, resvt);
+    if (FAILED(hres)) goto VarImp_Exit;
+
+    /* do the math */
+    V_VT(result) = resvt;
+    switch (resvt)
+    {
+    case VT_I8:
+    V_I8(result) = (~V_I8(&lv)) | V_I8(&rv);
+    break;
+    case VT_I4:
+    V_I4(result) = (~V_I4(&lv)) | V_I4(&rv);
+    break;
+    case VT_I2:
+    V_I2(result) = (~V_I2(&lv)) | V_I2(&rv);
+    break;
+    case VT_UI1:
+    V_UI1(result) = (~V_UI1(&lv)) | V_UI1(&rv);
+    break;
+    case VT_BOOL:
+    V_BOOL(result) = (~V_BOOL(&lv)) | V_BOOL(&rv);
+    break;
+    default:
+    FIXME("Couldn't perform bitwise implication on variant types %d,%d\n",
+        leftvt,rightvt);
+    }
+
+VarImp_Exit:
+
+    VariantClear(&lv);
+    VariantClear(&rv);
+
+    return hres;
+}
