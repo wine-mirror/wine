@@ -381,8 +381,13 @@ static void test_text_extents(void)
                                if the extents array is untouched.  */
     GetTextExtentExPointW(hdc, wt, len, 32767, &fit1, extents, &sz1);
     GetTextExtentPointW(hdc, wt, len, &sz2);
-    ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy,
-       "results from GetTextExtentExPointW and GetTextExtentPointW differ\n");
+    ok(sz1.cy == sz2.cy,
+       "cy from GetTextExtentExPointW (%ld) and GetTextExtentPointW (%ld) differ\n", sz1.cy, sz2.cy);
+todo_wine {
+    /* The \n in the string is apparently handled differently in GetTextExtentPoint and GetTextExtentExPoint */
+    ok(sz1.cx != sz2.cx,
+       "cx from GetTextExtentExPointW (%ld) and GetTextExtentPointW (%ld) are the same\n", sz1.cx, sz2.cx);
+ }
     for (i = 1; i < len; ++i)
         ok(extents[i-1] <= extents[i],
            "GetTextExtentExPointW generated a non-increasing sequence of partial extents (at position %d)\n",
