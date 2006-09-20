@@ -149,6 +149,7 @@ static void test_add_bitmap(void)
     TBADDBITMAP bmp128;
     TBADDBITMAP bmp80;
     TBADDBITMAP stdsmall;
+    TBADDBITMAP addbmp;
     INT ret;
 
     /* empty 128x15 bitmap */
@@ -239,6 +240,36 @@ static void test_add_bitmap(void)
     todo_wine ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&stdsmall) == 2, "TB_ADDBITMAP - unexpected return\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST_TODO_COUNT_SIZE(28, 16, 15);
+
+    /* check standard bitmaps */
+    addbmp.hInst = HINST_COMMCTRL;
+    addbmp.nID = IDB_STD_SMALL_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(15, 16, 15);
+    addbmp.nID = IDB_STD_LARGE_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(15, 24, 24);
+
+    addbmp.nID = IDB_VIEW_SMALL_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(12, 16, 15);
+    addbmp.nID = IDB_VIEW_LARGE_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(12, 24, 24);
+
+    addbmp.nID = IDB_HIST_SMALL_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(5, 16, 15);
+    addbmp.nID = IDB_HIST_LARGE_COLOR;
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(5, 24, 24);
+
 
     DestroyWindow(hToolbar);
 }

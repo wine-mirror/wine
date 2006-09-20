@@ -2591,7 +2591,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if ((lpAddBmp->nID & ~1) == IDB_STD_SMALL_COLOR)
 	    nButtons = 15;
 	else if ((lpAddBmp->nID & ~1) == IDB_VIEW_SMALL_COLOR)
-	    nButtons = 13;
+	    nButtons = 12;
 	else if ((lpAddBmp->nID & ~1) == IDB_HIST_SMALL_COLOR)
 	    nButtons = 5;
 	else
