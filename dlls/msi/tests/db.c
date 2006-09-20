@@ -1262,9 +1262,12 @@ static void test_streamtable(void)
 
 static void test_where(void)
 {
-    MSIHANDLE hdb = 0, rec;
+    MSIHANDLE hdb = 0, rec, view;
     LPCSTR query;
     UINT r;
+    DWORD size;
+    CHAR buf[MAX_PATH];
+    UINT count;
 
     hdb = create_db();
     ok( hdb, "failed to create db\n");
@@ -1310,6 +1313,40 @@ static void test_where(void)
     ok( 2 == r, "field wrong\n");
     r = MsiRecordGetInteger(rec, 2);
     ok( 1 == r, "field wrong\n");
+
+    query = "SELECT `DiskId` FROM `Media` WHERE `LastSequence` >= 1 AND DiskId >= 0";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(view, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    r = MsiViewFetch(view, &rec);
+    ok( r == ERROR_SUCCESS, "failed to fetch view: %d\n", r );
+
+    count = MsiRecordGetFieldCount( rec );
+    ok( count == 1, "Expected 1 record fields, got %d\n", count );
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( rec, 1, buf, &size );
+    ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+    ok( !lstrcmp( buf, "2" ),
+        "For (row %d, column 1) expected '%d', got %s\n", 0, 2, buf );
+
+    r = MsiViewFetch(view, &rec);
+    ok( r == ERROR_SUCCESS, "failed to fetch view: %d\n", r );
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( rec, 1, buf, &size );
+    ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+    ok( !lstrcmp( buf, "3" ),
+        "For (row %d, column 1) expected '%d', got %s\n", 1, 3, buf );
+
+    r = MsiViewFetch(view, &rec);
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+
+    MsiViewClose(view);
+    MsiCloseHandle(view);
 
     MsiCloseHandle( rec );
 
