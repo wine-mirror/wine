@@ -1511,7 +1511,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
         DWORD keyLen, pad = 0;
 
         StorageUtl_WriteDWord((LPBYTE)&keyLen, 0,
-         (lstrlenW((LPWSTR)key) + 1) * sizeof(WCHAR));
+         (lstrlenW((LPCWSTR)key) + 1) * sizeof(WCHAR));
         c->hr = IStream_Write(This->stm, &keyLen, sizeof(keyLen), &count);
         if (FAILED(c->hr))
             goto end;
@@ -2521,12 +2521,12 @@ HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
         lstrcpyW(str, szDocSummaryInfo);
     else
     {
-        BYTE *fmtptr;
+        const BYTE *fmtptr;
         WCHAR *pstr = str;
         ULONG bitsRemaining = BITS_PER_BYTE;
 
         *pstr++ = 5;
-        for (fmtptr = (BYTE *)rfmtid; fmtptr < (BYTE *)rfmtid + sizeof(FMTID); )
+        for (fmtptr = (const BYTE *)rfmtid; fmtptr < (const BYTE *)rfmtid + sizeof(FMTID); )
         {
             ULONG i = *fmtptr >> (BITS_PER_BYTE - bitsRemaining);
 
