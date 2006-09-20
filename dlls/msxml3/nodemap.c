@@ -165,7 +165,10 @@ static HRESULT WINAPI xmlnodemap_getNamedItem(
     xmlAttrPtr attr;
     xmlNodePtr node;
 
-    TRACE("%p %s\n", This, debugstr_w(name) );
+    TRACE("%p %s %p\n", This, debugstr_w(name), namedItem );
+
+    if ( !namedItem )
+        return E_INVALIDARG;
 
     node = xmlNodePtr_from_domnode( This->node, 0 );
     if ( !node )
@@ -176,7 +179,10 @@ static HRESULT WINAPI xmlnodemap_getNamedItem(
     HeapFree( GetProcessHeap(), 0, element_name );
 
     if ( !attr )
-        return E_FAIL;
+    {
+        *namedItem = NULL;
+        return S_FALSE;
+    }
 
     *namedItem = create_node( (xmlNodePtr) attr );
 

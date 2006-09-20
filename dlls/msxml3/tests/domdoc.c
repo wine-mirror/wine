@@ -396,6 +396,19 @@ todo_wine
         IXMLDOMNode_Release(node);
         SysFreeString( str );
 
+        str = SysAllocString( szdl );
+        r = IXMLDOMNamedNodeMap_getNamedItem( map, str, NULL );
+        ok( r == E_INVALIDARG, "getNamedItem should return E_INVALIDARG\n");
+        SysFreeString( str );
+
+        /* something that isn't in szComplete4 */
+        str = SysAllocString( szOpen );
+        node = (IXMLDOMNode *) 1;
+        r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
+        ok( r = S_FALSE, "getNamedItem found a node that wasn't there\n");
+        ok( node == NULL, "getNamedItem should have returned NULL\n");
+        SysFreeString( str );
+
 	/* test indexed access of attributes */
         r = IXMLDOMNamedNodeMap_get_length( map, &count );
         ok ( r == S_OK, "get_length wrong code\n");
