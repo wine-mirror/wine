@@ -117,7 +117,7 @@ RECURSE_TARGETS = \
 depend $(RECURSE_TARGETS): $(MAKEDEP)
 
 $(MAKEDEP):
-	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(EXEEXT)
+	@cd $(TOOLSDIR)/tools && $(MAKE) makedep
 
 # Test rules
 

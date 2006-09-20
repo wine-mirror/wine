@@ -54,7 +54,7 @@ all: $(PROGRAMS) $(MANPAGES) $(SUBDIRS)
 
 @MAKE_RULES@
 
-makedep$(EXEEXT): makedep.o
+makedep$(EXEEXT) $(EXEEXT:%=makedep): makedep.o
 	$(CC) $(CFLAGS) -o $@ makedep.o $(LDFLAGS)
 
 make_ctests$(EXEEXT): make_ctests.o
