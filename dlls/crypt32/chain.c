@@ -163,7 +163,7 @@ void WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
 
     TRACE("(%p)\n", hChainEngine);
 
-    if (InterlockedDecrement(&engine->ref) == 0)
+    if (engine && InterlockedDecrement(&engine->ref) == 0)
     {
         CertCloseStore(engine->hWorld, 0);
         CertCloseStore(engine->hRoot, 0);
