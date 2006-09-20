@@ -827,7 +827,7 @@ static void loadNumberedArrays(
     WineDirect3DVertexStridedData *strided) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint curVBO = -1;
+    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
     int i;
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
