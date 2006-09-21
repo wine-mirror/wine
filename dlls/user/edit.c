@@ -5341,7 +5341,7 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
         return;
     }
 
-    lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen);
+    lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
     if (!lpCompStr)
     {
         ERR("Unable to allocate IME CompositionString\n");
@@ -5362,7 +5362,7 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
         if (dwBufLenAttr)
         {
             dwBufLenAttr ++;
-            lpCompStrAttr = HeapAlloc(GetProcessHeap(),0,dwBufLenAttr);
+            lpCompStrAttr = HeapAlloc(GetProcessHeap(),0,dwBufLenAttr+1);
             if (!lpCompStrAttr)
             {
                 ERR("Unable to allocate IME Attribute String\n");
@@ -5417,7 +5417,7 @@ static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
         return;
     }
 
-    lpResultStr = HeapAlloc(GetProcessHeap(),0, dwBufLen);
+    lpResultStr = HeapAlloc(GetProcessHeap(),0, dwBufLen+sizeof(WCHAR));
     if (!lpResultStr)
     {
         ERR("Unable to alloc buffer for IME string\n");
