@@ -225,6 +225,21 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
     return 1; /* continue enumeration */
 }
 
+#define CP1252_BIT    0x00000001
+#define CP1250_BIT    0x00000002
+#define CP1251_BIT    0x00000004
+#define CP1253_BIT    0x00000008
+#define CP1254_BIT    0x00000010
+#define CP1255_BIT    0x00000020
+#define CP1256_BIT    0x00000040
+#define CP1257_BIT    0x00000080
+#define CP1258_BIT    0x00000100
+#define CP874_BIT     0x00010000
+#define CP932_BIT     0x00020000
+#define CP936_BIT     0x00040000
+#define CP949_BIT     0x00080000
+#define CP950_BIT     0x00100000
+
 static void test_bitmap_font_metrics(void)
 {
     static const struct font_data
@@ -232,33 +247,57 @@ static void test_bitmap_font_metrics(void)
         const char face_name[LF_FACESIZE];
         int weight, height, ascent, descent, int_leading, ext_leading;
         int ave_char_width, max_char_width;
+        DWORD ansi_bitfield;
     } fd[] =
     {
-        { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11 },
-        { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14 },
-        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 16 },
-        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 20 },
-        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 25 },
-        { "MS Sans Serif", FW_NORMAL, 37, 29, 8, 5, 0, 16, 32 },
-        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8 },
-        { "MS Serif", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9 },
-        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 12 },
-        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 16 },
-        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 19 },
-        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23 },
-        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27 },
-        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34 },
-        { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8 },
-        { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9 },
-        { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12 },
-        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15 },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2 },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4 },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13 },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7 },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8 },
-        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9 }
-        /* FIXME: add "Fixedsys", "Terminal" */
+        { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 16, CP1252_BIT | CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 18, CP1250_BIT },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 19, CP1252_BIT },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 24, CP1250_BIT },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 20, CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 24, CP1252_BIT },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 6, 0, 12, 24, CP1250_BIT },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 25, CP1251_BIT },
+        { "MS Sans Serif", FW_NORMAL, 37, 29, 8, 5, 0, 16, 32, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, CP1252_BIT | CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, CP1252_BIT },
+        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 12, CP1250_BIT | CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 14, CP1252_BIT | CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 16, CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 18, CP1252_BIT | CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 19, CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 17, CP1252_BIT },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 22, CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23, CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 23, CP1252_BIT },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 26, CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27, CP1251_BIT },
+        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 33, CP1252_BIT | CP1250_BIT },
+        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34, CP1251_BIT },
+        { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 14, CP1252_BIT },
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, CP1252_BIT},
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, CP1252_BIT },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, CP1252_BIT },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, CP1252_BIT },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, CP1250_BIT | CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, CP1252_BIT | CP1250_BIT },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, CP1251_BIT },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, CP1252_BIT | CP1250_BIT | CP1251_BIT },
+        { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, CP1252_BIT | CP1250_BIT },
+        { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, CP1251_BIT }
+
+        /* FIXME: add "Terminal" */
     };
     HDC hdc;
     LOGFONT lf;
@@ -271,34 +310,49 @@ static void test_bitmap_font_metrics(void)
 
     for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
     {
+        int bit;
+
         memset(&lf, 0, sizeof(lf));
 
         lf.lfHeight = fd[i].height;
         strcpy(lf.lfFaceName, fd[i].face_name);
-        ret = EnumFontFamilies(hdc, fd[i].face_name, find_font_proc, (LPARAM)&lf);
-        if (ret)
+
+        for(bit = 0; bit < 32; bit++)
         {
-            trace("font %s height %d not found\n", fd[i].face_name, fd[i].height);
-            continue;
+            DWORD fs[2];
+            CHARSETINFO csi;
+
+            fs[0] = 1L << bit;
+            fs[1] = 0;
+            if((fd[i].ansi_bitfield & fs[0]) == 0) continue;
+            if(!TranslateCharsetInfo( fs, &csi, TCI_SRCFONTSIG )) continue;
+
+            lf.lfCharSet = csi.ciCharset;
+            ret = EnumFontFamiliesEx(hdc, &lf, find_font_proc, (LPARAM)&lf, 0);
+            if (ret) continue;
+
+            trace("found font %s, height %ld charset %x\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet);
+
+            hfont = create_font(lf.lfFaceName, &lf);
+            old_hfont = SelectObject(hdc, hfont);
+            ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %ld\n", GetLastError());
+
+            ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
+            ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
+            ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
+            ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
+            ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
+            ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
+            ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
+
+            /* Don't run the max char width test on System/ANSI_CHARSET.  We have extra characters in our font
+               that make the max width bigger */
+            if(strcmp(lf.lfFaceName, "System") || lf.lfCharSet != ANSI_CHARSET)
+                ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
+
+            SelectObject(hdc, old_hfont);
+            DeleteObject(hfont);
         }
-
-        trace("found font %s, height %ld\n", lf.lfFaceName, lf.lfHeight);
-
-        hfont = create_font(lf.lfFaceName, &lf);
-        old_hfont = SelectObject(hdc, hfont);
-        ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %ld\n", GetLastError());
-
-        ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
-        ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
-        ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
-        ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
-        ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
-        ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
-        ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
-        ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
-
-        SelectObject(hdc, old_hfont);
-        DeleteObject(hfont);
     }
 
     DeleteDC(hdc);
