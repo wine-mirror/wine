@@ -76,7 +76,7 @@ static property_data_t *get_properties( HWND hwnd, int *count )
  *
  * relay to call the EnumProps callback function from EnumPropsEx
  */
-static BOOL CALLBACK EnumPropsA_relay( HWND hwnd, LPCSTR str, HANDLE handle, ULONG_PTR lparam )
+static BOOL CALLBACK EnumPropsA_relay( HWND hwnd, LPSTR str, HANDLE handle, ULONG_PTR lparam )
 {
     PROPENUMPROCA func = (PROPENUMPROCA)lparam;
     return func( hwnd, str, handle );
@@ -88,7 +88,7 @@ static BOOL CALLBACK EnumPropsA_relay( HWND hwnd, LPCSTR str, HANDLE handle, ULO
  *
  * relay to call the EnumProps callback function from EnumPropsEx
  */
-static BOOL CALLBACK EnumPropsW_relay( HWND hwnd, LPCWSTR str, HANDLE handle, ULONG_PTR lparam )
+static BOOL CALLBACK EnumPropsW_relay( HWND hwnd, LPWSTR str, HANDLE handle, ULONG_PTR lparam )
 {
     PROPENUMPROCW func = (PROPENUMPROCW)lparam;
     return func( hwnd, str, handle );
