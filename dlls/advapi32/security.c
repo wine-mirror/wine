@@ -386,6 +386,7 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
 {
     HKEY key;
     LONG ret;
+    BOOL retval = FALSE;
     static const WCHAR Account[] = { 'S','E','C','U','R','I','T','Y','\\','S','A','M','\\','D','o','m','a','i','n','s','\\','A','c','c','o','u','n','t',0 };
     static const WCHAR V[] = { 'V',0 };
 
@@ -404,15 +405,15 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
                 {
                     /* the SID is in the last 24 bytes of the binary data */
                     CopyMemory(sid, &data[size-24], 24);
-                    HeapFree(GetProcessHeap(), 0, data);
-                    RegCloseKey(key);
-                    return TRUE;
+                    retval = TRUE;
                 }
                 HeapFree(GetProcessHeap(), 0, data);
             }
         }
         RegCloseKey(key);
     }
+
+    if(retval == TRUE) return retval;
 
     /* create a new random SID */
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, Account,
@@ -427,18 +428,15 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
             if (AllocateAndInitializeSid(&identifierAuthority, 4, SECURITY_NT_NON_UNIQUE, id[0], id[1], id[2], 0, 0, 0, 0, &new_sid))
             {
                 if (RegSetValueExW(key, V, 0, REG_BINARY, new_sid, GetLengthSid(new_sid)) == ERROR_SUCCESS)
-                {
-                    FreeSid(new_sid);
-                    RegCloseKey(key);
-                    return CopySid(GetLengthSid(new_sid), sid, &new_sid);
-                }
+                    retval = CopySid(GetLengthSid(new_sid), sid, new_sid);
+
                 FreeSid(new_sid);
             }
         }
         RegCloseKey(key);
     }
 
-    return FALSE;
+    return retval;
 }
 
 /*	##############################
