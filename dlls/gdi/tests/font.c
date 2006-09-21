@@ -428,6 +428,17 @@ static void test_text_extents(void)
     GetTextExtentPointA(hdc, "o", 1, &sz);
     ok(sz.cy == tm.tmHeight, "cy %ld tmHeight %ld\n", sz.cy, tm.tmHeight);
 
+    SetLastError(0xdeadbeef);
+    GetTextExtentExPointW(hdc, wt, 1, 1, &fit1, &fit2, &sz1);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("Skipping remainder of text extents test on a Win9x platform\n");
+        SelectObject(hdc, hfont);
+        DeleteObject(hfont);
+        ReleaseDC(0, hdc);
+        return;
+    }
+
     len = lstrlenW(wt);
     extents = HeapAlloc(GetProcessHeap(), 0, len * sizeof extents[0]);
     memset(extents, 0, len * sizeof extents[0]);
@@ -511,6 +522,128 @@ static void test_GetGlyphIndices()
                     textm.tmDefaultChar, glyphs[4]);
 }
 
+static void test_GetKerningPairs(void)
+{
+    static const struct kerning_data
+    {
+        const char face_name[LF_FACESIZE];
+        LONG height;
+        /* small subset of kerning pairs to test */
+        DWORD total_kern_pairs;
+        const KERNINGPAIR kern_pair[20];
+    } kd[] =
+    {
+        {"Arial", -34, 20,
+            {
+                {' ','A',-2},{' ','T',-1},{' ','Y',-1},{'1','1',-3},
+                {'A',' ',-2},{'A','T',-3},{'A','V',-3},{'A','W',-1},
+                {'A','Y',-3},{'A','v',-1},{'A','w',-1},{'A','y',-1},
+                {'F',',',-4},{'F','.',-4},{'F','A',-2},{'L',' ',-1},
+                {'L','T',-3},{'L','V',-3},{'L','W',-3},{'L','Y',-3}
+            }
+        },
+        { "Arial", 120, 20,
+            {
+                {' ','A',-6},{' ','T',-2},{' ','Y',-2},{'1','1',-8},
+                {'A',' ',-6},{'A','T',-8},{'A','V',-8},{'A','W',-4},
+                {'A','Y',-8},{'A','v',-2},{'A','w',-2},{'A','y',-2},
+                {'F',',',-12},{'F','.',-12},{'F','A',-6},{'L',' ',-4},
+                {'L','T',-8},{'L','V',-8},{'L','W',-8},{'L','Y',-8}
+            }
+        }
+    };
+    LOGFONT lf;
+    HFONT hfont, hfont_old;
+    KERNINGPAIR *kern_pair;
+    HDC hdc;
+    DWORD total_kern_pairs, ret, i, n, matches;
+
+    hdc = GetDC(0);
+
+    /* GetKerningPairsA maps unicode set of kerning pairs to current code page
+     * which may render this test unusable, so we're trying to avoid that.
+     */
+    SetLastError(0xdeadbeef);
+    GetKerningPairsW(hdc, 0, NULL);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("Skipping the GetKerningPairs test on a Win9x platform\n");
+        ReleaseDC(0, hdc);
+        return;
+    }
+
+    for (i = 0; i < sizeof(kd)/sizeof(kd[0]); i++)
+    {
+        if (!is_font_installed(kd[i].face_name))
+        {
+            trace("%s is not installed so skipping this test\n", kd[i].face_name);
+            continue;
+        }
+
+        memset(&lf, 0, sizeof(lf));
+        strcpy(lf.lfFaceName, kd[i].face_name);
+        lf.lfHeight = kd[i].height;
+        hfont = CreateFontIndirect(&lf);
+        assert(hfont != 0);
+
+        hfont_old = SelectObject(hdc, hfont);
+
+        total_kern_pairs = GetKerningPairsW(hdc, 0, NULL);
+        trace("font %s, height %ld, total_kern_pairs %lu\n",
+              kd[i].face_name, kd[i].height, total_kern_pairs);
+        kern_pair = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pair));
+
+#if 0 /* Win98 (GetKerningPairsA) and XP behave differently here, the test passes on XP */
+        SetLastError(0xdeadbeef);
+        ret = GetKerningPairsW(hdc, 0, kern_pair);
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "got error %ld, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+        ok(ret == 0, "got %lu, expected 0\n", ret);
+#endif
+
+        ret = GetKerningPairsW(hdc, 100, NULL);
+        ok(ret == total_kern_pairs, "got %lu, expected %lu\n", ret, total_kern_pairs);
+
+        ret = GetKerningPairsW(hdc, total_kern_pairs/2, kern_pair);
+        ok(ret == total_kern_pairs/2, "got %lu, expected %lu\n", ret, total_kern_pairs/2);
+
+        ret = GetKerningPairsW(hdc, total_kern_pairs, kern_pair);
+        ok(ret == total_kern_pairs, "got %lu, expected %lu\n", ret, total_kern_pairs);
+
+        matches = 0;
+
+        for (n = 0; n < ret; n++)
+        {
+            DWORD j;
+#if 0
+            if (kern_pair[n].wFirst < 127 && kern_pair[n].wSecond < 127)
+                trace("wFirst '%c', wSecond '%c', iKernAmount %d\n",
+                      kern_pair[n].wFirst, kern_pair[n].wSecond, kern_pair[n].iKernAmount);
+#endif
+            for (j = 0; j < kd[i].total_kern_pairs; j++)
+            {
+                if (kern_pair[n].wFirst == kd[i].kern_pair[j].wFirst &&
+                    kern_pair[n].wSecond == kd[i].kern_pair[j].wSecond &&
+                    kern_pair[n].iKernAmount == kd[i].kern_pair[j].iKernAmount)
+                {
+                    /*trace("match\n");*/
+                    matches++;
+                }
+            }
+        }
+
+        ok(matches == kd[i].total_kern_pairs, "got matches %lu, expected %lu\n",
+           matches, kd[i].total_kern_pairs);
+
+        HeapFree(GetProcessHeap(), 0, kern_pair);
+
+        SelectObject(hdc, hfont_old);
+        DeleteObject(hfont);
+    }
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     test_logfont();
@@ -520,4 +653,5 @@ START_TEST(font)
     test_GetCharABCWidthsW();
     test_text_extents();
     test_GetGlyphIndices();
+    test_GetKerningPairs();
 }
