@@ -1522,9 +1522,16 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
     MSICOMPONENT *comp;
     MSIFEATURE *feature;
 
+    /* FIXME: component's installed state should be determined
+     * by the component's registration
+     */
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
         INSTALLSTATE res;
+
+        if (!comp->ComponentId)
+            continue;
+
         res = MsiGetComponentPathW( package->ProductCode, 
                                     comp->ComponentId, NULL, NULL);
         if (res < 0)
@@ -1541,6 +1548,12 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
         {
             comp= cl->component;
 
+            if (!comp->ComponentId)
+            {
+                res = INSTALLSTATE_ABSENT;
+                break;
+            }
+
             if (res == -10)
                 res = comp->Installed;
             else
@@ -1548,8 +1561,11 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
                 if (res == comp->Installed)
                     continue;
 
-                if (res != comp->Installed)
-                        res = INSTALLSTATE_INCOMPLETE;
+                if (res != INSTALLSTATE_DEFAULT || res != INSTALLSTATE_LOCAL ||
+                    res != INSTALLSTATE_SOURCE)
+                {
+                    res = INSTALLSTATE_INCOMPLETE;
+                }
             }
         }
         feature->Installed = res;
