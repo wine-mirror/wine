@@ -591,7 +591,12 @@ static void HttpSendRequestEx_test(void)
     ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
     hRequest = HttpOpenRequest(hConnect, "POST", "/posttest.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
-    ok( hRequest != NULL, "Failed to open request handle\n");
+    if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
+    {
+        trace( "Network unreachable, skipping test\n" );
+        goto done;
+    }
+    ok( hRequest != NULL, "Failed to open request handle err %lx\n", GetLastError());
 
 
     BufferIn.dwStructSize = sizeof( INTERNET_BUFFERS);
@@ -622,6 +627,7 @@ static void HttpSendRequestEx_test(void)
     ok(strncmp(szBuffer,"mode => Test\n",dwBytesRead)==0,"Got string %s\n",szBuffer);
 
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
+done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
@@ -644,6 +650,11 @@ static void HttpHeaders_test(void)
     ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
     hRequest = HttpOpenRequest(hConnect, "POST", "/posttest.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
+    {
+        trace( "Network unreachable, skipping test\n" );
+        goto done;
+    }
     ok( hRequest != NULL, "Failed to open request handle\n");
 
     index = 0;
@@ -799,6 +810,7 @@ static void HttpHeaders_test(void)
 
     
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
+done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
