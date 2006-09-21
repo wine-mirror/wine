@@ -92,7 +92,7 @@ DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
-DEFINE_EXPECT(Exec_MSHTML_2315);
+DEFINE_EXPECT(Exec_MSHTML_PARSECOMPLETE);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -1101,9 +1101,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
 
         switch(nCmdID) {
-        case 2315:
-            CHECK_EXPECT(Exec_MSHTML_2315);
-            /* TODO */
+        case IDM_PARSECOMPLETE:
+            CHECK_EXPECT(Exec_MSHTML_PARSECOMPLETE);
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
             return S_OK;
         default:
             ok(0, "unexpected command %ld\n", nCmdID);
@@ -1454,7 +1455,7 @@ static void test_download(void)
     SET_EXPECT(Exec_HTTPEQUIV);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Exec_MSHTML_2315);
+    SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
     expect_status_text = (LPCOLESTR)0xdeadbeef; /* TODO */
 
@@ -1472,7 +1473,7 @@ static void test_download(void)
     CHECK_CALLED(Exec_HTTPEQUIV);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Exec_MSHTML_2315);
+    CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
 
     load_state = LD_LOADED;
