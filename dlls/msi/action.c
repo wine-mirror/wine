@@ -1774,7 +1774,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 }
             }
 
-            if (component->ForceLocalState)
+            if (component->ForceLocalState && feature->Action == INSTALLSTATE_SOURCE)
             {
                 feature->Action = INSTALLSTATE_LOCAL;
                 feature->ActionRequest = INSTALLSTATE_LOCAL;
