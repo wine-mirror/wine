@@ -383,11 +383,11 @@ static void test_text_extents(void)
     GetTextExtentPointW(hdc, wt, len, &sz2);
     ok(sz1.cy == sz2.cy,
        "cy from GetTextExtentExPointW (%ld) and GetTextExtentPointW (%ld) differ\n", sz1.cy, sz2.cy);
-todo_wine {
-    /* The \n in the string is apparently handled differently in GetTextExtentPoint and GetTextExtentExPoint */
-    ok(sz1.cx != sz2.cx,
-       "cx from GetTextExtentExPointW (%ld) and GetTextExtentPointW (%ld) are the same\n", sz1.cx, sz2.cx);
- }
+    /* Because of the '\n' in the string GetTextExtentExPoint and
+       GetTextExtentPoint return different widths under Win2k, but
+       under WinXP they return the same width.  So we don't test that
+       here. */
+
     for (i = 1; i < len; ++i)
         ok(extents[i-1] <= extents[i],
            "GetTextExtentExPointW generated a non-increasing sequence of partial extents (at position %d)\n",
