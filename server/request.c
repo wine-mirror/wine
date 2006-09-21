@@ -402,13 +402,13 @@ int receive_fd( struct process *process )
 
     if (!ret)
     {
-        kill_process( process, NULL, 0 );
+        kill_process( process, 0 );
     }
     else if (ret > 0)
     {
         fprintf( stderr, "Protocol error: process %04x: partial recvmsg %d for fd\n",
                  process->id, ret );
-        kill_process( process, NULL, 1 );
+        kill_process( process, 1 );
     }
     else
     {
@@ -416,7 +416,7 @@ int receive_fd( struct process *process )
         {
             fprintf( stderr, "Protocol error: process %04x: ", process->id );
             perror( "recvmsg" );
-            kill_process( process, NULL, 1 );
+            kill_process( process, 1 );
         }
     }
     return -1;
@@ -450,17 +450,17 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     if (ret >= 0)
     {
         fprintf( stderr, "Protocol error: process %04x: partial sendmsg %d\n", process->id, ret );
-        kill_process( process, NULL, 1 );
+        kill_process( process, 1 );
     }
     else if (errno == EPIPE)
     {
-        kill_process( process, NULL, 0 );
+        kill_process( process, 0 );
     }
     else
     {
         fprintf( stderr, "Protocol error: process %04x: ", process->id );
         perror( "sendmsg" );
-        kill_process( process, NULL, 1 );
+        kill_process( process, 1 );
     }
     return -1;
 }

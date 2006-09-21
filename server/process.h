@@ -120,7 +120,7 @@ extern void remove_process_thread( struct process *process,
 extern void suspend_process( struct process *process );
 extern void resume_process( struct process *process );
 extern void kill_all_processes( struct process *skip, int exit_code );
-extern void kill_process( struct process *process, struct thread *skip, int exit_code );
+extern void kill_process( struct process *process, int violent_death );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern void break_process( struct process *process );

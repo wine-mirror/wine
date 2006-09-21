@@ -408,7 +408,7 @@ static void process_poll_event( struct fd *fd, int event )
             process->sigkill_timeout = NULL;
             process_died( process );
         }
-        else kill_process( process, NULL, 0 );
+        else kill_process( process, 0 );
     }
     else if (event & POLLIN) receive_fd( process );
 }
@@ -512,6 +512,20 @@ static void process_unload_dll( struct process *process, void *base )
     else set_error( STATUS_INVALID_PARAMETER );
 }
 
+/* terminate a process with the given exit code */
+static void terminate_process( struct process *process, struct thread *skip, int exit_code )
+{
+    struct list *ptr, *next;
+
+    LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+    {
+        struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+
+        if (exit_code) thread->exit_code = exit_code;
+        if (thread != skip) kill_thread( thread, 1 );
+    }
+}
+
 /* kill all processes */
 void kill_all_processes( struct process *skip, int exit_code )
 {
@@ -525,7 +539,7 @@ void kill_all_processes( struct process *skip, int exit_code )
             if (process->running_threads) break;
         }
         if (&process->entry == &process_list) break;  /* no process found */
-        kill_process( process, NULL, exit_code );
+        terminate_process( process, NULL, exit_code );
     }
 }
 
@@ -544,7 +558,7 @@ void kill_console_processes( struct thread *renderer, int exit_code )
             if (process->console && process->console->renderer == renderer) break;
         }
         if (&process->entry == &process_list) break;  /* no process found */
-        kill_process( process, NULL, exit_code );
+        terminate_process( process, NULL, exit_code );
     }
 }
 
@@ -638,16 +652,18 @@ void resume_process( struct process *process )
 }
 
 /* kill a process on the spot */
-void kill_process( struct process *process, struct thread *skip, int exit_code )
+void kill_process( struct process *process, int violent_death )
 {
-    struct list *ptr, *next;
-
-    LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+    if (violent_death) terminate_process( process, NULL, 1 );
+    else
     {
-        struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+        struct list *ptr, *next;
 
-        if (exit_code) thread->exit_code = exit_code;
-        if (thread != skip) kill_thread( thread, 1 );
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        {
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+            kill_thread( thread, 0 );
+        }
     }
 }
 
@@ -666,7 +682,7 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
         }
         if (&process->entry == &process_list) break;  /* no process found */
         process->debugger = NULL;
-        kill_process( process, NULL, exit_code );
+        terminate_process( process, NULL, exit_code );
     }
 }
 
@@ -960,7 +976,7 @@ DECL_HANDLER(terminate_process)
     if ((process = get_process_from_handle( req->handle, PROCESS_TERMINATE )))
     {
         reply->self = (current->process == process);
-        kill_process( process, current, req->exit_code );
+        terminate_process( process, current, req->exit_code );
         release_object( process );
     }
 }
