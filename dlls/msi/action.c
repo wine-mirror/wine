@@ -1240,7 +1240,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     feature->Directory = msi_dup_record_field( row, 7 );
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
-    feature->Installed = INSTALLSTATE_ABSENT;
+    feature->Installed = INSTALLSTATE_UNKNOWN;
     feature->Action = INSTALLSTATE_UNKNOWN;
     feature->ActionRequest = INSTALLSTATE_UNKNOWN;
 
