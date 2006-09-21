@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "urlmon.h"
+#include "wininet.h"
 
 #include "wine/test.h"
 
@@ -430,8 +431,12 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESUL
 {
     CHECK_EXPECT(OnStopBinding);
 
-    ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
-    ok(szError == NULL, "szError should be NULL\n");
+    /* ignore DNS failure */
+    if (hresult != HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
+    {
+        ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
+        ok(szError == NULL, "szError should be NULL\n");
+    }
     stopped_binding = TRUE;
 
     return S_OK;
@@ -659,6 +664,11 @@ static void test_BindToStorage(void)
     }
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
+    if (test_protocol == HTTP_TEST && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
+    {
+        trace( "Network unreachable, skipping tests\n" );
+        return;
+    }
     ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08lx\n", hres);
     if (!SUCCEEDED(hres)) return;
 
