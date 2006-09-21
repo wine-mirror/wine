@@ -364,14 +364,11 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     int string_num;
     int i;
 
-    if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
-	resource_id = (UINT)(-((INT)resource_id));
     TRACE("instance = %p, id = %04x, buffer = %p, length = %d\n",
           instance, resource_id, buffer, buflen);
 
-    /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out
-     * 20 - 31. */
-    hrsrc = FindResourceW( instance, MAKEINTRESOURCEW(((resource_id>>4)&0xffff)+1),
+    /* Use loword (incremented by 1) as resourceid */
+    hrsrc = FindResourceW( instance, MAKEINTRESOURCEW((LOWORD(resource_id) >> 4) + 1),
                            (LPWSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
@@ -394,9 +391,6 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 	    buffer[0] = (WCHAR) 0;
 	    return 0;
 	}
-#if 0
-	WARN("Don't know why caller gave buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
-#endif
     }
 
     TRACE("%s loaded !\n", debugstr_w(buffer));

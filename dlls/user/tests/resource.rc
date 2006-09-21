@@ -40,6 +40,8 @@
 STRINGTABLE
 {
   0 "String resource"
+  1 "Another string resource"
+  65534 "Test high id"
 }
 
 TEST_DIALOG DIALOG DISCARDABLE 0, 0, 60, 30
