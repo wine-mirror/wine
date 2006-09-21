@@ -1818,6 +1818,11 @@ AC_OUTPUT
 
 dnl **** Display messages about additional packages ***
 
+if test "$no_create" = "yes"
+then
+  exit 0
+fi
+
 if test "$verbose" = "yes"
 then
   dnl **** libcapi20-dev devel package ***

@@ -25406,6 +25406,11 @@ fi
 
 
 
+if test "$no_create" = "yes"
+then
+  exit 0
+fi
+
 if test "$verbose" = "yes"
 then
     if test "$ac_cv_header_capi20_h" != "yes" -o "$ac_cv_header_linux_capi_h" != "yes"
