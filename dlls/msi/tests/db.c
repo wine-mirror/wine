@@ -2286,6 +2286,62 @@ static void test_join(void)
     MsiViewClose(hview);
     MsiCloseHandle(hview);
 
+    query = "SELECT * FROM `StdDlls`, `Binary` ";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    }
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    }
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 4, "Expected 4 record fields, got %d\n", count );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 1, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].one ),
+            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 2, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].two ),
+            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_eighth[i].two, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 3, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].three ),
+            "For (row %ld, column 3) expected '%s', go %s\n", i, join_res_eighth[i].three, buf );
+
+        size = MAX_PATH;
+        r = MsiRecordGetString( hrec, 4, buf, &size );
+        ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+        ok( !lstrcmp( buf, join_res_eighth[i].four ),
+            "For (row %ld, column 4) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+
+    todo_wine
+    {
+        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
