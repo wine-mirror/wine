@@ -611,14 +611,14 @@ HRESULT WINAPI RegisterTypeLib(
 			    if (RegCreateKeyExW(key, ProxyStubClsidW, 0, NULL, 0,
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
 				RegSetValueExW(subKey, NULL, 0, REG_SZ,
-					       (BYTE*)PSOA, sizeof PSOA);
+					       (const BYTE *)PSOA, sizeof PSOA);
 				RegCloseKey(subKey);
 			    }
 
 			    if (RegCreateKeyExW(key, ProxyStubClsid32W, 0, NULL, 0,
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
 				RegSetValueExW(subKey, NULL, 0, REG_SZ,
-					       (BYTE*)PSOA, sizeof PSOA);
+					       (const BYTE *)PSOA, sizeof PSOA);
 				RegCloseKey(subKey);
 			    }
 
