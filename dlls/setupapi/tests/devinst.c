@@ -87,6 +87,7 @@ static void test_SetupDiOpenClassRegKeyExA(void)
     /* This is a unique guid for testing purposes */
     GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
         0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    static const CHAR guidString[] = "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
     HKEY hkey;
 
     /* Check return value for non-existent key */
@@ -94,6 +95,30 @@ static void test_SetupDiOpenClassRegKeyExA(void)
         DIOCR_INSTALLER, NULL, NULL);
     ok(hkey == INVALID_HANDLE_VALUE,
         "returned %p (expected INVALID_HANDLE_VALUE)\n", hkey);
+
+    /* Test it for a key that exists */
+    hkey = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS);
+    if (hkey != INVALID_HANDLE_VALUE)
+    {
+        HKEY classKey;
+        if (RegCreateKeyA(hkey, guidString, &classKey) == ERROR_SUCCESS)
+        {
+            RegCloseKey(classKey);
+            SetLastError(0xdeadbeef);
+            classKey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
+                DIOCR_INSTALLER, NULL, NULL);
+            ok(classKey != INVALID_HANDLE_VALUE,
+                "opening class registry key failed with error %ld\n",
+                GetLastError());
+            if (classKey != INVALID_HANDLE_VALUE)
+                RegCloseKey(classKey);
+            RegDeleteKeyA(hkey, guidString);
+        }
+        else
+            trace("failed to create registry key for test\n");
+    }
+    else
+        trace("failed to open classes key\n");
 }
 
 START_TEST(devinst)

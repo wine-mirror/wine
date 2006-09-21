@@ -1413,6 +1413,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
         PVOID Reserved)
 {
     LPWSTR lpGuidString;
+    WCHAR bracedGuidString[39];
     HKEY hClassesKey;
     HKEY hClassKey;
     LPCWSTR lpKeyName;
@@ -1455,19 +1456,22 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 	RegCloseKey(hClassesKey);
 	return INVALID_HANDLE_VALUE;
     }
+    bracedGuidString[0] = '{';
+    memcpy(&bracedGuidString[1], lpGuidString, 36*sizeof(WCHAR));
+    bracedGuidString[37] = '}';
+    bracedGuidString[38] = 0;
+    RpcStringFreeW(&lpGuidString);
 
     if (RegOpenKeyExW(hClassesKey,
-		      lpGuidString,
+		      bracedGuidString,
 		      0,
 		      KEY_ALL_ACCESS,
 		      &hClassKey))
     {
-	RpcStringFreeW(&lpGuidString);
 	RegCloseKey(hClassesKey);
 	return INVALID_HANDLE_VALUE;
     }
 
-    RpcStringFreeW(&lpGuidString);
     RegCloseKey(hClassesKey);
 
     return hClassKey;
