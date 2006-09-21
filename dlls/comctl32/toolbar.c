@@ -2578,6 +2578,7 @@ TOOLBAR_AddBitmapToImageList(TOOLBAR_INFO *infoPtr, HIMAGELIST himlDef, const TB
     HBITMAP hbmLoad;
     INT nCountBefore = ImageList_GetImageCount(himlDef);
     INT nCountAfter;
+    INT cxIcon, cyIcon;
     INT nAdded;
     INT nIndex;
 
@@ -2613,6 +2614,10 @@ TOOLBAR_AddBitmapToImageList(TOOLBAR_INFO *infoPtr, HIMAGELIST himlDef, const TB
     }
     else
         hbmLoad = CreateMappedBitmap(bitmap->hInst, bitmap->nID, 0, NULL, 0);
+
+    /* enlarge the bitmap if needed */
+    ImageList_GetIconSize(himlDef, &cxIcon, &cyIcon);
+    COMCTL32_EnsureBitmapSize(&hbmLoad, cxIcon*(INT)bitmap->nButtons, cyIcon, comctl32_color.clrBtnFace);
     
     nIndex = ImageList_AddMasked(himlDef, hbmLoad, comctl32_color.clrBtnFace);
     DeleteObject(hbmLoad);
@@ -2624,8 +2629,6 @@ TOOLBAR_AddBitmapToImageList(TOOLBAR_INFO *infoPtr, HIMAGELIST himlDef, const TB
     if (bitmap->nButtons == 0) /* wParam == 0 is special and means add only one image */
     {
         ImageList_SetImageCount(himlDef, nCountBefore + 1);
-    } else if (nAdded < (INT)bitmap->nButtons) {    /* if not enough buttons, grow the list */
-        ImageList_SetImageCount(himlDef, nCountBefore + bitmap->nButtons);
     } else if (nAdded > (INT)bitmap->nButtons) {
         TRACE("Added more images than wParam: Previous image number %i added %i while wParam %i. Images in list %i\n",
             nCountBefore, nAdded, bitmap->nButtons, nCountAfter);
