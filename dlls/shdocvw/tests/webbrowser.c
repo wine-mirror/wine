@@ -809,6 +809,49 @@ static void test_ie_funcs(IUnknown *unk)
     IWebBrowser2_Release(wb);
 }
 
+static void test_Silent(IUnknown *unk)
+{
+    IWebBrowser2 *wb;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    b = 100;
+    hres = IWebBrowser2_get_Silent(wb, &b);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Silent(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Silent(wb, &b);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Silent(wb, 100);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Silent(wb, &b);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Silent(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Silent(wb, &b);
+    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    IWebBrowser_Release(wb);
+}
+
 static void test_GetControlInfo(IUnknown *unk)
 {
     IOleControl *control;
@@ -911,6 +954,7 @@ static void test_WebBrowser(void)
     test_ClientSite(unk, NULL);
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
+    test_Silent(unk);
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
