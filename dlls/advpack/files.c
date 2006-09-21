@@ -59,7 +59,8 @@ HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
                                   LPCSTR lpcszBaseName, DWORD dwFlags)
 {
     UNICODE_STRING backupdir, basename;
-    LPWSTR filelist, backup;
+    LPWSTR filelist;
+    LPCWSTR backup;
     HRESULT res;
 
     TRACE("(%s, %s, %s, %ld)\n", debugstr_a(lpcszFileList),
