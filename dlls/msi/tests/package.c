@@ -2366,6 +2366,14 @@ static void test_featureparents(void)
     r = add_feature_entry( hdb, "'orion', '', '', '', 2, 1, '', 0" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
+    /* disabled because of install level */
+    r = add_feature_entry( hdb, "'waters', '', '', '', 15, 101, '', 9" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
+    /* child feature of disabled feature */
+    r = add_feature_entry( hdb, "'bayer', 'waters', '', '', 14, 1, '', 9" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
     r = add_component_entry( hdb, "'leo', '', 'TARGETDIR', 0, '', 'leo_file'" );
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
@@ -2505,6 +2513,20 @@ static void test_featureparents(void)
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetFeatureState(hpkg, "waters", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetFeatureState(hpkg, "bayer", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;

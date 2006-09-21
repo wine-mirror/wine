@@ -1163,6 +1163,19 @@ static UINT add_feature_component( MSIFEATURE *feature, MSICOMPONENT *comp )
     return ERROR_SUCCESS;
 }
 
+static UINT add_feature_child( MSIFEATURE *parent, MSIFEATURE *child )
+{
+    FeatureList *fl;
+
+    fl = msi_alloc( sizeof(*fl) );
+    if ( !fl )
+        return ERROR_NOT_ENOUGH_MEMORY;
+    fl->feature = child;
+    list_add_tail( &parent->Children, &fl->entry );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
 {
     _ilfs* ilfs= (_ilfs*)param;
@@ -1183,6 +1196,19 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     comp->Enabled = TRUE;
 
     return ERROR_SUCCESS;
+}
+
+static MSIFEATURE *find_feature_by_name( MSIPACKAGE *package, LPCWSTR name )
+{
+    MSIFEATURE *feature;
+
+    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+    {
+        if ( !lstrcmpW( feature->Feature, name ) )
+            return feature;
+    }
+
+    return NULL;
 }
 
 static UINT load_feature(MSIRECORD * row, LPVOID param)
@@ -1206,6 +1232,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     if (!feature)
         return ERROR_NOT_ENOUGH_MEMORY;
 
+    list_init( &feature->Children );
     list_init( &feature->Components );
     
     feature->Feature = msi_dup_record_field( row, 1 );
@@ -1244,6 +1271,26 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
+static UINT find_feature_children(MSIRECORD * row, LPVOID param)
+{
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
+    MSIFEATURE *parent, *child;
+
+    child = find_feature_by_name( package, MSI_RecordGetString( row, 1 ) );
+    if (!child)
+        return ERROR_FUNCTION_FAILED;
+
+    if (!child->Feature_Parent)
+        return ERROR_SUCCESS;
+
+    parent = find_feature_by_name( package, child->Feature_Parent );
+    if (!parent)
+        return ERROR_FUNCTION_FAILED;
+
+    add_feature_child( parent, child );
+    return ERROR_SUCCESS;
+}
+
 static UINT load_all_features( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
@@ -1261,7 +1308,12 @@ static UINT load_all_features( MSIPACKAGE *package )
         return r;
 
     r = MSI_IterateRecords( view, NULL, load_feature, package );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_IterateRecords( view, NULL, find_feature_children, package );
     msiobj_release( &view->hdr );
+
     return r;
 }
 
@@ -1542,7 +1594,7 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
         ComponentList *cl;
-        INSTALLSTATE res = -10;
+        INSTALLSTATE res = INSTALLSTATE_ABSENT;
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
@@ -1554,7 +1606,7 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
                 break;
             }
 
-            if (res == -10)
+            if (res == INSTALLSTATE_ABSENT)
                 res = comp->Installed;
             else
             {
@@ -1691,6 +1743,21 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                     feature->ActionRequest = INSTALLSTATE_LOCAL;
                     feature->Action = INSTALLSTATE_LOCAL;
                 }
+            }
+        }
+
+        /* disable child features of unselected parent features */
+        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+        {
+            FeatureList *fl;
+
+            if (feature->Level > 0 && feature->Level <= install_level)
+                continue;
+
+            LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
+            {
+                fl->feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                fl->feature->Action = INSTALLSTATE_UNKNOWN;
             }
         }
     }

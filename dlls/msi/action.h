@@ -39,6 +39,7 @@ typedef struct tagMSIFEATURE
     INSTALLSTATE ActionRequest;
     INSTALLSTATE Action;
 
+    struct list Children;
     struct list Components;
     
     INT Cost;
@@ -73,6 +74,12 @@ typedef struct tagComponentList
     struct list entry;
     MSICOMPONENT *component;
 } ComponentList;
+
+typedef struct tagFeatureList
+{
+    struct list entry;
+    MSIFEATURE *feature;
+} FeatureList;
 
 typedef struct tagMSIFOLDER
 {

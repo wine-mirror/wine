@@ -404,6 +404,13 @@ static void free_feature( MSIFEATURE *feature )
 {
     struct list *item, *cursor;
 
+    LIST_FOR_EACH_SAFE( item, cursor, &feature->Children )
+    {
+        FeatureList *fl = LIST_ENTRY( item, FeatureList, entry );
+        list_remove( &fl->entry );
+        msi_free( fl );
+    }
+
     LIST_FOR_EACH_SAFE( item, cursor, &feature->Components )
     {
         ComponentList *cl = LIST_ENTRY( item, ComponentList, entry );
