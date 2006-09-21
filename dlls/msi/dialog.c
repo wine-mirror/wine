@@ -1651,13 +1651,17 @@ static void
 msi_seltree_sync_item_state( HWND hwnd, MSIFEATURE *feature, HTREEITEM hItem )
 {
     TVITEMW tvi;
+    DWORD index = feature->Action;
 
     TRACE("Feature %s -> %d %d %d\n", debugstr_w(feature->Title),
         feature->Installed, feature->Action, feature->ActionRequest);
 
+    if (index == INSTALLSTATE_UNKNOWN)
+        index = INSTALLSTATE_ABSENT;
+
     tvi.mask = TVIF_STATE;
     tvi.hItem = hItem;
-    tvi.state = INDEXTOSTATEIMAGEMASK( feature->Action );
+    tvi.state = INDEXTOSTATEIMAGEMASK( index );
     tvi.stateMask = TVIS_STATEIMAGEMASK;
 
     SendMessageW( hwnd, TVM_SETITEMW, 0, (LPARAM) &tvi );
