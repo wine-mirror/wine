@@ -150,6 +150,7 @@ static void test_add_bitmap(void)
     TBADDBITMAP bmp80;
     TBADDBITMAP stdsmall;
     TBADDBITMAP addbmp;
+    HIMAGELIST himl;
     INT ret;
 
     /* empty 128x15 bitmap */
@@ -235,11 +236,48 @@ static void test_add_bitmap(void)
     /* the icons can be resized - an UpdateWindow is needed as this probably happens during WM_PAINT */
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
-    CHECK_IMAGELIST_TODO_COUNT_SIZE(26, 8, 8);
+    CHECK_IMAGELIST(26, 8, 8);
     /* loading a standard bitmaps automatically resizes the icons */
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&stdsmall) == 2, "TB_ADDBITMAP - unexpected return\n");
     UpdateWindow(hToolbar);
-    CHECK_IMAGELIST_TODO_COUNT_SIZE(28, 16, 15);
+    CHECK_IMAGELIST(28, 16, 15);
+
+    /* two more SETBITMAPSIZE tests */
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(100, 16, 15);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp80) == 100, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(200, 16, 15);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(200, 8, 8);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(30, 30)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(200, 30, 30);
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(8, 16, 15);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 3, (LPARAM)&bmp80) == 5, "TB_ADDBITMAP - unexpected return\n");
+    CHECK_IMAGELIST(13, 16, 15);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(30, 30)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(8, 30, 30);
+
+    /* the control can add bitmaps to an existing image list */
+    rebuild_toolbar(&hToolbar);
+    himl = ImageList_LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_80x15), 20, 2, CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
+    ok(himl != NULL, "failed to create imagelist\n");
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
+    CHECK_IMAGELIST(4, 20, 15);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return");
+    CHECK_IMAGELIST(10, 20, 15);
+    /* however TB_SETBITMAPSIZE/add std bitmap won't change the image size (the button size does change!) */
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(10, 20, 15);
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&stdsmall) == 1, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST_TODO_COUNT(22, 20, 15);
 
     /* check standard bitmaps */
     addbmp.hInst = HINST_COMMCTRL;
