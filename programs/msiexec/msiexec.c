@@ -546,14 +546,18 @@ int main(int argc, char **argv)
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PackageName = argvW[i];
 		}
-		else if(msi_option_equal(argvW[i], "x"))
+		else if(msi_option_prefix(argvW[i], "x"))
 		{
 			FunctionInstall = TRUE;
-			i++;
-			if(i >= argc)
-				ShowUsage(1);
-			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
-			PackageName = argvW[i];
+			PackageName = argvW[i]+2;
+			if (!PackageName[0])
+			{
+				i++;
+				if (i >= argc)
+					ShowUsage(1);
+				PackageName = argvW[i];
+			}
+			WINE_TRACE("PackageName = %s\n", wine_dbgstr_w(PackageName));
 			StringListAppend(&property_list, RemoveAll);
 		}
 		else if(msi_option_prefix(argvW[i], "j"))
