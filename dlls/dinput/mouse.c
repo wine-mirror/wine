@@ -551,12 +551,13 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
-static void dinput_window_check(SysMouseImpl* This) {
+static BOOL dinput_window_check(SysMouseImpl* This) {
     RECT rect;
     DWORD centerX, centerY;
-    
+
     /* make sure the window hasn't moved */
-    GetWindowRect(This->win, &rect);
+    if(!GetWindowRect(This->win, &rect))
+        return FALSE;
     centerX = (rect.right  - rect.left) / 2;
     centerY = (rect.bottom - rect.top ) / 2;
     if (This->win_centerX != centerX || This->win_centerY != centerY) {
@@ -566,6 +567,7 @@ static void dinput_window_check(SysMouseImpl* This) {
     This->mapped_center.x = This->win_centerX;
     This->mapped_center.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+    return TRUE;
 }
 
 
@@ -700,7 +702,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     
     /* Check if we need to do a mouse warping */
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
-	dinput_window_check(This);
+        if(!dinput_window_check(This))
+            return DIERR_GENERIC;
 	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
@@ -794,7 +797,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     
     /* Check if we need to do a mouse warping */
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
-	dinput_window_check(This);
+        if(!dinput_window_check(This))
+            return DIERR_GENERIC;
 	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
