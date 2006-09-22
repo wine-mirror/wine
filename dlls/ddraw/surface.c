@@ -293,14 +293,11 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
         IDirectDrawImpl *ddraw;
         IUnknown *ifaceToRelease = This->ifaceToRelease;
 
-        /* Destroy all complex attached surfaces
-         * Therefore, start with the first surface,
-         * except for textures. Not entirely sure what has
-         * to happen exactly in this case
-         */
-        if( (This->first_complex != This) && !(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+        /* Complex attached surfaces are destroyed implicitely when the root is released */
+        if(This->first_complex != This)
         {
-            FIXME("(%p) Destroying a surface which is a attached to a complex root %p\n", This, This->first_complex);
+            WARN("(%p) Attempt to destroy a surface that is attached to a complex root %p\n", This, This->first_complex);
+            return ref;
         }
         ddraw = This->ddraw;
 
