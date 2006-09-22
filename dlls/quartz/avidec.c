@@ -157,9 +157,10 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
     TRACE("(%p)->(%p)\n", This, pmt);
 
     AVIDec_Cleanup(pTransformFilter);
-   
+
+    /* Check root (GUID w/o FOURCC) */
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
-        (!memcmp(((char*)&pmt->subtype)+4, ((char*)&MEDIATYPE_Video)+4, sizeof(GUID)-4)) && /* Check root (GUID w/o FOURCC) */
+        (!memcmp(((const char *)&pmt->subtype)+4, ((const char *)&MEDIATYPE_Video)+4, sizeof(GUID)-4)) &&
         (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)))
     {
         VIDEOINFOHEADER* format = (VIDEOINFOHEADER*)pmt->pbFormat;

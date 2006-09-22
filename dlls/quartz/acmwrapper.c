@@ -169,8 +169,9 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
 
     TRACE("(%p)->(%p)\n", This, pmt);
 
+    /* Check root (GUID w/o FOURCC) */
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio)) &&
-        (!memcmp(((char*)&pmt->subtype)+4, ((char*)&MEDIATYPE_Audio)+4, sizeof(GUID)-4)) && /* Check root (GUID w/o FOURCC) */
+        (!memcmp(((const char *)&pmt->subtype)+4, ((const char *)&MEDIATYPE_Audio)+4, sizeof(GUID)-4)) &&
         (IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx)))
     {
         HACMSTREAM drv;
