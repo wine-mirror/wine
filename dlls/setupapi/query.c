@@ -130,6 +130,7 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
 {
     HINF inf;
     BOOL ret;
+    DWORD infSize;
 
     TRACE("(%p, %ld, %p, %ld, %p)\n", InfSpec, SearchControl, ReturnBuffer,
            ReturnBufferSize, RequiredSize);
@@ -141,12 +142,6 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
         else
             SetLastError(ERROR_INVALID_PARAMETER);
 
-        return FALSE;
-    }
-
-    if (!ReturnBuffer && ReturnBufferSize)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -181,7 +176,13 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
         return FALSE;
     }
 
-    ret = fill_inf_info(inf, ReturnBuffer, ReturnBufferSize, RequiredSize);
+    ret = fill_inf_info(inf, ReturnBuffer, ReturnBufferSize, &infSize);
+    if (!ReturnBuffer && (ReturnBufferSize >= infSize))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+    }
+    if (RequiredSize) *RequiredSize = infSize;
 
     if (SearchControl >= INFINFO_INF_NAME_IS_ABSOLUTE)
         SetupCloseInfFile(inf);

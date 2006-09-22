@@ -177,12 +177,24 @@ static void test_SetupGetInfInformation(void)
     ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
     ok(size != 0xdeadbeef, "Expected a valid size on return\n");
 
-    /* set ReturnBuffer to NULL and ReturnBufferSize to non-zero */
+    /* set ReturnBuffer to NULL and ReturnBufferSize to non-zero value 'size' */
     SetLastError(0xbeefcafe);
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    /* set ReturnBuffer to NULL and ReturnBufferSize to non-zero value 'size-1' */
+    ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size-1, &size);
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+
+    /* some tests for behaviour with a NULL RequiredSize pointer */
+    ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, 0, NULL);
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size - 1, NULL);
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size, NULL);
+    ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
 
     info = HeapAlloc(GetProcessHeap(), 0, size);
 
