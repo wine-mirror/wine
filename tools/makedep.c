@@ -710,9 +710,12 @@ static void output_dependencies(void)
     if (Separator && ((file = fopen( OutputFileName, "r+" ))))
     {
         while ((buffer = get_line( file )))
-            if (!strncmp( buffer, Separator, strlen(Separator) )) break;
-        ftruncate( fileno(file), ftell(file) );
-        fseek( file, 0L, SEEK_END );
+        {
+            if (strncmp( buffer, Separator, strlen(Separator) )) continue;
+            ftruncate( fileno(file), ftell(file) );
+            fseek( file, 0L, SEEK_END );
+            break;
+        }
     }
     if (!file)
     {
@@ -815,6 +818,6 @@ int main( int argc, char *argv[] )
         parse_file( pFile, 1 );
     }
     LIST_FOR_EACH_ENTRY( pFile, &includes, INCL_FILE, entry ) parse_file( pFile, 0 );
-    if (!list_empty( &sources )) output_dependencies();
+    output_dependencies();
     return 0;
 }
