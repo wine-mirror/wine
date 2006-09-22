@@ -19,6 +19,17 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
+my %makerules =
+(
+ "MAKE_RULES" => "Make.rules",
+ "MAKE_DLL_RULES" => "dlls/Makedll.rules",
+ "MAKE_IMPLIB_RULES" => "dlls/Makeimplib.rules",
+ "MAKE_TEST_RULES" => "dlls/Maketest.rules",
+ "MAKE_PROG_RULES" => "programs/Makeprog.rules",
+);
+
+my (@makefiles, %makefiles);
+
 # update a file if changed
 sub update_file($)
 {
@@ -27,7 +38,7 @@ sub update_file($)
     if (!$ret)
     {
         unlink "$file.new";
-        print "$file is unchanged\n";
+        #print "$file is unchanged\n";
     }
     else
     {
@@ -70,26 +81,56 @@ sub replace_in_file($$$@)
     return update_file($file);
 }
 
-my (@makefiles, @makerules);
+# parse the specified makefile to identify the rules file
+sub parse_makefile($)
+{
+    my $file = shift;
+
+    open MAKE, "$file.in" or die "cannot open $file.in\n";
+
+    while (<MAKE>)
+    {
+        chomp;
+        while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
+
+        if (/^\@(MAKE.*RULES)\@/)
+        {
+            my $var = $1;
+            $makefiles{$file} = $makerules{$var};
+            return;
+        }
+    }
+}
 
 if (-d ".git")
 {
     @makefiles = map { s/\.in$//; $_; } split /\s/, `git ls-files -c Makefile.in \\*/Makefile.in`;
-    @makerules = map { s/\.in$//; $_; } split /\s/, `git ls-files -c Make\\*rules.in \\*/Make\\*rules.in`;
 }
 else
 {
     @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
-    @makerules = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Make\\*.rules.in -print`);
 }
 
+foreach my $file (sort values %makerules, @makefiles)
+{
+    parse_makefile( $file );
+}
 
 ################################################################
 # update the makefile list in configure.ac
 
-replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
+my @lines = ();
+
+foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
+{
+    push @lines, "$var=$makerules{$var}\n";
+    push @lines, "AC_SUBST_FILE($var)\n\n";
+}
+
+replace_in_file( "configure.ac", '^MAKE_RULES', '\]\)$',
+                 @lines,
                  "AC_CONFIG_FILES([\n",
-                 join ("\n", (sort @makerules), (sort @makefiles) ), "])\n" );
+                 join ("\n", (sort values %makerules), (sort @makefiles) ), "])\n" );
 
 
 ################################################################
@@ -97,7 +138,7 @@ replace_in_file( "configure.ac", '^AC_CONFIG_FILES\(', '\]\)$',
 
 my %modules = ( "gdi" => "gdi32", "user" => "user32" );
 my %tests;
-my @lines = ( "TESTBINS =" );
+@lines = ( "TESTBINS =" );
 
 foreach my $file (sort grep /^dlls\/.*\/tests\/Makefile/, @makefiles)
 {
@@ -135,27 +176,17 @@ replace_in_file( "programs/winetest/winetest.rc", ' TESTRES ', undef, @lines );
 my @targets;
 my @depends;
 
-foreach my $file (sort @makerules)
+foreach my $file (sort values %makerules)
 {
     push @targets, $file;
-    if ($file eq "Make.rules") { push @depends, "$file: $file.in"; }
+    if (!defined($makefiles{$file})) { push @depends, "$file: $file.in"; }
     else { push @depends, "$file: $file.in Make.rules"; }
 }
 
 foreach my $file (sort @makefiles)
 {
     push @targets, $file unless $file eq "Makefile";
-
-    # find the right rules file (FIXME: should parse the Makefile.in instead)
-    my $dep = "Make.rules";
-    if ($file =~ /^programs\/.*\/Makefile/) { $dep = "programs/Makeprog.rules"; }
-    elsif ($file =~ /^dlls\/.*\/tests\/Makefile/) { $dep = "dlls/Maketest.rules"; }
-    elsif ($file =~ /^dlls\/(.*)\/Makefile/)
-    {
-        $dep = ($1 eq "dxerr8" || $1 eq "dxerr9" || $1 eq "dxguid" ||
-                $1 eq "strmiids" || $1 eq "uuid" || $1 eq "winecrt0") ?
-                "dlls/Makeimplib.rules" : "dlls/Makedll.rules";
-    }
+    my $dep = $makefiles{$file};
     push @depends, "$file: $file.in $dep";
 }
 
