@@ -5935,18 +5935,18 @@ HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgf
 HRESULT WINAPI StgOpenStorage(
   const OLECHAR *pwcsName,
   IStorage      *pstgPriority,
-  DWORD           grfMode,
-  SNB           snbExclude,
-  DWORD           reserved,
-  IStorage      **ppstgOpen)
+  DWORD          grfMode,
+  SNB            snbExclude,
+  DWORD          reserved,
+  IStorage     **ppstgOpen)
 {
-  StorageImpl* newStorage = 0;
+  StorageImpl*   newStorage = 0;
   HRESULT        hr = S_OK;
-  HANDLE       hFile = 0;
+  HANDLE         hFile = 0;
   DWORD          shareMode;
   DWORD          accessMode;
   WCHAR          fullname[MAX_PATH];
-  DWORD          length;
+  BOOL           newFile;
 
   TRACE("(%s, %p, %lx, %p, %ld, %p)\n",
 	debugstr_w(pwcsName), pstgPriority, grfMode,
@@ -6036,13 +6036,24 @@ HRESULT WINAPI StgOpenStorage(
    */
   *ppstgOpen = 0;
 
-  hFile = CreateFileW( pwcsName,
-                       accessMode,
-                       shareMode,
-                       NULL,
-                       OPEN_EXISTING,
-                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
-                       0);
+  if ((accessMode & GENERIC_WRITE) && /* try to create a file if no yet exists */
+      ((hFile = CreateFileW( pwcsName, accessMode, shareMode, NULL, CREATE_NEW,
+                             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, 0))
+          != INVALID_HANDLE_VALUE))
+  {
+      newFile = TRUE;
+  }
+  else
+  {
+      newFile = FALSE;
+      hFile = CreateFileW( pwcsName,
+                           accessMode,
+                           shareMode,
+                           NULL,
+                           OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
+                           0);
+  }
 
   if (hFile==INVALID_HANDLE_VALUE)
   {
@@ -6080,8 +6091,7 @@ HRESULT WINAPI StgOpenStorage(
    * Refuse to open the file if it's too small to be a structured storage file
    * FIXME: verify the file when reading instead of here
    */
-  length = GetFileSize(hFile, NULL);
-  if (length < 0x100)
+  if (!newFile && GetFileSize(hFile, NULL) < 0x100)
   {
     CloseHandle(hFile);
     hr = STG_E_FILEALREADYEXISTS;
@@ -6099,15 +6109,15 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
-  /* if the file's length was zero, initialize the storage */
+  /* if we created new file, initialize the storage */
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
-        pwcsName,
+         pwcsName,
          NULL,
          grfMode,
          TRUE,
-	 FALSE );
+         newFile );
 
   if (FAILED(hr))
   {

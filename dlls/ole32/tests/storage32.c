@@ -349,6 +349,18 @@ static BOOL is_zero_length(LPCWSTR filename)
     return len == 0;
 }
 
+static BOOL is_existing_file(LPCWSTR filename)
+{
+    HANDLE file;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    if (file==INVALID_HANDLE_VALUE)
+        return FALSE;
+    CloseHandle(file);
+    return TRUE;
+}
+
 static void test_open_storage(void)
 {
     static const WCHAR szPrefix[] = { 's','t','g',0 };
@@ -374,6 +386,14 @@ static void test_open_storage(void)
     ok(r==STG_E_FILEALREADYEXISTS, "StgOpenStorage didn't fail\n");
     ok(is_zero_length(filename), "file length changed\n");
 
+    DeleteFileW(filename);
+
+    /* try opening a non-existant file - it should create it */
+    stgm = STGM_DIRECT | STGM_SHARE_EXCLUSIVE | STGM_READWRITE;
+    r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed: 0x%08lx\n", r);
+    if (r==S_OK) IStorage_Release(stg);
+    ok(is_existing_file(filename), "StgOpenStorage didn't create a file\n");
     DeleteFileW(filename);
 
     /* create the file */
