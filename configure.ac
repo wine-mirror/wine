@@ -413,24 +413,11 @@ then
             then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
-			     OPENGL_LIBS="-lGL"
+			     [OPENGL_LIBS="-lGL"
+                             OPENGLFILES='$(OPENGLFILES)'
+                             AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])]
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-
-		if test "$ac_cv_lib_GL_glXCreateContext" = "yes"
-		then
-			OPENGLFILES='$(OPENGLFILES)'
-			AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])
-		else
-                    if test -f /usr/X11R6/lib/libGL.a
-                    then 
-                       AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
-This prevents linking to OpenGL. Delete the file and restart configure.])
-                    else
-                        dnl The compile test most likely failed because no libGL.so was found
-                        wine_cv_opengl_libs_found="no"
-                    fi
-		fi
 
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
@@ -1975,7 +1962,7 @@ then
   AC_MSG_WARN([ packages of Xlib/Xfree86 at the very least.])
 fi
 
-if test "$wine_cv_opengl_headers_found" = "no" -o "$wine_cv_opengl_header_version_OK" = "no" -o "$wine_cv_opengl_libs_found" = "no"
+if test -z "$OPENGLFILES"
 then
   echo >&2
   AC_MSG_WARN([Wine will be build without OpenGL or Direct3D support])
@@ -1987,10 +1974,15 @@ then
   if test "$wine_cv_opengl_header_version_OK" = "no"
   then
     AC_MSG_WARN([Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
-  fi
-  if test "$wine_cv_opengl_libs_found" = "no"
+  elif test "$ac_cv_lib_GL_glXCreateContext" = "no"
   then
-    AC_MSG_WARN([No OpenGL library found on this system.])
+     if test -f /usr/X11R6/lib/libGL.a
+     then 
+        AC_MSG_WARN([/usr/X11R6/lib/libGL.a is present on your system.
+This probably prevents linking to OpenGL. Try deleting the file and restarting configure.])
+     else
+        AC_MSG_WARN([No OpenGL library found on this system.])
+     fi
   fi
 fi
 
