@@ -327,6 +327,7 @@ static void get_src_file_info( HINF hinf, struct file_op *op )
     }
     if (!op->src_path && !(op->style & SP_COPY_SOURCE_ABSOLUTE))
     {
+        len = len2 = 0;
         if (!(op->style & SP_COPY_SOURCEPATH_ABSOLUTE))
         {
             /* retrieve relative path for this disk */
@@ -345,7 +346,7 @@ static void get_src_file_info( HINF hinf, struct file_op *op )
                 ptr = op->src_path + strlenW(op->src_path);
                 if (len2 && ptr > op->src_path && ptr[-1] != '\\') *ptr++ = '\\';
             }
-            if (!SetupGetStringFieldW( &disk_ctx, 4, ptr, len2, NULL )) *ptr = 0;
+            if (!SetupGetStringFieldW( &file_ctx, 2, ptr, len2, NULL )) *ptr = 0;
         }
     }
     if (!op->src_root) op->src_root = PARSER_get_src_root(hinf);
