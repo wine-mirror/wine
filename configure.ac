@@ -1482,6 +1482,8 @@ Makefile: dummy
 
 AH_TOP([#define __WINE_CONFIG_H])
 
+AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
+
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)

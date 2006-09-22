@@ -70,6 +70,10 @@ INSTALLDIRS = $(DESTDIR)$(datadir)/aclocal
 config.status: configure
 	@./config.status --recheck
 
+include/config.h: include/stamp-h
+include/stamp-h: include/config.h.in config.status
+	@./config.status include/config.h include/stamp-h
+
 wine: $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
@@ -114,7 +118,7 @@ RECURSE_TARGETS = \
 	$(TESTSUBDIRS:%=%/__test__) \
 	$(TESTSUBDIRS:%=%/__testclean__)
 
-depend $(RECURSE_TARGETS): $(MAKEDEP)
+depend $(RECURSE_TARGETS): $(MAKEDEP) include/config.h
 
 $(MAKEDEP):
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep
@@ -139,7 +143,7 @@ clean::
 	$(RM) wine
 
 distclean:: clean
-	$(RM) config.* configure.lineno TAGS tags include/config.h
+	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h
 	$(RM) -r autom4te.cache
 
 .PHONY: manpages htmlpages sgmlpages distclean
