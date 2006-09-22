@@ -3700,7 +3700,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                 FIXME("Unrecognized/Unhandled D3DBLENDOP value %ld\n", Value);
             }
 
-            if(GL_SUPPORT(ARB_IMAGING)) {
+            if(GL_SUPPORT(EXT_BLEND_MINMAX)) {
                 TRACE("glBlendEquation(%x)\n", glParm);
                 GL_EXTCALL(glBlendEquation(glParm));
                 checkGLcall("glBlendEquation");
@@ -4509,23 +4509,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
     case WINED3DRS_BLENDFACTOR               :
     {
         float col[4];
-        if (GL_SUPPORT(ARB_IMAGING)) {
 
-            TRACE("Setting BlendFactor to %ld", Value);
+        TRACE("Setting BlendFactor to %ld\n", Value);
 
-            D3DCOLORTOGLFLOAT4(Value, col);
-            if (0xFFFFFFFF != Value) {
-                glEnable(GL_BLEND);
-                checkGLcall("glEnable(GL_BLEND)");
-            }
-            else {
-               glDisable(GL_BLEND);
-               checkGLcall("glDisable(GL_BLEND)");
-            }
-            glBlendColor (col[0],col[1],col[2],col[3]);
-        } else {
-           WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
+        D3DCOLORTOGLFLOAT4(Value, col);
+        if (0xFFFFFFFF != Value) {
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable(GL_BLEND)");
         }
+        else {
+           glDisable(GL_BLEND);
+           checkGLcall("glDisable(GL_BLEND)");
+        }
+        glBlendColor (col[0],col[1],col[2],col[3]);
         break;
     }
 
