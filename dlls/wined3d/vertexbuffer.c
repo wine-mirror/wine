@@ -157,170 +157,220 @@ static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos,
     }
 }
 
+inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
+{
+    WineDirect3DVertexStridedData strided;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    BOOL ret;
+
+    memset(&strided, 0, sizeof(strided));
+    /* There are certain vertex data types that need to be fixed up. The Vertex Buffers FVF doesn't
+     * help finding them, only the vertex declaration or the device FVF can determine that at drawPrim
+     * time. Rules are as follows:
+     *
+     * -> No modification when Vertex Shaders are used
+     * -> Fix up position1 and position 2 if they are XYZRHW
+     * -> Fix up diffuse color
+     * -> Fix up specular color
+     *
+     * The Declaration is only known at drawing time, and it can change from draw to draw. If any converted values
+     * are changed, the whole buffer has to be reconverted and reloaded. (Converting is SLOW, so if this happens too
+     * often PreLoad stops converting entirely and falls back to drawStridedSlow).
+     *
+     * Reconvert if:
+     * -> New semantics that have to be converted appear
+     * -> The position of semantics that have to be converted changes
+     * -> The stride of the vertex changed AND there is stuff that needs conversion
+     * -> (If a vertex buffer is bound and in use assume that nothing that needs conversion is there)
+     *
+     * Return values:
+     *  TRUE: Reload is needed
+     *  FALSE: otherwise
+     */
+
+    if(device->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
+       &&((IWineD3DVertexShaderImpl *)device->stateBlock->vertexShader)->baseShader.function != NULL
+       && GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        /* Case 1: Vertex Shader: No conversion */
+        TRACE("Vertex Shader, no conversion needed\n");
+    } else if(device->stateBlock->vertexDecl || device->stateBlock->vertexShader) {
+        /* Case 2: Vertex Declaration */
+        TRACE("Using vertex declaration\n");
+
+        This->Flags |= VBFLAG_LOAD;
+        primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device,
+                FALSE,
+                &strided,
+                0,
+                &ret /* buffer contains fixed data, ignored here */);
+        This->Flags &= ~VBFLAG_LOAD;
+
+    } else {
+        /* Case 3: FVF */
+        if(!(This->Flags & VBFLAG_STREAM) ) {
+            TRACE("No vertex decl used and buffer is not bound to a stream\n");
+            /* No reload needed */
+            return FALSE;
+        } else {
+            This->Flags |= VBFLAG_LOAD;
+            primitiveConvertFVFtoOffset(device->stateBlock->fvf,
+                                        device->stateBlock->streamStride[This->stream],
+                                        NULL,
+                                        &strided,
+                                        This->vbo);
+            This->Flags &= ~VBFLAG_LOAD;
+            /* Data can only come from this buffer */
+        }
+    }
+
+    /* Filter out data that does not come from this VBO */
+    if(strided.u.s.position.VBO != This->vbo)    memset(&strided.u.s.position, 0, sizeof(strided.u.s.position));
+    if(strided.u.s.diffuse.VBO != This->vbo)     memset(&strided.u.s.diffuse, 0, sizeof(strided.u.s.diffuse));
+    if(strided.u.s.specular.VBO != This->vbo)    memset(&strided.u.s.specular, 0, sizeof(strided.u.s.specular));
+    if(strided.u.s.position2.VBO != This->vbo)   memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
+
+    /* We have a declaration now in the buffer */
+    This->Flags |= VBFLAG_HASDESC;
+
+    /* Find out if reload is needed
+     * Position of the semantic in the vertex and the stride must be equal to the stored type. Don't mind if only unconverted stuff changed.
+     *
+     * If some stuff does not exist in the buffer, then lpData, dwStride and dwType are memsetted to 0. So if the semantic didn't exist before
+     * and does not exist now all 3 values will be equal(=0).
+     *
+     * Checking the lpData field alone is not enought, because data may appear at offset 0 in the buffer. This is the same location as nonexistant
+     * data uses, so we have to check the type and stride too. Colors can be at offset 0 too, because it is perfectly fine to render from 2 or more
+     * buffers at the same time and get the position from one and the color from the other buffer.
+     */
+    if( /* Position transformed vs untransformed */
+        ((This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
+          This->strided.u.s.position.lpData != strided.u.s.position.lpData) ||
+        /* Diffuse position and data type */
+        This->strided.u.s.diffuse.lpData != strided.u.s.diffuse.lpData || This->strided.u.s.diffuse.dwStride != strided.u.s.diffuse.dwStride ||
+         This->strided.u.s.diffuse.dwType != strided.u.s.diffuse.dwType ||
+        /* Specular position and data type */
+        This->strided.u.s.specular.lpData != strided.u.s.specular.lpData || This->strided.u.s.specular.dwStride != strided.u.s.specular.dwStride ||
+         This->strided.u.s.specular.dwType != strided.u.s.specular.dwType) {
+
+        TRACE("Declaration changed, reloading buffer\n");
+        /* Set the new description */
+        memcpy(&This->strided, &strided, sizeof(strided));
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
     BYTE *data;
     UINT start = 0, end = 0, stride = 0;
-    BOOL useVertexShaderFunction = FALSE, fixup = FALSE;
+    BOOL declChanged = FALSE;
     TRACE("(%p)->()\n", This);
 
     if(This->Flags & VBFLAG_LOAD) {
         return; /* Already doing that stuff */
     }
 
-    if(!This->resource.allocatedMemory) {
-        TRACE("Locking directly into VBO, nothing to do\n");
-        return; /* Direct lock into the VBO */
+    if(!This->vbo) {
+        /* TODO: Make converting independent from VBOs */
+        return; /* Not doing any conversion */
     }
 
-    if(This->vbo) {
-        WineDirect3DVertexStridedData strided;
-        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
+    if(declChanged) {
+        /* The declaration changed, reload the whole buffer */
+        WARN("Reloading buffer because of decl change\n");
+        start = 0;
+        end = This->resource.size;
+    } else if(This->Flags & VBFLAG_DIRTY) {
+        /* No decl change, but dirty data, reload the changed stuff */
+        start = This->dirtystart;
+        end = This->dirtyend;
+    } else {
+        /* Desc not changed, buffer not dirty, nothing to do :-) */
+        return;
+    }
 
-        if(This->Flags & VBFLAG_DIRTY) {
-            /* Update the old buffer on unlock, use the old desc */
-            start = This->dirtystart;
-            end = This->dirtyend;
-            memcpy(&strided, &This->strided, sizeof(strided));
+    /* Mark the buffer clean */
+    This->Flags &= ~VBFLAG_DIRTY;
+    This->dirtystart = 0;
+    This->dirtyend = 0;
 
-            if     (strided.u.s.position.dwStride) stride = strided.u.s.position.dwStride;
-            else if(strided.u.s.specular.dwStride) stride = strided.u.s.specular.dwStride;
-            else if(strided.u.s.diffuse.dwStride)  stride = strided.u.s.diffuse.dwStride;
-            else {
-                /* That means that there is nothing to fixup, just override previously modified data */
-                fixup = FALSE;
-            }
-            if(stride) fixup = TRUE;
-        } else {
-            /* Keep this in sync with drawPrimitive in drawprim.c */
-            if (device->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
-                    &&((IWineD3DVertexShaderImpl *)device->stateBlock->vertexShader)->baseShader.function != NULL
-                    && GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
-                /* Using shaders? No conversion needed, the shaders handle this */
-                TRACE("Using vertex shaders, not doing any vertex conversion\n");
-                ENTER_GL();
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-                checkGLcall("glBindBufferARB");
-                GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
-                checkGLcall("glBufferSubDataARB");
-                LEAVE_GL();
-                /* Lock directly into the VBO in the future */
-                HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
-                This->resource.allocatedMemory = NULL;
-                This->Flags &= ~VBFLAG_DIRTY;
-                return;
-            }
+    /* If there was no conversion done before, then resource.allocatedMemory does not exist
+     * because locking was done directly into the VBO. In this case get the data out
+     */
+    if(declChanged && !This->resource.allocatedMemory) {
 
-            /* The code below reads the FVF / Vertex Declaration to find out which bits we have to convert
-            * Basically I can't see any reason why it can't change from DrawPrimitive to DrawPrimitive call
-            * from the DX api, but I think no sane game will do that. Reading the vertex declaration is quite
-            * complex, and we should save as much CPU time as possible. So read it only once ans assume that
-            * it doesn't change silently. I expect Windows D3D drivers to depend on that too
-            */
-            if(This->Flags & VBFLAG_HASDESC) return;
-
-            /* Check against updated declarations */
-            memset(&strided, 0, sizeof(strided));
-
-            if(device->stateBlock->vertexDecl || device->stateBlock->vertexShader) {
-                /* Check against the stream offset and make sure it is 0 */
-
-                This->Flags |= VBFLAG_LOAD;
-                primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device,
-                                                        useVertexShaderFunction,
-                                                        &strided,
-                                                        0,
-                                                        &fixup);
-                This->Flags &= ~VBFLAG_LOAD;
-
-                /* Only take care for stuff that is in this buffer, well, only the stuff that is interesting */
-                if(strided.u.s.position.VBO != This->vbo)    memset(&strided.u.s.position, 0, sizeof(strided.u.s.position));
-                if(strided.u.s.diffuse.VBO != This->vbo)     memset(&strided.u.s.diffuse, 0, sizeof(strided.u.s.diffuse));
-                if(strided.u.s.specular.VBO != This->vbo)    memset(&strided.u.s.specular, 0, sizeof(strided.u.s.specular));
-                if(strided.u.s.position2.VBO != This->vbo)   memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
-            } else {
-                if(!(This->Flags & VBFLAG_STREAM) ) {
-                    TRACE("No vertex decl used and buffer is not bound to a stream, nothing to do\n");
-                    return;
-                }
-
-                This->Flags |= VBFLAG_LOAD;
-                primitiveConvertFVFtoOffset(device->stateBlock->fvf,
-                                            device->stateBlock->streamStride[This->stream],
-                                            NULL,
-                                            &strided,
-                                            This->vbo);
-                This->Flags &= ~VBFLAG_LOAD;
-            }
-
-            /* If any data that needs conversion has changed we have to reload the whole buffer */
-            if( ( (This->strided.u.s.position_transformed || strided.u.s.position_transformed) &&
-                  This->strided.u.s.position.lpData != strided.u.s.position.lpData) ||
-                !((This->strided.u.s.diffuse.lpData == strided.u.s.diffuse.lpData && This->strided.u.s.diffuse.dwType == strided.u.s.diffuse.dwType) || strided.u.s.diffuse.VBO != This->vbo)   ||
-                !((This->strided.u.s.specular.lpData == strided.u.s.specular.lpData && This->strided.u.s.specular.dwType == strided.u.s.specular.dwType)|| strided.u.s.specular.VBO != This->vbo) ) {
-
-                start = 0;
-                end = This->resource.size;
-                fixup = TRUE;
-
-                if     (strided.u.s.position.dwStride) stride = strided.u.s.position.dwStride;
-                else if(strided.u.s.specular.dwStride) stride = strided.u.s.specular.dwStride;
-                else if(strided.u.s.diffuse.dwStride)  stride = strided.u.s.diffuse.dwStride;
-                else {
-                    /* That means that there is nothing to fixup, just override previously modified data */
-                    fixup = FALSE;
-                }
-
-                memcpy(&This->strided, &strided, sizeof(strided));
-            } else {
-                TRACE("No declaration change\n");
-                /* nothing to do - the old data is correct*/
-                return;
-            }
-            This->Flags |= VBFLAG_HASDESC;
-        }
-
-        if(end == 0) {
-            TRACE("Buffer not dirty, nothing to do\n");
-            This->Flags &= ~VBFLAG_DIRTY;
+        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size);
+        if(!This->resource.allocatedMemory) {
+            ERR("Out of memory when allocating memory for a vertex buffer\n");
             return;
         }
-
-        TRACE("Loading buffer\n");
-        if(fixup) {
-            data = HeapAlloc(GetProcessHeap(), 0, end-start);
-            if(!data) {
-                ERR("Out of memory\n");
-                return;
-            }
-            memcpy(data, This->resource.allocatedMemory + start, end - start);
-
-            fixup_vertices(data, data, stride, ( end - start) / stride,
-                           strided.u.s.position.lpData, strided.u.s.position_transformed,
-                           strided.u.s.diffuse.lpData, strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR,
-                           strided.u.s.specular.lpData, strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
-        } else {
-            data = This->resource.allocatedMemory + start;
-        }
+        ERR("Was locking directly into the VBO, reading data back because conv is needed\n");
 
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
+        data = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB));
+        if(!data) {
+            ERR("glMapBuffer failed!\n");
+            LEAVE_GL();
+            return;
+        }
+        memcpy(This->resource.allocatedMemory, data, This->resource.size);
+        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
+        checkGLcall("glUnmapBufferARB");
+        LEAVE_GL();
+    }
+
+    if     (This->strided.u.s.position.dwStride) stride = This->strided.u.s.position.dwStride;
+    else if(This->strided.u.s.specular.dwStride) stride = This->strided.u.s.specular.dwStride;
+    else if(This->strided.u.s.diffuse.dwStride)  stride = This->strided.u.s.diffuse.dwStride;
+    else {
+        /* That means that there is nothing to fixup. Upload everything into the VBO and
+         * free This->resource.allocatedMemory
+         */
+        TRACE("No conversion needed, locking directly into the VBO in future\n");
+
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
-
-        if(fixup) {
-            HeapFree(GetProcessHeap(), 0, data);
-        } else if(This->Flags & VBFLAG_HASDESC) {
-            /* Free the allocated memory, then Lock will directly lock into the
-             * VBO the next time :-)
-             */
-            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
-            This->resource.allocatedMemory = NULL;
-        }
+        return;
     }
-    This->Flags &= ~VBFLAG_DIRTY;
+
+    /* OK, we have the original data from the app, the description of the buffer and the dirty area.
+     * so convert the stuff
+     */
+    data = HeapAlloc(GetProcessHeap(), 0, end-start);
+    if(!data) {
+        ERR("Out of memory\n");
+        return;
+    }
+    memcpy(data, This->resource.allocatedMemory + start, end - start);
+
+    fixup_vertices(data, data, stride, ( end - start) / stride,
+                   /* Position */
+                   This->strided.u.s.position.lpData, /* Data location */
+                   This->strided.u.s.position_transformed, /* Do convert? */
+                   /* Diffuse color */
+                   This->strided.u.s.diffuse.lpData, /* Location */
+                   This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR, /* Convert? */
+                   /* specular color */
+                   This->strided.u.s.specular.lpData, /* location */
+                   This->strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
+
+    ENTER_GL();
+    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+    checkGLcall("glBindBufferARB");
+    GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));
+    checkGLcall("glBufferSubDataARB");
+    LEAVE_GL();
+
+    HeapFree(GetProcessHeap(), 0, data);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
@@ -406,7 +456,7 @@ HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
         GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
         checkGLcall("glUnmapBufferARB");
         LEAVE_GL();
-    } else {
+    } else if(This->Flags & VBFLAG_HASDESC){
         IWineD3DVertexBufferImpl_PreLoad(iface);
     }
     return WINED3D_OK;
