@@ -26,6 +26,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
 
+#define VB_MAXDECLCHANGES     100     /* After that number we stop converting */
+#define VB_RESETDECLCHANGE    1000    /* Reset the changecount after that number of draws */
+
 /* *******************************************
    IWineD3DVertexBuffer IUnknown parts follow
    ******************************************* */
@@ -278,6 +281,39 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     }
 
     declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
+
+    /* If applications change the declaration over and over, reconverting all the time is a huge
+     * performance hit. So count the declaration changes and release the VBO if there are too much
+     * of them(and thus stop converting)
+     */
+    if(declChanged) {
+        This->declChanges++;
+        This->draws = 0;
+
+        if(This->declChanges > VB_MAXDECLCHANGES) {
+            if(This->resource.allocatedMemory) {
+                FIXME("Too much declaration changes, stopping converting\n");
+                ENTER_GL();
+                GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
+                checkGLcall("glDeleteBuffersARB");
+                LEAVE_GL();
+                This->vbo = 0;
+                return;
+            }
+            /* Otherwise do not bother to release the VBO. If we're doing direct locking now,
+             * and the declarations changed the code below will fetch the VBO's contents, convert
+             * and on the next decl change the data will be in sysmem too and we can just release the VBO
+             */
+        }
+    } else {
+        /* However, it is perfectly fine to change the declaration every now and then. We don't want a game that
+         * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
+         * decl changes and reset the decl change count after a specific number of them
+         */
+        This->draws++;
+        if(This->draws > VB_RESETDECLCHANGE) This->declChanges = 0;
+    }
+
     if(declChanged) {
         /* The declaration changed, reload the whole buffer */
         WARN("Reloading buffer because of decl change\n");
