@@ -127,6 +127,9 @@ void shader_arb_load_constants(
                                    GL_LIMITS(vshader_constantsF),
                                    stateBlock->vertexShaderConstantF,
                                    &stateBlock->set_vconstantsF);
+
+        /* Upload the position fixup */
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, vshader_impl->wineD3DDevice->posFixup));
     }
 
     if (usePixelShader) {

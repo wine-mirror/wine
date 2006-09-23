@@ -288,6 +288,7 @@ void shader_glsl_load_constants(
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) vshader;
+        GLint pos;
 
         IWineD3DVertexDeclarationImpl* vertexDeclaration =
             (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
@@ -314,6 +315,12 @@ void shader_glsl_load_constants(
         shader_glsl_load_constantsB(vshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->vertexShaderConstantB,
                                     stateBlock->set.vertexShaderConstantsB);
+
+        /* Upload the position fixup params */
+        pos = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
+        checkGLcall("glGetUniformLocationARB");
+        glUniform4fvARB(pos, 1, &vshader_impl->wineD3DDevice->posFixup[0]);
+        checkGLcall("glUniform4fvARB");
     }
 
     if (usePixelShader) {
@@ -374,6 +381,9 @@ void shader_generate_glsl_declarations(
 
     if (This->baseShader.limits.constant_bool > 0)
         shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
+
+    if(!pshader)
+        shader_addline(buffer, "uniform vec4 posFixup;\n");
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {

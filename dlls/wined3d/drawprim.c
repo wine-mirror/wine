@@ -311,22 +311,9 @@ static void primitiveInitState(
 
         /* Vertex Shader output is already transformed, so set up identity matrices */
         if (useVS) {
-            glMatrixMode(GL_MODELVIEW);
-            checkGLcall("glMatrixMode");
-            glLoadIdentity();
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
-            glLoadIdentity();
-            /* Window Coord 0 is the middle of the first pixel, so translate by half
-               a pixel (See comment above glTranslate above)                         */
-            glTranslatef(0.9 / This->stateBlock->viewport.Width, -0.9 / This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
-            if (This->renderUpsideDown) {
-                glMultMatrixf(invymat);
-                checkGLcall("glMultMatrixf(invymat)");
-            }
-            This->modelview_valid = FALSE;
-            This->proj_valid = FALSE;
+            This->posFixup[1] = This->renderUpsideDown ? -1.0 : 1.0;
+            This->posFixup[2] = 0.9 / This->stateBlock->viewport.Width;
+            This->posFixup[3] = -0.9 / This->stateBlock->viewport.Height;
         }
         This->last_was_rhw = FALSE;
 

@@ -581,6 +581,9 @@ typedef struct IWineD3DDeviceImpl
     /* List of GLSL shader programs and their associated vertex & pixel shaders */
     struct list glsl_shader_progs;
 
+
+    /* Final position fixup constant */
+    float                       posFixup[4];
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
@@ -1666,6 +1669,12 @@ inline static BOOL shader_is_vshader_version(DWORD token) {
 inline static BOOL shader_is_comment(DWORD token) {
     return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
 }
+
+/* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
+ * so upload them above that
+ */
+#define ARB_SHADER_PRIVCONST_BASE GL_LIMITS(vshader_constantsF)
+#define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
