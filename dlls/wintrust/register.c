@@ -991,11 +991,52 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 /***********************************************************************
  *              SoftpubDllRegisterServer (WINTRUST.@)
+ *
+ * Registers softpub.dll
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: S_FALSE. (See also GetLastError()).
+ *
+ * NOTES
+ *  DllRegisterServer in softpub.dll will call this function.
+ *  See comments in DllRegisterServer.
  */
 HRESULT WINAPI SoftpubDllRegisterServer(void)
 {
-     FIXME("stub\n");
-     return S_OK;
+    HRESULT TrustProviderRes = S_OK;
+
+    TRACE("\n");
+
+    /* Create the necessary action registry structures */
+    WINTRUST_InitRegStructs();
+
+    /* Register several Trust Provider actions */
+    if (!WINTRUST_RegisterGenVerifyV2())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterPublishedSoftware())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterPublishedSoftwareNoBadUi())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterGenCertVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterTrustProviderTest())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterHttpsProv())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterOfficeSignVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterDriverVerify())
+        TrustProviderRes = S_FALSE;
+    if (!WINTRUST_RegisterGenChainVerify())
+        TrustProviderRes = S_FALSE;
+
+    /* Free the registry structures */
+    WINTRUST_FreeRegStructs();
+
+    return TrustProviderRes;
 }
 
 /***********************************************************************
