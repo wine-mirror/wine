@@ -87,7 +87,8 @@ DEFINE_EXPECT(QueryStatus_NEW);
 DEFINE_EXPECT(Exec_SETPROGRESSMAX);
 DEFINE_EXPECT(Exec_SETPROGRESSPOS);
 DEFINE_EXPECT(Exec_HTTPEQUIV_DONE); 
-DEFINE_EXPECT(Exec_SETDOWNLOADSTATE);
+DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
+DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
@@ -104,6 +105,10 @@ DEFINE_EXPECT(UpdateUI);
 DEFINE_EXPECT(Navigate);
 DEFINE_EXPECT(OnFrameWindowActivate);
 DEFINE_EXPECT(OnChanged_READYSTATE);
+DEFINE_EXPECT(OnChanged_1005);
+DEFINE_EXPECT(GetDisplayName);
+DEFINE_EXPECT(BindToStorage);
+DEFINE_EXPECT(Abort);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -239,7 +244,10 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
 {
     switch(dispID) {
     case DISPID_READYSTATE:
-        CHECK_EXPECT(OnChanged_READYSTATE);
+        CHECK_EXPECT2(OnChanged_READYSTATE);
+        return S_OK;
+    case 1005:
+        CHECK_EXPECT(OnChanged_1005);
         return S_OK;
     }
 
@@ -262,6 +270,341 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 };
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
+
+static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IWinInetHttpInfo, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(&IID_IWinInetInfo, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Binding_AddRef(IBinding *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Binding_Release(IBinding *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Binding_Abort(IBinding *iface)
+{
+    CHECK_EXPECT(Abort);
+    return S_OK;
+}
+
+static HRESULT WINAPI Binding_Suspend(IBinding *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Binding_Resume(IBinding *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Binding_SetPriority(IBinding *iface, LONG nPriority)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Binding_GetPriority(IBinding *iface, LONG *pnPriority)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Binding_GetBindResult(IBinding *iface, CLSID *pclsidProtocol,
+        DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IBindingVtbl BindingVtbl = {
+    Binding_QueryInterface,
+    Binding_AddRef,
+    Binding_Release,
+    Binding_Abort,
+    Binding_Suspend,
+    Binding_Resume,
+    Binding_SetPriority,
+    Binding_GetPriority,
+    Binding_GetBindResult
+};
+
+static IBinding Binding = { &BindingVtbl };
+
+static HRESULT WINAPI Moniker_QueryInterface(IMoniker *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Moniker_AddRef(IMoniker *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Moniker_Release(IMoniker *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Moniker_GetClassID(IMoniker *iface, CLSID *pClassID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_IsDirty(IMoniker *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_Load(IMoniker *iface, IStream *pStm)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_Save(IMoniker *iface, IStream *pStm, BOOL fClearDirty)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *pcbSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_BindToObject(IMoniker *iface, IBindCtx *pcb, IMoniker *pmkToLeft,
+        REFIID riidResult, void **ppvResult)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        REFIID riid, void **ppv)
+{
+    IBindStatusCallback *callback = NULL;
+    FORMATETC formatetc = {0xc02d, NULL, 1, -1, TYMED_ISTREAM};
+    STGMEDIUM stgmedium;
+    BINDINFO bindinfo;
+    DWORD bindf, written=0;
+    IStream *stream;
+    HRESULT hres;
+
+    static OLECHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+    static const char html_page[] = "<html><body>test</body></html>";
+
+    CHECK_EXPECT(BindToStorage);
+
+    ok(pbc != NULL, "pbc == NULL\n");
+    ok(pmkToLeft == NULL, "pmkToLeft=%p\n", pmkToLeft);
+    ok(IsEqualGUID(&IID_IStream, riid), "unexpected riid\n");
+    ok(ppv != NULL, "ppv == NULL\n");
+    ok(*ppv == NULL, "*ppv=%p\n", *ppv);
+
+    hres = IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown**)&callback);
+    ok(hres == S_OK, "GetObjectParam failed: %08lx\n", hres);
+    ok(callback != NULL, "callback == NULL\n");
+
+    memset(&bindinfo, 0xf0, sizeof(bindinfo));
+    bindinfo.cbSize = sizeof(bindinfo);
+
+    hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
+    ok(hres == S_OK, "GetBindInfo failed: %08lx\n", hres);
+    ok(bindf == (BINDF_PULLDATA|BINDF_ASYNCSTORAGE|BINDF_ASYNCHRONOUS), "bindf = %08lx\n", bindf);
+    ok(bindinfo.cbSize == sizeof(bindinfo), "bindinfo.cbSize=%ld\n", bindinfo.cbSize);
+    ok(bindinfo.szExtraInfo == NULL, "bindinfo.szExtraInfo=%p\n", bindinfo.szExtraInfo);
+    /* TODO: test stgmedData */
+    ok(bindinfo.grfBindInfoF == 0, "bindinfo.grfBinfInfoF=%08lx\n", bindinfo.grfBindInfoF);
+    ok(bindinfo.dwBindVerb == 0, "bindinfo.dwBindVerb=%ld\n", bindinfo.dwBindVerb);
+    ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
+    ok(bindinfo.cbStgmedData == 0, "bindinfo.cbStgmedData=%ld\n", bindinfo.cbStgmedData);
+    ok(bindinfo.dwOptions == 0x80000, "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
+    ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%ld\n", bindinfo.dwOptionsFlags);
+    /* TODO: test dwCodePage */
+    /* TODO: test securityAttributes */
+    ok(IsEqualGUID(&IID_NULL, &bindinfo.iid), "unexepected bindinfo.iid\n");
+    ok(bindinfo.pUnk == NULL, "bindinfo.pUnk=%p\n", bindinfo.pUnk);
+    ok(bindinfo.dwReserved == 0, "bindinfo.dwReserved=%ld\n", bindinfo.dwReserved);
+
+    hres = IBindStatusCallback_OnStartBinding(callback, 0, &Binding);
+    ok(hres == S_OK, "OnStartBinding failed: %08lx\n", hres);
+
+    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE,
+                                          wszTextHtml);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08lx\n", hres);
+
+    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_BEGINDOWNLOADDATA,
+                                          NULL);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08lx\n", hres);
+
+    CreateStreamOnHGlobal(0, TRUE, &stream);
+    IStream_Write(stream, html_page, sizeof(html_page)-1, &written);
+
+    stgmedium.tymed = TYMED_ISTREAM;
+    U(stgmedium).pstm = stream;
+    stgmedium.pUnkForRelease = (IUnknown*)iface;
+    hres = IBindStatusCallback_OnDataAvailable(callback,
+            BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
+            100, &formatetc, &stgmedium);
+    ok(hres == S_OK, "OnDataAvailable failed: %08lx\n", hres);
+    IStream_Release(stream);
+
+    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
+            BINDSTATUS_ENDDOWNLOADDATA, NULL);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_ENDDOWNLOADDATA) failed: %08lx\n", hres);
+
+    hres = IBindStatusCallback_OnStopBinding(callback, S_OK, NULL);
+    ok(hres == S_OK, "OnStopBinding failed: %08lx\n", hres);
+
+    IBindStatusCallback_Release(callback);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Moniker_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD dwReduceHowFar,
+        IMoniker **ppmkToLeft, IMoniker **ppmkReduced)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_ComposeWith(IMoniker *iface, IMoniker *pmkRight,
+        BOOL fOnlyIfNotGeneric, IMoniker **ppnkComposite)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_Enum(IMoniker *iface, BOOL fForward, IEnumMoniker **ppenumMoniker)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_IsEqual(IMoniker *iface, IMoniker *pmkOtherMoniker)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_Hash(IMoniker *iface, DWORD *pdwHash)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_IsRunning(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        IMoniker *pmkNewlyRunning)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, FILETIME *pFileTime)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_Inverse(IMoniker *iface, IMoniker **ppmk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_CommonPrefixWith(IMoniker *iface, IMoniker *pmkOther,
+        IMoniker **ppmkPrefix)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_RelativePathTo(IMoniker *iface, IMoniker *pmkOther,
+        IMoniker **pmkRelPath)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, LPOLESTR *ppszDisplayName)
+{
+    static const WCHAR winetest_test[] =
+        {'w','i','n','e','t','e','s','t',':','t','e','s','t',0};
+
+    CHECK_EXPECT2(GetDisplayName);
+
+    /* ok(pbc != NULL, "pbc == NULL\n"); */
+    ok(pmkToLeft == NULL, "pmkToLeft=%p\n", pmkToLeft);
+    ok(ppszDisplayName != NULL, "ppszDisplayName == NULL\n");
+    ok(*ppszDisplayName == NULL, "*ppszDisplayName=%p\n", *ppszDisplayName);
+
+    *ppszDisplayName = CoTaskMemAlloc(sizeof(winetest_test));
+    memcpy(*ppszDisplayName, winetest_test, sizeof(winetest_test));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Moniker_ParseDisplayName(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Moniker_IsSystemMoniker(IMoniker *iface, DWORD *pdwMksys)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IMonikerVtbl MonikerVtbl = {
+    Moniker_QueryInterface,
+    Moniker_AddRef,
+    Moniker_Release,
+    Moniker_GetClassID,
+    Moniker_IsDirty,
+    Moniker_Load,
+    Moniker_Save,
+    Moniker_GetSizeMax,
+    Moniker_BindToObject,
+    Moniker_BindToStorage,
+    Moniker_Reduce,
+    Moniker_ComposeWith,
+    Moniker_Enum,
+    Moniker_IsEqual,
+    Moniker_Hash,
+    Moniker_IsRunning,
+    Moniker_GetTimeOfLastChange,
+    Moniker_Inverse,
+    Moniker_CommonPrefixWith,
+    Moniker_RelativePathTo,
+    Moniker_GetDisplayName,
+    Moniker_ParseDisplayName,
+    Moniker_IsSystemMoniker
+};
+
+static IMoniker Moniker = { &MonikerVtbl };
 
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
@@ -1028,11 +1371,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     if(!pguidCmdGroup) {
-        ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
-
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
             CHECK_EXPECT2(Exec_SETPROGRESSMAX);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
@@ -1043,6 +1385,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return S_OK;
         case OLECMDID_SETPROGRESSPOS:
             CHECK_EXPECT2(Exec_SETPROGRESSPOS);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
                 ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d, expected VT_I4\n", V_VT(pvaIn));
@@ -1053,23 +1396,45 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return S_OK;
         case OLECMDID_HTTPEQUIV_DONE:
             CHECK_EXPECT(Exec_HTTPEQUIV_DONE);
-            /* TODO */
+            ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
+            ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
+            ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
             return S_OK;
         case OLECMDID_SETDOWNLOADSTATE:
-            CHECK_EXPECT2(Exec_SETDOWNLOADSTATE);
-            /* TODO */
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
+            ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(V_VT(pvaIn) == VT_I4, "V_VT(pvaIn)=%d\n", V_VT(pvaIn));
+
+            switch(V_I4(pvaIn)) {
+            case 0:
+                CHECK_EXPECT(Exec_SETDOWNLOADSTATE_0);
+                break;
+            case 1:
+                CHECK_EXPECT(Exec_SETDOWNLOADSTATE_1);
+                break;
+            default:
+                ok(0, "unexpevted V_I4(pvaIn)=%ld\n", V_I4(pvaIn));
+            }
+
             return S_OK;
         case OLECMDID_UPDATECOMMANDS:
             CHECK_EXPECT(Exec_UPDATECOMMANDS);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
             ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             return S_OK;
         case OLECMDID_SETTITLE:
             CHECK_EXPECT2(Exec_SETTITLE);
-            /* TODO */
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
+            ok(V_VT(pvaIn) == VT_BSTR, "V_VT(pvaIn)=%d\n", V_VT(pvaIn));
+            ok(V_BSTR(pvaIn) != NULL, "V_BSTR(pvaIn) == NULL\n"); /* TODO */
             return S_OK;
         case OLECMDID_HTTPEQUIV:
             CHECK_EXPECT2(Exec_HTTPEQUIV);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
             /* TODO */
             return S_OK;
         default:
@@ -1374,112 +1739,102 @@ static void test_ConnectionPointContainer(IUnknown *unk)
 
 static void test_Load(IPersistMoniker *persist)
 {
-    IMoniker *mon;
     IBindCtx *bind;
     HRESULT hres;
-
-    static const WCHAR wszWineHQ[] =
-        {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
-
-    hres = CreateURLMoniker(NULL, wszWineHQ, &mon);
-    ok(hres == S_OK, "CreateURLMoniker failed: %08lx\n", hres);
-    if(FAILED(hres))
-        return;
 
     CreateBindCtx(0, &bind);
     IBindCtx_RegisterObjectParam(bind, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)&ClientSite);
 
+    SET_EXPECT(GetDisplayName);
     SET_EXPECT(GetHostInfo);
+    SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+    SET_EXPECT(Invoke_AMBIENT_PALETTE);
     SET_EXPECT(GetOptionKeyPath);
     SET_EXPECT(GetOverrideKeyPath);
     SET_EXPECT(GetWindow);
     SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Invoke_AMBIENT_USERMODE);
-    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
-    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    SET_EXPECT(Invoke_AMBIENT_SILENT);
-    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
-    SET_EXPECT(Invoke_AMBIENT_PALETTE);
+    SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(BindToStorage);
     SET_EXPECT(GetContainer);
     SET_EXPECT(LockContainer);
-    SET_EXPECT(Exec_ShellDocView_37);
     expect_LockContainer_fLock = TRUE;
 
-    hres = IPersistMoniker_Load(persist, FALSE, mon, bind, 0x12);
-#if 0
+    hres = IPersistMoniker_Load(persist, FALSE, &Moniker, bind, 0x12);
     ok(hres == S_OK, "Load failed: %08lx\n", hres);
-#endif
 
+    CHECK_CALLED(GetDisplayName);
     CHECK_CALLED(GetHostInfo);
+    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverrideKeyPath);
     CHECK_CALLED(GetWindow);
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
-    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
-    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    CHECK_CALLED(Invoke_AMBIENT_SILENT);
-    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
+    CHECK_CALLED(BindToStorage);
     CHECK_CALLED(GetContainer);
     CHECK_CALLED(LockContainer);
-    CHECK_CALLED(Exec_ShellDocView_37);
 
     set_clientsite = container_locked = TRUE;
 
     IBindCtx_Release(bind);
-    IMoniker_Release(mon);
 }
-
-#ifdef DOWNLOAD_TEST
 
 static void test_download(void)
 {
+    HWND hwnd;
     MSG msg;
 
     load_state = LD_LOADING;
 
-    SET_EXPECT(Exec_SETDOWNLOADSTATE);
-    SET_EXPECT(GetDropTarget);
+    hwnd = FindWindowA("Internet Explorer_Hidden", NULL);
+    ok(hwnd != NULL, "Could not find hidden window\n");
+
     SET_EXPECT(SetStatusText);
-    SET_EXPECT(UpdateUI);
-    SET_EXPECT(Exec_UPDATECOMMANDS);
-    SET_EXPECT(Exec_SETTITLE);
-    SET_EXPECT(Exec_HTTPEQUIV);
-    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
+    SET_EXPECT(GetDropTarget);
+    SET_EXPECT(OnChanged_1005);
+    SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
-    expect_status_text = (LPCOLESTR)0xdeadbeef; /* TODO */
+    SET_EXPECT(Exec_SETTITLE);
+    expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
-    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, NULL, 0, 0)) {
+    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, hwnd, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    CHECK_CALLED(Exec_SETDOWNLOADSTATE);
-    CHECK_CALLED(GetDropTarget);
     CHECK_CALLED(SetStatusText);
-    CHECK_CALLED(UpdateUI);
-    CHECK_CALLED(Exec_UPDATECOMMANDS);
-    CHECK_CALLED(Exec_SETTITLE);
-    CHECK_CALLED(Exec_HTTPEQUIV);
-    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+    CHECK_CALLED(GetDropTarget);
+    CHECK_CALLED(OnChanged_1005);
+    CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
+    CHECK_CALLED(Exec_SETTITLE);
 
     load_state = LD_LOADED;
 }
-
-#endif
 
 static void test_Persist(IUnknown *unk)
 {
@@ -2128,6 +2483,8 @@ static void test_HTMLDocument(enum load_state_t ls)
     HRESULT hres;
     ULONG ref;
 
+    trace("Testing HTMLDocument (%s)...\n", (ls == LD_DOLOAD ? " load" : "no load"));
+
     init_test(ls);
 
     hres = create_document(&unk);
@@ -2145,10 +2502,8 @@ static void test_HTMLDocument(enum load_state_t ls)
         return;
     }
 
-#ifdef DOWNLOAD_TEST
     if(load_state == LD_DOLOAD)
         test_download();
-#endif
 
     test_OleCommandTarget_fail(unk);
     test_OleCommandTarget(unk);
@@ -2197,7 +2552,6 @@ static void test_HTMLDocument(enum load_state_t ls)
     ok(ref == 0, "ref=%ld, expected 0\n", ref);
 
     ok(!IsWindow(hwnd), "hwnd is not destroyed\n");
-
 }
 
 static void test_HTMLDocument_hlink(void)
@@ -2205,6 +2559,8 @@ static void test_HTMLDocument_hlink(void)
     IUnknown *unk;
     HRESULT hres;
     ULONG ref;
+
+    trace("Testing HTMLDocument (hlink)...\n");
 
     init_test(LD_DOLOAD);
 
@@ -2216,9 +2572,7 @@ static void test_HTMLDocument_hlink(void)
     test_Persist(unk);
     test_Navigate(unk);
 
-#ifdef DOWNLOAD_TEST
     test_download();
-#endif
 
     test_exec_onunload(unk);
     test_Window(unk, TRUE);
@@ -2239,6 +2593,8 @@ static void test_editing_mode(void)
     IOleObject *oleobj;
     HRESULT hres;
     ULONG ref;
+
+    trace("Testing HTMLDocument (edit)...\n");
 
     init_test(LD_DOLOAD);
 
