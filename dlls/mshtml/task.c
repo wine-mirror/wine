@@ -123,11 +123,54 @@ static void set_downloading(HTMLDocument *doc)
     }
 }
 
+static void set_parsecomplete(HTMLDocument *doc)
+{
+    IOleCommandTarget *olecmd;
+    HRESULT hres;
+
+    TRACE("(%p)\n", doc);
+
+    call_property_onchanged(doc->cp_propnotif, 1005);
+    call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(SUCCEEDED(hres)) {
+        VARIANT state, title, progress;
+        WCHAR empty[] = {0};
+
+        V_VT(&progress) = VT_I4;
+        V_I4(&progress) = 0;
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress, NULL);
+
+        V_VT(&state) = VT_I4;
+        V_I4(&state) = 0;
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &state, NULL);
+
+        IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
+
+        V_VT(&title) = VT_BSTR;
+        V_BSTR(&title) = SysAllocString(empty);
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETTITLE, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &title, NULL);
+        SysFreeString(V_BSTR(&title));
+
+        IOleCommandTarget_Release(olecmd);
+    }
+}
+
 static void process_task(task_t *task)
 {
     switch(task->task_id) {
     case TASK_SETDOWNLOADSTATE:
         return set_downloading(task->doc);
+    case TASK_PARSECOMPLETE:
+        return set_parsecomplete(task->doc);
     default:
         ERR("Wrong task_id %d\n", task->task_id);
     }

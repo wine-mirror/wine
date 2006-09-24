@@ -333,6 +333,20 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         }
     }
 
+    if(This->doc) {
+        task_t *task = mshtml_alloc(sizeof(task_t));
+
+        task->doc = This->doc;
+        task->task_id = TASK_PARSECOMPLETE;
+        task->next = NULL;
+
+        /*
+         * This should be done in the worker thread that parses HTML,
+         * but we don't have such thread (Gecko parses HTML for us).
+         */
+        push_task(task);
+    }
+
     return S_OK;
 }
 
