@@ -1078,7 +1078,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** Masked Edit ********************************************/
 
-#define MASK_MAX_GROUPS 10
+#define MASK_MAX_GROUPS 20
 
 struct msi_mask_group
 {
