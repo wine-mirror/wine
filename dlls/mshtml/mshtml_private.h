@@ -86,6 +86,8 @@ struct HTMLDocument {
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
 
+    BSCallback *bscallback;
+
     HWND hwnd;
     HWND tooltips_hwnd;
 
@@ -175,6 +177,8 @@ struct BSCallback {
 
     IMoniker *mon;
     IBinding *binding;
+
+    HTMLDocument *doc;
 
     nsProtocolStream *nsstream;
 };
@@ -314,8 +318,9 @@ void nsAString_Finish(nsAString*);
 nsIInputStream *create_nsstream(const char*,PRInt32);
 nsICommandParams *create_nscommand_params(void);
 
-BSCallback *create_bscallback(HTMLDocument*,IMoniker*);
+BSCallback *create_bscallback(IMoniker*);
 HRESULT start_binding(BSCallback*);
+void set_document_bscallback(HTMLDocument*,BSCallback*);
 
 IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);

@@ -668,7 +668,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_UNEXPECTED;
     }
 
-    bscallback = create_bscallback(NULL, mon);
+    bscallback = create_bscallback(mon);
     IMoniker_Release(mon);
 
     nsIChannel_AddRef(NSCHANNEL(This));

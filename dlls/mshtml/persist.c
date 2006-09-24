@@ -218,7 +218,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    bscallback = create_bscallback(This, pimkName);
+    bscallback = create_bscallback(pimkName);
 
     task = mshtml_alloc(sizeof(task_t));
 
@@ -260,6 +260,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(pibc)
         FIXME("not supported pibc\n");
 
+    set_document_bscallback(This, bscallback);
     hres = start_binding(bscallback);
 
     IBindStatusCallback_Release(STATUSCLB(bscallback));
@@ -508,4 +509,6 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->lpPersistFileVtbl = &PersistFileVtbl;
     This->lpMonikerPropVtbl = &MonikerPropVtbl;
     This->lpPersistStreamInitVtbl = &PersistStreamInitVtbl;
+
+    This->bscallback = NULL;
 }

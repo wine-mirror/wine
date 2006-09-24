@@ -586,7 +586,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryService
 };
 
-BSCallback *create_bscallback(HTMLDocument *doc, IMoniker *mon)
+BSCallback *create_bscallback(IMoniker *mon)
 {
     BSCallback *ret = mshtml_alloc(sizeof(BSCallback));
 
@@ -604,6 +604,7 @@ BSCallback *create_bscallback(HTMLDocument *doc, IMoniker *mon)
     ret->nscontext = NULL;
     ret->nsstream = NULL;
     ret->binding = NULL;
+    ret->doc = NULL;
 
     if(mon)
         IMoniker_AddRef(mon);
@@ -690,7 +691,7 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IMoniker *mon;
     IHlink *hlink;
 
-    callback = create_bscallback(doc, NULL);
+    callback = create_bscallback(NULL);
 
     if(post_data_stream) {
         parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
@@ -744,4 +745,21 @@ HRESULT start_binding(BSCallback *bscallback)
     IMoniker_Release(bscallback->mon);
     bscallback->mon = NULL;
     return S_OK;
+}
+
+void set_document_bscallback(HTMLDocument *doc, BSCallback *callback)
+{
+    if(doc->bscallback) {
+        if(doc->bscallback->binding)
+            IBinding_Abort(doc->bscallback->binding);
+        doc->bscallback->doc = NULL;
+        IBindStatusCallback_Release(STATUSCLB(doc->bscallback));
+    }
+
+    doc->bscallback = callback;
+
+    if(callback) {
+        IBindStatusCallback_AddRef(STATUSCLB(callback));
+        callback->doc = doc;
+    }
 }
