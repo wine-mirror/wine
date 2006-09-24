@@ -1822,8 +1822,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->AdapterOrdinal          = Adapter;
 
     *pCaps->Caps                    = 0;
-    *pCaps->Caps2                   = D3DCAPS2_CANRENDERWINDOWED;
-    *pCaps->Caps3                   = WINED3DDEVCAPS_HWTRANSFORMANDLIGHT;
+    *pCaps->Caps2                   = WINED3DCAPS2_CANRENDERWINDOWED |
+                                      WINED3DCAPS2_FULLSCREENGAMMA;
+    *pCaps->Caps3                   = 0;
     *pCaps->PresentationIntervals   = D3DPRESENT_INTERVAL_IMMEDIATE;
 
     *pCaps->CursorCaps              = 0;
