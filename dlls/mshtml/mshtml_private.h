@@ -174,6 +174,7 @@ struct BSCallback {
     nsISupports *nscontext;
 
     IMoniker *mon;
+    IBinding *binding;
 
     nsProtocolStream *nsstream;
 };

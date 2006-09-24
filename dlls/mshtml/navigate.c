@@ -248,6 +248,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             nsIInputStream_Release(NSINSTREAM(This->nsstream));
         if(This->mon)
             IMoniker_Release(This->mon);
+        if(This->binding)
+            IBinding_Release(This->binding);
         mshtml_free(This->headers);
         mshtml_free(This);
     }
@@ -259,7 +261,12 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
         DWORD dwReserved, IBinding *pbind)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwReserved, pbind);
+
+    TRACE("(%p)->(%ld %p)\n", This, dwReserved, pbind);
+
+    IBinding_AddRef(pbind);
+    This->binding = pbind;
+
     return S_OK;
 }
 
@@ -308,6 +315,9 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     BSCallback *This = STATUSCLB_THIS(iface);
 
     TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
+
+    IBinding_Release(This->binding);
+    This->binding = NULL;
 
     if(This->nslistener) {
         nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
@@ -593,6 +603,7 @@ BSCallback *create_bscallback(HTMLDocument *doc, IMoniker *mon)
     ret->nslistener = NULL;
     ret->nscontext = NULL;
     ret->nsstream = NULL;
+    ret->binding = NULL;
 
     if(mon)
         IMoniker_AddRef(mon);
