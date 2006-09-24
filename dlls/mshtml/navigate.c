@@ -366,7 +366,7 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
 
     pbindinfo->cbStgmedData = This->post_data_len;
     pbindinfo->dwCodePage = CP_UTF8;
-    pbindinfo->dwOptions = 0x00020000;
+    pbindinfo->dwOptions = 0x80000;
 
     if(This->post_data) {
         pbindinfo->dwBindVerb = BINDVERB_POST;
