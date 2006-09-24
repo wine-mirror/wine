@@ -253,13 +253,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    /* FIXME: Use grfMode */
-
-    if(fFullyAvailable)
-        FIXME("not supported fFullyAvailable\n");
-    if(pibc)
-        FIXME("not supported pibc\n");
-
     set_document_bscallback(This, bscallback);
     hres = start_binding(bscallback);
 
@@ -425,7 +418,7 @@ static const IPersistFileVtbl PersistFileVtbl = {
     PersistFile_GetCurFile
 };
 
-#define PERSTRINIT_THIS(iface) DEFINE_THIS(HTMLDocument, PersistStreamInit, iface);
+#define PERSTRINIT_THIS(iface) DEFINE_THIS(HTMLDocument, PersistStreamInit, iface)
 
 static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface,
                                                        REFIID riid, void **ppv)
