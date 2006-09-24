@@ -87,7 +87,6 @@ struct HTMLDocument {
     IOleInPlaceFrame *frame;
 
     HWND hwnd;
-    HWND hidden_hwnd;
     HWND tooltips_hwnd;
 
     USERMODE usermode;
@@ -316,7 +315,6 @@ nsICommandParams *create_nscommand_params(void);
 
 BSCallback *create_bscallback(HTMLDocument*,IMoniker*);
 HRESULT start_binding(BSCallback*);
-void create_hidden_hwnd(HTMLDocument*);
 
 IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
@@ -340,6 +338,15 @@ void release_nodes(HTMLDocument*);
 
 void install_wine_gecko(void);
 
+extern DWORD mshtml_tls;
+
+typedef struct {
+    HWND thread_hwnd;
+} thread_data_t;
+
+thread_data_t *get_thread_data(BOOL);
+HWND get_thread_hwnd(void);
+
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_MailtoProtocol, 0x3050F3DA, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
@@ -357,6 +364,11 @@ extern LONG module_ref;
 static inline void *mshtml_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *mshtml_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 }
 
 static inline void *mshtml_realloc(void *mem, size_t len)

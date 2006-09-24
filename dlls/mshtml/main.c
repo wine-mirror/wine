@@ -47,16 +47,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 HINSTANCE hInst;
 LONG module_ref = 0;
+DWORD mshtml_tls = 0;
+
+static void thread_detach(void)
+{
+    thread_data_t *thread_data = get_thread_data(FALSE);
+
+    if(!thread_data)
+        return;
+
+    if(thread_data->thread_hwnd)
+        DestroyWindow(thread_data->thread_hwnd);
+
+    mshtml_free(thread_data);
+}
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
-        case DLL_PROCESS_ATTACH:
-            hInst = hInstDLL;
-	    break;
-	case DLL_PROCESS_DETACH:
-            close_gecko();
-	    break;
+    case DLL_PROCESS_ATTACH:
+        hInst = hInstDLL;
+        break;
+    case DLL_PROCESS_DETACH:
+        close_gecko();
+        if(mshtml_tls)
+            TlsFree(mshtml_tls);
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
+        break;
     }
     return TRUE;
 }

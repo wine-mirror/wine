@@ -154,7 +154,6 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             DestroyWindow(This->tooltips_hwnd);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
-        DestroyWindow(This->hidden_hwnd);
 
         release_nodes(This);
 
@@ -1092,6 +1091,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_ConnectionPoints_Init(ret);
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
+
+    get_thread_hwnd();
 
     return hres;
 }
