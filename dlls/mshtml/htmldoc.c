@@ -143,6 +143,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref) {
+        remove_doc_tasks(This);
+
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(This), NULL);
         if(This->in_place_active)

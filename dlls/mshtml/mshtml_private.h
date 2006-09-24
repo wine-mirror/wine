@@ -340,12 +340,27 @@ void install_wine_gecko(void);
 
 extern DWORD mshtml_tls;
 
+typedef struct task_t {
+    HTMLDocument *doc;
+
+    enum {
+        TASK_SETDOWNLOADSTATE,
+        TASK_PARSECOMPLETE
+    } task_id;
+
+    struct task_t *next;
+} task_t;
+
 typedef struct {
     HWND thread_hwnd;
+    task_t *task_queue_head;
+    task_t *task_queue_tail;
 } thread_data_t;
 
 thread_data_t *get_thread_data(BOOL);
 HWND get_thread_hwnd(void);
+void push_task(task_t*);
+void remove_doc_tasks(HTMLDocument*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

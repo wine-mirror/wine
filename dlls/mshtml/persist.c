@@ -156,6 +156,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     HTMLDocument *This = PERSISTMON_THIS(iface);
     BSCallback *bscallback;
     LPOLESTR url = NULL;
+    task_t *task;
     HRESULT hres;
     nsresult nsres;
 
@@ -218,6 +219,14 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     }
 
     bscallback = create_bscallback(This, pimkName);
+
+    task = mshtml_alloc(sizeof(task_t));
+
+    task->doc = This;
+    task->task_id = TASK_SETDOWNLOADSTATE;
+    task->next = NULL;
+
+    push_task(task);
 
     if(This->nscontainer) {
         nsIInputStream *post_data_stream = get_post_data_stream(pibc);
