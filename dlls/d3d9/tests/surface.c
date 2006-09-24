@@ -113,6 +113,27 @@ cleanup:
     if (surface_ptr) IDirect3DSurface9_Release(surface_ptr);
 }
 
+static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
+{
+    IDirect3DSurface9 *surface_ptr = 0;
+    HRESULT hr;
+
+    /* Test a sysmem surface as those aren't affected by the hardware's np2 restrictions */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device_ptr, 5, 5, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface_ptr, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08lx\n", hr);
+
+    if(surface_ptr)
+    {
+        D3DLOCKED_RECT lockedRect;
+        hr = IDirect3DSurface9_LockRect(surface_ptr, &lockedRect, NULL, 0);
+        ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08lx\n", hr);
+        /* test is deactivated until out np2 support doesn't report the full power of 2 pitch to the app */
+        todo_wine ok(lockedRect.Pitch == 12, "Got pitch %d, expected 12\n", lockedRect.Pitch);
+        hr = IDirect3DSurface9_UnlockRect(surface_ptr);
+        IDirect3DSurface9_Release(surface_ptr);
+    }
+}
+
 START_TEST(surface)
 {
     HMODULE d3d9_handle;
@@ -129,4 +150,5 @@ START_TEST(surface)
     if (!device_ptr) return;
 
     test_surface_get_container(device_ptr);
+    test_surface_alignment(device_ptr);
 }

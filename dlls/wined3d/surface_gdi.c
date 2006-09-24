@@ -1516,7 +1516,7 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     This->resource.allocatedMemory = NULL;
 
     /* We don't mind the nonpow2 stuff in GDI */
-    This->resource.size = This->currentDesc.Width * getFormatDescEntry(This->resource.format)->bpp * This->currentDesc.Height;
+    This->resource.size = IWineD3DSurface_GetPitch(iface) * This->currentDesc.Height;
     This->pow2Size = This->resource.size;
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;

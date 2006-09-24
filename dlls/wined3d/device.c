@@ -1001,7 +1001,9 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
        Size = ((max(pow2Width,4) * tableEntry->bpp) * max(pow2Height,4));
     } else {
-       Size = (pow2Width * tableEntry->bpp) * pow2Height;
+       /* The pitch is a multiple of 4 bytes */
+       Size = ((pow2Width * tableEntry->bpp) + 3) & ~3;
+       Size *= pow2Height;
     }
 
     /** Create and initialise the surface resource **/

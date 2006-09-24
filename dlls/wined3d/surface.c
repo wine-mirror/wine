@@ -2170,7 +2170,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
                format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
         This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
     } else {
-        This->resource.size = (This->pow2Width * formatEntry->bpp) * This->pow2Height;
+        This->resource.size = ((This->pow2Width * formatEntry->bpp) + 3) & ~3;
+        This->resource.size *= This->pow2Height;
     }
 
 
@@ -3063,6 +3064,8 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
         } else {
             ret = This->bytesPerPixel * This->pow2Width;
         }
+        /* Surfaces are 32 bit aligned */
+        ret = (ret + 3) & ~3;
     }
     TRACE("(%p) Returning %ld\n", This, ret);
     return ret;
