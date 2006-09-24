@@ -797,7 +797,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     nsIWineURI_SetNSContainer(wine_uri, This);
 
     if(This->bscallback && This->bscallback->mon) {
-        LPWSTR url;
+        LPWSTR url = NULL;
         HRESULT hres;
 
         hres = IMoniker_GetDisplayName(This->bscallback->mon, NULL, 0, &url);
