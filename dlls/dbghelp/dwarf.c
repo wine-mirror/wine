@@ -547,6 +547,14 @@ static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
             case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
             case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
             case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
+            case DW_OP_breg0:  case DW_OP_breg1:  case DW_OP_breg2:  case DW_OP_breg3:
+            case DW_OP_breg4:  case DW_OP_breg5:  case DW_OP_breg6:  case DW_OP_breg7:
+            case DW_OP_breg8:  case DW_OP_breg9:  case DW_OP_breg10: case DW_OP_breg11:
+            case DW_OP_breg12: case DW_OP_breg13: case DW_OP_breg14: case DW_OP_breg15:
+            case DW_OP_breg16: case DW_OP_breg17: case DW_OP_breg18: case DW_OP_breg19:
+            case DW_OP_breg20: case DW_OP_breg21: case DW_OP_breg22: case DW_OP_breg23:
+            case DW_OP_breg24: case DW_OP_breg25: case DW_OP_breg26: case DW_OP_breg27:
+            case DW_OP_breg28: case DW_OP_breg29: case DW_OP_breg30: case DW_OP_breg31:
                 if (in_register)
                 {
                     /* dbghelp APIs don't know how to cope with this anyway
@@ -562,6 +570,11 @@ static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
                     }
                 }
                 else FIXME("Found register, while not expecting it\n");
+                if (op >= DW_OP_breg0 && op <= DW_OP_breg31)
+                {
+                    loc[++stk] = dwarf2_leb128_as_signed(&lctx);
+                    if (in_register) *in_register |= Wine_DW_register_deref;
+                }
                 break;
             case DW_OP_fbreg:
                 if (in_register)
