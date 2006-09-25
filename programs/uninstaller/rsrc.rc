@@ -40,6 +40,8 @@
 #include "Pt.rc"
 #include "Tr.rc"
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 /* BINRES uninstaller.ico */
 UNINSTALLER ICON MOVEABLE uninstaller.ico
 /* {

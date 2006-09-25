@@ -44,6 +44,8 @@
 #include "Sv.rc"
 #include "Tr.rc"
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 REGINST REGINST mshtml.inf
 
 blank.htm HTML "blank.htm"
