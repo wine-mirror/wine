@@ -3,6 +3,7 @@
  * French language support
  *
  * Copyright 1998 Juergen Schmied
+ * Copyright 2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,8 +24,8 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Grands icônes",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Petits icônes",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Grandes icônes",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Petites icônes",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Détails",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -38,8 +39,8 @@ BEGIN
 	BEGIN
 	  POPUP "&Affichage"
 	  BEGIN
-	    MENUITEM "&Grands icônes",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&Petits icônes",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Grandes icônes",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Petites icônes",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Détails",	FCIDM_SHVIEW_REPORTVIEW
 	  END
@@ -55,10 +56,10 @@ BEGIN
 	  END
 	  MENUITEM "Aligner les icônes",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
-	  MENUITEM "Rafraîchir",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM "Actualiser",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
 	  MENUITEM "Coller",			FCIDM_SHVIEW_INSERT
-	  MENUITEM "Coller comme un lien",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Coller comme lien",	FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Nouveau"
 	  BEGIN
@@ -134,43 +135,9 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Parcourir...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-/*
-	special folders
-*/
 STRINGTABLE DISCARDABLE
 {
-	IDS_DESKTOP		"Bureau"
-	IDS_MYCOMPUTER		"Poste de travail"
-}
-
-/*
-	context menus
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_VIEW_LARGE		"&Grands icônes"
-	IDS_VIEW_SMALL		"&Petits icônes"
-	IDS_VIEW_LIST		"&Liste"
-	IDS_VIEW_DETAILS	"&Détails"
-	IDS_SELECT		"Sélectionner"
-	IDS_OPEN		"Ouvrir"
-}
-
-STRINGTABLE DISCARDABLE
-{
-	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
-	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du nouveau dossier"
-	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
-	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
-	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sût de vouloir supprimer ces %1 items ?"
-	IDS_OVERWRITEFILE_TEXT "Écraser le fichier %1?"
-	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
-}
-
-/*	columns in the shellview	*/
-STRINGTABLE
-BEGIN
+        /* columns in the shellview */
 	IDS_SHV_COLUMN1		"Fichier"
 	IDS_SHV_COLUMN2		"Taille"
 	IDS_SHV_COLUMN3		"Type"
@@ -180,20 +147,45 @@ BEGIN
 	IDS_SHV_COLUMN7		"Espace disponible"
 	IDS_SHV_COLUMN8		"Nom"
 	IDS_SHV_COLUMN9		"Commentaires"
-END
+	IDS_SHV_COLUMN10	"Propriétaire"
+	IDS_SHV_COLUMN11	"Groupe"
+	IDS_SHV_COLUMN_DELFROM	"Emplacement d'origine"
+	IDS_SHV_COLUMN_DELDATE	"Date de suppression"
 
-/* message box strings */
-STRINGTABLE DISCARDABLE
-{
+        /* special folders */
+	IDS_DESKTOP		"Bureau"
+	IDS_MYCOMPUTER		"Poste de travail"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Corbeille"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"&Grandes icônes"
+	IDS_VIEW_SMALL		"&Petites icônes"
+	IDS_VIEW_LIST		"&Liste"
+	IDS_VIEW_DETAILS	"&Détails"
+	IDS_SELECT		"Sélectionner"
+	IDS_OPEN		"Ouvrir"
+
+	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
+	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du nouveau dossier"
+	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
+	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
+	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sûr de vouloir supprimer ces %1 éléments ?"
+	IDS_DELETESELECTED_TEXT "Êtes-vous sûr de vouloir supprimer le(les) élément(s) séléectionné(s) ?"
+	IDS_TRASHITEM_TEXT "Êtes-vous sûr de vouloir mettre « %1 » dans la corbeille ?"
+	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
+	IDS_TRASHMULTIPLE_TEXT "Êtes-vous sûr de vouloir mettre ces %1 éléments dans la corbeille ?"
+	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut pas être mis dans la corbeille. Souhaitez-vous le supprimer à la place ?"
+	IDS_OVERWRITEFILE_TEXT "Écraser le fichier %1 ?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
+
+        /* message box strings */
        IDS_RESTART_TITLE       "Redémarrer"
-       IDS_RESTART_PROMPT      "Voulez-vous simuler le redémarrage de Windows?"
+       IDS_RESTART_PROMPT      "Voulez-vous simuler le redémarrage de Windows ?"
        IDS_SHUTDOWN_TITLE      "Arrêter"
-       IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session Wine?"
-}
+       IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session Wine ?"
 
 /* shell folder path default values */
-STRINGTABLE DISCARDABLE
-{
  IDS_PROGRAMS                "Menu Démarrer\\Programmes"
  IDS_PERSONAL                "Mes documents"
  IDS_FAVORITES               "Favoris"

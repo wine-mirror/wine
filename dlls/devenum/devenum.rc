@@ -43,6 +43,15 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 }
 
 STRINGTABLE DISCARDABLE
+LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+{
+	7  "DirectSound par défaut"
+	8  "DirectSound : %s"
+	9  "Périphérique WaveOut par défaut"
+	10 "Périphérique MidiOut par défaut"
+}
+
+STRINGTABLE DISCARDABLE
 LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 {
 	7  "Standard DirectSound"
