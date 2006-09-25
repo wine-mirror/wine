@@ -133,10 +133,8 @@
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
 @ cdecl wglGetCurrentContext() X11DRV_wglGetCurrentContext
 @ cdecl wglGetCurrentDC() X11DRV_wglGetCurrentDC
-@ cdecl wglGetCurrentReadDCARB() X11DRV_wglGetCurrentReadDCARB
 @ cdecl wglGetIntegerv(long ptr) X11DRV_wglGetIntegerv
 @ cdecl wglGetProcAddress(ptr) X11DRV_wglGetProcAddress
-@ cdecl wglMakeContextCurrentARB(long long long) X11DRV_wglMakeContextCurrentARB
 @ cdecl wglMakeCurrent(long long) X11DRV_wglMakeCurrent
 @ cdecl wglShareLists(long long) X11DRV_wglShareLists
 @ cdecl wglUseFontBitmapsA(long long long long) X11DRV_wglUseFontBitmapsA

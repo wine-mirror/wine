@@ -1320,7 +1320,7 @@ HDC WINAPI X11DRV_wglGetCurrentDC(void) {
 }
 
 /* OpenGL32 wglGetCurrentReadDCARB */
-HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
+static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
 {
     GLXDrawable gl_d;
     HDC ret;
@@ -1417,7 +1417,7 @@ BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
 }
 
 /* OpenGL32 wglMakeContextCurrentARB */
-BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
+static BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
 {
     BOOL ret;
     TRACE("(%p,%p,%p)\n", hDrawDC, hReadDC, hglrc);
@@ -2816,13 +2816,6 @@ HDC WINAPI X11DRV_wglGetCurrentDC(void) {
     return 0;
 }
 
-/* OpenGL32 wglGetCurrentReadDCARB */
-HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
-{
-    ERR_(opengl)("No OpenGL support compiled in.\n");
-    return 0;
-}
-
 /* OpenGL32: wglGetProcAddress */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
@@ -2831,13 +2824,6 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
 
 /* OpenGL32 wglMakeCurrent */
 BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
-    return FALSE;
-}
-
-/* OpenGL32 wglMakeContextCurrentARB */
-BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
-{
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
