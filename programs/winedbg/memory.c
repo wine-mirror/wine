@@ -299,6 +299,20 @@ char* memory_offset_to_string(char *str, DWORD64 offset, unsigned mode)
     return str;
 }
 
+static void dbg_print_longlong(LONGLONG sv, BOOL is_signed)
+{
+    char      tmp[24], *ptr = tmp + sizeof(tmp) - 1;
+    ULONGLONG uv, div;
+    *ptr = '\0';
+    if (is_signed && sv < 0)    uv = -sv;
+    else                        { uv = sv; is_signed = FALSE; }
+    for (div = 10; uv; div *= 10, uv /= 10)
+        *--ptr = '0' + (uv % 10);
+    if (ptr == tmp + sizeof(tmp) - 1) *--ptr = '0';
+    if (is_signed) *--ptr = '-';
+    dbg_printf("%s", ptr);
+}
+
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
 {
     LONGLONG            val_int;
@@ -326,12 +340,12 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btInt:
         case btLong:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
-            dbg_printf("%s", wine_dbgstr_longlong(val_int));
+            dbg_print_longlong(val_int, TRUE);
             break;
         case btUInt:
         case btULong:
             if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
-            dbg_printf("%s", wine_dbgstr_longlong(val_int));
+            dbg_print_longlong(val_int, FALSE);
             break;
         case btFloat:
             if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
@@ -438,7 +452,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 count -= min(count, 256);
                 fcp->Start += 256;
             }
-            if (!ok) dbg_printf("%s", wine_dbgstr_longlong(val_int));
+            if (!ok) dbg_print_longlong(val_int, TRUE);
         }
         break;
     default:
