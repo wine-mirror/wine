@@ -189,7 +189,7 @@ static struct option long_options[] = {
 	{ "nostdinc", 0, 0, 1 },
 	{ "output", 1, 0, 'o' },
 	{ "output-format", 1, 0, 'O' },
-	{ "pendantic", 0, 0, 8 },
+	{ "pedantic", 0, 0, 8 },
 	{ "preprocessor", 1, 0, 4 },
 	{ "target", 1, 0, 'F' },
 	{ "undefine", 1, 0, 'U' },
