@@ -225,7 +225,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
       if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                           KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
         if (name)
-          RegSetValueExA(key, NULL, 0, REG_SZ, (LPBYTE)name, strlen(name));
+          RegSetValueExA(key, NULL, 0, REG_SZ, (const BYTE *)name, strlen(name));
         if (RegCreateKeyExA(key, "ProxyStubClsid32", 0, NULL, 0,
                             KEY_WRITE, NULL, &subkey, NULL) == ERROR_SUCCESS) {
           snprintf(module, sizeof(module), "{%s}", clsid);
@@ -245,11 +245,11 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
     TRACE("registering CLSID %s => %s\n", clsid, module);
     if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyname, 0, NULL, 0,
                         KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
-      RegSetValueExA(subkey, NULL, 0, REG_SZ, (LPBYTE)"PSFactoryBuffer", strlen("PSFactoryBuffer"));
+      RegSetValueExA(subkey, NULL, 0, REG_SZ, (const BYTE *)"PSFactoryBuffer", strlen("PSFactoryBuffer"));
       if (RegCreateKeyExA(key, "InProcServer32", 0, NULL, 0,
                           KEY_WRITE, NULL, &subkey, NULL) == ERROR_SUCCESS) {
         RegSetValueExA(subkey, NULL, 0, REG_SZ, (LPBYTE)module, strlen(module));
-        RegSetValueExA(subkey, "ThreadingModel", 0, REG_SZ, (LPBYTE)"Both", strlen("Both"));
+        RegSetValueExA(subkey, "ThreadingModel", 0, REG_SZ, (const BYTE *)"Both", strlen("Both"));
         RegCloseKey(subkey);
       }
       RegCloseKey(key);
