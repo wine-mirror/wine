@@ -499,8 +499,9 @@ static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
 static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
                                   struct symt_compiland*);
 
-#define Wine_DW_no_register     -1
-#define Wine_DW_frame_register  -2
+#define Wine_DW_no_register     0x7FFFFFFF
+#define Wine_DW_frame_register  0x7FFFFFFE
+#define Wine_DW_register_deref  0x80000000
 
 static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
                                              struct dwarf2_block* block,
@@ -567,7 +568,7 @@ static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
                 {
                     if (*in_register != Wine_DW_no_register)
                         FIXME("Only supporting one reg (%d -> -2)\n", *in_register);
-                    *in_register = Wine_DW_frame_register;
+                    *in_register = Wine_DW_frame_register | Wine_DW_register_deref;
                 }
                 else FIXME("Found register, while not expecting it\n");
                 loc[++stk] = dwarf2_leb128_as_signed(&lctx);
@@ -1066,7 +1067,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         offset = dwarf2_compute_location(subpgm->ctx, loc.block, &in_reg);
 	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
               name.string, offset, in_reg, dwarf2_debug_ctx(subpgm->ctx));
-        switch (in_reg)
+        switch (in_reg & ~Wine_DW_register_deref)
         {
         case Wine_DW_no_register:
             /* it's a global variable */
@@ -1079,7 +1080,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                      0, param_type);
             break;
         case Wine_DW_frame_register:
-            in_reg = subpgm->frame_reg;
+            in_reg = subpgm->frame_reg | Wine_DW_register_deref;
             offset += subpgm->frame_offset;
             /* fall through */
         default:
@@ -1088,8 +1089,9 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
              */
             symt_add_func_local(subpgm->ctx->module, subpgm->func, 
                                 is_pmt ? DataIsParam : DataIsLocal,
-                                dwarf2_map_register(in_reg), offset,
-                                block, param_type, name.string);
+                                dwarf2_map_register(in_reg & ~Wine_DW_register_deref),
+                                in_reg & Wine_DW_register_deref,
+                                offset, block, param_type, name.string);
             break;
         }
     }

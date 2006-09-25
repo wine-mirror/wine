@@ -1091,7 +1091,8 @@ struct pending_loc_var
     struct symt*        type;
     enum DataKind       kind;
     unsigned            offset;
-    unsigned            regno;
+    unsigned            regrel : 1,
+                        regno;
 };
 
 struct pending_block
@@ -1102,7 +1103,7 @@ struct pending_block
 };
 
 static inline void pending_add(struct pending_block* pending, const char* name,
-                               enum DataKind dt, int regno, long offset)
+                               enum DataKind dt, int regno, BOOL regrel, long offset)
 {
     if (pending->num == pending->allocated)
     {
@@ -1120,6 +1121,7 @@ static inline void pending_add(struct pending_block* pending, const char* name,
     pending->vars[pending->num].kind   = dt;
     pending->vars[pending->num].offset = offset;
     pending->vars[pending->num].regno  = regno;
+    pending->vars[pending->num].regrel = regrel ? 1 : 0;
     pending->num++;
 }
 
@@ -1131,9 +1133,9 @@ static void pending_flush(struct pending_block* pending, struct module* module,
     for (i = 0; i < pending->num; i++)
     {
         symt_add_func_local(module, func, 
-                            pending->vars[i].kind, pending->vars[i].regno, 
-                            pending->vars[i].offset, block,
-                            pending->vars[i].type, pending->vars[i].name);
+                            pending->vars[i].kind, pending->vars[i].regno,
+                            pending->vars[i].regrel, pending->vars[i].offset,
+                            block, pending->vars[i].type, pending->vars[i].name);
     }
     pending->num = 0;
 }
@@ -1311,7 +1313,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 stab_strcpy(symname, sizeof(symname), ptr);
                 symt_add_func_local(module, curr_func,
                                     stab_ptr->n_value > 0 ? DataIsParam : DataIsLocal,
-                                    0, stab_ptr->n_value, NULL, param_type, symname);
+                                    0, TRUE, stab_ptr->n_value, NULL, param_type, symname);
                 symt_add_function_signature_parameter(module, 
                                                       (struct symt_function_signature*)curr_func->type, 
                                                       param_type);
@@ -1352,19 +1354,19 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 {
                     struct symt*    param_type = stabs_parse_type(ptr);
                     stab_strcpy(symname, sizeof(symname), ptr);
-                    symt_add_func_local(module, curr_func, DataIsParam, reg, 0,
+                    symt_add_func_local(module, curr_func, DataIsParam, reg, FALSE, 0,
                                         NULL, param_type, symname);
                     symt_add_function_signature_parameter(module, 
                                                           (struct symt_function_signature*)curr_func->type, 
                                                           param_type);
                 }
                 else
-                    pending_add(&pending, ptr, DataIsLocal, reg, 0);
+                    pending_add(&pending, ptr, DataIsLocal, reg, FALSE, 0);
             }
             break;
         case N_LSYM:
             /* These are local variables */
-            if (curr_func != NULL) pending_add(&pending, ptr, DataIsLocal, 0, stab_ptr->n_value);
+            if (curr_func != NULL) pending_add(&pending, ptr, DataIsLocal, 0, TRUE, stab_ptr->n_value);
             break;
         case N_SLINE:
             /*

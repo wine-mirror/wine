@@ -155,7 +155,8 @@ struct symt_data
         {
             long                        offset; /* DataIs{Member,Local,Param} in bits */
             unsigned long               length; /* DataIs{Member} in bits */
-            unsigned long               reg_id; /* DataIs{Local} (0 if frame relative) */
+            unsigned long               reg_rel : 1, /* DataIs{Local}: 0 in register, 1 deref */
+                                        reg_id; /* DataIs{Local} (0 if frame relative) */
         } s;
         VARIANT                 value;          /* DataIsConstant */
     } u;
@@ -472,7 +473,7 @@ extern void         symt_add_func_line(struct module* module,
 extern struct symt_data*
                     symt_add_func_local(struct module* module, 
                                         struct symt_function* func, 
-                                        enum DataKind dt, int regno, long offset,
+                                        enum DataKind dt, BOOL regrel, int regno, long offset,
                                         struct symt_block* block,
                                         struct symt* type, const char* name);
 extern struct symt_block*

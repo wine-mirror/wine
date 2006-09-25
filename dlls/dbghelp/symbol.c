@@ -300,7 +300,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 struct symt_data* symt_add_func_local(struct module* module, 
                                       struct symt_function* func, 
                                       enum DataKind dt,
-                                      int regno, long offset,
+                                      int regno, BOOL regrel, long offset,
                                       struct symt_block* block, 
                                       struct symt* type, const char* name)
 {
@@ -323,6 +323,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->container     = &block->symt;
     locsym->type          = type;
     locsym->u.s.reg_id    = regno;
+    locsym->u.s.reg_rel   = regrel ? TRUE : FALSE;
     locsym->u.s.offset    = offset * 8;
     locsym->u.s.length    = 0;
     if (block)
@@ -477,7 +478,7 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 sym_info->Flags |= SYMFLAG_PARAMETER;
                 /* fall through */
             case DataIsLocal: 
-                if (data->u.s.reg_id)
+                if (!data->u.s.reg_rel)
                 {
                     sym_info->Flags |= SYMFLAG_REGISTER;
                     sym_info->Register = data->u.s.reg_id;
@@ -486,8 +487,8 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 else
                 {
                     sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
-                    /* FIXME: needed ? moreover, it's i386 dependent !!! */
-                    sym_info->Register = CV_REG_EBP;
+                    /* FIXME: it's i386 dependent !!! */
+                    sym_info->Register = data->u.s.reg_id ? data->u.s.reg_id : CV_REG_EBP;
                     sym_info->Address = data->u.s.offset / 8;
                 }
                 break;
