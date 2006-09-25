@@ -571,24 +571,39 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
 #define Wine_DW_frame_register  0x7FFFFFFE
 #define Wine_DW_register_deref  0x80000000
 
-static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
-                                             struct dwarf2_block* block,
-                                             int* in_register)
+static BOOL dwarf2_compute_location(dwarf2_parse_context_t* ctx,
+                                    dwarf2_debug_info_t* di,
+                                    unsigned long dw,
+                                    unsigned long* offset, int* in_register)
 {
     unsigned long loc[64];
     unsigned stk;
+    struct attribute xloc;
+
+    if (!dwarf2_find_attribute(ctx, di, dw, &xloc)) return FALSE;
 
     if (in_register) *in_register = Wine_DW_no_register;
+
+    switch (xloc.form)
+    {
+    case DW_FORM_data1: case DW_FORM_data2:
+    case DW_FORM_data4: case DW_FORM_data8:
+    case DW_FORM_udata: case DW_FORM_sdata:
+        /* we've got a constant */
+        *offset = xloc.u.uvalue;
+        return TRUE;
+    }
+    /* assume we have a block form */
     loc[stk = 0] = 0;
 
-    if (block->size)
+    if (xloc.u.block.size)
     {
         dwarf2_traverse_context_t  lctx;
         unsigned char op;
         BOOL piece_found = FALSE;
 
-        lctx.data = block->ptr;
-        lctx.end_data = block->ptr + block->size;
+        lctx.data = xloc.u.block.ptr;
+        lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->word_size;
 
         while (lctx.data < lctx.end_data)
@@ -667,7 +682,8 @@ static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
             }
         }
     }
-    return loc[stk];
+    *offset = loc[stk];
+    return TRUE;
 }
 
 static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
@@ -919,7 +935,6 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 {
     struct symt* elt_type;
     struct attribute name;
-    struct attribute loc;
     unsigned long offset = 0;
     struct attribute bit_size;
     struct attribute bit_offset;
@@ -930,12 +945,8 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     dwarf2_find_name(ctx, di, &name, "udt_member");
     elt_type = dwarf2_lookup_type(ctx, di);
-    if (dwarf2_find_attribute(ctx, di, DW_AT_data_member_location, &loc))
-    {
-	TRACE("found member_location at %s\n", dwarf2_debug_ctx(ctx));
-        offset = dwarf2_compute_location(ctx, &loc.u.block, NULL);
-        TRACE("found offset:%lu\n", offset); 		  
-    }
+    if (dwarf2_compute_location(ctx, di, DW_AT_data_member_location, &offset, NULL))
+	TRACE("found member_location at %s -> %lu\n", dwarf2_debug_ctx(ctx), offset);
     if (!dwarf2_find_attribute(ctx, di, DW_AT_bit_size, &bit_size))   bit_size.u.uvalue = 0;
     if (dwarf2_find_attribute(ctx, di, DW_AT_bit_offset, &bit_offset))
     {
@@ -1117,7 +1128,7 @@ typedef struct dwarf2_subprogram_s
     dwarf2_parse_context_t*     ctx;
     struct symt_compiland*      compiland;
     struct symt_function*       func;
-    long                        frame_offset;
+    unsigned long               frame_offset;
     int                         frame_reg;
 } dwarf2_subprogram_t;
 
@@ -1131,20 +1142,19 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                   dwarf2_debug_info_t* di)
 {
     struct symt* param_type;
-    struct attribute name, loc, value;
+    struct attribute name, value;
+    unsigned long offset;
+    int in_reg;
     BOOL is_pmt = di->abbrev->tag == DW_TAG_formal_parameter;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     param_type = dwarf2_lookup_type(subpgm->ctx, di);
     dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
-    if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_location, &loc))
+    if (dwarf2_compute_location(subpgm->ctx, di, DW_AT_location, &offset, &in_reg))
     {
         struct attribute ext;
-        long offset;
-        int in_reg;
 
-        offset = dwarf2_compute_location(subpgm->ctx, &loc.u.block, &in_reg);
 	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
               name.u.string, offset, in_reg, dwarf2_debug_ctx(subpgm->ctx));
         switch (in_reg & ~Wine_DW_register_deref)
@@ -1331,7 +1341,6 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     struct attribute high_pc;
     struct attribute is_decl;
     struct attribute inline_flags;
-    struct attribute frame;
     struct symt* ret_type;
     struct symt_function_signature* sig_type;
     dwarf2_subprogram_t subpgm;
@@ -1368,11 +1377,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     subpgm.ctx = ctx;
     subpgm.compiland = compiland;
-    if (dwarf2_find_attribute(ctx, di, DW_AT_frame_base, &frame))
-    {
-        subpgm.frame_offset = dwarf2_compute_location(ctx, &frame.u.block, &subpgm.frame_reg);
+    if (dwarf2_compute_location(ctx, di, DW_AT_frame_base, &subpgm.frame_offset, &subpgm.frame_reg))
         TRACE("For %s got %ld/%d\n", name.u.string, subpgm.frame_offset, subpgm.frame_reg);
-    }
     else /* on stack !! */
     {
         subpgm.frame_reg = 0;
