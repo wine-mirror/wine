@@ -7927,14 +7927,14 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                 */
                 if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
                     if ((IWineD3DResource *)This->updateStateBlock->streamSource[streamNumber] == resource) {
-                        FIXME("Vertex buffer released whlst bound to a state block  stream %d\n", streamNumber);
+                        FIXME("Vertex buffer released while bound to a state block, stream %d\n", streamNumber);
                         This->updateStateBlock->streamSource[streamNumber] = 0;
                         /* Set changed flag? */
                     }
                 }
                 if (This->stateBlock != NULL ) { /* only happens if there is an error in the application, or on reset/release (because we don't manage internal tracking properly) */
                     if ((IWineD3DResource *)This->stateBlock->streamSource[streamNumber] == resource) {
-                        TRACE("Vertex buffer released whlst bound to a state block  stream %d\n", streamNumber);
+                        TRACE("Vertex buffer released while bound to a state block, stream %d\n", streamNumber);
                         This->stateBlock->streamSource[streamNumber] = 0;
                     }
                 }
