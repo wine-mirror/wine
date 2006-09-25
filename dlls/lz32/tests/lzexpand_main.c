@@ -233,6 +233,91 @@ static void test_LZOpenFileA_existing_compressed(void)
   delete_file(_terminated_);
 }
 
+static void test_LZOpenFileA_nonexisting_compressed(void)
+{
+  OFSTRUCT test;
+  INT file;
+  char expected[MAX_PATH];
+  char filled_0xA5[OFS_MAXPATHNAME];
+
+  /* Try to open nonexisting compressed files: */
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+
+  /* a, using 8.3-conformant file name. */
+  file = LZOpenFileA(filename, &test, OF_EXIST);
+  /* If the file "foo.xxx" does not exist, LZOpenFileA should then
+     check for the file "foo.xx_" and open that -- at least on some
+     operating systems.  Doesn't seem to on my copy of Win98.   
+   */
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileA succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(dotless_, expected, FALSE);
+
+  /* b, using dotless file name. */
+  file = LZOpenFileA(dotless, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileA succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(extless_, expected, FALSE);
+
+  /* c, using extensionless file name. */
+  file = LZOpenFileA(extless, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileA succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(_terminated_, expected, FALSE);
+
+  /* d, using underscore-terminated file name. */
+  file = LZOpenFileA(_terminated, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileA succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+}
+
 static void test_LZOpenFileA(void)
 {
   OFSTRUCT test;
@@ -281,6 +366,7 @@ static void test_LZOpenFileA(void)
      "GetFileAttributesA succeeded on deleted file\n");
 
   test_LZOpenFileA_existing_compressed();
+  test_LZOpenFileA_nonexisting_compressed();
 }
 
 static void test_LZRead(void)
@@ -478,6 +564,87 @@ static void test_LZOpenFileW_existing_compressed(void)
   delete_fileW(_terminatedW_);
 }
 
+static void test_LZOpenFileW_nonexisting_compressed(void)
+{
+  OFSTRUCT test;
+  INT file;
+  char expected[MAX_PATH];
+  char filled_0xA5[OFS_MAXPATHNAME];
+
+  /* Try to open nonexisting compressed files: */
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+
+  /* a, using 8.3-conformant file name. */
+  file = LZOpenFileW(filenameW, &test, OF_EXIST);
+  /* If the file "foo.xxx" does not exist, LZOpenFileA should then
+     check for the file "foo.xx_" and open that -- at least on some
+     operating systems.  Doesn't seem to on my copy of Win98.   
+   */
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileW succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(dotless_, expected, FALSE);
+
+  /* b, using dotless file name. */
+  file = LZOpenFileW(dotlessW, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileW succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(extless_, expected, FALSE);
+
+  /* c, using extensionless file name. */
+  file = LZOpenFileW(extlessW, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileW succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(_terminated_, expected, FALSE);
+
+  /* d, using underscore-terminated file name. */
+  file = LZOpenFileW(_terminatedW, &test, OF_EXIST);
+  ok(file == LZERROR_BADINHANDLE, 
+     "LZOpenFileW succeeded on nonexistent file\n");
+  todo_wine
+  ok(test.cBytes == 0xA5, 
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     test.szPathName, expected, filled_0xA5);
+}
+
 static void test_LZOpenFileW(void)
 {
   OFSTRUCT test;
@@ -529,6 +696,7 @@ static void test_LZOpenFileW(void)
      "GetFileAttributesW succeeded on deleted file\n");
 
   test_LZOpenFileW_existing_compressed();
+  test_LZOpenFileW_nonexisting_compressed();
 }
 
 
