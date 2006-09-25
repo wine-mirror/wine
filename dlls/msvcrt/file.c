@@ -2127,12 +2127,12 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
 {
-  char *i;
-  int j;
+  unsigned char *i;
+  unsigned int j;
   do {
     if (file->_cnt>0) {
       file->_cnt--;
-      i = file->_ptr++;
+      i = (unsigned char *)file->_ptr++;
       j = *i;
     } else
       j = MSVCRT__filbuf(file);

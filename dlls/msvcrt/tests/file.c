@@ -255,6 +255,24 @@ static WCHAR* AtoW( char* p )
     return buffer;
 }
 
+static void test_fgetc( void )
+{
+  char* tempf;
+  FILE *tempfh;
+  int  ich=0xe0, ret;
+
+  tempf=_tempnam(".","wne");
+  tempfh = fopen(tempf,"w+");
+  fputc(ich, tempfh);
+  fputc(ich, tempfh);
+  rewind(tempfh);
+  ret = fgetc(tempfh);
+  ok(ich == ret, "First fgetc expected %x got %x\n", ich, ret);
+  ret = fgetc(tempfh);
+  ok(ich == ret, "Second fgetc expected %x got %x\n", ich, ret);
+  fclose(tempfh);
+}
+
 static void test_fgetwc( void )
 {
 #define LLEN 512
@@ -773,6 +791,7 @@ START_TEST(file)
     test_fileops();
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
+    test_fgetc();
     test_fgetwc();
     test_ctrlz();
     test_file_put_get();
