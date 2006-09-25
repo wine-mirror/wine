@@ -402,7 +402,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount)
 {
   BYTE dtype = pFormat[0] & 0xf;
-  short ofs = *(short *)&pFormat[2];
+  short ofs = *(const short *)&pFormat[2];
   LPVOID ptr = NULL;
   DWORD data = 0;
 
@@ -1617,7 +1617,7 @@ void WINAPI NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrSimpleStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-  unsigned short size = *(LPWORD)(pFormat+2);
+  unsigned short size = *(const WORD *)(pFormat+2);
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
@@ -2950,7 +2950,7 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
+    const NDR_CSTRUCT_FORMAT *pCStructFormat = (const NDR_CSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCArrayFormat;
     ULONG esize, bufsize;
 
@@ -2964,7 +2964,7 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         return NULL;
     }
 
-    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+    pCArrayFormat = (const unsigned char *)&pCStructFormat->offset_to_array_description +
         pCStructFormat->offset_to_array_description;
     if (*pCArrayFormat != RPC_FC_CARRAY)
     {
@@ -3005,7 +3005,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
                                 PFORMAT_STRING pFormat,
                                 unsigned char fMustAlloc)
 {
-    const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
+    const NDR_CSTRUCT_FORMAT *pCStructFormat = (const NDR_CSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCArrayFormat;
     ULONG esize, bufsize;
 
@@ -3018,7 +3018,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
         return NULL;
     }
-    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+    pCArrayFormat = (const unsigned char *)&pCStructFormat->offset_to_array_description +
         pCStructFormat->offset_to_array_description;
     if (*pCArrayFormat != RPC_FC_CARRAY)
     {
@@ -3060,7 +3060,7 @@ void WINAPI NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
+    const NDR_CSTRUCT_FORMAT * pCStructFormat = (const NDR_CSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCArrayFormat;
     ULONG esize;
 
@@ -3073,7 +3073,7 @@ void WINAPI NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
         return;
     }
-    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+    pCArrayFormat = (const unsigned char *)&pCStructFormat->offset_to_array_description +
         pCStructFormat->offset_to_array_description;
     if (*pCArrayFormat != RPC_FC_CARRAY)
     {
@@ -3124,7 +3124,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
+    const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize, bufsize;
 
@@ -3138,7 +3138,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
         return NULL;
     }
 
-    pCVArrayFormat = (unsigned char*)&pCVStructFormat->offset_to_array_description +
+    pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
     switch (*pCVArrayFormat)
     {
@@ -3210,7 +3210,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
                                 PFORMAT_STRING pFormat,
                                 unsigned char fMustAlloc)
 {
-    const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
+    const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize, bufsize;
     unsigned char cvarray_type;
@@ -3225,7 +3225,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
         return NULL;
     }
 
-    pCVArrayFormat = (unsigned char*)&pCVStructFormat->offset_to_array_description +
+    pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
     cvarray_type = *pCVArrayFormat;
     switch (cvarray_type)
@@ -3317,7 +3317,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
+    const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize;
 
@@ -3331,7 +3331,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         return;
     }
 
-    pCVArrayFormat = (unsigned char*)&pCVStructFormat->offset_to_array_description +
+    pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
     switch (*pCVArrayFormat)
     {
@@ -3388,7 +3388,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
+    const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize;
     unsigned char cvarray_type;
@@ -3403,7 +3403,7 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
         return 0;
     }
 
-    pCVArrayFormat = (unsigned char*)&pCVStructFormat->offset_to_array_description +
+    pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
     cvarray_type = *pCVArrayFormat;
     switch (cvarray_type)
@@ -3454,7 +3454,7 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
+    const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize;
 
@@ -3468,7 +3468,7 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
         return;
     }
 
-    pCVArrayFormat = (unsigned char*)&pCVStructFormat->offset_to_array_description +
+    pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
     switch (*pCVArrayFormat)
     {
@@ -3550,13 +3550,13 @@ unsigned char *  WINAPI NdrFixedArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
     {
         total_size = pSmFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pSmFArrayFormat + 1);
     }
     else
     {
         const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
         total_size = pLgFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
 
     memcpy(pStubMsg->Buffer, pMemory, total_size);
@@ -3594,13 +3594,13 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
     {
         total_size = pSmFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pSmFArrayFormat + 1);
     }
     else
     {
         const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
         total_size = pLgFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
 
     if (fMustAlloc || !*ppMemory)
@@ -3639,13 +3639,13 @@ void WINAPI NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
     {
         total_size = pSmFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pSmFArrayFormat + 1);
     }
     else
     {
         const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
         total_size = pLgFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
     pStubMsg->BufferLength += total_size;
 
@@ -3676,13 +3676,13 @@ unsigned long WINAPI NdrFixedArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
     {
         total_size = pSmFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pSmFArrayFormat + 1);
     }
     else
     {
         const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
         total_size = pLgFArrayFormat->total_size;
-        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
     pStubMsg->BufferMark = pStubMsg->Buffer;
     pStubMsg->Buffer += total_size;
@@ -3713,11 +3713,11 @@ void WINAPI NdrFixedArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
-        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pSmFArrayFormat + 1);
     else
     {
         const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
-        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+        pFormat = (const unsigned char *)(pLgFArrayFormat + 1);
     }
 
     EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
