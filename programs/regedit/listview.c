@@ -528,7 +528,6 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
     if (RegQueryValueEx(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) { 
         AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
     }
-    /*dwValSize = max_val_size; */
     for(index = 0; index < val_count; index++) {
         BOOL bSelected = (valName == highlightValue); /* NOT a bug, we check for double NULL here */
         valNameLen = max_val_name_len;
