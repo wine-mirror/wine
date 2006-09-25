@@ -319,7 +319,7 @@ void shader_glsl_load_constants(
         /* Upload the position fixup params */
         pos = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
         checkGLcall("glGetUniformLocationARB");
-        glUniform4fvARB(pos, 1, &vshader_impl->wineD3DDevice->posFixup[0]);
+        GL_EXTCALL(glUniform4fvARB(pos, 1, &vshader_impl->wineD3DDevice->posFixup[0]));
         checkGLcall("glUniform4fvARB");
     }
 
