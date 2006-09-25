@@ -911,6 +911,22 @@ static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx,
     return ref_type;
 }
 
+static struct symt* dwarf2_parse_volatile_type(dwarf2_parse_context_t* ctx,
+                                               dwarf2_debug_info_t* di)
+{
+    struct symt* ref_type;
+
+    if (di->symt) return di->symt;
+
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+
+    ref_type = dwarf2_lookup_type(ctx, di);
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+    di->symt = ref_type;
+
+    return ref_type;
+}
+
 static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx,
                                                 dwarf2_debug_info_t* di)
 {
@@ -1177,6 +1193,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             /* either a pmt/variable relative to frame pointer or
              * pmt/variable in a register
              */
+            assert(subpgm->func);
             symt_add_func_local(subpgm->ctx->module, subpgm->func, 
                                 is_pmt ? DataIsParam : DataIsLocal,
                                 dwarf2_map_register(in_reg & ~Wine_DW_register_deref),
@@ -1436,6 +1453,46 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     return di->symt;
 }
 
+static struct symt* dwarf2_parse_subroutine_type(dwarf2_parse_context_t* ctx,
+                                                 dwarf2_debug_info_t* di)
+{
+    struct symt* ret_type;
+    struct symt_function_signature* sig_type;
+
+    if (di->symt) return di->symt;
+
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+
+    ret_type = dwarf2_lookup_type(ctx, di);
+
+    /* FIXME: assuming C source code */
+    sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
+
+    if (di->abbrev->have_child) /** any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**   pchild = NULL;
+        dwarf2_debug_info_t*    child;
+
+        while ((pchild = vector_iter_up(&di->children, pchild)))
+        {
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_formal_parameter:
+                symt_add_function_signature_parameter(ctx->module, sig_type,
+                                                      dwarf2_lookup_type(ctx, child));
+                break;
+            case DW_TAG_unspecified_parameters:
+                WARN("Unsupported unspecified parameters\n");
+                break;
+            }
+	}
+    }
+
+    return di->symt = &sig_type->symt;
+}
+
 static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
                                   dwarf2_debug_info_t* di,
                                   struct symt_compiland* compiland)
@@ -1466,6 +1523,9 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     case DW_TAG_const_type:
         dwarf2_parse_const_type(ctx, di);
         break;
+    case DW_TAG_volatile_type:
+        dwarf2_parse_volatile_type(ctx, di);
+        break;
     case DW_TAG_reference_type:
         dwarf2_parse_reference_type(ctx, di);
         break;
@@ -1475,9 +1535,24 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     case DW_TAG_subprogram:
         dwarf2_parse_subprogram(ctx, di, compiland);
         break;
+    case DW_TAG_subroutine_type:
+        dwarf2_parse_subroutine_type(ctx, di);
+        break;
+    case DW_TAG_variable:
+        {
+            dwarf2_subprogram_t subpgm;
+
+            subpgm.ctx = ctx;
+            subpgm.compiland = compiland;
+            subpgm.func = NULL;
+            subpgm.frame_offset = 0;
+            subpgm.frame_reg = 0;
+            dwarf2_parse_variable(&subpgm, NULL, di);
+        }
+        break;
     default:
-        WARN("Unhandled Tag type 0x%lx at %s, for %lu\n",
-             di->abbrev->tag, dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
+        FIXME("Unhandled Tag type 0x%lx at %s, for %lu\n",
+              di->abbrev->tag, dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
     }
 }
 
