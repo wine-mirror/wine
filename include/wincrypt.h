@@ -627,6 +627,11 @@ typedef struct _CMSG_SIGNER_INFO {
     CRYPT_ATTRIBUTES           UnauthAttrs;
 } CMSG_SIGNER_INFO, *PCMSG_SIGNER_INFO;
 
+#define CMSG_VERIFY_SIGNER_PUBKEY 1
+#define CMSG_VERIFY_SIGNER_CERT   2
+#define CMSG_VERIFY_SIGNER_CHAIN  3
+#define CMSG_VERIFY_SIGNER_NULL   4
+
 typedef struct _CERT_REVOCATION_CRL_INFO {
     DWORD         cbSize;
     PCCRL_CONTEXT pBaseCrlContext;
