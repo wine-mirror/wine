@@ -1481,7 +1481,7 @@ __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
 __ASM_GLOBAL_FUNC( EXC_CallHandler,
 "	pushl	%ebp\n"
 "	movl	%esp, %ebp\n"
-"	subl    $4,%esp\n"
+"	pushl	%ebx\n"
 "	movl	28(%ebp), %edx\n" /* ugly hack to pass the 6th param needed because of Shrinker */
 "	pushl	24(%ebp)\n"
 "	pushl	20(%ebp)\n"
@@ -1489,6 +1489,7 @@ __ASM_GLOBAL_FUNC( EXC_CallHandler,
 "	pushl	12(%ebp)\n"
 "	pushl	8(%ebp)\n"
 "	call	" __ASM_NAME("call_exception_handler") "\n"
+"	popl	%ebx\n"
 "	leave\n"
 "	ret\n"
 );
