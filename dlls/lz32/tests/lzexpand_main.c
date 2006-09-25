@@ -27,8 +27,9 @@
 
 #include "wine/test.h"
 
+/* Compressed file names end with underscore. */
+static char filename [] = "testfile.xxx";
 static char filename_[] = "testfile.xx_";
-static char filename[] = "testfile.xxx";
 static char filename2[] = "testfile.yyy";
 
 static WCHAR filename_W[] = {'t','e','s','t','f','i','l','e','.','x','x','_',0};
@@ -54,6 +55,17 @@ static const char uncompressed_data[] = "This is a test file.";
 static const DWORD uncompressed_data_size = sizeof(uncompressed_data) - 1;
 
 static char *buf;
+
+static void full_file_path_name_in_a_CWD(const char *src, char *dst)
+{
+  DWORD retval;
+
+  retval = GetCurrentDirectoryA(MAX_PATH, dst);
+  ok(retval > 0, "GetCurrentDirectoryA returned %ld, GLE=0x%lx\n", 
+     retval, GetLastError());
+  lstrcatA(dst, "\\");
+  lstrcatA(dst, src);
+}
 
 static void test_LZOpenFileA(void)
 {
@@ -99,14 +111,7 @@ static void test_LZOpenFileA(void)
      check for the file "foo.xx_" and open that -- at least on some
      operating systems.  Doesn't seem to on my copy of Win98.   
    */
-  retval = GetCurrentDirectoryA(MAX_PATH, expected);
-  ok(retval > 0, "GetCurrentDirectoryA returned %ld, GLE=0x%lx\n", 
-     retval, GetLastError());
-  lstrcatA(expected, "\\");
-  lstrcatA(expected, filename);
-  /* Compressed file name ends with underscore. */
-  retval = lstrlenA(expected);
-  expected[retval-1] = '_';
+  full_file_path_name_in_a_CWD(filename_, expected);
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
 
@@ -271,15 +276,7 @@ static void test_LZOpenFileW(void)
      check for the file "foo.xx_" and open that -- at least on some
      operating systems.  Doesn't seem to on my copy of Win98.   
    */
-  retval = GetCurrentDirectoryA(MAX_PATH, expected);
-  ok(retval > 0, "GetCurrentDirectoryW returned %ld, GLE=0x%lx\n", 
-     retval, GetLastError());
-  lstrcatA(expected, "\\");
-  /* It's probably better to use WideCharToMultiByte() on filenameW: */
-  lstrcatA(expected, filename);
-  /* Compressed file name ends with underscore. */
-  retval = lstrlenA(expected);
-  expected[retval-1] = '_';
+  full_file_path_name_in_a_CWD(filename_, expected);
   memset(&test, 0xA5, sizeof(test));
 
   /* Try to open compressed file. */
