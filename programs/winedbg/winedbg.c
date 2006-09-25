@@ -287,6 +287,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->imageName = NULL;
     p->threads = NULL;
     p->continue_on_first_exception = FALSE;
+    p->active_debuggee = FALSE;
     p->next_bp = 1;  /* breakpoint 0 is reserved for step-over */
     memset(p->bp, 0, sizeof(p->bp));
     p->delayed_bp = NULL;
@@ -581,6 +582,12 @@ int main(int argc, char** argv)
     case start_ok:              break;
     case start_error_parse:     return dbg_winedbg_usage(FALSE);
     case start_error_init:      return -1;
+    }
+
+    if (dbg_curr_process)
+    {
+        dbg_printf("WineDbg starting on pid 0x%lx\n", dbg_curr_pid);
+        if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
     }
 
     dbg_interactiveP = TRUE;

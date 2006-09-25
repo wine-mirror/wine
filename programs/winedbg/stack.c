@@ -364,13 +364,14 @@ static void backtrace_all(void)
 
             if (entry.th32OwnerProcessID != dbg_curr_pid)
             {
-                if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE))
+                if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE))
                 {
                     dbg_printf("\nwarning: could not attach to 0x%lx\n",
                                entry.th32OwnerProcessID);
                     continue;
                 }
                 dbg_curr_pid = dbg_curr_process->pid;
+                dbg_active_wait_for_first_exception();
             }
 
             dbg_printf("\nBacktracing for thread 0x%lx in process 0x%lx (%s):\n",

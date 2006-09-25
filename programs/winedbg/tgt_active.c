@@ -70,10 +70,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de);
  * wfe is set to TRUE if dbg_attach_debuggee should also proceed with all debug events
  * until the first exception is received (aka: attach to an already running process)
  */
-BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
+BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe)
 {
-    DEBUG_EVENT         de;
-
     if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, pid, 0))) return FALSE;
 
     if (!DebugActiveProcess(pid)) 
@@ -86,15 +84,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
 
     SetEnvironmentVariableA("DBGHELP_NOLIVE", NULL);
 
-    if (wfe) /* shall we proceed all debug events until we get an exception ? */
-    {
-        dbg_interactiveP = FALSE;
-        while (dbg_curr_process && WaitForDebugEvent(&de, INFINITE))
-        {
-            if (dbg_handle_debug_event(&de)) break;
-        }
-        if (dbg_curr_process) dbg_interactiveP = TRUE;
-    }
+    dbg_curr_process->active_debuggee = TRUE;
     return TRUE;
 }
 
@@ -667,9 +657,19 @@ static void dbg_resume_debuggee(DWORD cont)
         dbg_printf("Cannot continue on %lu (%lu)\n", dbg_curr_tid, cont);
 }
 
+static void wait_exception(void)
+{
+    DEBUG_EVENT		de;
+
+    while (dbg_curr_process && WaitForDebugEvent(&de, INFINITE))
+    {
+        if (dbg_handle_debug_event(&de)) break;
+    }
+    dbg_interactiveP = TRUE;
+}
+
 void dbg_wait_next_exception(DWORD cont, int count, int mode)
 {
-    DEBUG_EVENT         de;
     ADDRESS64           addr;
     char                hexbuf[MAX_OFFSET_TO_STR_LEN];
 
@@ -680,12 +680,8 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     }
     dbg_resume_debuggee(cont);
 
-    while (dbg_curr_process && WaitForDebugEvent(&de, INFINITE))
-    {
-        if (dbg_handle_debug_event(&de)) break;
-    }
+    wait_exception();
     if (!dbg_curr_process) return;
-    dbg_interactiveP = TRUE;
 
     memory_get_current_pc(&addr);
     WINE_TRACE("Entering debugger     PC=%s mode=%d count=%d\n",
@@ -694,18 +690,11 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
                dbg_curr_thread->exec_count);
 }
 
-static void     dbg_wait_for_first_exception(void)
+void     dbg_active_wait_for_first_exception(void)
 {
-    DEBUG_EVENT		de;
-
-    if (dbg_curr_process)
-        dbg_printf("WineDbg starting on pid 0x%lx\n", dbg_curr_pid);
-
+    dbg_interactiveP = FALSE;
     /* wait for first exception */
-    while (WaitForDebugEvent(&de, INFINITE))
-    {
-        if (dbg_handle_debug_event(&de)) break;
-    }
+    wait_exception();
 }
 
 static	unsigned dbg_start_debuggee(LPSTR cmdLine)
@@ -749,7 +738,7 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
     }
     dbg_curr_pid = info.dwProcessId;
     if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, dbg_curr_pid, 0))) return FALSE;
-    dbg_wait_for_first_exception();
+    dbg_curr_process->active_debuggee = TRUE;
 
     return TRUE;
 }
@@ -763,18 +752,13 @@ void	dbg_run_debuggee(const char* args)
     }
     else 
     {
-        DEBUG_EVENT     de;
-
 	if (!dbg_last_cmd_line)
         {
 	    dbg_printf("Cannot find previously used command line.\n");
 	    return;
 	}
 	dbg_start_debuggee(dbg_last_cmd_line);
-        while (dbg_curr_process && WaitForDebugEvent(&de, INFINITE))
-        {
-            if (dbg_handle_debug_event(&de)) break;
-        }
+        dbg_active_wait_for_first_exception();
         source_list_from_addr(NULL, 0);
     }
 }
@@ -801,14 +785,14 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
     /* try the form <myself> pid */
     if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
     {
-        if (!dbg_attach_debuggee(pid, FALSE, FALSE))
+        if (!dbg_attach_debuggee(pid, FALSE))
             return start_error_init;
     }
     /* try the form <myself> pid evt (Win32 JIT debugger) */
     else if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
              str2int(argv[1], &evt) && evt != 0)
     {
-        if (!dbg_attach_debuggee(pid, TRUE, FALSE))
+        if (!dbg_attach_debuggee(pid, TRUE))
         {
             /* don't care about result */
             SetEvent((HANDLE)evt);
@@ -824,7 +808,6 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
     else return start_error_parse;
 
     dbg_curr_pid = pid;
-    dbg_wait_for_first_exception();
     return start_ok;
 }
 
