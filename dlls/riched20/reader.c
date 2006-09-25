@@ -66,7 +66,7 @@ static void	ReadPictGroup (RTF_Info *);
 static void	ReadObjGroup (RTF_Info *);
 static void	LookupInit (void);
 static void	Lookup (RTF_Info *, char *);
-static int	Hash (char*);
+static int	Hash (const char *);
 
 static void	CharAttr(RTF_Info *info);
 static void	CharSet(RTF_Info *info);
@@ -2349,8 +2349,8 @@ static void LookupInit(void)
                 memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
 		for (rp = rtfKey; rp->rtfKStr != NULL; rp++) {
                         int index;
-                        
-			rp->rtfKHash = Hash ((char*)rp->rtfKStr);
+
+			rp->rtfKHash = Hash (rp->rtfKStr);
                         index = rp->rtfKHash % (RTF_KEY_COUNT * 2);
                         if (!rtfHashTable[index].count)
                                 rtfHashTable[index].value = RTFAlloc(sizeof(RTFKey *));
@@ -2398,7 +2398,7 @@ static void Lookup(RTF_Info *info, char *s)
  * Compute hash value of symbol
  */
 
-static int Hash(char *s)
+static int Hash(const char *s)
 {
 	char	c;
 	int	val = 0;
