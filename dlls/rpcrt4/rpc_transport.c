@@ -899,8 +899,8 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
                                         char **networkaddr,
                                         char **endpoint)
 {
-    twr_empty_floor_t *protocol_floor;
-    twr_empty_floor_t *floor4;
+    const twr_empty_floor_t *protocol_floor;
+    const twr_empty_floor_t *floor4;
     const struct protseq_ops *protseq_ops = NULL;
     RPC_STATUS status;
     int i;
@@ -908,7 +908,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
     if (tower_size < sizeof(*protocol_floor))
         return EPT_S_NOT_REGISTERED;
 
-    protocol_floor = (twr_empty_floor_t *)tower_data;
+    protocol_floor = (const twr_empty_floor_t *)tower_data;
     tower_data += sizeof(*protocol_floor);
     tower_size -= sizeof(*protocol_floor);
     if ((protocol_floor->count_lhs != sizeof(protocol_floor->protid)) ||
@@ -917,7 +917,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
     tower_data += protocol_floor->count_rhs;
     tower_size -= protocol_floor->count_rhs;
 
-    floor4 = (twr_empty_floor_t *)tower_data;
+    floor4 = (const twr_empty_floor_t *)tower_data;
     if ((tower_size < sizeof(*floor4)) ||
         (floor4->count_lhs != sizeof(floor4->protid)))
         return EPT_S_NOT_REGISTERED;
