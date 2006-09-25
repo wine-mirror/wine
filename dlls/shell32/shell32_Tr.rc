@@ -145,10 +145,13 @@ STRINGTABLE DISCARDABLE
 	IDS_SHV_COLUMN9		"Açýklamalar"
 	IDS_SHV_COLUMN10	"Sahip"
 	IDS_SHV_COLUMN11	"Grup"
+        IDS_SHV_COLUMN_DELFROM  "Özgün konum"
+        IDS_SHV_COLUMN_DELDATE  "Silinme tarihi"
 
         /* special folders */
 	IDS_DESKTOP		"Masaüstü"
 	IDS_MYCOMPUTER		"Bilgisayarým"
+        IDS_RECYCLEBIN_FOLDER_NAME      "Çöp"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Bü&yük Simgeler"
@@ -164,6 +167,11 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Dizin silmeyi onayla"
 	IDS_DELETEITEM_TEXT "'%1' öðesini silmek istediðinizden emin misiniz?"
 	IDS_DELETEMULTIPLE_TEXT "Bu %1 öðeyi silmek istediðinizden emin misiniz?"
+        IDS_DELETESELECTED_TEXT "Seçili öðeleri silmek istediðinizden emin misiniz?"
+        IDS_TRASHITEM_TEXT "'%1' adlý öðeyi çöpe göndermek istediðinizden emin misiniz?"
+        IDS_TRASHFOLDER_TEXT "'%1' adlý öðeyi ve tüm içeriðini çöpe göndermek istediðinizden emin misiniz?"
+        IDS_TRASHMULTIPLE_TEXT "Bu %1 öðeyi çöpe göndermek istediðinizden emin misiniz?"
+        IDS_CANTTRASH_TEXT "'%1' adlý öðe çöpe gönderilemiyor. Tamamen silmek ister misiniz?"
 	IDS_OVERWRITEFILE_TEXT "%1 dosyasýnýn üzerine yazmak istiyor musunuz?"
 	IDS_OVERWRITEFILE_CAPTION "Dosya Üzerine Yazmayý Onayla"
 
@@ -199,6 +207,6 @@ STRINGTABLE DISCARDABLE
 	IDS_ADMINTOOLS              "Start Menu\\Programlar\\Yönetimsel Araçlar"
 	IDS_COMMON_MUSIC            "Belgeler\\Müziðim"
 	IDS_COMMON_PICTURES         "Belgeler\\Resimlerim"
-	IDS_COMMON_VIDEO            "Belgeler\\Vidyolarým"
+	IDS_COMMON_VIDEO            "Belgeler\\Videolarým"
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 }
