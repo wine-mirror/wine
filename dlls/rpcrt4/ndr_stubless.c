@@ -389,7 +389,7 @@ static PFORMAT_STRING client_get_handle(
         {
         case RPC_FC_BIND_PRIMITIVE: /* explicit primitive */
             {
-                NDR_EHD_PRIMITIVE * pDesc = (NDR_EHD_PRIMITIVE *)pFormat;
+                const NDR_EHD_PRIMITIVE *pDesc = (const NDR_EHD_PRIMITIVE *)pFormat;
 
                 TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
 
@@ -401,7 +401,7 @@ static PFORMAT_STRING client_get_handle(
             }
         case RPC_FC_BIND_GENERIC: /* explicit generic */
             {
-                NDR_EHD_GENERIC * pDesc = (NDR_EHD_GENERIC *)pFormat;
+                const NDR_EHD_GENERIC *pDesc = (const NDR_EHD_GENERIC *)pFormat;
                 void *pObject = NULL;
                 void *pArg;
                 const GENERIC_BINDING_ROUTINE_PAIR *pGenPair;
@@ -419,7 +419,7 @@ static PFORMAT_STRING client_get_handle(
             }
         case RPC_FC_BIND_CONTEXT: /* explicit context */
             {
-                NDR_EHD_CONTEXT * pDesc = (NDR_EHD_CONTEXT *)pFormat;
+                const NDR_EHD_CONTEXT *pDesc = (const NDR_EHD_CONTEXT *)pFormat;
                 NDR_CCONTEXT context_handle;
                 TRACE("Explicit bind context\n");
                 if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
@@ -484,7 +484,7 @@ static void client_free_handle(
         {
         case RPC_FC_BIND_GENERIC: /* explicit generic */
             {
-                NDR_EHD_GENERIC * pDesc = (NDR_EHD_GENERIC *)pFormat;
+                const NDR_EHD_GENERIC *pDesc = (const NDR_EHD_GENERIC *)pFormat;
                 void *pObject = NULL;
                 void *pArg;
                 const GENERIC_BINDING_ROUTINE_PAIR *pGenPair;
@@ -534,8 +534,8 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
 
     for (i = 0; i < number_of_params; i++)
     {
-        NDR_PARAM_OIF_BASETYPE * pParam =
-            (NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
+        const NDR_PARAM_OIF_BASETYPE *pParam =
+            (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
         unsigned char * pArg;
 
         current_stack_offset = pParam->stack_offset;
@@ -584,8 +584,8 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
         }
         else
         {
-            NDR_PARAM_OIF_OTHER * pParamOther =
-                (NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
+            const NDR_PARAM_OIF_OTHER *pParamOther =
+                (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
 
             const unsigned char * pTypeFormat =
                 &(pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset]);
@@ -658,8 +658,8 @@ static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
      */
     for (i = 0; TRUE; i++)
     {
-        NDR_PARAM_OI_BASETYPE * pParam =
-            (NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
+        const NDR_PARAM_OI_BASETYPE *pParam =
+            (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
         /* note: current_stack_offset starts after the This pointer
          * if present, so adjust this */
         unsigned short current_stack_offset_adjusted = current_stack_offset +
@@ -711,8 +711,8 @@ static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
         }
         else
         {
-            NDR_PARAM_OI_OTHER * pParamOther = 
-                (NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
+            const NDR_PARAM_OI_OTHER *pParamOther = 
+                (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
 
             const unsigned char *pTypeFormat =
                 &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
@@ -791,7 +791,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
-        NDR_PROC_HEADER_RPC * pProcHeader = (NDR_PROC_HEADER_RPC *)&pFormat[0];
+        const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
         stack_size = pProcHeader->stack_size;
         procedure_number = pProcHeader->proc_num;
         pFormat += sizeof(NDR_PROC_HEADER_RPC);
@@ -841,8 +841,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     if (bV2Format)
     {
-        NDR_PROC_PARTIAL_OIF_HEADER * pOIFHeader =
-            (NDR_PROC_PARTIAL_OIF_HEADER*)pFormat;
+        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
+            (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
 
         Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
@@ -854,8 +854,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     if (Oif_flags.HasExtensions)
     {
-        NDR_PROC_HEADER_EXTS * pExtensions =
-            (NDR_PROC_HEADER_EXTS *)pFormat;
+        const NDR_PROC_HEADER_EXTS *pExtensions =
+            (const NDR_PROC_HEADER_EXTS *)pFormat;
         ext_flags = pExtensions->Flags2;
         pFormat += pExtensions->Size;
     }
@@ -864,7 +864,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
-        rpcMsg.RpcFlags = ((NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
+        rpcMsg.RpcFlags = ((const NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
 
     /* use alternate memory allocation routines */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCSSALLOC)
@@ -1137,7 +1137,7 @@ long WINAPI NdrStubCall2(
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
-        NDR_PROC_HEADER_RPC * pProcHeader = (NDR_PROC_HEADER_RPC *)&pFormat[0];
+        const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
         stack_size = pProcHeader->stack_size;
         current_offset = sizeof(NDR_PROC_HEADER_RPC);
 
@@ -1185,8 +1185,8 @@ long WINAPI NdrStubCall2(
 
     if (bV2Format)
     {
-        NDR_PROC_PARTIAL_OIF_HEADER * pOIFHeader =
-            (NDR_PROC_PARTIAL_OIF_HEADER*)&pFormat[current_offset];
+        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
+            (const NDR_PROC_PARTIAL_OIF_HEADER *)&pFormat[current_offset];
 
         Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
@@ -1198,8 +1198,8 @@ long WINAPI NdrStubCall2(
 
     if (Oif_flags.HasExtensions)
     {
-        NDR_PROC_HEADER_EXTS * pExtensions =
-            (NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
+        const NDR_PROC_HEADER_EXTS *pExtensions =
+            (const NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
         ext_flags = pExtensions->Flags2;
         current_offset += pExtensions->Size;
     }
@@ -1211,7 +1211,7 @@ long WINAPI NdrStubCall2(
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
-        pRpcMsg->RpcFlags = ((NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
+        pRpcMsg->RpcFlags = ((const NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
 
     /* use alternate memory allocation routines */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCSSALLOC)
@@ -1329,7 +1329,7 @@ long WINAPI NdrStubCall2(
                 if (bV2Format) /* new parameter format */
                 {
                     const NDR_PARAM_OIF_BASETYPE *pParam =
-                        (NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
+                        (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
                     unsigned char *pArg;
 
                     current_stack_offset = pParam->stack_offset;
@@ -1394,8 +1394,8 @@ long WINAPI NdrStubCall2(
                     }
                     else
                     {
-                        NDR_PARAM_OIF_OTHER * pParamOther =
-                            (NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
+                        const NDR_PARAM_OIF_OTHER *pParamOther =
+                            (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
 
                         const unsigned char * pTypeFormat =
                             &(pStubDesc->pFormatTypes[pParamOther->type_offset]);
@@ -1456,8 +1456,8 @@ long WINAPI NdrStubCall2(
                 }
                 else /* old parameter format */
                 {
-                    NDR_PARAM_OI_BASETYPE *pParam =
-                        (NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
+                    const NDR_PARAM_OI_BASETYPE *pParam =
+                        (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
                     /* note: current_stack_offset starts after the This pointer
                      * if present, so adjust this */
                     unsigned short current_stack_offset_adjusted = current_stack_offset +
@@ -1505,8 +1505,8 @@ long WINAPI NdrStubCall2(
                     }
                     else
                     {
-                        NDR_PARAM_OI_OTHER * pParamOther = 
-                            (NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
+                        const NDR_PARAM_OI_OTHER *pParamOther = 
+                            (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
 
                         const unsigned char * pTypeFormat =
                             &pStubDesc->pFormatTypes[pParamOther->type_offset];
