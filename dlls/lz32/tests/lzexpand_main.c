@@ -30,10 +30,10 @@
 /* Compressed file names end with underscore. */
 static char filename [] = "testfile.xxx";
 static char filename_[] = "testfile.xx_";
-static char filename2[] = "testfile.yyy";
+static WCHAR filenameW [] = {'t','e','s','t','f','i','l','e','.','x','x','x',0};
+static WCHAR filenameW_[] = {'t','e','s','t','f','i','l','e','.','x','x','_',0};
 
-static WCHAR filename_W[] = {'t','e','s','t','f','i','l','e','.','x','x','_',0};
-static WCHAR filenameW[]  = {'t','e','s','t','f','i','l','e','.','x','x','x',0};
+static char filename2[] = "testfile.yyy";
 
 /* This is the hex string representation of the file created by compressing
    a simple text file with the contents "This is a test file."
@@ -67,13 +67,78 @@ static void full_file_path_name_in_a_CWD(const char *src, char *dst)
   lstrcatA(dst, src);
 }
 
+static void create_file(char *fname)
+{
+  INT file;
+  OFSTRUCT ofs;
+  DWORD retval;
+
+  file = LZOpenFileA(fname, &ofs, OF_CREATE);
+  ok(file >= 0, "LZOpenFileA failed on creation\n");
+  LZClose(file);
+  retval = GetFileAttributesA(fname);
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA('%s'): error %ld\n", ofs.szPathName, GetLastError());
+}
+
+static void delete_file(char *fname)
+{
+  INT file;
+  OFSTRUCT ofs;
+  DWORD retval;
+
+  file = LZOpenFileA(fname, &ofs, OF_DELETE);
+  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  LZClose(file);
+  retval = GetFileAttributesA(fname);
+  ok(retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file ('%s')\n", ofs.szPathName);
+}
+
+static void test_LZOpenFileA_existing_compressed(void)
+{
+  OFSTRUCT test;
+  INT file;
+  char expected[MAX_PATH];
+  char filled_0xA5[OFS_MAXPATHNAME];
+
+  /* Try to open existing compressed files: */
+  create_file(filename_);
+
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, expected);
+
+  file = LZOpenFileA(filename, &test, OF_EXIST);
+  /* If the file "foo.xxx" does not exist, LZOpenFileA should then
+     check for the file "foo.xx_" and open that -- at least on some
+     operating systems.  Doesn't seem to on my copy of Win98.   
+   */
+  if(file != LZERROR_BADINHANDLE) {
+    ok(test.cBytes == sizeof(OFSTRUCT), 
+       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
+       test.nErrCode);
+    ok(lstrcmpA(test.szPathName, expected) == 0, 
+       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
+       test.szPathName, expected);
+    LZClose(file);
+  } else { /* Win9x */
+    ok(test.cBytes == 0xA5, 
+       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
+       "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
+       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
+       test.szPathName, filled_0xA5);
+  }
+
+  delete_file(filename_);
+}
+
 static void test_LZOpenFileA(void)
 {
   OFSTRUCT test;
   DWORD retval;
   INT file;
-  char expected[MAX_PATH];
-  char filled_0xA5[OFS_MAXPATHNAME];
   static char badfilename_[] = "badfilename_";
 
   SetLastError(0xfaceabee);
@@ -107,35 +172,6 @@ static void test_LZOpenFileA(void)
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
   LZClose(file);
 
-  /* If the file "foo.xxx" does not exist, LZOpenFileA should then
-     check for the file "foo.xx_" and open that -- at least on some
-     operating systems.  Doesn't seem to on my copy of Win98.   
-   */
-  full_file_path_name_in_a_CWD(filename_, expected);
-  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
-  memset(&test, 0xA5, sizeof(test));
-
-  /* Try to open compressed file. */
-  file = LZOpenFileA(filename, &test, OF_EXIST);
-  if(file != LZERROR_BADINHANDLE) {
-    ok(test.cBytes == sizeof(OFSTRUCT), 
-       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
-       test.nErrCode);
-    ok(lstrcmpA(test.szPathName, expected) == 0, 
-       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
-       test.szPathName, expected);
-    LZClose(file);
-  } else {
-    ok(test.cBytes == 0xA5, 
-       "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
-    ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
-       "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0, 
-       "LZOpenFileA returned '%s', but was expected to return '%s'\n", 
-       test.szPathName, filled_0xA5);
-  }
-
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFileA(filename_, &test, OF_DELETE);
   ok(file >= 0, "LZOpenFileA failed on delete\n");
@@ -144,6 +180,8 @@ static void test_LZOpenFileA(void)
   retval = GetFileAttributesA(filename_);
   ok(retval == INVALID_FILE_ATTRIBUTES, 
      "GetFileAttributesA succeeded on deleted file\n");
+
+  test_LZOpenFileA_existing_compressed();
 }
 
 static void test_LZRead(void)
@@ -230,12 +268,67 @@ static void test_LZCopy(void)
   ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
+static void create_fileW(WCHAR *fnameW)
+{
+  INT file;
+  OFSTRUCT ofs;
+  DWORD retval;
+
+  file = LZOpenFileW(fnameW, &ofs, OF_CREATE);
+  ok(file >= 0, "LZOpenFileA failed on creation\n");
+  LZClose(file);
+  retval = GetFileAttributesW(fnameW);
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA('%s'): error %ld\n", ofs.szPathName, GetLastError());
+}
+
+static void delete_fileW(WCHAR *fnameW)
+{
+  INT file;
+  OFSTRUCT ofs;
+  DWORD retval;
+
+  file = LZOpenFileW(fnameW, &ofs, OF_DELETE);
+  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  LZClose(file);
+  retval = GetFileAttributesW(fnameW);
+  ok(retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file ('%s')\n", ofs.szPathName);
+}
+
+static void test_LZOpenFileW_existing_compressed(void)
+{
+  OFSTRUCT test;
+  INT file;
+  char expected[MAX_PATH];
+
+  /* Try to open existing compressed files: */
+  create_fileW(filenameW_);
+
+  full_file_path_name_in_a_CWD(filename_, expected);
+  memset(&test, 0xA5, sizeof(test));
+
+  file = LZOpenFileW(filenameW, &test, OF_EXIST);
+  /* If the file "foo.xxx" does not exist, LZOpenFileW should then
+     check for the file "foo.xx_" and open that.
+   */
+  ok(file >= 0, "LZOpenFileW failed on switching to a compressed file name\n");
+  ok(test.cBytes == sizeof(OFSTRUCT), 
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS, "LZOpenFileW set test.nErrCode to %d\n", 
+     test.nErrCode);
+  /* Note that W-function returns A-string by a OFSTRUCT.szPathName: */
+  ok(lstrcmpA(test.szPathName, expected) == 0, 
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
+     test.szPathName, expected);
+  LZClose(file);
+
+  delete_fileW(filenameW_);
+}
+
 static void test_LZOpenFileW(void)
 {
   OFSTRUCT test;
   DWORD retval;
   INT file;
-  char expected[MAX_PATH];
   static WCHAR badfilenameW[] = {'b','a','d','f','i','l','e','n','a','m','e','.','x','t','n',0};
 
   SetLastError(0xfaceabee);
@@ -251,55 +344,37 @@ static void test_LZOpenFileW(void)
   LZClose(file);
 
   /* Create an empty file. */
-  file = LZOpenFileW(filename_W, &test, OF_CREATE);
+  file = LZOpenFileW(filenameW_, &test, OF_CREATE);
   ok(file >= 0, "LZOpenFile failed on creation\n");
   LZClose(file);
-  retval = GetFileAttributesW(filename_W);
+  retval = GetFileAttributesW(filenameW_);
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
     GetLastError());
 
   /* Check various opening options. */
-  file = LZOpenFileW(filename_W, &test, OF_READ);
+  file = LZOpenFileW(filenameW_, &test, OF_READ);
   ok(file >= 0, "LZOpenFileW failed on read\n");
   LZClose(file);
-  file = LZOpenFileW(filename_W, &test, OF_WRITE);
+  file = LZOpenFileW(filenameW_, &test, OF_WRITE);
   ok(file >= 0, "LZOpenFileW failed on write\n");
   LZClose(file);
-  file = LZOpenFileW(filename_W, &test, OF_READWRITE);
+  file = LZOpenFileW(filenameW_, &test, OF_READWRITE);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
   LZClose(file);
-  file = LZOpenFileW(filename_W, &test, OF_EXIST);
+  file = LZOpenFileW(filenameW_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
-  LZClose(file);
-
-  /* If the file "foo.xxx" does not exist, LZOpenFileW should then
-     check for the file "foo.xx_" and open that -- at least on some
-     operating systems.  Doesn't seem to on my copy of Win98.   
-   */
-  full_file_path_name_in_a_CWD(filename_, expected);
-  memset(&test, 0xA5, sizeof(test));
-
-  /* Try to open compressed file. */
-  file = LZOpenFileW(filenameW, &test, OF_EXIST);
-  ok(file >= 0, "LZOpenFileW failed on switching to a compressed file name\n");
-  ok(test.cBytes == sizeof(OFSTRUCT), 
-     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
-  ok(test.nErrCode == ERROR_SUCCESS, "LZOpenFileW set test.nErrCode to %d\n", 
-     test.nErrCode);
-  /* Note that W-function returns A-string by a OFSTRUCT.szPathName: */
-  ok(lstrcmpA(test.szPathName, expected) == 0, 
-     "LZOpenFileW returned '%s', but was expected to return '%s'\n", 
-     test.szPathName, expected);
   LZClose(file);
 
   /* Delete the file then make sure it doesn't exist anymore. */
-  file = LZOpenFileW(filename_W, &test, OF_DELETE);
+  file = LZOpenFileW(filenameW_, &test, OF_DELETE);
   ok(file >= 0, "LZOpenFileW failed on delete\n");
   LZClose(file);
 
-  retval = GetFileAttributesW(filename_W);
+  retval = GetFileAttributesW(filenameW_);
   ok(retval == INVALID_FILE_ATTRIBUTES, 
      "GetFileAttributesW succeeded on deleted file\n");
+
+  test_LZOpenFileW_existing_compressed();
 }
 
 
