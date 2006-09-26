@@ -786,19 +786,20 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         if (reg_maps->fog)
             shader_addline(&buffer, "MAX result.fogcoord, TMP_FOG, 0.0;\n");
 
-        shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
         /* Write the final position.
          *
          * OpenGL coordinates specify the center of the pixel while d3d coords specify
          * the corner. The offsets are stored in the 2nd row of the projection matrix,
          * the x offset in z and the y offset in w. Add them to the resulting position
          */
-        shader_addline(&buffer, "ADD result.position.x, TMP_OUT.x, posFixup.z;\n");
-        shader_addline(&buffer, "ADD result.position.y, TMP_OUT.y, posFixup.w;\n");
+        shader_addline(&buffer, "ADD TMP_OUT.x, TMP_OUT.x, posFixup.z;\n");
+        shader_addline(&buffer, "ADD TMP_OUT.y, TMP_OUT.y, posFixup.w;\n");
         /* Account for any inverted textures (render to texture case) by reversing the y coordinate
          *  (this is handled in drawPrim() when it sets the MODELVIEW and PROJECTION matrices)
          */
-        shader_addline(&buffer, "MUL result.position.y, TMP_OUT.y, posFixup.y;\n");
+        shader_addline(&buffer, "MUL TMP_OUT.y, TMP_OUT.y, posFixup.y;\n");
+
+        shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
         
         shader_addline(&buffer, "END\n\0"); 
 
