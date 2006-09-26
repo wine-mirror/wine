@@ -545,7 +545,7 @@ int mp_prime_random_ex(mp_int *a, int t, int size, int flags, ltm_prime_callback
 int mp_count_bits(mp_int *a);
 
 int mp_unsigned_bin_size(mp_int *a);
-int mp_read_unsigned_bin(mp_int *a, unsigned char *b, int c);
+int mp_read_unsigned_bin(mp_int *a, const unsigned char *b, int c);
 int mp_to_unsigned_bin(mp_int *a, unsigned char *b);
 
 int mp_signed_bin_size(mp_int *a);

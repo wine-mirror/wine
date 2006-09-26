@@ -196,8 +196,8 @@ int rsa_exptmod(const unsigned char *in,   unsigned long inlen,
    }
 
    /* init and copy into tmp */
-   if ((err = mp_init_multi(&tmp, &tmpa, &tmpb, NULL)) != MP_OKAY)                     { return mpi_to_ltc_error(err); }
-   if ((err = mp_read_unsigned_bin(&tmp, (unsigned char *)in, (int)inlen)) != MP_OKAY) { goto error; }
+   if ((err = mp_init_multi(&tmp, &tmpa, &tmpb, NULL)) != MP_OKAY)    { return mpi_to_ltc_error(err); }
+   if ((err = mp_read_unsigned_bin(&tmp, in, (int)inlen)) != MP_OKAY) { goto error; }
 
    /* sanity check on the input */
    if (mp_cmp(&key->N, &tmp) == MP_LT) {
