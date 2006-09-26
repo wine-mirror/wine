@@ -766,6 +766,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     }
     checkGLcall("extension detection\n");
 
+    /* In some cases the number of texture stages can be larger than the number
+     * of samplers. The GF4 for example can use only 2 samplers (no fragment
+     * shaders), but 8 texture stages (register combiners). */
     gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
 
     /* We can only use NP2_NATIVE when the hardware supports it. */
