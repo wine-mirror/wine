@@ -124,7 +124,7 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     IWineD3DTexture_BindTexture(iface);
     ENTER_GL();
         /* If were dirty then reload the surfaces */
-    if(This->baseTexture.dirty != FALSE) {
+    if(This->baseTexture.dirty) {
 
         for (i = 0; i < This->baseTexture.levels; i++) {
             if(setGlTextureDesc)

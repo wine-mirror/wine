@@ -1272,7 +1272,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         /* FillGLCaps updates gl_info, but we only want to store and
            reuse the values once we have a context which is valid. Values from
            a temporary context may differ from the final ones                 */
-        if (isGLInfoValid == FALSE) {
+        if (!isGLInfoValid) {
             WineD3D_Context *fake_ctx = NULL;
             if (glXGetCurrentContext() == NULL) fake_ctx = WineD3D_CreateFakeGLContext();
             /* If we don't know the device settings, go query them now */
@@ -1816,7 +1816,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     /* FIXME: both the gl_info and the shader_mode should be made per adapter */
 
     /* If we don't know the device settings, go query them now */
-    if (This->isGLInfoValid == FALSE) {
+    if (!This->isGLInfoValid) {
         /* use the desktop window to fill gl caps */
         BOOL rc = IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
 

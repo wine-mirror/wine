@@ -500,7 +500,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
 
     /* TODO: NV_POINT_SPRITE */
     if (GL_SUPPORT(ARB_POINT_SPRITE)) {
-        if (This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE] != FALSE) {
+        if (This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
            /* Doesn't work with GL_POINT_SMOOTH on on my ATI 9600, but then ATI drivers are buggered! */
            glDisable(GL_POINT_SMOOTH);
 
@@ -1059,13 +1059,13 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     * ****************************************/
     switch(Pool) {
     case WINED3DPOOL_SCRATCH:
-        if(Lockable == FALSE)
+        if(!Lockable)
             FIXME("Create suface called with a pool of SCRATCH and a Lockable of FALSE \
                 which are mutually exclusive, setting lockable to true\n");
                 Lockable = TRUE;
     break;
     case WINED3DPOOL_SYSTEMMEM:
-        if(Lockable == FALSE) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, \
+        if(!Lockable) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, \
                                     this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
     case WINED3DPOOL_MANAGED:
         if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a \
@@ -2859,7 +2859,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     }
 
     /* OK, we now have a light... */
-    if (Enable == FALSE) {
+    if (!Enable) {
 
         /* If we are disabling it, check it was enabled, and
            still only do something if it has assigned a glIndex (which it should have!)   */
@@ -2901,7 +2901,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
             while (pos != NULL && pos->glIndex != -1 && Index < This->maxConcurrentLights) {
 
                 /* Try to remember which index can be replaced if necessary */
-                if (bsf==NULL && pos->lightEnabled == FALSE) {
+                if (bsf==NULL && !pos->lightEnabled) {
                     /* Found a light we can replace, save as best replacement */
                     bsf = pos;
                 }
@@ -5224,7 +5224,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
              *
              */
 
-            if( doClip == FALSE ||
+            if( !doClip ||
                 ( (-rhw -eps < x) && (-rhw -eps < y) && ( -eps < z) &&
                   (x <= rhw + eps) && (y <= rhw + eps ) && (z <= rhw + eps) && 
                   ( rhw > eps ) ) ) {
@@ -5326,7 +5326,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             if(!color_d) {
                 static BOOL warned = FALSE;
 
-                if(warned == FALSE) {
+                if(!warned) {
                     ERR("No diffuse color in source, but destination has one\n");
                     warned = TRUE;
                 }
@@ -5357,7 +5357,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             if(!color_s) {
                 static BOOL warned = FALSE;
 
-                if(warned == FALSE) {
+                if(!warned) {
                     ERR("No specular color in source, but destination has one\n");
                     warned = TRUE;
                 }
@@ -7149,7 +7149,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     } else {
         /* Otherwise, set the render target up */
 
-        if (FALSE == This->sceneEnded) {
+        if (!This->sceneEnded) {
             IWineD3DDevice_EndScene(iface);
         }
         TRACE("clearing renderer\n");
@@ -7252,7 +7252,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IW
         ATI cards don't destroy pbuffers, but as soon as resource releasing callbacks are inplace
         the pSurface can be set to 0 allowing it to be reused from cache **/
         if (This->contextCache[i].Width == width && This->contextCache[i].Height == height
-          && (pbuffer_per_surface == FALSE || This->contextCache[i].pSurface == pSurface || This->contextCache[i].pSurface == NULL)) {
+          && (!pbuffer_per_surface || This->contextCache[i].pSurface == pSurface || This->contextCache[i].pSurface == NULL)) {
             *context = &This->contextCache[i];
             break;
         }
@@ -7762,7 +7762,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL bEnableDialogs) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /** FIXME: always true at the moment **/
-    if(bEnableDialogs == FALSE) {
+    if(!bEnableDialogs) {
         FIXME("(%p) Dialogs cannot be disabled yet\n", This);
     }
     return WINED3D_OK;

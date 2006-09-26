@@ -109,8 +109,8 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
         This->tracking_color = IS_TRACKING;
         requires_material_reset = TRUE; /* Restore material settings as will be used */
 
-    } else if ((This->tracking_color == IS_TRACKING && isDiffuseSupplied == FALSE) ||
-               (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == FALSE)) {
+    } else if ((This->tracking_color == IS_TRACKING && !isDiffuseSupplied) ||
+               (This->tracking_color == NEEDS_TRACKING && !isDiffuseSupplied)) {
         /* If we are tracking the current color but one isn't supplied, don't! */
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");

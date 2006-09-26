@@ -223,7 +223,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
 
 static HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    if (FALSE == This->locked) {
+    if (!This->locked) {
       ERR("trying to lock unlocked volume@%p\n", This);
       return WINED3DERR_INVALIDCALL;
     }

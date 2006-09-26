@@ -143,7 +143,7 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
 
     ENTER_GL();
     /* If were dirty then reload the surfaces */
-    if (This->baseTexture.dirty != FALSE) {
+    if (This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = D3DCUBEMAP_FACE_POSITIVE_X; j <= D3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
                 if(setGlTextureDesc)

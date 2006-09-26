@@ -120,7 +120,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
 
     ENTER_GL();
     /* If were dirty then reload the volumes */
-    if(This->baseTexture.dirty != FALSE) {
+    if(This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             IWineD3DVolume_LoadTexture(This->volumes[i], i);
         }

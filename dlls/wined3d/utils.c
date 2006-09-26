@@ -1663,7 +1663,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
 
                 /*FIXME("Stage %d matrix is (%.2f,%.2f),(%.2f,%.2f)\n", Stage, m[0][0], m[0][1], m[1][0], m[1][0]);*/
 
-                if (FALSE == This->texture_shader_active) {
+                if (!This->texture_shader_active) {
                   This->texture_shader_active = TRUE;
                   glEnable(GL_TEXTURE_SHADER_NV);
                 }
