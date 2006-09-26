@@ -216,10 +216,14 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     if (!name)
         return NULL;
 
+    f = get_loaded_folder( package, name );
+    if (!f)
+        return NULL;
+
     /* special resolving for Target and Source root dir */
     if (strcmpW(name,cszTargetDir)==0 || strcmpW(name,cszSourceDir)==0)
     {
-        if (!source)
+        if (!f->ResolvedTarget && !f->Property)
         {
             LPWSTR check_path;
             check_path = msi_dup_property( package, cszTargetDir );
@@ -236,17 +240,13 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             if (strcmpiW(path,check_path)!=0)
                 MSI_SetPropertyW(package,cszTargetDir,path);
             msi_free(check_path);
-        }
-        else
-            path = get_source_root( package );
-        if (folder)
-            *folder = get_loaded_folder( package, name );
-        return path;
-    }
 
-    f = get_loaded_folder( package, name );
-    if (!f)
-        return NULL;
+            f->ResolvedTarget = path;
+        }
+
+        if (!f->ResolvedSource)
+            f->ResolvedSource = get_source_root( package );
+    }
 
     if (folder)
         *folder = f;

@@ -454,10 +454,7 @@ static void test_getsourcepath( void )
     sz = sizeof buffer -1;
     strcpy(buffer,"x bad");
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
-    todo_wine
-    {
-        ok( r == ERROR_DIRECTORY, "return value wrong\n");
-    }
+    ok( r == ERROR_DIRECTORY, "return value wrong\n");
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
@@ -675,17 +672,11 @@ static void test_settargetpath(void)
     lstrcat( tempdir, "\\" );
     r = MsiGetTargetPath( hpkg, "TARGETDIR", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp(buffer, tempdir), "Expected %s, got %s\n", tempdir, buffer);
-    }
+    ok( !lstrcmp(buffer, tempdir), "Expected %s, got %s\n", tempdir, buffer);
 
     sprintf( file, "%srootfile.txt", tempdir );
     query_file_path( hpkg, "[#RootFile]", buffer );
-    todo_wine
-    {
-        ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
-    }
+    ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
 
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
