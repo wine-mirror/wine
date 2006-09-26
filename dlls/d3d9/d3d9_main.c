@@ -29,10 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static int D3DPERF_event_level = 0;
 
-void (*wine_tsx11_lock_ptr)(void) = NULL;
-void (*wine_tsx11_unlock_ptr)(void) = NULL;
-
-
 HRESULT WINAPI D3D9GetSWInfo(void) {
     FIXME("(void): stub\n");
     return 0;
@@ -55,20 +51,12 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
 }
 
 /* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv) {
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+{
     TRACE("fdwReason=%ld\n", fdwReason);
-    if (fdwReason == DLL_PROCESS_ATTACH) {
-        HMODULE mod;
-
+    if (fdwReason == DLL_PROCESS_ATTACH)
         DisableThreadLibraryCalls(hInstDLL);
 
-        mod = GetModuleHandleA( "winex11.drv" );
-        if (mod)
-        {
-            wine_tsx11_lock_ptr   = (void*) GetProcAddress(mod, "wine_tsx11_lock");
-            wine_tsx11_unlock_ptr = (void*) GetProcAddress(mod, "wine_tsx11_unlock");
-        }
-    }
     return TRUE;
 }
 
