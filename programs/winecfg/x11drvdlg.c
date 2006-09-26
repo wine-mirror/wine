@@ -165,7 +165,7 @@ static void init_dialog(HWND dialog)
     }
     HeapFree(GetProcessHeap(), 0, buf);
 
-    buf = get_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "disabled");
+    buf = get_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "enabled");
     if (!strcmp(buf, "enabled"))
       CheckDlgButton(dialog, IDC_D3D_PSHADER_MODE, BST_CHECKED);
     else

@@ -37,7 +37,7 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 wined3d_settings_t wined3d_settings = 
 {
     VS_HW,          /* Hardware by default */
-    PS_NONE,        /* Disabled by default */
+    PS_HW,          /* Hardware by default */
     VBO_HW,         /* Hardware by default */
     FALSE,          /* Use of GLSL disabled by default */
     SHADER_ARB,     /* Use ARB vertex programs, when available */
