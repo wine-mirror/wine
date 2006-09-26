@@ -7374,10 +7374,14 @@ static GLXFBConfig* device_find_fbconfigs(
                              attribs, &nCfgs);
     if (cfgs == NULL) {
         /* OK we didn't find the exact config, so use any reasonable match */
-        /* TODO: fill in the 'requested' and 'current' depths, also make sure that's
-           why we failed and only show this message once! */
-        MESSAGE("Failed to find exact match, finding alternative but you may "
-            "suffer performance issues, try changing xfree's depth to match the requested depth\n");
+        /* TODO: fill in the 'requested' and 'current' depths, and make sure that's
+           why we failed. */
+        static BOOL show_message = TRUE;
+        if (show_message) {
+            ERR("Failed to find exact match, finding alternative but you may "
+                "suffer performance issues, try changing xfree's depth to match the requested depth\n");
+            show_message = FALSE;
+        }
         nAttribs = 0;
         PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT);
         /* PUSH2(GLX_X_RENDERABLE,  TRUE); */
