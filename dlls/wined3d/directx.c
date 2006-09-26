@@ -590,6 +590,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture mirrored repeat support\n");
                 gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_texture_non_power_of_two") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB NPOT texture support\n");
+                gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = TRUE;
             } else if (strcmp(ThisExtn, "GLX_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -764,6 +767,12 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     checkGLcall("extension detection\n");
 
     gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
+
+    /* We can only use NP2_NATIVE when the hardware supports it. */
+    if (wined3d_settings.nonpower2_mode == NP2_NATIVE && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]) {
+        WARN_(d3d_caps)("GL_ARB_texture_non_power_of_two not supported, falling back to NP2_NONE NPOT mode.\n");
+        wined3d_settings.nonpower2_mode = NP2_NONE;
+    }
 
     /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of different GPUs with roughly the same
      * features. In most cases GPUs from a certain family differ in clockspeeds, the amount of video memory and

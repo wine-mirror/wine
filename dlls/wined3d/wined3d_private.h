@@ -132,6 +132,7 @@ static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
 
 #define NP2_NONE   0
 #define NP2_REPACK 1
+#define NP2_NATIVE 2
 
 #define SHADER_SW   0
 #define SHADER_ARB  1

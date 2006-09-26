@@ -971,11 +971,15 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
       *******************************/
 
     /* Non-power2 support */
-
-    /* Find the nearest pow2 match */
-    pow2Width = pow2Height = 1;
-    while (pow2Width < Width) pow2Width <<= 1;
-    while (pow2Height < Height) pow2Height <<= 1;
+    if (wined3d_settings.nonpower2_mode == NP2_NATIVE) {
+        pow2Width = Width;
+        pow2Height = Height;
+    } else {
+        /* Find the nearest pow2 match */
+        pow2Width = pow2Height = 1;
+        while (pow2Width < Width) pow2Width <<= 1;
+        while (pow2Height < Height) pow2Height <<= 1;
+    }
 
     if (pow2Width > Width || pow2Height > Height) {
          /** TODO: add support for non power two compressed textures (OpenGL 2 provices support for * non-power-two textures gratis) **/
@@ -1125,8 +1129,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     UINT tmpW;
     UINT tmpH;
     HRESULT hr;
-    unsigned int pow2Width  = Width;
-    unsigned int pow2Height = Height;
+    unsigned int pow2Width;
+    unsigned int pow2Height;
 
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#lx\n", This, Width, Height, Levels, Usage);
@@ -1146,10 +1150,15 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     object->height = Height;
 
     /** Non-power2 support **/
-    /* Find the nearest pow2 match */
-    pow2Width = pow2Height = 1;
-    while (pow2Width < Width) pow2Width <<= 1;
-    while (pow2Height < Height) pow2Height <<= 1;
+    if (wined3d_settings.nonpower2_mode == NP2_NATIVE) {
+        pow2Width = Width;
+        pow2Height = Height;
+    } else {
+        /* Find the nearest pow2 match */
+        pow2Width = pow2Height = 1;
+        while (pow2Width < Width) pow2Width <<= 1;
+        while (pow2Height < Height) pow2Height <<= 1;
+    }
 
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
     /* Precalculated scaling for 'faked' non power of two texture coords */

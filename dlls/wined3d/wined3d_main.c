@@ -42,7 +42,7 @@ wined3d_settings_t wined3d_settings =
     FALSE,          /* Use of GLSL disabled by default */
     SHADER_ARB,     /* Use ARB vertex programs, when available */
     SHADER_ARB,     /* Use ARB fragment programs, when available */
-    NP2_NONE,       /* Box NPOT textures */
+    NP2_NATIVE,     /* Use native NPOT textures, when available */
     RTL_AUTO,       /* Automatically determine best locking method */
     64*1024*1024    /* 64MB texture memory by default */
 };
