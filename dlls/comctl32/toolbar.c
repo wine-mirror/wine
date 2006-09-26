@@ -2931,64 +2931,57 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+#define MAX_RESOURCE_STRING_LENGTH 512
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    INT nIndex;
+    INT nIndex = infoPtr->nNumStrings;
 
     if ((wParam) && (HIWORD(lParam) == 0)) {
-	char szString[256];
+	WCHAR szString[MAX_RESOURCE_STRING_LENGTH];
+	WCHAR delimiter;
+	WCHAR *next_delim;
+	WCHAR *p;
 	INT len;
 	TRACE("adding string from resource!\n");
 
-	len = LoadStringA ((HINSTANCE)wParam, (UINT)lParam, szString, sizeof(szString));
+        LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
+                             szString, MAX_RESOURCE_STRING_LENGTH);
+        len = lstrlenW(szString);
 
-	TRACE("len=%d \"%s\"\n", len, szString);
-	nIndex = infoPtr->nNumStrings;
-	if (infoPtr->nNumStrings == 0) {
-	    infoPtr->strings =
-		Alloc (sizeof(LPWSTR));
-	}
-	else {
-	    LPWSTR *oldStrings = infoPtr->strings;
-	    infoPtr->strings =
-		Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-	    memcpy (&infoPtr->strings[0], &oldStrings[0],
-		    sizeof(LPWSTR) * infoPtr->nNumStrings);
-	    Free (oldStrings);
-	}
+        TRACE("len=%d %s\n", len, debugstr_w(szString));
+        if (len == 0 || len == 1)
+            return nIndex;
 
-        /*Alloc zeros out the allocated memory*/
-        Str_SetPtrAtoW (&infoPtr->strings[infoPtr->nNumStrings], szString );
-	infoPtr->nNumStrings++;
+        TRACE("Delimiter: 0x%x\n", *szString);
+        delimiter = *szString;
+        p = szString + 1;
+        if (szString[len-1] == delimiter)
+            szString[len-1] = 0;
+
+        while ((next_delim = strchrW(p, delimiter)) != NULL) {
+            *next_delim = 0;
+
+            infoPtr->strings = ReAlloc(infoPtr->strings, sizeof(LPWSTR)*(infoPtr->nNumStrings+1));
+            Str_SetPtrW(&infoPtr->strings[infoPtr->nNumStrings], p);
+            infoPtr->nNumStrings++;
+
+            p = next_delim + 1;
+        }
     }
     else {
-	LPSTR p = (LPSTR)lParam;
+	LPWSTR p = (LPWSTR)lParam;
 	INT len;
 
 	if (p == NULL)
 	    return -1;
 	TRACE("adding string(s) from array!\n");
-
-	nIndex = infoPtr->nNumStrings;
 	while (*p) {
-	    len = strlen (p);
-	    TRACE("len=%d \"%s\"\n", len, p);
+            len = strlenW (p);
 
-	    if (infoPtr->nNumStrings == 0) {
-		infoPtr->strings =
-		    Alloc (sizeof(LPWSTR));
-	    }
-	    else {
-		LPWSTR *oldStrings = infoPtr->strings;
-		infoPtr->strings =
-		    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-		memcpy (&infoPtr->strings[0], &oldStrings[0],
-			sizeof(LPWSTR) * infoPtr->nNumStrings);
-		Free (oldStrings);
-	    }
-
-            Str_SetPtrAtoW (&infoPtr->strings[infoPtr->nNumStrings], p );
+            TRACE("len=%d %s\n", len, debugstr_w(p));
+            infoPtr->strings = ReAlloc(infoPtr->strings, sizeof(LPWSTR)*(infoPtr->nNumStrings+1));
+            Str_SetPtrW (&infoPtr->strings[infoPtr->nNumStrings], p);
 	    infoPtr->nNumStrings++;
 
 	    p += (len+1);
@@ -3000,109 +2993,31 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-#define MAX_RESOURCE_STRING_LENGTH 512
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    LPSTR p;
     INT nIndex;
+    INT len;
 
-    if ((wParam) && (HIWORD(lParam) == 0)) {
-	WCHAR szString[MAX_RESOURCE_STRING_LENGTH];
-	INT len;
-	TRACE("adding string from resource!\n");
+    if ((wParam) && (HIWORD(lParam) == 0))  /* load from resources */
+        return TOOLBAR_AddStringW(hwnd, wParam, lParam);
 
-	len = LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
-			     szString, MAX_RESOURCE_STRING_LENGTH);
+    p = (LPSTR)lParam;
+    if (p == NULL)
+        return -1;
 
-	TRACE("len=%d %s\n", len, debugstr_w(szString));
-	TRACE("First char: 0x%x\n", *szString);
-	if (szString[0] == L'|')
-	{
-	    PWSTR p = szString + 1;
+    TRACE("adding string(s) from array!\n");
+    nIndex = infoPtr->nNumStrings;
+    while (*p) {
+        len = strlen (p);
+        TRACE("len=%d \"%s\"\n", len, p);
 
-            nIndex = infoPtr->nNumStrings;
-            while (*p != L'|' && *p != L'\0') {
-                PWSTR np;
+        infoPtr->strings = ReAlloc(infoPtr->strings, sizeof(LPWSTR)*(infoPtr->nNumStrings+1));
+        Str_SetPtrAtoW(&infoPtr->strings[infoPtr->nNumStrings], p);
+        infoPtr->nNumStrings++;
 
-                if (infoPtr->nNumStrings == 0) {
-                    infoPtr->strings = Alloc (sizeof(LPWSTR));
-                }
-                else
-                {
-                    LPWSTR *oldStrings = infoPtr->strings;
-                    infoPtr->strings = Alloc(sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-                    memcpy(&infoPtr->strings[0], &oldStrings[0],
-                           sizeof(LPWSTR) * infoPtr->nNumStrings);
-                    Free(oldStrings);
-                }
-
-                np=strchrW (p, '|');
-                if (np!=NULL) {
-                    len = np - p;
-                    np++;
-                } else {
-                    len = strlenW(p);
-                    np = p + len;
-                }
-                TRACE("len=%d %s\n", len, debugstr_w(p));
-                infoPtr->strings[infoPtr->nNumStrings] =
-                    Alloc (sizeof(WCHAR)*(len+1));
-                lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len+1);
-                infoPtr->nNumStrings++;
-
-                p = np;
-            }
-	}
-	else
-	{
-            nIndex = infoPtr->nNumStrings;
-            if (infoPtr->nNumStrings == 0) {
-                infoPtr->strings =
-                    Alloc (sizeof(LPWSTR));
-            }
-            else {
-                LPWSTR *oldStrings = infoPtr->strings;
-                infoPtr->strings =
-                    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-                memcpy (&infoPtr->strings[0], &oldStrings[0],
-                        sizeof(LPWSTR) * infoPtr->nNumStrings);
-                Free (oldStrings);
-            }
-
-            Str_SetPtrW (&infoPtr->strings[infoPtr->nNumStrings], szString);
-            infoPtr->nNumStrings++;
-        }
-    }
-    else {
-	LPWSTR p = (LPWSTR)lParam;
-	INT len;
-
-	if (p == NULL)
-	    return -1;
-	TRACE("adding string(s) from array!\n");
-	nIndex = infoPtr->nNumStrings;
-	while (*p) {
-	    len = strlenW (p);
-
-	    TRACE("len=%d %s\n", len, debugstr_w(p));
-	    if (infoPtr->nNumStrings == 0) {
-		infoPtr->strings =
-		    Alloc (sizeof(LPWSTR));
-	    }
-	    else {
-		LPWSTR *oldStrings = infoPtr->strings;
-		infoPtr->strings =
-		    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
-		memcpy (&infoPtr->strings[0], &oldStrings[0],
-			sizeof(LPWSTR) * infoPtr->nNumStrings);
-		Free (oldStrings);
-	    }
-
-	    Str_SetPtrW (&infoPtr->strings[infoPtr->nNumStrings], p);
-	    infoPtr->nNumStrings++;
-
-	    p += (len+1);
-	}
+        p += (len+1);
     }
 
     return nIndex;

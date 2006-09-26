@@ -312,6 +312,64 @@ static void test_add_bitmap(void)
     DestroyWindow(hToolbar);
 }
 
+#define CHECK_STRING_TABLE(count, tab) { \
+        INT _i; \
+        CHAR _buf[260]; \
+        for (_i = 0; _i < (count); _i++) {\
+            ret = SendMessageA(hToolbar, TB_GETSTRING, MAKEWPARAM(260, _i), (LPARAM)_buf); \
+            ok(ret >= 0, "TB_GETSTRING - unexpected return %d while checking string %d\n", ret, _i); \
+            if (ret >= 0) \
+                ok(strcmp(_buf, (tab)[_i]) == 0, "Invalid string #%d - '%s' vs '%s'\n", _i, (tab)[_i], _buf); \
+        } \
+        ok(SendMessageA(hToolbar, TB_GETSTRING, MAKEWPARAM(260, (count)), (LPARAM)_buf) == -1, \
+            "Too many string in table\n"); \
+    }
+
+void test_add_string()
+{
+    LPCSTR test1 = "a\0b\0";
+    LPCSTR test2 = "|a|b||\0";
+    LPCSTR ret1[] = {"a", "b"};
+    LPCSTR ret2[] = {"a", "b", "|a|b||"};
+    LPCSTR ret3[] = {"a", "b", "|a|b||", "p", "q"};
+    LPCSTR ret4[] = {"a", "b", "|a|b||", "p", "q", "p"};
+    LPCSTR ret5[] = {"a", "b", "|a|b||", "p", "q", "p", "p", "q"};
+    LPCSTR ret6[] = {"a", "b", "|a|b||", "p", "q", "p", "p", "q", "p", "", "q"};
+    LPCSTR ret7[] = {"a", "b", "|a|b||", "p", "q", "p", "p", "q", "p", "", "q", "br", "c", "d"};
+    HWND hToolbar = NULL;
+    int ret;
+
+    rebuild_toolbar(&hToolbar);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)test1);
+    ok(ret == 0, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(2, ret1);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)test2);
+    ok(ret == 2, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(3, ret2);
+
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD1);
+    ok(ret == 3, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(3, ret2);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD2);
+    ok(ret == 3, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(5, ret3);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD3);
+    ok(ret == 5, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(6, ret4);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD4);
+    ok(ret == 6, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(8, ret5);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD5);
+    ok(ret == 8, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(11, ret6);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD6);
+    ok(ret == 11, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(11, ret6);
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD7);
+    ok(ret == 11, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(14, ret7);
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -339,6 +397,7 @@ START_TEST(toolbar)
 
     basic_test();
     test_add_bitmap();
+    test_add_string();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
