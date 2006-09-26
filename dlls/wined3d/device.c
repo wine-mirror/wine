@@ -7609,6 +7609,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             implicitSwapchainImpl->drawable   = newContext->drawable;
             implicitSwapchainImpl->render_ctx = newContext->context;
         }
+    } else {
+        /* Same context, but update renderUpsideDown and cull mode */
+        device_render_to_texture(This, TRUE);
     }
 
     /* Replace the render target */
