@@ -7453,7 +7453,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 #if defined(GL_VERSION_1_3)
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurface *tmp;
     GLXFBConfig* cfgs = NULL;
     IWineD3DSwapChain     *currentSwapchain;
     IWineD3DSwapChainImpl *currentSwapchainImpl;
@@ -7615,10 +7614,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     }
 
     /* Replace the render target */
-    tmp = This->renderTarget;
-    This->renderTarget = RenderSurface;
-    IWineD3DSurface_AddRef(This->renderTarget);
-    IWineD3DSurface_Release(tmp);
+    if (This->renderTarget != RenderSurface) {
+        IWineD3DSurface_Release(This->renderTarget);
+        This->renderTarget = RenderSurface;
+        IWineD3DSurface_AddRef(RenderSurface);
+    }
 
     if (cfgs != NULL)                   XFree(cfgs);
     if (implicitSwapchain != NULL)       IWineD3DSwapChain_Release(implicitSwapchain);
