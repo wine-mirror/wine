@@ -3713,7 +3713,7 @@ HRESULT WINAPI DllRegisterServer(void)
                 static const WCHAR szSignature[] = { 'S','i','g','n','a','t','u','r','e',0 };
                 DWORD type = (i == 3) ? PROV_RSA_SCHANNEL : PROV_RSA_FULL;
                 DWORD sign = 0xdeadbeef;
-                RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase, 
+                RegSetValueExW(key, szImagePath, 0, REG_SZ, (const BYTE *)szRSABase,
                                (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
                 RegSetValueExW(key, szType, 0, REG_DWORD, (LPBYTE)&type, sizeof(type));
                 RegSetValueExW(key, szSignature, 0, REG_BINARY, (LPBYTE)&sign, sizeof(sign));
@@ -3746,9 +3746,9 @@ HRESULT WINAPI DllRegisterServer(void)
                   { 'R','S','A',' ','S','C','h','a','n','n','e','l',0 } };
 
                 RegSetValueExW(key, szName, 0, REG_SZ, 
-                                (LPBYTE)szRSAName[i], lstrlenW(szRSAName[i])*sizeof(WCHAR)+sizeof(WCHAR));
+                                (const BYTE *)szRSAName[i], lstrlenW(szRSAName[i])*sizeof(WCHAR)+sizeof(WCHAR));
                 RegSetValueExW(key, szTypeName, 0, REG_SZ, 
-                                (LPBYTE)szRSATypeName[i], lstrlenW(szRSATypeName[i])*sizeof(WCHAR)+sizeof(WCHAR));
+                                (const BYTE *)szRSATypeName[i], lstrlenW(szRSATypeName[i])*sizeof(WCHAR)+sizeof(WCHAR));
             }
         }
         RegCloseKey(key);
