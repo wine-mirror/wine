@@ -2339,6 +2339,14 @@ static void test_featureparents(void)
     r = add_feature_entry( hdb, "'bayer', 'waters', '', '', 14, 1, '', 9" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
+    /* component of disabled feature (install level) */
+    r = add_component_entry( hdb, "'delphinus', '', 'TARGETDIR', 0, '', 'delphinus_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    /* component of disabled child feature (install level) */
+    r = add_component_entry( hdb, "'hydrus', '', 'TARGETDIR', 0, '', 'hydrus_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
     r = add_component_entry( hdb, "'leo', '', 'TARGETDIR', 0, '', 'leo_file'" );
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
@@ -2419,6 +2427,12 @@ static void test_featureparents(void)
     r = add_feature_components_entry( hdb, "'orion', 'lepus'" );
     ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
 
+    r = add_feature_components_entry( hdb, "'waters', 'delphinus'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'bayer', 'hydrus'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
     r = add_file_entry( hdb, "'leo_file', 'leo', 'leo.txt', 100, '', '1033', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
@@ -2444,6 +2458,12 @@ static void test_featureparents(void)
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
     r = add_file_entry( hdb, "'lepus_file', 'lepus', 'lepus.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'delphinus_file', 'delphinus', 'delphinus.txt', 0, '', '1033', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'hydrus_file', 'hydrus', 'hydrus.txt', 0, '', '1033', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
     hpkg = package_from_db( hdb );
@@ -2556,6 +2576,20 @@ static void test_featureparents(void)
     ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "delphinus", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "hydrus", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
     r = MsiSetFeatureState(hpkg, "orion", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
 
@@ -2657,6 +2691,20 @@ static void test_featureparents(void)
     {
         ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     }
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "delphinus", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "hydrus", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     
     MsiCloseHandle(hpkg);
 }

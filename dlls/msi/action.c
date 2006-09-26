@@ -1831,6 +1831,11 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                         component->ActionRequest = INSTALLSTATE_ABSENT;
                     }
                 }
+                else if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
+                {
+                    component->Action = INSTALLSTATE_UNKNOWN;
+                    component->ActionRequest = INSTALLSTATE_UNKNOWN;
+                }
             }
 
             if (component->ForceLocalState && feature->Action == INSTALLSTATE_SOURCE)
