@@ -30,7 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
-#ifdef HAVE_XKB
+#ifdef HAVE_X11_XKBLIB_H
 #include <X11/XKBlib.h>
 #endif
 
