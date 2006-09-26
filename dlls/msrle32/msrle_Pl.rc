@@ -1,5 +1,8 @@
 /*
- * Copyright 2005 Dmitry Timoshkov
+ * English resource file for MS-RLE
+ *
+ * Copyright 2002 Michael Gnnewig
+ * Copyright 2006 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,14 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "iccvid_private.h"
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-#include "iccvid_De.rc"
-#include "iccvid_En.rc"
-#include "iccvid_Fr.rc"
-#include "iccvid_Hu.rc"
-#include "iccvid_Ko.rc"
-#include "iccvid_No.rc"
-#include "iccvid_Pl.rc"
-#include "iccvid_Tr.rc"
+STRINGTABLE DISCARDABLE
+{
+	IDS_NAME	"WINE-MS-RLE"
+	IDS_DESCRIPTION	"Kodek Wine MS-RLE"
+	IDS_ABOUT       L"Koder-dekoder Wine MS-RLE\nCopyright 2002 - Michael G\x00fcnnewig"
+}

@@ -25,4 +25,5 @@
 #include "msvidc32_Hu.rc"
 #include "msvidc32_Ko.rc"
 #include "msvidc32_No.rc"
+#include "msvidc32_Pl.rc"
 #include "msvidc32_Tr.rc"
