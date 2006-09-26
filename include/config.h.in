@@ -977,9 +977,6 @@
 /* Define to the soname of the libcurses library. */
 #undef SONAME_LIBCURSES
 
-/* Define to the soname of the libdbus-1 library. */
-#undef SONAME_LIBDBUS_1
-
 /* Define to the soname of the libfontconfig library. */
 #undef SONAME_LIBFONTCONFIG
 

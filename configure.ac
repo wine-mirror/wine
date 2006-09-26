@@ -1137,7 +1137,6 @@ then
   WINE_GET_SONAME(Xrandr,XRRQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
-  WINE_GET_SONAME(dbus-1,dbus_error_init)
   WINE_GET_SONAME(hal,libhal_ctx_new)
   WINE_GET_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
   WINE_GET_SONAME(cups,cupsGetDefault)

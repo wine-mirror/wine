@@ -88,13 +88,17 @@ HAL_FUNCS;
 
 static BOOL load_functions(void)
 {
-    void *dbus_handle, *hal_handle;
+    void *hal_handle;
     char error[128];
 
-    if (!(dbus_handle = wine_dlopen(SONAME_LIBDBUS_1, RTLD_NOW, error, sizeof(error)))) goto failed;
-    if (!(hal_handle = wine_dlopen(SONAME_LIBHAL, RTLD_NOW, error, sizeof(error)))) goto failed;
+    /* Load libhal with RTLD_GLOBAL so that the dbus symbols are available.
+     * We can't load libdbus directly since libhal may have been built against a
+     * different version but with the same soname. Binary compatibility is for wimps. */
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( dbus_handle, #f, error, sizeof(error) ))) goto failed
+    if (!(hal_handle = wine_dlopen(SONAME_LIBHAL, RTLD_NOW|RTLD_GLOBAL, error, sizeof(error))))
+        goto failed;
+
+#define DO_FUNC(f) if (!(p_##f = wine_dlsym( RTLD_DEFAULT, #f, error, sizeof(error) ))) goto failed
     DBUS_FUNCS;
 #undef DO_FUNC
 
