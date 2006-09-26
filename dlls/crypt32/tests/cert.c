@@ -132,162 +132,161 @@ static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
 static void testAddCert(void)
 {
     HCERTSTORE store;
+    HCERTSTORE collection;
+    PCCERT_CONTEXT context;
+    BOOL ret;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
-    if (store != NULL)
+    if (!store)
+        return;
+
+    /* Weird--bad add disposition leads to an access violation in Windows.
+     */
+    ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert), 0, NULL);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), 0, NULL);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+
+    /* Weird--can add a cert to the NULL store (does this have special
+     * meaning?)
+     */
+    context = NULL;
+    ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+        CertFreeCertificateContext(context);
+
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    /* This has the same name as bigCert, so finding isn't done by name */
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ok(context != NULL, "Expected a context\n");
+    if (context)
     {
-        HCERTSTORE collection;
-        PCCERT_CONTEXT context;
-        BOOL ret;
+        CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
+         (LPBYTE)bigCert2Hash };
 
-        /* Weird--bad add disposition leads to an access violation in Windows.
+        /* Duplicate (AddRef) the context so we can still use it after
+         * deleting it from the store.
          */
-        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
-         sizeof(bigCert), 0, NULL);
-        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert), 0, NULL);
-        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
-
-        /* Weird--can add a cert to the NULL store (does this have special
-         * meaning?)
+        CertDuplicateCertificateContext(context);
+        CertDeleteCertificateFromStore(context);
+        /* Set the same hash as bigCert2, and try to readd it */
+        ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+         0, &hash);
+        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+         GetLastError());
+        ret = CertAddCertificateContextToStore(store, context,
+         CERT_STORE_ADD_NEW, NULL);
+        /* The failure is a bit odd (CRYPT_E_ASN1_BADTAG), so just check
+         * that it fails.
          */
-        context = NULL;
-        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
-         sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-            CertFreeCertificateContext(context);
+        ok(!ret, "Expected failure\n");
+        CertFreeCertificateContext(context);
+    }
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+     sizeof(bigCert2));
+    ok(context != NULL, "Expected a context\n");
+    if (context)
+    {
+        /* Try to readd bigCert2 to the store */
+        ret = CertAddCertificateContextToStore(store, context,
+         CERT_STORE_ADD_NEW, NULL);
+        ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+         "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+        CertFreeCertificateContext(context);
+    }
 
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        /* This has the same name as bigCert, so finding isn't done by name */
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ok(context != NULL, "Expected a context\n");
-        if (context)
-        {
-            CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
-             (LPBYTE)bigCert2Hash };
+    /* Adding a cert with the same issuer name and serial number (but
+     * different subject) as an existing cert succeeds.
+     */
+    context = NULL;
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert2WithDifferentSerial, sizeof(bigCert2WithDifferentSerial),
+     CERT_STORE_ADD_NEW, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+        CertDeleteCertificateFromStore(context);
 
-            /* Duplicate (AddRef) the context so we can still use it after
-             * deleting it from the store.
-             */
-            CertDuplicateCertificateContext(context);
-            CertDeleteCertificateFromStore(context);
-            /* Set the same hash as bigCert2, and try to readd it */
-            ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID,
-             0, &hash);
-            ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-             GetLastError());
-            ret = CertAddCertificateContextToStore(store, context,
-             CERT_STORE_ADD_NEW, NULL);
-            /* The failure is a bit odd (CRYPT_E_ASN1_BADTAG), so just check
-             * that it fails.
-             */
-            ok(!ret, "Expected failure\n");
-            CertFreeCertificateContext(context);
-        }
+    /* Adding a cert with the same subject name and serial number (but
+     * different issuer) as an existing cert succeeds.
+     */
+    context = NULL;
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCertWithDifferentSubject, sizeof(bigCertWithDifferentSubject),
+     CERT_STORE_ADD_NEW, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+        CertDeleteCertificateFromStore(context);
+
+    /* Adding a cert with the same issuer name and serial number (but
+     * different otherwise) as an existing cert succeeds.
+     */
+    context = NULL;
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCertWithDifferentIssuer, sizeof(bigCertWithDifferentIssuer),
+     CERT_STORE_ADD_NEW, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+        CertDeleteCertificateFromStore(context);
+
+    collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(collection != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    if (collection)
+    {
+        /* Add store to the collection, but disable updates */
+        CertAddStoreToCollection(collection, store, 0, 0);
+
         context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
          sizeof(bigCert2));
         ok(context != NULL, "Expected a context\n");
         if (context)
         {
-            /* Try to readd bigCert2 to the store */
-            ret = CertAddCertificateContextToStore(store, context,
+            /* Try to readd bigCert2 to the collection */
+            ret = CertAddCertificateContextToStore(collection, context,
              CERT_STORE_ADD_NEW, NULL);
             ok(!ret && GetLastError() == CRYPT_E_EXISTS,
              "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+            /* Replacing an existing certificate context is allowed, even
+             * though updates to the collection aren't..
+             */
+            ret = CertAddCertificateContextToStore(collection, context,
+             CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+            ok(ret, "CertAddCertificateContextToStore failed: %08lx\n",
+             GetLastError());
+            /* but adding a new certificate isn't allowed. */
+            ret = CertAddCertificateContextToStore(collection, context,
+             CERT_STORE_ADD_ALWAYS, NULL);
+            ok(!ret && GetLastError() == E_ACCESSDENIED,
+             "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
             CertFreeCertificateContext(context);
         }
 
-        /* Adding a cert with the same issuer name and serial number (but
-         * different subject) as an existing cert succeeds.
-         */
-        context = NULL;
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert2WithDifferentSerial, sizeof(bigCert2WithDifferentSerial),
-         CERT_STORE_ADD_NEW, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-            CertDeleteCertificateFromStore(context);
-
-        /* Adding a cert with the same subject name and serial number (but
-         * different issuer) as an existing cert succeeds.
-         */
-        context = NULL;
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCertWithDifferentSubject, sizeof(bigCertWithDifferentSubject),
-         CERT_STORE_ADD_NEW, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-            CertDeleteCertificateFromStore(context);
-
-        /* Adding a cert with the same issuer name and serial number (but
-         * different otherwise) as an existing cert succeeds.
-         */
-        context = NULL;
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCertWithDifferentIssuer, sizeof(bigCertWithDifferentIssuer),
-         CERT_STORE_ADD_NEW, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-            CertDeleteCertificateFromStore(context);
-
-        collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
-         CERT_STORE_CREATE_NEW_FLAG, NULL);
-        ok(collection != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
-        if (collection)
-        {
-            /* Add store to the collection, but disable updates */
-            CertAddStoreToCollection(collection, store, 0, 0);
-
-            context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
-             sizeof(bigCert2));
-            ok(context != NULL, "Expected a context\n");
-            if (context)
-            {
-                /* Try to readd bigCert2 to the collection */
-                ret = CertAddCertificateContextToStore(collection, context,
-                 CERT_STORE_ADD_NEW, NULL);
-                ok(!ret && GetLastError() == CRYPT_E_EXISTS,
-                 "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
-                /* Replacing an existing certificate context is allowed, even
-                 * though updates to the collection aren't..
-                 */
-                ret = CertAddCertificateContextToStore(collection, context,
-                 CERT_STORE_ADD_REPLACE_EXISTING, NULL);
-                ok(ret, "CertAddCertificateContextToStore failed: %08lx\n",
-                 GetLastError());
-                /* but adding a new certificate isn't allowed. */
-                ret = CertAddCertificateContextToStore(collection, context,
-                 CERT_STORE_ADD_ALWAYS, NULL);
-                ok(!ret && GetLastError() == E_ACCESSDENIED,
-                 "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
-                CertFreeCertificateContext(context);
-            }
-
-            CertCloseStore(collection, 0);
-        }
-
-        CertCloseStore(store, 0);
+        CertCloseStore(collection, 0);
     }
+
+    CertCloseStore(store, 0);
 }
 
 static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
@@ -317,390 +316,386 @@ static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
      bigCert, sizeof(bigCert));
+    DWORD propID, numProps, access, size;
+    BOOL ret;
+    BYTE hash[20] = { 0 }, hashProperty[20];
+    CRYPT_DATA_BLOB blob;
+    CERT_KEY_CONTEXT keyContext;
+    HCRYPTPROV csp;
 
     ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
-    if (context)
-    {
-        DWORD propID, numProps, access, size;
-        BOOL ret;
-        BYTE hash[20] = { 0 }, hashProperty[20];
-        CRYPT_DATA_BLOB blob;
-        CERT_KEY_CONTEXT keyContext;
-        HCRYPTPROV csp;
+    if (!context)
+        return;
 
-        /* This crashes
-        propID = CertEnumCertificateContextProperties(NULL, 0);
-         */
+    /* This crashes
+    propID = CertEnumCertificateContextProperties(NULL, 0);
+     */
 
-        propID = 0;
-        numProps = 0;
-        do {
-            propID = CertEnumCertificateContextProperties(context, propID);
-            if (propID)
-                numProps++;
-        } while (propID != 0);
-        ok(numProps == 0, "Expected 0 properties, got %ld\n", numProps);
+    propID = 0;
+    numProps = 0;
+    do {
+        propID = CertEnumCertificateContextProperties(context, propID);
+        if (propID)
+            numProps++;
+    } while (propID != 0);
+    ok(numProps == 0, "Expected 0 properties, got %ld\n", numProps);
 
-        /* Tests with a NULL cert context.  Prop ID 0 fails.. */
-        ret = CertSetCertificateContextProperty(NULL, 0, 0, NULL);
-        ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
-        /* while this just crashes.
-        ret = CertSetCertificateContextProperty(NULL,
-         CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
-         */
+    /* Tests with a NULL cert context.  Prop ID 0 fails.. */
+    ret = CertSetCertificateContextProperty(NULL, 0, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* while this just crashes.
+    ret = CertSetCertificateContextProperty(NULL,
+     CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
+     */
 
-        ret = CertSetCertificateContextProperty(context, 0, 0, NULL);
-        ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
-        /* Can't set the cert property directly, this crashes.
-        ret = CertSetCertificateContextProperty(context,
-         CERT_CERT_PROP_ID, 0, bigCert2);
-         */
+    ret = CertSetCertificateContextProperty(context, 0, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    /* Can't set the cert property directly, this crashes.
+    ret = CertSetCertificateContextProperty(context,
+     CERT_CERT_PROP_ID, 0, bigCert2);
+     */
 
-        /* These all crash.
-        ret = CertGetCertificateContextProperty(context,
-         CERT_ACCESS_STATE_PROP_ID, 0, NULL);
-        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
-         NULL, NULL);
-        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
-         hashProperty, NULL);
-         */
-        /* A missing prop */
-        size = 0;
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
-        ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
-        /* And, an implicit property */
-        size = sizeof(access);
-        ret = CertGetCertificateContextProperty(context,
-         CERT_ACCESS_STATE_PROP_ID, &access, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
-         "Didn't expect a persisted cert\n");
-        /* Trying to set this "read only" property crashes.
-        access |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
-        ret = CertSetCertificateContextProperty(context,
-         CERT_ACCESS_STATE_PROP_ID, 0, &access);
-         */
+    /* These all crash.
+    ret = CertGetCertificateContextProperty(context,
+     CERT_ACCESS_STATE_PROP_ID, 0, NULL);
+    ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+     NULL, NULL);
+    ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, 
+     hashProperty, NULL);
+     */
+    /* A missing prop */
+    size = 0;
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+    /* And, an implicit property */
+    size = sizeof(access);
+    ret = CertGetCertificateContextProperty(context,
+     CERT_ACCESS_STATE_PROP_ID, &access, &size);
+    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
+     "Didn't expect a persisted cert\n");
+    /* Trying to set this "read only" property crashes.
+    access |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
+    ret = CertSetCertificateContextProperty(context,
+     CERT_ACCESS_STATE_PROP_ID, 0, &access);
+     */
 
-        /* Can I set the hash to an invalid hash? */
-        blob.pbData = hash;
-        blob.cbData = sizeof(hash);
-        ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
-         &blob);
-        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        size = sizeof(hashProperty);
-        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
-         hashProperty, &size);
-        ok(!memcmp(hashProperty, hash, sizeof(hash)), "Unexpected hash\n");
-        /* Delete the (bogus) hash, and get the real one */
-        ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
-         NULL);
-        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        checkHash(bigCert, sizeof(bigCert), CALG_SHA1, context,
-         CERT_HASH_PROP_ID);
+    /* Can I set the hash to an invalid hash? */
+    blob.pbData = hash;
+    blob.cbData = sizeof(hash);
+    ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
+     &blob);
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    size = sizeof(hashProperty);
+    ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+     hashProperty, &size);
+    ok(!memcmp(hashProperty, hash, sizeof(hash)), "Unexpected hash\n");
+    /* Delete the (bogus) hash, and get the real one */
+    ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID, 0,
+     NULL);
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    checkHash(bigCert, sizeof(bigCert), CALG_SHA1, context,
+     CERT_HASH_PROP_ID);
 
-        /* Now that the hash property is set, we should get one property when
-         * enumerating.
-         */
-        propID = 0;
-        numProps = 0;
-        do {
-            propID = CertEnumCertificateContextProperties(context, propID);
-            if (propID)
-                numProps++;
-        } while (propID != 0);
-        ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
+    /* Now that the hash property is set, we should get one property when
+     * enumerating.
+     */
+    propID = 0;
+    numProps = 0;
+    do {
+        propID = CertEnumCertificateContextProperties(context, propID);
+        if (propID)
+            numProps++;
+    } while (propID != 0);
+    ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
 
-        /* Check a few other implicit properties */
-        checkHash(bigCert, sizeof(bigCert), CALG_MD5, context,
-         CERT_MD5_HASH_PROP_ID);
-        checkHash(
-         context->pCertInfo->Subject.pbData,
-         context->pCertInfo->Subject.cbData,
-         CALG_MD5, context, CERT_SUBJECT_NAME_MD5_HASH_PROP_ID);
-        checkHash(
-         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
-         context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
-         CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
+    /* Check a few other implicit properties */
+    checkHash(bigCert, sizeof(bigCert), CALG_MD5, context,
+     CERT_MD5_HASH_PROP_ID);
+    checkHash(
+     context->pCertInfo->Subject.pbData,
+     context->pCertInfo->Subject.cbData,
+     CALG_MD5, context, CERT_SUBJECT_NAME_MD5_HASH_PROP_ID);
+    checkHash(
+     context->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
+     context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
+     CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
 
-        /* Test key identifiers and handles and such */
-        size = 0;
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
-        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
-        size = sizeof(CERT_KEY_CONTEXT);
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
-        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
-        ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-         "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
-        /* Key context with an invalid size */
-        keyContext.cbSize = 0;
-        ret = CertSetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
-        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        size = sizeof(keyContext);
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        keyContext.cbSize = sizeof(keyContext);
-        keyContext.hCryptProv = 0;
-        keyContext.dwKeySpec = AT_SIGNATURE;
-        /* Crash
-        ret = CertSetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
-        ret = CertSetCertificateContextProperty(context,
-         CERT_KEY_IDENTIFIER_PROP_ID, CERT_STORE_NO_CRYPT_RELEASE_FLAG,
-         &keyContext);
-         */
-        ret = CryptAcquireContextW(&csp, cspNameW,
-         MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET);
-        ok(ret, "CryptAcquireContextW failed: %08lx\n", GetLastError());
-        keyContext.hCryptProv = csp;
-        ret = CertSetCertificateContextProperty(context,
-         CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
-        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        /* Now that that's set, the key prov handle property is also gettable.
-         */
-        size = sizeof(DWORD);
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_PROV_HANDLE_PROP_ID, &keyContext.hCryptProv, &size);
-        ok(ret, "Expected to get the CERT_KEY_PROV_HANDLE_PROP_ID, got %08lx\n",
-         GetLastError());
-        /* Remove the key prov handle property.. */
-        ret = CertSetCertificateContextProperty(context,
-         CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
-        ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        /* and the key context's CSP is set to NULL. */
-        size = sizeof(keyContext);
-        ret = CertGetCertificateContextProperty(context,
-         CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
-        ok(keyContext.hCryptProv == 0, "Expected no hCryptProv\n");
+    /* Test key identifiers and handles and such */
+    size = 0;
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+    size = sizeof(CERT_KEY_CONTEXT);
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08lx\n", GetLastError());
+    /* Key context with an invalid size */
+    keyContext.cbSize = 0;
+    ret = CertSetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    size = sizeof(keyContext);
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
+    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    keyContext.cbSize = sizeof(keyContext);
+    keyContext.hCryptProv = 0;
+    keyContext.dwKeySpec = AT_SIGNATURE;
+    /* Crash
+    ret = CertSetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
+    ret = CertSetCertificateContextProperty(context,
+     CERT_KEY_IDENTIFIER_PROP_ID, CERT_STORE_NO_CRYPT_RELEASE_FLAG,
+     &keyContext);
+     */
+    ret = CryptAcquireContextW(&csp, cspNameW,
+     MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    ok(ret, "CryptAcquireContextW failed: %08lx\n", GetLastError());
+    keyContext.hCryptProv = csp;
+    ret = CertSetCertificateContextProperty(context,
+     CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    /* Now that that's set, the key prov handle property is also gettable.
+     */
+    size = sizeof(DWORD);
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_PROV_HANDLE_PROP_ID, &keyContext.hCryptProv, &size);
+    ok(ret, "Expected to get the CERT_KEY_PROV_HANDLE_PROP_ID, got %08lx\n",
+     GetLastError());
+    /* Remove the key prov handle property.. */
+    ret = CertSetCertificateContextProperty(context,
+     CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
+    ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    /* and the key context's CSP is set to NULL. */
+    size = sizeof(keyContext);
+    ret = CertGetCertificateContextProperty(context,
+     CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
+    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+     GetLastError());
+    ok(keyContext.hCryptProv == 0, "Expected no hCryptProv\n");
 
-        CryptReleaseContext(csp, 0);
+    CryptReleaseContext(csp, 0);
 
-        CertFreeCertificateContext(context);
-    }
+    CertFreeCertificateContext(context);
 }
 
 static void testDupCert(void)
 {
     HCERTSTORE store;
+    PCCERT_CONTEXT context, dupContext;
+    BOOL ret;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
-    if (store != NULL)
+    if (!store)
+        return;
+
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ok(context != NULL, "Expected a valid cert context\n");
+    if (context)
     {
-        PCCERT_CONTEXT context, dupContext;
-        BOOL ret;
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Wrong cert size %ld\n", context->cbCertEncoded);
+        ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
+         "Unexpected encoded cert in context\n");
+        ok(context->hCertStore == store, "Unexpected store\n");
 
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ok(context != NULL, "Expected a valid cert context\n");
-        if (context)
-        {
-            ok(context->cbCertEncoded == sizeof(bigCert),
-             "Wrong cert size %ld\n", context->cbCertEncoded);
-            ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
-             "Unexpected encoded cert in context\n");
-            ok(context->hCertStore == store, "Unexpected store\n");
-
-            dupContext = CertDuplicateCertificateContext(context);
-            ok(dupContext != NULL, "Expected valid duplicate\n");
-            /* Not only is it a duplicate, it's identical: the address is the
-             * same.
-             */
-            ok(dupContext == context, "Expected identical context addresses\n");
-            CertFreeCertificateContext(dupContext);
-            CertFreeCertificateContext(context);
-        }
-        CertCloseStore(store, 0);
+        dupContext = CertDuplicateCertificateContext(context);
+        ok(dupContext != NULL, "Expected valid duplicate\n");
+        /* Not only is it a duplicate, it's identical: the address is the
+         * same.
+         */
+        ok(dupContext == context, "Expected identical context addresses\n");
+        CertFreeCertificateContext(dupContext);
+        CertFreeCertificateContext(context);
     }
+    CertCloseStore(store, 0);
 }
 
 static void testFindCert(void)
 {
     HCERTSTORE store;
+    PCCERT_CONTEXT context = NULL;
+    BOOL ret;
+    CERT_INFO certInfo = { 0 };
+    CRYPT_HASH_BLOB blob;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
-    if (store)
+    if (!store)
+        return;
+
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    /* This has the same name as bigCert */
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+
+    /* Crashes
+    context = CertFindCertificateInStore(NULL, 0, 0, 0, NULL, NULL);
+     */
+
+    /* Check first cert's there, by issuer */
+    certInfo.Subject.pbData = (LPBYTE)subjectName;
+    certInfo.Subject.cbData = sizeof(subjectName);
+    certInfo.SerialNumber.pbData = (LPBYTE)serialNum;
+    certInfo.SerialNumber.cbData = sizeof(serialNum);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_ISSUER_NAME, &certInfo.Subject, NULL);
+    ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+     GetLastError());
+    if (context)
     {
-        PCCERT_CONTEXT context = NULL;
-        BOOL ret;
-        CERT_INFO certInfo = { 0 };
-        CRYPT_HASH_BLOB blob;
-
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert), CERT_STORE_ADD_NEW, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        /* This has the same name as bigCert */
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-
-        /* Crashes
-        context = CertFindCertificateInStore(NULL, 0, 0, 0, NULL, NULL);
-         */
-
-        /* Check first cert's there, by issuer */
-        certInfo.Subject.pbData = (LPBYTE)subjectName;
-        certInfo.Subject.cbData = sizeof(subjectName);
-        certInfo.SerialNumber.pbData = (LPBYTE)serialNum;
-        certInfo.SerialNumber.cbData = sizeof(serialNum);
         context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_ISSUER_NAME, &certInfo.Subject, NULL);
-        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
-         GetLastError());
+         CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+        ok(context != NULL, "Expected more than one cert\n");
         if (context)
         {
-            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
-            ok(context != NULL, "Expected more than one cert\n");
-            if (context)
-            {
-                context = CertFindCertificateInStore(store, X509_ASN_ENCODING,
-                 0, CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
-                ok(context == NULL, "Expected precisely two certs\n");
-            }
+            context = CertFindCertificateInStore(store, X509_ASN_ENCODING,
+             0, CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
+            ok(context == NULL, "Expected precisely two certs\n");
         }
-
-        /* Check second cert's there as well, by subject name */
-        certInfo.Subject.pbData = (LPBYTE)subjectName2;
-        certInfo.Subject.cbData = sizeof(subjectName2);
-        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_SUBJECT_NAME, &certInfo.Subject, NULL);
-        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-        {
-            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
-            ok(context == NULL, "Expected one cert only\n");
-        }
-
-        /* Strange but true: searching for the subject cert requires you to set
-         * the issuer, not the subject
-         */
-        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_SUBJECT_CERT, &certInfo.Subject, NULL);
-        ok(context == NULL, "Expected no certificate\n");
-        certInfo.Subject.pbData = NULL;
-        certInfo.Subject.cbData = 0;
-        certInfo.Issuer.pbData = (LPBYTE)subjectName2;
-        certInfo.Issuer.cbData = sizeof(subjectName2);
-        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
-        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-        {
-            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
-            ok(context == NULL, "Expected one cert only\n");
-        }
-
-        /* The nice thing about hashes, they're unique */
-        blob.pbData = (LPBYTE)bigCertHash;
-        blob.cbData = sizeof(bigCertHash);
-        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_SHA1_HASH, &blob, NULL);
-        ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
-         GetLastError());
-        if (context)
-        {
-            context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-             CERT_FIND_ISSUER_NAME, &certInfo.Subject, context);
-            ok(context == NULL, "Expected one cert only\n");
-        }
-
-        CertCloseStore(store, 0);
     }
+
+    /* Check second cert's there as well, by subject name */
+    certInfo.Subject.pbData = (LPBYTE)subjectName2;
+    certInfo.Subject.cbData = sizeof(subjectName2);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SUBJECT_NAME, &certInfo.Subject, NULL);
+    ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_NAME, &certInfo.Subject, context);
+        ok(context == NULL, "Expected one cert only\n");
+    }
+
+    /* Strange but true: searching for the subject cert requires you to set
+     * the issuer, not the subject
+     */
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SUBJECT_CERT, &certInfo.Subject, NULL);
+    ok(context == NULL, "Expected no certificate\n");
+    certInfo.Subject.pbData = NULL;
+    certInfo.Subject.cbData = 0;
+    certInfo.Issuer.pbData = (LPBYTE)subjectName2;
+    certInfo.Issuer.cbData = sizeof(subjectName2);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
+    ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_CERT, &certInfo.Subject, context);
+        ok(context == NULL, "Expected one cert only\n");
+    }
+
+    /* The nice thing about hashes, they're unique */
+    blob.pbData = (LPBYTE)bigCertHash;
+    blob.cbData = sizeof(bigCertHash);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SHA1_HASH, &blob, NULL);
+    ok(context != NULL, "CertFindCertificateInStore failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SHA1_HASH, &certInfo.Subject, context);
+        ok(context == NULL, "Expected one cert only\n");
+    }
+
+    CertCloseStore(store, 0);
 }
 
 static void testGetSubjectCert(void)
 {
     HCERTSTORE store;
+    PCCERT_CONTEXT context1, context2;
+    CERT_INFO info = { 0 };
+    BOOL ret;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
-    if (store != NULL)
-    {
-        PCCERT_CONTEXT context1, context2;
-        CERT_INFO info = { 0 };
-        BOOL ret;
+    if (!store)
+        return;
 
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, &context1);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
-        ok(context1 != NULL, "Expected a context\n");
-        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
-        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
-         GetLastError());
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, &context1);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
+    ok(context1 != NULL, "Expected a context\n");
+    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+     certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+     GetLastError());
 
-        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
-         NULL);
-        ok(!context2 && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
-        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
-         &info);
-        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
-        info.SerialNumber.cbData = sizeof(serialNum);
-        info.SerialNumber.pbData = (LPBYTE)serialNum;
-        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
-         &info);
-        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
-        info.Issuer.cbData = sizeof(subjectName2);
-        info.Issuer.pbData = (LPBYTE)subjectName2;
-        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
-         &info);
-        ok(context2 != NULL,
-         "CertGetSubjectCertificateFromStore failed: %08lx\n", GetLastError());
-        /* Not only should this find a context, but it should be the same
-         * (same address) as context1.
-         */
-        ok(context1 == context2, "Expected identical context addresses\n");
-        CertFreeCertificateContext(context2);
+    context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+     NULL);
+    ok(!context2 && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+    context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+     &info);
+    ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+    info.SerialNumber.cbData = sizeof(serialNum);
+    info.SerialNumber.pbData = (LPBYTE)serialNum;
+    context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+     &info);
+    ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+    info.Issuer.cbData = sizeof(subjectName2);
+    info.Issuer.pbData = (LPBYTE)subjectName2;
+    context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+     &info);
+    ok(context2 != NULL,
+     "CertGetSubjectCertificateFromStore failed: %08lx\n", GetLastError());
+    /* Not only should this find a context, but it should be the same
+     * (same address) as context1.
+     */
+    ok(context1 == context2, "Expected identical context addresses\n");
+    CertFreeCertificateContext(context2);
 
-        CertFreeCertificateContext(context1);
-        CertCloseStore(store, 0);
-    }
+    CertFreeCertificateContext(context1);
+    CertCloseStore(store, 0);
 }
 
 /* This expires in 1970 or so */
