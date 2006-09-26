@@ -145,6 +145,8 @@ static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
 #define RTL_TEXDRAW    3
 #define RTL_TEXTEX     4
 
+/* NOTE: When adding fields to this structure, make sure to update the default
+ * values in wined3d_main.c as well. */
 typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
   int vs_mode;

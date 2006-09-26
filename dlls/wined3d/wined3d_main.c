@@ -32,13 +32,19 @@ void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 
+/* When updating default value here, make sure to update winecfg as well,
+ * where appropriate. */
 wined3d_settings_t wined3d_settings = 
 {
-  VS_HW,   /* Hardware by default */
-  PS_NONE, /* Disabled by default */
-  VBO_HW,  /* Hardware by default */
-  FALSE,   /* Use of GLSL disabled by default */
-  RTL_AUTO /* Automatically determine best locking method */
+    VS_HW,          /* Hardware by default */
+    PS_NONE,        /* Disabled by default */
+    VBO_HW,         /* Hardware by default */
+    FALSE,          /* Use of GLSL disabled by default */
+    SHADER_ARB,     /* Use ARB vertex programs, when available */
+    SHADER_ARB,     /* Use ARB fragment programs, when available */
+    NP2_NONE,       /* Box NPOT textures */
+    RTL_AUTO,       /* Automatically determine best locking method */
+    64*1024*1024    /* 64MB texture memory by default */
 };
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
