@@ -1203,16 +1203,16 @@ static LRESULT Configure(CodecInfo *pi, HWND hWnd)
 
 static LRESULT About(CodecInfo *pi, HWND hWnd)
 {
-  CHAR szTitle[20];
-  CHAR szAbout[128];
+  WCHAR szTitle[20];
+  WCHAR szAbout[128];
 
   /* pre-condition */
   assert(MSRLE32_hModule != 0);
 
-  LoadStringA(MSRLE32_hModule, IDS_NAME, szTitle, sizeof(szTitle));
-  LoadStringA(MSRLE32_hModule, IDS_ABOUT, szAbout, sizeof(szAbout));
+  LoadStringW(MSRLE32_hModule, IDS_NAME, szTitle, sizeof(szTitle));
+  LoadStringW(MSRLE32_hModule, IDS_ABOUT, szAbout, sizeof(szAbout));
 
-  MessageBoxA(hWnd, szAbout, szTitle, MB_OK|MB_ICONINFORMATION);
+  MessageBoxW(hWnd, szAbout, szTitle, MB_OK|MB_ICONINFORMATION);
 
   return ICERR_OK;
 }

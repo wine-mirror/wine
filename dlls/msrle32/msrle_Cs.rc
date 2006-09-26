@@ -28,5 +28,5 @@ STRINGTABLE DISCARDABLE
 {
 	IDS_NAME	"WINE-MS-RLE"
 	IDS_DESCRIPTION	"Wine MS-RLE video kodek"
-	IDS_ABOUT       "Wine MS-RLE video kodek\nCopyright 2002 Michael Günnewig"
+	IDS_ABOUT       L"Wine MS-RLE video kodek\nCopyright 2002 Michael Günnewig"
 }
