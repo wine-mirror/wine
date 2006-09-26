@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "msipriv.h"
@@ -58,6 +59,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
     MSIDATABASE *db = (MSIDATABASE *) arg;
     DWORD r;
 
+    msi_free(db->path);
     free_cached_tables( db );
     msi_free_transforms( db );
     msi_destroy_stringtable( db->strings );
@@ -77,15 +79,19 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     HRESULT r;
     MSIDATABASE *db = NULL;
     UINT ret = ERROR_FUNCTION_FAILED;
-    LPCWSTR szMode;
+    LPCWSTR szMode, save_path;
     STATSTG stat;
     BOOL created = FALSE;
+    WCHAR path[MAX_PATH];
+
+    static const WCHAR backslash[] = {'\\',0};
 
     TRACE("%s %s\n",debugstr_w(szDBPath),debugstr_w(szPersist) );
 
     if( !pdb )
         return ERROR_INVALID_PARAMETER;
 
+    save_path = szDBPath;
     szMode = szPersist;
     if( HIWORD( szPersist ) )
     {
@@ -161,6 +167,17 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         FIXME("Failed to allocate a handle\n");
         goto end;
     }
+
+    if (!strchrW( save_path, '\\' ))
+    {
+        GetCurrentDirectoryW( MAX_PATH, path );
+        lstrcatW( path, backslash );
+        lstrcatW( path, save_path );
+    }
+    else
+        lstrcpyW( path, save_path );
+
+    db->path = strdupW( path );
 
     if( TRACE_ON( msi ) )
         enum_stream_names( stg );

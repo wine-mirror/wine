@@ -513,6 +513,10 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIHANDLE handle;
     UINT r;
 
+    static const WCHAR OriginalDatabase[] =
+        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
+    static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
+
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
     if( szPackage[0] == '#' )
@@ -551,19 +555,15 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if( !package )
         return ERROR_FUNCTION_FAILED;
 
-    /* 
-     * FIXME:  I don't think this is right.  Maybe we should be storing the
-     * name of the database in the MSIDATABASE structure and fetching this
-     * info from there, or maybe this is only relevant to cached databases.
-     */
     if( szPackage[0] != '#' )
     {
-        static const WCHAR OriginalDatabase[] =
-          {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
-        static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
-
         MSI_SetPropertyW( package, OriginalDatabase, szPackage );
         MSI_SetPropertyW( package, Database, szPackage );
+    }
+    else
+    {
+        MSI_SetPropertyW( package, OriginalDatabase, db->path );
+        MSI_SetPropertyW( package, Database, db->path );
     }
 
     *pPackage = package;

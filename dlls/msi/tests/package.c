@@ -454,14 +454,16 @@ static void test_getsourcepath( void )
     sz = sizeof buffer -1;
     strcpy(buffer,"x bad");
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
-    ok( r == ERROR_DIRECTORY, "return value wrong\n");
+    todo_wine
+    {
+        ok( r == ERROR_DIRECTORY, "return value wrong\n");
+    }
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
-    todo_wine {
     sz = sizeof buffer -1;
     buffer[0] = 'x';
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
@@ -472,13 +474,10 @@ static void test_getsourcepath( void )
     strcpy(buffer,"x bad");
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, &sz );
     ok( r == ERROR_MORE_DATA, "return value wrong\n");
-    }
     ok( buffer[0] == 'x', "buffer modified\n");
 
-    todo_wine {
     r = MsiGetSourcePath( hpkg, "TARGETDIR", NULL, NULL );
     ok( r == ERROR_SUCCESS, "return value wrong\n");
-    }
 
     r = MsiGetSourcePath( hpkg, "TARGETDIR ", NULL, NULL );
     ok( r == ERROR_DIRECTORY, "return value wrong\n");
@@ -489,10 +488,8 @@ static void test_getsourcepath( void )
     r = MsiGetSourcePath( hpkg, "TARGETDIR", buffer, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "return value wrong\n");
 
-    todo_wine {
     r = MsiGetSourcePath( hpkg, "TARGETDIR", NULL, &sz );
     ok( r == ERROR_SUCCESS, "return value wrong\n");
-    }
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
@@ -2696,6 +2693,32 @@ static void test_featureparents(void)
     MsiCloseHandle(hpkg);
 }
 
+static void test_installprops(void)
+{
+    MSIHANDLE hpkg, hdb;
+    CHAR path[MAX_PATH];
+    CHAR buf[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    GetCurrentDirectory(MAX_PATH, path);
+    lstrcat(path, "\\");
+    lstrcat(path, msifile);
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create database\n");
+
+    hpkg = package_from_db(hdb);
+    ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle(hdb);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "DATABASE", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -2713,4 +2736,5 @@ START_TEST(package)
     test_removefiles();
     test_appsearch();
     test_featureparents();
+    test_installprops();
 }

@@ -137,7 +137,7 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
         if (len)
             len--;
         WideCharToMultiByte( CP_ACP, 0, str, -1, awbuf->str.a, *sz, NULL, NULL );
-        if ( *sz && (len >= *sz) )
+        if ( awbuf->str.a && *sz && (len >= *sz) )
             awbuf->str.a[*sz - 1] = 0;
     }
 
