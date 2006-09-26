@@ -3,6 +3,7 @@
  * Russian Language Support
  *
  * Copyright 2003 Igor Stepin
+ * Copyright 2006 Vitaliy Margolen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -82,7 +83,7 @@ BEGIN
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,55
 
-    LTEXT	    "Поддержка Vertex Shader: ",IDC_STATIC,15,199,120,30
+    LTEXT	    "Вершинные шейдеры: ",IDC_STATIC,15,199,120,30
     COMBOBOX	    IDC_D3D_VSHADER_MODE,120,197,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
@@ -160,14 +161,18 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
+    GROUPBOX        " Выбор драйвера ",IDC_STATIC,8,4,244,195
     LTEXT	    "Звуковой драйвер: ",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON	    "Панель управления",IDC_AUDIO_CONTROL_PANEL,170,50,80,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Аппаратное ускорение: ",IDC_STATIC,15,215,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Программная эмуляция",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Частота (герц):",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,100,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Кодирование (бит):",IDC_STATIC,144,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,216,230,30,52,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Эмуляция драйвера",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -214,63 +219,63 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
-    IDS_DLL_WARNING_CAPTION "Warning: system library"
-    IDS_DLL_NATIVE          "native"
-    IDS_DLL_BUILTIN         "builtin"
-    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
-    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
-    IDS_DLL_DISABLED        "disabled"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DLL_WARNING             "Изменение порядка загрузки этой библиотеки не рекомендуется.\nВы действительно хотите изменить порядок?"
+    IDS_DLL_WARNING_CAPTION     "Внимание: системная библиотека"
+    IDS_DLL_NATIVE              "родная"
+    IDS_DLL_BUILTIN             "встроенная"
+    IDS_DLL_NATIVE_BUILTIN      "родная, встроенная"
+    IDS_DLL_BUILTIN_NATIVE      "встроенная, родная"
+    IDS_DLL_DISABLED            "отключена"
+    IDS_DEFAULT_SETTINGS        "Установки по умолчанию"
+    IDS_EXECUTABLE_FILTER       "Программы Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS     "Использовать по умолчанию"
+    IDS_SELECT_EXECUTABLE       "Выберите исполняемый файл"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-    IDS_SHADER_MODE_EMULATION   "Emulated"
+    IDS_SHADER_MODE_HARDWARE    "Включены"
+    IDS_SHADER_MODE_NONE        "Выключены"
+    IDS_SHADER_MODE_EMULATION   "Эмуляция"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "Автоопределить"
+    IDS_DRIVE_FIXED             "Жесткий диск"
+    IDS_DRIVE_REMOTE            "Сетевой диск"
+    IDS_DRIVE_REMOVABLE         "Дисковод"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Невозможно создать новый диск.\n\nУ каждого диска должна быть буква - от A до Z, и у Вас уже 26 дисков."
+    IDS_SYSTEM_DRIVE_LABEL      "Системный диск"
+    IDS_CONFIRM_DELETE_C        "Вы действительно хотите удалить диск C?\n\nБольшинство Windows програм перестанут работать без диска C. Если Вы все же решили удалить диск, не забудьте создать новый!"
+    IDS_COL_DRIVELETTER         "Диск"
+    IDS_COL_DRIVEMAPPING        "Путь"
+    IDS_NO_DRIVE_C              "Вы не назначили диск C.\n\nНе забудьте его создать!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ARTS             "aRts Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_FULL              "Полное"
+    IDS_ACCEL_STANDARD          "Стандартное"
+    IDS_ACCEL_BASIC             "Минимальное"
+    IDS_ACCEL_EMULATION         "Эмуляция"
+    IDS_DRIVER_ALSA             "ALSA драйвер"
+    IDS_DRIVER_ARTS             "aRts драйвер"
+    IDS_DRIVER_ESOUND           "EsounD драйвер"
+    IDS_DRIVER_OSS              "OSS драйвер"
+    IDS_DRIVER_JACK             "JACK драйвер"
+    IDS_DRIVER_NAS              "NAS драйвер"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) драйвер"
+    IDS_DRIVER_COREAUDIO        "CoreAudio драйвер"
+    IDS_OPEN_DRIVER_ERROR       "Невозможно открыть %s!"
+    IDS_SOUNDDRIVERS            "Аудио драйвера"
+    IDS_DEVICES_WAVEOUT         "Устройство вывода звука"
+    IDS_DEVICES_WAVEIN          "Устройство ввода звука"
+    IDS_DEVICES_MIDIOUT         "Устройство вывода MIDI"
+    IDS_DEVICES_MIDIIN          "Устройство ввода MIDI"
+    IDS_DEVICES_AUX             "Дополнительное устройство"
+    IDS_DEVICES_MIXER           "Устройство микширования"
+    IDS_UNAVAILABLE_DRIVER      "Драйвер, указанный в реестре, не найден!\n\nУдалить \"%s\" из реестра?"
+    IDS_WARNING                 "Внимание"
 END
