@@ -572,7 +572,7 @@ static void query_file_path(MSIHANDLE hpkg, LPCSTR file, LPSTR buff)
 
 static void test_settargetpath(void)
 {
-    char tempdir[MAX_PATH+8], buffer[MAX_PATH];
+    char tempdir[MAX_PATH+8], buffer[MAX_PATH], file[MAX_PATH];
     DWORD sz;
     MSIHANDLE hpkg;
     UINT r;
@@ -584,81 +584,40 @@ static void test_settargetpath(void)
     r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
     ok( r == S_OK, "failed to add directory entry: %d\n" , r );
 
-    r = run_query( hdb, /* these tables required by Windows Installer for MsiSetTargetPath */
-            "CREATE TABLE `Component` ( "
-            "`Component` CHAR(72) NOT NULL, "
-            "`ComponentId` CHAR(38), "
-            "`Directory_` CHAR(72) NOT NULL, "
-            "`Attributes` SHORT NOT NULL, "
-            "`Condition` CHAR(255), "
-            "`KeyPath` CHAR(72) "
-            "PRIMARY KEY `Component`)" );
+    r = create_component_table( hdb );
     ok( r == S_OK, "cannot create Component table: %d\n", r );
 
-    r = run_query( hdb,
-            "INSERT INTO `Component`  "
-            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
-            "VALUES( 'WinWorkAround', '{83e2694d-0864-4124-9323-6d37630912a1}', 'TARGETDIR', 8, '', 'FL_dummycomponent')" );
+    r = add_component_entry( hdb, "'RootComp', '{83e2694d-0864-4124-9323-6d37630912a1}', 'TARGETDIR', 8, '', 'RootFile'" );
     ok( r == S_OK, "cannot add dummy component: %d\n", r );
 
-    r = run_query( hdb,
-            "INSERT INTO `Component`  "
-            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
-            "VALUES( 'TestComp', '{A3FB59C8-C293-4F7E-B8C5-F0E1D8EEE4E5}', 'TestDir', 0, '', 'TestFile')" );
+    r = add_component_entry( hdb, "'TestComp', '{A3FB59C8-C293-4F7E-B8C5-F0E1D8EEE4E5}', 'TestDir', 0, '', 'TestFile'" );
     ok( r == S_OK, "cannot add test component: %d\n", r );
 
-    r = run_query( hdb,
-            "CREATE TABLE `Feature` ( "
-            "`Feature` CHAR(38) NOT NULL, "
-            "`Feature_Parent` CHAR(38), "
-            "`Title` CHAR(64), "
-            "`Description` CHAR(255), "
-            "`Display` SHORT NOT NULL, "
-            "`Level` SHORT NOT NULL, "
-            "`Directory_` CHAR(72), "
-            "`Attributes` SHORT NOT NULL "
-            "PRIMARY KEY `Feature`)" );
+    r = create_feature_table( hdb );
     ok( r == S_OK, "cannot create Feature table: %d\n", r );
 
-    r = run_query( hdb,
-            "INSERT INTO `Feature` "
-            "(`Feature`, `Feature_Parent`, `Display`, `Level`, `Attributes`) "
-            "VALUES( 'TestFeature', '', 0, 1, 0 )" );
+    r = add_feature_entry( hdb, "'TestFeature', '', '', '', 0, 1, '', 0" );
     ok( r == ERROR_SUCCESS, "cannot add TestFeature to Feature table: %d\n", r );
 
-    r = run_query( hdb,
-            "CREATE TABLE `FeatureComponents` ( "
-            "`Feature_` CHAR(38) NOT NULL, "
-            "`Component_` CHAR(72) NOT NULL "
-            "PRIMARY KEY `Feature_` )" );
+    r = create_feature_components_table( hdb );
     ok( r == S_OK, "cannot create FeatureComponents table: %d\n", r );
 
-    r = run_query( hdb,
-            "INSERT INTO `FeatureComponents` "
-            "(`Feature_`, `Component_`) "
-            "VALUES( 'TestFeature', 'TestComp' )" );
+    r = add_feature_components_entry( hdb, "'TestFeature', 'RootComp'" );
+    ok( r == S_OK, "cannot insert component into FeatureComponents table: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'TestFeature', 'TestComp'" );
     ok( r == S_OK, "cannot insert component into FeatureComponents table: %d\n", r );
 
     add_directory_entry( hdb, "'TestParent', 'TARGETDIR', 'TestParent'" );
     add_directory_entry( hdb, "'TestDir', 'TestParent', 'TestDir'" );
 
-    r = run_query( hdb,
-            "CREATE TABLE `File` ("
-            "`File` CHAR(72) NOT NULL, "
-            "`Component_` CHAR(72) NOT NULL, "
-            "`FileName` CHAR(255) NOT NULL, "
-            "`FileSize` LONG NOT NULL, "
-            "`Version` CHAR(72), "
-            "`Language` CHAR(20), "
-            "`Attributes` SHORT, "
-            "`Sequence` SHORT NOT NULL "
-            "PRIMARY KEY `File`)" );
+    r = create_file_table( hdb );
     ok( r == S_OK, "cannot create File table: %d\n", r );
 
-    r = run_query( hdb,
-            "INSERT INTO `File` "
-            "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
-            "VALUES( 'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1 )" );
+    r = add_file_entry( hdb, "'RootFile', 'RootComp', 'rootfile.txt', 0, '', '1033', 8192, 1" );
+    ok( r == S_OK, "cannot add file to the File table: %d\n", r );
+
+    r = add_file_entry( hdb, "'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1" );
     ok( r == S_OK, "cannot add file to the File table: %d\n", r );
 
     hpkg = package_from_db( hdb );
@@ -687,32 +646,45 @@ static void test_settargetpath(void)
 
     sz = sizeof tempdir - 1;
     r = MsiGetTargetPath( hpkg, "TARGETDIR", tempdir, &sz );
-    if ( r == S_OK )
+    sprintf( file, "%srootfile.txt", tempdir );
+    query_file_path( hpkg, "[#RootFile]", buffer );
+    ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
+    ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer );
+
+    GetTempFileName( tempdir, "_wt", 0, buffer );
+    sprintf( tempdir, "%s\\subdir", buffer );
+
+    r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath on file returned %d\n", r );
+
+    r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
+
+    DeleteFile( buffer );
+
+    r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
+
+    r = GetFileAttributes( buffer );
+    ok ( r == INVALID_FILE_ATTRIBUTES, "file/directory exists after MsiSetTargetPath. Attributes: %08X\n", r );
+
+    r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
+
+    sz = sizeof buffer - 1;
+    lstrcat( tempdir, "\\" );
+    r = MsiGetTargetPath( hpkg, "TARGETDIR", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
+    todo_wine
     {
-        if ( GetTempFileName( tempdir, "_wt", 0, buffer ) )
-        {
-            sprintf( tempdir, "%s\\subdir", buffer );
-            r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
-            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on file returned %d\n", r );
+        ok( !lstrcmp(buffer, tempdir), "Expected %s, got %s\n", tempdir, buffer);
+    }
 
-            r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
-            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
-
-            DeleteFile( buffer );
-
-            r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
-            ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
-
-            r = GetFileAttributes( buffer );
-            ok ( r == INVALID_FILE_ATTRIBUTES, "file/directory exists after MsiSetTargetPath. Attributes: %08X\n", r );
-
-            r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
-            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
-        } else {
-            trace("GetTempFileName failed, cannot do some tests\n");
-        }
-    } else {
-        trace( "MsiGetTargetPath failed: %d\n", r );
+    sprintf( file, "%srootfile.txt", tempdir );
+    query_file_path( hpkg, "[#RootFile]", buffer );
+    todo_wine
+    {
+        ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
     }
 
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
@@ -721,7 +693,12 @@ static void test_settargetpath(void)
     query_file_path( hpkg, "[#TestFile]", buffer );
     ok( !lstrcmp(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
         "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
-    
+
+    sz = sizeof buffer - 1;
+    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
+    ok( !lstrcmp(buffer, "C:\\one\\two\\"), "Expected C:\\one\\two\\, got %s\n", buffer);
+
     MsiCloseHandle( hpkg );
 }
 
