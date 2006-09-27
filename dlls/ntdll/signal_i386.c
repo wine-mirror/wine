@@ -521,7 +521,7 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
  */
 inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
-    void *stack = (void *)ESP_sig(sigcontext);
+    void *stack = (void *)(ESP_sig(sigcontext) & ~3);
     TEB *teb = get_current_teb();
     struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
 
