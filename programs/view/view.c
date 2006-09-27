@@ -96,6 +96,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    GetClientRect(hwnd, &r);
 	    width = r.right - r.left;
 	    height = r.bottom - r.top;
+	    deltax = deltay = 0;
 	    InvalidateRect( hwnd, NULL, TRUE );
 	  }
 	  break;
