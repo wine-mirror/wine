@@ -1865,6 +1865,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             glXMakeCurrent(object->display, oldDrawable, oldContext);
         }
 
+        /* Set the surface alignment. This never changes, so we are safe to set it once per context*/
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, 4);");
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, 4);");
+
         LEAVE_GL();
 
         TRACE("Set swapchain to %p\n", object);
