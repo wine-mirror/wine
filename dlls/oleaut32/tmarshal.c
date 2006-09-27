@@ -416,6 +416,7 @@ TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
         DeleteCriticalSection(&This->crit);
         if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
         VirtualFree(This->asmstubs, 0, MEM_RELEASE);
+        HeapFree(GetProcessHeap(), 0, This->lpvtbl);
         CoTaskMemFree(This);
     }
     return refCount;
