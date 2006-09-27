@@ -6,6 +6,7 @@ MODULE    = localspl.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
+	localmon.c \
 	localspl_main.c
 
 @MAKE_DLL_RULES@

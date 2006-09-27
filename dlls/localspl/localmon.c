@@ -41,20 +41,30 @@
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
 /*****************************************************
- *      DllMain
+ *      InitializePrintMonitor  (LOCALSPL.@)
+ *
+ * Initialize the Monitor for the Local Ports
+ *
+ * PARAMS
+ *  regroot [I] Registry-Path, where the settings are stored
+ *
+ * RETURNS
+ *  Success: Pointer to a MONITOREX Structure
+ *  Failure: NULL
+ *
+ * NOTES
+ *  Native localspl.dll fails, when the Section "Ports" is missing in "win.ini".
+ *
  */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+
+LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
 {
-    TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
-
-    switch(fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;           /* prefer native version */
-
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls( hinstDLL );
-            break;
+    FIXME("(%s) stub\n", debugstr_w(regroot));
+    if (!regroot || !regroot[0]) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
     }
-    return TRUE;
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
 }
