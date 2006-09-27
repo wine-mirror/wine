@@ -238,8 +238,8 @@ static void _makeFnTableA(PSecurityFunctionTableA fnTableA,
              * implemented (yikes)
              */
             size_t tableSize = inFnTableA->dwVersion == 1 ?
-             (LPBYTE)&inFnTableA->SetContextAttributesA -
-             (LPBYTE)inFnTableA : sizeof(SecurityFunctionTableA);
+             (const BYTE *)&inFnTableA->SetContextAttributesA -
+             (const BYTE *)inFnTableA : sizeof(SecurityFunctionTableA);
 
             memcpy(fnTableA, inFnTableA, tableSize);
             /* override this, since we can do it internally anyway */
@@ -309,8 +309,8 @@ static void _makeFnTableW(PSecurityFunctionTableW fnTableW,
              * implemented (yikes)
              */
             size_t tableSize = inFnTableW->dwVersion == 1 ?
-             (LPBYTE)&inFnTableW->SetContextAttributesW -
-             (LPBYTE)inFnTableW : sizeof(SecurityFunctionTableW);
+             (const BYTE *)&inFnTableW->SetContextAttributesW -
+             (const BYTE *)inFnTableW : sizeof(SecurityFunctionTableW);
 
             memcpy(fnTableW, inFnTableW, tableSize);
             /* override this, since we can do it internally anyway */
@@ -374,7 +374,7 @@ static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
         /* odd, I know, but up until Name and Comment the structures are
          * identical
          */
-        memcpy(info, inInfoW ? inInfoW : (PSecPkgInfoW)inInfoA, sizeof(*info));
+        memcpy(info, inInfoW ? inInfoW : (const SecPkgInfoW *)inInfoA, sizeof(*info));
         if (inInfoW)
         {
             info->Name = SECUR32_strdupW(inInfoW->Name);
