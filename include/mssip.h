@@ -115,7 +115,7 @@ typedef struct SIP_INDIRECT_DATA_ {
 #include <poppack.h>
 
 typedef BOOL (WINAPI * pCryptSIPGetSignedDataMsg)(SIP_SUBJECTINFO *,DWORD *,DWORD,DWORD *,BYTE *);
-typedef BOOL (WINAPI * pCryptSIPPutSignedDataMsg)(SIP_SUBJECTINFO *,DWORD,DWORD,DWORD,BYTE);
+typedef BOOL (WINAPI * pCryptSIPPutSignedDataMsg)(SIP_SUBJECTINFO *,DWORD,DWORD *,DWORD,BYTE *);
 typedef BOOL (WINAPI * pCryptSIPCreateIndirectData)(SIP_SUBJECTINFO *,DWORD *,SIP_INDIRECT_DATA *);
 typedef BOOL (WINAPI * pCryptSIPVerifyIndirectData)(SIP_SUBJECTINFO *,SIP_INDIRECT_DATA *);
 typedef BOOL (WINAPI * pCryptSIPRemoveSignedDataMsg)(SIP_SUBJECTINFO *,DWORD);
@@ -162,7 +162,7 @@ typedef struct SIP_ADD_NEWPROVIDER_
 /**********************************************************************/
 
 BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO *,DWORD *,DWORD,DWORD *,BYTE *);
-BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO *,DWORD,DWORD,DWORD,BYTE);
+BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO *,DWORD,DWORD *,DWORD,BYTE *);
 BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO *,DWORD *,SIP_INDIRECT_DATA *);
 BOOL WINAPI CryptSIPVerifyIndirectData(SIP_SUBJECTINFO *,SIP_INDIRECT_DATA *);
 BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO *,DWORD);
