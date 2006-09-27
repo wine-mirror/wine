@@ -828,14 +828,26 @@ struct atl_thunk
  */
 static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct atl_thunk *thunk = (struct atl_thunk *)rec->ExceptionInformation[1];
+    const struct atl_thunk *thunk = (const struct atl_thunk *)rec->ExceptionInformation[1];
+    BOOL ret = FALSE;
 
-    if (thunk->movl != 0x042444c7 || thunk->jmp != 0xe9) return FALSE;
-    *((DWORD *)context->Esp + 1) = thunk->this;
-    context->Eip = (DWORD_PTR)(&thunk->func + 1) + thunk->func;
-    TRACE( "emulating ATL thunk at %p, func=%08lx arg=%08lx\n",
-           thunk, context->Eip, *((DWORD *)context->Esp + 1) );
-    return TRUE;
+    __TRY
+    {
+        if (thunk->movl == 0x042444c7 && thunk->jmp == 0xe9)
+        {
+            *((DWORD *)context->Esp + 1) = thunk->this;
+            context->Eip = (DWORD_PTR)(&thunk->func + 1) + thunk->func;
+            TRACE( "emulating ATL thunk at %p, func=%08lx arg=%08lx\n",
+                   thunk, context->Eip, *((DWORD *)context->Esp + 1) );
+            ret = TRUE;
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return FALSE;
+    }
+    __ENDTRY
+    return ret;
 }
 
 
