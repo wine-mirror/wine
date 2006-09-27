@@ -415,7 +415,9 @@ static HRESULT WINAPI StgStreamImpl_Write(
   if (newSize.u.LowPart > This->streamSize.u.LowPart)
   {
     /* grow stream */
-    IStream_SetSize(iface, newSize);
+    res = IStream_SetSize(iface, newSize);
+    if (FAILED(res))
+      return res;
   }
 
   /*
