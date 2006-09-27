@@ -1412,6 +1412,7 @@ typedef struct SHADER_OPCODE {
 } SHADER_OPCODE;
 
 typedef struct SHADER_OPCODE_ARG {
+    IWineD3DStateBlock* stateBlock;
     IWineD3DBaseShader* shader;
     shader_reg_maps* reg_maps;
     CONST SHADER_OPCODE* opcode;
@@ -1472,7 +1473,7 @@ extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
 /* ARB_[vertex/fragment]_program helper functions */
 extern void shader_arb_load_constants(
-    IWineD3DStateBlock* iface,
+    IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader);
 
@@ -1503,7 +1504,7 @@ extern void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 extern void set_glsl_shader_program(IWineD3DDevice *iface);
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
 extern void shader_glsl_load_constants(
-    IWineD3DStateBlock* iface,
+    IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader);
 

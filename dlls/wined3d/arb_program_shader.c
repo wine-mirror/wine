@@ -102,19 +102,19 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
  * worry about the Integers or Booleans
  */
 void shader_arb_load_constants(
-    IWineD3DStateBlock* iface,
+    IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
-    
-    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)stateBlock->wineD3DDevice->wineD3D)->gl_info;
+   
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
+    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)deviceImpl->wineD3D)->gl_info;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexDeclarationImpl* vertexDeclaration = 
             (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
-        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) vshader->baseShader.device;
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants for vertex shader */

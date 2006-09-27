@@ -1852,9 +1852,9 @@ inline static void drawPrimitiveDrawStrided(
        
     /* Load any global constants/uniforms that may have been set by the application */
     if (wined3d_settings.vs_selected_mode == SHADER_GLSL || wined3d_settings.ps_selected_mode == SHADER_GLSL)
-        shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
+        shader_glsl_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
     else if (wined3d_settings.vs_selected_mode== SHADER_ARB || wined3d_settings.ps_selected_mode == SHADER_ARB)
-        shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
+        shader_arb_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction); 
         
     /* Draw vertex-by-vertex */
     if (useDrawStridedSlow)

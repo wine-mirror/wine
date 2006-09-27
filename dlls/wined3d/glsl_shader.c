@@ -269,12 +269,14 @@ void shader_glsl_load_constantsB(
  * Loads the app-supplied constants into the currently set GLSL program.
  */
 void shader_glsl_load_constants(
-    IWineD3DStateBlock* iface,
+    IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
-    
-    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)stateBlock->wineD3DDevice->wineD3D)->gl_info;
+   
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
+    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*) deviceImpl->wineD3D)->gl_info;
+
     GLhandleARB *constant_locations;
     struct list *constant_list;
     GLhandleARB programId;
@@ -288,7 +290,6 @@ void shader_glsl_load_constants(
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) vshader;
-        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) vshader->baseShader.device;
         GLint pos;
 
         IWineD3DVertexDeclarationImpl* vertexDeclaration =
@@ -332,7 +333,7 @@ void shader_glsl_load_constants(
         constant_list = &stateBlock->set_pconstantsF;
 
         /* Load pixel shader samplers */
-        shader_glsl_load_psamplers(gl_info, iface);
+        shader_glsl_load_psamplers(gl_info, (IWineD3DStateBlock*) stateBlock);
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
         shader_glsl_load_constantsF(pshader, gl_info, GL_LIMITS(pshader_constantsF),
