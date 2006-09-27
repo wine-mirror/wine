@@ -1008,8 +1008,8 @@ RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 /***********************************************************************
  *             RpcMgmtSetServerStackSize (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcMgmtSetServerStackSize(unsigned int ThreadStackSize)
+RPC_STATUS WINAPI RpcMgmtSetServerStackSize(unsigned long ThreadStackSize)
 {
-  FIXME("(0x%x): stub\n", ThreadStackSize);
+  FIXME("(0x%lx): stub\n", ThreadStackSize);
   return RPC_S_OK;
 }
