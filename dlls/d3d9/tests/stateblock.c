@@ -23,6 +23,8 @@
 
 static HMODULE d3d9_handle = 0;
 
+static DWORD texture_stages;
+
 static HWND create_window(void)
 {
     WNDCLASS wc = {0};
@@ -761,7 +763,7 @@ static void transform_set_handler(
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
     ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
-    hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE7, &tdata->texture7);
+    hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
     ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &tdata->world0);
@@ -786,7 +788,7 @@ static void transform_get_handler(
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
     ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
 
-    hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE7, &tdata->texture7);
+    hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
     ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &tdata->world0);
@@ -1316,6 +1318,8 @@ static void test_state_management(
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hret == D3D_OK, "GetDeviceCaps returned %#lx.\n", hret);
     if (hret != D3D_OK) return;
+
+    texture_stages = caps.MaxTextureBlendStages;
 
     if (caps.VertexShaderVersion & 0xffff) {
         shader_constants_queue_test(device, &tests[tcount], &buffer[bcount], FALSE);
