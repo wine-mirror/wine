@@ -72,6 +72,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "보기"
     IDS_DESCRIPTION         "정규 메타파일 보기"
 END

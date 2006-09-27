@@ -72,6 +72,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "Visualizza"
     IDS_DESCRIPTION         "Visualizzatore di Metafile Regolari"
 END

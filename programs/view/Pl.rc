@@ -71,6 +71,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Podgl¹d plików WMF (Regular Metafile)"
 END

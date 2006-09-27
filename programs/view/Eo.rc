@@ -70,6 +70,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "Videbligo"
     IDS_DESCRIPTION         "Videbligilo laý Regulaj Metadosieroj"
 END

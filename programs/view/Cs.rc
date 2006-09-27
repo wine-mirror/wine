@@ -75,6 +75,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Obyèejný prohlížeè metasouborù"
 END

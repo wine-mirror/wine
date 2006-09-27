@@ -71,6 +71,5 @@ END
 /*FIXME: to be completed*/
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Regular Metafile Viewer"
 END

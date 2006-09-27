@@ -23,16 +23,14 @@
 /* global variables */
 
 HINSTANCE hInst;
-char szAppName[9];
+char szAppName[5] = "View";
 char szTitle[80];
 
 BOOL InitApplication(HINSTANCE hInstance)
 {
   WNDCLASSEX wc;
 
-  /* Load the application name and description strings */
-
-  LoadString(hInstance, IDS_APPNAME, szAppName, sizeof(szAppName));
+  /* Load the application description strings */
   LoadString(hInstance, IDS_DESCRIPTION, szTitle, sizeof(szTitle));
 
   /* Fill in window class structure with parameters that describe the

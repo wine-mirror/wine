@@ -69,6 +69,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Toont Metafile bestanden"
 END

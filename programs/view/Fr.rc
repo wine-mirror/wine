@@ -72,8 +72,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APPNAME             "View" /* Should be "Visionneuse", but this name
-                                    * is used elsewhere for a resource name,
-				    * and anything else than "View" crashes */
     IDS_DESCRIPTION         "Visionneuse de fichiers Metafile réguliers"
 END
