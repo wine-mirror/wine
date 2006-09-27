@@ -66,7 +66,8 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR,LPSTR*);
 static HRESULT WINAPI _SHStrDupAW(LPCWSTR,LPSTR*);
 
 
-static void FillNumberFmt(NUMBERFMTW *fmt, WCHAR decimal_buffer[8], WCHAR thousand_buffer[8])
+static void FillNumberFmt(NUMBERFMTW *fmt, LPWSTR decimal_buffer, int decimal_bufwlen,
+                          LPWSTR thousand_buffer, int thousand_bufwlen)
 {
   WCHAR grouping[64];
   WCHAR *c;
@@ -74,11 +75,11 @@ static void FillNumberFmt(NUMBERFMTW *fmt, WCHAR decimal_buffer[8], WCHAR thousa
   GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt->LeadingZero, sizeof(fmt->LeadingZero)/sizeof(WCHAR));
   GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_INEGNUMBER|LOCALE_RETURN_NUMBER, (LPWSTR)&fmt->LeadingZero, sizeof(fmt->NegativeOrder)/sizeof(WCHAR));
   fmt->NumDigits = 0;
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimal_buffer, sizeof(decimal_buffer)/sizeof(WCHAR));
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousand_buffer, sizeof(thousand_buffer)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimal_buffer, decimal_bufwlen);
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousand_buffer, thousand_bufwlen);
   fmt->lpThousandSep = thousand_buffer;
   fmt->lpDecimalSep = decimal_buffer;
-  
+
   /* 
    * Converting grouping string to number as described on 
    * http://blogs.msdn.com/oldnewthing/archive/2006/04/18/578251.aspx
@@ -114,8 +115,9 @@ static int FormatInt(LONGLONG qdwValue, LPWSTR pszBuf, int cchBuf)
   WCHAR *c;
   BOOL neg = (qdwValue < 0);
 
-  FillNumberFmt(&fmt, decimal, thousand);  
-    
+  FillNumberFmt(&fmt, decimal, sizeof decimal / sizeof (WCHAR),
+                thousand, sizeof thousand / sizeof (WCHAR));
+
   c = &buf[24];
   *(--c) = 0;
   do
@@ -147,7 +149,8 @@ static int FormatDouble(double value, int decimals, LPWSTR pszBuf, int cchBuf)
   
   snprintfW(buf, 64, flfmt, value);
 
-  FillNumberFmt(&fmt, decimal, thousand);  
+  FillNumberFmt(&fmt, decimal, sizeof decimal / sizeof (WCHAR),
+                 thousand, sizeof thousand / sizeof (WCHAR));
   fmt.NumDigits = decimals;
   return GetNumberFormatW(LOCALE_USER_DEFAULT, 0, buf, &fmt, pszBuf, cchBuf);
 }
