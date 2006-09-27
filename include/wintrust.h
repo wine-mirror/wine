@@ -118,20 +118,6 @@ typedef struct _WINTRUST_DATA
     DWORD  dwUIContext;
 } WINTRUST_DATA, *PWINTRUST_DATA;
 
-#define WTD_UI_ALL    1
-#define WTD_UI_NONE   2
-#define WTD_UI_NOBAD  3
-#define WTD_UI_NOGOOD 4
-
-#define WTD_REVOKE_NONE       0
-#define WTD_REVOKE_WHOLECHAIN 1
-
-#define WTD_CHOICE_FILE    1
-#define WTD_CHOICE_CATALOG 2
-#define WTD_CHOICE_BLOB    3
-#define WTD_CHOICE_SIGNER  4
-#define WTD_CHOICE_CERT    5
-
 #define WTD_STATEACTION_IGNORE           0
 #define WTD_STATEACTION_VERIFY           1
 #define WTD_STATEACTION_CLOSE            2
