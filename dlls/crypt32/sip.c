@@ -266,12 +266,91 @@ end_function:
  *  Success: TRUE. pgSubject contains the SIP GUID.
  *  Failure: FALSE. (Look at GetLastError()).
  *
+ * NOTES
+ *  On failure pgSubject will contain a NULL GUID.
+ *  The handle is always preferred above the filename.
  */
 BOOL WINAPI CryptSIPRetrieveSubjectGuid
       (LPCWSTR FileName, HANDLE hFileIn, GUID *pgSubject)
 {
-    FIXME("(%s %p %p) stub!\n", wine_dbgstr_w(FileName), hFileIn, pgSubject);
-    return FALSE;
+    HANDLE hFile;
+    HANDLE hFilemapped;
+    LPVOID pMapped;
+    BOOL   bRet = FALSE;
+    DWORD  fileSize;
+    IMAGE_DOS_HEADER *dos;
+    /* FIXME, find out if there is a name for this GUID */
+    static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+
+    TRACE("(%s %p %p)\n", wine_dbgstr_w(FileName), hFileIn, pgSubject);
+
+    if (!pgSubject || (!FileName && !hFileIn))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* Set pgSubject to zero's */
+    memset(pgSubject, 0 , sizeof(GUID));
+
+    if (hFileIn)
+        /* Use the given handle, make sure not to close this one ourselves */
+        hFile = hFileIn;
+    else
+    {
+        hFile = CreateFileW(FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        /* Last error is set by CreateFile */
+        if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+    }
+
+    hFilemapped = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    /* Last error is set by CreateFileMapping */
+    if (!hFilemapped) goto cleanup3;
+
+    pMapped = MapViewOfFile(hFilemapped, FILE_MAP_READ, 0, 0, 0);
+    /* Last error is set by MapViewOfFile */
+    if (!pMapped) goto cleanup2;
+
+    /* Native checks it right here */
+    fileSize = GetFileSize(hFile, NULL);
+    if (fileSize < 4)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto cleanup1;
+    }
+
+    /* As everything is in place now we start looking at the file header */
+    dos = (IMAGE_DOS_HEADER *)pMapped;
+    if (dos->e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        memcpy(pgSubject, &unknown, sizeof(GUID));
+        SetLastError(S_OK);
+        bRet = TRUE;
+        goto cleanup1;
+    }
+
+    /* FIXME
+     * There is a lot more to be checked:
+     * - Check for MSFC in the header
+     * - Check for the keys CryptSIPDllIsMyFileType and CryptSIPDllIsMyFileType2
+     *   under HKLM\Software\Microsoft\Cryptography\OID\EncodingType 0. Here are 
+     *   functions listed that need check if a SIP Provider can deal with the 
+     *   given file.
+     */
+
+    /* Let's set the most common error for now */
+    SetLastError(TRUST_E_SUBJECT_FORM_UNKNOWN);
+
+    /* The 3 different cleanups are here because we shouldn't overwrite the last error */
+cleanup1:
+    UnmapViewOfFile(pMapped);
+cleanup2:
+    CloseHandle(hFilemapped);
+cleanup3:
+    /* If we didn't open this one we shouldn't close it (hFile is a copy) */
+    if (!hFileIn) CloseHandle(hFile);
+
+    return bRet;
 }
 
 /***********************************************************************
