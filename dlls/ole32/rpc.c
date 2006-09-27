@@ -924,6 +924,7 @@ struct local_server_params
 {
     CLSID clsid;
     IStream *stream;
+    HANDLE ready_event;
 };
 
 /* FIXME: should call to rpcss instead */
@@ -945,12 +946,14 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
     get_localserver_pipe_name(pipefn, &lsp->clsid);
 
-    HeapFree(GetProcessHeap(), 0, lsp);
-
     hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX,
                               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
                               4096, 4096, 500 /* 0.5 second timeout */, NULL );
-    
+
+    SetEvent(lsp->ready_event);
+
+    HeapFree(GetProcessHeap(), 0, lsp);
+
     if (hPipe == INVALID_HANDLE_VALUE)
     {
         FIXME("pipe creation failed for %s, le is %ld\n", debugstr_w(pipefn), GetLastError());
@@ -958,7 +961,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     }
     
     while (1) {
-        if (!ConnectNamedPipe(hPipe,NULL)) {
+        if (!ConnectNamedPipe(hPipe,NULL) && GetLastError() != ERROR_PIPE_CONNECTED) {
             ERR("Failure during ConnectNamedPipe %ld, ABORT!\n",GetLastError());
             break;
         }
@@ -1002,14 +1005,18 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 void RPC_StartLocalServer(REFCLSID clsid, IStream *stream)
 {
     DWORD tid;
-    HANDLE thread;
+    HANDLE thread, ready_event;
     struct local_server_params *lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
 
     lsp->clsid = *clsid;
     lsp->stream = stream;
     IStream_AddRef(stream);
+    lsp->ready_event = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
     CloseHandle(thread);
     /* FIXME: failure handling */
+
+    WaitForSingleObject(ready_event, INFINITE);
+    CloseHandle(ready_event);
 }
