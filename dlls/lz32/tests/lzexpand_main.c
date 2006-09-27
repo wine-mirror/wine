@@ -460,10 +460,10 @@ static void create_fileW(WCHAR *fnameW)
   DWORD retval;
 
   file = LZOpenFileW(fnameW, &ofs, OF_CREATE);
-  ok(file >= 0, "LZOpenFileA failed on creation\n");
+  ok(file >= 0, "LZOpenFileW failed on creation\n");
   LZClose(file);
   retval = GetFileAttributesW(fnameW);
-  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA('%s'): error %ld\n", ofs.szPathName, GetLastError());
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesW('%s'): error %ld\n", ofs.szPathName, GetLastError());
 }
 
 static void delete_fileW(WCHAR *fnameW)
@@ -473,10 +473,10 @@ static void delete_fileW(WCHAR *fnameW)
   DWORD retval;
 
   file = LZOpenFileW(fnameW, &ofs, OF_DELETE);
-  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  ok(file >= 0, "LZOpenFileW failed on delete\n");
   LZClose(file);
   retval = GetFileAttributesW(fnameW);
-  ok(retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file ('%s')\n", ofs.szPathName);
+  ok(retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesW succeeded on deleted file ('%s')\n", ofs.szPathName);
 }
 
 static void test_LZOpenFileW_existing_compressed(void)
@@ -637,11 +637,11 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
      "LZOpenFileW succeeded on nonexistent file\n");
   todo_wine
   ok(test.cBytes == 0xA5, 
-     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
-     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
   ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n", 
+     "LZOpenFileW returned '%s', but was expected to return '%s' or '%s'\n",
      test.szPathName, expected, filled_0xA5);
 }
 
