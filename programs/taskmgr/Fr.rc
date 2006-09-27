@@ -143,7 +143,7 @@ BEGIN
         MENUITEM "&Terminer le processus",                ID_PROCESS_PAGE_ENDPROCESS
         MENUITEM "Terminer l'&arborescence du processus", ID_PROCESS_PAGE_ENDPROCESSTREE
 
-        MENUITEM "&Débugguer",                      ID_PROCESS_PAGE_DEBUG
+        MENUITEM "&Déboguer",                      ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
         POPUP "Définir la &priorité"
         BEGIN
@@ -161,7 +161,7 @@ BEGIN
 
         END
         MENUITEM "Définir l'&affinité...",            ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "Modifier les &canaux de débuggage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+	MENUITEM "Modifier les &canaux de débogage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -171,7 +171,7 @@ END
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 259, 210
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "About Task Manager"
+CAPTION "À propos du gestionnaire des tâches"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "Gestionnaire des tâches v1.0\nCopyright (C) 1999 - 2001\nby Brian Palmer (brianp@reactos.org)",
@@ -494,5 +494,5 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Place le processus dans la classe de priorité INFERIEURE A LA NORMALE"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Place le processus dans la classe de priorité BASSE"
-    IDS_LICENSE             "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\r\n\r\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\r\n\r\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+    IDS_LICENSE             "Ce programme est libre, vous pouvez la redistribuer et/ou le modifier selon les termes de la Licence Publique Générale GNU Limitée publiée par la Free Software Foundation (version 2.1 ou bien toute autre version ultérieure choisie par vous).\r\n\r\nCe programme est distribuée car potentiellement utile, mais SANS AUCUNE GARANTIE, ni explicite ni implicite, y compris les garanties de commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la Licence Publique Générale GNU Limitée pour plus de détails.\r\n\r\nVous devez avoir reçu une copie de la Licence Publique Générale GNU Limitée en même temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02111-1301, États-Unis."
 END
