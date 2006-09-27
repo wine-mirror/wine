@@ -43,10 +43,6 @@ BEGIN
       MENUITEM "&Opp",				IDM_UP
       MENUITEM "Ne&d",				IDM_DOWN
     END
-    POPUP "&Informasjon"
-    BEGIN
-	MENUITEM "&Hallo",			IDM_HELLO
-    END
 END
 
 

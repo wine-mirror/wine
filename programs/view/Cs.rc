@@ -48,10 +48,6 @@ BEGIN
       MENUITEM "Nahor&u",			IDM_UP
       MENUITEM "&Dolù",				IDM_DOWN
     END
-    POPUP "&Informace"
-    BEGIN
-	MENUITEM "A&hoj",			IDM_HELLO
-    END
 END
 
 

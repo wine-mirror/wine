@@ -43,10 +43,6 @@ BEGIN
       MENUITEM "&Arriba",			IDM_UP
       MENUITEM "A&bajo",			IDM_DOWN
     END
-    POPUP "&Info"
-    BEGIN
-	MENUITEM "&Hola",			IDM_HELLO
-    END
 END
 
 

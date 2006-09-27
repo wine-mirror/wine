@@ -43,10 +43,6 @@ BEGIN
       MENUITEM "&Supre",				IDM_UP
       MENUITEM "&Sube",				IDM_DOWN
     END
-    POPUP "&Pri..."
-    BEGIN
-	MENUITEM "&Saluton",			IDM_HELLO
-    END
 END
 
 

@@ -42,10 +42,6 @@ BEGIN
       MENUITEM "В&верх",				IDM_UP
       MENUITEM "В&низ",				IDM_DOWN
     END
-    POPUP "&Информация"
-    BEGIN
-	MENUITEM "&Привет",			IDM_HELLO
-    END
 END
 
 

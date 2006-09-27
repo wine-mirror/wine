@@ -44,10 +44,6 @@ BEGIN
       MENUITEM "Przesuñ w &górê",				IDM_UP
       MENUITEM "Przesuñ w &dó³",				IDM_DOWN
     END
-    POPUP "&Info"
-    BEGIN
-	MENUITEM "&Hello",			IDM_HELLO
-    END
 END
 
 

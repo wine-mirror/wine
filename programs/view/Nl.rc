@@ -42,10 +42,6 @@ BEGIN
       MENUITEM "&Omhoog", IDM_UP
       MENUITEM "O&mlaag", IDM_DOWN
     END
-    POPUP "&Info"
-    BEGIN
-	MENUITEM "&Hallo",    IDM_HELLO
-    END
 END
 
 

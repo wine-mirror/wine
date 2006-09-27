@@ -44,10 +44,6 @@ BEGIN
       MENUITEM "&Acima",				IDM_UP
       MENUITEM "A&baixo",				IDM_DOWN
     END
-    POPUP "&Informações"
-    BEGIN
-	MENUITEM "&Hello",			IDM_HELLO
-    END
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -67,10 +63,6 @@ BEGIN
       MENUITEM "&Direita",			IDM_RIGHT
       MENUITEM "&Acima",				IDM_UP
       MENUITEM "A&baixo",				IDM_DOWN
-    END
-    POPUP "&Informações"
-    BEGIN
-	MENUITEM "&Olá",			IDM_HELLO
     END
 END
 

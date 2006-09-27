@@ -45,10 +45,6 @@ BEGIN
       MENUITEM "&Haut",				IDM_UP
       MENUITEM "&Bas",				IDM_DOWN
     END
-    POPUP "&Info"
-    BEGIN
-	MENUITEM "&Allô",			IDM_HELLO
-    END
 END
 
 

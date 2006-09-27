@@ -71,10 +71,6 @@ LRESULT CALLBACK WndProc(HWND hwnd,
     case WM_COMMAND: /* message: command from application menu */
       switch (GET_WM_COMMAND_ID(wparam,lparam))
 	{
-	case IDM_HELLO:
-	  MessageBox( hwnd , "Hello there world!", "Hello", MB_OK);
-	  break;
-
 	case IDM_OPEN:
 	  {
 	    char filename[MAX_PATH];

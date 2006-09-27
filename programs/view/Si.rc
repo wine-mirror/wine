@@ -43,10 +43,6 @@ BEGIN
       MENUITEM "&Gor",				IDM_UP
       MENUITEM "&Dol",				IDM_DOWN
     END
-    POPUP "&Informacije"
-    BEGIN
-	MENUITEM "&Hello",			IDM_HELLO
-    END
 END
 
 

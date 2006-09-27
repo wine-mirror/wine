@@ -43,10 +43,6 @@ BEGIN
       MENUITEM "&Yukarý",			IDM_UP
       MENUITEM "A&þaðý",			IDM_DOWN
     END
-    POPUP "&Bilgi"
-    BEGIN
-	MENUITEM "&Merhaba",			IDM_HELLO
-    END
 END
 
 
