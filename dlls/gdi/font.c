@@ -2583,11 +2583,18 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
 DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
                                  LPKERNINGPAIR lpKerningPairs )
 {
-    DC *dc = DC_GetDCPtr(hDC);
+    DC *dc;
     DWORD ret = 0;
 
     TRACE("(%p,%ld,%p)\n", hDC, cPairs, lpKerningPairs);
 
+    if (!cPairs && lpKerningPairs)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    dc = DC_GetDCPtr(hDC);
     if (!dc) return 0;
 
     if (dc->gdiFont)

@@ -433,7 +433,7 @@ static void test_text_extents(void)
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         trace("Skipping remainder of text extents test on a Win9x platform\n");
-        SelectObject(hdc, hfont);
+        hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);
         ReleaseDC(0, hdc);
         return;
@@ -473,7 +473,7 @@ static void test_text_extents(void)
        "GetTextExtentExPointW with lpnFit and alpDx both NULL returns incorrect results\n");
     HeapFree(GetProcessHeap(), 0, extents);
 
-    SelectObject(hdc, hfont);
+    hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
     ReleaseDC(NULL, hdc);
 }
@@ -528,29 +528,77 @@ static void test_GetKerningPairs(void)
     {
         const char face_name[LF_FACESIZE];
         LONG height;
+        /* some interesting fields from OUTLINETEXTMETRIC */
+        LONG tmHeight, tmAscent, tmDescent;
+        UINT otmEMSquare;
+        INT  otmAscent;
+        INT  otmDescent;
+        UINT otmLineGap;
+        UINT otmsCapEmHeight;
+        UINT otmsXHeight;
+        INT  otmMacAscent;
+        INT  otmMacDescent;
+        UINT otmMacLineGap;
+        UINT otmusMinimumPPEM;
         /* small subset of kerning pairs to test */
         DWORD total_kern_pairs;
-        const KERNINGPAIR kern_pair[20];
+        const KERNINGPAIR kern_pair[26];
     } kd[] =
     {
-        {"Arial", -34, 20,
+        {"Arial", 12, 12, 9, 3,
+                  2048, 7, -2, 1, 5, 2, 8, -2, 0, 9,
+                  26,
+            {
+                {' ','A',-1},{' ','T',0},{' ','Y',0},{'1','1',-1},
+                {'A',' ',-1},{'A','T',-1},{'A','V',-1},{'A','W',0},
+                {'A','Y',-1},{'A','v',0},{'A','w',0},{'A','y',0},
+                {'F',',',-1},{'F','.',-1},{'F','A',-1},{'L',' ',0},
+                {'L','T',-1},{'L','V',-1},{'L','W',-1},{'L','Y',-1},
+                {915,912,+1},{915,913,-1},{910,912,+1},{910,913,-1},
+                {933,970,+1},{933,972,-1}
+                }
+        },
+        {"Arial", -34, 39, 32, 7,
+                  2048, 25, -7, 5, 17, 9, 31, -7, 1, 9,
+                  26,
             {
                 {' ','A',-2},{' ','T',-1},{' ','Y',-1},{'1','1',-3},
                 {'A',' ',-2},{'A','T',-3},{'A','V',-3},{'A','W',-1},
                 {'A','Y',-3},{'A','v',-1},{'A','w',-1},{'A','y',-1},
                 {'F',',',-4},{'F','.',-4},{'F','A',-2},{'L',' ',-1},
-                {'L','T',-3},{'L','V',-3},{'L','W',-3},{'L','Y',-3}
+                {'L','T',-3},{'L','V',-3},{'L','W',-3},{'L','Y',-3},
+                {915,912,+3},{915,913,-3},{910,912,+3},{910,913,-3},
+                {933,970,+2},{933,972,-3}
             }
         },
-        { "Arial", 120, 20,
+        { "Arial", 120, 120, 97, 23,
+                   2048, 79, -23, 16, 54, 27, 98, -23, 4, 9,
+                   26,
             {
                 {' ','A',-6},{' ','T',-2},{' ','Y',-2},{'1','1',-8},
                 {'A',' ',-6},{'A','T',-8},{'A','V',-8},{'A','W',-4},
                 {'A','Y',-8},{'A','v',-2},{'A','w',-2},{'A','y',-2},
                 {'F',',',-12},{'F','.',-12},{'F','A',-6},{'L',' ',-4},
-                {'L','T',-8},{'L','V',-8},{'L','W',-8},{'L','Y',-8}
+                {'L','T',-8},{'L','V',-8},{'L','W',-8},{'L','Y',-8},
+                {915,912,+9},{915,913,-10},{910,912,+9},{910,913,-8},
+                {933,970,+6},{933,972,-10}
+            }
+        },
+#if 0 /* this set fails due to +1/-1 errors (rounding bug?), needs investigation. */
+        { "Arial", 1024 /* usually 1/2 of EM Square */, 1024, 830, 194,
+                   2048, 668, -193, 137, 459, 229, 830, -194, 30, 9,
+                   26,
+            {
+                {' ','A',-51},{' ','T',-17},{' ','Y',-17},{'1','1',-68},
+                {'A',' ',-51},{'A','T',-68},{'A','V',-68},{'A','W',-34},
+                {'A','Y',-68},{'A','v',-17},{'A','w',-17},{'A','y',-17},
+                {'F',',',-102},{'F','.',-102},{'F','A',-51},{'L',' ',-34},
+                {'L','T',-68},{'L','V',-68},{'L','W',-68},{'L','Y',-68},
+                {915,912,+73},{915,913,-84},{910,912,+76},{910,913,-68},
+                {933,970,+54},{933,972,-83}
             }
         }
+#endif
     };
     LOGFONT lf;
     HFONT hfont, hfont_old;
@@ -574,11 +622,15 @@ static void test_GetKerningPairs(void)
 
     for (i = 0; i < sizeof(kd)/sizeof(kd[0]); i++)
     {
+        OUTLINETEXTMETRICW otm;
+
         if (!is_font_installed(kd[i].face_name))
         {
             trace("%s is not installed so skipping this test\n", kd[i].face_name);
             continue;
         }
+
+        trace("testing font %s, height %ld\n", kd[i].face_name, kd[i].height);
 
         memset(&lf, 0, sizeof(lf));
         strcpy(lf.lfFaceName, kd[i].face_name);
@@ -588,9 +640,44 @@ static void test_GetKerningPairs(void)
 
         hfont_old = SelectObject(hdc, hfont);
 
+        SetLastError(0xdeadbeef);
+        otm.otmSize = sizeof(otm); /* just in case for Win9x compatibility */
+        ok(GetOutlineTextMetricsW(hdc, sizeof(otm), &otm) == sizeof(otm), "GetOutlineTextMetricsW error %ld\n", GetLastError());
+
+        ok(kd[i].tmHeight == otm.otmTextMetrics.tmHeight, "expected %ld, got %ld\n",
+           kd[i].tmHeight, otm.otmTextMetrics.tmHeight);
+        ok(kd[i].tmAscent == otm.otmTextMetrics.tmAscent, "expected %ld, got %ld\n",
+           kd[i].tmAscent, otm.otmTextMetrics.tmAscent);
+        ok(kd[i].tmDescent == otm.otmTextMetrics.tmDescent, "expected %ld, got %ld\n",
+           kd[i].tmDescent, otm.otmTextMetrics.tmDescent);
+
+        ok(kd[i].otmEMSquare == otm.otmEMSquare, "expected %u, got %u\n",
+           kd[i].otmEMSquare, otm.otmEMSquare);
+        ok(kd[i].otmAscent == otm.otmAscent, "expected %d, got %d\n",
+           kd[i].otmAscent, otm.otmAscent);
+        ok(kd[i].otmDescent == otm.otmDescent, "expected %d, got %d\n",
+           kd[i].otmDescent, otm.otmDescent);
+        ok(kd[i].otmLineGap == otm.otmLineGap, "expected %u, got %u\n",
+           kd[i].otmLineGap, otm.otmLineGap);
+todo_wine {
+        ok(kd[i].otmsCapEmHeight == otm.otmsCapEmHeight, "expected %u, got %u\n",
+           kd[i].otmsCapEmHeight, otm.otmsCapEmHeight);
+        ok(kd[i].otmsXHeight == otm.otmsXHeight, "expected %u, got %u\n",
+           kd[i].otmsXHeight, otm.otmsXHeight);
+        ok(kd[i].otmMacAscent == otm.otmMacAscent, "expected %d, got %d\n",
+           kd[i].otmMacAscent, otm.otmMacAscent);
+        ok(kd[i].otmMacDescent == otm.otmMacDescent, "expected %d, got %d\n",
+           kd[i].otmMacDescent, otm.otmMacDescent);
+#if 0 /* this one succeeds due to expected 0, enable it when removing todo */
+        ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
+           kd[i].otmMacLineGap, otm.otmMacLineGap);
+#endif
+        ok(kd[i].otmusMinimumPPEM == otm.otmusMinimumPPEM, "expected %u, got %u\n",
+           kd[i].otmusMinimumPPEM, otm.otmusMinimumPPEM);
+}
+
         total_kern_pairs = GetKerningPairsW(hdc, 0, NULL);
-        trace("font %s, height %ld, total_kern_pairs %lu\n",
-              kd[i].face_name, kd[i].height, total_kern_pairs);
+        trace("total_kern_pairs %lu\n", total_kern_pairs);
         kern_pair = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pair));
 
 #if 0 /* Win98 (GetKerningPairsA) and XP behave differently here, the test passes on XP */
@@ -617,16 +704,18 @@ static void test_GetKerningPairs(void)
             DWORD j;
 #if 0
             if (kern_pair[n].wFirst < 127 && kern_pair[n].wSecond < 127)
-                trace("wFirst '%c', wSecond '%c', iKernAmount %d\n",
+                trace("{'%c','%c',%d},\n",
                       kern_pair[n].wFirst, kern_pair[n].wSecond, kern_pair[n].iKernAmount);
 #endif
             for (j = 0; j < kd[i].total_kern_pairs; j++)
             {
                 if (kern_pair[n].wFirst == kd[i].kern_pair[j].wFirst &&
-                    kern_pair[n].wSecond == kd[i].kern_pair[j].wSecond &&
-                    kern_pair[n].iKernAmount == kd[i].kern_pair[j].iKernAmount)
+                    kern_pair[n].wSecond == kd[i].kern_pair[j].wSecond)
                 {
-                    /*trace("match\n");*/
+                    ok(kern_pair[n].iKernAmount == kd[i].kern_pair[j].iKernAmount,
+                       "pair %d:%d got %d, expected %d\n",
+                       kern_pair[n].wFirst, kern_pair[n].wSecond,
+                       kern_pair[n].iKernAmount, kd[i].kern_pair[j].iKernAmount);
                     matches++;
                 }
             }

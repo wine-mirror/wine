@@ -4176,7 +4176,19 @@ static DWORD parse_format0_kern_subtable(GdiFont font,
     {
         kern_pair->wFirst = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].left)];
         kern_pair->wSecond = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].right)];
-        kern_pair->iKernAmount = MulDiv((short)GET_BE_WORD(tt_kern_pair[i].value), font->ppem, font->ft_face->units_per_EM);
+        /* this algorithm appears to better match what Windows does */
+        kern_pair->iKernAmount = (short)GET_BE_WORD(tt_kern_pair[i].value) * font->ppem;
+        if (kern_pair->iKernAmount < 0)
+        {
+            kern_pair->iKernAmount -= font->ft_face->units_per_EM / 2;
+            kern_pair->iKernAmount -= font->ppem;
+        }
+        else if (kern_pair->iKernAmount > 0)
+        {
+            kern_pair->iKernAmount += font->ft_face->units_per_EM / 2;
+            kern_pair->iKernAmount += font->ppem;
+        }
+        kern_pair->iKernAmount /= font->ft_face->units_per_EM;
 
         TRACE("left %u right %u value %d\n",
                kern_pair->wFirst, kern_pair->wSecond, kern_pair->iKernAmount);
