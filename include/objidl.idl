@@ -2370,3 +2370,67 @@ interface IThumbnailExtractor : IUnknown
     HRESULT OnFileUpdated(
         [in] IStorage *pStg);
 }
+
+
+cpp_quote("#ifdef USE_COM_CONTEXT_DEF")
+
+typedef DWORD CPFLAGS;
+
+typedef struct tagContextProperty
+{
+    GUID policyId;
+    CPFLAGS flags;
+    [unique] IUnknown *pUnk;
+} ContextProperty;
+
+[
+    local,
+    object,
+    uuid(000001c1-0000-0000-C000-000000000046)
+]
+interface IEnumContextProps : IUnknown
+{
+    typedef [unique] IEnumContextProps *LPENUMCONTEXTPROPS;
+
+    HRESULT Next(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] ContextProperty *pContextProperties,
+        [out] ULONG *pceltFetched);
+
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    HRESULT Reset();
+
+    HRESULT Clone(
+        [out] IEnumContextProps **ppEnumContextProps);
+
+    HRESULT Count(
+        [out] ULONG *pcelt);
+}
+
+[
+    local,
+    object,
+    uuid(000001c0-0000-0000-C000-000000000046)
+]
+interface IContext : IUnknown
+{
+    HRESULT SetProperty(
+        [in] REFGUID policyId,
+        [in] CPFLAGS flags,
+        [in] IUnknown *pUnk);
+
+    HRESULT RemovePropert(
+        [in] REFGUID policyId);
+
+    HRESULT GetProperty(
+        [in] REFGUID guid,
+        [out] CPFLAGS *pFlags,
+        [out] IUnknown **ppUnk);
+
+    HRESULT EnumContextProps(
+        [out] IEnumContextProps **ppEnumContextProps);
+}
+
+cpp_quote("#endif /* defined USE_COM_CONTEXT_DEF */")
