@@ -54,7 +54,7 @@ static void test_streamonhglobal(IStream *pStream)
     /* should return S_OK, not S_FALSE */
     hr = IStream_Read(pStream, buffer, sizeof(buffer), &read);
     ok_ole_success(hr, "IStream_Read");
-    ok(read == sizeof(data), "IStream_Read returned read %ld instead of %d\n", read, sizeof(data));
+    ok(read == sizeof(data), "IStream_Read returned read %ld\n", read);
 
     /* ignores HighPart */
     ull.HighPart = -1;
