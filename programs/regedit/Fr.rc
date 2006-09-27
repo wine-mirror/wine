@@ -22,22 +22,6 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-/*
- * Menu
- */
-
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Fichier"
-    BEGIN
-        MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
-    END
-    POPUP "Aid&e"
-    BEGIN
-        MENUITEM "À &propos",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Registres"
@@ -81,16 +65,32 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Rafraîchir\tF5",                ID_VIEW_REFRESH
     END
-    POPUP "&Favoris"
+    POPUP "&Signets"
     BEGIN
-        MENUITEM "&Ajouter aux Favoris",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Supprimer des Favoris",        ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Ajouter aux signets",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Supprimer des signets",        ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "Aid&e"
     BEGIN
-        MENUITEM "&Sujets de l'aide",                ID_HELP_HELPTOPICS
+        MENUITEM "&Sommaire\tF1",                ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&A propos de l'éditeur de registres",      ID_HELP_ABOUT
+         MENUITEM "&À propos de l'éditeur de registres",      ID_HELP_ABOUT
+    END
+END
+
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Fichier"
+    BEGIN
+        MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
+    END
+    POPUP "Aid&e"
+    BEGIN
+        MENUITEM "À &propos",                  ID_HELP_ABOUT
     END
 END
 
@@ -146,7 +146,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Recherche"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Rechercher:",IDC_STATIC,5,7,119,8
+    LTEXT           "Rechercher :",IDC_STATIC,5,7,119,8
     EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     LTEXT           "Regarder dans:",IDC_STATIC,5, 22, 119, 8
     CHECKBOX        "Clés", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
@@ -197,9 +197,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la valeur DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Nom de la valeur:",IDC_STATIC,5,5,119,8
+    LTEXT           "Nom de la valeur :",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
-    LTEXT           "Données de valeur:",IDC_STATIC,5,30,90,8
+    LTEXT           "Données de valeur :",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
     AUTORADIOBUTTON "Hexadécimale", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
@@ -297,6 +297,21 @@ BEGIN
     IDS_NOTFOUND            "Occurence de '%s' non trouvée"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importer un fichier de registre"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Exporter un fichier de registre"
+    IDS_FILEDIALOG_FILTER         "Fichiers de registres\0*.reg\0Fichiers de registres Win9x/NT4 (REGEDIT4)\0*.reg\0Tous les fichiers (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Poste de travail"
+    IDS_REGISTRY_DEFAULT_VALUE       "(par défaut)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(valeur non définie)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(impossible d'afficher la valeur)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(%d inconnu)"
+END
 /*****************************************************************/
 
 
