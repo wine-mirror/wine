@@ -535,6 +535,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define	PAGE_EXECUTE_WRITECOPY	0x80
 #define	PAGE_GUARD		0x100
 #define	PAGE_NOCACHE		0x200
+#define	PAGE_WRITECOMBINE	0x400
 
 #define MEM_COMMIT              0x00001000
 #define MEM_RESERVE             0x00002000
@@ -545,7 +546,10 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MEM_MAPPED              0x00040000
 #define MEM_RESET               0x00080000
 #define MEM_TOP_DOWN            0x00100000
+#define MEM_WRITE_WATCH         0x00200000
 #define MEM_PHYSICAL            0x00400000
+#define MEM_LARGE_PAGES         0x20000000
+#define MEM_4MB_PAGES           0x80000000
 #ifdef __WINESRC__
 #define MEM_SYSTEM              0x80000000
 #endif
@@ -555,7 +559,10 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define SEC_RESERVE             0x04000000
 #define SEC_COMMIT              0x08000000
 #define SEC_NOCACHE             0x10000000
+#define SEC_LARGE_PAGES         0x80000000
 #define MEM_IMAGE               SEC_IMAGE
+
+#define WRITE_WATCH_FLAG_RESET  0x00000001
 
 
 #define MINCHAR       0x80
