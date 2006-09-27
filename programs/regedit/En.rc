@@ -60,8 +60,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND
-        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT
+        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&View"
     BEGIN
