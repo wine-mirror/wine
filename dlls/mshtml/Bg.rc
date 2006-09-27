@@ -65,7 +65,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Ко&дировка",              IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Пе&чат",                 IDM_PRINT
-        MENUITEM "Опр&есни",               IDM_REFRESH 
+        MENUITEM "Опр&есни",               _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Сво&йства",            IDM_PROPERTIES
@@ -117,7 +117,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Клетка",         IDM_CELL 
             MENUITEM "&Ред",          IDM_ROW
             MENUITEM "&Колона",       IDM_COLUMN
-            MENUITEM "&Таблица",        IDM_TABLE
+            MENUITEM "&Таблица",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -179,7 +179,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Възпроизведи",                     IDM_PLAY
-        MENUITEM "Спри",                     IDM_STOP
+        MENUITEM "Спри",                     IDM_DYNSRCSTOP
         MENUITEM "&Свойства",              IDM_PROPERTIES
     }
 
@@ -203,7 +203,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Добави към от&метките...",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "Възпроизведи",                     IDM_PLAY
-        MENUITEM "Спри",                     IDM_STOP
+        MENUITEM "Спри",                     IDM_DYNSRCSTOP
         MENUITEM "Върни се в началото",                   IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

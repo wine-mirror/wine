@@ -64,7 +64,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Kodlama",               IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Ya&zdýr",                IDM_PRINT
-        MENUITEM "&Yenile",                IDM_REFRESH 
+        MENUITEM "&Yenile",                _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "&Özellikler",            IDM_PROPERTIES
@@ -116,7 +116,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Hücre",        IDM_CELL 
             MENUITEM "&Satýr",        IDM_ROW
             MENUITEM "&Sütun",        IDM_COLUMN
-            MENUITEM "&Tablo",        IDM_TABLE
+            MENUITEM "&Tablo",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Yürüt",                    IDM_PLAY
-        MENUITEM "Durdur",                   IDM_STOP
+        MENUITEM "Durdur",                   IDM_DYNSRCSTOP
         MENUITEM "&Özellikler",              IDM_PROPERTIES
     }
 
@@ -202,7 +202,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Sýk Ku&llanýlanlara Ekle...",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "Yürüt",                    IDM_PLAY
-        MENUITEM "Durdur",                   IDM_STOP
+        MENUITEM "Durdur",                   IDM_DYNSRCSTOP
         MENUITEM "Geri Çevir",               IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

@@ -64,7 +64,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "K&oding",              IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Skr&iv ut",                 IDM_PRINT
-        MENUITEM "Oppdate&r",               IDM_REFRESH 
+        MENUITEM "Oppdate&r",               _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Egenska&per",            IDM_PROPERTIES
@@ -116,7 +116,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Celle",         IDM_CELL 
             MENUITEM "&Rad",          IDM_ROW
             MENUITEM "&Kolonne",       IDM_COLUMN
-            MENUITEM "&Tabell",        IDM_TABLE
+            MENUITEM "&Tabell",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Spill av",                     IDM_PLAY
-        MENUITEM "Stopp",                     IDM_STOP
+        MENUITEM "Stopp",                     IDM_DYNSRCSTOP
         MENUITEM "Egenskape&r",              IDM_PROPERTIES
     }
 
@@ -202,7 +202,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Legg til i &Favoritter . . .",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "Spill av",                     IDM_PLAY
-        MENUITEM "Stopp",                     IDM_STOP
+        MENUITEM "Stopp",                     IDM_DYNSRCSTOP
         MENUITEM "Spol tilbake",                   IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

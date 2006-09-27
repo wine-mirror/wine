@@ -64,7 +64,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Tecken&kodning",                  IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Skriv &ut",                       IDM_PRINT
-        MENUITEM "Upp&datera",                      IDM_REFRESH 
+        MENUITEM "Upp&datera",                      _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "&Egenskapar",                     IDM_PROPERTIES
@@ -116,7 +116,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Cell",         IDM_CELL 
             MENUITEM "&Rad",          IDM_ROW
             MENUITEM "&Kolumn",       IDM_COLUMN
-            MENUITEM "&Tabell",       IDM_TABLE
+            MENUITEM "&Tabell",       IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Spela upp",                       IDM_PLAY
-        MENUITEM "Stoppa",                          IDM_STOP
+        MENUITEM "Stoppa",                          IDM_DYNSRCSTOP
         MENUITEM "&Egenskaper",                     IDM_PROPERTIES
     }
 
@@ -202,7 +202,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Lägg till &i Favoriter...",       IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "Spela upp",                       IDM_PLAY
-        MENUITEM "Stoppa",                          IDM_STOP
+        MENUITEM "Stoppa",                          IDM_DYNSRCSTOP
         MENUITEM "Spola tillbaka",                  IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

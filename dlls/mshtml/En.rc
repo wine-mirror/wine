@@ -64,7 +64,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Encoding",              IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Pr&int",                 IDM_PRINT
-        MENUITEM "&Refresh",               IDM_REFRESH 
+        MENUITEM "&Refresh",               _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "&Properties",            IDM_PROPERTIES
@@ -116,7 +116,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Cell",         IDM_CELL 
             MENUITEM "&Row",          IDM_ROW
             MENUITEM "&Column",       IDM_COLUMN
-            MENUITEM "&Table",        IDM_TABLE
+            MENUITEM "&Table",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Play",                     IDM_PLAY
-        MENUITEM "Stop",                     IDM_STOP
+        MENUITEM "Stop",                     IDM_DYNSRCSTOP
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }
 
@@ -202,7 +202,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Add to &Favorites...",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "Play",                     IDM_PLAY
-        MENUITEM "Stop",                     IDM_STOP
+        MENUITEM "Stop",                     IDM_DYNSRCSTOP
         MENUITEM "Rewind",                   IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

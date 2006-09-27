@@ -51,7 +51,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Koo&daus",                      IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "Tul&osta",                      IDM_PRINT
-        MENUITEM "P&‰ivit‰",                      IDM_REFRESH 
+        MENUITEM "P&‰ivit‰",                      _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "O&minaisuudet",                 IDM_PROPERTIES
@@ -103,7 +103,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Solu",                     IDM_CELL 
             MENUITEM "&Rivi",                     IDM_ROW
             MENUITEM "&Palsta",                   IDM_COLUMN
-            MENUITEM "&Taulukko",                 IDM_TABLE
+            MENUITEM "&Taulukko",                 IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -165,7 +165,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "&Toista",                       IDM_PLAY
-        MENUITEM "P&ys‰yt‰",                      IDM_STOP
+        MENUITEM "P&ys‰yt‰",                      IDM_DYNSRCSTOP
         MENUITEM "O&minaisuuedet",                IDM_PROPERTIES
     }
 
@@ -189,7 +189,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Lis&‰‰ Suosikkeihin...",        IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "&Toista",                       IDM_PLAY
-        MENUITEM "P&ys‰yt‰",                      IDM_STOP
+        MENUITEM "P&ys‰yt‰",                      IDM_DYNSRCSTOP
         MENUITEM "Al&kuun",                       IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

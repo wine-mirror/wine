@@ -49,7 +49,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "K&ódolás",              IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "&Nyomtatás",                 IDM_PRINT
-        MENUITEM "F&rissítés",               IDM_REFRESH 
+        MENUITEM "F&rissítés",               _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Tula&jdonságok",            IDM_PROPERTIES
@@ -101,7 +101,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Cella",         IDM_CELL 
             MENUITEM "&Sor",          IDM_ROW
             MENUITEM "&Oszlop",       IDM_COLUMN
-            MENUITEM "&Tábla",        IDM_TABLE
+            MENUITEM "&Tábla",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -164,7 +164,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     MENUITEM SEPARATOR
     MENUITEM SEPARATOR
     MENUITEM "Lejátszás",                     IDM_PLAY
-    MENUITEM "Leállítás",                     IDM_STOP
+    MENUITEM "Leállítás",                     IDM_DYNSRCSTOP
     MENUITEM "Tula&jdonságok",              IDM_PROPERTIES
     }
 
@@ -188,7 +188,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     MENUITEM "Hozzáa&dás a kedvencekhez...",     IDM_ADDTOFAVOURITES
     MENUITEM SEPARATOR
     MENUITEM "Lejátszás",                     IDM_PLAY
-    MENUITEM "Leállítás",                     IDM_STOP
+    MENUITEM "Leállítás",                     IDM_DYNSRCSTOP
     MENUITEM "Visszatekerés",                   IDM_REWIND
     MENUITEM SEPARATOR
     MENUITEM SEPARATOR

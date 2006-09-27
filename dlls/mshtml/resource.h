@@ -51,7 +51,6 @@
 #define IDM_CELL                2206
 #define IDM_ROW                 2207
 #define IDM_COLUMN              2208
-#define IDM_TABLE               2209
 #define IDM_TABLEPROPERTIES     2210
 #define IDM_CELLPROPERTIES      2211
 
@@ -66,7 +65,6 @@
 #define IDM_SHOWPICTURE         2269
 #define IDM_SAVEPICTUREAS       2270
 #define IDM_PLAY                2271
-#define IDM_STOP                2272
 #define IDM_PRINTTARGET         2273
 
 #define IDM_REWIND              2276
@@ -111,4 +109,4 @@
 #define IDM_DUMPFORMATCACHES    6016
 #define IDM_DUMPLAYOUTRECTS     6017
 
-#define IDM_REFRESH             6042
+#define _IDM_REFRESH            6042

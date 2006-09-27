@@ -66,7 +66,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "인코딩(&E)",              IDM_ENCODING 
         MENUITEM SEPARATOR
         MENUITEM "인쇄(&I)",                 IDM_PRINT
-        MENUITEM "다시 읽기(&R)",               IDM_REFRESH 
+        MENUITEM "다시 읽기(&R)",               _IDM_REFRESH
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "옵션(&P)",            IDM_PROPERTIES
@@ -118,7 +118,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "칸(&C)",         IDM_CELL 
             MENUITEM "가로줄(&R)",          IDM_ROW
             MENUITEM "세로줄(&C)",       IDM_COLUMN
-            MENUITEM "표(&T)",        IDM_TABLE
+            MENUITEM "표(&T)",        IDM_TABLESELECT
         }
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -180,7 +180,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "재생",                     IDM_PLAY
-        MENUITEM "정지",                     IDM_STOP
+        MENUITEM "정지",                     IDM_DYNSRCSTOP
         MENUITEM "속성(&R)",              IDM_PROPERTIES
     }
 
@@ -204,7 +204,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "즐겨찾기에 더하기(&F)...",     IDM_ADDTOFAVOURITES
         MENUITEM SEPARATOR
         MENUITEM "재생",                     IDM_PLAY
-        MENUITEM "정지",                     IDM_STOP
+        MENUITEM "정지",                     IDM_DYNSRCSTOP
         MENUITEM "다시 감기",                   IDM_REWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR

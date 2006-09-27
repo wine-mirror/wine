@@ -19,6 +19,7 @@
 #include "windef.h"
 #include "winuser.h"
 #include "commctrl.h"
+#include "mshtmcid.h"
 
 #include "resource.h"
 
