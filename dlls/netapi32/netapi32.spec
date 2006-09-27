@@ -3,12 +3,14 @@
 @ stub DsDeregisterDnsHostRecords
 @ stub DsEnumerateDomainTrusts
 @ stub DsGetDcClose
-@ stub DsGetDcName
+@ stub DsGetDcNameA # (str str ptr str long ptr)
+@ stdcall DsGetDcNameW(wstr wstr ptr wstr long ptr)
 @ stub DsGetDcNext
 @ stub DsGetDcOpen
 @ stub DsGetDcSiteCoverage
 @ stub DsGetForestTrustInformationW
-@ stub DsGetSiteName
+@ stub DsGetSiteNameA # (str str)
+@ stdcall DsGetSiteNameW(wstr wstr)
 @ stub DsMergeForestTrustInformationW
 @ stdcall DsRoleFreeMemory(ptr)
 @ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr)

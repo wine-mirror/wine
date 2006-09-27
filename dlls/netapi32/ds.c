@@ -29,8 +29,25 @@
 #include "ntsecapi.h"
 #include "wine/debug.h"
 #include "dsrole.h"
+#include "dsgetdc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ds);
+
+DWORD WINAPI DsGetDcNameW(LPCWSTR ComputerName, LPCWSTR AvoidDCName,
+ GUID* DomainGuid, LPCWSTR SiteName, ULONG Flags,
+ PDOMAIN_CONTROLLER_INFOW *DomainControllerInfo)
+{
+    FIXME("(%s, %s, %s, %s, %08lx, %p): stub\n", debugstr_w(ComputerName),
+     debugstr_w(AvoidDCName), debugstr_guid(DomainGuid),
+     debugstr_w(SiteName), Flags, DomainControllerInfo);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD WINAPI DsGetSiteNameW(LPCWSTR ComputerName, LPWSTR *SiteName)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(ComputerName), SiteName);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 /************************************************************
  *  DsRoleFreeMemory (NETAPI32.@)
