@@ -66,6 +66,7 @@ cabinet/libcabinet.def
 capi2032/libcapi2032.def
 cards/libcards.def
 cfgmgr32/libcfgmgr32.def
+clusapi/libclusapi.def
 comctl32/libcomctl32.def
 comdlg32/libcomdlg32.def
 compstui/libcompstui.def

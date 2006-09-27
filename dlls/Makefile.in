@@ -27,6 +27,7 @@ BASEDIRS = \
 	capi2032 \
 	cards \
 	cfgmgr32 \
+	clusapi \
 	comcat \
 	comctl32 \
 	comdlg32 \
@@ -503,6 +504,7 @@ IMPORT_LIBS = \
 	capi2032/libcapi2032.$(IMPLIBEXT) \
 	cards/libcards.$(IMPLIBEXT) \
 	cfgmgr32/libcfgmgr32.$(IMPLIBEXT) \
+	clusapi/libclusapi.$(IMPLIBEXT) \
 	comctl32/libcomctl32.$(IMPLIBEXT) \
 	comdlg32/libcomdlg32.$(IMPLIBEXT) \
 	compstui/libcompstui.$(IMPLIBEXT) \
@@ -643,6 +645,9 @@ cards/libcards.$(IMPLIBEXT): cards/cards.spec $(WINEBUILD)
 
 cfgmgr32/libcfgmgr32.$(IMPLIBEXT): cfgmgr32/cfgmgr32.spec $(WINEBUILD)
 	@cd cfgmgr32 && $(MAKE) libcfgmgr32.$(IMPLIBEXT)
+
+clusapi/libclusapi.$(IMPLIBEXT): clusapi/clusapi.spec $(WINEBUILD)
+	@cd clusapi && $(MAKE) libclusapi.$(IMPLIBEXT)
 
 comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
 	@cd comctl32 && $(MAKE) libcomctl32.$(IMPLIBEXT)

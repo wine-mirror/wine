@@ -171,6 +171,7 @@ ALL_MAKEFILES = \
 	dlls/capi2032/Makefile \
 	dlls/cards/Makefile \
 	dlls/cfgmgr32/Makefile \
+	dlls/clusapi/Makefile \
 	dlls/comcat/Makefile \
 	dlls/comcat/tests/Makefile \
 	dlls/comctl32/Makefile \
@@ -489,6 +490,7 @@ dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules
 dlls/capi2032/Makefile: dlls/capi2032/Makefile.in dlls/Makedll.rules
 dlls/cards/Makefile: dlls/cards/Makefile.in dlls/Makedll.rules
 dlls/cfgmgr32/Makefile: dlls/cfgmgr32/Makefile.in dlls/Makedll.rules
+dlls/clusapi/Makefile: dlls/clusapi/Makefile.in dlls/Makedll.rules
 dlls/comcat/Makefile: dlls/comcat/Makefile.in dlls/Makedll.rules
 dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in dlls/Maketest.rules
 dlls/comctl32/Makefile: dlls/comctl32/Makefile.in dlls/Makedll.rules
