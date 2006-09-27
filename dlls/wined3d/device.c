@@ -95,6 +95,16 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     *pp##type = (IWineD3D##type *) object; \
 }
 
+#define D3DCREATESHADEROBJECTINSTANCE(object, type) { \
+    object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
+    D3DMEMCHECK(object, pp##type); \
+    object->lpVtbl = &IWineD3D##type##_Vtbl;  \
+    object->parent       = parent; \
+    object->ref          = 1; \
+    object->baseShader.device = (IWineD3DDevice*) This; \
+    *pp##type = (IWineD3D##type *) object; \
+}
+
 #define  D3DCREATERESOURCEOBJECTINSTANCE(object, type, d3dtype, _size){ \
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
     D3DMEMCHECK(object, pp##type); \
@@ -1943,7 +1953,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     HRESULT hr = WINED3D_OK;
-    D3DCREATEOBJECTINSTANCE(object, VertexShader)
+    D3DCREATESHADEROBJECTINSTANCE(object, VertexShader)
     object->baseShader.shader_ins = IWineD3DVertexShaderImpl_shader_ins;
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
@@ -1988,7 +1998,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
     HRESULT hr = WINED3D_OK;
 
-    D3DCREATEOBJECTINSTANCE(object, PixelShader)
+    D3DCREATESHADEROBJECTINSTANCE(object, PixelShader)
     object->baseShader.shader_ins = IWineD3DPixelShaderImpl_shader_ins;
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
     if (WINED3D_OK == hr) {

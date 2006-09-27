@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
+#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->baseShader.device)->wineD3D))->gl_info
 
 #if 0 /* Must not be 1 in cvs version */
 # define PSTRACE(A) TRACE A
@@ -102,8 +102,8 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *if
 
 static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWineD3DDevice **pDevice){
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
-    *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
+    IWineD3DDevice_AddRef(This->baseShader.device);
+    *pDevice = This->baseShader.device;
     TRACE("(%p) returning %p\n", This, *pDevice);
     return WINED3D_OK;
 }
@@ -944,7 +944,9 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 }
 
 static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader *iface) {
+
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     CONST DWORD *function = This->baseShader.function;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     HRESULT hr;
@@ -963,7 +965,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
     memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-                                    This->semantics_in, NULL, This->baseShader.function, This->wineD3DDevice->stateBlock);
+        This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
     if (hr != WINED3D_OK) return hr;
     /* FIXME: validate reg_maps against OpenGL */
 

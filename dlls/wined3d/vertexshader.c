@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
+#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->baseShader.device)->wineD3D))->gl_info
 
 /* Shader debugging - Change the following line to enable debugging of software
       vertex shaders                                                             */
@@ -659,6 +659,8 @@ BOOL vshader_input_is_color(
     unsigned int regnum) {
 
     IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+
     DWORD usage_token = This->semantics_in[regnum].usage;
     DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
     DWORD usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
@@ -669,7 +671,7 @@ BOOL vshader_input_is_color(
         vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->vertexDeclaration;
     } else {
         /* D3D9 declaration */
-        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DDeviceImpl *)This->wineD3DDevice)->stateBlock->vertexDecl;
+        vertexDeclaration = (IWineD3DVertexDeclarationImpl *) (deviceImpl->stateBlock->vertexDecl);
     }
 
     if (vertexDeclaration) {
@@ -1136,8 +1138,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *i
 
 static HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
-    *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
+    IWineD3DDevice_AddRef(This->baseShader.device);
+    *pDevice = This->baseShader.device;
     TRACE("(%p) returning %p\n", This, *pDevice);
     return WINED3D_OK;
 }
@@ -1174,6 +1176,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
 static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
     HRESULT hr;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
 
@@ -1201,7 +1204,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* Second pass: figure out registers used, semantics, etc.. */
     memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-       This->semantics_in, This->semantics_out, pFunction, This->wineD3DDevice->stateBlock);
+       This->semantics_in, This->semantics_out, pFunction, deviceImpl->stateBlock);
     if (hr != WINED3D_OK) return hr;
 
     This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;

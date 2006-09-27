@@ -114,6 +114,7 @@ void shader_arb_load_constants(
         IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexDeclarationImpl* vertexDeclaration = 
             (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
+        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) vshader->baseShader.device;
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants for vertex shader */
@@ -129,7 +130,7 @@ void shader_arb_load_constants(
                                    &stateBlock->set_vconstantsF);
 
         /* Upload the position fixup */
-        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, vshader_impl->wineD3DDevice->posFixup));
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, deviceImpl->posFixup));
     }
 
     if (usePixelShader) {
@@ -617,6 +618,8 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -670,7 +673,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
          tex_type = "2D";
   }
 
-  if(This->wineD3DDevice->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+  if (deviceImpl->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
       shader_addline(buffer, "TXP %s, %s, texture[%lu], %s;\n",
           reg_dest, reg_coord, reg_sampler_code, tex_type);
   } else {

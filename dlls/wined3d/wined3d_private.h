@@ -1590,6 +1590,9 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsI;
     shader_reg_maps reg_maps;
 
+    /* Pointer to the parent device */
+    IWineD3DDevice *device;
+
 } IWineD3DBaseShaderClass;
 
 typedef struct IWineD3DBaseShaderImpl {
@@ -1692,7 +1695,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* IWineD3DVertexShaderImpl */
     IUnknown                    *parent;
-    IWineD3DDeviceImpl          *wineD3DDevice;
 
     char                        usesFog;
     DWORD                       usage;
@@ -1726,7 +1728,6 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* IWineD3DPixelShaderImpl */
     IUnknown                   *parent;
-    IWineD3DDeviceImpl         *wineD3DDevice;
 
     /* Pixel shader input semantics */
     semantic semantics_in [MAX_REG_INPUT];

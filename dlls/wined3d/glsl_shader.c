@@ -288,6 +288,7 @@ void shader_glsl_load_constants(
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
         IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) vshader;
+        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) vshader->baseShader.device;
         GLint pos;
 
         IWineD3DVertexDeclarationImpl* vertexDeclaration =
@@ -319,7 +320,7 @@ void shader_glsl_load_constants(
         /* Upload the position fixup params */
         pos = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
         checkGLcall("glGetUniformLocationARB");
-        GL_EXTCALL(glUniform4fvARB(pos, 1, &vshader_impl->wineD3DDevice->posFixup[0]));
+        GL_EXTCALL(glUniform4fvARB(pos, 1, &deviceImpl->posFixup[0]));
         checkGLcall("glUniform4fvARB");
     }
 
@@ -596,10 +597,12 @@ static void shader_glsl_get_register_name(
     /* oPos, oFog and oPts in D3D */
     const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)((IWineD3DPixelShaderImpl*)arg->shader)->wineD3DDevice->wineD3D)->gl_info;
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    WineD3D_GL_Info* gl_info = &((IWineD3DImpl*)deviceImpl->wineD3D)->gl_info;
+
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
     char tmpStr[50];
 
@@ -1356,6 +1359,8 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     /* FIXME: Make this work for more than just 2D textures */
     
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD hex_version = This->baseShader.hex_version;
 
@@ -1387,7 +1392,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     }         
 
     sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
-    if(This->wineD3DDevice->stateBlock->textureState[sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+    if(deviceImpl->stateBlock->textureState[sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
         switch(sampler_type) {
 
             case WINED3DSTT_2D:
