@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "wintrust.h"
 #include "mscat.h"
+#include "mssip.h"
 
 #include "wine/debug.h"
 
@@ -125,4 +126,61 @@ HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV h
     FIXME("(%s, %ld, %ld, %ld, %ld) stub\n", debugstr_w(pwszFileName), fdwOpenFlags,
           hProv, dwPublicVersion, dwEncodingType);
     return 0;
+}
+
+/***********************************************************************
+ *      CryptSIPCreateIndirectData  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcbIndirectData,
+                                       SIP_INDIRECT_DATA* pIndirectData)
+{
+    FIXME("(%p %p %p) stub\n", pSubjectInfo, pcbIndirectData, pIndirectData);
+ 
+    return FALSE;
+}
+
+/***********************************************************************
+ *      CryptSIPGetSignedDataMsg  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
+                                       DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    FIXME("(%p %p %ld %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
+          pcbSignedDataMsg, pbSignedDataMsg);
+ 
+    return FALSE;
+}
+
+/***********************************************************************
+ *      CryptSIPPutSignedDataMsg  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
+                                       DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    FIXME("(%p %ld %p %ld %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+          cbSignedDataMsg, pbSignedDataMsg);
+ 
+    return FALSE;
+}
+
+/***********************************************************************
+ *      CryptSIPRemoveSignedDataMsg  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
+                                       DWORD dwIndex)
+{
+    FIXME("(%p %ld) stub\n", pSubjectInfo, dwIndex);
+ 
+    return FALSE;
+}
+
+/***********************************************************************
+ *      CryptSIPVerifyIndirectData  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPVerifyIndirectData(SIP_SUBJECTINFO* pSubjectInfo,
+                                       SIP_INDIRECT_DATA* pIndirectData)
+{
+    FIXME("(%p %p) stub\n", pSubjectInfo, pIndirectData);
+ 
+    return FALSE;
 }

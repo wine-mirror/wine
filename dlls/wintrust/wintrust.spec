@@ -33,13 +33,13 @@
 @ stub CryptCATPutMemberInfo
 @ stub CryptCATStoreFromHandle
 @ stub CryptCATVerifyMember
-@ stub CryptSIPCreateIndirectData
+@ stdcall CryptSIPCreateIndirectData(ptr ptr ptr)
 @ stub CryptSIPGetInfo
 @ stub CryptSIPGetRegWorkingFlags
-@ stub CryptSIPGetSignedDataMsg
-@ stub CryptSIPPutSignedDataMsg
-@ stub CryptSIPRemoveSignedDataMsg
-@ stub CryptSIPVerifyIndirectData
+@ stdcall CryptSIPGetSignedDataMsg(ptr ptr long ptr ptr)
+@ stdcall CryptSIPPutSignedDataMsg(ptr long ptr long ptr)
+@ stdcall CryptSIPRemoveSignedDataMsg(ptr long)
+@ stdcall CryptSIPVerifyIndirectData(ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stub DriverCleanupPolicy
