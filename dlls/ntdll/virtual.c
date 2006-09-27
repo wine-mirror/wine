@@ -1350,10 +1350,15 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     if (!(type & MEM_SYSTEM))
     {
         if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
-            (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN)))
+            (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN | MEM_WRITE_WATCH | MEM_RESET)))
         {
             WARN("called with wrong alloc type flags (%08lx) !\n", type);
             return STATUS_INVALID_PARAMETER;
+        }
+        if (type & MEM_WRITE_WATCH)
+        {
+            FIXME("MEM_WRITE_WATCH type not supported\n");
+            return STATUS_NOT_SUPPORTED;
         }
     }
     vprot = VIRTUAL_GetProt( protect );
