@@ -29,6 +29,12 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI * funcCryptSIPGetSignedDataMsg)(SIP_SUBJECTINFO *,DWORD *,DWORD,DWORD *,BYTE *);
+static BOOL (WINAPI * funcCryptSIPPutSignedDataMsg)(SIP_SUBJECTINFO *,DWORD,DWORD *,DWORD,BYTE *);
+static BOOL (WINAPI * funcCryptSIPCreateIndirectData)(SIP_SUBJECTINFO *,DWORD *,SIP_INDIRECT_DATA *);
+static BOOL (WINAPI * funcCryptSIPVerifyIndirectData)(SIP_SUBJECTINFO *,SIP_INDIRECT_DATA *);
+static BOOL (WINAPI * funcCryptSIPRemoveSignedDataMsg)(SIP_SUBJECTINFO *,DWORD);
+
 static char *show_guid(const GUID *guid)
 {
     static char guidstring[39];
@@ -277,6 +283,7 @@ static void test_SIPLoad(void)
     static GUID dummySubject = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
     static GUID unknown      = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
     SIP_DISPATCH_INFO sdi;
+    HMODULE hCrypt;
 
     /* All NULL */
     SetLastError(0xdeadbeef);
@@ -333,6 +340,34 @@ static void test_SIPLoad(void)
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
     ok ( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n", GetLastError());
+
+    /* The function addresses returned by CryptSIPLoad are actually the addresses of
+     * crypt32's own functions. A function calling these addresses will end up first
+     * calling crypt32 functions which in it's turn call the equivalent in the SIP
+     * as dictated by the given GUID.
+     */
+    hCrypt = LoadLibrary("crypt32.dll");
+    if (hCrypt)
+    {
+        funcCryptSIPGetSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPGetSignedDataMsg");
+        funcCryptSIPPutSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPPutSignedDataMsg");
+        funcCryptSIPCreateIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPCreateIndirectData");
+        funcCryptSIPVerifyIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPVerifyIndirectData");
+        funcCryptSIPRemoveSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPRemoveSignedDataMsg");
+        if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
+            funcCryptSIPVerifyIndirectData && funcCryptSIPRemoveSignedDataMsg)
+            todo_wine
+                ok (sdi.pfGet == funcCryptSIPGetSignedDataMsg &&
+                    sdi.pfPut == funcCryptSIPPutSignedDataMsg &&
+                    sdi.pfCreate == funcCryptSIPCreateIndirectData &&
+                    sdi.pfVerify == funcCryptSIPVerifyIndirectData &&
+                    sdi.pfRemove == funcCryptSIPRemoveSignedDataMsg,
+                    "Expected function addresses to be from crypt32\n");
+        else
+            trace("Couldn't load function pointers\n");
+ 
+        FreeLibrary(hCrypt);
+    }
 
     /* Reserved parameter not 0 */
     SetLastError(0xdeadbeef);
