@@ -508,6 +508,10 @@ static HRESULT exec_editmode(HTMLDocument *This)
     if(This->nscontainer)
         setup_ns_editing(This->nscontainer);
 
+    /* 
+     * FIXME: We should load about:protocol here.
+     */
+    This->readystate = READYSTATE_LOADING;
     call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
 
     return S_OK;

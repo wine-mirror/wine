@@ -92,6 +92,7 @@ struct HTMLDocument {
     HWND tooltips_hwnd;
 
     USERMODE usermode;
+    READYSTATE readystate;
     BOOL in_place_active;
     BOOL ui_active;
     BOOL window_active;

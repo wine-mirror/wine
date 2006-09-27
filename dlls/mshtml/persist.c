@@ -192,6 +192,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
+    This->readystate = READYSTATE_LOADING;
     call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
 
     HTMLDocument_LockContainer(This, TRUE);

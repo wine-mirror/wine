@@ -125,21 +125,20 @@ static void set_downloading(HTMLDocument *doc)
 
 static void set_parsecomplete(HTMLDocument *doc)
 {
-    IOleCommandTarget *olecmd;
-    HRESULT hres;
+    IOleCommandTarget *olecmd = NULL;
 
     TRACE("(%p)\n", doc);
 
     call_property_onchanged(doc->cp_propnotif, 1005);
+
+    doc->readystate = READYSTATE_INTERACTIVE;
     call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
 
-    if(!doc->client)
-        return;
+    if(doc->client)
+        IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
 
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(SUCCEEDED(hres)) {
-        VARIANT state, title, progress;
-        WCHAR empty[] = {0};
+    if(olecmd) {
+        VARIANT state, progress;
 
         V_VT(&progress) = VT_I4;
         V_I4(&progress) = 0;
@@ -153,7 +152,15 @@ static void set_parsecomplete(HTMLDocument *doc)
 
         IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
         IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
+    }
 
+    doc->readystate = READYSTATE_COMPLETE;
+    call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
+
+    if(olecmd) {
+        VARIANT title;
+        WCHAR empty[] = {0};
+        
         V_VT(&title) = VT_BSTR;
         V_BSTR(&title) = SysAllocString(empty);
         IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETTITLE, OLECMDEXECOPT_DONTPROMPTUSER,

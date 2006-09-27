@@ -369,8 +369,29 @@ static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSel
 
 static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+
+    static const WCHAR wszUninitialized[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
+    static const WCHAR wszLoading[] = {'l','o','a','d','i','n','g',0};
+    static const WCHAR wszLoaded[] = {'l','o','a','d','e','d',0};
+    static const WCHAR wszInteractive[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
+    static const WCHAR wszComplete[] = {'c','o','m','p','l','e','t','e',0};
+
+    static const LPCWSTR readystate_str[] = {
+        wszUninitialized,
+        wszLoading,
+        wszLoaded,
+        wszInteractive,
+        wszComplete
+    };
+
+    TRACE("(%p)->(%p)\n", iface, p);
+
+    if(!p)
+        return E_POINTER;
+
+    *p = SysAllocString(readystate_str[This->readystate]);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFramesCollection2 **p)
@@ -1075,6 +1096,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->ref = 0;
     ret->nscontainer = NULL;
     ret->nodes = NULL;
+    ret->readystate = READYSTATE_UNINITIALIZED;
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {

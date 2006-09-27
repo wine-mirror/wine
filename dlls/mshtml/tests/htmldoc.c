@@ -113,16 +113,19 @@ DEFINE_EXPECT(Abort);
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
+static BOOL readystate_set_loading = FALSE;
 static enum load_state_t {
-    LD_NO = 0,
     LD_DOLOAD,
     LD_LOADING,
-    LD_LOADED
+    LD_INTERACTIVE,
+    LD_COMPLETE,
+    LD_NO
 } load_state;
 
 static LPCOLESTR expect_status_text = NULL;
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
+static void test_readyState(IUnknown*);
 
 static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)
 {
@@ -245,9 +248,16 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     switch(dispID) {
     case DISPID_READYSTATE:
         CHECK_EXPECT2(OnChanged_READYSTATE);
+        if(readystate_set_loading) {
+            readystate_set_loading = FALSE;
+            load_state = LD_LOADING;
+        }
+        test_readyState(NULL);
         return S_OK;
     case 1005:
         CHECK_EXPECT(OnChanged_1005);
+        test_readyState(NULL);
+        load_state = LD_INTERACTIVE;
         return S_OK;
     }
 
@@ -494,7 +504,7 @@ static HRESULT WINAPI Moniker_ComposeWith(IMoniker *iface, IMoniker *pmkRight,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Moniker_Enum(IMoniker *iface, BOOL fForward, IEnumMoniker **ppenumMoniker)
+static HRESULT WINAPI Moniker_Enum(IMoniker *iface, BOOL fForwrd, IEnumMoniker **ppenumMoniker)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -1109,7 +1119,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(Exec_SETPROGRESSMAX);
                 SET_EXPECT(Exec_SETPROGRESSPOS);
                 SET_EXPECT(OnUIActivate);
-                expect_status_text = (load_state == LD_LOADED ? (LPCOLESTR)0xdeadbeef : NULL);
+                expect_status_text = (load_state == LD_COMPLETE ? (LPCOLESTR)0xdeadbeef : NULL);
 
                 hres = IOleDocumentView_Show(view, TRUE);
                 ok(hres == S_OK, "Show failed: %08lx\n", hres);
@@ -1370,6 +1380,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
+    test_readyState(NULL);
+
     if(!pguidCmdGroup) {
         switch(nCmdID) {
         case OLECMDID_SETPROGRESSMAX:
@@ -1399,6 +1411,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
+            load_state = LD_COMPLETE;
             return S_OK;
         case OLECMDID_SETDOWNLOADSTATE:
             ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
@@ -1409,6 +1422,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             switch(V_I4(pvaIn)) {
             case 0:
                 CHECK_EXPECT(Exec_SETDOWNLOADSTATE_0);
+                load_state = LD_INTERACTIVE;
                 break;
             case 1:
                 CHECK_EXPECT(Exec_SETDOWNLOADSTATE_1);
@@ -1538,6 +1552,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(puArgErr != NULL, "puArgErr == NULL\n");
     ok(V_VT(pVarResult) == 0, "V_VT(pVarResult)=%d, expected 0\n", V_VT(pVarResult));
     ok(wFlags == DISPATCH_PROPERTYGET, "wFlags=%08x, expected DISPATCH_PROPERTYGET\n", wFlags);
+    test_readyState(NULL);
 
     switch(dispIdMember) {
     case DISPID_AMBIENT_USERMODE:
@@ -1682,6 +1697,45 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+static void test_readyState(IUnknown *unk)
+{
+    IHTMLDocument2 *htmldoc;
+    BSTR state;
+    HRESULT hres;
+
+    static IUnknown *_unk;
+
+    static const WCHAR wszUninitialized[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
+    static const WCHAR wszLoading[] = {'l','o','a','d','i','n','g',0};
+    static const WCHAR wszInteractive[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
+    static const WCHAR wszComplete[] = {'c','o','m','p','l','e','t','e',0};
+
+    static const LPCWSTR expected_state[] = {
+        wszUninitialized,
+        wszLoading,
+        wszInteractive,
+        wszComplete,
+        wszUninitialized
+    };
+
+    if(!unk) unk = _unk;
+    else _unk = unk;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&htmldoc);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLDocument2_get_readyState(htmldoc, NULL);
+    ok(hres == E_POINTER, "get_readyState failed: %08lx, expected \n", hres);
+
+    hres = IHTMLDocument2_get_readyState(htmldoc, &state);
+    ok(hres == S_OK, "get_ReadyState failed: %08lx\n", hres);
+    ok(!lstrcmpW(state, expected_state[load_state]), "unexpected state, expected %d\n", load_state);
+
+    IHTMLDocument_Release(htmldoc);
+}
+
 static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID riid)
 {
     IConnectionPointContainer *tmp_container = NULL;
@@ -1742,6 +1796,8 @@ static void test_Load(IPersistMoniker *persist)
     IBindCtx *bind;
     HRESULT hres;
 
+    test_readyState((IUnknown*)persist);
+
     CreateBindCtx(0, &bind);
     IBindCtx_RegisterObjectParam(bind, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)&ClientSite);
@@ -1766,6 +1822,7 @@ static void test_Load(IPersistMoniker *persist)
     SET_EXPECT(GetContainer);
     SET_EXPECT(LockContainer);
     expect_LockContainer_fLock = TRUE;
+    readystate_set_loading = TRUE;
 
     hres = IPersistMoniker_Load(persist, FALSE, &Moniker, bind, 0x12);
     ok(hres == S_OK, "Load failed: %08lx\n", hres);
@@ -1793,6 +1850,8 @@ static void test_Load(IPersistMoniker *persist)
     set_clientsite = container_locked = TRUE;
 
     IBindCtx_Release(bind);
+
+    test_readyState((IUnknown*)persist);
 }
 
 static void test_download(void)
@@ -1800,10 +1859,10 @@ static void test_download(void)
     HWND hwnd;
     MSG msg;
 
-    load_state = LD_LOADING;
-
     hwnd = FindWindowA("Internet Explorer_Hidden", NULL);
     ok(hwnd != NULL, "Could not find hidden window\n");
+
+    test_readyState(NULL);
 
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
@@ -1833,7 +1892,9 @@ static void test_download(void)
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     CHECK_CALLED(Exec_SETTITLE);
 
-    load_state = LD_LOADED;
+    load_state = LD_COMPLETE;
+
+    test_readyState(NULL);
 }
 
 static void test_Persist(IUnknown *unk)
@@ -1868,6 +1929,8 @@ static void test_Persist(IUnknown *unk)
 
         if(load_state == LD_DOLOAD)
             test_Load(persist_mon);
+
+        test_readyState(unk);
 
         IPersistMoniker_Release(persist_mon);
     }
@@ -2042,6 +2105,7 @@ static void test_exec_editmode(IUnknown *unk)
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
     expect_status_text = NULL;
+    readystate_set_loading = TRUE;
 
     hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
             OLECMDEXECOPT_DODEFAULT, NULL, NULL);
@@ -2502,7 +2566,7 @@ static void test_HTMLDocument(enum load_state_t ls)
         return;
     }
 
-    if(load_state == LD_DOLOAD)
+    if(load_state == LD_LOADING)
         test_download();
 
     test_OleCommandTarget_fail(unk);
@@ -2605,6 +2669,7 @@ static void test_editing_mode(void)
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08lx\n", hres);
 
+    test_readyState(unk);
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
