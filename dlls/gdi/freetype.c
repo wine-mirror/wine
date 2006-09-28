@@ -248,7 +248,7 @@ typedef struct {
     struct list entry;
     char *file_name;
     INT index;
-    GdiFont font;
+    GdiFont *font;
 } CHILD_FONT;
 
 struct tagGdiFont {
@@ -273,7 +273,7 @@ struct tagGdiFont {
     DWORD total_kern_pairs;
     KERNINGPAIR *kern_pairs;
     FONTSIGNATURE fs;
-    GdiFont base_font;
+    GdiFont *base_font;
     struct list child_fonts;
     LONG ppem;
 };
@@ -1867,9 +1867,9 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
     return ppem;
 }
 
-static LONG load_VDMX(GdiFont, LONG);
+static LONG load_VDMX(GdiFont*, LONG);
 
-static FT_Face OpenFontFile(GdiFont font, char *file, FT_Long face_index, LONG width, LONG height)
+static FT_Face OpenFontFile(GdiFont *font, char *file, FT_Long face_index, LONG width, LONG height)
 {
     FT_Error err;
     FT_Face ft_face;
@@ -1935,9 +1935,9 @@ static int get_nearest_charset(Face *face, int *cp)
     return DEFAULT_CHARSET;
 }
 
-static GdiFont alloc_font(void)
+static GdiFont *alloc_font(void)
 {
-    GdiFont ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
     ret->gmsize = INIT_GM_SIZE;
     ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			ret->gmsize * sizeof(*ret->gm));
@@ -1950,7 +1950,7 @@ static GdiFont alloc_font(void)
     return ret;
 }
 
-static void free_font(GdiFont font)
+static void free_font(GdiFont *font)
 {
     struct list *cursor, *cursor2;
 
@@ -2008,7 +2008,7 @@ typedef struct {
     BYTE endsz;
 } VDMX_group;
 
-static LONG load_VDMX(GdiFont font, LONG height)
+static LONG load_VDMX(GdiFont *font, LONG height)
 {
     WORD hdr[3], tmp;
     VDMX_group group;
@@ -2136,7 +2136,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
     return ppem;
 }
 
-static BOOL fontcmp(GdiFont font, FONT_DESC *fd)
+static BOOL fontcmp(GdiFont *font, FONT_DESC *fd)
 {
     if(font->font_desc.hash != fd->hash) return TRUE;
     if(memcmp(&font->font_desc.matrix, &fd->matrix, sizeof(fd->matrix))) return TRUE;
@@ -2170,9 +2170,9 @@ static void calc_hash(FONT_DESC *pfd)
     return;
 }
 
-static GdiFont find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_use_bitmap)
+static GdiFont *find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_use_bitmap)
 {
-    GdiFont ret;
+    GdiFont *ret;
     FONT_DESC fd;
     HFONTLIST *hflist;
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
@@ -2223,7 +2223,7 @@ static GdiFont find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_us
 /*************************************************************
  * create_child_font_list
  */
-static BOOL create_child_font_list(GdiFont font)
+static BOOL create_child_font_list(GdiFont *font)
 {
     BOOL ret = FALSE;
     SYSTEM_LINKS *font_link;
@@ -2255,9 +2255,9 @@ static BOOL create_child_font_list(GdiFont font)
  * WineEngCreateFontInstance
  *
  */
-GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
+GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
-    GdiFont ret;
+    GdiFont *ret;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
     struct list *family_elem_ptr, *face_elem_ptr;
@@ -2535,7 +2535,7 @@ found:
 
 static void dump_gdi_font_list(void)
 {
-    GdiFont gdiFont;
+    GdiFont *gdiFont;
     struct list *elem_ptr;
 
     TRACE("---------- gdiFont Cache ----------\n");
@@ -2561,7 +2561,7 @@ static void dump_gdi_font_list(void)
  */
 BOOL WineEngDestroyFontInstance(HFONT handle)
 {
-    GdiFont gdiFont;
+    GdiFont *gdiFont;
     HFONTLIST *hflist;
     BOOL ret = FALSE;
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
@@ -2625,7 +2625,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     OUTLINETEXTMETRICW *potm = NULL;
     UINT size;
     TEXTMETRICW tm, *ptm;
-    GdiFont font = alloc_font();
+    GdiFont *font = alloc_font();
     LONG width, height;
 
     if(face->scalable) {
@@ -2866,7 +2866,7 @@ static BOOL codepage_sets_default_used(UINT codepage)
    }
 }
 
-static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
+static FT_UInt get_glyph_index(GdiFont *font, UINT glyph)
 {
     if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
         WCHAR wc = (WCHAR)glyph;
@@ -2896,7 +2896,7 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
  *
  * FIXME: add support for GGI_MARK_NONEXISTING_GLYPHS
  */
-DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
 				LPWORD pgi, DWORD flags)
 {
     int i;
@@ -2929,7 +2929,7 @@ DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
  * question rather than an HDC.
  *
  */
-DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
+DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
 			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
 			     const MAT2* lpmat)
 {
@@ -3383,7 +3383,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     return needed;
 }
 
-static BOOL get_bitmap_text_metrics(GdiFont font)
+static BOOL get_bitmap_text_metrics(GdiFont *font)
 {
     FT_Face ft_face = font->ft_face;
 #ifdef HAVE_FREETYPE_FTWINFNT_H
@@ -3452,7 +3452,7 @@ static BOOL get_bitmap_text_metrics(GdiFont font)
  * WineEngGetTextMetrics
  *
  */
-BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
+BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
 {
     if(!font->potm) {
         if(!WineEngGetOutlineTextMetrics(font, 0, NULL))
@@ -3473,7 +3473,7 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
  * WineEngGetOutlineTextMetrics
  *
  */
-UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
+UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
 				  OUTLINETEXTMETRICW *potm)
 {
     FT_Face ft_face = font->ft_face;
@@ -3719,7 +3719,7 @@ end:
     return ret;
 }
 
-static BOOL load_child_font(GdiFont font, CHILD_FONT *child)
+static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
     HFONTLIST *hfontlist;
     child->font = alloc_font();
@@ -3741,7 +3741,7 @@ static BOOL load_child_font(GdiFont font, CHILD_FONT *child)
     return TRUE;
 }
 
-static BOOL get_glyph_index_linked(GdiFont font, UINT c, GdiFont *linked_font, FT_UInt *glyph)
+static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph)
 {
     FT_UInt g;
     CHILD_FONT *child_font;
@@ -3777,13 +3777,13 @@ static BOOL get_glyph_index_linked(GdiFont font, UINT c, GdiFont *linked_font, F
  * WineEngGetCharWidth
  *
  */
-BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
+BOOL WineEngGetCharWidth(GdiFont *font, UINT firstChar, UINT lastChar,
 			 LPINT buffer)
 {
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
-    GdiFont linked_font;
+    GdiFont *linked_font;
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
@@ -3800,13 +3800,13 @@ BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
  * WineEngGetCharABCWidths
  *
  */
-BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
+BOOL WineEngGetCharABCWidths(GdiFont *font, UINT firstChar, UINT lastChar,
 			     LPABC buffer)
 {
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
-    GdiFont linked_font;
+    GdiFont *linked_font;
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
@@ -3829,13 +3829,13 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
  * WineEngGetCharABCWidthsI
  *
  */
-BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD pgi,
+BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD pgi,
 			      LPABC buffer)
 {
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
-    GdiFont linked_font;
+    GdiFont *linked_font;
 
     if(!FT_IS_SCALABLE(font->ft_face))
         return FALSE;
@@ -3867,7 +3867,7 @@ BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD p
  * WineEngGetTextExtentExPoint
  *
  */
-BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
+BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
                                  INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
 {
     INT idx;
@@ -3875,7 +3875,7 @@ BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
     FT_UInt glyph_index;
-    GdiFont linked_font;
+    GdiFont *linked_font;
 
     TRACE("%p, %s, %d, %d, %p\n", font, debugstr_wn(wstr, count), count,
 	  max_ext, size);
@@ -3908,7 +3908,7 @@ BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
  * WineEngGetTextExtentPointI
  *
  */
-BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
+BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
 				LPSIZE size)
 {
     INT idx;
@@ -3935,7 +3935,7 @@ BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
  * WineEngGetFontData
  *
  */
-DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
+DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
 			 DWORD cbData)
 {
     FT_Face ft_face = font->ft_face;
@@ -4013,7 +4013,7 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
  * WineEngGetTextFace
  *
  */
-INT WineEngGetTextFace(GdiFont font, INT count, LPWSTR str)
+INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
 {
     if(str) {
         lstrcpynW(str, font->name, count);
@@ -4022,7 +4022,7 @@ INT WineEngGetTextFace(GdiFont font, INT count, LPWSTR str)
         return strlenW(font->name) + 1;
 }
 
-UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
+UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
 {
     if (fs) memcpy(fs, &font->fs, sizeof(FONTSIGNATURE));
     return font->charset;
@@ -4030,7 +4030,7 @@ UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
 
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
 {
-    GdiFont font = dc->gdiFont, linked_font;
+    GdiFont *font = dc->gdiFont, *linked_font;
     struct list *first_hfont;
     BOOL ret;
 
@@ -4149,7 +4149,7 @@ struct TT_kern_pair
     short  value;
 };
 
-static DWORD parse_format0_kern_subtable(GdiFont font,
+static DWORD parse_format0_kern_subtable(GdiFont *font,
                                          const struct TT_format0_kern_subtable *tt_f0_ks,
                                          const USHORT *glyph_to_char,
                                          KERNINGPAIR *kern_pair, DWORD cPairs)
@@ -4199,7 +4199,7 @@ static DWORD parse_format0_kern_subtable(GdiFont font,
     return nPairs;
 }
 
-DWORD WineEngGetKerningPairs(GdiFont font, DWORD cPairs, KERNINGPAIR *kern_pair)
+DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair)
 {
     DWORD length;
     void *buf;
@@ -4347,7 +4347,7 @@ BOOL WineEngInit(void)
 {
     return FALSE;
 }
-GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
+GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
     return NULL;
 }
@@ -4361,13 +4361,13 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
     return 1;
 }
 
-DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
 				LPWORD pgi, DWORD flags)
 {
     return GDI_ERROR;
 }
 
-DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
+DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
 			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
 			     const MAT2* lpmat)
 {
@@ -4375,62 +4375,62 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     return GDI_ERROR;
 }
 
-BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
+BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
+UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
 				  OUTLINETEXTMETRICW *potm)
 {
     ERR("called but we don't have FreeType\n");
     return 0;
 }
 
-BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
+BOOL WineEngGetCharWidth(GdiFont *font, UINT firstChar, UINT lastChar,
 			 LPINT buffer)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
+BOOL WineEngGetCharABCWidths(GdiFont *font, UINT firstChar, UINT lastChar,
 			     LPABC buffer)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD pgi,
+BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD pgi,
 			      LPABC buffer)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-BOOL WineEngGetTextExtentExPoint(GdiFont font, LPCWSTR wstr, INT count,
+BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
                                  INT max_ext, LPINT nfit, LPINT dx, LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
+BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
 				LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
 }
 
-DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
+DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
 			 DWORD cbData)
 {
     ERR("called but we don't have FreeType\n");
     return GDI_ERROR;
 }
 
-INT WineEngGetTextFace(GdiFont font, INT count, LPWSTR str)
+INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
 {
     ERR("called but we don't have FreeType\n");
     return 0;
@@ -4448,7 +4448,7 @@ INT WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
     return TRUE;
 }
 
-UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags)
+UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
 {
     FIXME(":stub\n");
     return DEFAULT_CHARSET;
@@ -4475,7 +4475,7 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     return TRUE;
 }
 
-DWORD WineEngGetKerningPairs(GdiFont font, DWORD cPairs, KERNINGPAIR *kern_pair)
+DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair)
 {
     ERR("called but we don't have FreeType\n");
     return 0;

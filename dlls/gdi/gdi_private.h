@@ -205,7 +205,7 @@ typedef struct tagGdiPath
    BOOL       newStroke;
 } GdiPath;
 
-typedef struct tagGdiFont *GdiFont;
+typedef struct tagGdiFont GdiFont;
 
 struct saved_visrgn
 {
@@ -248,7 +248,7 @@ typedef struct tagDC
     HANDLE        hDevice;
     HPALETTE      hPalette;
 
-    GdiFont       gdiFont;
+    GdiFont      *gdiFont;
     GdiPath       path;
 
     WORD          ROPmode;
@@ -362,28 +362,28 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
 
 /* freetype.c */
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
-extern GdiFont WineEngCreateFontInstance(DC*, HFONT);
+extern GdiFont* WineEngCreateFontInstance(DC*, HFONT);
 extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM);
-extern BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar,
+extern BOOL WineEngGetCharABCWidths(GdiFont *font, UINT firstChar,
                                     UINT lastChar, LPABC buffer);
-extern BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar,
+extern BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar,
                                     UINT count, LPWORD pgi, LPABC buffer);
-extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
-extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
-extern DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
+extern BOOL WineEngGetCharWidth(GdiFont*, UINT, UINT, LPINT);
+extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD);
+extern DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
                                     LPWORD pgi, DWORD flags);
-extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
+extern DWORD WineEngGetGlyphOutline(GdiFont*, UINT glyph, UINT format,
                                     LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
                                     const MAT2*);
-extern DWORD WineEngGetKerningPairs(GdiFont, DWORD, KERNINGPAIR *);
+extern DWORD WineEngGetKerningPairs(GdiFont*, DWORD, KERNINGPAIR *);
 extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph);
-extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
-extern UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags);
-extern BOOL WineEngGetTextExtentExPoint(GdiFont, LPCWSTR, INT, INT, LPINT, LPINT, LPSIZE);
-extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
-extern INT  WineEngGetTextFace(GdiFont, INT, LPWSTR);
-extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);
+extern UINT WineEngGetOutlineTextMetrics(GdiFont*, UINT, LPOUTLINETEXTMETRICW);
+extern UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags);
+extern BOOL WineEngGetTextExtentExPoint(GdiFont*, LPCWSTR, INT, INT, LPINT, LPINT, LPSIZE);
+extern BOOL WineEngGetTextExtentPointI(GdiFont*, const WORD *, INT, LPSIZE);
+extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR);
+extern BOOL WineEngGetTextMetrics(GdiFont*, LPTEXTMETRICW);
 extern BOOL WineEngInit(void);
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID);
 
