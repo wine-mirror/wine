@@ -53,7 +53,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "끝내기(&X)",                   ID_REGISTRY_EXIT
     END
-    POPUP "편집기(&E)"
+    POPUP "편집(&E)"
     BEGIN
         MENUITEM "수정(&M)",                     ID_EDIT_MODIFY
         MENUITEM SEPARATOR
