@@ -579,10 +579,7 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
         write_file(table->filename, table->data, (table->size - 1) * sizeof(char));
 
         r = MsiDatabaseImportA(db, CURR_DIR, table->filename);
-        todo_wine
-        {
-            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        }
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
         DeleteFileA(table->filename);
     }
@@ -604,10 +601,7 @@ static void test_MsiInstallProduct(void)
     DWORD num, size, type;
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     todo_wine
     {
@@ -624,19 +618,13 @@ static void test_MsiInstallProduct(void)
     }
 
     res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     size = MAX_PATH;
     type = REG_SZ;
     res = RegQueryValueExA(hkey, "Name", NULL, &type, (LPBYTE)path, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-        ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
 
     size = MAX_PATH;
     type = REG_SZ;
@@ -649,11 +637,8 @@ static void test_MsiInstallProduct(void)
     size = sizeof(num);
     type = REG_DWORD;
     res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-        ok(num == 314, "Expected 314, got %ld\n", num);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    ok(num == 314, "Expected 314, got %ld\n", num);
 
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
 }
@@ -683,10 +668,7 @@ static void test_MsiSetComponentState(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSetComponentState(package, "dangler", INSTALLSTATE_SOURCE);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(package);
     CoUninitialize();
@@ -710,37 +692,31 @@ static void test_packagecoltypes(void)
 
     query = "SELECT * FROM `Media`";
     r = MsiDatabaseOpenView( hdb, query, &view );
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
 
     r = MsiViewGetColumnInfo( view, MSICOLINFO_NAMES, &rec );
     count = MsiRecordGetFieldCount( rec );
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
-        ok(count == 6, "Expected 6, got %d\n", count);
-        ok(check_record(rec, 1, "DiskId"), "wrong column label\n");
-        ok(check_record(rec, 2, "LastSequence"), "wrong column label\n");
-        ok(check_record(rec, 3, "DiskPrompt"), "wrong column label\n");
-        ok(check_record(rec, 4, "Cabinet"), "wrong column label\n");
-        ok(check_record(rec, 5, "VolumeLabel"), "wrong column label\n");
-        ok(check_record(rec, 6, "Source"), "wrong column label\n");
-    }
+    ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
+    ok(count == 6, "Expected 6, got %d\n", count);
+    ok(check_record(rec, 1, "DiskId"), "wrong column label\n");
+    ok(check_record(rec, 2, "LastSequence"), "wrong column label\n");
+    ok(check_record(rec, 3, "DiskPrompt"), "wrong column label\n");
+    ok(check_record(rec, 4, "Cabinet"), "wrong column label\n");
+    ok(check_record(rec, 5, "VolumeLabel"), "wrong column label\n");
+    ok(check_record(rec, 6, "Source"), "wrong column label\n");
 
     r = MsiViewGetColumnInfo( view, MSICOLINFO_TYPES, &rec );
     count = MsiRecordGetFieldCount( rec );
+    ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
+    ok(count == 6, "Expected 6, got %d\n", count);
+    ok(check_record(rec, 4, "S255"), "wrong column label\n");
+    ok(check_record(rec, 5, "S32"), "wrong column label\n");
+    ok(check_record(rec, 6, "S72"), "wrong column label\n");
     todo_wine
     {
-        ok(r == ERROR_SUCCESS, "MsiViewGetColumnInfo failed\n");
-        ok(count == 6, "Expected 6, got %d\n", count);
         ok(check_record(rec, 1, "i2"), "wrong column label\n");
         ok(check_record(rec, 2, "i4"), "wrong column label\n");
         ok(check_record(rec, 3, "L64"), "wrong column label\n");
-        ok(check_record(rec, 4, "S255"), "wrong column label\n");
-        ok(check_record(rec, 5, "S32"), "wrong column label\n");
-        ok(check_record(rec, 6, "S72"), "wrong column label\n");
     }
 
     MsiCloseHandle(hdb);
