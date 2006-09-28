@@ -1322,7 +1322,7 @@ typedef struct _CRYPT_RETRIEVE_AUX_INFO {
 #define ALG_SID_MD4                     2
 #define ALG_SID_MD5                     3
 #define ALG_SID_SHA                     4
-#define ALG_SID_SHA1                    CALG_SHA
+#define ALG_SID_SHA1                    ALG_SID_SHA
 #define ALG_SID_MAC                     5
 #define ALG_SID_RIPEMD                  6
 #define ALG_SID_RIPEMD160               7
