@@ -58,13 +58,13 @@ UINT ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*
 /*
  * Create a dialog box and run it if it's modal
  */
-static UINT event_do_dialog( MSIPACKAGE *package, LPCWSTR name, BOOL destroy_modeless )
+static UINT event_do_dialog( MSIPACKAGE *package, LPCWSTR name, msi_dialog *parent, BOOL destroy_modeless )
 {
     msi_dialog *dialog;
     UINT r;
 
     /* create a new dialog */
-    dialog = msi_dialog_create( package, name,
+    dialog = msi_dialog_create( package, name, parent,
                                 ControlEvent_HandleControlEvent );
     if( dialog )
     {
@@ -111,7 +111,12 @@ static UINT ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument,
     else if (lstrcmpW(argument, szIgnore) == 0)
         package->CurrentInstallState = -1;
     else if (lstrcmpW(argument, szReturn) == 0)
+    {
+        msi_dialog *parent = msi_dialog_get_parent(dialog);
+        msi_free(package->next_dialog);
+        package->next_dialog = (parent) ? strdupW(msi_dialog_get_name(parent)) : NULL;
         package->CurrentInstallState = ERROR_SUCCESS;
+    }
     else
     {
         ERR("Unknown argument string %s\n",debugstr_w(argument));
@@ -143,7 +148,7 @@ static UINT ControlEvent_SpawnDialog(MSIPACKAGE* package, LPCWSTR argument,
                               msi_dialog *dialog)
 {
     /* don't destroy a modeless dialogs that might be our parent */
-    event_do_dialog( package, argument, FALSE );
+    event_do_dialog( package, argument, dialog, FALSE );
     if( package->CurrentInstallState != ERROR_SUCCESS )
         msi_dialog_end_dialog( dialog );
     return ERROR_SUCCESS;
@@ -353,13 +358,13 @@ UINT ACTION_DialogBox( MSIPACKAGE* package, LPCWSTR szDialogName )
      *  dialog, as it returns ERROR_IO_PENDING when we try to run
      *  its message loop.
      */
-    r = event_do_dialog( package, szDialogName, TRUE );
+    r = event_do_dialog( package, szDialogName, NULL, TRUE );
     while( r == ERROR_SUCCESS && package->next_dialog )
     {
         LPWSTR name = package->next_dialog;
 
         package->next_dialog = NULL;
-        r = event_do_dialog( package, name, TRUE );
+        r = event_do_dialog( package, name, NULL, TRUE );
         msi_free( name );
     }
 

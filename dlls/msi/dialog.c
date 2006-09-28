@@ -82,6 +82,7 @@ typedef struct msi_font_tag
 struct msi_dialog_tag
 {
     MSIPACKAGE *package;
+    msi_dialog *parent;
     msi_dialog_event_handler event_handler;
     BOOL finished;
     INT scale;
@@ -220,6 +221,16 @@ static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOO
         return msi_dup_property( dialog->package, property );
 
     return strdupW( property );
+}
+
+msi_dialog *msi_dialog_get_parent( msi_dialog *dialog )
+{
+    return dialog->parent;
+}
+
+LPWSTR msi_dialog_get_name( msi_dialog *dialog )
+{
+    return dialog->name;
 }
 
 /*
@@ -3060,8 +3071,9 @@ static LRESULT WINAPI MSIHiddenWindowProc( HWND hwnd, UINT msg,
 
 /* functions that interface to other modules within MSI */
 
-msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
-                                msi_dialog_event_handler event_handler )
+msi_dialog *msi_dialog_create( MSIPACKAGE* package,
+                               LPCWSTR szDialogName, msi_dialog *parent,
+                               msi_dialog_event_handler event_handler )
 {
     MSIRECORD *rec = NULL;
     msi_dialog *dialog;
@@ -3073,6 +3085,7 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
     if( !dialog )
         return NULL;
     strcpyW( dialog->name, szDialogName );
+    dialog->parent = parent;
     msiobj_addref( &package->hdr );
     dialog->package = package;
     dialog->event_handler = event_handler;
