@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-STRINGTABLE LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+STRINGTABLE LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 BEGIN
 
 /* MMSYS errors */
@@ -77,7 +77,7 @@ MCIERR_FLAGS_NOT_COMPATIBLE, 	"지정된 매개변수는 함께 사용할 수 없습니다."
 MCIERR_FILE_NOT_SAVED, 		"지정된 파일을 저장할 수 없습니다. 충분한 공간이 있는지 확인하거나.내트워크가 연결되어있는지 확인하세요."
 MCIERR_DEVICE_TYPE_REQUIRED, 	"지정된 장치를 찾을 수 없습니다.이것이 설치된게 확실하다면 장치이름이 올바른지 확인하십시오."
 MCIERR_DEVICE_LOCKED, 		"지정된 장치는 지금 닫혔습니다. 잠시 기다린 후에 다시 시도하십시오."
-MCIERR_DUPLICATE_ALIAS, 	"지정된 별명은 이미 풀그림에 의해 사용중입니다. 유일한 별명을 사용하십시오."
+MCIERR_DUPLICATE_ALIAS, 	"지정된 별명은 이미 프로그램에 의해 사용중입니다. 중복되지 않는 별명을 사용하십시오."
 MCIERR_BAD_CONSTANT, 		"지정된 매개변수는 이 명령에 적합하지 않습니다."
 MCIERR_MUST_USE_SHAREABLE, 	"이 장치 드라이버는 이미 사용중입니다. 이것을 공유하려면, 'shareable' 매개변수를  'open'명령과 같이 사용하십시오."
 MCIERR_MISSING_DEVICE_NAME, 	"지정된 명령은 별명,파일,드라이버나 장치 이름을 필요로 합니다. 이것을 지정하십시오."
@@ -87,7 +87,7 @@ MCIERR_DUPLICATE_FLAGS, 	"이 값의 매개변수는 두번 지정되었습니다. 오직 하나만 지
 MCIERR_INVALID_FILE, 		"이 지정된 파일은 지정된 MCI장치에서 재생 할 수 없습니다. 이 파일이 깨졌거나 올바르지 않은 형식입니다."
 MCIERR_NULL_PARAMETER_BLOCK, 	"이 빈 매개변수 블럭은 MCI에서 무시되었습니다."
 MCIERR_UNNAMED_RESOURCE, 	"이름없는 파일을 저장할 수 없습니다. 파일 이름을 지정하십시오."
-MCIERR_NEW_REQUIRES_ALIAS, 	" 'new'매개변수를 사용할 떄 별명을 지정해주어야 합니다."
+MCIERR_NEW_REQUIRES_ALIAS, 	" '반드시 new'매개변수를 사용할  별명을 지정해주어야 합니다."
 MCIERR_NOTIFY_ON_AUTO_OPEN, 	"'notify' 플래그는 자동으로 열린 장치에 사용할 수 없습니다."
 MCIERR_NO_ELEMENT_ALLOWED, 	"지정된 장치하고 파일이름은 같이 사용할 수 없습니다."
 MCIERR_NONAPPLICABLE_FUNCTION, 	"명령을 지정된 순서대로 보낼 수 없습니다. 명령 순서를 고치고 다시  시도하십시오."
