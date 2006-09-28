@@ -255,7 +255,11 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             pThread = dbg_curr_thread;
         else
             pThread = dbg_get_thread(dbg_curr_process, pThreadName->dwThreadID);
-
+        if(!pThread)
+        {
+            dbg_printf("Thread ID=0x%lx not in our list of threads -> can't rename\n", pThreadName->dwThreadID);
+            return DBG_CONTINUE;
+        }
         if (dbg_read_memory(pThreadName->szName, pThread->name, 9))
             dbg_printf("Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
                        pThread->tid, pThread->name);
