@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = cmdlgtst.exe
 APPMODE   = -mwindows
 IMPORTS   = comdlg32 user32 gdi32 kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	cmdlgtst.c

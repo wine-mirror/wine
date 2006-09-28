@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = rasapi32.dll
 IMPORTLIB = librasapi32.$(IMPLIBEXT)
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = rasapi.c
 

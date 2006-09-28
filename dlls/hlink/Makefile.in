@@ -7,6 +7,7 @@ IMPORTS   = shell32 ole32 advapi32 kernel32
 IMPORTLIB = libhlink.$(IMPLIBEXT)
 DELAYIMPORTS = urlmon
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	browse_ctx.c \

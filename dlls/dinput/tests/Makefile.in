@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = dinput.dll
 IMPORTS   = dinput ole32 version user32 kernel32
 EXTRALIBS = -ldxguid -luuid -ldxerr8
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	joystick.c \

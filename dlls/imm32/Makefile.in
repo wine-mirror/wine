@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = imm32.dll
 IMPORTLIB = libimm32.$(IMPLIBEXT)
 IMPORTS   = user32 gdi32 kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	imm.c

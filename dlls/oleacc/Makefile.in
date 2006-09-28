@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = oleacc.dll
 IMPORTLIB = liboleacc.$(IMPLIBEXT)
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	main.c

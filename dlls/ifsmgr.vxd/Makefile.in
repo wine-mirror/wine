@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ifsmgr.vxd
 IMPORTS   = winedos kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	ifsmgr.c

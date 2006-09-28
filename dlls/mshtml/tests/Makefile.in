@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mshtml.dll
 IMPORTS   = ole32 user32 urlmon advapi32 kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	htmldoc.c \

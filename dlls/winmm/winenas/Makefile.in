@@ -6,6 +6,7 @@ MODULE    = winenas.drv
 IMPORTS   = winmm user32 kernel32
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = -ldxguid -luuid @NASLIBS@
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	audio.c \

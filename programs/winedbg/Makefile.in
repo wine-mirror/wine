@@ -7,6 +7,7 @@ APPMODE   = -mconsole
 IMPORTS   = psapi dbghelp advapi32 kernel32 ntdll
 DELAYIMPORTS = user32
 EXTRALIBS = @LIBPOLL@
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	be_alpha.c \

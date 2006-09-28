@@ -6,6 +6,7 @@ MODULE    = d3dx8.dll
 IMPORTLIB = libd3dx8.$(IMPLIBEXT)
 IMPORTS   = d3d8 user32 gdi32 kernel32
 EXTRALIBS = -ldxguid -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	d3dx8_main.c \

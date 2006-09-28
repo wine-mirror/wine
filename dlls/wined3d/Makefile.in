@@ -7,6 +7,7 @@ IMPORTLIB = libwined3d.$(IMPLIBEXT)
 IMPORTS   = user32 gdi32 advapi32 kernel32
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	arb_program_shader.c \

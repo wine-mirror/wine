@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = eject.exe
 APPMODE   = -mconsole
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = eject.c
 

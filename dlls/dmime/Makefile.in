@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = dmime.dll
 IMPORTS   = dsound winmm ole32 user32 advapi32 kernel32
 EXTRALIBS = -ldxguid -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	audiopath.c \

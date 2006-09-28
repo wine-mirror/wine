@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = iphlpapi.dll
 IMPORTS   = iphlpapi kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	iphlpapi.c

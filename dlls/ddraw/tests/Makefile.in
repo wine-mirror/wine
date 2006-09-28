@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = ddraw.dll
 IMPORTS   = ddraw user32 gdi32 kernel32
 EXTRALIBS = -ldxguid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	d3d.c \

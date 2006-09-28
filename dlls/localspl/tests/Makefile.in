@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = localspl.dll
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	localmon.c

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = cabinet.dll
 IMPORTS   = cabinet user32 kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
        extract.c

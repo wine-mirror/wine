@@ -6,6 +6,7 @@ MODULE    = dinput8.dll
 IMPORTLIB = libdinput8.$(IMPLIBEXT)
 IMPORTS   = dinput ole32 advapi32 kernel32
 EXTRALIBS = -luuid -ldxguid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	dinput8_main.c

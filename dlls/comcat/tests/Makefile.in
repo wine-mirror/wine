@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = comcat.dll
 IMPORTS   = ole32 advapi32 kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	comcat.c

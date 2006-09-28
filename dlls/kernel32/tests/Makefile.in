@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = kernel32.dll
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	alloc.c \

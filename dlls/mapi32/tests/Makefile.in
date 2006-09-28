@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mapi32.dll
 IMPORTS   = kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	imalloc.c \

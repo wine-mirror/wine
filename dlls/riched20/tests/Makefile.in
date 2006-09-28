@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = riched20.dll
 IMPORTS   = riched20 user32 gdi32 kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	editor.c

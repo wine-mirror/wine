@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = rpcrt4.dll
 IMPORTS   = ole32 rpcrt4 kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	cstub.c \

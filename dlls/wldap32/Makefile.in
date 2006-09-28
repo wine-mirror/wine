@@ -6,6 +6,7 @@ MODULE    = wldap32.dll
 IMPORTLIB = libwldap32.$(IMPLIBEXT)
 IMPORTS   = user32 kernel32
 EXTRALIBS = @LDAPLIBS@
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	add.c \

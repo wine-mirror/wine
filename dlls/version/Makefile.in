@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = version.dll
 IMPORTLIB = libversion.$(IMPLIBEXT)
 IMPORTS   = lz32 kernel32 ntdll
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	info.c \

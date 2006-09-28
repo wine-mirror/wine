@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = comcat.dll
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	comcat_main.c \

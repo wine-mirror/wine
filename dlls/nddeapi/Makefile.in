@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = nddeapi.dll
 IMPORTLIB = libnddeapi.$(IMPLIBEXT)
 IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	nddeapi.c

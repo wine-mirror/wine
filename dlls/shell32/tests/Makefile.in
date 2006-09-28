@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = shell32.dll
 IMPORTS   = shell32 ole32 oleaut32 shlwapi advapi32 kernel32
 EXTRALIBS = -luuid
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	generated.c \

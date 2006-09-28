@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = libdxerr8.a
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	dxerr8.c

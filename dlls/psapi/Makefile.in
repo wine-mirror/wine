@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = psapi.dll
 IMPORTLIB = libpsapi.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
+EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	psapi_main.c
