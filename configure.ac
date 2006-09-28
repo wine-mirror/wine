@@ -1590,6 +1590,7 @@ dlls/itss/Makefile
 dlls/kernel32/Makefile
 dlls/kernel32/tests/Makefile
 dlls/localspl/Makefile
+dlls/localspl/tests/Makefile
 dlls/lz32/Makefile
 dlls/lz32/tests/Makefile
 dlls/mapi32/Makefile

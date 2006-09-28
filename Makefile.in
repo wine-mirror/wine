@@ -247,6 +247,7 @@ ALL_MAKEFILES = \
 	dlls/kernel32/Makefile \
 	dlls/kernel32/tests/Makefile \
 	dlls/localspl/Makefile \
+	dlls/localspl/tests/Makefile \
 	dlls/lz32/Makefile \
 	dlls/lz32/tests/Makefile \
 	dlls/mapi32/Makefile \
@@ -566,6 +567,7 @@ dlls/itss/Makefile: dlls/itss/Makefile.in dlls/Makedll.rules
 dlls/kernel32/Makefile: dlls/kernel32/Makefile.in dlls/Makedll.rules
 dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules
 dlls/localspl/Makefile: dlls/localspl/Makefile.in dlls/Makedll.rules
+dlls/localspl/tests/Makefile: dlls/localspl/tests/Makefile.in dlls/Maketest.rules
 dlls/lz32/Makefile: dlls/lz32/Makefile.in dlls/Makedll.rules
 dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in dlls/Maketest.rules
 dlls/mapi32/Makefile: dlls/mapi32/Makefile.in dlls/Makedll.rules

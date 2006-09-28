@@ -230,6 +230,7 @@ TESTSUBDIRS = \
 	infosoft/tests \
 	iphlpapi/tests \
 	kernel32/tests \
+	localspl/tests \
 	lz32/tests \
 	mapi32/tests \
 	mlang/tests \

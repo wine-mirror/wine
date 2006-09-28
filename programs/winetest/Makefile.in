@@ -41,6 +41,7 @@ TESTBINS = \
 	infosoft_test.exe \
 	iphlpapi_test.exe \
 	kernel32_test.exe \
+	localspl_test.exe \
 	lz32_test.exe \
 	mapi32_test.exe \
 	mlang_test.exe \
@@ -113,6 +114,8 @@ iphlpapi_test.exe: $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe: $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+localspl_test.exe: $(DLLDIR)/localspl/tests/localspl_test.exe$(DLLEXT)
+	cp $(DLLDIR)/localspl/tests/localspl_test.exe$(DLLEXT) $@ && $(STRIP) $@
 lz32_test.exe: $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mapi32_test.exe: $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)
