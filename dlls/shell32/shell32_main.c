@@ -634,29 +634,31 @@ DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                                 UINT flags )
 {
     INT len;
-    LPWSTR temppath;
+    LPWSTR temppath = NULL;
+    LPCWSTR pathW;
     DWORD ret;
     SHFILEINFOW temppsfi;
 
     if (flags & SHGFI_PIDL)
     {
         /* path contains a pidl */
-        temppath = (LPWSTR) path;
+        pathW = (LPCWSTR)path;
     }
     else
     {
         len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
         temppath = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, path, -1, temppath, len);
+        pathW = temppath;
     }
 
     if (psfi && (flags & SHGFI_ATTR_SPECIFIED))
         temppsfi.dwAttributes=psfi->dwAttributes;
 
     if (psfi == NULL)
-        ret = SHGetFileInfoW(temppath, dwFileAttributes, NULL, sizeof(temppsfi), flags);
+        ret = SHGetFileInfoW(pathW, dwFileAttributes, NULL, sizeof(temppsfi), flags);
     else
-        ret = SHGetFileInfoW(temppath, dwFileAttributes, &temppsfi, sizeof(temppsfi), flags);
+        ret = SHGetFileInfoW(pathW, dwFileAttributes, &temppsfi, sizeof(temppsfi), flags);
 
     if (psfi)
     {
@@ -678,8 +680,7 @@ DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
         }
     }
 
-    if (!(flags & SHGFI_PIDL))
-        HeapFree(GetProcessHeap(), 0, temppath);
+    HeapFree(GetProcessHeap(), 0, temppath);
 
     return ret;
 }
