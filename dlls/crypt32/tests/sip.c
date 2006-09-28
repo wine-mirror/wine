@@ -283,41 +283,50 @@ static void test_SIPLoad(void)
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
     sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&dummySubject, 0, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     todo_wine
         ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
             "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+    ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 
     /* cbSize not initialized */
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&dummySubject, 0, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     todo_wine
         ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
             "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+    ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 
     /* cbSize not initialized, but valid subject (named unknown but registered by wintrust) */
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown, 0, &sdi);
     todo_wine
     {
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
         ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
             "Expected ERROR_PROC_NOT_FOUND, got 0x%08lx\n", GetLastError());
+        ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
     }
 
     /* All OK */
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
     sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown, 0, &sdi);
     todo_wine
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
     ok ( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n", GetLastError());
+    todo_wine
+        ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
 
     /* The function addresses returned by CryptSIPLoad are actually the addresses of
      * crypt32's own functions. A function calling these addresses will end up first
@@ -351,11 +360,13 @@ static void test_SIPLoad(void)
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
     sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown, 1, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     todo_wine
         ok ( GetLastError() == ERROR_INVALID_PARAMETER,
             "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
+    ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 }
 
 START_TEST(sip)
