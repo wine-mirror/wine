@@ -1124,3 +1124,50 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      ScriptLayout (USP10.@)
+ *
+ * Map embedding levels to visual and/or logical order.
+ *
+ * PARAMS
+ *  runs     [I] Size of level array.
+ *  level    [I] Array of embedding levels.
+ *  vistolog [O] Map of embedding levels from visual to logical order.
+ *  logtovis [O] Map of embedding levels from logical to visual order.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ *
+ * BUGS
+ *  This stub works correctly for any sequence of a single
+ *  embedding level but not for sequences of different
+ *  embedding levels, i.e. mixtures of RTL and LTR scripts.
+ */
+HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *logtovis)
+{
+    int i, j = runs - 1, k = 0;
+
+    FIXME("(%d, %p, %p, %p): stub\n", runs, level, vistolog, logtovis);
+
+    if (!level || (!vistolog && !logtovis))
+        return E_INVALIDARG;
+
+    for (i = 0; i < runs; i++)
+    {
+        if (level[i] % 2)
+        {
+            if (vistolog) *vistolog++ = j;
+            if (logtovis) *logtovis++ = j;
+            j--;
+        }
+        else
+        {
+            if (vistolog) *vistolog++ = k;
+            if (logtovis) *logtovis++ = k;
+            k++;
+        }
+    }
+    return S_OK;
+}

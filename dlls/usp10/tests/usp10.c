@@ -727,6 +727,52 @@ void test_ScriptGetGlyphABCWidth(HDC hdc)
     ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
 }
 
+void test_ScriptLayout(void)
+{
+    HRESULT hr;
+    static const BYTE levels[][5] =
+    {
+        { 0, 0, 0, 0, 0 },
+        { 1, 1, 1, 1, 1 },
+        { 2, 2, 2, 2, 2 },
+        { 3, 3, 3, 3, 3 },
+    };
+    static const int expect[][5] =
+    {
+        { 0, 1, 2, 3, 4 },
+        { 4, 3, 2, 1, 0 },
+        { 0, 1, 2, 3, 4 },
+        { 4, 3, 2, 1, 0 }
+    };
+    int i, j, vistolog[sizeof(levels[0])], logtovis[sizeof(levels[0])];
+
+    hr = ScriptLayout(sizeof(levels[0]), NULL, vistolog, logtovis);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+
+    hr = ScriptLayout(sizeof(levels[0]), levels[0], NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+
+    for (i = 0; i < sizeof(levels)/sizeof(levels[0]); i++)
+    {
+        hr = ScriptLayout(sizeof(levels[0]), levels[i], vistolog, logtovis);
+        ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+
+        for (j = 0; j < sizeof(levels[i]); j++)
+        {
+            ok(expect[i][j] == vistolog[j],
+               "failure: levels[%d][%d] = %d, vistolog[%d] = %d\n",
+               i, j, levels[i][j], j, vistolog[j] );
+        }
+
+        for (j = 0; j < sizeof(levels[i]); j++)
+        {
+            ok(expect[i][j] == logtovis[j],
+               "failure: levels[%d][%d] = %d, logtovis[%d] = %d\n",
+               i, j, levels[i][j], j, logtovis[j] );
+        }
+    }
+}
+
 static const struct
 {
     LGRPID group;
@@ -1010,6 +1056,7 @@ START_TEST(usp10)
     test_ScriptTextOut();
     test_ScriptXtoX();
     test_ScriptString();
+    test_ScriptLayout();
 
     test_digit_substitution();
 }
