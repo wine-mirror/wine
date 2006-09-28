@@ -22,6 +22,7 @@
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 
 static HMODULE hntdll = 0;
 
@@ -49,6 +50,7 @@ static BOOL InitFunctionPtrs(void)
     {
       NTDLL_GET_PROC(NtQuerySystemInformation)
       NTDLL_GET_PROC(NtQueryInformationProcess)
+      NTDLL_GET_PROC(NtReadVirtualMemory)
     }
     return TRUE;
 }
@@ -755,6 +757,61 @@ static void test_query_process_handlecount(void)
     }
 }
 
+
+static void test_readvirtualmemory(void)
+{
+    HANDLE process;
+    DWORD status;
+    SIZE_T readcount;
+    static const char teststring[] = "test string";
+    char buffer[12];
+
+    process = OpenProcess(PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+    ok(process != 0, "Expected to be able to open own process for reading memory\n");
+
+    /* normal operation */
+    status = pNtReadVirtualMemory(process, teststring, buffer, 12, &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+
+    /* no number of bytes */
+    memset(buffer, 0, 12);
+    status = pNtReadVirtualMemory(process, teststring, buffer, 12, NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+
+    /* illegal remote address */
+    todo_wine{
+    status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
+    ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08lx\n", status);
+    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+    }
+
+    /* 0 handle */
+    status = pNtReadVirtualMemory(0, teststring, buffer, 12, &readcount);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+
+    /* pseudo handle for current process*/
+    memset(buffer, 0, 12);
+    status = pNtReadVirtualMemory((HANDLE)-1, teststring, buffer, 12, &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+
+    /* this test currently crashes wine with "wine client error:<process id>: read: Bad address"
+     * because the reply from wine server is directly read into the buffer and that fails with EFAULT
+     */
+    /* illegal local address */
+    /*status = pNtReadVirtualMemory(process, teststring, (void *)0x1234, 12, &readcount);
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
+    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+    */
+
+    CloseHandle(process);
+}
+
 START_TEST(info)
 {
     if(!InitFunctionPtrs())
@@ -831,6 +888,10 @@ START_TEST(info)
     /* 0x14 ProcessHandleCount */
     trace("Starting test_query_process_handlecount()\n");
     test_query_process_handlecount();
+
+    /* belongs into it's own file */
+    trace("Starting test_readvirtualmemory()\n");
+    test_readvirtualmemory();
 
     FreeLibrary(hntdll);
 }
