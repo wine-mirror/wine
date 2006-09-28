@@ -378,3 +378,60 @@ BOOL WINAPI CryptSIPLoad
     FIXME("(%s %ld %p) stub!\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
     return FALSE;
 }
+
+/***********************************************************************
+ *             CryptSIPCreateIndirectData (CRYPT32.@)
+ */
+BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcbIndirectData,
+                                       SIP_INDIRECT_DATA* pIndirectData)
+{
+    FIXME("(%p %p %p) stub\n", pSubjectInfo, pcbIndirectData, pIndirectData);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptSIPGetSignedDataMsg (CRYPT32.@)
+ */
+BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
+                                       DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    FIXME("(%p %p %ld %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
+          pcbSignedDataMsg, pbSignedDataMsg);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptSIPPutSignedDataMsg (CRYPT32.@)
+ */
+BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
+                                       DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    FIXME("(%p %ld %p %ld %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+          cbSignedDataMsg, pbSignedDataMsg);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptSIPRemoveSignedDataMsg (CRYPT32.@)
+ */
+BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
+                                       DWORD dwIndex)
+{
+    FIXME("(%p %ld) stub\n", pSubjectInfo, dwIndex);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *             CryptSIPVerifyIndirectData (CRYPT32.@)
+ */
+BOOL WINAPI CryptSIPVerifyIndirectData(SIP_SUBJECTINFO* pSubjectInfo,
+                                       SIP_INDIRECT_DATA* pIndirectData)
+{
+    FIXME("(%p %p) stub\n", pSubjectInfo, pIndirectData);
+
+    return FALSE;
+}
