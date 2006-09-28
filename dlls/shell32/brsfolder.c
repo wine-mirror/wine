@@ -713,7 +713,8 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
     BROWSEINFOW bi;
     LPITEMIDLIST lpid;
     INT len;
-    
+    LPWSTR title;
+
     TRACE("%p\n", lpbi);
 
     bi.hwndOwner = lpbi->hwndOwner;
@@ -729,12 +730,13 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
     if (lpbi->lpszTitle)
     {
         len = MultiByteToWideChar( CP_ACP, 0, lpbi->lpszTitle, -1, NULL, 0 );
-        bi.lpszTitle = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpbi->lpszTitle, -1, (LPWSTR)bi.lpszTitle, len );
+        title = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpbi->lpszTitle, -1, title, len );
     }
     else
-        bi.lpszTitle = NULL;
+        title = NULL;
 
+    bi.lpszTitle = title;
     bi.ulFlags = lpbi->ulFlags;
     bi.lpfn = lpbi->lpfn;
     bi.lParam = lpbi->lParam;
@@ -746,7 +748,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
                              lpbi->pszDisplayName, MAX_PATH, 0, NULL);
         HeapFree( GetProcessHeap(), 0, bi.pszDisplayName );
     }
-    HeapFree(GetProcessHeap(), 0, (LPVOID)bi.lpszTitle);
+    HeapFree(GetProcessHeap(), 0, title);
     lpbi->iImage = bi.iImage;
     return lpid;
 }
