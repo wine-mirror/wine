@@ -207,12 +207,6 @@ present).
 This is a template for 'configure' to produce a makefile. It
 is designed for a DLL that will be inserted into the Wine
 source tree.
-.RE
-.I foo_install
-.RS
-A shell script for adding
-.I foo
-to the Wine source tree.
 .SH BUGS
 C++ name demangling is currently under development. Since the
 algorithm used is not documented, it must be decoded. Many simple
