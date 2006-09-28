@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(compstui);
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %d, %p)\n",hinstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason)
     {

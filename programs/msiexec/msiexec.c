@@ -710,7 +710,7 @@ int main(int argc, char **argv)
 			LogFileName = argvW[i];
 			if(MsiEnableLogW(LogMode, LogFileName, LogAttributes) != ERROR_SUCCESS)
 			{
-				fprintf(stderr, "Logging in %s (0x%08lx, %lu) failed\n",
+				fprintf(stderr, "Logging in %s (0x%08x, %u) failed\n",
 					 wine_dbgstr_w(LogFileName), LogMode, LogAttributes);
 				ExitProcess(1);
 			}

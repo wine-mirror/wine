@@ -46,6 +46,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 LONG WINAPI MSNET32_57( LONG a1, LONG a2, LPVOID a3, LONG a4, LPVOID a5 )
 {
-    FIXME("(0x%04lx 0x%04lx %p 0x%04lx %p): stub\n", a1, a2, a3, a4, a5);
+    FIXME("(0x%04x 0x%04x %p 0x%04x %p): stub\n", a1, a2, a3, a4, a5);
     return -1; /* FAILURE */
 }

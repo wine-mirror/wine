@@ -256,7 +256,7 @@ static void UninstallProgram(void)
         {   /* wait for the process to exit */
             WaitForSingleObject(info.hProcess, INFINITE);
             res = GetExitCodeProcess(info.hProcess, &exit_code);
-            WINE_TRACE("%d: %08lx\n", res, exit_code);
+            WINE_TRACE("%d: %08x\n", res, exit_code);
         }
         else
         {

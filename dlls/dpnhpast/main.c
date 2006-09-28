@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dpnhpast);
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	TRACE("(%p, %ld, %p)\n",hinstDLL,fdwReason,lpvReserved);
+	TRACE("(%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
 
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{

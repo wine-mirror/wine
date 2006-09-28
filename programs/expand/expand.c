@@ -47,6 +47,6 @@ int main(int argc, char *argv[])
   ret = LZCopy(hSourceFile, hDestFile);
   LZClose(hSourceFile);
   LZClose(hDestFile);
-  if (ret <= 0) fprintf(stderr,"LZCopy failed: return is %ld\n",ret);
+  if (ret <= 0) fprintf(stderr,"LZCopy failed: return is %d\n",ret);
   return (ret <= 0);
 }

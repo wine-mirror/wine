@@ -41,7 +41,7 @@ static int init_functions(void)
   HMODULE hModule = LoadLibraryA("msvcrtd.dll");
 
   if (!hModule) {
-    trace("LoadLibraryA failed to load msvcrtd.dll with GLE=%ld\n", GetLastError());
+    trace("LoadLibraryA failed to load msvcrtd.dll with GLE=%d\n", GetLastError());
     return FALSE;
   }
 

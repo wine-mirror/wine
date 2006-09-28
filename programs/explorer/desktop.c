@@ -80,7 +80,7 @@ static unsigned long create_desktop( const char *name, unsigned int width, unsig
     desktop = CreateDesktopA( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
     if (!desktop)
     {
-        WINE_ERR( "failed to create desktop %s error %ld\n", wine_dbgstr_a(name), GetLastError() );
+        WINE_ERR( "failed to create desktop %s error %d\n", wine_dbgstr_a(name), GetLastError() );
         ExitProcess( 1 );
     }
     /* magic: desktop "root" means use the X11 root window */

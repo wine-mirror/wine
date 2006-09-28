@@ -400,7 +400,7 @@ static LRESULT JSTCK_GetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 	lpInfo->dwButtons = js.buttons;
 #endif
 
-    TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, buttons: 0x%04x, flags: 0x%04x (fd %d)\n",
+    TRACE("x: %d, y: %d, z: %d, r: %d, u: %d, v: %d, buttons: 0x%04x, flags: 0x%04x (fd %d)\n",
 	  lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,
 	  lpInfo->dwRpos, lpInfo->dwUpos, lpInfo->dwVpos,
 	  (unsigned int)lpInfo->dwButtons,

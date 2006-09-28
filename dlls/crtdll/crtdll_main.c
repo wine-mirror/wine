@@ -86,7 +86,7 @@ static void convert_struct_stat( struct crtdll_stat *dst, const struct _stat *sr
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
-  TRACE("(%p,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
+  TRACE("(%p,%d,%p)\n",hinstDLL,fdwReason,lpvReserved);
 
   if (fdwReason == DLL_PROCESS_ATTACH)
   {

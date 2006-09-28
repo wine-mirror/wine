@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-   TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
+   TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
    switch (fdwReason) {
       case DLL_WINE_PREATTACH:

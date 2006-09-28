@@ -56,7 +56,7 @@ static void test_HlinkIsShortcut(void)
 
     for(i=0; i<sizeof(shortcut_test)/sizeof(shortcut_test[0]); i++) {
         hres = HlinkIsShortcut(shortcut_test[i].file);
-        ok(hres == shortcut_test[i].hres, "[%d] HlinkIsShortcut returned %08lx, expected %08lx\n",
+        ok(hres == shortcut_test[i].hres, "[%d] HlinkIsShortcut returned %08x, expected %08x\n",
            i, hres, shortcut_test[i].hres);
     }
 }
