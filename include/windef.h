@@ -196,14 +196,14 @@ typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
 typedef float           FLOAT,      *PFLOAT;
 typedef char                        *PSZ;
-#if defined(_WIN64) && !defined(_MSC_VER)
-typedef int                                    *LPLONG;
-typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned int    ULONG,      *PULONG;
-#else
+#if defined(_MSC_VER) || (defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64))
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
+#else
+typedef int                                    *LPLONG;
+typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
+typedef unsigned int    ULONG,      *PULONG;
 #endif
 
 /* Macros to map Winelib names to the correct implementation name */
