@@ -33,6 +33,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "action.h"
+#include "msidefs.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -892,8 +893,30 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                           f->ActionRequest == INSTALLSTATE_SOURCE) )
                     {
                         TRACE("Saved by %s\n", debugstr_w(f->Feature));
-                        component->ActionRequest = f->ActionRequest;
-                        component->Action = f->ActionRequest;
+
+                        if (component->Attributes & msidbComponentAttributesOptional)
+                        {
+                            if (f->Attributes & msidbFeatureAttributesFavorSource)
+                            {
+                                component->Action = INSTALLSTATE_SOURCE;
+                                component->ActionRequest = INSTALLSTATE_SOURCE;
+                            }
+                            else
+                            {
+                                component->Action = INSTALLSTATE_LOCAL;
+                                component->ActionRequest = INSTALLSTATE_LOCAL;
+                            }
+                        }
+                        else if (component->Attributes & msidbComponentAttributesSourceOnly)
+                        {
+                            component->Action = INSTALLSTATE_SOURCE;
+                            component->ActionRequest = INSTALLSTATE_SOURCE;
+                        }
+                        else
+                        {
+                            component->Action = INSTALLSTATE_LOCAL;
+                            component->ActionRequest = INSTALLSTATE_LOCAL;
+                        } 
                     }
                 }
             }
