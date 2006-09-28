@@ -371,7 +371,11 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
+#if defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64)
         fprintf( stdout, "%s: %ld tests executed, %ld marked as todo, %ld %s.\n",
+#else
+        fprintf( stdout, "%s: %d tests executed, %d marked as todo, %d %s.\n",
+#endif
                  name, successes + failures + todo_successes + todo_failures,
                  todo_successes, failures + todo_failures,
                  (failures + todo_failures != 1) ? "failures" : "failure" );
