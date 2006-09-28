@@ -344,13 +344,13 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 				  &shellfolder_key, NULL);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	    if (list->flags & SHELLFOLDER_WANTSFORPARSING)
-		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, (LPBYTE)"", 1);
+		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, (const BYTE *)"", 1);
 	    if (list->flags & SHELLFOLDER_ATTRIBUTES) 
 		res = RegSetValueExA(shellfolder_key, attributes_valuename, 0, REG_DWORD, 
-				     (LPBYTE)&list->dwAttributes, sizeof(DWORD));
+				     (const BYTE *)&list->dwAttributes, sizeof(DWORD));
 	    if (list->flags & SHELLFOLDER_CALLFORATTRIBUTES) 
 		res = RegSetValueExA(shellfolder_key, cfattributes_valuename, 0, REG_DWORD,
-				     (LPBYTE)&list->dwCallForAttributes, sizeof(DWORD));
+				     (const BYTE *)&list->dwCallForAttributes, sizeof(DWORD));
 	    RegCloseKey(shellfolder_key);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
@@ -460,7 +460,7 @@ static HRESULT register_namespace_extensions(struct regsvr_namespace const *list
         if (pwszKey && ERROR_SUCCESS == 
             RegCreateKeyExW(HKEY_LOCAL_MACHINE, pwszKey, 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL)) 
         {
-            RegSetValueExW(hKey, NULL, 0, REG_SZ, (LPBYTE)list->value, sizeof(WCHAR)*(lstrlenW(list->value)+1));
+            RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE *)list->value, sizeof(WCHAR)*(lstrlenW(list->value)+1));
             RegCloseKey(hKey);
         }
 

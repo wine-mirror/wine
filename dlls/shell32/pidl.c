@@ -1971,7 +1971,7 @@ FileStructW* _ILGetFileStructW(LPCITEMIDLIST pidl) {
     if (!(_ILIsValue(pidl) || _ILIsFolder(pidl)))
         return NULL;
 
-    cbOffset = *(WORD*)((LPBYTE)pidl + pidl->mkid.cb - sizeof(WORD));
+    cbOffset = *(const WORD *)((const BYTE *)pidl + pidl->mkid.cb - sizeof(WORD));
     pFileStructW = (FileStructW*)((LPBYTE)pidl + cbOffset);
 
     /* Currently I don't see a fool prove way to figure out if a pidl is for sure of WinXP
