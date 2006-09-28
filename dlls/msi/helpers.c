@@ -849,6 +849,9 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 
     newstate = feature->ActionRequest;
 
+    if (newstate == INSTALLSTATE_ABSENT)
+        newstate = INSTALLSTATE_UNKNOWN;
+
     LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
     {
         MSICOMPONENT* component = cl->component;
@@ -879,7 +882,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                 if ( f->ActionRequest != INSTALLSTATE_LOCAL &&
                      f->ActionRequest != INSTALLSTATE_SOURCE )
                 {
-                    break;
+                    continue;
                 }
 
                 LIST_FOR_EACH_ENTRY( clist, &f->Components, ComponentList, entry )
