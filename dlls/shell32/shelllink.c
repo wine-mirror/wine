@@ -2455,7 +2455,7 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
                             UINT idCmdFirst, UINT idCmdLast, UINT uFlags )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
-    static const WCHAR szOpen[] = { 'O','p','e','n',0 };
+    static WCHAR szOpen[] = { 'O','p','e','n',0 };
     MENUITEMINFOW mii;
     int id = 1;
 
@@ -2468,7 +2468,7 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
     memset( &mii, 0, sizeof mii );
     mii.cbSize = sizeof mii;
     mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-    mii.dwTypeData = (LPWSTR)szOpen;
+    mii.dwTypeData = szOpen;
     mii.cch = strlenW( mii.dwTypeData );
     mii.wID = idCmdFirst + id++;
     mii.fState = MFS_DEFAULT | MFS_ENABLED;
