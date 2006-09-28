@@ -6741,6 +6741,8 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 
     if (nType == GWL_STYLE)
     {
+        DWORD dwOldStyle = infoPtr->dwStyle;
+
         if (lpStyle->styleNew & TBSTYLE_LIST)
             infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS;
         else
@@ -6753,7 +6755,7 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
         infoPtr->dwStyle = lpStyle->styleNew;
 
         /* only resize if one of the CCS_* styles was changed */
-        if ((infoPtr->dwStyle ^ lpStyle->styleNew) & COMMON_STYLES)
+        if ((dwOldStyle ^ lpStyle->styleNew) & COMMON_STYLES)
         {
             TOOLBAR_AutoSize (hwnd);
     
