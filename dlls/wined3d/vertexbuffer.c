@@ -241,7 +241,7 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      * If some stuff does not exist in the buffer, then lpData, dwStride and dwType are memsetted to 0. So if the semantic didn't exist before
      * and does not exist now all 3 values will be equal(=0).
      *
-     * Checking the lpData field alone is not enought, because data may appear at offset 0 in the buffer. This is the same location as nonexistant
+     * Checking the lpData field alone is not enough, because data may appear at offset 0 in the buffer. This is the same location as nonexistent
      * data uses, so we have to check the type and stride too. Colors can be at offset 0 too, because it is perfectly fine to render from 2 or more
      * buffers at the same time and get the position from one and the color from the other buffer.
      */

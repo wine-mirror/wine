@@ -147,7 +147,7 @@ static void test_checkboxes(void)
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(item.state == 0x1ccc, "state %x\n", item.state);
 
-    /* Now add an item without specifying a state and check that it's state goes to 0x1000 */
+    /* Now add an item without specifying a state and check that its state goes to 0x1000 */
     item.iItem = 2;
     item.mask = LVIF_TEXT;
     item.state = 0;
@@ -161,7 +161,7 @@ static void test_checkboxes(void)
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(item.state == 0x1000, "state %x\n", item.state);
 
-    /* Add a further item this time specifying a state and still it's state goes to 0x1000 */
+    /* Add a further item this time specifying a state and still its state goes to 0x1000 */
     item.iItem = 3;
     item.mask = LVIF_TEXT | LVIF_STATE;
     item.stateMask = 0xffff;

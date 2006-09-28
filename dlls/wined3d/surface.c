@@ -2864,7 +2864,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
         DstRect.right = dstx + SrcRect.right - SrcRect.left;
         DstRect.bottom = dsty + SrcRect.bottom - SrcRect.top;
 
-        /* Convert BltFast flags into Btl ones because it is called from SurfaceImpl_Blt aswell */
+        /* Convert BltFast flags into Btl ones because it is called from SurfaceImpl_Blt as well */
         if(trans & DDBLTFAST_SRCCOLORKEY)
             Flags |= DDBLT_KEYSRC;
         if(trans & DDBLTFAST_DESTCOLORKEY)

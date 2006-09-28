@@ -149,9 +149,9 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %ld.\n", GetLastError());
 
-    /* Test with a non-existent file (hopefully) */
+    /* Test with a nonexistent file (hopefully) */
     SetLastError(0xdeadbeef);
-    /* Set subject to something other than zero's */
+    /* Set subject to something other than zeros */
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(deadbeef, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");

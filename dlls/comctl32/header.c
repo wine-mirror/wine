@@ -1829,7 +1829,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		HEADER_DrawTrackLine (hwnd, hdc, infoPtr->xOldTrack);
 		ReleaseDC (hwnd, hdc);
                 iTrackWidth = infoPtr->xOldTrack - infoPtr->items[infoPtr->iMoveItem].rect.left;
-                /* FIXME: should stop tracking if HDN_TRACK returnes TRUE */
+                /* FIXME: should stop tracking if HDN_TRACK returns TRUE */
                 HEADER_SendNotifyWithIntFieldT(hwnd, HDN_TRACKW, infoPtr->iMoveItem, HDI_WIDTH, iTrackWidth);
 	    }
 

@@ -90,7 +90,7 @@ static void test_SetupDiOpenClassRegKeyExA(void)
     static const CHAR guidString[] = "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
     HKEY hkey;
 
-    /* Check return value for non-existent key */
+    /* Check return value for nonexistent key */
     hkey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
         DIOCR_INSTALLER, NULL, NULL);
     ok(hkey == INVALID_HANDLE_VALUE,

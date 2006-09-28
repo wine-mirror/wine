@@ -403,7 +403,7 @@ LOAD_FUNCPTR(glPixelStorei)
      * 8762 drivers support 1.3 for the server and 1.4 for the client and they support lots of extensions.
      * Unfortunately it is much more complicated for Mesa/DRI-based drivers and ATI's drivers.
      * Both sets of drivers report a server version of 1.2 and the client version can be 1.3 or 1.4.
-     * Further in case of atleast ATI's drivers one crucial extension needed for our pixel format code
+     * Further, in case of at least ATI's drivers, one crucial extension needed for our pixel format code
      * is only available in the list of server extensions and not in the client list.
      *
      * The versioning checks below try to take into account the comments from above.
@@ -2029,7 +2029,7 @@ GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribILis
     int tmp_vis_id;
 
     int pfmt_it = 0;
-    int offscreen_index = 1; /* Start at one because we allways have a main visual at iPixelFormat=1 */
+    int offscreen_index = 1; /* Start at one because we always have a main visual at iPixelFormat=1 */
 
     TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
     if (NULL != pfAttribFList) {
@@ -2103,7 +2103,7 @@ GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribILis
             /* The format of Wine's main visual is stored at index 1 of our WGL format table.
             * At higher indices we store offscreen rendering formats (visualid=0). Below we calculate
             * the index of the offscreen format. We do this by counting the number of offscreen formats
-            * which we see upto reaching our target format. */ 
+            * which we see until we reach our target format. */ 
             if(tmp_vis_id == 0)
                 offscreen_index++;
 

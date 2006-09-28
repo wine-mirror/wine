@@ -713,9 +713,9 @@ DGifGetPrefixChar(GifPrefixType *Prefix,
 
 /******************************************************************************
  * The LZ decompression input routine:
- * This routine is responsable for the decompression of the bit stream from
+ * This routine is responsible for the decompression of the bit stream from
  * 8 bits (bytes) packets, into the real codes.
- * Returns GIF_OK if read succesfully.
+ * Returns GIF_OK if read successfully.
  *****************************************************************************/
 static int
 DGifDecompressInput(GifFileType * GifFile,
@@ -767,7 +767,7 @@ DGifDecompressInput(GifFileType * GifFile,
  * This routines read one gif data block at a time and buffers it internally
  * so that the decompression routine could access it.
  * The routine returns the next byte from its internal buffer (or read next
- * block in if buffer empty) and returns GIF_OK if succesful.
+ * block in if buffer empty) and returns GIF_OK if successful.
  *****************************************************************************/
 static int
 DGifBufferedInput(GifFileType * GifFile,
