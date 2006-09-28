@@ -772,6 +772,45 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
+DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
+ PCERT_PUBLIC_KEY_INFO pPublicKey)
+{
+    DWORD len = 0;
+
+    TRACE("(%08lx, %p)\n", dwCertEncodingType, pPublicKey);
+
+    if (dwCertEncodingType != X509_ASN_ENCODING)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return 0;
+    }
+    if (pPublicKey->Algorithm.pszObjId &&
+     !strcmp(pPublicKey->Algorithm.pszObjId, szOID_RSA_DH))
+    {
+        FIXME("unimplemented for DH public keys\n");
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+    }
+    else
+    {
+        DWORD size;
+        PBYTE buf;
+        BOOL ret = CryptDecodeObjectEx(dwCertEncodingType,
+         RSA_CSP_PUBLICKEYBLOB, pPublicKey->PublicKey.pbData,
+         pPublicKey->PublicKey.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &buf,
+         &size);
+
+        if (ret)
+        {
+            RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)((LPBYTE)buf +
+             sizeof(BLOBHEADER));
+
+            len = rsaPubKey->bitlen;
+            LocalFree(buf);
+        }
+    }
+    return len;
+}
+
 typedef BOOL (*CertCompareFunc)(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, const void *pvPara);
 

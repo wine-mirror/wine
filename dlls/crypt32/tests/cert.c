@@ -1903,6 +1903,82 @@ static void testAcquireCertPrivateKey(void)
     CertFreeCertificateContext(cert);
 }
 
+static void testGetPublicKeyLength(void)
+{
+    static char oid_rsa_rsa[] = szOID_RSA_RSA;
+    static char oid_rsa_dh[] = szOID_RSA_DH;
+    static char bogusOID[] = "1.2.3";
+    DWORD ret;
+    CERT_PUBLIC_KEY_INFO info = { { 0 } };
+    BYTE bogusKey[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    BYTE key[] = { 0x30,0x0f,0x02,0x08,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+     0x02,0x03,0x01,0x00,0x01 };
+
+    /* Crashes
+    ret = CertGetPublicKeyLength(0, NULL);
+     */
+    /* With an empty public key info */
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(0, &info);
+    ok(ret == 0 && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected length 0 and ERROR_FILE_NOT_FOUND, got length %ld, %08lx\n",
+     ret, GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected length 0 and CRYPT_E_ASN1_EOD, got length %ld, %08lx\n",
+     ret, GetLastError());
+    /* With a nearly-empty public key info */
+    info.Algorithm.pszObjId = oid_rsa_rsa;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(0, &info);
+    ok(ret == 0 && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected length 0 and ERROR_FILE_NOT_FOUND, got length %ld, %08lx\n",
+     ret, GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected length 0 and CRYPT_E_ASN1_EOD, got length %ld, %08lx\n",
+     ret, GetLastError());
+    /* With a bogus key */
+    info.PublicKey.cbData = sizeof(bogusKey);
+    info.PublicKey.pbData = bogusKey;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(0, &info);
+    ok(ret == 0 && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected length 0 and ERROR_FILE_NOT_FOUND, got length %ld, %08lx\n",
+     ret, GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected length 0 and CRYPT_E_ASN1_BADTAGTAG, got length %ld, %08lx\n",
+     ret, GetLastError());
+    /* With a believable RSA key but a bogus OID */
+    info.Algorithm.pszObjId = bogusOID;
+    info.PublicKey.cbData = sizeof(key);
+    info.PublicKey.pbData = key;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(0, &info);
+    ok(ret == 0 && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected length 0 and ERROR_FILE_NOT_FOUND, got length %ld, %08lx\n",
+     ret, GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 56, "Expected length 56, got %ld\n", ret);
+    /* An RSA key with the DH OID */
+    info.Algorithm.pszObjId = oid_rsa_dh;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected length 0 and CRYPT_E_ASN1_BADTAG, got length %ld, %08lx\n",
+     ret, GetLastError());
+    /* With the RSA OID */
+    info.Algorithm.pszObjId = oid_rsa_rsa;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
+    ok(ret == 56, "Expected length 56, got %ld\n", ret);
+}
+
 START_TEST(cert)
 {
     init_function_pointers();
@@ -1925,4 +2001,5 @@ START_TEST(cert)
     testCompareCert();
     testVerifySubjectCert();
     testAcquireCertPrivateKey();
+    testGetPublicKeyLength();
 }

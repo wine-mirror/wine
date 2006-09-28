@@ -57,7 +57,7 @@
 @ stdcall CertGetIssuerCertificateFromStore(long ptr ptr ptr)
 @ stdcall CertGetNameStringA(ptr long long ptr ptr long)
 @ stdcall CertGetNameStringW(ptr long long ptr ptr long)
-@ stub CertGetPublicKeyLength
+@ stdcall CertGetPublicKeyLength(long ptr)
 @ stdcall CertGetSubjectCertificateFromStore(ptr long ptr)
 @ stdcall CertGetValidUsages(long ptr ptr ptr ptr)
 @ stub CertIsRDNAttrsInCertificateName
