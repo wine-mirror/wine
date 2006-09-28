@@ -1488,6 +1488,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
             if (*phProv != (HCRYPTPROV)INVALID_HANDLE_VALUE) 
             {
                 release_handle(&handle_table, (unsigned int)*phProv, RSAENH_MAGIC_CONTAINER);
+                TRACE("Can't create new keyset, already exists\n");
                 SetLastError(NTE_EXISTS);
                 return FALSE;
             }
@@ -1496,6 +1497,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 
         case CRYPT_VERIFYCONTEXT:
             if (pszContainer) {
+                TRACE("pszContainer should be NULL\n");
                 SetLastError(NTE_BAD_FLAGS);
                 return FALSE;
             }
@@ -1911,20 +1913,20 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
             switch (pCryptKey->dwMode) {
                 case CRYPT_MODE_ECB:
-                    encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, in, out, 
+                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
                                        RSAENH_ENCRYPT);
                     break;
                 
                 case CRYPT_MODE_CBC:
                     for (j=0; j<pCryptKey->dwBlockLen; j++) in[j] ^= pCryptKey->abChainVector[j];
-                    encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, in, out, 
+                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
                                        RSAENH_ENCRYPT);
                     memcpy(pCryptKey->abChainVector, out, pCryptKey->dwBlockLen);
                     break;
 
                 case CRYPT_MODE_CFB:
                     for (j=0; j<pCryptKey->dwBlockLen; j++) {
-                        encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, 
+                        encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, 
                                            pCryptKey->abChainVector, o, RSAENH_ENCRYPT);
                         out[j] = in[j] ^ o[0];
                         for (k=0; k<pCryptKey->dwBlockLen-1; k++) 
@@ -1959,7 +1961,7 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             return FALSE;
         }
         if (!pad_data(pbData, *pdwDataLen, pbData, pCryptKey->dwBlockLen, dwFlags)) return FALSE;
-        encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, pbData, RSAENH_ENCRYPT);
+        encrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbData, pbData, RSAENH_ENCRYPT);
         *pdwDataLen = pCryptKey->dwBlockLen;
         Final = TRUE;
     } else {
@@ -2040,12 +2042,12 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
             switch (pCryptKey->dwMode) {
                 case CRYPT_MODE_ECB:
-                    encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, in, out, 
+                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
                                        RSAENH_DECRYPT);
                     break;
                 
                 case CRYPT_MODE_CBC:
-                    encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, in, out, 
+                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
                                        RSAENH_DECRYPT);
                     for (j=0; j<pCryptKey->dwBlockLen; j++) out[j] ^= pCryptKey->abChainVector[j];
                     memcpy(pCryptKey->abChainVector, in, pCryptKey->dwBlockLen);
@@ -2053,7 +2055,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
 
                 case CRYPT_MODE_CFB:
                     for (j=0; j<pCryptKey->dwBlockLen; j++) {
-                        encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, 
+                        encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, 
                                            pCryptKey->abChainVector, o, RSAENH_ENCRYPT);
                         out[j] = in[j] ^ o[0];
                         for (k=0; k<pCryptKey->dwBlockLen-1; k++) 
@@ -2077,7 +2079,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             SetLastError(NTE_BAD_KEY);
             return FALSE;
         }
-        encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, pbData, RSAENH_DECRYPT);
+        encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbData, pbData, RSAENH_DECRYPT);
         if (!unpad_data(pbData, pCryptKey->dwBlockLen, pbData, pdwDataLen, dwFlags)) return FALSE;
         Final = TRUE;
     } else {
@@ -2178,7 +2180,7 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                     return FALSE;
                 }
                 
-                encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, (BYTE*)(pAlgid+1), 
+                encrypt_block_impl(pPubKey->aiAlgid, PK_PUBLIC, &pPubKey->context, (BYTE*)(pAlgid+1), 
                                    (BYTE*)(pAlgid+1), RSAENH_ENCRYPT); 
             }
             *pdwDataLen = dwDataLen;
@@ -2207,8 +2209,6 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 pBlobHeader->bVersion = CUR_BLOB_VERSION;
                 pBlobHeader->reserved = 0;
                 pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
-                if (pBlobHeader->aiKeyAlg == CALG_RSA_SIGN)
-                    pBlobHeader->aiKeyAlg = CALG_RSA_KEYX;
 
                 pRSAPubKey->magic = RSAENH_MAGIC_RSA1; 
                 pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
@@ -2325,12 +2325,14 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 {
                 case AT_SIGNATURE:
                 case CALG_RSA_SIGN:
+                    TRACE("installing signing key\n");
                     RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
                     copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
                             (unsigned int*)&pKeyContainer->hSignatureKeyPair);
                     break;
                 case AT_KEYEXCHANGE:
                 case CALG_RSA_KEYX:
+                    TRACE("installing key exchange key\n");
                     RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
                     copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
                                 (unsigned int*)&pKeyContainer->hKeyExchangeKeyPair);
@@ -2352,8 +2354,6 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
              * available, so only signature verification is possible.
              */
             algID = pBlobHeader->aiKeyAlg;
-            if (algID == CALG_RSA_KEYX)
-                algID = CALG_RSA_SIGN;
             *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE; 
             setup_key(pCryptKey);
@@ -2364,6 +2364,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 {
                 case AT_KEYEXCHANGE:
                 case CALG_RSA_KEYX:
+                    TRACE("installing public key\n");
                     RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
                     copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
                                 (unsigned int*)&pKeyContainer->hKeyExchangeKeyPair);
@@ -2388,7 +2389,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
 
             pbDecrypted = HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
             if (!pbDecrypted) return FALSE;
-            encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, pbKeyStream, pbDecrypted, 
+            encrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted, 
                                RSAENH_DECRYPT);
 
             dwKeyLen = RSAENH_MAX_KEY_SIZE;
@@ -3531,7 +3532,7 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
         return FALSE;
     }
 
-    return encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbSignature, pbSignature, RSAENH_ENCRYPT);
+    return encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbSignature, pbSignature, RSAENH_ENCRYPT);
 }
 
 /******************************************************************************
@@ -3611,7 +3612,7 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
         goto cleanup;
     }
 
-    if (!encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbSignature, pbDecrypted, 
+    if (!encrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbSignature, pbDecrypted, 
                             RSAENH_DECRYPT)) 
     {
         goto cleanup;
