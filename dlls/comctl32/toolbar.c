@@ -6226,15 +6226,14 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
         /* fill in the TRACKMOUSEEVENT struct */
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
         trackinfo.dwFlags = TME_QUERY;
-        trackinfo.hwndTrack = hwnd;
-        trackinfo.dwHoverTime = HOVER_DEFAULT;
 
         /* call _TrackMouseEvent to see if we are currently tracking for this hwnd */
         _TrackMouseEvent(&trackinfo);
 
         /* Make sure tracking is enabled so we receive a WM_MOUSELEAVE message */
-        if(!(trackinfo.dwFlags & TME_LEAVE)) {
+        if(trackinfo.hwndTrack != hwnd || !(trackinfo.dwFlags & TME_LEAVE)) {
             trackinfo.dwFlags = TME_LEAVE; /* notify upon leaving */
+            trackinfo.hwndTrack = hwnd;
 
             /* call TRACKMOUSEEVENT so we receive a WM_MOUSELEAVE message */
             /* and can properly deactivate the hot toolbar button */
