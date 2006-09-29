@@ -847,7 +847,7 @@ static void write_com_interface(type_t *iface)
   fprintf(header, "    END_INTERFACE\n");
   fprintf(header, "} %sVtbl;\n", iface->name);
   fprintf(header, "interface %s {\n", iface->name);
-  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
+  fprintf(header, "    CONST_VTBL %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "\n");
   fprintf(header, "#ifdef COBJMACROS\n");
@@ -932,7 +932,7 @@ void write_dispinterface(type_t *iface)
   fprintf(header, "    END_INTERFACE\n");
   fprintf(header, "} %sVtbl;\n", iface->name);
   fprintf(header, "interface %s {\n", iface->name);
-  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
+  fprintf(header, "    CONST_VTBL %sVtbl* lpVtbl;\n", iface->name);
   fprintf(header, "};\n");
   fprintf(header, "\n");
   fprintf(header, "#ifdef COBJMACROS\n");
