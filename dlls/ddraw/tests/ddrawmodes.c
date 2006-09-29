@@ -1,6 +1,13 @@
 /*
  * Unit tests for ddraw functions
  *
+ *
+ * Part of this test involves changing the screen resolution. But this is
+ * really disrupting if the user is doing something else and is not very nice
+ * to CRT screens. Plus, ideally it needs someone watching it to check that
+ * each mode displays correctly.
+ * So this is only done if the test is being run in interactive mode.
+ *
  * Copyright (C) 2003 Sami Aario
  *
  * This library is free software; you can redistribute it and/or
@@ -342,7 +349,8 @@ START_TEST(ddrawmodes)
     if (!createdirectdraw())
         return;
     enumdisplaymodes();
-    testdisplaymodes();
+    if (winetest_interactive)
+        testdisplaymodes();
     flushdisplaymodes();
     releasedirectdraw();
 
