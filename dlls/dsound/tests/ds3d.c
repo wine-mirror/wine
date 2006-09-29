@@ -562,14 +562,14 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
         }
 
         /* try an offset past the end of the buffer */
-        rc = IDirectSoundBuffer_Lock(*dsbo, state.buffer_size, 0, &buffer1,
+        rc = IDirectSoundBuffer_Lock(*dsbo, dsbcaps.dwBufferBytes, 0, &buffer1,
                                       &length1, NULL, NULL,
                                       DSBLOCK_ENTIREBUFFER);
         ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
            "returned DSERR_INVALIDPARAM, returned %s\n", DXGetErrorString8(rc));
 
         /* try a size larger than the buffer */
-        rc = IDirectSoundBuffer_Lock(*dsbo, 0, state.buffer_size + 1,
+        rc = IDirectSoundBuffer_Lock(*dsbo, 0, dsbcaps.dwBufferBytes + 1,
                                      &buffer1, &length1, NULL, NULL,
                                      DSBLOCK_FROMWRITECURSOR);
         ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
