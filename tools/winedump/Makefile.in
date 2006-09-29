@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
-DEFS      = -DWINE_NO_LONG_AS_INT
 
 PROGRAMS = winedump$(EXEEXT)
 MANPAGES = winedump.man

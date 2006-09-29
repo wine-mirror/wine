@@ -159,7 +159,7 @@ static inline void print_word(const char *title, WORD value)
 
 static inline void print_dword(const char *title, DWORD value)
 {
-    printf("  %-34s 0x%-8lx     %lu\n", title, value, value);
+    printf("  %-34s 0x%-8x     %u\n", title, value, value);
 }
 
 static inline void print_longlong(const char *title, ULONGLONG value)
@@ -208,11 +208,11 @@ static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *dire
 {
     unsigned i;
     printf("Data Directory\n");
-    printf("%ld\n", n * sizeof(IMAGE_DATA_DIRECTORY));
+    printf("%d\n", n * sizeof(IMAGE_DATA_DIRECTORY));
 
     for (i = 0; i < n && i < 16; i++)
     {
-        printf("  %-12s rva: 0x%-8lX  size: %8lu\n",
+        printf("  %-12s rva: 0x%-8X  size: %8u\n",
                DirectoryNames[i], directory[i].VirtualAddress,
                directory[i].Size);
     }
@@ -299,11 +299,11 @@ static	void	dump_pe_header(void)
     printf("  Machine:                      %04X (%s)\n",
 	   fileHeader->Machine, get_machine_str(fileHeader->Machine));
     printf("  Number of Sections:           %d\n", fileHeader->NumberOfSections);
-    printf("  TimeDateStamp:                %08lX (%s) offset %lu\n",
+    printf("  TimeDateStamp:                %08X (%s) offset %lu\n",
 	   fileHeader->TimeDateStamp, get_time_str(fileHeader->TimeDateStamp),
 	   Offset(&(fileHeader->TimeDateStamp)));
-    printf("  PointerToSymbolTable:         %08lX\n", fileHeader->PointerToSymbolTable);
-    printf("  NumberOfSymbols:              %08lX\n", fileHeader->NumberOfSymbols);
+    printf("  PointerToSymbolTable:         %08X\n", fileHeader->PointerToSymbolTable);
+    printf("  NumberOfSymbols:              %08X\n", fileHeader->NumberOfSymbols);
     printf("  SizeOfOptionalHeader:         %04X\n", fileHeader->SizeOfOptionalHeader);
     printf("  Characteristics:              %04X\n", fileHeader->Characteristics);
 #define	X(f,s)	if (fileHeader->Characteristics & f) printf("    %s\n", s)
@@ -350,16 +350,16 @@ static	void	dump_sections(const void* addr, unsigned num_sect)
     printf("Section Table\n");
     for (i = 0; i < num_sect; i++, sectHead++)
     {
-	printf("  %02d %-8.8s   VirtSize: %-8lu  VirtAddr:  %-8lu 0x%08lx\n",
+	printf("  %02d %-8.8s   VirtSize: %-8u  VirtAddr:  %-8u 0x%08x\n",
 	       i + 1, sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
 	       sectHead->VirtualAddress);
-	printf("    raw data offs: %-8lu raw data size: %-8lu\n",
+	printf("    raw data offs: %-8u raw data size: %-8u\n",
 	       sectHead->PointerToRawData, sectHead->SizeOfRawData);
-	printf("    relocation offs: %-8lu  relocations:   %-8u\n",
+	printf("    relocation offs: %-8u  relocations:   %-8u\n",
 	       sectHead->PointerToRelocations, sectHead->NumberOfRelocations);
-	printf("    line # offs:     %-8lu  line #'s:      %-8u\n",
+	printf("    line # offs:     %-8u  line #'s:      %-8u\n",
 	       sectHead->PointerToLinenumbers, sectHead->NumberOfLinenumbers);
-	printf("    characteristics: 0x%08lx\n", sectHead->Characteristics);
+	printf("    characteristics: 0x%08x\n", sectHead->Characteristics);
 	printf("      ");
 #define X(b,s)	if (sectHead->Characteristics & b) printf(s "  ")
 /* #define IMAGE_SCN_TYPE_REG			0x00000000 - Reserved */
@@ -429,16 +429,16 @@ static	void	dump_dir_exported_functions(void)
     printf("Exports table:\n");
     printf("\n");
     printf("  Name:            %s\n", (const char*)RVA(exportDir->Name, sizeof(DWORD)));
-    printf("  Characteristics: %08lx\n", exportDir->Characteristics);
-    printf("  TimeDateStamp:   %08lX %s\n",
+    printf("  Characteristics: %08x\n", exportDir->Characteristics);
+    printf("  TimeDateStamp:   %08X %s\n",
 	   exportDir->TimeDateStamp, get_time_str(exportDir->TimeDateStamp));
     printf("  Version:         %u.%02u\n", exportDir->MajorVersion, exportDir->MinorVersion);
-    printf("  Ordinal base:    %lu\n", exportDir->Base);
-    printf("  # of functions:  %lu\n", exportDir->NumberOfFunctions);
-    printf("  # of Names:      %lu\n", exportDir->NumberOfNames);
-    printf("Addresses of functions: %08lX\n", exportDir->AddressOfFunctions);
-    printf("Addresses of name ordinals: %08lX\n", exportDir->AddressOfNameOrdinals);
-    printf("Addresses of names: %08lX\n", exportDir->AddressOfNames);
+    printf("  Ordinal base:    %u\n", exportDir->Base);
+    printf("  # of functions:  %u\n", exportDir->NumberOfFunctions);
+    printf("  # of Names:      %u\n", exportDir->NumberOfNames);
+    printf("Addresses of functions: %08X\n", exportDir->AddressOfFunctions);
+    printf("Addresses of name ordinals: %08X\n", exportDir->AddressOfNameOrdinals);
+    printf("Addresses of names: %08X\n", exportDir->AddressOfNames);
     printf("\n");
     printf("  Entry Pt  Ordn  Name\n");
 
@@ -462,7 +462,7 @@ static	void	dump_dir_exported_functions(void)
 	name = (const char*)RVA(*pName, sizeof(DWORD));
 	if (name && globals.do_demangle)
 	{
-	    printf("  %08lX  %4lu ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
+            printf("  %08X  %4u ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
 
 	    symbol_init(&symbol, name);
 	    if (symbol_demangle(&symbol) == -1)
@@ -475,7 +475,7 @@ static	void	dump_dir_exported_functions(void)
 	}
 	else
 	{
-	    printf("  %08lX  %4lu %s", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
+            printf("  %08X  %4u %s", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
 	}
         /* check for forwarded function */
         if ((const char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (const char *)exportDir &&
@@ -489,7 +489,7 @@ static	void	dump_dir_exported_functions(void)
     {
 	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))
 	{
-	    printf("  %08lX  %4lu <by ordinal>\n", pFunc[i], exportDir->Base + i);
+            printf("  %08X  %4u <by ordinal>\n", pFunc[i], exportDir->Base + i);
 	}
     }
     free(map);
@@ -503,14 +503,14 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il)
     for (; il->u1.Ordinal; il++)
     {
         if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
-            printf("  %4lu  <by ordinal>\n", (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
+            printf("  %4u  <by ordinal>\n", (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
+                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
         }
     }
 }
@@ -521,14 +521,14 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il)
     for (; il->u1.Ordinal; il++)
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
-            printf("  %4lu  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
+            printf("  %4u  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
+                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
         }
     }
 }
@@ -550,7 +550,7 @@ static	void	dump_dir_imported_functions(void)
         directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
     }
 
-    printf("Import Table size: %08lx\n", directorySize);/* FIXME */
+    printf("Import Table size: %08x\n", directorySize);/* FIXME */
 
     for (;;)
     {
@@ -559,11 +559,11 @@ static	void	dump_dir_imported_functions(void)
         if (!importDesc->Name || !importDesc->FirstThunk) break;
 
 	printf("  offset %08lx %s\n", Offset(importDesc), (const char*)RVA(importDesc->Name, sizeof(DWORD)));
-	printf("  Hint/Name Table: %08lX\n", (DWORD)importDesc->u.OriginalFirstThunk);
-	printf("  TimeDataStamp:   %08lX (%s)\n",
+	printf("  Hint/Name Table: %08X\n", (DWORD)importDesc->u.OriginalFirstThunk);
+	printf("  TimeDataStamp:   %08X (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
-	printf("  ForwarderChain:  %08lX\n", importDesc->ForwarderChain);
-	printf("  First thunk RVA: %08lX\n", (DWORD)importDesc->FirstThunk);
+	printf("  ForwarderChain:  %08X\n", importDesc->ForwarderChain);
+	printf("  First thunk RVA: %08X\n", (DWORD)importDesc->FirstThunk);
 
 	printf("  Ordn  Name\n");
 
@@ -613,7 +613,7 @@ static void dump_dir_delay_imported_functions(void)
         directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
     }
 
-    printf("Delay Import Table size: %08lx\n", directorySize); /* FIXME */
+    printf("Delay Import Table size: %08x\n", directorySize); /* FIXME */
 
     for (;;)
     {
@@ -622,10 +622,10 @@ static void dump_dir_delay_imported_functions(void)
 
         if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT) break;
 
-        printf("  grAttrs %08lx offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
+        printf("  grAttrs %08x offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
                use_rva ? (const char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
-        printf("  Hint/Name Table: %08lx\n", importDesc->pINT);
-        printf("  TimeDataStamp:   %08lX (%s)\n",
+        printf("  Hint/Name Table: %08x\n", importDesc->pINT);
+        printf("  TimeDataStamp:   %08X (%s)\n",
                importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
 
         printf("  Ordn  Name\n");
@@ -652,8 +652,8 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     const	char*	str;
 
     printf("Directory %02u\n", idx + 1);
-    printf("  Characteristics:   %08lX\n", idd->Characteristics);
-    printf("  TimeDateStamp:     %08lX %s\n",
+    printf("  Characteristics:   %08X\n", idd->Characteristics);
+    printf("  TimeDateStamp:     %08X %s\n",
 	   idd->TimeDateStamp, get_time_str(idd->TimeDateStamp));
     printf("  Version            %u.%02u\n", idd->MajorVersion, idd->MinorVersion);
     switch (idd->Type)
@@ -671,10 +671,10 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_BORLAND:	str = "BORLAND"; 	break;
     case IMAGE_DEBUG_TYPE_RESERVED10:	str = "RESERVED10"; 	break;
     }
-    printf("  Type:              %lu (%s)\n", idd->Type, str);
-    printf("  SizeOfData:        %lu\n", idd->SizeOfData);
-    printf("  AddressOfRawData:  %08lX\n", idd->AddressOfRawData);
-    printf("  PointerToRawData:  %08lX\n", idd->PointerToRawData);
+    printf("  Type:              %u (%s)\n", idd->Type, str);
+    printf("  SizeOfData:        %u\n", idd->SizeOfData);
+    printf("  AddressOfRawData:  %08X\n", idd->AddressOfRawData);
+    printf("  PointerToRawData:  %08X\n", idd->PointerToRawData);
 
     switch (idd->Type)
     {
@@ -694,10 +694,10 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     {
 	const IMAGE_DEBUG_MISC* misc = PRD(idd->PointerToRawData, idd->SizeOfData);
 	if (!misc) {printf("Can't get misc debug information\n"); break;}
-	printf("    DataType:          %lu (%s)\n",
+	printf("    DataType:          %u (%s)\n",
 	       misc->DataType,
 	       (misc->DataType == IMAGE_DEBUG_MISC_EXENAME) ? "Exe name" : "Unknown");
-	printf("    Length:            %lu\n", misc->Length);
+	printf("    Length:            %u\n", misc->Length);
 	printf("    Unicode:           %s\n", misc->Unicode ? "Yes" : "No");
 	printf("    Data:              %s\n", misc->Data);
     }
@@ -760,19 +760,19 @@ static void dump_dir_tls(void)
 
     /* FIXME: This does not properly handle large images */
     printf( "Thread Local Storage\n" );
-    printf( "  Raw data        %08lx-%08lx (data size %lx zero fill size %lx)\n",
+    printf( "  Raw data        %08x-%08x (data size %x zero fill size %x)\n",
             (DWORD)dir.StartAddressOfRawData, (DWORD)dir.EndAddressOfRawData,
             (DWORD)(dir.EndAddressOfRawData - dir.StartAddressOfRawData),
             (DWORD)dir.SizeOfZeroFill );
-    printf( "  Index address   %08lx\n", (DWORD)dir.AddressOfIndex );
-    printf( "  Characteristics %08lx\n", dir.Characteristics );
-    printf( "  Callbacks       %08lx -> {", (DWORD)dir.AddressOfCallBacks );
+    printf( "  Index address   %08x\n", (DWORD)dir.AddressOfIndex );
+    printf( "  Characteristics %08x\n", dir.Characteristics );
+    printf( "  Callbacks       %08x -> {", (DWORD)dir.AddressOfCallBacks );
     if (dir.AddressOfCallBacks)
     {
         DWORD   addr = (DWORD)dir.AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
         while ((callbacks = RVA(addr, sizeof(DWORD))) && *callbacks)
         {
-            printf( " %08lx", *callbacks );
+            printf( " %08x", *callbacks );
             addr += sizeof(DWORD);
         }
     }
@@ -795,14 +795,14 @@ void	dump_separate_dbg(void)
     printf ("Machine:            0x%04X (%s)\n",
 	    separateDebugHead->Machine, get_machine_str(separateDebugHead->Machine));
     printf ("Characteristics:    0x%04X\n", separateDebugHead->Characteristics);
-    printf ("TimeDateStamp:      0x%08lX (%s)\n",
+    printf ("TimeDateStamp:      0x%08X (%s)\n",
 	    separateDebugHead->TimeDateStamp, get_time_str(separateDebugHead->TimeDateStamp));
-    printf ("CheckSum:           0x%08lX\n", separateDebugHead->CheckSum);
-    printf ("ImageBase:          0x%08lX\n", separateDebugHead->ImageBase);
-    printf ("SizeOfImage:        0x%08lX\n", separateDebugHead->SizeOfImage);
-    printf ("NumberOfSections:   0x%08lX\n", separateDebugHead->NumberOfSections);
-    printf ("ExportedNamesSize:  0x%08lX\n", separateDebugHead->ExportedNamesSize);
-    printf ("DebugDirectorySize: 0x%08lX\n", separateDebugHead->DebugDirectorySize);
+    printf ("CheckSum:           0x%08X\n", separateDebugHead->CheckSum);
+    printf ("ImageBase:          0x%08X\n", separateDebugHead->ImageBase);
+    printf ("SizeOfImage:        0x%08X\n", separateDebugHead->SizeOfImage);
+    printf ("NumberOfSections:   0x%08X\n", separateDebugHead->NumberOfSections);
+    printf ("ExportedNamesSize:  0x%08X\n", separateDebugHead->ExportedNamesSize);
+    printf ("DebugDirectorySize: 0x%08X\n", separateDebugHead->DebugDirectorySize);
 
     if (!PRD(sizeof(IMAGE_SEPARATE_DEBUG_HEADER),
 	     separateDebugHead->NumberOfSections * sizeof(IMAGE_SECTION_HEADER)))
@@ -1234,7 +1234,7 @@ static	void	do_grab_sym( enum FileSig sig, const void* pmt )
 	{
 	    char ordinal_text[256];
 	    /* Ordinal only entry */
-	    snprintf (ordinal_text, sizeof(ordinal_text), "%s_%lu",
+            snprintf (ordinal_text, sizeof(ordinal_text), "%s_%u",
 		      globals.forward_dll ? globals.forward_dll : OUTPUT_UC_DLL_NAME,
 		      exportDir->Base + i);
 	    str_toupper(ordinal_text);
@@ -1248,7 +1248,7 @@ static	void	do_grab_sym( enum FileSig sig, const void* pmt )
     free(map);
 
     if (NORMAL)
-	printf("%lu named symbols in DLL, %lu total, %d unique (ordinal base = %ld)\n",
+	printf("%u named symbols in DLL, %u total, %d unique (ordinal base = %d)\n",
 	       exportDir->NumberOfNames, exportDir->NumberOfFunctions, j, exportDir->Base);
 
     qsort( dll_symbols, j, sizeof(dll_symbol), symbol_cmp );

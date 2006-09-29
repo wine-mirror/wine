@@ -424,9 +424,9 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 	const struct {DWORD TimeStamp; DWORD  Dunno; char Name[1];} *pdb_data;
 	pdb_data = (const void *)(signature + 1);
 
-	printf("        TimeStamp:            %08lX (%s)\n",
+	printf("        TimeStamp:            %08X (%s)\n",
 	       pdb_data->TimeStamp, get_time_str(pdb_data->TimeStamp));
-	printf("        Dunno:                %08lX\n", pdb_data->Dunno);
+	printf("        Dunno:                %08X\n", pdb_data->Dunno);
 	printf("        Filename:             %s\n", pdb_data->Name);
 	return;
     }
@@ -544,7 +544,7 @@ void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
            */
           nampnt = get_coff_name( coff_sym, coff_strtab );
 
-	  printf("%05d | %02d:%08lx [%08lx] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
+          printf("%05d | %02d:%08x [%08x] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
 	  i += naux;
 	  continue;
 	}
@@ -559,7 +559,7 @@ void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
 
 	  /* FIXME: add code to find out the file this symbol belongs to,
 	   * see winedbg */
-	  printf("%05d | %02d:%08lx [%08lx] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
+          printf("%05d | %02d:%08x [%08x] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
           i += naux;
           continue;
 	}

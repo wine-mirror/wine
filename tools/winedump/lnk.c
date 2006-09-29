@@ -266,17 +266,17 @@ static int dump_location(int fd)
 
     printf("Location\n");
     printf("--------\n\n");
-    printf("Total size    = %ld\n", loc->dwTotalSize);
-    printf("Header size   = %ld\n", loc->dwHeaderSize);
-    printf("Flags         = %08lx\n", loc->dwFlags);
+    printf("Total size    = %d\n", loc->dwTotalSize);
+    printf("Header size   = %d\n", loc->dwHeaderSize);
+    printf("Flags         = %08x\n", loc->dwFlags);
 
     /* dump out information about the volume the link points to */
-    printf("Volume ofs    = %08lx ", loc->dwVolTableOfs);
+    printf("Volume ofs    = %08x ", loc->dwVolTableOfs);
     if (loc->dwVolTableOfs && (loc->dwVolTableOfs<loc->dwTotalSize))
     {
         LOCAL_VOLUME_INFO *vol = (LOCAL_VOLUME_INFO *) &p[loc->dwVolTableOfs];
 
-        printf("size %ld  type %ld  serial %08lx  label %ld ",
+        printf("size %d  type %d  serial %08x  label %d ",
                vol->dwSize, vol->dwType, vol->dwVolSerial, vol->dwVolLabelOfs);
         if(vol->dwVolLabelOfs)
             printf("(\"%s\")", &p[loc->dwVolTableOfs + vol->dwVolLabelOfs]);
@@ -284,13 +284,13 @@ static int dump_location(int fd)
     printf("\n");
 
     /* dump out the path the link points to */
-    printf("LocalPath ofs = %08lx ", loc->dwLocalPathOfs);
+    printf("LocalPath ofs = %08x ", loc->dwLocalPathOfs);
     if( loc->dwLocalPathOfs && (loc->dwLocalPathOfs < loc->dwTotalSize) )
         printf("(\"%s\")", &p[loc->dwLocalPathOfs]);
     printf("\n");
 
-    printf("Net Path ofs  = %08lx\n", loc->dwNetworkVolTableOfs);
-    printf("Final Path    = %08lx ", loc->dwFinalPathOfs);
+    printf("Net Path ofs  = %08x\n", loc->dwNetworkVolTableOfs);
+    printf("Final Path    = %08x ", loc->dwFinalPathOfs);
     if( loc->dwFinalPathOfs && (loc->dwFinalPathOfs < loc->dwTotalSize) )
         printf("(\"%s\")", &p[loc->dwFinalPathOfs]);
     printf("\n");
@@ -348,7 +348,7 @@ static int dump_advertise_info(int fd, const char *type)
 
     printf("Advertise Info\n");
     printf("--------------\n\n");
-    printf("magic   = %lx\n", avt->magic);
+    printf("magic   = %x\n", avt->magic);
     printf("%s = %s\n", type, avt->bufA);
     if (avt->magic == 0xa0000006)
     {
@@ -402,19 +402,19 @@ static int dump_lnk_fd(int fd)
 
     printf("Header\n");
     printf("------\n\n");
-    printf("Size:    %04lx\n", hdr->dwSize);
+    printf("Size:    %04x\n", hdr->dwSize);
     printf("GUID:    %s\n", guid);
 
-    printf("FileAttr: %08lx\n", hdr->dwFileAttr);
-    printf("FileLength: %08lx\n", hdr->dwFileLength);
-    printf("nIcon: %ld\n", hdr->nIcon);
-    printf("Startup: %ld\n", hdr->fStartup);
-    printf("HotKey: %08lx\n", hdr->wHotKey);
-    printf("Unknown5: %08lx\n", hdr->Unknown5);
-    printf("Unknown6: %08lx\n", hdr->Unknown6);
+    printf("FileAttr: %08x\n", hdr->dwFileAttr);
+    printf("FileLength: %08x\n", hdr->dwFileLength);
+    printf("nIcon: %d\n", hdr->nIcon);
+    printf("Startup: %d\n", hdr->fStartup);
+    printf("HotKey: %08x\n", hdr->wHotKey);
+    printf("Unknown5: %08x\n", hdr->Unknown5);
+    printf("Unknown6: %08x\n", hdr->Unknown6);
 
     /* dump out all the flags */
-    printf("Flags:   %04lx ( ", hdr->dwFlags);
+    printf("Flags:   %04x ( ", hdr->dwFlags);
 #define FLAG(x) if(hdr->dwFlags & SCF_##x) printf("%s ",#x);
     FLAG(PIDL)
     FLAG(LOCATION)
@@ -429,7 +429,7 @@ static int dump_lnk_fd(int fd)
 #undef FLAG
     printf(")\n");
 
-    printf("Length:  %04lx\n", hdr->dwFileLength);
+    printf("Length:  %04x\n", hdr->dwFileLength);
     printf("\n");
 
     if (hdr->dwFlags & SCF_PIDL)
