@@ -1142,6 +1142,42 @@ static void test_rsa_encrypt(void)
 
     CryptDestroyKey(hRSAKey);
 }
+
+static void test_import_export(void)
+{
+    DWORD dwLen, dwDataLen;
+    HCRYPTKEY hPublicKey;
+    BOOL result;
+    ALG_ID algID;
+    BYTE emptyKey[2048];
+    static BYTE abPlainPublicKey[84] = {
+        0x06, 0x02, 0x00, 0x00, 0x00, 0xa4, 0x00, 0x00,
+        0x52, 0x53, 0x41, 0x31, 0x00, 0x02, 0x00, 0x00,
+        0x01, 0x00, 0x01, 0x00, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+        0x11, 0x11, 0x11, 0x11
+    };
+
+    dwLen=84;
+    result = CryptImportKey(hProv, abPlainPublicKey, dwLen, 0, 0, &hPublicKey);
+    ok(result, "failed to import the public key\n");
+
+    dwDataLen=sizeof(algID);
+    result = CryptGetKeyParam(hPublicKey, KP_ALGID, (LPBYTE)&algID, &dwDataLen, 0);
+    ok(result, "failed to get the KP_ALGID from the imported public key\n");
+    ok(algID == CALG_RSA_KEYX, "Expected CALG_RSA_KEYX, got %x\n", algID);
+        
+    result = CryptExportKey(hPublicKey, 0, PUBLICKEYBLOB, 0, emptyKey, &dwLen);
+    ok(result, "failed to export the fresh imported public key\n");
+    ok(dwLen == 84, "Expected exported key to be 84 bytes long but got %ld bytes.",dwLen);
+    ok(!memcmp(emptyKey, abPlainPublicKey, dwLen), "exported key is different from the imported key\n");
+}
         
 static void test_schannel_provider(void)
 {
@@ -1586,6 +1622,7 @@ START_TEST(rsaenh)
     test_import_private();
     test_verify_signature();
     test_rsa_encrypt();
+    test_import_export();
     test_enum_container();
     clean_up_environment();
     test_schannel_provider();
