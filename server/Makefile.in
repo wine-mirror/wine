@@ -1,4 +1,4 @@
-DEFS      = -D__WINESRC__ -DWINE_NO_LONG_AS_INT
+DEFS      = -D__WINESRC__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@

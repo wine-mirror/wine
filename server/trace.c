@@ -99,9 +99,9 @@ static void dump_char_info( const char_info_t *info )
 static void dump_context( const CONTEXT *context )
 {
 #ifdef __i386__
-    fprintf( stderr, "{flags=%08lx,eax=%08lx,ebx=%08lx,ecx=%08lx,edx=%08lx,esi=%08lx,edi=%08lx,"
-             "ebp=%08lx,eip=%08lx,esp=%08lx,eflags=%08lx,cs=%04lx,ds=%04lx,es=%04lx,"
-             "fs=%04lx,gs=%04lx,dr0=%08lx,dr1=%08lx,dr2=%08lx,dr3=%08lx,dr6=%08lx,dr7=%08lx,",
+    fprintf( stderr, "{flags=%08x,eax=%08x,ebx=%08x,ecx=%08x,edx=%08x,esi=%08x,edi=%08x,"
+             "ebp=%08x,eip=%08x,esp=%08x,eflags=%08x,cs=%04x,ds=%04x,es=%04x,"
+             "fs=%04x,gs=%04x,dr0=%08x,dr1=%08x,dr2=%08x,dr3=%08x,dr6=%08x,dr7=%08x,",
              context->ContextFlags, context->Eax, context->Ebx, context->Ecx, context->Edx,
              context->Esi, context->Edi, context->Ebp, context->Eip, context->Esp, context->EFlags,
              context->SegCs, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
@@ -117,7 +117,7 @@ static void dump_context( const CONTEXT *context )
 static void dump_exc_record( const EXCEPTION_RECORD *rec )
 {
     unsigned int i;
-    fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
+    fprintf( stderr, "{code=%x,flags=%x,rec=%p,addr=%p,params={",
              rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
              rec->ExceptionAddress );
     for (i = 0; i < min(rec->NumberParameters,EXCEPTION_MAXIMUM_PARAMETERS); i++)
@@ -319,25 +319,25 @@ static void dump_varargs_startup_info( data_size_t size )
     memset( &params, 0, sizeof(params) );
     memcpy( &params, ptr, min( size, sizeof(params) ));
 
-    fprintf( stderr, "{AllocationSize=%lx,", params.AllocationSize );
-    fprintf( stderr, "Size=%lx,", params.Size );
-    fprintf( stderr, "Flags=%lx,", params.Flags );
-    fprintf( stderr, "DebugFlags=%lx,", params.DebugFlags );
+    fprintf( stderr, "{AllocationSize=%x,", params.AllocationSize );
+    fprintf( stderr, "Size=%x,", params.Size );
+    fprintf( stderr, "Flags=%x,", params.Flags );
+    fprintf( stderr, "DebugFlags=%x,", params.DebugFlags );
     fprintf( stderr, "ConsoleHandle=%p,", params.ConsoleHandle );
-    fprintf( stderr, "ConsoleFlags=%lx,", params.ConsoleFlags );
+    fprintf( stderr, "ConsoleFlags=%x,", params.ConsoleFlags );
     fprintf( stderr, "hStdInput=%p,", params.hStdInput );
     fprintf( stderr, "hStdOutput=%p,", params.hStdOutput );
     fprintf( stderr, "hStdError=%p,", params.hStdError );
     fprintf( stderr, "CurrentDirectory.Handle=%p,", params.CurrentDirectory.Handle );
-    fprintf( stderr, "dwX=%ld,", params.dwX );
-    fprintf( stderr, "dwY=%ld,", params.dwY );
-    fprintf( stderr, "dwXSize=%ld,", params.dwXSize );
-    fprintf( stderr, "dwYSize=%ld,", params.dwYSize );
-    fprintf( stderr, "dwXCountChars=%ld,", params.dwXCountChars );
-    fprintf( stderr, "dwYCountChars=%ld,", params.dwYCountChars );
-    fprintf( stderr, "dwFillAttribute=%lx,", params.dwFillAttribute );
-    fprintf( stderr, "dwFlags=%lx,", params.dwFlags );
-    fprintf( stderr, "wShowWindow=%lx,", params.wShowWindow );
+    fprintf( stderr, "dwX=%d,", params.dwX );
+    fprintf( stderr, "dwY=%d,", params.dwY );
+    fprintf( stderr, "dwXSize=%d,", params.dwXSize );
+    fprintf( stderr, "dwYSize=%d,", params.dwYSize );
+    fprintf( stderr, "dwXCountChars=%d,", params.dwXCountChars );
+    fprintf( stderr, "dwYCountChars=%d,", params.dwYCountChars );
+    fprintf( stderr, "dwFillAttribute=%x,", params.dwFillAttribute );
+    fprintf( stderr, "dwFlags=%x,", params.dwFlags );
+    fprintf( stderr, "wShowWindow=%x,", params.wShowWindow );
     fprintf( stderr, "CurrentDirectory.DosPath=L\"" );
     dump_inline_unicode_string( &params.CurrentDirectory.DosPath, cur_data, size );
     fprintf( stderr, "\",DllPath=L\"" );
@@ -414,7 +414,7 @@ static void dump_varargs_LUID_AND_ATTRIBUTES( data_size_t size )
     fputc( '{', stderr );
     while (len > 0)
     {
-        fprintf( stderr, "{luid=%08lx%08lx,attr=%lx}",
+        fprintf( stderr, "{luid=%08x%08x,attr=%x}",
                  lat->Luid.HighPart, lat->Luid.LowPart, lat->Attributes );
         lat++;
         if (--len) fputc( ',', stderr );
@@ -436,13 +436,13 @@ static void dump_inline_sid( const SID *sid, data_size_t size )
     }
 
     fputc( '{', stderr );
-    fprintf( stderr, "S-%u-%lu", sid->Revision, MAKELONG(
+    fprintf( stderr, "S-%u-%u", sid->Revision, MAKELONG(
         MAKEWORD( sid->IdentifierAuthority.Value[5],
                   sid->IdentifierAuthority.Value[4] ),
         MAKEWORD( sid->IdentifierAuthority.Value[3],
                   sid->IdentifierAuthority.Value[2] ) ) );
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        fprintf( stderr, "-%lu", sid->SubAuthority[i] );
+        fprintf( stderr, "-%u", sid->SubAuthority[i] );
     fputc( '}', stderr );
 }
 
@@ -485,25 +485,25 @@ static void dump_inline_acl( const ACL *acl, data_size_t size )
             case ACCESS_DENIED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
                 sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart);
-                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE,Mask=%lx",
+                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE,Mask=%x",
                          ((const ACCESS_DENIED_ACE *)ace)->Mask );
                 break;
             case ACCESS_ALLOWED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
                 sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart);
-                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE,Mask=%lx",
+                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE,Mask=%x",
                          ((const ACCESS_ALLOWED_ACE *)ace)->Mask );
                 break;
             case SYSTEM_AUDIT_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
                 sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart);
-                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE,Mask=%lx",
+                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE,Mask=%x",
                          ((const SYSTEM_AUDIT_ACE *)ace)->Mask );
                 break;
             case SYSTEM_ALARM_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
                 sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
-                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%lx",
+                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%x",
                          ((const SYSTEM_ALARM_ACE *)ace)->Mask );
                 break;
             default:

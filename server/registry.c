@@ -210,7 +210,7 @@ static void dump_value( const struct key_value *value, FILE *f )
         {
             DWORD dw;
             memcpy( &dw, value->data, sizeof(DWORD) );
-            fprintf( f, "dword:%08lx", dw );
+            fprintf( f, "dword:%08x", dw );
             break;
         }
         /* else fall through */
