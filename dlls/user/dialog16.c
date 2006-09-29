@@ -122,7 +122,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 
     p += *p + 1;
 
-    TRACE("   %s %s %d, %d, %d, %d, %d, %08lx, %p\n",
+    TRACE("   %s %s %d, %d, %d, %d, %d, %08x, %p\n",
           debugstr_a(info->className),  debugstr_a(info->windowName),
           info->id, info->x, info->y, info->cx, info->cy,
           info->style, info->data );
@@ -220,7 +220,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
     result->cy      = GET_WORD(p);  p += sizeof(WORD);
 
     TRACE("DIALOG %d, %d, %d, %d\n", result->x, result->y, result->cx, result->cy );
-    TRACE(" STYLE %08lx\n", result->style );
+    TRACE(" STYLE %08x\n", result->style );
 
     /* Get the menu name */
 
@@ -748,7 +748,7 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
     HGLOBAL16 hmem;
     LPCVOID data;
 
-    TRACE("%04x,%s,%04x,%08lx,%ld\n",
+    TRACE("%04x,%s,%04x,%08x,%ld\n",
           hInst, debugstr_a(dlgTemplate), owner, (DWORD)dlgProc, param );
 
     if (!(hRsrc = FindResource16( hInst, dlgTemplate, (LPSTR)RT_DIALOG ))) return 0;

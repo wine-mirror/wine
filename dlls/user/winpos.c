@@ -165,7 +165,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (ret)
     {
         MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
-        TRACE( "hwnd %p (%ld,%ld)-(%ld,%ld)\n",
+        TRACE( "hwnd %p (%d,%d)-(%d,%d)\n",
                hwnd, rect->left, rect->top, rect->right, rect->bottom);
     }
     return ret;
@@ -396,7 +396,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
     }
     ret = list[i];
     HeapFree( GetProcessHeap(), 0, list );
-    TRACE( "scope %p (%ld,%ld) returning %p\n", hwndScope, pt.x, pt.y, ret );
+    TRACE( "scope %p (%d,%d) returning %p\n", hwndScope, pt.x, pt.y, ret );
     return ret;
 }
 
@@ -800,7 +800,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 
       /* Some sanity checks */
 
-    TRACE("%ld %ld / %ld %ld / %ld %ld / %ld %ld\n",
+    TRACE("%d %d / %d %d / %d %d / %d %d\n",
                       MinMax.ptMaxSize.x, MinMax.ptMaxSize.y,
                       MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
                       MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,

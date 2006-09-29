@@ -220,7 +220,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
         p += strlenW( info->windowName ) + 1;
     }
 
-    TRACE("    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n",
+    TRACE("    %s %s %d, %d, %d, %d, %d, %08x, %08x, %08x\n",
           debugstr_w( info->className ), debugstr_w( info->windowName ),
           info->id, info->x, info->y, info->cx, info->cy,
           info->style, info->exStyle, info->helpId );
@@ -369,11 +369,11 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     result->y       = GET_WORD(p); p++;
     result->cx      = GET_WORD(p); p++;
     result->cy      = GET_WORD(p); p++;
-    TRACE("DIALOG%s %d, %d, %d, %d, %ld\n",
+    TRACE("DIALOG%s %d, %d, %d, %d, %d\n",
            result->dialogEx ? "EX" : "", result->x, result->y,
            result->cx, result->cy, result->helpId );
-    TRACE(" STYLE 0x%08lx\n", result->style );
-    TRACE(" EXSTYLE 0x%08lx\n", result->exStyle );
+    TRACE(" STYLE 0x%08x\n", result->style );
+    TRACE(" EXSTYLE 0x%08x\n", result->exStyle );
 
     /* Get the menu name */
 

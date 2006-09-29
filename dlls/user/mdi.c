@@ -485,7 +485,7 @@ static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax
     lpMinMax->ptMaxPosition.x = rect.left;
     lpMinMax->ptMaxPosition.y = rect.top;
 
-    TRACE("max rect (%ld,%ld - %ld, %ld)\n",
+    TRACE("max rect (%d,%d - %d, %d)\n",
                         rect.left,rect.top,rect.right,rect.bottom);
 }
 
@@ -700,7 +700,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
         /* walk the list (backwards) and move windows */
         for (i = total - 1; i >= 0; i--)
         {
-            TRACE("move %p to (%ld,%ld) size [%ld,%ld]\n",
+            TRACE("move %p to (%d,%d) size [%d,%d]\n",
                   win_array[i], pos[0].x, pos[0].y, pos[1].x, pos[1].y);
 
             MDI_CalcDefaultChildPos(client, n++, pos, delta, NULL);
@@ -1203,7 +1203,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
             pt.y = (short)HIWORD(lParam);
             child = ChildWindowFromPoint(hwnd, pt);
 
-	    TRACE("notification from %p (%li,%li)\n",child,pt.x,pt.y);
+            TRACE("notification from %p (%i,%i)\n",child,pt.x,pt.y);
 
             if( child && child != hwnd && child != ci->hwndActiveChild )
                 SetWindowPos(child, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
@@ -1571,7 +1571,7 @@ HWND WINAPI CreateMDIWindowA(
     HINSTANCE hInstance, /* [in] Handle to application instance */
     LPARAM lParam)         /* [in] Application-defined value */
 {
-    TRACE("(%s,%s,%08lx,%d,%d,%d,%d,%p,%p,%08lx)\n",
+    TRACE("(%s,%s,%08x,%d,%d,%d,%d,%p,%p,%08lx)\n",
           debugstr_a(lpClassName),debugstr_a(lpWindowName),dwStyle,X,Y,
           nWidth,nHeight,hWndParent,hInstance,lParam);
 
@@ -1599,7 +1599,7 @@ HWND WINAPI CreateMDIWindowW(
     HINSTANCE hInstance, /* [in] Handle to application instance */
     LPARAM lParam)         /* [in] Application-defined value */
 {
-    TRACE("(%s,%s,%08lx,%d,%d,%d,%d,%p,%p,%08lx)\n",
+    TRACE("(%s,%s,%08x,%d,%d,%d,%d,%p,%p,%08lx)\n",
           debugstr_w(lpClassName), debugstr_w(lpWindowName), dwStyle, X, Y,
           nWidth, nHeight, hWndParent, hInstance, lParam);
 

@@ -132,7 +132,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule )
 {
-    FIXME("(%04x, %08lx, %04lx, %04x)\n",
+    FIXME("(%04x, %08x, %04x, %04x)\n",
           uCode, dwThreadOrProcessID, dwFlags, hModule );
     /* FIXME: Should chain to GdiSignalProc now. */
     return 0;
@@ -151,7 +151,7 @@ void WINAPI SetLastErrorEx(
     DWORD error, /* [in] Per-thread error code */
     DWORD type)  /* [in] Error type */
 {
-    TRACE("(0x%08lx, 0x%08lx)\n", error,type);
+    TRACE("(0x%08x, 0x%08x)\n", error,type);
     switch(type) {
         case 0:
             break;
@@ -160,7 +160,7 @@ void WINAPI SetLastErrorEx(
         case SLE_WARNING:
             /* Fall through for now */
         default:
-            FIXME("(error=%08lx, type=%08lx): Unhandled type\n", error,type);
+            FIXME("(error=%08x, type=%08x): Unhandled type\n", error,type);
             break;
     }
     SetLastError( error );
@@ -196,7 +196,7 @@ BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszIte
  */
 VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 {
-    FIXME("(%ld): stub\n", dwLevel);
+    FIXME("(%d): stub\n", dwLevel);
 }
 
 
@@ -242,7 +242,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
 {
     if ( dwDefaultLayout == 0 )
         return TRUE;
-    FIXME( "( %08lx ): No BiDi\n", dwDefaultLayout );
+    FIXME( "( %08x ): No BiDi\n", dwDefaultLayout );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
@@ -253,7 +253,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
  */
 DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2)
 {
-    FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
+    FIXME("(0x%08x,0x%08x),stub!\n",x1,x2);
     return 1;
 }
 
@@ -318,7 +318,7 @@ BOOL WINAPI EnumDisplayDevicesA( LPCSTR lpDevice, DWORD i, LPDISPLAY_DEVICEA lpD
 BOOL WINAPI EnumDisplayDevicesW( LPCWSTR lpDevice, DWORD i, LPDISPLAY_DEVICEW lpDisplayDevice,
                                  DWORD dwFlags )
 {
-    FIXME("(%s,%ld,%p,0x%08lx), stub!\n",debugstr_w(lpDevice),i,lpDisplayDevice,dwFlags);
+    FIXME("(%s,%d,%p,0x%08x), stub!\n",debugstr_w(lpDevice),i,lpDisplayDevice,dwFlags);
 
     if (i)
         return FALSE;
@@ -500,7 +500,7 @@ BOOL WINAPI EnumDisplayMonitors(
  */
 void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 {
-    FIXME("(%08lx, %08lx)\n", flags, reserved);
+    FIXME("(%08x, %08x)\n", flags, reserved);
 }
 
 /***********************************************************************
@@ -518,7 +518,7 @@ BOOL WINAPI RegisterShellHookWindow ( HWND hWnd )
  */
 HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 {
-    FIXME("0x%08lx stub\n",u);
+    FIXME("0x%08x stub\n",u);
     return 0;
 
 }
@@ -529,7 +529,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
  */
 DWORD WINAPI RegisterTasklist (DWORD x)
 {
-    FIXME("0x%08lx\n",x);
+    FIXME("0x%08x\n",x);
     return TRUE;
 }
 
@@ -541,7 +541,7 @@ DWORD WINAPI RegisterTasklist (DWORD x)
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, DWORD flags)
 {
-    FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hnd,notifyfilter,flags );
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08x), STUB!\n", hnd,notifyfilter,flags );
     return 0;
 }
 
@@ -570,7 +570,7 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, D
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotificationFilter, DWORD dwFlags)
 {
-    FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hRecepient,pNotificationFilter,dwFlags );
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08x), STUB!\n", hRecepient,pNotificationFilter,dwFlags );
     return 0;
 }
 
@@ -599,9 +599,9 @@ DWORD WINAPI GetAppCompatFlags( HTASK hTask )
  */
 BOOL WINAPI AlignRects(LPRECT rect, DWORD b, DWORD c, DWORD d)
 {
-    FIXME("(%p, %ld, %ld, %ld): stub\n", rect, b, c, d);
+    FIXME("(%p, %d, %d, %d): stub\n", rect, b, c, d);
     if (rect)
-        FIXME("rect: [[%ld, %ld], [%ld, %ld]]\n", rect->left, rect->top, rect->right, rect->bottom);
+        FIXME("rect: [[%d, %d], [%d, %d]]\n", rect->left, rect->top, rect->right, rect->bottom);
     /* Calls OffsetRect */
     return FALSE;
 }

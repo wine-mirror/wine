@@ -434,7 +434,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
  */
 DWORD WINAPI GetGuiResources( HANDLE hProcess, DWORD uiFlags )
 {
-    FIXME("(%p,%lx): stub\n",hProcess,uiFlags);
+    FIXME("(%p,%x): stub\n",hProcess,uiFlags);
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
 }

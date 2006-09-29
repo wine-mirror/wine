@@ -90,24 +90,24 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
             switch(inputs[i].type)
             {
             case INPUT_MOUSE:
-                TRACE("mouse: dx %ld, dy %ld, data %lx, flags %lx, time %lu, info %lx\n",
+                TRACE("mouse: dx %d, dy %d, data %x, flags %x, time %u, info %lx\n",
                       inputs[i].u.mi.dx, inputs[i].u.mi.dy, inputs[i].u.mi.mouseData,
                       inputs[i].u.mi.dwFlags, inputs[i].u.mi.time, inputs[i].u.mi.dwExtraInfo);
                 break;
 
             case INPUT_KEYBOARD:
-                TRACE("keyboard: vk %x, scan %x, flags %lx, time %lu, info %lx\n",
+                TRACE("keyboard: vk %x, scan %x, flags %x, time %u, info %lx\n",
                       inputs[i].u.ki.wVk, inputs[i].u.ki.wScan, inputs[i].u.ki.dwFlags,
                       inputs[i].u.ki.time, inputs[i].u.ki.dwExtraInfo);
                 break;
 
             case INPUT_HARDWARE:
-                TRACE("hardware: msg %ld, wParamL %x, wParamH %x\n",
+                TRACE("hardware: msg %d, wParamL %x, wParamH %x\n",
                       inputs[i].u.hi.uMsg, inputs[i].u.hi.wParamL, inputs[i].u.hi.wParamH);
                 break;
 
             default:
-                FIXME("unknown input type %lu\n", inputs[i].type);
+                FIXME("unknown input type %u\n", inputs[i].type);
                 break;
             }
         }
@@ -764,7 +764,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
     POINT pos;
     INT hoverwidth = 0, hoverheight = 0, hittest;
 
-    TRACE("hwnd %p, msg %04x, id %04x, time %lu\n", hwnd, uMsg, idEvent, dwTime);
+    TRACE("hwnd %p, msg %04x, id %04x, time %u\n", hwnd, uMsg, idEvent, dwTime);
 
     GetCursorPos(&pos);
     hwnd = WINPOS_WindowFromPoint(hwnd, pos, &hittest);
@@ -895,7 +895,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     DWORD hover_time;
     INT hittest;
 
-    TRACE("%lx, %lx, %p, %lu\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
+    TRACE("%x, %x, %p, %u\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
 
     if (ptme->cbSize != sizeof(TRACKMOUSEEVENT)) {
         WARN("wrong TRACKMOUSEEVENT size from app\n");
@@ -930,7 +930,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     TRACE("point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest);
 
     if (ptme->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT))
-        FIXME("Unknown flag(s) %08lx\n", ptme->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT));
+        FIXME("Unknown flag(s) %08x\n", ptme->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT));
 
     if (ptme->dwFlags & TME_CANCEL)
     {

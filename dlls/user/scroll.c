@@ -893,7 +893,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           return;  /* Should never happen */
     }
 
-    TRACE("Event: hwnd=%p bar=%d msg=%s pt=%ld,%ld hit=%d\n",
+    TRACE("Event: hwnd=%p bar=%d msg=%s pt=%d,%d hit=%d\n",
           hwnd, nBar, SPY_GetMsgName(msg,hwnd), pt.x, pt.y, hittest );
 
     switch(SCROLL_trackHitTest)
@@ -1782,7 +1782,7 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
  */
 BOOL WINAPI GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
 {
-    TRACE("hwnd=%p idObject=%ld info=%p\n", hwnd, idObject, info);
+    TRACE("hwnd=%p idObject=%d info=%p\n", hwnd, idObject, info);
 
     /* Refer OBJID_CLIENT requests to the window */
     if (idObject == OBJID_CLIENT)

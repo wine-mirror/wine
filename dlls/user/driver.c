@@ -316,7 +316,7 @@ static BOOL nulldrv_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
         break;
     default:
-        MESSAGE( "Unknown error (%ld).\n", driver_load_error );
+        MESSAGE( "Unknown error (%d).\n", driver_load_error );
     }
 
     return FALSE;

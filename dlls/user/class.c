@@ -304,7 +304,7 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
     CLASS *classPtr;
     BOOL ret;
 
-    TRACE("atom=0x%x hinst=%p style=0x%lx clExtr=0x%x winExtr=0x%x\n",
+    TRACE("atom=0x%x hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
           atom, hInstance, style, classExtra, winExtra );
 
     /* Fix the extra bytes value */
@@ -934,7 +934,7 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
  */
 DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
-    TRACE("%p %d %lx\n", hwnd, offset, newval);
+    TRACE("%p %d %x\n", hwnd, offset, newval);
 
     return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), TRUE );
 }
@@ -945,7 +945,7 @@ DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
  */
 DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
-    TRACE("%p %d %lx\n", hwnd, offset, newval);
+    TRACE("%p %d %x\n", hwnd, offset, newval);
 
     return CLASS_SetClassLong( hwnd, offset, newval, sizeof(LONG), FALSE );
 }

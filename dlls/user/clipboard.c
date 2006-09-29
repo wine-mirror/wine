@@ -672,6 +672,6 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
     }
     SERVER_END_REQ;
 
-    TRACE("returning %lx\n", seqno);
+    TRACE("returning %x\n", seqno);
     return seqno;
 }

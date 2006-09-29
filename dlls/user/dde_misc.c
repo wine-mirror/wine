@@ -264,7 +264,7 @@ static void WDML_IncrementInstanceId(WDML_INSTANCE* pInstance)
     DWORD	id = InterlockedIncrement(&WDML_MaxInstanceID);
 
     pInstance->instanceID = id;
-    TRACE("New instance id %ld allocated\n", id);
+    TRACE("New instance id %d allocated\n", id);
 }
 
 /******************************************************************
@@ -348,7 +348,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     UINT			ret;
     WNDCLASSEXW			wndclass;
 
-    TRACE("(%p,%p,0x%lx,%ld)\n",
+    TRACE("(%p,%p,0x%x,%d)\n",
 	  pidInst, pfnCallback, afCmd, ulRes);
 
     if (ulRes)
@@ -402,7 +402,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     if (*pidInst == 0)
     {
 	/*  Initialisation of new Instance Identifier */
-	TRACE("new instance, callback %p flags %lX\n",pfnCallback,afCmd);
+	TRACE("new instance, callback %p flags %X\n",pfnCallback,afCmd);
 
 	EnterCriticalSection(&WDML_CritSect);
 
@@ -505,7 +505,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     else
     {
 	/* Reinitialisation situation   --- FIX  */
-	TRACE("reinitialisation of (%p,%p,0x%lx,%ld): stub\n", pidInst, pfnCallback, afCmd, ulRes);
+	TRACE("reinitialisation of (%p,%p,0x%x,%d): stub\n", pidInst, pfnCallback, afCmd, ulRes);
 
 	EnterCriticalSection(&WDML_CritSect);
 
@@ -630,7 +630,7 @@ BOOL WINAPI DdeUninitialize(DWORD idInst)
     WDML_CONV*			pConv;
     WDML_CONV*			pConvNext;
 
-    TRACE("(%ld)\n", idInst);
+    TRACE("(%d)\n", idInst);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1016,7 +1016,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     DWORD		ret = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld, %p, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1030,7 +1030,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     }
     LeaveCriticalSection(&WDML_CritSect);
 
-    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
+    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
     return ret;
 }
 
@@ -1043,7 +1043,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     DWORD		ret = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld, %p, %p, %ld, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
+    TRACE("(%d, %p, %p, %d, %d)\n", idInst, hsz, psz, cchMax, iCodePage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1057,7 +1057,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     }
     LeaveCriticalSection(&WDML_CritSect);
 
-    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
+    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
 
@@ -1098,7 +1098,7 @@ HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
     HSZ			hsz = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld,%s,%d)\n", idInst, debugstr_a(psz), codepage);
+    TRACE("(%d,%s,%d)\n", idInst, debugstr_a(psz), codepage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1130,7 +1130,7 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
     WDML_INSTANCE*	pInstance;
     HSZ			hsz = 0;
 
-    TRACE("(%ld,%s,%d)\n", idInst, debugstr_w(psz), codepage);
+    TRACE("(%d,%s,%d)\n", idInst, debugstr_w(psz), codepage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1156,7 +1156,7 @@ BOOL WINAPI DdeFreeStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,%p):\n", idInst, hsz);
+    TRACE("(%d,%p):\n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1183,7 +1183,7 @@ BOOL WINAPI DdeKeepStringHandle(DWORD idInst, HSZ hsz)
     WDML_INSTANCE*	pInstance;
     BOOL		ret = FALSE;
 
-    TRACE("(%ld,%p):\n", idInst, hsz);
+    TRACE("(%d,%p):\n", idInst, hsz);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1289,7 +1289,7 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
         psz[1] = 0;
     }
 
-    TRACE("(%ld,%p,cb %ld, cbOff %ld,%p <%s>,fmt %04x,%x)\n",
+    TRACE("(%d,%p,cb %d, cbOff %d,%p <%s>,fmt %04x,%x)\n",
 	  idInst, pSrc, cb, cbOff, hszItem, debugstr_w(psz), wFmt, afCmd);
 
     if (afCmd != 0 && afCmd != HDATA_APPOWNED)
@@ -1332,7 +1332,7 @@ HDDEDATA WINAPI DdeAddData(HDDEDATA hData, LPBYTE pSrc, DWORD cb, DWORD cbOff)
     DWORD	old_sz, new_sz;
     LPBYTE	pDst;
 
-    TRACE("(%p,%p,cb %ld, cbOff %ld)\n", hData, pSrc, cb, cbOff);
+    TRACE("(%p,%p,cb %d, cbOff %d)\n", hData, pSrc, cb, cbOff);
 
     pDst = DdeAccessData(hData, &old_sz);
     if (!pDst) return 0;
@@ -1371,7 +1371,7 @@ DWORD WINAPI DdeGetData(HDDEDATA hData, LPBYTE pDst, DWORD cbMax, DWORD cbOff)
     DWORD   dwSize, dwRet;
     LPBYTE  pByte;
 
-    TRACE("(%p,%p,%ld,%ld)\n", hData, pDst, cbMax, cbOff);
+    TRACE("(%p,%p,%d,%d)\n", hData, pDst, cbMax, cbOff);
 
     pByte = DdeAccessData(hData, &dwSize);
 
@@ -1529,7 +1529,7 @@ HDDEDATA        WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* p)
                     }
                     else
                     {
-                        ERR("Wrong count: %lu / %d\n", size, count);
+                        ERR("Wrong count: %u / %d\n", size, count);
                     }
                 } else ERR("No bitmap header\n");
                 break;
@@ -1897,7 +1897,7 @@ BOOL WINAPI DdeEnableCallback(DWORD idInst, HCONV hConv, UINT wCmd)
     BOOL ret = FALSE;
     WDML_CONV *pConv;
 
-    TRACE("(%ld, %p, %04x)\n", idInst, hConv, wCmd);
+    TRACE("(%d, %p, %04x)\n", idInst, hConv, wCmd);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1994,7 +1994,7 @@ BOOL WINAPI DdeSetUserHandle(HCONV hConv, DWORD id, DWORD hUser)
     WDML_CONV*	pConv;
     BOOL	ret = TRUE;
 
-    TRACE("(%p,%lx,%lx)\n", hConv, id, hUser);
+    TRACE("(%p,%x,%x)\n", hConv, id, hUser);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -2116,7 +2116,7 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
     CONVINFO	ci;
     WDML_CONV*	pConv;
 
-    TRACE("(%p,%lx,%p)\n", hConv, id, lpConvInfo);
+    TRACE("(%p,%x,%p)\n", hConv, id, lpConvInfo);
 
     if (!hConv)
     {

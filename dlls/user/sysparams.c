@@ -962,7 +962,7 @@ static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
                     found = TRUE;
                     SYSPARAMS_LogFont16To32W( (LOGFONT16*) &lfbuf, lf);
                 } else
-                    WARN("Unknown format in key %s value %s, size is %ld\n",
+                    WARN("Unknown format in key %s value %s, size is %d\n",
                             debugstr_w( key), debugstr_w( value), size);
             }
             RegCloseKey(hkey);

@@ -345,7 +345,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *compr  = v5hdr->bV5Compression;
         return 5;
     }
-    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+    ERR("(%d): unknown/wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -1134,7 +1134,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
             dwBytesInRes = pDirEntry->dwBytesInRes;
             FreeResource(hMem);
 
-            TRACE_(icon)("ResID %u, BytesInRes %lu, Width %d, Height %d DX %d, DY %d\n",
+            TRACE_(icon)("ResID %u, BytesInRes %u, Width %d, Height %d DX %d, DY %d\n",
                 wResId, dwBytesInRes,  pDirEntry->ResInfo.icon.bWidth,
                 pDirEntry->ResInfo.icon.bHeight, iDesiredCX, iDesiredCY);
 
@@ -1583,7 +1583,7 @@ BOOL WINAPI GetClipCursor( RECT *rect )
  */
 BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
 {
-    FIXME("(%p,%08lx),stub!\n",  hcur, id);
+    FIXME("(%p,%08x),stub!\n",  hcur, id);
     return TRUE;
 }
 
@@ -1671,7 +1671,7 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
              return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
                           GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), 0 );
         default:
-             WARN_(cursor)("invalid res type %ld\n", resType );
+             WARN_(cursor)("invalid res type %d\n", resType );
     }
     return 0;
 }

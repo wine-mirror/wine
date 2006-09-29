@@ -129,7 +129,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
 
     if (!handle)
     {
-        WARN( "error %ld creating window\n", GetLastError() );
+        WARN( "error %d creating window\n", GetLastError() );
         return NULL;
     }
 
@@ -496,7 +496,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            ERR( "cannot set style %lx/%lx on other process window %p\n",
+            ERR( "cannot set style %x/%x on other process window %p\n",
                  set_bits, clear_bits, hwnd );
         return 0;
     }
@@ -895,7 +895,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
     BOOL unicode = (flags & WIN_ISUNICODE) != 0;
     MDICREATESTRUCTA mdi_cs;
 
-    TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
+    TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
           unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
@@ -1625,13 +1625,13 @@ HWND WINAPI GetDesktopWindow(void)
         if (CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
                             NULL, NULL, &si, &pi ))
         {
-            TRACE( "started explorer pid %04lx tid %04lx\n", pi.dwProcessId, pi.dwThreadId );
+            TRACE( "started explorer pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
             WaitForInputIdle( pi.hProcess, 10000 );
             CloseHandle( pi.hThread );
             CloseHandle( pi.hProcess );
 
         }
-        else WARN( "failed to start explorer, err %ld\n", GetLastError() );
+        else WARN( "failed to start explorer, err %d\n", GetLastError() );
 
         SERVER_START_REQ( get_desktop_window )
         {
@@ -3132,7 +3132,7 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
 BOOL WINAPI SetLayeredWindowAttributes( HWND hWnd, COLORREF rgbKey, 
                                         BYTE bAlpha, DWORD dwFlags )
 {
-    FIXME("(%p,0x%.8lx,%d,%ld): stub!\n", hWnd, rgbKey, bAlpha, dwFlags);
+    FIXME("(%p,0x%.8x,%d,%d): stub!\n", hWnd, rgbKey, bAlpha, dwFlags);
     return TRUE;
 }
 
@@ -3143,7 +3143,7 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
                                  HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend,
                                  DWORD dwFlags)
 {
-    FIXME("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%ld): stub!\n",
+    FIXME("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%d): stub!\n",
           hwnd, hdcDst, pptDst, psize, hdcSrc, pptSrc, crKey, pblend, dwFlags);
     return 0;
 }

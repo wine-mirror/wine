@@ -60,7 +60,7 @@ const WCHAR WDML_szClientConvClassW[] = {'W','i','n','e','D','d','e','C','l','i'
 HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
 				HCONVLIST hConvList, PCONVCONTEXT pCC)
 {
-    FIXME("(%ld,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
+    FIXME("(%d,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
     return (HCONVLIST)1;
 }
 
@@ -101,7 +101,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     WDML_CONV*		pConv = NULL;
     ATOM		aSrv = 0, aTpc = 0;
 
-    TRACE("(0x%lx,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
+    TRACE("(0x%x,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1019,7 +1019,7 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
     DWORD	err;
     WDML_CONV*	pConv;
 
-    TRACE("Starting wait for a timeout of %ld ms\n", dwTimeout);
+    TRACE("Starting wait for a timeout of %d ms\n", dwTimeout);
 
     /* FIXME: time 32 bit wrap around */
     dwTimeout += GetCurrentTime();
@@ -1113,7 +1113,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     WDML_XACT*		pXAct;
     HDDEDATA		hDdeData = 0;
 
-    TRACE("(%p,%ld,%p,%p,%x,%x,%ld,%p)\n",
+    TRACE("(%p,%d,%p,%p,%x,%x,%d,%p)\n",
 	  pData, cbData, hConv, hszItem, wFmt, wType, dwTimeout, pdwResult);
 
     if (hConv == 0)
@@ -1184,7 +1184,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     if (!PostMessageW(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
     {
-	WARN("Failed posting message %x to %p (error=0x%lx)\n",
+	WARN("Failed posting message %x to %p (error=0x%x)\n",
 	      pXAct->ddeMsg, pConv->hwndServer, GetLastError());
 	pConv->wStatus &= ~ST_CONNECTED;
 	WDML_UnQueueTransaction(pConv, pXAct);
@@ -1230,7 +1230,7 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
     WDML_CONV*		pConv;
     WDML_XACT*          pXAct;
 
-    TRACE("(%08lx,%p,%08lx);\n", idInst, hConv, idTransaction);
+    TRACE("(%08x,%p,%08x);\n", idInst, hConv, idTransaction);
 
     EnterCriticalSection(&WDML_CritSect);
     if ((pInstance = WDML_GetInstance(idInst)))

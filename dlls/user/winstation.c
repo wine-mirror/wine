@@ -395,7 +395,7 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
  */
 HDESK WINAPI OpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access )
 {
-    FIXME( "(%lx,%i,%lx): stub\n", flags, inherit, access );
+    FIXME( "(%x,%i,%x): stub\n", flags, inherit, access );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
 }
@@ -571,7 +571,7 @@ BOOL WINAPI SetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
 BOOL WINAPI GetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
                                    PSECURITY_DESCRIPTOR sid, DWORD len, LPDWORD needed )
 {
-    FIXME( "(%p %p %p len=%ld %p),stub!\n", handle, info, sid, len, needed );
+    FIXME( "(%p %p %p len=%d %p),stub!\n", handle, info, sid, len, needed );
     return TRUE;
 }
 

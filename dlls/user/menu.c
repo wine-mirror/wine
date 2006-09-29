@@ -992,7 +992,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         } else
             lpitem->rect.bottom += mis.itemHeight;
 
-        TRACE("id=%04x size=%ldx%ld\n",
+        TRACE("id=%04x size=%dx%d\n",
                 lpitem->wID, lpitem->rect.right-lpitem->rect.left,
                 lpitem->rect.bottom-lpitem->rect.top);
         return;
@@ -4037,7 +4037,7 @@ HMENU WINAPI GetMenu( HWND hWnd )
  */
 BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO pmbi )
 {
-    FIXME( "(%p,0x%08lx,0x%08lx,%p)\n", hwnd, idObject, idItem, pmbi );
+    FIXME( "(%p,0x%08x,0x%08x,%p)\n", hwnd, idObject, idItem, pmbi );
     return FALSE;
 }
 
@@ -4957,7 +4957,7 @@ BOOL WINAPI SetMenuContextHelpId( HMENU hMenu, DWORD dwContextHelpID)
 {
     LPPOPUPMENU menu;
 
-    TRACE("(%p 0x%08lx)\n", hMenu, dwContextHelpID);
+    TRACE("(%p 0x%08x)\n", hMenu, dwContextHelpID);
 
     if ((menu = MENU_GetMenu(hMenu)))
     {

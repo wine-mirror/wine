@@ -1681,7 +1681,7 @@ DWORD WINAPI FormatMessage16(
     BOOL        eos = FALSE;
     LPSTR       allocstring = NULL;
 
-    TRACE("(0x%lx,%lx,%d,0x%x,%p,%d,%p)\n",
+    TRACE("(0x%x,%x,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
                 && (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)) return 0;
@@ -1690,7 +1690,7 @@ DWORD WINAPI FormatMessage16(
                         || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
-        FIXME("line wrapping (%lu) not supported.\n", width);
+        FIXME("line wrapping (%u) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
     {

@@ -1476,7 +1476,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 	    {
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
-                TRACE( "exec: pairing c=%08lx s=%08lx\n", *lparam, (DWORD)hMem );
+                TRACE( "exec: pairing c=%08lx s=%08x\n", *lparam, (DWORD)hMem );
                 if (!dde_add_pair( (HGLOBAL)*lparam, hMem ))
                 {
                     GlobalFree( hMem );
@@ -1837,7 +1837,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
                     if (!FOCUS_MouseActivate( hwndTop )) eatMsg = TRUE;
                     break;
                 default:
-                    WARN( "unknown WM_MOUSEACTIVATE code %ld\n", ret );
+                    WARN( "unknown WM_MOUSEACTIVATE code %d\n", ret );
                     break;
                 }
             }
@@ -1883,12 +1883,12 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
                                           ULONG_PTR data, LRESULT result )
 {
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+        DPRINTF( "%04x:Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
                  GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
                  data, result );
     callback( hwnd, msg, data, result );
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+        DPRINTF( "%04x:Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
                  GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
                  data, result );
 }
@@ -2010,7 +2010,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                 }
             }
             if (TRACE_ON(relay))
-                DPRINTF( "%04lx:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%lx)\n",
+                DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%x)\n",
                          GetCurrentThreadId(), info.hook_proc,
                          info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                          info.msg.lParam, extra_info, info.msg.time);
@@ -2019,7 +2019,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                             info.msg.lParam, extra_info, info.msg.time );
 
             if (TRACE_ON(relay))
-                DPRINTF( "%04lx:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%lx)\n",
+                DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%x)\n",
                          GetCurrentThreadId(), info.hook_proc,
                          info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                          info.msg.lParam, extra_info, info.msg.time);
@@ -2251,7 +2251,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
 
     HeapFree( GetProcessHeap(), 0, reply_data );
 
-    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
+    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx got reply %lx (err=%d)\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
            info->lparam, *result, status );
 
@@ -2826,7 +2826,7 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
         if (changed_bits & mask) continue;
         if (wake_bits & QS_SENDMESSAGE) continue;
 
-        TRACE( "(%04lx) mask=%08x, bits=%08x, changed=%08x, waiting\n",
+        TRACE( "(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
                GetCurrentThreadId(), mask, wake_bits, changed_bits );
 
         ReleaseThunkLock( &dwlc );
@@ -3277,13 +3277,13 @@ LONG WINAPI BroadcastSystemMessageA( DWORD flags, LPDWORD recipients, UINT msg, 
 {
     if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
     {
-        FIXME( "(%08lx,%08lx,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
         PostMessageA( HWND_BROADCAST, msg, wp, lp );
         return 1;
     }
     else
     {
-        FIXME( "(%08lx,%08lx,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp);
+        FIXME( "(%08x,%08x,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp);
         return -1;
     }
 }
@@ -3296,13 +3296,13 @@ LONG WINAPI BroadcastSystemMessageW( DWORD flags, LPDWORD recipients, UINT msg, 
 {
     if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
     {
-        FIXME( "(%08lx,%08lx,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
         PostMessageW( HWND_BROADCAST, msg, wp, lp );
         return 1;
     }
     else
     {
-        FIXME( "(%08lx,%08lx,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp );
         return -1;
     }
 }

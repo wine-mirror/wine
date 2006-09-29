@@ -446,13 +446,13 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     *result = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04x:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, *result );
     return *result;
 }
@@ -467,14 +467,14 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Call dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     ret = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
     *result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx result=%08lx\n",
+        DPRINTF( "%04x:Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx result=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, ret, *result );
     return ret;
 }

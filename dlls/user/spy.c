@@ -2265,7 +2265,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPRECT rc = (LPRECT) sp_e->lParam;
                 if (rc) {
-                    TRACE("lParam rect (%ld,%ld)-(%ld,%ld)\n",
+                    TRACE("lParam rect (%d,%d)-(%d,%d)\n",
                           rc->left, rc->top, rc->right, rc->bottom);
                 }
                 break;
@@ -2278,7 +2278,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPPOINT point = (LPPOINT) sp_e->lParam;
                 if (point) {
-                    TRACE("lParam point x=%ld, y=%ld\n", point->x, point->y);
+                    TRACE("lParam point x=%d, y=%d\n", point->x, point->y);
                 }
                 break;
             }
@@ -2304,14 +2304,14 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             if (enter && sp_e->lParam)
             {
                 CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
-                TRACE("CHARRANGE: cpMin=%ld cpMax=%ld\n", cr->cpMin, cr->cpMax);
+                TRACE("CHARRANGE: cpMin=%d cpMax=%d\n", cr->cpMin, cr->cpMax);
             }
             break;
         case EM_SETCHARFORMAT:
             if (enter && sp_e->lParam)
             {
                 CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
-                TRACE("CHARFORMAT: dwMask=0x%08lx dwEffects=", cf->dwMask);
+                TRACE("CHARFORMAT: dwMask=0x%08x dwEffects=", cf->dwMask);
                 if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
                     TRACE(" CFE_BOLD");
                 if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
@@ -2326,11 +2326,11 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     TRACE(" CFE_UNDERLINE");
                 TRACE("\n");
                 if (cf->dwMask & CFM_SIZE)
-                    TRACE("yHeight=%ld\n", cf->yHeight);
+                    TRACE("yHeight=%d\n", cf->yHeight);
                 if (cf->dwMask & CFM_OFFSET)
-                    TRACE("yOffset=%ld\n", cf->yOffset);
+                    TRACE("yOffset=%d\n", cf->yOffset);
                 if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
-                    TRACE("crTextColor=%lx\n", cf->crTextColor);
+                    TRACE("crTextColor=%x\n", cf->crTextColor);
                 TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
                 /* FIXME: we should try to be a bit more intelligent about
                  * whether this is in ANSI or Unicode (it could be either) */
@@ -2347,7 +2347,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                       lpdis->CtlType, lpdis->CtlID);
                 TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
                       lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-                TRACE("hWnd=%p hDC=%p (%ld,%ld)-(%ld,%ld) itemData=0x%08lx\n",
+                TRACE("hWnd=%p hDC=%p (%d,%d)-(%d,%d) itemData=0x%08lx\n",
                       lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
                       lpdis->rcItem.top, lpdis->rcItem.right,
                       lpdis->rcItem.bottom, lpdis->itemData);
@@ -2382,14 +2382,14 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
         case WM_STYLECHANGING:
             {
                 LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
-                TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
+                TRACE("STYLESTRUCT: StyleOld=0x%08x, StyleNew=0x%08x\n",
                       ss->styleOld, ss->styleNew);
             }
             break;
         case WM_NCCALCSIZE:
             {
                 RECT *rc = (RECT *)sp_e->lParam;
-                TRACE("Rect (%ld,%ld)-(%ld,%ld)\n",
+                TRACE("Rect (%d,%d)-(%d,%d)\n",
                       rc->left, rc->top, rc->right, rc->bottom);
             }
             break;
@@ -2478,7 +2478,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
             DWORD tid = GetWindowThreadProcessId( hWnd, NULL );
 
             if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
-            else sprintf( taskName, "tid %04lx", GetCurrentThreadId() );
+            else sprintf( taskName, "tid %04x", GetCurrentThreadId() );
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",

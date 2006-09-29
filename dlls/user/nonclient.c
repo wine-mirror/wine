@@ -412,7 +412,7 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
                 WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    TRACE("(%ld,%ld)-(%ld,%ld) %08lx %d %08lx\n",
+    TRACE("(%d,%d)-(%d,%d) %08x %d %08x\n",
           rect->left, rect->top, rect->right, rect->bottom,
           style, menu, exStyle );
 
@@ -450,7 +450,7 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 
         if (((style & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
         {
-            TRACE("Calling GetMenuBarHeight with hwnd %p, width %ld, at (%ld, %ld).\n",
+            TRACE("Calling GetMenuBarHeight with hwnd %p, width %d, at (%d, %d).\n",
                   hwnd, winRect->right - winRect->left, -tmpRect.left, -tmpRect.top );
 
             winRect->top +=
@@ -549,7 +549,7 @@ static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
     RECT rect, rcClient;
     POINT ptClient;
 
-    TRACE("hwnd=%p pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
+    TRACE("hwnd=%p pt=%d,%d\n", wndPtr->hwndSelf, pt.x, pt.y );
 
     GetWindowRect(wndPtr->hwndSelf, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -1081,13 +1081,13 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
 
-	TRACE("Calling DrawMenuBar with rect (%ld, %ld)-(%ld, %ld)\n",
+	TRACE("Calling DrawMenuBar with rect (%d, %d)-(%d, %d)\n",
               r.left, r.top, r.right, r.bottom);
 
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
     }
 
-    TRACE("After MenuBar, rect is (%ld, %ld)-(%ld, %ld).\n",
+    TRACE("After MenuBar, rect is (%d, %d)-(%d, %d).\n",
           rect.left, rect.top, rect.right, rect.bottom );
 
     if (dwExStyle & WS_EX_CLIENTEDGE)
@@ -1673,7 +1673,7 @@ BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
     TRACE("(%p %p)\n", hwnd, tbi);
 
     if(tbi->cbSize != sizeof(TITLEBARINFO)) {
-        TRACE("Invalid TITLEBARINFO size: %ld\n", tbi->cbSize);
+        TRACE("Invalid TITLEBARINFO size: %d\n", tbi->cbSize);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }

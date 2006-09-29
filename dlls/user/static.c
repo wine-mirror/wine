@@ -378,7 +378,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
         {
-            ERR("Unknown style 0x%02lx\n", style );
+            ERR("Unknown style 0x%02x\n", style );
             return -1;
         }
         STATIC_InitColours();

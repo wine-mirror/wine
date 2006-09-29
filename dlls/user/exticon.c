@@ -388,13 +388,13 @@ static UINT ICO_ExtractIconExW(
 	CloseHandle(hFile);
 	if (!fmapping)
 	{
-	  WARN("CreateFileMapping error %ld\n", GetLastError() );
+          WARN("CreateFileMapping error %d\n", GetLastError() );
 	  return 0xFFFFFFFF;
 	}
 
 	if (!(peimage = MapViewOfFile(fmapping, FILE_MAP_READ, 0, 0, 0)))
 	{
-	  WARN("MapViewOfFile error %ld\n", GetLastError() );
+          WARN("MapViewOfFile error %d\n", GetLastError() );
 	  CloseHandle(fmapping);
 	  return 0xFFFFFFFF;
 	}
@@ -422,7 +422,7 @@ static UINT ICO_ExtractIconExW(
 	  NE_NAMEINFO	*pIconDir = NULL;
 	  LPicoICONDIR	lpiID = NULL;
 
-	  TRACE("-- OS2/icon Signature (0x%08lx)\n", sig);
+          TRACE("-- OS2/icon Signature (0x%08x)\n", sig);
 
 	  if (pData == (BYTE*)-1)
 	  {
@@ -430,7 +430,7 @@ static UINT ICO_ExtractIconExW(
 	    if (pCIDir)
 	    {
 	      iconDirCount = 1; iconCount = lpiID->idCount;
-	      TRACE("-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
+              TRACE("-- icon found %p 0x%08x 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
 	    }
 	  }
 	  else while (pTInfo->type_id && !(pIconStorage && pIconDir))
@@ -526,7 +526,7 @@ static UINT ICO_ExtractIconExW(
 	    if (pe_sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 	      continue;
 	    if (fsizel < pe_sections[i].PointerToRawData+pe_sections[i].SizeOfRawData) {
-	      FIXME("File %s too short (section is at %ld bytes, real size is %ld)\n",
+              FIXME("File %s too short (section is at %d bytes, real size is %d)\n",
 		      debugstr_w(lpszExeFileName),
 		      pe_sections[i].PointerToRawData+pe_sections[i].SizeOfRawData,
 		      fsizel
@@ -624,7 +624,7 @@ static UINT ICO_ExtractIconExW(
 	        continue;
 
 	      if (igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData+igdataent->Size > fsizel) {
-	        FIXME("overflow in PE lookup (%s has len %ld, have offset %ld), short file?\n", debugstr_w(lpszExeFileName), fsizel,
+                FIXME("overflow in PE lookup (%s has len %d, have offset %d), short file?\n", debugstr_w(lpszExeFileName), fsizel,
 	        	   igdataent->OffsetToData - pe_sections[j].VirtualAddress + pe_sections[j].PointerToRawData + igdataent->Size);
 	        goto end; /* failure */
 	      }

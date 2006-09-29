@@ -191,7 +191,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
     }
     SERVER_END_REQ;
 
-    TRACE( "%s %p %lx -> %p\n", hook_names[id-WH_MINHOOK], proc, tid, handle );
+    TRACE( "%s %p %x -> %p\n", hook_names[id-WH_MINHOOK], proc, tid, handle );
     return handle;
 }
 
@@ -282,7 +282,7 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
     LRESULT ret;
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Call hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
     if (!prev_unicode == !next_unicode) ret = proc( code, wparam, lparam );
@@ -290,7 +290,7 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
     else ret = call_hook_AtoW( proc, id, code, wparam, lparam );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Ret  hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04x:Ret  hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
 
     return ret;
@@ -357,7 +357,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
     if (tid)
     {
-        TRACE( "calling hook in thread %04lx %s code %x wp %x lp %lx\n",
+        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
                tid, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
         switch(id)
@@ -530,7 +530,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 
     if (tid)
     {
-        TRACE( "calling hook in thread %04lx %s code %x wp %x lp %lx\n",
+        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
                tid, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
         switch(id)
@@ -612,7 +612,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     WCHAR module[MAX_PATH];
     DWORD len;
 
-    TRACE("%ld,%ld,%p,%p,%08lx,%04lx,%08lx\n", event_min, event_max, inst,
+    TRACE("%d,%d,%p,%p,%08x,%04x,%08x\n", event_min, event_max, inst,
           proc, pid, tid, flags);
 
     if (inst)
@@ -783,7 +783,7 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
 {
     struct hook_info info;
 
-    TRACE("%04lx,%p,%ld,%ld\n", event, hwnd, object_id, child_id);
+    TRACE("%04x,%p,%d,%d\n", event, hwnd, object_id, child_id);
 
     if (!hwnd)
     {
@@ -819,13 +819,13 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
     {
         if (info.proc)
         {
-            TRACE( "calling WH_WINEVENT hook %p event %lx hwnd %p %lx %lx module %s\n",
+            TRACE( "calling WH_WINEVENT hook %p event %x hwnd %p %x %x module %s\n",
                    info.proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
 
             if (!info.module[0] || (info.proc = get_hook_proc( info.proc, info.module )) != NULL)
             {
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04lx:Call winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
+                    DPRINTF( "%04x:Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
                              child_id, GetCurrentThreadId(), GetCurrentTime());
 
@@ -833,7 +833,7 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
                           GetCurrentThreadId(), GetCurrentTime());
 
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04lx:Ret  winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
+                    DPRINTF( "%04x:Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
                              child_id, GetCurrentThreadId(), GetCurrentTime());
             }
@@ -864,6 +864,6 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
  */
 BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
 {
-    FIXME("(%ld)-stub!\n", dwEvent);
+    FIXME("(%d)-stub!\n", dwEvent);
     return TRUE;
 }
