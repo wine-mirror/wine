@@ -633,7 +633,7 @@ static void test_ReleaseHfont(void)
     IFont_get_hFont(ifnt2,&hfnt2);
 
     /* Try invalid HFONT */
-    hres = IFont_ReleaseHfont(ifnt1,(HFONT)0);
+    hres = IFont_ReleaseHfont(ifnt1,NULL);
     ok(hres == E_INVALIDARG,
         "IFont_ReleaseHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08lx\n",
         hres);
@@ -708,7 +708,7 @@ static void test_AddRefHfont(void)
     IFont_get_hFont(ifnt2,&hfnt2);
 
     /* Try invalid HFONT */
-    hres = IFont_AddRefHfont(ifnt1,(HFONT)0);
+    hres = IFont_AddRefHfont(ifnt1,NULL);
     ok(hres == E_INVALIDARG,
         "IFont_AddRefHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08lx\n",
         hres);
