@@ -669,6 +669,16 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
     return USER_Driver->pActivateKeyboardLayout(hLayout, flags);
 }
 
+/**********************************************************************
+ *		BlockInput (USER32.@)
+ */
+BOOL WINAPI BlockInput(BOOL fBlockIt)
+{
+    FIXME_(keyboard)("(%d): stub\n", fBlockIt);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
+}
 
 /***********************************************************************
  *		GetKeyboardLayoutList (USER32.@)

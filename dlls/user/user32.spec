@@ -12,7 +12,7 @@
 @ stdcall AttachThreadInput(long long long)
 @ stdcall BeginDeferWindowPos(long)
 @ stdcall BeginPaint(long ptr)
-# @ stub BlockInput
+@ stdcall BlockInput(long)
 @ stdcall BringWindowToTop(long)
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessageA
 @ stdcall BroadcastSystemMessageA(long ptr long long long)
