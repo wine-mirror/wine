@@ -52,13 +52,13 @@ static void test_cryptprotectdata(void)
     protected = CryptProtectData(NULL,desc,NULL,NULL,NULL,0,&cipher);
     ok(!protected, "Encrypting without plain data source.\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%u) GetLastError seen\n",r);
 
     SetLastError(0xDEADBEEF);
     protected = CryptProtectData(&plain,desc,NULL,NULL,NULL,0,NULL);
     ok(!protected, "Encrypting without cipher destination.\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%u) GetLastError seen\n",r);
 
     cipher.pbData=NULL;
     cipher.cbData=0;
@@ -68,7 +68,7 @@ static void test_cryptprotectdata(void)
     protected = CryptProtectData(&plain,desc,NULL,NULL,NULL,0,&cipher);
     ok(protected, "Encrypting without entropy.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 
     cipher_entropy.pbData=NULL;
     cipher_entropy.cbData=0;
@@ -78,7 +78,7 @@ static void test_cryptprotectdata(void)
     protected = CryptProtectData(&plain,desc,&entropy,NULL,NULL,0,&cipher_entropy);
     ok(protected, "Encrypting with entropy.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 
     cipher_no_desc.pbData=NULL;
     cipher_no_desc.cbData=0;
@@ -90,7 +90,7 @@ static void test_cryptprotectdata(void)
     protected = CryptProtectData(&plain,NULL,&entropy,NULL,NULL,0,&cipher_no_desc);
     ok(protected, "Encrypting with entropy and no description.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 }
 
 static void test_cryptunprotectdata(void)
@@ -114,13 +114,13 @@ static void test_cryptunprotectdata(void)
     okay = CryptUnprotectData(&cipher,NULL,NULL,NULL,NULL,0,NULL);
     ok(!okay,"Decrypting without destination\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%u) GetLastError seen\n",r);
 
     SetLastError(0xDEADBEEF);
     okay = CryptUnprotectData(NULL,NULL,NULL,NULL,NULL,0,&plain);
     ok(!okay,"Decrypting without source\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_INVALID_PARAMETER, "Wrong (%u) GetLastError seen\n",r);
 
     plain.pbData=NULL;
     plain.cbData=0;
@@ -129,7 +129,7 @@ static void test_cryptunprotectdata(void)
     okay = CryptUnprotectData(&cipher_entropy,NULL,NULL,NULL,NULL,0,&plain);
     ok(!okay,"Decrypting without needed entropy\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_DATA, "Wrong (%lu) GetLastError seen\n", r);
+    ok(r == ERROR_INVALID_DATA, "Wrong (%u) GetLastError seen\n", r);
 
     plain.pbData=NULL;
     plain.cbData=0;
@@ -140,7 +140,7 @@ static void test_cryptunprotectdata(void)
     okay = CryptUnprotectData(&cipher,&data_desc,NULL,NULL,NULL,0,&plain);
     ok(okay,"Decrypting without entropy\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret)+1,"Plain DATA_BLOB wrong length\n");
@@ -160,14 +160,14 @@ static void test_cryptunprotectdata(void)
     okay = CryptUnprotectData(&cipher_entropy,&data_desc,&cipher_entropy,NULL,NULL,0,&plain);
     ok(!okay,"Decrypting with wrong entropy\n");
     r = GetLastError();
-    ok(r == ERROR_INVALID_DATA, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_INVALID_DATA, "Wrong (%u) GetLastError seen\n",r);
 
     /* with entropy */
     SetLastError(0xDEADBEEF);
     okay = CryptUnprotectData(&cipher_entropy,&data_desc,&entropy,NULL,NULL,0,&plain);
     ok(okay,"Decrypting with entropy\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret)+1,"Plain DATA_BLOB wrong length\n");
@@ -187,7 +187,7 @@ static void test_cryptunprotectdata(void)
     okay = CryptUnprotectData(&cipher_no_desc,&data_desc,&entropy,NULL,NULL,0,&plain);
     ok(okay,"Decrypting with entropy and no description\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%lu) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
 
     ok(plain.pbData!=NULL,"Plain DATA_BLOB missing data\n");
     ok(plain.cbData==strlen(secret2)+1,"Plain DATA_BLOB wrong length\n");

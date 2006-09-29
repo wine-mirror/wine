@@ -94,26 +94,26 @@ static void testCreateCRL(void)
 
     context = CertCreateCRLContext(0, NULL, 0);
     ok(!context && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     context = CertCreateCRLContext(X509_ASN_ENCODING, NULL, 0);
     ok(!context && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     context = CertCreateCRLContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
     ok(!context && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-     "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL) - 1);
     ok(!context && (GetLastError() == CRYPT_E_ASN1_EOD ||
      GetLastError() == CRYPT_E_ASN1_CORRUPT),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08lx\n",
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08x\n",
      GetLastError());
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL));
-    ok(context != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(context != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     if (context)
         CertFreeCRLContext(context);
     context = CertCreateCRLContext(X509_ASN_ENCODING, CRL, sizeof(CRL));
-    ok(context != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(context != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     if (context)
         CertFreeCRLContext(context);
 }
@@ -130,50 +130,50 @@ static void testAddCRL(void)
     /* Bad CRL encoding type */
     ret = CertAddEncodedCRLToStore(0, 0, NULL, 0, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, 0, NULL, 0, 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(0, 0, signedCRL, sizeof(signedCRL), 0, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, 0, signedCRL, sizeof(signedCRL), 0,
      NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(0, 0, signedCRL, sizeof(signedCRL),
      CERT_STORE_ADD_ALWAYS, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, 0, signedCRL, sizeof(signedCRL),
      CERT_STORE_ADD_ALWAYS, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
 
     /* No CRL */
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, NULL, 0, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, NULL, 0, 0, NULL);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
 
     /* Weird--bad add disposition leads to an access violation in Windows. */
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), 0, NULL);
     ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), 0, NULL);
     ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
 
     /* Weird--can add a CRL to the NULL store (does this have special meaning?)
      */
     context = NULL;
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, &context);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
     if (context)
         CertFreeCRLContext(context);
 
@@ -183,17 +183,17 @@ static void testAddCRL(void)
     /* and an unsigned one is too. */
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, CRL, sizeof(CRL),
      CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, newerCRL,
      sizeof(newerCRL), CERT_STORE_ADD_NEW, NULL);
     ok(!ret && GetLastError() == CRYPT_E_EXISTS,
-     "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_EXISTS, got %08x\n", GetLastError());
 
     /* This should replace (one of) the existing CRL(s). */
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, newerCRL,
      sizeof(newerCRL), CERT_STORE_ADD_NEWER, NULL);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     CertCloseStore(store, 0);
 }
@@ -210,7 +210,7 @@ static void testFindCRL(void)
 
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     /* Crashes
     context = CertFindCRLInStore(NULL, 0, 0, 0, NULL, NULL);
@@ -241,7 +241,7 @@ static void testFindCRL(void)
     /* Try to match an issuer that isn't in the store */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
      sizeof(bigCert2));
-    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
     context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
     ok(context == NULL, "Expected no matching context\n");
@@ -250,7 +250,7 @@ static void testFindCRL(void)
     /* Match an issuer that is in the store */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
-    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
     context = CertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_BY, cert, NULL);
     ok(context != NULL, "Expected a context\n");
@@ -281,17 +281,17 @@ static void testGetCRLFromStore(void)
     flags = 0xffffffff;
     context = CertGetCRLFromStore(store, NULL, NULL, &flags);
     ok(!context && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
 
     /* Test an empty store */
     flags = 0;
     context = CertGetCRLFromStore(store, NULL, NULL, &flags);
     ok(context == NULL && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
 
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     /* NULL matches any CRL */
     flags = 0;
@@ -302,17 +302,17 @@ static void testGetCRLFromStore(void)
     /* This cert's issuer isn't in */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
      sizeof(bigCert2));
-    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
     context = CertGetCRLFromStore(store, cert, NULL, &flags);
     ok(context == NULL && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     CertFreeCertificateContext(cert);
 
     /* But this one is */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
-    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
     context = CertGetCRLFromStore(store, cert, NULL, &flags);
     ok(context != NULL, "Expected a context\n");
@@ -333,10 +333,10 @@ static void checkCRLHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
     memset(hashProperty, 0, sizeof(hashProperty));
     size = sizeof(hash);
     ret = CryptHashCertificate(0, algID, 0, data, dataLen, hash, &size);
-    ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CryptHashCertificate failed: %08x\n", GetLastError());
     ret = CertGetCRLContextProperty(context, propID, hashProperty, &size);
-    ok(ret, "CertGetCRLContextProperty failed: %08lx\n", GetLastError());
-    ok(!memcmp(hash, hashProperty, size), "Unexpected hash for property %ld\n",
+    ok(ret, "CertGetCRLContextProperty failed: %08x\n", GetLastError());
+    ok(!memcmp(hash, hashProperty, size), "Unexpected hash for property %d\n",
      propID);
 }
 
@@ -345,7 +345,7 @@ static void testCRLProperties(void)
     PCCRL_CONTEXT context = CertCreateCRLContext(X509_ASN_ENCODING,
      CRL, sizeof(CRL));
 
-    ok(context != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(context != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     if (context)
     {
         DWORD propID, numProps, access, size;
@@ -364,12 +364,12 @@ static void testCRLProperties(void)
             if (propID)
                 numProps++;
         } while (propID != 0);
-        ok(numProps == 0, "Expected 0 properties, got %ld\n", numProps);
+        ok(numProps == 0, "Expected 0 properties, got %d\n", numProps);
 
         /* Tests with a NULL cert context.  Prop ID 0 fails.. */
         ret = CertSetCRLContextProperty(NULL, 0, 0, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
         /* while this just crashes.
         ret = CertSetCRLContextProperty(NULL, CERT_KEY_PROV_HANDLE_PROP_ID, 0,
          NULL);
@@ -377,7 +377,7 @@ static void testCRLProperties(void)
 
         ret = CertSetCRLContextProperty(context, 0, 0, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
         /* Can't set the cert property directly, this crashes.
         ret = CertSetCRLContextProperty(context, CERT_CRL_PROP_ID, 0, CRL);
          */
@@ -394,14 +394,14 @@ static void testCRLProperties(void)
         ret = CertGetCRLContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID,
          NULL, &size);
         ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+         "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
         /* And, an implicit property */
         ret = CertGetCRLContextProperty(context, CERT_ACCESS_STATE_PROP_ID,
          NULL, &size);
-        ok(ret, "CertGetCRLContextProperty failed: %08lx\n", GetLastError());
+        ok(ret, "CertGetCRLContextProperty failed: %08x\n", GetLastError());
         ret = CertGetCRLContextProperty(context, CERT_ACCESS_STATE_PROP_ID,
          &access, &size);
-        ok(ret, "CertGetCRLContextProperty failed: %08lx\n", GetLastError());
+        ok(ret, "CertGetCRLContextProperty failed: %08x\n", GetLastError());
         ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
          "Didn't expect a persisted crl\n");
         /* Trying to set this "read only" property crashes.
@@ -414,7 +414,7 @@ static void testCRLProperties(void)
         blob.pbData = hash;
         blob.cbData = sizeof(hash);
         ret = CertSetCRLContextProperty(context, CERT_HASH_PROP_ID, 0, &blob);
-        ok(ret, "CertSetCRLContextProperty failed: %08lx\n",
+        ok(ret, "CertSetCRLContextProperty failed: %08x\n",
          GetLastError());
         size = sizeof(hashProperty);
         ret = CertGetCRLContextProperty(context, CERT_HASH_PROP_ID,
@@ -422,7 +422,7 @@ static void testCRLProperties(void)
         ok(!memcmp(hashProperty, hash, sizeof(hash)), "Unexpected hash\n");
         /* Delete the (bogus) hash, and get the real one */
         ret = CertSetCRLContextProperty(context, CERT_HASH_PROP_ID, 0, NULL);
-        ok(ret, "CertSetCRLContextProperty failed: %08lx\n", GetLastError());
+        ok(ret, "CertSetCRLContextProperty failed: %08x\n", GetLastError());
         checkCRLHash(CRL, sizeof(CRL), CALG_SHA1, context, CERT_HASH_PROP_ID);
 
         /* Now that the hash property is set, we should get one property when
@@ -435,7 +435,7 @@ static void testCRLProperties(void)
             if (propID)
                 numProps++;
         } while (propID != 0);
-        ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
+        ok(numProps == 1, "Expected 1 properties, got %d\n", numProps);
 
         /* Check a few other implicit properties */
         checkCRLHash(CRL, sizeof(CRL), CALG_MD5, context,
@@ -505,10 +505,10 @@ static void testIsValidCRLForCert(void)
 
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
-    ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     cert1 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
-    ok(cert1 != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert1 != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
 
     /* Crash
@@ -518,15 +518,15 @@ static void testIsValidCRLForCert(void)
 
     /* Curiously, any CRL is valid for the NULL certificate */
     ret = pCertIsValidCRLForCertificate(NULL, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     /* Same issuer for both cert and CRL, this CRL is valid for that cert */
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     cert2 = CertCreateCertificateContext(X509_ASN_ENCODING,
      bigCertWithDifferentIssuer, sizeof(bigCertWithDifferentIssuer));
-    ok(cert2 != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert2 != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
 
     /* Yet more curious: different issuers for these, yet the CRL is valid for
@@ -534,7 +534,7 @@ static void testIsValidCRLForCert(void)
      * CRL has a CRL_ISSUING_DIST_POINT extension.
      */
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
 
@@ -543,24 +543,24 @@ static void testIsValidCRLForCert(void)
      */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v2CRLWithIssuingDistPoint,
      sizeof(v2CRLWithIssuingDistPoint));
-    ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
 
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
 
     /* And again, with a real CRL, the CRL is valid for both certs. */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL));
-    ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
 
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
 
@@ -569,16 +569,16 @@ static void testIsValidCRLForCert(void)
      */
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, X509_ASN_ENCODING, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+    ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
 
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL), CERT_STORE_ADD_ALWAYS, &crl);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08lx\n", GetLastError());
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
 
     ret = pCertIsValidCRLForCertificate(cert1, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
     ret = pCertIsValidCRLForCertificate(cert2, crl, 0, NULL);
-    ok(ret, "CertIsValidCRLForCertificate failed: %08lx\n", GetLastError());
+    ok(ret, "CertIsValidCRLForCertificate failed: %08x\n", GetLastError());
 
     CertFreeCRLContext(crl);
 
@@ -604,7 +604,7 @@ static void testFindCertInCRL(void)
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
-    ok(cert != NULL, "CertCreateCertificateContext failed: %08lx\n",
+    ok(cert != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
 
     /* Crash
@@ -620,14 +620,14 @@ static void testFindCertInCRL(void)
     crl = CertCreateCRLContext(X509_ASN_ENCODING, verisignCRL,
      sizeof(verisignCRL));
     ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
-    ok(ret, "CertFindCertificateInCRL failed: %08lx\n", GetLastError());
+    ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry == NULL, "Expected not to find an entry in CRL\n");
     CertFreeCRLContext(crl);
 
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
     ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
-    ok(ret, "CertFindCertificateInCRL failed: %08lx\n", GetLastError());
+    ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry != NULL, "Expected to find an entry in CRL\n");
     CertFreeCRLContext(crl);
 
@@ -635,7 +635,7 @@ static void testFindCertInCRL(void)
     crl = CertCreateCRLContext(X509_ASN_ENCODING, crlWithDifferentIssuer,
      sizeof(crlWithDifferentIssuer));
     ret = CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
-    ok(ret, "CertFindCertificateInCRL failed: %08lx\n", GetLastError());
+    ok(ret, "CertFindCertificateInCRL failed: %08x\n", GetLastError());
     ok(entry != NULL, "Expected to find an entry in CRL\n");
     CertFreeCRLContext(crl);
 
@@ -649,18 +649,18 @@ static void testVerifyCRLRevocation(void)
     PCCRL_CONTEXT crl;
 
     ret = CertVerifyCRLRevocation(0, NULL, 0, NULL);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
     ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, NULL, 0, NULL);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
 
     /* Check against no CRL */
     ret = CertVerifyCRLRevocation(0, cert->pCertInfo, 0, NULL);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
     ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, cert->pCertInfo, 0, NULL);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
 
     /* Check against CRL with entry for the cert */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
@@ -676,7 +676,7 @@ static void testVerifyCRLRevocation(void)
     /* Check against CRL with different issuer and entry for the cert */
     crl = CertCreateCRLContext(X509_ASN_ENCODING, v1CRLWithIssuerAndEntry,
      sizeof(v1CRLWithIssuerAndEntry));
-    ok(crl != NULL, "CertCreateCRLContext failed: %08lx\n", GetLastError());
+    ok(crl != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
     ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, cert->pCertInfo, 1,
      (PCRL_INFO *)&crl->pCrlInfo);
     ok(!ret, "CertVerifyCRLRevocation should have been revoked\n");
@@ -687,10 +687,10 @@ static void testVerifyCRLRevocation(void)
      sizeof(verisignCRL));
     ret = CertVerifyCRLRevocation(0, cert->pCertInfo, 1,
      (PCRL_INFO *)&crl->pCrlInfo);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
     ret = CertVerifyCRLRevocation(X509_ASN_ENCODING, cert->pCertInfo, 1,
      (PCRL_INFO *)&crl->pCrlInfo);
-    ok(ret, "CertVerifyCRLRevocation failed: %08lx\n", GetLastError());
+    ok(ret, "CertVerifyCRLRevocation failed: %08x\n", GetLastError());
     CertFreeCRLContext(crl);
 
     CertFreeCertificateContext(cert);

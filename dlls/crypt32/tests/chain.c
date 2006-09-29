@@ -65,21 +65,21 @@ static void testCreateCertChainEngine(void)
      */
     ret = CertCreateCertificateChainEngine(&config, NULL);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertCreateCertificateChainEngine(&config, &engine);
     ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Crashes
     config.cbSize = sizeof(config);
     ret = CertCreateCertificateChainEngine(&config, NULL);
      */
     config.cbSize = sizeof(config);
     ret = CertCreateCertificateChainEngine(&config, &engine);
-    ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
+    ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     CertFreeCertificateChainEngine(engine);
     config.dwFlags = 0xff000000;
     ret = CertCreateCertificateChainEngine(&config, &engine);
-    ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
+    ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     CertFreeCertificateChainEngine(engine);
 
     /* Creating a cert with no root certs at all is allowed.. */
@@ -87,7 +87,7 @@ static void testCreateCertChainEngine(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     config.hRestrictedRoot = store;
     ret = CertCreateCertificateChainEngine(&config, &engine);
-    ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
+    ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     CertFreeCertificateChainEngine(engine);
 
     /* but creating one with a restricted root with a cert that isn't a member
@@ -97,7 +97,7 @@ static void testCreateCertChainEngine(void)
      sizeof(selfSignedCert), CERT_STORE_ADD_ALWAYS, NULL);
     ret = CertCreateCertificateChainEngine(&config, &engine);
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
 
     CertCloseStore(store, 0);
 }

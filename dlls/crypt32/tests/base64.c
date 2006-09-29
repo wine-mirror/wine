@@ -96,7 +96,7 @@ static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
     BOOL ret;
 
     ret = pCryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen);
-    ok(ret, "CryptBinaryToStringA failed: %ld\n", GetLastError());
+    ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
     str = HeapAlloc(GetProcessHeap(), 0, strLen);
     if (str)
     {
@@ -105,8 +105,8 @@ static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
 
         ret = pCryptBinaryToStringA(toEncode, toEncodeLen, format, str,
          &strLen2);
-        ok(ret, "CryptBinaryToStringA failed: %ld\n", GetLastError());
-        ok(strLen2 == strLen - 1, "Expected length %ld, got %ld\n",
+        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+        ok(strLen2 == strLen - 1, "Expected length %d, got %d\n",
          strLen - 1, strLen);
         if (header)
         {
@@ -136,10 +136,10 @@ static void testBinaryToStringA(void)
 
     ret = pCryptBinaryToStringA(NULL, 0, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ret = pCryptBinaryToStringA(NULL, 0, 0, NULL, &strLen);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
     {
         DWORD strLen = 0;
@@ -148,7 +148,7 @@ static void testBinaryToStringA(void)
 
         ret = pCryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen,
          CRYPT_STRING_BINARY, NULL, &strLen);
-        ok(ret, "CryptBinaryToStringA failed: %ld\n", GetLastError());
+        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
         str = HeapAlloc(GetProcessHeap(), 0, strLen);
         if (str)
         {
@@ -156,7 +156,7 @@ static void testBinaryToStringA(void)
 
             ret = pCryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen,
              CRYPT_STRING_BINARY, str, &strLen2);
-            ok(strLen == strLen2, "Expected length %ld, got %ld\n", strLen,
+            ok(strLen == strLen2, "Expected length %d, got %d\n", strLen,
              strLen2);
             ok(!memcmp(str, tests[i].toEncode, tests[i].toEncodeLen),
              "Unexpected value\n");
@@ -183,7 +183,7 @@ static void testBinaryToStringA(void)
         ret = pCryptBinaryToStringA(testsNoCR[i].toEncode,
          testsNoCR[i].toEncodeLen, CRYPT_STRING_BINARY | CRYPT_STRING_NOCR,
          NULL, &strLen);
-        ok(ret, "CryptBinaryToStringA failed: %ld\n", GetLastError());
+        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
         str = HeapAlloc(GetProcessHeap(), 0, strLen);
         if (str)
         {
@@ -192,7 +192,7 @@ static void testBinaryToStringA(void)
             ret = pCryptBinaryToStringA(testsNoCR[i].toEncode,
              testsNoCR[i].toEncodeLen, CRYPT_STRING_BINARY | CRYPT_STRING_NOCR,
              str, &strLen2);
-            ok(strLen == strLen2, "Expected length %ld, got %ld\n", strLen,
+            ok(strLen == strLen2, "Expected length %d, got %d\n", strLen,
              strLen2);
             ok(!memcmp(str, testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen),
              "Unexpected value\n");
@@ -245,7 +245,7 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
             strcat(str, trailer);
         ret = pCryptStringToBinaryA(str, 0, useFormat, NULL, &bufLen, NULL,
          NULL);
-        ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
+        ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         buf = HeapAlloc(GetProcessHeap(), 0, bufLen);
         if (buf)
         {
@@ -254,16 +254,16 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
             /* check as normal, make sure last two parameters are optional */
             ret = pCryptStringToBinaryA(str, 0, useFormat, buf, &bufLen, NULL,
              NULL);
-            ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
+            ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
             ok(bufLen == expectedLen,
-             "Expected length %ld, got %ld\n", expectedLen, bufLen);
+             "Expected length %d, got %d\n", expectedLen, bufLen);
             ok(!memcmp(buf, expected, bufLen), "Unexpected value\n");
             /* check last two params */
             ret = pCryptStringToBinaryA(str, 0, useFormat, buf, &bufLen,
              &skipped, &usedFormat);
-            ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
-            ok(skipped == 0, "Expected skipped 0, got %ld\n", skipped);
-            ok(usedFormat == expectedFormat, "Expected format %ld, got %ld\n",
+            ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
+            ok(skipped == 0, "Expected skipped 0, got %d\n", skipped);
+            ok(usedFormat == expectedFormat, "Expected format %d, got %d\n",
              expectedFormat, usedFormat);
             HeapFree(GetProcessHeap(), 0, buf);
         }
@@ -279,10 +279,10 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
          NULL);
         /* expect failure with no header, and success with one */
         if (header)
-            ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
+            ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         else
             ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-             "Expected ERROR_INVALID_DATA, got %ld\n", GetLastError());
+             "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
         if (ret)
         {
             buf = HeapAlloc(GetProcessHeap(), 0, bufLen);
@@ -293,7 +293,7 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
                 ret = pCryptStringToBinaryA(str, 0, useFormat, buf, &bufLen,
                  &skipped, &usedFormat);
                 ok(skipped == strlen(garbage),
-                 "Expected %d characters skipped, got %ld\n", lstrlenA(garbage),
+                 "Expected %d characters skipped, got %d\n", lstrlenA(garbage),
                  skipped);
                 HeapFree(GetProcessHeap(), 0, buf);
             }
@@ -324,20 +324,20 @@ static void testStringToBinaryA(void)
 
     ret = pCryptStringToBinaryA(NULL, 0, 0, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ret = pCryptStringToBinaryA(NULL, 0, 0, NULL, &bufLen, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* Bogus format */
     ret = pCryptStringToBinaryA(tests[0].base64, 0, 0, NULL, &bufLen, NULL,
      NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
     /* Decoding doesn't expect the NOCR flag to be specified */
     ret = pCryptStringToBinaryA(tests[0].base64, 1,
      CRYPT_STRING_BASE64 | CRYPT_STRING_NOCR, NULL, &bufLen, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %ld\n", GetLastError());
+     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
     /* Bad strings */
     for (i = 0; i < sizeof(badStrings) / sizeof(badStrings[0]); i++)
     {
@@ -345,7 +345,7 @@ static void testStringToBinaryA(void)
         ret = pCryptStringToBinaryA(badStrings[i].str, 0, badStrings[i].format,
          NULL, &bufLen, NULL, NULL);
         ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-         "Expected ERROR_INVALID_DATA, got %ld\n", GetLastError());
+         "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
     }
     /* Good strings */
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
@@ -356,7 +356,7 @@ static void testStringToBinaryA(void)
          */
         ret = pCryptStringToBinaryA(tests[i].base64, 1, CRYPT_STRING_BASE64,
          NULL, &bufLen, NULL, NULL);
-        todo_wine ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
+        todo_wine ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         /* Check with the precise format */
         decodeAndCompareBase64_A(tests[i].base64, NULL, NULL,
          CRYPT_STRING_BASE64, CRYPT_STRING_BASE64, tests[i].toEncode,
@@ -410,7 +410,7 @@ static void testStringToBinaryA(void)
          */
         ret = pCryptStringToBinaryA(testsNoCR[i].base64, 1, CRYPT_STRING_BASE64,
          NULL, &bufLen, NULL, NULL);
-        todo_wine ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
+        todo_wine ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         /* Check with the precise format */
         decodeAndCompareBase64_A(testsNoCR[i].base64, NULL, NULL,
          CRYPT_STRING_BASE64, CRYPT_STRING_BASE64, testsNoCR[i].toEncode,

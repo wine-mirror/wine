@@ -42,7 +42,7 @@ static void test_findAttribute(void)
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute(NULL, 0, NULL);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* crashes
     SetLastError(0xdeadbeef);
@@ -52,24 +52,24 @@ static void test_findAttribute(void)
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute(NULL, 1, &attr);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute("bogus", 1, &attr);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute("1.2.4", 1, &attr);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* succeeds, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute("1.2.3", 1, &attr);
-    ok(ret != NULL, "CertFindAttribute failed: %08lx\n", GetLastError());
+    ok(ret != NULL, "CertFindAttribute failed: %08x\n", GetLastError());
 }
 
 static void test_findExtension(void)
@@ -83,7 +83,7 @@ static void test_findExtension(void)
     SetLastError(0xdeadbeef);
     ret = CertFindExtension(NULL, 0, NULL);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* crashes
     SetLastError(0xdeadbeef);
@@ -93,24 +93,24 @@ static void test_findExtension(void)
     SetLastError(0xdeadbeef);
     ret = CertFindExtension(NULL, 1, &ext);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindExtension("bogus", 1, &ext);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindExtension("1.2.4", 1, &ext);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* succeeds, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindExtension("1.2.3", 1, &ext);
-    ok(ret != NULL, "CertFindExtension failed: %08lx\n", GetLastError());
+    ok(ret != NULL, "CertFindExtension failed: %08x\n", GetLastError());
 }
 
 static void test_findRDNAttr(void)
@@ -134,24 +134,24 @@ static void test_findRDNAttr(void)
     SetLastError(0xdeadbeef);
     ret = CertFindRDNAttr(NULL, &nameInfo);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindRDNAttr("bogus", &nameInfo);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindRDNAttr("1.2.4", &nameInfo);
     ok(ret == NULL, "Expected failure\n");
-    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
     /* succeeds, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindRDNAttr("1.2.3", &nameInfo);
-    ok(ret != NULL, "CertFindRDNAttr failed: %08lx\n", GetLastError());
+    ok(ret != NULL, "CertFindRDNAttr failed: %08x\n", GetLastError());
 }
 
 static void test_verifyTimeValidity(void)
@@ -169,16 +169,16 @@ static void test_verifyTimeValidity(void)
      */
     /* Check with 0 NotBefore and NotAfter */
     ret = CertVerifyTimeValidity(&fileTime, &info);
-    ok(ret == 1, "Expected 1, got %ld\n", ret);
+    ok(ret == 1, "Expected 1, got %d\n", ret);
     memcpy(&info.NotAfter, &fileTime, sizeof(info.NotAfter));
     /* Check with NotAfter equal to comparison time */
     ret = CertVerifyTimeValidity(&fileTime, &info);
-    ok(ret == 0, "Expected 0, got %ld\n", ret);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
     /* Check with NotBefore after comparison time */
     memcpy(&info.NotBefore, &fileTime, sizeof(info.NotBefore));
     info.NotBefore.dwLowDateTime += 5000;
     ret = CertVerifyTimeValidity(&fileTime, &info);
-    ok(ret == -1, "Expected -1, got %ld\n", ret);
+    ok(ret == -1, "Expected -1, got %d\n", ret);
 }
 
 static void test_cryptAllocate(void)
@@ -186,13 +186,13 @@ static void test_cryptAllocate(void)
     LPVOID buf;
 
     buf = CryptMemAlloc(0);
-    ok(buf != NULL, "CryptMemAlloc failed: %08lx\n", GetLastError());
+    ok(buf != NULL, "CryptMemAlloc failed: %08x\n", GetLastError());
     CryptMemFree(buf);
     buf = CryptMemRealloc(NULL, 0);
     ok(!buf, "Expected NULL\n");
     buf = CryptMemAlloc(0);
     buf = CryptMemRealloc(buf, 1);
-    ok(buf != NULL, "CryptMemRealloc failed: %08lx\n", GetLastError());
+    ok(buf != NULL, "CryptMemRealloc failed: %08x\n", GetLastError());
     CryptMemFree(buf);
 }
 
@@ -228,7 +228,7 @@ static void test_cryptTls(void)
 
     /* One normal pass */
     index = pI_CryptAllocTls();
-    ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+    ok(index, "I_CryptAllocTls failed: %08x\n", GetLastError());
     if (index)
     {
         LPVOID ptr;
@@ -236,24 +236,24 @@ static void test_cryptTls(void)
         ptr = pI_CryptGetTls(index);
         ok(!ptr, "Expected NULL\n");
         ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
-        ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+        ok(ret, "I_CryptSetTls failed: %08x\n", GetLastError());
         ptr = pI_CryptGetTls(index);
         ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
         /* This crashes
         ret = pI_CryptFreeTls(index, 1);
          */
         ret = pI_CryptFreeTls(index, 0);
-        ok(ret, "I_CryptFreeTls failed: %08lx\n", GetLastError());
+        ok(ret, "I_CryptFreeTls failed: %08x\n", GetLastError());
         ret = pI_CryptFreeTls(index, 0);
         /* Not sure if this fails because TlsFree should fail, so leave as
          * todo for now.
          */
         todo_wine ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
     /* Similar pass, check I_CryptDetachTls */
     index = pI_CryptAllocTls();
-    ok(index, "I_CryptAllocTls failed: %08lx\n", GetLastError());
+    ok(index, "I_CryptAllocTls failed: %08x\n", GetLastError());
     if (index)
     {
         LPVOID ptr;
@@ -261,7 +261,7 @@ static void test_cryptTls(void)
         ptr = pI_CryptGetTls(index);
         ok(!ptr, "Expected NULL\n");
         ret = pI_CryptSetTls(index, (LPVOID)0xdeadbeef);
-        ok(ret, "I_CryptSetTls failed: %08lx\n", GetLastError());
+        ok(ret, "I_CryptSetTls failed: %08x\n", GetLastError());
         ptr = pI_CryptGetTls(index);
         ok(ptr == (LPVOID)0xdeadbeef, "Expected 0xdeadbeef, got %p\n", ptr);
         ptr = pI_CryptDetachTls(index);
@@ -312,7 +312,7 @@ static void test_readTrustedPublisherDWORD(void)
         ret = pReadDWORD(authenticodeFlags, &returnedFlags);
         ok(ret == exists, "Unexpected return value\n");
         ok(readFlags == returnedFlags,
-         "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);
+         "Expected flags %08x, got %08x\n", readFlags, returnedFlags);
     }
 }
 
@@ -331,15 +331,15 @@ static void test_getDefaultCryptProv(void)
 
     prov = pI_CryptGetDefaultCryptProv(0xdeadbeef);
     ok(prov == 0 && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     prov = pI_CryptGetDefaultCryptProv(PROV_RSA_FULL);
     ok(prov == 0 && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     prov = pI_CryptGetDefaultCryptProv(1);
     ok(prov == 0 && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     prov = pI_CryptGetDefaultCryptProv(0);
-    ok(prov != 0, "I_CryptGetDefaultCryptProv failed: %08lx\n", GetLastError());
+    ok(prov != 0, "I_CryptGetDefaultCryptProv failed: %08x\n", GetLastError());
     CryptReleaseContext(prov, 0);
 }
 
