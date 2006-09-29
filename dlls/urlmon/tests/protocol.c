@@ -17,6 +17,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <wine/test.h>
 #include <stdarg.h>

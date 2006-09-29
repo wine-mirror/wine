@@ -30,6 +30,13 @@ extern "C" {
 
 #include <basetsd.h>
 
+#undef CONST_VTBL
+#ifdef CONST_VTABLE
+# define CONST_VTBL const
+#else
+# define CONST_VTBL
+#endif
+
 /* stupid #if can't handle casts... this __stupidity
    is just a workaround for that limitation */
 
