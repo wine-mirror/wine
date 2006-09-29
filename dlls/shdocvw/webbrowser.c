@@ -795,7 +795,7 @@ static HRESULT WINAPI WebBrowser_put_RegisterAsDropTarget(IWebBrowser2 *iface,
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
     FIXME("(%p)->(%x)\n", This, bRegister);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL *pbRegister)
