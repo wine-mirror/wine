@@ -610,7 +610,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     ok(IsEqualIID(header->piid, &IID_if1), "header iid differs\n");
     ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
     /* 0xdeadbeef returned from create_stub_test_QI */
-    ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p", cstd_stub->pvServerObject);
+    ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(cstd_stub->pPSFactory == ppsf, "pPSFactory %p\n", cstd_stub->pPSFactory);
 
     vtbl = &create_stub_test_fail_vtbl;

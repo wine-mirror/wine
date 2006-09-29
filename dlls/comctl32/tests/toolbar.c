@@ -269,7 +269,7 @@ static void test_add_bitmap(void)
     ok(himl != NULL, "failed to create imagelist\n");
     ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
     CHECK_IMAGELIST(4, 20, 15);
-    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return");
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(10, 20, 15);
     /* however TB_SETBITMAPSIZE/add std bitmap won't change the image size (the button size does change!) */
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
