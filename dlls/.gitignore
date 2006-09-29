@@ -137,6 +137,7 @@ powrprof/libpowrprof.def
 psapi/libpsapi.def
 quartz/libquartz.def
 rasapi32/librasapi32.def
+resutils/libresutils.def
 riched20/libriched20.def
 rpcrt4/librpcrt4.def
 rsaenh/librsaenh.def

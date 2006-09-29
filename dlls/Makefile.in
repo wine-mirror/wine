@@ -138,6 +138,7 @@ BASEDIRS = \
 	quartz \
 	query \
 	rasapi32 \
+	resutils \
 	riched20 \
 	riched32 \
 	rpcrt4 \
@@ -577,6 +578,7 @@ IMPORT_LIBS = \
 	psapi/libpsapi.$(IMPLIBEXT) \
 	quartz/libquartz.$(IMPLIBEXT) \
 	rasapi32/librasapi32.$(IMPLIBEXT) \
+	resutils/libresutils.$(IMPLIBEXT) \
 	riched20/libriched20.$(IMPLIBEXT) \
 	rpcrt4/librpcrt4.$(IMPLIBEXT) \
 	rsaenh/librsaenh.$(IMPLIBEXT) \
@@ -862,6 +864,9 @@ quartz/libquartz.$(IMPLIBEXT): quartz/quartz.spec $(WINEBUILD)
 
 rasapi32/librasapi32.$(IMPLIBEXT): rasapi32/rasapi32.spec $(WINEBUILD)
 	@cd rasapi32 && $(MAKE) librasapi32.$(IMPLIBEXT)
+
+resutils/libresutils.$(IMPLIBEXT): resutils/resutils.spec $(WINEBUILD)
+	@cd resutils && $(MAKE) libresutils.$(IMPLIBEXT)
 
 riched20/libriched20.$(IMPLIBEXT): riched20/riched20.spec $(WINEBUILD)
 	@cd riched20 && $(MAKE) libriched20.$(IMPLIBEXT)

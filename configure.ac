@@ -1663,6 +1663,7 @@ dlls/quartz/Makefile
 dlls/quartz/tests/Makefile
 dlls/query/Makefile
 dlls/rasapi32/Makefile
+dlls/resutils/Makefile
 dlls/riched20/Makefile
 dlls/riched20/tests/Makefile
 dlls/riched32/Makefile
