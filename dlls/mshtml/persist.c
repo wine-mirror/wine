@@ -118,7 +118,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
 
     if(SUCCEEDED(hres) && bindinfo.dwBindVerb == BINDVERB_POST)
-        post_len = bindinfo.cbStgmedData;
+        post_len = bindinfo.cbstgmedData;
 
     if(headers_len || post_len) {
         int len = headers_len ? headers_len-1 : 0;

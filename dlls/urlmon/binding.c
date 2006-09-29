@@ -339,7 +339,7 @@ static void dump_BINDINFO(BINDINFO *bi)
             bi->dwBindVerb > BINDVERB_CUSTOM
                 ? "unknown" : BINDVERB_str[bi->dwBindVerb],
             debugstr_w(bi->szCustomVerb),
-            bi->cbStgmedData, bi->dwOptions, bi->dwOptionsFlags, bi->dwCodePage,
+            bi->cbstgmedData, bi->dwOptions, bi->dwOptionsFlags, bi->dwCodePage,
             bi->securityAttributes.nLength,
             bi->securityAttributes.lpSecurityDescriptor,
             bi->securityAttributes.bInheritHandle,

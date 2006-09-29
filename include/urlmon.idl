@@ -131,7 +131,7 @@ interface IBindStatusCallback : IUnknown
         DWORD grfBindInfoF;
         DWORD dwBindVerb;
         LPWSTR szCustomVerb;
-        DWORD cbStgmedData;
+        DWORD cbstgmedData;
         DWORD dwOptions;
         DWORD dwOptionsFlags;
         DWORD dwCodePage;

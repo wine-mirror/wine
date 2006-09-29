@@ -79,7 +79,7 @@ static void dump_BINDINFO(BINDINFO *bi)
             bi->dwBindVerb > BINDVERB_CUSTOM
                 ? "unknown" : BINDVERB_str[bi->dwBindVerb],
             debugstr_w(bi->szCustomVerb),
-            bi->cbStgmedData, bi->dwOptions, bi->dwOptionsFlags, bi->dwCodePage,
+            bi->cbstgmedData, bi->dwOptions, bi->dwOptionsFlags, bi->dwCodePage,
             bi->securityAttributes.nLength,
             bi->securityAttributes.lpSecurityDescriptor,
             bi->securityAttributes.bInheritHandle,
@@ -195,7 +195,7 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
     memset(pbindinfo, 0, sizeof(BINDINFO));
     pbindinfo->cbSize = sizeof(BINDINFO);
 
-    pbindinfo->cbStgmedData = This->post_data_len;
+    pbindinfo->cbstgmedData = This->post_data_len;
 
     if(This->post_data) {
         pbindinfo->dwBindVerb = BINDVERB_POST;
@@ -539,7 +539,7 @@ HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
     dump_BINDINFO(&bindinfo);
     if(bindinfo.dwBindVerb == BINDVERB_POST) {
-        post_data_len = bindinfo.cbStgmedData;
+        post_data_len = bindinfo.cbstgmedData;
         if(post_data_len)
             post_data = bindinfo.stgmedData.u.hGlobal;
     }
