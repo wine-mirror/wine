@@ -42,7 +42,7 @@ void * CALLBACK my_alloc(size_t size)
 void CALLBACK my_free(void *ptr)
 {
     my_free_called++;
-    return NdrOleFree(ptr);
+    NdrOleFree(ptr);
 }
 
 static const MIDL_STUB_DESC Object_StubDesc = 
