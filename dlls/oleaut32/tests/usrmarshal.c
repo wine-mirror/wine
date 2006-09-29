@@ -27,6 +27,12 @@
 
 #include "wine/test.h"
 
+#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+# define V_U2(A)  ((A)->n1.n2)
+#else
+# define V_U2(A)  (*(A))
+#endif
+
 /* doesn't work on Windows due to needing more of the
  * MIDL_STUB_MESSAGE structure to be filled out */
 #define LPSAFEARRAY_UNMARSHAL_WORKS 0
@@ -376,11 +382,11 @@ static void check_variant_header(DWORD *wirev, VARIANT *v, unsigned long size)
     wp = (WORD*)wirev;
     ok(*wp == V_VT(v), "vt %04x expected %04x\n", *wp, V_VT(v));
     wp++;
-    ok(*wp == v->n1.n2.wReserved1, "res1 %04x expected %04x\n", *wp, v->n1.n2.wReserved1);
+    ok(*wp == V_U2(v).wReserved1, "res1 %04x expected %04x\n", *wp, V_U2(v).wReserved1);
     wp++;
-    ok(*wp == v->n1.n2.wReserved2, "res2 %04x expected %04x\n", *wp, v->n1.n2.wReserved2);
+    ok(*wp == V_U2(v).wReserved2, "res2 %04x expected %04x\n", *wp, V_U2(v).wReserved2);
     wp++;
-    ok(*wp == v->n1.n2.wReserved3, "res3 %04x expected %04x\n", *wp, v->n1.n2.wReserved3);
+    ok(*wp == V_U2(v).wReserved3, "res3 %04x expected %04x\n", *wp, V_U2(v).wReserved3);
     wp++;
     wirev = (DWORD*)wp;
     switch_is = V_VT(v);
