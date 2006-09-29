@@ -278,6 +278,7 @@ BOOL X11DRV_WineGL_InitOpenglInfo()
         pglXMakeCurrent(gdi_display, win, ctx);
     } else {
         ERR(" couldn't initialize OpenGL, expect problems\n");
+        wine_tsx11_unlock();
         return FALSE;
     }
 
@@ -302,12 +303,12 @@ BOOL X11DRV_WineGL_InitOpenglInfo()
     TRACE("Client GLX version     : %s.\n", WineGLInfo.glxClientVersion);
     TRACE("Direct rendering enabled: %s\n", WineGLInfo.glxDirect ? "True" : "False");
 
-    wine_tsx11_unlock();
     if(vis) XFree(vis);
     if(ctx) {
         pglXMakeCurrent(gdi_display, None, NULL);    
         pglXDestroyContext(gdi_display, ctx);
     }
+    wine_tsx11_unlock();
     return TRUE;
 }
 
