@@ -675,7 +675,7 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
     if(V_VT(URL) != VT_BSTR)
         return E_INVALIDARG;
 
-    if(PostData && V_VT(PostData) != VT_EMPTY) {
+    if(PostData && V_VT(PostData) != VT_EMPTY && V_VT(PostData) != VT_ERROR) {
         if(V_VT(PostData) != (VT_ARRAY | VT_UI1)
            || V_ARRAY(PostData)->cDims != 1) {
             WARN("Invalid PostData\n");
@@ -686,7 +686,7 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
     }
 
-    if(Headers && V_VT(Headers) != VT_EMPTY) {
+    if(Headers && V_VT(Headers) != VT_EMPTY && V_VT(Headers) != VT_ERROR) {
         if(V_VT(Headers) != VT_BSTR)
             return E_INVALIDARG;
 
