@@ -1303,17 +1303,14 @@ static void test_state_management(
                    1 for transforms
                    1 for render states
      */
-    const int max_tests = 2 + 1 + 1 + 1;
-    const int max_buffer = SHADER_CONSTANTS_REQ_BUFFER * 2 +
-                           LIGHTS_REQ_BUFFER +
-                           TRANSFORMS_REQ_BUFFER + 
-                           RENDER_STATES_REQ_BUFFER;
+    state_test tests[2 + 1 + 1 + 1];
+    BYTE buffer[SHADER_CONSTANTS_REQ_BUFFER * 2 +
+                LIGHTS_REQ_BUFFER +
+                TRANSFORMS_REQ_BUFFER + 
+                RENDER_STATES_REQ_BUFFER];
 
     unsigned int tcount = 0;
     unsigned int bcount = 0;
-
-    state_test tests[max_tests];
-    BYTE buffer[max_buffer];
 
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hret == D3D_OK, "GetDeviceCaps returned %#lx.\n", hret);
