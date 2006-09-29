@@ -631,7 +631,7 @@ sub _generate_dsp($$) {
 	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir\\\"";
 	    push @defines2, qw(__i386__ _X86_);
 
-	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv)$/) {
+	    if($project eq "msvcrt_test") {
 		push @includes, "..";
 	    }
 
@@ -646,11 +646,7 @@ sub _generate_dsp($$) {
 
 	if($wine) {
 	    foreach my $include (@includes) {
-		if ($include !~ /[\\\"]/) {
-		    print OUT " /I \"$include\"";
-		} else {
-		    print OUT " /I $include";
-		}
+                print OUT " /I \"$include\"";
 	    }
 	}
 
