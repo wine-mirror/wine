@@ -189,6 +189,16 @@ static void test_checkboxes(void)
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(item.state == 0x2aaa, "state %x\n", item.state);
 
+    /* Check that only the bits we asked for are returned,
+     * and that all the others are set to zero
+     */
+    item.iItem = 3;
+    item.mask = LVIF_STATE;
+    item.stateMask = 0xf000;
+    item.state = 0xffff;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(item.state == 0x2000, "state %x\n", item.state);
+
     /* Set the style again and check that doesn't change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
     ok(r == LVS_EX_CHECKBOXES, "ret %lx\n", r);

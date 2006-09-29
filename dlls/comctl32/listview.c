@@ -5364,7 +5364,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     /* ... the state field (this one is different due to uCallbackmask) */
     if (lpLVItem->mask & LVIF_STATE) 
     {
-	lpLVItem->state = lpItem->state;
+	lpLVItem->state = lpItem->state & lpLVItem->stateMask;
 	if (dispInfo.item.mask & LVIF_STATE)
 	{
 	    lpLVItem->state &= ~dispInfo.item.stateMask;
