@@ -348,7 +348,8 @@ int WINAPIV ShellMessageBoxW(
 	...)
 {
 	WCHAR	szText[100],szTitle[100];
-	LPCWSTR pszText = szText, pszTitle = szTitle, pszTemp;
+	LPCWSTR pszText = szText, pszTitle = szTitle;
+	LPWSTR  pszTemp;
 	va_list args;
 	int	ret;
 
@@ -405,7 +406,8 @@ int WINAPIV ShellMessageBoxA(
 	...)
 {
 	char	szText[100],szTitle[100];
-	LPCSTR  pszText = szText, pszTitle = szTitle, pszTemp;
+	LPCSTR  pszText = szText, pszTitle = szTitle;
+	LPSTR   pszTemp;
 	va_list args;
 	int	ret;
 

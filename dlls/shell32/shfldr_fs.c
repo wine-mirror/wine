@@ -311,7 +311,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
  */
 LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
 {
-    static const WCHAR szfsbc[] = {
+    static WCHAR szfsbc[] = {
         'F','i','l','e',' ','S','y','s','t','e','m',' ',
         'B','i','n','d',' ','D','a','t','a',0 };
     IFileSystemBindData *fsbd = NULL;

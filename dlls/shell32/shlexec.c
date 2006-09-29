@@ -1464,7 +1464,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             retval = execfunc(wszQuotedCmd, env, FALSE, &sei_tmp, sei);
         HeapFree( GetProcessHeap(), 0, env );
     }
-    else if (PathIsURLW((LPWSTR)lpFile))    /* File not found, check for URL */
+    else if (PathIsURLW(lpFile))    /* File not found, check for URL */
     {
 	static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
 	static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};

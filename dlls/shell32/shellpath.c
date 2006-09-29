@@ -600,7 +600,7 @@ int WINAPI PathCleanupSpec( LPCWSTR lpszPathW, LPWSTR lpszFileW )
     else
     {
         LPSTR lpszFileA = (LPSTR)lpszFileW;
-        LPCSTR lpszPathA = (LPSTR)lpszPathW;
+        LPCSTR lpszPathA = (LPCSTR)lpszPathW;
         LPSTR p = lpszFileA;
 
         TRACE("Cleanup %s\n",debugstr_a(lpszFileA));
