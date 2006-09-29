@@ -343,7 +343,7 @@ static void test_moniker(
     /* IROTData::GetComparisonData test */
 
     hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
-    ok_ole_success(hr, IMoniker_QueryInterface(IID_IROTData));
+    ok_ole_success(hr, IMoniker_QueryInterface_IID_IROTData);
 
     hr = IROTData_GetComparisonData(rotdata, buffer, sizeof(buffer), &moniker_size);
     ok_ole_success(hr, IROTData_GetComparisonData);
