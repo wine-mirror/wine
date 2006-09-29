@@ -294,7 +294,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
     LPCWSTR             p;
     DWORD               sp = 0, lp = 0;
     DWORD               tmplen;
-    BOOL                unixabsolute = (shortpath[0] == '/');
+    BOOL                unixabsolute;
     WIN32_FIND_DATAW    wfd;
     HANDLE              goit;
 
@@ -317,6 +317,8 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
         lstrcpynW( longpath, shortpath, longlen );
         return strlenW(longpath);
     }
+
+    unixabsolute = (shortpath[0] == '/');
 
     /* check for drive letter */
     if (!unixabsolute && shortpath[1] == ':' )
