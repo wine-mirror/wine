@@ -1897,7 +1897,7 @@ static const WCHAR CERT_TRUST_PUB_SAFER_GROUP_POLICY_REGPATH[] =
 #elif defined(_MSC_VER)
 #define CERT_TRUST_PUB_SAFER_LOCAL_MACHINE_REGPATH \
  CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH L"\\TrustedPublisher\\Safer"
-#define CERT_TRUST_PUB_SAFER_LOCAL_MACHINE_REGPATH L"AuthenticodeFlags"
+#define CERT_TRUST_PUB_AUTHENTICODE_FLAGS_VALUE_NAME L"AuthenticodeFlags"
 #else
 static const WCHAR CERT_TRUST_PUB_SAFER_LOCAL_MACHINE_REGPATH[] =
  {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
