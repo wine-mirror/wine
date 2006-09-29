@@ -976,8 +976,7 @@ static void test_EM_SETTEXTEX()
 static void test_EM_EXLIMITTEXT(void)
 {
   int i, selBegin, selEnd, len1, len2;
-  int BUFSIZE = 1024;
-  char text[BUFSIZE+1];
+  char text[1024 + 1];
   int textlimit = 0; /* multiple of 100 */
   HWND hwndRichEdit = new_richedit(NULL);
   
@@ -1001,9 +1000,9 @@ static void test_EM_EXLIMITTEXT(void)
   /* default for WParam = 0 */
   ok(65536 == i, "EM_EXLIMITTEXT: expected: %d, actual: %d\n", 65536, i);
  
-  textlimit = BUFSIZE;
+  textlimit = sizeof(text)-1;
   memset(text, 'W', textlimit);
-  text[BUFSIZE] = 0;
+  text[sizeof(text)-1] = 0;
   SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
   /* maxed out text */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
