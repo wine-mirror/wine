@@ -50,6 +50,7 @@ static const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`";
 static const CHAR is_char_ok[] ="11111110111111111011";
 
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR,LPSTR,DWORD);
+static DWORD (WINAPI *pGetLongPathNameW)(LPWSTR,LPWSTR,DWORD);
 
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
@@ -929,14 +930,37 @@ static void test_GetTempPath(void)
     SetEnvironmentVariableA("TMP", save_TMP);
 }
 
+static void test_GetLongPathNameW(void)
+{
+    DWORD length; 
+    WCHAR empty[MAX_PATH];
+
+    SetLastError(0xdeadbeef); 
+    length = pGetLongPathNameW(NULL,NULL,0);
+    if(pGetLongPathNameW) 
+    {
+    ok(0==length,"GetLongPathNameW returned %ld but expected 0\n",length);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"GetLastError returned %lx but expected ERROR_INVALID_PARAMETER",GetLastError());
+
+    SetLastError(0xdeadbeef); 
+    empty[0]=0;
+    length = pGetLongPathNameW(empty,NULL,0);
+    ok(0==length,"GetLongPathNameW returned %ld but expected 0\n",length);
+    ok(GetLastError()==ERROR_PATH_NOT_FOUND,"GetLastError returned %lx but expected ERROR_PATH_NOT_FOUND\n",GetLastError());
+    }
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
     pGetLongPathNameA = (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
                                                "GetLongPathNameA" );
+    pGetLongPathNameW = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll") ,
+                                               "GetLongPathNameW" );
     test_InitPathA(curdir, &curDrive, &otherDrive);
     test_CurrentDirectoryA(origdir,curdir);
     test_PathNameA(curdir, curDrive, otherDrive);
     test_CleanupPathA(origdir,curdir);
     test_GetTempPath();
+    test_GetLongPathNameW();
 }
