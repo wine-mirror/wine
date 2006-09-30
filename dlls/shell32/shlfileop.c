@@ -133,6 +133,7 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	SHELL_ConfirmIDstruc ids;
 	MSGBOXPARAMSW params;
+	DWORD_PTR args[1];
 
 	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
 	  return FALSE;
@@ -140,8 +141,9 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption)/sizeof(WCHAR));
 	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText)/sizeof(WCHAR));
 
+	args[0] = (DWORD_PTR)szDir;
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
+	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)args);
 
         ZeroMemory(&params, sizeof(params));
         params.cbSize = sizeof(MSGBOXPARAMSW);
