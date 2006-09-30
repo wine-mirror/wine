@@ -554,7 +554,7 @@ static DNS_STATUS dns_set_serverlist( PIP4_ARRAY addrs )
 
     if (addrs->AddrCount > MAXNS) 
     {
-        WARN( "too many servers: %ld only using the first: %d\n",
+        WARN( "too many servers: %d only using the first: %d\n",
               addrs->AddrCount, MAXNS );
         _res.nscount = MAXNS;
     }
@@ -656,7 +656,7 @@ DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PIP4_ARRAY s
     DNS_RECORDW *resultW;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08lx,%p,%p,%p)\n", debugstr_a(name), dns_type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), dns_type_to_str( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -690,7 +690,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRA
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
 #ifdef HAVE_RESOLV
 
-    TRACE( "(%s,%s,0x%08lx,%p,%p,%p)\n", debugstr_a(name), dns_type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), dns_type_to_str( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -733,7 +733,7 @@ DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PIP4_ARRAY 
     DNS_RECORDA *resultA;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08lx,%p,%p,%p)\n", debugstr_w(name), dns_type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_w(name), dns_type_to_str( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -804,7 +804,7 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PWSTR adap
 {
     DNS_STATUS ret = ERROR_INVALID_PARAMETER;
 
-    TRACE( "(%d,0x%08lx,%s,%p,%p,%p)\n", config, flag, debugstr_w(adapter),
+    TRACE( "(%d,0x%08x,%s,%p,%p,%p)\n", config, flag, debugstr_w(adapter),
            reserved, buffer, len );
 
     if (!len) return ERROR_INVALID_PARAMETER;

@@ -6,7 +6,6 @@ MODULE    = dnsapi.dll
 IMPORTLIB = libdnsapi.$(IMPLIBEXT)
 IMPORTS   = netapi32 kernel32
 EXTRALIBS = @RESOLVLIBS@
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	main.c \

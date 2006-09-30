@@ -34,7 +34,7 @@ HINSTANCE hdnsapi;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE( "(%p, %ld, %p)\n", hinst, reason, reserved );
+    TRACE( "(%p, %d, %p)\n", hinst, reason, reserved );
 
     switch (reason)
     {
@@ -57,7 +57,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 DNS_STATUS WINAPI DnsAcquireContextHandle_A( DWORD flags, PVOID cred,
                                              HANDLE *context )
 {
-    FIXME( "(0x%08lx,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -70,7 +70,7 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_A( DWORD flags, PVOID cred,
 DNS_STATUS WINAPI DnsAcquireContextHandle_UTF8( DWORD flags, PVOID cred,
                                                 HANDLE *context )
 {
-    FIXME( "(0x%08lx,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -83,7 +83,7 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_UTF8( DWORD flags, PVOID cred,
 DNS_STATUS WINAPI DnsAcquireContextHandle_W( DWORD flags, PVOID cred,
                                              HANDLE *context )
 {
-    FIXME( "(0x%08lx,%p,%p) stub\n", flags, cred, context );
+    FIXME( "(0x%08x,%p,%p) stub\n", flags, cred, context );
 
     *context = (HANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
@@ -132,7 +132,7 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_A( PDNS_RECORDA add, PDNS_RECORDA delete
                                            DWORD options, HANDLE context,
                                            PIP4_ARRAY servers, PVOID reserved )
 {
-    FIXME( "(%p,%p,0x%08lx,%p,%p,%p) stub\n", add, delete, options,
+    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
     return ERROR_SUCCESS;
 }
@@ -145,7 +145,7 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( PDNS_RECORDA add, PDNS_RECORDA del
                                               DWORD options, HANDLE context,
                                               PIP4_ARRAY servers, PVOID reserved )
 {
-    FIXME( "(%p,%p,0x%08lx,%p,%p,%p) stub\n", add, delete, options,
+    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
     return ERROR_SUCCESS;
 }
@@ -158,7 +158,7 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_W( PDNS_RECORDW add, PDNS_RECORDW delete
                                            DWORD options, HANDLE context,
                                            PIP4_ARRAY servers, PVOID reserved )
 {
-    FIXME( "(%p,%p,0x%08lx,%p,%p,%p) stub\n", add, delete, options,
+    FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
     return ERROR_SUCCESS;
 }
@@ -184,7 +184,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetA( PDNS_RECORDA set, DWORD options,
                                         HANDLE context, PIP4_ARRAY servers,
                                         PVOID reserved )
 {
-    FIXME( "(%p,0x%08lx,%p,%p,%p) stub\n", set, options, context,
+    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
            servers, reserved );
     return ERROR_SUCCESS;
 }
@@ -197,7 +197,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( PDNS_RECORDA set, DWORD options,
                                            HANDLE context, PIP4_ARRAY servers,
                                            PVOID reserved )
 {
-    FIXME( "(%p,0x%08lx,%p,%p,%p) stub\n", set, options, context,
+    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
            servers, reserved );
     return ERROR_SUCCESS;
 }
@@ -210,7 +210,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetW( PDNS_RECORDW set, DWORD options,
                                         HANDLE context, PIP4_ARRAY servers,
                                         PVOID reserved )
 {
-    FIXME( "(%p,0x%08lx,%p,%p,%p) stub\n", set, options, context,
+    FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
            servers, reserved );
     return ERROR_SUCCESS;
 }
