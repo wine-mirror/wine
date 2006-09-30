@@ -1239,14 +1239,16 @@ static const char *szFailOk = "Call failed, hres = %08lx\n";
   ok(V_I8(&vOut) == ((((LONG64)(high))<<32)|(low)), "Expected i8 = %lx%08lx, got %lx%08lx\n", \
      (LONG)(high), (LONG)(low), (LONG)(V_I8(&vOut)>>32), (LONG)V_I8(&vOut) ); }
 #define EXPECT_UI8(val) EXPECT_OK { EXPECT_TYPE(VT_UI8); \
-  ok(V_UI8(&vOut) == val, "Expected ui8 = %lld, got %lld\n", (ULONG64)val, V_UI8(&vOut)); }
+  ok(V_UI8(&vOut) == val, "Expected ui8 = 0x%lx%08lx, got 0x%lx%08lx\n", \
+      (DWORD)((ULONG64)val >> 32), (DWORD)(ULONG64)val, (DWORD)(V_UI8(&vOut) >> 32), (DWORD)V_UI8(&vOut)); }
 #define EXPECT_R4(val) EXPECT_OK { EXPECT_TYPE(VT_R4); \
   ok(V_R4(&vOut) == val, "Expected r4 = %f, got %f\n", val, V_R4(&vOut)); }
 #define EXPECT_R8(val) EXPECT_OK { EXPECT_TYPE(VT_R8); \
   ok(V_R8(&vOut) == val, "Expected r8 = %g, got %g\n", val, V_R8(&vOut)); }
 #define CY_MULTIPLIER 10000
 #define EXPECT_CY(val) EXPECT_OK { EXPECT_TYPE(VT_CY); \
-  ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = %lld, got %lld\n", (LONG64)val, V_CY(&vOut).int64); }
+  ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = 0x%lx%08lx, got 0x%lx%08lx\n", \
+      (DWORD)((LONG64)val >> 23), (DWORD)(LONG64)val, (DWORD)(V_CY(&vOut).int64 >>32), (DWORD)V_CY(&vOut).int64); }
 
 static void test_VarNumFromParseNum(void)
 {
@@ -2780,7 +2782,8 @@ static void test_VarInt(void)
     pcy->int64 = -11000;
     hres = pVarInt(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == -20000,
-       "VarInt: VT_CY wrong, hres=0x%lX %lld\n", hres,V_CY(&vDst).int64);
+       "VarInt: VT_CY wrong, hres=0x%lX 0x%lx%08lx\n",
+       hres, (DWORD)(V_CY(&vDst).int64 >> 32), (DWORD)V_CY(&vDst).int64);
 }
 
 static HRESULT (WINAPI *pVarNeg)(LPVARIANT,LPVARIANT);
@@ -7486,7 +7489,8 @@ static void test_VarIdiv(void)
         "VARIDIV: expected coerced hres 0x%lX type VT_I8, got hres 0x%lX type %s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && V_I8(&result) == 5000,
-        "VARIDIV: CY value %lld, expected %d\n", V_I8(&result), 5000);
+        "VARIDIV: CY value 0x%lx%08lx, expected 0x%x\n",
+	(DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), 5000);
 
     hres = VarIdiv(&left, &cy, &result);
     ok(hres == S_OK && V_VT(&result) == VT_I4,
@@ -7514,7 +7518,8 @@ static void test_VarIdiv(void)
         "VARIDIV: expected coerced hres 0x%lX type VT_I8, got hres 0x%lX type%s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && V_I8(&result) == 1,
-        "VARIDIV: DECIMAL value %lld, expected %d\n", V_I8(&result), 1);
+        "VARIDIV: DECIMAL value 0x%lx%08lx, expected %d\n",
+	(DWORD)(V_I8(&result) >> 32), (DWORD)V_I8(&result), 1);
 
     /* Check for division by zero */
     V_VT(&left) = VT_INT;
@@ -8038,7 +8043,8 @@ static void test_VarImp(void)
         "VARIMP: expected coerced hres 0x%lX type VT_I8, got hres 0x%lX type%s!\n",
         S_OK, hres, vtstr(V_VT(&result)));
     ok(hres == S_OK && V_I8(&result) == -3,
-        "VARIMP: DECIMAL value %lld, expected %d\n", V_I8(&result), -3);
+        "VARIMP: DECIMAL value 0x%lx%08lx, expected %d\n",
+	(DWORD)(V_I8(&result) >>32), (DWORD)V_I8(&result), -3);
 
     SysFreeString(false_str);
     SysFreeString(true_str);
