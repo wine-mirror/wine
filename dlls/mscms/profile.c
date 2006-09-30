@@ -171,7 +171,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
     DWORD i, count;
     icTag tag;
 
-    TRACE( "( %p, 0x%08lx, %ld, %p, %p, %p )\n", profile, type, offset, size, buffer, ref );
+    TRACE( "( %p, 0x%08x, %d, %p, %p, %p )\n", profile, type, offset, size, buffer, ref );
 
     if (!iccprofile || !size || !ref) return FALSE;
     count = MSCMS_get_tag_count( iccprofile );
@@ -225,7 +225,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE t
     DWORD count;
     icTag tag;
 
-    TRACE( "( %p, %ld, %p )\n", profile, index, type );
+    TRACE( "( %p, %d, %p )\n", profile, index, type );
 
     if (!iccprofile || !type) return FALSE;
 
@@ -362,7 +362,7 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
     BOOL ret = FALSE;
     DWORD sizeW;
 
-    TRACE( "( 0x%08lx, %p, %p )\n", id, profile, size );
+    TRACE( "( 0x%08x, %p, %p )\n", id, profile, size );
 
     if (machine) 
     {
@@ -427,7 +427,7 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
     WCHAR rgbprofile[MAX_PATH];
     DWORD len = sizeof(rgbprofile);
 
-    TRACE( "( 0x%08lx, %p, %p )\n", id, profile, size );
+    TRACE( "( 0x%08x, %p, %p )\n", id, profile, size );
 
     if (machine) 
     {
@@ -520,15 +520,15 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_MEDIATYPE)
     {
-        FIXME( "ET_MEDIATYPE: 0x%08lx\n", rec->dwMediaType );
+        FIXME( "ET_MEDIATYPE: 0x%08x\n", rec->dwMediaType );
     }
     if (rec->dwFields & ET_DITHERMODE)
     {
-        FIXME( "ET_DITHERMODE: 0x%08lx\n", rec->dwDitheringMode );
+        FIXME( "ET_DITHERMODE: 0x%08x\n", rec->dwDitheringMode );
     }
     if (rec->dwFields & ET_RESOLUTION)
     {
-        FIXME( "ET_RESOLUTION: 0x%08lx, 0x%08lx\n",
+        FIXME( "ET_RESOLUTION: 0x%08x, 0x%08x\n",
                rec->dwResolution[0], rec->dwResolution[1] );
     }
     if (rec->dwFields & ET_DEVICECLASS)
@@ -567,7 +567,7 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_PROFILEFLAGS)
     {
-        TRACE( "ET_PROFILEFLAGS: 0x%08lx\n", rec->dwProfileFlags );
+        TRACE( "ET_PROFILEFLAGS: 0x%08x\n", rec->dwProfileFlags );
         if (rec->dwProfileFlags != hdr->phProfileFlags) return FALSE;
     }
     if (rec->dwFields & ET_MANUFACTURER)
@@ -582,14 +582,14 @@ static BOOL MSCMS_match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_ATTRIBUTES)
     {
-        TRACE( "ET_ATTRIBUTES: 0x%08lx, 0x%08lx\n",
+        TRACE( "ET_ATTRIBUTES: 0x%08x, 0x%08x\n",
                rec->dwAttributes[0], rec->dwAttributes[1] );
         if (rec->dwAttributes[0] != hdr->phAttributes[0] || 
             rec->dwAttributes[1] != hdr->phAttributes[1]) return FALSE;
     }
     if (rec->dwFields & ET_RENDERINGINTENT)
     {
-        TRACE( "ET_RENDERINGINTENT: 0x%08lx\n", rec->dwRenderingIntent );
+        TRACE( "ET_RENDERINGINTENT: 0x%08x\n", rec->dwRenderingIntent );
         if (rec->dwRenderingIntent != hdr->phRenderingIntent) return FALSE;
     }
     if (rec->dwFields & ET_CREATOR)
@@ -949,7 +949,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL pres
     DWORD i, count;
     icTag tag;
 
-    TRACE( "( %p, 0x%08lx, %p )\n", profile, type, present );
+    TRACE( "( %p, 0x%08x, %p )\n", profile, type, present );
 
     if (!iccprofile || !present) return FALSE;
 
@@ -1025,7 +1025,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
     DWORD i, count, access = MSCMS_hprofile2access( profile );
     icTag tag;
 
-    TRACE( "( %p, 0x%08lx, %ld, %p, %p )\n", profile, type, offset, size, buffer );
+    TRACE( "( %p, 0x%08x, %d, %p, %p )\n", profile, type, offset, size, buffer );
 
     if (!iccprofile || !size || !buffer) return FALSE;
     if (!(access & PROFILE_READWRITE)) return FALSE;
@@ -1145,7 +1145,7 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
 {
     HPROFILE handle = NULL;
 
-    TRACE( "( %p, 0x%08lx, 0x%08lx, 0x%08lx )\n", profile, access, sharing, creation );
+    TRACE( "( %p, 0x%08x, 0x%08x, 0x%08x )\n", profile, access, sharing, creation );
 
     if (!profile || !profile->pProfileData) return NULL;
 
@@ -1205,7 +1205,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     HANDLE handle = NULL;
     DWORD size;
 
-    TRACE( "( %p, 0x%08lx, 0x%08lx, 0x%08lx )\n", profile, access, sharing, creation );
+    TRACE( "( %p, 0x%08x, 0x%08x, 0x%08x )\n", profile, access, sharing, creation );
 
     if (!profile || !profile->pProfileData) return NULL;
 

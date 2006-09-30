@@ -40,7 +40,7 @@ HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest,
     LOGCOLORSPACEW spaceW;
     DWORD len;
 
-    TRACE( "( %p, %p, %p, 0x%08lx )\n", space, dest, target, flags );
+    TRACE( "( %p, %p, %p, 0x%08x )\n", space, dest, target, flags );
 
     if (!space || !dest) return FALSE;
 
@@ -62,7 +62,7 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     cmsHPROFILE cmsprofiles[3];
     int intent;
 
-    TRACE( "( %p, %p, %p, 0x%08lx )\n", space, dest, target, flags );
+    TRACE( "( %p, %p, %p, 0x%08x )\n", space, dest, target, flags );
 
     if (!space || !dest) return FALSE;
 
@@ -97,7 +97,7 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     cmsHTRANSFORM cmstransform;
     DWORD i;
 
-    TRACE( "( %p, 0x%08lx, %p, 0x%08lx, 0x%08lx, 0x%08lx ) stub\n",
+    TRACE( "( %p, 0x%08x, %p, 0x%08x, 0x%08x, 0x%08x ) stub\n",
            profiles, nprofiles, intents, nintents, flags, cmm );
 
     if (!profiles || !intents) return NULL;
@@ -145,7 +145,7 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
 #ifdef HAVE_LCMS
     cmsHTRANSFORM cmstransform;
 
-    TRACE( "( %p, %p, 0x%08x, 0x%08lx, 0x%08lx, 0x%08lx, %p, 0x%08x, 0x%08lx, %p, 0x%08lx )\n",
+    TRACE( "( %p, %p, 0x%08x, 0x%08x, 0x%08x, 0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08x )\n",
            transform, srcbits, input, width, height, inputstride, destbits, output,
            outputstride, callback, data );
 

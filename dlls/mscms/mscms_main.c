@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE( "(%p, %ld, %p)\n", hinst, reason, reserved );
+    TRACE( "(%p, %d, %p)\n", hinst, reason, reserved );
 
     switch (reason)
     {
