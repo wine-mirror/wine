@@ -37,6 +37,7 @@
 #ifdef __i386__
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
+static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 
 /* Test various instruction combinations that cause a protection fault on the i386,
  * and check what the resulting exception looks like.
@@ -227,11 +228,65 @@ static void test_prot_fault(void)
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 }
 
+static DWORD dreg_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                      CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    context->Eip += 2;	/* Skips the popl (%eax) */
+    context->Dr0 = 0;
+    context->Dr1 = 0;
+    context->Dr2 = 0;
+    context->Dr3 = 0;
+    context->Dr6 = 0;
+    context->Dr7 = 0x155;
+    return ExceptionContinueExecution;
+}
+
+static BYTE code[5] = {
+	0x31, 0xc0, /* xor    %eax,%eax */
+	0x8f, 0x00, /* popl   (%eax) - cause exception */
+        0xc3        /* ret */
+};
+
+static void test_debug_regs(void)
+{
+    CONTEXT ctx;
+    NTSTATUS res;
+    struct
+    {
+        EXCEPTION_REGISTRATION_RECORD frame;
+    } exc_frame;
+    void (*func)(void) = (void*)code;
+
+    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    if (!pNtCurrentTeb)
+    {
+        trace( "NtCurrentTeb not found, skipping tests\n" );
+        return;
+    }
+    pNtGetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
+    if (!pNtGetContextThread)
+    {
+        trace( "NtGetContextThread not found, skipping tests\n" );
+        return;
+    }
+
+    exc_frame.frame.Handler = dreg_handler;
+    exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
+    func();
+    pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    res = pNtGetContextThread(GetCurrentThread(), &ctx);
+    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %lx", res);
+    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155");
+}
+
 #endif  /* __i386__ */
 
 START_TEST(exception)
 {
 #ifdef __i386__
     test_prot_fault();
+    test_debug_regs();
 #endif
 }
