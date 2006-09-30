@@ -295,6 +295,22 @@ BEGIN
     IDS_NOTFOUND            "Fant ikke søkestrengen «%s»"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+IDS_FILEDIALOG_IMPORT_TITLE   "Importer registerfil"
+IDS_FILEDIALOG_EXPORT_TITLE   "Eksporter registerfil"
+IDS_FILEDIALOG_FILTER         "Registerfiler\0*.reg\0Win9x-/NT4-registerfiler (REGEDIT4)\0*.reg\0Alle filer (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+IDS_REGISTRY_ROOT_NAME           "Min datamaskin"
+IDS_REGISTRY_DEFAULT_VALUE       "(Standard)"
+IDS_REGISTRY_VALUE_NOT_SET       "(verdi ikke oppgitt)"
+IDS_REGISTRY_VALUE_CANT_DISPLAY  "(klarte ikke vise verdi)"
+IDS_REGISTRY_UNKNOWN_TYPE        "(ukjent %d)"
+END
+
 /*****************************************************************/
 
 

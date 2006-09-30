@@ -2,7 +2,7 @@
  * Common Dialog Test Jig Exerciser
  * Norwegian Bokmål Language Support
  *
- * Copyright (c) 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright (c) 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Avslutt", CM_U_EXIT
  }
 
- POPUP "&Dialoger"
+ POPUP "Mel&dingsbokser"
  {
   MENUITEM "&Åpne", CM_U_OPEN
   MENUITEM "&Lagre", CM_U_SAVE
@@ -66,7 +66,7 @@ CmdlgtstMenu MENU
 
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Flagg for fargedialog"
+CAPTION "Flagg for fargeboksen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -83,7 +83,7 @@ FONT 8, "MS Shell Dlg"
 
 Font_Flags_Dialog DIALOG 9, 20, 207, 313
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Flagg for skriftdialog"
+CAPTION "Flagg for skriftboksen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -117,7 +117,7 @@ FONT 8, "MS Shell Dlg"
 
 Find_Flags_Dialog DIALOG 8, 24, 207, 306
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Flagg for finn-/erstatt-dialog"
+CAPTION "Flagg for finn-/erstatt-boksen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -150,7 +150,7 @@ FONT 8, "MS Shell Dlg"
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Flagg for skriver/-oppsett-dialog"
+CAPTION "Flagg for skriver/-oppsett-boksen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
@@ -180,9 +180,37 @@ FONT 8, "MS Shell Dlg"
  CHECKBOX "PD_USEDEVMODECOPIES", I_PD_USEDEVMODECOPIES, 12, 264, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 }
 
+PageSetup_Flags_Dialog DIALOG 4, 17, 239, 245
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION " "
+FONT 8, "MS Shell Dlg"
+{
+DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
+PUSHBUTTON "Avbryt", IDCANCEL, 180, 24, 50, 14                     
+CHECKBOX "PSD_DEFAULTMINMARGINS",       I_PSD_DEFAULTMINMARGINS,       12, 12, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_DISABLEMARGINS",          I_PSD_DISABLEMARGINS,          12, 24, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_DISABLEORIENTATION",      I_PSD_DISABLEORIENTATION,      12, 36, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_DISABLEPAGEPAINTING",     I_PSD_DISABLEPAGEPAINTING,     12, 48, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_DISABLEPAPER",            I_PSD_DISABLEPAPER,            12, 60, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_DISABLEPRINTER",          I_PSD_DISABLEPRINTER,          12, 72, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_ENABLEPAGEPAINTHOOK",     I_PSD_ENABLEPAGEPAINTHOOK,     12, 84, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_ENABLEPAGESETUPHOOK",     I_PSD_ENABLEPAGESETUPHOOK,     12, 96, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_ENABLEPAGESETUPTEMPLATE", I_PSD_ENABLEPAGESETUPTEMPLATE, 12, 108, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_ENABLEPAGESETUPTEMPLATEHANDLE", I_PSD_ENABLEPAGESETUPTEMPLATEHANDLE, 12, 120, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_INHUNDREDTHSOFMILLIMETERS", I_PSD_INHUNDREDTHSOFMILLIMETERS, 12, 132, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_INTHOUSANDTHSOFINCHES",   I_PSD_INTHOUSANDTHSOFINCHES,   12, 144, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_INWININIINTLMEASURE",     I_PSD_INWININIINTLMEASURE,     12, 156, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_MARGINS",                 I_PSD_MARGINS,                 12, 168, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_MINMARGINS",              I_PSD_MINMARGINS,              12, 180, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_NONETWORKBUTTON",         I_PSD_NONETWORKBUTTON,         12, 192, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_NOWARNING",               I_PSD_NOWARNING,               12, 204, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_RETURNDEFAULT",           I_PSD_RETURNDEFAULT,           12, 216, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+CHECKBOX "PSD_SHOWHELP",                I_PSD_SHOWHELP,                12, 228, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+}
+
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Flagg for åpne-/lagre-dialog"
+CAPTION "Flagg for åpne-/lagre-boksen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -213,7 +241,7 @@ CAPTION "Om"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
- LTEXT "Test- og øvelsesprogram for vanlige dialoger (COMDLG), versjon 1.20", -1, 13, 36, 168, 20
+ LTEXT "Test- og øvelsesprogram for vanlige meldingsbokser (COMDLG), versjon 1.20", -1, 13, 36, 168, 20
  LTEXT "Kopirett 1999-2000 tilhører Eric Williams. Oversatt av Alexander N. Sørnes. Rettighetene er som gitt under WINE-lisensen. Ikke lås inne kode - del den!", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
@@ -224,11 +252,11 @@ CAPTION "Bruk"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
- LTEXT "Test- og øvelsesprogram for vanlige dialoger (COMDLG), versjon 1.20", -1, 13, 48, 168, 20
+ LTEXT "Test- og øvelsesprogram for vanlige meldingsbokser (COMDLG), versjon 1.20", -1, 13, 48, 168, 20
  LTEXT "Dette verktøyet tester COMMDLG for Wine.", -1, 12, 72, 168, 12
  LTEXT "Flagg settes i flagg-menyen.", -1, 12, 96, 168, 12
- LTEXT "Fargedialogen endrer bakgrunnsfargen.", -1, 12, 120, 168, 12
- LTEXT "Skriftdialogen endrer alle skrifter, og skriftfarge hvis 'CF_EFFECTS' er valgt.", -1, 12, 144, 168, 24
+ LTEXT "Fargeboksen endrer bakgrunnsfargen.", -1, 12, 120, 168, 12
+ LTEXT "Skriftboksen endrer alle skrifter, og skriftfarge hvis 'CF_EFFECTS' er valgt.", -1, 12, 144, 168, 24
  LTEXT "Det øverste hjørnet til venstre viser hele stien og tittelen tittelen til den forrige vellykete åpningen eller lagringen.", -1, 12, 180, 168, 24
  LTEXT "Kopirett 1999-2000 tilhører Eric Williams. Oversatt av Alexander N. Sørnes. Rettigheter er som gitt i WINE-lisensen. Ikke lås inne kode - del den!", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
@@ -237,7 +265,7 @@ FONT 8, "MS Shell Dlg"
 
 PAGESETUPDLGORD_CSTM DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Testdialog for TFT"
+CAPTION "Testboks for TFT"
 FONT 8, "MS Shell Dlg"
 BEGIN
   CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
