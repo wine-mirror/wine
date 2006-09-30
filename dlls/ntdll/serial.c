@@ -2,7 +2,7 @@
  *
  * DEC 93 Erik Bos <erik@xs4all.nl>
  * Copyright 1996 Marcus Meissner
- * Copyright 2005 Eric Pouech
+ * Copyright 2005,2006 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -78,6 +78,10 @@
 
 #ifdef HAVE_LINUX_SERIAL_H
 #include <linux/serial.h>
+#endif
+
+#if !defined(TIOCINQ) && defined(FIONREAD)
+#define	TIOCINQ FIONREAD
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(comm);
@@ -861,6 +865,243 @@ static NTSTATUS set_XOn(int fd)
     return STATUS_SUCCESS;
 }
 
+/*             serial_irq_info
+ * local structure holding the irq values we need for WaitCommEvent()
+ *
+ * Stripped down from struct serial_icounter_struct, which may not be available on some systems
+ * As the modem line interrupts (cts, dsr, rng, dcd) only get updated with TIOCMIWAIT active,
+ * no need to carry them in the internal structure
+ *
+ */
+typedef struct serial_irq_info
+{
+    int rx , tx, frame, overrun, parity, brk, buf_overrun;
+}serial_irq_info;
+
+/***********************************************************************
+ * Data needed by the thread polling for the changing CommEvent
+ */
+typedef struct async_commio
+{
+    HANDLE              hDevice;
+    DWORD*              events;
+    HANDLE              hEvent;
+    DWORD               evtmask;
+    DWORD               mstat;
+    serial_irq_info     irq_info;
+} async_commio;
+
+/***********************************************************************
+ *   Get extended interrupt count info, needed for wait_on
+ */
+static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
+{
+#ifdef TIOCGICOUNT
+    struct serial_icounter_struct einfo;
+    if (!ioctl(fd, TIOCGICOUNT, &einfo))
+    {
+        irq_info->rx          = einfo.rx;
+        irq_info->tx          = einfo.tx;
+        irq_info->frame       = einfo.frame;
+        irq_info->overrun     = einfo.overrun;
+        irq_info->parity      = einfo.parity;
+        irq_info->brk         = einfo.brk;
+        irq_info->buf_overrun = einfo.buf_overrun;
+        return STATUS_SUCCESS;
+    }
+    TRACE("TIOCGICOUNT err %s\n", strerror(errno));
+    return FILE_GetNtStatus();
+#endif
+    memset(irq_info,0, sizeof(serial_irq_info));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+static DWORD WINAPI check_events(int fd, DWORD mask, 
+                                 const serial_irq_info *new, 
+                                 const serial_irq_info *old,
+                                 DWORD new_mstat, DWORD old_mstat)
+{
+    DWORD ret = 0, queue;
+
+    TRACE("mask 0x%08lx\n", mask);
+    TRACE("old->rx          0x%08x vs. new->rx          0x%08x\n", old->rx, new->rx);
+    TRACE("old->tx          0x%08x vs. new->tx          0x%08x\n", old->tx, new->tx);
+    TRACE("old->frame       0x%08x vs. new->frame       0x%08x\n", old->frame, new->frame);
+    TRACE("old->overrun     0x%08x vs. new->overrun     0x%08x\n", old->overrun, new->overrun);
+    TRACE("old->parity      0x%08x vs. new->parity      0x%08x\n", old->parity, new->parity);
+    TRACE("old->brk         0x%08x vs. new->brk         0x%08x\n", old->brk, new->brk);
+    TRACE("old->buf_overrun 0x%08x vs. new->buf_overrun 0x%08x\n", old->buf_overrun, new->buf_overrun);
+
+    if (old->brk != new->brk) ret |= EV_BREAK;
+    if ((old_mstat & MS_CTS_ON ) != (new_mstat & MS_CTS_ON )) ret |= EV_CTS;
+    if ((old_mstat & MS_DSR_ON ) != (new_mstat & MS_DSR_ON )) ret |= EV_DSR;
+    if ((old_mstat & MS_RING_ON) != (new_mstat & MS_RING_ON)) ret |= EV_RING;
+    if ((old_mstat & MS_RLSD_ON) != (new_mstat & MS_RLSD_ON)) ret |= EV_RLSD;
+    if (old->frame != new->frame || old->overrun != new->overrun || old->parity != new->parity) ret |= EV_ERR;
+    if (mask & EV_RXCHAR)
+    {
+	queue = 0;
+#ifdef TIOCINQ
+	if (ioctl(fd, TIOCINQ, &queue))
+	    WARN("TIOCINQ returned error\n");
+#endif
+	if (queue)
+	    ret |= EV_RXCHAR;
+    }
+    if (mask & EV_TXEMPTY)
+    {
+	queue = 0;
+/* We really want to know when all characters have gone out of the transmitter */
+#if defined(TIOCSERGETLSR) 
+	if (ioctl(fd, TIOCSERGETLSR, &queue))
+	    WARN("TIOCSERGETLSR returned error\n");
+	if (queue)
+/* TIOCOUTQ only checks for an empty buffer */
+#elif defined(TIOCOUTQ)
+	if (ioctl(fd, TIOCOUTQ, &queue))
+	    WARN("TIOCOUTQ returned error\n");
+	if (!queue)
+#endif
+           ret |= EV_TXEMPTY;
+	TRACE("OUTQUEUE %ld, Transmitter %sempty\n",
+              queue, (ret & EV_TXEMPTY) ? "" : "not ");
+    }
+    return ret & mask;
+}
+
+/***********************************************************************
+ *             wait_for_event      (INTERNAL)
+ *
+ *  We need to poll for what is interesting
+ *  TIOCMIWAIT only checks modem status line and may not be aborted by a changing mask
+ *
+ */
+static DWORD CALLBACK wait_for_event(LPVOID arg)
+{
+    async_commio *commio = (async_commio*) arg;
+    int fd;
+
+    if (wine_server_handle_to_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, NULL ))
+    {
+        fd = -1;
+    }
+    else
+    {
+        serial_irq_info new_irq_info;
+        DWORD new_mstat, new_evtmask;
+        LARGE_INTEGER time;
+        
+        TRACE("device=%p fd=0x%08x mask=0x%08lx buffer=%p event=%p irq_info=%p\n", 
+              commio->hDevice, fd, commio->evtmask, commio->events, commio->hEvent, &commio->irq_info);
+
+        time.QuadPart = (ULONGLONG)10000;
+        time.QuadPart = -time.QuadPart;
+        for (;;)
+        {
+            /*
+             * TIOCMIWAIT is not adequate
+             *
+             * FIXME:
+             * We don't handle the EV_RXFLAG (the eventchar)
+             */
+            NtDelayExecution(FALSE, &time);
+            get_irq_info(fd, &new_irq_info);
+            if (get_modem_status(fd, &new_mstat))
+                TRACE("get_modem_status failed\n");
+            *commio->events = check_events(fd, commio->evtmask,
+                                           &new_irq_info, &commio->irq_info,
+                                           new_mstat, commio->mstat);
+            if (*commio->events) break;
+            get_wait_mask(commio->hDevice, &new_evtmask);
+            if (commio->evtmask != new_evtmask)
+            {
+                *commio->events = 0;
+                break;
+            }
+        }
+    }
+    if (commio->hEvent != INVALID_HANDLE_VALUE)
+        NtSetEvent(commio->hEvent, NULL);
+    if (fd != -1) wine_server_release_fd( commio->hDevice, fd );
+    RtlFreeHeap(GetProcessHeap(), 0, commio);
+    return 0;
+}
+
+static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
+{
+    async_commio*       commio;
+    NTSTATUS            status;
+
+    if ((status = NtResetEvent(hEvent, NULL)))
+        return status;
+
+    commio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof (async_commio));
+    if (!commio) return STATUS_NO_MEMORY;
+
+    commio->hDevice = hDevice;
+    commio->events  = events;
+    commio->hEvent  = hEvent;
+    get_wait_mask(commio->hDevice, &commio->evtmask);
+
+/* We may never return, if some capabilities miss
+ * Return error in that case
+ */
+#if !defined(TIOCINQ)
+    if (commio->evtmask & EV_RXCHAR)
+	goto error_caps;
+#endif
+#if !(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)
+    if (commio->evtmask & EV_TXEMPTY)
+	goto error_caps;
+#endif
+#if !defined(TIOCMGET)
+    if (commio->evtmask & (EV_CTS | EV_DSR| EV_RING| EV_RLSD))
+	goto error_caps;
+#endif
+#if !defined(TIOCM_CTS)
+    if (commio->evtmask & EV_CTS)
+	goto error_caps;
+#endif
+#if !defined(TIOCM_DSR)
+    if (commio->evtmask & EV_DSR)
+	goto error_caps;
+#endif
+#if !defined(TIOCM_RNG)
+    if (commio->evtmask & EV_RING)
+	goto error_caps;
+#endif
+#if !defined(TIOCM_CAR)
+    if (commio->evtmask & EV_RLSD)
+	goto error_caps;
+#endif
+    if (commio->evtmask & EV_RXFLAG)
+	FIXME("EV_RXFLAG not handled\n");
+    if ((status = get_irq_info(fd, &commio->irq_info)) ||
+        (status = get_modem_status(fd, &commio->mstat)))
+        goto out_now;
+
+    /* We might have received something or the TX bufffer is delivered */
+    *events = check_events(fd, commio->evtmask,
+                               &commio->irq_info, &commio->irq_info,
+                               commio->mstat, commio->mstat);
+    if (*events) goto out_now;
+
+    /* create the worker for the task */
+    status = RtlQueueWorkItem(wait_for_event, commio, 0 /* FIXME */);
+    if (status != STATUS_SUCCESS) goto out_now;
+    return STATUS_PENDING;
+
+#if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
+error_caps:
+    FIXME("Returning error because of missing capabilities\n");
+    status STATUS_INVALID_PARAMETER;
+#endif
+out_now:
+    RtlFreeHeap(GetProcessHeap(), 0, commio);
+    return status;
+}
+
 static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, char* ptr)
 {
     /* FIXME: not perfect as it should bypass the in-queue */
@@ -875,13 +1116,13 @@ static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, char* ptr)
  *
  *
  */
-NTSTATUS COMM_DeviceIoControl(HANDLE hDevice, 
-                              HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
-                              PVOID UserApcContext, 
-                              PIO_STATUS_BLOCK piosb, 
-                              ULONG dwIoControlCode,
-                              LPVOID lpInBuffer, DWORD nInBufferSize,
-                              LPVOID lpOutBuffer, DWORD nOutBufferSize)
+static inline NTSTATUS io_control(HANDLE hDevice, 
+                                  HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
+                                  PVOID UserApcContext, 
+                                  PIO_STATUS_BLOCK piosb, 
+                                  ULONG dwIoControlCode,
+                                  LPVOID lpInBuffer, DWORD nInBufferSize,
+                                  LPVOID lpOutBuffer, DWORD nOutBufferSize)
 {
     DWORD       sz = 0, access = FILE_READ_DATA;
     NTSTATUS    status = STATUS_SUCCESS;
@@ -1085,6 +1326,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
     case IOCTL_SERIAL_SET_XON:
         status = set_XOn(fd);
         break;
+    case IOCTL_SERIAL_WAIT_ON_MASK:
+        if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
+        {
+            if (!(status = wait_on(hDevice, fd, hEvent, (DWORD*)lpOutBuffer)))
+                sz = sizeof(DWORD);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
     default:
         FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 
               dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
@@ -1097,6 +1347,58 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
  error:
     piosb->u.Status = status;
     piosb->Information = sz;
-    if (hEvent) NtSetEvent(hEvent, NULL);
+    if (hEvent && status != STATUS_PENDING) NtSetEvent(hEvent, NULL);
+    return status;
+}
+
+NTSTATUS COMM_DeviceIoControl(HANDLE hDevice, 
+                              HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
+                              PVOID UserApcContext, 
+                              PIO_STATUS_BLOCK piosb, 
+                              ULONG dwIoControlCode,
+                              LPVOID lpInBuffer, DWORD nInBufferSize,
+                              LPVOID lpOutBuffer, DWORD nOutBufferSize)
+{
+    NTSTATUS    status;
+
+    if (dwIoControlCode == IOCTL_SERIAL_WAIT_ON_MASK)
+    {
+        HANDLE          hev = hEvent;
+
+        /* this is an ioctl we implement in a non blocking way if hEvent is not
+         * null
+         * so we have to explicitely wait if no hEvent is provided
+         */
+        if (!hev)
+        {
+            OBJECT_ATTRIBUTES   attr;
+            
+            attr.Length                   = sizeof(attr);
+            attr.RootDirectory            = 0;
+            attr.ObjectName               = NULL;
+            attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
+            attr.SecurityDescriptor       = NULL;
+            attr.SecurityQualityOfService = NULL;
+            status = NtCreateEvent(&hev, EVENT_ALL_ACCESS, &attr, FALSE, FALSE);
+
+            if (status) goto done;
+        }
+        status = io_control(hDevice, hev, UserApcRoutine, UserApcContext,
+                            piosb, dwIoControlCode, lpInBuffer, nInBufferSize,
+                            lpOutBuffer, nOutBufferSize);
+        if (hev != hEvent)
+        {
+            if (status == STATUS_PENDING)
+            {
+                NtWaitForSingleObject(hev, FALSE, NULL);
+                status = STATUS_SUCCESS;
+            }
+            NtClose(hev);
+        }
+    }
+    else status = io_control(hDevice, hEvent, UserApcRoutine, UserApcContext,
+                             piosb, dwIoControlCode, lpInBuffer, nInBufferSize,
+                             lpOutBuffer, nOutBufferSize);
+done:
     return status;
 }
