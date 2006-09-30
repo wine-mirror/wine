@@ -54,7 +54,7 @@ ULONG CDECL ldap_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
-    TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn), cred, method );
+    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_a(dn), cred, method );
 
     if (!ld) return ~0UL;
 
@@ -105,7 +105,7 @@ ULONG CDECL ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
-    TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
+    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return ~0UL;
     if (method != LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;
@@ -150,7 +150,7 @@ ULONG CDECL ldap_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
-    TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn), cred, method );
+    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_a(dn), cred, method );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
@@ -197,7 +197,7 @@ ULONG CDECL ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
-    TRACE( "(%p, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn), cred, method );
+    TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_w(dn), cred, method );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
     if (method != LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;

@@ -325,6 +325,7 @@ ULONG CDECL ldap_parse_sort_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
 #ifdef HAVE_LDAP
     char *attrU = NULL;
     LDAPControl **controlU = NULL;
+    unsigned long res;
 
     TRACE( "(%p, %p, %p, %p)\n", ld, control, result, attr );
 
@@ -335,8 +336,9 @@ ULONG CDECL ldap_parse_sort_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
         if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
     }
 
-    ret = ldap_parse_sort_control( ld, controlU, result, &attrU );
+    ret = ldap_parse_sort_control( ld, controlU, &res, &attrU );
 
+    *result = res;
     *attr = strUtoW( attrU );
     controlarrayfreeU( controlU );
 
@@ -403,6 +405,7 @@ INT CDECL ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     int ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
     LDAPControl **controlU = NULL;
+    unsigned long pos, count;
 
     TRACE( "(%p, %p, %p, %p, %p, %p)\n", ld, control, targetpos,
            listcount, context, errcode );
@@ -414,9 +417,11 @@ INT CDECL ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
         if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
     }
 
-    ret = ldap_parse_vlv_control( ld, controlU, targetpos, listcount,
+    ret = ldap_parse_vlv_control( ld, controlU, &pos, &count,
                                   (struct berval **)context, errcode );
 
+    *targetpos = pos;
+    *listcount = count;
     controlarrayfreeU( controlU );
 
 #endif

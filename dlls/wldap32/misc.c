@@ -60,7 +60,7 @@ ULONG CDECL WLDAP32_ldap_abandon( WLDAP32_LDAP *ld, ULONG msgid )
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
 
-    TRACE( "(%p, 0x%08lx)\n", ld, msgid );
+    TRACE( "(%p, 0x%08x)\n", ld, msgid );
 
     if (!ld) return ~0UL;
     ret = ldap_abandon_ext( ld, msgid, NULL, NULL );
@@ -248,7 +248,7 @@ ULONG CDECL ldap_escape_filter_elementA( PCHAR src, ULONG srclen, PCHAR dst, ULO
 {
     ULONG len;
 
-    TRACE( "(%p, 0x%08lx, %p, 0x%08lx)\n", src, srclen, dst, dstlen );
+    TRACE( "(%p, 0x%08x, %p, 0x%08x)\n", src, srclen, dst, dstlen );
 
     len = get_escape_size( src, srclen );
     if (!dst) return len;
@@ -281,7 +281,7 @@ ULONG CDECL ldap_escape_filter_elementW( PCHAR src, ULONG srclen, PWCHAR dst, UL
 {
     ULONG len;
 
-    TRACE( "(%p, 0x%08lx, %p, 0x%08lx)\n", src, srclen, dst, dstlen );
+    TRACE( "(%p, 0x%08x, %p, 0x%08x)\n", src, srclen, dst, dstlen );
 
     len = get_escape_size( src, srclen );
     if (!dst) return len;
@@ -611,7 +611,7 @@ ULONG CDECL WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all,
     ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
 
-    TRACE( "(%p, 0x%08lx, 0x%08lx, %p, %p)\n", ld, msgid, all, timeout, res );
+    TRACE( "(%p, 0x%08x, 0x%08x, %p, %p)\n", ld, msgid, all, timeout, res );
 
     if (!ld || !res || msgid == ~0UL) return ~0UL;
     ret = ldap_result( ld, msgid, all, (struct timeval *)timeout, res );

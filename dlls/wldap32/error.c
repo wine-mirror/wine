@@ -53,7 +53,7 @@ PCHAR CDECL ldap_err2stringA( ULONG err )
 {
     static char buf[256] = "";
 
-    TRACE( "(0x%08lx)\n", err );
+    TRACE( "(0x%08x)\n", err );
 
     if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
         LoadStringA( hwldap32, err, buf, 256 );
@@ -83,7 +83,7 @@ PWCHAR CDECL ldap_err2stringW( ULONG err )
 {
     static WCHAR buf[256] = { 0 };
 
-    TRACE( "(0x%08lx)\n", err );
+    TRACE( "(0x%08x)\n", err );
 
     if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
         LoadStringW( hwldap32, err, buf, 256 );
@@ -136,7 +136,7 @@ ULONG CDECL WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *re
 #ifdef HAVE_LDAP
     int error;
 
-    TRACE( "(%p, %p, 0x%08lx)\n", ld, res, free );
+    TRACE( "(%p, %p, 0x%08x)\n", ld, res, free );
 
     if (!ld || !res) return ~0UL;
 
@@ -282,7 +282,7 @@ static const ULONG WLDAP32_errormap[] = {
  */
 ULONG CDECL LdapMapErrorToWin32( ULONG err )
 {
-    TRACE( "(0x%08lx)\n", err );
+    TRACE( "(0x%08x)\n", err );
 
     if (err >= sizeof(WLDAP32_errormap)/sizeof(WLDAP32_errormap[0]))
         return ERROR_DS_GENERIC_ERROR;

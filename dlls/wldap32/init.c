@@ -136,7 +136,7 @@ static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnum
 {
     char *res, *p, *q, **v;
     unsigned int i = 0, size = 0; 
-    static const char sep[] = " ", fmt[] = ":%ld";
+    static const char sep[] = " ", fmt[] = ":%d";
     char port[7];
 
     sprintf( port, fmt, portnumber ); 
@@ -224,7 +224,7 @@ WLDAP32_LDAP * CDECL cldap_openA( PCHAR hostname, ULONG portnumber )
     WLDAP32_LDAP *ld = NULL;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
 
     if (hostname) {
         hostnameW = strAtoW( hostname );
@@ -268,7 +268,7 @@ WLDAP32_LDAP * CDECL cldap_openW( PWCHAR hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
     if (hostname) {
         hostnameU = strWtoU( hostname );
@@ -330,7 +330,7 @@ WLDAP32_LDAP *  CDECL ldap_initA( PCHAR hostname, ULONG portnumber )
     WLDAP32_LDAP *ld = NULL;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
 
     if (hostname) {
         hostnameW = strAtoW( hostname );
@@ -375,7 +375,7 @@ WLDAP32_LDAP * CDECL ldap_initW( PWCHAR hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
     if (hostname) {
         hostnameU = strWtoU( hostname );
@@ -411,7 +411,7 @@ WLDAP32_LDAP * CDECL ldap_openA( PCHAR hostname, ULONG portnumber )
     WLDAP32_LDAP *ld = NULL;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_a(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_a(hostname), portnumber );
 
     if (hostname) {
         hostnameW = strAtoW( hostname );
@@ -455,7 +455,7 @@ WLDAP32_LDAP * CDECL ldap_openW( PWCHAR hostname, ULONG portnumber )
     LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
-    TRACE( "(%s, %ld)\n", debugstr_w(hostname), portnumber );
+    TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
     if (hostname) {
         hostnameU = strWtoU( hostname );
@@ -491,7 +491,7 @@ WLDAP32_LDAP * CDECL ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure
     WLDAP32_LDAP *ld;
     WCHAR *hostnameW = NULL;
 
-    TRACE( "(%s, %ld, 0x%08x)\n", debugstr_a(hostname), portnumber, secure );
+    TRACE( "(%s, %d, 0x%08x)\n", debugstr_a(hostname), portnumber, secure );
 
     if (hostname) {
         hostnameW = strAtoW( hostname );
@@ -536,7 +536,7 @@ WLDAP32_LDAP * CDECL ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secur
     WLDAP32_LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
-    TRACE( "(%s, %ld, 0x%08x)\n", debugstr_w(hostname), portnumber, secure );
+    TRACE( "(%s, %d, 0x%08x)\n", debugstr_w(hostname), portnumber, secure );
 
     if (hostname) {
         hostnameU = strWtoU( hostname );

@@ -57,7 +57,7 @@ ULONG CDECL ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
 #ifdef HAVE_LDAP
     LDAPControlW *controlW = NULL;
 
-    TRACE( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
+    TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
            critical, control );
 
     if (!ld || !control || pagesize > LDAP_MAXINT)
@@ -152,7 +152,7 @@ ULONG CDECL ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
 
-    TRACE( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
+    TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
            critical, control );
 
     if (!ld || !control || pagesize > LDAP_MAXINT)
@@ -167,7 +167,7 @@ ULONG CDECL ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
 ULONG CDECL ldap_get_next_page( WLDAP32_LDAP *ld, PLDAPSearch search, ULONG pagesize,
     ULONG *message )
 {
-    FIXME( "(%p, %p, 0x%08lx, %p)\n", ld, search, pagesize, message );
+    FIXME( "(%p, %p, 0x%08x, %p)\n", ld, search, pagesize, message );
 
     if (!ld) return ~0UL;
     return LDAP_NOT_SUPPORTED;
@@ -177,7 +177,7 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     struct l_timeval *timeout, ULONG pagesize, ULONG *count,
     WLDAP32_LDAPMessage **results )
 {
-    FIXME( "(%p, %p, %p, 0x%08lx, %p, %p)\n", ld, search, timeout,
+    FIXME( "(%p, %p, %p, 0x%08x, %p, %p)\n", ld, search, timeout,
            pagesize, count, results );
 
     if (!ld) return ~0UL;
@@ -278,7 +278,7 @@ PLDAPSearch CDECL ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scop
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyA *sortkeys )
 {
-    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_a(dn),
+    FIXME( "(%p, %s, 0x%08x, %s, %p, 0x%08x)\n", ld, debugstr_a(dn),
            scope, debugstr_a(filter), attrs, attrsonly );
     return NULL;
 }
@@ -287,7 +287,7 @@ PLDAPSearch CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG sco
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyW *sortkeys )
 {
-    FIXME( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx)\n", ld, debugstr_w(dn),
+    FIXME( "(%p, %s, 0x%08x, %s, %p, 0x%08x)\n", ld, debugstr_w(dn),
            scope, debugstr_w(filter), attrs, attrsonly );
     return NULL;
 }

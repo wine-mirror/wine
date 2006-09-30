@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL ldap_close_extended_op( WLDAP32_LDAP *ld, ULONG msgid )
 {
-    TRACE( "(%p, 0x%08lx)\n", ld, msgid );
+    TRACE( "(%p, 0x%08x)\n", ld, msgid );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
     return LDAP_SUCCESS;

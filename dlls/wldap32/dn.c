@@ -113,7 +113,7 @@ PCHAR * CDECL ldap_explode_dnA( PCHAR dn, ULONG notypes )
 #ifdef HAVE_LDAP
     WCHAR *dnW, **retW;
 
-    TRACE( "(%s, 0x%08lx)\n", debugstr_a(dn), notypes );
+    TRACE( "(%s, 0x%08x)\n", debugstr_a(dn), notypes );
 
     dnW = strAtoW( dn );
     if (!dnW) return NULL;
@@ -151,7 +151,7 @@ PWCHAR * CDECL ldap_explode_dnW( PWCHAR dn, ULONG notypes )
 #ifdef HAVE_LDAP
     char *dnU, **retU;
 
-    TRACE( "(%s, 0x%08lx)\n", debugstr_w(dn), notypes );
+    TRACE( "(%s, 0x%08x)\n", debugstr_w(dn), notypes );
 
     dnU = strWtoU( dn );
     if (!dnU) return NULL;
