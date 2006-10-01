@@ -1412,7 +1412,6 @@ typedef struct SHADER_OPCODE {
 } SHADER_OPCODE;
 
 typedef struct SHADER_OPCODE_ARG {
-    IWineD3DStateBlock* stateBlock;
     IWineD3DBaseShader* shader;
     shader_reg_maps* reg_maps;
     CONST SHADER_OPCODE* opcode;
