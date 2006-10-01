@@ -388,6 +388,7 @@ struct get_thread_info_reply
     int          affinity;
     abs_time_t   creation_time;
     abs_time_t   exit_time;
+    int          last;
 };
 
 
@@ -4405,6 +4406,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 246
+#define SERVER_PROTOCOL_VERSION 247
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

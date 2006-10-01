@@ -950,8 +950,9 @@ DECL_HANDLER(get_thread_info)
         reply->affinity       = thread->affinity;
         reply->creation_time.sec  = thread->creation_time.tv_sec;
         reply->creation_time.usec = thread->creation_time.tv_usec;
-        reply->exit_time.sec      = thread->exit_time.tv_sec;
-        reply->exit_time.usec     = thread->exit_time.tv_usec;
+        reply->exit_time.sec  = thread->exit_time.tv_sec;
+        reply->exit_time.usec = thread->exit_time.tv_usec;
+        reply->last           = thread->process->running_threads == 1;
 
         release_object( thread );
     }

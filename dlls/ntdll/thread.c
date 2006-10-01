@@ -1167,6 +1167,23 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 #endif
             return status;
         }
+    case ThreadAmILastThread:
+        {
+            SERVER_START_REQ(get_thread_info)
+            {
+                req->handle = handle;
+                req->tid_in = 0;
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
+                {
+                    BOOLEAN last = reply->last;
+                    if (data) memcpy( data, &last, min( length, sizeof(last) ));
+                    if (ret_len) *ret_len = min( length, sizeof(last) );
+                }
+            }
+            SERVER_END_REQ;
+            return status;
+        }
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadAffinityMask:
@@ -1176,7 +1193,6 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadQuerySetWin32StartAddress:
     case ThreadZeroTlsCell:
     case ThreadPerformanceCount:
-    case ThreadAmILastThread:
     case ThreadIdealProcessor:
     case ThreadPriorityBoost:
     case ThreadSetTlsArrayAddress:

@@ -772,6 +772,8 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, "," );
     fprintf( stderr, " exit_time=" );
     dump_abs_time( &req->exit_time );
+    fprintf( stderr, "," );
+    fprintf( stderr, " last=%d", req->last );
 }
 
 static void dump_set_thread_info_request( const struct set_thread_info_request *req )

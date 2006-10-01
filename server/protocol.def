@@ -347,6 +347,7 @@ struct token_groups
     int          affinity;      /* thread affinity mask */
     abs_time_t   creation_time; /* thread creation time */
     abs_time_t   exit_time;     /* thread exit time */
+    int          last;          /* last thread in process */
 @END
 
 
