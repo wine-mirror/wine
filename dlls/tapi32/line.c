@@ -665,18 +665,18 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             char buf[10];
             numlocations = 1;
             length += sizeof(LINELOCATIONENTRY) + 20 ;
-            RegSetValueExA( hsubkey, "AreaCode", 0, REG_SZ, (LPBYTE)"010", 4);
+            RegSetValueExA( hsubkey, "AreaCode", 0, REG_SZ, (const BYTE *)"010", 4);
             GetLocaleInfoA( LOCALE_SYSTEM_DEFAULT, LOCALE_ICOUNTRY, buf, 8);
             dwval = atoi(buf);
             RegSetValueExA( hsubkey, "Country", 0, REG_DWORD, (LPBYTE)&dwval,
                     sizeof(DWORD));
-            RegSetValueExA( hsubkey, "DisableCallWaiting", 0, REG_SZ, (LPBYTE)"", 1);
+            RegSetValueExA( hsubkey, "DisableCallWaiting", 0, REG_SZ, (const BYTE *)"", 1);
             dwval = 1;  
             RegSetValueExA( hsubkey, "Flags", 0, REG_DWORD, (LPBYTE)&dwval,
                     sizeof(DWORD));
-            RegSetValueExA( hsubkey, "LongDistanceAccess", 0, REG_SZ, (LPBYTE)"", 1);
-            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, (LPBYTE)"New Location", 13);
-            RegSetValueExA( hsubkey, "OutsideAccess", 0, REG_SZ, (LPBYTE)"", 1);
+            RegSetValueExA( hsubkey, "LongDistanceAccess", 0, REG_SZ, (const BYTE *)"", 1);
+            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, (const BYTE *)"New Location", 13);
+            RegSetValueExA( hsubkey, "OutsideAccess", 0, REG_SZ, (const BYTE *)"", 1);
             RegCloseKey(hsubkey);
             dwval = 1;  
             RegSetValueExA( hkLocations, "CurrentID", 0, REG_DWORD,
@@ -723,13 +723,13 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             DWORD dwval;
             numcards = 1;
             length += sizeof(LINECARDENTRY) + 22 ;
-            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, (LPBYTE)"None (Direct Call)", 19);
+            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, (const BYTE *)"None (Direct Call)", 19);
             dwval = 1;  
             RegSetValueExA( hsubkey, "Flags", 0, REG_DWORD, (LPBYTE)&dwval,
                     sizeof(DWORD));
-            RegSetValueExA( hsubkey, "InternationalRule", 0, REG_SZ, (LPBYTE)"", 1);
-            RegSetValueExA( hsubkey, "LDRule", 0, REG_SZ, (LPBYTE)"", 1);
-            RegSetValueExA( hsubkey, "LocalRule", 0, REG_SZ, (LPBYTE)"", 1);
+            RegSetValueExA( hsubkey, "InternationalRule", 0, REG_SZ, (const BYTE *)"", 1);
+            RegSetValueExA( hsubkey, "LDRule", 0, REG_SZ, (const BYTE *)"", 1);
+            RegSetValueExA( hsubkey, "LocalRule", 0, REG_SZ, (const BYTE *)"", 1);
             RegCloseKey(hsubkey);
             dwval = 2;  
             RegSetValueExA( hkCards, "NextID", 0, REG_DWORD, (LPBYTE)&dwval,
