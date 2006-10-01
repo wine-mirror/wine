@@ -750,10 +750,20 @@ typedef struct WS(WSAData)
 #ifndef USE_WS_PREFIX
 #define FIONREAD                   _IOR('f', 127, u_long)
 #define FIONBIO                    _IOW('f', 126, u_long)
+#define FIOASYNC                   _IOW('f', 125, u_long)
+#define SIOCSHIWAT                 _IOW('s',  0, u_long)
+#define SIOCGHIWAT                 _IOR('s',  1, u_long)
+#define SIOCSLOWAT                 _IOW('s',  2, u_long)
+#define SIOCGLOWAT                 _IOR('s',  3, u_long)
 #define SIOCATMARK                 _IOR('s',  7, u_long)
 #else
 #define WS_FIONREAD                WS__IOR('f', 127, u_long)
 #define WS_FIONBIO                 WS__IOW('f', 126, u_long)
+#define WS_FIOASYNC                WS__IOW('f', 125, u_long)
+#define WS_SIOCSHIWAT              WS__IOW('s',  0, u_long)
+#define WS_SIOCGHIWAT              WS__IOR('s',  1, u_long)
+#define WS_SIOCSLOWAT              WS__IOW('s',  2, u_long)
+#define WS_SIOCGLOWAT              WS__IOR('s',  3, u_long)
 #define WS_SIOCATMARK              WS__IOR('s',  7, u_long)
 #endif
 

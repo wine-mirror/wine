@@ -2258,7 +2258,7 @@ INT WINAPI WSAIoctl(SOCKET s,
        break;
 
    default:
-       WARN("\tunsupported WS_IOCTL cmd (%08lx)\n", dwIoControlCode);
+       FIXME("unsupported WS_IOCTL cmd (%08lx)\n", dwIoControlCode);
        release_sock_fd( s, fd );
        WSASetLastError(WSAEOPNOTSUPP);
        return SOCKET_ERROR;
@@ -2318,7 +2318,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
         newcmd=SIOCATMARK;
         break;
 
-    case WS__IOW('f',125,u_long):
+    case WS_FIOASYNC:
         WARN("Warning: WS1.1 shouldn't be using async I/O\n");
         SetLastError(WSAEINVAL);
         return SOCKET_ERROR;
