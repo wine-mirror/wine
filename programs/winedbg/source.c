@@ -28,13 +28,6 @@
 
 #include "debugger.h"
 
-struct search_list
-{
-    char*               path;
-    struct search_list*  next;
-};
-
-
 struct open_file_list
 {
     char*                       path;
@@ -47,45 +40,55 @@ struct open_file_list
 
 static struct open_file_list*   source_ofiles;
 
-static struct search_list*      source_list_head;
+static char* search_path; /* = NULL; */
 static char source_current_file[PATH_MAX];
 static int source_start_line = -1;
 static int source_end_line = -1;
 
 void source_show_path(void)
 {
-    struct search_list* sl;
+    const char* ptr;
+    const char* next;
 
     dbg_printf("Search list:\n");
-    for (sl = source_list_head; sl; sl = sl->next) dbg_printf("\t%s\n", sl->path);
+    for (ptr = search_path; ptr; ptr = next)
+    {
+        next = strchr(ptr, ';');
+        if (next)
+            dbg_printf("\t%.*s\n", next++ - ptr, ptr);
+        else
+            dbg_printf("\t%s\n", ptr);
+    }
     dbg_printf("\n");
 }
 
 void source_add_path(const char* path)
 {
-    struct search_list* sl;
+    char*       new;
+    unsigned    size;
 
-    if (!(sl = HeapAlloc(GetProcessHeap(), 0, sizeof(struct search_list))))
-        return;
-
-    sl->next = source_list_head;
-    sl->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(path) + 1), path);
-    source_list_head = sl;
+    size = strlen(path) + 1;
+    if (search_path)
+    {
+        unsigned pos = HeapSize(GetProcessHeap(), 0, search_path);
+        new = HeapReAlloc(GetProcessHeap(), 0, search_path, pos + size);
+        if (!new || !pos) return;
+        new[pos - 1] = ';';
+        strcpy(&new[pos], path);
+    }
+    else
+    {
+        new = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!new) return;
+        strcpy(new, path);
+    }
+    search_path = new;
 }
 
 void source_nuke_path(void)
 {
-    struct search_list* sl;
-    struct search_list* nxt;
-
-    for (sl = source_list_head; sl; sl = nxt)
-    {
-        nxt = sl->next;
-        HeapFree(GetProcessHeap(), 0, sl->path);
-        HeapFree(GetProcessHeap(), 0, sl);
-    }
-
-    source_list_head = NULL;
+    HeapFree(GetProcessHeap(), 0, search_path);
+    search_path = NULL;
 }
 
 static  void*   source_map_file(const char* name, HANDLE* hMap, unsigned* size)
@@ -128,9 +131,7 @@ static int source_display(const char* sourcefile, int start, int end)
     const char*                 basename = NULL;
     char*                       pnt;
     int				rtn;
-    struct search_list*         sl;
     HANDLE                      hMap;
-    DWORD			status;
     char			tmppath[PATH_MAX];
 
     /*
@@ -157,21 +158,20 @@ static int source_display(const char* sourcefile, int start, int end)
         /*
          * Crapola.  We need to try and open the file.
          */
-        status = GetFileAttributes(sourcefile);
-        if (status != INVALID_FILE_ATTRIBUTES)
+        strcpy(tmppath, sourcefile);
+        if (GetFileAttributes(sourcefile) == INVALID_FILE_ATTRIBUTES &&
+            (!search_path || !SearchPathA(search_path, sourcefile, NULL, MAX_PATH, tmppath, NULL)))
         {
-            strcpy(tmppath, sourcefile);
-        }
-        else if ((status = GetFileAttributes(basename)) != INVALID_FILE_ATTRIBUTES)
-        {
-            strcpy(tmppath, basename);
-        }
-        else
-        {
-            for (sl = source_list_head; sl; sl = sl->next)
+            if (dbg_interactiveP)
             {
-                strcpy(tmppath, sl->path);
-                if (tmppath[strlen(tmppath) - 1] != '/' && tmppath[strlen(tmppath) - 1] != '\\')
+                char zbuf[256];
+                /*
+                 * Still couldn't find it.  Ask user for path to add.
+                 */
+                snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s': ", sourcefile);
+                input_read_line(zbuf, tmppath, sizeof(tmppath));
+
+                if (tmppath[strlen(tmppath) - 1] != '/')
                 {
                     strcat(tmppath, "/");
                 }
@@ -179,55 +179,24 @@ static int source_display(const char* sourcefile, int start, int end)
                  * Now append the base file name.
                  */
                 strcat(tmppath, basename);
-
-                status = GetFileAttributes(tmppath);
-                if (status != INVALID_FILE_ATTRIBUTES) break;
             }
 
-            if (sl == NULL)
+            if (GetFileAttributes(tmppath) == INVALID_FILE_ATTRIBUTES)
             {
-                if (dbg_interactiveP)
-                {
-                    char zbuf[256];
-                    /*
-                     * Still couldn't find it.  Ask user for path to add.
-                     */
-                    snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s': ", sourcefile);
-                    input_read_line(zbuf, tmppath, sizeof(tmppath));
-
-                    if (tmppath[strlen(tmppath) - 1] != '/')
-                    {
-                        strcat(tmppath, "/");
-                    }
-                    /*
-                     * Now append the base file name.
-                     */
-                    strcat(tmppath, basename);
-
-                    status = GetFileAttributes(tmppath);
-                }
-                else
-                {
-                    status = INVALID_FILE_ATTRIBUTES;
-                    strcpy(tmppath, sourcefile);
-                }
-
-                if (status == INVALID_FILE_ATTRIBUTES)
-                {
-                    /*
-                     * OK, I guess the user doesn't really want to see it
-                     * after all.
-                     */
-                    ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
-                    ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
-                    ol->real_path = NULL;
-                    ol->next = source_ofiles;
-                    ol->nlines = 0;
-                    ol->linelist = NULL;
-                    source_ofiles = ol;
-                    dbg_printf("Unable to open file '%s'\n", tmppath);
-                    return FALSE;
-                }
+                /*
+                 * OK, I guess the user doesn't really want to see it
+                 * after all.
+                 */
+                ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
+                ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
+                ol->real_path = NULL;
+                ol->next = source_ofiles;
+                ol->nlines = 0;
+                ol->linelist = NULL;
+                ol->size = 0;
+                source_ofiles = ol;
+                dbg_printf("Unable to open file '%s'\n", tmppath);
+                return FALSE;
             }
         }
         /*
