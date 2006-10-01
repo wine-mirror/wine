@@ -2332,6 +2332,9 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 
     default:
         /* Netscape tries hard to use bogus ioctl 0x667e */
+        /* FIXME: 0x667e above is ('f' << 8) | 126, and is a low word of
+         * FIONBIO (_IOW('f', 126, u_long)), how that should be handled?
+         */
         WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
         break;
     }
