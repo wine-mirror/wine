@@ -78,14 +78,14 @@ ULONG WINAPI IWineD3DBaseTextureImpl_AddRef(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
 
-    TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This,ref - 1);
     return ref;
 }
 
 ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DBaseTextureImpl_CleanUp(iface);
         HeapFree(GetProcessHeap(), 0, This);
@@ -351,14 +351,14 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     for (i = 0 ;textureObjectSamplerStates[i].state != -1; i++) {
         if (*state != samplerStates[textureObjectSamplerStates[i].state]) {
             /* apply the state */
-            TRACE("(%p) : Changing state %u from %ld to %ld\n", This, i, *state , samplerStates[textureObjectSamplerStates[i].state]);
+            TRACE("(%p) : Changing state %u from %d to %d\n", This, i, *state , samplerStates[textureObjectSamplerStates[i].state]);
             switch (textureObjectSamplerStates[i].function) {
             case WINED3DSAMP_ADDRESSU:
             case WINED3DSAMP_ADDRESSV: /* fall through */
             case WINED3DSAMP_ADDRESSW: /* fall through */
                 *state = samplerStates[textureObjectSamplerStates[i].state];
                 if (*state < minLookup[WINELOOKUP_WARPPARAM] || *state > maxLookup[WINELOOKUP_WARPPARAM]) {
-                    FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", *state, textureObjectSamplerStates[i].function);
+                    FIXME("Unrecognized or unsupported D3DTADDRESS_* value %d, state %d\n", *state, textureObjectSamplerStates[i].function);
                 } else {
                     GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][*state - minLookup[WINELOOKUP_WARPPARAM]];
                     TRACE("Setting WRAP_R to %d for %x\n", wrapParm, textureDimensions);
@@ -371,7 +371,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                 float col[4];
                 *state = samplerStates[textureObjectSamplerStates[i].state];
                 D3DCOLORTOGLFLOAT4(*state, col);
-                TRACE("Setting border color for %u to %lx\n", textureDimensions, *state);
+                TRACE("Setting border color for %u to %x\n", textureDimensions, *state);
                 glTexParameterfv(textureDimensions, GL_TEXTURE_BORDER_COLOR, &col[0]);
                 checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
             }
@@ -381,10 +381,10 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                     GLint glValue;
                     *state = samplerStates[textureObjectSamplerStates[i].state];
                     if (*state < minLookup[WINELOOKUP_MAGFILTER] || *state > maxLookup[WINELOOKUP_MAGFILTER]) {
-                        FIXME("Unrecognized or unsupported MAGFILTER* value %ld, state %d\n", *state, textureObjectSamplerStates[i].function);
+                        FIXME("Unrecognized or unsupported MAGFILTER* value %d, state %d\n", *state, textureObjectSamplerStates[i].function);
                     }
                     glValue = stateLookup[WINELOOKUP_MAGFILTER][*state - minLookup[WINELOOKUP_MAGFILTER]];
-                    TRACE("ValueMAG=%ld setting MAGFILTER to %x\n", *state, glValue);
+                    TRACE("ValueMAG=%d setting MAGFILTER to %x\n", *state, glValue);
                     glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
                 /* We need to reset the Aniotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentataion to see how it should be switched off. */
                     if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == *state) {
@@ -405,7 +405,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                         This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_LINEAR)
                     {
 
-                        FIXME("Unrecognized or unsupported D3DSAMP_MINFILTER value %ld, state %d D3DSAMP_MIPFILTER value %ld, state %d\n",
+                        FIXME("Unrecognized or unsupported D3DSAMP_MINFILTER value %d, state %d D3DSAMP_MIPFILTER value %d, state %d\n",
                                 This->baseTexture.states[WINED3DTEXSTA_MINFILTER],
                                 textureObjectSamplerStates[WINED3DTEXSTA_MINFILTER].function,
                                 This->baseTexture.states[WINED3DTEXSTA_MIPFILTER],
@@ -414,7 +414,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                     glValue = minMipLookup[min(max(This->baseTexture.states[WINED3DTEXSTA_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
                                                 [min(max(This->baseTexture.states[WINED3DTEXSTA_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
 
-                    TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", 
+                    TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n", 
                             This->baseTexture.states[WINED3DTEXSTA_MINFILTER], 
                             This->baseTexture.states[WINED3DTEXSTA_MIPFILTER], glValue);
                     glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, glValue);

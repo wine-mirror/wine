@@ -97,7 +97,7 @@ inline static DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, c
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    TRACE("WineD3D DLLMain Reason=%ld\n", fdwReason);
+    TRACE("WineD3D DLLMain Reason=%d\n", fdwReason);
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
        HMODULE mod;

@@ -46,14 +46,14 @@ static HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, R
 
 static ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
 
 static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);

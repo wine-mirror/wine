@@ -51,14 +51,14 @@ static HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuff
 static ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, ref - 1);
     return ref;
 }
 
 static ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
 
         if(This->vbo) {
@@ -423,7 +423,7 @@ static HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *i
 static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     BYTE *data;
-    TRACE("(%p)->%d, %d, %p, %08lx\n", This, OffsetToLock, SizeToLock, ppbData, Flags);
+    TRACE("(%p)->%d, %d, %p, %08x\n", This, OffsetToLock, SizeToLock, ppbData, Flags);
 
     InterlockedIncrement(&This->lockcount);
 

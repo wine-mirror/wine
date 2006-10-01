@@ -266,7 +266,7 @@ do {                                                                            
 
 /* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
-#define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%ld, type:%ld)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
+#define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%d, type:%d)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
 
 /* Defines used for optimizations */
 

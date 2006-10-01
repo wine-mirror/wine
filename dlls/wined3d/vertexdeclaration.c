@@ -186,34 +186,34 @@ static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
 
   switch ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT) { /* maybe a macro to inverse ... */
   case D3DVSD_TOKEN_NOP:
-    TRACE(" 0x%08lx NOP()\n", token);
+    TRACE(" 0x%08x NOP()\n", token);
     break;
   case D3DVSD_TOKEN_STREAM:
     if (token & D3DVSD_STREAMTESSMASK) {
-      TRACE(" 0x%08lx STREAM_TESS()\n", token);
+      TRACE(" 0x%08x STREAM_TESS()\n", token);
     } else {
-      TRACE(" 0x%08lx STREAM(%lu)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
+      TRACE(" 0x%08x STREAM(%u)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
     }
     break;
   case D3DVSD_TOKEN_STREAMDATA:
     if (token & 0x10000000) {
-      TRACE(" 0x%08lx SKIP(%lu)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
+      TRACE(" 0x%08x SKIP(%u)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
     } else {
       DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
       DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08lx REG(%s, %s)\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
+      TRACE(" 0x%08x REG(%s, %s)\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
     }
     break;
   case D3DVSD_TOKEN_TESSELLATOR:
     if (token & 0x10000000) {
       DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
       DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08lx TESSUV(%s) as %s\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
+      TRACE(" 0x%08x TESSUV(%s) as %s\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
     } else {
       DWORD type   = ((token & D3DVSD_DATATYPEMASK)    >> D3DVSD_DATATYPESHIFT);
       DWORD regout = ((token & D3DVSD_VERTEXREGMASK)   >> D3DVSD_VERTEXREGSHIFT);
       DWORD regin  = ((token & D3DVSD_VERTEXREGINMASK) >> D3DVSD_VERTEXREGINSHIFT);
-      TRACE(" 0x%08lx TESSNORMAL(%s, %s) as %s\n", token, VertexDecl8_Registers[regin], VertexDecl8_Registers[regout], VertexDecl8_DataTypes[type]);
+      TRACE(" 0x%08x TESSNORMAL(%s, %s) as %s\n", token, VertexDecl8_Registers[regin], VertexDecl8_Registers[regout], VertexDecl8_DataTypes[type]);
     }
     break;
   case D3DVSD_TOKEN_CONSTMEM:
@@ -226,16 +226,16 @@ static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
     {
       DWORD count   = ((token & D3DVSD_CONSTCOUNTMASK) >> D3DVSD_CONSTCOUNTSHIFT);
       DWORD extinfo = ((token & D3DVSD_EXTINFOMASK)    >> D3DVSD_EXTINFOSHIFT);
-      TRACE(" 0x%08lx EXT(%lu, %lu)\n", token, count, extinfo);
+      TRACE(" 0x%08x EXT(%u, %u)\n", token, count, extinfo);
       /* todo ... print extension */
       tokenlen = count + 1;
     }
     break;
   case D3DVSD_TOKEN_END:
-    TRACE(" 0x%08lx END()\n", token);
+    TRACE(" 0x%08x END()\n", token);
     break;
   default:
-    TRACE(" 0x%08lx UNKNOWN\n", token);
+    TRACE(" 0x%08x UNKNOWN\n", token);
     /* argg error */
   }
   return tokenlen;
@@ -308,12 +308,12 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             convToW[nTokens].Type       = type;
             convToW[nTokens].Offset     = offset;
             convToW[nTokens].Reg        = reg;
-            TRACE("Adding element %ld:\n", nTokens);
+            TRACE("Adding element %d:\n", nTokens);
             dump_wined3dvertexelement(&convToW[nTokens]);
             offset += glTypeLookup[type].size * glTypeLookup[type].typesize;
             ++nTokens;
         } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
-             TRACE(" 0x%08lx SKIP(%lu)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
+             TRACE(" 0x%08x SKIP(%u)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
              offset += sizeof(DWORD) * ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
         } else if (D3DVSD_TOKEN_CONSTMEM  == tokentype) {
             DWORD i;
@@ -323,9 +323,9 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
                 This->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
                         ((IWineD3DImpl*)This->wineD3DDevice->wineD3D)->gl_info.max_vshader_constantsF * 4 * sizeof(float));
             }
-            TRACE(" 0x%08lx CONST(%lu, %lu)\n", token, constaddress, count);
+            TRACE(" 0x%08x CONST(%u, %u)\n", token, constaddress, count);
             for (i = 0; i < count; ++i) {
-                TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
+                TRACE("        c[%u] = (0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
                     constaddress,
                     *pToken,
                     *(pToken + 1),
@@ -336,7 +336,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
                 This->constants[constaddress * 4 + 1] = *(const float *)(pToken + i * 4 + 2);
                 This->constants[constaddress * 4 + 2] = *(const float *)(pToken + i * 4 + 3);
                 This->constants[constaddress * 4 + 3] = *(const float *)(pToken + i * 4 + 4);
-                FIXME("        c[%lu] = (%8f, %8f, %8f, %8f)\n",
+                FIXME("        c[%u] = (%8f, %8f, %8f, %8f)\n",
                     constaddress,
                     *(const float*) (pToken+ i * 4 + 1),
                     *(const float*) (pToken + i * 4 + 2),
@@ -427,14 +427,14 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVerte
 
 static ULONG WINAPI IWineD3DVertexDeclarationImpl_AddRef(IWineD3DVertexDeclaration *iface) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *iface) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
@@ -486,7 +486,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
     }
 
     if (*pSizeOfData < This->declaration8Length) {
-        FIXME("(%p) : Returning WINED3DERR_MOREDATA numElements %ld expected %ld\n", iface, *pSizeOfData, This->declaration8Length);
+        FIXME("(%p) : Returning WINED3DERR_MOREDATA numElements %d expected %d\n", iface, *pSizeOfData, This->declaration8Length);
         *pSizeOfData = This->declaration8Length;
         return WINED3DERR_MOREDATA;
     }

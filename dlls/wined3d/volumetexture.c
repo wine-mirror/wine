@@ -48,7 +48,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DVolumeTex
 
 static ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
 
@@ -56,7 +56,7 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *ifa
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     ULONG ref;
     int i;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         for (i = 0; i < This->baseTexture.levels; i++) {
@@ -236,7 +236,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *i
 
     if (Level < This->baseTexture.levels) {
       hr = IWineD3DVolume_LockBox((IWineD3DVolume *)This->volumes[Level], pLockedVolume, pBox, Flags);
-      TRACE("(%p) Level (%d) success(%lu)\n", This, Level, hr);
+      TRACE("(%p) Level (%d) success(%u)\n", This, Level, hr);
 
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
@@ -251,7 +251,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture 
 
     if (Level < This->baseTexture.levels) {
       hr = IWineD3DVolume_UnlockBox((IWineD3DVolume*) This->volumes[Level]);
-      TRACE("(%p) -> level(%d) success(%lu)\n", This, Level, hr);
+      TRACE("(%p) -> level(%d) success(%u)\n", This, Level, hr);
 
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);

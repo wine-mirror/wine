@@ -55,14 +55,14 @@ static HRESULT  WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, RE
 
 static ULONG  WINAPI IWineD3DQueryImpl_AddRef(IWineD3DQuery *iface) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->extendedData);
@@ -96,7 +96,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     HRESULT res = S_OK;
 
-    TRACE("(%p) : type %#x, pData %p, dwSize %#lx, dwGetDataFlags %#lx\n", This, This->type, pData, dwSize, dwGetDataFlags);
+    TRACE("(%p) : type %#x, pData %p, dwSize %#x, dwGetDataFlags %#x\n", This, This->type, pData, dwSize, dwGetDataFlags);
 
     if(dwSize == 0){
         /*you can use this method to poll the resource for the query status*/
@@ -334,7 +334,7 @@ static WINED3DQUERYTYPE  WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
 static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
 
-    TRACE("(%p) : dwIssueFlags %#lx, type %#x\n", This, dwIssueFlags, This->type);
+    TRACE("(%p) : dwIssueFlags %#x, type %#x\n", This, dwIssueFlags, This->type);
 
     switch (This->type) {
         case WINED3DQUERYTYPE_OCCLUSION:

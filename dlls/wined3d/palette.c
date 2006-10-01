@@ -51,7 +51,7 @@ static ULONG  WINAPI IWineD3DPaletteImpl_AddRef(IWineD3DPalette *iface) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -60,7 +60,7 @@ static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -84,7 +84,7 @@ DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags) {
 static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
 
-    TRACE("(%p)->(%08lx,%ld,%ld,%p)\n",This,Flags,Start,Count,PalEnt);
+    TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
 
     if (Flags != 0) return WINED3DERR_INVALIDCALL; /* unchecked */
     if (Start + Count > IWineD3DPaletteImpl_Size(This->Flags))
@@ -109,7 +109,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ResourceList *res;
 
-    TRACE("(%p)->(%08lx,%ld,%ld,%p)\n",This,Flags,Start,Count,PalEnt);
+    TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
 
     if (This->Flags & DDPCAPS_8BITENTRIES) {
         unsigned int i;

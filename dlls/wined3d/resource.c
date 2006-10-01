@@ -46,14 +46,14 @@ HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFI
 ULONG WINAPI IWineD3DResourceImpl_AddRef(IWineD3DResource *iface) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, ref - 1);
     return ref; 
 }
 
 ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DResourceImpl_CleanUp(iface);
         HeapFree(GetProcessHeap(), 0, This);
@@ -103,7 +103,7 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     PrivateData **data;
 
-    TRACE("(%p) : %p %p %ld %ld\n", This, refguid, pData, SizeOfData, Flags);
+    TRACE("(%p) : %p %p %d %d\n", This, refguid, pData, SizeOfData, Flags);
     data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
     if (*data == NULL)
     {

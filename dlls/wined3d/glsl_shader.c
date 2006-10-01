@@ -408,7 +408,7 @@ void shader_generate_glsl_declarations(
                     break;
                 default:
                     shader_addline(buffer, "uniform unsupported_sampler %csampler%lu;\n", prefix, i);
-                    FIXME("Unrecognized sampler type: %#lx\n", stype);
+                    FIXME("Unrecognized sampler type: %#x\n", stype);
                     break;
             }
         }
@@ -417,7 +417,7 @@ void shader_generate_glsl_declarations(
     /* Declare address variables */
     for (i = 0; i < This->baseShader.limits.address; i++) {
         if (reg_maps->address[i])
-            shader_addline(buffer, "ivec4 A%ld;\n", i);
+            shader_addline(buffer, "ivec4 A%d;\n", i);
     }
 
     /* Declare texture coordinate temporaries and initialize them */
@@ -581,7 +581,7 @@ static void shader_glsl_gen_modifier (
         sprintf(out_str, "-abs(%s%s)", in_reg, in_regswizzle);
         break;
     default:
-        FIXME("Unhandled modifier %lu\n", (instr & D3DSP_SRCMOD_MASK));
+        FIXME("Unhandled modifier %u\n", (instr & D3DSP_SRCMOD_MASK));
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
     }
 }
@@ -611,13 +611,13 @@ static void shader_glsl_get_register_name(
  
     switch (regtype) {
     case D3DSPR_TEMP:
-        sprintf(tmpStr, "R%lu", reg);
+        sprintf(tmpStr, "R%u", reg);
     break;
     case D3DSPR_INPUT:
         if (pshader) {
             /* Pixel shaders >= 3.0 */
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
-                sprintf(tmpStr, "IN%lu", reg);
+                sprintf(tmpStr, "IN%u", reg);
              else {
                 if (reg==0)
                     strcpy(tmpStr, "gl_Color");
@@ -627,7 +627,7 @@ static void shader_glsl_get_register_name(
         } else {
             if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
                *is_color = TRUE;
-            sprintf(tmpStr, "attrib%lu", reg);
+            sprintf(tmpStr, "attrib%u", reg);
         } 
         break;
     case D3DSPR_CONST:
@@ -642,32 +642,32 @@ static void shader_glsl_get_register_name(
            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
                char relStr[100], relReg[50], relMask[6];
                shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
-               sprintf(tmpStr, "%s[%s + %lu]", prefix, relStr, reg);
+               sprintf(tmpStr, "%s[%s + %u]", prefix, relStr, reg);
            } else
-               sprintf(tmpStr, "%s[A0.x + %lu]", prefix, reg);
+               sprintf(tmpStr, "%s[A0.x + %u]", prefix, reg);
 
         } else
-             sprintf(tmpStr, "%s[%lu]", prefix, reg);
+             sprintf(tmpStr, "%s[%u]", prefix, reg);
 
         break;
     }
     case D3DSPR_CONSTINT:
         if (pshader)
-            sprintf(tmpStr, "PI[%lu]", reg);
+            sprintf(tmpStr, "PI[%u]", reg);
         else
-            sprintf(tmpStr, "VI[%lu]", reg);
+            sprintf(tmpStr, "VI[%u]", reg);
         break;
     case D3DSPR_CONSTBOOL:
         if (pshader)
-            sprintf(tmpStr, "PB[%lu]", reg);
+            sprintf(tmpStr, "PB[%u]", reg);
         else
-            sprintf(tmpStr, "VB[%lu]", reg);
+            sprintf(tmpStr, "VB[%u]", reg);
         break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         if (pshader) {
-            sprintf(tmpStr, "T%lu", reg);
+            sprintf(tmpStr, "T%u", reg);
         } else {
-            sprintf(tmpStr, "A%lu", reg);
+            sprintf(tmpStr, "A%u", reg);
         }
     break;
     case D3DSPR_LOOP:
@@ -675,16 +675,16 @@ static void shader_glsl_get_register_name(
     break;
     case D3DSPR_SAMPLER:
         if (pshader)
-            sprintf(tmpStr, "Psampler%lu", reg);
+            sprintf(tmpStr, "Psampler%u", reg);
         else
-            sprintf(tmpStr, "Vsampler%lu", reg);
+            sprintf(tmpStr, "Vsampler%u", reg);
     break;
     case D3DSPR_COLOROUT:
         if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-            sprintf(tmpStr, "gl_FragData[%lu]", reg);
+            sprintf(tmpStr, "gl_FragData[%u]", reg);
             if (reg > 0) {
                 /* TODO: See GL_ARB_draw_buffers */
-                FIXME("Unsupported write to render target %lu\n", reg);
+                FIXME("Unsupported write to render target %u\n", reg);
             }
         } else { /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
             if (reg > 0)
@@ -709,12 +709,12 @@ static void shader_glsl_get_register_name(
     case D3DSPR_TEXCRDOUT:
         /* Vertex shaders >= 3.0: D3DSPR_OUTPUT */
         if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
-            sprintf(tmpStr, "OUT%lu", reg);
+            sprintf(tmpStr, "OUT%u", reg);
         else
-            sprintf(tmpStr, "gl_TexCoord[%lu]", reg);
+            sprintf(tmpStr, "gl_TexCoord[%u]", reg);
     break;
     default:
-        FIXME("Unhandled register name Type(%ld)\n", regtype);
+        FIXME("Unhandled register name Type(%d)\n", regtype);
         sprintf(tmpStr, "unrecognized_register");
     break;
     }
@@ -850,7 +850,7 @@ static inline const char* shader_get_comp_op(
         case COMPARISON_NE: return "!=";
         case COMPARISON_LE: return "<=";
         default:
-            FIXME("Unrecognized comparison value: %lu\n", op);
+            FIXME("Unrecognized comparison value: %u\n", op);
             return "(\?\?)";
     }
 }
@@ -1384,7 +1384,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     /* 1.0-1.4: Use destination register as coordinate source.
      * 2.0+: Use provided coordinate source register. */
     if (hex_version < D3DPS_VERSION(2,0)) {
-        sprintf(sampler_str, "Psampler%lu", reg_dest_code); 
+        sprintf(sampler_str, "Psampler%u", reg_dest_code); 
         sampler_code = reg_dest_code;
     }       
     else {
@@ -1407,7 +1407,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
                 break;
             default:
                 shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
+                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
                 break;
         }
     } else {
@@ -1424,7 +1424,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
                 break;
             default:
                 shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
+                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
                 break;
         }
     }
@@ -1447,10 +1447,10 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
     if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "%s = clamp(gl_TexCoord[%lu], 0.0, 1.0);\n", tmpReg, reg);
+        shader_addline(buffer, "%s = clamp(gl_TexCoord[%u], 0.0, 1.0);\n", tmpReg, reg);
     } else {
         DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "%s = gl_TexCoord[%lu]%s;\n", tmpStr, reg2, tmpMask);
+        shader_addline(buffer, "%s = gl_TexCoord[%u]%s;\n", tmpStr, reg2, tmpMask);
    }
 }
 
@@ -1467,8 +1467,8 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
 
-    shader_addline(arg->buffer, "tmp0.x = dot(vec3(gl_TexCoord[%lu]), vec3(%s));\n", dstreg, src0_str);
-    shader_addline(arg->buffer, "%s = vec4(texture1D(Psampler%lu, tmp0.x))%s;\n", dst_str, dstreg, dst_mask);
+    shader_addline(arg->buffer, "tmp0.x = dot(vec3(gl_TexCoord[%u]), vec3(%s));\n", dstreg, src0_str);
+    shader_addline(arg->buffer, "%s = vec4(texture1D(Psampler%u, tmp0.x))%s;\n", dst_str, dstreg, dst_mask);
 }
 
 /** Process the D3DSIO_TEXDP3 instruction in GLSL:
@@ -1483,7 +1483,7 @@ void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
 
-    shader_addline(arg->buffer, "%s = vec4(dot(vec3(T%lu), vec3(%s)))%s;\n",
+    shader_addline(arg->buffer, "%s = vec4(dot(vec3(T%u), vec3(%s)))%s;\n",
             dst_str, dstreg, src0_str, dst_mask);
 }
 
@@ -1515,7 +1515,7 @@ void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_name, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
 
-    shader_addline(arg->buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", dstreg, src0_str);
+    shader_addline(arg->buffer, "tmp0.y = dot(vec3(T%u), vec3(%s));\n", dstreg, src0_str);
     shader_addline(arg->buffer, "gl_FragDepth = vec4((tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y)%s;\n", dst_str, dst_name);
 }
 
@@ -1530,7 +1530,7 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.x = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+    shader_addline(buffer, "tmp0.x = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
 }
 
 /** Process the D3DSIO_TEXM3X3PAD instruction in GLSL
@@ -1546,7 +1546,7 @@ void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.%c = dot(vec3(T%lu), vec3(%s));\n", 'x' + current_state->current_row, reg, src0_str);
+    shader_addline(buffer, "tmp0.%c = dot(vec3(T%u), vec3(%s));\n", 'x' + current_state->current_row, reg, src0_str);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
@@ -1561,8 +1561,8 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
-    shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.st);\n", reg, reg);
+    shader_addline(buffer, "tmp0.y = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_addline(buffer, "T%u = texture2D(Psampler%u, tmp0.st);\n", reg, reg);
 }
 
 /** Process the D3DSIO_TEXM3X3TEX instruction in GLSL
@@ -1585,13 +1585,13 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
         case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            FIXME("Unrecognized sampler type: %#x\n", stype);
             break;
     }
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
-    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
-    shader_addline(arg->buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
+    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_addline(arg->buffer, "T%u = texture%s(Psampler%u, tmp0.%s);\n", 
             reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
     current_state->current_row = 0;
 }
@@ -1609,8 +1609,8 @@ void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
     
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     
-    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
-    shader_addline(arg->buffer, "T%lu = vec4(tmp0.x, tmp0.y, tmp0.z, 1.0);\n", reg);
+    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_addline(arg->buffer, "T%u = vec4(tmp0.x, tmp0.y, tmp0.z, 1.0);\n", reg);
     current_state->current_row = 0;
 }
 
@@ -1633,7 +1633,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
         case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            FIXME("Unrecognized sampler type: %#x\n", stype);
             break;
     }
 
@@ -1641,13 +1641,13 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_name, src1_mask, src1_str);
 
     /* Perform the last matrix multiply operation */
-    shader_addline(buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+    shader_addline(buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
 
     /* Calculate reflection vector */
     shader_addline(buffer, "tmp0.xyz = reflect(-vec3(%s), vec3(tmp0));\n", src1_str);
 
     /* Sample the texture */
-    shader_addline(buffer, "T%lu = texture%s(Psampler%lu, tmp0.%s);\n", 
+    shader_addline(buffer, "T%u = texture%s(Psampler%u, tmp0.%s);\n", 
             reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
     current_state->current_row = 0;
 }
@@ -1665,12 +1665,12 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
 
     /* Perform the last matrix multiply operation */
-    shader_addline(buffer, "tmp0.z = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
+    shader_addline(buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
 
     /* Construct the eye-ray vector from w coordinates */
-    shader_addline(buffer, "tmp1.x = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[0]);
-    shader_addline(buffer, "tmp1.y = gl_TexCoord[%lu].w;\n", current_state->texcoord_w[1]);
-    shader_addline(buffer, "tmp1.z = gl_TexCoord[%lu].w;\n", reg);
+    shader_addline(buffer, "tmp1.x = gl_TexCoord[%u].w;\n", current_state->texcoord_w[0]);
+    shader_addline(buffer, "tmp1.y = gl_TexCoord[%u].w;\n", current_state->texcoord_w[1]);
+    shader_addline(buffer, "tmp1.z = gl_TexCoord[%u].w;\n", reg);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
     shader_addline(buffer, "tmp0.x = dot(vec3(tmp0), vec3(tmp1));\n");
@@ -1684,7 +1684,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
      * shader versions < 2.0, since that's the only time we can guarantee that we're sampling
      * the correct type of texture because we can lookup what textures are bound at that point.
      */
-    shader_addline(buffer, "T%lu = textureCube(Psampler%lu, tmp0.xyz);\n", reg, reg);
+    shader_addline(buffer, "T%u = textureCube(Psampler%u, tmp0.xyz);\n", reg, reg);
     current_state->current_row = 0;
 }
 
@@ -1697,7 +1697,7 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
 
     FIXME("Not applying the BUMPMAPENV matrix for pixel shader instruction texbem.\n");
-    shader_addline(arg->buffer, "T%lu = texture2D(Psampler%lu, gl_TexCoord[%lu].xy + T%lu.xy);\n",
+    shader_addline(arg->buffer, "T%u = texture2D(Psampler%u, gl_TexCoord[%u].xy + T%u.xy);\n",
             reg1, reg1, reg1, reg2);
 }
 
@@ -1715,7 +1715,7 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
 
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%stexture2D(Psampler%lu, %s.yz))%s;\n",
+    shader_addline(arg->buffer, "%stexture2D(Psampler%u, %s.yz))%s;\n",
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
 
@@ -1733,7 +1733,7 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
 
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%stexture2D(Psampler%lu, %s.yz))%s;\n",
+    shader_addline(arg->buffer, "%stexture2D(Psampler%u, %s.yz))%s;\n",
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
 
@@ -1754,7 +1754,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
         case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
         default:
             strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#lx\n", stype);
+            FIXME("Unrecognized sampler type: %#x\n", stype);
             break;
     }
 
@@ -1762,7 +1762,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
 
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%stexture%s(Psampler%lu, %s.%s))%s;\n",
+    shader_addline(arg->buffer, "%stexture%s(Psampler%u, %s.%s))%s;\n",
             tmpLine, dimensions, src0_regnum, dst_reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz", dst_mask);
 }
 
@@ -1817,28 +1817,28 @@ void pshader_glsl_input_pack(
 
            case D3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
-                   shader_addline(buffer, "IN%lu%s = vec4(gl_Color)%s;\n",
+                   shader_addline(buffer, "IN%u%s = vec4(gl_Color)%s;\n",
                        i, reg_mask, reg_mask);
                else if (usage_idx == 1)
-                   shader_addline(buffer, "IN%lu%s = vec4(gl_SecondaryColor)%s;\n",
+                   shader_addline(buffer, "IN%u%s = vec4(gl_SecondaryColor)%s;\n",
                        i, reg_mask, reg_mask);
                else
-                   shader_addline(buffer, "IN%lu%s = vec4(unsupported_color_input)%s;\n",
+                   shader_addline(buffer, "IN%u%s = vec4(unsupported_color_input)%s;\n",
                        i, reg_mask, reg_mask);
                break;
 
            case D3DDECLUSAGE_TEXCOORD:
-               shader_addline(buffer, "IN%lu%s = vec4(gl_TexCoord[%lu])%s;\n",
+               shader_addline(buffer, "IN%u%s = vec4(gl_TexCoord[%u])%s;\n",
                    i, reg_mask, usage_idx, reg_mask );
                break;
 
            case D3DDECLUSAGE_FOG:
-               shader_addline(buffer, "IN%lu%s = vec4(gl_FogFragCoord)%s;\n",
+               shader_addline(buffer, "IN%u%s = vec4(gl_FogFragCoord)%s;\n",
                    i, reg_mask, reg_mask);
                break;
 
            default:
-               shader_addline(buffer, "IN%lu%s = vec4(unsupported_input)%s;\n",
+               shader_addline(buffer, "IN%u%s = vec4(unsupported_input)%s;\n",
                    i, reg_mask, reg_mask);
         }
     }
@@ -1872,32 +1872,32 @@ void vshader_glsl_output_unpack(
 
            case D3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
-                   shader_addline(buffer, "gl_FrontColor%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+                   shader_addline(buffer, "gl_FrontColor%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                else if (usage_idx == 1)
-                   shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+                   shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                else
-                   shader_addline(buffer, "unsupported_color_output%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+                   shader_addline(buffer, "unsupported_color_output%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
 
            case D3DDECLUSAGE_POSITION:
-               shader_addline(buffer, "gl_Position%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+               shader_addline(buffer, "gl_Position%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
  
            case D3DDECLUSAGE_TEXCOORD:
-               shader_addline(buffer, "gl_TexCoord[%lu]%s = OUT%lu%s;\n",
+               shader_addline(buffer, "gl_TexCoord[%u]%s = OUT%u%s;\n",
                    usage_idx, reg_mask, i, reg_mask);
                break;
 
            case WINED3DSHADERDECLUSAGE_PSIZE:
-               shader_addline(buffer, "gl_PointSize = OUT%lu.x;\n", i);
+               shader_addline(buffer, "gl_PointSize = OUT%u.x;\n", i);
                break;
 
            case WINED3DSHADERDECLUSAGE_FOG:
-               shader_addline(buffer, "gl_FogFragCoord%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+               shader_addline(buffer, "gl_FogFragCoord%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
 
            default:
-               shader_addline(buffer, "unsupported_output%s = OUT%lu%s;\n", reg_mask, i, reg_mask);
+               shader_addline(buffer, "unsupported_output%s = OUT%u%s;\n", reg_mask, i, reg_mask);
        }
     }
 }

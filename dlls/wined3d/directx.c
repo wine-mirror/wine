@@ -182,14 +182,14 @@ static ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, refCount - 1);
     return refCount;
 }
 
 static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -450,7 +450,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             minor = 9;
         }
         gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
-        TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08lx)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
+        TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08x)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
     }
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
@@ -1259,7 +1259,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %lx, pId=%p)\n", This, Adapter, Flags, pIdentifier);
+    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %x, pId=%p)\n", This, Adapter, Flags, pIdentifier);
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return WINED3DERR_INVALIDCALL;
@@ -1508,7 +1508,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     if (hr != WINED3D_OK)
         TRACE_(d3d_caps)("Failed to match stencil format to device\b");
 
-    TRACE_(d3d_caps)("(%p) : Returning %lx\n", This, hr);
+    TRACE_(d3d_caps)("(%p) : Returning %x\n", This, hr);
     return hr;
 }
 
@@ -1587,7 +1587,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%u,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
           This,
           Adapter,
           DeviceType, debug_d3ddevicetype(DeviceType),
@@ -2382,7 +2382,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     /* Set the state up as invalid until the device is fully created */
     object->state   = WINED3DERR_DRIVERINTERNALERROR;
 
-    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, RetDevInt: %p)\n", This, Adapter, DeviceType,
+    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %x, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, ppReturnedDeviceInterface);
 
     /* Save the creation parameters */

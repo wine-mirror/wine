@@ -65,7 +65,7 @@ x11_copy_to_screen(IWineD3DSurfaceImpl *This,
         hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS|DCX_CACHE);
         if(rc)
         {
-            TRACE(" copying rect (%ld,%ld)->(%ld,%ld), offset (%ld,%ld)\n",
+            TRACE(" copying rect (%d,%d)->(%d,%d), offset (%d,%d)\n",
             rc->left, rc->top, rc->right, rc->bottom, offset.x, offset.y);
         }
 #if 0
@@ -175,7 +175,7 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
         TRACE("Warning: trying to lock unlockable surf@%p\n", This);
     }
 
-    TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n",
+    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n",
           This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
     if(!This->resource.allocatedMemory) {
@@ -200,13 +200,13 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
         This->lockedRect.right  = This->currentDesc.Width;
         This->lockedRect.bottom = This->currentDesc.Height;
 
-        TRACE("Locked Rect (%p) = l %ld, t %ld, r %ld, b %ld\n",
+        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n",
         &This->lockedRect, This->lockedRect.left, This->lockedRect.top,
         This->lockedRect.right, This->lockedRect.bottom);
     }
     else
     {
-        TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n",
+        TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
         if ((pRect->top < 0) ||
@@ -322,7 +322,7 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Target = (IWineD3DSurfaceImpl *) override;
-    TRACE("(%p)->(%p,%lx)\n", This, override, Flags);
+    TRACE("(%p)->(%p,%x)\n", This, override, Flags);
 
     TRACE("(%p) Flipping to surface %p\n", This, Target);
 
@@ -503,13 +503,13 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
     int x, y;
     const PixelFormatDesc *sEntry, *dEntry;
     LPBYTE dbuf, sbuf;
-    TRACE("(%p)->(%p,%p,%p,%lx,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
+    TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
 
     if (TRACE_ON(d3d_surface))
     {
-        if (DestRect) TRACE("\tdestrect :%ldx%ld-%ldx%ld\n",
+        if (DestRect) TRACE("\tdestrect :%dx%d-%dx%d\n",
         DestRect->left, DestRect->top, DestRect->right, DestRect->bottom);
-        if (SrcRect) TRACE("\tsrcrect  :%ldx%ld-%ldx%ld\n",
+        if (SrcRect) TRACE("\tsrcrect  :%dx%d-%dx%d\n",
         SrcRect->left, SrcRect->top, SrcRect->right, SrcRect->bottom);
 #if 0
         TRACE("\tflags: ");
@@ -778,14 +778,14 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
             case SRCCOPY: /* well, we do that below ? */
                 break;
             default:
-                FIXME("Unsupported raster op: %08lx  Pattern: %p\n", DDBltFx->dwROP, DDBltFx->u5.lpDDSPattern);
+                FIXME("Unsupported raster op: %08x  Pattern: %p\n", DDBltFx->dwROP, DDBltFx->u5.lpDDSPattern);
                 goto error;
         }
         Flags &= ~DDBLT_ROP;
     }
     if (Flags & DDBLT_DDROPS)
     {
-        FIXME("\tDdraw Raster Ops: %08lx  Pattern: %p\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
+        FIXME("\tDdraw Raster Ops: %08x  Pattern: %p\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
     }
     /* Now the 'with source' blits */
     if (Src)
@@ -1085,7 +1085,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
 error:
     if (Flags && FIXME_ON(d3d_surface))
     {
-        FIXME("\tUnsupported flags: %08lx\n", Flags);
+        FIXME("\tUnsupported flags: %08x\n", Flags);
     }
 
 release:
@@ -1133,11 +1133,11 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
 
     if (TRACE_ON(d3d_surface))
     {
-        TRACE("(%p)->(%ld,%ld,%p,%p,%08lx)\n", This,dstx,dsty,Src,rsrc,trans);
+        TRACE("(%p)->(%d,%d,%p,%p,%08x)\n", This,dstx,dsty,Src,rsrc,trans);
 
         if (rsrc)
         {
-            TRACE("\tsrcrect: %ldx%ld-%ldx%ld\n",rsrc->left,rsrc->top,
+            TRACE("\tsrcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,
                   rsrc->right,rsrc->bottom);
         }
         else
@@ -1533,13 +1533,13 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     hr = IWineD3DSurface_GetDC(iface, &hdc);
     if(FAILED(hr))
     {
-        ERR("(%p) IWineD3DSurface::GetDC failed with hr %08lx\n", This, hr);
+        ERR("(%p) IWineD3DSurface::GetDC failed with hr %08x\n", This, hr);
         return hr;
     }
     hr = IWineD3DSurface_ReleaseDC(iface, hdc);
     if(FAILED(hr))
     {
-        ERR("(%p) IWineD3DSurface::ReleaseDC failed with hr %08lx\n", This, hr);
+        ERR("(%p) IWineD3DSurface::ReleaseDC failed with hr %08x\n", This, hr);
         return hr;
     }
 

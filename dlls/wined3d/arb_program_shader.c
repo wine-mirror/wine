@@ -163,23 +163,23 @@ void shader_generate_arb_declarations(
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
         if (reg_maps->temporary[i])
-            shader_addline(buffer, "TEMP R%lu;\n", i);
+            shader_addline(buffer, "TEMP R%u;\n", i);
     }
 
     for (i = 0; i < This->baseShader.limits.address; i++) {
         if (reg_maps->address[i])
-            shader_addline(buffer, "ADDRESS A%ld;\n", i);
+            shader_addline(buffer, "ADDRESS A%d;\n", i);
     }
 
     for(i = 0; i < This->baseShader.limits.texcoord; i++) {
         if (reg_maps->texcoord[i])
-            shader_addline(buffer,"TEMP T%lu;\n", i);
+            shader_addline(buffer,"TEMP T%u;\n", i);
     }
 
     /* Texture coordinate registers must be pre-loaded */
     for (i = 0; i < This->baseShader.limits.texcoord; i++) {
         if (reg_maps->texcoord[i])
-            shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+            shader_addline(buffer, "MOV T%u, fragment.texcoord[%u];\n", i, i);
     }
 
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
@@ -315,7 +315,7 @@ static void pshader_get_register_name(
 
     switch (regtype) {
     case D3DSPR_TEMP:
-        sprintf(regstr, "R%lu", reg);
+        sprintf(regstr, "R%u", reg);
     break;
     case D3DSPR_INPUT:
         if (reg==0) {
@@ -325,17 +325,17 @@ static void pshader_get_register_name(
         }
     break;
     case D3DSPR_CONST:
-        sprintf(regstr, "C[%lu]", reg);
+        sprintf(regstr, "C[%u]", reg);
     break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
-        sprintf(regstr,"T%lu", reg);
+        sprintf(regstr,"T%u", reg);
     break;
     case D3DSPR_COLOROUT:
         if (reg == 0)
             sprintf(regstr, "result.color");
         else {
             /* TODO: See GL_ARB_draw_buffers */
-            FIXME("Unsupported write to render target %lu\n", reg);
+            FIXME("Unsupported write to render target %u\n", reg);
             sprintf(regstr, "unsupported_register");
         }
     break;
@@ -343,13 +343,13 @@ static void pshader_get_register_name(
         sprintf(regstr, "result.depth");
     break;
     case D3DSPR_ATTROUT:
-        sprintf(regstr, "oD[%lu]", reg);
+        sprintf(regstr, "oD[%u]", reg);
     break;
     case D3DSPR_TEXCRDOUT:
-        sprintf(regstr, "oT[%lu]", reg);
+        sprintf(regstr, "oT[%u]", reg);
     break;
     default:
-        FIXME("Unhandled register name Type(%ld)\n", regtype);
+        FIXME("Unhandled register name Type(%d)\n", regtype);
         sprintf(regstr, "unrecognized_register");
     break;
     }
@@ -376,7 +376,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
 
   switch (regtype) {
   case D3DSPR_TEMP:
-    sprintf(tmpReg, "R%lu", reg);
+    sprintf(tmpReg, "R%u", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_INPUT:
@@ -384,15 +384,15 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
         is_color = TRUE;
 
-    sprintf(tmpReg, "vertex.attrib[%lu]", reg);
+    sprintf(tmpReg, "vertex.attrib[%u]", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_CONST:
-    sprintf(tmpReg, "C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
+    sprintf(tmpReg, "C[%s%u]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
-    sprintf(tmpReg, "A%lu", reg);
+    sprintf(tmpReg, "A%u", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_RASTOUT:
@@ -407,11 +407,11 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     }
     break;
   case D3DSPR_TEXCRDOUT:
-    sprintf(tmpReg, "result.texcoord[%lu]", reg);
+    sprintf(tmpReg, "result.texcoord[%u]", reg);
     strcat(hwLine, tmpReg);
     break;
   default:
-    FIXME("Unknown reg type %ld %ld\n", regtype, reg);
+    FIXME("Unknown reg type %d %d\n", regtype, reg);
     strcat(hwLine, "unrecognized_register");
     break;
   }
@@ -577,10 +577,10 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
          partialprecision = mask & D3DSPDM_PARTIALPRECISION;
          mask &= ~(D3DSPDM_MSAMPCENTROID | D3DSPDM_PARTIALPRECISION | D3DSPDM_SATURATE);
          if (mask)
-            FIXME("Unrecognized modifier(0x%#lx)\n", mask >> D3DSP_DSTMOD_SHIFT);
+            FIXME("Unrecognized modifier(0x%#x)\n", mask >> D3DSP_DSTMOD_SHIFT);
 
          if (centroid)
-             FIXME("Unhandled modifier(0x%#lx)\n", mask >> D3DSP_DSTMOD_SHIFT);
+             FIXME("Unhandled modifier(0x%#x)\n", mask >> D3DSP_DSTMOD_SHIFT);
      }
      shift = (dst & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
 
@@ -669,15 +669,15 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
          break;
 
      default:
-         ERR("Unexpected texture type %ld\n", sampler_type);
+         ERR("Unexpected texture type %d\n", sampler_type);
          tex_type = "2D";
   }
 
   if (deviceImpl->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
-      shader_addline(buffer, "TXP %s, %s, texture[%lu], %s;\n",
+      shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n",
           reg_dest, reg_coord, reg_sampler_code, tex_type);
   } else {
-      shader_addline(buffer, "TEX %s, %s, texture[%lu], %s;\n",
+      shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n",
                      reg_dest, reg_coord, reg_sampler_code, tex_type);
   }
 }
@@ -694,11 +694,11 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
     pshader_get_write_mask(dst, tmp);
     if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = dst & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "MOV_SAT T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
+        shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
         DWORD reg1 = dst & D3DSP_REGNUM_MASK;
         DWORD reg2 = src[0] & D3DSP_REGNUM_MASK;
-        shader_addline(buffer, "MOV R%lu%s, fragment.texcoord[%lu];\n", reg1, tmp, reg2);
+        shader_addline(buffer, "MOV R%u%s, fragment.texcoord[%u];\n", reg1, tmp, reg2);
    }
 }
 
@@ -708,9 +708,9 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
-     shader_addline(buffer, "MOV TMP.r, T%lu.a;\n", reg2);
-     shader_addline(buffer, "MOV TMP.g, T%lu.r;\n", reg2);
-     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+     shader_addline(buffer, "MOV TMP.r, T%u.a;\n", reg2);
+     shader_addline(buffer, "MOV TMP.g, T%u.r;\n", reg2);
+     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
 }
 
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
@@ -719,9 +719,9 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
-     shader_addline(buffer, "MOV TMP.r, T%lu.g;\n", reg2);
-     shader_addline(buffer, "MOV TMP.g, T%lu.b;\n", reg2);
-     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+     shader_addline(buffer, "MOV TMP.r, T%u.g;\n", reg2);
+     shader_addline(buffer, "MOV TMP.g, T%u.b;\n", reg2);
+     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
 }
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
@@ -731,8 +731,8 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
      DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
 
      /* FIXME: Should apply the BUMPMAPENV matrix */
-     shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%lu], T%lu;\n", reg1, reg2);
-     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+     shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%u], T%u;\n", reg1, reg2);
+     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
 }
 
 void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
@@ -742,7 +742,7 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.x, T%u, %s;\n", reg, src0_name);
 }
 
 void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
@@ -752,8 +752,8 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.y, T%lu, %s;\n", reg, src0_name);
-    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
+    shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg, reg);
 }
 
 void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
@@ -765,7 +765,7 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state->current_row, reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.%c, T%u, %s;\n", 'x' + current_state->current_row, reg, src0_name);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
@@ -778,10 +778,10 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
     /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
     current_state->current_row = 0;
 }
 
@@ -794,12 +794,12 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
-    shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", current_state->texcoord_w[0]);
-    shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%lu].w;\n", current_state->texcoord_w[1]);
-    shader_addline(buffer, "MOV TMP2.z, fragment.texcoord[%lu].w;\n", reg);
+    shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%u].w;\n", current_state->texcoord_w[0]);
+    shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%u].w;\n", current_state->texcoord_w[1]);
+    shader_addline(buffer, "MOV TMP2.z, fragment.texcoord[%u].w;\n", reg);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
     shader_addline(buffer, "DP3 TMP.w, TMP, TMP2;\n");
@@ -807,7 +807,7 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -TMP2;\n");
 
     /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
     current_state->current_row = 0;
 }
 
@@ -821,15 +821,15 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
-    shader_addline(buffer, "DP3 TMP.w, TMP, C[%lu];\n", reg3);
+    shader_addline(buffer, "DP3 TMP.w, TMP, C[%u];\n", reg3);
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
-    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%lu];\n", reg3);
+    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%u];\n", reg3);
 
     /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
     current_state->current_row = 0;
 }
 

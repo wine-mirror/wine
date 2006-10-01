@@ -217,7 +217,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, refCount - 1);
     return refCount;
 }
 
@@ -225,7 +225,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
+    TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
         constant_entry *constant, *constant2;
@@ -412,7 +412,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
                 /* If the light exists, copy its parameters, otherwise copy the default parameters */
                 const WINED3DLIGHT* params = realLight? &realLight->OriginalParms: &WINED3D_default_light;
-                TRACE("Updating lights for light %ld\n", src->OriginalIndex);
+                TRACE("Updating lights for light %d\n", src->OriginalIndex);
                 memcpy(&src->OriginalParms, params, sizeof(*params));
             }
 
@@ -420,7 +420,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             if (src->enabledChanged) {
 
                 /* If the light exists, check if it's enabled, otherwise default is disabled state */
-                TRACE("Updating lightEnabled for light %ld\n", src->OriginalIndex);
+                TRACE("Updating lightEnabled for light %d\n", src->OriginalIndex);
                 src->lightEnabled = realLight? realLight->lightEnabled: FALSE;
             }
 
@@ -567,7 +567,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         for (i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
 
             if (This->set.renderState[i] && (This->renderState[i] != targetStateBlock->renderState[i])) {
-                TRACE("Updating renderState %d to %ld\n", i, targetStateBlock->renderState[i]);
+                TRACE("Updating renderState %d to %d\n", i, targetStateBlock->renderState[i]);
                 This->renderState[i] = targetStateBlock->renderState[i];
             }
         }
@@ -577,7 +577,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             /* TODO: move over to using memcpy */
             for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE ; i++) {
                 if (This->set.textureState[j][i]) {
-                    TRACE("Updating texturestagestate %d,%d to %ld (was %ld)\n", j,i, targetStateBlock->textureState[j][i],
+                    TRACE("Updating texturestagestate %d,%d to %d (was %d)\n", j,i, targetStateBlock->textureState[j][i],
                     This->textureState[j][i]);
                     This->textureState[j][i]         =  targetStateBlock->textureState[j][i];
                 }
@@ -593,7 +593,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             }
             for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
                 if (This->set.samplerState[j][i]) {
-                    TRACE("Updating sampler state %d,%d to %ld (was %ld)\n",
+                    TRACE("Updating sampler state %d,%d to %d (was %d)\n",
                     j, i, targetStateBlock->samplerState[j][i],
                     This->samplerState[j][i]);
                     This->samplerState[j][i]         = targetStateBlock->samplerState[j][i];

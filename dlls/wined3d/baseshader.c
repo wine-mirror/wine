@@ -81,7 +81,7 @@ const SHADER_OPCODE* shader_get_opcode(
         }
         ++i;
     }
-    FIXME("Unsupported opcode %#lx(%ld) masked %#lx, shader version %#lx\n", 
+    FIXME("Unsupported opcode %#x(%d) masked %#x, shader version %#x\n", 
        code, code, code & D3DSI_OPCODE_MASK, hex_version);
     return NULL;
 }
@@ -144,8 +144,8 @@ int shader_skip_unrecognized(
         tokens_read += shader_get_param(iface, pToken, &param, &addr_token);
         pToken += tokens_read;
 
-        FIXME("Unrecognized opcode param: token=%08lX "
-            "addr_token=%08lX name=", param, addr_token);
+        FIXME("Unrecognized opcode param: token=%08x "
+            "addr_token=%08x name=", param, addr_token);
         shader_dump_param(iface, param, addr_token, i);
         FIXME("\n");
         ++i;
@@ -302,7 +302,7 @@ HRESULT shader_get_registers_used(
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
 
                 if(!stateBlock->textures[sampler_code]) {
-                    ERR("No texture bound to sampler %ld\n", sampler_code);
+                    ERR("No texture bound to sampler %d\n", sampler_code);
                     reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
                 } else {
                     int texType = IWineD3DBaseTexture_GetTextureDimensions(stateBlock->textures[sampler_code]);
@@ -404,7 +404,7 @@ static void shader_dump_decl_usage(
             case WINED3DSTT_2D: TRACE("_2d"); break;
             case WINED3DSTT_CUBE: TRACE("_cube"); break;
             case WINED3DSTT_VOLUME: TRACE("_volume"); break;
-            default: TRACE("_unknown_ttype(%08lx)", ttype); 
+            default: TRACE("_unknown_ttype(%08x)", ttype); 
        }
 
     } else { 
@@ -421,7 +421,7 @@ static void shader_dump_decl_usage(
 
         switch(usage) {
         case D3DDECLUSAGE_POSITION:
-            TRACE("%s%ld", "position", idx);
+            TRACE("%s%d", "position", idx);
             break;
         case D3DDECLUSAGE_BLENDINDICES:
             TRACE("%s", "blend");
@@ -430,7 +430,7 @@ static void shader_dump_decl_usage(
             TRACE("%s", "weight");
             break;
         case D3DDECLUSAGE_NORMAL:
-            TRACE("%s%ld", "normal", idx);
+            TRACE("%s%d", "normal", idx);
             break;
         case D3DDECLUSAGE_PSIZE:
             TRACE("%s", "psize");
@@ -439,11 +439,11 @@ static void shader_dump_decl_usage(
             if(idx == 0)  {
                 TRACE("%s", "color");
             } else {
-                TRACE("%s%ld", "specular", (idx - 1));
+                TRACE("%s%d", "specular", (idx - 1));
             }
             break;
         case D3DDECLUSAGE_TEXCOORD:
-            TRACE("%s%ld", "texture", idx);
+            TRACE("%s%d", "texture", idx);
             break;
         case D3DDECLUSAGE_TANGENT:
             TRACE("%s", "tangent");
@@ -455,7 +455,7 @@ static void shader_dump_decl_usage(
             TRACE("%s", "tessfactor");
             break;
         case D3DDECLUSAGE_POSITIONT:
-            TRACE("%s%ld", "positionT", idx);
+            TRACE("%s%d", "positionT", idx);
             break;
         case D3DDECLUSAGE_FOG:
             TRACE("%s", "fog");
@@ -467,7 +467,7 @@ static void shader_dump_decl_usage(
             TRACE("%s", "sample");
             break;
         default:
-            FIXME("unknown_semantics(%08lx)", usage);
+            FIXME("unknown_semantics(%08x)", usage);
         }
     }
 }
@@ -538,7 +538,7 @@ void shader_dump_param(
 
     switch (regtype) {
         case D3DSPR_TEMP:
-            TRACE("r%lu", reg);
+            TRACE("r%u", reg);
             break;
         case D3DSPR_INPUT:
             TRACE("v");
@@ -552,19 +552,19 @@ void shader_dump_param(
             shader_dump_arr_entry(iface, param, addr_token, shader_get_float_offset(param), input);
             break;
         case D3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
-            TRACE("%c%lu", (pshader? 't':'a'), reg);
+            TRACE("%c%u", (pshader? 't':'a'), reg);
             break;        
         case D3DSPR_RASTOUT:
             TRACE("%s", rastout_reg_names[reg]);
             break;
         case D3DSPR_COLOROUT:
-            TRACE("oC%lu", reg);
+            TRACE("oC%u", reg);
             break;
         case D3DSPR_DEPTHOUT:
             TRACE("oDepth");
             break;
         case D3DSPR_ATTROUT:
-            TRACE("oD%lu", reg);
+            TRACE("oD%u", reg);
             break;
         case D3DSPR_TEXCRDOUT: 
 
@@ -576,7 +576,7 @@ void shader_dump_param(
                 shader_dump_arr_entry(iface, param, addr_token, reg, input);
             }
             else 
-               TRACE("oT%lu", reg);
+               TRACE("oT%u", reg);
             break;
         case D3DSPR_CONSTINT:
             TRACE("i");
@@ -587,19 +587,19 @@ void shader_dump_param(
             shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
         case D3DSPR_LABEL:
-            TRACE("l%lu", reg);
+            TRACE("l%u", reg);
             break;
         case D3DSPR_LOOP:
             TRACE("aL");
             break;
         case D3DSPR_SAMPLER:
-            TRACE("s%lu", reg);
+            TRACE("s%u", reg);
             break;
         case D3DSPR_PREDICATE:
-            TRACE("p%lu", reg);
+            TRACE("p%u", reg);
             break;
         default:
-            TRACE("unhandled_rtype(%#lx)", regtype);
+            TRACE("unhandled_rtype(%#x)", regtype);
             break;
    }
 
@@ -639,7 +639,7 @@ void shader_dump_param(
                 case D3DSPSM_ABSNEG:  TRACE(")"); break;
                 case D3DSPSM_ABS:     TRACE(")"); break;
                 default:
-                    TRACE("_unknown_modifier(%#lx)", modifier >> D3DSP_SRCMOD_SHIFT);
+                    TRACE("_unknown_modifier(%#x)", modifier >> D3DSP_SRCMOD_SHIFT);
             }
         }
 
@@ -720,7 +720,7 @@ void shader_generate_main(
 
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
-                FIXME("Unrecognized opcode: token=%08lX\n", hw_arg.opcode_token);
+                FIXME("Unrecognized opcode: token=%08x\n", hw_arg.opcode_token);
                 pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* Nothing to do */
@@ -793,7 +793,7 @@ void shader_dump_ins_modifiers(const DWORD output) {
         case 1: TRACE("_x2"); break;
         case 2: TRACE("_x4"); break;
         case 3: TRACE("_x8"); break;
-        default: TRACE("_unhandled_shift(%ld)", shift); break;
+        default: TRACE("_unhandled_shift(%d)", shift); break;
     }
 
     if (mmask & D3DSPDM_SATURATE)         TRACE("_sat");
@@ -802,7 +802,7 @@ void shader_dump_ins_modifiers(const DWORD output) {
 
     mmask &= ~(D3DSPDM_SATURATE | D3DSPDM_PARTIALPRECISION | D3DSPDM_MSAMPCENTROID);
     if (mmask)
-        FIXME("_unrecognized_modifier(%#lx)", mmask >> D3DSP_DSTMOD_SHIFT);
+        FIXME("_unrecognized_modifier(%#x)", mmask >> D3DSP_DSTMOD_SHIFT);
 }
 
 /* First pass: trace shader, initialize length and version */
@@ -824,7 +824,7 @@ void shader_trace_init(
         while (D3DVS_END() != *pToken) {
             if (shader_is_version_token(*pToken)) { /** version */
                 This->baseShader.hex_version = *pToken;
-                TRACE("%s_%lu_%lu\n", shader_is_pshader_version(This->baseShader.hex_version)? "ps": "vs",
+                TRACE("%s_%u_%u\n", shader_is_pshader_version(This->baseShader.hex_version)? "ps": "vs",
                     D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version),
                     D3DSHADER_VERSION_MINOR(This->baseShader.hex_version));
                 ++pToken;
@@ -845,7 +845,7 @@ void shader_trace_init(
 
             if (NULL == curOpcode) {
                 int tokens_read;
-                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                FIXME("Unrecognized opcode: token=%08x\n", opcode_token);
                 tokens_read = shader_skip_unrecognized(iface, pToken);
                 pToken += tokens_read;
                 len += tokens_read;
@@ -877,18 +877,18 @@ void shader_trace_init(
                         len += 5;
                 } else if (curOpcode->opcode == D3DSIO_DEFI) {
 
-                        TRACE("defi i%lu = %ld, %ld, %ld, %ld", *pToken & D3DSP_REGNUM_MASK,
-                            (long) *(pToken + 1),
-                            (long) *(pToken + 2),
-                            (long) *(pToken + 3),
-                            (long) *(pToken + 4));
+                        TRACE("defi i%u = %d, %d, %d, %d", *pToken & D3DSP_REGNUM_MASK,
+                            *(pToken + 1),
+                            *(pToken + 2),
+                            *(pToken + 3),
+                            *(pToken + 4));
 
                         pToken += 5;
                         len += 5;
 
                 } else if (curOpcode->opcode == D3DSIO_DEFB) {
 
-                        TRACE("defb b%lu = %s", *pToken & D3DSP_REGNUM_MASK,
+                        TRACE("defb b%u = %s", *pToken & D3DSP_REGNUM_MASK,
                             *(pToken + 1)? "true": "false");
 
                         pToken += 2;
@@ -921,7 +921,7 @@ void shader_trace_init(
                             case COMPARISON_NE: TRACE("_ne"); break;
                             case COMPARISON_LE: TRACE("_le"); break;
                             default:
-                                TRACE("_(%lu)", op);
+                                TRACE("_(%u)", op);
                         }
                     }
 

@@ -246,7 +246,7 @@ const char* debug_d3dusage(DWORD usage) {
 #undef WINED3DUSAGE_TO_STR
   case 0: return "none";
   default:
-    FIXME("Unrecognized %lu Usage!\n", usage);
+    FIXME("Unrecognized %u Usage!\n", usage);
     return "unrecognized";
   }
 }
@@ -264,7 +264,7 @@ const char* debug_d3dusagequery(DWORD usagequery) {
 #undef WINED3DUSAGEQUERY_TO_STR
   case 0: return "none";
   default:
-    FIXME("Unrecognized %lu Usage Query!\n", usagequery);
+    FIXME("Unrecognized %u Usage Query!\n", usagequery);
     return "unrecognized";
   }
 }
@@ -511,7 +511,7 @@ const char* debug_d3drenderstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DRS_BLENDOPALPHA              );
 #undef D3DSTATE_TO_STR
   default:
-    FIXME("Unrecognized %lu render state!\n", state);
+    FIXME("Unrecognized %u render state!\n", state);
     return "unrecognized";
   }
 }
@@ -534,7 +534,7 @@ const char* debug_d3dsamplerstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DSAMP_DMAPOFFSET   );
 #undef D3DSTATE_TO_STR
   default:
-    FIXME("Unrecognized %lu sampler state!\n", state);
+    FIXME("Unrecognized %u sampler state!\n", state);
     return "unrecognized";
   }
 }
@@ -567,7 +567,7 @@ const char* debug_d3dtexturestate(DWORD state) {
     return "unused";
     break;
   default:
-    FIXME("Unrecognized %lu texture state!\n", state);
+    FIXME("Unrecognized %u texture state!\n", state);
     return "unrecognized";
   }
 }
@@ -660,7 +660,7 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
     case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
     default:
-        FIXME("Unrecognized stencil op %ld\n", op);
+        FIXME("Unrecognized stencil op %d\n", op);
         return GL_KEEP;
     }
 }
@@ -676,7 +676,7 @@ GLenum CompareFunc(DWORD func) {
     case D3DCMP_GREATEREQUAL : return GL_GEQUAL;
     case D3DCMP_ALWAYS       : return GL_ALWAYS;
     default:
-        FIXME("Unrecognized D3DCMPFUNC value %ld\n", func);
+        FIXME("Unrecognized D3DCMPFUNC value %d\n", func);
         return 0;
     }
 }
@@ -711,7 +711,7 @@ static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx)
             return GL_CONSTANT_COLOR1_NV;
 
         default:
-            FIXME("Unrecognized texture arg %#lx\n", d3dta);
+            FIXME("Unrecognized texture arg %#x\n", d3dta);
             return GL_TEXTURE;
     }
 }
@@ -761,7 +761,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
     GLenum target = GL_COMBINER0_NV + stage;
 
-    TRACE("stage %d, is_alpha %d, op %s, arg1 %#lx, arg2 %#lx, arg3 %#lx, texture_idx %d\n",
+    TRACE("stage %d, is_alpha %d, op %s, arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d\n",
             stage, is_alpha, debug_d3dtop(op), arg1, arg2, arg3, texture_idx);
 
     /* If a texture stage references an invalid texture unit the stage just
@@ -1044,7 +1044,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
             break;
 
         default:
-            FIXME("Unhandled D3DTOP: stage %d, is_alpha %d, op %s (%#x), arg1 %#lx, arg2 %#lx, arg3 %#lx, texture_idx %d\n",
+            FIXME("Unhandled D3DTOP: stage %d, is_alpha %d, op %s (%#x), arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d\n",
                     stage, is_alpha, debug_d3dtop(op), op, arg1, arg2, arg3, texture_idx);
     }
 
@@ -1085,7 +1085,7 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
             *source = GL_TEXTURE;
             break;
         default:
-            FIXME("Unrecognized texture arg %#lx\n", arg);
+            FIXME("Unrecognized texture arg %#x\n", arg);
             *source = GL_TEXTURE;
             break;
     }
@@ -1126,7 +1126,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
         BOOL Handled = FALSE;
         IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-        TRACE("Alpha?(%d), Stage:%d Op(%s), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, debug_d3dtop(op), arg1, arg2, arg3);
+        TRACE("Alpha?(%d), Stage:%d Op(%s), a1(%d), a2(%d), a3(%d)\n", isAlpha, Stage, debug_d3dtop(op), arg1, arg2, arg3);
 
         ENTER_GL();
 
@@ -2523,7 +2523,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     int y1 = Rect->top, y2 = Rect->bottom;
     GLint maxSize = GL_LIMITS(texture_size);
 
-    TRACE("(%p)->(%ld,%ld)-(%ld,%ld)\n", This,
+    TRACE("(%p)->(%d,%d)-(%d,%d)\n", This,
           Rect->left, Rect->top, Rect->right, Rect->bottom);
 
     /* The sizes might be reversed */
@@ -2608,7 +2608,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
                 This->glRect.top = 0;
                 This->glRect.bottom = This->pow2Height;
             }
-            TRACE("(%p): Using rect (%ld,%ld)-(%ld,%ld)\n", This,
+            TRACE("(%p): Using rect (%d,%d)-(%d,%d)\n", This,
                    This->glRect.left, This->glRect.top, This->glRect.right, This->glRect.bottom);
         }
 

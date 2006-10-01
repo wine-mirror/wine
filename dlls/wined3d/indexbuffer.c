@@ -49,14 +49,14 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_QueryInterface(IWineD3DIndexBuffer
 static ULONG WINAPI IWineD3DIndexBufferImpl_AddRef(IWineD3DIndexBuffer *iface) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, ref - 1);
     return ref;
 }
 
 static ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
@@ -108,7 +108,7 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_GetParent(IWineD3DIndexBuffer *ifa
    ****************************************************** */
 static HRESULT WINAPI IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
-    TRACE("(%p) : no real locking yet, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
+    TRACE("(%p) : no real locking yet, offset %d, size %d, Flags=%x\n", This, OffsetToLock, SizeToLock, Flags);
     *ppbData = (BYTE *)This->resource.allocatedMemory + OffsetToLock;
     return WINED3D_OK;
 }

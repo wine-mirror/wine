@@ -206,14 +206,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID
 ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This,ref - 1);
     return ref;
 }
 
 ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
+    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
         TRACE("(%p) : cleaning up\n", This);
@@ -579,13 +579,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 }
             }
             if (backbuf) {
-                TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+                TRACE("(%p, backBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
             } else if (swapchain != NULL && iface ==  swapchain->frontBuffer) {
-                TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+                TRACE("(%p, frontBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
             } else if (iface == myDevice->renderTarget) {
-                TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+                TRACE("(%p, renderTarget) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
             } else if (iface == myDevice->depthStencilBuffer) {
-                TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+                TRACE("(%p, stencilBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
             }
 
             if (NULL != swapchain) {
@@ -594,7 +594,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             swapchain = NULL;
         }
     } else {
-        TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+        TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
     }
 
     pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
@@ -605,9 +605,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         This->lockedRect.top    = 0;
         This->lockedRect.right  = This->currentDesc.Width;
         This->lockedRect.bottom = This->currentDesc.Height;
-        TRACE("Locked Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
+        TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
     } else {
-        TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
+        TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
         if ((pRect->top < 0) ||
              (pRect->left < 0) ||
@@ -1387,7 +1387,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        TRACE("Creating a DIB section with size %ldx%ldx%d, size=%ld\n", b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight, b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
+        TRACE("Creating a DIB section with size %dx%dx%d, size=%d\n", b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight, b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
         This->dib.DIBsection = CreateDIBSection(ddc, b_info, usage, &This->dib.bitmap_data, 0 /* Handle */, 0 /* Offset */);
         DeleteDC(ddc);
 
@@ -1431,7 +1431,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                                   NULL,
                                   0);
     if(FAILED(hr)) {
-        ERR("IWineD3DSurface_LockRect failed with hr = %08lx\n", hr);
+        ERR("IWineD3DSurface_LockRect failed with hr = %08x\n", hr);
         /* keep the dib section */
         return hr;
     }
@@ -2103,7 +2103,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
     This->dirtyRect.top    = This->currentDesc.Height;
     This->dirtyRect.right  = 0;
     This->dirtyRect.bottom = 0;
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY ? 1 : 0, This->dirtyRect.left,
+    TRACE("(%p) : Dirty?%d, Rect:(%d,%d,%d,%d)\n", This, This->Flags & SFLAG_DIRTY ? 1 : 0, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     return WINED3D_OK;
 }
@@ -2126,7 +2126,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
         This->dirtyRect.right  = This->currentDesc.Width;
         This->dirtyRect.bottom = This->currentDesc.Height;
     }
-    TRACE("(%p) : Dirty?%ld, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY, This->dirtyRect.left,
+    TRACE("(%p) : Dirty?%d, Rect:(%d,%d,%d,%d)\n", This, This->Flags & SFLAG_DIRTY, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
@@ -2262,7 +2262,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
 static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDevice *D3D = (IWineD3DDevice *) This->resource.wineD3DDevice;
-    TRACE("(%p)->(%p,%lx)\n", This, override, Flags);
+    TRACE("(%p)->(%p,%x)\n", This, override, Flags);
 
     /* Flipping is only supported on RenderTargets */
     if( !(This->resource.usage & WINED3DUSAGE_RENDERTARGET) ) return DDERR_NOTFLIPPABLE;
@@ -2287,7 +2287,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     BOOL SrcOK = TRUE;
 
-    TRACE("(%p)->(%p,%p,%p,%08lx,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
+    TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
     IWineD3DSurface_GetContainer( (IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
@@ -2399,7 +2399,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             if(!CalculateTexRect(Src, &SourceRectangle, glTexCoord)) {
                 /* Fall back to software */
-                WARN("(%p) Source texture area (%ld,%ld)-(%ld,%ld) is too big\n", Src,
+                WARN("(%p) Source texture area (%d,%d)-(%d,%d) is too big\n", Src,
                      SourceRectangle.left, SourceRectangle.top,
                      SourceRectangle.right, SourceRectangle.bottom);
                 return WINED3DERR_INVALIDCALL;
@@ -2748,7 +2748,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             return WINED3DERR_INVALIDCALL;
         }
 
-        TRACE("(%p) executing Render Target override, color = %lx\n", This, color);
+        TRACE("(%p) executing Render Target override, color = %x\n", This, color);
 
         IWineD3DDevice_Clear( (IWineD3DDevice *) myDevice,
                               1 /* Number of rectangles */,
@@ -2774,7 +2774,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
-    TRACE("(%p)->(%p,%p,%p,%lx,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
+    TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
     TRACE("(%p): Usage is %s\n", This, debug_d3dusage(This->resource.usage));
 
     /* Special cases for RenderTargets */
@@ -2792,7 +2792,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *Dest
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    TRACE("(%p)->(%lx)\n", This, Flags);
+    TRACE("(%p)->(%x)\n", This, Flags);
 
     switch (Flags)
     {
@@ -2808,7 +2808,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Fl
 HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags) {
     /* XXX: DDERR_INVALIDSURFACETYPE */
 
-    TRACE("(%p)->(%08lx)\n",iface,Flags);
+    TRACE("(%p)->(%08x)\n",iface,Flags);
     switch (Flags) {
     case DDGFS_CANFLIP:
     case DDGFS_ISFLIPDONE:
@@ -2838,7 +2838,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
 HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *srcImpl = (IWineD3DSurfaceImpl *) Source;
-    TRACE("(%p)->(%ld, %ld, %p, %p, %08lx\n", iface, dstx, dsty, Source, rsrc, trans);
+    TRACE("(%p)->(%d, %d, %p, %p, %08x\n", iface, dstx, dsty, Source, rsrc, trans);
 
     /* Special cases for RenderTargets */
     if( (This->resource.usage & WINED3DUSAGE_RENDERTARGET) ||
@@ -2958,10 +2958,10 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)->(%08lx,%p)\n", This, Flags, CKey);
+    TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
     if ((Flags & DDCKEY_COLORSPACE) != 0) {
-        FIXME(" colorkey value not supported (%08lx) !\n", Flags);
+        FIXME(" colorkey value not supported (%08x) !\n", Flags);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -3067,7 +3067,7 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
         /* Surfaces are 32 bit aligned */
         ret = (ret + 3) & ~3;
     }
-    TRACE("(%p) Returning %ld\n", This, ret);
+    TRACE("(%p) Returning %d\n", This, ret);
     return ret;
 }
 

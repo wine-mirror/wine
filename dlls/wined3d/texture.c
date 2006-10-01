@@ -48,14 +48,14 @@ static HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface,
 
 static ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
 
 static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         int i;

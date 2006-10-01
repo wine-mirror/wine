@@ -463,7 +463,7 @@ void primitiveDeclarationConvertToStridedData(
 
         if (stride_used) {
            TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
-                 "stream=%u, offset=%u, stride=%lu, VBO=%u]\n",
+                 "stream=%u, offset=%u, stride=%u, VBO=%u]\n",
                  useVertexShaderFunction? "shader": "fixed function", idx,
                  debug_d3ddeclusage(element->Usage), element->UsageIndex,
                  element->Stream, element->Offset, stride, streamVBO);
@@ -882,7 +882,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
 #endif
 
-            TRACE("Blend %d %p %ld\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
+            TRACE("Blend %d %p %d\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
                 sd->u.s.blendWeights.lpData, sd->u.s.blendWeights.dwStride);
             /* FIXME("TODO\n");*/
             /* Note dwType == float3 or float4 == 2 or 3 */
@@ -895,7 +895,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 #endif
 
 
-            VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %ld, %p)\n",
+            VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %d, %p)\n",
                 WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) ,
                 sd->u.s.blendWeights.dwStride,
                 sd->u.s.blendWeights.lpData));
@@ -1026,7 +1026,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     /* Vertex Pointers -----------------------------------------*/
     if (sd->u.s.position.lpData != NULL || sd->u.s.position.VBO != 0) {
         /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glVertexPointer(%ld, GL_FLOAT, %ld, %p)\n",
+        VTRACE(("glVertexPointer(%d, GL_FLOAT, %d, %p)\n",
                 sd->u.s.position.dwStride,
                 sd->u.s.position.dwType + 1,
                 sd->u.s.position.lpData));
@@ -1067,7 +1067,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     /* Normals -------------------------------------------------*/
     if (sd->u.s.normal.lpData || sd->u.s.normal.VBO) {
         /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glNormalPointer(GL_FLOAT, %ld, %p)\n",
+        VTRACE(("glNormalPointer(GL_FLOAT, %d, %p)\n",
                 sd->u.s.normal.dwStride,
                 sd->u.s.normal.lpData));
         if(curVBO != sd->u.s.normal.VBO) {
@@ -1101,7 +1101,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
     if (sd->u.s.diffuse.lpData || sd->u.s.diffuse.VBO) {
         /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glColorPointer(4, GL_UNSIGNED_BYTE, %ld, %p)\n",
+        VTRACE(("glColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n",
                 sd->u.s.diffuse.dwStride,
                 sd->u.s.diffuse.lpData));
 
@@ -1128,7 +1128,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     if (sd->u.s.specular.lpData || sd->u.s.specular.VBO) {
         TRACE("setting specular colour\n");
         /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %ld, %p)\n",
+        VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n",
                 sd->u.s.specular.dwStride,
                 sd->u.s.specular.lpData));
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
@@ -1227,7 +1227,7 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (idxData != NULL /* This crashes sometimes!*/) {
-        TRACE("(%p) : glElements(%x, %d, %ld, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
+        TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
         idxData = idxData == (void *)-1 ? NULL : idxData;
 #if 1
 #if 0
@@ -1306,10 +1306,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2) {
-                VTRACE(("Idx for vertex %ld = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
                 SkipnStrides = pIdxBufS[startIdx + vx_index];
             } else {
-                VTRACE(("Idx for vertex %ld = %ld\n", vx_index, pIdxBufL[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
                 SkipnStrides = pIdxBufL[startIdx + vx_index];
             }
         }
@@ -1442,7 +1442,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                             case 4:  /* Nop here */
                                 break;
                             default:
-                                FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %ld\n",
+                                FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %d\n",
                                       This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
                             }
                         }
@@ -1628,10 +1628,10 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2) {
-                VTRACE(("Idx for vertex %ld = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
                 SkipnStrides = pIdxBufS[startIdx+vx_index];
             } else {
-                VTRACE(("Idx for vertex %ld = %ld\n", vx_index, pIdxBufL[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
                 SkipnStrides = pIdxBufL[startIdx+vx_index];
             }
         }
@@ -2214,7 +2214,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             WINED3DLOCKED_RECT r;
             char buffer[80];
             IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, WINED3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);
+            sprintf(buffer, "/tmp/backbuffer_%d.tga", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IWineD3DSurface_SaveSnapshot(This->renderTarget, buffer);
             IWineD3DSurface_UnlockRect(This->renderTarget);
@@ -2225,7 +2225,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             int textureNo;
             for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
-                    sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
+                    sprintf(buffer, "/tmp/texture_%p_%d_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
                     if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
                             IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[textureNo], 0, &pSur);
@@ -2239,7 +2239,7 @@ void drawPrimitive(IWineD3DDevice *iface,
            }
 #endif
         }
-        TRACE("drawprim #%ld\n", primCounter);
+        TRACE("drawprim #%d\n", primCounter);
         ++primCounter;
     }
 #endif

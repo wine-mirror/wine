@@ -58,7 +58,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 static ULONG WINAPI IWineD3DSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     DWORD refCount = InterlockedIncrement(&This->ref);
-    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    TRACE("(%p) : AddRef increasing from %d\n", This, refCount - 1);
     return refCount;
 }
 
@@ -86,7 +86,7 @@ static ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     DWORD refCount;
     refCount = InterlockedDecrement(&This->ref);
-    TRACE("(%p) : ReleaseRef to %ld\n", This, refCount);
+    TRACE("(%p) : ReleaseRef to %d\n", This, refCount);
     if (refCount == 0) {
         IUnknown* bufferParent;
 
@@ -554,7 +554,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *ifac
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC hDC;
-    TRACE("(%p) : pRamp@%p flags(%ld)\n", This, pRamp, Flags);
+    TRACE("(%p) : pRamp@%p flags(%d)\n", This, pRamp, Flags);
     hDC = GetDC(This->win_handle);
     SetDeviceGammaRamp(hDC, (LPVOID)pRamp);
     ReleaseDC(This->win_handle, hDC);

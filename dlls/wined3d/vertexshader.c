@@ -606,7 +606,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
                    This->baseShader.limits.label = 16;
-                   FIXME("Unrecognized vertex shader version %#lx\n",
+                   FIXME("Unrecognized vertex shader version %#x\n",
                        This->baseShader.hex_version);
       }
 }
@@ -905,7 +905,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
         curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
 
         if (NULL == curOpcode) {
-            FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+            FIXME("Unrecognized opcode: token=%08x\n", opcode_token);
             pToken += shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
             /* return FALSE; */
 
@@ -1097,14 +1097,14 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShad
 
 static ULONG WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         if (This->vertexDeclaration) IWineD3DVertexDeclaration_Release(This->vertexDeclaration);

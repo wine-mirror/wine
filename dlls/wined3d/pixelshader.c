@@ -63,14 +63,14 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShade
 
 static ULONG  WINAPI IWineD3DPixelShaderImpl_AddRef(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     ULONG ref;
-    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
@@ -803,7 +803,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
                    This->baseShader.limits.label = 0;
-                   FIXME("Unrecognized pixel shader version %#lx\n", 
+                   FIXME("Unrecognized pixel shader version %#x\n", 
                        This->baseShader.hex_version);
       }
 }
