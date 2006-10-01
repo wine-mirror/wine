@@ -1914,7 +1914,7 @@ static int get_nearest_charset(Face *face, int *cp)
 
     *cp = acp;
     if(TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE))
-        if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
+        if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
 	    return csi.ciCharset;
 
     for(i = 0; i < 32; i++) {
