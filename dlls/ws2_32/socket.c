@@ -2102,8 +2102,6 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
  *
- *
- *   FIXME:  Only SIO_GET_INTERFACE_LIST option implemented.
  */
 INT WINAPI WSAIoctl(SOCKET s,
                     DWORD   dwIoControlCode,
@@ -2116,6 +2114,7 @@ INT WINAPI WSAIoctl(SOCKET s,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
    int fd = get_sock_fd( s, 0, NULL );
+   INT ret;
 
    if (fd == -1) return SOCKET_ERROR;
 
@@ -2125,6 +2124,32 @@ INT WINAPI WSAIoctl(SOCKET s,
 
    switch( dwIoControlCode )
    {
+   case WS_FIONBIO:
+        if (cbInBuffer != sizeof(u_long)) {
+            release_sock_fd( s, fd );
+            WSASetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        ret = WS_ioctlsocket( s, WS_FIONBIO, lpvInBuffer);
+        if (ret == SOCKET_ERROR) {
+            release_sock_fd( s, fd );
+            /* last error already set by WS_ioctlsocket */
+            return ret;
+        }
+	break;
+   case WS_FIONREAD:
+        if (cbOutBuffer != sizeof(u_long)) {
+            release_sock_fd( s, fd );
+            WSASetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        ret = WS_ioctlsocket( s, WS_FIONREAD, lpbOutBuffer);
+        if (ret == SOCKET_ERROR) {
+            release_sock_fd( s, fd );
+            /* last error already set by WS_ioctlsocket */
+            return ret;
+        }
+	break;
    case SIO_GET_INTERFACE_LIST:
        {
            INTERFACE_INFO* intArray = (INTERFACE_INFO*)lpbOutBuffer;
@@ -2256,6 +2281,10 @@ INT WINAPI WSAIoctl(SOCKET s,
        /* FIXME: error and return code depend on whether socket was created
         * with WSA_FLAG_OVERLAPPED, but there is no easy way to get this */
        break;
+
+   case SIO_FLUSH:
+	FIXME("SIO_FLUSH: stub.\n");
+	break;
 
    default:
        FIXME("unsupported WS_IOCTL cmd (%08lx)\n", dwIoControlCode);
