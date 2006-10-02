@@ -927,6 +927,9 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     else return start_error_parse;
     if (hFile == INVALID_HANDLE_VALUE) return start_error_parse;
 
+    if (dbg_curr_process->active_debuggee)
+        dbg_active_wait_for_first_exception();
+
     dbg_interactiveP = TRUE;
     parser_handle(hFile);
 

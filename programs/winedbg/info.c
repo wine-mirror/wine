@@ -204,7 +204,7 @@ void info_win32_module(DWORD base)
     int                 i, j, num_printed = 0;
     DWORD               opt;
 
-    if (!dbg_curr_process || !dbg_curr_thread)
+    if (!dbg_curr_process)
     {
         dbg_printf("Cannot get info on module while no process is loaded\n");
         return;
