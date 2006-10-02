@@ -936,6 +936,21 @@ static void test_Extent(IUnknown *unk)
     IOleObject_Release(oleobj);
 }
 
+static void test_QueryInterface(IUnknown *unk)
+{
+    IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
+    IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
+    ok(qa == NULL, "qa=%p, ezpected NULL\n", qa);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
+    ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+}
+
 static void test_WebBrowser(void)
 {
     IUnknown *unk = NULL;
@@ -948,6 +963,7 @@ static void test_WebBrowser(void)
     if(FAILED(hres))
         return;
 
+    test_QueryInterface(unk);
     test_ClassInfo(unk);
     test_ClientSite(unk, &ClientSite);
     test_Extent(unk);
