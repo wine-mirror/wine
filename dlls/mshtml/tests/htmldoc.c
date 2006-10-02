@@ -2535,6 +2535,16 @@ static void test_Navigate(IUnknown *unk)
     IHlinkTarget_Release(hlink);
 }
 
+static void test_QueryInterface(IUnknown *unk)
+{
+    IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
+    ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+}
+
 static void init_test(enum load_state_t ls) {
     hwnd = last_hwnd = NULL;
     set_clientsite = FALSE;
@@ -2556,6 +2566,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     if(FAILED(hres))
         return;
 
+    test_QueryInterface(unk);
     test_ConnectionPointContainer(unk);
     test_Persist(unk);
     if(load_state == LD_NO)
