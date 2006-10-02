@@ -867,7 +867,7 @@ int PopulateTree(void)
     HREFTYPE hRefType;
     TYPEATTR *pTypeAttr;
     INT count, i;
-    unsigned long ulHelpContext;
+    ULONG ulHelpContext;
     BSTR bstrName;
     BSTR bstrData;
     WCHAR wszText[MAX_LOAD_STRING];
