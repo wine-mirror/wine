@@ -585,8 +585,8 @@ static void test_reg_create_key(void)
     ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
 
     /* clean up */
-    RegDeleteKey(hkey2, NULL);
-    RegDeleteKey(hkey1, NULL);
+    RegDeleteKey(hkey2, "");
+    RegDeleteKey(hkey1, "");
 
     /*  beginning backslash character */
     ret = RegCreateKeyExA(hkey_main, "\\Subkey3", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
