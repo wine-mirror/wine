@@ -607,7 +607,7 @@ static UINT ICO_ExtractIconExW(
 	    const IMAGE_RESOURCE_DIRECTORY *resdir;
 
 	    /* go down this resource entry, name */
-            resdir = (PIMAGE_RESOURCE_DIRECTORY)((char *)rootresdir + xresent->u2.s3.OffsetToDirectory);
+            resdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)rootresdir + xresent->u2.s3.OffsetToDirectory);
 
 	    /* default language (0) */
 	    resdir = find_entry_default(resdir,rootresdir);

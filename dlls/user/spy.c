@@ -2659,7 +2659,7 @@ int SPY_Init(void)
             q++;
         }
         q--;
-        cc_array[i].lastmsg = (USER_MSG *)q;
+        cc_array[i].lastmsg = q;
 
         i++;
     }

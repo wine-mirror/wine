@@ -269,7 +269,7 @@ static BOOL is_dib_monochrome( const BITMAPINFO* info )
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
-        RGBTRIPLE *rgb = ((BITMAPCOREINFO *) info)->bmciColors;
+        const RGBTRIPLE *rgb = ((const BITMAPCOREINFO*)info)->bmciColors;
 
         /* Check if the first color is black */
         if ((rgb->rgbtRed == 0) && (rgb->rgbtGreen == 0) && (rgb->rgbtBlue == 0))
@@ -320,7 +320,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
         *width  = core->bcWidth;
         *height = core->bcHeight;
         *bpp    = core->bcBitCount;
@@ -329,7 +329,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPV4HEADER))
     {
-        BITMAPV4HEADER *v4hdr = (BITMAPV4HEADER *)header;
+        const BITMAPV4HEADER *v4hdr = (const BITMAPV4HEADER *)header;
         *width  = v4hdr->bV4Width;
         *height = v4hdr->bV4Height;
         *bpp    = v4hdr->bV4BitCount;
@@ -338,7 +338,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     }
     if (header->biSize == sizeof(BITMAPV5HEADER))
     {
-        BITMAPV5HEADER *v5hdr = (BITMAPV5HEADER *)header;
+        const BITMAPV5HEADER *v5hdr = (const BITMAPV5HEADER *)header;
         *width  = v5hdr->bV5Width;
         *height = v5hdr->bV5Height;
         *bpp    = v5hdr->bV5BitCount;
