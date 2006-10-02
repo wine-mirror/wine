@@ -347,7 +347,7 @@ static void mw_checkError(HWND hWnd, BOOL explicitcancel)
 	if(errval) {
 		char errbuf[80];
 
-		sprintf(errbuf, "CommDlgExtendedError(): error code %ld (0x%lx)", errval, errval);
+		sprintf(errbuf, "CommDlgExtendedError(): error code %d (0x%x)", errval, errval);
 		MessageBox(hWnd, errbuf, "Error", MB_ICONEXCLAMATION | MB_OK);
 	}
 	else {
@@ -493,7 +493,7 @@ static void mw_PageSetup(HWND hWnd)
 			WINE_TRACE("    dmDriverVersion =%#x\n",	dm->dmDriverVersion);
 			WINE_TRACE("    dmSize          =%#x\n", 	dm->dmSize);	
 			WINE_TRACE("    dmDriverExtra   =%#x\n",	dm->dmDriverExtra);
-			WINE_TRACE("    dmFields        =%#lx\n", 	dm->dmFields);
+			WINE_TRACE("    dmFields        =%#x\n", 	dm->dmFields);
 			OF("dmOrientation",	u1.s1.dmOrientation,	DM_ORIENTATION)
 			OF("dmPaperSize",	u1.s1.dmPaperSize,	DM_PAPERSIZE);
 			OF("dmPaperLength",	u1.s1.dmPaperLength,	DM_PAPERLENGTH);
@@ -503,7 +503,7 @@ static void mw_PageSetup(HWND hWnd)
 			OF("dmDefaultSource",	dmDefaultSource,DM_DEFAULTSOURCE);
 			OF("dmPrintQuality",	dmPrintQuality,	DM_PRINTQUALITY);
 			if(dm->dmFields &	DM_POSITION)
-				WINE_TRACE("        dmPosition(%ld, %ld)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
+				WINE_TRACE("        dmPosition(%d, %d)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
 			else
 				WINE_TRACE("        dmPosition NOT SET!\n");
 			OF("dmColor",		dmColor,	DM_COLOR);
@@ -516,7 +516,7 @@ static void mw_PageSetup(HWND hWnd)
 			else 
 				WINE_TRACE("        dmFormName NOT SET!\n");
 			if(dm->dmFields & DM_ICMMETHOD)
-				WINE_TRACE("        dmICMMethod = %#lx\n", dm->dmICMMethod);
+				WINE_TRACE("        dmICMMethod = %#x\n", dm->dmICMMethod);
 			else
 				WINE_TRACE("        dmICMMethod NOT SET!");
 			
@@ -526,8 +526,8 @@ static void mw_PageSetup(HWND hWnd)
 			WINE_TRACE("dm == NULL\n");
 	
 		WINE_TRACE("\nPAGESETUPDLG struct\n");
-		WINE_TRACE("    ptPaperSize(%ld, %ld)\n", psd.ptPaperSize.x, psd.ptPaperSize.y);
-		WINE_TRACE("    rtMargin(%ld, %ld, %ld, %ld)\n", 
+		WINE_TRACE("    ptPaperSize(%d, %d)\n", psd.ptPaperSize.x, psd.ptPaperSize.y);
+		WINE_TRACE("    rtMargin(%d, %d, %d, %d)\n",
 			psd.rtMargin.left, psd.rtMargin.top, psd.rtMargin.right, psd.rtMargin.bottom);
 	
 		WINE_TRACE("\nDEVNAMES struct\n");
