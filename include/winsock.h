@@ -43,6 +43,7 @@
  * All we can do is disable all these symbols so that they are not used
  * inadvertantly.
  */
+#  include <sys/types.h>
 #  undef FD_SETSIZE
 #  undef FD_CLR
 #  undef FD_SET
