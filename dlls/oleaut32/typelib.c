@@ -5579,6 +5579,23 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
 	    return S_OK;
         }
     }
+
+    if(This->TypeAttr.cImplTypes &&
+       (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
+        /* recursive search */
+        ITypeInfo *pTInfo;
+        HRESULT result;
+        result = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef,
+                                        &pTInfo);
+        if(SUCCEEDED(result)) {
+            result = ITypeInfo_GetDocumentation(pTInfo, memid, pBstrName,
+                pBstrDocString, pdwHelpContext, pBstrHelpFile);
+            ITypeInfo_Release(pTInfo);
+            return result;
+        }
+        WARN("Could not search inherited interface!\n");
+    }
+
     WARN("member %ld not found\n", memid);
     return TYPE_E_ELEMENTNOTFOUND;
 }
