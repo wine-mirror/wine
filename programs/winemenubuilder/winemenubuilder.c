@@ -278,7 +278,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
     if (!hModule)
     {
-        WINE_ERR("LoadLibraryExW (%s) failed, error %ld\n",
+        WINE_ERR("LoadLibraryExW (%s) failed, error %d\n",
                  wine_dbgstr_w(szFileName), GetLastError());
         return FALSE;
     }
@@ -286,7 +286,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     if (nIndex < 0)
     {
         hResInfo = FindResourceW(hModule, MAKEINTRESOURCEW(-nIndex), (LPCWSTR)RT_GROUP_ICON);
-        WINE_TRACE("FindResourceW (%s) called, return %p, error %ld\n",
+        WINE_TRACE("FindResourceW (%s) called, return %p, error %d\n",
                    wine_dbgstr_w(szFileName), hResInfo, GetLastError());
     }
     else
@@ -297,7 +297,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
         if (!EnumResourceNamesW(hModule, (LPCWSTR)RT_GROUP_ICON,
                                 EnumResNameProc, (LONG_PTR)&sEnumRes))
         {
-            WINE_TRACE("EnumResourceNamesW failed, error %ld\n", GetLastError());
+            WINE_TRACE("EnumResourceNamesW failed, error %d\n", GetLastError());
         }
     }
 
