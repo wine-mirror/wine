@@ -48,7 +48,7 @@ static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z'
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
-    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02lx font=%s/%lu hist=%lu/%d flags=%c%c msk=%08lx sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x font=%s/%u hist=%u/%d flags=%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
                pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
                wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size, cfg->history_nodup ? 1 : 2,
                cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',

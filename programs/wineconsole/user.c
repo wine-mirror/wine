@@ -277,8 +277,8 @@ static void	WCUSER_SetTitle(const struct inner_data* data)
 void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft)
 {
     WINE_TRACE_(wc_font)("%s %s%s%s%s\n"
-                         "\tlf.lfHeight=%ld lf.lfWidth=%ld lf.lfEscapement=%ld lf.lfOrientation=%ld\n"
-                         "\tlf.lfWeight=%ld lf.lfItalic=%u lf.lfUnderline=%u lf.lfStrikeOut=%u\n"
+                         "\tlf.lfHeight=%d lf.lfWidth=%d lf.lfEscapement=%d lf.lfOrientation=%d\n"
+                         "\tlf.lfWeight=%d lf.lfItalic=%u lf.lfUnderline=%u lf.lfStrikeOut=%u\n"
                          "\tlf.lfCharSet=%u lf.lfOutPrecision=%u lf.lfClipPrecision=%u lf.lfQuality=%u\n"
                          "\tlf->lfPitchAndFamily=%u lf.lfFaceName=%s\n",
                          pfx,
@@ -295,9 +295,9 @@ void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft)
 void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
 {
     WINE_TRACE_(wc_font)("%s%s%s%s\n"
-                         "\ttmHeight=%ld tmAscent=%ld tmDescent=%ld tmInternalLeading=%ld tmExternalLeading=%ld\n"
-                         "\ttmAveCharWidth=%ld tmMaxCharWidth=%ld tmWeight=%ld tmOverhang=%ld\n"
-                         "\ttmDigitizedAspectX=%ld tmDigitizedAspectY=%ld\n"
+                         "\ttmHeight=%d tmAscent=%d tmDescent=%d tmInternalLeading=%d tmExternalLeading=%d\n"
+                         "\ttmAveCharWidth=%d tmMaxCharWidth=%d tmWeight=%d tmOverhang=%d\n"
+                         "\ttmDigitizedAspectX=%d tmDigitizedAspectY=%d\n"
                          "\ttmFirstChar=%d tmLastChar=%d tmDefaultChar=%d tmBreakChar=%d\n"
                          "\ttmItalic=%u tmUnderlined=%u tmStruckOut=%u tmPitchAndFamily=%u tmCharSet=%u\n",
                          (ft & RASTER_FONTTYPE) ? "raster" : "",
