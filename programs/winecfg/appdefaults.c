@@ -360,7 +360,7 @@ static void on_winver_change(HWND dialog)
         switch (win_versions[selection].dwPlatformId)
         {
         case VER_PLATFORM_WIN32_WINDOWS:
-            snprintf(Buffer, sizeof(Buffer), "%ld.%ld.%ld", win_versions[selection].dwMajorVersion,
+            snprintf(Buffer, sizeof(Buffer), "%d.%d.%d", win_versions[selection].dwMajorVersion,
                      win_versions[selection].dwMinorVersion, win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", win_versions[selection].szCSDVersion);
@@ -374,11 +374,11 @@ static void on_winver_change(HWND dialog)
             break;
 
         case VER_PLATFORM_WIN32_NT:
-            snprintf(Buffer, sizeof(Buffer), "%ld.%ld", win_versions[selection].dwMajorVersion,
+            snprintf(Buffer, sizeof(Buffer), "%d.%d", win_versions[selection].dwMajorVersion,
                      win_versions[selection].dwMinorVersion);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection].szCSDVersion);
-            snprintf(Buffer, sizeof(Buffer), "%ld", win_versions[selection].dwBuildNumber);
+            snprintf(Buffer, sizeof(Buffer), "%d", win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", win_versions[selection].szProductType);
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion",

@@ -119,7 +119,7 @@ static char *get_config_key (HKEY root, const char *subkey, const char *name, co
         }
         else
         {
-            WINE_ERR("RegOpenKey failed on wine config key (res=%ld)\n", res);
+            WINE_ERR("RegOpenKey failed on wine config key (res=%d)\n", res);
         }
         goto end;
     }
@@ -132,7 +132,7 @@ static char *get_config_key (HKEY root, const char *subkey, const char *name, co
 	goto end;
     } else if (res != ERROR_SUCCESS)
     {
-        WINE_ERR("Couldn't query value's length (res=%ld)\n", res);
+        WINE_ERR("Couldn't query value's length (res=%d)\n", res);
         goto end;
     }
 
@@ -162,7 +162,7 @@ static int set_config_key(HKEY root, const char *subkey, const char *name, const
     DWORD res = 1;
     HKEY key = NULL;
 
-    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%ld\n", subkey, name, value, type);
+    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%d\n", subkey, name, value, type);
 
     assert( subkey != NULL );
 
@@ -184,7 +184,7 @@ static int set_config_key(HKEY root, const char *subkey, const char *name, const
     res = 0;
 end:
     if (key && key != root) RegCloseKey(key);
-    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s, res=%ld\n", name, subkey, res);
+    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s, res=%d\n", name, subkey, res);
     return res;
 }
 
@@ -492,7 +492,7 @@ char **enumerate_values(HKEY root, char *path)
     }
     else
     {
-        WINE_WARN("failed opening registry key %s, res=0x%lx\n", path, res);
+        WINE_WARN("failed opening registry key %s, res=0x%x\n", path, res);
     }
 
     WINE_TRACE("adding settings in list but not registry\n");
@@ -629,7 +629,7 @@ int initialize(HINSTANCE hInstance)
     DWORD res = RegCreateKey(HKEY_CURRENT_USER, WINE_KEY_ROOT, &config_key);
 
     if (res != ERROR_SUCCESS) {
-	WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
+	WINE_ERR("RegOpenKey failed on wine config key (%d)\n", res);
 	return 1;
     }
 

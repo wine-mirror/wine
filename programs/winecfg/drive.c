@@ -322,7 +322,7 @@ void load_drives()
             serial = 0;
         }
 
-        WINE_TRACE("serial: '0x%lX'\n", serial);
+        WINE_TRACE("serial: '0x%X'\n", serial);
 
         /* build rootpath for GetDriveType() */
         lstrcpynA(rootpath, devices, sizeof(rootpath));
@@ -343,7 +343,7 @@ void load_drives()
         c = targetpath;
         do if (*c == '\\') *c = '/'; while (*c++);
 
-        snprintf(serialstr, sizeof(serialstr), "%lX", serial);
+        snprintf(serialstr, sizeof(serialstr), "%X", serial);
         WINE_TRACE("serialstr: '%s'\n", serialstr);
         add_drive(*devices, targetpath, volname, serialstr, get_drive_type(devices[0]) );
 
@@ -486,7 +486,7 @@ void apply_drive_changes(void)
         if (drives[i].label && strcmp(drives[i].label, volumeNameBuffer))
             set_drive_label( drives[i].letter, drives[i].label );
 
-        snprintf(newSerialNumberText, sizeof(newSerialNumberText), "%lX", serialNumber);
+        snprintf(newSerialNumberText, sizeof(newSerialNumberText), "%X", serialNumber);
         if (drives[i].serial && drives[i].serial[0] && strcmp(drives[i].serial, newSerialNumberText))
             set_drive_serial( drives[i].letter, drives[i].serial );
 
