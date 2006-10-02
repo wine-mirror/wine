@@ -204,7 +204,7 @@ static VOID HandlerThread(LPVOID lpvPipeHandle)
 	);
 	if ( (!success) || (bytesread != sizeof(RPCSS_NP_MESSAGE)) ||
              (vardata_payload_msg.message_type != RPCSS_NP_MESSAGE_TYPEID_VARDATAPAYLOADMSG) ) {
-	  WINE_ERR("vardata payload read failure! (s=%s,br=%ld,mt=%u,mt_exp=%u\n",
+          WINE_ERR("vardata payload read failure! (s=%s,br=%d,mt=%u,mt_exp=%u\n",
 	    success ? "TRUE" : "FALSE", bytesread,
 	    vardata_payload_msg.message_type, RPCSS_NP_MESSAGE_TYPEID_VARDATAPAYLOADMSG);
 	  success = FALSE;
@@ -237,7 +237,7 @@ static VOID HandlerThread(LPVOID lpvPipeHandle)
     );
 
     if ( (!success) || (written != sizeof(RPCSS_NP_REPLY)) )
-      WINE_WARN("Message reply failed. (success=%d, br=%ld)\n", success, written);
+      WINE_WARN("Message reply failed. (success=%d, br=%d)\n", success, written);
     else
       WINE_TRACE("Reply sent successfully.\n");
   } else 
@@ -425,7 +425,7 @@ static BOOL RPCSS_SendReceiveNPMsg(HANDLE np, PRPCSS_NP_MESSAGE msg, PRPCSS_NP_R
   }
 
   if (count != sizeof(RPCSS_NP_REPLY)) {
-    WINE_ERR("read count mismatch, got %ld.\n", count);
+    WINE_ERR("read count mismatch, got %d.\n", count);
     return FALSE;
   }
 
