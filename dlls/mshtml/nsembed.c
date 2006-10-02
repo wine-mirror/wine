@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_MEMORY_CONTRACTID "@mozilla.org/xpcom/memory-service;1"
 #define NS_STRINGSTREAM_CONTRACTID "@mozilla.org/io/string-input-stream;1"
 #define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
+#define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -462,6 +463,103 @@ nsICommandParams *create_nscommand_params(void)
         ERR("Could not get nsICommandParams\n");
 
     return ret;
+}
+
+static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode *nsnode, nsAString *str)
+{
+    nsIDOMNodeList *node_list = NULL;
+    PRBool has_children = FALSE;
+    PRUint16 type;
+    nsresult nsres;
+
+    nsIDOMNode_HasChildNodes(nsnode, &has_children);
+
+    nsres = nsIDOMNode_GetNodeType(nsnode, &type);
+    if(NS_FAILED(nsres)) {
+        ERR("GetType failed: %08lx\n", nsres);
+        return;
+    }
+
+    switch(type) {
+    case ELEMENT_NODE: {
+        nsIDOMElement *nselem;
+        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+        nsIContentSerializer_AppendElementStart(serializer, nselem, has_children, str);
+        nsIDOMElement_Release(nselem);
+        break;
+    }
+    case TEXT_NODE: {
+        nsIDOMText *nstext;
+        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&nstext);
+        nsIContentSerializer_AppendText(serializer, nstext, 0, -1, str);
+        nsIDOMText_Release(nstext);
+        break;
+    }
+    case DOCUMENT_NODE: {
+        nsIDOMDocument *nsdoc;
+        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocument, (void**)&nsdoc);
+        nsIContentSerializer_AppendDocumentStart(serializer, nsdoc, str);
+        nsIDOMDocument_Release(nsdoc);
+    }
+    default:
+        FIXME("Unhandled type %u\n", type);
+    }
+
+    if(has_children) {
+        PRUint32 child_cnt, i;
+        nsIDOMNode *child_node;
+
+        nsIDOMNode_GetChildNodes(nsnode, &node_list);
+        nsIDOMNodeList_GetLength(node_list, &child_cnt);
+
+        for(i=0; i<child_cnt; i++) {
+            nsres = nsIDOMNodeList_Item(node_list, i, &child_node);
+            if(NS_SUCCEEDED(nsres)) {
+                nsnode_to_nsstring_rec(serializer, child_node, str);
+                nsIDOMNode_Release(child_node);
+            }else {
+                ERR("Item failed: %08lx\n", nsres);
+            }
+        }
+
+        nsIDOMNodeList_Release(node_list);
+    }
+
+    if(type == ELEMENT_NODE) {
+        nsIDOMElement *nselem;
+        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+        nsIContentSerializer_AppendElementEnd(serializer, nselem, str);
+        nsIDOMElement_Release(nselem);
+    }
+}
+
+void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
+{
+    nsIContentSerializer *serializer;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_HTMLSERIALIZER_CONTRACTID, NULL, &IID_nsIContentSerializer,
+            (void**)&serializer);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIContentSerializer: %08lx\n", nsres);
+        return;
+    }
+
+    nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE);
+    if(NS_FAILED(nsres))
+        ERR("Init failed: %08lx\n", nsres);
+
+    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
+    nsnode_to_nsstring_rec(serializer, nsnode, str);
+    nsIDOMNode_Release(nsnode);
+
+    nsres = nsIContentSerializer_Flush(serializer, str);
+    if(NS_FAILED(nsres))
+        ERR("Flush failed: %08lx\n", nsres);
+
+    nsIContentSerializer_Release(serializer);
 }
 
 void close_gecko()

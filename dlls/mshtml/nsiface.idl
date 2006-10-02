@@ -100,7 +100,6 @@ typedef nsISupports nsIDOMAttr;
 typedef nsISupports nsIDOMDocumentType;
 typedef nsISupports nsIDOMDOMImplementation;
 typedef nsISupports nsIDOMDocumentFragment;
-typedef nsISupports nsIDOMText;
 typedef nsISupports nsIDOMComment;
 typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
@@ -110,6 +109,7 @@ typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIDOMRange;
 typedef nsISupports nsIEditor;
+typedef nsISupports nsIWebProgressListener;
 
 [
     object,
@@ -391,6 +391,21 @@ interface nsIDOMNodeList : nsISupports
 ]
 interface nsIDOMNode : nsISupports
 {
+    enum NSNODETYPE {
+        ELEMENT_NODE = 1,
+        ATTRIBUTE_NODE = 2,
+        TEXT_NODE = 3,
+        CDATA_SELECTION_NODE = 4,
+        ENTITY_REFERENCE_NODE = 5,
+        ENTITY_NODE = 6,
+        PROCESSING_INSTRUCTION_NODE = 7,
+        COMMENT_NODE = 8,
+        DOCUMENT_NODE = 9,
+        DOCUMENT_TYPE_NODE = 10,
+        DOCUMENT_FRAGMENT_NODE = 11,
+        NOTATION_NODE = 12
+    };
+
     nsresult GetNodeName(nsAString *aNodeName);
     nsresult GetNodeValue(nsAString *aNodeValue);
     nsresult SetNodeValue(const nsAString *aNodeValue);
@@ -489,6 +504,31 @@ interface nsIDOMNSHTMLElement : nsISupports
     nsresult GetClientHeight(PRInt32 *aClientHeight);
     nsresult GetClientWidth(PRInt32 *aClientWidth);
     nsresult ScrollIntoView(PRBool top);
+}
+
+[
+    object,
+    uuid(a6cf9072-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMCharacterData : nsIDOMNode
+{
+    nsresult GetData(nsAString *aData);
+    nsresult SetData(const nsAString *aData);
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult SubstringData(PRUint32 offset, PRUint32 count, nsAString *_retval);
+    nsresult AppendData(const nsAString *arg);
+    nsresult InsertData(PRUint32 offset, const nsAString *arg);
+    nsresult DeleteData(PRUint32 offset, PRUint32 count);
+    nsresult ReplaceData(PRUint32 offset, PRUint32 count, const nsAString *arg);
+}
+
+[
+    object,
+    uuid(a6cf9082-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMText : nsIDOMCharacterData
+{
+    nsresult SplitText(PRUint32 offset, nsIDOMText **_retval);
 }
 
 [
@@ -1214,6 +1254,27 @@ interface nsICommandManager : nsISupports
             nsICommandParams *aCommandParams);
     nsresult DoCommand(const char *aCommandName, nsICommandParams *aCommandParams,
             nsIDOMWindow *aTargetWindow);
+}
+
+[
+    object,
+    uuid(d650439a-ca29-410d-a906-b0557fb62fcd)
+]
+interface nsIContentSerializer : nsISupports
+{
+    nsresult Init(PRUint32 flags, PRUint32 aWrapColumn, const char* aCharSet, PRBool aIsCopying);
+    nsresult AppendText(nsIDOMText *aText, PRInt32 aStartOffset, PRInt32 aEndOffset, nsAString *aStr);
+    nsresult AppendCDATASection(nsIDOMCDATASection *aCDATASection, PRInt32 aStartOffset,
+            PRInt32 aEndOffset, nsAString *aStr);
+    nsresult AppendProcessingInstruction(nsIDOMProcessingInstruction* aPI, PRInt32 aStartOffset,
+            PRInt32 aEndOffset, nsAString *aStr);
+    nsresult AppendComment(nsIDOMComment *aComment, PRInt32 aStartOffset, PRInt32 aEndOffset,
+            nsAString *aStr);
+    nsresult AppendDoctype(nsIDOMDocumentType *aDoctype, nsAString *aStr);
+    nsresult AppendElementStart(nsIDOMElement *aElement, PRBool aHasChildren, nsAString *aStr);
+    nsresult AppendElementEnd(nsIDOMElement *aElement, nsAString *aStr);
+    nsresult Flush(nsAString *aStr);
+    nsresult AppendDocumentStart(nsIDOMDocument *aDocument, nsAString *aStr);
 }
 
 /*
