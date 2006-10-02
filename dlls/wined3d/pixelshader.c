@@ -838,6 +838,10 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
+        if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+            shader_addline(&buffer, "#extension GL_ARB_draw_buffers : enable\n");
+        }
+
         /* Base Declarations */
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
