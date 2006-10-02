@@ -59,8 +59,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Копирай името на ключа",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Търси\tCtrl+F",               ID_EDIT_FIND
-        MENUITEM "Намери &следващ\tF3",              ID_EDIT_FINDNEXT
+        MENUITEM "&Търси\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Намери &следващ\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Изглед"
     BEGIN

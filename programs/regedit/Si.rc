@@ -82,9 +82,7 @@ BEGIN
     POPUP "&Priljubljene"
     BEGIN
         MENUITEM "&Dodaj med Priljubljene",          ID_FAVORITES_ADDTOFAVORITES
-        , GRAYED
         MENUITEM "&Odstrani iz Priljubljenih",           ID_FAVORITES_REMOVEFAVORITE
-        , GRAYED
     END
     POPUP "&Pomoè"
     BEGIN
@@ -100,7 +98,7 @@ END
  */
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "O"
 FONT 8, "MS Shell Dlg"
 BEGIN

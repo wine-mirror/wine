@@ -54,8 +54,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copier le nom de la clé",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Rechercher...\tCtrl+F",              ID_EDIT_FIND
-        MENUITEM "Rechercher le s&uivant\tF3",          ID_EDIT_FINDNEXT
+        MENUITEM "&Rechercher...\tCtrl+F",              ID_EDIT_FIND, GRAYED
+        MENUITEM "Rechercher le s&uivant\tF3",          ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Affichage"
     BEGIN
@@ -130,7 +130,7 @@ END
  */
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "À propos"
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -193,7 +193,7 @@ BEGIN
 END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la valeur DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN

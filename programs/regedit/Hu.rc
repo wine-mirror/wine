@@ -54,8 +54,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Kul&csnév másolása",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Keresés\tCtrl+F",               ID_EDIT_FIND
-        MENUITEM "K&övetkezõ keresése\tF3",              ID_EDIT_FINDNEXT
+        MENUITEM "&Keresés\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "K&övetkezõ keresése\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Nézet"
     BEGIN

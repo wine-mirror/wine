@@ -84,9 +84,7 @@ BEGIN
     POPUP "&Preferiti"
     BEGIN
         MENUITEM "&Aggiungi ai Preferiti",          ID_FAVORITES_ADDTOFAVORITES
-        , GRAYED
         MENUITEM "&Rimuovi dai Preferiti",           ID_FAVORITES_REMOVEFAVORITE
-        , GRAYED
     END
     POPUP "&Aiuto"
     BEGIN
@@ -131,7 +129,7 @@ END
  */
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Informazioni sull'editor del Registro"
 FONT 8, "MS Shell Dlg"
 BEGIN

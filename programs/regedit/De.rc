@@ -74,8 +74,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Schlüsselname &kopieren",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND
-        MENUITEM "&Nächstes finden\tF3",              ID_EDIT_FINDNEXT
+        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "&Nächstes finden\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Ansicht"
     BEGIN
@@ -184,7 +184,7 @@ BEGIN
 END
 
 IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
-STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Zeichenkette ändern"
 FONT 8, "MS Shell Dlg"
 BEGIN
