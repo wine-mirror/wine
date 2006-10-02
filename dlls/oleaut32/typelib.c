@@ -4547,6 +4547,51 @@ HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const F
     return E_INVALIDARG;
 }
 
+/* internal function to make the inherited interfaces' methods appear
+ * part of the interface */
+static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
+    UINT index, const FUNCDESC **ppFuncDesc, UINT *funcs)
+{
+    ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    HRESULT hr;
+    UINT i;
+    UINT implemented_funcs = 0;
+
+    if (funcs)
+        *funcs = 0;
+
+    for (i = 0; i < This->TypeAttr.cImplTypes; i++)
+    {
+        HREFTYPE href;
+        ITypeInfo *pSubTypeInfo;
+        UINT sub_funcs;
+
+        hr = ITypeInfo_GetRefTypeOfImplType(iface, i, &href);
+        if (FAILED(hr))
+            return hr;
+        hr = ITypeInfo_GetRefTypeInfo(iface, href, &pSubTypeInfo);
+        if (FAILED(hr))
+            return hr;
+
+        hr = ITypeInfoImpl_GetInternalDispatchFuncDesc(pSubTypeInfo,
+                                                       index,
+                                                       ppFuncDesc,
+                                                       &sub_funcs);
+        implemented_funcs += sub_funcs;
+        ITypeInfo_Release(pSubTypeInfo);
+        if (SUCCEEDED(hr))
+            return hr;
+    }
+
+    if (funcs)
+        *funcs = implemented_funcs + This->TypeAttr.cFuncs;
+    
+    if (index < implemented_funcs)
+        return E_INVALIDARG;
+    return ITypeInfoImpl_GetInternalFuncDesc(iface, index - implemented_funcs,
+                                             ppFuncDesc);
+}
+
 /* ITypeInfo::GetFuncDesc
  *
  * Retrieves the FUNCDESC structure that contains information about a
@@ -4562,9 +4607,18 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
 
     TRACE("(%p) index %d\n", This, index);
 
-    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &internal_funcdesc);
+    if ((This->TypeAttr.typekind == TKIND_DISPATCH) &&
+        (This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL))
+        hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
+                                                       &internal_funcdesc, NULL);
+    else
+        hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
+                                               &internal_funcdesc);
     if (FAILED(hr))
+    {
+        WARN("description for function %d not found\n", index);
         return hr;
+    }
 
     return TLB_AllocAndInitFuncDesc(
         internal_funcdesc,
