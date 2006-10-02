@@ -315,10 +315,9 @@ static BOOL load_gecko(void)
         }
     }
 
-    NS_StringContainerInit(&path);
-    NS_StringSetData(&path, gre_path, PR_UINT32_MAX);
+    nsAString_Init(&path, gre_path);
     nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
-    NS_StringContainerFinish(&path);
+    nsAString_Finish(&path);
     if(NS_FAILED(nsres)) {
         ERR("NS_NewLocalFile failed: %08lx\n", nsres);
         FreeLibrary(hXPCOM);
