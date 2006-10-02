@@ -53,7 +53,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 	memcpy(type,&(ii.fccType),4);type[4]='\0';
 	memcpy(handler,&(ii.fccHandler),4);handler[4]='\0';
 	printf("%s.%s: %s\n",type,handler,buf);
-	printf("\tdwFlags: 0x%08lx (",ii.dwFlags);
+	printf("\tdwFlags: 0x%08x (",ii.dwFlags);
 #define XX(x) if (ii.dwFlags & x) printf(#x" ");
 	XX(VIDCF_QUALITY);
 	XX(VIDCF_CRUNCH);
@@ -65,8 +65,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 	XX(VIDCF_QUALITYTIME);
 #undef XX
 	printf(")\n");
-	printf("\tdwVersion: 0x%08lx\n",ii.dwVersion);
-	printf("\tdwVersionICM: 0x%08lx\n",ii.dwVersionICM);
+	printf("\tdwVersion: 0x%08x\n",ii.dwVersion);
+	printf("\tdwVersionICM: 0x%08x\n",ii.dwVersionICM);
 	w2s(ii.szDescription,buf);
 	printf("\tszDescription: %s\n",buf);
 	if (doabout) ICAbout(hic,0);
