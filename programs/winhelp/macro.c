@@ -196,12 +196,12 @@ void CALLBACK MACRO_About(void)
 
 void CALLBACK MACRO_AddAccelerator(LONG u1, LONG u2, LPCSTR str)
 {
-    WINE_FIXME("(%lu, %lu, \"%s\")\n", u1, u2, str);
+    WINE_FIXME("(%u, %u, \"%s\")\n", u1, u2, str);
 }
 
 void CALLBACK MACRO_ALink(LPCSTR str1, LONG u, LPCSTR str2)
 {
-    WINE_FIXME("(\"%s\", %lu, \"%s\")\n", str1, u, str2);
+    WINE_FIXME("(\"%s\", %u, \"%s\")\n", str1, u, str2);
 }
 
 void CALLBACK MACRO_Annotate(void)
@@ -359,7 +359,7 @@ void CALLBACK MACRO_Contents(void)
 
 void CALLBACK MACRO_ControlPanel(LPCSTR str1, LPCSTR str2, LONG u)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lu)\n", str1, str2, u);
+    WINE_FIXME("(\"%s\", \"%s\", %u)\n", str1, str2, u);
 }
 
 void CALLBACK MACRO_CopyDialog(void)
@@ -466,12 +466,12 @@ void CALLBACK MACRO_EndMPrint(void)
 
 void CALLBACK MACRO_ExecFile(LPCSTR str1, LPCSTR str2, LONG u, LPCSTR str3)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lu, \"%s\")\n", str1, str2, u, str3);
+    WINE_FIXME("(\"%s\", \"%s\", %u, \"%s\")\n", str1, str2, u, str3);
 }
 
 void CALLBACK MACRO_ExecProgram(LPCSTR str, LONG u)
 {
-    WINE_FIXME("(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
 void CALLBACK MACRO_Exit(void)
@@ -484,17 +484,17 @@ void CALLBACK MACRO_Exit(void)
 
 void CALLBACK MACRO_ExtAbleItem(LPCSTR str, LONG u)
 {
-    WINE_FIXME("(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
 void CALLBACK MACRO_ExtInsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u1, LONG u2)
 {
-    WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, str4, u1, u2);
+    WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %u, %u)\n", str1, str2, str3, str4, u1, u2);
 }
 
 void CALLBACK MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2)
 {
-    WINE_FIXME("(\"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, u1, u2);
+    WINE_FIXME("(\"%s\", \"%s\", \"%s\", %u, %u)\n", str1, str2, str3, u1, u2);
 }
 
 BOOL CALLBACK MACRO_FileExist(LPCSTR str)
@@ -592,7 +592,7 @@ void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
 
 void CALLBACK MACRO_Generate(LPCSTR str, LONG w, LONG l)
 {
-    WINE_FIXME("(\"%s\", %lx, %lx)\n", str, w, l);
+    WINE_FIXME("(\"%s\", %x, %x)\n", str, w, l);
 }
 
 void CALLBACK MACRO_GotoMark(LPCSTR str)
@@ -641,12 +641,12 @@ BOOL CALLBACK MACRO_InitMPrint(void)
 
 void CALLBACK MACRO_InsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u)
 {
-    WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %lu)\n", str1, str2, str3, str4, u);
+    WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %u)\n", str1, str2, str3, str4, u);
 }
 
 void CALLBACK MACRO_InsertMenu(LPCSTR str1, LPCSTR str2, LONG u)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lu)\n", str1, str2, u);
+    WINE_FIXME("(\"%s\", \"%s\", %u)\n", str1, str2, u);
 }
 
 BOOL CALLBACK MACRO_IsBook(void)
@@ -680,7 +680,7 @@ void CALLBACK MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 
 void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %ld)semi-stub\n", lpszPath, lpszWindow, context);
+    WINE_FIXME("(\"%s\", \"%s\", %d)semi-stub\n", lpszPath, lpszWindow, context);
     return MACRO_JumpContents(lpszPath, lpszWindow);
 }
 
@@ -688,7 +688,7 @@ void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 {
     HLPFILE*    hlpfile;
 
-    WINE_TRACE("(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, lHash);
+    WINE_TRACE("(\"%s\", \"%s\", %u)\n", lpszPath, lpszWindow, lHash);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
     WINHELP_CreateHelpWindowByHash(hlpfile, lHash,
                                    WINHELP_GetWindowInfo(hlpfile, lpszWindow),
@@ -716,7 +716,7 @@ void CALLBACK MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keywo
 
 void CALLBACK MACRO_KLink(LPCSTR str1, LONG u, LPCSTR str2, LPCSTR str3)
 {
-    WINE_FIXME("(\"%s\", %lu, \"%s\", \"%s\")\n", str1, u, str2, str3);
+    WINE_FIXME("(\"%s\", %u, \"%s\", \"%s\")\n", str1, u, str2, str3);
 }
 
 void CALLBACK MACRO_Menu(void)
@@ -726,7 +726,7 @@ void CALLBACK MACRO_Menu(void)
 
 void CALLBACK MACRO_MPrintHash(LONG u)
 {
-    WINE_FIXME("(%lu)\n", u);
+    WINE_FIXME("(%u)\n", u);
 }
 
 void CALLBACK MACRO_MPrintID(LPCSTR str)
@@ -755,12 +755,12 @@ void CALLBACK MACRO_NoShow(void)
 
 void CALLBACK MACRO_PopupContext(LPCSTR str, LONG u)
 {
-    WINE_FIXME("(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
 void CALLBACK MACRO_PopupHash(LPCSTR str, LONG u)
 {
-    WINE_FIXME("(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
 void CALLBACK MACRO_PopupId(LPCSTR str1, LPCSTR str2)
@@ -770,7 +770,7 @@ void CALLBACK MACRO_PopupId(LPCSTR str1, LPCSTR str2)
 
 void CALLBACK MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR str)
 {
-    WINE_FIXME("(%li, %li, %lu, %lu, %lu, \"%s\")\n", i1, i2, u1, u2, u3, str);
+    WINE_FIXME("(%i, %i, %u, %u, %u, \"%s\")\n", i1, i2, u1, u2, u3, str);
 }
 
 void CALLBACK MACRO_Prev(void)
@@ -862,7 +862,7 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
             Globals.dlls = dll;
             dll->handler = (WINHELP_LDLLHandler)GetProcAddress(dll->hLib, "LDLLHandler");
             dll->class = dll->handler ? (dll->handler)(DW_WHATMSG, 0, 0) : DC_NOMSG;
-            WINE_TRACE("Got class %lx for DLL %s\n", dll->class, dll_name);
+            WINE_TRACE("Got class %x for DLL %s\n", dll->class, dll_name);
             if (dll->class & DC_INITTERM) dll->handler(DW_INIT, 0, 0);
             if (dll->class & DC_CALLBACKS) dll->handler(DW_CALLBACKS, (DWORD)Callbacks, 0);
         }
@@ -887,7 +887,7 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
 
 void CALLBACK MACRO_RemoveAccelerator(LONG u1, LONG u2)
 {
-    WINE_FIXME("(%lu, %lu)\n", u1, u2);
+    WINE_FIXME("(%u, %u)\n", u1, u2);
 }
 
 void CALLBACK MACRO_ResetMenu(void)
@@ -907,7 +907,7 @@ void CALLBACK MACRO_Search(void)
 
 void CALLBACK MACRO_SetContents(LPCSTR str, LONG u)
 {
-    WINE_FIXME("(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
 void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
@@ -917,27 +917,27 @@ void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
 
 void CALLBACK MACRO_SetPopupColor(LONG u1, LONG u2, LONG u3)
 {
-    WINE_FIXME("(%lu, %lu, %lu)\n", u1, u2, u3);
+    WINE_FIXME("(%u, %u, %u)\n", u1, u2, u3);
 }
 
 void CALLBACK MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lu, %lu, \"%s\", \"%s\")\n", str1, str2, u1, u2, str3, str4);
+    WINE_FIXME("(\"%s\", \"%s\", %u, %u, \"%s\", \"%s\")\n", str1, str2, u1, u2, str3, str4);
 }
 
 void CALLBACK MACRO_ShortCut(LPCSTR str1, LPCSTR str2, LONG w, LONG l, LPCSTR str)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %lx, %lx, \"%s\")\n", str1, str2, w, l, str);
+    WINE_FIXME("(\"%s\", \"%s\", %x, %x, \"%s\")\n", str1, str2, w, l, str);
 }
 
 void CALLBACK MACRO_TCard(LONG u)
 {
-    WINE_FIXME("(%lu)\n", u);
+    WINE_FIXME("(%u)\n", u);
 }
 
 void CALLBACK MACRO_Test(LONG u)
 {
-    WINE_FIXME("(%lu)\n", u);
+    WINE_FIXME("(%u)\n", u);
 }
 
 BOOL CALLBACK MACRO_TestALink(LPCSTR str)

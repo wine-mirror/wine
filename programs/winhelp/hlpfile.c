@@ -134,7 +134,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%lx]\n", hlpfile->lpszPath, offset);
+    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, offset);
 
     if (offset == 0xFFFFFFFF) return NULL;
     page = NULL;
@@ -145,7 +145,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
             found = page;
     }
     if (!found)
-        WINE_ERR("Page of offset %lu not found in file %s\n",
+        WINE_ERR("Page of offset %u not found in file %s\n",
                  offset, hlpfile->lpszPath);
     return found;
 }
@@ -160,7 +160,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%lx]\n", hlpfile->lpszPath, lHash);
+    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lHash);
 
     for (i = 0; i < hlpfile->wContextLen; i++)
     {
@@ -168,7 +168,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
             return HLPFILE_PageByOffset(hlpfile, hlpfile->Context[i].offset);
     }
 
-    WINE_ERR("Page of hash %lx not found in file %s\n", lHash, hlpfile->lpszPath);
+    WINE_ERR("Page of hash %x not found in file %s\n", lHash, hlpfile->lpszPath);
     return NULL;
 }
 
@@ -316,7 +316,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
         index  = (ref - 0x0C) >> 14;
         offset = (ref - 0x0C) & 0x3fff;
 
-        WINE_TRACE("ref=%08lx => [%u/%u]\n", ref, index, offset);
+        WINE_TRACE("ref=%08x => [%u/%u]\n", ref, index, offset);
 
         if (index >= topic.wMapLen) {WINE_WARN("maplen\n"); break;}
         buf = topic.map[index] + offset;
@@ -415,7 +415,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     page->browse_bwd = GET_UINT(buf, 0x19);
     page->browse_fwd = GET_UINT(buf, 0x1D);
 
-    WINE_TRACE("Added page[%d]: title='%s' %08lx << %08x >> %08lx\n",
+    WINE_TRACE("Added page[%d]: title='%s' %08x << %08x >> %08x\n",
                page->wNumber, page->lpszTitle, 
                page->browse_bwd, page->offset, page->browse_fwd);
 
@@ -597,7 +597,7 @@ static BOOL HLPFILE_LoadBitmap(BYTE* beg, BYTE type, BYTE pack,
     if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
     if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
     bi->bmiHeader.biSizeImage = (((bi->bmiHeader.biWidth * bi->bmiHeader.biBitCount + 31) & ~31) / 8) * bi->bmiHeader.biHeight;
-    WINE_TRACE("planes=%d bc=%d size=(%ld,%ld)\n",
+    WINE_TRACE("planes=%d bc=%d size=(%d,%d)\n",
                bi->bmiHeader.biPlanes, bi->bmiHeader.biBitCount, 
                bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
 
@@ -673,7 +673,7 @@ static BOOL     HLPFILE_LoadMetaFile(BYTE* beg, BYTE pack, HLPFILE_PARAGRAPH* pa
     hsoff = GET_UINT(ptr, 4);
     ptr += 8;
 
-    WINE_TRACE("sz=%lu csz=%lu (%ld,%ld) offs=%lu/%u,%lu\n", 
+    WINE_TRACE("sz=%lu csz=%lu (%d,%d) offs=%lu/%u,%lu\n",
                size, csize, mfp.xExt, mfp.yExt, off, ptr - beg, hsoff);
 
     bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack);
@@ -815,7 +815,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
     link->window     = wnd;
     link->wRefCount   = 1;
 
-    WINE_TRACE("Link[%d] to %s@%08lx:%d\n",
+    WINE_TRACE("Link[%d] to %s@%08x:%d\n",
                link->cookie, link->lpszString, 
                link->lHash, link->window);
     return link;
@@ -1431,7 +1431,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 wi->style = (flags & 0x0080) ? GET_USHORT(ptr, 84) : SW_SHOW;
                 wi->sr_color = (flags & 0x0100) ? GET_UINT(ptr, 86) : 0xFFFFFF;
                 wi->nsr_color = (flags & 0x0200) ? GET_UINT(ptr, 90) : 0xFFFFFF;
-                WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%ld,%ld)x(%ld,%ld)\n",
+                WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%d,%d)x(%d,%d)\n",
                            flags & 0x0001 ? 'T' : 't',
                            flags & 0x0002 ? 'N' : 'n',
                            flags & 0x0004 ? 'C' : 'c',
