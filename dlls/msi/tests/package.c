@@ -2285,10 +2285,7 @@ static void test_appsearch(void)
 
     r = MsiGetPropertyA( hpkg, "WEBBROWSERPROG", prop, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
-    todo_wine
-    {
-        ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
-    }
+    ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
 
     MsiCloseHandle( hpkg );
     DeleteFileA(msifile);

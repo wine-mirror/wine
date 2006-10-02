@@ -397,6 +397,9 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue,
             rc = ACTION_SearchDirectory(package, sig, (LPCWSTR)value, 0,
              appValue);
             break;
+        case msidbLocatorTypeFileName:
+            *appValue = (LPWSTR)value;
+            break;
         case msidbLocatorTypeRawValue:
             ACTION_ConvertRegValue(regType, value, sz, appValue);
             break;
