@@ -94,7 +94,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
     {
         if (SendMessageTimeoutW( win[i].hwnd, WM_QUERYENDSESSION, 0, 0, flags, 0, &result ))
         {
-            WINE_TRACE( "sent MW_QUERYENDSESSION hwnd %p pid %04lx result %ld\n",
+            WINE_TRACE( "sent MW_QUERYENDSESSION hwnd %p pid %04x result %ld\n",
                         win[i].hwnd, win[i].pid, result );
             ret = result;
         }
@@ -104,7 +104,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
     for (i = 0; i < count; i++)
     {
         if (!win[i].hwnd) continue;
-        WINE_TRACE( "sending WM_ENDSESSION hwnd %p pid %04lx wp %ld\n", win[i].hwnd, win[i].pid, ret );
+        WINE_TRACE( "sending WM_ENDSESSION hwnd %p pid %04x wp %ld\n", win[i].hwnd, win[i].pid, ret );
         SendMessageTimeoutW( win[i].hwnd, WM_ENDSESSION, ret, 0, flags, 0, &result );
     }
 
@@ -113,7 +113,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
         HANDLE handle = OpenProcess( PROCESS_TERMINATE, FALSE, win[0].pid );
         if (handle)
         {
-            WINE_TRACE( "terminating process %04lx\n", win[0].pid );
+            WINE_TRACE( "terminating process %04x\n", win[0].pid );
             TerminateProcess( handle, 0 );
             CloseHandle( handle );
         }
@@ -168,7 +168,7 @@ void kill_processes( BOOL kill_desktop )
         {
             if (process.th32ProcessID == GetCurrentProcessId()) continue;
             if (process.th32ProcessID == desktop_pid) continue;
-            WINE_TRACE("killing process %04lx %s\n",
+            WINE_TRACE("killing process %04x %s\n",
                        process.th32ProcessID, wine_dbgstr_w(process.szExeFile) );
             if (!(handle = OpenProcess( PROCESS_TERMINATE, FALSE, process.th32ProcessID )))
                 continue;

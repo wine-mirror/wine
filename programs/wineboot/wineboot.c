@@ -134,7 +134,7 @@ static BOOL wininit(void)
 	    return TRUE;
 	}
 
-	WINE_ERR("There was an error in reading wininit.ini file - %ld\n",
+	WINE_ERR("There was an error in reading wininit.ini file - %d\n",
 		GetLastError() );
 
 	return FALSE;
@@ -191,7 +191,7 @@ static BOOL wininit(void)
 
     if( !MoveFileExA( RENAME_FILE, RENAME_FILE_TO, MOVEFILE_REPLACE_EXISTING) )
     {
-        WINE_ERR("Couldn't rename wininit.ini, error %ld\n", GetLastError() );
+        WINE_ERR("Couldn't rename wininit.ini, error %d\n", GetLastError() );
 
         return FALSE;
     }
@@ -226,7 +226,7 @@ static BOOL pendingRename(void)
         }
         else
         {
-            WINE_ERR("Couldn't open key, error %ld\n", res );
+            WINE_ERR("Couldn't open key, error %d\n", res );
             res=FALSE;
         }
 
@@ -246,7 +246,7 @@ static BOOL pendingRename(void)
 
     if( res!=ERROR_SUCCESS )
     {
-        WINE_ERR("Couldn't query value's length (%ld)\n", res );
+        WINE_ERR("Couldn't query value's length (%d)\n", res );
         res=FALSE;
         goto end;
     }
@@ -254,7 +254,7 @@ static BOOL pendingRename(void)
     buffer=HeapAlloc( GetProcessHeap(),0,dataLength );
     if( buffer==NULL )
     {
-        WINE_ERR("Couldn't allocate %lu bytes for the value\n", dataLength );
+        WINE_ERR("Couldn't allocate %u bytes for the value\n", dataLength );
         res=FALSE;
         goto end;
     }
@@ -262,7 +262,7 @@ static BOOL pendingRename(void)
     res=RegQueryValueExW( hSession, ValueName, NULL, NULL, (LPBYTE)buffer, &dataLength );
     if( res!=ERROR_SUCCESS )
     {
-        WINE_ERR("Couldn't query value after successfully querying before (%lu),\n"
+        WINE_ERR("Couldn't query value after successfully querying before (%u),\n"
                 "please report to wine-devel@winehq.org\n", res);
         res=FALSE;
         goto end;
@@ -322,14 +322,14 @@ static BOOL pendingRename(void)
                 }
             } else
             {
-                WINE_ERR("couldn't get file attributes (%ld)\n", GetLastError() );
+                WINE_ERR("couldn't get file attributes (%d)\n", GetLastError() );
             }
         }
     }
 
     if((res=RegDeleteValueW(hSession, ValueName))!=ERROR_SUCCESS )
     {
-        WINE_ERR("Error deleting the value (%lu)\n", GetLastError() );
+        WINE_ERR("Error deleting the value (%u)\n", GetLastError() );
         res=FALSE;
     } else
         res=TRUE;
@@ -385,7 +385,7 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
 
     if( !CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dir, &si, &info) )
     {
-        WINE_ERR("Failed to run command %s (%ld)\n", wine_dbgstr_w(cmdline),
+        WINE_ERR("Failed to run command %s (%d)\n", wine_dbgstr_w(cmdline),
                  GetLastError() );
 
         return INVALID_RUNCMD_RETURN;
@@ -433,7 +433,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
 
     if( (res=RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ))!=ERROR_SUCCESS )
     {
-        WINE_ERR("RegOpenKey failed on Software\\Microsoft\\Windows\\CurrentVersion (%ld)\n",
+        WINE_ERR("RegOpenKey failed on Software\\Microsoft\\Windows\\CurrentVersion (%d)\n",
                 res);
 
         goto end;
@@ -449,7 +449,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
             res=ERROR_SUCCESS;
         }
         else
-            WINE_ERR("RegOpenKey failed on run key (%ld)\n", res);
+            WINE_ERR("RegOpenKey failed on run key (%d)\n", res);
 
         goto end;
     }
@@ -457,7 +457,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     if( (res=RegQueryInfoKeyW( hkRun, NULL, NULL, NULL, NULL, NULL, NULL, &i, &nMaxValue,
                     &nMaxCmdLine, NULL, NULL ))!=ERROR_SUCCESS )
     {
-        WINE_ERR("Couldn't query key info (%ld)\n", res );
+        WINE_ERR("Couldn't query key info (%d)\n", res );
 
         goto end;
     }
@@ -496,29 +496,29 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
         if( (res=RegEnumValueW( hkRun, i, szValue, &nValLength, 0, &type,
                         (LPBYTE)szCmdLine, &nDataLength ))!=ERROR_SUCCESS )
         {
-            WINE_ERR("Couldn't read in value %ld - %ld\n", i, res );
+            WINE_ERR("Couldn't read in value %d - %d\n", i, res );
 
             continue;
         }
 
         if( bDelete && (res=RegDeleteValueW( hkRun, szValue ))!=ERROR_SUCCESS )
         {
-            WINE_ERR("Couldn't delete value - %ld, %ld. Running command anyways.\n", i, res );
+            WINE_ERR("Couldn't delete value - %d, %d. Running command anyways.\n", i, res );
         }
         
         if( type!=REG_SZ )
         {
-            WINE_ERR("Incorrect type of value #%ld (%ld)\n", i, type );
+            WINE_ERR("Incorrect type of value #%d (%d)\n", i, type );
 
             continue;
         }
 
         if( (res=runCmd(szCmdLine, NULL, bSynchronous, FALSE ))==INVALID_RUNCMD_RETURN )
         {
-            WINE_ERR("Error running cmd #%ld (%ld)\n", i, GetLastError() );
+            WINE_ERR("Error running cmd #%d (%d)\n", i, GetLastError() );
         }
 
-        WINE_TRACE("Done processing cmd #%ld\n", i);
+        WINE_TRACE("Done processing cmd #%d\n", i);
     }
 
     res=ERROR_SUCCESS;
@@ -606,7 +606,7 @@ static int ProcessWindowsFileProtection(void)
                     (LPSTR) dllcache, targetpath, currentpath, tempfile,&sz);
         if (rc != ERROR_SUCCESS)
         {
-            WINE_ERR("WFP: %s error 0x%lx\n",finddata.cFileName,rc);
+            WINE_ERR("WFP: %s error 0x%x\n",finddata.cFileName,rc);
             DeleteFile(tempfile);
         }
         find_rc = FindNextFile(find_handle,&finddata);
@@ -666,7 +666,7 @@ int main( int argc, char *argv[] )
     
     if( res==0 )
     {
-	WINE_ERR("Couldn't get the windows directory - error %ld\n",
+	WINE_ERR("Couldn't get the windows directory - error %d\n",
 		GetLastError() );
 
 	return 100;
@@ -674,14 +674,14 @@ int main( int argc, char *argv[] )
 
     if( res>=sizeof(gen_path) )
     {
-	WINE_ERR("Windows path too long (%ld)\n", res );
+	WINE_ERR("Windows path too long (%d)\n", res );
 
 	return 100;
     }
 
     if( !SetCurrentDirectory( gen_path ) )
     {
-        WINE_ERR("Cannot set the dir to %s (%ld)\n", gen_path, GetLastError() );
+        WINE_ERR("Cannot set the dir to %s (%d)\n", gen_path, GetLastError() );
 
         return 100;
     }
