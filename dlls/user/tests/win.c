@@ -64,7 +64,7 @@ static HMENU hmenu;
 static void flush_events(void)
 {
     MSG msg;
-    int diff = 100;
+    int diff = 200;
     DWORD time = GetTickCount() + diff;
 
     while (diff > 0)
