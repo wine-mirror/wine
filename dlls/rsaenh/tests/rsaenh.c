@@ -1175,7 +1175,7 @@ static void test_import_export(void)
         
     result = CryptExportKey(hPublicKey, 0, PUBLICKEYBLOB, 0, emptyKey, &dwLen);
     ok(result, "failed to export the fresh imported public key\n");
-    ok(dwLen == 84, "Expected exported key to be 84 bytes long but got %ld bytes.",dwLen);
+    ok(dwLen == 84, "Expected exported key to be 84 bytes long but got %ld bytes.\n",dwLen);
     ok(!memcmp(emptyKey, abPlainPublicKey, dwLen), "exported key is different from the imported key\n");
 }
         

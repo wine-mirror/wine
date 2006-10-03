@@ -940,7 +940,7 @@ static void test_GetLongPathNameW(void)
     if(pGetLongPathNameW) 
     {
     ok(0==length,"GetLongPathNameW returned %ld but expected 0\n",length);
-    ok(GetLastError()==ERROR_INVALID_PARAMETER,"GetLastError returned %lx but expected ERROR_INVALID_PARAMETER",GetLastError());
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"GetLastError returned %lx but expected ERROR_INVALID_PARAMETER\n",GetLastError());
 
     SetLastError(0xdeadbeef); 
     empty[0]=0;

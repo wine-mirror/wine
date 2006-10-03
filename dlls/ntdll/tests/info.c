@@ -773,13 +773,13 @@ static void test_readvirtualmemory(void)
     status = pNtReadVirtualMemory(process, teststring, buffer, 12, &readcount);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
-    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* no number of bytes */
     memset(buffer, 0, 12);
     status = pNtReadVirtualMemory(process, teststring, buffer, 12, NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* illegal remote address */
     todo_wine{
@@ -798,7 +798,7 @@ static void test_readvirtualmemory(void)
     status = pNtReadVirtualMemory((HANDLE)-1, teststring, buffer, 12, &readcount);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
-    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory");
+    ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* this test currently crashes wine with "wine client error:<process id>: read: Bad address"
      * because the reply from wine server is directly read into the buffer and that fails with EFAULT
