@@ -186,6 +186,8 @@ typedef struct tagDC_FUNCS
     /* OpenGL32 */
     HGLRC    (*pwglCreateContext)(PHYSDEV);
     BOOL     (*pwglMakeCurrent)(PHYSDEV, HGLRC);
+    BOOL     (*pwglUseFontBitmapsA)(PHYSDEV, DWORD, DWORD, DWORD);
+    BOOL     (*pwglUseFontBitmapsW)(PHYSDEV, DWORD, DWORD, DWORD);
 } DC_FUNCTIONS;
 
 /* It should not be necessary to access the contents of the GdiPath

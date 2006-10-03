@@ -516,17 +516,6 @@ inline static void set_drawable( HDC hdc, Drawable drawable )
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
 }
 
-/* retrieve the X font to use on a given DC */
-inline static Font get_font( HDC hdc )
-{
-    Font font;
-    enum x11drv_escape_codes escape = X11DRV_GET_FONT;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(font), (LPSTR)&font )) font = 0;
-    return font;
-}
-
 /** for use of wglGetCurrentReadDCARB */
 inline static HDC get_hdc_from_Drawable(GLXDrawable d)
 {
@@ -1589,14 +1578,14 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
 }
 
 /* OpenGL32 wglUseFontBitmapsA */
-BOOL WINAPI X11DRV_wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-     Font fid = get_font( hdc );
+     Font fid = physDev->font;
 
-     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
      if (fid == 0) {
-         return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineA);
+         return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineA);
      }
 
      wine_tsx11_lock();
@@ -1607,14 +1596,14 @@ BOOL WINAPI X11DRV_wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD l
 }
 
 /* OpenGL32 wglUseFontBitmapsW */
-BOOL WINAPI X11DRV_wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-     Font fid = get_font( hdc );
+     Font fid = physDev->font;
 
-     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
+     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
      if (fid == 0) {
-         return internal_wglUseFontBitmaps(hdc, first, count, listBase, GetGlyphOutlineW);
+         return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineW);
      }
 
      WARN("Using the glX API for the WCHAR variant - some characters may come out incorrectly !\n");

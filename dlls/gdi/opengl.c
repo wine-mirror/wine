@@ -74,3 +74,41 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     GDI_ReleaseObj( hdc);
     return ret;
 }
+
+/***********************************************************************
+ *		wglUseFontBitmapsA (OPENGL32.@)
+ */
+BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
+
+    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglUseFontBitmapsA) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglUseFontBitmapsA(dc->physDev, first, count, listBase);
+
+    GDI_ReleaseObj( hdc);
+    return ret;
+}
+
+/***********************************************************************
+ *		wglUseFontBitmapsW (OPENGL32.@)
+ */
+BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
+
+    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglUseFontBitmapsW) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglUseFontBitmapsW(dc->physDev, first, count, listBase);
+
+    GDI_ReleaseObj( hdc);
+    return ret;
+}

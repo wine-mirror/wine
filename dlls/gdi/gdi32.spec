@@ -500,6 +500,8 @@
 #
 @ stdcall wglCreateContext(long)
 @ stdcall wglMakeCurrent(long long)
+@ stdcall wglUseFontBitmapsA(long long long long)
+@ stdcall wglUseFontBitmapsW(long long long long)
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

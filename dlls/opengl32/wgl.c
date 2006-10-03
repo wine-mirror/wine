@@ -52,8 +52,6 @@ typedef struct wine_wgl_s {
     HDC WINAPI   (*p_wglGetCurrentDC)(void);
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
     BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
-    BOOL WINAPI  (*p_wglUseFontBitmapsA)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
-    BOOL WINAPI  (*p_wglUseFontBitmapsW)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
 
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl_t;
@@ -325,30 +323,6 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   }
 
   return TRUE;
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsA (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
-			       DWORD first,
-			       DWORD count,
-			       DWORD listBase)
-{
-    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
-    return wine_wgl.p_wglUseFontBitmapsA(hdc, first, count, listBase);
-}
-
-/***********************************************************************
- *		wglUseFontBitmapsW (OPENGL32.@)
- */
-BOOL WINAPI wglUseFontBitmapsW(HDC hdc,
-			       DWORD first,
-			       DWORD count,
-			       DWORD listBase)
-{
-    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
-    return wine_wgl.p_wglUseFontBitmapsW(hdc, first, count, listBase);
 }
 
 #ifdef HAVE_GL_GLU_H
@@ -680,8 +654,6 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod, "wglGetCurrentDC");
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
   wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
-  wine_wgl.p_wglUseFontBitmapsA = (void*)GetProcAddress(mod, "wglUseFontBitmapsA");
-  wine_wgl.p_wglUseFontBitmapsW = (void*)GetProcAddress(mod, "wglUseFontBitmapsW");
 
   /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");

@@ -394,7 +394,7 @@
 @  stdcall wglShareLists(long long)
 @  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 @  stdcall wglSwapLayerBuffers(long long)
-@  stdcall wglUseFontBitmapsA(long long long long)
-@  stdcall wglUseFontBitmapsW(long long long long)
+@  stdcall wglUseFontBitmapsA(long long long long) gdi32.wglUseFontBitmapsA
+@  stdcall wglUseFontBitmapsW(long long long long) gdi32.wglUseFontBitmapsW
 @  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
 @  stdcall wglUseFontOutlinesW(long long long long long long long ptr)
