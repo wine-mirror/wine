@@ -165,7 +165,7 @@
 @ stub CryptSetAsyncParam
 @ stdcall CryptSetOIDFunctionValue(long str str wstr long ptr long)
 @ stub CryptSetProviderU
-@ stub CryptSignAndEncodeCertificate
+@ stdcall CryptSignAndEncodeCertificate(long long long str ptr ptr ptr ptr ptr)
 @ stub CryptSignAndEncryptMessage
 @ stdcall CryptSignCertificate(long long long ptr long ptr ptr ptr ptr)
 @ stub CryptSignHashU

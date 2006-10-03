@@ -1198,33 +1198,116 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
  const void *pvHashAuxInfo, BYTE *pbSignature, DWORD *pcbSignature)
 {
     BOOL ret;
-    ALG_ID algID;
+    PCCRYPT_OID_INFO info;
     HCRYPTHASH hHash;
 
     TRACE("(%08lx, %ld, %ld, %p, %ld, %p, %p, %p, %p)\n", hCryptProv,
      dwKeySpec, dwCertEncodingType, pbEncodedToBeSigned, cbEncodedToBeSigned,
      pSignatureAlgorithm, pvHashAuxInfo, pbSignature, pcbSignature);
 
-    algID = CertOIDToAlgId(pSignatureAlgorithm->pszObjId);
-    if (!algID)
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     pSignatureAlgorithm->pszObjId, 0);
+    if (!info)
     {
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
     }
-    if (!hCryptProv)
+    if (info->dwGroupId == CRYPT_HASH_ALG_OID_GROUP_ID)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        if (!hCryptProv)
+            hCryptProv = CRYPT_GetDefaultProvider();
+        ret = CryptCreateHash(hCryptProv, info->Algid, 0, 0, &hHash);
+        if (ret)
+        {
+            ret = CryptHashData(hHash, pbEncodedToBeSigned,
+             cbEncodedToBeSigned, 0);
+            if (ret)
+                ret = CryptGetHashParam(hHash, HP_HASHVAL, pbSignature,
+                 pcbSignature, 0);
+            CryptDestroyHash(hHash);
+        }
     }
+    else
+    {
+        if (!hCryptProv)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
+        else
+        {
+            ret = CryptCreateHash(hCryptProv, info->Algid, 0, 0, &hHash);
+            if (ret)
+            {
+                ret = CryptHashData(hHash, pbEncodedToBeSigned,
+                 cbEncodedToBeSigned, 0);
+                if (ret)
+                    ret = CryptSignHashW(hHash, dwKeySpec, NULL, 0, pbSignature,
+                     pcbSignature);
+                CryptDestroyHash(hHash);
+            }
+        }
+    }
+    return ret;
+}
 
-    ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hHash);
+BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV hCryptProv,
+ DWORD dwKeySpec, DWORD dwCertEncodingType, LPCSTR lpszStructType,
+ const void *pvStructInfo, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
+ const void *pvHashAuxInfo, PBYTE pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+    DWORD encodedSize, hashSize;
+
+    TRACE("(%08lx, %ld, %ld, %s, %p, %p, %p, %p, %p)\n", hCryptProv, dwKeySpec,
+     dwCertEncodingType, debugstr_a(lpszStructType), pvStructInfo,
+     pSignatureAlgorithm, pvHashAuxInfo, pbEncoded, pcbEncoded);
+
+    ret = CryptEncodeObject(dwCertEncodingType, lpszStructType, pvStructInfo,
+     NULL, &encodedSize);
     if (ret)
     {
-        ret = CryptHashData(hHash, pbEncodedToBeSigned, cbEncodedToBeSigned, 0);
-        if (ret)
-            ret = CryptSignHashW(hHash, dwKeySpec, NULL, 0, pbSignature,
-             pcbSignature);
-        CryptDestroyHash(hHash);
+        PBYTE encoded = CryptMemAlloc(encodedSize);
+
+        if (encoded)
+        {
+            ret = CryptEncodeObject(dwCertEncodingType, lpszStructType,
+             pvStructInfo, encoded, &encodedSize);
+            if (ret)
+            {
+                ret = CryptSignCertificate(hCryptProv, dwKeySpec,
+                 dwCertEncodingType, encoded, encodedSize, pSignatureAlgorithm,
+                 pvHashAuxInfo, NULL, &hashSize);
+                if (ret)
+                {
+                    PBYTE hash = CryptMemAlloc(hashSize);
+
+                    if (hash)
+                    {
+                        ret = CryptSignCertificate(hCryptProv, dwKeySpec,
+                         dwCertEncodingType, encoded, encodedSize,
+                         pSignatureAlgorithm, pvHashAuxInfo, hash, &hashSize);
+                        if (ret)
+                        {
+                            CERT_SIGNED_CONTENT_INFO info = { { 0 } };
+
+                            info.ToBeSigned.cbData = encodedSize;
+                            info.ToBeSigned.pbData = encoded;
+                            memcpy(&info.SignatureAlgorithm,
+                             pSignatureAlgorithm,
+                             sizeof(info.SignatureAlgorithm));
+                            info.Signature.cbData = hashSize;
+                            info.Signature.pbData = hash;
+                            info.Signature.cUnusedBits = 0;
+                            ret = CryptEncodeObject(dwCertEncodingType,
+                             X509_CERT, &info, pbEncoded, pcbEncoded);
+                        }
+                        CryptMemFree(hash);
+                    }
+                }
+            }
+            CryptMemFree(encoded);
+        }
     }
     return ret;
 }

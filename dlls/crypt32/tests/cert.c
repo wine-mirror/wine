@@ -1061,6 +1061,97 @@ static void testCertSigs(void)
      CRYPT_DELETEKEYSET);
 }
 
+static const BYTE md5SignedEmptyCert[] = {
+0x30,0x56,0x30,0x33,0x02,0x00,0x30,0x02,0x06,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,
+0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,
+0x36,0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x07,
+0x30,0x02,0x06,0x00,0x03,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,
+0x0d,0x02,0x05,0x05,0x00,0x03,0x11,0x00,0xfb,0x0f,0x66,0x82,0x66,0xd9,0xe5,0xf8,
+0xd8,0xa2,0x55,0x2b,0xe1,0xa5,0xd9,0x04 };
+static const BYTE md5SignedEmptyCertNoNull[] = {
+0x30,0x54,0x30,0x33,0x02,0x00,0x30,0x02,0x06,0x00,0x30,0x22,0x18,0x0f,0x31,0x36,
+0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x18,0x0f,0x31,
+0x36,0x30,0x31,0x30,0x31,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x5a,0x30,0x07,
+0x30,0x02,0x06,0x00,0x03,0x01,0x00,0x30,0x0a,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,
+0x0d,0x02,0x05,0x03,0x11,0x00,0x04,0xd9,0xa5,0xe1,0x2b,0x55,0xa2,0xd8,0xf8,0xe5,
+0xd9,0x66,0x82,0x66,0x0f,0xfb };
+
+static void testSignAndEncodeCert(void)
+{
+    static char oid_rsa_md5rsa[] = szOID_RSA_MD5RSA;
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+    BOOL ret;
+    DWORD size;
+    CRYPT_ALGORITHM_IDENTIFIER algID = { 0 };
+    CERT_INFO info = { 0 };
+
+    /* Crash
+    ret = CryptSignAndEncodeCertificate(0, 0, 0, NULL, NULL, NULL, NULL, NULL,
+     NULL);
+    ret = CryptSignAndEncodeCertificate(0, 0, 0, NULL, NULL, NULL, NULL, NULL,
+     &size);
+     */
+    ret = CryptSignAndEncodeCertificate(0, 0, 0, NULL, NULL, &algID, NULL, NULL,
+     &size);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING, NULL, NULL,
+     &algID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CryptSignAndEncodeCertificate(0, 0, 0, X509_CERT_TO_BE_SIGNED, NULL,
+     &algID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+     X509_CERT_TO_BE_SIGNED, NULL, &algID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    /* Crashes
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+     X509_CERT_TO_BE_SIGNED, &info, NULL, NULL, NULL, &size);
+     */
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+     X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == NTE_BAD_ALGID,
+     "Expected NTE_BAD_ALGID, got %08x\n", GetLastError());
+    algID.pszObjId = oid_rsa_md5rsa;
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+     X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    algID.pszObjId = oid_rsa_md5;
+    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+     X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
+    ok(ret, "CryptSignAndEncodeCertificate failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+        if (buf)
+        {
+            ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+             X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, buf, &size);
+            ok(ret, "CryptSignAndEncodeCertificate failed: %08x\n",
+             GetLastError());
+            /* Tricky: because the NULL parameters may either be omitted or
+             * included as an asn.1-encoded NULL (0x05,0x00), two different
+             * values are allowed.
+             */
+            ok(size == sizeof(md5SignedEmptyCert) ||
+             size == sizeof(md5SignedEmptyCertNoNull), "Unexpected size %d\n",
+             size);
+            if (size == sizeof(md5SignedEmptyCert))
+                ok(!memcmp(buf, md5SignedEmptyCert, size),
+                 "Unexpected value\n");
+            else if (size == sizeof(md5SignedEmptyCertNoNull))
+                ok(!memcmp(buf, md5SignedEmptyCertNoNull, size),
+                 "Unexpected value\n");
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+    }
+}
+
 static void testCreateSelfSignCert(void)
 {
     PCCERT_CONTEXT context;
@@ -1992,6 +2083,7 @@ START_TEST(cert)
 
     testCryptHashCert();
     testCertSigs();
+    testSignAndEncodeCert();
     testCreateSelfSignCert();
     testKeyUsage();
     testCompareCertName();
