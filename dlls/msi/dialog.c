@@ -1809,7 +1809,7 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
 {
     MSIFEATURE *feature;
     TVINSERTSTRUCTW tvis;
-    HTREEITEM hitem;
+    HTREEITEM hitem, hfirst = NULL;
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
@@ -1833,6 +1833,9 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
         if (!hitem)
             continue;
 
+        if (!hfirst)
+            hfirst = hitem;
+
         msi_seltree_sync_item_state( hwnd, feature, hitem );
         msi_seltree_add_child_features( package, hwnd,
                                         feature->Feature, hitem );
@@ -1841,6 +1844,9 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
         if ( feature->Display % 2 != 0 )
             SendMessageW( hwnd, TVM_EXPAND, TVE_EXPAND, (LPARAM) hitem );
     }
+
+    /* select the first item */
+    SendMessageW( hwnd, TVM_SELECTITEM, TVGN_CARET | TVGN_DROPHILITE, (LPARAM) hfirst );
 }
 
 static void msi_seltree_create_imagelist( HWND hwnd )
