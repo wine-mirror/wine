@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nddeapi);
  */
 UINT WINAPI NDdeGetErrorStringA(UINT uErrorCode, LPSTR lpszErrorString, DWORD cBufSize)
 {
-    FIXME("(%u, %s, %ld): stub!\n",uErrorCode,debugstr_a(lpszErrorString), cBufSize);
+    FIXME("(%u, %s, %d): stub!\n",uErrorCode,debugstr_a(lpszErrorString), cBufSize);
 
     return E_NOTIMPL;
 }
@@ -43,7 +43,7 @@ UINT WINAPI NDdeGetErrorStringA(UINT uErrorCode, LPSTR lpszErrorString, DWORD cB
 */
 UINT WINAPI NDdeGetErrorStringW(UINT uErrorCode, LPWSTR lpszErrorString, DWORD cBufSize)
 {
-    FIXME("(%u, %s, %ld): stub!\n",uErrorCode,debugstr_w(lpszErrorString), cBufSize);
+    FIXME("(%u, %s, %d): stub!\n",uErrorCode,debugstr_w(lpszErrorString), cBufSize);
 
     return E_NOTIMPL;
 }
