@@ -388,7 +388,7 @@ static void test_open_storage(void)
 
     DeleteFileW(filename);
 
-    /* try opening a non-existant file - it should create it */
+    /* try opening a nonexistent file - it should create it */
     stgm = STGM_DIRECT | STGM_SHARE_EXCLUSIVE | STGM_READWRITE;
     r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
     ok(r==S_OK, "StgOpenStorage failed: 0x%08lx\n", r);

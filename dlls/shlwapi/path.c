@@ -1112,7 +1112,7 @@ BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich)
  *
  * NOTES
  *  lpszPath is modified in place and must be at least MAX_PATH in length.
- *  If the function returns FALSE, the path is modified to its orginal state.
+ *  If the function returns FALSE, the path is modified to its original state.
  *  If the given path contains an extension or dwWhich is 0, executable
  *  extensions are not checked.
  *

@@ -104,7 +104,7 @@ my %options_long = (
     "documentation-pedantic" => {
 	default => 0,
 	parent => "documentation",
-	description => "be pendantic when checking for documentation inconsistencies"
+	description => "be pedantic when checking for documentation inconsistencies"
 	},
 
     "documentation-arguments" => {

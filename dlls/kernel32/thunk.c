@@ -117,7 +117,7 @@ struct ThunkDataSL
     char                   pszDll32[256];     /*120 */
 
     We do it differently since all our thunk handling is done
-    by 32-bit code. Therefore we do not need do provide
+    by 32-bit code. Therefore we do not need to provide
     easy access to this data, especially the process target
     table database, for 16-bit code.
 #endif
@@ -1542,7 +1542,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         context->SegCs  = HIWORD(context->Eax);
 
         /* Since C16ThkSL01 got called by a jmp, we need to leave the
-           orginal return address on the stack */
+           original return address on the stack */
         context->Esp -= 4;
     }
     else
