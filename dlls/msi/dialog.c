@@ -1899,7 +1899,6 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
         return ERROR_FUNCTION_FAILED;
 
     /* create the treeview control */
-    prop = MSI_RecordGetString( rec, 9 );
     style = TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT;
     style |= WS_GROUP | WS_VSCROLL;
     control = msi_dialog_add_control( dialog, rec, WC_TREEVIEWW, style );
@@ -1908,6 +1907,10 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
         msi_free(info);
         return ERROR_FUNCTION_FAILED;
     }
+
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
     /* subclass */
     info->dialog = dialog;
