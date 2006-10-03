@@ -83,7 +83,7 @@ BOOL WINAPI ContinueDebugEvent16(DWORD pid, DWORD tid, DWORD status)
 BOOL WINAPI ReadProcessMemory16(HANDLE process, LPCVOID addr, LPVOID buffer,
 				DWORD size, LPDWORD bytes_read)
 {
-    return ReadProcessMemory(process, addr, buffer, size, bytes_read);
+    return ReadProcessMemory(process, addr, buffer, size, (SIZE_T *)bytes_read);
 }
 
 /***********************************************************************
