@@ -1456,6 +1456,9 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
     path = msi_dup_property( dialog->package, prop );
+    if (!path)
+        path = prop;
+
     SetWindowTextW( control->hwnd, path );
     SendMessageW( control->hwnd, EM_SETSEL, 0, -1 );
 
@@ -2083,7 +2086,10 @@ static void msi_dialog_update_directory_combo( msi_dialog *dialog, msi_control *
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
     path = msi_dup_property( dialog->package, prop );
+    if (!path)
+        path = prop;
 
     PathStripPathW( path );
     PathRemoveBackslashW( path );
@@ -2140,7 +2146,10 @@ static void msi_dialog_update_directory_list( msi_dialog *dialog, msi_control *c
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
     path = msi_dup_property( dialog->package, prop );
+    if (!path)
+        path = prop;
 
     lstrcpyW( dir_spec, path );
     lstrcatW( dir_spec, asterisk );
@@ -2182,6 +2191,8 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
     path = msi_dup_property( dialog->package, prop );
+    if (!path)
+        path = prop;
 
     /* strip off the last directory */
     ptr = PathFindFileNameW( path );
@@ -2230,7 +2241,10 @@ static UINT msi_dialog_dirlist_handler( msi_dialog *dialog,
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
+
     path = msi_dup_property( dialog->package, prop );
+    if (!path)
+        path = prop;
 
     lstrcpyW( new_path, path );
     lstrcatW( new_path, text );
