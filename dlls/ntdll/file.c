@@ -358,6 +358,7 @@ NTSTATUS FILE_GetNtStatus(void)
 #ifdef ENOMEDIUM
     case ENOMEDIUM: return STATUS_NO_MEDIA_IN_DEVICE;
 #endif
+    case ENXIO:     return STATUS_NO_SUCH_DEVICE;
     case ENOTTY:
     case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
     case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
