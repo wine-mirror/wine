@@ -30,7 +30,7 @@ HINSTANCE hhctrl_hinstance;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p,%ld,%p)\n", hInstance, fdwReason, lpvReserved);
+    TRACE("(%p,%d,%p)\n", hInstance, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {

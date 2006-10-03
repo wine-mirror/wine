@@ -76,7 +76,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
     CHAR *file = NULL;
 
-    TRACE("(%p, %s, command=%s, data=%ld)\n",
+    TRACE("(%p, %s, command=%s, data=%d)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
 
