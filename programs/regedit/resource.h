@@ -36,7 +36,7 @@
 #define IDC_REGEDIT                     109
 #define IDC_REGEDIT_FRAME               110
 #define IDR_REGEDIT_MENU                130
-#define IDD_DIALOG1                     131
+#define IDD_EXPORT_TEMPLATE             131
 #define IDI_OPEN_FILE                   132
 #define IDD_DIALOG2                     132
 #define IDI_CLOSED_FILE                 133
@@ -144,5 +144,10 @@
 #define IDC_FIND_VALUES                 2006
 #define IDC_FIND_CONTENT                2007
 #define IDC_FIND_WHOLE                  2008
+
+#define IDC_EXPORT_BASE                 100
+#define IDC_EXPORT_ALL                  101
+#define IDC_EXPORT_SELECTED             102
+#define IDC_EXPORT_PATH                 103
 
 #define IDC_STATIC                      -1

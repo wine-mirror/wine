@@ -239,18 +239,46 @@ static BOOL CheckCommDlgError(HWND hWnd)
     return TRUE;
 }
 
+static void ExportRegistryFile_StoreSelection(HWND hdlg, OPENFILENAME *pOpenFileName)
+{
+    if (IsDlgButtonChecked(hdlg, IDC_EXPORT_SELECTED))
+    {
+        INT len = SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_GETTEXTLENGTH, 0, 0);
+        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(TCHAR));
+        SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_GETTEXT, len+1, pOpenFileName->lCustData);
+    }
+    else
+        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TCHAR));
+}
+
 static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
-    OPENFILENAME* pOpenFileName;
-    OFNOTIFY* pOfNotify;
+    static OPENFILENAME* pOpenFileName;
+    OFNOTIFY *pOfNotify;
+    LPTSTR path;
 
     switch (uiMsg) {
     case WM_INITDIALOG:
         pOpenFileName = (OPENFILENAME*)lParam;
         break;
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDC_EXPORT_PATH && HIWORD(wParam) == EN_UPDATE)
+            CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, IDC_EXPORT_SELECTED);
+        break;
     case WM_NOTIFY:
         pOfNotify = (OFNOTIFY*)lParam;
-    if (pOfNotify->hdr.code == CDN_INITDONE) {}
+        switch (pOfNotify->hdr.code)
+        {
+            case CDN_INITDONE:
+                path = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+                SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)path);
+                HeapFree(GetProcessHeap(), 0, path);
+                CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, IDC_EXPORT_ALL);
+                break;
+            case CDN_FILEOK:
+                ExportRegistryFile_StoreSelection(hdlg, pOpenFileName);
+                break;
+        }
         break;
     default:
         break;
@@ -312,13 +340,13 @@ static BOOL ExportRegistryFile(HWND hWnd)
     InitOpenFileName(hWnd, &ofn);
     LoadString(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
-    /*    ofn.lCustData = ;*/
-    ofn.Flags = OFN_ENABLETEMPLATE | OFN_EXPLORER | OFN_HIDEREADONLY;
+    ofn.lCustData = 0; 
+    ofn.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
     ofn.lpfnHook = ExportRegistryFile_OFNHookProc;
-    ofn.lpTemplateName = MAKEINTRESOURCE(IDD_DIALOG1);
+    ofn.lpTemplateName = MAKEINTRESOURCE(IDD_EXPORT_TEMPLATE);
     if (GetSaveFileName(&ofn)) {
         BOOL result;
-        result = export_registry_key(ofn.lpstrFile, ExportKeyPath);
+        result = export_registry_key(ofn.lpstrFile, (LPTSTR)ofn.lCustData);
         if (!result) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
