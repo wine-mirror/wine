@@ -410,6 +410,7 @@ static const struct _events Events[] = {
     { "Reset",ControlEvent_Reset },
     { "SetInstallLevel",ControlEvent_SetInstallLevel },
     { "DirectoryListUp",ControlEvent_DirectoryListUp },
+    { "SelectionBrowse",ControlEvent_SpawnDialog },
     { NULL,NULL },
 };
 
