@@ -48,7 +48,7 @@ static void dumpLsaAttributes(PLSA_OBJECT_ATTRIBUTES oa)
 {
     if (oa)
     {
-        TRACE("\n\tlength=%lu, rootdir=%p, objectname=%s\n\tattr=0x%08lx, sid=%s qos=%p\n",
+        TRACE("\n\tlength=%u, rootdir=%p, objectname=%s\n\tattr=0x%08x, sid=%s qos=%p\n",
               oa->Length, oa->RootDirectory,
               oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
               oa->Attributes, debugstr_sid(oa->SecurityDescriptor),
@@ -104,7 +104,7 @@ NTSTATUS WINAPI LsaAddAccountRights(
     PLSA_UNICODE_STRING rights,
     ULONG count)
 {
-    FIXME("(%p,%p,%p,0x%08lx) stub\n", policy, sid, rights, count);
+    FIXME("(%p,%p,%p,0x%08x) stub\n", policy, sid, rights, count);
     return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
@@ -137,7 +137,7 @@ NTSTATUS WINAPI LsaCreateTrustedDomainEx(
     ACCESS_MASK access,
     PLSA_HANDLE domain)
 {
-    FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", policy, domain_info, auth_info,
+    FIXME("(%p,%p,%p,0x%08x,%p) stub\n", policy, domain_info, auth_info,
           access, domain);
     return STATUS_SUCCESS;
 }
@@ -209,7 +209,7 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomains(
     IN ULONG PreferredMaximumLength,
     OUT PULONG CountReturned)
 {
-    FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", PolicyHandle, EnumerationContext,
+    FIXME("(%p,%p,%p,0x%08x,%p) stub\n", PolicyHandle, EnumerationContext,
           Buffer, PreferredMaximumLength, CountReturned);
 
     if (CountReturned) *CountReturned = 0;
@@ -227,7 +227,7 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomainsEx(
     ULONG length,
     PULONG count)
 {
-    FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", policy, context, buffer, length, count);
+    FIXME("(%p,%p,%p,0x%08x,%p) stub\n", policy, context, buffer, length, count);
 
     if (count) *count = 0;
     return STATUS_SUCCESS;
@@ -275,7 +275,7 @@ NTSTATUS WINAPI LsaLookupNames(
     OUT PLSA_REFERENCED_DOMAIN_LIST* ReferencedDomains,
     OUT PLSA_TRANSLATED_SID* Sids)
 {
-    FIXME("(%p,0x%08lx,%p,%p,%p) stub\n", PolicyHandle, Count, Names,
+    FIXME("(%p,0x%08x,%p,%p,%p) stub\n", PolicyHandle, Count, Names,
           ReferencedDomains, Sids);
 
     return STATUS_NONE_MAPPED;
@@ -293,7 +293,7 @@ NTSTATUS WINAPI LsaLookupNames2(
     PLSA_REFERENCED_DOMAIN_LIST *domains,
     PLSA_TRANSLATED_SID2 *sids)
 {
-    FIXME("(%p,0x%08lx,0x%08lx,%p,%p,%p) stub\n", policy, flags, count, names, domains, sids);
+    FIXME("(%p,0x%08x,0x%08x,%p,%p,%p) stub\n", policy, flags, count, names, domains, sids);
     return STATUS_NONE_MAPPED;
 }
 
@@ -321,7 +321,7 @@ NTSTATUS WINAPI LsaLookupSids(
     OUT PLSA_REFERENCED_DOMAIN_LIST *ReferencedDomains,
     OUT PLSA_TRANSLATED_NAME *Names )
 {
-    FIXME("(%p,%lu,%p,%p,%p) stub\n", PolicyHandle, Count, Sids,
+    FIXME("(%p,%u,%p,%p,%p) stub\n", PolicyHandle, Count, Sids,
           ReferencedDomains, Names);
 
     return STATUS_NONE_MAPPED;
@@ -368,7 +368,7 @@ NTSTATUS WINAPI LsaOpenPolicy(
     IN ACCESS_MASK DesiredAccess,
     IN OUT PLSA_HANDLE PolicyHandle)
 {
-    FIXME("(%s,%p,0x%08lx,%p) stub\n",
+    FIXME("(%s,%p,0x%08x,%p) stub\n",
           SystemName?debugstr_w(SystemName->Buffer):"(null)",
           ObjectAttributes, DesiredAccess, PolicyHandle);
 
@@ -390,7 +390,7 @@ NTSTATUS WINAPI LsaOpenTrustedDomainByName(
     ACCESS_MASK access,
     PLSA_HANDLE handle)
 {
-    FIXME("(%p,%p,0x%08lx,%p) stub\n", policy, name, access, handle);
+    FIXME("(%p,%p,0x%08x,%p) stub\n", policy, name, access, handle);
     return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
@@ -564,7 +564,7 @@ NTSTATUS WINAPI LsaRemoveAccountRights(
     PLSA_UNICODE_STRING rights,
     ULONG count)
 {
-    FIXME("(%p,%p,%d,%p,0x%08lx) stub\n", policy, sid, all, rights, count);
+    FIXME("(%p,%p,%d,%p,0x%08x) stub\n", policy, sid, all, rights, count);
     return STATUS_SUCCESS;
 }
 

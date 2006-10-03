@@ -416,13 +416,13 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
     LPWSTR args;
     BOOL r;
 
-    TRACE("%p %p %ld\n", pipe, service, count);
+    TRACE("%p %p %d\n", pipe, service, count);
 
     args = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
     r = ReadFile(pipe, args, count*sizeof(WCHAR), &read, NULL);
     if (!r || count!=read/sizeof(WCHAR) || args[count-1])
     {
-        ERR("pipe read failed r = %d count = %ld/%ld args[n-1]=%s\n",
+        ERR("pipe read failed r = %d count = %d/%d args[n-1]=%s\n",
             r, count, read/sizeof(WCHAR), debugstr_wn(args, count));
         goto end;
     }
@@ -457,7 +457,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
     LPWSTR p;
     BOOL r;
 
-    TRACE("%p %p %ld\n", pipe, argv, argc);
+    TRACE("%p %p %d\n", pipe, argv, argc);
 
     /* calculate how much space do we need to send the startup info */
     len = 1;
@@ -516,7 +516,7 @@ static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS status)
     r = ReadFile( pipe, status, sizeof *status, &count, NULL );
     if (!r || count != sizeof *status)
         ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %ld!\n", r, count);
+            "r = %d  count = %d!\n", r, count);
     return r;
 }
 
@@ -539,7 +539,7 @@ static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
     r = ReadFile(pipe, result, sizeof *result, &count, NULL);
     if (!r || count != sizeof *result)
         ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %ld!\n", r, count);
+            "r = %d  count = %d!\n", r, count);
     return r;
 }
 
@@ -606,7 +606,7 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
 {
     DWORD count, ret = ERROR_INVALID_SERVICE_CONTROL;
 
-    TRACE("received control %ld\n", dwControl);
+    TRACE("received control %d\n", dwControl);
     
     if (service_accepts_control(service, dwControl))
     {
@@ -666,7 +666,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 
     if (pipe==INVALID_HANDLE_VALUE)
     {
-        ERR("failed to create pipe for %s, error = %ld\n",
+        ERR("failed to create pipe for %s, error = %d\n",
             debugstr_w(service->name), GetLastError());
         return 0;
     }
@@ -706,7 +706,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             service_handle_control(pipe, service, req[1]);
             break;
         default:
-            ERR("received invalid command %ld length %ld\n", req[0], req[1]);
+            ERR("received invalid command %d length %d\n", req[0], req[1]);
         }
 
         FlushFileBuffers(pipe);
@@ -732,7 +732,7 @@ static BOOL service_run_threads(void)
     for (service = service_list; service; service = service->next)
         count++;
 
-    TRACE("starting %ld pipe listener threads\n", count);
+    TRACE("starting %d pipe listener threads\n", count);
 
     handles = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLE)*count);
 
@@ -918,7 +918,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
     service_data *service;
     BOOL r = TRUE;
 
-    TRACE("%p %lx %lx %lx %lx %lx %lx %lx\n", hService,
+    TRACE("%p %x %x %x %x %x %x %x\n", hService,
           lpStatus->dwServiceType, lpStatus->dwCurrentState,
           lpStatus->dwControlsAccepted, lpStatus->dwWin32ExitCode,
           lpStatus->dwServiceSpecificExitCode, lpStatus->dwCheckPoint,
@@ -931,7 +931,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
     if (service)
     {
         memcpy( &service->status, lpStatus, sizeof(SERVICE_STATUS) );
-        TRACE("Set service status to %ld\n",service->status.dwCurrentState);
+        TRACE("Set service status to %d\n",service->status.dwCurrentState);
     }
     else
         r = FALSE;
@@ -981,7 +981,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     HKEY hReg;
     LONG r;
 
-    TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
+    TRACE("(%s,%s,0x%08x)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
     if( lpDatabaseName && lpDatabaseName[0] )
@@ -1052,7 +1052,7 @@ BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
     BOOL ret = FALSE;
     HANDLE handle;
 
-    TRACE("%p %ld %p\n", hService, dwControl, lpServiceStatus);
+    TRACE("%p %d %p\n", hService, dwControl, lpServiceStatus);
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -1142,7 +1142,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     LPWSTR lpServiceNameW;
     SC_HANDLE ret;
 
-    TRACE("%p %s %ld\n", hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
+    TRACE("%p %s %d\n", hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
 
     lpServiceNameW = SERV_dup(lpServiceName);
     ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
@@ -1165,7 +1165,7 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     long r;
     DWORD len;
 
-    TRACE("%p %s %ld\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
+    TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
 
     if (!lpServiceName)
     {
@@ -1414,7 +1414,7 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     unsigned int i;
     BOOL r;
 
-    TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
+    TRACE("(%p,%d,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 
     if (dwNumServiceArgs)
         lpwstr = HeapAlloc( GetProcessHeap(), 0,
@@ -1526,7 +1526,7 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
     SC_LOCK hLock;
     HANDLE handle = INVALID_HANDLE_VALUE;
 
-    TRACE("%p %ld %p\n", hService, dwNumServiceArgs, lpServiceArgVectors);
+    TRACE("%p %d %p\n", hService, dwNumServiceArgs, lpServiceArgVectors);
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -1664,7 +1664,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     DWORD type, val, sz, total, n;
     LPSTR p;
 
-    TRACE("%p %p %ld %p\n", hService, lpServiceConfig,
+    TRACE("%p %p %d %p\n", hService, lpServiceConfig,
            cbBufSize, pcbBytesNeeded);
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
@@ -1802,7 +1802,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     HKEY hKey;
     struct sc_service *hsvc;
 
-    TRACE("%p %p %ld %p\n", hService, lpServiceConfig,
+    TRACE("%p %p %d %p\n", hService, lpServiceConfig,
            cbBufSize, pcbBytesNeeded);
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
@@ -1943,7 +1943,7 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
 {
-    FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+    FIXME("%p type=%x state=%x %p %x %p %p %p\n", hSCManager,
           dwServiceType, dwServiceState, lpServices, cbBufSize,
           pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
     SetLastError (ERROR_ACCESS_DENIED);
@@ -1959,7 +1959,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
 {
-    FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+    FIXME("%p type=%x state=%x %p %x %p %p %p\n", hSCManager,
           dwServiceType, dwServiceState, lpServices, cbBufSize,
           pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
     SetLastError (ERROR_ACCESS_DENIED);
@@ -1993,7 +1993,7 @@ BOOL WINAPI QueryServiceLockStatusA( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSA lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08x %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
@@ -2005,7 +2005,7 @@ BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSW lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08x %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
@@ -2046,7 +2046,7 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
     HKEY hKey;
     int n = 0;
 
-    TRACE("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+    TRACE("%p %d %d %d %s %s %p %p %s %s %s\n",
           hService, dwServiceType, dwStartType, dwErrorControl, 
           debugstr_w(lpBinaryPathName), debugstr_w(lpLoadOrderGroup),
           lpdwTagId, lpDependencies, debugstr_w(lpServiceStartName),
@@ -2101,7 +2101,7 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
     LPWSTR wServiceStartName, wPassword, wDisplayName;
     BOOL r;
 
-    TRACE("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+    TRACE("%p %d %d %d %s %s %p %p %s %s %s\n",
           hService, dwServiceType, dwStartType, dwErrorControl, 
           debugstr_a(lpBinaryPathName), debugstr_a(lpLoadOrderGroup),
           lpdwTagId, lpDependencies, debugstr_a(lpServiceStartName),
@@ -2137,7 +2137,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 {
     BOOL r = FALSE;
 
-    TRACE("%p %ld %p\n",hService, dwInfoLevel, lpInfo);
+    TRACE("%p %d %p\n",hService, dwInfoLevel, lpInfo);
 
     if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
     {
@@ -2205,7 +2205,7 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         }
     }
     else   
-        FIXME("STUB: %p %ld %p\n",hService, dwInfoLevel, lpInfo);
+        FIXME("STUB: %p %d %p\n",hService, dwInfoLevel, lpInfo);
     return TRUE;
 }
 
@@ -2219,7 +2219,7 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
 {
     PACL pACL = NULL;
 
-    FIXME("%p %ld %p %lu %p\n", hService, dwSecurityInformation,
+    FIXME("%p %d %p %u %p\n", hService, dwSecurityInformation,
           lpSecurityDescriptor, cbBufSize, pcbBytesNeeded);
 
     InitializeSecurityDescriptor(lpSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
@@ -2237,7 +2237,7 @@ BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
        SECURITY_INFORMATION dwSecurityInformation,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor)
 {
-    FIXME("%p %ld %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
+    FIXME("%p %d %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
     return TRUE;
 }
 
@@ -2249,7 +2249,7 @@ BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
         BOOL bSetBitsOn,
         BOOL bUpdateImmediately)
 {
-    FIXME("%p %08lx %x %x\n", hServiceStatus, dwServiceBits,
+    FIXME("%p %08x %x %x\n", hServiceStatus, dwServiceBits,
           bSetBitsOn, bUpdateImmediately);
     return TRUE;
 }

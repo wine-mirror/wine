@@ -292,33 +292,33 @@ const char * debugstr_sid(PSID sid)
     case 0:
         return wine_dbg_sprintf("S-%d-%d", psid->Revision, auth);
     case 1:
-        return wine_dbg_sprintf("S-%d-%d-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u", psid->Revision, auth,
             psid->SubAuthority[0]);
     case 2:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1]);
     case 3:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2]);
     case 4:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3]);
     case 5:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4]);
     case 6:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
     case 7:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
             psid->SubAuthority[6]);
     case 8:
-        return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
+        return wine_dbg_sprintf("S-%d-%d-%u-%u-%u-%u-%u-%u-%u-%u", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
             psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5],
             psid->SubAuthority[6], psid->SubAuthority[7]);
@@ -587,7 +587,7 @@ BOOL WINAPI
 GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
-    TRACE("(%p, %s, %p, %ld, %p):\n",
+    TRACE("(%p, %s, %p, %d, %p):\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
@@ -629,7 +629,7 @@ BOOL WINAPI
 SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength )
 {
-    TRACE("(%p, %s, %p, %ld): stub\n",
+    TRACE("(%p, %s, %p, %d): stub\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
@@ -999,7 +999,7 @@ DWORD WINAPI BuildSecurityDescriptorA(
     IN OUT PULONG lpdwBufferLength,
     OUT PSECURITY_DESCRIPTOR* pNewSD)
 { 
-    FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
+    FIXME("(%p,%p,%d,%p,%d,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
           cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
           pListofAuditEntries,pOldSD,lpdwBufferLength,pNewSD);
  
@@ -1022,7 +1022,7 @@ DWORD WINAPI BuildSecurityDescriptorW(
     IN OUT PULONG lpdwBufferLength,
     OUT PSECURITY_DESCRIPTOR* pNewSD)
 { 
-    FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
+    FIXME("(%p,%p,%d,%p,%d,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
           cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
           pListofAuditEntries,pOldSD,lpdwBufferLength,pNewSD);
  
@@ -1077,7 +1077,7 @@ BOOL WINAPI GetKernelObjectSecurity(
         DWORD nLength,
         LPDWORD lpnLengthNeeded )
 {
-    TRACE("(%p,0x%08lx,%p,0x%08lx,%p)\n", Handle, RequestedInformation,
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", Handle, RequestedInformation,
           pSecurityDescriptor, nLength, lpnLengthNeeded);
 
     return set_ntstatus( NtQuerySecurityObject(Handle, RequestedInformation, pSecurityDescriptor,
@@ -1094,7 +1094,7 @@ BOOL WINAPI GetPrivateObjectSecurity(
         DWORD DescriptorLength,
         PDWORD ReturnLength )
 {
-    TRACE("(%p,0x%08lx,%p,0x%08lx,%p)\n", ObjectDescriptor, SecurityInformation,
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", ObjectDescriptor, SecurityInformation,
           ResultantDescriptor, DescriptorLength, ReturnLength);
 
     return set_ntstatus( NtQuerySecurityObject(ObjectDescriptor, SecurityInformation,
@@ -1522,7 +1522,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
             continue;
         lpLuid->LowPart = i;
         lpLuid->HighPart = 0;
-        TRACE( "%s -> %08lx-%08lx\n",debugstr_w( lpSystemName ),
+        TRACE( "%s -> %08x-%08x\n",debugstr_w( lpSystemName ),
                lpLuid->HighPart, lpLuid->LowPart );
         return TRUE;
     }
@@ -1828,7 +1828,7 @@ LookupAccountSidA(
     DWORD accountSizeW = *accountSize;
     DWORD domainSizeW = *domainSize;
 
-    TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
+    TRACE("(%s,sid=%s,%p,%p(%u),%p,%p(%u),%p)\n",
           debugstr_a(system),debugstr_sid(sid),
           account,accountSize,accountSize?*accountSize:0,
           domain,domainSize,domainSize?*domainSize:0,
@@ -1898,7 +1898,7 @@ LookupAccountSidW(
     SID_NAME_USE use = 0;
     LPWSTR computer_name = NULL;
 
-    TRACE("(%s,sid=%s,%p,%p(%lu),%p,%p(%lu),%p)\n",
+    TRACE("(%s,sid=%s,%p,%p(%u),%p,%p(%u),%p)\n",
 	  debugstr_w(system),debugstr_sid(sid),
 	  account,accountSize,accountSize?*accountSize:0,
 	  domain,domainSize,domainSize?*domainSize:0,
@@ -2084,7 +2084,7 @@ SetFileSecurityW( LPCWSTR lpFileName,
 BOOL WINAPI
 QueryWindows31FilesMigration( DWORD x1 )
 {
-	FIXME("(%ld):stub\n",x1);
+	FIXME("(%d):stub\n",x1);
 	return TRUE;
 }
 
@@ -2101,7 +2101,7 @@ BOOL WINAPI
 SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
                                                DWORD x4 )
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
+	FIXME("(0x%08x,0x%08x,0x%08x,0x%08x):stub\n",x1,x2,x3,x4);
 	return TRUE;
 }
 
@@ -2187,7 +2187,7 @@ BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
                                    &ImpersonationToken );
         if (Status != STATUS_SUCCESS)
         {
-            ERR( "NtDuplicateToken failed with error 0x%08lx\n", Status );
+            ERR( "NtDuplicateToken failed with error 0x%08x\n", Status );
             SetLastError( RtlNtStatusToDosError( Status ) );
             return FALSE;
         }
@@ -2205,7 +2205,7 @@ BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 
     if (Status != STATUS_SUCCESS)
     {
-        ERR( "NtSetInformationThread failed with error 0x%08lx\n", Status );
+        ERR( "NtSetInformationThread failed with error 0x%08x\n", Status );
         SetLastError( RtlNtStatusToDosError( Status ) );
         return FALSE;
     }
@@ -2425,7 +2425,7 @@ BOOL WINAPI AccessCheckAndAuditAlarmA(LPCSTR Subsystem, LPVOID HandleId, LPSTR O
   PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
   LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 {
-	FIXME("stub (%s,%p,%s,%s,%p,%08lx,%p,%x,%p,%p,%p)\n", debugstr_a(Subsystem),
+	FIXME("stub (%s,%p,%s,%s,%p,%08x,%p,%x,%p,%p,%p)\n", debugstr_a(Subsystem),
 		HandleId, debugstr_a(ObjectTypeName), debugstr_a(ObjectName),
 		SecurityDescriptor, DesiredAccess, GenericMapping,
 		ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
@@ -2440,7 +2440,7 @@ BOOL WINAPI AccessCheckAndAuditAlarmW(LPCWSTR Subsystem, LPVOID HandleId, LPWSTR
   PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
   LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 {
-	FIXME("stub (%s,%p,%s,%s,%p,%08lx,%p,%x,%p,%p,%p)\n", debugstr_w(Subsystem),
+	FIXME("stub (%s,%p,%s,%s,%p,%08x,%p,%x,%p,%p,%p)\n", debugstr_w(Subsystem),
 		HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName),
 		SecurityDescriptor, DesiredAccess, GenericMapping,
 		ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
@@ -2473,7 +2473,7 @@ BOOL WINAPI ObjectOpenAuditAlarmA(LPCSTR SubsystemName, LPVOID HandleId, LPSTR O
   DWORD GrantedAccess, PPRIVILEGE_SET Privileges, BOOL ObjectCreation, BOOL AccessGranted,
   LPBOOL GenerateOnClose)
 {
-	FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08lx,0x%08lx,%p,%x,%x,%p)\n", debugstr_a(SubsystemName),
+	FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08x,0x%08x,%p,%x,%x,%p)\n", debugstr_a(SubsystemName),
 		HandleId, debugstr_a(ObjectTypeName), debugstr_a(ObjectName), pSecurityDescriptor,
         ClientToken, DesiredAccess, GrantedAccess, Privileges, ObjectCreation, AccessGranted,
         GenerateOnClose);
@@ -2486,7 +2486,7 @@ BOOL WINAPI ObjectOpenAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, LPWSTR
   DWORD GrantedAccess, PPRIVILEGE_SET Privileges, BOOL ObjectCreation, BOOL AccessGranted,
   LPBOOL GenerateOnClose)
 {
-    FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08lx,0x%08lx,%p,%x,%x,%p)\n", debugstr_w(SubsystemName),
+    FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08x,0x%08x,%p,%x,%x,%p)\n", debugstr_w(SubsystemName),
         HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName), pSecurityDescriptor,
         ClientToken, DesiredAccess, GrantedAccess, Privileges, ObjectCreation, AccessGranted,
         GenerateOnClose);
@@ -2497,7 +2497,7 @@ BOOL WINAPI ObjectOpenAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, LPWSTR
 BOOL WINAPI ObjectPrivilegeAuditAlarmA( LPCSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
   DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 {
-    FIXME("stub (%s,%p,%p,0x%08lx,%p,%x)\n", debugstr_a(SubsystemName), HandleId, ClientToken,
+    FIXME("stub (%s,%p,%p,0x%08x,%p,%x)\n", debugstr_a(SubsystemName), HandleId, ClientToken,
           DesiredAccess, Privileges, AccessGranted);
 
     return TRUE;
@@ -2506,7 +2506,7 @@ BOOL WINAPI ObjectPrivilegeAuditAlarmA( LPCSTR SubsystemName, LPVOID HandleId, H
 BOOL WINAPI ObjectPrivilegeAuditAlarmW( LPCWSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
   DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 {
-    FIXME("stub (%s,%p,%p,0x%08lx,%p,%x)\n", debugstr_w(SubsystemName), HandleId, ClientToken,
+    FIXME("stub (%s,%p,%p,0x%08x,%p,%x)\n", debugstr_w(SubsystemName), HandleId, ClientToken,
           DesiredAccess, Privileges, AccessGranted);
 
     return TRUE;
@@ -2565,7 +2565,7 @@ VOID WINAPI BuildExplicitAccessWithNameA( PEXPLICIT_ACCESSA pExplicitAccess,
                                           LPSTR pTrusteeName, DWORD AccessPermissions,
                                           ACCESS_MODE AccessMode, DWORD Inheritance )
 {
-    TRACE("%p %s 0x%08lx 0x%08x 0x%08lx\n", pExplicitAccess, debugstr_a(pTrusteeName),
+    TRACE("%p %s 0x%08x 0x%08x 0x%08x\n", pExplicitAccess, debugstr_a(pTrusteeName),
           AccessPermissions, AccessMode, Inheritance);
 
     pExplicitAccess->grfAccessPermissions = AccessPermissions;
@@ -2586,7 +2586,7 @@ VOID WINAPI BuildExplicitAccessWithNameW( PEXPLICIT_ACCESSW pExplicitAccess,
                                           LPWSTR pTrusteeName, DWORD AccessPermissions,
                                           ACCESS_MODE AccessMode, DWORD Inheritance )
 {
-    TRACE("%p %s 0x%08lx 0x%08x 0x%08lx\n", pExplicitAccess, debugstr_w(pTrusteeName),
+    TRACE("%p %s 0x%08x 0x%08x 0x%08x\n", pExplicitAccess, debugstr_w(pTrusteeName),
           AccessPermissions, AccessMode, Inheritance);
 
     pExplicitAccess->grfAccessPermissions = AccessPermissions;
@@ -2898,7 +2898,7 @@ BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
                                DWORD nAclInformationLength,
                                ACL_INFORMATION_CLASS dwAclInformationClass )
 {
-    FIXME("%p %p 0x%08lx 0x%08x - stub\n", pAcl, pAclInformation,
+    FIXME("%p %p 0x%08x 0x%08x - stub\n", pAcl, pAclInformation,
           nAclInformationLength, dwAclInformationClass);
 
     return TRUE;
@@ -2910,7 +2910,7 @@ BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
 DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
                                PACL OldAcl, PACL* NewAcl )
 {
-    FIXME("%ld %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    FIXME("%d %p %p %p\n",count,pEntries,OldAcl,NewAcl);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -2920,7 +2920,7 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
 DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
                                PACL OldAcl, PACL* NewAcl )
 {
-    FIXME("%ld %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    FIXME("%d %p %p %p\n",count,pEntries,OldAcl,NewAcl);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -2935,7 +2935,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     LPWSTR wstr = NULL;
     DWORD r;
 
-    TRACE("%s %d %ld %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
+    TRACE("%s %d %d %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
 
     if( pObjectName )
@@ -2959,7 +2959,7 @@ BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION SecurityInformation,
     PGENERIC_MAPPING GenericMapping,
     HANDLE Token )
 {
-    FIXME("0x%08lx %p %p %p %p - stub\n", SecurityInformation, ModificationDescriptor,
+    FIXME("0x%08x %p %p %p %p - stub\n", SecurityInformation, ModificationDescriptor,
           ObjectsSecurityDescriptor, GenericMapping, Token);
 
     return TRUE;
@@ -3007,7 +3007,7 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
 {
-    FIXME("%s %d %ld %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
+    FIXME("%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
     return ERROR_SUCCESS;
 }
@@ -3672,7 +3672,7 @@ BOOL WINAPI CreateProcessAsUserA(
         LPSTARTUPINFOA lpStartupInfo,
         LPPROCESS_INFORMATION lpProcessInformation )
 {
-    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - stub\n", hToken, debugstr_a(lpApplicationName),
+    FIXME("%p %s %s %p %p %d 0x%08x %p %s %p %p - stub\n", hToken, debugstr_a(lpApplicationName),
           debugstr_a(lpCommandLine), lpProcessAttributes, lpThreadAttributes, bInheritHandles,
           dwCreationFlags, lpEnvironment, debugstr_a(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
 
@@ -3692,7 +3692,7 @@ BOOL WINAPI CreateProcessAsUserW(
         LPSTARTUPINFOW lpStartupInfo,
         LPPROCESS_INFORMATION lpProcessInformation )
 {
-    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - semi- stub\n", hToken, 
+    FIXME("%p %s %s %p %p %d 0x%08x %p %s %p %p - semi- stub\n", hToken, 
           debugstr_w(lpApplicationName), debugstr_w(lpCommandLine), lpProcessAttributes,
           lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, 
           debugstr_w(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
@@ -3724,7 +3724,7 @@ BOOL WINAPI DuplicateTokenEx(
 {
     OBJECT_ATTRIBUTES ObjectAttributes;
 
-    TRACE("%p 0x%08lx 0x%08x 0x%08x %p\n", ExistingTokenHandle, dwDesiredAccess,
+    TRACE("%p 0x%08x 0x%08x 0x%08x %p\n", ExistingTokenHandle, dwDesiredAccess,
           ImpersonationLevel, TokenType, DuplicateTokenHandle);
 
     InitializeObjectAttributes(
@@ -3760,7 +3760,7 @@ BOOL WINAPI EnumDependentServicesA(
         LPDWORD pcbBytesNeeded,
         LPDWORD lpServicesReturned )
 {
-    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
+    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
           lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
 
     return FALSE;
@@ -3774,7 +3774,7 @@ BOOL WINAPI EnumDependentServicesW(
         LPDWORD pcbBytesNeeded,
         LPDWORD lpServicesReturned )
 {
-    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
+    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
           lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
 
     return FALSE;
@@ -3934,7 +3934,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     LPWSTR wstr = NULL;
     DWORD r;
 
-    TRACE("%s %d %ld %p %p %p %p %p\n", pObjectName, ObjectType, SecurityInfo,
+    TRACE("%s %d %d %p %p %p %p %p\n", pObjectName, ObjectType, SecurityInfo,
         ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
 
     if( pObjectName )
@@ -3963,7 +3963,7 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     SECURITY_DESCRIPTOR_RELATIVE *relative;
     BYTE *buffer;
 
-    TRACE( "%s %d %ld %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
+    TRACE( "%s %d %d %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
            group, dacl, sacl, descriptor );
 
     if (!name || !descriptor) return ERROR_INVALID_PARAMETER;
@@ -4028,7 +4028,7 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
  */
 BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)
 {
-    FIXME("%s %08lx\n", debugstr_w(lpFileName), dwReserved);
+    FIXME("%s %08x\n", debugstr_w(lpFileName), dwReserved);
     return TRUE;
 }
 
@@ -4037,7 +4037,7 @@ BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)
  */
 BOOL WINAPI DecryptFileA(LPCSTR lpFileName, DWORD dwReserved)
 {
-    FIXME("%s %08lx\n", debugstr_a(lpFileName), dwReserved);
+    FIXME("%s %08x\n", debugstr_a(lpFileName), dwReserved);
     return TRUE;
 }
 
