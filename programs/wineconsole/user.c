@@ -21,11 +21,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "winecon_user.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 WINE_DECLARE_DEBUG_CHANNEL(wc_font);
+
+UINT g_uiDefaultCharset;
 
 /* mapping console colors to RGB values */
 COLORREF	WCUSER_ColorMap[16] =
@@ -342,7 +345,7 @@ BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* 
         ret = (tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
                tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN));
     return ret && !tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut &&
-        (tm->tmCharSet == DEFAULT_CHARSET || tm->tmCharSet == ANSI_CHARSET);
+        (tm->tmCharSet == DEFAULT_CHARSET || tm->tmCharSet == g_uiDefaultCharset);
 }
 
 /******************************************************************
@@ -354,7 +357,7 @@ BOOL	WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf)
 {
     return (lf->lfPitchAndFamily & 3) == FIXED_PITCH &&
         /* (lf->lfPitchAndFamily & 0xF0) == FF_MODERN && */
-        (lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == ANSI_CHARSET);
+        (lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == g_uiDefaultCharset);
 }
 
 /******************************************************************
@@ -1382,6 +1385,12 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     static const WCHAR wClassName[] = {'W','i','n','e','C','o','n','s','o','l','e','C','l','a','s','s',0};
 
     WNDCLASS		wndclass;
+    CHARSETINFO         ci;
+    
+    if (!TranslateCharsetInfo((DWORD *)(INT_PTR)GetACP(), &ci, TCI_SRCCODEPAGE))
+        return init_failed;
+    g_uiDefaultCharset = ci.ciCharset;
+    WINE_TRACE_(wc_font)("Code page %d => Default charset: %d\n", GetACP(), g_uiDefaultCharset);
 
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_user));
     if (!data->private) return init_failed;
