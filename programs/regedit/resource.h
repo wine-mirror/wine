@@ -38,7 +38,6 @@
 #define IDR_REGEDIT_MENU                130
 #define IDD_EXPORT_TEMPLATE             131
 #define IDI_OPEN_FILE                   132
-#define IDD_DIALOG2                     132
 #define IDI_CLOSED_FILE                 133
 #define IDD_ADDFAVORITE                 133
 #define IDI_ROOT                        134

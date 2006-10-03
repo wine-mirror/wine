@@ -319,21 +319,6 @@ END
 
 /*****************************************************************/
 
-
-/*
- * Dialog
- */
-
-IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "대화상자"
-FONT 8, "MS Shell Dlg"
-BEGIN
-    DEFPUSHBUTTON   "확인",IDOK,130,7,50,14
-    PUSHBUTTON      "취소",IDCANCEL,130,24,50,14
-END
-
-
 /*
  * TEXTINCLUDE
  */
