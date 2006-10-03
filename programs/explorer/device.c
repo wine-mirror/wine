@@ -76,6 +76,16 @@ static void send_notify( int drive, int code )
                          SMTO_ABORTIFHUNG, 0, &result );
 }
 
+static inline int is_valid_device( struct stat *st )
+{
+#if defined(linux) || defined(__sun__)
+    return S_ISBLK( st->st_mode );
+#else
+    /* disks are char devices on *BSD */
+    return S_ISCHR( st->st_mode );
+#endif
+}
+
 /* find or create a DOS drive for the corresponding device */
 static int add_drive( const char *device, const char *type )
 {
@@ -84,7 +94,7 @@ static int add_drive( const char *device, const char *type )
     struct stat dev_st, drive_st;
     int drive, first, last, avail = 0;
 
-    if (stat( device, &dev_st ) == -1 || !S_ISBLK( dev_st.st_mode )) return -1;
+    if (stat( device, &dev_st ) == -1 || !is_valid_device( &dev_st )) return -1;
 
     if (!(path = get_dosdevices_path())) return -1;
     p = path + strlen(path) - 3;
@@ -123,7 +133,7 @@ static int add_drive( const char *device, const char *type )
             else
             {
                 in_use[drive] = 1;
-                if (!S_ISBLK( drive_st.st_mode )) continue;
+                if (!is_valid_device( &drive_st )) continue;
                 if (dev_st.st_rdev == drive_st.st_rdev) goto done;
             }
         }

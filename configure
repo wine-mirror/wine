@@ -743,6 +743,7 @@ DLLTOOL
 DLLWRAP
 COREFOUNDATIONLIB
 IOKITLIB
+DISKARBITRATIONLIB
 LDEXECFLAGS
 COREAUDIO
 CROSSTEST
@@ -15359,6 +15360,8 @@ fi
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
+    DISKARBITRATIONLIB="-framework DiskArbitration -framework CoreFoundation"
+
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"
 
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
@@ -24840,6 +24843,7 @@ DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
 COREFOUNDATIONLIB!$COREFOUNDATIONLIB$ac_delim
 IOKITLIB!$IOKITLIB$ac_delim
+DISKARBITRATIONLIB!$DISKARBITRATIONLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
@@ -24858,7 +24862,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 78; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

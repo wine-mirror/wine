@@ -26,6 +26,7 @@ extern BOOL add_dos_device( const char *udi, const char *device,
 extern BOOL remove_dos_device( const char *udi );
 
 extern void manage_desktop( char *arg );
+extern void initialize_diskarbitration(void);
 extern void initialize_hal(void);
 extern void initialize_systray(void);
 

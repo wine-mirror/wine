@@ -166,6 +166,7 @@ void manage_desktop( char *arg )
         SetWindowTextW( hwnd, desktop_nameW );
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
         SetDeskWallPaper( (LPSTR)-1 );
+        initialize_diskarbitration();
         initialize_hal();
         initialize_systray();
     }

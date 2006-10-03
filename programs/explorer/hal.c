@@ -240,7 +240,7 @@ void initialize_hal(void)
 
 void initialize_hal(void)
 {
-    WINE_WARN( "HAL support not compiled in\n" );
+    WINE_TRACE( "Skipping, HAL support not compiled in\n" );
 }
 
 #endif  /* HAVE_LIBHAL */
