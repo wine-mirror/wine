@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(spoolss);
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
         case DLL_WINE_PREATTACH:
@@ -67,7 +67,7 @@ LPVOID WINAPI DllAllocSplMem(DWORD size)
     LPVOID  res;
 
     res = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-    TRACE("(%ld) => %p\n", size, res);
+    TRACE("(%d) => %p\n", size, res);
     return res;
 }
 
