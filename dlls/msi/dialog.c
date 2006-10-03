@@ -2529,10 +2529,7 @@ static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog )
     /* query the Control table for all the elements of the control */
     r = MSI_OpenQuery( package->db, &view, query, dialog->name );
     if( r != ERROR_SUCCESS )
-    {
-        ERR("query failed for dialog %s\n", debugstr_w(dialog->name));
-        return ERROR_INVALID_PARAMETER;
-    }
+        return ERROR_SUCCESS;
 
     r = MSI_IterateRecords( view, 0, msi_dialog_set_control_condition, dialog );
     msiobj_release( &view->hdr );
