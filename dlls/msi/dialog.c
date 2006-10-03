@@ -1664,6 +1664,7 @@ struct msi_selection_tree_info
     msi_dialog *dialog;
     HWND hwnd;
     WNDPROC oldproc;
+    HTREEITEM selected;
 };
 
 static void
@@ -1809,6 +1810,7 @@ static void
 msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
                                 LPCWSTR parent, HTREEITEM hParent )
 {
+    struct msi_selection_tree_info *info = GetPropW( hwnd, szButtonData );
     MSIFEATURE *feature;
     TVINSERTSTRUCTW tvis;
     HTREEITEM hitem, hfirst = NULL;
@@ -1849,6 +1851,7 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
 
     /* select the first item */
     SendMessageW( hwnd, TVM_SELECTITEM, TVGN_CARET | TVGN_DROPHILITE, (LPARAM) hfirst );
+    info->selected = hfirst;
 }
 
 static void msi_seltree_create_imagelist( HWND hwnd )
@@ -1891,6 +1894,7 @@ static void msi_seltree_create_imagelist( HWND hwnd )
 static UINT msi_dialog_seltree_handler( msi_dialog *dialog,
                                         msi_control *control, WPARAM param )
 {
+    struct msi_selection_tree_info *info = GetPropW( control->hwnd, szButtonData );
     LPNMTREEVIEWW tv = (LPNMTREEVIEWW)param;
     MSIRECORD *row, *rec;
     MSIFOLDER *folder;
@@ -1905,6 +1909,8 @@ static UINT msi_dialog_seltree_handler( msi_dialog *dialog,
 
     if (tv->hdr.code != TVN_SELCHANGINGW)
         return ERROR_SUCCESS;
+
+    info->selected = tv->itemNew.hItem;
 
     row = MSI_QueryGetRecord( dialog->package->db, select, tv->itemNew.pszText );
     if (!row)
