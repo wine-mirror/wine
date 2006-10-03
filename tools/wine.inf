@@ -2147,7 +2147,10 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,crypt32.dll
 11,,d3d8.dll
 11,,dbghelp.dll
+11,,ddhelp.exe
 11,,ddraw.dll
+11,,dsound.dll
+11,,dsound.vxd
 11,,explorer.exe
 11,,gdi32.dll
 11,,hhctrl.ocx
