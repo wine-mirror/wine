@@ -232,7 +232,7 @@ static DWORD dreg_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD 
                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     context->Eip += 2;	/* Skips the popl (%eax) */
-    context->Dr0 = 0;
+    context->Dr0 = 0x42424242;
     context->Dr1 = 0;
     context->Dr2 = 0;
     context->Dr3 = 0;
@@ -277,8 +277,103 @@ static void test_debug_regs(void)
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
-    ok(res == STATUS_SUCCESS,"NtGetContextThread failed with %lx\n", res);
+    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %lx\n", res);
+    ok(ctx.Dr0 == 0x42424242,"failed to set debugregister 0 to 0x42424242, got %lx\n", ctx.Dr0);
     ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155, got %lx\n", ctx.Dr7);
+}
+
+/* test the single step exception behaviour */
+static int gotsinglesteps = 0;
+static DWORD single_step_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                  CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    gotsinglesteps++;
+    ok (!(context->EFlags & 0x100), "eflags has single stepping bit set\n");
+    return ExceptionContinueExecution;
+}
+
+static BYTE single_stepcode[] = {
+    0x9c,		/* pushf */
+    0x58,		/* pop   %eax */
+    0x0d,0,1,0,0,	/* or    $0x100,%eax */
+    0x50,		/* push   %eax */
+    0x9d,		/* popf    */
+    0x35,0,1,0,0,	/* xor    $0x100,%eax */
+    0x50,		/* push   %eax */
+    0x9d,		/* popf    */
+    0xc3
+};
+
+static void test_single_step(void)
+{
+    struct {
+        EXCEPTION_REGISTRATION_RECORD frame;
+    } exc_frame;
+    void (*func)(void) = (void *)single_stepcode;
+
+    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    if (!pNtCurrentTeb) {
+        trace( "NtCurrentTeb not found, skipping tests\n" );
+        return;
+    }
+    exc_frame.frame.Handler = single_step_handler;
+    exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
+    func();
+    ok(gotsinglesteps == 1, "expected 1 single step exceptions, got %d\n", gotsinglesteps);
+    pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
+}
+
+/* Test the alignment check (AC) flag handling. */
+static BYTE align_check_code[] = {
+    0x55,                  	/* push   %ebp */
+    0x89,0xe5,             	/* mov    %esp,%ebp */
+    0x9c,                  	/* pushf   */
+    0x58,                  	/* pop    %eax */
+    0x0d,0,0,4,0,       	/* or     $0x40000,%eax */
+    0x50,                  	/* push   %eax */
+    0x9d,                  	/* popf    */
+    0x8b,0x45,8,           	/* mov    0x8(%ebp),%eax */
+    0xc7,0x40,1,42,0,0,0, 	/* movl   $42,0x1(%eax) */
+    0x9c,                  	/* pushf   */
+    0x58,                  	/* pop    %eax */
+    0x35,0,0,4,0,       	/* xor    $0x40000,%eax */
+    0x50,                  	/* push   %eax */
+    0x9d,                  	/* popf    */
+    0x5d,                  	/* pop    %ebp */
+    0xc3,                  	/* ret     */
+};
+
+static int gotalignfaults = 0;
+static DWORD align_check_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                  CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    ok (!(context->EFlags & 0x40000), "eflags has AC bit set\n");
+    gotalignfaults++;
+    return ExceptionContinueExecution;
+}
+
+static void test_align_faults(void)
+{
+    int twoints[2];
+    struct {
+        EXCEPTION_REGISTRATION_RECORD frame;
+    } exc_frame;
+    void (*func1)(int*) = (void *)align_check_code;
+
+    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    if (!pNtCurrentTeb) {
+        trace( "NtCurrentTeb not found, skipping tests\n" );
+        return;
+    }
+    exc_frame.frame.Handler = align_check_handler;
+    exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
+
+    gotalignfaults=0;
+    func1(twoints);
+    ok(gotalignfaults == 0, "got %d alignment faults, expected 0\n", gotalignfaults);
+    pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 }
 
 #endif  /* __i386__ */
@@ -288,5 +383,7 @@ START_TEST(exception)
 #ifdef __i386__
     test_prot_fault();
     test_debug_regs();
+    test_single_step();
+    test_align_faults();
 #endif
 }
