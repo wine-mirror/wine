@@ -32,11 +32,6 @@
 
 #include "shell32_test.h"
 
-#ifndef _MSC_VER
-#define DBH(x)  (x).dbh
-#else
-#define DBH(x)  (x)
-#endif
 
 typedef void (WINAPI *fnILFree)(LPITEMIDLIST);
 typedef BOOL (WINAPI *fnILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
@@ -612,7 +607,7 @@ static void test_datalink(void)
     r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
     ok( r == S_OK, "CopyDataBlock failed\n");
 
-    ok( dar && DBH(*dar).dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
+    ok( dar && ((DATABLOCK_HEADER*)dar)->dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
     ok( dar && 0==lstrcmpW(dar->szwDarwinID, comp ), "signature wrong\n");
 
     LocalFree( dar );
