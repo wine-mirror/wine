@@ -44,6 +44,7 @@ C_SRCS = \
 	mfdrv/mapping.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
+	opengl.c \
 	painting.c \
 	palette.c \
 	path.c \

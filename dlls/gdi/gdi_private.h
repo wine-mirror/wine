@@ -182,6 +182,10 @@ typedef struct tagDC_FUNCS
     BOOL     (*pStrokePath)(PHYSDEV);
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pWidenPath)(PHYSDEV);
+
+    /* OpenGL32 */
+    HGLRC    (*pwglCreateContext)(PHYSDEV);
+    BOOL     (*pwglMakeCurrent)(PHYSDEV, HGLRC);
 } DC_FUNCTIONS;
 
 /* It should not be necessary to access the contents of the GdiPath

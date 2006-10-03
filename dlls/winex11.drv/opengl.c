@@ -1194,7 +1194,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 }
 
 /* OpenGL32 wglCreateContext */
-HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc)
+HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 {
     Wine_GLContext *ret;
     GLXFBConfig* cfgs_fmt = NULL;
@@ -1205,6 +1205,7 @@ HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc)
     int nCfgs_fmt = 0;
     int value = 0;
     int gl_test = 0;
+    HDC hdc = physDev->hdc;
 
     TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
@@ -1365,8 +1366,9 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 
 
 /* OpenGL32 wglMakeCurrent */
-BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
+BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     BOOL ret;
+    HDC hdc = physDev->hdc;
     DWORD type = GetObjectType(hdc);
 
     TRACE("(%p,%p)\n", hdc, hglrc);
@@ -1377,7 +1379,7 @@ BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
         NtCurrentTeb()->glContext = NULL;
     } else {
         Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-        Drawable drawable = get_drawable( hdc );
+        Drawable drawable = physDev->drawable;
         if (ctx->ctx == NULL) {
             int draw_vis_id, ctx_vis_id;
             VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
@@ -2373,12 +2375,14 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         pglGetIntegerv(object->texture_target, &prev_binded_tex);
         if (NULL == object->render_ctx) {
             object->render_hdc = X11DRV_wglGetPbufferDCARB(hPbuffer);
-            object->render_ctx = X11DRV_wglCreateContext(object->render_hdc);
+            /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
+            object->render_ctx = wglCreateContext(object->render_hdc);
             do_init = 1;
         }
         object->prev_hdc = X11DRV_wglGetCurrentDC();
         object->prev_ctx = X11DRV_wglGetCurrentContext();
-        X11DRV_wglMakeCurrent(object->render_hdc, object->render_ctx);
+        /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
+        wglMakeCurrent(object->render_hdc, object->render_ctx);
         /*
         if (do_init) {
             glBindTexture(object->texture_target, object->texture);
@@ -2430,7 +2434,8 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
             pglCopyTexSubImage2D(object->texture_target, object->texture_level, 0, 0, 0, 0, object->width, object->height);
         }
 
-        X11DRV_wglMakeCurrent(object->prev_hdc, object->prev_ctx);
+        /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
+        wglMakeCurrent(object->prev_hdc, object->prev_ctx);
         return GL_TRUE;
     }
     if (NULL != pglXReleaseTexImageARB) {

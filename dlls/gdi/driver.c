@@ -194,6 +194,10 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(StrokePath);
         GET_FUNC(SwapBuffers);
         GET_FUNC(WidenPath);
+
+        /* OpenGL32 */
+        GET_FUNC(wglCreateContext);
+        GET_FUNC(wglMakeCurrent);
 #undef GET_FUNC
     }
     else memset( &driver->funcs, 0, sizeof(driver->funcs) );

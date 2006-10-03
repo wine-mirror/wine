@@ -496,6 +496,12 @@
 @ stub pstackConnect
 
 ################################################################
+# Wine extensions: OpenGL support
+#
+@ stdcall wglCreateContext(long)
+@ stdcall wglMakeCurrent(long long)
+
+################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
 @ stdcall CloseJob16(long)

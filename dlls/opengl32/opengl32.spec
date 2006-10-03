@@ -376,7 +376,7 @@
 @  stdcall glViewport( long long long long ) wine_glViewport
 @  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
 @  stdcall wglCopyContext(long long long)
-@  stdcall wglCreateContext(long)
+@  stdcall wglCreateContext(long) gdi32.wglCreateContext
 @  stdcall wglCreateLayerContext(long long)
 @  stdcall wglDeleteContext(long)
 @  stdcall wglDescribeLayerPlane(long long long long ptr)
@@ -387,7 +387,7 @@
 @  stdcall wglGetLayerPaletteEntries(long long long long ptr)
 @  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
 @  stdcall wglGetProcAddress(str)
-@  stdcall wglMakeCurrent(long long)
+@  stdcall wglMakeCurrent(long long) gdi32.wglMakeCurrent
 @  stdcall wglRealizeLayerPalette(long long long)
 @  stdcall wglSetLayerPaletteEntries(long long long long ptr)
 @  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat

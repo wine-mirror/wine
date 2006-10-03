@@ -47,12 +47,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 typedef struct wine_wgl_s {
-    HGLRC WINAPI (*p_wglCreateContext)(HDC hdc);
     BOOL WINAPI  (*p_wglDeleteContext)(HGLRC hglrc);
     HGLRC WINAPI (*p_wglGetCurrentContext)(void);
     HDC WINAPI   (*p_wglGetCurrentDC)(void);
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
-    BOOL WINAPI  (*p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
     BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
     BOOL WINAPI  (*p_wglUseFontBitmapsA)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
     BOOL WINAPI  (*p_wglUseFontBitmapsW)(HDC hdc, DWORD first, DWORD count, DWORD listBase);
@@ -126,15 +124,6 @@ inline static Display *get_display( HDC hdc )
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(display), (LPSTR)&display )) display = NULL;
     return display;
-}
-
-/***********************************************************************
- *		wglCreateContext (OPENGL32.@)
- */
-HGLRC WINAPI wglCreateContext(HDC hdc)
-{
-    TRACE("(%p)\n", hdc);
-    return wine_wgl.p_wglCreateContext(hdc);
 }
 
 /***********************************************************************
@@ -285,14 +274,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       return ext_ret->func;
     }
   }
-}
-
-/***********************************************************************
- *		wglMakeCurrent (OPENGL32.@)
- */
-BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc) {
-    TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
-    return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
 }
 
 /***********************************************************************
@@ -694,12 +675,10 @@ static BOOL process_attach(void)
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
 
   /* Load WGL function pointers from winex11.drv */
-  wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod, "wglCreateContext");
   wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod, "wglDeleteContext");
   wine_wgl.p_wglGetCurrentContext = (void *)GetProcAddress(mod, "wglGetCurrentContext");
   wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod, "wglGetCurrentDC");
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
-  wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod, "wglMakeCurrent");
   wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
   wine_wgl.p_wglUseFontBitmapsA = (void*)GetProcAddress(mod, "wglUseFontBitmapsA");
   wine_wgl.p_wglUseFontBitmapsW = (void*)GetProcAddress(mod, "wglUseFontBitmapsW");
