@@ -449,7 +449,7 @@ int CDECL _access(const char *filename, int mode)
 {
   DWORD attr = GetFileAttributesA(filename);
 
-  TRACE("(%s,%d) %ld\n",filename,mode,attr);
+  TRACE("(%s,%d) %d\n",filename,mode,attr);
 
   if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
@@ -471,7 +471,7 @@ int CDECL _waccess(const MSVCRT_wchar_t *filename, int mode)
 {
   DWORD attr = GetFileAttributesW(filename);
 
-  TRACE("(%s,%d) %ld\n",debugstr_w(filename),mode,attr);
+  TRACE("(%s,%d) %d\n",debugstr_w(filename),mode,attr);
 
   if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
@@ -532,7 +532,7 @@ int CDECL _unlink(const char *path)
   TRACE("%s\n",debugstr_a(path));
   if(DeleteFileA(path))
     return 0;
-  TRACE("failed (%ld)\n",GetLastError());
+  TRACE("failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -545,7 +545,7 @@ int CDECL _wunlink(const MSVCRT_wchar_t *path)
   TRACE("(%s)\n",debugstr_w(path));
   if(DeleteFileW(path))
     return 0;
-  TRACE("failed (%ld)\n",GetLastError());
+  TRACE("failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -610,7 +610,7 @@ int CDECL _close(int fd)
     ret = -1;
   else if (!CloseHandle(hand))
   {
-    WARN(":failed-last error (%ld)\n",GetLastError());
+    WARN(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
     ret = -1;
   }
@@ -644,7 +644,7 @@ int CDECL _commit(int fd)
        */
       return 0;
     }
-    TRACE(":failed-last error (%ld)\n",GetLastError());
+    TRACE(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
     return -1;
   }
@@ -816,7 +816,7 @@ __int64 CDECL _lseeki64(int fd, __int64 offset, int whence)
 
     return ret.QuadPart;
   }
-  TRACE(":error-last error (%ld)\n",GetLastError());
+  TRACE(":error-last error (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -850,7 +850,7 @@ int CDECL _locking(int fd, int mode, LONG nbytes)
     return -1;
   }
 
-  TRACE(":fd (%d) by 0x%08lx mode %s\n",
+  TRACE(":fd (%d) by 0x%08x mode %s\n",
         fd,nbytes,(mode==MSVCRT__LK_UNLCK)?"_LK_UNLCK":
         (mode==MSVCRT__LK_LOCK)?"_LK_LOCK":
         (mode==MSVCRT__LK_NBLCK)?"_LK_NBLCK":
@@ -1129,7 +1129,7 @@ int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
   memset(buf, 0, sizeof(struct MSVCRT__stati64));
   if (!GetFileInformationByHandle(hand, &hfi))
   {
-    WARN(":failed-last error (%ld)\n",GetLastError());
+    WARN(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(ERROR_INVALID_PARAMETER);
     return -1;
   }
@@ -1144,7 +1144,7 @@ int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
     buf->st_mode |= S_IFIFO;
   else
     buf->st_mode |= S_IFREG;
-  TRACE(":dwFileAttributes = 0x%lx, mode set to 0x%x\n",hfi.dwFileAttributes,
+  TRACE(":dwFileAttributes = 0x%x, mode set to 0x%x\n",hfi.dwFileAttributes,
    buf->st_mode);
   buf->st_nlink = hfi.nNumberOfLinks;
   buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
@@ -1457,7 +1457,7 @@ int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   hand = CreateFileA(path, access, sharing, &sa, creation, attrib, 0);
 
   if (hand == INVALID_HANDLE_VALUE)  {
-    WARN(":failed-last error (%ld)\n",GetLastError());
+    WARN(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
     return -1;
   }
@@ -1655,12 +1655,12 @@ static int read_i(int fd, void *buf, unsigned int count)
     }
     else
     {
-        TRACE(":failed-last error (%ld)\n",GetLastError());
+        TRACE(":failed-last error (%d)\n",GetLastError());
         return -1;
     }
 
   if (count > 4)
-      TRACE("(%lu), %s\n",num_read,debugstr_an(buf, num_read));
+      TRACE("(%u), %s\n",num_read,debugstr_an(buf, num_read));
   return num_read;
 }
 
@@ -1707,7 +1707,7 @@ int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
 
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
-      TRACE("failed (%ld)\n",GetLastError());
+      TRACE("failed (%d)\n",GetLastError());
       msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return -1;
   }
@@ -1786,7 +1786,7 @@ int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * 
 
   if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
   {
-      TRACE("failed (%ld)\n",GetLastError());
+      TRACE("failed (%d)\n",GetLastError());
       msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return -1;
   }
@@ -1880,7 +1880,7 @@ char * CDECL _tempnam(const char *dir, const char *prefix)
     DeleteFileA(tmpbuf);
     return _strdup(tmpbuf);
   }
-  TRACE("failed (%ld)\n",GetLastError());
+  TRACE("failed (%d)\n",GetLastError());
   return NULL;
 }
 
@@ -1898,7 +1898,7 @@ MSVCRT_wchar_t * CDECL _wtempnam(const MSVCRT_wchar_t *dir, const MSVCRT_wchar_t
     DeleteFileW(tmpbuf);
     return _wcsdup(tmpbuf);
   }
-  TRACE("failed (%ld)\n",GetLastError());
+  TRACE("failed (%d)\n",GetLastError());
   return NULL;
 }
 
@@ -1973,7 +1973,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
       if (WriteFile(hand, buf, count, &num_written, NULL)
 	  &&  (num_written == count))
 	return num_written;
-      TRACE("WriteFile (fd %d, hand %p) failed-last error (%ld)\n", fd,
+      TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
        hand, GetLastError());
       *MSVCRT__errno() = MSVCRT_ENOSPC;
     }
@@ -2017,7 +2017,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
 
       if ((WriteFile(hand, p, count+nr_lf, &num_written, NULL) == 0 ) || (num_written != count+nr_lf))
       {
-          TRACE("WriteFile (fd %d, hand %p) failed-last error (%ld), num_written %ld\n",
+          TRACE("WriteFile (fd %d, hand %p) failed-last error (%d), num_written %d\n",
            fd, hand, GetLastError(), num_written);
           *MSVCRT__errno() = MSVCRT_ENOSPC;
           if(nr_lf)
@@ -2571,7 +2571,7 @@ MSVCRT_FILE* CDECL MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE
       else if (msvcrt_init_fp(file, fd, stream_flags) == -1)
       {
           file->_flag = 0;
-          WARN(":failed-last error (%ld)\n",GetLastError());
+          WARN(":failed-last error (%d)\n",GetLastError());
           msvcrt_set_errno(GetLastError());
           file = NULL;
       }
@@ -2776,7 +2776,7 @@ int CDECL MSVCRT_remove(const char *path)
   TRACE("(%s)\n",path);
   if (DeleteFileA(path))
     return 0;
-  TRACE(":failed (%ld)\n",GetLastError());
+  TRACE(":failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -2789,7 +2789,7 @@ int CDECL _wremove(const MSVCRT_wchar_t *path)
   TRACE("(%s)\n",debugstr_w(path));
   if (DeleteFileW(path))
     return 0;
-  TRACE(":failed (%ld)\n",GetLastError());
+  TRACE(":failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -2802,7 +2802,7 @@ int CDECL MSVCRT_rename(const char *oldpath,const char *newpath)
   TRACE(":from %s to %s\n",oldpath,newpath);
   if (MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
-  TRACE(":failed (%ld)\n",GetLastError());
+  TRACE(":failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }
@@ -2815,7 +2815,7 @@ int CDECL _wrename(const MSVCRT_wchar_t *oldpath,const MSVCRT_wchar_t *newpath)
   TRACE(":from %s to %s\n",debugstr_w(oldpath),debugstr_w(newpath));
   if (MoveFileExW(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
-  TRACE(":failed (%ld)\n",GetLastError());
+  TRACE(":failed (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
 }

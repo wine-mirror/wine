@@ -396,7 +396,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
     else
     {
         exc_type = NULL;
-        TRACE("handling C exception code %lx  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
+        TRACE("handling C exception code %x  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
               rec->ExceptionCode,  rec, frame, frame->trylevel, descr, nested_frame );
     }
 

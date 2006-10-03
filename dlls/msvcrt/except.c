@@ -161,7 +161,7 @@ int CDECL _except_handler2(PEXCEPTION_RECORD rec,
                            PCONTEXT context,
                            EXCEPTION_REGISTRATION_RECORD** dispatcher)
 {
-  FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
+  FIXME("exception %x flags=%x at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->Handler, context, dispatcher);
   return ExceptionContinueSearch;
@@ -180,7 +180,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
   EXCEPTION_POINTERS exceptPtrs;
   PSCOPETABLE pScopeTable;
 
-  TRACE("exception %lx flags=%lx at %p handler=%p %p %p semi-stub\n",
+  TRACE("exception %x flags=%x at %p handler=%p %p %p semi-stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->handler, context, dispatcher);
 
@@ -539,7 +539,7 @@ MSVCRT___sighandler_t CDECL MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
  */
 int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 {
-    TRACE("(%08lx,%p)\n", ex, ptr);
+    TRACE("(%08x,%p)\n", ex, ptr);
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
     return msvcrt_exception_filter(ptr);
 }

@@ -433,7 +433,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
   lcid = MSVCRT_locale_to_LCID(&lc);
 
-  TRACE(":found LCID %ld\n",lcid);
+  TRACE(":found LCID %d\n",lcid);
 
   if (lcid == 0)
   {
@@ -580,7 +580,7 @@ int CDECL __crtLCMapStringA(
   LCID lcid, DWORD mapflags, const char* src, int srclen, char* dst,
   int dstlen, unsigned int codepage, int xflag
 ) {
-  FIXME("(lcid %lx, flags %lx, %s(%d), %p(%d), %x, %d), partial stub!\n",
+  FIXME("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
         lcid,mapflags,src,srclen,dst,dstlen,codepage,xflag);
   /* FIXME: A bit incorrect. But msvcrt itself just converts its
    * arguments to wide strings and then calls LCMapStringW

@@ -37,7 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   thread_data_t *tls;
 
-  TRACE("(%p, %s, %p) pid(%lx), tid(%lx), tls(%ld)\n",
+  TRACE("(%p, %s, %p) pid(%x), tid(%x), tls(%ld)\n",
         hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         GetCurrentProcessId(), GetCurrentThreadId(),
         (long)msvcrt_tls_index);

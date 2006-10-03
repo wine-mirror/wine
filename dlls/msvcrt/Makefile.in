@@ -1,4 +1,4 @@
-EXTRADEFS = -D_MT -DWINE_NO_LONG_AS_INT
+EXTRADEFS = -D_MT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
