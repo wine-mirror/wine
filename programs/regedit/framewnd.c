@@ -239,7 +239,7 @@ static BOOL CheckCommDlgError(HWND hWnd)
     return TRUE;
 }
 
-static UINT_PTR CALLBACK ImportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
     OPENFILENAME* pOpenFileName;
     OFNOTIFY* pOfNotify;
@@ -277,18 +277,8 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
     pofn->nMaxFile = _MAX_PATH;
     pofn->lpstrFileTitle = FileTitleBuffer;
     pofn->nMaxFileTitle = _MAX_PATH;
-    /*    pofn->lpstrInitialDir = _T("");*/
-    /*    pofn->lpstrTitle = _T("Import Registry File");*/
-    /*    pofn->Flags = OFN_ENABLETEMPLATE + OFN_EXPLORER + OFN_ENABLESIZING;*/
     pofn->Flags = OFN_HIDEREADONLY;
-    /*    pofn->nFileOffset = ;*/
-    /*    pofn->nFileExtension = ;*/
-    /*    pofn->lpstrDefExt = _T("");*/
-    /*    pofn->lCustData = ;*/
-    /*    pofn->lpfnHook = ImportRegistryFile_OFNHookProc;*/
-    /*    pofn->lpTemplateName = _T("ID_DLG_IMPORT_REGFILE");*/
-    /*    pofn->lpTemplateName = MAKEINTRESOURCE(IDD_DIALOG1);*/
-    /*    pofn->FlagsEx = ;*/
+    /* some other fields may be set by the caller */
     return TRUE;
 }
 
@@ -300,30 +290,11 @@ static BOOL ImportRegistryFile(HWND hWnd)
     InitOpenFileName(hWnd, &ofn);
     LoadString(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
-    /*    ofn.lCustData = ;*/
     if (GetOpenFileName(&ofn)) {
         if (!import_registry_file(ofn.lpstrFile)) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
         }
-#if 0
-        get_file_name(&s, filename, MAX_PATH);
-        if (!filename[0]) {
-            printf("No file name is specified\n%s", usage);
-            return FALSE;
-            /*exit(1);*/
-        }
-        while (filename[0]) {
-            if (!import_registry_file(filename)) {
-                perror("");
-                printf("Can't open file \"%s\"\n", filename);
-                return FALSE;
-                /*exit(1);*/
-            }
-            get_file_name(&s, filename, MAX_PATH);
-        }
-#endif
-
     } else {
         CheckCommDlgError(hWnd);
     }
@@ -342,36 +313,16 @@ static BOOL ExportRegistryFile(HWND hWnd)
     LoadString(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
     /*    ofn.lCustData = ;*/
-    ofn.Flags = OFN_ENABLETEMPLATE + OFN_EXPLORER;
-    ofn.lpfnHook = ImportRegistryFile_OFNHookProc;
+    ofn.Flags = OFN_ENABLETEMPLATE | OFN_EXPLORER | OFN_HIDEREADONLY;
+    ofn.lpfnHook = ExportRegistryFile_OFNHookProc;
     ofn.lpTemplateName = MAKEINTRESOURCE(IDD_DIALOG1);
     if (GetSaveFileName(&ofn)) {
         BOOL result;
         result = export_registry_key(ofn.lpstrFile, ExportKeyPath);
-        /*result = export_registry_key(ofn.lpstrFile, NULL);*/
-        /*if (!export_registry_key(ofn.lpstrFile, NULL)) {*/
         if (!result) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
         }
-#if 0
-        TCHAR filename[MAX_PATH];
-        filename[0] = '\0';
-        get_file_name(&s, filename, MAX_PATH);
-        if (!filename[0]) {
-            printf("No file name is specified\n%s", usage);
-            return FALSE;
-            /*exit(1);*/
-        }
-        if (s[0]) {
-            TCHAR reg_key_name[KEY_MAX_LEN];
-            get_file_name(&s, reg_key_name, KEY_MAX_LEN);
-            export_registry_key(filename, reg_key_name);
-        } else {
-            export_registry_key(filename, NULL);
-        }
-#endif
-
     } else {
         CheckCommDlgError(hWnd);
     }
