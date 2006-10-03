@@ -143,13 +143,14 @@ done:
     return drive;
 }
 
-static void set_mount_point( struct dos_drive *drive, const char *mount_point )
+static BOOL set_mount_point( struct dos_drive *drive, const char *mount_point )
 {
     char *path, *p;
     struct stat path_st, mnt_st;
+    BOOL modified = FALSE;
 
-    if (drive->drive == -1) return;
-    if (!(path = get_dosdevices_path())) return;
+    if (drive->drive == -1) return FALSE;
+    if (!(path = get_dosdevices_path())) return FALSE;
     p = path + strlen(path) - 3;
     *p = 'a' + drive->drive;
     p[2] = 0;
@@ -162,11 +163,16 @@ static void set_mount_point( struct dos_drive *drive, const char *mount_point )
         {
             unlink( path );
             symlink( mount_point, path );
+            modified = TRUE;
         }
     }
-    else unlink( path );
+    else
+    {
+        if (unlink( path ) != -1) modified = TRUE;
+    }
 
     HeapFree( GetProcessHeap(), 0, path );
+    return modified;
 }
 
 BOOL add_dos_device( const char *udi, const char *device,
@@ -227,7 +233,7 @@ BOOL remove_dos_device( const char *udi )
 
         if (drive->drive != -1)
         {
-            set_mount_point( drive, "" );
+            BOOL modified = set_mount_point( drive, "" );
 
             /* clear the registry key too */
             if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
@@ -238,7 +244,7 @@ BOOL remove_dos_device( const char *udi )
                 RegCloseKey( hkey );
             }
 
-            send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+            if (modified) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
         }
 
         list_remove( &drive->entry );
