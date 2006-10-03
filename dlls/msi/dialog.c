@@ -147,6 +147,7 @@ static const WCHAR szDirectoryList[] = { 'D','i','r','e','c','t','o','r','y','L'
 static const WCHAR szVolumeCostList[] = { 'V','o','l','u','m','e','C','o','s','t','L','i','s','t',0 };
 static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
+static const WCHAR szProperty[] = {'P','r','o','p','e','r','t','y',0};
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -155,7 +156,7 @@ static UINT msi_dialog_edit_handler( msi_dialog *, msi_control *, WPARAM );
 static UINT msi_dialog_radiogroup_handler( msi_dialog *, msi_control *, WPARAM param );
 static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog );
 static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control );
 
 /* dialog sequencing */
 
@@ -577,6 +578,11 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
             ERR("Unknown progress message %ld\n", func);
             break;
         }
+    }
+    else if ( !lstrcmpW(attribute, szProperty) )
+    {
+        MSIFEATURE *feature = msi_seltree_get_selected_feature( ctrl );
+        MSI_SetPropertyW( dialog->package, ctrl->property, feature->Directory );
     }
     else
     {
@@ -1770,6 +1776,12 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
     return 0;
 }
 
+static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control )
+{
+    struct msi_selection_tree_info *info = GetPropW(control->hwnd, szButtonData);
+    return msi_seltree_feature_from_item( control->hwnd, info->selected );
+}
+
 static LRESULT WINAPI
 MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -1972,6 +1984,9 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
     info->oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
                                           (LONG_PTR)MSISelectionTree_WndProc );
     SetPropW( control->hwnd, szButtonData, info );
+
+    ControlEvent_SubscribeToEvent( dialog->package, dialog,
+                                   szSelectionPath, control->name, szProperty );
 
     /* initialize it */
     msi_seltree_create_imagelist( control->hwnd );
