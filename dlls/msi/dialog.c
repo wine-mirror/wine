@@ -145,6 +145,8 @@ static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
 static const WCHAR szDirectoryCombo[] = { 'D','i','r','e','c','t','o','r','y','C','o','m','b','o',0 };
 static const WCHAR szDirectoryList[] = { 'D','i','r','e','c','t','o','r','y','L','i','s','t',0 };
 static const WCHAR szVolumeCostList[] = { 'V','o','l','u','m','e','C','o','s','t','L','i','s','t',0 };
+static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -1886,6 +1888,51 @@ static void msi_seltree_create_imagelist( HWND hwnd )
     SendMessageW( hwnd, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)himl );
 }
 
+static UINT msi_dialog_seltree_handler( msi_dialog *dialog,
+                                        msi_control *control, WPARAM param )
+{
+    LPNMTREEVIEWW tv = (LPNMTREEVIEWW)param;
+    MSIRECORD *row, *rec;
+    MSIFOLDER *folder;
+    LPCWSTR dir;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR select[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','F','e','a','t','u','r','e','`',' ','W','H','E','R','E',' ',
+        '`','T','i','t','l','e','`',' ','=',' ','\'','%','s','\'',0
+    };
+
+    if (tv->hdr.code != TVN_SELCHANGINGW)
+        return ERROR_SUCCESS;
+
+    row = MSI_QueryGetRecord( dialog->package->db, select, tv->itemNew.pszText );
+    if (!row)
+        return ERROR_FUNCTION_FAILED;
+
+    rec = MSI_CreateRecord( 1 );
+
+    MSI_RecordSetStringW( rec, 1, MSI_RecordGetString( row, 4 ) );
+    ControlEvent_FireSubscribedEvent( dialog->package, szSelectionDescription, rec );
+
+    dir = MSI_RecordGetString( row, 7 );
+    folder = get_loaded_folder( dialog->package, dir );
+    if (!folder)
+    {
+        r = ERROR_FUNCTION_FAILED;
+        goto done;
+    }
+
+    MSI_RecordSetStringW( rec, 1, folder->ResolvedTarget );
+    ControlEvent_FireSubscribedEvent( dialog->package, szSelectionPath, rec );
+
+done:
+    msiobj_release(&row->hdr);
+    msiobj_release(&rec->hdr);
+
+    return r;
+}
+
 static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -1908,6 +1955,7 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
         return ERROR_FUNCTION_FAILED;
     }
 
+    control->handler = msi_dialog_seltree_handler;
     control->attributes = MSI_RecordGetInteger( rec, 8 );
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
