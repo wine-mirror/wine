@@ -2308,7 +2308,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
  *    if the source is a DIB section.
  *    The LR_MONOCHROME flag is ignored if LR_CREATEDIBSECTION is present.
  */
-HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
+HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                              INT desiredy, UINT flags )
 {
     TRACE("hnd=%p, type=%u, desiredx=%d, desiredy=%d, flags=%x\n",
@@ -2492,7 +2492,7 @@ HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                 }
             }
             HeapFree(GetProcessHeap(), 0, bi);
-            return (HICON)res;
+            return res;
         }
         case IMAGE_ICON:
                 return CURSORICON_ExtCopy(hnd,type, desiredx, desiredy, flags);

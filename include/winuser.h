@@ -4215,7 +4215,7 @@ BOOL      WINAPI CloseWindow(HWND);
 BOOL      WINAPI CloseWindowStation(HWINSTA);
 #define     CopyCursor(cur) ((HCURSOR)CopyIcon((HICON)(cur)))
 HICON     WINAPI CopyIcon(HICON);
-HICON     WINAPI CopyImage(HANDLE,UINT,INT,INT,UINT);
+HANDLE    WINAPI CopyImage(HANDLE,UINT,INT,INT,UINT);
 BOOL      WINAPI CopyRect(RECT*,const RECT*);
 INT       WINAPI CountClipboardFormats(void);
 BOOL      WINAPI CreateCaret(HWND,HBITMAP,INT,INT);
