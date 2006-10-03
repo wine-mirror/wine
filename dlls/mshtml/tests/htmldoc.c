@@ -1728,7 +1728,7 @@ static void test_readyState(IUnknown *unk)
         return;
 
     hres = IHTMLDocument2_get_readyState(htmldoc, NULL);
-    ok(hres == E_POINTER, "get_readyState failed: %08lx, expected \n", hres);
+    ok(hres == E_POINTER, "get_readyState failed: %08lx, expected\n", hres);
 
     hres = IHTMLDocument2_get_readyState(htmldoc, &state);
     ok(hres == S_OK, "get_ReadyState failed: %08lx\n", hres);
