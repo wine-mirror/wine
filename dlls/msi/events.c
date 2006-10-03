@@ -48,6 +48,7 @@ struct _events {
 
 struct subscriber {
     struct list entry;
+    msi_dialog *dialog;
     LPWSTR event;
     LPWSTR control;
     LPWSTR attribute;
@@ -267,14 +268,15 @@ static void free_subscriber( struct subscriber *sub )
     msi_free(sub);
 }
 
-VOID ControlEvent_SubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
-                                    LPCWSTR control, LPCWSTR attribute )
+VOID ControlEvent_SubscribeToEvent( MSIPACKAGE *package, msi_dialog *dialog,
+                                    LPCWSTR event, LPCWSTR control, LPCWSTR attribute )
 {
     struct subscriber *sub;
 
     sub = msi_alloc(sizeof (*sub));
     if( !sub )
         return;
+    sub->dialog = dialog;
     sub->event = strdupW(event);
     sub->control = strdupW(control);
     sub->attribute = strdupW(attribute);
@@ -309,14 +311,11 @@ VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event,
 
     TRACE("Firing Event %s\n",debugstr_w(event));
 
-    if (!package->dialog)
-        return;
-
     LIST_FOR_EACH_ENTRY( sub, &package->subscriptions, struct subscriber, entry )
     {
         if (lstrcmpiW(sub->event, event))
             continue;
-        msi_dialog_handle_event( package->dialog, sub->control,
+        msi_dialog_handle_event( sub->dialog, sub->control,
                                  sub->attribute, rec );
     }
 }

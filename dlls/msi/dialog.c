@@ -602,7 +602,7 @@ static void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
 
     event = MSI_RecordGetString( row, 3 );
     attribute = MSI_RecordGetString( row, 4 );
-    ControlEvent_SubscribeToEvent( dialog->package, event, control, attribute );
+    ControlEvent_SubscribeToEvent( dialog->package, dialog, event, control, attribute );
     msiobj_release( &row->hdr );
 }
 

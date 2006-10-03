@@ -295,8 +295,8 @@ extern UINT msi_create_component_directories( MSIPACKAGE *package );
 extern VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
                                       MSIRECORD *data);
 extern VOID ControlEvent_CleanupSubscriptions(MSIPACKAGE *package);
-extern VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
-                                   LPCWSTR control, LPCWSTR attribute);
+extern VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, msi_dialog *dialog,
+                                      LPCWSTR event, LPCWSTR control, LPCWSTR attribute);
 extern VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
                                       LPCWSTR control, LPCWSTR attribute );
 
