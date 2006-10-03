@@ -158,6 +158,17 @@ static inline BOOL is_invalid_dos_char( WCHAR ch )
     return strchrW( invalid_chars, ch ) != NULL;
 }
 
+/* check if the device can be a mounted volume */
+static inline int is_valid_mounted_device( struct stat *st )
+{
+#if defined(linux) || defined(__sun__)
+    return S_ISBLK( st->st_mode );
+#else
+    /* disks are char devices on *BSD */
+    return S_ISCHR( st->st_mode );
+#endif
+}
+
 /***********************************************************************
  *           get_default_com_device
  *
@@ -563,6 +574,25 @@ static char *get_device_mount_point( dev_t dev )
             }
         }
         endmntent( f );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+#elif defined(__APPLE__)
+    struct statfs *entry;
+    struct stat st;
+    int i, size;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    size = getmntinfo( &entry, MNT_NOWAIT );
+    for (i = 0; i < size; i++)
+    {
+        if (stat( entry[i].f_mntfromname, &st ) == -1) continue;
+        if (S_ISBLK(st.st_mode) && st.st_rdev == dev)
+        {
+            ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(entry[i].f_mntfromname) + 1 );
+            if (ret) strcpy( ret, entry[i].f_mntfromname );
+            break;
+        }
     }
     RtlLeaveCriticalSection( &dir_section );
 #else
@@ -1760,13 +1790,17 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
         struct stat st;
         char *mount_point = NULL;
 
-        if (fstat( unix_fd, &st ) == -1 || !S_ISBLK(st.st_mode))
+        if (fstat( unix_fd, &st ) == -1 || !is_valid_mounted_device( &st ))
             status = STATUS_INVALID_PARAMETER;
         else
         {
             if ((mount_point = get_device_mount_point( st.st_rdev )))
             {
+#ifdef __APPLE__
+                static const char umount[] = "diskutil unmount >/dev/null 2>&1 ";
+#else
                 static const char umount[] = "umount >/dev/null 2>&1 ";
+#endif
                 char *cmd = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mount_point)+sizeof(umount));
                 if (cmd)
                 {

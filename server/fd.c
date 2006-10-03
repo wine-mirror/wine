@@ -1780,6 +1780,16 @@ void no_cancel_async( struct fd *fd )
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
+static inline int is_valid_mounted_device( struct stat *st )
+{
+#if defined(linux) || defined(__sun__)
+    return S_ISBLK( st->st_mode );
+#else
+    /* disks are char devices on *BSD */
+    return S_ISCHR( st->st_mode );
+#endif
+}
+
 /* close all Unix file descriptors on a device to allow unmounting it */
 static void unmount_device( struct fd *device_fd )
 {
@@ -1792,7 +1802,7 @@ static void unmount_device( struct fd *device_fd )
 
     if (unix_fd == -1) return;
 
-    if (fstat( unix_fd, &st ) == -1 || !S_ISBLK( st.st_mode ))
+    if (fstat( unix_fd, &st ) == -1 || !is_valid_mounted_device( &st ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
