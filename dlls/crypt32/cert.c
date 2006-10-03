@@ -1326,22 +1326,53 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
  PCERT_SIGNED_CONTENT_INFO signedCert)
 {
     BOOL ret;
-    ALG_ID algID = CertOIDToAlgId(pubKeyInfo->Algorithm.pszObjId);
     HCRYPTKEY key;
+    PCCRYPT_OID_INFO info;
+    ALG_ID pubKeyID, hashID;
 
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     pubKeyInfo->Algorithm.pszObjId, 0);
+    if (!info || (info->dwGroupId != CRYPT_PUBKEY_ALG_OID_GROUP_ID &&
+     info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID))
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+    if (info->dwGroupId == CRYPT_PUBKEY_ALG_OID_GROUP_ID)
+    {
+        switch (info->Algid)
+        {
+            case CALG_RSA_KEYX:
+                pubKeyID = CALG_RSA_SIGN;
+                hashID = CALG_SHA1;
+                break;
+            case CALG_RSA_SIGN:
+                pubKeyID = CALG_RSA_SIGN;
+                hashID = CALG_SHA1;
+                break;
+            default:
+                FIXME("unimplemented for %s\n", pubKeyInfo->Algorithm.pszObjId);
+                return FALSE;
+        }
+    }
+    else
+    {
+        hashID = info->Algid;
+        if (info->ExtraInfo.cbData >= sizeof(ALG_ID))
+            pubKeyID = *(ALG_ID *)info->ExtraInfo.pbData;
+        else
+            pubKeyID = hashID;
+    }
     /* Load the default provider if necessary */
     if (!hCryptProv)
         hCryptProv = CRYPT_GetDefaultProvider();
     ret = CryptImportPublicKeyInfoEx(hCryptProv, dwCertEncodingType,
-     pubKeyInfo, algID, 0, NULL, &key);
+     pubKeyInfo, pubKeyID, 0, NULL, &key);
     if (ret)
     {
         HCRYPTHASH hash;
 
-        /* Some key algorithms aren't hash algorithms, so map them */
-        if (algID == CALG_RSA_SIGN || algID == CALG_RSA_KEYX)
-            algID = CALG_SHA1;
-        ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hash);
+        ret = CryptCreateHash(hCryptProv, hashID, 0, 0, &hash);
         if (ret)
         {
             ret = CryptHashData(hash, signedCert->ToBeSigned.pbData,
