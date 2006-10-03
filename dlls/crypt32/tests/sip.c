@@ -164,8 +164,10 @@ static void test_SIPRetrieveSubjectGUID(void)
      *
      * Use A-functions where possible as that should be available on all platforms
      */
-    GetEnvironmentVariableA(windir, regeditPath, MAX_PATH);
-    sprintf(regeditPath, "%s\\%s", regeditPath, regeditExe);
+    ret = GetEnvironmentVariableA(windir, regeditPath, MAX_PATH);
+    ok (ret > 0, "expected GEVA(windir) to succeed, last error %d\n", GetLastError());
+    strcat(regeditPath, "\\");
+    strcat(regeditPath, regeditExe);
     MultiByteToWideChar( CP_ACP, 0, regeditPath,
                          strlen(regeditPath)+1, regeditPathW,
                          sizeof(regeditPathW)/sizeof(regeditPathW[0]) );
