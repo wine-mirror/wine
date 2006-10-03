@@ -51,13 +51,13 @@ static void test_InitializePrintMonitor(void)
     SetLastError(0xdeadbeef);
     res = pInitializePrintMonitor(NULL);
     ok( (res == NULL) && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %p with %ld\n (expected NULL with " \
+        "returned %p with %d\n (expected NULL with " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pInitializePrintMonitor((LPWSTR) emptyW);
     ok( (res == NULL) && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %p with %ld\n (expected NULL with " \
+        "returned %p with %d\n (expected NULL with " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 }
 
