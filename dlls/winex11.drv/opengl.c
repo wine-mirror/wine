@@ -1203,7 +1203,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 
     /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the correspondig GLX format.
     * If this fails something is very wrong on the system. */
-    if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &tmp, &fmt_index)) {
+    if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &fmt_index, &tmp)) {
         ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
