@@ -90,7 +90,14 @@ typedef struct _RpcConnection_np
 
 static RpcConnection *rpcrt4_conn_np_alloc(void)
 {
-  return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_np));
+  RpcConnection_np *npc = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcConnection_np));
+  if (npc)
+  {
+    npc->pipe = NULL;
+    npc->thread = NULL;
+    memset(&npc->ovl, 0, sizeof(npc->ovl));
+  }
+  return &npc->common;
 }
 
 static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
@@ -446,8 +453,9 @@ typedef struct _RpcConnection_tcp
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 {
   RpcConnection_tcp *tcpc;
-  tcpc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_tcp));
-  tcpc->sock = -1;
+  tcpc = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcConnection_tcp));
+  if (tcpc)
+    tcpc->sock = -1;
   return &tcpc->common;
 }
 
@@ -779,13 +787,17 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
     return RPC_S_PROTSEQ_NOT_SUPPORTED;
 
   NewConnection = ops->alloc();
+  NewConnection->Next = NULL;
   NewConnection->server = server;
   NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
   NewConnection->Used = Binding;
   NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
+  memset(&NewConnection->ActiveInterface, 0, sizeof(NewConnection->ActiveInterface));
   NewConnection->NextCallId = 1;
+
+  memset(&NewConnection->ctx, 0, sizeof(NewConnection->ctx));
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
   list_init(&NewConnection->conn_pool_entry);
