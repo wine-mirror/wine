@@ -245,10 +245,10 @@ static HRESULT WINAPI FileProtocol_Read(IInternetProtocol *iface, void *pv,
 }
 
 static HRESULT WINAPI FileProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
-        DWORD dwOrgin, ULARGE_INTEGER *plibNewPosition)
+        DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrgin, plibNewPosition);
+    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 

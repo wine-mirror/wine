@@ -144,10 +144,10 @@ static HRESULT WINAPI FtpProtocol_Read(IInternetProtocol *iface, void *pv,
 }
 
 static HRESULT WINAPI FtpProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
-        DWORD dwOrgin, ULARGE_INTEGER *plibNewPosition)
+        DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrgin, plibNewPosition);
+    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
