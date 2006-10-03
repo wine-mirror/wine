@@ -54,7 +54,7 @@ static ULONG WINAPI ID3DXBufferImpl_AddRef(LPD3DXBUFFER iface) {
   ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+  TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
   return ref;
 }
@@ -63,7 +63,7 @@ static ULONG WINAPI ID3DXBufferImpl_Release(LPD3DXBUFFER iface) {
   ID3DXBufferImpl *This = (ID3DXBufferImpl *)iface;
   ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+  TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
   if (ref == 0) {
     HeapFree(GetProcessHeap(), 0, This->buffer);
