@@ -843,7 +843,11 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBr
 	    {
 		FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
 		if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
-		    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
+		{
+		    WCHAR szSave[16];
+		    LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, szSave, sizeof(szSave)/sizeof(WCHAR));
+		    SetDlgItemTextW(fodInfos->ShellInfos.hwndOwner, IDOK, szSave);
+		}
             }
             break;
         case CDBOSC_SELCHANGE:
