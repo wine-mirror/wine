@@ -536,6 +536,8 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     LPCWSTR font_text, text = NULL;
     LPWSTR font;
 
+    static const WCHAR empty[] = {0};
+
     ctrl = msi_dialog_find_control( dialog, control );
     if (!ctrl)
         return;
@@ -543,6 +545,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     {
         font_text = MSI_RecordGetString( rec , 1 );
         font = msi_dialog_get_style( font_text, &text );
+        if (!text) text = empty;
         SetWindowTextW( ctrl->hwnd, text );
         msi_free( font );
         msi_dialog_check_messages( NULL );
