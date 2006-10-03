@@ -181,14 +181,14 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 
   /* protseq=ncalrpc: supposed to use NT LPC ports,
    * but we'll implement it with named pipes for now */
-  pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+  pname = I_RpcAllocate(strlen(prefix) + strlen(Connection->Endpoint) + 1);
   strcat(strcpy(pname, prefix), Connection->Endpoint);
 
   if (Connection->server)
     r = rpcrt4_connect_pipe(Connection, pname);
   else
     r = rpcrt4_open_pipe(Connection, pname, TRUE);
-  HeapFree(GetProcessHeap(), 0, pname);
+  I_RpcFree(pname);
 
   return r;
 }
@@ -205,13 +205,13 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
     return RPC_S_OK;
 
   /* protseq=ncacn_np: named pipes */
-  pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+  pname = I_RpcAllocate(strlen(prefix) + strlen(Connection->Endpoint) + 1);
   strcat(strcpy(pname, prefix), Connection->Endpoint);
   if (Connection->server)
     r = rpcrt4_connect_pipe(Connection, pname);
   else
     r = rpcrt4_open_pipe(Connection, pname, FALSE);
-  HeapFree(GetProcessHeap(), 0, pname);
+  I_RpcFree(pname);
 
   return r;
 }
@@ -339,7 +339,7 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
 
     if (endpoint)
     {
-        *endpoint = HeapAlloc(GetProcessHeap(), 0, smb_floor->count_rhs);
+        *endpoint = I_RpcAllocate(smb_floor->count_rhs);
         if (!*endpoint)
             return RPC_S_OUT_OF_RESOURCES;
         memcpy(*endpoint, tower_data, smb_floor->count_rhs);
@@ -362,12 +362,12 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
 
     if (networkaddr)
     {
-        *networkaddr = HeapAlloc(GetProcessHeap(), 0, nb_floor->count_rhs);
+        *networkaddr = I_RpcAllocate(nb_floor->count_rhs);
         if (!*networkaddr)
         {
             if (endpoint)
             {
-                HeapFree(GetProcessHeap(), 0, *endpoint);
+                I_RpcFree(*endpoint);
                 *endpoint = NULL;
             }
             return RPC_S_OUT_OF_RESOURCES;
@@ -433,7 +433,7 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
 
     if (endpoint)
     {
-        *endpoint = HeapAlloc(GetProcessHeap(), 0, pipe_floor->count_rhs);
+        *endpoint = I_RpcAllocate(pipe_floor->count_rhs);
         if (!*endpoint)
             return RPC_S_OUT_OF_RESOURCES;
         memcpy(*endpoint, tower_data, pipe_floor->count_rhs);
@@ -673,7 +673,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
 
     if (endpoint)
     {
-        *endpoint = HeapAlloc(GetProcessHeap(), 0, 6);
+        *endpoint = I_RpcAllocate(6 /* sizeof("65535") + 1 */);
         if (!*endpoint)
             return RPC_S_OUT_OF_RESOURCES;
         sprintf(*endpoint, "%u", ntohs(tcp_floor->port));
@@ -681,12 +681,12 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
 
     if (networkaddr)
     {
-        *networkaddr = HeapAlloc(GetProcessHeap(), 0, INET_ADDRSTRLEN);
+        *networkaddr = I_RpcAllocate(INET_ADDRSTRLEN);
         if (!*networkaddr)
         {
             if (endpoint)
             {
-                HeapFree(GetProcessHeap(), 0, *endpoint);
+                I_RpcFree(*endpoint);
                 *endpoint = NULL;
             }
             return RPC_S_OUT_OF_RESOURCES;
@@ -695,11 +695,11 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
         if (!inet_ntop(AF_INET, &in_addr, *networkaddr, INET_ADDRSTRLEN))
         {
             ERR("inet_ntop: %s\n", strerror(errno));
-            HeapFree(GetProcessHeap(), 0, *networkaddr);
+            I_RpcFree(*networkaddr);
             *networkaddr = NULL;
             if (endpoint)
             {
-                HeapFree(GetProcessHeap(), 0, *endpoint);
+                I_RpcFree(*endpoint);
                 *endpoint = NULL;
             }
             return EPT_S_NOT_REGISTERED;
@@ -949,7 +949,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
 
     if ((status == RPC_S_OK) && protseq)
     {
-        *protseq = HeapAlloc(GetProcessHeap(), 0, strlen(protseq_ops->name) + 1);
+        *protseq = I_RpcAllocate(strlen(protseq_ops->name) + 1);
         strcpy(*protseq, protseq_ops->name);
     }
 
