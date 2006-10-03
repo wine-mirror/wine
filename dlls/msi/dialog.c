@@ -2964,7 +2964,7 @@ static LRESULT msi_dialog_onnotify( msi_dialog *dialog, LPARAM param )
     LPNMHDR nmhdr = (LPNMHDR) param;
     msi_control *control = msi_dialog_find_control_by_hwnd( dialog, nmhdr->hwndFrom );
 
-    TRACE("%p %p", dialog, nmhdr->hwndFrom);
+    TRACE("%p %p\n", dialog, nmhdr->hwndFrom);
 
     if ( control && control->handler )
         control->handler( dialog, control, param );
