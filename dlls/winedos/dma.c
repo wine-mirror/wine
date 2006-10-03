@@ -111,7 +111,7 @@ int DMA_Transfer(int channel,int reqlen,void* buffer)
         break;
     case 1:
         /* Write */
-        TRACE("Perform Write transfer of %d bytes at %lx with count %x\n",ret,
+        TRACE("Perform Write transfer of %d bytes at %x with count %x\n",ret,
             DMA_CurrentBaseAddress[channel],DMA_CurrentByteCount[channel]);
         if (increment)
             memcpy((void*)DMA_CurrentBaseAddress[channel],dmabuf,ret*size);
@@ -122,7 +122,7 @@ int DMA_Transfer(int channel,int reqlen,void* buffer)
         break;
     case 2:
         /* Read */
-        TRACE("Perform Read transfer of %d bytes at %lx with count %x\n",ret,
+        TRACE("Perform Read transfer of %d bytes at %x with count %x\n",ret,
             DMA_CurrentBaseAddress[channel],DMA_CurrentByteCount[channel]);
         if (increment)
             memcpy(dmabuf,(void*)DMA_CurrentBaseAddress[channel],ret*size);
@@ -174,7 +174,7 @@ void DMA_ioport_out( WORD port, BYTE val )
         else {
             DMA_BaseAddress[channel]=(DMA_BaseAddress[channel] & (~(0xFF << 8)))|((val & 0xFF) << 8);
             DMA_CurrentBaseAddress[channel] = DMA_BaseAddress[channel];
-            TRACE("Write Base Address = %lx\n",DMA_BaseAddress[channel]);
+            TRACE("Write Base Address = %x\n",DMA_BaseAddress[channel]);
         }
         DMA_Toggle[dmachip] = !DMA_Toggle[dmachip];
         break;
@@ -325,7 +325,7 @@ BYTE DMA_ioport_in( WORD port )
             res = DMA_CurrentBaseAddress[channel] & 0xFF;
         else {
             res = (DMA_CurrentBaseAddress[channel] & (0xFF << 8))>>8;
-            TRACE("Read Current Base Address = %lx\n",DMA_CurrentBaseAddress[channel]);
+            TRACE("Read Current Base Address = %x\n",DMA_CurrentBaseAddress[channel]);
         }
         DMA_Toggle[dmachip] = !DMA_Toggle[dmachip];
         break;

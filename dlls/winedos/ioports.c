@@ -500,7 +500,7 @@ DWORD WINAPI DOSVM_inport( int port, int size )
  */
 void WINAPI DOSVM_outport( int port, int size, DWORD value )
 {
-    TRACE("IO: 0x%lx (%d-byte value) to port 0x%04x\n", value, size, port );
+    TRACE("IO: 0x%x (%d-byte value) to port 0x%04x\n", value, size, port );
 
 #ifdef HAVE_PPDEV
     if (do_pp_port_access == -1) do_pp_port_access = IO_pp_init();

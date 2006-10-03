@@ -104,7 +104,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
     WCHAR root[] = {'A',':','\\',0}, drive_root[] = {'\\','\\','.','\\','A',':',0};
     HANDLE h;
 
-    TRACE("in  [ EDX=%08lx ]\n", context->Edx );
+    TRACE("in  [ EDX=%08x ]\n", context->Edx );
 
     SET_AL( context, 0 );
     SET_BX( context, 0 );
@@ -164,7 +164,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
         return;
     }
 
-    TRACE("out [ EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx EDI=%08lx ]\n",
+    TRACE("out [ EAX=%08x EBX=%08x ECX=%08x EDX=%08x EDI=%08x ]\n",
           context->Eax, context->Ebx, context->Ecx, context->Edx, context->Edi);
 
     INT13_SetStatus( context, 0x00 ); /* success */

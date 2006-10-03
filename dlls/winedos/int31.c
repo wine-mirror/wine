@@ -209,7 +209,7 @@ static LPVOID DPMI_xalloc( DWORD len )
             if (!xflag && (lastvalloced<oldlastv)) 
             { 
                 /* wrapped */
-                FIXME( "failed to allocate linearly growing memory (%ld bytes), "
+                FIXME( "failed to allocate linearly growing memory (%d bytes), "
                        "using non-linear growing...\n", len );
                 xflag++;
             }
@@ -221,7 +221,7 @@ static LPVOID DPMI_xalloc( DWORD len )
                 xflag++;
 
             if ((xflag==2) && (lastvalloced < oldlastv)) {
-                FIXME( "failed to allocate any memory of %ld bytes!\n", len );
+                FIXME( "failed to allocate any memory of %d bytes!\n", len );
                 return NULL;
             }
         }
@@ -421,9 +421,9 @@ int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
     int alloc = 0, already = 0;
     BYTE *code;
 
-    TRACE("EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+    TRACE("EAX=%08x EBX=%08x ECX=%08x EDX=%08x\n",
                  context->Eax, context->Ebx, context->Ecx, context->Edx );
-    TRACE("ESI=%08lx EDI=%08lx ES=%04lx DS=%04lx CS:IP=%04lx:%04x, %d WORD arguments, %s\n",
+    TRACE("ESI=%08x EDI=%08x ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
                  context->Esi, context->Edi, context->SegEs, context->SegDs,
                  context->SegCs, LOWORD(context->Eip), args, iret?"IRET":"FAR" );
 
@@ -555,9 +555,9 @@ void WINAPI DOSVM_CallRMProc( CONTEXT86 *context, int iret )
                                           context->Edi );
     CONTEXT86 context16;
 
-    TRACE("RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+    TRACE("RealModeCall: EAX=%08x EBX=%08x ECX=%08x EDX=%08x\n",
           p->eax, p->ebx, p->ecx, p->edx);
-    TRACE("              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
+    TRACE("              ESI=%08x EDI=%08x ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
           p->esi, p->edi, p->es, p->ds, p->cs, p->ip, CX_reg(context), iret?"IRET":"FAR" );
 
     if (!(p->cs) && !(p->ip)) { /* remove this check
@@ -740,7 +740,7 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
       rm_ctx.EFlags = V86_FLAG;
 
   /* enter real mode again */
-  TRACE("re-entering real mode at %04lx:%04lx\n",rm_ctx.SegCs,rm_ctx.Eip);
+  TRACE("re-entering real mode at %04x:%04x\n",rm_ctx.SegCs,rm_ctx.Eip);
   ret = DOSVM_Enter( &rm_ctx );
   /* when the real-mode stuff call its mode switch address,
      DOSVM_Enter will return and we will continue here */
@@ -769,7 +769,7 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
       NtCurrentTeb()->dpmi_vif = 0;
 
   /* Return to new address and hope that we didn't mess up */
-  TRACE("re-entering protected mode at %04lx:%08lx\n",
+  TRACE("re-entering protected mode at %04x:%08x\n",
       context->SegCs, context->Eip);
 }
 
@@ -966,7 +966,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         {
             DWORD base = MAKELONG( DX_reg(context), CX_reg(context) );
             WORD  sel = BX_reg(context);
-            TRACE( "set selector base address (0x%04x,0x%08lx)\n", sel, base );
+            TRACE( "set selector base address (0x%04x,0x%08x)\n", sel, base );
 
             /* check if Win16 app wants to access lower 64K of DOS memory */
             if (base < 0x10000 && DOSVM_IsWin16())
@@ -979,7 +979,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x0008:  /* Set selector limit */
         {
             DWORD limit = MAKELONG( DX_reg(context), CX_reg(context) );
-            TRACE( "set selector limit (0x%04x,0x%08lx)\n",
+            TRACE( "set selector limit (0x%04x,0x%08x)\n",
                    BX_reg(context), limit );
             SetSelectorLimit16( BX_reg(context), limit );
         }
@@ -1121,7 +1121,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
-        TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08lx)\n",
+        TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08x)\n",
               BL_reg(context), CX_reg(context), context->Edx);
         if (DOSVM_IsDos32()) 
         {
@@ -1251,7 +1251,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             DWORD size = MAKELONG( CX_reg(context), BX_reg(context) );
             BYTE *ptr;
 
-            TRACE( "allocate memory block (%ld bytes)\n", size );
+            TRACE( "allocate memory block (%d bytes)\n", size );
 
             ptr = (BYTE *)DPMI_xalloc( size );
             if (!ptr)
@@ -1272,7 +1272,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x0502:  /* Free memory block */
         {
             DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
-            TRACE( "free memory block (0x%08lx)\n", handle );
+            TRACE( "free memory block (0x%08x)\n", handle );
             DPMI_xfree( (void *)handle );
         }
         break;
@@ -1283,7 +1283,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
             BYTE *ptr;
 
-            TRACE( "resize memory block (0x%08lx, %ld bytes)\n", handle, size );
+            TRACE( "resize memory block (0x%08x, %d bytes)\n", handle, size );
 
             ptr = (BYTE *)DPMI_xrealloc( (void *)handle, size );
             if (!ptr)
@@ -1342,7 +1342,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0800:  /* Physical address mapping */
-        FIXME( "physical address mapping (0x%08lx) - unimplemented\n", 
+        FIXME( "physical address mapping (0x%08x) - unimplemented\n",
                MAKELONG(CX_reg(context),BX_reg(context)) );
         break;
 

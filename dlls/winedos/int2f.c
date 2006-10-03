@@ -644,7 +644,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
                 ERR("CD-ROM driver: unsupported addressing mode !!\n");
                 Error = 0x0c;
             }
-            TRACE(" ----> HEAD LOCATION <%ld>\n", PTR_AT(io_stru, 2, DWORD));
+            TRACE(" ----> HEAD LOCATION <%d>\n", PTR_AT(io_stru, 2, DWORD));
             break;
 
         case 4: /* Audio channel info */
@@ -676,13 +676,13 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
              * 0        see below (Door closed/opened)
              */
             if (!present) PTR_AT(io_stru, 1, DWORD) |= 1;
-            TRACE(" ----> DEVICE STATUS <0x%08lx>\n", PTR_AT(io_stru, 1, DWORD));
+            TRACE(" ----> DEVICE STATUS <0x%08x>\n", PTR_AT(io_stru, 1, DWORD));
             break;
 
         case 8: /* Volume size */
             PTR_AT(io_stru, 1, DWORD) = FRAME_OF_TOC(toc, toc.LastTrack + 1) -
                 FRAME_OF_TOC(toc, toc.FirstTrack) - 1;
-            TRACE(" ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
+            TRACE(" ----> VOLUME SIZE <%d>\n", PTR_AT(io_stru, 1, DWORD));
             break;
 
         case 9: /* media changed ? */
@@ -697,7 +697,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
             MSCDEX_StoreMSF(FRAME_OF_TOC(toc, toc.LastTrack + 1) -
                             FRAME_OF_TOC(toc, toc.FirstTrack) - 1, io_stru + 3);
 
-            TRACE(" ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
+            TRACE(" ----> AUDIO DISK INFO <%d-%d/%08x>\n",
                   io_stru[1], io_stru[2], PTR_AT(io_stru, 3, DWORD));
             break;
 
@@ -710,7 +710,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
                 PTR_AT(io_stru, 2, DWORD) = 0;
                 io_stru[6] = 0;
             }
-            TRACE(" ----> AUDIO TRACK INFO[%d] = [%08lx:%d]\n",
+            TRACE(" ----> AUDIO TRACK INFO[%d] = [%08x:%d]\n",
                   io_stru[1], PTR_AT(io_stru, 2, DWORD), io_stru[6]);
             break;
 
@@ -753,7 +753,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
                 PTR_AT(io_stru, 3, DWORD) = FRAME_OF_TOC(toc, toc.FirstTrack);
                 PTR_AT(io_stru, 7, DWORD) = FRAME_OF_TOC(toc, toc.LastTrack + 1);
             }
-            TRACE("Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
+            TRACE("Audio status info: status=%04x startLoc=%d endLoc=%d\n",
                   PTR_AT(io_stru, 1, WORD), PTR_AT(io_stru, 3, DWORD), PTR_AT(io_stru, 7, DWORD));
             break;
 
@@ -846,7 +846,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
 
         at = PTR_AT(driver_request, 20, DWORD);
 
-        TRACE(" --> SEEK AUDIO mode :<0x%02X>, [%ld]\n",
+        TRACE(" --> SEEK AUDIO mode :<0x%02X>, [%d]\n",
               (BYTE)driver_request[13], at);
 
         switch (driver_request[13]) {
@@ -881,7 +881,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
         beg = end = PTR_AT(driver_request, 14, DWORD);
         end += PTR_AT(driver_request, 18, DWORD);
 
-        TRACE(" --> PLAY AUDIO mode :<0x%02X>, [%ld-%ld]\n",
+        TRACE(" --> PLAY AUDIO mode :<0x%02X>, [%d-%d]\n",
               (BYTE)driver_request[13], beg, end);
 
         switch (driver_request[13]) {
@@ -1029,7 +1029,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
            if (!driver_request) {
                /* FIXME - to be deleted ?? */
                ERR("ES:BX==0 ! SEGFAULT ?\n");
-               ERR("-->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
+               ERR("-->BX=0x%04x, ES=0x%04x, DS=0x%04x, CX=0x%04x\n",
                    BX_reg(context), context->SegEs, context->SegDs, CX_reg(context));
                driver_request[4] |= 0x80;
                driver_request[3] = 5;  /* bad request length */

@@ -277,7 +277,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
         FreeEnvironmentStringsA( oldenv);
 
     /* allocate memory for the executable */
-    TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
+    TRACE("Allocating DOS memory (min=%d, max=%d)\n",min_size,max_size);
     avail=DOSMEM_Available();
     if (avail<min_size) {
       ERR("insufficient DOS memory\n");
@@ -298,7 +298,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
   }
 
  /* load executable image */
- TRACE("loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
+ TRACE("loading DOS %s image, %08x bytes\n",old_com?"COM":"EXE",image_size);
  SetFilePointer(hFile,image_start,NULL,FILE_BEGIN);
  if (!ReadFile(hFile,load_start,image_size,&len,NULL) || len != image_size) {
   /* check if this is due to the workaround for the pre-1.10 MS linker and we

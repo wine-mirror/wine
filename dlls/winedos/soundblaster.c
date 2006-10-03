@@ -139,7 +139,7 @@ static BOOL SB_Init(void)
         }
         result = (*lpDirectSoundCreate)(NULL,&lpdsound,NULL);
         if (result != DS_OK) {
-            ERR("Unable to initialize Sound Subsystem err = %lx !\n",result);
+            ERR("Unable to initialize Sound Subsystem err = %x !\n",result);
             return 0;
         }
 

@@ -204,11 +204,11 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
 
     EnterCriticalSection(&qcrit);
 
-    TRACE( "Called in %s mode %s events pending (time=%ld)\n",
+    TRACE( "Called in %s mode %s events pending (time=%d)\n",
            ISV86(context) ? "real" : "protected",
            DOSVM_HasPendingEvents() ? "with" : "without",
            GetTickCount() );
-    TRACE( "cs:ip=%04lx:%08lx, ss:sp=%04lx:%08lx\n",
+    TRACE( "cs:ip=%04x:%08x, ss:sp=%04x:%08x\n",
            context->SegCs, context->Eip, context->SegSs, context->Esp);
 
     while (context->SegCs == old_cs &&
@@ -280,7 +280,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     else pending_event = event;
 
     if (!old_pending && DOSVM_HasPendingEvents()) {
-      TRACE("new event queued, signalling (time=%ld)\n", GetTickCount());
+      TRACE("new event queued, signalling (time=%d)\n", GetTickCount());
       
       /* Alert VM86 thread about the new event. */
       kill(dosvm_pid,SIGUSR2);
@@ -288,7 +288,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
       /* Wake up DOSVM_Wait so that it can serve pending events. */
       SetEvent(event_notifier);
     } else {
-      TRACE("new event queued (time=%ld)\n", GetTickCount());
+      TRACE("new event queued (time=%d)\n", GetTickCount());
     }
 
     LeaveCriticalSection(&qcrit);
@@ -455,7 +455,7 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
         }
         else
         {
-            ERR_(module)( "dosvm wait error=%ld\n", GetLastError() );
+            ERR_(module)( "dosvm wait error=%d\n", GetLastError() );
         }
     }
 }
@@ -530,17 +530,17 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
   switch(rec->ExceptionCode) {
   case EXCEPTION_VM86_INTx:
-    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%04lx\n"
-                  " eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n"
-                  " ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%04x\n"
+                  " eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n"
+                  " ebp=%08x esp=%08x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                   arg, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi,
                   context->Ebp, context->Esp, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
                   context->EFlags );
     ret = DOSVM_EmulateInterruptRM( context, arg );
-    TRACE_(relay)("Ret  DOS int 0x%02x ret=%04lx:%04lx\n"
-                  " eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n"
-                  " ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+    TRACE_(relay)("Ret  DOS int 0x%02x ret=%04x:%04x\n"
+                  " eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n"
+                  " ebp=%08x esp=%08x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                   arg, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi,
                   context->Ebp, context->Esp, context->SegDs, context->SegEs,
@@ -700,7 +700,7 @@ void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 *context )
  */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
-    TRACE_(module)("(%p,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE_(module)("(%p,%d,%p)\n", hinstDLL, fdwReason, lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {

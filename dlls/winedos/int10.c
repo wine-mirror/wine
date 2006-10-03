@@ -1467,7 +1467,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0xfe: /* GET SHADOW BUFFER */
-        TRACE( "GET SHADOW BUFFER %lx:%x - ignored\n",
+        TRACE( "GET SHADOW BUFFER %x:%x - ignored\n",
                context->SegEs, DI_reg(context) );
         break;
 

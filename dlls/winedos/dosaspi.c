@@ -41,7 +41,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 
 
 	memcpy(&ptrSRB,lpPRB->SenseArea + lpPRB->SRB_SenseLen,sizeof(DWORD));
-	TRACE("Copying data back to DOS client at 0x%8lx\n",ptrSRB);
+	TRACE("Copying data back to DOS client at 0x%8x\n",ptrSRB);
 	lpSRB16 = PTR_REAL_TO_LIN(SELECTOROF(ptrSRB),OFFSETOF(ptrSRB));
 	lpSRB16->cmd.SRB_TargStat = lpPRB->SRB_TargStat;
 	lpSRB16->cmd.SRB_HaStat = lpPRB->SRB_HaStat;
@@ -127,7 +127,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		break;
 	case SC_EXEC_SCSI_CMD:
 		TRACE("SC_EXEC_SCSI_CMD\n");
-		TRACE("Copying data from DOS client at 0x%8lx\n",ptrSRB);
+		TRACE("Copying data from DOS client at 0x%8x\n",ptrSRB);
 		lpPRB = HeapAlloc(GetProcessHeap(),0,sizeof(SRB)+lpSRB16->cmd.SRB_SenseLen+sizeof(DWORD));
 #define srb_dos_to_w32(name) \
 		lpPRB->SRB_##name = lpSRB16->cmd.SRB_##name
@@ -171,7 +171,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		break;
 	}
 
-	TRACE("Returning %lx\n", retval );
+	TRACE("Returning %x\n", retval );
 	return retval;
 }
 

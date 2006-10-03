@@ -123,7 +123,7 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
         context->Ecx = (DWORD)info.lpMaximumApplicationAddress;
         SET_BL( context, 0 ); /* No errors. */
 
-        TRACE("returning largest %ldK, total %ldK, highest 0x%lx\n", 
+        TRACE("returning largest %dK, total %dK, highest 0x%x\n",
               context->Eax, context->Edx, context->Ecx);
     }
     break;

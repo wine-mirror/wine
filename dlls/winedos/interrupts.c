@@ -243,10 +243,10 @@ static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
  */
 void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
 {
-    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%08lx\n"
-                  "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n"
-                  "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n"
-                  "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
+                  "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
+                  "  esi=%08x edi=%08x ebp=%08x esp=%08x \n"
+                  "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
                   intnum, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx,
                   context->Esi, context->Edi, context->Ebp, context->Esp,
@@ -275,7 +275,7 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
 
         if (intnum != context->Eip / DOSVM_STUB_PM48)
             WARN( "interrupt stub has been modified "
-                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  "(interrupt is %02x, interrupt stub is %02x)\n",
                   intnum, context->Eip/DOSVM_STUB_PM48 );
 
         TRACE( "builtin interrupt %02x has been branched to\n", intnum );
@@ -296,7 +296,7 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
 
         if (intnum != context->Eip / DOSVM_STUB_PM16)
             WARN( "interrupt stub has been modified "
-                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  "(interrupt is %02x, interrupt stub is %02x)\n",
                   intnum, context->Eip/DOSVM_STUB_PM16 );
 
         TRACE( "builtin interrupt %02x has been branched to\n", intnum );
@@ -331,8 +331,8 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         
         if (addr.selector == DOSVM_dpmi_segments->int48_sel)
         {
-            TRACE( "builtin interrupt %02lx has been invoked "
-                   "(through vector %02x)\n", 
+            TRACE( "builtin interrupt %02x has been invoked "
+                   "(through vector %02x)\n",
                    addr.offset / DOSVM_STUB_PM48, intnum );
 
             if (intnum == 0x25 || intnum == 0x26)
@@ -349,7 +349,7 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         {
             DWORD *stack;
             
-            TRACE( "invoking hooked interrupt %02x at %04x:%08lx\n",
+            TRACE( "invoking hooked interrupt %02x at %04x:%08x\n",
                    intnum, addr.selector, addr.offset );
             
             if (DOSVM_IsIRQ(intnum))
@@ -422,10 +422,10 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
  */
 BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum ) 
 {
-    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%08lx\n"
-                  "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n"
-                  "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n"
-                  "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
+                  "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
+                  "  esi=%08x edi=%08x ebp=%08x esp=%08x \n"
+                  "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
                   intnum, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx,
                   context->Esi, context->Edi, context->Ebp, context->Esp,
@@ -453,7 +453,7 @@ BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
 
         if (intnum != context->Eip / DOSVM_STUB_RM)
             WARN( "interrupt stub has been modified "
-                  "(interrupt is %02x, interrupt stub is %02lx)\n",
+                  "(interrupt is %02x, interrupt stub is %02x)\n",
                   intnum, context->Eip/DOSVM_STUB_RM );
 
         TRACE( "builtin interrupt %02x has been branched to\n", intnum );
@@ -664,7 +664,7 @@ FARPROC48 DOSVM_GetPMHandler48( BYTE intnum )
  */
 void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
 {
-  TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08lx\n",
+  TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08x\n",
        intnum, handler.selector, handler.offset );
   DOSVM_Vectors48[intnum] = handler;
 }

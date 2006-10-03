@@ -43,7 +43,7 @@ void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context )
             SET_CX( context, HIWORD(data->Ticks) );
             SET_DX( context, LOWORD(data->Ticks) );
             SET_AL( context, 0 ); /* FIXME: midnight flag is unsupported */
-            TRACE( "GET SYSTEM TIME - ticks=%ld\n", data->Ticks );
+            TRACE( "GET SYSTEM TIME - ticks=%d\n", data->Ticks );
         }
         break;
 
