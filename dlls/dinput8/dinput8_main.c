@@ -53,7 +53,7 @@ static void UnlockModule(void)
 HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI, LPUNKNOWN punkOuter) {
     HRESULT hr;
 
-    TRACE("hInst (%p), dwVersion: %ld, riid (%s), punkOuter (%p))\n", hinst, dwVersion, debugstr_guid(riid), punkOuter);
+    TRACE("hInst (%p), dwVersion: %d, riid (%s), punkOuter (%p))\n", hinst, dwVersion, debugstr_guid(riid), punkOuter);
 
     /* The specified version needs to be dinput8 (0x800) or higher */
     if(dwVersion < 0x800)
@@ -66,7 +66,7 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid,
     
     hr = CoCreateInstance( &CLSID_DirectInput8, punkOuter, CLSCTX_INPROC_SERVER, riid, ppDI);
     if(FAILED(hr)) {
-        ERR("CoCreateInstance failed with hr = %ld; Try running wineprefixcreate to fix it.\n", hr);
+        ERR("CoCreateInstance failed with hr = %d; Try running wineprefixcreate to fix it.\n", hr);
         return DIERR_INVALIDPARAM;
     }
 
