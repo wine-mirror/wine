@@ -42,7 +42,7 @@ BOOL WINAPI InstallNewDevice(HWND hwndParent, LPGUID ClassGuid, PDWORD pReboot)
 BOOL WINAPI UpdateDriverForPlugAndPlayDevicesA(HWND hwndParent, LPCSTR HardwareId,
     LPCSTR FullInfPath, DWORD InstallFlags, PBOOL bRebootRequired OPTIONAL)
 {
-    FIXME("Stub! %s %s 0x%08lx\n", HardwareId, FullInfPath, InstallFlags);
+    FIXME("Stub! %s %s 0x%08x\n", HardwareId, FullInfPath, InstallFlags);
     return TRUE;
 }
 
@@ -53,6 +53,6 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesA(HWND hwndParent, LPCSTR HardwareI
 BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND hwndParent, LPCWSTR HardwareId,
     LPCWSTR FullInfPath, DWORD InstallFlags, PBOOL bRebootRequired OPTIONAL)
 {
-    FIXME("Stub! %s %s 0x%08lx\n", debugstr_w(HardwareId), debugstr_w(FullInfPath), InstallFlags);
+    FIXME("Stub! %s %s 0x%08x\n", debugstr_w(HardwareId), debugstr_w(FullInfPath), InstallFlags);
     return TRUE;
 }

@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = newdev.dll
 IMPORTLIB = libnewdev.$(IMPLIBEXT)
 IMPORTS   = kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = main.c
 
