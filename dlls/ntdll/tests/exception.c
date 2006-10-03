@@ -277,8 +277,8 @@ static void test_debug_regs(void)
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
-    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %lx", res);
-    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155");
+    ok(res == STATUS_SUCCESS,"NtGetContextThread failed with %lx\n", res);
+    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155, got %lx\n", ctx.Dr7);
 }
 
 #endif  /* __i386__ */
