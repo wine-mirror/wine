@@ -10,6 +10,7 @@ EXTRADEFS = @HALINCL@
 
 C_SRCS = \
 	desktop.c \
+	device.c \
 	explorer.c \
 	hal.c \
 	systray.c
