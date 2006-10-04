@@ -88,7 +88,7 @@
 @ stub CertVerifyRevocation
 @ stdcall CertVerifySubjectCertificateContext(ptr ptr ptr)
 @ stdcall CertVerifyTimeValidity(ptr ptr)
-@ stub CertVerifyValidityNesting
+@ stdcall CertVerifyValidityNesting(ptr ptr)
 @ stdcall CreateFileU(wstr long long ptr long long ptr) kernel32.CreateFileW
 @ stdcall CryptBinaryToStringA(ptr long long ptr ptr)
 @ stub CryptBinaryToStringW # (ptr long long ptr ptr)

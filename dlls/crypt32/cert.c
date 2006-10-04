@@ -1125,6 +1125,15 @@ LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
     return ret;
 }
 
+BOOL WINAPI CertVerifyValidityNesting(PCERT_INFO pSubjectInfo,
+ PCERT_INFO pIssuerInfo)
+{
+    TRACE("(%p, %p)\n", pSubjectInfo, pIssuerInfo);
+
+    return CertVerifyTimeValidity(&pSubjectInfo->NotBefore, pIssuerInfo) == 0
+     && CertVerifyTimeValidity(&pSubjectInfo->NotAfter, pIssuerInfo) == 0;
+}
+
 BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
  DWORD dwFlags, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
  DWORD *pcbComputedHash)
