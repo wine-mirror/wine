@@ -94,7 +94,7 @@
 @ stub CryptBinaryToStringW # (ptr long long ptr ptr)
 @ stdcall CryptStringToBinaryA(str long long ptr ptr ptr ptr)
 @ stub CryptStringToBinaryW # (wstr long long ptr ptr ptr ptr)
-@ stub CryptAcquireContextU
+@ stdcall CryptAcquireContextU(ptr wstr wstr long long) advapi32.CryptAcquireContextW
 @ stdcall CryptAcquireCertificatePrivateKey(ptr long ptr ptr ptr ptr)
 @ stub CryptCloseAsyncHandle
 @ stub CryptCreateAsyncHandle
