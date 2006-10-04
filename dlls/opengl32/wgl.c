@@ -374,7 +374,7 @@ BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
     UINT em_size = 1024;
     RECT rc;
 
-    TRACE("(%p, %ld, %ld, %ld, %f, %f, %d, %p, %s)\n", hdc, first, count,
+    TRACE("(%p, %d, %d, %d, %f, %f, %d, %p, %s)\n", hdc, first, count,
           listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
 
 
