@@ -2382,7 +2382,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " is_unicode=%d,", req->is_unicode );
     fprintf( stderr, " instance=%p,", req->instance );
-    fprintf( stderr, " user_data=%p,", req->user_data );
+    fprintf( stderr, " user_data=%lx,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%u,", req->extra_size );
     fprintf( stderr, " extra_value=%lx", req->extra_value );
@@ -2394,7 +2394,7 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
     fprintf( stderr, " old_ex_style=%08x,", req->old_ex_style );
     fprintf( stderr, " old_id=%08x,", req->old_id );
     fprintf( stderr, " old_instance=%p,", req->old_instance );
-    fprintf( stderr, " old_user_data=%p,", req->old_user_data );
+    fprintf( stderr, " old_user_data=%lx,", req->old_user_data );
     fprintf( stderr, " old_extra_value=%lx", req->old_extra_value );
 }
 

@@ -2643,7 +2643,7 @@ struct set_window_info_request
     unsigned int   id;
     int            is_unicode;
     void*          instance;
-    void*          user_data;
+    unsigned long  user_data;
     int            extra_offset;
     data_size_t    extra_size;
     unsigned long  extra_value;
@@ -2655,7 +2655,7 @@ struct set_window_info_reply
     unsigned int   old_ex_style;
     unsigned int   old_id;
     void*          old_instance;
-    void*          old_user_data;
+    unsigned long  old_user_data;
     unsigned long  old_extra_value;
 };
 #define SET_WIN_STYLE     0x01
@@ -4426,6 +4426,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 251
+#define SERVER_PROTOCOL_VERSION 252
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

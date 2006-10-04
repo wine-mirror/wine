@@ -1780,7 +1780,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
                 case GWL_EXSTYLE:    retvalue = reply->old_ex_style; break;
                 case GWLP_ID:        retvalue = reply->old_id; break;
                 case GWLP_HINSTANCE: retvalue = (ULONG_PTR)reply->old_instance; break;
-                case GWLP_USERDATA:  retvalue = (ULONG_PTR)reply->old_user_data; break;
+                case GWLP_USERDATA:  retvalue = reply->old_user_data; break;
                 default:
                     if (offset >= 0) retvalue = get_win_data( &reply->old_extra_value, size );
                     else SetLastError( ERROR_INVALID_INDEX );
@@ -1982,7 +1982,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             break;
         case GWLP_USERDATA:
             req->flags = SET_WIN_USERDATA;
-            req->user_data = (void *)newval;
+            req->user_data = newval;
             break;
         default:
             req->flags = SET_WIN_EXTRA;
@@ -2014,7 +2014,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
                 break;
             case GWLP_USERDATA:
                 wndPtr->userdata = newval;
-                retval = (ULONG_PTR)reply->old_user_data;
+                retval = reply->old_user_data;
                 break;
             default:
                 retval = get_win_data( (char *)wndPtr->wExtra + offset, size );

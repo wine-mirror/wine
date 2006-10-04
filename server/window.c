@@ -78,7 +78,7 @@ struct window
     unsigned int     id;              /* window id */
     void*            instance;        /* creator instance */
     int              is_unicode;      /* ANSI or unicode */
-    void*            user_data;       /* user-specific data */
+    unsigned long    user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
     int              prop_inuse;      /* number of in-use window properties */
@@ -401,7 +401,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->id             = 0;
     win->instance       = NULL;
     win->is_unicode     = 1;
-    win->user_data      = NULL;
+    win->user_data      = 0;
     win->text           = NULL;
     win->paint_flags    = 0;
     win->prop_inuse     = 0;

@@ -57,7 +57,7 @@ typedef struct tagWND
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
-    DWORD          userdata;      /* User private data */
+    DWORD_PTR      userdata;      /* User private data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
