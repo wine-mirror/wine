@@ -261,7 +261,10 @@ static void test_SIPLoad(void)
     BOOL ret;
     GUID subject;
     static GUID dummySubject = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
-    static GUID unknown      = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static GUID unknown      = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
+    static GUID unknown2     = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
+    /* The next SIP is available on Windows (not on a clean Wine install) */
+    static GUID unknown3     = { 0x000C10F1, 0x0000, 0x0000, { 0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 }}; /* MSISIP.DLL */
     SIP_DISPATCH_INFO sdi;
     HMODULE hCrypt;
 
@@ -293,6 +296,18 @@ static void test_SIPLoad(void)
             "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
     ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 
+    hCrypt = LoadLibraryA("crypt32.dll");
+    if (hCrypt)
+    {
+        funcCryptSIPGetSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPGetSignedDataMsg");
+        funcCryptSIPPutSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPPutSignedDataMsg");
+        funcCryptSIPCreateIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPCreateIndirectData");
+        funcCryptSIPVerifyIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPVerifyIndirectData");
+        funcCryptSIPRemoveSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPRemoveSignedDataMsg");
+    }
+    /* We're not going to use the functions, so we can free already here */
+    FreeLibrary(hCrypt);
+
     /* All OK */
     SetLastError(0xdeadbeef);
     memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
@@ -304,7 +319,8 @@ static void test_SIPLoad(void)
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
         /* This error will always be there as native searches for the function DllCanUnloadNow
          * in WINTRUST.DLL (in this case). This function is not available in WINTRUST.DLL.
-         * For now there's no need to implement this is Wine.
+         * For now there's no need to implement this is Wine as I doubt any program will rely on
+         * this last error when the call succeeded.
          */
         ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
             "Expected ERROR_PROC_NOT_FOUND, got 0x%08x\n", GetLastError());
@@ -316,27 +332,70 @@ static void test_SIPLoad(void)
      * calling crypt32 functions which in it's turn call the equivalent in the SIP
      * as dictated by the given GUID.
      */
-    hCrypt = LoadLibrary("crypt32.dll");
-    if (hCrypt)
+    if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
+        funcCryptSIPVerifyIndirectData && funcCryptSIPRemoveSignedDataMsg)
+        todo_wine
+            ok (sdi.pfGet == funcCryptSIPGetSignedDataMsg &&
+                sdi.pfPut == funcCryptSIPPutSignedDataMsg &&
+                sdi.pfCreate == funcCryptSIPCreateIndirectData &&
+                sdi.pfVerify == funcCryptSIPVerifyIndirectData &&
+                sdi.pfRemove == funcCryptSIPRemoveSignedDataMsg,
+                "Expected function addresses to be from crypt32\n");
+    else
+        trace("Couldn't load function pointers\n");
+
+    /* All OK, but different GUID (same SIP though) */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
+    ret = CryptSIPLoad(&unknown2, 0, &sdi);
+    todo_wine
     {
-        funcCryptSIPGetSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPGetSignedDataMsg");
-        funcCryptSIPPutSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPPutSignedDataMsg");
-        funcCryptSIPCreateIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPCreateIndirectData");
-        funcCryptSIPVerifyIndirectData = (void*)GetProcAddress(hCrypt, "CryptSIPVerifyIndirectData");
-        funcCryptSIPRemoveSignedDataMsg = (void*)GetProcAddress(hCrypt, "CryptSIPRemoveSignedDataMsg");
-        if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
-            funcCryptSIPVerifyIndirectData && funcCryptSIPRemoveSignedDataMsg)
-            todo_wine
+        ok ( ret, "Expected CryptSIPLoad to succeed\n");
+        /* This call on it's own would have resulted in a ERROR_PROC_NOT_FOUND, but the previous
+         * call to CryptSIPLoad already loaded wintrust.dll. As this information is cached,
+         * CryptSIPLoad will not try to search for the already mentioned DllCanUnloadNow.
+         */
+    }
+    ok ( GetLastError() == 0xdeadbeef,
+        "Expected 0xdeadbeef, got 0x%08x\n", GetLastError());
+    todo_wine
+        ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
+
+    /* All OK, but other SIP */
+    SetLastError(0xdeadbeef);
+    memset(&sdi, 0, sizeof(SIP_DISPATCH_INFO));
+    sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
+    sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
+    ret = CryptSIPLoad(&unknown3, 0, &sdi);
+    if (ret)
+    {
+        /* The SIP is known so we can safely assume that the next tests can be done */
+
+        /* As msisip.dll is not checked yet by any of the previous calls, the
+         * function DllCanUnloadNow will be checked again in msisip.dll (it's not present)
+         */
+        todo_wine
+        {
+            ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
+                "Expected ERROR_PROC_NOT_FOUND, got 0x%08x\n", GetLastError());
+            ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
+
+            /* This is another SIP but this test proves the function addresses are the same as
+             * in the previous test.
+             */
+            if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
+                funcCryptSIPVerifyIndirectData && funcCryptSIPRemoveSignedDataMsg)
                 ok (sdi.pfGet == funcCryptSIPGetSignedDataMsg &&
                     sdi.pfPut == funcCryptSIPPutSignedDataMsg &&
                     sdi.pfCreate == funcCryptSIPCreateIndirectData &&
                     sdi.pfVerify == funcCryptSIPVerifyIndirectData &&
                     sdi.pfRemove == funcCryptSIPRemoveSignedDataMsg,
                     "Expected function addresses to be from crypt32\n");
-        else
-            trace("Couldn't load function pointers\n");
- 
-        FreeLibrary(hCrypt);
+            else
+                trace("Couldn't load function pointers\n");
+        }
     }
 
     /* Reserved parameter not 0 */
@@ -355,6 +414,10 @@ static void test_SIPLoad(void)
 START_TEST(sip)
 {
     test_AddRemoveProvider();
-    test_SIPRetrieveSubjectGUID();
+    /* It seems that the caching for loaded dlls is shared between CryptSIPRetrieveSubjectGUID
+     * and CryptSIPLoad. The tests have to be in this order to succeed. This is because in the last
+     * test for CryptSIPRetrieveSubjectGUID, several SIPs will be loaded (on Windows).
+     */
     test_SIPLoad();
+    test_SIPRetrieveSubjectGUID();
 }
