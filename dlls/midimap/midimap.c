@@ -262,7 +262,7 @@ static	DWORD	modOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
     MIDIMAPDATA*	mom = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
 
-    TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
+    TRACE("(%p %p %08x)\n", lpdwUser, lpDesc, dwFlags);
 
     if (!mom) return MMSYSERR_NOMEM;
 
@@ -385,7 +385,7 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
 	}
 	break;
     default:
-	FIXME("ooch %lu\n", dwParam);
+	FIXME("ooch %u\n", dwParam);
     }
 
     return ret;
@@ -452,7 +452,7 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
 DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 				DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg)
