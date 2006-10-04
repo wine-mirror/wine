@@ -2098,11 +2098,9 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " timeout=%d,", req->timeout );
-    fprintf( stderr, " callback=%p,", req->callback );
     fprintf( stderr, " data=" );
-    dump_varargs_bytes( cur_size );
+    dump_varargs_message_data( cur_size );
 }
 
 static void dump_post_quit_message_request( const struct post_quit_message_request *req )

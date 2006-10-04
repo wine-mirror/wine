@@ -2169,6 +2169,7 @@ static void wait_message_reply( UINT flags )
 static BOOL put_message_in_queue( const struct send_message_info *info, size_t *reply_size )
 {
     struct packed_message data;
+    message_data_t msg_data;
     unsigned int res;
     int i, timeout = 0;
 
@@ -2191,6 +2192,15 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
             return FALSE;
         }
     }
+    else if (info->type == MSG_CALLBACK)
+    {
+        msg_data.callback.callback = info->callback;
+        msg_data.callback.data     = info->data;
+        msg_data.callback.result   = 0;
+        data.data[0] = &msg_data;
+        data.size[0] = sizeof(msg_data.callback);
+        data.count = 1;
+    }
     else if (info->type == MSG_POSTED && info->msg >= WM_DDE_FIRST && info->msg <= WM_DDE_LAST)
     {
         return post_dde_message( &data, info );
@@ -2206,12 +2216,6 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         req->wparam  = info->wparam;
         req->lparam  = info->lparam;
         req->timeout = timeout;
-
-        if (info->type == MSG_CALLBACK)
-        {
-            req->callback = info->callback;
-            req->info     = info->data;
-        }
 
         if (info->flags & SMTO_ABORTIFHUNG) req->flags |= SEND_MSG_ABORT_IF_HUNG;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
@@ -2569,7 +2573,6 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         call_sendmsg_callback( callback, hwnd, msg, data, result );
         return TRUE;
     }
-    FIXME( "callback will not be called\n" );
     return send_inter_thread_message( &info, &result );
 }
 

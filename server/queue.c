@@ -180,6 +180,7 @@ static const struct object_ops thread_input_ops =
 static struct thread_input *foreground_input;
 static unsigned int last_input_time;
 
+static void free_message( struct message *msg );
 
 /* set the caret window in a given thread input */
 static void set_caret_window( struct thread_input *input, user_handle_t win )
@@ -404,11 +405,7 @@ static void free_result( struct message_result *result )
 {
     if (result->timeout) remove_timeout_user( result->timeout );
     if (result->data) free( result->data );
-    if (result->callback_msg)
-    {
-        free( result->callback_msg->data );
-        free( result->callback_msg );
-    }
+    if (result->callback_msg) free_message( result->callback_msg );
     free( result );
 }
 
@@ -522,8 +519,7 @@ static void result_timeout( void *private )
 /* allocate and fill a message result structure */
 static struct message_result *alloc_message_result( struct msg_queue *send_queue,
                                                     struct msg_queue *recv_queue,
-                                                    struct message *msg, int timeout,
-                                                    void *callback, unsigned long callback_data )
+                                                    struct message *msg, int timeout )
 {
     struct message_result *result = mem_alloc( sizeof(*result) );
     if (result)
@@ -538,17 +534,10 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
 
         if (msg->type == MSG_CALLBACK)
         {
-            struct callback_msg_data *data;
             struct message *callback_msg = mem_alloc( sizeof(*callback_msg) );
 
             if (!callback_msg)
             {
-                free( result );
-                return NULL;
-            }
-            if (!(data = mem_alloc( sizeof(*data ))))
-            {
-                free( callback_msg );
                 free( result );
                 return NULL;
             }
@@ -562,10 +551,11 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             callback_msg->y         = 0;
             callback_msg->info      = 0;
             callback_msg->result    = NULL;
-            callback_msg->data      = data;
-            callback_msg->data_size = sizeof(*data);
-            data->callback = callback;
-            data->data     = callback_data;
+            /* steal the data from the original message */
+            callback_msg->data      = msg->data;
+            callback_msg->data_size = msg->data_size;
+            msg->data = NULL;
+            msg->data_size = 0;
 
             result->callback_msg = callback_msg;
             list_add_head( &send_queue->callback_result, &result->sender_entry );
@@ -1600,26 +1590,25 @@ DECL_HANDLER(send_message)
         msg->time      = get_tick_count();
         msg->x         = 0;
         msg->y         = 0;
-        msg->info      = req->info;
+        msg->info      = 0;
         msg->result    = NULL;
         msg->data      = NULL;
-        msg->data_size = 0;
+        msg->data_size = get_req_data_size();
+
+        if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
+        {
+            free( msg );
+            release_object( thread );
+            return;
+        }
 
         switch(msg->type)
         {
         case MSG_OTHER_PROCESS:
-            msg->data_size = get_req_data_size();
-            if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
-            {
-                free( msg );
-                break;
-            }
-            /* fall through */
         case MSG_ASCII:
         case MSG_UNICODE:
         case MSG_CALLBACK:
-            if (!(msg->result = alloc_message_result( send_queue, recv_queue, msg,
-                                                      req->timeout, req->callback, req->info )))
+            if (!(msg->result = alloc_message_result( send_queue, recv_queue, msg, req->timeout )))
             {
                 free_message( msg );
                 break;
@@ -1630,13 +1619,6 @@ DECL_HANDLER(send_message)
             set_queue_bits( recv_queue, QS_SENDMESSAGE );
             break;
         case MSG_POSTED:
-            /* needed for posted DDE messages */
-            msg->data_size = get_req_data_size();
-            if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
-            {
-                free( msg );
-                break;
-            }
             list_add_tail( &recv_queue->msg_list[POST_MESSAGE], &msg->entry );
             set_queue_bits( recv_queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
             break;

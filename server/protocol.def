@@ -1596,10 +1596,8 @@ enum char_info_mode
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters */
     unsigned long   lparam;    /* parameters */
-    unsigned long   info;      /* extra info */
     int             timeout;   /* timeout for reply */
-    void*           callback;  /* callback address */
-    VARARG(data,bytes);        /* message data for sent messages */
+    VARARG(data,message_data); /* message data for sent messages */
 @END
 
 @REQ(post_quit_message)

@@ -2224,10 +2224,8 @@ struct send_message_request
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
-    unsigned long   info;
     int             timeout;
-    void*           callback;
-    /* VARARG(data,bytes); */
+    /* VARARG(data,message_data); */
 };
 struct send_message_reply
 {
@@ -4428,6 +4426,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 249
+#define SERVER_PROTOCOL_VERSION 250
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
