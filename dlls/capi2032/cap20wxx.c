@@ -99,7 +99,7 @@ DWORD WINAPI wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConnect
         return 0x1009;
     fret = pcapi20_register (maxLogicalConnection, maxBDataBlocks, maxBDataLen, &aid);
     *pApplID   = aid;
-    TRACE ( "(%lx) -> %lx\n", *pApplID, fret);
+    TRACE ( "(%x) -> %x\n", *pApplID, fret);
     return fret;
 #else
     FIXME ( "(), no CAPI4LINUX support compiled into WINE.\n" );
@@ -117,7 +117,7 @@ DWORD WINAPI wrapCAPI_RELEASE (DWORD ApplID) {
     if (!pcapi20_release)
         return 0x1109;
     fret = pcapi20_release (ApplID);
-    TRACE ("(%lx) -> %lx\n", ApplID, fret);
+    TRACE ("(%x) -> %x\n", ApplID, fret);
     return fret;
 #else
     return 0x1109;
@@ -134,7 +134,7 @@ DWORD WINAPI wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
     if (!pcapi20_put_message)
         return 0x1109;
     fret = pcapi20_put_message (ApplID, pCAPIMessage);
-    TRACE ("(%lx) -> %lx\n", ApplID, fret);
+    TRACE ("(%x) -> %x\n", ApplID, fret);
     return fret;
 #else
     return 0x1109;
@@ -151,7 +151,7 @@ DWORD WINAPI wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
     if (!pcapi20_get_message)
         return 0x1109;
     fret = pcapi20_get_message (ApplID, (unsigned char **)ppCAPIMessage);
-    TRACE ("(%lx) -> %lx\n", ApplID, fret);
+    TRACE ("(%x) -> %x\n", ApplID, fret);
     return fret;
 #else
     return 0x1109;
@@ -162,7 +162,7 @@ DWORD WINAPI wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
 #ifdef HAVE_CAPI4LINUX
-    TRACE ("(%lx)\n", ApplID);
+    TRACE ("(%x)\n", ApplID);
 
     load_functions();
     if (!pcapi20_waitformessage)
@@ -188,7 +188,7 @@ DWORD WINAPI wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
     if (!strncmp (SzBuffer, "AVM", 3)) {
         strcpy (SzBuffer, "AVM-GmbH");
     }
-    TRACE ("(%s) -> %lx\n", SzBuffer, fret);
+    TRACE ("(%s) -> %x\n", SzBuffer, fret);
     return fret;
 #else
     return 0x1109;
@@ -210,7 +210,7 @@ DWORD WINAPI wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *
     *pCAPIMinor         = *(unsigned *)(version + 1 * sizeof (unsigned));
     *pManufacturerMajor = *(unsigned *)(version + 2 * sizeof (unsigned));
     *pManufacturerMinor = *(unsigned *)(version + 3 * sizeof (unsigned));
-    TRACE ("(%lx.%lx,%lx.%lx) -> %lx\n", *pCAPIMajor, *pCAPIMinor, *pManufacturerMajor,
+    TRACE ("(%x.%x,%x.%x) -> %x\n", *pCAPIMajor, *pCAPIMinor, *pManufacturerMajor,
              *pManufacturerMinor, fret);
     return fret;
 #else
@@ -228,7 +228,7 @@ DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
     if (!pcapi20_get_serial_number)
         return 0x1109;
     fret = (pcapi20_get_serial_number (0, (unsigned char*) SzBuffer) != 0) ? 0 : 0x1108;
-    TRACE ("(%s) -> %lx\n", SzBuffer, fret);
+    TRACE ("(%s) -> %x\n", SzBuffer, fret);
     return fret;
 #else
     return 0x1109;
@@ -246,7 +246,7 @@ DWORD WINAPI wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
         return 0x1109;
 
     fret = pcapi20_get_profile (CtlrNr, SzBuffer);
-    TRACE ("(%lx,%x) -> %lx\n", CtlrNr, *(unsigned short *)SzBuffer, fret);
+    TRACE ("(%x,%x) -> %x\n", CtlrNr, *(unsigned short *)SzBuffer, fret);
     return fret;
 #else
     return 0x1109;
@@ -263,7 +263,7 @@ DWORD WINAPI wrapCAPI_INSTALLED (void) {
     if (!pcapi20_isinstalled)
         return 0x1109;
     fret = pcapi20_isinstalled();
-    TRACE ("() -> %lx\n", fret);
+    TRACE ("() -> %x\n", fret);
     return fret;
 #else
     return 0x1109;
