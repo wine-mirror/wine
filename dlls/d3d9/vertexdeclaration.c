@@ -290,7 +290,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
         IUnknown_AddRef(iface);
         object->parentDevice = iface;
         *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
-         TRACE("(%p) : Created vertex declatanio %p\n", This, object);
+         TRACE("(%p) : Created vertex declaration %p\n", This, object);
     }
     return hr;
 }
