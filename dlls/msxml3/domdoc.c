@@ -174,14 +174,14 @@ typedef struct _domdoc
 LONG xmldoc_add_ref(xmlDocPtr doc)
 {
     LONG ref = InterlockedIncrement((LONG*)&doc->_private);
-    TRACE("%ld\n", ref);
+    TRACE("%d\n", ref);
     return ref;
 }
 
 LONG xmldoc_release(xmlDocPtr doc)
 {
     LONG ref = InterlockedDecrement((LONG*)&doc->_private);
-    TRACE("%ld\n", ref);
+    TRACE("%d\n", ref);
     if(ref == 0)
     {
         TRACE("freeing docptr %p\n", doc);

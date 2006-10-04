@@ -743,7 +743,7 @@ static HRESULT WINAPI xmlnode_get_baseName(
         break;
     }
 
-    TRACE("returning %08lx str = %s\n", r, debugstr_w( str ) );
+    TRACE("returning %08x str = %s\n", r, debugstr_w( str ) );
 
     *nameString = str;
     return r;
