@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
                     const GUID *sysSystem, DWORD dwFlags )
 {
-    FIXME("%p %s %lx\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
+    FIXME("%p %s %x\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -59,7 +59,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
                                                 BYTE* pbHash, DWORD dwFlags )
 {
-    FIXME("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    FIXME("%p %p %p %x\n", hFile, pcbHash, pbHash, dwFlags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -73,7 +73,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
                                                  DWORD dwFlags,
                                                  HCATINFO* phPrevCatInfo )
 {
-    FIXME("%p %p %ld %ld %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+    FIXME("%p %p %d %d %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
@@ -94,7 +94,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 {
-    FIXME("%p %lx\n", hCatAdmin, dwFlags);
+    FIXME("%p %x\n", hCatAdmin, dwFlags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -123,7 +123,7 @@ CRYPTCATMEMBER *WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER* 
 HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV hProv,
                            DWORD dwPublicVersion, DWORD dwEncodingType)
 {
-    FIXME("(%s, %ld, %ld, %ld, %ld) stub\n", debugstr_w(pwszFileName), fdwOpenFlags,
+    FIXME("(%s, %d, %ld, %d, %d) stub\n", debugstr_w(pwszFileName), fdwOpenFlags,
           hProv, dwPublicVersion, dwEncodingType);
     return 0;
 }
@@ -145,7 +145,7 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
 BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
                                        DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %p %ld %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    FIXME("(%p %p %d %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
  
     return FALSE;
@@ -157,7 +157,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
                                        DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %ld %p %ld %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    FIXME("(%p %d %p %d %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
  
     return FALSE;
@@ -169,7 +169,7 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
 BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
                                        DWORD dwIndex)
 {
-    FIXME("(%p %ld) stub\n", pSubjectInfo, dwIndex);
+    FIXME("(%p %d) stub\n", pSubjectInfo, dwIndex);
  
     return FALSE;
 }

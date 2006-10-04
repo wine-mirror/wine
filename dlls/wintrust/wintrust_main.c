@@ -104,7 +104,7 @@ CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
  CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSigner,
  DWORD idxCounterSigner)
 {
-    FIXME("%p %ld %d %ld\n", pProvData, idxSigner, fCounterSigner,
+    FIXME("%p %d %d %d\n", pProvData, idxSigner, fCounterSigner,
      idxCounterSigner);
     return NULL;
 }
@@ -143,6 +143,6 @@ void WINAPI WintrustGetRegPolicyFlags( DWORD* pdwPolicyFlags )
  */
 BOOL WINAPI WintrustSetRegPolicyFlags( DWORD dwPolicyFlags)
 {
-    FIXME("stub: %lx\n", dwPolicyFlags);
+    FIXME("stub: %x\n", dwPolicyFlags);
     return TRUE;
 }
