@@ -29,8 +29,8 @@
 
 static const WCHAR TEST_DDE_SERVICE[] = {'T','e','s','t','D','D','E','S','e','r','v','i','c','e',0};
 
-static const char exec_cmdA[] = "ANSI dde command";
-static const WCHAR exec_cmdW[] = {'u','n','i','c','o','d','e',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
+static char exec_cmdA[] = "ANSI dde command";
+static WCHAR exec_cmdW[] = {'u','n','i','c','o','d','e',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
 
 static WNDPROC old_dde_client_wndproc;
 
@@ -220,7 +220,7 @@ static void test_dde_transaction(void)
     HWND hwnd_client, hwnd_server;
     CONVINFO info;
     HDDEDATA hdata;
-    static const char test_cmd[] = "test dde command";
+    static char test_cmd[] = "test dde command";
 
     /* server: unicode, client: ansi */
     if (!create_dde_windows(&hwnd_client, &hwnd_server)) return;
