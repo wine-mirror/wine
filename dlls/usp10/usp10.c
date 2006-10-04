@@ -187,7 +187,7 @@ HRESULT WINAPI ScriptRecordDigitSubstitution(LCID locale, SCRIPT_DIGITSUBSTITUTE
 {
     DWORD plgid, sub;
 
-    TRACE("0x%lx, %p\n", locale, sds);
+    TRACE("0x%x, %p\n", locale, sds);
 
     /* This implementation appears to be correct for all languages, but it's
      * not clear if sds->DigitSubstitute is ever set to anything except 
@@ -447,7 +447,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 				   const BYTE *pbInClass,
 				   SCRIPT_STRING_ANALYSIS *pssa)
 {
-  FIXME("(%p,%p,%d,%d,%d,0x%lx,%d,%p,%p,%p,%p,%p,%p): stub\n",
+  FIXME("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p): stub\n",
 	hdc, pString, cString, cGlyphs, iCharset, dwFlags,
 	iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
   if (1 > cString || NULL == pString) {
@@ -784,7 +784,7 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 {
     unsigned int i, j;
 
-    TRACE("(%s,%d,0x%lx)\n", debugstr_wn(chars, len), len, flag);
+    TRACE("(%s,%d,0x%x)\n", debugstr_wn(chars, len), len, flag);
 
     for (i = 0; i < len; i++)
     {
@@ -958,7 +958,7 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     int cnt;
     DWORD hr;
     Scriptcache *pScriptcache;
-    FIXME("(%p,%p,%s,%d,0x%lx,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars), 
+    FIXME("(%p,%p,%s,%d,0x%x,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars),
                                                  cChars, dwFlags, pwOutGlyphs);
 
     if  (!psc)
@@ -1031,7 +1031,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 
     if  (hr) return S_OK;
     else {
-        FIXME("ExtTextOut returned:=%ld\n", hr);
+        FIXME("ExtTextOut returned:=%d\n", hr);
         return hr;
     }
 }
