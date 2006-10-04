@@ -240,30 +240,34 @@ LPWSTR msi_dialog_get_name( msi_dialog *dialog )
  * msi_dialog_get_style
  *
  * Extract the {\style} string from the front of the text to display and
- *  update the pointer.
+ * update the pointer.  Only the last style in a list is applied.
  */
 static LPWSTR msi_dialog_get_style( LPCWSTR p, LPCWSTR *rest )
 {
-    LPWSTR ret = NULL;
-    LPCWSTR q, i;
+    LPWSTR ret;
+    LPCWSTR q, i, first;
     DWORD len;
 
+    q = NULL;
     *rest = p;
     if( !p )
-        return ret;
-    if( *p++ != '{' )
-        return ret;
-    q = strchrW( p, '}' );
-    if( !q )
-        return ret;
-    if( *p == '\\' || *p == '&' )
-        p++;
+        return NULL;
 
-    /* little bit of sanity checking to stop us getting confused with RTF */
-    for( i=p; i<q; i++ )
-        if( *i == '}' || *i == '\\' )
-            return ret;
-    
+    while ((first = strchrW( p, '{' )) && (q = strchrW( first + 1, '}' )))
+    {
+        p = first + 1;
+        if( *p == '\\' || *p == '&' )
+            p++;
+
+        /* little bit of sanity checking to stop us getting confused with RTF */
+        for( i=p; i<q; i++ )
+            if( *i == '}' || *i == '\\' )
+                return NULL;
+    }
+
+    if (!p || !q)
+        return NULL;
+
     *rest = ++q;
     len = q - p;
 
