@@ -104,7 +104,7 @@ static void test_str_sid(const char *str_sid)
     else
     {
         if (GetLastError() != ERROR_INVALID_SID)
-            trace(" %s: couldn't be converted, returned %ld\n", str_sid, GetLastError());
+            trace(" %s: couldn't be converted, returned %d\n", str_sid, GetLastError());
         else
             trace(" %s: couldn't be converted\n", str_sid);
     }
@@ -140,24 +140,24 @@ static void test_sid(void)
     if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
         return;
     ok( GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %ld\n",
+     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
     r = pConvertStringSidToSidA( refs[0].refStr, NULL );
     ok( !r && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %ld\n",
+     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
     r = pConvertStringSidToSidA( NULL, &str );
     ok( !r && GetLastError() == ERROR_INVALID_PARAMETER,
-     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %ld\n",
+     "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
     r = pConvertStringSidToSidA( noSubAuthStr, &psid );
     ok( !r,
      "expected failure with no sub authorities\n" );
     ok( GetLastError() == ERROR_INVALID_SID,
-     "expected GetLastError() is ERROR_INVALID_SID, got %ld\n",
+     "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
      GetLastError() );
 
     for( i = 0; i < sizeof(refs) / sizeof(refs[0]); i++ )
@@ -185,7 +185,7 @@ static void test_sid(void)
          !memcmp( pisid->IdentifierAuthority.Value, refs[i].auth.Value,
          sizeof(refs[i].auth) ),
          "string sid %s didn't parse to expected value\n"
-         "(got 0x%04x%08lx, expected 0x%04x%08lx)\n",
+         "(got 0x%04x%08x, expected 0x%04x%08x)\n",
          refs[i].refStr,
          MAKEWORD( pisid->IdentifierAuthority.Value[1],
          pisid->IdentifierAuthority.Value[0] ),
@@ -443,17 +443,17 @@ static void test_allocateLuid(void)
         return;
 
     ok(ret,
-     "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
+     "AllocateLocallyUniqueId failed: %d\n", GetLastError());
     ret = pAllocateLocallyUniqueId(&luid2);
     ok( ret,
-     "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
+     "AllocateLocallyUniqueId failed: %d\n", GetLastError());
     ok(luid1.LowPart > SE_MAX_WELL_KNOWN_PRIVILEGE || luid1.HighPart != 0,
      "AllocateLocallyUniqueId returned a well-known LUID\n");
     ok(luid1.LowPart != luid2.LowPart || luid1.HighPart != luid2.HighPart,
      "AllocateLocallyUniqueId returned non-unique LUIDs\n");
     ret = pAllocateLocallyUniqueId(NULL);
     ok( !ret && GetLastError() == ERROR_NOACCESS,
-     "AllocateLocallyUniqueId(NULL) didn't return ERROR_NOACCESS: %ld\n",
+     "AllocateLocallyUniqueId(NULL) didn't return ERROR_NOACCESS: %d\n",
      GetLastError());
 }
 
@@ -479,18 +479,18 @@ static void test_lookupPrivilegeName(void)
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
     ret = pLookupPrivilegeNameA(NULL, &luid, NULL, &cchName);
     ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-     "LookupPrivilegeNameA didn't fail with ERROR_INSUFFICIENT_BUFFER: %ld\n",
+     "LookupPrivilegeNameA didn't fail with ERROR_INSUFFICIENT_BUFFER: %d\n",
      GetLastError());
     ok(cchName == strlen("SeCreateTokenPrivilege") + 1,
      "LookupPrivilegeNameA returned an incorrect required length for\n"
-     "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
+     "SeCreateTokenPrivilege (got %d, expected %d)\n", cchName,
      lstrlenA("SeCreateTokenPrivilege") + 1);
     /* check a known value and its returned length on success */
     cchName = sizeof(buf);
     ok(pLookupPrivilegeNameA(NULL, &luid, buf, &cchName) &&
      cchName == strlen("SeCreateTokenPrivilege"),
      "LookupPrivilegeNameA returned an incorrect output length for\n"
-     "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
+     "SeCreateTokenPrivilege (got %d, expected %d)\n", cchName,
      (int)strlen("SeCreateTokenPrivilege"));
     /* check known values */
     for (i = SE_MIN_WELL_KNOWN_PRIVILEGE; i < SE_MAX_WELL_KNOWN_PRIVILEGE; i++)
@@ -499,21 +499,21 @@ static void test_lookupPrivilegeName(void)
         cchName = sizeof(buf);
         ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
         ok( ret || GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
-         "LookupPrivilegeNameA(0.%ld) failed: %ld\n", i, GetLastError());
+         "LookupPrivilegeNameA(0.%d) failed: %d\n", i, GetLastError());
     }
     /* check a bogus LUID */
     luid.LowPart = 0xdeadbeef;
     cchName = sizeof(buf);
     ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
     ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
-     "LookupPrivilegeNameA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     "LookupPrivilegeNameA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %d\n",
      GetLastError());
     /* check on a bogus system */
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
     cchName = sizeof(buf);
     ret = pLookupPrivilegeNameA("b0gu5.Nam3", &luid, buf, &cchName);
     ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-     "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
+     "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE: %d\n",
      GetLastError());
 }
 
@@ -571,22 +571,22 @@ static void test_lookupPrivilegeValue(void)
     /* check a bogus system name */
     ret = pLookupPrivilegeValueA("b0gu5.Nam3", "SeCreateTokenPrivilege", &luid);
     ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-     "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
+     "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE: %d\n",
      GetLastError());
     /* check a NULL string */
     ret = pLookupPrivilegeValueA(NULL, 0, &luid);
     ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
-     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %d\n",
      GetLastError());
     /* check a bogus privilege name */
     ret = pLookupPrivilegeValueA(NULL, "SeBogusPrivilege", &luid);
     ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
-     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %d\n",
      GetLastError());
     /* check case insensitive */
     ret = pLookupPrivilegeValueA(NULL, "sEcREATEtOKENpRIVILEGE", &luid);
     ok( ret,
-     "LookupPrivilegeValueA(NULL, sEcREATEtOKENpRIVILEGE, &luid) failed: %ld\n",
+     "LookupPrivilegeValueA(NULL, sEcREATEtOKENpRIVILEGE, &luid) failed: %d\n",
      GetLastError());
     for (i = 0; i < sizeof(privs) / sizeof(privs[0]); i++)
     {
@@ -635,7 +635,7 @@ static void test_FileSecurity(void)
     ok( (GetLastError() == ERROR_FILE_NOT_FOUND ) ||
         (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) , 
         "last error ERROR_FILE_NOT_FOUND / ERROR_CALL_NOT_IMPLEMENTED (98) "
-        "expected, got %ld\n", GetLastError());
+        "expected, got %d\n", GetLastError());
 }
 
 static void test_AccessCheck(void)
@@ -674,38 +674,38 @@ static void test_AccessCheck(void)
         trace("ACLs not implemented - skipping tests\n");
         return;
     }
-    ok(res, "InitializeAcl failed with error %ld\n", GetLastError());
+    ok(res, "InitializeAcl failed with error %d\n", GetLastError());
 
     res = AllocateAndInitializeSid( &SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
-    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
     res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdminSid);
-    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
     res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
-    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
     res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
-    ok(res, "AddAccessAllowedAceEx failed with error %ld\n", GetLastError());
+    ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
 
     res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_ALL_ACCESS, AdminSid);
-    ok(res, "AddAccessAllowedAceEx failed with error %ld\n", GetLastError());
+    ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
 
     SecurityDescriptor = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
 
     res = InitializeSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
-    ok(res, "InitializeSecurityDescriptor failed with error %ld\n", GetLastError());
+    ok(res, "InitializeSecurityDescriptor failed with error %d\n", GetLastError());
 
     res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
-    ok(res, "SetSecurityDescriptorDacl failed with error %ld\n", GetLastError());
+    ok(res, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
 
     res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
-    ok(res, "SetSecurityDescriptorOwner failed with error %ld\n", GetLastError());
+    ok(res, "SetSecurityDescriptorOwner failed with error %d\n", GetLastError());
 
     res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, TRUE);
-    ok(res, "SetSecurityDescriptorGroup failed with error %ld\n", GetLastError());
+    ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
 
     PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
     PrivSet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, PrivSetLen);
@@ -717,29 +717,29 @@ static void test_AccessCheck(void)
 
     ret = OpenThreadToken(GetCurrentThread(),
                           TOKEN_QUERY, TRUE, &Token);
-    ok(ret, "OpenThreadToken failed with error %ld\n", GetLastError());
+    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
 
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
-    ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
     ok(AccessStatus && (Access == KEY_READ),
-        "AccessCheck failed to grant access with error %ld\n",
+        "AccessCheck failed to grant access with error %d\n",
         GetLastError());
 
     ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
-    ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
     ok(AccessStatus,
-        "AccessCheck failed to grant any access with error %ld\n",
+        "AccessCheck failed to grant any access with error %d\n",
         GetLastError());
-    trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08lx\n", Access);
+    trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08x\n", Access);
 
     SetLastError(0);
     PrivSet->PrivilegeCount = 16;
     ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     ok(ret && !AccessStatus && GetLastError() == ERROR_PRIVILEGE_NOT_HELD,
-        "AccessCheck should have failed with ERROR_PRIVILEGE_NOT_HELD, instead of %ld\n",
+        "AccessCheck should have failed with ERROR_PRIVILEGE_NOT_HELD, instead of %d\n",
         GetLastError());
 
     ret = pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, TRUE, TRUE, &Enabled);
@@ -750,10 +750,10 @@ static void test_AccessCheck(void)
         ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
                           PrivSet, &PrivSetLen, &Access, &AccessStatus);
         ok(ret && AccessStatus && GetLastError() == 0,
-            "AccessCheck should have succeeded, error %ld\n",
+            "AccessCheck should have succeeded, error %d\n",
             GetLastError());
         ok(Access == ACCESS_SYSTEM_SECURITY,
-            "Access should be equal to ACCESS_SYSTEM_SECURITY instead of 0x%08lx\n",
+            "Access should be equal to ACCESS_SYSTEM_SECURITY instead of 0x%08x\n",
             Access);
     }
     else
@@ -791,7 +791,7 @@ static void test_token_attr(void)
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
     GLE = GetLastError();
     ok(ret || (GLE == ERROR_CALL_NOT_IMPLEMENTED), 
-        "OpenProcessToken failed with error %ld\n", GLE);
+        "OpenProcessToken failed with error %d\n", GLE);
     if(!ret && (GLE == ERROR_CALL_NOT_IMPLEMENTED))
     {
         trace("OpenProcessToken() not implemented, skipping test_token_attr()\n");
@@ -802,7 +802,7 @@ static void test_token_attr(void)
     ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
     Groups = HeapAlloc(GetProcessHeap(), 0, Size);
     ret = GetTokenInformation(Token, TokenGroups, Groups, Size, &Size);
-    ok(ret, "GetTokenInformation(TokenGroups) failed with error %ld\n", GetLastError());
+    ok(ret, "GetTokenInformation(TokenGroups) failed with error %d\n", GetLastError());
     trace("TokenGroups:\n");
     for (i = 0; i < Groups->GroupCount; i++)
     {
@@ -815,8 +815,8 @@ static void test_token_attr(void)
         Name[0] = '\0';
         Domain[0] = '\0';
         ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
-        ok(ret, "LookupAccountSid(%s) failed with error %ld\n", SidString, GetLastError());
-        trace("\t%s, %s\\%s use: %d attr: 0x%08lx\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
+        ok(ret, "LookupAccountSid(%s) failed with error %d\n", SidString, GetLastError());
+        trace("\t%s, %s\\%s use: %d attr: 0x%08x\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
         LocalFree(SidString);
     }
     HeapFree(GetProcessHeap(), 0, Groups);
@@ -824,31 +824,31 @@ static void test_token_attr(void)
     /* user */
     ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
     ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "GetTokenInformation(TokenUser) failed with error %ld\n", GetLastError());
+        "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
     User = HeapAlloc(GetProcessHeap(), 0, Size);
     ret = GetTokenInformation(Token, TokenUser, User, Size, &Size);
     ok(ret,
-        "GetTokenInformation(TokenUser) failed with error %ld\n", GetLastError());
+        "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
 
     pConvertSidToStringSidA(User->User.Sid, &SidString);
-    trace("TokenUser: %s attr: 0x%08lx\n", SidString, User->User.Attributes);
+    trace("TokenUser: %s attr: 0x%08x\n", SidString, User->User.Attributes);
     LocalFree(SidString);
 
     /* privileges */
     ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
     ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "GetTokenInformation(TokenPrivileges) failed with error %ld\n", GetLastError());
+        "GetTokenInformation(TokenPrivileges) failed with error %d\n", GetLastError());
     Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
     ret = GetTokenInformation(Token, TokenPrivileges, Privileges, Size, &Size);
     ok(ret,
-        "GetTokenInformation(TokenPrivileges) failed with error %ld\n", GetLastError());
+        "GetTokenInformation(TokenPrivileges) failed with error %d\n", GetLastError());
     trace("TokenPrivileges:\n");
     for (i = 0; i < Privileges->PrivilegeCount; i++)
     {
         TCHAR Name[256];
         DWORD NameLen = sizeof(Name)/sizeof(Name[0]);
         LookupPrivilegeName(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
-        trace("\t%s, 0x%lx\n", Name, Privileges->Privileges[i].Attributes);
+        trace("\t%s, 0x%x\n", Name, Privileges->Privileges[i].Attributes);
     }
 }
 
@@ -862,7 +862,7 @@ static void test_sid_str(PSID * sid)
 {
     char *str_sid;
     BOOL ret = pConvertSidToStringSidA(sid, &str_sid);
-    ok(ret, "ConvertSidToStringSidA() failed: %ld\n", GetLastError());
+    ok(ret, "ConvertSidToStringSidA() failed: %d\n", GetLastError());
     if (ret)
     {
         char account[MAX_PATH], domain[MAX_PATH];
@@ -871,7 +871,7 @@ static void test_sid_str(PSID * sid)
         DWORD dom_size = MAX_PATH;
         ret = LookupAccountSid(NULL, sid, account, &acc_size, domain, &dom_size, &use);
         ok(ret || (!ret && (GetLastError() == ERROR_NONE_MAPPED)),
-           "LookupAccountSid(%s) failed: %ld\n", str_sid, GetLastError());
+           "LookupAccountSid(%s) failed: %d\n", str_sid, GetLastError());
         if (ret)
             trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
         else if (GetLastError() == ERROR_NONE_MAPPED)
@@ -902,7 +902,7 @@ static void test_LookupAccountSid(void)
     ret = AllocateAndInitializeSid(&SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &pUsersSid);
     ok(ret || (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED),
-       "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+       "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
     /* not running on NT so give up */
     if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
@@ -932,7 +932,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
 
     /* try a 0 sized account buffer */
     acc_sizeA = 0;
@@ -941,7 +941,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeA == real_acc_sizeA + 1,
-       "LookupAccountSidA() Expected acc_size = %lu, got %lu\n",
+       "LookupAccountSidA() Expected acc_size = %u, got %u\n",
        real_acc_sizeA + 1, acc_sizeA);
 
     /* try a 0 sized account buffer */
@@ -950,7 +950,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeA == real_acc_sizeA + 1,
-       "LookupAccountSid() Expected acc_size = %lu, got %lu\n",
+       "LookupAccountSid() Expected acc_size = %u, got %u\n",
        real_acc_sizeA + 1, acc_sizeA);
 
     /* try a small domain buffer */
@@ -960,7 +960,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+       "LookupAccountSidA() Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
 
     /* try a 0 sized domain buffer */
     dom_sizeA = 0;
@@ -969,7 +969,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeA == real_dom_sizeA + 1,
-       "LookupAccountSidA() Expected dom_size = %lu, got %lu\n",
+       "LookupAccountSidA() Expected dom_size = %u, got %u\n",
        real_dom_sizeA + 1, dom_sizeA);
 
     /* try a 0 sized domain buffer */
@@ -978,7 +978,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, NULL, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeA == real_dom_sizeA + 1,
-       "LookupAccountSidA() Expected dom_size = %lu, got %lu\n",
+       "LookupAccountSidA() Expected dom_size = %u, got %u\n",
        real_dom_sizeA + 1, dom_sizeA);
 
     real_acc_sizeW = MAX_PATH;
@@ -995,7 +995,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     ok(!ret, "LookupAccountSidW() Expected FALSE got TRUE\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
 
     /* try a 0 sized account buffer */
     acc_sizeW = 0;
@@ -1004,7 +1004,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeW == real_acc_sizeW + 1,
-       "LookupAccountSidW() Expected acc_size = %lu, got %lu\n",
+       "LookupAccountSidW() Expected acc_size = %u, got %u\n",
        real_acc_sizeW + 1, acc_sizeW);
 
     /* try a 0 sized account buffer */
@@ -1013,7 +1013,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeW == real_acc_sizeW + 1,
-       "LookupAccountSidW() Expected acc_size = %lu, got %lu\n",
+       "LookupAccountSidW() Expected acc_size = %u, got %u\n",
        real_acc_sizeW + 1, acc_sizeW);
 
     /* try a small domain buffer */
@@ -1023,7 +1023,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     ok(!ret, "LookupAccountSidW() Expected FALSE got TRUE\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %lu\n", GetLastError());
+       "LookupAccountSidW() Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
 
     /* try a 0 sized domain buffer */
     dom_sizeW = 0;
@@ -1032,7 +1032,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeW == real_dom_sizeW + 1,
-       "LookupAccountSidW() Expected dom_size = %lu, got %lu\n",
+       "LookupAccountSidW() Expected dom_size = %u, got %u\n",
        real_dom_sizeW + 1, dom_sizeW);
 
     /* try a 0 sized domain buffer */
@@ -1041,7 +1041,7 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeW == real_dom_sizeW + 1,
-       "LookupAccountSidW() Expected dom_size = %lu, got %lu\n",
+       "LookupAccountSidW() Expected dom_size = %u, got %u\n",
        real_dom_sizeW + 1, dom_sizeW);
 
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
@@ -1066,7 +1066,7 @@ static void test_LookupAccountSid(void)
             else
             {
                 if (GetLastError() != ERROR_INVALID_PARAMETER)
-                    trace(" CreateWellKnownSid(%d) failed: %ld\n", i, GetLastError());
+                    trace(" CreateWellKnownSid(%d) failed: %d\n", i, GetLastError());
                 else
                     trace(" %d: not supported\n", i);
             }
@@ -1088,20 +1088,20 @@ static void test_LookupAccountSid(void)
 
             status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
             ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-               "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08lx\n", status);
+               "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08x\n", status);
 
             /* try a more restricted access mask if necessary */
             if (status == STATUS_ACCESS_DENIED) {
                 trace("LsaOpenPolicy(POLICY_ALL_ACCESS) failed, trying POLICY_VIEW_LOCAL_INFORMATION\n");
                 status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_VIEW_LOCAL_INFORMATION, &handle);
-                ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08lx\n", status);
+                ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08x\n", status);
             }
 
             if (status == STATUS_SUCCESS)
             {
                 PPOLICY_ACCOUNT_DOMAIN_INFO info;
                 status = pLsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&info);
-                ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08lx\n", status);
+                ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08x\n", status);
                 if (status == STATUS_SUCCESS)
                 {
                     ok(info->DomainSid!=0, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) missing SID\n");
@@ -1143,7 +1143,7 @@ static void test_LookupAccountSid(void)
                 }
 
                 status = pLsaClose(handle);
-                ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);
+                ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08x\n", status);
             }
         }
     }

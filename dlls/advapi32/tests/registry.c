@@ -68,14 +68,14 @@ static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string)
 
     ret = RegQueryValueExA(hkey_main, name, NULL, &type, NULL, &cbData);
     GLE = GetLastError();
-    ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %ld, GLE=%ld\n", ret, GLE);
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%d\n", ret, GLE);
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
 
     str_byte_len = lstrlenA(string) + 1;
     full_byte_len = sizeof(string);
-    ok(type == REG_SZ, "RegQueryValueExA returned type %ld\n", type);
+    ok(type == REG_SZ, "RegQueryValueExA returned type %d\n", type);
     ok(cbData == full_byte_len || cbData == str_byte_len,
-        "cbData=%ld instead of %ld or %ld\n", cbData, full_byte_len, str_byte_len);
+        "cbData=%d instead of %d or %d\n", cbData, full_byte_len, str_byte_len);
 }
 
 static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string)
@@ -85,14 +85,14 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string)
 
     ret = RegQueryValueExW(hkey_main, name, NULL, &type, NULL, &cbData);
     GLE = GetLastError();
-    ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %ld, GLE=%ld\n", ret, GLE);
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %d, GLE=%d\n", ret, GLE);
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
 
     str_byte_len = (lstrlenW(string) + 1) * sizeof(WCHAR);
     full_byte_len = sizeof(string);
-    ok(type == REG_SZ, "RegQueryValueExW returned type %ld\n", type);
+    ok(type == REG_SZ, "RegQueryValueExW returned type %d\n", type);
     ok(cbData == full_byte_len || cbData == str_byte_len,
-        "cbData=%ld instead of %ld or %ld\n", cbData, full_byte_len, str_byte_len);
+        "cbData=%d instead of %d or %d\n", cbData, full_byte_len, str_byte_len);
 }
 
 static void test_set_value(void)
@@ -111,13 +111,13 @@ static void test_set_value(void)
 
     /* test RegSetValueExA with normal string */
     ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)string1A, sizeof(string1A));
-    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 
     /* test RegSetValueExA with intrazeroed string */
     ret = RegSetValueExA(hkey_main, name2A, 0, REG_SZ, (const BYTE *)string2A, sizeof(string2A));
-    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 
@@ -126,13 +126,13 @@ static void test_set_value(void)
 
     /* test RegSetValueExW with normal string */
     ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (const BYTE *)string1W, sizeof(string1W));
-    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
+    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %d, GLE=%d\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 
     /* test RegSetValueExW with intrazeroed string */
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (const BYTE *)string2W, sizeof(string2W));
-    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
+    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %d, GLE=%d\n", ret, GetLastError());
     test_hkey_main_Value_A(name1A, string1A);
     test_hkey_main_Value_W(name1W, string1W);
 }
@@ -171,21 +171,21 @@ static void test_enum_value(void)
 
     /* create the working key for new 'Test' value */
     res = RegCreateKeyA( hkey_main, "TestKey", &test_key );
-    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res);
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res);
 
     /* check NULL data with zero length */
     res = RegSetValueExA( test_key, "Test", 0, REG_SZ, NULL, 0 );
     if (GetVersion() & 0x80000000)
-        ok( res == ERROR_INVALID_PARAMETER, "RegSetValueExA returned %ld\n", res );
+        ok( res == ERROR_INVALID_PARAMETER, "RegSetValueExA returned %d\n", res );
     else
-        ok( !res, "RegSetValueExA returned %ld\n", res );
+        ok( !res, "RegSetValueExA returned %d\n", res );
     res = RegSetValueExA( test_key, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
-    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
+    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %d\n", res );
     res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
-    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
+    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %d\n", res );
 
     res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (const BYTE *)"foobar", 7 );
-    ok( res == 0, "RegSetValueExA failed error %ld\n", res );
+    ok( res == 0, "RegSetValueExA failed error %d\n", res );
 
     /* overflow both name and data */
     val_count = 2;
@@ -194,10 +194,10 @@ static void test_enum_value(void)
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 2, "val_count set to %ld\n", val_count );
-    ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 2, "val_count set to %d\n", val_count );
+    ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
     ok( !strcmp( data, "xxxxxxxxxx" ), "data set to '%s'\n", data );
 
@@ -208,11 +208,11 @@ static void test_enum_value(void)
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     /* Win9x returns 2 as specified by MSDN but NT returns 3... */
-    ok( val_count == 2 || val_count == 3, "val_count set to %ld\n", val_count );
-    ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( val_count == 2 || val_count == 3, "val_count set to %d\n", val_count );
+    ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     /* v5.1.2600.0 (XP Home and Proffesional) does not touch value or data in this case */
     ok( !strcmp( value, "Te" ) || !strcmp( value, "xxxxxxxxxx" ), 
         "value set to '%s' instead of 'Te' or 'xxxxxxxxxx'\n", value );
@@ -226,10 +226,10 @@ static void test_enum_value(void)
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 0, "val_count set to %ld\n", val_count );
-    ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 0, "val_count set to %d\n", val_count );
+    ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
     /* v5.1.2600.0 (XP Home and Professional) does not touch data in this case */
     ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ), 
@@ -242,10 +242,10 @@ static void test_enum_value(void)
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 20, "val_count set to %ld\n", val_count );
-    ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 20, "val_count set to %d\n", val_count );
+    ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
     ok( !strcmp( data, "xxxxxxxxxx" ), "data set to '%s'\n", data );
 
@@ -256,10 +256,10 @@ static void test_enum_value(void)
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
-    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res );
-    ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
-    ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
+    ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
+    ok( data_count == 7, "data_count set to %d instead of 7\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !strcmp( value, "Test" ), "value is '%s' instead of Test\n", value );
     ok( !strcmp( data, "foobar" ), "data is '%s' instead of foobar\n", data );
 
@@ -269,7 +269,7 @@ static void test_enum_value(void)
     res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
         return;
-    ok( res == 0, "RegSetValueExW failed error %ld\n", res );
+    ok( res == 0, "RegSetValueExW failed error %d\n", res );
 
     /* overflow both name and data */
     val_count = 2;
@@ -278,10 +278,10 @@ static void test_enum_value(void)
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 2, "val_count set to %ld\n", val_count );
-    ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 2, "val_count set to %d\n", val_count );
+    ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, xxxW, sizeof(xxxW) ), "value modified\n" );
     ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
 
@@ -292,10 +292,10 @@ static void test_enum_value(void)
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 3, "val_count set to %ld\n", val_count );
-    ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 3, "val_count set to %d\n", val_count );
+    ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, xxxW, sizeof(xxxW) ), "value modified\n" );
     ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
 
@@ -306,10 +306,10 @@ static void test_enum_value(void)
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
-    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
-    ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
-    ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
+    ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
+    ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
 
@@ -320,10 +320,10 @@ static void test_enum_value(void)
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
-    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res );
-    ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
-    ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
-    ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
+    ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
+    ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
+    ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
 }
@@ -336,22 +336,22 @@ static void test_query_value_ex(void)
     BYTE buffer[10];
     
     ret = RegQueryValueExA(hkey_main, "TP1_SZ", NULL, &type, NULL, &size);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(size == strlen(sTestpath1) + 1, "(%ld,%ld)\n", (DWORD)strlen(sTestpath1) + 1, size);
-    ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(size == strlen(sTestpath1) + 1, "(%d,%d)\n", (DWORD)strlen(sTestpath1) + 1, size);
+    ok(type == REG_SZ, "type %d is not REG_SZ\n", type);
 
     type = 0xdeadbeef;
     size = 0xdeadbeef;
     ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, NULL, &size);
-    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
-    ok(size == 0, "size should have been set to 0 instead of %ld\n", size);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    ok(size == 0, "size should have been set to 0 instead of %d\n", size);
     ok(type == (DWORD)HKEY_CLASSES_ROOT /* NT */ || type == 0 /* Win9x */,
-        "type should have been set to 0x80000000 or 0 instead of 0x%lx\n", type);
+        "type should have been set to 0x80000000 or 0 instead of 0x%x\n", type);
 
     size = sizeof(buffer);
     ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, buffer, &size);
-    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
-    ok(size == sizeof(buffer), "size shouldn't have been changed to %ld\n", size);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    ok(size == sizeof(buffer), "size shouldn't have been changed to %d\n", size);
 }
 
 static void test_get_value(void)
@@ -370,7 +370,7 @@ static void test_get_value(void)
     hadvapi32 = LoadLibraryA("advapi32.dll");
     if(!hadvapi32) 
     {
-        ok(0, "error=%ld\n", GetLastError());
+        ok(0, "error=%d\n", GetLastError());
         return;
     }
     pRegGetValueA = (PVOID)GetProcAddress(hadvapi32, "RegGetValueA");
@@ -380,116 +380,116 @@ static void test_get_value(void)
     /* Query REG_DWORD using RRF_RT_REG_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD, &type, &dw, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == 4, "size=%ld\n", size);
-    ok(type == REG_DWORD, "type=%ld\n", type);
-    ok(dw == 0x12345678, "dw=%ld\n", dw);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_DWORD, "type=%d\n", type);
+    ok(dw == 0x12345678, "dw=%d\n", dw);
 
     /* Query by subkey-name */
     ret = pRegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "DWORD", RRF_RT_REG_DWORD, NULL, NULL, NULL);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
 
     /* Query REG_DWORD using RRF_RT_REG_BINARY (restricted) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_BINARY, &type, &dw, &size);
-    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%ld\n", ret);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
     /* Although the function failed all values are retrieved */
-    ok(size == 4, "size=%ld\n", size);
-    ok(type == REG_DWORD, "type=%ld\n", type);
-    ok(dw == 0x12345678, "dw=%ld\n", dw);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_DWORD, "type=%d\n", type);
+    ok(dw == 0x12345678, "dw=%d\n", dw);
 
     /* Test RRF_ZEROONFAILURE */
     type = dw = 0xdeadbeef; size = 4;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_SZ|RRF_ZEROONFAILURE, &type, &dw, &size);
-    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%ld\n", ret);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
     /* Again all values are retrieved ... */
-    ok(size == 4, "size=%ld\n", size);
-    ok(type == REG_DWORD, "type=%ld\n", type);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_DWORD, "type=%d\n", type);
     /* ... except the buffer, which is zeroed out */
-    ok(dw == 0, "dw=%ld\n", dw);
+    ok(dw == 0, "dw=%d\n", dw);
 
     /* Query REG_DWORD using RRF_RT_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_DWORD, &type, &dw, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == 4, "size=%ld\n", size);
-    ok(type == REG_DWORD, "type=%ld\n", type);
-    ok(dw == 0x12345678, "dw=%ld\n", dw);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_DWORD, "type=%d\n", type);
+    ok(dw == 0x12345678, "dw=%d\n", dw);
 
     /* Query 32-bit REG_BINARY using RRF_RT_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "BIN32", RRF_RT_DWORD, &type, &dw, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == 4, "size=%ld\n", size);
-    ok(type == REG_BINARY, "type=%ld\n", type);
-    ok(dw == 0x12345678, "dw=%ld\n", dw);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_BINARY, "type=%d\n", type);
+    ok(dw == 0x12345678, "dw=%d\n", dw);
     
     /* Query 64-bit REG_BINARY using RRF_RT_DWORD (type mismatch) */
     qw[0] = qw[1] = size = type = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "BIN64", RRF_RT_DWORD, &type, qw, &size);
-    ok(ret == ERROR_DATATYPE_MISMATCH, "ret=%ld\n", ret);
-    ok(size == 8, "size=%ld\n", size);
-    ok(type == REG_BINARY, "type=%ld\n", type);
+    ok(ret == ERROR_DATATYPE_MISMATCH, "ret=%d\n", ret);
+    ok(size == 8, "size=%d\n", size);
+    ok(type == REG_BINARY, "type=%d\n", type);
     ok(qw[0] == 0x12345678 && 
-       qw[1] == 0x87654321, "qw={%ld,%ld}\n", qw[0], qw[1]);
+       qw[1] == 0x87654321, "qw={%d,%d}\n", qw[0], qw[1]);
     
     /* Query 64-bit REG_BINARY using 32-bit buffer (buffer too small) */
     type = dw = 0xdeadbeef; size = 4;
     ret = pRegGetValueA(hkey_main, NULL, "BIN64", RRF_RT_REG_BINARY, &type, &dw, &size);
-    ok(ret == ERROR_MORE_DATA, "ret=%ld\n", ret);
-    ok(dw == 0xdeadbeef, "dw=%ld\n", dw);
-    ok(size == 8, "size=%ld\n", size);
+    ok(ret == ERROR_MORE_DATA, "ret=%d\n", ret);
+    ok(dw == 0xdeadbeef, "dw=%d\n", dw);
+    ok(size == 8, "size=%d\n", size);
 
     /* Query 64-bit REG_BINARY using RRF_RT_QWORD (ok) */
     qw[0] = qw[1] = size = type = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "BIN64", RRF_RT_QWORD, &type, qw, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == 8, "size=%ld\n", size);
-    ok(type == REG_BINARY, "type=%ld\n", type);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == 8, "size=%d\n", size);
+    ok(type == REG_BINARY, "type=%d\n", type);
     ok(qw[0] == 0x12345678 &&
-       qw[1] == 0x87654321, "qw={%ld,%ld}\n", qw[0], qw[1]);
+       qw[1] == 0x87654321, "qw={%d,%d}\n", qw[0], qw[1]);
 
     /* Query REG_SZ using RRF_RT_REG_SZ (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ, &type, buf, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
-    ok(type == REG_SZ, "type=%ld\n", type);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
+    ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, &type, buf, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
-    ok(type == REG_SZ, "type=%ld\n", type);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
+    ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
     /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
     ok((size == strlen(expanded)+1) || (size == strlen(sTestpath1)+1), 
-        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
-    ok(type == REG_SZ, "type=%ld\n", type);
+        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%d\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
+    ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
     
     /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND (ok, doesn't expand) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, &type, buf, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
-    ok(type == REG_EXPAND_SZ, "type=%ld\n", type);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
+    ok(type == REG_EXPAND_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
     
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (type mismatch) */
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, NULL, NULL, NULL);
-    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%ld\n", ret);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ (not allowed without RRF_NOEXPAND) */
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ, NULL, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "ret=%ld\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "ret=%d\n", ret);
 } 
 
 static void test_reg_open_key(void)
@@ -500,7 +500,7 @@ static void test_reg_open_key(void)
 
     /* successful open */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
     ok(hkResult != NULL, "expected hkResult != NULL\n");
     hkPreserve = hkResult;
 
@@ -510,7 +510,7 @@ static void test_reg_open_key(void)
     {
         /* open same key twice */
         ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
-        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
         ok(hkResult != hkPreserve, "epxected hkResult != hkPreserve\n");
         ok(hkResult != NULL, "hkResult != NULL\n");
         RegCloseKey(hkResult);
@@ -520,13 +520,13 @@ static void test_reg_open_key(void)
         */
         hkResult = hkPreserve;
         ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
-        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
         ok(hkResult == NULL, "expected hkResult == NULL\n");
     
         /* open the same nonexistent key again to make sure the key wasn't created */
         hkResult = hkPreserve;
         ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
-        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
         ok(hkResult == NULL, "expected hkResult == NULL\n");
     
         /* send in NULL lpSubKey
@@ -534,13 +534,13 @@ static void test_reg_open_key(void)
         */
         hkResult = hkPreserve;
         ret = RegOpenKeyA(HKEY_CURRENT_USER, NULL, &hkResult);
-        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
         ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
     
         /* send empty-string in lpSubKey */
         hkResult = hkPreserve;
         ret = RegOpenKeyA(HKEY_CURRENT_USER, "", &hkResult);
-        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
         ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
     
         /* send in NULL lpSubKey and NULL hKey
@@ -548,7 +548,7 @@ static void test_reg_open_key(void)
         */
         hkResult = hkPreserve;
         ret = RegOpenKeyA(NULL, NULL, &hkResult);
-        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
         ok(hkResult == NULL, "expected hkResult == NULL\n");
     }
 
@@ -558,19 +558,19 @@ static void test_reg_open_key(void)
     hkResult = hkPreserve;
     ret = RegOpenKeyA(NULL, "Software\\Wine\\Test", &hkResult);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
-       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
+       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
     ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
     RegCloseKey(hkResult);
 
     /* send in NULL hkResult */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", ret);
 
     /*  beginning backslash character */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "\\Software\\Wine\\Test", &hkResult);
        ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
            ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
-           , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+           , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
 }
 
 static void test_reg_create_key(void)
@@ -578,11 +578,11 @@ static void test_reg_create_key(void)
     LONG ret;
     HKEY hkey1, hkey2;
     ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
-    ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+    ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
     /* should succeed: all versions of Windows ignore the access rights
      * to the parent handle */
     ret = RegCreateKeyExA(hkey1, "Subkey2", 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey2, NULL);
-    ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+    ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
 
     /* clean up */
     RegDeleteKey(hkey2, "");
@@ -591,9 +591,9 @@ static void test_reg_create_key(void)
     /*  beginning backslash character */
     ret = RegCreateKeyExA(hkey_main, "\\Subkey3", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
     if (!(GetVersion() & 0x80000000))
-        ok(ret == ERROR_BAD_PATHNAME, "expected ERROR_BAD_PATHNAME, got %ld\n", ret);
+        ok(ret == ERROR_BAD_PATHNAME, "expected ERROR_BAD_PATHNAME, got %d\n", ret);
     else {
-        ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+        ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
         RegDeleteKey(hkey1, NULL);
     }
 }
@@ -608,17 +608,17 @@ static void test_reg_close_key(void)
      */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkHandle);
     ret = RegCloseKey(hkHandle);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
     /* try to close the key twice */
     ret = RegCloseKey(hkHandle); /* Windows 95 doesn't mind. */
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_SUCCESS,
-       "expected ERROR_INVALID_HANDLE or ERROR_SUCCESS, got %ld\n", ret);
+       "expected ERROR_INVALID_HANDLE or ERROR_SUCCESS, got %d\n", ret);
     
     /* try to close a NULL handle */
     ret = RegCloseKey(NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
-       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
+       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
 }
 
 static void test_reg_delete_key(void)
@@ -629,7 +629,7 @@ static void test_reg_delete_key(void)
     ok(ret == ERROR_INVALID_PARAMETER ||
        ret == ERROR_ACCESS_DENIED ||
        ret == ERROR_BADKEY, /* Win95 */
-       "ret=%ld\n", ret);
+       "ret=%d\n", ret);
 }
 
 static void test_reg_save_key(void)
@@ -637,7 +637,7 @@ static void test_reg_save_key(void)
     DWORD ret;
 
     ret = RegSaveKey(hkey_main, "saved_key", NULL);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 }
 
 static void test_reg_load_key(void)
@@ -646,10 +646,10 @@ static void test_reg_load_key(void)
     HKEY hkHandle;
 
     ret = RegLoadKey(HKEY_LOCAL_MACHINE, "Test", "saved_key");
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
     ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
     RegCloseKey(hkHandle);
 }
@@ -659,7 +659,7 @@ static void test_reg_unload_key(void)
     DWORD ret;
 
     ret = RegUnLoadKey(HKEY_LOCAL_MACHINE, "Test");
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
     DeleteFile("saved_key");
     DeleteFile("saved_key.LOG");
@@ -714,30 +714,30 @@ static void test_regconnectregistry( void)
     DWORD GLE;
 
     ret = GetComputerNameA(compName, &len);
-    ok( ret, "GetComputerName failed err = %ld\n", GetLastError());
+    ok( ret, "GetComputerName failed err = %d\n", GetLastError());
     if( !ret) return;
 
     lstrcpyA(netwName, "\\\\");
     lstrcpynA(netwName+2, compName, MAX_COMPUTERNAME_LENGTH + 1);
 
     retl = RegConnectRegistryA( compName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %ld\n", retl);
+    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %d\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     retl = RegConnectRegistryA( netwName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %ld\n", retl);
+    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %d\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     schnd = OpenSCManagerA( compName, NULL, GENERIC_READ); 
     GLE = GetLastError();
     ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
-        "OpenSCManagerA failed err = %ld\n", GLE);
+        "OpenSCManagerA failed err = %d\n", GLE);
     CloseServiceHandle( schnd);
 
     schnd = OpenSCManagerA( netwName, NULL, GENERIC_READ); 
     GLE = GetLastError();
     ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
-        "OpenSCManagerA failed err = %ld\n", GLE);
+        "OpenSCManagerA failed err = %d\n", GLE);
     CloseServiceHandle( schnd);
 
 }

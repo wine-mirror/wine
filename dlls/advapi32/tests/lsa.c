@@ -71,13 +71,13 @@ static void test_lsa(void)
 
     status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
     ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-       "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08lx\n", status);
+       "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08x\n", status);
 
     /* try a more restricted access mask if necessary */
     if (status == STATUS_ACCESS_DENIED) {
         trace("LsaOpenPolicy(POLICY_ALL_ACCESS) failed, trying POLICY_VIEW_LOCAL_INFORMATION\n");
         status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_VIEW_LOCAL_INFORMATION, &handle);
-        ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08x\n", status);
     }
 
     if (status == STATUS_SUCCESS) {
@@ -87,13 +87,13 @@ static void test_lsa(void)
         PPOLICY_DNS_DOMAIN_INFO dns_domain_info;
 
         status = pLsaQueryInformationPolicy(handle, PolicyAuditEventsInformation, (PVOID*)&audit_events_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
             pLsaFreeMemory((LPVOID)audit_events_info);
         }
 
         status = pLsaQueryInformationPolicy(handle, PolicyPrimaryDomainInformation, (PVOID*)&primary_domain_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyPrimaryDomainInformation) failed, returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyPrimaryDomainInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
             ok(primary_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
             if (primary_domain_info->Sid) {
@@ -119,7 +119,7 @@ static void test_lsa(void)
         }
 
         status = pLsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&account_domain_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) failed, returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
             pLsaFreeMemory((LPVOID)account_domain_info);
         }
@@ -127,7 +127,7 @@ static void test_lsa(void)
         /* This isn't supported in NT4 */
         status = pLsaQueryInformationPolicy(handle, PolicyDnsDomainInformation, (PVOID*)&dns_domain_info);
         ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER,
-           "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08lx\n", status);
+           "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
             ok(IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL), "DomainGUID should be GUID_NULL on local computer\n");
             ok(dns_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
@@ -173,7 +173,7 @@ static void test_lsa(void)
         }
 
         status = pLsaClose(handle);
-        ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);
+        ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08x\n", status);
     }
 }
 
