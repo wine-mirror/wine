@@ -157,6 +157,14 @@ typedef struct
 } rectangle_t;
 
 
+
+struct callback_msg_data
+{
+    void           *callback;
+    unsigned long   data;
+    unsigned long   result;
+};
+
 struct winevent_msg_data
 {
     user_handle_t   hook;
@@ -168,6 +176,7 @@ struct winevent_msg_data
 typedef union
 {
     unsigned char            bytes[1];
+    struct callback_msg_data callback;
     struct winevent_msg_data winevent;
 } message_data_t;
 
@@ -4419,6 +4428,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 248
+#define SERVER_PROTOCOL_VERSION 249
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

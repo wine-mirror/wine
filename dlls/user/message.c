@@ -1989,8 +1989,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
             info.flags = ISMEX_CALLBACK;
             break;
         case MSG_CALLBACK_RESULT:
-            call_sendmsg_callback( (SENDASYNCPROC)info.msg.wParam, info.msg.hwnd,
-                                   info.msg.message, extra_info, info.msg.lParam );
+            if (size >= sizeof(struct callback_msg_data))
+            {
+                const struct callback_msg_data *data = (const struct callback_msg_data *)buffer;
+                call_sendmsg_callback( data->callback, info.msg.hwnd,
+                                       info.msg.message, data->data, data->result );
+            }
             goto next;
         case MSG_WINEVENT:
             if (size >= sizeof(struct winevent_msg_data))

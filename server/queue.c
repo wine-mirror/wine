@@ -404,7 +404,11 @@ static void free_result( struct message_result *result )
 {
     if (result->timeout) remove_timeout_user( result->timeout );
     if (result->data) free( result->data );
-    if (result->callback_msg) free( result->callback_msg );
+    if (result->callback_msg)
+    {
+        free( result->callback_msg->data );
+        free( result->callback_msg );
+    }
     free( result );
 }
 
@@ -435,7 +439,8 @@ static void store_message_result( struct message_result *res, unsigned int resul
         if (res->callback_msg)
         {
             /* queue the callback message in the sender queue */
-            res->callback_msg->lparam = result;
+            struct callback_msg_data *data = res->callback_msg->data;
+            data->result = result;
             list_add_tail( &res->sender->msg_list[SEND_MESSAGE], &res->callback_msg->entry );
             set_queue_bits( res->sender, QS_SENDMESSAGE );
             res->callback_msg = NULL;
@@ -533,24 +538,34 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
 
         if (msg->type == MSG_CALLBACK)
         {
+            struct callback_msg_data *data;
             struct message *callback_msg = mem_alloc( sizeof(*callback_msg) );
+
             if (!callback_msg)
             {
+                free( result );
+                return NULL;
+            }
+            if (!(data = mem_alloc( sizeof(*data ))))
+            {
+                free( callback_msg );
                 free( result );
                 return NULL;
             }
             callback_msg->type      = MSG_CALLBACK_RESULT;
             callback_msg->win       = msg->win;
             callback_msg->msg       = msg->msg;
-            callback_msg->wparam    = (unsigned long)callback;
+            callback_msg->wparam    = 0;
             callback_msg->lparam    = 0;
             callback_msg->time      = get_tick_count();
             callback_msg->x         = 0;
             callback_msg->y         = 0;
-            callback_msg->info      = callback_data;
+            callback_msg->info      = 0;
             callback_msg->result    = NULL;
-            callback_msg->data      = NULL;
-            callback_msg->data_size = 0;
+            callback_msg->data      = data;
+            callback_msg->data_size = sizeof(*data);
+            data->callback = callback;
+            data->data     = callback_data;
 
             result->callback_msg = callback_msg;
             list_add_head( &send_queue->callback_result, &result->sender_entry );

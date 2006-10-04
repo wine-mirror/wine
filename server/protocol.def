@@ -173,6 +173,14 @@ typedef struct
 } rectangle_t;
 
 /* structures for extra message data */
+
+struct callback_msg_data
+{
+    void           *callback;   /* callback function */
+    unsigned long   data;       /* user data for callback */
+    unsigned long   result;     /* message result */
+};
+
 struct winevent_msg_data
 {
     user_handle_t   hook;       /* hook handle */
@@ -184,6 +192,7 @@ struct winevent_msg_data
 typedef union
 {
     unsigned char            bytes[1];   /* raw data for sent messages */
+    struct callback_msg_data callback;
     struct winevent_msg_data winevent;
 } message_data_t;
 
@@ -1637,9 +1646,9 @@ enum message_type
     int             type;      /* message type */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned long   wparam;    /* parameters (callback function for MSG_CALLBACK_RESULT) */
-    unsigned long   lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
-    unsigned long   info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
+    unsigned long   wparam;    /* parameters */
+    unsigned long   lparam;    /* parameters */
+    unsigned long   info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
