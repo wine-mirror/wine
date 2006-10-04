@@ -309,13 +309,13 @@ struct init_thread_request
     struct request_header __header;
     int          unix_pid;
     int          unix_tid;
+    int          debug_level;
     void*        teb;
     void*        peb;
     void*        entry;
     void*        ldt_copy;
     int          reply_fd;
     int          wait_fd;
-    int          debug_level;
 };
 struct init_thread_reply
 {
@@ -1430,9 +1430,9 @@ struct send_console_signal_reply
 struct read_directory_changes_request
 {
     struct request_header __header;
+    unsigned int filter;
     obj_handle_t handle;
     obj_handle_t event;
-    unsigned int filter;
     int          subtree;
     int          want_data;
     void*        io_apc;
@@ -2264,12 +2264,12 @@ struct send_hardware_message_request
     thread_id_t     id;
     user_handle_t   win;
     unsigned int    msg;
+    unsigned int    time;
     unsigned long   wparam;
     unsigned long   lparam;
     unsigned long   info;
     int             x;
     int             y;
-    unsigned int    time;
 };
 struct send_hardware_message_reply
 {
@@ -2290,8 +2290,8 @@ struct get_message_request
 struct get_message_reply
 {
     struct reply_header __header;
-    int             type;
     user_handle_t   win;
+    int             type;
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
@@ -2636,13 +2636,13 @@ struct get_window_info_reply
 struct set_window_info_request
 {
     struct request_header __header;
-    user_handle_t  handle;
     unsigned int   flags;
+    user_handle_t  handle;
     unsigned int   style;
     unsigned int   ex_style;
     unsigned int   id;
-    void*          instance;
     int            is_unicode;
+    void*          instance;
     void*          user_data;
     int            extra_offset;
     data_size_t    extra_size;
@@ -2751,9 +2751,9 @@ struct get_window_tree_reply
 struct set_window_pos_request
 {
     struct request_header __header;
+    unsigned int   flags;
     user_handle_t  handle;
     user_handle_t  previous;
-    unsigned int   flags;
     rectangle_t    window;
     rectangle_t    client;
     /* VARARG(valid,rectangles); */
@@ -4426,6 +4426,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 250
+#define SERVER_PROTOCOL_VERSION 251
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

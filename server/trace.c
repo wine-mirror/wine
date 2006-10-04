@@ -688,13 +688,13 @@ static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " unix_tid=%d,", req->unix_tid );
+    fprintf( stderr, " debug_level=%d,", req->debug_level );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " entry=%p,", req->entry );
     fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
-    fprintf( stderr, " wait_fd=%d,", req->wait_fd );
-    fprintf( stderr, " debug_level=%d", req->debug_level );
+    fprintf( stderr, " wait_fd=%d", req->wait_fd );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
@@ -1495,9 +1495,9 @@ static void dump_send_console_signal_request( const struct send_console_signal_r
 
 static void dump_read_directory_changes_request( const struct read_directory_changes_request *req )
 {
+    fprintf( stderr, " filter=%08x,", req->filter );
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " event=%p,", req->event );
-    fprintf( stderr, " filter=%08x,", req->filter );
     fprintf( stderr, " subtree=%d,", req->subtree );
     fprintf( stderr, " want_data=%d,", req->want_data );
     fprintf( stderr, " io_apc=%p,", req->io_apc );
@@ -2113,12 +2113,12 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
     fprintf( stderr, " id=%04x,", req->id );
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
     fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " x=%d,", req->x );
-    fprintf( stderr, " y=%d,", req->y );
-    fprintf( stderr, " time=%08x", req->time );
+    fprintf( stderr, " y=%d", req->y );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -2132,8 +2132,8 @@ static void dump_get_message_request( const struct get_message_request *req )
 
 static void dump_get_message_reply( const struct get_message_reply *req )
 {
-    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
@@ -2375,13 +2375,13 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " style=%08x,", req->style );
     fprintf( stderr, " ex_style=%08x,", req->ex_style );
     fprintf( stderr, " id=%08x,", req->id );
-    fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " is_unicode=%d,", req->is_unicode );
+    fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " user_data=%p,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%u,", req->extra_size );
@@ -2469,9 +2469,9 @@ static void dump_get_window_tree_reply( const struct get_window_tree_reply *req 
 
 static void dump_set_window_pos_request( const struct set_window_pos_request *req )
 {
+    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " previous=%p,", req->previous );
-    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " window=" );
     dump_rectangle( &req->window );
     fprintf( stderr, "," );
