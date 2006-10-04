@@ -84,9 +84,11 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 struct hook_info
 {
+    INT id;
     FARPROC proc;
     void *handle;
-    DWORD tid;
+    DWORD pid, tid;
+    BOOL prev_unicode, next_unicode;
     WCHAR module[MAX_PATH];
 };
 
@@ -274,10 +276,10 @@ static LRESULT call_hook_WtoA( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
 
 
 /***********************************************************************
- *		call_hook
+ *		call_hook_proc
  */
-static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM lparam,
-                          BOOL prev_unicode, BOOL next_unicode )
+static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM lparam,
+                               BOOL prev_unicode, BOOL next_unicode )
 {
     LRESULT ret;
 
@@ -315,6 +317,57 @@ static void *get_hook_proc( void *proc, const WCHAR *module )
     return (char *)mod + (ULONG_PTR)proc;
 }
 
+/***********************************************************************
+ *		call_hook
+ *
+ * Call hook either in current thread or send message to the destination
+ * thread.
+ */
+static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARAM lparam )
+{
+    DWORD_PTR ret = 0;
+
+    if (info->tid)
+    {
+        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
+               info->tid, hook_names[info->id-WH_MINHOOK], code, wparam, lparam );
+
+        switch(info->id)
+        {
+        case WH_KEYBOARD_LL:
+            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK, wparam, lparam,
+                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            break;
+        case WH_MOUSE_LL:
+            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
+                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            break;
+        default:
+            ERR("Unknown hook id %d\n", info->id);
+            assert(0);
+            break;
+        }
+    }
+    else if (info->proc)
+    {
+        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
+               info->proc, hook_names[info->id-WH_MINHOOK], code, wparam,
+               lparam, debugstr_w(info->module) );
+
+        if (!info->module[0] ||
+            (info->proc = get_hook_proc( info->proc, info->module )) != NULL)
+        {
+            struct user_thread_info *thread_info = get_user_thread_info();
+            HHOOK prev = thread_info->hook;
+
+            thread_info->hook = info->handle;
+            ret = call_hook_proc( (HOOKPROC)info->proc, info->id, code, wparam, lparam,
+                                  info->prev_unicode, info->next_unicode );
+            thread_info->hook = prev;
+        }
+    }
+    return ret;
+}
 
 /***********************************************************************
  *		HOOK_CallHooks
@@ -322,11 +375,7 @@ static void *get_hook_proc( void *proc, const WCHAR *module )
 LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    HOOKPROC proc = NULL;
-    HHOOK handle = 0;
-    DWORD pid = 0, tid = 0;
-    WCHAR module[MAX_PATH];
-    BOOL unicode_hook = FALSE;
+    struct hook_info info;
     DWORD_PTR ret = 0;
 
     USER_CheckNotLock();
@@ -337,60 +386,30 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
         return 0;
     }
 
+    ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
+    info.prev_unicode = unicode;
+    info.id = id;
+
     SERVER_START_REQ( start_hook_chain )
     {
-        req->id = id;
+        req->id = info.id;
         req->event = EVENT_MIN;
-        wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
         if (!wine_server_call( req ))
         {
-            module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            handle       = reply->handle;
-            proc         = reply->proc;
-            pid          = reply->pid;
-            tid          = reply->tid;
-            unicode_hook = reply->unicode;
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = reply->handle;
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = reply->proc;
+            info.next_unicode = reply->unicode;
             thread_info->active_hooks = reply->active_hooks;
         }
     }
     SERVER_END_REQ;
 
-    if (tid)
-    {
-        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
-               tid, hook_names[id-WH_MINHOOK], code, wparam, lparam );
-
-        switch(id)
-        {
-        case WH_KEYBOARD_LL:
-            MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_KEYBOARD_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
-            break;
-        case WH_MOUSE_LL:
-            MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
-            break;
-        default:
-            ERR("Unknown hook id %d\n", id);
-            assert(0);
-            break;
-        }
-    }
-    else if (proc)
-    {
-        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
-               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, debugstr_w(module) );
-
-        if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
-        {
-            HHOOK prev = thread_info->hook;
-            thread_info->hook = handle;
-            ret = call_hook( proc, id, code, wparam, lparam, unicode, unicode_hook );
-            thread_info->hook = prev;
-        }
-
-    }
-    else return 0;
+    if (!info.tid && !info.proc) return 0;
+    ret = call_hook( &info, code, wparam, lparam );
 
     SERVER_START_REQ( finish_hook_chain )
     {
@@ -501,68 +520,30 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    HOOKPROC proc = NULL;
-    WCHAR module[MAX_PATH];
-    HHOOK handle = 0;
-    DWORD pid = 0, tid = 0;
-    INT id = 0;
-    BOOL prev_unicode = FALSE, next_unicode = FALSE;
-    DWORD_PTR ret = 0;
+    struct hook_info info;
+
+    ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
 
     SERVER_START_REQ( get_next_hook )
     {
         req->handle = thread_info->hook;
         req->event = EVENT_MIN;
-        wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
-            module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            handle       = reply->next;
-            id           = reply->id;
-            pid          = reply->pid;
-            tid          = reply->tid;
-            proc         = reply->proc;
-            prev_unicode = reply->prev_unicode;
-            next_unicode = reply->next_unicode;
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = reply->next;
+            info.id           = reply->id;
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = reply->proc;
+            info.prev_unicode = reply->prev_unicode;
+            info.next_unicode = reply->next_unicode;
         }
     }
     SERVER_END_REQ;
 
-    if (tid)
-    {
-        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
-               tid, hook_names[id-WH_MINHOOK], code, wparam, lparam );
-
-        switch(id)
-        {
-        case WH_KEYBOARD_LL:
-            MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_KEYBOARD_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
-            break;
-        case WH_MOUSE_LL:
-            MSG_SendInternalMessageTimeout( pid, tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
-            break;
-        default:
-            ERR("Unknown hook id %d\n", id);
-            assert(0);
-            break;
-        }
-    }
-    else if (proc)
-    {
-        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
-               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, debugstr_w(module) );
-
-        if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
-        {
-            HHOOK prev = thread_info->hook;
-            thread_info->hook = handle;
-            ret = call_hook( proc, id, code, wparam, lparam, prev_unicode, next_unicode );
-            thread_info->hook = prev;
-        }
-    }
-    return ret;
+    return call_hook( &info, code, wparam, lparam );
 }
 
 
