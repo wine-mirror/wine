@@ -157,6 +157,21 @@ typedef struct
 } rectangle_t;
 
 
+struct winevent_msg_data
+{
+    user_handle_t   hook;
+    thread_id_t     tid;
+    void           *hook_proc;
+
+};
+
+typedef union
+{
+    unsigned char            bytes[1];
+    struct winevent_msg_data winevent;
+} message_data_t;
+
+
 typedef struct
 {
     WCHAR          ch;
@@ -2276,13 +2291,11 @@ struct get_message_reply
     unsigned long   info;
     int             x;
     int             y;
-    user_handle_t   hook;
-    void*           hook_proc;
     unsigned int    time;
     unsigned int    hw_id;
     unsigned int    active_hooks;
     data_size_t     total;
-    /* VARARG(data,bytes); */
+    /* VARARG(data,message_data); */
 };
 #define GET_MSG_REMOVE      1
 #define GET_MSG_SENT_ONLY   2
@@ -4406,6 +4419,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 247
+#define SERVER_PROTOCOL_VERSION 248
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

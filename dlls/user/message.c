@@ -68,8 +68,6 @@ struct received_message_info
     enum message_type type;
     MSG               msg;
     UINT              flags;  /* InSendMessageEx return flags */
-    HWINEVENTHOOK     hook;   /* winevent hook handle */
-    WINEVENTPROC      hook_proc; /* winevent hook proc address */
 };
 
 /* structure to group all parameters for sent messages of the various kinds */
@@ -1958,8 +1956,6 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                     info.msg.time    = reply->time;
                     info.msg.pt.x    = reply->x;
                     info.msg.pt.y    = reply->y;
-                    info.hook        = reply->hook;
-                    info.hook_proc   = reply->hook_proc;
                     hw_id            = reply->hw_id;
                     extra_info       = reply->info;
                     thread_info->active_hooks = reply->active_hooks;
@@ -1997,32 +1993,42 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                                    info.msg.message, extra_info, info.msg.lParam );
             goto next;
         case MSG_WINEVENT:
-            if (size)
+            if (size >= sizeof(struct winevent_msg_data))
             {
-                WCHAR module[MAX_PATH];
-                size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
-                memcpy( module, buffer, size );
-                module[size / sizeof(WCHAR)] = 0;
-                if (!(info.hook_proc = get_hook_proc( info.hook_proc, module )))
+                WINEVENTPROC hook_proc;
+                const struct winevent_msg_data *data = (const struct winevent_msg_data *)buffer;
+
+                hook_proc = data->hook_proc;
+                size -= sizeof(*data);
+                if (size)
                 {
-                    ERR( "invalid winevent hook module name %s\n", debugstr_w(module) );
-                    goto next;
+                    WCHAR module[MAX_PATH];
+
+                    size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
+                    memcpy( module, buffer, size );
+                    module[size / sizeof(WCHAR)] = 0;
+                    if (!(hook_proc = get_hook_proc( hook_proc, module )))
+                    {
+                        ERR( "invalid winevent hook module name %s\n", debugstr_w(module) );
+                        goto next;
+                    }
                 }
+
+                if (TRACE_ON(relay))
+                    DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04x,time=%x)\n",
+                             GetCurrentThreadId(), hook_proc,
+                             data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                             info.msg.lParam, data->tid, info.msg.time);
+
+                hook_proc( data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                                 info.msg.lParam, data->tid, info.msg.time );
+
+                if (TRACE_ON(relay))
+                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04x,time=%x)\n",
+                             GetCurrentThreadId(), hook_proc,
+                             data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                             info.msg.lParam, data->tid, info.msg.time);
             }
-            if (TRACE_ON(relay))
-                DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%x)\n",
-                         GetCurrentThreadId(), info.hook_proc,
-                         info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                         info.msg.lParam, extra_info, info.msg.time);
-
-            info.hook_proc( info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                            info.msg.lParam, extra_info, info.msg.time );
-
-            if (TRACE_ON(relay))
-                DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04lx,time=%x)\n",
-                         GetCurrentThreadId(), info.hook_proc,
-                         info.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                         info.msg.lParam, extra_info, info.msg.time);
             goto next;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;

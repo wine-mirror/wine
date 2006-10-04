@@ -389,6 +389,12 @@ static void dump_varargs_rectangles( data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_message_data( data_size_t size )
+{
+    /* FIXME: dump the structured data */
+    dump_varargs_bytes( size );
+}
+
 static void dump_varargs_properties( data_size_t size )
 {
     const property_data_t *prop = cur_data;
@@ -2136,14 +2142,12 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " info=%lx,", req->info );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
-    fprintf( stderr, " hook=%p,", req->hook );
-    fprintf( stderr, " hook_proc=%p,", req->hook_proc );
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " data=" );
-    dump_varargs_bytes( cur_size );
+    dump_varargs_message_data( cur_size );
 }
 
 static void dump_reply_message_request( const struct reply_message_request *req )

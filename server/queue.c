@@ -76,8 +76,6 @@ struct message
     int                    x;         /* x position */
     int                    y;         /* y position */
     unsigned int           time;      /* message time */
-    user_handle_t          hook;      /* winevent hook handle */
-    void                  *hook_proc; /* winevent hook proc address */
     void                  *data;      /* message data for sent messages */
     unsigned int           data_size; /* size of message data */
     unsigned int           unique_id; /* unique id for nested hw message waits */
@@ -550,8 +548,6 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             callback_msg->x         = 0;
             callback_msg->y         = 0;
             callback_msg->info      = callback_data;
-            callback_msg->hook      = 0;
-            callback_msg->hook_proc = NULL;
             callback_msg->result    = NULL;
             callback_msg->data      = NULL;
             callback_msg->data_size = 0;
@@ -596,8 +592,6 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
     reply->y      = msg->y;
     reply->time   = msg->time;
     reply->info   = msg->info;
-    reply->hook   = msg->hook;
-    reply->hook_proc = msg->hook_proc;
 
     if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
 
@@ -1458,8 +1452,6 @@ void post_message( user_handle_t win, unsigned int message,
         msg->x         = 0;
         msg->y         = 0;
         msg->info      = 0;
-        msg->hook      = 0;
-        msg->hook_proc = NULL;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
@@ -1481,6 +1473,8 @@ void post_win_event( struct thread *thread, unsigned int event,
 
     if (thread->queue && (msg = mem_alloc( sizeof(*msg) )))
     {
+        struct winevent_msg_data *data;
+
         msg->type      = MSG_WINEVENT;
         msg->win       = get_user_full_handle( win );
         msg->msg       = event;
@@ -1489,15 +1483,18 @@ void post_win_event( struct thread *thread, unsigned int event,
         msg->time      = get_tick_count();
         msg->x         = 0;
         msg->y         = 0;
-        msg->info      = get_thread_id( current );
+        msg->info      = 0;
         msg->result    = NULL;
-        msg->hook      = hook;
-        msg->hook_proc = hook_proc;
 
-        if ((msg->data = malloc( module_size )))
+        if ((data = malloc( sizeof(*data) + module_size )))
         {
-            msg->data_size = module_size;
-            memcpy( msg->data, module, module_size );
+            data->hook = hook;
+            data->tid  = get_thread_id( current );
+            data->hook_proc = hook_proc;
+            memcpy( data + 1, module, module_size );
+
+            msg->data = data;
+            msg->data_size = sizeof(*data) + module_size;
 
             if (debug_level > 1)
                 fprintf( stderr, "post_win_event: tid %04x event %04x win %p object_id %d child_id %d\n",
@@ -1589,8 +1586,6 @@ DECL_HANDLER(send_message)
         msg->x         = 0;
         msg->y         = 0;
         msg->info      = req->info;
-        msg->hook      = 0;
-        msg->hook_proc = NULL;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
@@ -1671,8 +1666,6 @@ DECL_HANDLER(send_hardware_message)
         msg->x         = req->x;
         msg->y         = req->y;
         msg->info      = req->info;
-        msg->hook      = 0;
-        msg->hook_proc = NULL;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
