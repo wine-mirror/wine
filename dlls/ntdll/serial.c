@@ -1095,7 +1095,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
 #if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
 error_caps:
     FIXME("Returning error because of missing capabilities\n");
-    status STATUS_INVALID_PARAMETER;
+    status = STATUS_INVALID_PARAMETER;
 #endif
 out_now:
     RtlFreeHeap(GetProcessHeap(), 0, commio);
