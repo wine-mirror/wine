@@ -22,6 +22,22 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Fichier"
+    BEGIN
+        MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
+    END
+    POPUP "Aid&e"
+    BEGIN
+        MENUITEM "À &propos",                  ID_HELP_ABOUT
+    END
+END
+
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Registres"
@@ -78,22 +94,6 @@ BEGIN
     END
 END
 
-/*
- * Menu
- */
-
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Fichier"
-    BEGIN
-        MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
-    END
-    POPUP "Aid&e"
-    BEGIN
-        MENUITEM "À &propos",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_POPUP_MENUS MENU DISCARDABLE
 BEGIN
   POPUP ""
@@ -121,9 +121,9 @@ BEGIN
         MENUITEM "&Copier le nom de la clé",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Rechercher\tCtrl+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "Rechercher le s&uivant\tF3",              ID_EDIT_FINDNEXT, GRAYED
   END
 END
+
 
 /*
  * Dialog
@@ -141,6 +141,17 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "&Exporter le registre", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Tout", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "&Sélectionner une branche :", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
 IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Recherche"
@@ -148,7 +159,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Rechercher :",IDC_STATIC,5,7,119,8
     EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
-    LTEXT           "Regarder dans:",IDC_STATIC,5, 22, 119, 8
+    LTEXT           "Regarder dans :",IDC_STATIC,5, 22, 119, 8
     CHECKBOX        "Clés", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX        "Valeurs", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
     CHECKBOX        "Données", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
@@ -159,10 +170,10 @@ END
 
 IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Ajouter aux Favoris"
+CAPTION "Ajouter aux signets"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Nom du Favori:",IDC_STATIC,5,5,119,8
+    LTEXT           "Nom du signet :",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,140,40,30,11,WS_GROUP
     PUSHBUTTON      "Annuler",IDCANCEL,175,40,30,11, WS_GROUP
@@ -170,10 +181,10 @@ END
 
 IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Supprimer les Favoris"
+CAPTION "Supprimer les signets"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Sélectionnez un ou plusieurs Favoris:",IDC_STATIC,5,5,119,8
+    LTEXT           "Sélectionnez un ou plusieurs signets :",IDC_STATIC,5,5,119,8
     LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
     DEFPUSHBUTTON   "OK",IDOK,140,73,30,11,WS_GROUP
     PUSHBUTTON      "Annuler",IDCANCEL,175,73,30,11, WS_GROUP
@@ -184,9 +195,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la c&haîne"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Nom de la valeur:",IDC_STATIC,5,5,119,8
+    LTEXT           "Nom de la valeur :",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
-    LTEXT           "Données de la valeur:",IDC_STATIC,5,30,119,8
+    LTEXT           "Données de la valeur :",IDC_STATIC,5,30,119,8
     EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
     PUSHBUTTON      "Annuler",IDCANCEL,175,60,30,11,WS_GROUP
@@ -271,8 +282,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Quitte l'éditeur de registres"
-    ID_FAVORITES_ADDTOFAVORITES "Ajoute des clés à la liste des Favoris"
-    ID_FAVORITES_REMOVEFAVORITE "Retire des clés de la liste des Favoris"
+    ID_FAVORITES_ADDTOFAVORITES "Ajoute des clés à la liste des signets"
+    ID_FAVORITES_REMOVEFAVORITE "Retire des clés de la liste des signets"
     ID_VIEW_STATUSBAR       "Montre ou cache la barre d'état"
     ID_VIEW_SPLIT           "Change la position de la séparation entre les deux panneaux"
     ID_VIEW_REFRESH         "Rafraîchit la fenêtre"
@@ -312,6 +323,7 @@ BEGIN
     IDS_REGISTRY_VALUE_CANT_DISPLAY  "(impossible d'afficher la valeur)"
     IDS_REGISTRY_UNKNOWN_TYPE        "(%d inconnu)"
 END
+
 /*****************************************************************/
 
 /*
