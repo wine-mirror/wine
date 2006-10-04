@@ -49,5 +49,6 @@
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
+#include "Pl.rc"
 #include "Ru.rc"
 #include "Tr.rc"
