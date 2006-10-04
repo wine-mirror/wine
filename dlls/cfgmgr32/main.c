@@ -51,7 +51,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 CONFIGRET WINAPI CM_Get_Device_ID_ListA( 
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
-    FIXME("%p %p %ld %ld\n", pszFilter, Buffer, BufferLen, ulFlags );
+    FIXME("%p %p %d %d\n", pszFilter, Buffer, BufferLen, ulFlags );
     memset(Buffer,0,2);
     return CR_SUCCESS;
 }
@@ -62,7 +62,7 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListA(
 CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
                                         ULONG  ulFlags)
 {
-    FIXME("%p %p %lu\n",pulLen, dnDevInst, ulFlags);
+    FIXME("%p %p %u\n",pulLen, dnDevInst, ulFlags);
     *pulLen = 1;
     return CR_SUCCESS;
 }
@@ -73,7 +73,7 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
 CONFIGRET WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer, 
                                    ULONG  BufferLen, ULONG  ulFlags)
 {
-    FIXME("%p, %p, %lu %lu\n",dnDevInst, Buffer, BufferLen, ulFlags);
+    FIXME("%p, %p, %u %u\n",dnDevInst, Buffer, BufferLen, ulFlags);
     Buffer[0] = 0;
     return CR_SUCCESS;
 }
