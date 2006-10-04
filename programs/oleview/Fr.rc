@@ -71,6 +71,22 @@ IDM_MENU MENU
     }
 }
 
+IDM_TYPELIB MENU
+{
+    POPUP "&Fichier"
+    {
+        MENUITEM "Enregistrer &sous",    IDM_SAVEAS
+        MENUITEM "&Fermer",  IDM_CLOSE
+    }
+    POPUP "&Affichage"
+    {
+        MENUITEM "&Grouper par type", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "Barre d'&outils",    IDM_TOOLBAR
+        MENUITEM "&Barre d'état", IDM_STATUSBAR,CHECKED
+    }
+}
+
 STRINGTABLE
 {
     IDS_APPNAME            "OleView"
@@ -78,6 +94,8 @@ STRINGTABLE
     IDS_READY              "Prêt"
     IDS_ABOUT              "OleView - Visionneur d'objets OLE/COM"
     IDS_ABOUTVER           "version 1.0"
+    IDS_TYPELIBTITLE       "Visionneur d'ITypeLib"
+    IDS_OPEN               "Ouvrir"
 
     IDM_BIND,              "Lie à un fichier à l'aide d'un File Moniker"
     IDM_TYPELIB,           "Ouvre un fichier TypeLib et afficher son contenu"
@@ -100,6 +118,10 @@ STRINGTABLE
     IDM_REFRESH,           "Actualise toutes les listes"
     IDM_ABOUT,             "Affiche les informations sur le programme ; le numéro de version et la licence"
 
+    IDM_SAVEAS,            "Enregistrer en tant que fichier .IDL ou .H"
+    IDM_CLOSE,             "Fermer la fenêtre"
+    IDM_GROUP,             "Grouper par typeinfos"
+
     IDS_TREE_OC,           "ObjectClasses"
     IDS_TREE_GBCC,         "Groupés par catégorie de composants"
     IDS_TREE_O1O,          "Objets OLE 1.0"
@@ -116,4 +138,75 @@ STRINGTABLE
 
     IDS_CGCOFAIL,          "CoGetClassObject a échoué."
     IDS_ERROR_UNKN,        "Erreur inconnue"
+    IDS_TRUE,              "True"
+    IDS_FALSE,             "Faux"
+    IDS_BYTES,             "octets"
+
+    IDS_ERROR_LOADTYPELIB, "Échec de LoadTypeLib( %s ) ($%x)"
+    IDS_INHERITINTERFACES, "Interfaces héritées"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Se connecter à une autre machine"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nom de la &machine :", IDIGNORE, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "&Annuler", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuration système"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Paramètres système", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX    "&Activer le COM distribué", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Activer les connexions à &distance (seulement Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "Ces paramètres ne font que modifier les valeurs du registre.\nIls n'ont pas d'effet sur les performances de Wine.", IDIGNORE, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "&Annuler", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Visionneur d'interface par défaut"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Interface", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&Afficher les informations de type", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist Interface Viewer"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nom de la classe :", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Visionneur d'interface IPersistStream"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nom de la classe :", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
 }
