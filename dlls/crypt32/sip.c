@@ -375,7 +375,7 @@ cleanup3:
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
-    FIXME("(%s %ld %p) stub!\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
+    FIXME("(%s %d %p) stub!\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
     return FALSE;
 }
 
@@ -396,7 +396,7 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
 BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
                                        DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %p %ld %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    FIXME("(%p %p %d %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     return FALSE;
@@ -408,7 +408,7 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
                                        DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %ld %p %ld %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    FIXME("(%p %d %p %d %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
 
     return FALSE;
@@ -420,7 +420,7 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
 BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
                                        DWORD dwIndex)
 {
-    FIXME("(%p %ld) stub\n", pSubjectInfo, dwIndex);
+    FIXME("(%p %d) stub\n", pSubjectInfo, dwIndex);
 
     return FALSE;
 }

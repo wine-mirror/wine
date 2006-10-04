@@ -94,7 +94,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
         linkContext->linked = linkedBase;
         if (addRef)
             InterlockedIncrement(&linkedBase->ref);
-        TRACE("%p's ref count is %ld\n", context, linkContext->ref);
+        TRACE("%p's ref count is %d\n", context, linkContext->ref);
     }
     return context;
 }
@@ -161,7 +161,7 @@ void Context_Release(void *context, size_t contextSize,
         CryptMemFree(context);
     }
     else
-        TRACE("%p's ref count is %ld\n", context, base->ref);
+        TRACE("%p's ref count is %d\n", context, base->ref);
 }
 
 void Context_CopyProperties(const void *to, const void *from,

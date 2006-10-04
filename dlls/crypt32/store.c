@@ -311,9 +311,9 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINE_MEMSTORE *store = (WINE_MEMSTORE *)hCertStore;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
+    TRACE("(%p, %08x)\n", store, dwFlags);
     if (dwFlags)
-        FIXME("Unimplemented flags: %08lx\n", dwFlags);
+        FIXME("Unimplemented flags: %08x\n", dwFlags);
 
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
@@ -325,7 +325,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
 {
     PWINE_MEMSTORE store;
 
-    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
@@ -361,7 +361,7 @@ static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
     PWINE_COLLECTIONSTORE cs = (PWINE_COLLECTIONSTORE)store;
     PWINE_STORE_LIST_ENTRY entry, next;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
+    TRACE("(%p, %08x)\n", store, dwFlags);
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, next, &cs->stores, WINE_STORE_LIST_ENTRY,
      entry)
@@ -685,7 +685,7 @@ static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
+    TRACE("(%p, %08x)\n", store, dwFlags);
 
     if (store->provCloseStore)
         store->provCloseStore(store->hStoreProv, dwFlags);
@@ -826,7 +826,7 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
     PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
     BOOL ret = TRUE;
 
-    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     if (store->provControl)
@@ -1219,9 +1219,9 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
+    TRACE("(%p, %08x)\n", store, dwFlags);
     if (dwFlags)
-        FIXME("Unimplemented flags: %08lx\n", dwFlags);
+        FIXME("Unimplemented flags: %08x\n", dwFlags);
 
     CRYPT_RegFlushStore(store, FALSE);
     RegCloseKey(store->key);
@@ -1291,7 +1291,7 @@ static BOOL WINAPI CRYPT_RegWriteCert(HCERTSTORE hCertStore,
 {
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwFlags);
+    TRACE("(%p, %p, %d)\n", hCertStore, cert, dwFlags);
 
     return CRYPT_RegWriteContext(store, cert, dwFlags);
 }
@@ -1301,7 +1301,7 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
 {
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %08lx)\n", store, pCertContext, dwFlags);
+    TRACE("(%p, %p, %08x)\n", store, pCertContext, dwFlags);
 
     return CRYPT_RegDeleteContext(store, &store->certsToDelete, pCertContext,
      pCertInterface);
@@ -1312,7 +1312,7 @@ static BOOL WINAPI CRYPT_RegWriteCRL(HCERTSTORE hCertStore,
 {
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %ld)\n", hCertStore, crl, dwFlags);
+    TRACE("(%p, %p, %d)\n", hCertStore, crl, dwFlags);
 
     return CRYPT_RegWriteContext(store, crl, dwFlags);
 }
@@ -1322,7 +1322,7 @@ static BOOL WINAPI CRYPT_RegDeleteCRL(HCERTSTORE hCertStore,
 {
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %08lx)\n", store, pCrlContext, dwFlags);
+    TRACE("(%p, %p, %08x)\n", store, pCrlContext, dwFlags);
 
     return CRYPT_RegDeleteContext(store, &store->crlsToDelete, pCrlContext,
      pCRLInterface);
@@ -1334,7 +1334,7 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
     PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
     BOOL ret;
 
-    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     switch (dwCtrlType)
@@ -1350,7 +1350,7 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
          dwFlags & CERT_STORE_CTRL_COMMIT_FORCE_FLAG);
         break;
     default:
-        FIXME("%ld: stub\n", dwCtrlType);
+        FIXME("%d: stub\n", dwCtrlType);
         ret = FALSE;
     }
     return ret;
@@ -1431,7 +1431,7 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
 {
     PWINECRYPT_CERTSTORE store = NULL;
 
-    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
@@ -1506,7 +1506,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
     LPCWSTR base;
     BOOL ret;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_w((LPCWSTR)pvPara));
 
     if (!pvPara)
@@ -1606,7 +1606,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreA(HCRYPTPROV hCryptProv,
     int len;
     PWINECRYPT_CERTSTORE ret = NULL;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a((LPCSTR)pvPara));
 
     if (!pvPara)
@@ -1635,7 +1635,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
     HCERTSTORE store = 0;
     BOOL ret;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_w((LPCWSTR)pvPara));
 
     if (!pvPara)
@@ -1704,7 +1704,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreA(HCRYPTPROV hCryptProv,
     int len;
     PWINECRYPT_CERTSTORE ret = NULL;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a((LPCSTR)pvPara));
 
     if (!pvPara)
@@ -1731,7 +1731,7 @@ static void WINAPI CRYPT_FileCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
+    TRACE("(%p, %08x)\n", store, dwFlags);
     if (store->dirty)
         CRYPT_WriteSerializedFile(store->file, store->memStore);
     CertCloseStore(store->memStore, dwFlags);
@@ -1744,7 +1744,7 @@ static BOOL WINAPI CRYPT_FileWriteCert(HCERTSTORE hCertStore,
 {
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwFlags);
+    TRACE("(%p, %p, %d)\n", hCertStore, cert, dwFlags);
     store->dirty = TRUE;
     return TRUE;
 }
@@ -1754,7 +1754,7 @@ static BOOL WINAPI CRYPT_FileDeleteCert(HCERTSTORE hCertStore,
 {
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %08lx)\n", hCertStore, pCertContext, dwFlags);
+    TRACE("(%p, %p, %08x)\n", hCertStore, pCertContext, dwFlags);
     store->dirty = TRUE;
     return TRUE;
 }
@@ -1764,7 +1764,7 @@ static BOOL WINAPI CRYPT_FileWriteCRL(HCERTSTORE hCertStore,
 {
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %ld)\n", hCertStore, crl, dwFlags);
+    TRACE("(%p, %p, %d)\n", hCertStore, crl, dwFlags);
     store->dirty = TRUE;
     return TRUE;
 }
@@ -1774,7 +1774,7 @@ static BOOL WINAPI CRYPT_FileDeleteCRL(HCERTSTORE hCertStore,
 {
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
 
-    TRACE("(%p, %p, %08lx)\n", hCertStore, pCrlContext, dwFlags);
+    TRACE("(%p, %p, %08x)\n", hCertStore, pCrlContext, dwFlags);
     store->dirty = TRUE;
     return TRUE;
 }
@@ -1785,7 +1785,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
     PWINE_FILESTOREINFO store = (PWINE_FILESTOREINFO)hCertStore;
     BOOL ret;
 
-    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     switch (dwCtrlType)
@@ -1807,7 +1807,7 @@ static BOOL WINAPI CRYPT_FileControl(HCERTSTORE hCertStore, DWORD dwFlags,
             ret = TRUE;
         break;
     default:
-        FIXME("%ld: stub\n", dwCtrlType);
+        FIXME("%d: stub\n", dwCtrlType);
         ret = FALSE;
     }
     return ret;
@@ -1836,7 +1836,7 @@ static PWINECRYPT_CERTSTORE CRYPT_FileOpenStore(HCRYPTPROV hCryptProv,
     PWINECRYPT_CERTSTORE store = NULL;
     HANDLE file = (HANDLE)pvPara;
 
-    TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
+    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
 
     if (!pvPara)
     {
@@ -1901,7 +1901,7 @@ static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
     DWORD access, create;
     HANDLE file;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags, debugstr_w(fileName));
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags, debugstr_w(fileName));
 
     if (!fileName)
     {
@@ -1944,7 +1944,7 @@ static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
     int len;
     PWINECRYPT_CERTSTORE ret = NULL;
 
-    TRACE("(%ld, %08lx, %s)\n", hCryptProv, dwFlags,
+    TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_a((LPCSTR)pvPara));
 
     if (!pvPara)
@@ -1971,9 +1971,9 @@ static PWINECRYPT_CERTSTORE CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
     if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
-        FIXME("(%ld, %08lx, %p): stub\n", hCryptProv, dwFlags, pvPara);
+        FIXME("(%ld, %08x, %p): stub\n", hCryptProv, dwFlags, pvPara);
     else
-        FIXME("(%ld, %08lx, %s): stub\n", hCryptProv, dwFlags,
+        FIXME("(%ld, %08x, %s): stub\n", hCryptProv, dwFlags,
          debugstr_w((LPCWSTR)pvPara));
     return NULL;
 }
@@ -1985,7 +1985,7 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     WINECRYPT_CERTSTORE *hcs;
     StoreOpenFunc openFunc = NULL;
 
-    TRACE("(%s, %08lx, %08lx, %08lx, %p)\n", debugstr_a(lpszStoreProvider),
+    TRACE("(%s, %08x, %08lx, %08x, %p)\n", debugstr_a(lpszStoreProvider),
           dwMsgAndCertEncodingType, hCryptProv, dwFlags, pvPara);
 
     if (!HIWORD(lpszStoreProvider))
@@ -2081,7 +2081,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
 BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
              DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags)
 {
-    FIXME("(%p,%ld,%ld,%ld,%p,%08lx) stub!\n", hCertStore, 
+    FIXME("(%p,%d,%d,%d,%p,%08x) stub!\n", hCertStore, 
           dwMsgAndCertEncodingType, dwSaveAs, dwSaveTo, pvSaveToPara, dwFlags);
     return TRUE;
 }
@@ -2112,7 +2112,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
     BOOL ret = TRUE;
     PCCERT_CONTEXT toAdd = NULL, existing = NULL;
 
-    TRACE("(%p, %p, %08lx, %p)\n", hCertStore, pCertContext,
+    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCertContext,
      dwAddDisposition, ppStoreContext);
 
     /* Weird case to pass a test */
@@ -2166,7 +2166,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
             CertContext_CopyProperties(existing, pCertContext);
         break;
     default:
-        FIXME("Unimplemented add disposition %ld\n", dwAddDisposition);
+        FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
         ret = FALSE;
     }
 
@@ -2239,7 +2239,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
     BOOL ret = TRUE;
     PCCRL_CONTEXT toAdd = NULL, existing = NULL;
 
-    TRACE("(%p, %p, %08lx, %p)\n", hCertStore, pCrlContext,
+    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCrlContext,
      dwAddDisposition, ppStoreContext);
 
     /* Weird case to pass a test */
@@ -2300,7 +2300,7 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
             CrlContext_CopyProperties(existing, pCrlContext);
         break;
     default:
-        FIXME("Unimplemented add disposition %ld\n", dwAddDisposition);
+        FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
         ret = FALSE;
     }
 
@@ -2365,7 +2365,7 @@ PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
 PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwCertEncodingType,
   const BYTE* pbCtlEncoded, DWORD cbCtlEncoded)
 {
-    FIXME("(%08lx, %p, %08lx): stub\n", dwCertEncodingType, pbCtlEncoded,
+    FIXME("(%08x, %p, %08x): stub\n", dwCertEncodingType, pbCtlEncoded,
      cbCtlEncoded);
     return NULL;
 }
@@ -2374,7 +2374,7 @@ BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
  DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
  DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)
 {
-    FIXME("(%p, %08lx, %p, %ld, %08lx, %p): stub\n", hCertStore,
+    FIXME("(%p, %08x, %p, %d, %08x, %p): stub\n", hCertStore,
      dwMsgAndCertEncodingType, pbCtlEncoded, cbCtlEncoded, dwAddDisposition,
      ppCtlContext);
     return FALSE;
@@ -2384,7 +2384,7 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
  PCCTL_CONTEXT* ppStoreContext)
 {
-    FIXME("(%p, %p, %08lx, %p): stub\n", hCertStore, pCtlContext,
+    FIXME("(%p, %p, %08x, %p): stub\n", hCertStore, pCtlContext,
      dwAddDisposition, ppStoreContext);
     return TRUE;
 }
@@ -2429,7 +2429,7 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *) hCertStore;
 
-    TRACE("(%p, %08lx)\n", hCertStore, dwFlags);
+    TRACE("(%p, %08x)\n", hCertStore, dwFlags);
 
     if( ! hCertStore )
         return TRUE;
@@ -2446,7 +2446,7 @@ BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
         hcs->closeStore(hcs, dwFlags);
     }
     else
-        TRACE("%p's ref count is %ld\n", hcs, hcs->ref);
+        TRACE("%p's ref count is %d\n", hcs, hcs->ref);
     return TRUE;
 }
 
@@ -2456,7 +2456,7 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
     WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;
     BOOL ret;
 
-    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+    TRACE("(%p, %08x, %d, %p)\n", hCertStore, dwFlags, dwCtrlType,
      pvCtrlPara);
 
     if (!hcs)
@@ -2476,21 +2476,21 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
 DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId)
 {
-    FIXME("(%p, %ld): stub\n", pCTLContext, dwPropId);
+    FIXME("(%p, %d): stub\n", pCTLContext, dwPropId);
     return 0;
 }
 
 BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %ld, %p, %p): stub\n", pCTLContext, dwPropId, pvData, pcbData);
+    FIXME("(%p, %d, %p, %p): stub\n", pCTLContext, dwPropId, pvData, pcbData);
     return FALSE;
 }
 
 BOOL WINAPI CertSetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
  DWORD dwPropId, DWORD dwFlags, const void *pvData)
 {
-    FIXME("(%p, %ld, %08lx, %p): stub\n", pCTLContext, dwPropId, dwFlags,
+    FIXME("(%p, %d, %08x, %p): stub\n", pCTLContext, dwPropId, dwFlags,
      pvData);
     return FALSE;
 }
@@ -2503,7 +2503,7 @@ BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
     PWINE_STORE_LIST_ENTRY entry;
     BOOL ret;
 
-    TRACE("(%p, %p, %08lx, %ld)\n", hCollectionStore, hSiblingStore,
+    TRACE("(%p, %p, %08x, %d)\n", hCollectionStore, hSiblingStore,
      dwUpdateFlags, dwPriority);
 
     if (!collection || !sibling)
@@ -2528,12 +2528,12 @@ BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
     if (entry)
     {
         InterlockedIncrement(&sibling->ref);
-        TRACE("sibling %p's ref count is %ld\n", sibling, sibling->ref);
+        TRACE("sibling %p's ref count is %d\n", sibling, sibling->ref);
         entry->store = sibling;
         entry->dwUpdateFlags = dwUpdateFlags;
         entry->dwPriority = dwPriority;
         list_init(&entry->entry);
-        TRACE("%p: adding %p, priority %ld\n", collection, entry, dwPriority);
+        TRACE("%p: adding %p, priority %d\n", collection, entry, dwPriority);
         EnterCriticalSection(&collection->cs);
         if (dwPriority)
         {

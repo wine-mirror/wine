@@ -77,19 +77,19 @@ BOOL WINAPI I_CryptCreateLruCache(void *unknown, HLRUCACHE *out)
 
 BOOL WINAPI I_CryptFindLruEntryData(DWORD unk0, DWORD unk1, DWORD unk2)
 {
-    FIXME("(%08lx, %08lx, %08lx): stub!\n", unk0, unk1, unk2);
+    FIXME("(%08x, %08x, %08x): stub!\n", unk0, unk1, unk2);
     return FALSE;
 }
 
 DWORD WINAPI I_CryptFlushLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
 {
-    FIXME("(%p, %08lx, %08lx): stub!\n", h, unk0, unk1);
+    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
     return 0;
 }
 
 HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
 {
-    FIXME("(%p, %08lx, %08lx): stub!\n", h, unk0, unk1);
+    FIXME("(%p, %08x, %08x): stub!\n", h, unk0, unk1);
     return h;
 }
 
@@ -134,13 +134,13 @@ BOOL WINAPI I_CryptSetTls(DWORD dwTlsIndex, LPVOID lpTlsValue)
 
 BOOL WINAPI I_CryptFreeTls(DWORD dwTlsIndex, DWORD unknown)
 {
-    TRACE("(%ld, %ld)\n", dwTlsIndex, unknown);
+    TRACE("(%d, %d)\n", dwTlsIndex, unknown);
     return TlsFree(dwTlsIndex);
 }
 
 BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
 {
-    FIXME("%08lx\n", x);
+    FIXME("%08x\n", x);
     return FALSE;
 }
 
@@ -148,7 +148,7 @@ HCRYPTPROV WINAPI I_CryptGetDefaultCryptProv(DWORD reserved)
 {
     HCRYPTPROV ret;
 
-    TRACE("(%08lx)\n", reserved);
+    TRACE("(%08x)\n", reserved);
 
     if (reserved)
     {
@@ -190,13 +190,13 @@ BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
 
 BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 {
-    FIXME("%08lx %08lx %08lx\n", x, y, z);
+    FIXME("%08x %08x %08x\n", x, y, z);
     return FALSE;
 }
 
 BOOL WINAPI I_CryptInstallAsn1Module(void *x, DWORD y, DWORD z)
 {
-    FIXME("%p %08lx %08lx\n", x, y, z);
+    FIXME("%p %08x %08x\n", x, y, z);
     return TRUE;
 }
 
@@ -210,7 +210,7 @@ BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
  DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat, DWORD *pcbFormat)
 {
-    FIXME("(%08lx, %ld, %ld, %p, %s, %p, %ld, %p, %p): stub\n",
+    FIXME("(%08x, %d, %d, %p, %s, %p, %d, %p, %p): stub\n",
      dwCertEncodingType, dwFormatType, dwFormatStrType, pFormatStruct,
      debugstr_a(lpszStructType), pbEncoded, cbEncoded, pbFormat, pcbFormat);
     return FALSE;
@@ -222,7 +222,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
     DWORD* pdwFormatType, HCERTSTORE* phCertStore, HCRYPTMSG* phMsg,
     const void** ppvContext)
 {
-    FIXME( "%08lx %p %08lx %08lx %08lx %p %p %p %p %p %p", dwObjectType,
+    FIXME( "%08x %p %08x %08x %08x %p %p %p %p %p %p", dwObjectType,
            pvObject, dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
            dwFlags, pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
            phCertStore, phMsg, ppvContext);
@@ -233,7 +233,7 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
           DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
           BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
 {
-    FIXME("stub: %p, %ld, %p, %ld, %p, %p, %p\n",
+    FIXME("stub: %p, %d, %p, %d, %p, %p, %p\n",
         pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
         pbDecoded, pcbDecoded, ppSignerCert);
     return FALSE;

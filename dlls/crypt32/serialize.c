@@ -43,7 +43,7 @@ static BOOL CRYPT_SerializeStoreElement(const void *context,
 {
     BOOL ret;
 
-    TRACE("(%p, %p, %08lx, %d, %p, %p)\n", context, contextInterface, dwFlags,
+    TRACE("(%p, %p, %08x, %d, %p, %p)\n", context, contextInterface, dwFlags,
      omitHashes, pbElement, pcbElement);
 
     if (context)
@@ -294,7 +294,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
 {
     const void *context;
 
-    TRACE("(%p, %ld, %08lx, %p)\n", pbElement, cbElement, dwContextTypeFlags,
+    TRACE("(%p, %d, %08x, %p)\n", pbElement, cbElement, dwContextTypeFlags,
      pdwContentType);
 
     if (!cbElement)
@@ -381,7 +381,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
                     const WINE_CERT_PROP_HEADER *hdr =
                      (const WINE_CERT_PROP_HEADER *)pbElement;
 
-                    TRACE("prop is %ld\n", hdr->propID);
+                    TRACE("prop is %d\n", hdr->propID);
                     cbElement -= sizeof(WINE_CERT_PROP_HEADER);
                     pbElement += sizeof(WINE_CERT_PROP_HEADER);
                     if (!hdr->propID)
@@ -606,7 +606,7 @@ BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
     DWORD type;
     BOOL ret;
 
-    TRACE("(%p, %p, %ld, %08lx, %08lx, %08lx, %p, %p)\n", hCertStore,
+    TRACE("(%p, %p, %d, %08x, %08x, %08x, %p, %p)\n", hCertStore,
      pbElement, cbElement, dwAddDisposition, dwFlags, dwContextTypeFlags,
      pdwContentType, ppvContext);
 
