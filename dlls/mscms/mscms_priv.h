@@ -52,6 +52,18 @@
 #include <lcms.h>
 #endif
 
+/*  Funny thing is lcms.h defines DWORD as an 'unsigned long' whereas Wine
+ *  defines it as an 'unsigned int'. To avoid compiler warnings we use a
+ *  preprocessor define for DWORD and LPDWORD to get back Wine's orginal
+ *  (typedef) definitions.
+ */
+
+#undef DWORD
+#undef LPDWORD
+
+#define DWORD   DWORD
+#define LPDWORD LPDWORD
+
 extern DWORD MSCMS_hprofile2access( HPROFILE );
 extern HPROFILE MSCMS_handle2hprofile( HANDLE file );
 extern HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile );
