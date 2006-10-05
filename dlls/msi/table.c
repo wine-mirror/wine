@@ -1966,11 +1966,17 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
         r = IEnumSTATSTG_Next( stgenum, 1, &stat, &count );
         if( FAILED( r ) || !count )
             break;
+
         decode_streamname( stat.pwcsName, name );
-        if( ( name[0] == 0x4840 ) && ( name[1] != '_' ) )
-            ret = msi_table_load_transform( db, stg, strings, name+1 );
-        else
-            TRACE("transform contains stream %s\n", debugstr_w(name));
+        TRACE("transform contains stream %s\n", debugstr_w(name));
+
+        if ( name[0] != 0x4840 )
+            continue;
+
+        if ( !lstrcmpW(name+1, szStringPool ) || !lstrcmpW(name+1, szStringData) )
+            continue;
+
+        ret = msi_table_load_transform( db, stg, strings, name+1 );
     }
 
     if ( ret == ERROR_SUCCESS )
