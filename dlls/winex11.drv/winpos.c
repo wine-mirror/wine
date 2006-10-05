@@ -1537,6 +1537,8 @@ static void X11DRV_WMMoveResizeWindow( HWND hwnd, int x, int y, int dir )
     XEvent xev;
     Display *display = thread_display();
 
+    TRACE("hwnd %p, x %d, y %d, dir %d\n", hwnd, x, y, dir);
+
     xev.xclient.type = ClientMessage;
     xev.xclient.window = X11DRV_get_whole_window(hwnd);
     xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
@@ -1593,6 +1595,9 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    TRACE("hwnd %p (%smanaged), command %04x, hittest %ld, pos %ld,%ld\n",
+          hwnd, data->managed ? "" : "NOT ", syscommand, hittest, pt.x, pt.y);
 
     /* if we are managed then we let the WM do all the work */
     if (data->managed)

@@ -532,13 +532,11 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
    }
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-    mwm_hints.functions = 0;
-    if ((style & WS_CAPTION) == WS_CAPTION) mwm_hints.functions |= MWM_FUNC_MOVE;
-    if (style & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_MOVE | MWM_FUNC_RESIZE;
+    mwm_hints.functions = MWM_FUNC_MOVE;
+    if (style & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_RESIZE;
     if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
     if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
     if (style & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
-    if (ex_style & WS_EX_APPWINDOW) mwm_hints.functions |= MWM_FUNC_MOVE;
     mwm_hints.decorations = 0;
     if ((style & WS_CAPTION) == WS_CAPTION) 
     {
