@@ -963,6 +963,30 @@ typedef struct WineDirect3DVertexStridedData {
     } u;
 } WineDirect3DVertexStridedData;
 
+typedef struct _WINEDDOVERLAYFX
+{
+    DWORD       dwSize;                         /* size of structure */
+    DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
+    DWORD       dwAlphaEdgeBlend;               /* Constant to use as alpha for edge blend */
+    DWORD       dwReserved;
+    DWORD       dwAlphaDestConstBitDepth;       /* Bit depth used to specify alpha constant for destination */
+    union
+    {
+        DWORD   dwAlphaDestConst;               /* Constant to use as alpha channel for dest */
+        LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as alpha channel for dest */
+    } DUMMYUNIONNAME1;
+    DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
+    union
+    {
+        DWORD   dwAlphaSrcConst;                /* Constant to use as alpha channel for src */
+        LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
+    } DUMMYUNIONNAME2;
+    DDCOLORKEY  dckDestColorkey;                /* DestColorkey override */
+    DDCOLORKEY  dckSrcColorkey;                 /* DestColorkey override */
+    DWORD       dwDDFX;                         /* Overlay FX */
+    DWORD       dwFlags;                        /* flags */
+} WINEDDOVERLAYFX;
+
 /**************************** 
  *  * Vertex Shaders Declaration
  *   */
