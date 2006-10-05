@@ -1528,8 +1528,11 @@ IDirectDrawSurfaceImpl_SetOverlayPosition(IDirectDrawSurface7 *iface,
                                           LONG Y)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
-    FIXME("(%p)->(%ld,%ld): Stub!\n", This, X, Y);
-    return DDERR_NOTAOVERLAYSURFACE;
+    TRACE("(%p)->(%ld,%ld): Relay\n", This, X, Y);
+
+    return IWineD3DSurface_SetOverlayPosition(This->WineD3DSurface,
+                                              X,
+                                              Y);
 }
 
 /*****************************************************************************

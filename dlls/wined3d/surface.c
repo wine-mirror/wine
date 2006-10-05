@@ -3071,6 +3071,14 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
     return ret;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG X, LONG Y) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    FIXME("(%p)->(%d,%d) Stub!\n", This, X, Y);
+
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3108,6 +3116,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetColorKey,
     IWineD3DSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,
+    IWineD3DSurfaceImpl_SetOverlayPosition,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
