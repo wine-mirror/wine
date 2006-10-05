@@ -157,7 +157,7 @@ static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
         case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
         case SB_VERT: infoPtr = (SCROLLBAR_INFO *)wndPtr->pVScroll; break;
         case SB_CTL:  infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra; break;
-        case SB_BOTH: WARN("with SB_BOTH"); break;
+        case SB_BOTH: WARN("with SB_BOTH\n"); break;
     }
 
     if (!infoPtr && alloc)
@@ -259,7 +259,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         SCROLLBAR_INFO *info = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
         if (!info)
         {
-            WARN("called for missing scroll bar");
+            WARN("called for missing scroll bar\n");
             WIN_ReleasePtr( wndPtr );
             return FALSE;
         }

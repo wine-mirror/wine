@@ -155,7 +155,7 @@ static BOOL query_video_device(int devnum, char *name, int namesize, char *versi
 /* errno 515 is used by some webcam drivers for unknown IOICTL command */
       if (errno != EINVAL && errno != 515)
          ERR("%s: Querying failed: %s\n", device, strerror(errno));
-      else ERR("%s: Querying failed: Not a V4L compatible device", device);
+      else ERR("%s: Querying failed: Not a V4L compatible device\n", device);
       close(fd);
       return FALSE;
    }

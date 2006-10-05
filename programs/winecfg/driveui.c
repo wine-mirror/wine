@@ -561,7 +561,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             HeapFree(GetProcessHeap(), 0, current_drive->serial);
             current_drive->serial = serial ? serial : strdupA("");
 
-            WINE_TRACE("set serial to %s", current_drive->serial);
+            WINE_TRACE("set serial to %s\n", current_drive->serial);
 
             /* enable the apply button  */
             SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);

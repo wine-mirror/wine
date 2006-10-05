@@ -820,7 +820,7 @@ CMC_return_code WINAPI cmc_query_configuration(
   CMC_buffer reference,
   CMC_extension  *config_extensions)
 {
-	FIXME("stub");
+	FIXME("stub\n");
 	return CMC_E_NOT_SUPPORTED;
 }
 

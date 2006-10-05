@@ -741,7 +741,7 @@ static IClassFactory RegistrarCF = { &IRegistrarCFVtbl };
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 {
-    TRACE("(%s %s %p)", debugstr_guid(clsid), debugstr_guid(riid), ppvObject);
+    TRACE("(%s %s %p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppvObject);
 
     if(IsEqualGUID(&CLSID_ATLRegistrar, clsid)) {
         *ppvObject = &RegistrarCF;

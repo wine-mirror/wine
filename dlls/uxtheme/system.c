@@ -642,7 +642,7 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
     LPCWSTR pszAppName;
     LPCWSTR pszUseClassList;
     HTHEME hTheme = NULL;
-    TRACE("(%p,%s)", hwnd, debugstr_w(pszClassList));
+    TRACE("(%p,%s)\n", hwnd, debugstr_w(pszClassList));
 
     if(bThemeActive)
     {

@@ -484,7 +484,7 @@ static void on_add_click(HWND dialog)
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM) "");
     disable(IDC_DLLS_ADDDLL);
     
-    WINE_TRACE("Adding %s as native, builtin", buffer);
+    WINE_TRACE("Adding %s as native, builtin\n", buffer);
     
     SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
     set_reg_key(config_key, keypath("DllOverrides"), buffer, "native,builtin");

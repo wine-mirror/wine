@@ -1595,7 +1595,7 @@ static void update_font_info(void)
             return;
         }
     }
-    FIXME("there is no font defaults for lcid %04lx/ansi_cp %u", lcid, ansi_cp);
+    FIXME("there is no font defaults for lcid %04lx/ansi_cp %u\n", lcid, ansi_cp);
 }
 
 /*************************************************************

@@ -846,7 +846,7 @@ DllMain(HINSTANCE hInstDLL,
                 }
                 else
                 {
-                    ERR("Unknown default surface type. Supported are:\n gdi, opengl");
+                    ERR("Unknown default surface type. Supported are:\n gdi, opengl\n");
                 }
             }
         }

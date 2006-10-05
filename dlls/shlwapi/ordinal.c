@@ -3873,7 +3873,7 @@ BOOL WINAPI IsOS(DWORD feature)
 
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
     if(!GetVersionExA(&osvi))  {
-        ERR("GetVersionEx failed");
+        ERR("GetVersionEx failed\n");
         return FALSE;
     }
 

@@ -3185,7 +3185,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     avail = snd_pcm_avail_update(wwo->pcm);
     if (avail < 0)
     {
-	ERR("No buffer is available: %s.", snd_strerror(avail));
+	ERR("No buffer is available: %s.\n", snd_strerror(avail));
 	return DSERR_GENERIC;
     }
     err = snd_pcm_mmap_begin(wwo->pcm, (const snd_pcm_channel_area_t **)&pdbi->mmap_areas, &ofs, &avail);

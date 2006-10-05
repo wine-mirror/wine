@@ -2687,7 +2687,7 @@ PRINTDLG_PS_ChangePaperPrev(PageSetupDataA *pda)
     }
     x = (pda->rtDrawRect.right + pda->rtDrawRect.left - width) / 2;
     y = (pda->rtDrawRect.bottom + pda->rtDrawRect.top - height) / 2;
-    TRACE("rtDrawRect(%ld, %ld, %ld, %ld) x=%ld, y=%ld, w=%ld, h=%ld",
+    TRACE("rtDrawRect(%ld, %ld, %ld, %ld) x=%ld, y=%ld, w=%ld, h=%ld\n",
 	pda->rtDrawRect.left, pda->rtDrawRect.top, pda->rtDrawRect.right, pda->rtDrawRect.bottom,
 	x, y, width, height);
 
@@ -3110,7 +3110,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	memcpy(&pda->curdlg, pda->dlga, sizeof(pda->curdlg));
 	
 	hDrawWnd = GetDlgItem(hDlg, rct1); 
-        TRACE("set property to %p", pda);
+        TRACE("set property to %p\n", pda);
 	SetPropA(hDlg, "__WINE_PAGESETUPDLGDATA", pda);
 	SetPropA(hDrawWnd, "__WINE_PAGESETUPDLGDATA", pda);
 	GetWindowRect(hDrawWnd, &pda->rtDrawRect); /* Calculating rect in client coordinates where paper draws */
@@ -3196,7 +3196,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 pda->curdlg.ptPaperSize.x = tmp;
             }
 	} else 
-	    WARN("GlobalLock(pda->pdlg.hDevMode) fail? hDevMode=%p", pda->pdlg.hDevMode);
+	    WARN("GlobalLock(pda->pdlg.hDevMode) fail? hDevMode=%p\n", pda->pdlg.hDevMode);
 	/* Drawing paper prev */
 	PRINTDLG_PS_ChangePaperPrev(pda);
 	return TRUE;

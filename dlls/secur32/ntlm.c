@@ -1201,10 +1201,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
         return SEC_E_INVALID_HANDLE;
 
     if(fQOP)
-        FIXME("Ignoring fQOP 0x%08lx", fQOP);
+        FIXME("Ignoring fQOP 0x%08lx\n", fQOP);
 
     if(MessageSeqNo)
-        FIXME("Ignoring MessageSeqNo");
+        FIXME("Ignoring MessageSeqNo\n");
 
     if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
             pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||

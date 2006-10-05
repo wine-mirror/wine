@@ -775,7 +775,7 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextW (RPC_STATUS e, unsigned short *buffer)
                 NULL, RPC_S_NOT_RPC_ERROR, 0, buffer, MAX_RPC_ERROR_TEXT, NULL);
         if (!count)
         {
-            ERR ("Failed to translate error");
+            ERR ("Failed to translate error\n");
             return RPC_S_INVALID_ARG;
         }
     }
@@ -794,7 +794,7 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextA (RPC_STATUS e, unsigned char *buffer)
         if (!WideCharToMultiByte(CP_ACP, 0, bufferW, -1, (LPSTR)buffer, MAX_RPC_ERROR_TEXT,
                 NULL, NULL))
         {
-            ERR ("Failed to translate error");
+            ERR ("Failed to translate error\n");
             status = RPC_S_INVALID_ARG;
         }
     }

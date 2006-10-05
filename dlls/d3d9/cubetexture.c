@@ -251,7 +251,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr = D3D_OK;
 
-    TRACE("(%p) : ELen(%d) Lvl(%d) Usage(%ld) fmt(%u), Pool(%d)  Shared(%p)" , This, EdgeLength, Levels, Usage, Format, Pool, pSharedHandle);
+    TRACE("(%p) : ELen(%d) Lvl(%d) Usage(%ld) fmt(%u), Pool(%d)  Shared(%p)\n", This, EdgeLength, Levels, Usage, Format, Pool, pSharedHandle);
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));

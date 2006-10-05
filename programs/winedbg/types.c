@@ -610,7 +610,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         case UdtStruct: dbg_printf("struct %s", name); break;
         case UdtUnion:  dbg_printf("union %s", name); break;
         case UdtClass:  dbg_printf("class %s", name); break;
-        default:        WINE_ERR("Unsupported UDT type (%ld) for %s", udt, name); break;
+        default:        WINE_ERR("Unsupported UDT type (%ld) for %s\n", udt, name); break;
         }
         if (details &&
             types_get_info(type, TI_GET_CHILDRENCOUNT, &count))

@@ -669,7 +669,7 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
 
     if (MachineName != NULL)
     {
-        FIXME("remote support is not implemented");
+        FIXME("remote support is not implemented\n");
         SetLastError(ERROR_INVALID_MACHINENAME);
         return (HDEVINFO)INVALID_HANDLE_VALUE;
     }
@@ -752,7 +752,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
         debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
         hwndParent, CreationFlags, DeviceInfoData);
 
-    FIXME("stub");
+    FIXME("stub\n");
 
     return FALSE;
 }
@@ -1048,7 +1048,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
         PCWSTR machine,
         PVOID reserved)
 {
-    FIXME("stub");
+    FIXME("stub\n");
     return FALSE;
 }
 

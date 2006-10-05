@@ -92,7 +92,7 @@ static void update_gui_for_desktop_mode(HWND dialog) {
                 SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), buf);
                 SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
             } else {
-                WINE_TRACE("Desktop registry entry is malformed");
+                WINE_TRACE("Desktop registry entry is malformed\n");
                 SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "640");
                 SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "480");
             }

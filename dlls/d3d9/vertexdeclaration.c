@@ -267,7 +267,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
 
     TRACE("(%p) : Relay\n", iface);
     if (NULL == ppDecl) {
-        WARN("(%p) : Caller passed NULL As ppDecl, returning D3DERR_INVALIDCALL",This);
+        WARN("(%p) : Caller passed NULL As ppDecl, returning D3DERR_INVALIDCALL\n",This);
         return D3DERR_INVALIDCALL;
     }
     /* Allocate the storage for the device */

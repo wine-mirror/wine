@@ -702,12 +702,12 @@ static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx)
 
         case D3DTA_TEMP:
             /* TODO: Support D3DTSS_RESULTARG */
-            FIXME("D3DTA_TEMP, not properly supported.");
+            FIXME("D3DTA_TEMP, not properly supported.\n");
             return GL_SPARE1_NV;
 
         case D3DTA_CONSTANT:
             /* TODO: Support per stage constants (D3DTSS_CONSTANT, NV_register_combiners2) */
-            FIXME("D3DTA_CONSTANT, not properly supported.");
+            FIXME("D3DTA_CONSTANT, not properly supported.\n");
             return GL_CONSTANT_COLOR1_NV;
 
         default:

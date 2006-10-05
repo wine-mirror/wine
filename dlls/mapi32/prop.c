@@ -508,7 +508,7 @@ LONG WINAPI LPropCompareProp(LPSPropValue lpPropLeft, LPSPropValue lpPropRight)
         return memcmp(lpPropLeft->Value.lpguid, lpPropRight->Value.lpguid,
                       sizeof(GUID));
     }
-    FIXME("Unhandled property type %ld", PROP_TYPE(lpPropLeft->ulPropTag));
+    FIXME("Unhandled property type %ld\n", PROP_TYPE(lpPropLeft->ulPropTag));
     return 0;
 }
 

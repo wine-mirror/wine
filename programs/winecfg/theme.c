@@ -316,7 +316,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 	if (!found)
 	{
 	    /* Current theme not found?... add to the list, then... */
-	    WINE_TRACE("Theme %s not in list of enumerated themes",
+	    WINE_TRACE("Theme %s not in list of enumerated themes\n",
 		wine_dbgstr_w (currentTheme));
 	    myEnumThemeProc (NULL, currentTheme, currentTheme, 
 		currentTheme, NULL, NULL);

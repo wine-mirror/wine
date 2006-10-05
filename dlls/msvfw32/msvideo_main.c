@@ -1428,7 +1428,7 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
     DWORD ret;
     TRACE("(%p)\n", pc);
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
-    TRACE(" -- %lx", ret);
+    TRACE(" -- %lx\n", ret);
     HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
     HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
     HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);

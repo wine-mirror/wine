@@ -1928,7 +1928,7 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfoCount(
   IDispatch*    iface,
   unsigned int* pctinfo)
 {
-  TRACE("(%p)", pctinfo);
+  TRACE("(%p)\n", pctinfo);
 
   *pctinfo = 1;
 

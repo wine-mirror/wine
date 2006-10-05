@@ -1061,7 +1061,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
 
     /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
 
-    TRACE("Pool %d %d %d %d",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
+    TRACE("Pool %d %d %d %d\n",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
 
     /** Quick lockable sanity check TODO: remove this after surfaces, usage and locablility have been debugged properly
     * this function is too deap to need to care about things like this.
@@ -5909,7 +5909,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     IWineD3DStateBlockImpl *object;
     HRESULT temp_result;
     
-    TRACE("(%p)", This);
+    TRACE("(%p)\n", This);
     
     if (This->isRecordingState) {
         return WINED3DERR_INVALIDCALL;

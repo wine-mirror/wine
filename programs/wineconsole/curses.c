@@ -738,7 +738,7 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
         numEvent = WCCURSES_FillSimpleChar(ir, 0x9);
 	ir[0].Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
 	ir[1].Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;	
-	if (numEvent != 2) WINE_ERR("FillsimpleChar has changed");
+	if (numEvent != 2) WINE_ERR("FillsimpleChar has changed\n");
 	break;
 
     case KEY_BEG:

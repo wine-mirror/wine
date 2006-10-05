@@ -794,7 +794,7 @@ UCHAR WINAPI Netbios(PNCB ncb)
         ncb->ncb_retcode = ncb->ncb_cmd_cplt = ret = nbEnum(ncb);
     else if (cmd == NCBADDNAME)
     {
-        FIXME("NCBADDNAME: stub, returning success");
+        FIXME("NCBADDNAME: stub, returning success\n");
         ncb->ncb_retcode = ncb->ncb_cmd_cplt = ret = NRC_GOODRET;
     }
     else

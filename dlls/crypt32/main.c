@@ -222,7 +222,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
     DWORD* pdwFormatType, HCERTSTORE* phCertStore, HCRYPTMSG* phMsg,
     const void** ppvContext)
 {
-    FIXME( "%08x %p %08x %08x %08x %p %p %p %p %p %p", dwObjectType,
+    FIXME( "%08x %p %08x %08x %08x %p %p %p %p %p %p\n", dwObjectType,
            pvObject, dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
            dwFlags, pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
            phCertStore, phMsg, ppvContext);

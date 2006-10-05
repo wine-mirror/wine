@@ -1123,7 +1123,7 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
         return E_INVALIDARG;
 
     if(options)
-        FIXME("not supported options %08lx", options);
+        FIXME("not supported options %08lx\n", options);
     if(format)
         FIXME("format is not supported\n");
 

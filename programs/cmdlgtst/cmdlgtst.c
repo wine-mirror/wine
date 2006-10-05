@@ -518,7 +518,7 @@ static void mw_PageSetup(HWND hWnd)
 			if(dm->dmFields & DM_ICMMETHOD)
 				WINE_TRACE("        dmICMMethod = %#x\n", dm->dmICMMethod);
 			else
-				WINE_TRACE("        dmICMMethod NOT SET!");
+				WINE_TRACE("        dmICMMethod NOT SET!\n");
 			
 			GlobalUnlock(psd.hDevMode);
 		}
