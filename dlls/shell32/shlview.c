@@ -527,7 +527,7 @@ static int LV_FindItemByPidl(
 	LPCITEMIDLIST pidl)
 {
 	LVITEMA lvItem;
-	ZeroMemory(&lvItem, sizeof(LVITEMA));
+	lvItem.iSubItem = 0;
 	lvItem.mask = LVIF_PARAM;
 	for(lvItem.iItem = 0;
 		SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
@@ -552,9 +552,9 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 
 	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
-	ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listview item*/
 	lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;	/*set the mask*/
 	lvItem.iItem = ListView_GetItemCount(This->hWndList);	/*add the item to the end of the list*/
+	lvItem.iSubItem = 0;
 	lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidl));				/*set the item's data*/
 	lvItem.pszText = LPSTR_TEXTCALLBACKA;			/*get text on a callback basis*/
 	lvItem.iImage = I_IMAGECALLBACK;			/*get the image on a callback basis*/
@@ -587,7 +587,6 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 	nItem = LV_FindItemByPidl(This, ILFindLastID(pidlOld));
 	if ( -1 != nItem )
 	{
-	  ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listview item*/
 	  lvItem.mask = LVIF_PARAM;		/* only the pidl */
 	  lvItem.iItem = nItem;
 	  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
@@ -826,9 +825,10 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 	{
 	  TRACE("-- Items selected =%u\n", This->cidl);
 
-	  ZeroMemory(&lvItem, sizeof(lvItem));
 	  lvItem.mask = LVIF_STATE | LVIF_PARAM;
 	  lvItem.stateMask = LVIS_SELECTED;
+	  lvItem.iItem = 0;
+	  lvItem.iSubItem = 0;
 
 	  while(ListView_GetItemA(This->hWndList, &lvItem) && (i < This->cidl))
 	  {
@@ -1429,8 +1429,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		WCHAR wszNewName[MAX_PATH];
 		LVITEMA lvItem;
 
-		ZeroMemory(&lvItem, sizeof(LVITEMA));
 		lvItem.iItem = lpdi->item.iItem;
+		lvItem.iSubItem = 0;
 		lvItem.mask = LVIF_PARAM;
 		SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
 
@@ -1979,9 +1979,10 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	  if(uFlags & SVSI_ENSUREVISIBLE)
 	    SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
 
-          ZeroMemory(&lvItem, sizeof(LVITEMA));
 	  lvItem.mask = LVIF_STATE;
+	  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 	  lvItem.iItem = 0;
+	  lvItem.iSubItem = 0;
 
           while(SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem))
 	  {
@@ -2261,9 +2262,9 @@ static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POIN
     } else {
         /* Query the relative PIDL of the shellfolder object represented by the currently
          * dragged over listview-item ... */
-        ZeroMemory(&lvItem, sizeof(lvItem));
         lvItem.mask = LVIF_PARAM;
         lvItem.iItem = lResult;
+        lvItem.iSubItem = 0;
         SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
 
         /* ... and bind pCurDropTarget to the IDropTarget interface of an UIObject of this object */
