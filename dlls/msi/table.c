@@ -71,6 +71,11 @@ typedef struct tagMSITRANSFORM {
     IStorage *stg;
 } MSITRANSFORM;
 
+static const WCHAR szStringData[] = {
+    '_','S','t','r','i','n','g','D','a','t','a',0 };
+static const WCHAR szStringPool[] = {
+    '_','S','t','r','i','n','g','P','o','o','l',0 };
+
 #define MAX_STREAM_NAME 0x1f
 
 static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name,
@@ -635,10 +640,6 @@ err:
 HRESULT init_string_table( IStorage *stg )
 {
     HRESULT r;
-    static const WCHAR szStringData[] = {
-        '_','S','t','r','i','n','g','D','a','t','a',0 };
-    static const WCHAR szStringPool[] = {
-        '_','S','t','r','i','n','g','P','o','o','l',0 };
     USHORT zero[2] = { 0, 0 };
     ULONG count = 0;
     IStream *stm = NULL;
@@ -687,10 +688,6 @@ string_table *load_string_table( IStorage *stg )
     USHORT *pool = NULL;
     UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n, refs;
-    static const WCHAR szStringData[] = {
-        '_','S','t','r','i','n','g','D','a','t','a',0 };
-    static const WCHAR szStringPool[] = {
-        '_','S','t','r','i','n','g','P','o','o','l',0 };
 
     r = read_stream_data( stg, szStringPool, &pool, &poolsize );
     if( r != ERROR_SUCCESS)
@@ -767,10 +764,6 @@ static UINT save_string_table( MSIDATABASE *db )
 {
     UINT i, count, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
     UINT ret = ERROR_FUNCTION_FAILED;
-    static const WCHAR szStringData[] = {
-        '_','S','t','r','i','n','g','D','a','t','a',0 };
-    static const WCHAR szStringPool[] = {
-        '_','S','t','r','i','n','g','P','o','o','l',0 };
     CHAR *data = NULL;
     USHORT *pool = NULL;
 
