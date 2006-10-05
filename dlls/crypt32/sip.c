@@ -357,7 +357,7 @@ cleanup3:
 /***********************************************************************
  *             CryptSIPLoad (CRYPT32.@)
  *
- * Load the functions for the given SIP.
+ * Load some internal crypt32 functions into a SIP_DISPATCH_INFO structure.
  *
  * PARAMS
  *  pgSubject    [I] The GUID.
@@ -369,9 +369,15 @@ cleanup3:
  *  Failure: FALSE. (Look at GetLastError()).
  *
  * NOTES
- *  Testing shows that (somehow) the table of functions is cached between
- *  calls.
+ *  CryptSIPLoad uses caching for the list of GUIDs and whether a SIP is
+ *  already loaded.
  *
+ *  An application calls CryptSipLoad which will return a structure with the
+ *  function addresses of some internal crypt32 functions. The application will
+ *  then call these functions which will be forwarded to the appropriate SIP.
+ *
+ *  CryptSIPLoad will load the needed SIP but doesn't unload this dll. The unloading
+ *  is done when crypt32 is unloaded.
  */
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
