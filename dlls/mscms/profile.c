@@ -615,7 +615,7 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
     PROFILEHEADER header;
     WIN32_FIND_DATAA data;
     ENUMTYPEW recordW;
-    WCHAR *fileW = NULL;
+    WCHAR *fileW = NULL, *deviceW = NULL;
     HANDLE find;
 
     TRACE( "( %p, %p, %p, %p, %p )\n", machine, record, buffer, size, number );
@@ -643,8 +643,8 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
     memcpy( &recordW, record, sizeof(ENUMTYPEA) );
     if (record->pDeviceName)
     {
-        recordW.pDeviceName = MSCMS_strdupW( record->pDeviceName );
-        if (!recordW.pDeviceName) goto exit;
+        deviceW = MSCMS_strdupW( record->pDeviceName );
+        if (!(recordW.pDeviceName = deviceW)) goto exit;
     }
 
     fileW = MSCMS_strdupW( data.cFileName );
@@ -730,7 +730,7 @@ exit:
     for (i = 0; i < count; i++)
         HeapFree( GetProcessHeap(), 0, profiles[i] );
     HeapFree( GetProcessHeap(), 0, profiles );
-    HeapFree( GetProcessHeap(), 0, (WCHAR *)recordW.pDeviceName );
+    HeapFree( GetProcessHeap(), 0, deviceW );
     HeapFree( GetProcessHeap(), 0, fileW );
     FindClose( find );
 
