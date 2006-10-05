@@ -49,11 +49,10 @@ void ProcessPage_OnDebug(void)
 
     for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
         lvitem.iItem = Index;
+        lvitem.iSubItem = 0;
 
         SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
 

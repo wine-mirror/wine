@@ -86,11 +86,10 @@ static DWORD    get_selected_pid(void)
 
     for (Index = 0; Index < (ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
         lvitem.iItem = Index;
+        lvitem.iSubItem = 0;
 
         SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
 
@@ -109,16 +108,16 @@ static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_
 {
     int         j;
     char        val[2];
-    LVITEMA     lvi;
+    LVITEMA     lvitem;
     int         index;
     HWND        hChannelLV = (HWND)user;
 
-    memset(&lvi, 0, sizeof(lvi));
+    lvitem.mask = LVIF_TEXT;
+    lvitem.pszText = channel->name;
+    lvitem.iItem = 0;
+    lvitem.iSubItem = 0;
 
-    lvi.mask = LVIF_TEXT;
-    lvi.pszText = channel->name;
-
-    index = ListView_InsertItem(hChannelLV, &lvi);
+    index = ListView_InsertItem(hChannelLV, &lvitem);
     if (index == -1) return 0;
 
     val[1] = '\0';
