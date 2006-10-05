@@ -579,9 +579,9 @@ static void HttpSendRequestEx_test(void)
     int i;
     BOOL ret;
 
-    static const char szPostData[] = "mode=Test";
+    static char szPostData[] = "mode=Test";
     static const char szContentType[] = "Content-Type: application/x-www-form-urlencoded";
-    
+
     hSession = InternetOpen("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
     ok( hSession != NULL ,"Unable to open Internet session\n");
@@ -604,7 +604,7 @@ static void HttpSendRequestEx_test(void)
     BufferIn.lpcszHeader = szContentType;
     BufferIn.dwHeadersLength = sizeof(szContentType);
     BufferIn.dwHeadersTotal = sizeof(szContentType);
-    BufferIn.lpvBuffer = (LPVOID)szPostData;
+    BufferIn.lpvBuffer = szPostData;
     BufferIn.dwBufferLength = 3;
     BufferIn.dwBufferTotal = sizeof(szPostData)-1;
     BufferIn.dwOffsetLow = 0;
