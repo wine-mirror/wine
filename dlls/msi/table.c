@@ -1950,7 +1950,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     IEnumSTATSTG *stgenum = NULL;
     HRESULT r;
     STATSTG stat;
-    ULONG n, count;
+    ULONG count;
     WCHAR name[0x40];
     string_table *strings;
     UINT ret = ERROR_FUNCTION_FAILED;
@@ -1965,7 +1965,6 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     if( FAILED( r ) )
         goto end;
 
-    n = 0;
     ret = ERROR_SUCCESS;
 
     while( r == ERROR_SUCCESS )
@@ -1979,7 +1978,6 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
             ret = msi_table_load_transform( db, stg, strings, name+1 );
         else
             TRACE("transform contains stream %s\n", debugstr_w(name));
-        n++;
     }
 
     if ( ret == ERROR_SUCCESS )
