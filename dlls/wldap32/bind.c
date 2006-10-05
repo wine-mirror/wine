@@ -303,6 +303,7 @@ ULONG CDECL ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
 #ifdef HAVE_LDAP
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval credU;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -327,7 +328,10 @@ ULONG CDECL ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_sasl_bind( ld, dnU, mechanismU, (struct berval *)cred,
+    credU.bv_len = cred->bv_len;
+    credU.bv_val = cred->bv_val;
+
+    ret = ldap_sasl_bind( ld, dnU, mechanismU, &credU,
                           serverctrlsU, clientctrlsU, message );
 
 exit:
@@ -419,6 +423,7 @@ ULONG CDECL ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
 #ifdef HAVE_LDAP
     char *dnU, *mechanismU = NULL;
     LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval credU;
 
     ret = WLDAP32_LDAP_NO_MEMORY;
 
@@ -443,7 +448,10 @@ ULONG CDECL ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_sasl_bind_s( ld, dnU, mechanismU, (struct berval *)cred,
+    credU.bv_len = cred->bv_len;
+    credU.bv_val = cred->bv_val;
+
+    ret = ldap_sasl_bind_s( ld, dnU, mechanismU, &credU,
                             serverctrlsU, clientctrlsU, (struct berval **)serverdata );
 
 exit:
