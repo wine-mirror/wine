@@ -1016,7 +1016,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
        Size = ((max(pow2Width,4) * tableEntry->bpp) * max(pow2Height,4));
     } else {
        /* The pitch is a multiple of 4 bytes */
-       Size = ((pow2Width * tableEntry->bpp) + 3) & ~3;
+       Size = ((pow2Width * tableEntry->bpp) + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
        Size *= pow2Height;
     }
 
@@ -1866,10 +1866,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         }
 
         /* Set the surface alignment. This never changes, so we are safe to set it once per context*/
-        glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, 4);");
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-        checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, 4);");
+        glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);
+        checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);");
+        glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);
+        checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);");
 
         LEAVE_GL();
 

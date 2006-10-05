@@ -3021,7 +3021,7 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
             ret = This->bytesPerPixel * This->pow2Width;
         }
         /* Surfaces are 32 bit aligned */
-        ret = (ret + 3) & ~3;
+        ret = (ret + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
     }
     TRACE("(%p) Returning %d\n", This, ret);
     return ret;

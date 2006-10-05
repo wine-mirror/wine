@@ -996,6 +996,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
+/* Alignment of the pitch */
+#define SURFACE_ALIGNMENT 4
+
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
