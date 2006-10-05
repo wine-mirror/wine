@@ -2333,9 +2333,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             DWORD oldCKey;
             DDCOLORKEY oldBltCKey = {0,0};
             GLint oldLight, oldFog, oldDepth, oldBlend, oldCull, oldAlpha;
+            GLint oldStencil, oldNVRegisterCombiners = 0;
             GLint alphafunc;
             GLclampf alpharef;
-            GLint oldStencil;
             RECT SourceRectangle;
             GLint oldDraw;
 
@@ -2397,6 +2397,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             oldAlpha = glIsEnabled(GL_ALPHA_TEST);
             oldStencil = glIsEnabled(GL_STENCIL_TEST);
 
+            if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+                oldNVRegisterCombiners = glIsEnabled(GL_REGISTER_COMBINERS_NV);
+            }
+
             glGetIntegerv(GL_ALPHA_TEST_FUNC, &alphafunc);
             checkGLcall("glGetFloatv GL_ALPHA_TEST_FUNC");
             glGetFloatv(GL_ALPHA_TEST_REF, &alpharef);
@@ -2433,6 +2437,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             checkGLcall("glDisable GL_CULL_FACE");
             glDisable(GL_STENCIL_TEST);
             checkGLcall("glDisable GL_STENCIL_TEST");
+            if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+                glDisable(GL_REGISTER_COMBINERS_NV);
+                checkGLcall("glDisable GL_REGISTER_COMBINERS_NV");
+            }
 
             /* Ok, we need 2d textures, but not 1D or 3D */
             glDisable(GL_TEXTURE_1D);
@@ -2535,6 +2543,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             } else {
                 glEnable(GL_ALPHA_TEST);
                 checkGLcall("glEnable GL_ALPHA_TEST");
+            }
+            if (GL_SUPPORT(NV_REGISTER_COMBINERS) && oldNVRegisterCombiners) {
+                glEnable(GL_REGISTER_COMBINERS_NV);
+                checkGLcall("glEnable GL_REGISTER_COMBINERS_NV");
             }
 
             glAlphaFunc(alphafunc, alpharef);
