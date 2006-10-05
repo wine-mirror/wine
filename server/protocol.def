@@ -2369,19 +2369,20 @@ enum message_type
 @END
 
 
-/* Get the next hook to call */
-@REQ(get_next_hook)
+/* Get the hook information */
+@REQ(get_hook_info)
     user_handle_t  handle;         /* handle to the current hook */
+    int            get_next;       /* do we want info about current or next hook? */
     int            event;          /* signalled event */
     user_handle_t  window;         /* handle to the event window */
     int            object_id;      /* object id for out of context winevent */
     int            child_id;       /* child id for out of context winevent */
 @REPLY
-    user_handle_t  next;           /* handle to the next hook */
-    int            id;             /* id of the next hook */
+    user_handle_t  handle;         /* handle to the hook */
+    int            id;             /* id of the hook */
     process_id_t   pid;            /* process id for low-level keyboard/mouse hooks */
     thread_id_t    tid;            /* thread id for low-level keyboard/mouse hooks */
-    void*          proc;           /* next hook procedure */
+    void*          proc;           /* hook procedure */
     int            unicode;        /* is it a unicode hook? */
     VARARG(module,unicode_str);    /* module name */
 @END

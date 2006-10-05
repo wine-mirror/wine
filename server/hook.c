@@ -536,10 +536,10 @@ DECL_HANDLER(finish_hook_chain)
 }
 
 
-/* get the next hook to call */
-DECL_HANDLER(get_next_hook)
+/* get the hook information */
+DECL_HANDLER(get_hook_info)
 {
-    struct hook *hook, *next;
+    struct hook *hook;
 
     if (!(hook = get_user_object( req->handle, USER_HOOK ))) return;
     if (hook->thread && (hook->thread != current))
@@ -547,22 +547,23 @@ DECL_HANDLER(get_next_hook)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if ((next = get_next_hook( current, hook, req->event, req->window, req->object_id, req->child_id )))
+    if (req->get_next && !(hook = get_next_hook( current, hook, req->event, req->window,
+                                                 req->object_id, req->child_id )))
+        return;
+
+    reply->handle  = hook->handle;
+    reply->id      = hook->index + WH_MINHOOK;
+    reply->unicode = hook->unicode;
+    if (hook->module) set_reply_data( hook->module, min(hook->module_size,get_reply_max_size()) );
+    if (run_hook_in_owner_thread( hook ))
     {
-        reply->next = next->handle;
-        reply->id   = next->index + WH_MINHOOK;
-        reply->unicode = next->unicode;
-        if (next->module) set_reply_data( next->module, next->module_size );
-        if (run_hook_in_owner_thread( next ))
-        {
-            reply->pid  = get_process_id( next->owner->process );
-            reply->tid  = get_thread_id( next->owner );
-        }
-        else
-        {
-            reply->pid  = 0;
-            reply->tid  = 0;
-        }
-        reply->proc = next->proc;
+        reply->pid  = get_process_id( hook->owner->process );
+        reply->tid  = get_thread_id( hook->owner );
     }
+    else
+    {
+        reply->pid  = 0;
+        reply->tid  = 0;
+    }
+    reply->proc = hook->proc;
 }

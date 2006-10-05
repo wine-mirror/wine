@@ -2951,18 +2951,19 @@ static void dump_finish_hook_chain_request( const struct finish_hook_chain_reque
     fprintf( stderr, " id=%d", req->id );
 }
 
-static void dump_get_next_hook_request( const struct get_next_hook_request *req )
+static void dump_get_hook_info_request( const struct get_hook_info_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " get_next=%d,", req->get_next );
     fprintf( stderr, " event=%d,", req->event );
     fprintf( stderr, " window=%p,", req->window );
     fprintf( stderr, " object_id=%d,", req->object_id );
     fprintf( stderr, " child_id=%d", req->child_id );
 }
 
-static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
+static void dump_get_hook_info_reply( const struct get_hook_info_reply *req )
 {
-    fprintf( stderr, " next=%p,", req->next );
+    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
@@ -3477,7 +3478,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_hook_request,
     (dump_func)dump_start_hook_chain_request,
     (dump_func)dump_finish_hook_chain_request,
-    (dump_func)dump_get_next_hook_request,
+    (dump_func)dump_get_hook_info_request,
     (dump_func)dump_create_class_request,
     (dump_func)dump_destroy_class_request,
     (dump_func)dump_set_class_info_request,
@@ -3694,7 +3695,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_hook_reply,
     (dump_func)dump_start_hook_chain_reply,
     (dump_func)0,
-    (dump_func)dump_get_next_hook_reply,
+    (dump_func)dump_get_hook_info_reply,
     (dump_func)0,
     (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
@@ -3911,7 +3912,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "remove_hook",
     "start_hook_chain",
     "finish_hook_chain",
-    "get_next_hook",
+    "get_hook_info",
     "create_class",
     "destroy_class",
     "set_class_info",

@@ -302,7 +302,7 @@ DECL_HANDLER(set_hook);
 DECL_HANDLER(remove_hook);
 DECL_HANDLER(start_hook_chain);
 DECL_HANDLER(finish_hook_chain);
-DECL_HANDLER(get_next_hook);
+DECL_HANDLER(get_hook_info);
 DECL_HANDLER(create_class);
 DECL_HANDLER(destroy_class);
 DECL_HANDLER(set_class_info);
@@ -522,7 +522,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_remove_hook,
     (req_handler)req_start_hook_chain,
     (req_handler)req_finish_hook_chain,
-    (req_handler)req_get_next_hook,
+    (req_handler)req_get_hook_info,
     (req_handler)req_create_class,
     (req_handler)req_destroy_class,
     (req_handler)req_set_class_info,

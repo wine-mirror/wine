@@ -527,15 +527,16 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 
     ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
 
-    SERVER_START_REQ( get_next_hook )
+    SERVER_START_REQ( get_hook_info )
     {
         req->handle = thread_info->hook;
+        req->get_next = 1;
         req->event = EVENT_MIN;
         wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
             info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = reply->next;
+            info.handle       = reply->handle;
             info.id           = reply->id;
             info.pid          = reply->pid;
             info.tid          = reply->tid;
@@ -718,9 +719,10 @@ inline static BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
 {
     BOOL ret;
 
-    SERVER_START_REQ( get_next_hook )
+    SERVER_START_REQ( get_hook_info )
     {
         req->handle = info->handle;
+        req->get_next = 1;
         req->event = event;
         req->window = hwnd;
         req->object_id = object_id;
@@ -730,7 +732,7 @@ inline static BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
         if (ret)
         {
             info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info->handle    = reply->next;
+            info->handle    = reply->handle;
             info->proc      = reply->proc;
             info->tid       = reply->tid;
         }

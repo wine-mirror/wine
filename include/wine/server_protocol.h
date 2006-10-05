@@ -3375,19 +3375,20 @@ struct finish_hook_chain_reply
 
 
 
-struct get_next_hook_request
+struct get_hook_info_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    int            get_next;
     int            event;
     user_handle_t  window;
     int            object_id;
     int            child_id;
 };
-struct get_next_hook_reply
+struct get_hook_info_reply
 {
     struct reply_header __header;
-    user_handle_t  next;
+    user_handle_t  handle;
     int            id;
     process_id_t   pid;
     thread_id_t    tid;
@@ -3961,7 +3962,7 @@ enum request
     REQ_remove_hook,
     REQ_start_hook_chain,
     REQ_finish_hook_chain,
-    REQ_get_next_hook,
+    REQ_get_hook_info,
     REQ_create_class,
     REQ_destroy_class,
     REQ_set_class_info,
@@ -4182,7 +4183,7 @@ union generic_request
     struct remove_hook_request remove_hook_request;
     struct start_hook_chain_request start_hook_chain_request;
     struct finish_hook_chain_request finish_hook_chain_request;
-    struct get_next_hook_request get_next_hook_request;
+    struct get_hook_info_request get_hook_info_request;
     struct create_class_request create_class_request;
     struct destroy_class_request destroy_class_request;
     struct set_class_info_request set_class_info_request;
@@ -4401,7 +4402,7 @@ union generic_reply
     struct remove_hook_reply remove_hook_reply;
     struct start_hook_chain_reply start_hook_chain_reply;
     struct finish_hook_chain_reply finish_hook_chain_reply;
-    struct get_next_hook_reply get_next_hook_reply;
+    struct get_hook_info_reply get_hook_info_reply;
     struct create_class_reply create_class_reply;
     struct destroy_class_reply destroy_class_reply;
     struct set_class_info_reply set_class_info_reply;
@@ -4425,6 +4426,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 253
+#define SERVER_PROTOCOL_VERSION 254
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
