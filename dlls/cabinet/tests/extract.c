@@ -342,7 +342,7 @@ static void test_Extract(void)
     lstrcpyA(extractDest.directory, "dest");
     extractDest.flags = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
@@ -354,7 +354,7 @@ static void test_Extract(void)
     lstrcpyA(extractDest.directory, "dest");
     extractDest.flags = EXTRACT_FILLFILELIST;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(extractDest.filecount == 4, "Expected 4 files, got %ld\n", extractDest.filecount);
@@ -364,7 +364,7 @@ static void test_Extract(void)
     /* try extract files operation once file list is filled */
     extractDest.flags = EXTRACT_EXTRACTFILES;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
@@ -374,7 +374,7 @@ static void test_Extract(void)
 
     /* Extract does not extract files if the dest dir does not exist */
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
 
@@ -389,7 +389,7 @@ static void test_Extract(void)
     extractDest.filterlist = NULL;
     CreateDirectoryA("dest", NULL);
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
@@ -405,7 +405,7 @@ static void test_Extract(void)
     extractDest.flags = 1;
     extractDest.filelist = NULL;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
@@ -420,7 +420,7 @@ static void test_Extract(void)
 
     extractDest.flags = 0;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
@@ -436,7 +436,7 @@ static void test_Extract(void)
     extractDest.flags = 0;
     extractDest.filterlist = extractDest.filelist;
     res = pExtract(&extractDest, "extract.cab");
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
