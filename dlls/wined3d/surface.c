@@ -47,7 +47,7 @@ typedef enum {
     CONVERT_RGB32_888
 } CONVERT_TYPES;
 
-HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
     if (This->resource.format == WINED3DFMT_DXT1 ||
@@ -990,7 +990,9 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             }
             d3dfmt_convert_surface(This->resource.allocatedMemory,
                                    mem,
-                                   pitch*height,
+                                   pitch,
+                                   height,
+                                   pitch * 4,
                                    CONVERT_PALETTED,
                                    This);
         }
@@ -1330,14 +1332,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         if( (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
             b_info->bmiHeader.biWidth = This->currentDesc.Width;
             b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
-            b_info->bmiHeader.biSizeImage = This->currentDesc.Width * This->currentDesc.Height * This->bytesPerPixel;
+            b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
             /* Use the full pow2 image size(assigned below) because LockRect
              * will need it for a full glGetTexImage call
              */
         } else {
             b_info->bmiHeader.biWidth = This->pow2Width;
             b_info->bmiHeader.biHeight = -This->pow2Height -extraline;
-            b_info->bmiHeader.biSizeImage = This->resource.size;
+            b_info->bmiHeader.biSizeImage = This->resource.size + extraline  * IWineD3DSurface_GetPitch(iface);
         }
         b_info->bmiHeader.biPlanes = 1;
         b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
@@ -1570,13 +1572,14 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     return WINED3D_OK;
 }
 
-HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
-    TRACE("(%p)->(%p),(%ld,%d,%p)\n", src, dst, len, convert, surf);
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
+    BYTE *dest;
+    TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert, surf);
 
     switch (convert) {
         case NO_CONVERSION:
         {
-            memcpy(dst, src, len * surf->bytesPerPixel);
+            memcpy(dst, src, pitch * height);
             break;
         }
         case CONVERT_PALETTED:
@@ -1585,7 +1588,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
             IWineD3DPaletteImpl* pal = surf->palette;
             BYTE table[256][4];
             unsigned int i;
-            unsigned int x;
+            unsigned int x, y;
 
             if( pal == NULL) {
                 /* TODO: If we are a sublevel, try to get the palette from level 0 */
@@ -1631,12 +1634,17 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
                 }
             }
 
-            for (x = 0; x < len; x++) {
-                BYTE color = *src++;
-                *dst++ = table[color][0];
-                *dst++ = table[color][1];
-                *dst++ = table[color][2];
-                *dst++ = table[color][3];
+            for (y = 0; y < height; y++)
+            {
+                dest = dst + outpitch * y;
+                /* This is an 1 bpp format, using the pitch here is fine */
+                for (x = 0; x < pitch; x++) {
+                    BYTE color = *src++;
+                    *dest++ = table[color][0];
+                    *dest++ = table[color][1];
+                    *dest++ = table[color][2];
+                    *dest++ = table[color][3];
+                }
             }
         }
         break;
@@ -1653,20 +1661,24 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
               Note2: Nvidia documents say that their driver does not support alpha + color keying
                      on the same surface and disables color keying in such a case
             */
-            unsigned int x;
-            WORD *Source = (WORD *) src;
-            WORD *Dest = (WORD *) dst;
+            unsigned int x, y;
+            WORD *Source;
+            WORD *Dest;
 
             TRACE("Color keyed 565\n");
 
-            for (x = 0; x < len; x++ ) {
-                WORD color = *Source++;
-                *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
-                    (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
-                    *Dest |= 0x0001;
+            for (y = 0; y < height; y++) {
+                Source = (WORD *) (src + y * pitch);
+                Dest = (WORD *) (dst + y * outpitch);
+                for (x = 0; x < pitch / 2; x++ ) {
+                    WORD color = *Source++;
+                    *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+                    if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
+                        (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        *Dest |= 0x0001;
+                    }
+                    Dest++;
                 }
-                Dest++;
             }
         }
         break;
@@ -1674,7 +1686,6 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
         default:
             ERR("Unsupported conversation type %d\n", convert);
     }
-
     return WINED3D_OK;
 }
 
@@ -1735,7 +1746,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
-    int width;
+    int width, pitch, outpitch;
     BYTE *mem;
 
     if (This->Flags & SFLAG_INTEXTURE) {
@@ -1824,15 +1835,21 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     else
         width = This->pow2Width;
 
+    pitch = IWineD3DSurface_GetPitch(iface);
+
     if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
         int height = This->glRect.bottom - This->glRect.top;
 
-        mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+        outpitch = width * bpp;
+        outpitch = (outpitch + 3) & ~3;
+
+        mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
         if(!mem) {
-            ERR("Out of memory %d, %d!\n", width, height);
+            ERR("Out of memory %d, %d!\n", outpitch, height);
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
-        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, width * height, convert, This);
+        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, height, outpitch, convert, This);
 
         This->Flags |= SFLAG_CONVERTED;
     } else if (This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
