@@ -337,7 +337,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface
 
     object->lpVtbl = &Direct3DTexture8_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
+    hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage & WINED3DUSAGE_MASK,
                                  (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DTexture, NULL, (IUnknown *)object, D3D8CB_CreateSurface);
 
     if (FAILED(hrc)) {
@@ -375,7 +375,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8
 
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage,
+    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage & WINED3DUSAGE_MASK,
                                  (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DVolumeTexture, NULL,
                                  (IUnknown *)object, D3D8CB_CreateVolume);
 
@@ -414,7 +414,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 i
 
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
-    hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
+    hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage & WINED3DUSAGE_MASK,
                                  (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DCubeTexture, NULL, (IUnknown*)object,
                                  D3D8CB_CreateSurface);
 
@@ -450,7 +450,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 
 
     object->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
 
     if (D3D_OK != hrc) {
 
@@ -483,7 +483,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 i
     object->lpVtbl = &Direct3DIndexBuffer8_Vtbl;
     object->ref = 1;
     TRACE("Calling wined3d create index buffer\n");
-    hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage, Format, (WINED3DPOOL) Pool, &object->wineD3DIndexBuffer, NULL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage & WINED3DUSAGE_MASK, Format, (WINED3DPOOL) Pool, &object->wineD3DIndexBuffer, NULL, (IUnknown *)object);
 
     if (D3D_OK != hrc) {
 
@@ -533,7 +533,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, (WINED3DPOOL) Pool,MultiSample,MultisampleQuality, NULL, SURFACE_OPENGL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL) Pool,MultiSample,MultisampleQuality, NULL, SURFACE_OPENGL, (IUnknown *)object);
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);

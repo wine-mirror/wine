@@ -1806,6 +1806,10 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
                                  DDSCAPS_VISIBLE     |
                                  DDSCAPS_LOCALVIDMEM;
     }
+    if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
+    {
+        Usage |= WINED3DUSAGE_OVERLAY;
+    }
     if(This->depthstencil)
     {
         /* The depth stencil creation callback sets this flag.

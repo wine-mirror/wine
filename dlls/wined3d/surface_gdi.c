@@ -1509,6 +1509,11 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     HDC hdc;
     long oldsize = This->resource.size;
 
+    if(This->resource.usage & WINED3DUSAGE_OVERLAY)
+    {
+        ERR("(%p) Overlays not yet supported by GDI surfaces\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
     /* Sysmem textures have memory already allocated -
      * release it, this avoids an unnecessary memcpy
      */

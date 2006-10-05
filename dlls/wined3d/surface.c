@@ -3076,6 +3076,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LO
 
     FIXME("(%p)->(%d,%d) Stub!\n", This, X, Y);
 
+    if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("(%p): Not an overlay surface\n", This);
+        return DDERR_NOTAOVERLAYSURFACE;
+    }
+
     return WINED3D_OK;
 }
 
@@ -3083,6 +3089,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LO
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
     FIXME("(%p)->(%p,%p) Stub!\n", This, X, Y);
+
+    if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("(%p): Not an overlay surface\n", This);
+        return DDERR_NOTAOVERLAYSURFACE;
+    }
 
     return WINED3D_OK;
 }
@@ -3093,6 +3105,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, D
 
     FIXME("(%p)->(%08x,%p) Stub!\n", This, Flags, RefImpl);
 
+    if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("(%p): Not an overlay surface\n", This);
+        return DDERR_NOTAOVERLAYSURFACE;
+    }
+
     return WINED3D_OK;
 }
 
@@ -3100,6 +3118,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *) DstSurface;
     FIXME("(%p)->(%p, %p, %p, %08x, %p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
+
+    if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("(%p): Not an overlay surface\n", This);
+        return DDERR_NOTAOVERLAYSURFACE;
+    }
 
     return WINED3D_OK;
 }

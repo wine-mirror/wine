@@ -256,7 +256,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
 
     object->lpVtbl = &Direct3DTexture9_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
+    hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage & WINED3DUSAGE_MASK,
                                  (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
     if (FAILED(hrc)) {
