@@ -290,7 +290,6 @@ static int fill_drives_list(HWND dialog)
         letter[1] = ':';
         letter[2] = 0;
 
-        memset(&item, 0, sizeof(item));
         item.mask = LVIF_TEXT | LVIF_PARAM;
         item.iItem = count;
         item.iSubItem = 0;
@@ -387,7 +386,6 @@ static void on_remove_click(HWND dialog)
     itemIndex = lv_get_curr_select(dialog);
     if (itemIndex == -1) return; /* no selection */
 
-    memset(&item, 0, sizeof(item));
     item.mask = LVIF_PARAM;
     item.iItem = itemIndex;
     item.iSubItem = 0;
@@ -437,7 +435,6 @@ static void update_controls(HWND dialog)
         return;
     }
 
-    memset(&item, 0, sizeof(item));
     item.mask = LVIF_PARAM;
     item.iItem = i;
     item.iSubItem = 0;
