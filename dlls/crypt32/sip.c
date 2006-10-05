@@ -56,6 +56,9 @@ static const WCHAR szIsMyFile[] = {
 static const WCHAR szIsMyFile2[] = {
     'I','s','M','y','F','i','l','e','T','y','p','e','2','\\',0};
 
+static const WCHAR szDllName[] = { 'D','l','l',0 };
+static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
+
 /* convert a guid to a wide character string */
 static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
 {
@@ -150,8 +153,6 @@ BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey, 
               LPCWSTR szDll, LPCWSTR szFunction )
 {
-    static const WCHAR szDllName[] = { 'D','l','l',0 };
-    static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
     WCHAR szFullKey[ 0x100 ];
     LONG r = ERROR_SUCCESS;
     HKEY hKey;
