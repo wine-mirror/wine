@@ -38,7 +38,7 @@ static BOOL CALLBACK FormatTagEnumProc(HACMDRIVERID hadid,
                                        DWORD fdwSupport)
 {
     if (winetest_interactive)
-        trace("   Format 0x%04lx: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
+        trace("   Format 0x%04x: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
 
     return TRUE;
 }
@@ -49,7 +49,7 @@ static BOOL CALLBACK FormatEnumProc(HACMDRIVERID hadid,
                                     DWORD fd)
 {
     if (winetest_interactive)
-        trace("   0x%04lx, %s\n", pafd->dwFormatTag, pafd->szFormat);
+        trace("   0x%04x, %s\n", pafd->dwFormatTag, pafd->szFormat);
 
     return TRUE;
 }
@@ -128,7 +128,7 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
      */
     if (rc == MMSYSERR_NOERROR) {    
         ok(dd.cbStruct == sizeof(dd),
-            "acmDriverDetails(): cbStruct = %08lx, should be %08lx\n",
+            "acmDriverDetails(): cbStruct = %08x, should be %08lx\n",
             dd.cbStruct, (unsigned long)sizeof(dd));
     }
 
@@ -138,8 +138,8 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
         trace("  Copyright: %s\n", dd.szCopyright);
         trace("  Licensing: %s\n", dd.szLicensing);
         trace("  Features: %s\n", dd.szFeatures);
-        trace("  Supports %lu formats\n", dd.cFormatTags);
-        trace("  Supports %lu filter formats\n", dd.cFilterTags);
+        trace("  Supports %u formats\n", dd.cFormatTags);
+        trace("  Supports %u filter formats\n", dd.cFilterTags);
     }
 
     /* try bad pointer */
@@ -453,7 +453,7 @@ static DWORD check_count(UINT uMetric)
     ok(rc == MMSYSERR_NOERROR, "acmMetrics() failed: rc = 0x%08x\n", rc);
 
     if (rc == MMSYSERR_NOERROR && winetest_interactive)
-        trace("%s: %lu\n", get_metric(uMetric), dwMetric);
+        trace("%s: %u\n", get_metric(uMetric), dwMetric);
 
     return dwMetric;
 }
