@@ -48,6 +48,24 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 # define NS_PTR(ns_msg) ((ns_msg)->_ptr)
 #endif
 
+#define DNS_NS_GET16(s, cp) do { \
+    register const u_char *t_cp = (const u_char *)(cp); \
+    (s) = ((u_int16_t)t_cp[0] << 8) \
+        | ((u_int16_t)t_cp[1]) \
+        ; \
+    (cp) += NS_INT16SZ; \
+} while (0)
+
+#define DNS_NS_GET32(l, cp) do { \
+    register const u_char *t_cp = (const u_char *)(cp); \
+    (l) = ((u_int32_t)t_cp[0] << 24) \
+        | ((u_int32_t)t_cp[1] << 16) \
+        | ((u_int32_t)t_cp[2] << 8) \
+        | ((u_int32_t)t_cp[3]) \
+        ; \
+    (cp) += NS_INT32SZ; \
+} while (0)
+
 /* Public. */
 
 static int
@@ -65,7 +83,7 @@ dns_ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) 
 			if (ptr + NS_INT32SZ + NS_INT16SZ > eom)
 				RETERR(EMSGSIZE);
 			ptr += NS_INT32SZ/*TTL*/;
-			NS_GET16(rdlength, ptr);
+			DNS_NS_GET16(rdlength, ptr);
 			ptr += rdlength/*RData*/;
 		}
 	}
@@ -84,14 +102,14 @@ dns_ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 	handle->_eom = eom;
 	if (msg + NS_INT16SZ > eom)
 		RETERR(EMSGSIZE);
-	NS_GET16(handle->_id, msg);
+	DNS_NS_GET16(handle->_id, msg);
 	if (msg + NS_INT16SZ > eom)
 		RETERR(EMSGSIZE);
-	NS_GET16(handle->_flags, msg);
+	DNS_NS_GET16(handle->_flags, msg);
 	for (i = 0; i < ns_s_max; i++) {
 		if (msg + NS_INT16SZ > eom)
 			RETERR(EMSGSIZE);
-		NS_GET16(handle->_counts[i], msg);
+		DNS_NS_GET16(handle->_counts[i], msg);
 	}
 	for (i = 0; i < ns_s_max; i++)
 		if (handle->_counts[i] == 0)
@@ -146,8 +164,8 @@ dns_ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	NS_PTR(handle) += b;
 	if (NS_PTR(handle) + NS_INT16SZ + NS_INT16SZ > handle->_eom)
 		RETERR(EMSGSIZE);
-	NS_GET16(rr->type, NS_PTR(handle));
-	NS_GET16(rr->rr_class, NS_PTR(handle));
+	DNS_NS_GET16(rr->type, NS_PTR(handle));
+	DNS_NS_GET16(rr->rr_class, NS_PTR(handle));
 	if (section == ns_s_qd) {
 		rr->ttl = 0;
 		rr->rdlength = 0;
@@ -155,8 +173,8 @@ dns_ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	} else {
                 if (NS_PTR(handle) + NS_INT32SZ + NS_INT16SZ > handle->_eom)
 			RETERR(EMSGSIZE);
-		NS_GET32(rr->ttl, NS_PTR(handle));
-		NS_GET16(rr->rdlength, NS_PTR(handle));
+		DNS_NS_GET32(rr->ttl, NS_PTR(handle));
+		DNS_NS_GET16(rr->rdlength, NS_PTR(handle));
 		if (NS_PTR(handle) + rr->rdlength > handle->_eom)
 			RETERR(EMSGSIZE);
 		rr->rdata = NS_PTR(handle);
