@@ -20,6 +20,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* For compatibility with old Mesa headers */
+#ifndef GLX_SAMPLE_BUFFERS_ARB
+# define GLX_SAMPLE_BUFFERS_ARB             100000
+#endif
+#ifndef GLX_SAMPLES_ARB
+# define GLX_SAMPLES_ARB                    100001
+#endif
+#ifndef GL_TEXTURE_CUBE_MAP
+# define GL_TEXTURE_CUBE_MAP 0x8513
+#endif
+
 #define HPBUFFERARB void *
 
 #define WGL_NUMBER_PIXEL_FORMATS_ARB		0x2000
