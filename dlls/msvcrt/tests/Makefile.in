@@ -6,7 +6,6 @@ TESTDLL   = msvcrt.dll
 IMPORTS   = msvcrt kernel32
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	cpp.c \

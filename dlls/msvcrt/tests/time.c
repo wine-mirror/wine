@@ -75,13 +75,13 @@ static void test_mktime(void)
     sav_tm = my_tm;
   
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok(((DWORD)local_time == SECSPERDAY), "mktime returned 0x%08x\n",(DWORD)local_time);
     /* now test some unnormalized struct tm's */
     my_tm = sav_tm;
     my_tm.tm_sec += 60;
     my_tm.tm_min -= 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08x\n",(DWORD)local_time);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec
@@ -94,7 +94,7 @@ static void test_mktime(void)
     my_tm.tm_min -= 60;
     my_tm.tm_hour += 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08x\n",(DWORD)local_time);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec
@@ -107,7 +107,7 @@ static void test_mktime(void)
     my_tm.tm_mon -= 12;
     my_tm.tm_year += 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08x\n",(DWORD)local_time);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec
@@ -120,7 +120,7 @@ static void test_mktime(void)
     my_tm.tm_mon += 12;
     my_tm.tm_year -= 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned 0x%08x\n",(DWORD)local_time);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec
@@ -133,7 +133,7 @@ static void test_mktime(void)
     my_tm = sav_tm;
     my_tm.tm_year -= 1;
     local_time = mktime(&my_tm);
-    ok((local_time == -1), "(bad time) mktime returned 0x%08lx\n",(DWORD)local_time);
+    ok((local_time == -1), "(bad time) mktime returned 0x%08x\n",(DWORD)local_time);
 
     my_tm = sav_tm;
     /* TEST that we are independent from the TZ variable */
@@ -141,7 +141,7 @@ static void test_mktime(void)
     _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
     putenv("TZ=GMT");
     nulltime = mktime(&my_tm);
-    ok(((DWORD)nulltime == SECSPERDAY),"mktime returned 0x%08lx\n",(DWORD)nulltime);
+    ok(((DWORD)nulltime == SECSPERDAY),"mktime returned 0x%08x\n",(DWORD)nulltime);
     putenv(TZ_env);
 }
 static void test_localtime(void)
