@@ -176,9 +176,38 @@ BOOL WINAPI FindActCtxSectionStringW(DWORD dwFlags, const GUID* lpExtGuid,
                                     PACTCTX_SECTION_KEYED_DATA pInfo)
 {
   FIXME("%08lx %s %lu %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
-       ulId, debugstr_w(lpSearchStr), pInfo);
-  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+        ulId, debugstr_w(lpSearchStr), pInfo);
+
+  if (lpExtGuid)
+  {
+    FIXME("expected lpExtGuid == NULL\n");
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  if (dwFlags & ~FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX)
+  {
+    FIXME("unknown dwFlags %08lx\n", dwFlags);
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  if (!pInfo || pInfo->cbSize < sizeof (ACTCTX_SECTION_KEYED_DATA))
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  pInfo->ulDataFormatVersion = 1;
+  pInfo->lpData = NULL;
+  pInfo->lpSectionGlobalData = NULL;
+  pInfo->ulSectionGlobalDataLength = 0;
+  pInfo->lpSectionBase = NULL;
+  pInfo->ulSectionTotalLength = 0;
+  pInfo->hActCtx = ACTCTX_FAKE_HANDLE;
+  pInfo->ulAssemblyRosterIndex = 0;
+
+  return TRUE;
 }
 
 /***********************************************************************
