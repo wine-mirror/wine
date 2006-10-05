@@ -25,7 +25,7 @@ STYLE DS_CONTEXTHELP | DS_MODALFRAME | DS_SETFONT | DS_SETFOREGROUND | WS_POPUPW
 CAPTION "Imprimer dans un fichier"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT "&Fichier de sortieÂ :", -1, 7, 13, 194, 13, WS_VISIBLE
+    LTEXT "&Fichier de sortie :", -1, 7, 13, 194, 13, WS_VISIBLE
     EDITTEXT EDITBOX, 6, 28, 174, 12, WS_VISIBLE | ES_AUTOHSCROLL
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Annuler", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
@@ -34,6 +34,6 @@ END
 STRINGTABLE DISCARDABLE
 {
     IDS_CAPTION "Port local"
-    IDS_FILE_EXISTS "Le fichier de sortie existe dÃ©jÃ . Cliquez sur OK pour l'Ã©craser."
-    IDS_CANNOT_OPEN "Impossible de crÃ©er le fichier de sortie."
+    IDS_FILE_EXISTS "Le fichier de sortie existe déjà. Cliquez sur OK pour l'écraser."
+    IDS_CANNOT_OPEN "Impossible de créer le fichier de sortie."
 }

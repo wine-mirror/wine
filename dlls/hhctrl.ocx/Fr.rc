@@ -33,9 +33,9 @@ STRINGTABLE
 BEGIN
     IDTB_EXPAND      "Afficher"
     IDTB_CONTRACT    "Cacher"
-    IDTB_STOP        "ArrÃªter"
+    IDTB_STOP        "Arrêter"
     IDTB_REFRESH     "A&ctualiser"
-    IDTB_BACK        "PrÃ©cÃ©dent"
+    IDTB_BACK        "Précédent"
     IDTB_HOME        "Sommaire"
     IDTB_SYNC        "Synchroniser"
     IDTB_PRINT       "Imprimer"
