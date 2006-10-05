@@ -193,7 +193,7 @@ static ULONG WINAPI IStream_fnAddRef(IStream *iface)
     IUMCacheStream *This = (IUMCacheStream *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -206,7 +206,7 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
     IUMCacheStream *This = (IUMCacheStream *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -228,7 +228,7 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface,
     ULONG dwBytesRead;
     IUMCacheStream *This = (IUMCacheStream *)iface;
 
-    TRACE("(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
+    TRACE("(%p)->(%p,0x%08x,%p)\n",This, pv, cb, pcbRead);
 
     if ( !pv )
        return STG_E_INVALIDPOINTER;

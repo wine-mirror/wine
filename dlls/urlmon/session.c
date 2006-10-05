@@ -82,13 +82,13 @@ static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, IUnknown **r
     res = RegQueryValueExW(hkey, wszCLSID, NULL, &type, (LPBYTE)str_clsid, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
-        WARN("Could not get protocol CLSID res=%ld\n", res);
+        WARN("Could not get protocol CLSID res=%d\n", res);
         return E_FAIL;
     }
 
     hres = CLSIDFromString(str_clsid, &clsid);
     if(FAILED(hres)) {
-        WARN("CLSIDFromString failed: %08lx\n", hres);
+        WARN("CLSIDFromString failed: %08x\n", hres);
         return hres;
     }
 
@@ -194,13 +194,13 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
     name_space *new_name_space;
     int size;
 
-    TRACE("(%p %s %s %ld %p %ld)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
+    TRACE("(%p %s %s %d %p %d)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
           cPatterns, ppwzPatterns, dwReserved);
 
     if(cPatterns || ppwzPatterns)
         FIXME("patterns not supported\n");
     if(dwReserved)
-        WARN("dwReserved = %ld\n", dwReserved);
+        WARN("dwReserved = %d\n", dwReserved);
 
     if(!pCF || !pwzProtocol)
         return E_INVALIDARG;
@@ -268,7 +268,7 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
         LPBC pBC, LPCWSTR szUrl, IUnknown *pUnkOuter, IUnknown **ppUnk,
         IInternetProtocol **ppOInetProt, DWORD dwOption)
 {
-    FIXME("(%p %s %p %p %p %08lx)\n", pBC, debugstr_w(szUrl), pUnkOuter, ppUnk,
+    FIXME("(%p %s %p %p %p %08x)\n", pBC, debugstr_w(szUrl), pUnkOuter, ppUnk,
             ppOInetProt, dwOption);
     return E_NOTIMPL;
 }
@@ -276,7 +276,7 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
 static HRESULT WINAPI InternetSession_SetSessionOption(IInternetSession *iface,
         DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength, DWORD dwReserved)
 {
-    FIXME("(%08lx %p %ld %ld)\n", dwOption, pBuffer, dwBufferLength, dwReserved);
+    FIXME("(%08x %p %d %d)\n", dwOption, pBuffer, dwBufferLength, dwReserved);
     return E_NOTIMPL;
 }
 
@@ -313,12 +313,12 @@ static IInternetSession InternetSession = { &InternetSessionVtbl };
 HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, IInternetSession **ppIInternetSession,
         DWORD dwReserved)
 {
-    TRACE("(%ld %p %ld)\n", dwSessionMode, ppIInternetSession, dwReserved);
+    TRACE("(%d %p %d)\n", dwSessionMode, ppIInternetSession, dwReserved);
 
     if(dwSessionMode)
-        ERR("dwSessionMode=%ld\n", dwSessionMode);
+        ERR("dwSessionMode=%d\n", dwSessionMode);
     if(dwReserved)
-        ERR("dwReserved=%ld\n", dwReserved);
+        ERR("dwReserved=%d\n", dwReserved);
 
     *ppIInternetSession = &InternetSession;
     return S_OK;
@@ -353,10 +353,10 @@ static BOOL get_url_encoding(HKEY root, DWORD *encoding)
 HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
                                      DWORD* pdwBufferLength, DWORD dwReserved)
 {
-    TRACE("(%lx, %p, %ld, %p)\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
+    TRACE("(%x, %p, %d, %p)\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
 
     if(dwReserved)
-        WARN("dwReserved = %ld\n", dwReserved);
+        WARN("dwReserved = %d\n", dwReserved);
 
     switch(dwOption) {
     case URLMON_OPTION_URL_ENCODING: {
@@ -373,7 +373,7 @@ HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
         return S_OK;
     }
     default:
-        FIXME("unsupported option %lx\n", dwOption);
+        FIXME("unsupported option %x\n", dwOption);
     }
 
     return E_INVALIDARG;

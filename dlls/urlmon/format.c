@@ -66,7 +66,7 @@ static ULONG WINAPI EnumFORMATETC_AddRef(IEnumFORMATETC *iface)
 {
     ENUMF_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
     return ref;
 }
 
@@ -75,7 +75,7 @@ static ULONG WINAPI EnumFORMATETC_Release(IEnumFORMATETC *iface)
     ENUMF_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         HeapFree(GetProcessHeap(), 0, This->fetc);
@@ -93,7 +93,7 @@ static HRESULT WINAPI EnumFORMATETC_Next(IEnumFORMATETC *iface, ULONG celt,
     ENUMF_THIS(iface);
     ULONG cnt;
 
-    TRACE("(%p)->(%ld %p %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%d %p %p)\n", This, celt, rgelt, pceltFetched);
 
     if(!rgelt)
         return E_INVALIDARG;
@@ -119,7 +119,7 @@ static HRESULT WINAPI EnumFORMATETC_Skip(IEnumFORMATETC *iface, ULONG celt)
 {
     ENUMF_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, celt);
+    TRACE("(%p)->(%d)\n", This, celt);
 
     This->it += celt;
     return This->it > This->fetc_cnt ? S_FALSE : S_OK;
@@ -197,7 +197,7 @@ HRESULT WINAPI CreateFormatEnumerator(UINT cfmtetc, FORMATETC *rgfmtetc,
  */
 HRESULT WINAPI RegisterFormatEnumerator(LPBC pBC, IEnumFORMATETC *pEFetc, DWORD reserved)
 {
-    TRACE("(%p %p %ld)\n", pBC, pEFetc, reserved);
+    TRACE("(%p %p %d)\n", pBC, pEFetc, reserved);
 
     if(reserved)
         WARN("reserved != 0\n");

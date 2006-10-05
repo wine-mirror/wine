@@ -69,7 +69,7 @@ static ULONG WINAPI FtpProtocol_AddRef(IInternetProtocol *iface)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
     return ref;
 }
 
@@ -78,7 +78,7 @@ static ULONG WINAPI FtpProtocol_Release(IInternetProtocol *iface)
     FtpProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -94,7 +94,7 @@ static HRESULT WINAPI FtpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         DWORD grfPI, DWORD dwReserved)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%s %p %p %08lx %ld)\n", This, debugstr_w(szUrl), pOIProtSink,
+    FIXME("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
     return E_NOTIMPL;
 }
@@ -110,14 +110,14 @@ static HRESULT WINAPI FtpProtocol_Abort(IInternetProtocol *iface, HRESULT hrReas
         DWORD dwOptions)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx %08lx)\n", This, hrReason, dwOptions);
+    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FtpProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx)\n", This, dwOptions);
+    FIXME("(%p)->(%08x)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -139,7 +139,7 @@ static HRESULT WINAPI FtpProtocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%p %lu %p)\n", This, pv, cb, pcbRead);
+    FIXME("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
     return E_NOTIMPL;
 }
 
@@ -147,14 +147,14 @@ static HRESULT WINAPI FtpProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER d
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FtpProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx)\n", This, dwOptions);
+    FIXME("(%p)->(%08x)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 

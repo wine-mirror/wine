@@ -78,7 +78,7 @@ static ULONG WINAPI FileProtocol_AddRef(IInternetProtocol *iface)
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
     return ref;
 }
 
@@ -87,7 +87,7 @@ static ULONG WINAPI FileProtocol_Release(IInternetProtocol *iface)
     FileProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->file)
@@ -117,7 +117,7 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     static const WCHAR wszFile[]  = {'f','i','l','e',':'};
 
-    TRACE("(%p)->(%s %p %p %08lx %ld)\n", This, debugstr_w(szUrl), pOIProtSink,
+    TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
     memset(&bindinfo, 0, sizeof(bindinfo));
@@ -198,7 +198,7 @@ static HRESULT WINAPI FileProtocol_Abort(IInternetProtocol *iface, HRESULT hrRea
         DWORD dwOptions)
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx %08lx)\n", This, hrReason, dwOptions);
+    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -206,7 +206,7 @@ static HRESULT WINAPI FileProtocol_Terminate(IInternetProtocol *iface, DWORD dwO
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
 
-    TRACE("(%p)->(%08lx)\n", This, dwOptions);
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
 
     return S_OK;
 }
@@ -231,7 +231,7 @@ static HRESULT WINAPI FileProtocol_Read(IInternetProtocol *iface, void *pv,
     FileProtocol *This = PROTOCOL_THIS(iface);
     DWORD read = 0;
 
-    TRACE("(%p)->(%p %lu %p)\n", This, pv, cb, pcbRead);
+    TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
     if(!This->file)
         return INET_E_DATA_NOT_AVAILABLE;
@@ -248,7 +248,7 @@ static HRESULT WINAPI FileProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER 
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
@@ -256,7 +256,7 @@ static HRESULT WINAPI FileProtocol_LockRequest(IInternetProtocol *iface, DWORD d
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
 
-    TRACE("(%p)->(%08lx)\n", This, dwOptions);
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
 
     return S_OK;
 }
@@ -313,7 +313,7 @@ static HRESULT WINAPI FilePriority_SetPriority(IInternetPriority *iface, LONG nP
 {
     FileProtocol *This = PRIORITY_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, nPriority);
+    TRACE("(%p)->(%d)\n", This, nPriority);
 
     This->priority = nPriority;
     return S_OK;

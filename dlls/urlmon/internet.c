@@ -39,7 +39,7 @@ static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     WCHAR *ptr;
     DWORD len = 0;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     if(flags)
         ERR("wrong flags\n");
@@ -68,7 +68,7 @@ static HRESULT parse_canonicalize_url(LPCWSTR url, DWORD flags, LPWSTR result,
     DWORD prsize = size;
     HRESULT hres;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -91,7 +91,7 @@ static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -110,7 +110,7 @@ static HRESULT parse_encode(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     DWORD prsize;
     HRESULT hres;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -136,7 +136,7 @@ static HRESULT parse_path_from_url(LPCWSTR url, DWORD flags, LPWSTR result, DWOR
     DWORD prsize;
     HRESULT hres;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -161,7 +161,7 @@ static HRESULT parse_security_domain(LPCWSTR url, DWORD flags, LPWSTR result,
     IInternetProtocolInfo *protocol_info;
     HRESULT hres;
 
-    TRACE("(%s %08lx %p %ld %p)\n", debugstr_w(url), flags, result, size, rsize);
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
 
     protocol_info = get_protocol_info(url);
 
@@ -182,7 +182,7 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
         LPWSTR pszResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
 {
     if(dwReserved)
-        WARN("dwReserved = %ld\n", dwReserved);
+        WARN("dwReserved = %d\n", dwReserved);
 
     switch(ParseAction) {
     case PARSE_CANONICALIZE:
@@ -215,7 +215,7 @@ HRESULT WINAPI CoInternetCombineUrl(LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl,
     DWORD size = cchResult;
     HRESULT hres;
     
-    TRACE("(%s,%s,0x%08lx,%p,%ld,%p,%ld)\n", debugstr_w(pwzBaseUrl),
+    TRACE("(%s,%s,0x%08x,%p,%d,%p,%d)\n", debugstr_w(pwzBaseUrl),
           debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult, pcchResult,
           dwReserved);
 

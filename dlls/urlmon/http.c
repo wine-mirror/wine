@@ -77,7 +77,7 @@ static ULONG WINAPI HttpProtocol_AddRef(IInternetProtocol *iface)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
     return ref;
 }
 
@@ -86,7 +86,7 @@ static ULONG WINAPI HttpProtocol_Release(IInternetProtocol *iface)
     HttpProtocol *This = PROTOCOL_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -102,7 +102,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         DWORD grfPI, DWORD dwReserved)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%s %p %p %08lx %ld)\n", This, debugstr_w(szUrl), pOIProtSink,
+    FIXME("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
     return E_NOTIMPL;
 }
@@ -118,14 +118,14 @@ static HRESULT WINAPI HttpProtocol_Abort(IInternetProtocol *iface, HRESULT hrRea
         DWORD dwOptions)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx %08lx)\n", This, hrReason, dwOptions);
+    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HttpProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx)\n", This, dwOptions);
+    FIXME("(%p)->(%08x)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -147,7 +147,7 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%p %lu %p)\n", This, pv, cb, pcbRead);
+    FIXME("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
     return E_NOTIMPL;
 }
 
@@ -155,14 +155,14 @@ static HRESULT WINAPI HttpProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER 
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+    FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HttpProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08lx)\n", This, dwOptions);
+    FIXME("(%p)->(%08x)\n", This, dwOptions);
     return E_NOTIMPL;
 }
 
@@ -199,7 +199,7 @@ static HRESULT WINAPI HttpPriority_SetPriority(IInternetPriority *iface, LONG nP
 {
     HttpProtocol *This = PRIORITY_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, nPriority);
+    TRACE("(%p)->(%d)\n", This, nPriority);
 
     This->priority = nPriority;
     return S_OK;

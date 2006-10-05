@@ -52,7 +52,7 @@ static void init_session(BOOL);
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -282,7 +282,7 @@ HRESULT WINAPI DllRegisterServerEx(void)
 HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
  					DWORD Reserved)
 {
-    FIXME("(%#lx, %p, %#lx): stub\n", dwOption, pBuffer, dwBufferLength);
+    FIXME("(%#x, %p, %#x): stub\n", dwOption, pBuffer, dwBufferLength);
 
     return S_OK;
 }
@@ -294,10 +294,10 @@ static const CHAR Agent[] = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
  */
 HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbSize)
 {
-    FIXME("(%ld, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
+    FIXME("(%d, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
 
     if(dwOption) {
-      ERR("dwOption: %ld, must be zero\n", dwOption);
+      ERR("dwOption: %d, must be zero\n", dwOption);
     }
 
     if (sizeof(Agent) < *cbSize)
@@ -309,7 +309,7 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
 
 HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
 {
-    TRACE("(%s,%s,%08lx)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+    TRACE("(%s,%s,%08x)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
     return UrlCompareW(pwzUrl1, pwzUrl2, dwCompareFlags)==0?S_OK:S_FALSE;
 }
 
@@ -333,7 +333,7 @@ HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCo
  */
 HRESULT WINAPI IsValidURL(LPBC pBC, LPCWSTR szURL, DWORD dwReserved)
 {
-    FIXME("(%p, %s, %ld): stub\n", pBC, debugstr_w(szURL), dwReserved);
+    FIXME("(%p, %s, %d): stub\n", pBC, debugstr_w(szURL), dwReserved);
     
     if (pBC != NULL || dwReserved != 0)
         return E_INVALIDARG;
@@ -349,7 +349,7 @@ HRESULT WINAPI IsValidURL(LPBC pBC, LPCWSTR szURL, DWORD dwReserved)
 HRESULT WINAPI FaultInIEFeature( HWND hwnd, uCLSSPEC * pClassSpec,
                                  QUERYCONTEXT *pQuery, DWORD flags )
 {
-    FIXME("%p %p %p %08lx\n", hwnd, pClassSpec, pQuery, flags);
+    FIXME("%p %p %p %08x\n", hwnd, pClassSpec, pQuery, flags);
     return E_NOTIMPL;
 }
 
@@ -361,7 +361,7 @@ HRESULT WINAPI CoGetClassObjectFromURL( REFCLSID rclsid, LPCWSTR szCodeURL, DWOR
                                         LPBINDCTX pBindCtx, DWORD dwClsContext, LPVOID pvReserved,
                                         REFIID riid, LPVOID *ppv )
 {
-    FIXME("(%s %s %ld %ld %s %p %ld %p %s %p) Stub!\n", debugstr_guid(rclsid), debugstr_w(szCodeURL),
+    FIXME("(%s %s %d %d %s %p %d %p %s %p) Stub!\n", debugstr_guid(rclsid), debugstr_w(szCodeURL),
 	dwFileVersionMS, dwFileVersionLS, debugstr_w(szContentType), pBindCtx, dwClsContext, pvReserved,
 	debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
@@ -479,13 +479,13 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
         LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {
-    TRACE("(%p,%s,%p,%ld,%s,0x%lx,%p,0x%lx)\n", pBC, debugstr_w(pwzUrl), pBuffer, cbSize,
+    TRACE("(%p,%s,%p,%d,%s,0x%x,%p,0x%x)\n", pBC, debugstr_w(pwzUrl), pBuffer, cbSize,
             debugstr_w(pwzMimeProposed), dwMimeFlags, ppwzMimeOut, dwReserved);
 
     if(dwMimeFlags)
-        WARN("dwMimeFlags=%08lx\n", dwMimeFlags);
+        WARN("dwMimeFlags=%08x\n", dwMimeFlags);
     if(dwReserved)
-        WARN("dwReserved=%ld\n", dwReserved);
+        WARN("dwReserved=%d\n", dwReserved);
 
     /* pBC seams to not be used */
 

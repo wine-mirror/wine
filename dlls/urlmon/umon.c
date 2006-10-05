@@ -89,7 +89,7 @@ static ULONG WINAPI Binding_AddRef(IBinding* iface)
     Binding *This = (Binding*)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -99,7 +99,7 @@ static ULONG WINAPI Binding_Release(IBinding* iface)
     Binding *This = (Binding*)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n",This, ref);
+    TRACE("(%p) ref=%d\n",This, ref);
 
     if(!ref) {
         HeapFree(GetProcessHeap(), 0, This->URLName);
@@ -161,7 +161,7 @@ static HRESULT WINAPI Binding_SetPriority(IBinding* iface, LONG nPriority)
 {
     Binding *This = (Binding*)iface;
 
-    FIXME("(%p)->(%ld): stub\n", This, nPriority);
+    FIXME("(%p)->(%d): stub\n", This, nPriority);
 
     return E_NOTIMPL;
 }
@@ -340,7 +340,7 @@ static ULONG WINAPI URLMonikerImpl_AddRef(IMoniker* iface)
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
 
     return refCount;
 }
@@ -353,7 +353,7 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
 
     /* destroy the object if there's no more reference on it */
     if (!refCount) {
@@ -558,10 +558,10 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                 DWORD dwService = 0;
                 BOOL bSuccess;
 
-                TRACE("got bindinfo. bindf = %08lx extrainfo = %s bindinfof = %08lx bindverb = %08lx iid %s\n",
+                TRACE("got bindinfo. bindf = %08x extrainfo = %s bindinfof = %08x bindverb = %08x iid %s\n",
                       bindf, debugstr_w(bi.szExtraInfo), bi.grfBindInfoF, bi.dwBindVerb, debugstr_guid(&bi.iid));
                 hres = IBindStatusCallback_OnStartBinding(bind->pbscb, 0, (IBinding*)bind);
-                TRACE("OnStartBinding rets %08lx\n", hres);
+                TRACE("OnStartBinding rets %08x\n", hres);
 
                 /* This class will accept URLs with the backslash in them. But InternetCrackURL will not - it
                  * requires forward slashes (this is the behaviour of Microsoft's INETAPI). So we need to make
@@ -712,7 +712,7 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                     }
                     if(bSuccess)
                     {
-                        TRACE("res = %ld gle = %08lx url len = %ld\n", hres, GetLastError(), bind->expected_size);
+                        TRACE("res = %d gle = %08x url len = %d\n", hres, GetLastError(), bind->expected_size);
 
                         IBindStatusCallback_OnProgress(bind->pbscb, 0, 0, BINDSTATUS_CACHEFILENAMEAVAILABLE, szFileName);
 
@@ -720,7 +720,7 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                             char buf[4096];
                             DWORD bufread;
                             if(InternetReadFile(bind->hrequest, buf, sizeof(buf), &bufread)) {
-                                TRACE("read %ld bytes %s...\n", bufread, debugstr_an(buf, 10));
+                                TRACE("read %d bytes %s...\n", bufread, debugstr_an(buf, 10));
                                 if(bufread == 0) break;
                                 hres = Binding_MoreCacheData(bind, buf, bufread);
                             } else
@@ -766,7 +766,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 
     bret = InternetCrackUrlW(This->URLName, 0, ICU_ESCAPE, &url);
     if(!bret) {
-        ERR("InternetCrackUrl failed: %ld\n", GetLastError());
+        ERR("InternetCrackUrl failed: %d\n", GetLastError());
         return E_FAIL;
     }
 
@@ -792,7 +792,7 @@ static HRESULT WINAPI URLMonikerImpl_Reduce(IMoniker* iface,
 {
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     
-    TRACE("(%p,%p,%ld,%p,%p)\n",This,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",This,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if(!ppmkReduced)
         return E_INVALIDARG;
@@ -1097,7 +1097,7 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
 HRESULT WINAPI CreateAsyncBindCtx(DWORD reserved, IBindStatusCallback *callback,
     IEnumFORMATETC *format, IBindCtx **pbind)
 {
-    TRACE("(%08lx %p %p %p)\n", reserved, callback, format, pbind);
+    TRACE("(%08x %p %p %p)\n", reserved, callback, format, pbind);
 
     if(!callback)
         return E_INVALIDARG;
@@ -1117,18 +1117,18 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
     BIND_OPTS bindopts;
     IBindCtx *bctx;
 
-    TRACE("(%p %08lx %p %p %p %ld)\n", ibind, options, callback, format, pbind, reserved);
+    TRACE("(%p %08x %p %p %p %d)\n", ibind, options, callback, format, pbind, reserved);
 
     if(!pbind)
         return E_INVALIDARG;
 
     if(options)
-        FIXME("not supported options %08lx\n", options);
+        FIXME("not supported options %08x\n", options);
     if(format)
         FIXME("format is not supported\n");
 
     if(reserved)
-        WARN("reserved=%ld\n", reserved);
+        WARN("reserved=%d\n", reserved);
 
     hres = CreateBindCtx(0, &bctx);
     if(FAILED(hres))
@@ -1211,7 +1211,7 @@ HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
   DWORD dwQueryFlags, LPVOID pvBuffer, DWORD cbBuffer, DWORD * pcbBuffer,
   DWORD dwReserved)
 {
-  FIXME("(%s, %x, %lx, %p, %lx, %p, %lx): stub\n", debugstr_w(pwzUrl),
+  FIXME("(%s, %x, %x, %p, %x, %p, %x): stub\n", debugstr_w(pwzUrl),
     QueryOption, dwQueryFlags, pvBuffer, cbBuffer, pcbBuffer, dwReserved);
   return S_OK;
 }
@@ -1293,7 +1293,7 @@ HRESULT WINAPI RegisterBindStatusCallback(
 {
     IBindStatusCallback *prev;
 
-    TRACE("(%p,%p,%p,%lu)\n", pbc, pbsc, ppbscPrevious, dwReserved);
+    TRACE("(%p,%p,%p,%u)\n", pbc, pbsc, ppbscPrevious, dwReserved);
 
     if (pbc == NULL || pbsc == NULL)
         return E_INVALIDARG;
@@ -1374,7 +1374,7 @@ HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller,
     UNICODE_STRING szURL_w, szFileName_w;
 
     if ((szURL == NULL) || (szFileName == NULL)) {
-	FIXME("(%p,%s,%s,%08lx,%p) cannot accept NULL strings !\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
+	FIXME("(%p,%s,%s,%08x,%p) cannot accept NULL strings !\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
 	return E_INVALIDARG; /* The error code is not specified in this case... */
     }
     
@@ -1391,7 +1391,7 @@ HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller,
 	}
     }
     
-    FIXME("(%p,%s,%s,%08lx,%p) could not allocate W strings !\n", pCaller, szURL, szFileName, dwReserved, lpfnCB);
+    FIXME("(%p,%s,%s,%08x,%p) could not allocate W strings !\n", pCaller, szURL, szFileName, dwReserved, lpfnCB);
     return E_OUTOFMEMORY;
 }
 
@@ -1429,7 +1429,7 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller,
     static const WCHAR wszAppName[]={'u','r','l','m','o','n','.','d','l','l',0};
 
     /* Note: all error codes would need to be checked agains real Windows behaviour... */
-    TRACE("(%p,%s,%s,%08lx,%p) stub!\n", pCaller, debugstr_w(szURL), debugstr_w(szFileName), dwReserved, lpfnCB);
+    TRACE("(%p,%s,%s,%08x,%p) stub!\n", pCaller, debugstr_w(szURL), debugstr_w(szFileName), dwReserved, lpfnCB);
 
     if ((szURL == NULL) || (szFileName == NULL)) {
 	FIXME(" cannot accept NULL strings !\n");
@@ -1485,7 +1485,7 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller,
     
     if (HttpQueryInfoW(hreq, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER,
 		       &total_size, &arg_size, NULL)) {
-	TRACE(" total size : %ld\n", total_size);
+	TRACE(" total size : %d\n", total_size);
     }
     
     hfile = CreateFileW(szFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -1572,7 +1572,7 @@ HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPST
     int len;
     HRESULT hres;
 
-    TRACE("(%p %s %p %ld %ld %p)\n", lpUnkCaller, debugstr_a(szURL), szFileName,
+    TRACE("(%p %s %p %d %d %p)\n", lpUnkCaller, debugstr_a(szURL), szFileName,
             dwBufLength, dwReserved, pBSC);
 
     if(szURL) {
@@ -1612,7 +1612,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
         'O','K','\\','r','\\','n','\\','r','\\','n',0
     };
 
-    TRACE("(%p, %s, %p, %ld, %ld, %p)\n", lpUnkCaller, debugstr_w(szURL),
+    TRACE("(%p, %s, %p, %d, %d, %p)\n", lpUnkCaller, debugstr_w(szURL),
           szFileName, dwBufLength, dwReserved, pBSC);
 
     if (!szURL || !szFileName)
