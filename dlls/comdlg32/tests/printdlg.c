@@ -61,7 +61,7 @@ static void test_PrintDlgA(void)
     SetLastError(0xdeadbeef);
     res = PrintDlgA(pDlg);
     ok( !res && (CommDlgExtendedError() == CDERR_STRUCTSIZE),
-        "returned %ld with 0x%lx and 0x%lx (expected '0' and " \
+        "returned %d with 0x%x and 0x%x (expected '0' and " \
         "CDERR_STRUCTSIZE)\n", res, GetLastError(), CommDlgExtendedError());
 
 
@@ -71,7 +71,7 @@ static void test_PrintDlgA(void)
     SetLastError(0xdeadbeef);
     res = PrintDlgA(pDlg);
     ok( res || (CommDlgExtendedError() == PDERR_NODEFAULTPRN),
-        "returned %ld with 0x%lx and 0x%lx (expected '!= 0' or '0' and " \
+        "returned %d with 0x%x and 0x%x (expected '!= 0' or '0' and " \
         "PDERR_NODEFAULTPRN)\n", res, GetLastError(), CommDlgExtendedError());
 
     HeapFree(GetProcessHeap(), 0, pDlg);
