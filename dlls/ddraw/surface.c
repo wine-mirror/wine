@@ -1607,8 +1607,11 @@ IDirectDrawSurfaceImpl_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
     IDirectDrawSurfaceImpl *Ref = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, DDSRef);
-    FIXME("(%p)->(%lx,%p)\n", This, Flags, Ref);
-    return DDERR_NOTAOVERLAYSURFACE;
+
+    TRACE("(%p)->(%lx,%p): Relay\n", This, Flags, Ref);
+    return IWineD3DSurface_UpdateOverlayZOrder(This->WineD3DSurface,
+                                               Flags,
+                                               Ref ? Ref->WineD3DSurface : NULL);
 }
 
 /*****************************************************************************

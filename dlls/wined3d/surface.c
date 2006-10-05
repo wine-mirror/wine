@@ -3087,6 +3087,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LO
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD Flags, IWineD3DSurface *Ref) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DSurfaceImpl *RefImpl = (IWineD3DSurfaceImpl *) Ref;
+
+    FIXME("(%p)->(%08x,%p) Stub!\n", This, Flags, RefImpl);
+
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3126,6 +3135,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetMem,
     IWineD3DSurfaceImpl_SetOverlayPosition,
     IWineD3DSurfaceImpl_GetOverlayPosition,
+    IWineD3DSurfaceImpl_UpdateOverlayZOrder,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
