@@ -89,13 +89,13 @@ static void error_code_messagebox(HWND hwnd, DWORD error_code)
     LPTSTR lpMsgBuf;
     DWORD status;
     TCHAR title[256];
-    static const TCHAR fallback[] = TEXT("Error displaying error message.\n");
+    static TCHAR fallback[] = TEXT("Error displaying error message.\n");
     if (!LoadString(hInst, IDS_ERROR, title, COUNT_OF(title)))
         lstrcpy(title, TEXT("Error"));
     status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL, error_code, 0, (LPTSTR)&lpMsgBuf, 0, NULL);
     if (!status)
-        lpMsgBuf = (LPTSTR)fallback;
+        lpMsgBuf = fallback;
     MessageBox(hwnd, lpMsgBuf, title, MB_OK | MB_ICONERROR);
     if (lpMsgBuf != fallback)
         LocalFree(lpMsgBuf);
@@ -481,9 +481,12 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
 	parentKey = hRootKey;
 	srcSubKey = keyPath;
     } else {
+	LPTSTR srcSubKey_copy;
+
 	parentPath = strdup(keyPath);
-	srcSubKey = strrchr(parentPath, '\\') + 1;
-	*((LPTSTR)srcSubKey - 1) = 0;
+	srcSubKey_copy = strrchr(parentPath, '\\');
+	*srcSubKey_copy = 0;
+	srcSubKey = srcSubKey_copy + 1;
 	lRet = RegOpenKeyEx(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);
 	if (lRet != ERROR_SUCCESS) {
 	    error_code_messagebox(hwnd, lRet);
