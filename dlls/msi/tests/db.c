@@ -1720,9 +1720,23 @@ static void test_generate_transform(void)
     r = run_query(hdb1, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
+    query = "INSERT INTO `AAR` ( `BAR`, `CAR` ) VALUES ( 1, 'vw' )";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+
+    query = "INSERT INTO `AAR` ( `BAR`, `CAR` ) VALUES ( 2, 'bmw' )";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row 2\n");
+
     todo_wine {
     r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
     ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    r = MsiDatabaseGenerateTransform(hdb1, hdb2, mstfile, 0, 0);
+    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    /* database needs to be committed */
+    MsiDatabaseCommit(hdb1);
 
     r = MsiDatabaseGenerateTransform(hdb1, hdb2, mstfile, 0, 0);
     ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
@@ -1731,6 +1745,8 @@ static void test_generate_transform(void)
 
     r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
     ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    MsiDatabaseCommit(hdb2);
 
     /* apply the same transform again? */
     r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
@@ -1741,6 +1757,18 @@ static void test_generate_transform(void)
     MsiCloseHandle( hdb2 );
 
     DeleteFile(msifile);
+
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_READONLY, &hdb1 );
+    ok( r == ERROR_SUCCESS , "Failed to create database\n" );
+
+    todo_wine {
+    query = "select `BAR`,`CAR` from `AAR`";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "select query failed\n");
+    }
+
+    MsiCloseHandle( hdb1 );
+
     DeleteFile(msifile2);
     DeleteFile(mstfile);
 }
