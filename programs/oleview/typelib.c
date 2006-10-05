@@ -1134,7 +1134,7 @@ int PopulateTree(void)
                 break;
             default:
                 lstrcpyW(wszText, bstrName);
-                WINE_FIXME("pTypeAttr->typekind ==  %d\n not supported",
+                WINE_FIXME("pTypeAttr->typekind == %d not supported\n",
                         pTypeAttr->typekind);
         }
 
