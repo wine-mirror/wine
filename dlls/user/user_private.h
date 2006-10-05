@@ -184,6 +184,12 @@ struct user_thread_info
     ULONG                         pad[11];                /* Available for more data */
 };
 
+struct hook_extra_info
+{
+    HHOOK handle;
+    LPARAM lparam;
+};
+
 static inline struct user_thread_info *get_user_thread_info(void)
 {
     return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
@@ -202,6 +208,7 @@ extern HBRUSH SYSCOLOR_55AABrush;
 extern BOOL CLIPBOARD_ReleaseOwner(void);
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
 extern BOOL HOOK_IsHooked( INT id );
+extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
                                                UINT msg, WPARAM wparam, LPARAM lparam,
                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr );

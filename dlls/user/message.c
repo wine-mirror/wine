@@ -612,11 +612,19 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
         return 0;
     case WM_WINE_KEYBOARD_LL_HOOK:
-        push_data( data, (KBDLLHOOKSTRUCT *)lparam, sizeof(KBDLLHOOKSTRUCT) );
+    {
+        struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
+        push_data( data, h_extra, sizeof(*h_extra) );
+        push_data( data, (LPVOID)h_extra->lparam, sizeof(KBDLLHOOKSTRUCT) );
         return 0;
+    }
     case WM_WINE_MOUSE_LL_HOOK:
-        push_data( data, (MSLLHOOKSTRUCT *)lparam, sizeof(MSLLHOOKSTRUCT) );
+    {
+        struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
+        push_data( data, h_extra, sizeof(*h_extra) );
+        push_data( data, (LPVOID)h_extra->lparam, sizeof(MSLLHOOKSTRUCT) );
         return 0;
+    }
     case WM_NCPAINT:
         if (wparam <= 1) return 0;
         FIXME( "WM_NCPAINT hdc packing not supported yet\n" );
@@ -876,11 +884,17 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         minsize = sizeof(DEV_BROADCAST_HDR);
         break;
     case WM_WINE_KEYBOARD_LL_HOOK:
-        minsize = sizeof(KBDLLHOOKSTRUCT);
-        break;
     case WM_WINE_MOUSE_LL_HOOK:
-        minsize = sizeof(MSLLHOOKSTRUCT);
+    {
+        struct hook_extra_info *h_extra = (struct hook_extra_info *)*buffer;
+
+        minsize = sizeof(struct hook_extra_info) +
+                  (message == WM_WINE_KEYBOARD_LL_HOOK ? sizeof(KBDLLHOOKSTRUCT)
+                                                       : sizeof(MSLLHOOKSTRUCT));
+        if (size < minsize) return FALSE;
+        h_extra->lparam = (LPARAM)(h_extra + 1);
         break;
+    }
     case WM_NCPAINT:
         if (*wparam <= 1) return TRUE;
         FIXME( "WM_NCPAINT hdc unpacking not supported\n" );
@@ -1189,9 +1203,12 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (hwnd == GetDesktopWindow()) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
-        return HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, wparam, lparam, TRUE );
     case WM_WINE_MOUSE_LL_HOOK:
-        return HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, wparam, lparam, TRUE );
+    {
+        struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
+
+        return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
+    }
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
             return USER_Driver->pWindowMessage( hwnd, msg, wparam, lparam );

@@ -329,18 +329,24 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
 
     if (info->tid)
     {
+        struct hook_extra_info h_extra;
+        h_extra.handle = info->handle;
+        h_extra.lparam = lparam;
+
         TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
                info->tid, hook_names[info->id-WH_MINHOOK], code, wparam, lparam );
 
         switch(info->id)
         {
         case WH_KEYBOARD_LL:
-            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK,
+                                            wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                            get_ll_hook_timeout(), &ret );
             break;
         case WH_MOUSE_LL:
-            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK, wparam, lparam,
-                                            SMTO_ABORTIFHUNG, get_ll_hook_timeout(), &ret );
+            MSG_SendInternalMessageTimeout( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK,
+                                            wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                            get_ll_hook_timeout(), &ret );
             break;
         default:
             ERR("Unknown hook id %d\n", info->id);
@@ -550,6 +556,35 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
     return call_hook( &info, code, wparam, lparam );
 }
 
+
+LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
+{
+    struct hook_info info;
+
+    ZeroMemory( &info, sizeof(info) - sizeof(info.module) );
+
+    SERVER_START_REQ( get_hook_info )
+    {
+        req->handle = hhook;
+        req->get_next = 0;
+        req->event = EVENT_MIN;
+        wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
+        if (!wine_server_call_err( req ))
+        {
+            info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
+            info.handle       = reply->handle;
+            info.id           = reply->id;
+            info.pid          = reply->pid;
+            info.tid          = reply->tid;
+            info.proc         = reply->proc;
+            info.next_unicode = reply->unicode;
+        }
+    }
+    SERVER_END_REQ;
+
+    info.prev_unicode = TRUE;  /* assume Unicode for this function */
+    return call_hook( &info, code, wparam, lparam );
+}
 
 /***********************************************************************
  *		CallMsgFilterA (USER32.@)
