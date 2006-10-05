@@ -579,7 +579,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
             SendMessageW(ctrl->hwnd, PBM_SETPOS, 100*(ctrl->progress_current/ctrl->progress_max), 0);
             break;
         default:
-            ERR("Unknown progress message %ld\n", func);
+            ERR("Unknown progress message %d\n", func);
             break;
         }
     }
@@ -886,7 +886,7 @@ msi_richedit_stream_in( DWORD_PTR arg, LPBYTE buffer, LONG count, LONG *pcb )
     *pcb = count;
     info->offset += count;
 
-    TRACE("%ld/%ld\n", info->offset, info->length);
+    TRACE("%d/%d\n", info->offset, info->length);
 
     return 0;
 }
@@ -2743,7 +2743,7 @@ static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LP
     dialog->size.cx = sz.cx;
     dialog->size.cy = sz.cy;
 
-    TRACE("%lu %lu %lu %lu\n", pos->left, pos->top, pos->right, pos->bottom);
+    TRACE("%u %u %u %u\n", pos->left, pos->top, pos->right, pos->bottom);
 
     style = GetWindowLongPtrW( dialog->hwnd, GWL_STYLE );
     AdjustWindowRect( pos, style, FALSE );

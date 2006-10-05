@@ -813,7 +813,7 @@ UINT MSI_DatabaseGetPrimaryKeys( MSIDATABASE *db,
     r = MSI_IterateRecords( query, 0, msi_primary_key_iterator, &info );
     if( r == ERROR_SUCCESS )
     {
-        TRACE("Found %ld primary keys\n", info.n );
+        TRACE("Found %d primary keys\n", info.n );
 
         /* allocate a record and fill in the names of the tables */
         info.rec = MSI_CreateRecord( info.n );

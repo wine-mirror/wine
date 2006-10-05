@@ -576,13 +576,13 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
     MSIPACKAGE *package = NULL;
     UINT ret;
 
-    TRACE("%s %08lx %p\n", debugstr_w(szPackage), dwOptions, phPackage );
+    TRACE("%s %08x %p\n", debugstr_w(szPackage), dwOptions, phPackage );
 
     if( szPackage == NULL )
         return ERROR_INVALID_PARAMETER;
 
     if( dwOptions )
-        FIXME("dwOptions %08lx not supported\n", dwOptions);
+        FIXME("dwOptions %08x not supported\n", dwOptions);
 
     ret = MSI_OpenPackageW( szPackage, &package );
     if( ret == ERROR_SUCCESS )
@@ -744,7 +744,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         }
     }
 
-    TRACE("(%p %lx %lx %s)\n",gUIHandlerA, gUIFilter, log_type,
+    TRACE("(%p %x %x %s)\n", gUIHandlerA, gUIFilter, log_type,
                              debugstr_w(message));
 
     /* convert it to ASCII */
@@ -1009,7 +1009,7 @@ UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName,
 
     if ( *pchValueBuf <= len )
     {
-        TRACE("have %lu, need %u -> ERROR_MORE_DATA\n", *pchValueBuf, len);
+        TRACE("have %u, need %u -> ERROR_MORE_DATA\n", *pchValueBuf, len);
         r = ERROR_MORE_DATA;
     }
     else

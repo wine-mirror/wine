@@ -154,7 +154,7 @@ static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig,
         TRACE("MaxVersion is %d.%d.%d.%d\n", HIWORD(sig->MaxVersionMS),
          LOWORD(sig->MaxVersionMS), HIWORD(sig->MaxVersionLS),
          LOWORD(sig->MaxVersionLS));
-        TRACE("MinSize is %ld, MaxSize is %ld;\n", sig->MinSize, sig->MaxSize);
+        TRACE("MinSize is %d, MaxSize is %d;\n", sig->MinSize, sig->MaxSize);
         TRACE("Languages is %s\n", debugstr_w(sig->Languages));
 
 end:
@@ -286,7 +286,7 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
                 sprintfW(*appValue + i * 3, binFmt, value[i]);
             break;
         default:
-            WARN("unimplemented for values of type %ld\n", regType);
+            WARN("unimplemented for values of type %d\n", regType);
             *appValue = NULL;
     }
 }

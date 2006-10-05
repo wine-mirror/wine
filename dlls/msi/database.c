@@ -65,7 +65,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
     msi_destroy_stringtable( db->strings );
     r = IStorage_Release( db->storage );
     if( r )
-        ERR("database reference count was not zero (%ld)\n", r);
+        ERR("database reference count was not zero (%d)\n", r);
     if (db->deletefile)
     {
         DeleteFileW( db->deletefile );
@@ -141,7 +141,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
 
     if( FAILED( r ) )
     {
-        FIXME("open failed r = %08lx!\n",r);
+        FIXME("open failed r = %08x!\n",r);
         return ERROR_FUNCTION_FAILED;
     }
 

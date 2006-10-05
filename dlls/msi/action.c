@@ -2136,7 +2136,7 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
             }
             msi_free(deformated);
 
-            TRACE("Data %li bytes(%i)\n",*size,count);
+            TRACE("Data %i bytes(%i)\n",*size,count);
         }
         else
         {
@@ -2162,7 +2162,7 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
             if (deformated[0] == '-')
                 d = -d;
             *(LPDWORD)data = d;
-            TRACE("DWORD %li\n",*(LPDWORD)data);
+            TRACE("DWORD %i\n",*(LPDWORD)data);
 
             msi_free(deformated);
         }
@@ -3639,7 +3639,7 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 
     if (!r)
     {
-        ERR("Unable to copy package (%s -> %s) (error %ld)\n",
+        ERR("Unable to copy package (%s -> %s) (error %d)\n",
             debugstr_w(msiFilePath), debugstr_w(packagefile), GetLastError());
         return ERROR_FUNCTION_FAILED;
     }
@@ -4073,7 +4073,7 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
     }
 
     if (count)
-        FIXME("%s -> %lu ignored %s table values\n",
+        FIXME("%s -> %u ignored %s table values\n",
               action, count, debugstr_w(table));
 
     return ERROR_SUCCESS;

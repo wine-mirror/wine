@@ -382,7 +382,7 @@ static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
     case ERROR_NO_MORE_ITEMS:
         return ERROR_SUCCESS;
     default:
-        ERR("Invalid Return Code %ld\n",rc);
+        ERR("Invalid Return Code %d\n",rc);
         return ERROR_INSTALL_FAILURE;
     }
 }
@@ -502,14 +502,13 @@ static DWORD WINAPI DllThread(LPVOID info)
 {
     thread_struct *stuff;
     DWORD rc = 0;
-  
-    TRACE("MSI Thread (0x%lx) started for custom action\n",
-                        GetCurrentThreadId());
-    
+
+    TRACE("MSI Thread (%x) started for custom action\n", GetCurrentThreadId());
+
     stuff = (thread_struct*)info;
     rc = ACTION_CallDllFunction(stuff);
 
-    TRACE("MSI Thread (0x%lx) finished (rc %li)\n",GetCurrentThreadId(), rc);
+    TRACE("MSI Thread (%x) finished (rc %i)\n",GetCurrentThreadId(), rc);
     /* clse all handles for this thread */
     MsiCloseAllHandles();
     return rc;

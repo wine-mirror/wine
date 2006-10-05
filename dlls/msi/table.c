@@ -208,7 +208,7 @@ void enum_stream_names( IStorage *stg )
         if( FAILED( r ) || !count )
             break;
         decode_streamname( stat.pwcsName, name );
-        TRACE("stream %2ld -> %s %s\n", n, 
+        TRACE("stream %2d -> %s %s\n", n,
               debugstr_w(stat.pwcsName), debugstr_w(name) );
         n++;
     }
@@ -236,14 +236,14 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     msi_free( encname );
     if( FAILED( r ) )
     {
-        WARN("open stream failed r = %08lx - empty table?\n",r);
+        WARN("open stream failed r = %08x - empty table?\n", r);
         return ret;
     }
 
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
     if( FAILED( r ) )
     {
-        WARN("open stream failed r = %08lx!\n",r);
+        WARN("open stream failed r = %08x!\n", r);
         goto end;
     }
 
@@ -257,7 +257,7 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     data = msi_alloc( sz );
     if( !data )
     {
-        WARN("couldn't allocate memory r=%08lx!\n",r);
+        WARN("couldn't allocate memory r=%08x!\n", r);
         ret = ERROR_NOT_ENOUGH_MEMORY;
         goto end;
     }
@@ -266,7 +266,7 @@ static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     if( FAILED( r ) || ( count != sz ) )
     {
         msi_free( data );
-        WARN("read stream failed r = %08lx!\n",r);
+        WARN("read stream failed r = %08x!\n", r);
         goto end;
     }
 
@@ -326,7 +326,7 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
     if( FAILED( r ) )
     {
-        WARN("open stream failed r = %08lx!\n",r);
+        WARN("open stream failed r = %08x!\n", r);
         goto end;
     }
 
@@ -340,7 +340,7 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     data = msi_alloc( sz );
     if( !data )
     {
-        WARN("couldn't allocate memory r=%08lx!\n",r);
+        WARN("couldn't allocate memory r=%08x!\n", r);
         ret = ERROR_NOT_ENOUGH_MEMORY;
         goto end;
     }
@@ -349,7 +349,7 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     if( FAILED( r ) || ( count != sz ) )
     {
         msi_free( data );
-        WARN("read stream failed r = %08lx!\n",r);
+        WARN("read stream failed r = %08x!\n", r);
         goto end;
     }
 
@@ -385,7 +385,7 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
     msi_free( encname );
     if( FAILED( r ) )
     {
-        WARN("open stream failed r = %08lx\n",r);
+        WARN("open stream failed r = %08x\n", r);
         return ret;
     }
 
@@ -746,15 +746,15 @@ string_table *load_string_table( IStorage *stg )
 
         r = msi_addstring( st, n, data+offset, len, refs );
         if( r != n )
-            ERR("Failed to add string %ld\n", n );
+            ERR("Failed to add string %d\n", n );
         n++;
         offset += len;
     }
 
     if ( datasize != offset )
-        ERR("string table load failed! (%08x != %08lx), please report\n", datasize, offset );
+        ERR("string table load failed! (%08x != %08x), please report\n", datasize, offset );
 
-    TRACE("Loaded %ld strings\n", count);
+    TRACE("Loaded %d strings\n", count);
 
 end:
     msi_free( pool );
