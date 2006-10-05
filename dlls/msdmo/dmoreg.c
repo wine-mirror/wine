@@ -194,7 +194,7 @@ lend:
     if (hrkey)
         RegCloseKey(hrkey);
 
-    TRACE(" hresult=0x%08lx\n", hres);
+    TRACE(" hresult=0x%08x\n", hres);
     return hres;
 }
 
@@ -448,7 +448,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
-    TRACE("%ld\n", cItemsToFetch);
+    TRACE("%d\n", cItemsToFetch);
 
     if (!pCLSID || !Names || !pcItemsFetched)
         return E_POINTER;
@@ -627,7 +627,7 @@ HRESULT WINAPI DMOEnum(
 {
     HRESULT hres = E_FAIL;
 
-    TRACE("guidCategory=%p dwFlags=0x%08lx cInTypes=%ld cOutTypes=%ld\n",
+    TRACE("guidCategory=%p dwFlags=0x%08x cInTypes=%d cOutTypes=%d\n",
         guidCategory, dwFlags, cInTypes, cOutTypes);
 
     *ppEnum = IEnumDMO_Constructor(guidCategory, dwFlags, cInTypes,
