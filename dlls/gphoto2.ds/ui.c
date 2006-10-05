@@ -55,9 +55,9 @@ static void PopulateListView(HWND List)
 	{
 		if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg")) 
 		{
-			memset(&item,0,sizeof(item));
 			item.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE ;
 			item.iItem = index;
+			item.iSubItem = 0;
 			item.pszText = file->filename;
 			item.iImage = index;
 			item.lParam= (LPARAM)file;
@@ -172,11 +172,11 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 								LVITEMA item;
 								struct gphoto2_file *file;
 
-								memset(&item,0,sizeof(item));
 
 								item.mask = LVIF_PARAM;
 								item.iItem = i;
 
+								item.iSubItem = 0;
 								SendMessageA(list,LVM_GETITEMA,0,(LPARAM)&item);
 
 								file = (struct gphoto2_file*)item.lParam;
@@ -204,10 +204,10 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 							LVITEMA item;
 							struct gphoto2_file *file;
 
-							memset(&item,0,sizeof(item));
 
 							item.mask = LVIF_PARAM;
 							item.iItem = i;
+							item.iSubItem = 0;
 
 							SendMessageA(list,LVM_GETITEMA,0,(LPARAM)&item);
 
