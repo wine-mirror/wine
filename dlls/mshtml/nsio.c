@@ -191,7 +191,7 @@ static nsrefcnt NSAPI nsChannel_AddRef(nsIHttpChannel *iface)
     nsChannel *This = NSCHANNEL_THIS(iface);
     nsrefcnt ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -265,7 +265,7 @@ static nsresult NSAPI nsChannel_Cancel(nsIHttpChannel *iface, nsresult aStatus)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    TRACE("(%p)->(%08lx)\n", This, aStatus);
+    TRACE("(%p)->(%08x)\n", This, aStatus);
 
     if(This->channel)
         return nsIChannel_Cancel(This->channel, aStatus);
@@ -345,7 +345,7 @@ static nsresult NSAPI nsChannel_SetLoadFlags(nsIHttpChannel *iface, nsLoadFlags 
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    TRACE("(%p)->(%08lx)\n", This, aLoadFlags);
+    TRACE("(%p)->(%08x)\n", This, aLoadFlags);
 
     This->load_flags = aLoadFlags;
 
@@ -546,7 +546,7 @@ static nsresult NSAPI nsChannel_SetContentLength(nsIHttpChannel *iface, PRInt32 
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, aContentLength);
+    TRACE("(%p)->(%d)\n", This, aContentLength);
 
     if(This->channel)
         return nsIChannel_SetContentLength(This->channel, aContentLength);
@@ -608,7 +608,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                                     (nsIRequest*)NSCHANNEL(This), NULL);
 
                     if(NS_FAILED(nsres))
-                        ERR("AddRequest failed:%08lx\n", nsres);
+                        ERR("AddRequest failed:%08x\n", nsres);
                 }
 
                 return WINE_NS_LOAD_FROM_MONIKER;
@@ -638,7 +638,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                                          &empty_string, -1);
                 nsIUploadChannel_Release(upload_channel);
                 if(NS_FAILED(nsres))
-                    WARN("SetUploadStream failed: %08lx\n", nsres);
+                    WARN("SetUploadStream failed: %08x\n", nsres);
 
                 nsACString_Finish(&empty_string);
             }
@@ -656,7 +656,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
     nsres = nsIURI_QueryInterface(This->original_uri, &IID_nsIWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWineURI: %08lx\n", nsres);
+        ERR("Could not get nsIWineURI: %08x\n", nsres);
         return NS_ERROR_UNEXPECTED;
     }
 
@@ -687,7 +687,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                 (nsIRequest*)NSCHANNEL(This), NULL);
 
         if(NS_FAILED(nsres))
-            ERR("AddRequest failed:%08lx\n", nsres);
+            ERR("AddRequest failed:%08x\n", nsres);
     }
 
     start_binding(bscallback);
@@ -824,7 +824,7 @@ static nsresult NSAPI nsChannel_SetRedirectionLimit(nsIHttpChannel *iface, PRUin
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    TRACE("(%p)->(%lu)\n", This, aRedirectionLimit);
+    TRACE("(%p)->(%u)\n", This, aRedirectionLimit);
 
     if(This->http_channel)
         return nsIHttpChannel_SetRedirectionLimit(This->http_channel, aRedirectionLimit);
@@ -1013,7 +1013,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     nsChannel *This = NSUPCHANNEL_THIS(iface);
     const char *content_type;
 
-    TRACE("(%p)->(%p %p %ld)\n", This, aStream, aContentType, aContentLength);
+    TRACE("(%p)->(%p %p %d)\n", This, aStream, aContentType, aContentLength);
 
     if(This->post_data_stream)
         nsIInputStream_Release(This->post_data_stream);
@@ -1025,7 +1025,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     }
 
     if(aContentLength != -1)
-        FIXME("Unsupported acontentLength = %ld\n", aContentLength);
+        FIXME("Unsupported acontentLength = %d\n", aContentLength);
 
     if(aStream)
         nsIInputStream_AddRef(aStream);
@@ -1091,7 +1091,7 @@ static nsrefcnt NSAPI nsURI_AddRef(nsIWineURI *iface)
     nsURI *This = NSURI_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -1101,7 +1101,7 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
     nsURI *This = NSURI_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->container)
@@ -1335,7 +1335,7 @@ static nsresult NSAPI nsURI_SetPort(nsIWineURI *iface, PRInt32 aPort)
 {
     nsURI *This = NSURI_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, aPort);
+    TRACE("(%p)->(%d)\n", This, aPort);
 
     if(This->uri)
         return nsIURI_SetPort(This->uri, aPort);
@@ -1408,7 +1408,7 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
 
         nsres = nsIURI_Clone(This->uri, &uri);
         if(NS_FAILED(nsres)) {
-            WARN("Clone failed: %08lx\n", nsres);
+            WARN("Clone failed: %08x\n", nsres);
             return nsres;
         }
 
@@ -1545,7 +1545,7 @@ static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
 
             TRACE("spec %s\n", debugstr_a(This->spec));
         }else {
-            ERR("GetDisplayName failed: %08lx\n", hres);
+            ERR("GetDisplayName failed: %08x\n", hres);
         }
 
         IMoniker_AddRef(aMoniker);
@@ -1684,7 +1684,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             nsACString_GetData(&base_uri_str, &base_uri, NULL);
             TRACE("uri=%s\n", debugstr_a(base_uri));
         }else {
-            ERR("GetSpec failed: %08lx\n", nsres);
+            ERR("GetSpec failed: %08x\n", nsres);
         }
 
         nsACString_Finish(&base_uri_str);
@@ -1692,7 +1692,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
     if(NS_FAILED(nsres))
-        TRACE("NewURI failed: %08lx\n", nsres);
+        TRACE("NewURI failed: %08x\n", nsres);
 
     if(uri) {
         nsIURI_SchemeIs(uri, "javascript", &is_javascript);
@@ -1712,7 +1712,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             nsIWineURI_GetMoniker(wine_uri, &base_mon);
             nsIWineURI_Release(wine_uri);
         }else {
-            ERR("Could not get nsIWineURI: %08lx\n", nsres);
+            ERR("Could not get nsIWineURI: %08x\n", nsres);
         }
     }
 
@@ -1737,7 +1737,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             nsIWineURI_SetMoniker((nsIWineURI*)*_retval, mon);
             IMoniker_Release(mon);
         }else {
-            WARN("CreateURLMoniker failed: %08lx\n", hres);
+            WARN("CreateURLMoniker failed: %08x\n", hres);
         }
     }
 
@@ -1763,14 +1763,14 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 
     nsres = nsIIOService_NewChannelFromURI(nsio, aURI, &channel);
     if(NS_FAILED(nsres) && nsres != NS_ERROR_UNKNOWN_PROTOCOL) {
-        WARN("NewChannelFromURI failed: %08lx\n", nsres);
+        WARN("NewChannelFromURI failed: %08x\n", nsres);
         *_retval = channel;
         return nsres;
     }
 
     nsres = nsIURI_QueryInterface(aURI, &IID_nsIWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
-        WARN("Could not get nsIWineURI: %08lx\n", nsres);
+        WARN("Could not get nsIWineURI: %08x\n", nsres);
         *_retval = channel;
         return channel ? NS_OK : NS_ERROR_UNEXPECTED;
     }
@@ -1821,7 +1821,7 @@ static nsresult NSAPI nsIOService_SetOffline(nsIIOService *iface, PRBool aOfflin
 static nsresult NSAPI nsIOService_AllowPort(nsIIOService *iface, PRInt32 aPort,
                                              const char *aScheme, PRBool *_retval)
 {
-    TRACE("(%ld %s %p)\n", aPort, debugstr_a(aScheme), _retval);
+    TRACE("(%d %s %p)\n", aPort, debugstr_a(aScheme), _retval);
     return nsIIOService_AllowPort(nsio, aPort, debugstr_a(aScheme), _retval);
 }
 
@@ -1912,14 +1912,14 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
     nsres = nsIComponentManager_GetClassObject(component_manager, &NS_IOSERVICE_CID,
                                                &IID_nsIFactory, (void**)&old_factory);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get factory: %08lx\n", nsres);
+        ERR("Could not get factory: %08x\n", nsres);
         nsIFactory_Release(old_factory);
         return;
     }
 
     nsres = nsIFactory_CreateInstance(old_factory, NULL, &IID_nsIIOService, (void**)&nsio);
     if(NS_FAILED(nsres)) {
-        ERR("Couldn not create nsIOService instance %08lx\n", nsres);
+        ERR("Couldn not create nsIOService instance %08x\n", nsres);
         nsIFactory_Release(old_factory);
         return;
     }
@@ -1927,10 +1927,10 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
     nsres = nsIComponentRegistrar_UnregisterFactory(registrar, &NS_IOSERVICE_CID, old_factory);
     nsIFactory_Release(old_factory);
     if(NS_FAILED(nsres))
-        ERR("UnregisterFactory failed: %08lx\n", nsres);
+        ERR("UnregisterFactory failed: %08x\n", nsres);
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_IOSERVICE_CID,
             NS_IOSERVICE_CLASSNAME, NS_IOSERVICE_CONTRACTID, &nsIOServiceFactory);
     if(NS_FAILED(nsres))
-        ERR("RegisterFactory failed: %08lx\n", nsres);
+        ERR("RegisterFactory failed: %08x\n", nsres);
 }

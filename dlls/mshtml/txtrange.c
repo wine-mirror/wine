@@ -79,7 +79,7 @@ static ULONG WINAPI HTMLTxtRange_AddRef(IHTMLTxtRange *iface)
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -89,7 +89,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->nsselection)
@@ -111,7 +111,7 @@ static HRESULT WINAPI HTMLTxtRange_GetTypeInfo(IHTMLTxtRange *iface, UINT iTInfo
                                                LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -120,7 +120,7 @@ static HRESULT WINAPI HTMLTxtRange_GetIDsOfNames(IHTMLTxtRange *iface, REFIID ri
                                                  LCID lcid, DISPID *rgDispId)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -130,7 +130,7 @@ static HRESULT WINAPI HTMLTxtRange_Invoke(IHTMLTxtRange *iface, DISPID dispIdMem
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -165,7 +165,7 @@ static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 
     nsres = nsISelection_ToString(This->nsselection, &nstext);
     if(NS_FAILED(nsres) || !nstext) {
-        ERR("toString failed: %08lx\n", nsres);
+        ERR("toString failed: %08x\n", nsres);
         return E_FAIL;
     }
 

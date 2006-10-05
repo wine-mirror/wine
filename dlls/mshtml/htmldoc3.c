@@ -66,7 +66,7 @@ static HRESULT WINAPI HTMLDocument3_GetTypeInfo(IHTMLDocument3 *iface, UINT iTIn
                                                 LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -75,7 +75,7 @@ static HRESULT WINAPI HTMLDocument3_GetIDsOfNames(IHTMLDocument3 *iface, REFIID 
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -85,7 +85,7 @@ static HRESULT WINAPI HTMLDocument3_Invoke(IHTMLDocument3 *iface, DISPID dispIdM
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -128,7 +128,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 
     nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres))
-        ERR("GetDocument failed: %08lx\n", nsres);
+        ERR("GetDocument failed: %08x\n", nsres);
 
     if(nsdoc) {
         node = get_node(This, (nsIDOMNode*)nsdoc);

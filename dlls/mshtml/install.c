@@ -89,7 +89,7 @@ static void set_registry(LPCSTR install_dir)
     /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
     res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
     if(res != ERROR_SUCCESS) {
-        ERR("Faild to open MSHTML key: %ld\n", res);
+        ERR("Faild to open MSHTML key: %d\n", res);
         return;
     }
 
@@ -108,7 +108,7 @@ static void set_registry(LPCSTR install_dir)
     mshtml_free(gecko_path);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
-        ERR("Failed to set GeckoPath value: %08lx\n", res);
+        ERR("Failed to set GeckoPath value: %08x\n", res);
 }
 
 static HRESULT WINAPI InstallCallback_QueryInterface(IBindStatusCallback *iface,
@@ -150,7 +150,7 @@ static HRESULT WINAPI InstallCallback_OnStartBinding(IBindStatusCallback *iface,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if(tmp_file == INVALID_HANDLE_VALUE) {
-        ERR("Could not create file: %ld\n", GetLastError());
+        ERR("Could not create file: %d\n", GetLastError());
         clean_up();
         return E_FAIL;
     }
@@ -196,7 +196,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
 
     if(FAILED(hresult)) {
-        ERR("Binding failed %08lx\n", hresult);
+        ERR("Binding failed %08x\n", hresult);
         clean_up();
         return S_OK;
     }
@@ -220,7 +220,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     FreeLibrary(advpack);
     mshtml_free(file_name);
     if(FAILED(hres)) {
-        ERR("Could not extract package: %08lx\n", hres);
+        ERR("Could not extract package: %08x\n", hres);
         clean_up();
     }
 
@@ -324,7 +324,7 @@ static DWORD WINAPI download_proc(PVOID arg)
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&str);
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
-        ERR("BindToStorage failed: %08lx\n", hres);
+        ERR("BindToStorage failed: %08x\n", hres);
         return 0;
     }
 

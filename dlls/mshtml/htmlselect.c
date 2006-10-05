@@ -106,7 +106,7 @@ static HRESULT WINAPI HTMLSelectElement_GetTypeInfo(IHTMLSelectElement *iface, U
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -115,7 +115,7 @@ static HRESULT WINAPI HTMLSelectElement_GetIDsOfNames(IHTMLSelectElement *iface,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -125,7 +125,7 @@ static HRESULT WINAPI HTMLSelectElement_Invoke(IHTMLSelectElement *iface, DISPID
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -181,7 +181,7 @@ static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR
         nsAString_GetData(&name_str, &name, NULL);
         *p = SysAllocString(name);
     }else {
-        ERR("GetName failed: %08lx\n", nsres);
+        ERR("GetName failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&name_str);
@@ -255,7 +255,7 @@ static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BST
         nsAString_GetData(&value_str, &value, NULL);
         *p = SysAllocString(value);
     }else {
-        ERR("GetValue failed: %08lx\n", nsres);
+        ERR("GetValue failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&value_str);
@@ -390,7 +390,7 @@ void HTMLSelectElement_Create(HTMLElement *element)
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLSelectElement interfce: %08lx\n", nsres);
+        ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
 
     element->impl = (IUnknown*)HTMLSELECT(ret);
     element->destructor = HTMLSelectElement_destructor;

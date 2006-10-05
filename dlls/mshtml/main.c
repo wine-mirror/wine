@@ -107,7 +107,7 @@ static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
     ClassFactory *This = (ClassFactory*)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %lu\n", This, ref);
+    TRACE("(%p) ref = %u\n", This, ref);
     return ref;
 }
 
@@ -116,7 +116,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     ClassFactory *This = (ClassFactory*)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %lu\n", This, ref);
+    TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
         mshtml_free(This);
@@ -209,7 +209,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    TRACE("() ref=%ld\n", module_ref);
+    TRACE("() ref=%d\n", module_ref);
     return module_ref ? S_FALSE : S_OK;
 }
 

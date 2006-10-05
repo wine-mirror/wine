@@ -105,7 +105,7 @@ static HRESULT WINAPI HTMLElement_GetTypeInfo(IHTMLElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -114,7 +114,7 @@ static HRESULT WINAPI HTMLElement_GetIDsOfNames(IHTMLElement *iface, REFIID riid
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -124,7 +124,7 @@ static HRESULT WINAPI HTMLElement_Invoke(IHTMLElement *iface, DISPID dispIdMembe
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -133,7 +133,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
                                                VARIANT AttributeValue, LONG lFlags)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s . %08lx)\n", This, debugstr_w(strAttributeName), lFlags);
+    FIXME("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
     return E_NOTIMPL;
 }
 
@@ -147,7 +147,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    WARN("(%p)->(%s %08lx %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
+    WARN("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
     nsAString_Init(&attr_str, strAttributeName);
     nsAString_Init(&value_str, NULL);
@@ -161,7 +161,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
         V_BSTR(AttributeValue) = SysAllocString(value);
         TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
     }else {
-        ERR("GetAttribute failed: %08lx\n", nsres);
+        ERR("GetAttribute failed: %08x\n", nsres);
         hres = E_FAIL;
     }
 
@@ -773,7 +773,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
 
     nsres = nsIDOMNode_GetChildNodes(elem->node->nsnode, &nsnode_list);
     if(NS_FAILED(nsres)) {
-        ERR("GetChildNodes failed: %08lx\n", nsres);
+        ERR("GetChildNodes failed: %08x\n", nsres);
         return;
     }
 
@@ -784,7 +784,7 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *b
     for(i=0; i<list_len; i++) {
         nsres = nsIDOMNodeList_Item(nsnode_list, i, &iter);
         if(NS_FAILED(nsres)) {
-            ERR("Item failed: %08lx\n", nsres);
+            ERR("Item failed: %08x\n", nsres);
             continue;
         }
 
@@ -1047,7 +1047,7 @@ static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -1057,7 +1057,7 @@ static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         IUnknown_Release(This->ref_unk);
@@ -1080,7 +1080,7 @@ static HRESULT WINAPI HTMLElementCollection_GetTypeInfo(IHTMLElementCollection *
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI HTMLElementCollection_GetIDsOfNames(IHTMLElementCollection
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -1098,7 +1098,7 @@ static HRESULT WINAPI HTMLElementCollection_Invoke(IHTMLElementCollection *iface
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -1151,7 +1151,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
     if(V_VT(&name) != VT_I4 || V_I4(&name) != V_I4(&index))
         FIXME("Unsupproted name vt=%d\n", V_VT(&name));
 
-    TRACE("(%p)->(%ld %ld %p)\n", This, V_I4(&name), V_I4(&index), pdisp);
+    TRACE("(%p)->(%d %d %p)\n", This, V_I4(&name), V_I4(&index), pdisp);
 
     if(V_I4(&index) < 0 || V_I4(&index) >= This->len)
         return E_INVALIDARG;
@@ -1195,7 +1195,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
 
     nsAString_Finish(&tag_str);
 
-    TRACE("fount %ld tags\n", buf.len);
+    TRACE("fount %d tags\n", buf.len);
 
     if(!buf.len) {
         mshtml_free(buf.buf);
@@ -1238,7 +1238,7 @@ static HRESULT HTMLElementCollection_Create(IUnknown *ref_unk, HTMLElement **ele
     IUnknown_AddRef(ref_unk);
     ret->ref_unk = ref_unk;
 
-    TRACE("ret=%p len=%ld\n", ret, len);
+    TRACE("ret=%p len=%d\n", ret, len);
 
     *p = (IDispatch*)ret;
     return S_OK;

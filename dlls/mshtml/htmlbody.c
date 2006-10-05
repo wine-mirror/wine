@@ -111,7 +111,7 @@ static HRESULT WINAPI HTMLBodyElement_GetTypeInfo(IHTMLBodyElement *iface, UINT 
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -120,7 +120,7 @@ static HRESULT WINAPI HTMLBodyElement_GetIDsOfNames(IHTMLBodyElement *iface, REF
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -130,7 +130,7 @@ static HRESULT WINAPI HTMLBodyElement_Invoke(IHTMLBodyElement *iface, DISPID dis
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -446,7 +446,7 @@ void HTMLBodyElement_Create(HTMLElement *element)
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsDOMHTMLBodyElement: %08lx\n", nsres);
+        ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
 
     element->impl = (IUnknown*)HTMLBODY(ret);
     element->destructor = HTMLBodyElement_destructor;

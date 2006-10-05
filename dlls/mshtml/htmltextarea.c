@@ -106,7 +106,7 @@ static HRESULT WINAPI HTMLTextAreaElement_GetTypeInfo(IHTMLTextAreaElement *ifac
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -115,7 +115,7 @@ static HRESULT WINAPI HTMLTextAreaElement_GetIDsOfNames(IHTMLTextAreaElement *if
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -125,7 +125,7 @@ static HRESULT WINAPI HTMLTextAreaElement_Invoke(IHTMLTextAreaElement *iface, DI
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -160,7 +160,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_value(IHTMLTextAreaElement *iface,
         nsAString_GetData(&value_str, &value, NULL);
         *p = SysAllocString(value);
     }else {
-        ERR("GetValue failed: %08lx\n", nsres);
+        ERR("GetValue failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&value_str);
@@ -192,7 +192,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_name(IHTMLTextAreaElement *iface, 
         nsAString_GetData(&name_str, &name, NULL);
         *p = SysAllocString(name);
     }else {
-        ERR("GetName failed: %08lx\n", nsres);
+        ERR("GetName failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&name_str);
@@ -406,7 +406,7 @@ void HTMLTextAreaElement_Create(HTMLElement *element)
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLTextAreaElement,
                                              (void**)&ret->nstextarea);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsDOMHTMLInputElement: %08lx\n", nsres);
+        ERR("Could not get nsDOMHTMLInputElement: %08x\n", nsres);
 
     element->impl = (IUnknown*)HTMLTXTAREA(ret);
     element->destructor = HTMLTextAreaElement_destructor;

@@ -66,7 +66,7 @@ static HRESULT WINAPI HTMLTextContainer_GetTypeInfo(IHTMLTextContainer *iface, U
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -75,7 +75,7 @@ static HRESULT WINAPI HTMLTextContainer_GetIDsOfNames(IHTMLTextContainer *iface,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -85,7 +85,7 @@ static HRESULT WINAPI HTMLTextContainer_Invoke(IHTMLTextContainer *iface, DISPID
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -126,7 +126,7 @@ static HRESULT WINAPI HTMLTextContainer_put_scrollTop(IHTMLTextContainer *iface,
         nsIDOMNSHTMLElement_SetScrollTop(nselem, v);
         nsIDOMNSHTMLElement_Release(nselem);
     }else {
-        ERR("Could not get nsIDOMNSHTMLElement interface: %08lx\n", nsres);
+        ERR("Could not get nsIDOMNSHTMLElement interface: %08x\n", nsres);
     }
 
     return S_OK;
@@ -153,7 +153,7 @@ static HRESULT WINAPI HTMLTextContainer_put_scrollLeft(IHTMLTextContainer *iface
         nsIDOMNSHTMLElement_SetScrollLeft(nselem, v);
         nsIDOMNSHTMLElement_Release(nselem);
     }else {
-        ERR("Could not get nsIDOMNSHTMLElement interface: %08lx\n", nsres);
+        ERR("Could not get nsIDOMNSHTMLElement interface: %08x\n", nsres);
     }
 
     return S_OK;

@@ -134,7 +134,7 @@ static ULONG WINAPI HTMLDocument_AddRef(IHTMLDocument2 *iface)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %lu\n", This, ref);
+    TRACE("(%p) ref = %u\n", This, ref);
     return ref;
 }
 
@@ -143,7 +143,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
     HTMLDocument *This = HTMLDOC_THIS(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %lu\n", This, ref);
+    TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
         remove_doc_tasks(This);
@@ -186,7 +186,7 @@ static HRESULT WINAPI HTMLDocument_GetTypeInfoCount(IHTMLDocument2 *iface, UINT 
 static HRESULT WINAPI HTMLDocument_GetTypeInfo(IHTMLDocument2 *iface, UINT iTInfo,
                                                 LCID lcid, ITypeInfo **ppTInfo)
 {
-    FIXME("(%p)->(%u %lu %p)\n", iface, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", iface, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -194,7 +194,7 @@ static HRESULT WINAPI HTMLDocument_GetIDsOfNames(IHTMLDocument2 *iface, REFIID r
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    FIXME("(%p)->(%s %p %u %lu %p)\n", iface, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", iface, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -203,7 +203,7 @@ static HRESULT WINAPI HTMLDocument_Invoke(IHTMLDocument2 *iface, DISPID dispIdMe
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -256,7 +256,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
 
     nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08lx\n", nsres);
+        ERR("GetDocument failed: %08x\n", nsres);
         return S_OK;
     }
 
@@ -270,7 +270,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     nsIDOMHTMLDocument_Release(nshtmldoc);
 
     if(NS_FAILED(nsres) || !nsbody) {
-        TRACE("Could not get body: %08lx\n", nsres);
+        TRACE("Could not get body: %08x\n", nsres);
         return S_OK;
     }
 

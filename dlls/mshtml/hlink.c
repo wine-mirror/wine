@@ -76,10 +76,10 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
 {
     HTMLDocument *This = HLINKTRG_THIS(iface);
 
-    TRACE("(%p)->(%08lx %s)\n", This, grfHLNF, debugstr_w(pwzJumpLocation));
+    TRACE("(%p)->(%08x %s)\n", This, grfHLNF, debugstr_w(pwzJumpLocation));
 
     if(grfHLNF)
-        FIXME("Unsupported grfHLNF=%08lx\n", grfHLNF);
+        FIXME("Unsupported grfHLNF=%08x\n", grfHLNF);
     if(pwzJumpLocation)
         FIXME("JumpLocation not supported\n");
 
@@ -90,7 +90,7 @@ static HRESULT WINAPI HlinkTarget_GetMoniker(IHlinkTarget *iface, LPCWSTR pwzLoc
         IMoniker **ppimkLocation)
 {
     HTMLDocument *This = HLINKTRG_THIS(iface);
-    FIXME("(%p)->(%s %08lx %p)\n", This, debugstr_w(pwzLocation), dwAssign, ppimkLocation);
+    FIXME("(%p)->(%s %08x %p)\n", This, debugstr_w(pwzLocation), dwAssign, ppimkLocation);
     return E_NOTIMPL;
 }
 
@@ -159,7 +159,7 @@ static ULONG WINAPI Hlink_AddRef(IHlink *iface)
     Hlink *This = HLINK_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -169,7 +169,7 @@ static ULONG WINAPI Hlink_Release(IHlink *iface)
     Hlink *This = HLINK_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->mon)
@@ -184,7 +184,7 @@ static ULONG WINAPI Hlink_Release(IHlink *iface)
 static HRESULT WINAPI Hlink_SetHlinkSite(IHlink *iface, IHlinkSite *pihlSite, DWORD dwSiteData)
 {
     Hlink *This = HLINK_THIS(iface);
-    FIXME("(%p)->(%p %ld)\n", This, pihlSite, dwSiteData);
+    FIXME("(%p)->(%p %d)\n", This, pihlSite, dwSiteData);
     return E_NOTIMPL;
 }
 
@@ -204,10 +204,10 @@ static HRESULT WINAPI Hlink_SetMonikerReference(IHlink *iface, DWORD grfHLSETF,
 {
     Hlink *This = HLINK_THIS(iface);
 
-    TRACE("(%p)->(%08lx %p %s)\n", This, grfHLSETF, pimkTarget, debugstr_w(pwzLocation));
+    TRACE("(%p)->(%08x %p %s)\n", This, grfHLSETF, pimkTarget, debugstr_w(pwzLocation));
 
     if(grfHLSETF)
-        FIXME("unsupported grfHLSETF=%08lx\n", grfHLSETF);
+        FIXME("unsupported grfHLSETF=%08x\n", grfHLSETF);
 
     if(This->mon)
         IMoniker_Release(This->mon);
@@ -234,10 +234,10 @@ static HRESULT WINAPI Hlink_GetMonikerReference(IHlink *iface, DWORD dwWhichRef,
 {
     Hlink *This = HLINK_THIS(iface);
 
-    TRACE("(%p)->(%ld %p %p)\n", This, dwWhichRef, ppimkTarget, ppwzLocation);
+    TRACE("(%p)->(%d %p %p)\n", This, dwWhichRef, ppimkTarget, ppwzLocation);
 
     if(dwWhichRef != 1)
-        FIXME("upsupported dwWhichRef = %ld\n", dwWhichRef);
+        FIXME("upsupported dwWhichRef = %d\n", dwWhichRef);
 
     if(This->mon)
         IMoniker_AddRef(This->mon);
@@ -259,7 +259,7 @@ static HRESULT WINAPI Hlink_SetStringReference(IHlink *iface, DWORD grfHLSETF,
                                                LPCWSTR pwzTarget, LPCWSTR pwzLocation)
 {
     Hlink *This = HLINK_THIS(iface);
-    FIXME("(%p)->(%08lx %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
+    FIXME("(%p)->(%08x %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
           debugstr_w(pwzLocation));
     return E_NOTIMPL;
 }
@@ -268,7 +268,7 @@ static HRESULT WINAPI Hlink_GetStringReference(IHlink *iface, DWORD dwWhichRef,
                                                LPWSTR *ppwzTarget, LPWSTR *ppwzLocation)
 {
     Hlink *This = HLINK_THIS(iface);
-    FIXME("(%p)->(%ld %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
+    FIXME("(%p)->(%d %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
     return E_NOTIMPL;
 }
 
@@ -284,7 +284,7 @@ static HRESULT WINAPI Hlink_GetFriendlyName(IHlink *iface, DWORD grfHLNAMEF,
 {
     Hlink *This = HLINK_THIS(iface);
 
-    TRACE("(%p)->(%08lx %p)\n", This, grfHLNAMEF, ppwzFriendlyName);
+    TRACE("(%p)->(%08x %p)\n", This, grfHLNAMEF, ppwzFriendlyName);
 
     *ppwzFriendlyName = NULL;
     return S_FALSE;
@@ -318,7 +318,7 @@ static HRESULT WINAPI Hlink_Navigate(IHlink *iface, DWORD grfHLNF, LPBC pibc,
         IBindStatusCallback *pibsc, IHlinkBrowseContext *pihlbc)
 {
     Hlink *This = HLINK_THIS(iface);
-    FIXME("(%p)->(%08lx %p %p %p)\n", This, grfHLNF, pibc, pibsc, pihlbc);
+    FIXME("(%p)->(%08x %p %p %p)\n", This, grfHLNF, pibc, pibsc, pihlbc);
     return E_NOTIMPL;
 }
 

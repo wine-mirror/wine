@@ -98,7 +98,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             nsres = nsIBaseWindow_SetSize(This->window,
                     LOWORD(lParam), HIWORD(lParam), TRUE);
             if(NS_FAILED(nsres))
-                WARN("SetSize failed: %08lx\n", nsres);
+                WARN("SetSize failed: %08x\n", nsres);
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -138,7 +138,7 @@ static BOOL load_xpcom(PRUnichar *gre_path)
 
     hXPCOM = LoadLibraryW(strXPCOM);
     if(!hXPCOM) {
-        WARN("Could not load XPCOM: %ld\n", GetLastError());
+        WARN("Could not load XPCOM: %d\n", GetLastError());
         return FALSE;
     }
 
@@ -273,7 +273,7 @@ static void set_profile(void)
     nsres = nsIServiceManager_GetServiceByContactID(pServMgr, NS_PROFILE_CONTRACTID,
                                          &IID_nsIProfile, (void**)&profile);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get profile service: %08lx\n", nsres);
+        ERR("Could not get profile service: %08x\n", nsres);
         return;
     }
 
@@ -281,12 +281,12 @@ static void set_profile(void)
     if(!exists) {
         nsres = nsIProfile_CreateNewProfile(profile, wszMSHTML, NULL, NULL, FALSE);
         if(NS_FAILED(nsres))
-            ERR("CreateNewProfile failed: %08lx\n", nsres);
+            ERR("CreateNewProfile failed: %08x\n", nsres);
     }
 
     nsres = nsIProfile_SetCurrentProfile(profile, wszMSHTML);
     if(NS_FAILED(nsres))
-        ERR("SetCurrentProfile failed: %08lx\n", nsres);
+        ERR("SetCurrentProfile failed: %08x\n", nsres);
 
     nsIProfile_Release(profile);
 }
@@ -320,35 +320,35 @@ static BOOL load_gecko(void)
     nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
     nsAString_Finish(&path);
     if(NS_FAILED(nsres)) {
-        ERR("NS_NewLocalFile failed: %08lx\n", nsres);
+        ERR("NS_NewLocalFile failed: %08x\n", nsres);
         FreeLibrary(hXPCOM);
         return FALSE;
     }
 
     nsres = NS_InitXPCOM2(&pServMgr, gre_dir, NULL);
     if(NS_FAILED(nsres)) {
-        ERR("NS_InitXPCOM2 failed: %08lx\n", nsres);
+        ERR("NS_InitXPCOM2 failed: %08x\n", nsres);
         FreeLibrary(hXPCOM);
         return FALSE;
     }
 
     nsres = nsIServiceManager_QueryInterface(pServMgr, &IID_nsIComponentManager, (void**)&pCompMgr);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIComponentManager: %08lx\n", nsres);
+        ERR("Could not get nsIComponentManager: %08x\n", nsres);
 
     nsres = NS_GetComponentRegistrar(&registrar);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIComponentRegistrar_AutoRegister(registrar, NULL);
         if(NS_FAILED(nsres))
-            ERR("AutoRegister(NULL) failed: %08lx\n", nsres);
+            ERR("AutoRegister(NULL) failed: %08x\n", nsres);
 
         nsres = nsIComponentRegistrar_AutoRegister(registrar, gre_dir);
         if(NS_FAILED(nsres))
-            ERR("AutoRegister(gre_dir) failed: %08lx\n", nsres);
+            ERR("AutoRegister(gre_dir) failed: %08x\n", nsres);
 
         init_nsio(pCompMgr, registrar);
     }else {
-        ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
+        ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
     }
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_APPSTARTUPNOTIFIER_CONTRACTID,
@@ -356,11 +356,11 @@ static BOOL load_gecko(void)
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIObserver_Observe(pStartNotif, NULL, APPSTARTUP_TOPIC, NULL);
         if(NS_FAILED(nsres))
-            ERR("Observe failed: %08lx\n", nsres);
+            ERR("Observe failed: %08x\n", nsres);
 
         nsIObserver_Release(pStartNotif);
     }else {
-        ERR("could not get appstartup-notifier: %08lx\n", nsres);
+        ERR("could not get appstartup-notifier: %08x\n", nsres);
     }
 
     set_profile();
@@ -368,7 +368,7 @@ static BOOL load_gecko(void)
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
             NULL, &IID_nsIMemory, (void**)&nsmem);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIMemory: %08lx\n", nsres);
+        ERR("Could not get nsIMemory: %08x\n", nsres);
 
     if(registrar) {
         register_nsservice(registrar, pServMgr);
@@ -440,7 +440,7 @@ nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
 
     nsres = nsIStringInputStream_SetData(ret, data, data_len);
     if(NS_FAILED(nsres)) {
-        ERR("AdoptData failed: %08lx\n", nsres);
+        ERR("AdoptData failed: %08x\n", nsres);
         nsIStringInputStream_Release(ret);
         return NULL;
     }
@@ -476,7 +476,7 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
 
     nsres = nsIDOMNode_GetNodeType(nsnode, &type);
     if(NS_FAILED(nsres)) {
-        ERR("GetType failed: %08lx\n", nsres);
+        ERR("GetType failed: %08x\n", nsres);
         return;
     }
 
@@ -518,7 +518,7 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
                 nsnode_to_nsstring_rec(serializer, child_node, str);
                 nsIDOMNode_Release(child_node);
             }else {
-                ERR("Item failed: %08lx\n", nsres);
+                ERR("Item failed: %08x\n", nsres);
             }
         }
 
@@ -543,13 +543,13 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
             NS_HTMLSERIALIZER_CONTRACTID, NULL, &IID_nsIContentSerializer,
             (void**)&serializer);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIContentSerializer: %08lx\n", nsres);
+        ERR("Could not get nsIContentSerializer: %08x\n", nsres);
         return;
     }
 
     nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE);
     if(NS_FAILED(nsres))
-        ERR("Init failed: %08lx\n", nsres);
+        ERR("Init failed: %08x\n", nsres);
 
     nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
     nsnode_to_nsstring_rec(serializer, nsnode, str);
@@ -557,7 +557,7 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
 
     nsres = nsIContentSerializer_Flush(serializer, str);
     if(NS_FAILED(nsres))
-        ERR("Flush failed: %08lx\n", nsres);
+        ERR("Flush failed: %08x\n", nsres);
 
     nsIContentSerializer_Release(serializer);
 }
@@ -634,7 +634,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
     NSContainer *This = NSWBCHROME_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -644,7 +644,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     NSContainer *This = NSWBCHROME_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->parent)
@@ -659,7 +659,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
         PRUint32 statusType, const PRUnichar *status)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    TRACE("(%p)->(%ld %s)\n", This, statusType, debugstr_w(status));
+    TRACE("(%p)->(%d %s)\n", This, statusType, debugstr_w(status));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -704,7 +704,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetChromeFlags(nsIWebBrowserChrome *ifa
         PRUint32 aChromeFlags)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    WARN("(%p)->(%08lx)\n", This, aChromeFlags);
+    WARN("(%p)->(%08x)\n", This, aChromeFlags);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -719,7 +719,7 @@ static nsresult NSAPI nsWebBrowserChrome_SizeBrowserTo(nsIWebBrowserChrome *ifac
         PRInt32 aCX, PRInt32 aCY)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    WARN("(%p)->(%ld %ld)\n", This, aCX, aCY);
+    WARN("(%p)->(%d %d)\n", This, aCX, aCY);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -741,7 +741,7 @@ static nsresult NSAPI nsWebBrowserChrome_ExitModalEventLoop(nsIWebBrowserChrome 
         nsresult aStatus)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    WARN("(%p)->(%08lx)\n", This, aStatus);
+    WARN("(%p)->(%08x)\n", This, aStatus);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -797,11 +797,11 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
     DWORD dwID = CONTEXT_MENU_DEFAULT;
     nsresult nsres;
 
-    TRACE("(%p)->(%08lx %p %p)\n", This, aContextFlags, aEvent, aNode);
+    TRACE("(%p)->(%08x %p %p)\n", This, aContextFlags, aEvent, aNode);
 
     nsres = nsIDOMEvent_QueryInterface(aEvent, &IID_nsIDOMMouseEvent, (void**)&event);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMMouseEvent interface: %08lx\n", nsres);
+        ERR("Could not get nsIDOMMouseEvent interface: %08x\n", nsres);
         return nsres;
     }
 
@@ -826,7 +826,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         dwID = CONTEXT_MENU_CONTROL;
         break;
     default:
-        FIXME("aContextFlags=%08lx\n", aContextFlags);
+        FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
     HTMLDocument_ShowContextMenu(This->doc, dwID, &pt);
@@ -887,7 +887,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
     nsres = nsIURI_QueryInterface(aURI, &IID_nsIWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
-        WARN("Could not get nsIWineURI interface: %08lx\n", nsres);
+        WARN("Could not get nsIWineURI interface: %08x\n", nsres);
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
@@ -906,10 +906,10 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
                 nsIWineURI_SetMoniker(wine_uri, mon);
                 IMoniker_Release(mon);
             }else {
-                WARN("CreateURLMoniker failed: %08lx\n", hres);
+                WARN("CreateURLMoniker failed: %08x\n", hres);
             }
         }else {
-            WARN("GetDisplayName failed: %08lx\n", hres);
+            WARN("GetDisplayName failed: %08x\n", hres);
         }
     }
 
@@ -1070,7 +1070,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow
         PRUint32 flags, PRInt32 x, PRInt32 y, PRInt32 cx, PRInt32 cy)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
-    WARN("(%p)->(%08lx %ld %ld %ld %ld)\n", This, flags, x, y, cx, cy);
+    WARN("(%p)->(%08x %d %d %d %d)\n", This, flags, x, y, cx, cy);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1078,7 +1078,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow
         PRUint32 flags, PRInt32 *x, PRInt32 *y, PRInt32 *cx, PRInt32 *cy)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
-    WARN("(%p)->(%08lx %p %p %p %p)\n", This, flags, x, y, cx, cy);
+    WARN("(%p)->(%08x %p %p %p %p)\n", This, flags, x, y, cx, cy);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1352,16 +1352,16 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
     if(NS_FAILED(nsres))
-        ERR("Creating WebBrowser failed: %08lx\n", nsres);
+        ERR("Creating WebBrowser failed: %08x\n", nsres);
 
     nsres = nsIWebBrowser_SetContainerWindow(ret->webbrowser, NSWBCHROME(ret));
     if(NS_FAILED(nsres))
-        ERR("SetContainerWindow failed: %08lx\n", nsres);
+        ERR("SetContainerWindow failed: %08x\n", nsres);
 
     nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIBaseWindow,
             (void**)&ret->window);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
+        ERR("Could not get nsIBaseWindow interface: %08x\n", nsres);
 
     nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserSetup,
                                          (void**)&wbsetup);
@@ -1369,7 +1369,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, TRUE);
         nsIWebBrowserSetup_Release(wbsetup);
         if(NS_FAILED(nsres))
-            ERR("SetProperty(SETUP_IS_CHROME_WRAPPER) failed: %08lx\n", nsres);
+            ERR("SetProperty(SETUP_IS_CHROME_WRAPPER) failed: %08x\n", nsres);
     }else {
         ERR("Could not get nsIWebBrowserSetup interface\n");
     }
@@ -1377,12 +1377,12 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIWebNavigation,
             (void**)&ret->navigation);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
+        ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
 
     nsres = nsIWebBrowserFocus_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserFocus,
             (void**)&ret->focus);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIWebBrowserFocus interface: %08lx\n", nsres);
+        ERR("Could not get nsIWebBrowserFocus interface: %08x\n", nsres);
 
     if(!nscontainer_class)
         register_nscontainer_class();
@@ -1395,17 +1395,17 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIBaseWindow_Create(ret->window);
         if(NS_FAILED(nsres))
-            WARN("Creating window failed: %08lx\n", nsres);
+            WARN("Creating window failed: %08x\n", nsres);
 
         nsIBaseWindow_SetVisibility(ret->window, FALSE);
         nsIBaseWindow_SetEnabled(ret->window, FALSE);
     }else {
-        ERR("InitWindow failed: %08lx\n", nsres);
+        ERR("InitWindow failed: %08x\n", nsres);
     }
 
     nsres = nsIWebBrowser_SetParentURIContentListener(ret->webbrowser, NSURICL(ret));
     if(NS_FAILED(nsres))
-        ERR("SetParentURIContentListener failed: %08lx\n", nsres);
+        ERR("SetParentURIContentListener failed: %08x\n", nsres);
 
     return ret;
 }

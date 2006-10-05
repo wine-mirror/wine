@@ -98,7 +98,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         hres = IDocHostUIHandler_GetHostInfo(pDocHostUIHandler, &hostinfo);
         if(SUCCEEDED(hres))
             /* FIXME: use hostinfo */
-            TRACE("hostinfo = {%lu %08lx %08lx %s %s}\n",
+            TRACE("hostinfo = {%u %08x %08x %s %s}\n",
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
 
@@ -202,7 +202,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
 
-    TRACE("(%p)->(%08lx)\n", This, dwSaveOption);
+    TRACE("(%p)->(%08x)\n", This, dwSaveOption);
 
     if(dwSaveOption == OLECLOSE_PROMPTSAVE)
         FIXME("OLECLOSE_PROMPTSAVE not implemented\n");
@@ -218,14 +218,14 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p %ld %p)->()\n", This, dwWhichMoniker, pmk);
+    FIXME("(%p %d %p)->()\n", This, dwWhichMoniker, pmk);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
+    FIXME("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
 
@@ -233,14 +233,14 @@ static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, IDataObject *pDa
                                         DWORD dwReserved)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%p %x %ld)\n", This, pDataObject, fCreation, dwReserved);
+    FIXME("(%p)->(%p %x %d)\n", This, pDataObject, fCreation, dwReserved);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwReserved, IDataObject **ppDataObject)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwReserved, ppDataObject);
+    FIXME("(%p)->(%d %p)\n", This, dwReserved, ppDataObject);
     return E_NOTIMPL;
 }
 
@@ -251,10 +251,10 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
     IOleDocumentSite *pDocSite;
     HRESULT hres;
 
-    TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
+    TRACE("(%p)->(%d %p %p %d %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
 
     if(iVerb != OLEIVERB_SHOW && iVerb != OLEIVERB_UIACTIVATE && iVerb != OLEIVERB_INPLACEACTIVATE) { 
-        FIXME("iVerb = %ld not supported\n", iVerb);
+        FIXME("iVerb = %d not supported\n", iVerb);
         return E_NOTIMPL;
     }
 
@@ -320,21 +320,21 @@ static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType, LPOLESTR *pszUserType)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwFormOfType, pszUserType);
+    FIXME("(%p)->(%d %p)\n", This, dwFormOfType, pszUserType);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwDrawAspect, psizel);
+    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwDrawAspect, psizel);
+    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
@@ -348,7 +348,7 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, dwConnection);
+    FIXME("(%p)->(%d)\n", This, dwConnection);
     return E_NOTIMPL;
 }
 
@@ -362,7 +362,7 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwAspect, pdwStatus);
+    FIXME("(%p)->(%d %p)\n", This, dwAspect, pdwStatus);
     return E_NOTIMPL;
 }
 
@@ -432,7 +432,7 @@ static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSit
     HTMLDocument *This = OLEDOC_THIS(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%p %p %ld %p)\n", This, pIPSite, pstm, dwReserved, ppView);
+    TRACE("(%p)->(%p %p %d %p)\n", This, pIPSite, pstm, dwReserved, ppView);
 
     if(!ppView)
         return E_INVALIDARG;
@@ -552,7 +552,7 @@ static HRESULT on_change_dlcontrol(HTMLDocument *This)
     
     hres = get_client_disp_property(This->client, DISPID_AMBIENT_DLCONTROL, &res);
     if(SUCCEEDED(hres))
-        FIXME("unsupported dlcontrol %08lx\n", V_I4(&res));
+        FIXME("unsupported dlcontrol %08x\n", V_I4(&res));
 
     return S_OK;
 }
@@ -641,7 +641,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
         return S_OK;
     }
 
-    FIXME("(%p) unsupported dispID=%ld\n", This, dispID);
+    FIXME("(%p) unsupported dispID=%d\n", This, dispID);
     return E_FAIL;
 }
 

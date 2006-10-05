@@ -123,7 +123,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     if(headers_len || post_len) {
         int len = headers_len ? headers_len-1 : 0;
 
-        static const char content_length[] = "Content-Length: %lu\r\n\r\n";
+        static const char content_length[] = "Content-Length: %u\r\n\r\n";
 
         data = mshtml_alloc(headers_len+post_len+sizeof(content_length)+8);
 
@@ -160,7 +160,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     HRESULT hres;
     nsresult nsres;
 
-    TRACE("(%p)->(%x %p %p %08lx)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
+    TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
     if(pibc) {
         IUnknown *unk = NULL;
@@ -199,7 +199,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     
     hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
     if(FAILED(hres)) {
-        WARN("GetDiaplayName failed: %08lx\n", hres);
+        WARN("GetDiaplayName failed: %08x\n", hres);
         return hres;
     }
 
@@ -250,7 +250,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             CoTaskMemFree(url);
             return S_OK;
         }else if(nsres != WINE_NS_LOAD_FROM_MONIKER) {
-            WARN("LoadURI failed: %08lx\n", nsres);
+            WARN("LoadURI failed: %08x\n", nsres);
         }
     }
 
@@ -382,7 +382,7 @@ static HRESULT WINAPI PersistFile_IsDirty(IPersistFile *iface)
 static HRESULT WINAPI PersistFile_Load(IPersistFile *iface, LPCOLESTR pszFileName, DWORD dwMode)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    FIXME("(%p)->(%s %08lx)\n", This, debugstr_w(pszFileName), dwMode);
+    FIXME("(%p)->(%s %08x)\n", This, debugstr_w(pszFileName), dwMode);
     return E_NOTIMPL;
 }
 
@@ -480,14 +480,14 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
 
     nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08lx\n", nsres);
+        ERR("GetDocument failed: %08x\n", nsres);
         return E_FAIL;
     }
 
     nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
     nsIDOMDocument_Release(nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNode failed: %08lx\n", nsres);
+        ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
         return E_FAIL;
     }
 
@@ -507,7 +507,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
 
     hres = IStream_Write(pStm, str, len, &written);
     if(FAILED(hres))
-        FIXME("Write failed: %08lx\n", hres);
+        FIXME("Write failed: %08x\n", hres);
 
     mshtml_free(str);
 

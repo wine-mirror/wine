@@ -84,7 +84,7 @@ static nsrefcnt NSAPI nsWindowCreator_Release(nsIWindowCreator2 *iface)
 static nsresult NSAPI nsWindowCreator_CreateChromeWindow(nsIWindowCreator2 *iface,
         nsIWebBrowserChrome *parent, PRUint32 chromeFlags, nsIWebBrowserChrome **_retval)
 {
-    TRACE("(%p %08lx %p)\n", parent, chromeFlags, _retval);
+    TRACE("(%p %08x %p)\n", parent, chromeFlags, _retval);
     return nsIWindowCreator2_CreateChromeWindow2(iface, parent, chromeFlags, 0, NULL,
                                                  NULL, _retval);
 }
@@ -93,7 +93,7 @@ static nsresult NSAPI nsWindowCreator_CreateChromeWindow2(nsIWindowCreator2 *ifa
         nsIWebBrowserChrome *parent, PRUint32 chromeFlags, PRUint32 contextFlags,
         nsIURI *uri, PRBool *cancel, nsIWebBrowserChrome **_retval)
 {
-    TRACE("(%p %08lx %08lx %p %p %p)\n", parent, chromeFlags, contextFlags, uri,
+    TRACE("(%p %08x %08x %p %p %p)\n", parent, chromeFlags, contextFlags, uri,
           cancel, _retval);
 
     if(cancel)
@@ -185,7 +185,7 @@ static nsresult NSAPI nsPromptService_ConfirmEx(nsIPromptService *iface,
 {
     static const PRUnichar wszContinue[] = {'C','o','n','t','i','n','u','e',0};
 
-    FIXME("(%p %s %s %08lx %s %s %s %s %p %p) hack!\n", aParent, debugstr_w(aDialogTitle),
+    FIXME("(%p %s %s %08x %s %s %s %s %p %p) hack!\n", aParent, debugstr_w(aDialogTitle),
           debugstr_w(aText), aButtonFlags, debugstr_w(aButton0Title),
           debugstr_w(aButton1Title), debugstr_w(aButton2Title), debugstr_w(aCheckMsg),
           aCheckState, _retval);
@@ -243,7 +243,7 @@ static nsresult NSAPI nsPromptService_Select(nsIPromptService *iface,
         const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
         PRInt32 *aOutSelection, PRBool *_retval)
 {
-    FIXME("(%p %s %s %ld %p %p %p)\n", aParent, debugstr_w(aDialogTitle),
+    FIXME("(%p %s %s %d %p %p %p)\n", aParent, debugstr_w(aDialogTitle),
         debugstr_w(aText), aCount, aSelectList, aOutSelection, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -449,7 +449,7 @@ void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *ser
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_PROMPTSERVICE_CID,
             "Prompt Service", NS_PROMPTSERVICE_CONTRACTID, NSFACTORY(&nsPromptServiceFactory));
     if(NS_FAILED(nsres))
-        ERR("RegisterFactory failed: %08lx\n", nsres);
+        ERR("RegisterFactory failed: %08x\n", nsres);
 
     nsres = nsIServiceManager_GetServiceByContactID(service_manager, NS_WINDOWWATCHER_CONTRACTID,
             &IID_nsIWindowWatcher, (void**)&window_watcher);
@@ -457,15 +457,15 @@ void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *ser
         nsres = nsIWindowWatcher_SetWindowCreator(window_watcher,
                                                   (nsIWindowCreator*)&nsWindowCreator);
         if(NS_FAILED(nsres))
-            ERR("SetWindowCreator failed: %08lx\n", nsres);
+            ERR("SetWindowCreator failed: %08x\n", nsres);
         nsIWindowWatcher_Release(window_watcher);
     }else {
-        ERR("Could not get WindowWatcher object: %08lx\n", nsres);
+        ERR("Could not get WindowWatcher object: %08x\n", nsres);
     }
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_TOOLTIPTEXTPROVIDER_CID,
             NS_TOOLTIPTEXTPROVIDER_CLASSNAME, NS_TOOLTIPTEXTPROVIDER_CONTRACTID,
             NSFACTORY(&nsTooltipTextFactory));
     if(NS_FAILED(nsres))
-        ERR("RegisterFactory failed: %08lx\n", nsres);
+        ERR("RegisterFactory failed: %08x\n", nsres);
 }

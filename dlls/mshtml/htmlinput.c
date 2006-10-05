@@ -106,7 +106,7 @@ static HRESULT WINAPI HTMLInputElement_GetTypeInfo(IHTMLInputElement *iface, UIN
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -115,7 +115,7 @@ static HRESULT WINAPI HTMLInputElement_GetIDsOfNames(IHTMLInputElement *iface, R
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
                                         lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -125,7 +125,7 @@ static HRESULT WINAPI HTMLInputElement_Invoke(IHTMLInputElement *iface, DISPID d
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }
@@ -153,7 +153,7 @@ static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *
         nsAString_GetData(&type_str, &type, NULL);
         *p = SysAllocString(type);
     }else {
-        ERR("GetType failed: %08lx\n", nsres);
+        ERR("GetType failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&type_str);
@@ -185,7 +185,7 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
         nsAString_GetData(&value_str, &value, NULL);
         *p = SysAllocString(value);
     }else {
-        ERR("GetValue failed: %08lx\n", nsres);
+        ERR("GetValue failed: %08x\n", nsres);
     }
 
     nsAString_Finish(&value_str);
@@ -217,7 +217,7 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
         nsAString_GetData(&name_str, &name, NULL);
         *p = SysAllocString(name);
     }else {
-        ERR("GetName failed: %08lx\n", nsres);
+        ERR("GetName failed: %08x\n", nsres);
         return E_FAIL;
     }
 
@@ -405,7 +405,7 @@ static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VAR
 
     nsres = nsIDOMHTMLInputElement_GetChecked(This->nsinput, &checked);
     if(NS_FAILED(nsres)) {
-        ERR("GetChecked failed: %08lx\n", nsres);
+        ERR("GetChecked failed: %08x\n", nsres);
         return E_FAIL;
     }
 
@@ -748,7 +748,7 @@ void HTMLInputElement_Create(HTMLElement *element)
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLInputElement,
                                              (void**)&ret->nsinput);
     if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLInputElement interface: %08lx\n", nsres);
+        ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
 
     element->impl = (IUnknown*)HTMLINPUT(ret);
     element->destructor = HTMLInputElement_destructor;

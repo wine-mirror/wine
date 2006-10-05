@@ -71,7 +71,7 @@ static nsrefcnt NSAPI nsInputStream_AddRef(nsIInputStream *iface)
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -82,7 +82,7 @@ static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
         mshtml_free(This);
@@ -109,7 +109,7 @@ static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUi
 {
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
 
-    TRACE("(%p)->(%p %ld %p)\n", This, aBuf, aCount, _retval);
+    TRACE("(%p)->(%p %d %p)\n", This, aBuf, aCount, _retval);
 
     /* Gecko always calls Read with big enough buffer */
     if(aCount < This->buf_size)
@@ -131,7 +131,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
     PRUint32 written = 0;
     nsresult nsres;
 
-    TRACE("(%p)->(%p %p %ld %p)\n", This, aWriter, aClousure, aCount, _retval);
+    TRACE("(%p)->(%p %p %d %p)\n", This, aWriter, aClousure, aCount, _retval);
 
     if(!This->buf_size)
         return S_OK;
@@ -141,7 +141,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
 
     nsres = aWriter(NSINSTREAM(This), aClousure, This->buf, 0, This->buf_size, &written);
     if(NS_FAILED(nsres))
-        FIXME("aWritter failed: %08lx\n", nsres);
+        FIXME("aWritter failed: %08x\n", nsres);
     if(written != This->buf_size)
         FIXME("written != buf_size\n");
 
@@ -223,7 +223,7 @@ static ULONG WINAPI BindStatusCallback_AddRef(IBindStatusCallback *iface)
     BSCallback *This = STATUSCLB_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %ld\n", This, ref);
+    TRACE("(%p) ref = %d\n", This, ref);
 
     return ref;
 }
@@ -233,7 +233,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     BSCallback *This = STATUSCLB_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %ld\n", This, ref);
+    TRACE("(%p) ref = %d\n", This, ref);
 
     if(!ref) {
         if(This->post_data)
@@ -262,7 +262,7 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
 {
     BSCallback *This = STATUSCLB_THIS(iface);
 
-    TRACE("(%p)->(%ld %p)\n", This, dwReserved, pbind);
+    TRACE("(%p)->(%d %p)\n", This, dwReserved, pbind);
 
     IBinding_AddRef(pbind);
     This->binding = pbind;
@@ -280,7 +280,7 @@ static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface,
 static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, reserved);
+    FIXME("(%p)->(%d)\n", This, reserved);
     return E_NOTIMPL;
 }
 
@@ -289,7 +289,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
 {
     BSCallback *This = STATUSCLB_THIS(iface);
 
-    TRACE("%p)->(%lu %lu %lu %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+    TRACE("%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
             debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
@@ -314,7 +314,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 {
     BSCallback *This = STATUSCLB_THIS(iface);
 
-    TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
+    TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
     IBinding_Release(This->binding);
     This->binding = NULL;
@@ -329,7 +329,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
             nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
                     (nsIRequest*)NSCHANNEL(This->nschannel), NULL, NS_OK);
             if(NS_FAILED(nsres))
-                ERR("RemoveRequest failed: %08lx\n", nsres);
+                ERR("RemoveRequest failed: %08x\n", nsres);
         }
     }
 
@@ -387,7 +387,7 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    TRACE("(%p)->(%08x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
     if(This->nslistener) {
         if(!This->nsstream) {
@@ -396,7 +396,7 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
             nsres = nsIStreamListener_OnStartRequest(This->nslistener,
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
             if(NS_FAILED(nsres))
-                FIXME("OnStartRequest failed: %08lx\n", nsres);
+                FIXME("OnStartRequest failed: %08x\n", nsres);
         }
 
         do {
@@ -409,7 +409,7 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
                     NSINSTREAM(This->nsstream), This->readed, This->nsstream->buf_size);
             if(NS_FAILED(nsres))
-                FIXME("OnDataAvailable failed: %08lx\n", nsres);
+                FIXME("OnDataAvailable failed: %08x\n", nsres);
 
             if(This->nsstream->buf_size)
                 FIXME("buffer is not empty!\n");
@@ -472,7 +472,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
     BSCallback *This = HTTPNEG_THIS(iface);
     DWORD size;
 
-    TRACE("(%p)->(%s %s %ld %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
+    TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
           dwReserved, pszAdditionalHeaders);
 
     if(!This->headers) {
@@ -491,7 +491,7 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwR
         LPCWSTR szResponseHeaders, LPCWSTR szRequestHeaders, LPWSTR *pszAdditionalRequestHeaders)
 {
     BSCallback *This = HTTPNEG_THIS(iface);
-    FIXME("(%p)->(%ld %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
+    FIXME("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
     return E_NOTIMPL;
 }
@@ -548,7 +548,7 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
         ULONG ulStringType, LPOLESTR *ppwzStr, ULONG cEl, ULONG *pcElFetched)
 {
     BSCallback *This = BINDINFO_THIS(iface);
-    FIXME("(%p)->(%lu %p %lu %p)\n", This, ulStringType, ppwzStr, cEl, pcElFetched);
+    FIXME("(%p)->(%u %p %u %p)\n", This, ulStringType, ppwzStr, cEl, pcElFetched);
     return E_NOTIMPL;
 }
 
@@ -742,14 +742,14 @@ HRESULT start_binding(BSCallback *bscallback)
 
     hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
     if(FAILED(hres)) {
-        WARN("CreateAsyncBindCtx failed: %08lx\n", hres);
+        WARN("CreateAsyncBindCtx failed: %08x\n", hres);
         return hres;
     }
 
     hres = IMoniker_BindToStorage(bscallback->mon, bctx, NULL, &IID_IStream, (void**)&str);
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
-        WARN("BindToStorage failed: %08lx\n", hres);
+        WARN("BindToStorage failed: %08x\n", hres);
         return hres;
     }
 
