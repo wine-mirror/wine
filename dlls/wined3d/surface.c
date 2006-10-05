@@ -1562,34 +1562,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 *type = GL_UNSIGNED_INT_8_8_8_8;
             }
             break;
-#if 0
-        /* Not sure if we should do color keying on Alpha-Enabled surfaces */
-        case WINED3DFMT_A4R4G4B4:
-            if (colorkey_active)
-            {
-                *convert = CONVERT_CK_4444_ARGB;
-                *format = GL_RGBA;
-                *internal = GL_RGBA;
-                *type = GL_UNSIGNED_SHORT_4_4_4_4;
-            }
-            break;
 
-        case WINED3DFMT_A1R5G5B5:
-            if (colorkey_active)
-            {
-                *convert = CONVERT_CK_1555;
-            }
-
-        case WINED3DFMT_A8R8G8B8:
-            if (colorkey_active)
-            {
-                *convert = CONVERT_CK_8888_ARGB;
-                *format = GL_RGBA;
-                *internal = GL_RGBA;
-                *type = GL_UNSIGNED_INT_8_8_8_8;
-            }
-            break;
-#endif
         default:
             break;
     }
@@ -1677,8 +1650,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
                       prevent 'color bleeding'. This will be done later on if ever it is
                       too visible.
 
-              Note2: when using color-keying + alpha, are the alpha bits part of the
-                      color-space or not ?
+              Note2: Nvidia documents say that their driver does not support alpha + color keying
+                     on the same surface and disables color keying in such a case
             */
             unsigned int x;
             WORD *Source = (WORD *) src;
@@ -1697,40 +1670,6 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
             }
         }
         break;
-
-        case CONVERT_CK_1555:
-        {
-            unsigned int x;
-            WORD *Source = (WORD *) src;
-            WORD *Dest = (WORD *) dst;
-
-            for (x = 0; x < len * sizeof(WORD); x+=sizeof(WORD)) {
-                WORD color = *Source++;
-                *Dest = (color & 0x7FFF);
-                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
-                    (color > surf->SrcBltCKey.dwColorSpaceHighValue))
-                    *Dest |= (color & 0x8000);
-                Dest++;
-            }
-        }
-        break;
-
-        case CONVERT_CK_4444_ARGB:
-        {
-            /* Move the four Alpha bits... */
-            unsigned int x;
-            WORD *Source = (WORD *) src;
-            WORD *Dest = (WORD *) dst;
-
-            for (x = 0; x < len; x++) {
-                WORD color = *Source++;
-                *dst = (color & 0x0FFF) << 4;
-                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
-                    (color > surf->SrcBltCKey.dwColorSpaceHighValue))
-                    *Dest |= (color & 0xF000) >> 12;
-                Dest++;
-            }
-        } break;
 
         default:
             ERR("Unsupported conversation type %d\n", convert);
