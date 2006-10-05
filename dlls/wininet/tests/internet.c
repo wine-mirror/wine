@@ -43,9 +43,9 @@ static void InternetQueryOptionA_test(void)
   len=strlen(useragent)+1;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  ok(len == strlen(useragent)+1,"Got wrong user agent length %ld instead of %d\n",len,lstrlenA(useragent));
+  ok(len == strlen(useragent)+1,"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%ld\n",err);
+  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
   SetLastError(0xdeadbeef);
   len=strlen(useragent)+1;
@@ -53,9 +53,9 @@ static void InternetQueryOptionA_test(void)
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,buffer,&len);
   err=GetLastError();
   todo_wine ok(!strcmp(useragent,buffer),"Got wrong user agent string %s instead of %s\n",buffer,useragent);
-  todo_wine ok(len == strlen(useragent),"Got wrong user agent length %ld instead of %d\n",len,lstrlenA(useragent));
+  todo_wine ok(len == strlen(useragent),"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
   todo_wine ok(retval == 1,"Got wrong return value %d\n",retval);
-  ok(err == 0xdeadbeef, "Got wrong error code %ld\n",err);
+  ok(err == 0xdeadbeef, "Got wrong error code %d\n",err);
   HeapFree(GetProcessHeap(),0,buffer);
 
   SetLastError(0xdeadbeef);
@@ -63,9 +63,9 @@ static void InternetQueryOptionA_test(void)
   buffer=HeapAlloc(GetProcessHeap(),0,100);
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,buffer,&len);
   err=GetLastError();
-  todo_wine ok(len == strlen(useragent) + 1,"Got wrong user agent length %ld instead of %d\n", len, lstrlenA(useragent) + 1);
+  todo_wine ok(len == strlen(useragent) + 1,"Got wrong user agent length %d instead of %d\n", len, lstrlenA(useragent) + 1);
   ok(!retval, "Got wrong return value %d\n", retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %ld\n", err);
+  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %d\n", err);
   HeapFree(GetProcessHeap(),0,buffer);
 
   hurl = InternetConnectA(hinet,"www.winehq.com",INTERNET_DEFAULT_HTTP_PORT,NULL,NULL,INTERNET_SERVICE_HTTP,0,0);
@@ -74,9 +74,9 @@ static void InternetQueryOptionA_test(void)
   len=0;
   retval = InternetQueryOptionA(hurl,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  ok(len == 0,"Got wrong user agent length %ld instead of 0\n",len);
+  ok(len == 0,"Got wrong user agent length %d instead of 0\n",len);
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code %ld\n",err);
+  todo_wine ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code %d\n",err);
 
   InternetCloseHandle(hurl);
   InternetCloseHandle(hinet);
@@ -88,9 +88,9 @@ static void InternetQueryOptionA_test(void)
   len=0;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  todo_wine ok(len == 1,"Got wrong user agent length %ld instead of %d\n",len,1);
+  todo_wine ok(len == 1,"Got wrong user agent length %d instead of %d\n",len,1);
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%ld\n",err);
+  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
   InternetCloseHandle(hinet);
 
@@ -100,9 +100,9 @@ static void InternetQueryOptionA_test(void)
   len=0;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();
-  todo_wine ok(len == 1,"Got wrong user agent length %ld instead of %d\n",len,1);
+  todo_wine ok(len == 1,"Got wrong user agent length %d instead of %d\n",len,1);
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%ld\n",err);
+  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
   InternetCloseHandle(hinet);
 }
@@ -115,7 +115,7 @@ static void test_get_cookie(void)
   SetLastError(0xdeadbeef);
   ret = InternetGetCookie("http://www.example.com", NULL, NULL, &len);
   ok(!ret && GetLastError() == ERROR_NO_MORE_ITEMS,
-    "InternetGetCookie should have failed with %s and error %ld\n",
+    "InternetGetCookie should have failed with %s and error %d\n",
     ret ? "TRUE" : "FALSE", GetLastError());
 }
 
