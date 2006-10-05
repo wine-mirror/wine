@@ -1466,18 +1466,20 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
     if (!test_error_msg(rc,"SPI_{GET,SET}MINIMIZEDMETRICS"))
         return;
-    /* test registry */
+    /* Test registry. Note that it is perfectly valid for some fields to
+     * not be set.
+     */
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINWIDTH_VALNAME, dpi);
-    ok( regval == lpMm_orig.iWidth, "wrong value in registry %d, expected %d\n",
+    ok( regval == -1 || regval == lpMm_orig.iWidth, "wrong value in registry %d, expected %d\n",
         regval, lpMm_orig.iWidth);
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINHORZGAP_VALNAME, dpi);
-    ok( regval == lpMm_orig.iHorzGap, "wrong value in registry %d, expected %d\n",
+    ok( regval == -1 || regval == lpMm_orig.iHorzGap, "wrong value in registry %d, expected %d\n",
         regval, lpMm_orig.iHorzGap);
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINVERTGAP_VALNAME, dpi);
-    ok( regval == lpMm_orig.iVertGap, "wrong value in registry %d, expected %d\n",
+    ok( regval == -1 || regval == lpMm_orig.iVertGap, "wrong value in registry %d, expected %d\n",
         regval, lpMm_orig.iVertGap);
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINARRANGE_VALNAME, dpi);
-    ok( regval == lpMm_orig.iArrange, "wrong value in registry %d, expected %d\n",
+    ok( regval == -1 || regval == lpMm_orig.iArrange, "wrong value in registry %d, expected %d\n",
         regval, lpMm_orig.iArrange);
     /* set some new values */
     lpMm_cur.iWidth = 180;
