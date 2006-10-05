@@ -27,9 +27,9 @@
 
 #include "wine/test.h"
 
-static const char * secret  = "I am a super secret string that no one can see!";
-static const char * secret2 = "I am a super secret string indescribable string";
-static const char * key = "Wibble wibble wibble";
+static char  secret[]     = "I am a super secret string that no one can see!";
+static char  secret2[]    = "I am a super secret string indescribable string";
+static char  key[]        = "Wibble wibble wibble";
 static const WCHAR desc[] = {'U','l','t','r','a',' ','s','e','c','r','e','t',' ','t','e','s','t',' ','m','e','s','s','a','g','e',0};
 static BOOL protected = FALSE; /* if true, the unprotect tests can run */
 static DATA_BLOB cipher;
