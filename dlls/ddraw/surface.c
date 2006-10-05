@@ -1563,8 +1563,14 @@ IDirectDrawSurfaceImpl_UpdateOverlay(IDirectDrawSurface7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
     IDirectDrawSurfaceImpl *Dst = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, DstSurface);
-    FIXME("(%p)->(%p,%p,%p,%lx,%p): Stub!\n", This, SrcRect, Dst, DstRect, Flags, FX);
-    return DDERR_UNSUPPORTED;
+    TRACE("(%p)->(%p,%p,%p,%lx,%p): Relay\n", This, SrcRect, Dst, DstRect, Flags, FX);
+
+    return IWineD3DSurface_UpdateOverlay(This->WineD3DSurface,
+                                         SrcRect,
+                                         Dst ? Dst->WineD3DSurface : NULL,
+                                         DstRect,
+                                         Flags,
+                                         (WINEDDOVERLAYFX *) FX);
 }
 
 /*****************************************************************************

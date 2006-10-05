@@ -1136,6 +1136,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(SetOverlayPosition)(THIS_ LONG X, LONG Y) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LONG *X, LONG *Y) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD Flags, IWineD3DSurface *Ref) PURE;
+    STDMETHOD(UpdateOverlay)(THIS_ RECT *SrcRect, IWineD3DSurface *DstSurface, RECT *DstRect, DWORD Flags, WINEDDOVERLAYFX *FX);
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
@@ -1191,6 +1192,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_SetOverlayPosition(p, a, b)  (p)->lpVtbl->SetOverlayPosition(p, a, b)
 #define IWineD3DSurface_GetOverlayPosition(p, a, b)  (p)->lpVtbl->GetOverlayPosition(p, a, b)
 #define IWineD3DSurface_UpdateOverlayZOrder(p, a, b) (p)->lpVtbl->UpdateOverlayZOrder(p, a, b)
+#define IWineD3DSurface_UpdateOverlay(p, a, b, c, d, e) (p)->lpVtbl->UpdateOverlay(p, a, b, c, d, e)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
