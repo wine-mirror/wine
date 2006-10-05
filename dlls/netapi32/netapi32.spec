@@ -3,7 +3,7 @@
 @ stub DsDeregisterDnsHostRecords
 @ stub DsEnumerateDomainTrusts
 @ stub DsGetDcClose
-@ stub DsGetDcNameA # (str str ptr str long ptr)
+@ stdcall DsGetDcNameA(str str ptr str long ptr)
 @ stdcall DsGetDcNameW(wstr wstr ptr wstr long ptr)
 @ stub DsGetDcNext
 @ stub DsGetDcOpen

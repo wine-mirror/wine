@@ -43,6 +43,16 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR ComputerName, LPCWSTR AvoidDCName,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI DsGetDcNameA(LPCSTR ComputerName, LPCSTR AvoidDCName,
+ GUID* DomainGuid, LPCSTR SiteName, ULONG Flags,
+ PDOMAIN_CONTROLLER_INFOA *DomainControllerInfo)
+{
+    FIXME("(%s, %s, %s, %s, %08lx, %p): stub\n", debugstr_a(ComputerName),
+     debugstr_a(AvoidDCName), debugstr_guid(DomainGuid),
+     debugstr_a(SiteName), Flags, DomainControllerInfo);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 DWORD WINAPI DsGetSiteNameW(LPCWSTR ComputerName, LPWSTR *SiteName)
 {
     FIXME("(%s, %p): stub\n", debugstr_w(ComputerName), SiteName);
