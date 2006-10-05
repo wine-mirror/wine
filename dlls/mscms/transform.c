@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2005 Hans Leidekker
+ * Copyright 2005, 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
+/******************************************************************************
+ * CreateColorTransformA            [MSCMS.@]
+ *
+ * See CreateColorTransformW.
+ */
 HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest,
     HPROFILE target, DWORD flags )
 {
@@ -53,6 +58,21 @@ HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest,
     return CreateColorTransformW( &spaceW, dest, target, flags );
 }
 
+/******************************************************************************
+ * CreateColorTransformW            [MSCMS.@]
+ *
+ * Create a color transform.
+ *
+ * PARAMS
+ *  space  [I] Input color space.
+ *  dest   [I] Color profile of destination device.
+ *  target [I] Color profile of target device.
+ *  flags  [I] Flags.
+ *
+ * RETURNS
+ *  Success: Handle to a transform.
+ *  Failure: NULL
+ */
 HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     HPROFILE target, DWORD flags )
 {
@@ -78,16 +98,31 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
                                                        TYPE_BGR_8, intent, 0 );
     }
     else
-    {
         cmstransform = cmsCreateTransform( cmsprofiles[0], TYPE_BGR_8, cmsprofiles[1],
                                            TYPE_BGR_8, intent, 0 );
-    }
+
     ret = MSCMS_create_htransform_handle( cmstransform );
 
 #endif /* HAVE_LCMS */
     return ret;
 }
 
+/******************************************************************************
+ * CreateMultiProfileTransform      [MSCMS.@]
+ *
+ * Create a color transform from an array of color profiles.
+ *
+ * PARAMS
+ *  profiles  [I] Array of color profiles.
+ *  nprofiles [I] Number of color profiles.
+ *  intents   [I] Array of rendering intents.
+ *  flags     [I] Flags.
+ *  cmm       [I] Profile to take the CMM from.
+ *
+ * RETURNS
+ *  Success: Handle to a transform.
+ *  Failure: NULL
+ */ 
 HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofiles,
     PDWORD intents, DWORD nintents, DWORD flags, DWORD cmm )
 {
@@ -119,6 +154,18 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     return ret;
 }
 
+/******************************************************************************
+ * DeleteColorTransform             [MSCMS.@]
+ *
+ * Delete a color transform.
+ *
+ * PARAMS
+ *  transform [I] Handle to a color transform.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */ 
 BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
 {
     BOOL ret = FALSE;
@@ -137,6 +184,28 @@ BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
     return ret;
 }
 
+/******************************************************************************
+ * TranslateBitmapBits              [MSCMS.@]
+ *
+ * Perform color translation.
+ *
+ * PARAMS
+ *  transform    [I] Handle to a color transform.
+ *  srcbits      [I] Source bitmap.
+ *  input        [I] Format of the source bitmap.
+ *  width        [I] Width of the source bitmap.
+ *  height       [I] Height of the source bitmap.
+ *  inputstride  [I] Number of bytes in one scanline.
+ *  destbits     [I] Destination bitmap.
+ *  output       [I] Format of the destination bitmap.
+ *  outputstride [I] Number of bytes in one scanline. 
+ *  callback     [I] Callback function.
+ *  data         [I] Callback data. 
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT input,
     DWORD width, DWORD height, DWORD inputstride, PVOID destbits, BMFORMAT output,
     DWORD outputstride, PBMCALLBACKFN callback, ULONG data )
@@ -150,7 +219,6 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
            outputstride, callback, data );
 
     cmstransform = MSCMS_htransform2cmstransform( transform );
-
     cmsDoTransform( cmstransform, srcbits, destbits, width * height );
     ret = TRUE;
 
