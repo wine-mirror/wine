@@ -551,8 +551,7 @@ DECL_HANDLER(get_next_hook)
     {
         reply->next = next->handle;
         reply->id   = next->index + WH_MINHOOK;
-        reply->prev_unicode = hook->unicode;
-        reply->next_unicode = next->unicode;
+        reply->unicode = next->unicode;
         if (next->module) set_reply_data( next->module, next->module_size );
         if (run_hook_in_owner_thread( next ))
         {

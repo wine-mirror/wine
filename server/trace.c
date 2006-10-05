@@ -2967,8 +2967,7 @@ static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
-    fprintf( stderr, " prev_unicode=%d,", req->prev_unicode );
-    fprintf( stderr, " next_unicode=%d,", req->next_unicode );
+    fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
     dump_varargs_unicode_str( cur_size );
 }

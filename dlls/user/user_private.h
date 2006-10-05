@@ -167,19 +167,21 @@ struct hook16_queue_info;
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
 {
-    HANDLE                        server_queue;           /* 00 Handle to server-side queue */
-    DWORD                         recursion_count;        /* 04 SendMessage recursion counter */
-    HHOOK                         hook;                   /* 08 Current hook */
-    struct received_message_info *receive_info;           /* 0c Message being currently received */
-    struct hook16_queue_info     *hook16_info;            /* 10 Opaque pointer for 16-bit hook support */
-    DWORD                         GetMessageTimeVal;      /* 14 Value for GetMessageTime */
-    DWORD                         GetMessagePosVal;       /* 18 Value for GetMessagePos */
-    ULONG_PTR                     GetMessageExtraInfoVal; /* 1c Value for GetMessageExtraInfo */
-    HCURSOR                       cursor;                 /* 20 Current cursor */
-    INT                           cursor_count;           /* 24 Cursor show count */
-    UINT                          active_hooks;           /* 28 Bitmap of active hooks */
-    HWND                          desktop;                /* 2c Desktop window */
-                                                          /* 30-7c Available for more data */
+    HANDLE                        server_queue;           /* Handle to server-side queue */
+    DWORD                         recursion_count;        /* SendMessage recursion counter */
+    BOOL                          hook_unicode;           /* Is current hook unicode? */
+    HHOOK                         hook;                   /* Current hook */
+    struct received_message_info *receive_info;           /* Message being currently received */
+    struct hook16_queue_info     *hook16_info;            /* Opaque pointer for 16-bit hook support */
+    DWORD                         GetMessageTimeVal;      /* Value for GetMessageTime */
+    DWORD                         GetMessagePosVal;       /* Value for GetMessagePos */
+    ULONG_PTR                     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
+    HCURSOR                       cursor;                 /* Current cursor */
+    INT                           cursor_count;           /* Cursor show count */
+    UINT                          active_hooks;           /* Bitmap of active hooks */
+    HWND                          desktop;                /* Desktop window */
+
+    ULONG                         pad[11];                /* Available for more data */
 };
 
 static inline struct user_thread_info *get_user_thread_info(void)

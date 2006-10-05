@@ -3392,8 +3392,7 @@ struct get_next_hook_reply
     process_id_t   pid;
     thread_id_t    tid;
     void*          proc;
-    int            prev_unicode;
-    int            next_unicode;
+    int            unicode;
     /* VARARG(module,unicode_str); */
 };
 
@@ -4426,6 +4425,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 252
+#define SERVER_PROTOCOL_VERSION 253
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

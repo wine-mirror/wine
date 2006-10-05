@@ -359,11 +359,14 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
         {
             struct user_thread_info *thread_info = get_user_thread_info();
             HHOOK prev = thread_info->hook;
+            BOOL prev_unicode = thread_info->hook_unicode;
 
             thread_info->hook = info->handle;
+            thread_info->hook_unicode = info->next_unicode;
             ret = call_hook_proc( (HOOKPROC)info->proc, info->id, code, wparam, lparam,
                                   info->prev_unicode, info->next_unicode );
             thread_info->hook = prev;
+            thread_info->hook_unicode = prev_unicode;
         }
     }
     return ret;
@@ -537,12 +540,12 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
             info.pid          = reply->pid;
             info.tid          = reply->tid;
             info.proc         = reply->proc;
-            info.prev_unicode = reply->prev_unicode;
-            info.next_unicode = reply->next_unicode;
+            info.next_unicode = reply->unicode;
         }
     }
     SERVER_END_REQ;
 
+    info.prev_unicode = thread_info->hook_unicode;
     return call_hook( &info, code, wparam, lparam );
 }
 
