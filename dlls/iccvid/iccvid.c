@@ -728,8 +728,8 @@ static void ICCVID_dump_BITMAPINFO(const BITMAPINFO * bmi)
     TRACE(
         "planes = %d\n"
         "bpp    = %d\n"
-        "height = %ld\n"
-        "width  = %ld\n"
+        "height = %d\n"
+        "width  = %d\n"
         "compr  = %s\n",
         bmi->bmiHeader.biPlanes,
         bmi->bmiHeader.biBitCount,
@@ -744,7 +744,7 @@ static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLOR
     COLORREF realBlueMask = MAKECOLOUR32(bmiColors[1].rgbRed, bmiColors[1].rgbGreen, bmiColors[1].rgbBlue);
     COLORREF realGreenMask = MAKECOLOUR32(bmiColors[2].rgbRed, bmiColors[2].rgbGreen, bmiColors[2].rgbBlue);
 
-    TRACE("\nbmiColors[0] = 0x%08lx\nbmiColors[1] = 0x%08lx\nbmiColors[2] = 0x%08lx\n",
+    TRACE("\nbmiColors[0] = 0x%08x\nbmiColors[1] = 0x%08x\nbmiColors[2] = 0x%08x\n",
         realRedMask, realBlueMask, realGreenMask);
         
     if ((realRedMask == redMask) &&
@@ -868,7 +868,7 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
 {
     LONG width, height;
 
-    TRACE("ICM_DECOMPRESS %p %p %ld\n", info, icd, size);
+    TRACE("ICM_DECOMPRESS %p %p %d\n", info, icd, size);
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -886,7 +886,7 @@ static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWOR
 {
     LONG width, height;
 
-    TRACE("ICM_DECOMPRESSEX %p %p %ld\n", info, icd, size);
+    TRACE("ICM_DECOMPRESSEX %p %p %d\n", info, icd, size);
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -1017,7 +1017,7 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
-    TRACE("(%p,%ld,%p)\n", hModule, dwReason, lpReserved);
+    TRACE("(%p,%d,%p)\n", hModule, dwReason, lpReserved);
 
     switch (dwReason)
     {
