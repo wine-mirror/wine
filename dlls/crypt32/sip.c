@@ -60,7 +60,7 @@ static const WCHAR szDllName[] = { 'D','l','l',0 };
 static const WCHAR szFuncName[] = { 'F','u','n','c','N','a','m','e',0 };
 
 /* convert a guid to a wide character string */
-static void CRYPT_guid2wstr( LPGUID guid, LPWSTR wstr )
+static void CRYPT_guid2wstr( const GUID *guid, LPWSTR wstr )
 {
     char str[40];
 
