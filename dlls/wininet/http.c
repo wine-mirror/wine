@@ -460,7 +460,7 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQW lpwhr;
 
-    TRACE("%p, %s, %li, %li\n", hHttpRequest, debugstr_w(lpszHeader), dwHeaderLength,
+    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_w(lpszHeader), dwHeaderLength,
           dwModifier);
 
     if (!lpszHeader) 
@@ -497,7 +497,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     LPWSTR hdr;
     BOOL r;
 
-    TRACE("%p, %s, %li, %li\n", hHttpRequest, debugstr_a(lpszHeader), dwHeaderLength,
+    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_a(lpszHeader), dwHeaderLength,
           dwModifier);
 
     len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
@@ -530,7 +530,7 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
     LPINTERNET_BUFFERSW lpBuffersOutW,ptrW;
     BOOL rc = FALSE;
 
-    TRACE("(%p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersOut, dwFlags,
+    TRACE("(%p, %p, %08x, %08x): stub\n", hRequest, lpBuffersOut, dwFlags,
             dwContext);
 
     ptr = lpBuffersOut;
@@ -663,7 +663,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
     LPWININETHTTPSESSIONW lpwhs;
     HINTERNET handle = NULL;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08lx)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08x)\n", hHttpSession,
           debugstr_w(lpszVerb), debugstr_w(lpszObjectName),
           debugstr_w(lpszVersion), debugstr_w(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -719,7 +719,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     INT len;
     INT acceptTypesCount;
     HINTERNET rc = FALSE;
-    TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08lx)\n", hHttpSession,
+    TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08x)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),
           debugstr_a(lpszVersion), debugstr_a(lpszReferrer), lpszAcceptTypes,
           dwFlags, dwContext);
@@ -1035,7 +1035,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
                    URL_ESCAPE_SPACES_ONLY);
         if (rc)
         {
-            ERR("Unable to escape string!(%s) (%ld)\n",debugstr_w(lpszObjectName),rc);
+            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(lpszObjectName),rc);
             strcpyW(lpwhr->lpszPath,lpszObjectName);
         }
     }
@@ -1577,7 +1577,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	DWORD info = dwInfoLevel & HTTP_QUERY_HEADER_MASK;
 	DWORD i;
 
-	TRACE("(%p, 0x%08lx)--> %ld\n", hHttpRequest, dwInfoLevel, dwInfoLevel);
+	TRACE("(%p, 0x%08x)--> %d\n", hHttpRequest, dwInfoLevel, dwInfoLevel);
 	TRACE("  Attribute:");
 	for (i = 0; i < (sizeof(query_flags) / sizeof(query_flags[0])); i++) {
 	    if (query_flags[i].val == info) {
@@ -1586,7 +1586,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	    }
 	}
 	if (i == (sizeof(query_flags) / sizeof(query_flags[0]))) {
-	    TRACE(" Unknown (%08lx)", info);
+	    TRACE(" Unknown (%08x)", info);
 	}
 
 	TRACE(" Modifier:");
@@ -1598,7 +1598,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	}
 	
 	if (info_mod) {
-	    TRACE(" Unknown (%08lx)", info_mod);
+	    TRACE(" Unknown (%08x)", info_mod);
 	}
 	TRACE("\n");
     }
@@ -1690,7 +1690,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
     BOOL rc = FALSE;
     DWORD headerlen;
 
-    TRACE("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08x, %08x): stub\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersIn)
@@ -1748,7 +1748,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC;
 
-    TRACE("(%p, %p, %p, %08lx, %08lx)\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08x, %08x)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
 
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
@@ -1832,7 +1832,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     LPWININETAPPINFOW hIC = NULL;
     BOOL r;
 
-    TRACE("%p, %p (%s), %li, %p, %li)\n", hHttpRequest,
+    TRACE("%p, %p (%s), %i, %p, %i)\n", hHttpRequest,
             lpszHeaders, debugstr_w(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
 
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
@@ -2129,7 +2129,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                         URL_ESCAPE_SPACES_ONLY);
         if (rc)
         {
-            ERR("Unable to escape string!(%s) (%ld)\n",debugstr_w(path),rc);
+            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
             strcpyW(lpwhr->lpszPath,path);
         }
     }
@@ -2780,7 +2780,7 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
     static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
     BOOL request_only = dwModifier & HTTP_ADDHDR_FLAG_REQ;
 
-    TRACE("--> %s: %s - 0x%08lx\n", debugstr_w(field), debugstr_w(value), dwModifier);
+    TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), dwModifier);
 
     /* Don't let applications add Connection header to request */
     if (strcmpW(szConnection,field)==0 && (dwModifier & HTTP_ADDHDR_FLAG_REQ))
@@ -3006,7 +3006,7 @@ static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
     if (index >= lpwhr->nCustHeaders)
 	index = -1;
 
-    TRACE("Return: %ld\n", index);
+    TRACE("Return: %d\n", index);
     return index;
 }
 
@@ -3078,6 +3078,6 @@ static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
  */
 BOOL WINAPI IsHostInProxyBypassList(DWORD flags, LPCSTR szHost, DWORD length)
 {
-   FIXME("STUB: flags=%ld host=%s length=%ld\n",flags,szHost,length);
+   FIXME("STUB: flags=%d host=%s length=%d\n",flags,szHost,length);
    return FALSE;
 }

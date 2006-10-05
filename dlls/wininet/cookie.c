@@ -519,7 +519,7 @@ BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
 DWORD WINAPI InternetSetCookieExA( LPCSTR lpszURL, LPCSTR lpszCookieName, LPCSTR lpszCookieData,
                                    DWORD dwFlags, DWORD_PTR dwReserved)
 {
-    FIXME("(%s, %s, %s, 0x%08lx, 0x%08lx) stub\n",
+    FIXME("(%s, %s, %s, 0x%08x, 0x%08lx) stub\n",
           debugstr_a(lpszURL), debugstr_a(lpszCookieName), debugstr_a(lpszCookieData),
           dwFlags, dwReserved);
     return TRUE;
@@ -538,7 +538,7 @@ DWORD WINAPI InternetSetCookieExA( LPCSTR lpszURL, LPCSTR lpszCookieName, LPCSTR
 DWORD WINAPI InternetSetCookieExW( LPCWSTR lpszURL, LPCWSTR lpszCookieName, LPCWSTR lpszCookieData,
                                    DWORD dwFlags, DWORD_PTR dwReserved)
 {
-    FIXME("(%s, %s, %s, 0x%08lx, 0x%08lx) stub\n",
+    FIXME("(%s, %s, %s, 0x%08x, 0x%08lx) stub\n",
           debugstr_w(lpszURL), debugstr_w(lpszCookieName), debugstr_w(lpszCookieData),
           dwFlags, dwReserved);
     return TRUE;
@@ -552,7 +552,7 @@ DWORD WINAPI InternetSetCookieExW( LPCWSTR lpszURL, LPCWSTR lpszCookieName, LPCW
 BOOL WINAPI InternetGetCookieExA( LPCSTR pchURL, LPCSTR pchCookieName, LPSTR pchCookieData,
                                   LPDWORD pcchCookieData, DWORD dwFlags, LPVOID lpReserved)
 {
-    FIXME("(%s, %s, %s, %p, 0x%08lx, %p) stub\n",
+    FIXME("(%s, %s, %s, %p, 0x%08x, %p) stub\n",
           debugstr_a(pchURL), debugstr_a(pchCookieName), debugstr_a(pchCookieData),
           pcchCookieData, dwFlags, lpReserved);
     return FALSE;
@@ -571,7 +571,7 @@ BOOL WINAPI InternetGetCookieExA( LPCSTR pchURL, LPCSTR pchCookieName, LPSTR pch
 BOOL WINAPI InternetGetCookieExW( LPCWSTR pchURL, LPCWSTR pchCookieName, LPWSTR pchCookieData,
                                   LPDWORD pcchCookieData, DWORD dwFlags, LPVOID lpReserved)
 {
-    FIXME("(%s, %s, %s, %p, 0x%08lx, %p) stub\n",
+    FIXME("(%s, %s, %s, %p, 0x%08x, %p) stub\n",
           debugstr_w(pchURL), debugstr_w(pchCookieName), debugstr_w(pchCookieData),
           pcchCookieData, dwFlags, lpReserved);
     return FALSE;
@@ -647,7 +647,7 @@ BOOL WINAPI InternetGetPerSiteCookieDecisionW( LPCWSTR pwchHostName, unsigned lo
  */
 BOOL WINAPI InternetSetPerSiteCookieDecisionA( LPCSTR pchHostName, DWORD dwDecision )
 {
-    FIXME("(%s, 0x%08lx) stub\n", debugstr_a(pchHostName), dwDecision);
+    FIXME("(%s, 0x%08x) stub\n", debugstr_a(pchHostName), dwDecision);
     return FALSE;
 }
 
@@ -656,6 +656,6 @@ BOOL WINAPI InternetSetPerSiteCookieDecisionA( LPCSTR pchHostName, DWORD dwDecis
  */
 BOOL WINAPI InternetSetPerSiteCookieDecisionW( LPCWSTR pchHostName, DWORD dwDecision )
 {
-    FIXME("(%s, 0x%08lx) stub\n", debugstr_w(pchHostName), dwDecision);
+    FIXME("(%s, 0x%08x) stub\n", debugstr_w(pchHostName), dwDecision);
     return FALSE;
 }

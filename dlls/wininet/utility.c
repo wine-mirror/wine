@@ -248,7 +248,7 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
         }
     }
     
-    TRACE(" callback(%p) (%p (%p), %08lx, %ld (%s), %p, %ld)\n",
+    TRACE(" callback(%p) (%p (%p), %08x, %d (%s), %p, %d)\n",
 	  hdr->lpfnStatusCB, hHttpSession, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvNewInfo, dwStatusInfoLength);
     
@@ -269,7 +269,7 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength)
 {
-    TRACE("(%p, %08lx, %ld (%s), %p, %ld): %sasync call with callback %p\n",
+    TRACE("(%p, %08x, %d (%s), %p, %d): %sasync call with callback %p\n",
 	  hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvStatusInfo, dwStatusInfoLength,
 	  hdr->dwFlags & INTERNET_FLAG_ASYNC ? "" : "non ",

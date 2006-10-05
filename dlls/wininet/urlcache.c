@@ -436,7 +436,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     CloseHandle(hFile);
     if (!pContainer->hMapping)
     {
-        ERR("Couldn't create file mapping (error is %ld)\n", GetLastError());
+        ERR("Couldn't create file mapping (error is %d)\n", GetLastError());
         return FALSE;
     }
 
@@ -496,7 +496,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
 
     if ((pContainer->hMutex = CreateMutexW(NULL, FALSE, mutex_name)) == NULL)
     {
-        ERR("couldn't create mutex (error is %ld)\n", GetLastError());
+        ERR("couldn't create mutex (error is %d)\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, pContainer->path);
         HeapFree(GetProcessHeap(), 0, pContainer);
         return FALSE;
@@ -547,7 +547,7 @@ void URLCacheContainers_CreateDefaults(void)
 
         if (FAILED(SHGetSpecialFolderPathW(NULL, wszCachePath, DefaultContainerData[i].nFolder, TRUE)))
         {
-            ERR("Couldn't get path for default container %lu\n", i);
+            ERR("Couldn't get path for default container %u\n", i);
             continue;
         }
         path_len = strlenW(wszCachePath);
@@ -638,7 +638,7 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
     if (!pIndexData)
     {
         ReleaseMutex(pContainer->hMutex);
-        ERR("Couldn't MapViewOfFile. Error: %ld\n", GetLastError());
+        ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
         return FALSE;
     }
     pHeader = (URLCACHE_HEADER *)pIndexData;
@@ -659,13 +659,13 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
         if (!pIndexData)
         {
             ReleaseMutex(pContainer->hMutex);
-            ERR("Couldn't MapViewOfFile. Error: %ld\n", GetLastError());
+            ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
             return FALSE;
         }
         pHeader = (URLCACHE_HEADER *)pIndexData;
     }
 
-    TRACE("Signature: %s, file size: %ld bytes\n", pHeader->szSignature, pHeader->dwFileSize);
+    TRACE("Signature: %s, file size: %d bytes\n", pHeader->szSignature, pHeader->dwFileSize);
 
     for (index = 0; index < pHeader->DirectoryCount; index++)
     {
@@ -760,12 +760,12 @@ static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlock
               dwFreeCounter + dwBlockNumber < pHeader->dwIndexCapacityInBlocks &&
               URLCache_Allocation_BlockIsFree(AllocationTable, dwBlockNumber + dwFreeCounter);
             dwFreeCounter++)
-                TRACE("Found free block at no. %ld (0x%lx)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
+                TRACE("Found free block at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
 
         if (dwFreeCounter == dwBlocksNeeded)
         {
             DWORD index;
-            TRACE("Found free blocks starting at no. %ld (0x%lx)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
+            TRACE("Found free blocks starting at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
             for (index = 0; index < dwBlocksNeeded; index++)
                 URLCache_Allocation_BlockAllocate(AllocationTable, dwBlockNumber + index);
             *ppEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
@@ -1136,7 +1136,7 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
         int i;
         if (pHashEntry->dwHashTableNumber != dwHashTableNumber++)
         {
-            ERR("Error: not right hash table number (%ld) expected %ld\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
+            ERR("Error: not right hash table number (%d) expected %d\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
             continue;
         }
         /* make sure that it is in fact a hash entry */
@@ -1262,7 +1262,7 @@ static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, D
         int i;
         if (pHashEntry->dwHashTableNumber != dwHashTableNumber++)
         {
-            ERR("not right hash table number (%ld) expected %ld\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
+            ERR("not right hash table number (%d) expected %d\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
             break;
         }
         /* make sure that it is in fact a hash entry */
@@ -1335,7 +1335,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     LPVOID lpReserved,
     DWORD dwFlags)
 {
-    TRACE("(%s, %p, %p, %p, %p, %p, %lx)\n",
+    TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
         debugstr_a(lpszUrl), 
         lpCacheEntryInfo,
         lpdwCacheEntryInfoBufSize,
@@ -1353,7 +1353,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         return FALSE;
     }
     if (dwFlags != 0)
-        FIXME("Undocumented flag(s): %lx\n", dwFlags);
+        FIXME("Undocumented flag(s): %x\n", dwFlags);
     return GetUrlCacheEntryInfoA(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
 }
 
@@ -1519,7 +1519,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
     LPVOID lpReserved,
     DWORD dwFlags)
 {
-    TRACE("(%s, %p, %p, %p, %p, %p, %lx)\n",
+    TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
         debugstr_w(lpszUrl), 
         lpCacheEntryInfo,
         lpdwCacheEntryInfoBufSize,
@@ -1537,7 +1537,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
         return FALSE;
     }
     if (dwFlags != 0)
-        FIXME("Undocumented flag(s): %lx\n", dwFlags);
+        FIXME("Undocumented flag(s): %x\n", dwFlags);
     return GetUrlCacheEntryInfoW(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
 }
 
@@ -1553,7 +1553,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
     CACHEFILE_ENTRY * pEntry;
     URLCACHECONTAINER * pContainer;
 
-    TRACE("(%s, %p, 0x%08lx)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
+    TRACE("(%s, %p, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
 
     if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
         return FALSE;
@@ -1601,7 +1601,7 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
     LPSTR lpszUrlA;
     int url_len;
 
-    TRACE("(%s, %p, 0x%08lx)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
+    TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
 
     url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
     lpszUrlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
@@ -1674,7 +1674,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
 
-    TRACE("(%s, %p, %p, 0x%08lx)\n",
+    TRACE("(%s, %p, %p, 0x%08x)\n",
         debugstr_a(lpszUrlName),
         lpCacheEntryInfo,
         lpdwCacheEntryInfoBufferSize,
@@ -1736,7 +1736,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     IN DWORD dwReserved
     )
 {
-    TRACE("(%s, %p, %p, 0x%08lx)\n",
+    TRACE("(%s, %p, %p, 0x%08x)\n",
         debugstr_w(lpszUrlName),
         lpCacheEntryInfo,
         lpdwCacheEntryInfoBufferSize,
@@ -1759,7 +1759,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
 
-    TRACE("(%s, 0x%08lx)\n", debugstr_a(lpszUrlName), dwReserved);
+    TRACE("(%s, 0x%08x)\n", debugstr_a(lpszUrlName), dwReserved);
 
     if (dwReserved)
     {
@@ -1814,7 +1814,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
  */
 BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
 {
-    FIXME("(%s, 0x%08lx)\n", debugstr_w(lpszUrlName), dwReserved);
+    FIXME("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
     return TRUE;
 }
 
@@ -1900,7 +1900,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
     int count;
     static const WCHAR szWWW[] = {'w','w','w',0};
 
-    TRACE("(%s, 0x%08lx, %s, %p, 0x%08lx)\n",
+    TRACE("(%s, 0x%08x, %s, %p, 0x%08x)\n",
         debugstr_w(lpszUrlName),
         dwExpectedFileSize,
         debugstr_w(lpszFileExtension),
@@ -2047,7 +2047,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     char achUrl[MAX_PATH];
     char *pchLocalFileName = 0;
 
-    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
+    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_w(lpszUrlName),
         debugstr_w(lpszLocalFileName),
         CacheEntryType,
@@ -2066,7 +2066,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
         hFile = CreateFileW(lpszLocalFileName, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
         if (hFile == INVALID_HANDLE_VALUE)
         {
-            ERR("couldn't open file %s (error is %ld)\n", debugstr_w(lpszLocalFileName), GetLastError());
+            ERR("couldn't open file %s (error is %d)\n", debugstr_w(lpszLocalFileName), GetLastError());
             return FALSE;
         }
 
@@ -2074,7 +2074,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
         dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
         if ((dwFileSizeLow == INVALID_FILE_SIZE) && (GetLastError() != NO_ERROR))
         {
-            ERR("couldn't get file size (error is %ld)\n", GetLastError());
+            ERR("couldn't get file size (error is %d)\n", GetLastError());
             CloseHandle(hFile);
             return FALSE;
         }
@@ -2243,7 +2243,7 @@ BOOL WINAPI CommitUrlCacheEntryA(
     BOOL bSuccess = FALSE;
     DWORD dwError = 0;
 
-    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
+    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_a(lpszUrlName),
         debugstr_a(lpszLocalFileName),
         CacheEntryType,
@@ -2321,7 +2321,7 @@ BOOL WINAPI CommitUrlCacheEntryW(
     DWORD len = 0;
     CHAR *header_info = NULL;
 
-    TRACE("(%s, %s, ..., ..., %lx, %p, %ld, %s, %s)\n",
+    TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_w(lpszUrlName),
         debugstr_w(lpszLocalFileName),
         CacheEntryType,
@@ -2409,7 +2409,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
     STREAM_HANDLE * pStream;
     HANDLE hFile;
 
-    TRACE( "(%s, %p, %p, %x, 0x%08lx)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo,
+    TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo,
            lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved );
 
     if (!RetrieveUrlCacheEntryFileA(lpszUrlName,
@@ -2456,7 +2456,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
     IN DWORD dwReserved
     )
 {
-    FIXME( "(%s, %p, %p, %x, 0x%08lx)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
+    FIXME( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
            lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved );
     return NULL;
 }
@@ -2548,13 +2548,13 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
 
 BOOL WINAPI DeleteUrlCacheContainerA(DWORD d1, DWORD d2)
 {
-    FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
+    FIXME("(0x%08x, 0x%08x) stub\n", d1, d2);
     return TRUE;
 }
 
 BOOL WINAPI DeleteUrlCacheContainerW(DWORD d1, DWORD d2)
 {
-    FIXME("(0x%08lx, 0x%08lx) stub\n", d1, d2);
+    FIXME("(0x%08x, 0x%08x) stub\n", d1, d2);
     return TRUE;
 }
 
@@ -2564,7 +2564,7 @@ BOOL WINAPI DeleteUrlCacheContainerW(DWORD d1, DWORD d2)
 BOOL WINAPI CreateUrlCacheContainerA(DWORD d1, DWORD d2, DWORD d3, DWORD d4,
                                      DWORD d5, DWORD d6, DWORD d7, DWORD d8)
 {
-    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx) stub\n",
+    FIXME("(0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x) stub\n",
           d1, d2, d3, d4, d5, d6, d7, d8);
     return TRUE;
 }
@@ -2575,7 +2575,7 @@ BOOL WINAPI CreateUrlCacheContainerA(DWORD d1, DWORD d2, DWORD d3, DWORD d4,
 BOOL WINAPI CreateUrlCacheContainerW(DWORD d1, DWORD d2, DWORD d3, DWORD d4,
                                      DWORD d5, DWORD d6, DWORD d7, DWORD d8)
 {
-    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx) stub\n",
+    FIXME("(0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x) stub\n",
           d1, d2, d3, d4, d5, d6, d7, d8);
     return TRUE;
 }
@@ -2594,7 +2594,7 @@ BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
  */
 HANDLE WINAPI FindFirstUrlCacheContainerA( LPVOID p1, LPVOID p2, LPVOID p3, DWORD d1 )
 {
-    FIXME("(%p, %p, %p, 0x%08lx) stub\n", p1, p2, p3, d1 );
+    FIXME("(%p, %p, %p, 0x%08x) stub\n", p1, p2, p3, d1 );
     return NULL;
 }
 
@@ -2603,7 +2603,7 @@ HANDLE WINAPI FindFirstUrlCacheContainerA( LPVOID p1, LPVOID p2, LPVOID p3, DWOR
  */
 HANDLE WINAPI FindFirstUrlCacheContainerW( LPVOID p1, LPVOID p2, LPVOID p3, DWORD d1 )
 {
-    FIXME("(%p, %p, %p, 0x%08lx) stub\n", p1, p2, p3, d1 );
+    FIXME("(%p, %p, %p, 0x%08x) stub\n", p1, p2, p3, d1 );
     return NULL;
 }
 
@@ -2637,7 +2637,7 @@ HANDLE WINAPI FindFirstUrlCacheEntryExA(
   LPVOID lpReserved3
 )
 {
-    FIXME("(%s, 0x%08lx, 0x%08lx, 0x%08lx%08lx, %p, %p, %p, %p, %p) stub\n", debugstr_a(lpszUrlSearchPattern),
+    FIXME("(%s, 0x%08x, 0x%08x, 0x%08x%08x, %p, %p, %p, %p, %p) stub\n", debugstr_a(lpszUrlSearchPattern),
           dwFlags, dwFilter, (ULONG)(GroupId >> 32), (ULONG)GroupId, lpFirstCacheEntryInfo,
           lpdwFirstCacheEntryInfoBufferSize, lpReserved, pcbReserved2,lpReserved3);
     SetLastError(ERROR_FILE_NOT_FOUND);
@@ -2656,7 +2656,7 @@ HANDLE WINAPI FindFirstUrlCacheEntryExW(
   LPVOID lpReserved3
 )
 {
-    FIXME("(%s, 0x%08lx, 0x%08lx, 0x%08lx%08lx, %p, %p, %p, %p, %p) stub\n", debugstr_w(lpszUrlSearchPattern),
+    FIXME("(%s, 0x%08x, 0x%08x, 0x%08x%08x, %p, %p, %p, %p, %p) stub\n", debugstr_w(lpszUrlSearchPattern),
           dwFlags, dwFilter, (ULONG)(GroupId >> 32), (ULONG)GroupId, lpFirstCacheEntryInfo,
           lpdwFirstCacheEntryInfoBufferSize, lpReserved, pcbReserved2,lpReserved3);
     SetLastError(ERROR_FILE_NOT_FOUND);
@@ -2689,7 +2689,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
 HANDLE WINAPI FindFirstUrlCacheGroup( DWORD dwFlags, DWORD dwFilter, LPVOID lpSearchCondition,
                                       DWORD dwSearchCondition, GROUPID* lpGroupId, LPVOID lpReserved )
 {
-    FIXME("(0x%08lx, 0x%08lx, %p, 0x%08lx, %p, %p) stub\n", dwFlags, dwFilter, lpSearchCondition,
+    FIXME("(0x%08x, 0x%08x, %p, 0x%08x, %p, %p) stub\n", dwFlags, dwFilter, lpSearchCondition,
           dwSearchCondition, lpGroupId, lpReserved);
     return NULL;
 }
@@ -2754,7 +2754,7 @@ BOOL WINAPI FindNextUrlCacheGroup( HANDLE hFind, GROUPID* lpGroupId, LPVOID lpRe
  */
 INTERNETAPI GROUPID WINAPI CreateUrlCacheGroup(DWORD dwFlags, LPVOID lpReserved)
 {
-  FIXME("(0x%08lx, %p): stub\n", dwFlags, lpReserved);
+  FIXME("(0x%08x, %p): stub\n", dwFlags, lpReserved);
   return FALSE;
 }
 
@@ -2764,7 +2764,7 @@ INTERNETAPI GROUPID WINAPI CreateUrlCacheGroup(DWORD dwFlags, LPVOID lpReserved)
  */
 BOOL WINAPI DeleteUrlCacheGroup(GROUPID GroupId, DWORD dwFlags, LPVOID lpReserved)
 {
-    FIXME("(0x%08lx%08lx, 0x%08lx, %p) stub\n",
+    FIXME("(0x%08x%08x, 0x%08x, %p) stub\n",
           (ULONG)(GroupId >> 32), (ULONG)GroupId, dwFlags, lpReserved);
     return FALSE;
 }
@@ -2777,7 +2777,7 @@ BOOL WINAPI SetUrlCacheEntryGroupA(LPCSTR lpszUrlName, DWORD dwFlags,
   GROUPID GroupId, LPBYTE pbGroupAttributes, DWORD cbGroupAttributes,
   LPVOID lpReserved)
 {
-    FIXME("(%s, 0x%08lx, 0x%08lx%08lx, %p, 0x%08lx, %p) stub\n",
+    FIXME("(%s, 0x%08x, 0x%08x%08x, %p, 0x%08x, %p) stub\n",
           debugstr_a(lpszUrlName), dwFlags, (ULONG)(GroupId >> 32), (ULONG)GroupId,
           pbGroupAttributes, cbGroupAttributes, lpReserved);
     SetLastError(ERROR_FILE_NOT_FOUND);
@@ -2792,7 +2792,7 @@ BOOL WINAPI SetUrlCacheEntryGroupW(LPCWSTR lpszUrlName, DWORD dwFlags,
   GROUPID GroupId, LPBYTE pbGroupAttributes, DWORD cbGroupAttributes,
   LPVOID lpReserved)
 {
-    FIXME("(%s, 0x%08lx, 0x%08lx%08lx, %p, 0x%08lx, %p) stub\n",
+    FIXME("(%s, 0x%08x, 0x%08x%08x, %p, 0x%08x, %p) stub\n",
           debugstr_w(lpszUrlName), dwFlags, (ULONG)(GroupId >> 32), (ULONG)GroupId,
           pbGroupAttributes, cbGroupAttributes, lpReserved);
     SetLastError(ERROR_FILE_NOT_FOUND);
@@ -2804,7 +2804,7 @@ BOOL WINAPI SetUrlCacheEntryGroupW(LPCWSTR lpszUrlName, DWORD dwFlags,
  */
 BOOL WINAPI GetUrlCacheConfigInfoW(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
 {
-    FIXME("(%p, %p, %lx)\n", CacheInfo, size, bitmask);
+    FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
 }
@@ -2816,7 +2816,7 @@ BOOL WINAPI GetUrlCacheConfigInfoW(LPDWORD CacheInfo, LPDWORD size, DWORD bitmas
  */
 BOOL WINAPI GetUrlCacheConfigInfoA(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
 {
-    FIXME("(%p, %p, %lx)\n", CacheInfo, size, bitmask);
+    FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
 }
@@ -2825,7 +2825,7 @@ BOOL WINAPI GetUrlCacheGroupAttributeA( GROUPID gid, DWORD dwFlags, DWORD dwAttr
                                         LPINTERNET_CACHE_GROUP_INFOA lpGroupInfo,
                                         LPDWORD lpdwGroupInfo, LPVOID lpReserved )
 {
-    FIXME("(0x%08lx%08lx, 0x%08lx, 0x%08lx, %p, %p, %p) stub\n",
+    FIXME("(0x%08x%08x, 0x%08x, 0x%08x, %p, %p, %p) stub\n",
           (ULONG)(gid >> 32), (ULONG)gid, dwFlags, dwAttributes, lpGroupInfo,
           lpdwGroupInfo, lpReserved);
     return FALSE;
@@ -2835,7 +2835,7 @@ BOOL WINAPI GetUrlCacheGroupAttributeW( GROUPID gid, DWORD dwFlags, DWORD dwAttr
                                         LPINTERNET_CACHE_GROUP_INFOW lpGroupInfo,
                                         LPDWORD lpdwGroupInfo, LPVOID lpReserved )
 {
-    FIXME("(0x%08lx%08lx, 0x%08lx, 0x%08lx, %p, %p, %p) stub\n",
+    FIXME("(0x%08x%08x, 0x%08x, 0x%08x, %p, %p, %p) stub\n",
           (ULONG)(gid >> 32), (ULONG)gid, dwFlags, dwAttributes, lpGroupInfo,
           lpdwGroupInfo, lpReserved);
     return FALSE;
@@ -2844,7 +2844,7 @@ BOOL WINAPI GetUrlCacheGroupAttributeW( GROUPID gid, DWORD dwFlags, DWORD dwAttr
 BOOL WINAPI SetUrlCacheGroupAttributeA( GROUPID gid, DWORD dwFlags, DWORD dwAttributes,
                                         LPINTERNET_CACHE_GROUP_INFOA lpGroupInfo, LPVOID lpReserved )
 {
-    FIXME("(0x%08lx%08lx, 0x%08lx, 0x%08lx, %p, %p) stub\n",
+    FIXME("(0x%08x%08x, 0x%08x, 0x%08x, %p, %p) stub\n",
           (ULONG)(gid >> 32), (ULONG)gid, dwFlags, dwAttributes, lpGroupInfo, lpReserved);
     return TRUE;
 }
@@ -2852,20 +2852,20 @@ BOOL WINAPI SetUrlCacheGroupAttributeA( GROUPID gid, DWORD dwFlags, DWORD dwAttr
 BOOL WINAPI SetUrlCacheGroupAttributeW( GROUPID gid, DWORD dwFlags, DWORD dwAttributes,
                                         LPINTERNET_CACHE_GROUP_INFOW lpGroupInfo, LPVOID lpReserved )
 {
-    FIXME("(0x%08lx%08lx, 0x%08lx, 0x%08lx, %p, %p) stub\n",
+    FIXME("(0x%08x%08x, 0x%08x, 0x%08x, %p, %p) stub\n",
           (ULONG)(gid >> 32), (ULONG)gid, dwFlags, dwAttributes, lpGroupInfo, lpReserved);
     return TRUE;
 }
 
 BOOL WINAPI SetUrlCacheConfigInfoA( LPDWORD lpCacheConfigInfo, DWORD dwFieldControl )
 {
-    FIXME("(%p, 0x%08lx) stub\n", lpCacheConfigInfo, dwFieldControl);
+    FIXME("(%p, 0x%08x) stub\n", lpCacheConfigInfo, dwFieldControl);
     return TRUE;
 }
 
 BOOL WINAPI SetUrlCacheConfigInfoW( LPDWORD lpCacheConfigInfo, DWORD dwFieldControl )
 {
-    FIXME("(%p, 0x%08lx) stub\n", lpCacheConfigInfo, dwFieldControl);
+    FIXME("(%p, 0x%08x) stub\n", lpCacheConfigInfo, dwFieldControl);
     return TRUE;
 }
 

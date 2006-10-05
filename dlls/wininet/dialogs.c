@@ -336,7 +336,7 @@ static INT WININET_GetConnectionStatus( HINTERNET hRequest )
         return -1;
     dwStatus = atoiW( szStatus );
 
-    TRACE("request %p status = %ld\n", hRequest, dwStatus );
+    TRACE("request %p status = %d\n", hRequest, dwStatus );
 
     return dwStatus;
 }
@@ -352,7 +352,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     HMODULE hwininet = GetModuleHandleA( "wininet.dll" );
     INT dwStatus;
 
-    TRACE("%p %p %ld %08lx %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
+    TRACE("%p %p %d %08x %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
 
     params.hWnd = hWnd;
     params.hRequest = hRequest;
@@ -380,7 +380,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
     case ERROR_INTERNET_POST_IS_NON_SECURE:
     case ERROR_INTERNET_SEC_CERT_CN_INVALID:
     case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
-        FIXME("Need to display dialog for error %ld\n", dwError);
+        FIXME("Need to display dialog for error %d\n", dwError);
         return ERROR_SUCCESS;
     }
     return ERROR_INVALID_PARAMETER;

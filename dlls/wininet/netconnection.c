@@ -624,7 +624,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	{
 	    lpszBuffer[nRecv++] = '\0';
 	    *dwBuffer = nRecv;
-	    TRACE(":%lu %s\n", nRecv, lpszBuffer);
+	    TRACE(":%u %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
 	else
@@ -665,7 +665,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	{
 	    lpszBuffer[nRecv++] = '\0';
 	    *dwBuffer = nRecv;
-	    TRACE("_SSL:%lu %s\n", nRecv, lpszBuffer);
+	    TRACE("_SSL:%u %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
         return FALSE;
