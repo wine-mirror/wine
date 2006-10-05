@@ -127,13 +127,12 @@ static void add_listview_item(HWND listview, const WCHAR *text, void *associatio
 {
   LVITEMW item;
 
-  ZeroMemory(&item, sizeof(LVITEM));
-
   item.mask = LVIF_TEXT | LVIF_PARAM;
   item.pszText = (WCHAR*) text;
   item.cchTextMax = lstrlenW(text);
   item.lParam = (LPARAM) association;
   item.iItem = ListView_GetItemCount(listview);
+  item.iSubItem = 0;
 
   SendMessage(listview, LVM_INSERTITEMW, 0, (LPARAM) &item);
 }
@@ -179,10 +178,9 @@ static void init_appsheet(HWND dialog)
   {
       LVITEM item;
       
-      ZeroMemory(&item, sizeof(item));
-      
-      item.mask = LVIF_STATE;
       item.iItem = 0;
+      item.iSubItem = 0;
+      item.mask = LVIF_STATE;
       item.state = LVIS_SELECTED | LVIS_FOCUSED;
       item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 
@@ -215,6 +213,7 @@ static void on_selection_change(HWND dialog, HWND listview)
   WINE_TRACE("()\n");
 
   item.iItem = get_listview_selection(listview);
+  item.iSubItem = 0;
   item.mask = LVIF_PARAM;
 
   WINE_TRACE("item.iItem=%d\n", item.iItem);
@@ -314,6 +313,7 @@ static void on_remove_app_click(HWND dialog)
     LVITEMW item;
 
     item.iItem = selection;
+    item.iSubItem = 0;
     item.mask = LVIF_PARAM;
 
     WINE_TRACE("selection=%d, section=%s\n", selection, section);
