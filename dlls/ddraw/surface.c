@@ -1351,9 +1351,12 @@ static HRESULT WINAPI
 IDirectDrawSurfaceImpl_GetOverlayPosition(IDirectDrawSurface7 *iface,
                                           LONG *X,
                                           LONG *Y) {
-    FIXME("(%p)->(%p,%p): Stub!\n", iface, X, Y);
+    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    TRACE("(%p)->(%p,%p): Relay\n", This, X, Y);
 
-    return DDERR_NOTAOVERLAYSURFACE;
+    return IWineD3DSurface_GetOverlayPosition(This->WineD3DSurface,
+                                              X,
+                                              Y);
 }
 
 /*****************************************************************************

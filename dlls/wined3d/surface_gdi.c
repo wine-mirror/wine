@@ -1584,6 +1584,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,
     IWineD3DSurfaceImpl_SetOverlayPosition,
+    IWineD3DSurfaceImpl_GetOverlayPosition,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,

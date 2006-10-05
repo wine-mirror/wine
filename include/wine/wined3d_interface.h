@@ -1134,6 +1134,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(DWORD,GetPitch)(THIS) PURE;
     STDMETHOD(SetMem)(THIS_ void *mem) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG X, LONG Y) PURE;
+    STDMETHOD(GetOverlayPosition)(THIS_ LONG *X, LONG *Y) PURE;
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
@@ -1187,6 +1188,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetPitch(p)                  (p)->lpVtbl->GetPitch(p)
 #define IWineD3DSurface_SetMem(p, a)                 (p)->lpVtbl->SetMem(p, a)
 #define IWineD3DSurface_SetOverlayPosition(p, a, b)  (p)->lpVtbl->SetOverlayPosition(p, a, b)
+#define IWineD3DSurface_GetOverlayPosition(p, a, b)  (p)->lpVtbl->GetOverlayPosition(p, a, b)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)

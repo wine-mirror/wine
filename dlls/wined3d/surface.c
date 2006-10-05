@@ -3079,6 +3079,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LO
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *X, LONG *Y) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    FIXME("(%p)->(%p,%p) Stub!\n", This, X, Y);
+
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3117,6 +3125,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,
     IWineD3DSurfaceImpl_SetOverlayPosition,
+    IWineD3DSurfaceImpl_GetOverlayPosition,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
