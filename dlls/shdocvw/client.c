@@ -94,7 +94,7 @@ static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssig
                                             DWORD dwWhichMoniker, IMoniker **ppmk)
 {
     DocHost *This = CLIENTSITE_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
+    FIXME("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
 
@@ -232,7 +232,7 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
 static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtent)
 {
     DocHost *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)->({%ld %ld})\n", This, scrollExtent.cx, scrollExtent.cy);
+    FIXME("(%p)->({%d %d})\n", This, scrollExtent.cx, scrollExtent.cy);
     return E_NOTIMPL;
 }
 
@@ -384,7 +384,7 @@ static HRESULT WINAPI ClDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID
 {
     DocHost *This = DISP_THIS(iface);
 
-    TRACE("(%p)->(%u %ld %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %d %p)\n", This, iTInfo, lcid, ppTInfo);
 
     return E_NOTIMPL;
 }
@@ -394,7 +394,7 @@ static HRESULT WINAPI ClDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LP
 {
     DocHost *This = DISP_THIS(iface);
 
-    TRACE("(%p)->(%s %p %u %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %u %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     return E_NOTIMPL;
@@ -405,7 +405,7 @@ static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, R
                                         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     DocHost *This = DISP_THIS(iface);
-    FIXME("(%p)->(%ld %s %ld %04x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    FIXME("(%p)->(%d %s %d %04x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
 }

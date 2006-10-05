@@ -149,7 +149,7 @@ HRESULT register_class_object(BOOL do_reg)
         hres = CoRegisterClassObject(&CLSID_InternetExplorer, (IUnknown*)FACTORY(&IEClassFactory),
                                      CLSCTX_SERVER, REGCLS_MULTIPLEUSE|REGCLS_SUSPENDED, &cookie);
         if (FAILED(hres)) {
-            ERR("failed to register object %08lx\n", hres);
+            ERR("failed to register object %08x\n", hres);
             return hres;
         }
 
@@ -157,7 +157,7 @@ HRESULT register_class_object(BOOL do_reg)
         if(SUCCEEDED(hres))
             return hres;
 
-        ERR("failed to resume object %08lx\n", hres);
+        ERR("failed to resume object %08x\n", hres);
     }
 
     return CoRevokeClassObject(cookie);

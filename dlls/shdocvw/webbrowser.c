@@ -120,7 +120,7 @@ static ULONG WINAPI WebBrowser_AddRef(IWebBrowser2 *iface)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
     return ref;
 }
 
@@ -129,7 +129,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
     WebBrowser *This = WEBBROWSER_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->doc_host.document)
@@ -158,7 +158,7 @@ static HRESULT WINAPI WebBrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, L
                                      LPTYPEINFO *ppTInfo)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%d %ld %p)\n", This, iTInfo, lcid, ppTInfo);
+    FIXME("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
 
@@ -167,7 +167,7 @@ static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
                                        LCID lcid, DISPID *rgDispId)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%s %p %d %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    FIXME("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
             lcid, rgDispId);
     return E_NOTIMPL;
 }
@@ -181,7 +181,7 @@ static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember
     ITypeInfo *typeinfo;
     HRESULT hres;
 
-    TRACE("(%p)->(%ld %s %ld %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%d %s %d %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
     hres = get_typeinfo(&typeinfo);

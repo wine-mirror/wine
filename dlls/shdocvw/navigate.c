@@ -61,15 +61,15 @@ static void dump_BINDINFO(BINDINFO *bi)
 
     TRACE("\n"
             "BINDINFO = {\n"
-            "    %ld, %s,\n"
-            "    {%ld, %p, %p},\n"
+            "    %d, %s,\n"
+            "    {%d, %p, %p},\n"
             "    %s,\n"
             "    %s,\n"
             "    %s,\n"
-            "    %ld, %08lx, %ld, %ld\n"
-            "    {%ld %p %x},\n"
+            "    %d, %08x, %d, %d\n"
+            "    {%d %p %x},\n"
             "    %s\n"
-            "    %p, %ld\n"
+            "    %p, %d\n"
             "}\n",
 
             bi->cbSize, debugstr_w(bi->szExtraInfo),
@@ -122,7 +122,7 @@ static ULONG WINAPI BindStatusCallback_AddRef(IBindStatusCallback *iface)
     BindStatusCallback *This = BINDSC_THIS(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -132,7 +132,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     BindStatusCallback *This = BINDSC_THIS(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%ld\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->post_data)
@@ -148,7 +148,7 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
        DWORD dwReserved, IBinding *pbind)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, dwReserved, pbind);
+    FIXME("(%p)->(%d %p)\n", This, dwReserved, pbind);
     return E_NOTIMPL;
 }
 
@@ -164,7 +164,7 @@ static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *ifac
        DWORD reserved)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, reserved);
+    FIXME("(%p)->(%d)\n", This, reserved);
     return E_NOTIMPL;
 }
 
@@ -172,7 +172,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
         ULONG ulProgress, ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%ld %ld %ld %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+    FIXME("(%p)->(%d %d %d %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
           debugstr_w(szStatusText));
     return E_NOTIMPL;
 }
@@ -181,7 +181,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         HRESULT hresult, LPCWSTR szError)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
+    FIXME("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
     return E_NOTIMPL;
 }
 
@@ -213,7 +213,7 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
         DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
 {
     BindStatusCallback *This = BINDSC_THIS(iface);
-    FIXME("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    FIXME("(%p)->(%08x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
     return E_NOTIMPL;
 }
 
@@ -258,7 +258,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
 {
     BindStatusCallback *This = HTTPNEG_THIS(iface);
 
-    FIXME("(%p)->(%s %s %ld %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
+    FIXME("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
           dwReserved, pszAdditionalHeaders);
 
     if(This->headers) {
@@ -275,7 +275,7 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate *iface,
         LPWSTR *pszAdditionalRequestHeaders)
 {
     BindStatusCallback *This = HTTPNEG_THIS(iface);
-    FIXME("(%p)->(%ld %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
+    FIXME("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
     return E_NOTIMPL;
 }
@@ -443,7 +443,7 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
                             &IID_IUnknown, (void**)&This->document);
 
     if(FAILED(hres)) {
-        ERR("Could not create HTMLDocument: %08lx\n", hres);
+        ERR("Could not create HTMLDocument: %08x\n", hres);
         return hres;
     }
 
@@ -459,7 +459,7 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
     IPersistMoniker_Release(persist);
     if(FAILED(hres)) {
-        WARN("Load failed: %08lx\n", hres);
+        WARN("Load failed: %08x\n", hres);
         return hres;
     }
 
@@ -490,7 +490,7 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_dat
 
     hres = CreateURLMoniker(NULL, url, &mon);
     if(FAILED(hres)) {
-        WARN("CreateURLMoniker failed: %08lx\n", hres);
+        WARN("CreateURLMoniker failed: %08x\n", hres);
         return hres;
     }
 
@@ -607,10 +607,10 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
     IMoniker *mon;
     LPWSTR location = NULL;
 
-    TRACE("(%p)->(%08lx %p %p %p)\n", This, grfHLNF, pbc, pibsc, pihlNavigate);
+    TRACE("(%p)->(%08x %p %p %p)\n", This, grfHLNF, pbc, pibsc, pihlNavigate);
 
     if(grfHLNF)
-        FIXME("unsupported grfHLNF=%08lx\n", grfHLNF);
+        FIXME("unsupported grfHLNF=%08x\n", grfHLNF);
 
     /* Windows calls GetTargetFrameName here. */
 
@@ -635,7 +635,7 @@ static HRESULT WINAPI HlinkFrame_OnNavigate(IHlinkFrame *iface, DWORD grfHLNF,
         IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName, DWORD dwreserved)
 {
     WebBrowser *This = HLINKFRAME_THIS(iface);
-    FIXME("(%p)->(%08lx %p %s %s %ld)\n", This, grfHLNF, pimkTarget, debugstr_w(pwzLocation),
+    FIXME("(%p)->(%08x %p %s %s %d)\n", This, grfHLNF, pimkTarget, debugstr_w(pwzLocation),
           debugstr_w(pwzFriendlyName), dwreserved);
     return E_NOTIMPL;
 }
@@ -644,7 +644,7 @@ static HRESULT WINAPI HlinkFrame_UpdateHlink(IHlinkFrame *iface, ULONG uHLID,
         IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
 {
     WebBrowser *This = HLINKFRAME_THIS(iface);
-    FIXME("(%p)->(%lu %p %s %s)\n", This, uHLID, pimkTarget, debugstr_w(pwzLocation),
+    FIXME("(%p)->(%u %p %s %s)\n", This, uHLID, pimkTarget, debugstr_w(pwzLocation),
           debugstr_w(pwzFriendlyName));
     return E_NOTIMPL;
 }

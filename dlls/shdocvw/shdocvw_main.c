@@ -54,7 +54,7 @@ HRESULT get_typeinfo(ITypeInfo **typeinfo)
 
     hres = LoadRegTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, &typelib);
     if(FAILED(hres)) {
-        ERR("LoadRegTypeLib failed: %08lx\n", hres);
+        ERR("LoadRegTypeLib failed: %08x\n", hres);
         return hres;
     }
 
@@ -70,7 +70,7 @@ HRESULT get_typeinfo(ITypeInfo **typeinfo)
  */
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hinst, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hinst, fdwReason, fImpLoad);
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
@@ -187,7 +187,7 @@ DWORD WINAPI RunInstallUninstallStubs(void)
  */
 DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
 {
-    FIXME("(%lu), stub!\n", arg);
+    FIXME("(%u), stub!\n", arg);
     return 0;
 }
 

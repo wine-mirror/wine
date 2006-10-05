@@ -735,7 +735,7 @@ static HRESULT register_typelib(void)
 
     hres = LoadTypeLibEx(wszSHDocVw, REGKIND_REGISTER, &typelib);
     if(FAILED(hres)) {
-        ERR("Could not load typelib: %08lx\n", hres);
+        ERR("Could not load typelib: %08x\n", hres);
         return hres;
     }
 

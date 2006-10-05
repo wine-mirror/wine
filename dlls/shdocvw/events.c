@@ -224,7 +224,7 @@ static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dw
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, dwCookie);
+    TRACE("(%p)->(%d)\n", This, dwCookie);
 
     if(!dwCookie || dwCookie > This->sinks_size || !This->sinks[dwCookie-1])
         return CONNECT_E_NOCONNECTION;

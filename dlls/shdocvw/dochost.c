@@ -92,7 +92,7 @@ static LRESULT resize_document(DocHost *This, LONG width, LONG height)
 {
     RECT rect = {0, 0, width, height};
 
-    TRACE("(%p)->(%ld %ld)\n", This, width, height);
+    TRACE("(%p)->(%d %d)\n", This, width, height);
 
     if(This->view)
         IOleDocumentView_SetRect(This->view, &rect);
@@ -231,7 +231,7 @@ static HRESULT WINAPI ClOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
         const GUID *pguidCmdGroup, ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
     DocHost *This = OLECMD_THIS(iface);
-    FIXME("(%p)->(%s %lu %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
+    FIXME("(%p)->(%s %u %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
           pCmdText);
     return E_NOTIMPL;
 }
@@ -241,7 +241,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         VARIANT *pvaOut)
 {
     DocHost *This = OLECMD_THIS(iface);
-    FIXME("(%p)->(%s %ld %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
+    FIXME("(%p)->(%s %d %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
           nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
@@ -283,7 +283,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
     DocHost *This = DOCHOSTUI_THIS(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%ld %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
+    TRACE("(%p)->(%d %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
 
     if(This->hostui) {
         hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt, pcmdtReserved,
@@ -321,7 +321,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%ld %p %p %p %p)\n", This, dwID, pActiveObject, pCommandTarget,
+    FIXME("(%p)->(%d %p %p %p %p)\n", This, dwID, pActiveObject, pCommandTarget,
           pFrame, pDoc);
     return E_NOTIMPL;
 }
@@ -376,7 +376,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
         LPMSG lpMsg, const GUID *pguidCmdGroup, DWORD nCmdID)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%p %p %ld)\n", This, lpMsg, pguidCmdGroup, nCmdID);
+    FIXME("(%p)->(%p %p %d)\n", This, lpMsg, pguidCmdGroup, nCmdID);
     return E_NOTIMPL;
 }
 
@@ -385,7 +385,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
 
-    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
+    TRACE("(%p)->(%p %d)\n", This, pchKey, dw);
 
     if(This->hostui)
         return IDocHostUIHandler_GetOptionKeyPath(This->hostui, pchKey, dw);
@@ -414,7 +414,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
 
-    TRACE("(%p)->(%ld %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
+    TRACE("(%p)->(%d %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
 
     if(This->hostui)
         return IDocHostUIHandler_TranslateUrl(This->hostui, dwTranslate,
@@ -438,7 +438,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
     IDocHostUIHandler2 *handler;
     HRESULT hres;
 
-    TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
+    TRACE("(%p)->(%p %d)\n", This, pchKey, dw);
 
     if(!This->hostui)
         return S_OK;
