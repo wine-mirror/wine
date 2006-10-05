@@ -144,7 +144,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(LPDIRECT3DDEVICE8 iface, 
         FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
         *ppD3D8 = NULL;
     }
-    TRACE("(%p) returning %p\b",This , *ppD3D8);
+    TRACE("(%p) returning %p\n",This , *ppD3D8);
     return hr;
 }
 
