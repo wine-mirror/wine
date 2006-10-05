@@ -119,7 +119,9 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define NM_LDOWN                (NM_FIRST-20)
 #define NM_RDOWN                (NM_FIRST-21)
 #define NM_THEMECHANGED         (NM_FIRST-22)
-
+#define NM_FONTCHANGED          (NM_FIRST-23)
+#define NM_CUSTOMTEXT           (NM_FIRST-24)
+#define NM_TVSTATEIMAGECHANGING (NM_FIRST-24)
 
 #define HANDLE_WM_NOTIFY(hwnd, wParam, lParam, fn) \
     (fn)((hwnd), (int)(wParam), (NMHDR*)(lParam))
@@ -253,6 +255,9 @@ typedef struct tagNMCHAR
 #define CDIS_MARKED             0x0080
 #define CDIS_INDETERMINATE      0x0100
 #define CDIS_SHOWKEYBOARDCUES   0x0200
+#define CDIS_NEARHOT            0x0400
+#define CDIS_OTHERSIDEHOT       0x0800
+#define CDIS_DROPHILITED        0x1000
 
 
 typedef struct tagNMCUSTOMDRAWINFO
@@ -524,6 +529,7 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define ILD_PRESERVEALPHA 0x1000
 #define ILD_SCALE         0x2000
 #define ILD_DPISCALE      0x4000
+#define ILD_ASYNC         0x8000
 
 #define ILD_SELECTED     ILD_BLEND50
 #define ILD_FOCUS        ILD_BLEND25
@@ -534,6 +540,9 @@ typedef struct _IMAGELIST *HIMAGELIST;
 
 #define ILCF_MOVE        (0x00000000)
 #define ILCF_SWAP        (0x00000001)
+
+#define ILGT_NORMAL     0x0000
+#define ILGT_ASYNC      0x0001
 
 #define ILS_NORMAL	0x0000
 #define ILS_GLOW	0x0001
@@ -726,6 +735,7 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDS_FULLDRAG            0x0080
 #define HDS_FILTERBAR           0x0100
 #define HDS_FLAT                0x0200
+#define HDS_CHECKBOXES          0x0400
 
 #define HDI_WIDTH               0x0001
 #define HDI_HEIGHT              HDI_WIDTH
@@ -743,7 +753,9 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDF_CENTER              0x0002
 #define HDF_JUSTIFYMASK         0x0003
 #define HDF_RTLREADING          0x0004
-
+#define HDF_CHECKBOX            0x0040
+#define HDF_CHECKED             0x0080
+#define HDF_FIXEDWIDTH          0x0100
 #define HDF_SORTDOWN            0x0200
 #define HDF_SORTUP              0x0400
 #define HDF_IMAGE               0x0800
@@ -762,6 +774,7 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HHT_BELOW               0x0200
 #define HHT_TORIGHT             0x0400
 #define HHT_TOLEFT              0x0800
+#define HHT_ONITEMSTATEICON     0x1000
 
 #define HDM_FIRST               0x1200
 #define HDM_GETITEMCOUNT        (HDM_FIRST+0)
@@ -827,6 +840,10 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDN_ENDDRAG             (HDN_FIRST-11)
 #define HDN_FILTERCHANGE        (HDN_FIRST-12)
 #define HDN_FILTERBTNCLICK      (HDN_FIRST-13)
+#define HDN_BEGINFILTEREDIT     (HDN_FIRST-14)
+#define HDN_ENDFILTEREDIT       (HDN_FIRST-15)
+#define HDN_ITEMSTATEICONCLICK  (HDN_FIRST-16)
+#define HDN_ITEMKEYDOWN         (HDN_FIRST-17)
 
 typedef struct _HD_LAYOUT
 {
@@ -1273,6 +1290,7 @@ typedef struct _NMTBCUSTOMDRAW
                                           /* disabled items                */
 #define TBCDRF_BLENDICON      0x00200000  /* ILD_BLEND50 on the icon image */
 #define TBCDRF_NOBACKGROUND   0x00400000  /* ILD_BLEND50 on the icon image */
+#define TBCDRF_USECDCOLORS    0x00800000
 
 
 /* This is just for old CreateToolbar. */
@@ -1608,6 +1626,7 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 #define TTS_NOFADE              0x20
 #define TTS_BALLOON             0x40
 #define TTS_CLOSE               0x80
+#define TTS_USEVISUALSTYLE      0x100
 
 #define TTF_IDISHWND            0x0001
 #define TTF_CENTERTIP           0x0002
@@ -2902,6 +2921,15 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVS_EX_SINGLEROW        0x00040000
 #define LVS_EX_SNAPTOGRID       0x00080000
 #define LVS_EX_SIMPLESELECT     0x00100000
+#define LVS_EX_JUSTIFYCOLUMNS   0x00200000
+#define LVS_EX_TRANSPARENTBKGND 0x00400000
+#define LVS_EX_TRANSPARENTSHADOWTEXT 0x00800000
+#define LVS_EX_AUTOAUTOARRANGE  0x01000000
+#define LVS_EX_HEADERINALLVIEWS 0x02000000
+#define LVS_EX_AUTOCHECKSELECT  0x08000000
+#define LVS_EX_AUTOSIZECOLUMNS  0x10000000
+#define LVS_EX_COLUMNSNAPPOINTS 0x40000000
+#define LVS_EX_COLUMNOVERFLOW   0x80000000
 
 #define LVCF_FMT                0x0001
 #define LVCF_WIDTH              0x0002
@@ -2914,9 +2942,18 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVCFMT_RIGHT            0x0001
 #define LVCFMT_CENTER           0x0002
 #define LVCFMT_JUSTIFYMASK      0x0003
+#define LVCFMT_FIXED_WIDTH      0x0100
 #define LVCFMT_IMAGE            0x0800
 #define LVCFMT_BITMAP_ON_RIGHT  0x1000
 #define LVCFMT_COL_HAS_IMAGES   0x8000
+#define LVCFMT_NO_DPI_SCALE     0x00040000
+#define LVCFMT_FIXED_RATIO      0x00080000
+#define LVCFMT_LINE_BREAK       0x00100000
+#define LVCFMT_FILL             0x00200000
+#define LVCFMT_WRAP             0x00400000
+#define LVCFMT_NO_TITLE         0x00800000
+#define LVCFMT_SPLIT_BUTTON     0x01000000
+#define LVCFMT_TILE_PLACEMENTMASK (LVCFMT_LINE_BREAK | LVCFMT_FILL)
 
 #define LVSIL_NORMAL            0
 #define LVSIL_SMALL             1
@@ -2943,6 +2980,7 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVIF_COLUMNS            0x0200
 #define LVIF_NORECOMPUTE        0x0800
 #define LVIF_DI_SETITEM         0x1000
+#define LVIF_COLFMT             0x00010000
 
 #define LVIR_BOUNDS             0x0000
 #define LVIR_ICON               0x0001
@@ -2993,6 +3031,15 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVGF_STATE              0x00000004
 #define LVGF_ALIGN              0x00000008
 #define LVGF_GROUPID            0x00000010
+#define LVGF_SUBTITLE           0x00000100
+#define LVGF_TASK               0x00000200
+#define LVGF_DESCRIPTIONTOP     0x00000400
+#define LVGF_DESCRIPTIONBOTTOM  0x00000800
+#define LVGF_TITLEIMAGE         0x00001000
+#define LVGF_EXTENDEDIMAGE      0x00002000
+#define LVGF_ITEMS              0x00004000
+#define LVGF_SUBSET             0x00008000
+#define LVGF_SUBSETITEMS        0x00010000
 
 #define LVGS_NORMAL             0x00000000
 #define LVGS_COLLAPSED          0x00000001
@@ -3014,6 +3061,7 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVTVIF_FIXEDWIDTH       0x00000001
 #define LVTVIF_FIXEDHEIGHT      0x00000002
 #define LVTVIF_FIXEDSIZE        0x00000003
+#define LVTVIF_EXTENDED         0x00000004
 
 #define LVTVIM_TILESIZE         0x00000001
 #define LVTVIM_COLUMNS          0x00000002
@@ -3198,6 +3246,11 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVN_GETINFOTIPA         (LVN_FIRST-57)
 #define LVN_GETINFOTIPW         (LVN_FIRST-58)
 #define LVN_GETINFOTIP          WINELIB_NAME_AW(LVN_GETINFOTIP)
+#define LVN_BEGINSCROLL         (LVN_FIRST-80)
+#define LVN_ENDSCROLL           (LVN_FIRST-81)
+#define LVN_LINKCLICK           (LVN_FIRST-84)
+#define LVN_ASYNCDRAWN          (LVN_FIRST-86)
+#define LVN_GETEMPTYMARKUP      (LVN_FIRST-87)
 
 #define LVA_DEFAULT             0x0000
 #define LVA_ALIGNLEFT           0x0001
@@ -3802,6 +3855,10 @@ typedef struct NMLVSCROLL
     (DWORD)SNDMSG((hwnd), LVM_GETVIEW, 0, 0)
 #define ListView_InsertGroup(hwnd, index, pgrp) \
     SNDMSG((hwnd), LVM_INSERTGROUP, (WPARAM)index, (LPARAM)pgrp)
+#define ListView_SetGroupHeaderImageList(hwnd, himl) \
+    SNDMSG((hwnd), LVM_SETIMAGELIST, (WPARAM)LVSIL_GROUPHEADER, (LPARAM)himl)
+#define ListView_GetGroupHeaderImageList(hwnd) \
+    SNDMSG((hwnd), LVM_GETIMAGELIST, (WPARAM)LVSIL_GROUPHEADER, 0)
 #define ListView_SetGroupInfo(hwnd, iGroupId, pgrp) \
     SNDMSG((hwnd), LVM_SETGROUPINFO, (WPARAM)iGroupId, (LPARAM)pgrp)
 #define ListView_GetGroupInfo(hwnd, iGroupId, pgrp) \
@@ -4875,6 +4932,14 @@ typedef struct tagNMLINK
   NMHDR hdr;
   LITEM item;
 } NMLINK, *PNMLINK;
+
+typedef struct tagNMLVLINK
+{
+    NMHDR hdr;
+    LITEM link;
+    int iItem;
+    int iSubItem;
+} NMLVLINK, *PNMLVLINK;
 
 /**************************************************************************
  * Static control

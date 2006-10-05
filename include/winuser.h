@@ -951,6 +951,7 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define SM_STARTER            88
 #define SM_SERVERR2           89
 #define SM_CMETRICS           90
+#define SM_MOUSEHORIZONTALWHEELPRESENT 91
 
 #define SM_REMOTESESSION        0x1000
 #define SM_SHUTTINGDOWN         0x2000
@@ -2676,6 +2677,7 @@ typedef struct tagCBTACTIVATESTRUCT
 #define MOUSEEVENTF_XDOWN       0x0080
 #define MOUSEEVENTF_XUP         0x0100
 #define MOUSEEVENTF_WHEEL       0x0800
+#define MOUSEEVENTF_HWHEEL      0x1000
 #define MOUSEEVENTF_ABSOLUTE    0x8000
 
 /* ExitWindows() flags */
@@ -2834,6 +2836,8 @@ typedef struct tagCBTACTIVATESTRUCT
 #define SPI_SETWHEELSCROLLLINES   105
 #define SPI_GETMENUSHOWDELAY      106
 #define SPI_SETMENUSHOWDELAY      107
+#define SPI_GETWHEELSCROLLCHARS   108
+#define SPI_SETWHEELSCROLLCHARS   109
 #define SPI_GETSHOWIMEUI          110
 #define SPI_SETSHOWIMEUI          111
 #define SPI_GETMOUSESPEED         112
