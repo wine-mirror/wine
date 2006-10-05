@@ -28,7 +28,7 @@
 
 #include "wine/test.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx \n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x \n", hr)
 
 static void register_testentry(void)
 {
@@ -103,7 +103,7 @@ static void do_enum(void)
 	ok_ole_success(hr,"ICatInformation_EnumClassesOfCategories");
 
 	hr = IEnumGUID_Next(pIEnum,1,the_guid, &fetched);
-	ok (fetched == 0,"Fetched wrong number of guids %lu\n",fetched);
+	ok (fetched == 0,"Fetched wrong number of guids %u\n",fetched);
 	IEnumGUID_Release(pIEnum);
 	
 	register_testentry();
@@ -112,7 +112,7 @@ static void do_enum(void)
 	ok_ole_success(hr,"ICatInformation_EnumClassesOfCategories");
 
 	hr = IEnumGUID_Next(pIEnum,1,the_guid, &fetched);
-	ok (fetched == 1,"Fetched wrong number of guids %lu\n",fetched);
+	ok (fetched == 1,"Fetched wrong number of guids %u\n",fetched);
 	ok (IsEqualGUID(the_guid,&wanted_guid),"Guids do not match\n");
 
 	IEnumGUID_Release(pIEnum);
