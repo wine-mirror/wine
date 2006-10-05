@@ -367,12 +367,22 @@ static void CRYPT_CopyKeyProvInfo(PCRYPT_KEY_PROV_INFO to,
     DWORD i;
     LPBYTE nextData = (LPBYTE)to + sizeof(CRYPT_KEY_PROV_INFO);
 
-    to->pwszContainerName = (LPWSTR)nextData;
-    lstrcpyW(to->pwszContainerName, from->pwszContainerName);
-    nextData += (lstrlenW(from->pwszContainerName) + 1) * sizeof(WCHAR);
-    to->pwszProvName = (LPWSTR)nextData;
-    lstrcpyW(to->pwszProvName, from->pwszProvName);
-    nextData += (lstrlenW(from->pwszProvName) + 1) * sizeof(WCHAR);
+    if (from->pwszContainerName)
+    {
+        to->pwszContainerName = (LPWSTR)nextData;
+        lstrcpyW(to->pwszContainerName, from->pwszContainerName);
+        nextData += (lstrlenW(from->pwszContainerName) + 1) * sizeof(WCHAR);
+    }
+    else
+        to->pwszContainerName = NULL;
+    if (from->pwszProvName)
+    {
+        to->pwszProvName = (LPWSTR)nextData;
+        lstrcpyW(to->pwszProvName, from->pwszProvName);
+        nextData += (lstrlenW(from->pwszProvName) + 1) * sizeof(WCHAR);
+    }
+    else
+        to->pwszProvName = NULL;
     to->dwProvType = from->dwProvType;
     to->dwFlags = from->dwFlags;
     to->cProvParam = from->cProvParam;
@@ -397,8 +407,14 @@ static BOOL CertContext_SetKeyProvInfoProperty(PCONTEXT_PROPERTY_LIST properties
     LPBYTE buf = NULL;
     DWORD size = sizeof(CRYPT_KEY_PROV_INFO), i, containerSize, provNameSize;
 
-    containerSize = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
-    provNameSize = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
+    if (info->pwszContainerName)
+        containerSize = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
+    else
+        containerSize = 0;
+    if (info->pwszProvName)
+        provNameSize = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
+    else
+        provNameSize = 0;
     size += containerSize + provNameSize;
     for (i = 0; i < info->cProvParam; i++)
         size += sizeof(CRYPT_KEY_PROV_PARAM) + info->rgProvParam[i].cbData;
