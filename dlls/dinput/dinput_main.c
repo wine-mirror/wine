@@ -754,20 +754,13 @@ static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wPar
 static HWND hook_thread_hwnd;
 static LONG hook_thread_refcount;
 
+static const WCHAR classW[]={'H','o','o','k','_','L','L','_','C','L',0};
+
 static DWORD WINAPI hook_thread_proc(void *param)
 {
-    static const WCHAR classW[]={'H','o','o','k','_','L','L','_','C','L',0};
     MSG msg;
-    WNDCLASSEXW wcex;
     HWND hwnd;
 
-    memset(&wcex, 0, sizeof(wcex));
-    wcex.cbSize = sizeof(wcex);
-    wcex.lpfnWndProc = dinput_hook_WndProc;
-    wcex.lpszClassName = classW;
-    wcex.hInstance = GetModuleHandleW(0);
-
-    if (!RegisterClassExW(&wcex)) ERR("Error registering window class\n");
     hwnd = CreateWindowExW(0, classW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, 0);
     hook_thread_hwnd = hwnd;
 
@@ -783,7 +776,6 @@ static DWORD WINAPI hook_thread_proc(void *param)
     }
     else ERR("Error creating message window\n");
 
-    UnregisterClassW(wcex.lpszClassName, wcex.hInstance);
     return 0;
 }
 
@@ -799,8 +791,21 @@ static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0
 static BOOL create_hook_thread(void)
 {
     LONG ref;
+    static ATOM class_atom;
 
     EnterCriticalSection(&dinput_hook_crit);
+
+    if (!class_atom)
+    {
+        WNDCLASSEXW wcex;
+        memset(&wcex, 0, sizeof(wcex));
+        wcex.cbSize = sizeof(wcex);
+        wcex.lpfnWndProc = dinput_hook_WndProc;
+        wcex.lpszClassName = classW;
+        wcex.hInstance = GetModuleHandleW(0);
+        if (!(class_atom = RegisterClassExW(&wcex))) ERR("Error registering window class\n");
+    }
+
     ref = ++hook_thread_refcount;
     TRACE("Refcount %ld\n", ref);
     if (ref == 1)
