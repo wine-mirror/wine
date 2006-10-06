@@ -48,7 +48,7 @@ static ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
     DXDIAGN_LockModule();
 
@@ -59,7 +59,7 @@ static ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -86,7 +86,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAI
   IDxDiagContainerImpl_SubContainer* p = NULL;
   DWORD i = 0;
   
-  TRACE("(%p, %lu, %s, %lu)\n", iface, dwIndex, debugstr_w(pwszContainer), cchContainer);
+  TRACE("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszContainer), cchContainer);
 
   if (NULL == pwszContainer) {
     return E_INVALIDARG;
@@ -182,7 +182,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
   IDxDiagContainerImpl_Property* p = NULL;
   DWORD i = 0;
   
-  FIXME("(%p, %lu, %s, %lu)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
+  FIXME("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
 
   if (NULL == pwszPropName) {
     return E_INVALIDARG;

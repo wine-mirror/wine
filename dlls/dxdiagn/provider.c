@@ -54,7 +54,7 @@ static ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
     DXDIAGN_LockModule();
 
@@ -65,7 +65,7 @@ static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
