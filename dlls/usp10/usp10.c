@@ -1171,3 +1171,22 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
     }
     return S_OK;
 }
+
+/***********************************************************************
+ *      ScriptStringValidate (USP10.@)
+ *
+ * Validate a string analysis.
+ *
+ * PARAMS
+ *  ssa [I] string analysis.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: S_FALSE if invalid sequences are found
+ *           or a non-zero HRESULT if it fails.
+ */
+HRESULT WINAPI ScriptStringValidate(SCRIPT_STRING_ANALYSIS ssa)
+{
+    FIXME("(%p): stub\n", ssa);
+    return S_OK;
+}
