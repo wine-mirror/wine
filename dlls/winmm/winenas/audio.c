@@ -280,19 +280,19 @@ static const char* nas_state(unsigned int state)
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              PCMWAVEFORMAT* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
           format->wf.nChannels, format->wf.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -316,7 +316,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -580,7 +580,7 @@ static int NAS_RetrieveRingMessage(MSG_RING* mr,
  */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -628,7 +628,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 	    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	    TRACE("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	} else {
-	    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+            TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 	    wwo->lpLoopPtr = lpWaveHdr;
 	    /* Windows does not touch WAVEHDR.dwLoops,
 	     * so we need to make an internal copy */
@@ -777,7 +777,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
     HANDLE		ev;
 
     while (NAS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-        TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+        TRACE("Received %s %x\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -871,7 +871,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -891,7 +891,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("wodOpen (%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("wodOpen (%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
 
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
@@ -918,14 +918,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	lpDesc->lpFormat->nChannels == 0 ||
 	lpDesc->lpFormat->nSamplesPerSec == 0 ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -966,9 +966,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("stream=0x%lx, BufferSize=%ld\n", (long)wwo->AuServ, wwo->BufferSize);
+    TRACE("stream=0x%lx, BufferSize=%d\n", (long)wwo->AuServ, wwo->BufferSize);
 
-    TRACE("wBitsPerSample=%u nAvgBytesPerSec=%lu nSamplesPerSec=%lu nChannels=%u nBlockAlign=%u\n",
+    TRACE("wBitsPerSample=%u nAvgBytesPerSec=%u nSamplesPerSec=%u nChannels=%u nBlockAlign=%u\n",
 	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
 	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
 	  wwo->format.wf.nBlockAlign);
@@ -1017,7 +1017,7 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV || AuServ == NULL)
@@ -1119,7 +1119,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= MAX_WAVEOUTDRV || AuServ == NULL)
     {
@@ -1180,7 +1180,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
 
-    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+    TRACE("(%u, %08X);\n", wDevID, dwParam);
 
     WOutDev[wDevID].volume_left = left;
     WOutDev[wDevID].volume_right = right;
@@ -1202,7 +1202,7 @@ static	DWORD	wodGetNumDevs(void)
 DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRVM_INIT:
@@ -1349,7 +1349,7 @@ event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd)
                    break;
 
                    case AuElementNotifyKindState:
-                     TRACE("ev: kind %s state %s->%s reason %s numbytes %ld freeB %lu\n",
+                     TRACE("ev: kind %s state %s->%s reason %s numbytes %ld freeB %u\n",
                                      nas_elementnotify_kind(event->kind),
                                      nas_state(event->prev_state),
                                      nas_state(event->cur_state),
@@ -1417,7 +1417,7 @@ static int nas_send_buffer(WINE_WAVEOUT* wwo) {
      memcpy(newdata, wwo->SoundBuffer + len, wwo->BufferUsed - len);
   }
 
- TRACE("envoye de %d bytes / %lu bytes / freeBytes %lu\n", len, wwo->BufferUsed, wwo->freeBytes);
+ TRACE("envoye de %d bytes / %lu bytes / freeBytes %u\n", len, wwo->BufferUsed, wwo->freeBytes);
 
  AuWriteElement(wwo->AuServ, wwo->AuFlow, 0, len, ptr, AuFalse, NULL);
 
@@ -1490,7 +1490,7 @@ static int nas_end(void)
  */
 DWORD WINAPI NAS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 #endif
