@@ -88,15 +88,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
     SECURITY_STATUS ret;
     PNegoHelper helper = NULL;
     static CHAR ntlm_auth[] = "ntlm_auth",
-                helper_protocol[] = "--helper-protocol=squid-2.5-ntlmssp";
+                server_helper_protocol[] = "--helper-protocol=squid-2.5-ntlmssp",
+                credentials_argv[] = "--use-cached-creds";
 
     SEC_CHAR *client_user_arg = NULL;
     SEC_CHAR *client_domain_arg = NULL;
     SEC_WCHAR *username = NULL, *domain = NULL;
 
-    SEC_CHAR *client_argv[5];
+    SEC_CHAR *client_argv[6];
     SEC_CHAR *server_argv[] = { ntlm_auth,
-        helper_protocol,
+        server_helper_protocol,
         NULL };
 
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
@@ -196,9 +197,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                 client_argv[1] = helper_protocol;
                 client_argv[2] = client_user_arg;
                 client_argv[3] = client_domain_arg;
-                client_argv[4] = NULL;
+                client_argv[4] = credentials_argv;
+                client_argv[5] = NULL;
 
-                if((ret = fork_helper(&helper, "ntlm_auth", client_argv)) != 
+                if((ret = fork_helper(&helper, "ntlm_auth", client_argv)) !=
                         SEC_E_OK)
                 {
                     phCredential = NULL;
@@ -460,11 +462,21 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(fContextReq & ISC_REQ_STREAM)
             FIXME("ISC_REQ_STREAM\n");
 
-        /* Request a challenge request from ntlm_auth */
+        /* If no password is given, try to use cached credentials. Fall back to an empty
+         * password if this failed. */
         if(helper->password == NULL)
         {
-            FIXME("Using empty password for now.\n");
-            lstrcpynA(buffer, "PW AA==", max_len-1);
+            lstrcpynA(buffer, "OK", max_len-1);
+            if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+                goto isc_end;
+            /* If the helper replied with "PW", using cached credentials failed */
+            if(!strncmp(buffer, "PW", 2))
+            {
+                TRACE("Using cached credentials failed. Using empty password.");
+                lstrcpynA(buffer, "PW AA==", max_len-1);
+            }
+            else /* Just do a noop on the next run */
+                lstrcpynA(buffer, "OK", max_len-1);
         }
         else
         {
