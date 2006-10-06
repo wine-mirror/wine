@@ -239,7 +239,8 @@ static INT_PTR fci_open(char *pszFile, int oflag, int pmode, int *err, void *pv)
     DWORD dwCreateDisposition = OPEN_EXISTING;
     
     dwAccess = GENERIC_READ | GENERIC_WRITE;
-    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    /* FILE_SHARE_DELETE is not supported by Windows Me/98/95 */
+    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
     if (GetFileAttributesA(pszFile) != INVALID_FILE_ATTRIBUTES)
         dwCreateDisposition = OPEN_EXISTING;
