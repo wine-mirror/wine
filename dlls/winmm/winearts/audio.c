@@ -225,19 +225,19 @@ static const char *wodPlayerCmdString[] = {
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              PCMWAVEFORMAT* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
           format->wf.nChannels, format->wf.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -261,7 +261,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -622,7 +622,7 @@ static int ARTS_RetrieveRingMessage(ARTS_MSG_RING* mr,
  */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -674,7 +674,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 	    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	    TRACE("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	} else {
-	    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+            TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 	    wwo->lpLoopPtr = lpWaveHdr;
 	    /* Windows does not touch WAVEHDR.dwLoops,
 	     * so we need to make an internal copy */
@@ -741,7 +741,7 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 	if(!dwMillis) dwMillis = 1;
     }
 
-    TRACE("dwMillis = %ld\n", dwMillis);
+    TRACE("dwMillis = %d\n", dwMillis);
 
     return dwMillis;
 }
@@ -759,7 +759,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     int toWrite = min(dwLength, *bytes);
     int written;
 
-    TRACE("Writing wavehdr %p.%lu[%lu]\n",
+    TRACE("Writing wavehdr %p.%u[%u]\n",
           wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength);
 
     if (dwLength == 0)
@@ -856,7 +856,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
     LPWAVEHDR		lpWaveHdr;
 
     if (wwo->lpQueuePtr) {
-	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p), reserved=(%ld), dwWrittenTotal=(%ld), force=(%d)\n", 
+	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p), reserved=(%d), dwWrittenTotal=(%d), force=(%d)\n",
 	      wwo->lpQueuePtr,
 	      wwo->lpPlayPtr,
 	      wwo->lpLoopPtr,
@@ -864,7 +864,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 	      wwo->dwWrittenTotal,
 	      force);
     } else {
-	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p),  dwWrittenTotal=(%ld), force=(%d)\n", 
+	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p),  dwWrittenTotal=(%d), force=(%d)\n",
 	      wwo->lpQueuePtr,
 	      wwo->lpPlayPtr,
 	      wwo->lpLoopPtr,
@@ -969,7 +969,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
     HANDLE		ev;
 
     while (ARTS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-	TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+	TRACE("Received %s %x\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -1034,7 +1034,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 
     wodUpdatePlayedTotal(wwo);
     availInQ = arts_stream_get(wwo->play_stream, ARTS_P_BUFFER_SPACE);
-    TRACE("availInQ = %ld\n", availInQ);
+    TRACE("availInQ = %d\n", availInQ);
 
     /* input queue empty */
     if (!wwo->lpPlayPtr) {
@@ -1064,7 +1064,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 	    TRACE("feeding waveheaders until we run out of space\n");
 	    /* note the value that dwPlayedTotal will return when this wave finishes playing */
 	    wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-	    TRACE("reserved=(%ld) dwWrittenTotal=(%ld) dwBufferLength=(%ld)\n",
+            TRACE("reserved=(%d) dwWrittenTotal=(%d) dwBufferLength=(%d)\n",
 		  wwo->lpPlayPtr->reserved,
 		  wwo->dwWrittenTotal,
 		  wwo->lpPlayPtr->dwBufferLength
@@ -1101,7 +1101,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          *  are no pending actions, wait forever for a command.
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
-        TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
+        TRACE("waiting %ums (%u,%u)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
         WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
@@ -1118,7 +1118,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -1138,7 +1138,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -1161,14 +1161,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
         lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -1209,7 +1209,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     TRACE("Tried to set ARTS_P_PACKET_SETTINGS to (%x), actually set to (%x)\n", WAVEOUT_PACKET_SETTINGS, wwo->packetSettings);
 
     wwo->dwBufferSize = arts_stream_get(wwo->play_stream, ARTS_P_BUFFER_SIZE);
-    TRACE("Buffer size is now (%ld)\n",wwo->dwBufferSize);
+    TRACE("Buffer size is now (%d)\n",wwo->dwBufferSize);
 
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1236,10 +1236,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("stream=0x%lx, dwBufferSize=%ld\n",
+    TRACE("stream=0x%lx, dwBufferSize=%d\n",
 	  (long)wwo->play_stream, wwo->dwBufferSize);
 
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
 	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
 	  wwo->format.wf.nBlockAlign);
@@ -1289,7 +1289,7 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].play_stream ==
@@ -1395,7 +1395,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].play_stream ==
 	(arts_stream_t*)-1)
@@ -1457,7 +1457,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
 
-    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+    TRACE("(%u, %08X);\n", wDevID, dwParam);
 
     WOutDev[wDevID].volume_left = left;
     WOutDev[wDevID].volume_right = right;
@@ -1506,7 +1506,7 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 DWORD WINAPI ARTS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1591,7 +1591,7 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
  */
 static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WIM_OPEN:
@@ -1617,7 +1617,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
  */
 static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -1649,7 +1649,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     /* make sleep time to be # of ms to record one packet */
     dwSleepTime = ((1 << (wwi->packetSettings & 0xFFFF)) * 1000) / wwi->format.wf.nAvgBytesPerSec;
-    TRACE("sleeptime=%ld ms\n", dwSleepTime);
+    TRACE("sleeptime=%d ms\n", dwSleepTime);
 
     for(;;) {
 	/* Oddly enough, dwBufferSpace is sometimes negative.... 
@@ -1670,11 +1670,11 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    TRACE("read as much as we can\n");
 	    while(wwi->lpQueuePtr)
 	    {
-		TRACE("attempt to read %ld bytes\n",lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+		TRACE("attempt to read %d bytes\n",lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 		bytesRead = arts_read(wwi->record_stream,
 				      lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
 				      lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
-		TRACE("bytesRead=%ld\n",bytesRead);
+		TRACE("bytesRead=%d\n",bytesRead);
 		if (bytesRead==0) break;
 		
 		lpWaveHdr->dwBytesRecorded	+= bytesRead;
@@ -1704,7 +1704,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (ARTS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-	    TRACE("msg=%s param=0x%lx\n",wodPlayerCmdString[msg - WM_USER - 1], param);
+            TRACE("msg=%s param=0x%x\n",wodPlayerCmdString[msg - WM_USER - 1], param);
 	    switch(msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
@@ -1797,7 +1797,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEIN*	wwi;
 
-    TRACE("(%u, %p %08lX);\n",wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p %08X);\n",wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parametr (lpDesc == NULL)!\n");
 	return MMSYSERR_INVALPARAM;
@@ -1821,14 +1821,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
         lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -1890,7 +1890,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
 	  wwi->format.wf.nBlockAlign);
@@ -1929,7 +1929,7 @@ static DWORD widClose(WORD wDevID)
  */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't do it !\n");
@@ -2004,7 +2004,7 @@ static DWORD widReset(WORD wDevID)
 DWORD WINAPI ARTS_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
     case DRVM_INIT:
@@ -2059,7 +2059,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 DWORD WINAPI ARTS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -2069,7 +2069,7 @@ DWORD WINAPI ARTS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI ARTS_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
