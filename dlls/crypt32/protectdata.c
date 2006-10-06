@@ -537,20 +537,13 @@ void free_protect_data(struct protect_data_t * pInfo)
 
     if (!pInfo) return;
 
-    if (pInfo->info0.pbData)
-        CryptMemFree(pInfo->info0.pbData);
-    if (pInfo->info1.pbData)
-        CryptMemFree(pInfo->info1.pbData);
-    if (pInfo->szDataDescr)
-        CryptMemFree(pInfo->szDataDescr);
-    if (pInfo->data0.pbData)
-        CryptMemFree(pInfo->data0.pbData);
-    if (pInfo->salt.pbData)
-        CryptMemFree(pInfo->salt.pbData);
-    if (pInfo->cipher.pbData)
-        CryptMemFree(pInfo->cipher.pbData);
-    if (pInfo->fingerprint.pbData)
-        CryptMemFree(pInfo->fingerprint.pbData);
+    CryptMemFree(pInfo->info0.pbData);
+    CryptMemFree(pInfo->info1.pbData);
+    CryptMemFree(pInfo->szDataDescr);
+    CryptMemFree(pInfo->data0.pbData);
+    CryptMemFree(pInfo->salt.pbData);
+    CryptMemFree(pInfo->cipher.pbData);
+    CryptMemFree(pInfo->fingerprint.pbData);
 }
 
 /* copies a string into a data blob */
@@ -768,7 +761,7 @@ BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
 
     /* clean up */
     CryptDestroyHash(hSaltHash);
-    if (szUsername) CryptMemFree(szUsername);
+    CryptMemFree(szUsername);
 
     return rc;
 }
