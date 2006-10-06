@@ -64,7 +64,7 @@ HMODULE SERIALUI_hModule = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
@@ -177,13 +177,13 @@ static BOOL SERIALUI_GetConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, LPDWO
 
     if( (!hControl) || (!lpdwVal))
     {
-        TRACE("Couldn't get window handle for item %lx\n",id);
+        TRACE("Couldn't get window handle for item %x\n",id);
         return FALSE;
     }
 
     if(!GetWindowTextA(hControl, &lpEntry[0], sizeof(lpEntry)))
     {
-        TRACE("Couldn't get window text for item %lx\n",id);
+        TRACE("Couldn't get window text for item %x\n",id);
         return FALSE;
     }
     /* TRACE("%ld contains %s\n",id, lpEntry); */
@@ -293,7 +293,7 @@ static void SERIALUI_DialogInfoToDCB(HWND hDlg, SERIALUI_DialogInfo *info)
     SERIALUI_GetConfItems( hDlg, IDC_DATA, &SERIALUI_Data2Str, &dwByteSize);
     SERIALUI_GetConfItems( hDlg, IDC_FLOW, &SERIALUI_Flow2Str, &dwFlowControl );
 
-    TRACE("baud=%ld stop=%ld parity=%ld data=%ld flow=%ld\n",
+    TRACE("baud=%d stop=%d parity=%d data=%d flow=%d\n",
           dwBaudRate, dwStopBits, dwParity, dwByteSize, dwFlowControl);
 
     lpdcb->BaudRate = dwBaudRate;
@@ -488,7 +488,7 @@ BOOL WINAPI drvSetDefaultCommConfigW(
     DWORD r,dwDCBSize;
     static const WCHAR fmt[] = {'%','s','\\','%','s',0 };
 
-    TRACE("%p %p %lx\n",lpszDevice,lpCommConfig,dwSize);
+    TRACE("%p %p %x\n",lpszDevice,lpCommConfig,dwSize);
 
     if(!lpCommConfig)
         return FALSE;
@@ -507,7 +507,7 @@ BOOL WINAPI drvSetDefaultCommConfigW(
         dwDCBSize = sizeof (DCB);
         r = RegSetValueExW( hKeyPort, lpszDCB, 0, REG_BINARY,
                             (LPBYTE)&lpCommConfig->dcb,dwDCBSize);
-        TRACE("write key r=%ld\n",r);
+        TRACE("write key r=%d\n",r);
         RegCloseKey(hKeyPort);
     }
 
