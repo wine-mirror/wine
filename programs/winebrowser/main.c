@@ -94,7 +94,7 @@ static int open_http_url( const char *url )
     if (r != ERROR_SUCCESS)
     {
         /* set value to the default */
-        RegSetValueExA( key, "Browsers", 0, REG_SZ, (LPBYTE)defaultbrowsers,
+        RegSetValueExA( key, "Browsers", 0, REG_SZ, (const BYTE *)defaultbrowsers,
                         lstrlen( defaultbrowsers ) + 1 );
         strcpy( browsers, defaultbrowsers );
     }
@@ -126,7 +126,7 @@ static int open_mailto_url( const char *url )
     if (r != ERROR_SUCCESS)
     {
         /* set value to the default */
-        RegSetValueExA( key, "Mailers", 0, REG_SZ, (LPBYTE)defaultmailers,
+        RegSetValueExA( key, "Mailers", 0, REG_SZ, (const BYTE *)defaultmailers,
                         lstrlen( defaultmailers ) + 1 );
         strcpy( mailers, defaultmailers );
     }
