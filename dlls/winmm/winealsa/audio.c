@@ -313,19 +313,19 @@ static BOOL NearMatch(int rate1, int rate2)
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              WAVEFORMATPCMEX* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->Format.wBitsPerSample, format->Format.nSamplesPerSec,
           format->Format.nChannels, format->Format.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels * format->Format.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -349,7 +349,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -1808,7 +1808,7 @@ static int ALSA_PeekRingMessage(ALSA_MSG_RING* omr,
  */
 static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -1867,7 +1867,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEDEV* wwo, LPWAVEHDR lpWaveHdr)
 	if (wwo->lpLoopPtr) {
 	    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	} else {
-	    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+            TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 	    wwo->lpLoopPtr = lpWaveHdr;
 	    /* Windows does not touch WAVEHDR.dwLoops,
 	     * so we need to make an internal copy */
@@ -1963,7 +1963,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
     int toWrite = min(dwLength, *frames);
     int written;
 
-    TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
+    TRACE("Writing wavehdr %p.%u[%u]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
 
     if (toWrite > 0) {
 	written = (wwo->write)(wwo->pcm, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
@@ -1989,7 +1989,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
     }
     *frames -= written;
     wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->pcm, written);
-    TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
+    TRACE("dwWrittenTotal=%u\n", wwo->dwWrittenTotal);
 
     return written;
 }
@@ -2035,7 +2035,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
         {
             if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
             if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
-            if (lpWaveHdr->reserved > wwo->dwPlayedTotal){TRACE("still playing %p (%lu/%lu)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal) {TRACE("still playing %p (%u/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
         }
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
@@ -2146,7 +2146,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
     int                 err;
 
     while (ALSA_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-     TRACE("Received %s %lx\n", getCmdString(msg), param); 
+     TRACE("Received %s %x\n", getCmdString(msg), param);
 
 	switch (msg) {
 	case WINE_WM_PAUSING:
@@ -2252,7 +2252,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
         /* Feed wavehdrs until we run out of wavehdrs or DSP space */
         if (wwo->dwPartialOffset == 0 && wwo->lpPlayPtr) {
             do {
-                TRACE("Setting time to elapse for %p to %lu\n",
+                TRACE("Setting time to elapse for %p to %u\n",
                       wwo->lpPlayPtr, wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength);
                 /* note the value that dwPlayedTotal will return when this wave finishes playing */
                 wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
@@ -2282,7 +2282,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          *  are no pending actions, wait forever for a command.
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
-        TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
+        TRACE("waiting %ums (%u,%u)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
         WAIT_OMR(&wwo->msgRing, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
@@ -2308,12 +2308,12 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2345,26 +2345,26 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     snd_pcm_sw_params_alloca(&sw_params);
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
     /* only PCM format is supported so far... */
     if (!supportedFormat(lpDesc->lpFormat)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -2414,7 +2414,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
     copy_format(lpDesc->lpFormat, &wwo->format);
 
-    TRACE("Requested this format: %ldx%dx%d %s\n",
+    TRACE("Requested this format: %dx%dx%d %s\n",
           wwo->format.Format.nSamplesPerSec,
           wwo->format.Format.wBitsPerSample,
           wwo->format.Format.nChannels,
@@ -2528,18 +2528,18 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dir=0;
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
-	WARN("Rate %ld Hz not available for playback: %s\n", wwo->format.Format.nSamplesPerSec, snd_strerror(rate));
+	WARN("Rate %d Hz not available for playback: %s\n", wwo->format.Format.nSamplesPerSec, snd_strerror(rate));
         retcode = WAVERR_BADFORMAT;
         goto errexit;
     }
     if (!NearMatch(rate, wwo->format.Format.nSamplesPerSec)) {
         if (dwFlags & WAVE_DIRECTSOUND) {
-            WARN("changed sample rate from %ld Hz to %d Hz\n", wwo->format.Format.nSamplesPerSec, rate);
+            WARN("changed sample rate from %d Hz to %d Hz\n", wwo->format.Format.nSamplesPerSec, rate);
             wwo->format.Format.nSamplesPerSec = rate;
             /* recalculate bytes per second */
             wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
         } else {
-            WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
+            WARN("Rate doesn't match (requested %d Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
             retcode = WAVERR_BADFORMAT;
             goto errexit;
         }
@@ -2555,7 +2555,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         lpDesc->lpFormat->nAvgBytesPerSec = wwo->format.Format.nAvgBytesPerSec;
     }
 
-    TRACE("Got this format: %ldx%dx%d %s\n",
+    TRACE("Got this format: %dx%dx%d %s\n",
           wwo->format.Format.nSamplesPerSec,
           wwo->format.Format.wBitsPerSample,
           wwo->format.Format.nChannels,
@@ -2616,7 +2616,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("handle=%p\n", pcm);
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.Format.wBitsPerSample, wwo->format.Format.nAvgBytesPerSec,
 	  wwo->format.Format.nSamplesPerSec, wwo->format.Format.nChannels,
 	  wwo->format.Format.nBlockAlign);
@@ -2661,7 +2661,7 @@ static DWORD wodClose(WORD wDevID)
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2708,10 +2708,10 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2743,7 +2743,7 @@ static DWORD wodPause(WORD wDevID)
     TRACE("(%u);!\n", wDevID);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2765,7 +2765,7 @@ static DWORD wodRestart(WORD wDevID)
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2794,7 +2794,7 @@ static DWORD wodReset(WORD wDevID)
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2815,10 +2815,10 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEDEV*	wwo;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2843,7 +2843,7 @@ static DWORD wodBreakLoop(WORD wDevID)
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2869,7 +2869,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2892,7 +2892,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         *lpdwVol = MAKELONG( wleft, wright );
     }
     else
-        TRACE("CheckSetVolume failed; rc %ld\n", rc);
+        TRACE("CheckSetVolume failed; rc %d\n", rc);
 
     return rc;
 }
@@ -2908,9 +2908,9 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     int                left, right;
     DWORD              rc;
 
-    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+    TRACE("(%u, %08X);\n", wDevID, dwParam);
     if (wDevID >= ALSA_WodNumDevs) {
-	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	TRACE("Asked for device %d, but only %d known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2929,7 +2929,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
         if (rc == MMSYSERR_NOERROR)
             TRACE("set volume:  wleft=%d, wright=%d, converted to alsa left %d, right %d\n", wleft, wright, left, right);
         else
-            TRACE("SetVolume failed; rc %ld\n", rc);
+            TRACE("SetVolume failed; rc %d\n", rc);
     }
 
     return rc;
@@ -2976,7 +2976,7 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %s, %08X, %08X, %08X);\n",
 	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -3202,7 +3202,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 
     snd_pcm_format_set_silence(format, pdbi->mmap_buffer, frames );
 
-    TRACE("created mmap buffer of %ld frames (%ld bytes) at %p\n",
+    TRACE("created mmap buffer of %ld frames (%d bytes) at %p\n",
         frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
 
     InitializeCriticalSection(&pdbi->mmap_crst);
@@ -3240,7 +3240,7 @@ static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
 
     return refCount;
 }
@@ -3250,7 +3250,7 @@ static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
 
     if (refCount)
 	return refCount;
@@ -3292,7 +3292,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface,
 static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, DWORD dwFreq)
 {
     /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
-    TRACE("(%p,%ld): stub\n",iface,dwFreq);
+    TRACE("(%p,%d): stub\n",iface,dwFreq);
     return DSERR_UNSUPPORTED;
 }
 
@@ -3314,7 +3314,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
 {
     /* IDsDriverImpl *This = (IDsDriverImpl *)iface; */
-    TRACE("(%p,%ld): stub\n",iface,dwNewPos);
+    TRACE("(%p,%d): stub\n",iface,dwNewPos);
     return DSERR_UNSUPPORTED;
 }
 
@@ -3351,7 +3351,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr + period_size * 2) % This->mmap_buflen_bytes;
     LeaveCriticalSection(&This->mmap_crst);
 
-    TRACE("hw_ptr=0x%08x, playpos=%ld, writepos=%ld\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
+    TRACE("hw_ptr=0x%08x, playpos=%d, writepos=%d\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
     return DS_OK;
 }
 
@@ -3362,7 +3362,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
     snd_pcm_state_t      state;
     int                  err;
 
-    TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
+    TRACE("(%p,%x,%x,%x)\n",iface,dwRes1,dwRes2,dwFlags);
 
     if (wwo->pcm == NULL) return DSERR_GENERIC;
 
@@ -3455,7 +3455,7 @@ static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
 
     return refCount;
 }
@@ -3465,7 +3465,7 @@ static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
 
     if (refCount)
 	return refCount;
@@ -3527,7 +3527,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     int err;
 
-    TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
+    TRACE("(%p,%p,%x,%x)\n",iface,pwfx,dwFlags,dwCardAddress);
     /* we only support primary buffers */
     if (!(dwFlags & DSBCAPS_PRIMARYBUFFER))
 	return DSERR_UNSUPPORTED;
@@ -3622,7 +3622,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 */
 static DWORD widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-   TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+   TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
    switch (wMsg) {
    case WIM_OPEN:
@@ -3647,12 +3647,12 @@ static DWORD widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD dwParam1, DWORD
  */
 static DWORD widGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3714,7 +3714,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     /* make sleep time to be # of ms to output a period */
     dwSleepTime = (1024/*wwi-dwPeriodSize => overrun!*/ * 1000) / wwi->format.Format.nAvgBytesPerSec;
     frames_per_period = snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize); 
-    TRACE("sleeptime=%ld ms\n", dwSleepTime);
+    TRACE("sleeptime=%d ms\n", dwSleepTime);
 
     for (;;) {
 	/* wait for dwSleepTime or an event in thread's queue */
@@ -3732,20 +3732,20 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             /* read all the fragments accumulated so far */
 	    frames = snd_pcm_avail_update(wwi->pcm);
 	    bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
-	    TRACE("frames = %ld  bytes = %ld\n", frames, bytes);
+            TRACE("frames = %d  bytes = %d\n", frames, bytes);
 	    periods = bytes / wwi->dwPeriodSize;
             while ((periods > 0) && (wwi->lpQueuePtr))
             {
 		periods--;
 		bytes = wwi->dwPeriodSize;
-	        TRACE("bytes = %ld\n",bytes);
+                TRACE("bytes = %d\n",bytes);
                 if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded >= wwi->dwPeriodSize)
                 {
                     /* directly read fragment in wavehdr */
                     read = wwi->read(wwi->pcm, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
 		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
 			
-                    TRACE("bytesRead=%ld (direct)\n", bytesRead);
+                    TRACE("bytesRead=%d (direct)\n", bytesRead);
 		    if (bytesRead != (DWORD) -1)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
@@ -3768,7 +3768,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    lpWaveHdr = lpNext;
 			}
                     } else {
-                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->pcmname,
+                        TRACE("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
                             lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
                             frames_per_period, strerror(errno));
                     }
@@ -3780,10 +3780,10 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
                     pOffset = buffer;
 
-                    TRACE("bytesRead=%ld (local)\n", bytesRead);
+                    TRACE("bytesRead=%d (local)\n", bytesRead);
 
 		    if (bytesRead == (DWORD) -1) {
-			TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->pcmname,
+			TRACE("read(%s, %p, %d) failed (%s)\n", wwi->pcmname,
 			      buffer, frames_per_period, strerror(errno));
 			continue;
 		    }	
@@ -3846,7 +3846,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                                     /* no more buffer to copy data to, but we did read more.
                                      * what hasn't been copied will be dropped
                                      */
-                                    WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
+                                    WARN("buffer under run! %u bytes dropped.\n", bytesRead);
                                     wwi->lpQueuePtr = NULL;
                                     break;
 				}
@@ -3861,7 +3861,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (ALSA_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-            TRACE("msg=%s param=0x%lx\n", getCmdString(msg), param);
+            TRACE("msg=%s param=0x%x\n", getCmdString(msg), param);
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
@@ -3976,26 +3976,26 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_sw_params_alloca(&sw_params);
 
     /* JPW TODO - review this code */
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
     /* only PCM format is supported so far... */
     if (!supportedFormat(lpDesc->lpFormat)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -4097,12 +4097,12 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dir = 0;
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
-	WARN("Rate %ld Hz not available for playback: %s\n", wwi->format.Format.nSamplesPerSec, snd_strerror(rate));
+	WARN("Rate %d Hz not available for playback: %s\n", wwi->format.Format.nSamplesPerSec, snd_strerror(rate));
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
     if (!NearMatch(rate, wwi->format.Format.nSamplesPerSec)) {
-	WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
+	WARN("Rate doesn't match (requested %d Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
@@ -4148,8 +4148,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /*if (wwi->dwFragmentSize % wwi->format.Format.nBlockAlign)
 	ERR("Fragment doesn't contain an integral number of data blocks\n");
     */
-    TRACE("dwPeriodSize=%lu\n", wwi->dwPeriodSize);
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("dwPeriodSize=%u\n", wwi->dwPeriodSize);
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->format.Format.wBitsPerSample, wwi->format.Format.nAvgBytesPerSec,
 	  wwi->format.Format.nSamplesPerSec, wwi->format.Format.nChannels,
 	  wwi->format.Format.nBlockAlign);
@@ -4182,7 +4182,7 @@ static DWORD widClose(WORD wDevID)
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4219,11 +4219,11 @@ static DWORD widClose(WORD wDevID)
  */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4253,11 +4253,11 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD widStart(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4277,11 +4277,11 @@ static DWORD widStart(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD widStop(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4302,7 +4302,7 @@ static DWORD widReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4322,10 +4322,10 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEDEV*	wwi;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= ALSA_WidNumDevs) {
-	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	TRACE("Requested device %d, but only %d are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -4408,7 +4408,7 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %s, %08X, %08X, %08X);\n",
 	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -4447,7 +4447,7 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 DWORD WINAPI ALSA_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -4457,7 +4457,7 @@ DWORD WINAPI ALSA_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI ALSA_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
                              DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
