@@ -78,7 +78,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 	DMUS_OBJECTDESC GotDesc;
 	BOOL bCache;
 
-	TRACE("(%p, %p, %s, %p): pDesc:\n%s", This, pDesc, debugstr_dmguid(riid), ppv, debugstr_DMUS_OBJECTDESC(pDesc));
+	TRACE("(%p, %p, %s, %p): pDesc:\n%s\n", This, pDesc, debugstr_dmguid(riid), ppv, debugstr_DMUS_OBJECTDESC(pDesc));
 	
 	/* sometimes it happens that guidClass is missing... which is a BadThingTM */
 	if (!(pDesc->dwValidData & DMUS_OBJ_CLASS)) {
@@ -308,7 +308,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 	LIST_FOR_EACH (pEntry, This->pObjects) {
 		i++;
 		pObjectEntry = LIST_ENTRY(pEntry, WINE_LOADER_ENTRY, entry);
-		TRACE(": entry nr. %i:\n%s  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", i, debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject);
+		TRACE(": entry nr. %i:\n%s\n  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", i, debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject);
 	}
 #endif
 	
@@ -611,7 +611,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (L
 		if ((Desc.dwValidData & DMUS_OBJ_OBJECT) &&
 			(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_OBJECT | DMUS_OBJ_LOADED)) &&
 			IsEqualGUID (&Desc.guidObject, &pObjectEntry->Desc.guidObject)) {
-			TRACE(": found it by object GUID\n%s", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc));
+			TRACE(": found it by object GUID\n%s\n", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc));
 			result = S_OK;
 			break;
 		}

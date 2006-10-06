@@ -500,7 +500,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 							case DMUS_FOURCC_CONTAINER_CHUNK: {
 								TRACE_(dmfile)(": container header chunk\n");
 								IStream_Read (pStm, &This->Header, Chunk.dwSize, NULL);
-								TRACE_(dmdump)(": container header chunk:\n%s", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
+								TRACE_(dmdump)(": container header chunk:\n%s\n", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
 								break;	
 							}
 							case DMUS_FOURCC_GUID_CHUNK: {
@@ -615,7 +615,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																		DMUS_IO_CONTAINED_OBJECT_HEADER tmpObjectHeader;
 																		TRACE_(dmfile)(": contained object header chunk\n");
 																		IStream_Read (pStm, &tmpObjectHeader, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": contained object header: \n%s", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
+																		TRACE_(dmdump)(": contained object header: \n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
 																		/* copy guidClass */
 																		pNewEntry->Desc.dwValidData |= DMUS_OBJ_CLASS;
 																		memcpy (&pNewEntry->Desc.guidClass, &tmpObjectHeader.guidClassID, sizeof(GUID));

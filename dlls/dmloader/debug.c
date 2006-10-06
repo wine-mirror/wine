@@ -484,19 +484,19 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 	if (pDesc) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
-		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
-		ptr += sprintf(ptr, " - dwSize = 0x%08lX\n", pDesc->dwSize);
-		ptr += sprintf(ptr, " - dwValidData = 0x%08lX ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
-		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
-		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
-		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, " - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
-		if (pDesc->dwValidData & DMUS_OBJ_VERSION) ptr += sprintf(ptr, " - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
-		if (pDesc->dwValidData & DMUS_OBJ_NAME) ptr += sprintf(ptr, " - wszName = %s\n", debugstr_w(pDesc->wszName));
-		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) ptr += sprintf(ptr, " - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
-		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) ptr += sprintf(ptr, " - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
-		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, " - llMemLength = 0x%s\n  - pbMemData = %p\n",
+		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):", pDesc);
+		ptr += sprintf(ptr, "\n - dwSize = 0x%08lX", pDesc->dwSize);
+		ptr += sprintf(ptr, "\n - dwValidData = 0x%08lX (%s)", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, "\n - guidClass = %s", debugstr_dmguid(&pDesc->guidClass));
+		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, "\n - guidObject = %s", debugstr_guid(&pDesc->guidObject));
+		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, "\n - ftDate = %s", debugstr_filetime (&pDesc->ftDate));
+		if (pDesc->dwValidData & DMUS_OBJ_VERSION) ptr += sprintf(ptr, " - vVersion = %s", debugstr_dmversion(&pDesc->vVersion));
+		if (pDesc->dwValidData & DMUS_OBJ_NAME) ptr += sprintf(ptr, "\n - wszName = %s", debugstr_w(pDesc->wszName));
+		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) ptr += sprintf(ptr, "\n - wszCategory = %s", debugstr_w(pDesc->wszCategory));
+		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) ptr += sprintf(ptr, "\n - wszFileName = %s", debugstr_w(pDesc->wszFileName));
+		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, "\n - llMemLength = 0x%s\n  - pbMemData = %p",
 		                                                     wine_dbgstr_longlong(pDesc->llMemLength), pDesc->pbMemData);
-		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
+		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, "\n - pStream = %p", pDesc->pStream);
 		
 		ptr = &buffer[0];
 		return ptr;
@@ -509,8 +509,8 @@ const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeade
 	if (pHeader) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
-		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):\n", pHeader);
-		ptr += sprintf(ptr, " - dwFlags = %s\n", debugstr_DMUS_CONTAINER_FLAGS(pHeader->dwFlags));
+		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):", pHeader);
+		ptr += sprintf(ptr, "\n - dwFlags = %s", debugstr_DMUS_CONTAINER_FLAGS(pHeader->dwFlags));
 		
 		ptr = &buffer[0];
 		return ptr;
@@ -523,11 +523,11 @@ const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT
 	if (pHeader) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
-		ptr += sprintf(ptr, "DMUS_IO_CONTAINED_OBJECT_HEADER (%p):\n", pHeader);
-		ptr += sprintf(ptr, " - guidClassID = %s\n", debugstr_dmguid(&pHeader->guidClassID));
-		ptr += sprintf(ptr, " - dwFlags = %s\n", debugstr_DMUS_CONTAINED_OBJF_FLAGS (pHeader->dwFlags));
-		ptr += sprintf(ptr, " - ckid = %s\n", debugstr_fourcc (pHeader->ckid));
-		ptr += sprintf(ptr, " - fccType = %s\n", debugstr_fourcc (pHeader->fccType));
+		ptr += sprintf(ptr, "DMUS_IO_CONTAINED_OBJECT_HEADER (%p):", pHeader);
+		ptr += sprintf(ptr, "\n - guidClassID = %s", debugstr_dmguid(&pHeader->guidClassID));
+		ptr += sprintf(ptr, "\n - dwFlags = %s", debugstr_DMUS_CONTAINED_OBJF_FLAGS (pHeader->dwFlags));
+		ptr += sprintf(ptr, "\n - ckid = %s", debugstr_fourcc (pHeader->ckid));
+		ptr += sprintf(ptr, "\n - fccType = %s", debugstr_fourcc (pHeader->fccType));
 
 		ptr = &buffer[0];
 		return ptr;
