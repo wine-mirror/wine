@@ -46,8 +46,8 @@ static void test_GetAcceptLanguagesA(void)
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    trace("GetAcceptLanguagesA: retval %08lx, size %08lx, buffer (%s),"
-	" last error %ld\n", retval, buffersize, buffer, GetLastError());
+    trace("GetAcceptLanguagesA: retval %08x, size %08x, buffer (%s),"
+	" last error %d\n", retval, buffersize, buffer, GetLastError());
     if(retval != S_OK) {
 	trace("GetAcceptLanguagesA: skipping tests\n");
 	return;
@@ -56,39 +56,39 @@ static void test_GetAcceptLanguagesA(void)
 	(ERROR_CLASS_DOES_NOT_EXIST == GetLastError()) ||
 	(ERROR_PROC_NOT_FOUND == GetLastError()) ||
 	(ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) ||
-	(ERROR_SUCCESS == GetLastError()), "last error set to %ld\n", GetLastError());
+	(ERROR_SUCCESS == GetLastError()), "last error set to %d\n", GetLastError());
     exactsize = strlen(buffer);
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, NULL);
     ok(retval == E_FAIL,
-       "function result wrong: got %08lx; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+       "function result wrong: got %08x; expected E_FAIL\n", retval);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
 
     buffersize = sizeof(buffer);
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, &buffersize);
     ok(retval == E_FAIL,
-       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+       "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == sizeof(buffer),
        "buffersize was changed (2nd parameter; not on Win2k)\n");
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, NULL);
     ok(retval == E_FAIL,
-       "function result wrong: got %08lx; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+       "function result wrong: got %08x; expected E_FAIL\n", retval);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
 
     buffersize = 0;
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     ok(retval == E_FAIL,
-       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+       "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == 0,
-       "buffersize wrong(changed) got %08lx; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+       "buffersize wrong(changed) got %08x; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
 
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
@@ -99,29 +99,29 @@ static void test_GetAcceptLanguagesA(void)
             if(buffersize == exactsize) {
             ok( (ERROR_SUCCESS == GetLastError()) || (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) ||
 		(ERROR_PROC_NOT_FOUND == GetLastError()) || (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()),
-                "last error wrong: got %08lx; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
+                "last error wrong: got %08x; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
 		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
-                 "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), exactsize);
+                 "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), exactsize);
             } else if((buffersize +1) == buffersize2) {
                 ok(ERROR_SUCCESS == GetLastError(),
-                    "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
+                    "last error wrong: got %08x; expected ERROR_SUCCESS\n", GetLastError());
                 ok(buffersize == strlen(buffer),
-                    "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize);
+                    "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize);
             } else
-                ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
                     retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
-               "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+               "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+               "last error wrong: got %08x; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
-               "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize2);
+               "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
         default:
-            ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+            ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
                 retval, buffersize, buffer, GetLastError());
             break;
     }
@@ -133,25 +133,25 @@ static void test_GetAcceptLanguagesA(void)
     switch(retval) {
 	case 0L:
             ok(ERROR_SUCCESS == GetLastError(),
-                 "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
+                 "last error wrong: got %08x; expected ERROR_SUCCESS\n", GetLastError());
             if((buffersize == exactsize) /* XP */ ||
                ((buffersize +1)== exactsize) /* 98 */)
                 ok(buffersize == strlen(buffer),
-                    "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize);
+                    "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize);
             else
-                ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
                     retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
-               "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+               "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+               "last error wrong: got %08x; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
-               "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize2);
+               "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
         default:
-            ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+            ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
                 retval, buffersize, buffer, GetLastError());
             break;
     }
@@ -208,23 +208,23 @@ static void test_alloc_shared(void)
 
     procid=GetCurrentProcessId();
     hmem=pSHAllocShared(NULL,10,procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %ld\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %d\n", GetLastError());
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %ld\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %d\n", GetLastError());
 
     val=0x12345678;
     hmem=pSHAllocShared(&val,4,procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %ld\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %d\n", GetLastError());
 
     p=(int*)pSHLockShared(hmem,procid);
-    ok(p!=NULL,"SHLockShared failed: %ld\n", GetLastError());
+    ok(p!=NULL,"SHLockShared failed: %d\n", GetLastError());
     if (p!=NULL)
         ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);
     ret = pSHUnlockShared(p);
-    ok( ret, "SHUnlockShared failed: %ld\n", GetLastError());
+    ok( ret, "SHUnlockShared failed: %d\n", GetLastError());
 
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %ld\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %d\n", GetLastError());
 }
 
 static void test_fdsa(void)
@@ -259,52 +259,52 @@ static void test_fdsa(void)
     memset(&info, 0, sizeof(info));
 
     ok(pFDSA_Initialize(block_size, inc, &info, mem, init_blocks), "FDSA_Initialize rets FALSE\n");
-    ok(info.num_items == 0, "num_items = %ld\n", info.num_items);
+    ok(info.num_items == 0, "num_items = %d\n", info.num_items);
     ok(info.mem == mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %d\n", info.blocks_alloced);
     ok(info.inc == inc, "inc = %d\n", info.inc);
     ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     ret = pFDSA_InsertItem(&info, 1234, "1234567890");
-    ok(ret == 0, "ret = %ld\n", ret);
-    ok(info.num_items == 1, "num_items = %ld\n", info.num_items);
+    ok(ret == 0, "ret = %d\n", ret);
+    ok(info.num_items == 1, "num_items = %d\n", info.num_items);
     ok(info.mem == mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks, "blocks_alloced = %d\n", info.blocks_alloced);
     ok(info.inc == inc, "inc = %d\n", info.inc);
     ok(info.block_size == block_size, "block_size = %d\n", info.block_size);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     ret = pFDSA_InsertItem(&info, 1234, "abcdefghij");
-    ok(ret == 1, "ret = %ld\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     ret = pFDSA_InsertItem(&info, 1, "klmnopqrst");
-    ok(ret == 1, "ret = %ld\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     ret = pFDSA_InsertItem(&info, 0, "uvwxyzABCD");
-    ok(ret == 0, "ret = %ld\n", ret);
+    ok(ret == 0, "ret = %d\n", ret);
     ok(info.mem == mem, "mem = %p\n", info.mem);
     ok(info.flags == 0, "flags = %d\n", info.flags);
 
     /* This next InsertItem will cause shlwapi to allocate its own mem buffer */
     ret = pFDSA_InsertItem(&info, 0, "EFGHIJKLMN");
-    ok(ret == 0, "ret = %ld\n", ret);
+    ok(ret == 0, "ret = %d\n", ret);
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCD1234567890klmnopqrstabcdefghij", 50), "mem %s\n", (char*)info.mem);
 
     ok(pFDSA_DeleteItem(&info, 2), "rets FALSE\n");
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrstabcdefghij", 40), "mem %s\n", (char*)info.mem);
 
     ok(pFDSA_DeleteItem(&info, 3), "rets FALSE\n");
     ok(info.mem != mem, "mem = %p\n", info.mem);
-    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %ld\n", info.blocks_alloced);
+    ok(info.blocks_alloced == init_blocks + inc, "blocks_alloced = %d\n", info.blocks_alloced);
     ok(info.flags == 0x1, "flags = %d\n", info.flags);
 
     ok(!memcmp(info.mem, "EFGHIJKLMNuvwxyzABCDklmnopqrst", 30), "mem %s\n", (char*)info.mem);
