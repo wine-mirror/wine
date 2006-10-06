@@ -179,7 +179,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
   TRACE("\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
   TRACE("Target: %d\n", prb->SRB_Target);
   TRACE("Lun: %d\n", prb->SRB_Lun);
-  TRACE("BufLen: %ld\n", prb->SRB_BufLen);
+  TRACE("BufLen: %d\n", prb->SRB_BufLen);
   TRACE("SenseLen: %d\n", prb->SRB_SenseLen);
   TRACE("BufPtr: %p\n", prb->SRB_BufPointer);
   TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
@@ -338,7 +338,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	     ((lpPRB->SRB_Flags & 0x18) == 0x18)
 	    ) && lpPRB->SRB_BufLen
 	) {
-	    FIXME("command 0x%02x, no data transfer specified, but buflen is %ld!!!\n",lpPRB->CDBByte[0],lpPRB->SRB_BufLen);
+            FIXME("command 0x%02x, no data transfer specified, but buflen is %d!!!\n",lpPRB->CDBByte[0],lpPRB->SRB_BufLen);
 	}
 	break;
   }

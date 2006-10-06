@@ -142,7 +142,7 @@ int ASPI_GetNumControllers()
     }
 
     RegCloseKey(hkeyScsi);
-    TRACE("Returning %ld host adapters\n", num_ha );
+    TRACE("Returning %d host adapters\n", num_ha );
     return num_ha;
 }
 
@@ -301,11 +301,11 @@ SCSI_LinuxDeviceIo( int fd,
 	{
 		set_last_error();
 		save_error = GetLastError();
-		WARN("Not enough bytes written to scsi device. bytes=%ld .. %ld\n", cbInBuffer, dwBytes );
+		WARN("Not enough bytes written to scsi device. bytes=%d .. %d\n", cbInBuffer, dwBytes );
                 /* FIXME: set_last_error() never sets error to ERROR_NOT_ENOUGH_MEMORY... */
 		if( save_error == ERROR_NOT_ENOUGH_MEMORY )
 			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device. Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h)");
-		WARN("error= %ld\n", save_error );
+		WARN("error= %d\n", save_error );
 		*lpcbBytesReturned = 0;
 		return FALSE;
 	}
@@ -316,8 +316,8 @@ SCSI_LinuxDeviceIo( int fd,
 	{
 		set_last_error();
 		save_error = GetLastError();
-		WARN("Not enough bytes read from scsi device. bytes=%ld .. %ld\n", cbOutBuffer, *lpcbBytesReturned);
-		WARN("error= %ld\n", save_error );
+		WARN("Not enough bytes read from scsi device. bytes=%d .. %d\n", cbOutBuffer, *lpcbBytesReturned);
+		WARN("error= %d\n", save_error );
 		return FALSE;
 	}
 	return TRUE;

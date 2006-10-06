@@ -166,12 +166,12 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   TRACE("\tPosting %s\n", prb->SRB_Flags & 0x1 ? "enabled" : "disabled");
   TRACE("Target: %d\n", prb->SRB_Target);
   TRACE("Lun: %d\n", prb->SRB_Lun);
-  TRACE("BufLen: %ld\n", prb->SRB_BufLen);
+  TRACE("BufLen: %d\n", prb->SRB_BufLen);
   TRACE("SenseLen: %d\n", prb->SRB_SenseLen);
-  TRACE("BufPtr: %lx (%p)\n", prb->SRB_BufPointer, lpBuf);
-  TRACE("LinkPointer %lx\n", prb->SRB_Rsvd1);
+  TRACE("BufPtr: %x (%p)\n", prb->SRB_BufPointer, lpBuf);
+  TRACE("LinkPointer %x\n", prb->SRB_Rsvd1);
   TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
-  TRACE("POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
+  TRACE("POST Proc: %x\n", (DWORD) prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
   if (TRACE_ON(aspi))
@@ -328,7 +328,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   /* now do posting */
 
   if (ASPI_POSTING(lpPRB) && lpPRB->SRB_PostProc) {
-    TRACE("Post Routine (%lx) called\n", (DWORD) lpPRB->SRB_PostProc);
+    TRACE("Post Routine (%x) called\n", (DWORD) lpPRB->SRB_PostProc);
     switch (mode)
     {
       case ASPI_DOS:
