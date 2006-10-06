@@ -80,7 +80,7 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
     int 	mixer, volume;
     static const WCHAR ini[] = {'O','S','S',' ','A','u','x',0};
 
-    TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%04X, %p, %u);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	WARN("mixer device not available !\n");
@@ -166,7 +166,7 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
     int		volume, left, right;
     int		cmd;
 
-    TRACE("(%04X, %08lX);\n", wDevID, dwParam);
+    TRACE("(%04X, %08X);\n", wDevID, dwParam);
 
     left   = (LOWORD(dwParam) * 100) >> 16;
     right  = (HIWORD(dwParam) * 100) >> 16;
@@ -222,7 +222,7 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
 #ifdef HAVE_OSS

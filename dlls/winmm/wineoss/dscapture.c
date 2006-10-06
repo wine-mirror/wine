@@ -177,7 +177,7 @@ static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+    TRACE("(%p) ref was %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -188,7 +188,7 @@ static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+    TRACE("(%p) ref was %d\n", This, refCount + 1);
 
     if (!refCount) {
         IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
@@ -209,7 +209,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Get(
     PULONG pcbReturnedData )
 {
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
-    FIXME("(%p,%p,%p,%lx,%p,%lx,%p)\n",This,pDsProperty,pPropertyParams,
+    FIXME("(%p,%p,%p,%x,%p,%x,%p)\n",This,pDsProperty,pPropertyParams,
           cbPropertyParams,pPropertyData,cbPropertyData,pcbReturnedData);
     return DSERR_UNSUPPORTED;
 }
@@ -223,7 +223,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Set(
     ULONG cbPropertyData )
 {
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
-    FIXME("(%p,%p,%p,%lx,%p,%lx)\n",This,pDsProperty,pPropertyParams,
+    FIXME("(%p,%p,%p,%x,%p,%x)\n",This,pDsProperty,pPropertyParams,
           cbPropertyParams,pPropertyData,cbPropertyData);
     return DSERR_UNSUPPORTED;
 }
@@ -235,7 +235,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     PULONG pSupport )
 {
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
-    FIXME("(%p,%s,%lx,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,
+    FIXME("(%p,%s,%x,%p)\n",This,debugstr_guid(PropertySetId),PropertyId,
           pSupport);
     return DSERR_UNSUPPORTED;
 }
@@ -281,7 +281,7 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+    TRACE("(%p) ref was %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -292,7 +292,7 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+    TRACE("(%p) ref was %d\n", This, refCount + 1);
 
     if (!refCount) {
         IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
@@ -309,7 +309,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     LPCDSBPOSITIONNOTIFY notify)
 {
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
-    TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+    TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
 
     if (!notify) {
         WARN("invalid parameter\n");
@@ -319,7 +319,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     if (TRACE_ON(dscapture)) {
         int i;
         for (i=0;i<howmuch;i++)
-            TRACE("notify at %ld to 0x%08lx\n",
+            TRACE("notify at %d to 0x%08x\n",
                 notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
     }
 
@@ -363,7 +363,7 @@ static HRESULT DSCDB_MapBuffer(IDsCaptureDriverBufferImpl *dscdb)
             return DSERR_GENERIC;
         }
         TRACE("(%p): sound device has been mapped for direct access at %p, "
-              "size=%ld\n", dscdb, dscdb->mapping, dscdb->maplen);
+              "size=%d\n", dscdb, dscdb->mapping, dscdb->maplen);
     }
     return DS_OK;
 }
@@ -430,7 +430,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_AddRef(PIDSCDRIVERBUFFER iface)
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+    TRACE("(%p) ref was %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -439,7 +439,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+    TRACE("(%p) ref was %d\n", This, refCount + 1);
 
     if (!refCount) {
         WINE_WAVEIN*        wwi;
@@ -485,7 +485,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(
     DWORD dwFlags)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    TRACE("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx)\n",This,ppvAudio1,pdwLen1,
+    TRACE("(%p,%p,%p,%p,%p,%d,%d,0x%08x)\n",This,ppvAudio1,pdwLen1,
           ppvAudio2,pdwLen2,dwWritePosition,dwWriteLen,dwFlags);
 
     if (This->is_direct_map) {
@@ -539,7 +539,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(
     DWORD dwLen2)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    TRACE("(%p,%p,%ld,%p,%ld)\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
+    TRACE("(%p,%p,%d,%p,%d)\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
 
     if (This->is_direct_map)
         This->map_readpos = (This->map_readpos + dwLen1 + dwLen2) % This->maplen;
@@ -582,7 +582,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(
             *lpdwRead = This->readptr;
     }
 
-    TRACE("capturepos=%ld, readpos=%ld\n", lpdwCapture?*lpdwCapture:0,
+    TRACE("capturepos=%d, readpos=%d\n", lpdwCapture?*lpdwCapture:0,
           lpdwRead?*lpdwRead:0);
     return DS_OK;
 }
@@ -611,7 +611,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
     int enable;
-    TRACE("(%p,%lx)\n",This,dwFlags);
+    TRACE("(%p,%x)\n",This,dwFlags);
 
     if (This->is_capturing)
         return DS_OK;
@@ -737,7 +737,7 @@ static ULONG WINAPI IDsCaptureDriverImpl_AddRef(PIDSCDRIVER iface)
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+    TRACE("(%p) ref was %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -747,7 +747,7 @@ static ULONG WINAPI IDsCaptureDriverImpl_Release(PIDSCDRIVER iface)
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+    TRACE("(%p) ref was %d\n", This, refCount + 1);
 
     if (!refCount) {
         HeapFree(GetProcessHeap(),0,This);
@@ -821,15 +821,15 @@ static void DSCDB_CheckEvent(
 {
     LPDSBPOSITIONNOTIFY event = dscb->notifies + dscb->notify_index;
     DWORD offset = event->dwOffset;
-    TRACE("(%p,%ld,%ld,%ld)\n", dscb, writepos, len, buflen);
+    TRACE("(%p,%d,%d,%d)\n", dscb, writepos, len, buflen);
 
-    TRACE("(%p) buflen = %ld, writeptr = %ld\n",
+    TRACE("(%p) buflen = %d, writeptr = %d\n",
         dscb, dscb->buflen, dscb->writeptr);
-    TRACE("checking %d, position %ld, event = %p\n",
+    TRACE("checking %d, position %d, event = %p\n",
         dscb->notify_index, offset, event->hEventNotify);
 
     if ((writepos + len) > offset) {
-         TRACE("signalled event %p (%d) %ld\n",
+         TRACE("signalled event %p (%d) %d\n",
                event->hEventNotify, dscb->notify_index, offset);
          SetEvent(event->hEventNotify);
          dscb->notify_index = (dscb->notify_index + 1) % dscb->nrofnotifies;
@@ -837,7 +837,7 @@ static void DSCDB_CheckEvent(
     } else if ((writepos + len) > buflen) {
         writepos = writepos + len - buflen;
         if ((writepos + len) > offset) {
-             TRACE("signalled event %p (%d) %ld\n",
+             TRACE("signalled event %p (%d) %d\n",
                    event->hEventNotify, dscb->notify_index, offset);
              SetEvent(event->hEventNotify);
              dscb->notify_index = (dscb->notify_index + 1) % dscb->nrofnotifies;
@@ -988,7 +988,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     int audio_fragment, fsize, shift, ret;
     BOOL bNewBuffer = FALSE;
     WINE_WAVEIN* wwi;
-    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,
+    TRACE("(%p,%p,%x,%x,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,
           pdwcbBufferSize,ppbBuffer,ppvObj);
 
     if (This->capture_buffer) {
@@ -1059,7 +1059,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
             shift--;
             fsize = 1 << shift;
             TRACE("shift = %d, fragment size = %d\n", shift, fsize);
-            TRACE("BufferSize=%ld(%08lx)\n", *pdwcbBufferSize, *pdwcbBufferSize);
+            TRACE("BufferSize=%d(%08x)\n", *pdwcbBufferSize, *pdwcbBufferSize);
 
             /* See if we can directly map the buffer first.
              * (buffer length is multiple of a power of 2)
@@ -1103,7 +1103,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
         }
         frag_size = 1 << (audio_fragment & 0xffff);
         TRACE("is_direct_map = %s\n", (*ippdscdb)->is_direct_map ? "TRUE" : "FALSE");
-        TRACE("requesting %d %d byte fragments (%d bytes) (%ld ms/fragment)\n",
+        TRACE("requesting %d %d byte fragments (%d bytes) (%d ms/fragment)\n",
               audio_fragment >> 16, frag_size, frag_size * (audio_fragment >> 16),
               (frag_size * 1000) / pwfx->nAvgBytesPerSec);
 
@@ -1133,7 +1133,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
              return DSERR_GENERIC;
         }
 
-        TRACE("got %d %d byte fragments (%d bytes) (%ld ms/fragment)\n",
+        TRACE("got %d %d byte fragments (%d bytes) (%d ms/fragment)\n",
               info.fragstotal, info.fragsize, info.fragstotal * info.fragsize,
               info.fragsize * 1000 / pwfx->nAvgBytesPerSec);
 

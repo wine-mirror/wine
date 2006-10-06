@@ -263,8 +263,8 @@ LRESULT OSS_MidiInit(void)
 	    FIXME("Synthesizer supports MIDI in. Not yet supported.\n");
 	}
 
-	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
-	      "\tOSS info: synth subtype=%d capa=%lx\n",
+	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
+              "\tOSS info: synth subtype=%d capa=%lx\n",
 	      i, wine_dbgstr_w(MidiOutDev[i].caps.szPname), 
               MidiOutDev[i].caps.wTechnology, 
               MidiOutDev[i].caps.wVoices, MidiOutDev[i].caps.wNotes, 
@@ -353,9 +353,9 @@ LRESULT OSS_MidiInit(void)
 	/* FIXME : could we get better information than that ? */
 	MidiInDev[i].caps.dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
 
-	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
-              "MidiIn [%d]\tname='%s' support=%ld\n"
-	      "\tOSS info: midi dev-type=%d, capa=%lx\n",
+	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
+              "MidiIn [%d]\tname='%s' support=%d\n"
+              "\tOSS info: midi dev-type=%d, capa=%lx\n",
 	      i, wine_dbgstr_w(MidiOutDev[numsynthdevs + i].caps.szPname), 
               MidiOutDev[numsynthdevs + i].caps.wTechnology,
 	      MidiOutDev[numsynthdevs + i].caps.wVoices, MidiOutDev[numsynthdevs + i].caps.wNotes,
@@ -407,7 +407,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     HANDLE		hDev;
     DWORD 		dwInstance;
 
-    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",
+    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04X dwParam2 = %04X\n",
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -632,7 +632,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	WARN("This shouldn't happen (%02X)\n", MidiInDev[wDevID].incoming[0]);
     }
     if (toSend != 0) {
-	TRACE("Sending event %08lx\n", toSend);
+	TRACE("Sending event %08x\n", toSend);
 	MidiInDev[wDevID].incLen =	0;
 	dwTime -= MidiInDev[wDevID].startTime;
 	if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime) != MMSYSERR_NOERROR) {
@@ -704,7 +704,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
  */
 static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpCaps, dwSize);
 
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (lpCaps == NULL)		return MMSYSERR_INVALPARAM;
@@ -719,7 +719,7 @@ static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
 
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
@@ -834,7 +834,7 @@ static DWORD midClose(WORD wDevID)
  */
 static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
@@ -866,7 +866,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
@@ -885,7 +885,7 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
@@ -1079,7 +1079,7 @@ static	void modFMReset(WORD wDevID)
  */
 static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpCaps, dwSize);
 
     if (wDevID >= MODM_NumDevs)	return MMSYSERR_BADDEVICEID;
     if (lpCaps == NULL) 	return MMSYSERR_INVALPARAM;
@@ -1094,7 +1094,7 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -1231,7 +1231,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
     WORD	d1  = HIBYTE(LOWORD(dwParam));
     WORD	d2  = LOBYTE(HIWORD(dwParam));
 
-    TRACE("(%04X, %08lX);\n", wDevID, dwParam);
+    TRACE("(%04X, %08X);\n", wDevID, dwParam);
 
     if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
@@ -1521,7 +1521,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     int		count;
     LPBYTE	lpData;
 
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     /* Note: MS doc does not say much about the dwBytesRecorded member of the MIDIHDR structure
      * but it seems to be used only for midi input.
@@ -1556,7 +1556,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	WARN("Alledged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
     }
 
-    TRACE("dwBufferLength=%lu !\n", lpMidiHdr->dwBufferLength);
+    TRACE("dwBufferLength=%u !\n", lpMidiHdr->dwBufferLength);
     TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
 	  lpData[0], lpData[1], lpData[2], lpData[lpMidiHdr->dwBufferLength-3],
 	  lpData[lpMidiHdr->dwBufferLength-2], lpData[lpMidiHdr->dwBufferLength-1]);
@@ -1603,7 +1603,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     if (midiSeqFD == -1) {
 	WARN("can't prepare !\n");
@@ -1617,7 +1617,7 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
 	lpMidiHdr->dwBufferLength >= 0x10000ul) {
-	WARN("%p %p %08lx %d/%ld\n", lpMidiHdr, lpMidiHdr->lpData,
+	WARN("%p %p %08x %d/%d\n", lpMidiHdr, lpMidiHdr->lpData,
 	           lpMidiHdr->dwFlags, sizeof(MIDIHDR), dwSize);
 	return MMSYSERR_INVALPARAM;
     }
@@ -1633,7 +1633,7 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
     if (midiSeqFD == -1) {
 	WARN("can't unprepare !\n");
@@ -1693,7 +1693,7 @@ LRESULT OSS_MidiInit(void)
 DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
@@ -1736,7 +1736,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {

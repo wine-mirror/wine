@@ -226,19 +226,19 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              WAVEFORMATPCMEX* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->Format.wBitsPerSample, format->Format.nSamplesPerSec,
           format->Format.nChannels, format->Format.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels * format->Format.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -262,7 +262,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -852,7 +852,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 #endif
     }
     OSS_CloseDevice(ossdev);
-    TRACE("out wChannels = %d, dwFormats = %08lX, dwSupport = %08lX\n",
+    TRACE("out wChannels = %d, dwFormats = %08X, dwSupport = %08X\n",
           ossdev->out_caps.wChannels, ossdev->out_caps.dwFormats,
           ossdev->out_caps.dwSupport);
     return TRUE;
@@ -962,7 +962,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 	    ossdev->in_caps_support |= WAVECAPS_SAMPLEACCURATE;
     }
     OSS_CloseDevice(ossdev);
-    TRACE("in wChannels = %d, dwFormats = %08lX, in_caps_support = %08lX\n",
+    TRACE("in wChannels = %d, dwFormats = %08X, in_caps_support = %08X\n",
         ossdev->in_caps.wChannels, ossdev->in_caps.dwFormats, ossdev->in_caps_support);
     return TRUE;
 }
@@ -1080,7 +1080,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 	}
     }
     OSS_CloseDevice(ossdev);
-    TRACE("duplex wChannels = %d, dwFormats = %08lX, dwSupport = %08lX\n",
+    TRACE("duplex wChannels = %d, dwFormats = %08X, dwSupport = %08X\n",
           ossdev->duplex_out_caps.wChannels,
           ossdev->duplex_out_caps.dwFormats,
           ossdev->duplex_out_caps.dwSupport);
@@ -1379,7 +1379,7 @@ static int OSS_PeekRingMessage(OSS_MSG_RING* omr,
  */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lX dwParam2 = %04lX\n", wMsg,
+    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04X dwParam2 = %04X\n", wMsg,
         wMsg == WOM_OPEN ? "WOM_OPEN" : wMsg == WOM_CLOSE ? "WOM_CLOSE" :
         wMsg == WOM_DONE ? "WOM_DONE" : "Unknown", dwParam1, dwParam2);
 
@@ -1455,7 +1455,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 	if (wwo->lpLoopPtr) {
 	    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 	} else {
-	    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+            TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 	    wwo->lpLoopPtr = lpWaveHdr;
 	    /* Windows does not touch WAVEHDR.dwLoops,
 	     * so we need to make an internal copy */
@@ -1556,14 +1556,14 @@ static BOOL wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     int         written;
     BOOL        ret = FALSE;
 
-    TRACE("Writing wavehdr %p.%lu[%lu]/%lu\n",
+    TRACE("Writing wavehdr %p.%u[%u]/%u\n",
           wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength, toWrite);
 
     if (toWrite > 0)
     {
         written = write(wwo->ossdev->fd, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
         if (written <= 0) {
-            TRACE("write(%s, %p, %ld) failed (%s) returned %d\n", wwo->ossdev->dev_name,
+            TRACE("write(%s, %p, %d) failed (%s) returned %d\n", wwo->ossdev->dev_name,
                 wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite, strerror(errno), written);
             return FALSE;
         }
@@ -1581,7 +1581,7 @@ static BOOL wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     }
     *bytes -= written;
     wwo->dwWrittenTotal += written;
-    TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
+    TRACE("dwWrittenTotal=%u\n", wwo->dwWrittenTotal);
     return ret;
 }
 
@@ -1626,7 +1626,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
         {
             if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
             if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
-            if (lpWaveHdr->reserved > wwo->dwPlayedTotal){TRACE("still playing %p (%lu/%lu)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal) {TRACE("still playing %p (%u/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
         }
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
@@ -1728,7 +1728,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
     HANDLE		ev;
 
     while (OSS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-	TRACE("Received %s %lx\n", getCmdString(msg), param);
+	TRACE("Received %s %x\n", getCmdString(msg), param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -1810,7 +1810,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
         /* Feed wavehdrs until we run out of wavehdrs or DSP space */
         if (wwo->dwPartialOffset == 0 && wwo->lpPlayPtr) {
             do {
-                TRACE("Setting time to elapse for %p to %lu\n",
+                TRACE("Setting time to elapse for %p to %u\n",
                       wwo->lpPlayPtr, wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength);
                 /* note the value that dwPlayedTotal will return when this wave finishes playing */
                 wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
@@ -1849,7 +1849,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          *  are no pending actions, wait forever for a command.
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
-        TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
+        TRACE("waiting %ums (%u,%u)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
 	WAIT_OMR(&wwo->msgRing, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
@@ -1885,7 +1885,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) {
         WARN("not enabled\n");
@@ -1915,7 +1915,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     audio_buf_info      info;
     DWORD               ret;
 
-    TRACE("(%u, %p[cb=%08lx], %08lX);\n", wDevID, lpDesc, lpDesc->dwCallback, dwFlags);
+    TRACE("(%u, %p[cb=%08x], %08X);\n", wDevID, lpDesc, lpDesc->dwCallback, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -1927,20 +1927,20 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* only PCM format is supported so far... */
     if (!supportedFormat(lpDesc->lpFormat)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
     }
 
-    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d %s\n",
+    TRACE("OSS_OpenDevice requested this format: %dx%dx%d %s\n",
           lpDesc->lpFormat->nSamplesPerSec,
           lpDesc->lpFormat->wBitsPerSample,
           lpDesc->lpFormat->nChannels,
@@ -1976,7 +1976,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	audio_fragment = 0x00100000 + shift;	/* 16 fragments of 2^shift */
     }
 
-    TRACE("requesting %d %d byte fragments (%ld ms/fragment)\n",
+    TRACE("requesting %d %d byte fragments (%d ms/fragment)\n",
         audio_fragment >> 16, 1 << (audio_fragment & 0xffff),
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
@@ -2001,7 +2001,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         lpDesc->lpFormat->wBitsPerSample=(wwo->ossdev->format == AFMT_U8 ? 8 : 16);
         lpDesc->lpFormat->nBlockAlign=lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
         lpDesc->lpFormat->nAvgBytesPerSec=lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
-        TRACE("OSS_OpenDevice returned this format: %ldx%dx%d\n",
+        TRACE("OSS_OpenDevice returned this format: %dx%dx%d\n",
               lpDesc->lpFormat->nSamplesPerSec,
               lpDesc->lpFormat->wBitsPerSample,
               lpDesc->lpFormat->nChannels);
@@ -2048,10 +2048,10 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwWrittenTotal = 0;
     wwo->bNeedPost = TRUE;
 
-    TRACE("fd=%d fragstotal=%d fragsize=%d BufferSize=%ld\n",
+    TRACE("fd=%d fragstotal=%d fragsize=%d BufferSize=%d\n",
           wwo->ossdev->fd, info.fragstotal, info.fragsize, wwo->dwBufferSize);
     if (wwo->dwFragmentSize % wwo->waveFormat.Format.nBlockAlign) {
-        ERR("Fragment doesn't contain an integral number of data blocks fragsize=%ld BlockAlign=%d\n",wwo->dwFragmentSize,wwo->waveFormat.Format.nBlockAlign);
+        ERR("Fragment doesn't contain an integral number of data blocks fragsize=%d BlockAlign=%d\n",wwo->dwFragmentSize,wwo->waveFormat.Format.nBlockAlign);
         /* Some SoundBlaster 16 cards return an incorrect (odd) fragment
          * size for 16 bit sound. This will cause a system crash when we try
          * to write just the specified odd number of bytes. So if we
@@ -2070,7 +2070,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     CloseHandle(wwo->hStartUpEvent);
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
 	  wwo->waveFormat.Format.nSamplesPerSec, wwo->waveFormat.Format.nChannels,
 	  wwo->waveFormat.Format.nBlockAlign);
@@ -2118,7 +2118,7 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
@@ -2138,7 +2138,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 
     if ((lpWaveHdr->dwBufferLength & (WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1)) != 0)
     {
-        WARN("WaveHdr length isn't a multiple of the PCM block size: %ld %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].waveFormat.Format.nBlockAlign);
+        WARN("WaveHdr length isn't a multiple of the PCM block size: %d %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].waveFormat.Format.nBlockAlign);
         lpWaveHdr->dwBufferLength &= ~(WOutDev[wDevID].waveFormat.Format.nBlockAlign - 1);
     }
 
@@ -2210,7 +2210,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= numOutDev || WOutDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("bad device ID !\n");
@@ -2297,10 +2297,10 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     left = LOBYTE(volume);
     right = HIBYTE(volume);
-    TRACE("left=%ld right=%ld !\n", left, right);
+    TRACE("left=%d right=%d !\n", left, right);
     last_left  = (LOWORD(WOutDev[wDevID].volume) * 100) / 0xFFFFl;
     last_right = (HIWORD(WOutDev[wDevID].volume) * 100) / 0xFFFFl;
-    TRACE("last_left=%ld last_right=%ld !\n", last_left, last_right);
+    TRACE("last_left=%d last_right=%d !\n", last_left, last_right);
     if (last_left == left && last_right == right)
 	*lpdwVol = WOutDev[wDevID].volume;
     else
@@ -2317,7 +2317,7 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     int		volume;
     DWORD	left, right;
 
-    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+    TRACE("(%u, %08X);\n", wDevID, dwParam);
 
     left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
@@ -2363,7 +2363,7 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %s, %08X, %08X, %08X);\n",
 	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -2411,7 +2411,7 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
  */
 static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lX dwParam2 = %04lX\n", wMsg,
+    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04X dwParam2 = %04X\n", wMsg,
         wMsg == WIM_OPEN ? "WIM_OPEN" : wMsg == WIM_CLOSE ? "WIM_CLOSE" :
         wMsg == WIM_DATA ? "WIM_DATA" : "Unknown", dwParam1, dwParam2);
 
@@ -2439,7 +2439,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
  */
 static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -2519,7 +2519,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     /* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->waveFormat.Format.nAvgBytesPerSec;
-    TRACE("sleeptime=%ld ms\n", dwSleepTime);
+    TRACE("sleeptime=%d ms\n", dwSleepTime);
 
     for (;;) {
 	/* wait for dwSleepTime or an event in thread's queue */
@@ -2546,7 +2546,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		      		     lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
                                      wwi->dwFragmentSize);
 
-                    TRACE("bytesRead=%ld (direct)\n", bytesRead);
+                    TRACE("bytesRead=%d (direct)\n", bytesRead);
                     if (bytesRead != (DWORD) -1)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
@@ -2570,7 +2570,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    lpWaveHdr = lpNext;
 			}
                     } else {
-                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->ossdev->dev_name,
+                        TRACE("read(%s, %p, %d) failed (%s)\n", wwi->ossdev->dev_name,
                             lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
                             wwi->dwFragmentSize, strerror(errno));
                     }
@@ -2581,10 +2581,10 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                     bytesRead = read(wwi->ossdev->fd, buffer, wwi->dwFragmentSize);
                     pOffset = buffer;
 
-                    TRACE("bytesRead=%ld (local)\n", bytesRead);
+                    TRACE("bytesRead=%d (local)\n", bytesRead);
 
                     if (bytesRead == (DWORD) -1) {
-                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->ossdev->dev_name,
+                        TRACE("read(%s, %p, %d) failed (%s)\n", wwi->ossdev->dev_name,
                             buffer, wwi->dwFragmentSize, strerror(errno));
                         continue;
                     }
@@ -2648,7 +2648,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                                     /* no more buffer to copy data to, but we did read more.
                                      * what hasn't been copied will be dropped
                                      */
-                                    WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
+                                    WARN("buffer under run! %u bytes dropped.\n", bytesRead);
                                     wwi->lpQueuePtr = NULL;
                                     break;
 				}
@@ -2663,7 +2663,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-            TRACE("msg=%s param=0x%lx\n", getCmdString(msg), param);
+            TRACE("msg=%s param=0x%x\n", getCmdString(msg), param);
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
@@ -2807,7 +2807,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int                 audio_fragment;
     DWORD               ret;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -2819,20 +2819,20 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* only PCM format is supported so far... */
     if (!supportedFormat(lpDesc->lpFormat)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
     }
 
-    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d %s\n",
+    TRACE("OSS_OpenDevice requested this format: %dx%dx%d %s\n",
           lpDesc->lpFormat->nSamplesPerSec,
           lpDesc->lpFormat->wBitsPerSample,
           lpDesc->lpFormat->nChannels,
@@ -2879,7 +2879,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	}
     }
 
-    TRACE("requesting %d %d byte fragments (%ld ms)\n", audio_fragment >> 16,
+    TRACE("requesting %d %d byte fragments (%d ms)\n", audio_fragment >> 16,
 	1 << (audio_fragment & 0xffff),
 	((1 << (audio_fragment & 0xffff)) * 1000) / lpDesc->lpFormat->nAvgBytesPerSec);
 
@@ -2925,8 +2925,8 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->dwFragmentSize = info.fragsize;
 
-    TRACE("dwFragmentSize=%lu\n", wwi->dwFragmentSize);
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("dwFragmentSize=%u\n", wwi->dwFragmentSize);
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->waveFormat.Format.wBitsPerSample, wwi->waveFormat.Format.nAvgBytesPerSec,
 	  wwi->waveFormat.Format.nSamplesPerSec, wwi->waveFormat.Format.nChannels,
 	  wwi->waveFormat.Format.nBlockAlign);
@@ -2977,7 +2977,7 @@ static DWORD widClose(WORD wDevID)
  */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't do it !\n");
@@ -3053,7 +3053,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEIN*	wwi;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= numInDev || WInDev[wDevID].state == WINE_WS_CLOSED) {
 	WARN("can't get pos !\n");
@@ -3080,7 +3080,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %s, %08X, %08X, %08X);\n",
 	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -3119,7 +3119,7 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -3129,7 +3129,7 @@ DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
