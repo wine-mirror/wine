@@ -43,7 +43,7 @@ HINSTANCE hInst;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(0x%p, %ld, %p)\n",hinstDLL,fdwReason,lpvReserved);
+    TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(hinstDLL);
@@ -143,7 +143,7 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContex
     HRESULT hRes = S_OK;
     int i=0;
 
-    TRACE("(%p %li %li)\n",pM, dwClsContext, dwFlags);
+    TRACE("(%p %i %i)\n",pM, dwClsContext, dwFlags);
 
     if (pM == NULL)
         return E_INVALIDARG;
@@ -222,7 +222,7 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
 
     while (pEntries[i].pFunc != 0)
     {
-        TRACE("Trying entry %i (%p %li %p)\n",i,pEntries[i].piid,
+        TRACE("Trying entry %i (%p %i %p)\n",i,pEntries[i].piid,
               pEntries[i].dw, pEntries[i].pFunc);
 
         if (pEntries[i].piid && IsEqualGUID(iid,pEntries[i].piid))
@@ -244,7 +244,7 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
         }
         i++;
     }
-    TRACE("Done returning (0x%lx)\n",rc);
+    TRACE("Done returning (0x%x)\n",rc);
     return rc;
 }
 
@@ -272,7 +272,7 @@ HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, LPDWO
  */
 HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID *iid, DWORD dw)
 {
-    FIXME("%p %p %ld\n", pUnkCP, iid, dw);
+    FIXME("%p %p %d\n", pUnkCP, iid, dw);
     return S_OK;
 }
 

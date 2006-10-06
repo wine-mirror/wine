@@ -249,7 +249,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     SHDeleteKeyW(parent_key, buf->str);
                 lres = RegCreateKeyW(parent_key, buf->str, &hkey);
                 if(lres != ERROR_SUCCESS) {
-                    WARN("Could not create(open) key: %08lx\n", lres);
+                    WARN("Could not create(open) key: %08x\n", lres);
                     hres = HRESULT_FROM_WIN32(lres);
                     break;
                 }
@@ -258,7 +258,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
             strbuf_write(buf->str, &name, -1);
             lres = RegOpenKeyW(parent_key, buf->str, &hkey);
               if(lres != ERROR_SUCCESS)
-                WARN("Could not open key %s: %08lx\n", debugstr_w(name.str), lres);
+                WARN("Could not open key %s: %08x\n", debugstr_w(name.str), lres);
         }
 
         if(key_type != DO_DELETE && *iter == '=') {
@@ -280,7 +280,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_SZ, (PBYTE)buf->str,
                             (lstrlenW(buf->str)+1)*sizeof(WCHAR));
                     if(lres != ERROR_SUCCESS) {
-                        WARN("Could set value of key: %08lx\n", lres);
+                        WARN("Could set value of key: %08x\n", lres);
                         hres = HRESULT_FROM_WIN32(lres);
                         break;
                     }
@@ -296,7 +296,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_DWORD,
                             (PBYTE)&dw, sizeof(dw));
                     if(lres != ERROR_SUCCESS) {
-                        WARN("Could set value of key: %08lx\n", lres);
+                        WARN("Could set value of key: %08x\n", lres);
                         hres = HRESULT_FROM_WIN32(lres);
                         break;
                     }
@@ -390,7 +390,7 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
         }
         hres = do_process_key(&iter, root_keys[i].key, &buf, do_register);
         if(FAILED(hres)) {
-            WARN("Processing key failed: %08lx\n", hres);
+            WARN("Processing key failed: %08x\n", hres);
             break;
         }
         hres = get_word(&iter, &buf);
@@ -520,7 +520,7 @@ static ULONG WINAPI Registrar_AddRef(IRegistrar *iface)
 {
     Registrar *This = (Registrar*)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ->%ld\n", This, ref);
+    TRACE("(%p) ->%d\n", This, ref);
     return ref;
 }
 
@@ -529,7 +529,7 @@ static ULONG WINAPI Registrar_Release(IRegistrar *iface)
     Registrar *This = (Registrar*)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ->%ld\n", This, ref);
+    TRACE("(%p) ->%d\n", This, ref);
     if(!ref) {
         IRegistrar_ClearReplacements(iface);
         HeapFree(GetProcessHeap(), 0, This);
@@ -839,6 +839,6 @@ HRESULT WINAPI DllUnregisterServer(void)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    TRACE("dll_count = %lu\n", dll_count);
+    TRACE("dll_count = %u\n", dll_count);
     return dll_count ? S_FALSE : S_OK;
 }
