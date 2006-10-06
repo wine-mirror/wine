@@ -433,8 +433,7 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
         goto end;
     }
 
-    if (service->args)
-        SERV_free(service->args);
+    SERV_free(service->args);
     service->args = args;
     args = NULL;
     service->thread = CreateThread( NULL, 0, service_thread,
