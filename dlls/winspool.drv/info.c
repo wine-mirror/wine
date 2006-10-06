@@ -3727,7 +3727,7 @@ BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 static BOOL WINSPOOL_GetDriverInfoFromReg(
                             HKEY    hkeyDrivers,
                             LPWSTR  DriverName,
-                            LPWSTR  pEnvironment,
+                            LPCWSTR pEnvironment,
                             DWORD   Level,
                             LPBYTE  ptr,            /* DRIVER_INFO */
                             LPBYTE  pDriverStrings, /* strings buffer */
@@ -3774,7 +3774,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         ((PDRIVER_INFO_2A) ptr)->cVersion = (GetVersion() & 0x80000000) ? 0 : 3; /* FIXME: add 1, 2 */
 
     if(!pEnvironment)
-        pEnvironment = (LPWSTR)DefaultEnvironmentW;
+        pEnvironment = DefaultEnvironmentW;
     if(unicode)
         size = (lstrlenW(pEnvironment) + 1) * sizeof(WCHAR);
     else
@@ -6567,17 +6567,30 @@ end:
 /*****************************************************************************
  *          StartDocDlgA [WINSPOOL.@]
  */
- LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
+LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
 {
     UNICODE_STRING usBuffer;
     DOCINFOW docW;
     LPWSTR retW;
+    LPWSTR docnameW = NULL, outputW = NULL, datatypeW = NULL;
     LPSTR ret = NULL;
 
     docW.cbSize = sizeof(docW);
-    docW.lpszDocName = asciitounicode(&usBuffer, doc->lpszDocName);
-    docW.lpszOutput = asciitounicode(&usBuffer, doc->lpszOutput);
-    docW.lpszDatatype = asciitounicode(&usBuffer, doc->lpszDatatype);
+    if (doc->lpszDocName)
+    {
+        docnameW = asciitounicode(&usBuffer, doc->lpszDocName);
+        if (!(docW.lpszDocName = docnameW)) return NULL;
+    }
+    if (doc->lpszOutput)
+    {
+        outputW = asciitounicode(&usBuffer, doc->lpszOutput);
+        if (!(docW.lpszOutput = outputW)) return NULL;
+    }
+    if (doc->lpszDatatype)
+    {
+        datatypeW = asciitounicode(&usBuffer, doc->lpszDatatype);
+        if (!(docW.lpszDatatype = datatypeW)) return NULL;
+    }
     docW.fwType = doc->fwType;
 
     retW = StartDocDlgW(hPrinter, &docW);
@@ -6590,9 +6603,9 @@ end:
         HeapFree(GetProcessHeap(), 0, retW);
     }
 
-    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszDatatype);
-    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszOutput);
-    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszDocName);
+    HeapFree(GetProcessHeap(), 0, datatypeW);
+    HeapFree(GetProcessHeap(), 0, outputW);
+    HeapFree(GetProcessHeap(), 0, docnameW);
 
     return ret;
 }
