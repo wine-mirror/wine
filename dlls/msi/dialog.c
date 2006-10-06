@@ -217,13 +217,18 @@ static LPWSTR msi_get_deformatted_field( MSIPACKAGE *package, MSIRECORD *rec, in
 
 static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOOL indirect )
 {
+    LPWSTR prop = NULL;
+
     if (!property)
         return NULL;
 
     if (indirect)
-        return msi_dup_property( dialog->package, property );
+        prop = msi_dup_property( dialog->package, property );
 
-    return strdupW( property );
+    if (!prop)
+        prop = strdupW( property );
+
+    return prop;
 }
 
 msi_dialog *msi_dialog_get_parent( msi_dialog *dialog )
@@ -1469,10 +1474,7 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    path = msi_dup_property( dialog->package, prop );
-    if (!path)
-        path = prop;
+    path = msi_dialog_dup_property( dialog, prop, TRUE );
 
     SetWindowTextW( control->hwnd, path );
     SendMessageW( control->hwnd, EM_SETSEL, 0, -1 );
@@ -2171,10 +2173,7 @@ static void msi_dialog_update_directory_combo( msi_dialog *dialog, msi_control *
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    path = msi_dup_property( dialog->package, prop );
-    if (!path)
-        path = prop;
+    path = msi_dialog_dup_property( dialog, prop, TRUE );
 
     PathStripPathW( path );
     PathRemoveBackslashW( path );
@@ -2231,10 +2230,7 @@ static void msi_dialog_update_directory_list( msi_dialog *dialog, msi_control *c
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    path = msi_dup_property( dialog->package, prop );
-    if (!path)
-        path = prop;
+    path = msi_dialog_dup_property( dialog, prop, TRUE );
 
     lstrcpyW( dir_spec, path );
     lstrcatW( dir_spec, asterisk );
@@ -2274,10 +2270,7 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     control = msi_dialog_find_control_by_type( dialog, szDirectoryList );
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    path = msi_dup_property( dialog->package, prop );
-    if (!path)
-        path = prop;
+    path = msi_dialog_dup_property( dialog, prop, TRUE );
 
     /* strip off the last directory */
     ptr = PathFindFileNameW( path );
@@ -2326,10 +2319,7 @@ static UINT msi_dialog_dirlist_handler( msi_dialog *dialog,
 
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
-
-    path = msi_dup_property( dialog->package, prop );
-    if (!path)
-        path = prop;
+    path = msi_dialog_dup_property( dialog, prop, TRUE );
 
     lstrcpyW( new_path, path );
     lstrcatW( new_path, text );
