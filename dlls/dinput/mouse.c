@@ -703,7 +703,10 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     /* Check if we need to do a mouse warping */
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
         if(!dinput_window_check(This))
+        {
+            LeaveCriticalSection(&(This->crit));
             return DIERR_GENERIC;
+        }
 	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
