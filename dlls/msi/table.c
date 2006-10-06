@@ -1830,6 +1830,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     MSITABLEVIEW *tv = NULL;
     UINT r, n, sz, i, mask;
     MSIRECORD *rec = NULL;
+    UINT colcol = 0;
 
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
@@ -1911,6 +1912,20 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
             if( rawdata[n] & 1)
             {
                 TRACE("insert [%d]: ", row);
+
+                /*
+                 * Native msi seems writes nul into the
+                 * Number (2nd) column of the _Columns table.
+                 * Not sure that it's deliberate...
+                 */
+                if (!lstrcmpW(name, szColumns))
+                {
+                    if ( MSI_RecordIsNull( rec, 2 ) )
+                        MSI_RecordSetInteger( rec, 2, ++colcol );
+                    else
+                        ERR("_Columns has non-null data...\n");
+                }
+
                 TABLE_insert_row( &tv->view, rec );
             }
             else if( mask & 0xff )
