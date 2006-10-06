@@ -1655,7 +1655,7 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
     if( !rec )
         return rec;
 
-    TRACE("row -> ");
+    TRACE("row -> \n");
     for( i=0; i<tv->num_cols; i++ )
     {
         UINT n = bytes_per_column( &columns[i] );
@@ -1675,20 +1675,20 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
             {
                 LPCWSTR sval = msi_string_lookup_id( st, val );
                 MSI_RecordSetStringW( rec, i+1, sval );
-                TRACE("[%s]", debugstr_w(sval));
+                TRACE(" field %d [%s]\n", i+1, debugstr_w(sval));
             }
             else
             {
                 if (val)
                     MSI_RecordSetInteger( rec, i+1, val^0x8000 );
-                TRACE("[0x%04x]", val );
+                TRACE(" field %d [0x%04x]\n", i+1, val );
             }
             break;
         case 4:
             val = (rawdata[ofs] + (rawdata[ofs + 1]<<16));
             if (val)
                 MSI_RecordSetInteger( rec, i+1, val^0x80000000 );
-            TRACE("[0x%08x]", val );
+            TRACE(" field %d [0x%08x]\n", i+1, val );
             break;
         default:
             ERR("oops - unknown column width %d\n", n);
@@ -1696,7 +1696,6 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
         }
         ofs += n/2;
     }
-    TRACE("\n");
     return rec;
 }
 
@@ -1911,7 +1910,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
             if( rawdata[n] & 1)
             {
-                TRACE("insert [%d]: ", row);
+                TRACE("insert [%d]: \n", row);
 
                 /*
                  * Native msi seems writes nul into the
@@ -1930,12 +1929,12 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
             }
             else if( mask & 0xff )
             {
-                TRACE("modify [%d]: ", row);
+                TRACE("modify [%d]: \n", row);
                 msi_table_modify_row( tv, rec, row, mask );
             }
             else
             {
-                TRACE("delete [%d]: ", row);
+                TRACE("delete [%d]: \n", row);
                 msi_delete_row( tv, row );
             }
             if( TRACE_ON(msidb) ) dump_record( rec );
