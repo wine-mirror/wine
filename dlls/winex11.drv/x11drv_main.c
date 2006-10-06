@@ -383,6 +383,8 @@ static BOOL process_attach(void)
 
     /* Open display */
 
+    if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
+
     if (!(display = XOpenDisplay( NULL ))) return FALSE;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
