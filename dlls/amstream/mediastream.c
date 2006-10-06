@@ -134,7 +134,7 @@ static HRESULT WINAPI IMediaStreamImpl_SetSameFormat(IMediaStream* iface, IMedia
 {
     IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p,%lx) stub!\n", This, iface, pStreamThatHasDesiredFormat, dwFlags); 
+    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, dwFlags);
 
     return S_FALSE;
 }
@@ -143,7 +143,7 @@ static HRESULT WINAPI IMediaStreamImpl_AllocateSample(IMediaStream* iface, DWORD
 {
     IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%lx,%p) stub!\n", This, iface, dwFlags, ppSample); 
+    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, dwFlags, ppSample);
 
     return S_FALSE;
 }
@@ -152,7 +152,7 @@ static HRESULT WINAPI IMediaStreamImpl_CreateSharedSample(IMediaStream* iface, I
 {
     IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p,%lx,%p) stub!\n", This, iface, pExistingSample, dwFlags, ppSample); 
+    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pExistingSample, dwFlags, ppSample);
 
     return S_FALSE;
 }
@@ -161,7 +161,7 @@ static HRESULT WINAPI IMediaStreamImpl_SendEndOfStream(IMediaStream* iface, DWOR
 {
     IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%lx) stub!\n", This, iface, dwFlags); 
+    FIXME("(%p/%p)->(%x) stub!\n", This, iface, dwFlags);
 
     return S_FALSE;
 }

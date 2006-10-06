@@ -210,7 +210,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
     HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%lx,%lx,%p) partial stub!\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph); 
+    FIXME("(%p/%p)->(%x,%x,%p) partial stub!\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph);
 
     if (pFilterGraph)
     {
@@ -256,7 +256,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     IMediaStream* pStream;
     IMediaStream** pNewStreams;
 
-    FIXME("(%p/%p)->(%p,%p,%lx,%p) partial stub!\n", This, iface, pStreamObject, PurposeId, dwFlags, ppNewStream); 
+    FIXME("(%p/%p)->(%p,%p,%x,%p) partial stub!\n", This, iface, pStreamObject, PurposeId, dwFlags, ppNewStream);
 
     hr = MediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
@@ -291,7 +291,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     IPin *ipin;
     PIN_DIRECTION pin_direction;
 
-    TRACE("(%p/%p)->(%s,%lx)\n", This, iface, debugstr_w(pszFileName), dwFlags);
+    TRACE("(%p/%p)->(%s,%x)\n", This, iface, debugstr_w(pszFileName), dwFlags);
 
     ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
     if(ret != S_OK)
@@ -350,7 +350,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenMoniker(IAMMultiMediaStream* i
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p,%p,%lx) stub!\n", This, iface, pCtx, pMoniker, dwFlags); 
+    FIXME("(%p/%p)->(%p,%p,%x) stub!\n", This, iface, pCtx, pMoniker, dwFlags);
 
     return E_NOTIMPL;
 }
@@ -359,7 +359,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%lx)\n", This, iface, dwFlags);
+    FIXME("(%p/%p)->(%x)\n", This, iface, dwFlags);
 
     if(dwFlags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
