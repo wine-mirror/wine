@@ -903,8 +903,8 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
 
     if(!vp)
     {
-        return DDERR_INVALIDPARAMS;
         *lplpDirect3DViewport3 = NULL;
+        return DDERR_INVALIDPARAMS;
     }
 
 
