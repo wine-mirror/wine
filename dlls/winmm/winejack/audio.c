@@ -218,19 +218,19 @@ static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi);
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              PCMWAVEFORMAT* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
           format->wf.nChannels, format->wf.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -254,7 +254,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -408,8 +408,8 @@ int JACK_callback_wwo (nframes_t nframes, void *arg)
       outputFramesAvailable = (wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset) / wwo->format.wf.nBlockAlign;
 
       numFramesToWrite = min(jackFramesAvailable, outputFramesAvailable);
-      TRACE("dwBufferLength=(%ld) dwPartialOffset=(%ld)\n",wwo->lpPlayPtr->dwBufferLength,wwo->dwPartialOffset);
-      TRACE("outputFramesAvailable == %ld, jackFramesAvailable == %ld\n", outputFramesAvailable, jackFramesAvailable);
+      TRACE("dwBufferLength=(%d) dwPartialOffset=(%d)\n",wwo->lpPlayPtr->dwBufferLength,wwo->dwPartialOffset);
+      TRACE("outputFramesAvailable == %d, jackFramesAvailable == %d\n", outputFramesAvailable, jackFramesAvailable);
 
       buffer = wwo->lpPlayPtr->lpData + wwo->dwPartialOffset;
 
@@ -464,7 +464,7 @@ int JACK_callback_wwo (nframes_t nframes, void *arg)
     the rest of the space with zero bytes */
     if(jackFramesAvailable)
     {
-      ERR("buffer underrun of %ld frames\n", jackFramesAvailable);
+      ERR("buffer underrun of %d frames\n", jackFramesAvailable);
       sample_silence_dS(out_l + (nframes - jackFramesAvailable), jackFramesAvailable);
       sample_silence_dS(out_r + (nframes - jackFramesAvailable), jackFramesAvailable);
     }
@@ -506,10 +506,10 @@ int JACK_bufsize_wwo (nframes_t nframes, void *arg)
 
   /* wwo->sound_buffer is always filled with 16-bit stereo data, even for mono streams */
   buffer_required = nframes * sizeof(short) * 2;
-  TRACE("wwo->buffer_size (%ld) buffer_required (%ld).\n", wwo->buffer_size,buffer_required);
+  TRACE("wwo->buffer_size (%ld) buffer_required (%d).\n", wwo->buffer_size,buffer_required);
   if(wwo->buffer_size < buffer_required)
   {
-    TRACE("expanding buffer from wwo->buffer_size == %ld, to %ld\n", 
+    TRACE("expanding buffer from wwo->buffer_size == %ld, to %d\n",
       wwo->buffer_size, buffer_required);
     TRACE("GetProcessHeap() == %p\n", GetProcessHeap());
     wwo->buffer_size = buffer_required;
@@ -1007,7 +1007,7 @@ sym_not_found:
  */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
     
     switch (wMsg) {
     case WOM_OPEN:
@@ -1056,7 +1056,7 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
         TRACE("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
       } else
       {
-        TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+        TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
         wwo->lpLoopPtr = lpWaveHdr;
         /* Windows does not touch WAVEHDR.dwLoops,
          * so we need to make an internal copy */
@@ -1141,7 +1141,7 @@ static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 
     lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
     lpWaveHdr->dwFlags |= WHDR_DONE;
-    TRACE("notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) dwFlags=(%ld)\n",
+    TRACE("notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) dwFlags=(%d)\n",
 	  lpWaveHdr, wwo->lpPlayPtr, lpWaveHdr->dwFlags);
 
     wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
@@ -1217,7 +1217,7 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
     
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     
@@ -1227,7 +1227,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
       return MMSYSERR_BADDEVICEID;
     }
 
-    TRACE("dwSupport=(0x%lx), dwFormats=(0x%lx)\n", WOutDev[wDevID].caps.dwSupport, WOutDev[wDevID].caps.dwFormats);
+    TRACE("dwSupport=(0x%x), dwFormats=(0x%x)\n", WOutDev[wDevID].caps.dwSupport, WOutDev[wDevID].caps.dwFormats);
     memcpy(lpCaps, &WOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
@@ -1243,7 +1243,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WINE_WAVEOUT*	wwo;
     DWORD retval;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
     {
       WARN("Invalid Parameter !\n");
@@ -1272,7 +1272,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       lpDesc->lpFormat->nSamplesPerSec == 0 ||
       lpDesc->lpFormat->wBitsPerSample != 16)
     {
-      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld wBitsPerSample=%d !\n",
+      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
        lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
       return WAVERR_BADFORMAT;
@@ -1280,7 +1280,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (dwFlags & WAVE_FORMAT_QUERY)
     {
-      TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+      TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
        lpDesc->lpFormat->nSamplesPerSec);
       return MMSYSERR_NOERROR;
@@ -1324,7 +1324,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     LeaveCriticalSection(&wwo->access_crst);
 
     /* display the current wave format */
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n", 
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
     wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
     wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
     wwo->format.wf.nBlockAlign);
@@ -1333,7 +1333,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* as we do in the jack server */
     if(wwo->format.wf.nSamplesPerSec != wwo->sample_rate)
     {
-      TRACE("error: jack server sample rate is '%ld', wave sample rate is '%ld'\n",
+      TRACE("error: jack server sample rate is '%ld', wave sample rate is '%d'\n",
          wwo->sample_rate, wwo->format.wf.nSamplesPerSec);
 
 #if JACK_CLOSE_HACK
@@ -1413,7 +1413,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     LPWAVEHDR*wh;
     WINE_WAVEOUT *wwo;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
     
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV || !WOutDev[wDevID].client)
@@ -1529,7 +1529,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     WINE_WAVEOUT*	wwo;
     DWORD elapsedMS;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= MAX_WAVEOUTDRV || !WOutDev[wDevID].client)
     {
@@ -1607,7 +1607,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
   left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
   right = (HIWORD(dwParam) * 100) / 0xFFFFl;
  
-  TRACE("(%u, %08lX);\n", wDevID, dwParam);
+  TRACE("(%u, %08X);\n", wDevID, dwParam);
 
   EnterCriticalSection(&(WOutDev[wDevID].access_crst));
 
@@ -1660,7 +1660,7 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
 {
-  TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+  TRACE("(%u, %04X, %08X, %08X, %08X);\n",
   wDevID, wMsg, dwUser, dwParam1, dwParam2);
     
   switch (wMsg) {
@@ -1752,7 +1752,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
  */
 static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
     
     switch (wMsg) {
     case WIM_OPEN:
@@ -1817,8 +1817,8 @@ int JACK_callback_wwi (nframes_t nframes, void *arg)
 	    DWORD waveHdrFramesLeft = (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded) / (sizeof(short) * wwi->format.wf.nChannels); 
 	    DWORD numFrames = min (jackFramesLeft, waveHdrFramesLeft);
 	    
-	    TRACE ("dwBufferLength=(%lu) dwBytesRecorded=(%ld)\n",   lpWaveHdr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
-	    TRACE ("jackFramesLeft=(%u) waveHdrFramesLeft=(%lu)\n", jackFramesLeft, waveHdrFramesLeft);
+            TRACE ("dwBufferLength=(%u) dwBytesRecorded=(%d)\n",   lpWaveHdr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
+            TRACE ("jackFramesLeft=(%u) waveHdrFramesLeft=(%u)\n", jackFramesLeft, waveHdrFramesLeft);
 
 	    if (!in_r) {
 	      /* mono */
@@ -1844,7 +1844,7 @@ int JACK_callback_wwi (nframes_t nframes, void *arg)
 		lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		lpWaveHdr->dwFlags |=  WHDR_DONE;
 
-		TRACE("WaveHdr full. dwBytesRecorded=(%lu) dwFlags=(0x%lx)\n",lpWaveHdr->dwBytesRecorded,lpWaveHdr->dwFlags);
+		TRACE("WaveHdr full. dwBytesRecorded=(%u) dwFlags=(0x%x)\n",lpWaveHdr->dwBytesRecorded,lpWaveHdr->dwFlags);
 
 		widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 
@@ -2023,7 +2023,7 @@ static int JACK_OpenWaveInDevice(WINE_WAVEIN* wwi, WORD nChannels)
  */
 static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -2044,7 +2044,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WINE_WAVEIN*	wwi;
     DWORD retval;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
     {
 	WARN("Invalid Parameter !\n");
@@ -2073,7 +2073,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       lpDesc->lpFormat->nSamplesPerSec == 0 ||
       lpDesc->lpFormat->wBitsPerSample!=16)
     {
-      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld wBitsPerSample=%d !\n",
+      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
        lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
       return WAVERR_BADFORMAT;
@@ -2081,7 +2081,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (dwFlags & WAVE_FORMAT_QUERY)
     {
-      TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+      TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
        lpDesc->lpFormat->nSamplesPerSec);
       return MMSYSERR_NOERROR;
@@ -2117,7 +2117,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     LeaveCriticalSection(&wwi->access_crst);
 
     /* display the current wave format */
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n", 
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
     wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
     wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
     wwi->format.wf.nBlockAlign);
@@ -2126,7 +2126,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* as we do in the jack server */
     if(wwi->format.wf.nSamplesPerSec != wwi->sample_rate)
     {
-      TRACE("error: jack server sample rate is '%ld', wave sample rate is '%ld'\n",
+      TRACE("error: jack server sample rate is '%ld', wave sample rate is '%d'\n",
          wwi->sample_rate, wwi->format.wf.nSamplesPerSec);
 
 #if JACK_CLOSE_HACK
@@ -2203,7 +2203,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     WINE_WAVEIN* wwi = &WInDev[wDevID];
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
 				WARN("can't do it !\n");
@@ -2356,7 +2356,7 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
 {
-  TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+  TRACE("(%u, %04X, %08X, %08X, %08X);\n",
   wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -2393,7 +2393,7 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
 {
-  FIXME("(%u, %04X, %08lX, %08lX, %08lX):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  FIXME("(%u, %04X, %08X, %08X, %08X):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
   return MMSYSERR_NOTENABLED;
 }
 
@@ -2403,7 +2403,7 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI JACK_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
 {
-  FIXME("(%u, %04X, %08lX, %08lX, %08lX):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  FIXME("(%u, %04X, %08X, %08X, %08X):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
   return MMSYSERR_NOTENABLED;
 }
 
