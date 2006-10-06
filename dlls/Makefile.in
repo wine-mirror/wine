@@ -99,6 +99,7 @@ BASEDIRS = \
 	msacm32.drv \
 	msadp32.acm \
 	mscms \
+	mscoree \
 	msdmo \
 	msftedit \
 	msg711.acm \

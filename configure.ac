@@ -1613,6 +1613,7 @@ dlls/msacm32/tests/Makefile
 dlls/msadp32.acm/Makefile
 dlls/mscms/Makefile
 dlls/mscms/tests/Makefile
+dlls/mscoree/Makefile
 dlls/msdmo/Makefile
 dlls/msftedit/Makefile
 dlls/msg711.acm/Makefile

@@ -1,0 +1,5 @@
+116 stdcall _CorDllMain(long long ptr)
+117 stdcall _CorExeMain2(ptr long ptr ptr ptr)
+118 stdcall _CorExeMain()
+119 stdcall _CorImageUnloading(ptr)
+120 stdcall _CorValidateImage(ptr ptr)
