@@ -2084,9 +2084,9 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     multiplier10 = pNumprs->nPwr10;
   }
 
-  TRACE("cDig %d; nPwr10 %d, whole %d, frac %d ", pNumprs->cDig,
-        pNumprs->nPwr10, wholeNumberDigits, fractionalDigits);
-  TRACE("mult %d; div %d\n", multiplier10, divisor10);
+  TRACE("cDig %d; nPwr10 %d, whole %d, frac %d mult %d; div %d\n",
+        pNumprs->cDig, pNumprs->nPwr10, wholeNumberDigits, fractionalDigits,
+        multiplier10, divisor10);
 
   if (dwVtBits & (INTEGER_VTBITS|VTBIT_DECIMAL) &&
       (!fractionalDigits || !(dwVtBits & (REAL_VTBITS|VTBIT_CY|VTBIT_DECIMAL))))

@@ -94,7 +94,7 @@ static inline void DUMPCONTEXT(LOGCONTEXTA lc)
         CHAR bits1[100];
         CHAR bits2[100];
 
-        sprintf(mmsg,"%s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %li ,%li, %li, %li, %li, %li,%li, %li, %li, %li, %li, %li, %i, %i, %i, %i, %i %li %li\n",
+        sprintf(mmsg,"%s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %li ,%li, %li, %li, %li, %li,%li, %li, %li, %li, %li, %li, %i, %i, %i, %i, %i %li %li",
     debugstr_a(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
 lc.lcDevice, lc.lcPktRate, (UINT)lc.lcPktData, DUMPBITS(lc.lcPktData,bits),
 (UINT)lc.lcPktMode, DUMPBITS(lc.lcPktMode,bits1), (UINT)lc.lcMoveMask,
@@ -104,7 +104,7 @@ lc.lcInExtZ, lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ, lc.lcOutExtX,
 lc.lcOutExtY, lc.lcOutExtZ, lc.lcSensX, lc.lcSensY, lc.lcSensZ, lc.lcSysMode,
 lc.lcSysOrgX, lc.lcSysOrgY, lc.lcSysExtX, lc.lcSysExtY, lc.lcSysSensX,
 lc.lcSysSensY);
-        TRACE("context: %s",mmsg);
+        TRACE("context: %s\n",mmsg);
 }
 
 

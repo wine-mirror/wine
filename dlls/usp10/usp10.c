@@ -340,8 +340,9 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     pItems[index].a.s.fGcpClusters = 0;
     pItems[index].a.s.fReserved = 0;
     pItems[index].a.s.fEngineReserved = 0;
-    TRACE("New_Script=%d, eScript=%d ", New_Script, pItems[index].a.eScript);
-    TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos = cnt);
+    TRACE("New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
+          New_Script, pItems[index].a.eScript, index, cnt,
+          pItems[index].iCharPos = cnt);
 
     for (cnt=0; cnt < cInChars; cnt++)
     {
