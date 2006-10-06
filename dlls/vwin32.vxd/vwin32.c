@@ -111,8 +111,8 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
             BYTE intnum = 0;
 
             TRACE( "Control '%s': "
-                   "eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
-                   "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx\n",
+                   "eax=0x%08x, ebx=0x%08x, ecx=0x%08x, "
+                   "edx=0x%08x, esi=0x%08x, edi=0x%08x\n",
                    (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
                    (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
                    (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" :
@@ -153,7 +153,7 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
         return FALSE;
 
     default:
-        FIXME( "Unknown Control %ld\n", dwIoControlCode);
+        FIXME( "Unknown Control %d\n", dwIoControlCode);
         return FALSE;
     }
 }
@@ -179,7 +179,7 @@ DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT86 *context )
         {
             DWORD parm = stack32_pop(context);
 
-            FIXME("Get VMCPD Version(%08lx): partial stub!\n", parm);
+            FIXME("Get VMCPD Version(%08x): partial stub!\n", parm);
 
             /* FIXME: This is what Win98 returns, it may
              *        not be correct in all situations.
@@ -192,7 +192,7 @@ DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT86 *context )
             DWORD callnum = stack32_pop(context);
             DWORD parm    = stack32_pop(context);
 
-            TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
+            TRACE("Int31/DPMI dispatch(%08x)\n", callnum);
 
             context->Eax = callnum;
             context->Ecx = parm;
@@ -205,7 +205,7 @@ DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT86 *context )
             return callnum; /* FIXME: should really call INT_Int41Handler() */
         }
     default:
-        FIXME("Unknown service %08lx\n", service);
+        FIXME("Unknown service %08x\n", service);
         return 0xffffffff;
     }
 }
