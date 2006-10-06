@@ -153,7 +153,7 @@ HANDLE WINAPI SHLWAPI_DupSharedHandle(HANDLE hShared, DWORD dwDstProcId,
   DWORD dwMyProcId = GetCurrentProcessId();
   HANDLE hRet = NULL;
 
-  TRACE("(%p,%ld,%ld,%08lx,%08lx)\n", hShared, dwDstProcId, dwSrcProcId,
+  TRACE("(%p,%d,%d,%08x,%08x)\n", hShared, dwDstProcId, dwSrcProcId,
         dwAccess, dwOptions);
 
   /* Get dest process handle */
@@ -217,7 +217,7 @@ HANDLE WINAPI SHAllocShared(LPCVOID lpvData, DWORD dwSize, DWORD dwProcId)
   LPVOID pMapped;
   HANDLE hRet = NULL;
 
-  TRACE("(%p,%ld,%ld)\n", lpvData, dwSize, dwProcId);
+  TRACE("(%p,%d,%d)\n", lpvData, dwSize, dwProcId);
 
   /* Create file mapping of the correct length */
   hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, FILE_MAP_READ, 0,
@@ -265,7 +265,7 @@ PVOID WINAPI SHLockShared(HANDLE hShared, DWORD dwProcId)
   HANDLE hDup;
   LPVOID pMapped;
 
-  TRACE("(%p %ld)\n", hShared, dwProcId);
+  TRACE("(%p %d)\n", hShared, dwProcId);
 
   /* Get handle to shared memory for current process */
   hDup = SHLWAPI_DupSharedHandle(hShared, dwProcId, GetCurrentProcessId(),
@@ -316,7 +316,7 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
 {
   HANDLE hClose;
 
-  TRACE("(%p %ld)\n", hShared, dwProcId);
+  TRACE("(%p %d)\n", hShared, dwProcId);
 
   /* Get a copy of the handle for our process, closing the source handle */
   hClose = SHLWAPI_DupSharedHandle(hShared, dwProcId, GetCurrentProcessId(),
@@ -796,7 +796,7 @@ BOOL WINAPI IsCharXDigitW(WCHAR wc)
  */
 BOOL WINAPI GetStringType3ExW(LPWSTR lpszStr, DWORD dwLen, LPVOID p3)
 {
-    FIXME("(%s,0x%08lx,%p): stub\n", debugstr_w(lpszStr), dwLen, p3);
+    FIXME("(%s,0x%08x,%p): stub\n", debugstr_w(lpszStr), dwLen, p3);
     return TRUE;
 }
 
@@ -1000,7 +1000,7 @@ BOOL WINAPI SHAboutInfoA(LPSTR lpszDest, DWORD dwDestLen)
 {
   WCHAR buff[2084];
 
-  TRACE("(%p,%ld)\n", lpszDest, dwDestLen);
+  TRACE("(%p,%d)\n", lpszDest, dwDestLen);
 
   if (lpszDest && SHAboutInfoW(buff, dwDestLen))
   {
@@ -1046,7 +1046,7 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
   HKEY hReg;
   DWORD dwType, dwLen;
 
-  TRACE("(%p,%ld)\n", lpszDest, dwDestLen);
+  TRACE("(%p,%d)\n", lpszDest, dwDestLen);
 
   if (!lpszDest)
     return FALSE;
@@ -1134,7 +1134,7 @@ HRESULT WINAPI IUnknown_QueryStatus(IUnknown* lpUnknown, REFGUID pguidCmdGroup,
 {
   HRESULT hRet = E_FAIL;
 
-  TRACE("(%p,%p,%ld,%p,%p)\n",lpUnknown, pguidCmdGroup, cCmds, prgCmds, pCmdText);
+  TRACE("(%p,%p,%d,%p,%p)\n",lpUnknown, pguidCmdGroup, cCmds, prgCmds, pCmdText);
 
   if (lpUnknown)
   {
@@ -1174,7 +1174,7 @@ HRESULT WINAPI IUnknown_Exec(IUnknown* lpUnknown, REFGUID pguidCmdGroup,
 {
   HRESULT hRet = E_FAIL;
 
-  TRACE("(%p,%p,%ld,%ld,%p,%p)\n",lpUnknown, pguidCmdGroup, nCmdID,
+  TRACE("(%p,%p,%d,%d,%p,%p)\n",lpUnknown, pguidCmdGroup, nCmdID,
         nCmdexecopt, pvaIn, pvaOut);
 
   if (lpUnknown)
@@ -1472,7 +1472,7 @@ HRESULT WINAPI IUnknown_SetOwner(IUnknown *pUnk, ULONG arg)
   };
   IMalloc *pUnk2;
 
-  TRACE("(%p,%ld)\n", pUnk, arg);
+  TRACE("(%p,%d)\n", pUnk, arg);
 
   /* Note: arg may not be a ULONG and pUnk2 is for sure not an IMalloc -
    *       We use this interface as its vtable entry is compatible with the
@@ -1506,21 +1506,21 @@ HRESULT WINAPI IUnknown_SetSite(
     if (!obj) return E_FAIL;
 
     hr = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (LPVOID *)&iobjwithsite);
-    TRACE("IID_IObjectWithSite QI ret=%08lx, %p\n", hr, iobjwithsite);
+    TRACE("IID_IObjectWithSite QI ret=%08x, %p\n", hr, iobjwithsite);
     if (SUCCEEDED(hr))
     {
 	hr = IObjectWithSite_SetSite(iobjwithsite, site);
-	TRACE("done IObjectWithSite_SetSite ret=%08lx\n", hr);
+	TRACE("done IObjectWithSite_SetSite ret=%08x\n", hr);
 	IUnknown_Release(iobjwithsite);
     }
     else
     {
 	hr = IUnknown_QueryInterface(obj, &IID_IInternetSecurityManager, (LPVOID *)&isecmgr);
-	TRACE("IID_IInternetSecurityManager QI ret=%08lx, %p\n", hr, isecmgr);
+	TRACE("IID_IInternetSecurityManager QI ret=%08x, %p\n", hr, isecmgr);
 	if (FAILED(hr)) return hr;
 
 	hr = IInternetSecurityManager_SetSecuritySite(isecmgr, (IInternetSecurityMgrSite *)site);
-	TRACE("done IInternetSecurityManager_SetSecuritySite ret=%08lx\n", hr);
+	TRACE("done IInternetSecurityManager_SetSecuritySite ret=%08x\n", hr);
 	IUnknown_Release(isecmgr);
     }
     return hr;
@@ -1852,7 +1852,7 @@ HRESULT WINAPI IUnknown_TranslateAcceleratorOCS(IUnknown *lpUnknown, LPMSG lpMsg
   IOleControlSite* lpCSite = NULL;
   HRESULT hRet = E_INVALIDARG;
 
-  TRACE("(%p,%p,0x%08lx)\n", lpUnknown, lpMsg, dwModifiers);
+  TRACE("(%p,%p,0x%08x)\n", lpUnknown, lpMsg, dwModifiers);
   if (lpUnknown)
   {
     hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleControlSite,
@@ -2162,7 +2162,7 @@ HRESULT WINAPI MayQSForward(IUnknown* lpUnknown, PVOID lpReserved,
                             REFGUID riidCmdGrp, ULONG cCmds,
                             OLECMD *prgCmds, OLECMDTEXT* pCmdText)
 {
-  FIXME("(%p,%p,%p,%ld,%p,%p) - stub\n",
+  FIXME("(%p,%p,%p,%d,%p,%p) - stub\n",
         lpUnknown, lpReserved, riidCmdGrp, cCmds, prgCmds, pCmdText);
 
   /* FIXME: Calls IsQSForward & IUnknown_QueryStatus */
@@ -2177,7 +2177,7 @@ HRESULT WINAPI MayExecForward(IUnknown* lpUnknown, INT iUnk, REFGUID pguidCmdGro
                            DWORD nCmdID, DWORD nCmdexecopt, VARIANT* pvaIn,
                            VARIANT* pvaOut)
 {
-  FIXME("(%p,%d,%p,%ld,%ld,%p,%p) - stub!\n", lpUnknown, iUnk, pguidCmdGroup,
+  FIXME("(%p,%d,%p,%d,%d,%p,%p) - stub!\n", lpUnknown, iUnk, pguidCmdGroup,
         nCmdID, nCmdexecopt, pvaIn, pvaOut);
   return DRAGDROP_E_NOTREGISTERED;
 }
@@ -2188,7 +2188,7 @@ HRESULT WINAPI MayExecForward(IUnknown* lpUnknown, INT iUnk, REFGUID pguidCmdGro
  */
 HRESULT WINAPI IsQSForward(REFGUID pguidCmdGroup,ULONG cCmds, OLECMD *prgCmds)
 {
-  FIXME("(%p,%ld,%p) - stub!\n", pguidCmdGroup, cCmds, prgCmds);
+  FIXME("(%p,%d,%p) - stub!\n", pguidCmdGroup, cCmds, prgCmds);
   return DRAGDROP_E_NOTREGISTERED;
 }
 
@@ -2240,7 +2240,7 @@ typedef struct
 BOOL WINAPI FDSA_Initialize(DWORD block_size, DWORD inc, FDSA_info *info, void *mem,
                             DWORD init_blocks)
 {
-    TRACE("(0x%08lx 0x%08lx %p %p 0x%08lx)\n", block_size, inc, info, mem, init_blocks);
+    TRACE("(0x%08x 0x%08x %p %p 0x%08x)\n", block_size, inc, info, mem, init_blocks);
 
     if(inc == 0)
         inc = 1;
@@ -2283,7 +2283,7 @@ BOOL WINAPI FDSA_Destroy(FDSA_info *info)
  */
 DWORD WINAPI FDSA_InsertItem(FDSA_info *info, DWORD where, const void *block)
 {
-    TRACE("(%p 0x%08lx %p)\n", info, where, block);
+    TRACE("(%p 0x%08x %p)\n", info, where, block);
     if(where > info->num_items)
         where = info->num_items;
 
@@ -2321,7 +2321,7 @@ DWORD WINAPI FDSA_InsertItem(FDSA_info *info, DWORD where, const void *block)
  */
 BOOL WINAPI FDSA_DeleteItem(FDSA_info *info, DWORD where)
 {
-    TRACE("(%p 0x%08lx)\n", info, where);
+    TRACE("(%p 0x%08x)\n", info, where);
 
     if(where >= info->num_items)
         return FALSE;
@@ -2367,7 +2367,7 @@ HRESULT WINAPI QISearch(
 	if (ppv) {
 	    xmove = x;
 	    while (xmove->refid) {
-		TRACE("trying (indx %ld) %s\n", xmove->indx, debugstr_guid(xmove->refid));
+		TRACE("trying (indx %d) %s\n", xmove->indx, debugstr_guid(xmove->refid));
 		if (IsEqualIID(riid, xmove->refid)) {
 		    a_vtbl = (IUnknown*)(xmove->indx + (LPBYTE)w);
 		    TRACE("matched, returning (%p)\n", a_vtbl);
@@ -2390,7 +2390,7 @@ HRESULT WINAPI QISearch(
 	} else
 	    ret = E_POINTER;
 
-	TRACE("-- 0x%08lx\n", ret);
+	TRACE("-- 0x%08x\n", ret);
 	return ret;
 }
 
@@ -2582,7 +2582,7 @@ HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   WNDCLASSA wc;
   HWND hWnd;
 
-  TRACE("(0x%08lx,%p,0x%08lx,0x%08lx,%p,0x%08lx)\n",
+  TRACE("(0x%08x,%p,0x%08x,0x%08x,%p,0x%08x)\n",
          wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
 
   /* Create Window class */
@@ -2686,7 +2686,7 @@ DWORD WINAPI SHRestrictionLookup(
 	LPPOLICYDATA polTable,
 	LPDWORD polArr)
 {
-	TRACE("(0x%08lx %s %p %p)\n", policy, debugstr_w(initial), polTable, polArr);
+	TRACE("(0x%08x %s %p %p)\n", policy, debugstr_w(initial), polTable, polArr);
 
 	if (!polTable || !polArr)
 	  return 0;
@@ -2704,7 +2704,7 @@ DWORD WINAPI SHRestrictionLookup(
 	  }
 	}
 	/* we don't know this policy, return 0 */
-	TRACE("unknown policy: (%08lx)\n", policy);
+	TRACE("unknown policy: (%08x)\n", policy);
 	return 0;
 }
 
@@ -2737,7 +2737,7 @@ HRESULT WINAPI SHWeakQueryInterface(
 	    hret = IUnknown_QueryInterface(pInner, riid, (LPVOID*)ppv);
 	    if (SUCCEEDED(hret)) IUnknown_Release(pUnk);
 	}
-	TRACE("-- 0x%08lx\n", hret);
+	TRACE("-- 0x%08x\n", hret);
 	return hret;
 }
 
@@ -2865,7 +2865,7 @@ HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   WNDCLASSW wc;
   HWND hWnd;
 
-  TRACE("(0x%08lx,%p,0x%08lx,0x%08lx,%p,0x%08lx)\n",
+  TRACE("(0x%08x,%p,0x%08x,0x%08x,%p,0x%08x)\n",
          wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
 
   /* If our OS is natively ASCII, use the ASCII version */
@@ -2975,7 +2975,7 @@ HRESULT WINAPI IConnectionPoint_OnChanged(IConnectionPoint* lpCP, DISPID dispID)
   IEnumConnections *lpEnum;
   HRESULT hRet = E_NOINTERFACE;
 
-  TRACE("(%p,0x%8lX)\n", lpCP, dispID);
+  TRACE("(%p,0x%8X)\n", lpCP, dispID);
 
   /* Get an enumerator for the connections */
   if (lpCP)
@@ -3023,7 +3023,7 @@ HRESULT WINAPI IUnknown_CPContainerOnChanged(IUnknown *lpUnknown, DISPID dispID)
   IConnectionPointContainer* lpCPC = NULL;
   HRESULT hRet = E_NOINTERFACE;
 
-  TRACE("(%p,0x%8lX)\n", lpUnknown, dispID);
+  TRACE("(%p,0x%8X)\n", lpUnknown, dispID);
 
   if (lpUnknown)
     hRet = IUnknown_QueryInterface(lpUnknown, &IID_IConnectionPointContainer, (void**)&lpCPC);
@@ -3072,7 +3072,7 @@ BOOL WINAPI SHGetIniStringW(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len, 
      * shlwapi.294(str1, str2, pStr, some_len, lpStr2);
      * shlwapi.PathRemoveBlanksW(pStr);
      */
-    FIXME("('%s', '%s', '%s', %08lx, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
+    FIXME("('%s', '%s', '%s', %08x, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
     return TRUE;
 }
 
@@ -3483,7 +3483,7 @@ HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCod
  */
 COLORREF WINAPI ColorAdjustLuma(COLORREF cRGB, int dwLuma, BOOL bUnknown)
 {
-  TRACE("(0x%8lx,%d,%d)\n", cRGB, dwLuma, bUnknown);
+  TRACE("(0x%8x,%d,%d)\n", cRGB, dwLuma, bUnknown);
 
   if (dwLuma)
   {
@@ -3668,7 +3668,7 @@ DWORD WINAPI SHGetMachineInfo(DWORD dwFlags)
 {
   HW_PROFILE_INFOA hwInfo;
 
-  TRACE("(0x%08lx)\n", dwFlags);
+  TRACE("(0x%08x)\n", dwFlags);
 
   GetCurrentHwProfileA(&hwInfo);
   switch (hwInfo.dwDockInfo & (DOCKINFO_DOCKED|DOCKINFO_UNDOCKED))
@@ -3744,7 +3744,7 @@ DWORD WINAPI MLSetMLHInstance(HINSTANCE hInst, HANDLE hHeap)
  */
 DWORD WINAPI MLClearMLHInstance(DWORD x)
 {
-	FIXME("(0x%08lx)stub\n", x);
+	FIXME("(0x%08x)stub\n", x);
 	return 0xabba1247;
 }
 
@@ -3882,7 +3882,7 @@ BOOL WINAPI IsOS(DWORD feature)
     platform = osvi.dwPlatformId;
 
 #define ISOS_RETURN(x) \
-    TRACE("(0x%lx) ret=%d\n",feature,(x)); \
+    TRACE("(0x%x) ret=%d\n",feature,(x)); \
     return (x);
 
     switch(feature)  {
@@ -3975,7 +3975,7 @@ BOOL WINAPI IsOS(DWORD feature)
 
 #undef ISOS_RETURN
 
-    WARN("(0x%lx) unknown parameter\n",feature);
+    WARN("(0x%x) unknown parameter\n",feature);
 
     return FALSE;
 }
@@ -4081,7 +4081,7 @@ VOID WINAPI ColorRGBToHLS(COLORREF cRGB, LPWORD pwHue,
 {
   int wR, wG, wB, wMax, wMin, wHue, wLuminosity, wSaturation;
 
-  TRACE("(%08lx,%p,%p,%p)\n", cRGB, pwHue, pwLuminance, pwSaturation);
+  TRACE("(%08x,%p,%p,%p)\n", cRGB, pwHue, pwLuminance, pwSaturation);
 
   wR = GetRValue(cRGB);
   wG = GetGValue(cRGB);
@@ -4173,7 +4173,7 @@ HRESULT WINAPI SHGetInverseCMAP(LPDWORD dest, DWORD dwSize)
 	*dest = (DWORD)0xabba1249;
 	return 0;
     }
-    FIXME("(%p, %#lx) stub\n", dest, dwSize);
+    FIXME("(%p, %#x) stub\n", dest, dwSize);
     return 0;
 }
 
@@ -4191,7 +4191,7 @@ HRESULT WINAPI SHGetInverseCMAP(LPDWORD dest, DWORD dwSize)
  */
 BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
 {
-  FIXME("(0x%08lx) stub\n", x);
+  FIXME("(0x%08x) stub\n", x);
   return FALSE;
 }
 
@@ -4254,7 +4254,7 @@ VOID WINAPI FixSlashesAndColonW(LPWSTR lpwstr)
  */
 DWORD WINAPI SHGetAppCompatFlags(DWORD dwUnknown)
 {
-  FIXME("(0x%08lx) stub\n", dwUnknown);
+  FIXME("(0x%08x) stub\n", dwUnknown);
   return 0;
 }
 
@@ -4311,7 +4311,7 @@ BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
  */
 DWORD WINAPI SHGetShellKey(DWORD a, DWORD b, DWORD c)
 {
-    FIXME("(%lx, %lx, %lx): stub\n", a, b, c);
+    FIXME("(%x, %x, %x): stub\n", a, b, c);
     return 0x50;
 }
 
@@ -4320,7 +4320,7 @@ DWORD WINAPI SHGetShellKey(DWORD a, DWORD b, DWORD c)
  */
 HRESULT WINAPI SHQueueUserWorkItem(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f, DWORD g)
 {
-    FIXME("(%lx, %lx, %lx, %lx, %lx, %lx, %lx): stub\n", a, b, c, d, e, f, g);
+    FIXME("(%x, %x, %x, %x, %x, %x, %x): stub\n", a, b, c, d, e, f, g);
     return E_FAIL;
 }
 
@@ -4352,7 +4352,7 @@ HRESULT WINAPI IUnknown_OnFocusChangeIS(LPUNKNOWN lpUnknown, LPUNKNOWN pFocusObj
  */
 HRESULT WINAPI SKGetValueW(DWORD a, LPWSTR b, LPWSTR c, DWORD d, DWORD e, DWORD f)
 {
-    FIXME("(%lx, %s, %s, %lx, %lx, %lx): stub\n", a, debugstr_w(b), debugstr_w(c), d, e, f);
+    FIXME("(%x, %s, %s, %x, %x, %x): stub\n", a, debugstr_w(b), debugstr_w(c), d, e, f);
     return E_FAIL;
 }
 
@@ -4404,7 +4404,7 @@ DWORD WINAPI GetUIVersion(void)
 BOOL WINAPI ShellMessageBoxWrapW(HMODULE mod, DWORD unknown1, UINT uId,
                                  LPCWSTR title, DWORD unknown2, LPCWSTR filename)
 {
-    FIXME("%p %lx %d %s %lx %s\n",
+    FIXME("%p %x %d %s %x %s\n",
           mod, unknown1, uId, debugstr_w(title), unknown2, debugstr_w(filename));
     return TRUE;
 }
@@ -4412,7 +4412,7 @@ BOOL WINAPI ShellMessageBoxWrapW(HMODULE mod, DWORD unknown1, UINT uId,
 HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *unk, REFIID service, REFIID clsid,
                                          DWORD x1, DWORD x2, DWORD x3, void **ppvOut)
 {
-    FIXME("%p %s %s %08lx %08lx %08lx %p\n", unk,
+    FIXME("%p %s %s %08x %08x %08x %p\n", unk,
           debugstr_guid(service), debugstr_guid(clsid), x1, x2, x3, ppvOut);
     return E_NOTIMPL;
 }

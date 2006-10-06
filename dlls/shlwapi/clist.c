@@ -293,7 +293,7 @@ HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewIt
   {
     /* Tune size to a ULONG boundary, add space for container element */
     ulSize = ((ulSize + 0x3) & 0xFFFFFFFC) + sizeof(SHLWAPI_CLIST);
-    TRACE("Creating container item, new size = %ld\n", ulSize);
+    TRACE("Creating container item, new size = %d\n", ulSize);
   }
 
   if(!*lppList)
@@ -372,7 +372,7 @@ BOOL WINAPI SHRemoveDataBlock(LPSHLWAPI_CLIST* lppList, ULONG ulId)
   LPSHLWAPI_CLIST lpNext;
   ULONG ulNewSize;
 
-  TRACE("(%p,%ld)\n", lppList, ulId);
+  TRACE("(%p,%d)\n", lppList, ulId);
 
   if(lppList && (lpList = *lppList))
   {
@@ -437,7 +437,7 @@ BOOL WINAPI SHRemoveDataBlock(LPSHLWAPI_CLIST* lppList, ULONG ulId)
  */
 LPSHLWAPI_CLIST WINAPI SHFindDataBlock(LPSHLWAPI_CLIST lpList, ULONG ulId)
 {
-  TRACE("(%p,%ld)\n", lpList, ulId);
+  TRACE("(%p,%d)\n", lpList, ulId);
 
   if(lpList)
   {

@@ -195,7 +195,7 @@ static INT_PTR CALLBACK SHDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
   case WM_INITDIALOG:
   {
     DLGDATA *d = (DLGDATA *)lParam;
-    TRACE("WM_INITDIALOG: %p, %s,%s,%ld\n", hDlg, debugstr_w(d->lpszTitle),
+    TRACE("WM_INITDIALOG: %p, %s,%s,%d\n", hDlg, debugstr_w(d->lpszTitle),
           debugstr_w(d->lpszText), d->dwType);
 
     SetWindowTextW(hDlg, d->lpszTitle);

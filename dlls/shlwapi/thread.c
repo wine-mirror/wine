@@ -81,7 +81,7 @@ LPSECURITY_ATTRIBUTES WINAPI _CreateAllAccessSecurityAttributes(
   /* This function is used within SHLWAPI only to create security attributes
    * for shell semaphores. */
 
-  TRACE("(%p,%p,%08lx)\n", lpAttr, lpSec, p3);
+  TRACE("(%p,%p,%08x)\n", lpAttr, lpSec, p3);
 
   if (!(GetVersion() & 0x80000000))  /* NT */
   {
@@ -282,7 +282,7 @@ BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE pfnThreadProc, VOID *pData,
   SHLWAPI_THREAD_INFO ti;
   BOOL bCalled = FALSE;
 
-  TRACE("(%p,%p,0x%lX,%p)\n", pfnThreadProc, pData, dwFlags, pfnCallback);
+  TRACE("(%p,%p,0x%X,%p)\n", pfnThreadProc, pData, dwFlags, pfnCallback);
 
   /* Set up data to pass to the new thread (On our stack) */
   ti.pfnThreadProc = pfnThreadProc;
@@ -419,7 +419,7 @@ HANDLE WINAPI _SHGlobalCounterCreateNamedW(LPCWSTR lpszName, DWORD iInitial)
   SECURITY_ATTRIBUTES sAttr, *pSecAttr;
   HANDLE hRet;
 
-  TRACE("(%s,%ld)\n", debugstr_w(lpszName), iInitial);
+  TRACE("(%s,%d)\n", debugstr_w(lpszName), iInitial);
 
   /* Create Semaphore name */
   memcpy(szBuff, szPrefix, (iPrefixLen + 1) * sizeof(WCHAR));
@@ -450,7 +450,7 @@ HANDLE WINAPI _SHGlobalCounterCreateNamedA(LPCSTR lpszName, DWORD iInitial)
 {
   WCHAR szBuff[MAX_PATH];
 
-  TRACE("(%s,%ld)\n", debugstr_a(lpszName), iInitial);
+  TRACE("(%s,%d)\n", debugstr_a(lpszName), iInitial);
 
   if (lpszName)
     MultiByteToWideChar(0, 0, lpszName, -1, szBuff, MAX_PATH);

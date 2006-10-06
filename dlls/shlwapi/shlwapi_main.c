@@ -65,7 +65,7 @@ DWORD SHLWAPI_ThreadRef_index = TLS_OUT_OF_INDEXES;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+	TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:
@@ -125,6 +125,6 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
     return S_OK;
  }
  if (pdvi)
-   WARN("pdvi->cbSize = %ld, unhandled\n", pdvi2->info1.cbSize);
+   WARN("pdvi->cbSize = %d, unhandled\n", pdvi2->info1.cbSize);
  return E_INVALIDARG;
 }
