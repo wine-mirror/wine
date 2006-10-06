@@ -123,12 +123,12 @@ init_comboboxes (HWND dialog)
     }
 }
 
-static void add_listview_item(HWND listview, const WCHAR *text, void *association)
+static void add_listview_item(HWND listview, WCHAR *text, void *association)
 {
   LVITEMW item;
 
   item.mask = LVIF_TEXT | LVIF_PARAM;
-  item.pszText = (WCHAR*) text;
+  item.pszText = text;
   item.cchTextMax = lstrlenW(text);
   item.lParam = (LPARAM) association;
   item.iItem = ListView_GetItemCount(listview);

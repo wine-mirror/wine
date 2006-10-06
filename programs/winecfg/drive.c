@@ -139,7 +139,7 @@ static void set_drive_type( char letter, DWORD type )
     else
     {
         if (typeText)
-            RegSetValueEx( hKey, driveValue, 0, REG_SZ, (LPBYTE)typeText, strlen(typeText) + 1 );
+            RegSetValueEx( hKey, driveValue, 0, REG_SZ, (const BYTE *)typeText, strlen(typeText) + 1 );
         else
             RegDeleteValue( hKey, driveValue );
         RegCloseKey(hKey);
