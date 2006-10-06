@@ -115,13 +115,13 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
   {
   case sizeof(DLLVERSIONINFO2):
     pdvi2->dwFlags = 0;
-    pdvi2->ullVersion = MAKEDLLVERULL(5, 0, 2314, 0);
+    pdvi2->ullVersion = MAKEDLLVERULL(6, 0, 2800, 1612);
     /* Fall through */
   case sizeof(DLLVERSIONINFO):
-    pdvi2->info1.dwMajorVersion = 5;
+    pdvi2->info1.dwMajorVersion = 6;
     pdvi2->info1.dwMinorVersion = 0;
-    pdvi2->info1.dwBuildNumber = 2314;
-    pdvi2->info1.dwPlatformID = 1000;
+    pdvi2->info1.dwBuildNumber = 2800;
+    pdvi2->info1.dwPlatformID = DLLVER_PLATFORM_WINDOWS;
     return S_OK;
  }
  if (pdvi)
