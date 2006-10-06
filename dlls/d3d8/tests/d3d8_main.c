@@ -106,6 +106,8 @@ static void test_ValidatePixelShader(void)
 START_TEST(d3d8_main)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
+    if (!d3d8_handle)
+        return;
     ValidateVertexShader = (void*)GetProcAddress (d3d8_handle, "ValidateVertexShader" );
     ValidatePixelShader = (void*)GetProcAddress (d3d8_handle, "ValidatePixelShader" );
     test_ValidateVertexShader();
