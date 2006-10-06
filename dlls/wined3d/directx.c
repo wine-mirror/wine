@@ -1508,7 +1508,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         WineD3D_ReleaseFakeGLContext(ctx);
 
     if (hr != WINED3D_OK)
-        TRACE_(d3d_caps)("Failed to match stencil format to device\b");
+        TRACE_(d3d_caps)("Failed to match stencil format to device\n");
 
     TRACE_(d3d_caps)("(%p) : Returning %x\n", This, hr);
     return hr;
