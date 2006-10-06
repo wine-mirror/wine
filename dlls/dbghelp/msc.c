@@ -1746,10 +1746,10 @@ static void pdb_free_lookup(const struct pdb_lookup* pdb_lookup)
     switch (pdb_lookup->kind)
     {
     case PDB_JG:
-        if (pdb_lookup->u.jg.toc) pdb_free(pdb_lookup->u.jg.toc);
+        pdb_free(pdb_lookup->u.jg.toc);
         break;
     case PDB_DS:
-        if (pdb_lookup->u.ds.toc) pdb_free(pdb_lookup->u.ds.toc);
+        pdb_free(pdb_lookup->u.ds.toc);
         break;
     }
 }
@@ -2193,7 +2193,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
  leave:
     /* Cleanup */
-    if (symbols_image) pdb_free(symbols_image);
+    pdb_free(symbols_image);
     pdb_free_lookup(pdb_lookup);
 
     if (image) UnmapViewOfFile(image);
