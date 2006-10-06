@@ -1833,6 +1833,13 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
+    read_stream_data( stg, name, &rawdata, &rawsize );
+    if ( !rawdata )
+    {
+        TRACE("table %s empty\n", debugstr_w(name) );
+        return ERROR_INVALID_TABLE;
+    }
+
     /* create a table view */
     r = TABLE_CreateView( db, name, (MSIVIEW**) &tv );
     if( r != ERROR_SUCCESS )
@@ -1958,6 +1965,18 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     if( FAILED( r ) )
         goto end;
 
+    /*
+     * Apply _Tables and _Coluimns transforms first so that
+     * the table metadata is correct, and empty tables exist.
+     */
+    ret = msi_table_load_transform( db, stg, strings, szTables );
+    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
+        goto end;
+
+    ret = msi_table_load_transform( db, stg, strings, szColumns );
+    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
+        goto end;
+
     ret = ERROR_SUCCESS;
 
     while( r == ERROR_SUCCESS )
@@ -1968,12 +1987,15 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
             break;
 
         decode_streamname( stat.pwcsName, name );
-        TRACE("transform contains stream %s\n", debugstr_w(name));
-
         if ( name[0] != 0x4840 )
             continue;
 
-        if ( !lstrcmpW(name+1, szStringPool ) || !lstrcmpW(name+1, szStringData) )
+        TRACE("transform contains stream %s\n", debugstr_w(name));
+
+        if ( !lstrcmpW( name+1, szStringPool ) ||
+             !lstrcmpW( name+1, szStringData ) ||
+             !lstrcmpW( name+1, szColumns ) ||
+             !lstrcmpW( name+1, szTables ) )
             continue;
 
         ret = msi_table_load_transform( db, stg, strings, name+1 );
