@@ -1679,15 +1679,15 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
             }
             else
             {
-                val ^= 0x8000;
-                MSI_RecordSetInteger( rec, i+1, val );
+                if (val)
+                    MSI_RecordSetInteger( rec, i+1, val^0x8000 );
                 TRACE("[0x%04x]", val );
             }
             break;
         case 4:
-            val = rawdata[ofs] + (rawdata[ofs + 1]<<16);
-            /* val ^= 0x80000000; */
-            MSI_RecordSetInteger( rec, i+1, val );
+            val = (rawdata[ofs] + (rawdata[ofs + 1]<<16));
+            if (val)
+                MSI_RecordSetInteger( rec, i+1, val^0x80000000 );
             TRACE("[0x%08x]", val );
             break;
         default:
