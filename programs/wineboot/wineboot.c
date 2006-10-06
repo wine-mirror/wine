@@ -547,12 +547,12 @@ static int ProcessWindowsFileProtection(void)
 {
     WIN32_FIND_DATA finddata;
     LPSTR custom_dllcache = NULL;
-    static const CHAR default_dllcache[] = "C:\\Windows\\System32\\dllcache";
+    static CHAR default_dllcache[] = "C:\\Windows\\System32\\dllcache";
     HANDLE find_handle;
     BOOL find_rc;
     DWORD rc;
     HKEY hkey;
-    LPCSTR dllcache;
+    LPSTR dllcache;
     CHAR find_string[MAX_PATH];
     CHAR windowsdir[MAX_PATH];
 
@@ -574,7 +574,7 @@ static int ProcessWindowsFileProtection(void)
         dllcache = custom_dllcache;
     else
         dllcache = default_dllcache;
-               
+
     strcpy(find_string,dllcache);
     strcat(find_string,"\\*.*");
 
@@ -603,7 +603,7 @@ static int ProcessWindowsFileProtection(void)
                 windowsdir, currentpath, &sz, targetpath,&sz2);
         sz = MAX_PATH;
         rc = VerInstallFile(0, finddata.cFileName, finddata.cFileName,
-                    (LPSTR) dllcache, targetpath, currentpath, tempfile,&sz);
+                            dllcache, targetpath, currentpath, tempfile,&sz);
         if (rc != ERROR_SUCCESS)
         {
             WINE_ERR("WFP: %s error 0x%x\n",finddata.cFileName,rc);
