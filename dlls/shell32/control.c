@@ -410,7 +410,7 @@ void WINAPI Control_RunDLLW(HWND hWnd, HINSTANCE hInst, LPCWSTR cmd, DWORD nCmdS
 {
     CPanel	panel;
 
-    TRACE("(%p, %p, %s, 0x%08lx)\n",
+    TRACE("(%p, %p, %s, 0x%08x)\n",
 	  hWnd, hInst, debugstr_w(cmd), nCmdShow);
 
     memset(&panel, 0, sizeof(panel));
@@ -443,7 +443,7 @@ void WINAPI Control_RunDLLA(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSh
  */
 HRESULT WINAPI Control_FillCache_RunDLLW(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
 {
-    FIXME("%p %p 0x%08lx 0x%08lx stub\n", hWnd, hModule, w, x);
+    FIXME("%p %p 0x%08x 0x%08x stub\n", hWnd, hModule, w, x);
     return 0;
 }
 
@@ -467,7 +467,7 @@ void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
     WORD args[5];
     SEGPTR cmdline_seg;
 
-    TRACE( "proc %lx hwnd %p inst %p cmdline %s cmdshow %d\n",
+    TRACE( "proc %x hwnd %p inst %p cmdline %s cmdshow %d\n",
            proc, hwnd, inst, debugstr_a(cmdline), cmdshow );
 
     cmdline_seg = MapLS( cmdline );
@@ -489,6 +489,6 @@ void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
  */
 DWORD WINAPI CallCPLEntry16(HMODULE hMod, FARPROC pFunc, DWORD dw3, DWORD dw4, DWORD dw5, DWORD dw6)
 {
-    FIXME("(%p, %p, %08lx, %08lx, %08lx, %08lx): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
+    FIXME("(%p, %p, %08x, %08x, %08x, %08x): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
     return 0x0deadbee;
 }

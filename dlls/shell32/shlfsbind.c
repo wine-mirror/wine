@@ -179,7 +179,7 @@ static ULONG WINAPI IFileSystemBindData_fnAddRef(IFileSystemBindData *iface)
     IFileSystemBindDataImpl *This = (IFileSystemBindDataImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%li)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%i)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -189,7 +189,7 @@ static ULONG WINAPI IFileSystemBindData_fnRelease(IFileSystemBindData *iface)
     IFileSystemBindDataImpl *This = (IFileSystemBindDataImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
     
-    TRACE("(%p)->(count=%li)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%i)\n", This, refCount + 1);
 
     if (!refCount)
     {

@@ -125,7 +125,7 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
     LPCWSTR pszTail = pszNext;
     DWORD dwCopy;
 
-    TRACE ("(%s %p 0x%08lx)\n", debugstr_w (pszNext), pszOut, dwOut);
+    TRACE ("(%s %p 0x%08x)\n", debugstr_w (pszNext), pszOut, dwOut);
 
     *pszOut = 0x0000;
 
@@ -143,7 +143,7 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
     else
 	pszTail = NULL;
 
-    TRACE ("--(%s %s 0x%08lx %p)\n", debugstr_w (pszNext), debugstr_w (pszOut), dwOut, pszTail);
+    TRACE ("--(%s %s 0x%08x %p)\n", debugstr_w (pszNext), debugstr_w (pszOut), dwOut, pszTail);
     return pszTail;
 }
 
@@ -178,7 +178,7 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
     ILFree (*pidlInOut);
     *pidlInOut = pidlTemp;
 
-    TRACE ("-- pidl=%p ret=0x%08lx\n", pidlInOut ? *pidlInOut : NULL, hr);
+    TRACE ("-- pidl=%p ret=0x%08x\n", pidlInOut ? *pidlInOut : NULL, hr);
     return hr;
 }
 
@@ -240,7 +240,7 @@ static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,
 	}
 	ILFree (pidlAbsolute);
     }
-    TRACE ("-- (%p) ret=0x%08lx\n", *ppvOut, hr);
+    TRACE ("-- (%p) ret=0x%08x\n", *ppvOut, hr);
     return hr;
 }
 
@@ -311,7 +311,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
         IShellFolder_Release (pSF);
     }
 
-    TRACE ("-- returning (%p) %08lx\n", *ppvOut, hr);
+    TRACE ("-- returning (%p) %08x\n", *ppvOut, hr);
 
     return hr;
 }
@@ -336,7 +336,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
     LPITEMIDLIST pidlFirst;
     HRESULT hr = E_INVALIDARG;
 
-    TRACE ("(%p)->(pidl=%p 0x%08lx %p 0x%08lx)\n", psf, pidl, dwFlags, szOut, dwOutLen);
+    TRACE ("(%p)->(pidl=%p 0x%08x %p 0x%08x)\n", psf, pidl, dwFlags, szOut, dwOutLen);
     pdump (pidl);
 
     pidlFirst = ILCloneFirst (pidl);
@@ -359,7 +359,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
     } else
 	hr = E_OUTOFMEMORY;
 
-    TRACE ("-- ret=0x%08lx %s\n", hr, debugstr_w(szOut));
+    TRACE ("-- ret=0x%08x %s\n", hr, debugstr_w(szOut));
 
     return hr;
 }
@@ -403,11 +403,11 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
                           SFGAO_FILESYSTEM |        /*0x40000000 */
                           SFGAO_HASSUBFOLDER;       /*0x80000000 */
     
-    TRACE ("0x%08lx\n", *pdwAttributes);
+    TRACE ("0x%08x\n", *pdwAttributes);
 
     if (*pdwAttributes & ~dwSupportedAttr)
     {
-        WARN ("attributes 0x%08lx not implemented\n", (*pdwAttributes & ~dwSupportedAttr));
+        WARN ("attributes 0x%08x not implemented\n", (*pdwAttributes & ~dwSupportedAttr));
         *pdwAttributes &= dwSupportedAttr;
     }
 
@@ -484,7 +484,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
     } else {
 	*pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
     }
-    TRACE ("-- 0x%08lx\n", *pdwAttributes);
+    TRACE ("-- 0x%08x\n", *pdwAttributes);
     return S_OK;
 }
 

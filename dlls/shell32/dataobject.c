@@ -82,7 +82,7 @@ static ULONG WINAPI IEnumFORMATETC_fnAddRef(LPENUMFORMATETC iface)
 	IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -92,7 +92,7 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 	IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(%u)\n", This, refCount + 1);
 
 	if (!refCount)
 	{
@@ -109,7 +109,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, F
 	IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
 	UINT i;
 
-	TRACE("(%p)->(%lu,%p)\n", This, celt, rgelt);
+	TRACE("(%p)->(%u,%p)\n", This, celt, rgelt);
 
 	if(!This->pFmt)return S_FALSE;
 	if(!rgelt) return E_INVALIDARG;
@@ -128,7 +128,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, F
 static HRESULT WINAPI IEnumFORMATETC_fnSkip(LPENUMFORMATETC iface, ULONG celt)
 {
 	IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
-	TRACE("(%p)->(num=%lu)\n", This, celt);
+	TRACE("(%p)->(num=%u)\n", This, celt);
 
 	if((This->posFmt + celt) >= This->countFmt) return S_FALSE;
 	This->posFmt += celt;
@@ -253,7 +253,7 @@ static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface)
 	IDataObjectImpl *This = (IDataObjectImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -266,7 +266,7 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 	IDataObjectImpl *This = (IDataObjectImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(%u)\n", This, refCount + 1);
 
 	if (!refCount)
 	{
@@ -337,7 +337,7 @@ static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC
 	IDataObjectImpl *This = (IDataObjectImpl *)iface;
 	UINT i;
 
-	TRACE("(%p)->(fmt=0x%08x tym=0x%08lx)\n", This, pformatetc->cfFormat, pformatetc->tymed);
+	TRACE("(%p)->(fmt=0x%08x tym=0x%08x)\n", This, pformatetc->cfFormat, pformatetc->tymed);
 
 	if(!(DVASPECT_CONTENT & pformatetc->dwAspect))
 	  return DV_E_DVASPECT;

@@ -222,7 +222,7 @@ static HRESULT IncludeObject(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	{
 	  TRACE("ICommDlgBrowser::IncludeObject pidl=%p\n", pidl);
 	  ret = ICommDlgBrowser_IncludeObject(This->pCommDlgBrowser, (IShellView*)This, pidl);
-	  TRACE("--0x%08lx\n", ret);
+	  TRACE("--0x%08x\n", ret);
 	}
 	return ret;
 }
@@ -235,7 +235,7 @@ static HRESULT OnDefaultCommand(IShellViewImpl * This)
 	{
 	  TRACE("ICommDlgBrowser::OnDefaultCommand\n");
 	  ret = ICommDlgBrowser_OnDefaultCommand(This->pCommDlgBrowser, (IShellView*)This);
-	  TRACE("-- returns %08lx\n", ret);
+	  TRACE("-- returns %08x\n", ret);
 	}
 	return ret;
 }
@@ -1197,7 +1197,7 @@ static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 */
 static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dwCmd, HWND hwndCmd)
 {
-	TRACE("(%p)->(0x%08lx 0x%08lx %p) stub\n",This, dwCmdID, dwCmd, hwndCmd);
+	TRACE("(%p)->(0x%08x 0x%08x %p) stub\n",This, dwCmdID, dwCmd, hwndCmd);
 
 	switch(dwCmdID)
 	{
@@ -1237,7 +1237,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    break;
 
 	  default:
-	    TRACE("-- COMMAND 0x%04lx unhandled\n", dwCmdID);
+	    TRACE("-- COMMAND 0x%04x unhandled\n", dwCmdID);
 	}
 	return 0;
 }
@@ -1550,7 +1550,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 static LRESULT ShellView_OnChange(IShellViewImpl * This, LPITEMIDLIST * Pidls, LONG wEventId)
 {
 
-	TRACE("(%p)(%p,%p,0x%08lx)\n", This, Pidls[0], Pidls[1], wEventId);
+	TRACE("(%p)(%p,%p,0x%08x)\n", This, Pidls[0], Pidls[1], wEventId);
 	switch(wEventId)
 	{
 	  case SHCNE_MKDIR:
@@ -1684,7 +1684,7 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -1696,7 +1696,7 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(count=%li)\n", This, refCount + 1);
+	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
 
 	if (!refCount)
 	{
@@ -1754,7 +1754,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 #if 0
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
-	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%lx wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
+	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%x wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
 #endif
 
 	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message>=WM_KEYLAST))
@@ -1843,7 +1843,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 
 
 	TRACE("(%p)->(shlview=%p set=%p shlbrs=%p rec=%p hwnd=%p) incomplete\n",This, lpPrevView,lpfs, psb, prcView, phWnd);
-	TRACE("-- vmode=%x flags=%x left=%li top=%li right=%li bottom=%li\n",lpfs->ViewMode, lpfs->fFlags ,prcView->left,prcView->top, prcView->right, prcView->bottom);
+	TRACE("-- vmode=%x flags=%x left=%i top=%i right=%i bottom=%i\n",lpfs->ViewMode, lpfs->fFlags ,prcView->left,prcView->top, prcView->right, prcView->bottom);
 
 	/*set up the member variables*/
 	This->pShellBrowser = psb;
@@ -2104,14 +2104,14 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
     UINT i;
     IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-    FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n",
+    FIXME("(%p)->(%p(%s) 0x%08x %p %p\n",
               This, pguidCmdGroup, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 
     if (!prgCmds)
         return E_POINTER;
     for (i = 0; i < cCmds; i++)
     {
-        FIXME("\tprgCmds[%d].cmdID = %ld\n", i, prgCmds[i].cmdID);
+        FIXME("\tprgCmds[%d].cmdID = %d\n", i, prgCmds[i].cmdID);
         prgCmds[i].cmdf = 0;
     }
     return OLECMDERR_E_UNKNOWNGROUP;
@@ -2132,7 +2132,7 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 {
 	IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08lx Opt:0x%08lx %p %p)\n",
+	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08x Opt:0x%08x %p %p)\n",
               This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
 	if (IsEqualIID(pguidCmdGroup, &CGID_Explorer) &&
@@ -2176,7 +2176,7 @@ static ULONG WINAPI ISVDropTarget_AddRef( IDropTarget *iface)
 {
 	IShellViewImpl *This = impl_from_IDropTarget(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_AddRef((IShellFolder*)This);
 }
@@ -2185,7 +2185,7 @@ static ULONG WINAPI ISVDropTarget_Release( IDropTarget *iface)
 {
 	IShellViewImpl *This = impl_from_IDropTarget(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_Release((IShellFolder*)This);
 }
@@ -2356,7 +2356,7 @@ static ULONG WINAPI ISVDropSource_AddRef( IDropSource *iface)
 {
 	IShellViewImpl *This = impl_from_IDropSource(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_AddRef((IShellFolder*)This);
 }
@@ -2365,7 +2365,7 @@ static ULONG WINAPI ISVDropSource_Release( IDropSource *iface)
 {
 	IShellViewImpl *This = impl_from_IDropSource(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_Release((IShellFolder*)This);
 }
@@ -2423,7 +2423,7 @@ static ULONG WINAPI ISVViewObject_AddRef( IViewObject *iface)
 {
 	IShellViewImpl *This = impl_from_IViewObject(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_AddRef((IShellFolder*)This);
 }
@@ -2432,7 +2432,7 @@ static ULONG WINAPI ISVViewObject_Release( IViewObject *iface)
 {
 	IShellViewImpl *This = impl_from_IViewObject(iface);
 
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
 	return IShellFolder_Release((IShellFolder*)This);
 }
@@ -2507,7 +2507,7 @@ static HRESULT WINAPI ISVViewObject_SetAdvise(
 
 	IShellViewImpl *This = impl_from_IViewObject(iface);
 
-	FIXME("partial stub: %p %08lx %08lx %p\n",
+	FIXME("partial stub: %p %08x %08x %p\n",
               This, aspects, advf, pAdvSink);
 
 	/* FIXME: we set the AdviseSink, but never use it to send any advice */

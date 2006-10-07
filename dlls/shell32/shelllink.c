@@ -280,7 +280,7 @@ static ULONG ShellLink_AddRef( IShellLinkImpl *This )
 {
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -292,7 +292,7 @@ static ULONG ShellLink_Release( IShellLinkImpl *This )
 {
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
 
     if (refCount)
         return refCount;
@@ -379,7 +379,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
         HRESULT r;
         IStream *stm;
 
-        TRACE("(%p, %s, %lx)\n",This, debugstr_w(pszFileName), dwMode);
+        TRACE("(%p, %s, %x)\n",This, debugstr_w(pszFileName), dwMode);
 
         if( dwMode == 0 )
  		dwMode = STGM_READ | STGM_SHARE_DENY_WRITE;
@@ -391,7 +391,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
             IStream_Release( stm );
             This->bDirty = FALSE;
         }
-        TRACE("-- returning hr %08lx\n", r);
+        TRACE("-- returning hr %08x\n", r);
         return r;
 }
 
@@ -628,7 +628,7 @@ static HRESULT Stream_ReadChunk( IStream* stm, LPVOID *data )
         return E_FAIL;
     }
 
-    TRACE("Read %ld bytes\n",chunk->size);
+    TRACE("Read %d bytes\n",chunk->size);
 
     *data = (LPVOID) chunk;
 
@@ -707,7 +707,7 @@ static HRESULT Stream_LoadLocation( IStream *stm,
     if( n && (n < loc->dwTotalSize) )
         *path = Stream_LoadPath( &p[n], loc->dwTotalSize - n );
 
-    TRACE("type %ld serial %08lx name %s path %s\n", volume->type,
+    TRACE("type %d serial %08x name %s path %s\n", volume->type,
           volume->serial, debugstr_w(volume->label), debugstr_w(*path));
 
     HeapFree( GetProcessHeap(), 0, p );
@@ -756,11 +756,11 @@ static HRESULT Stream_LoadAdvertiseInfo( IStream* stm, LPWSTR *str )
     if( count != size )
         return E_FAIL;
 
-    TRACE("magic %08lx  string = %s\n", buffer.dbh.dwSignature, debugstr_w(buffer.szwDarwinID));
+    TRACE("magic %08x  string = %s\n", buffer.dbh.dwSignature, debugstr_w(buffer.szwDarwinID));
 
     if( (buffer.dbh.dwSignature&0xffff0000) != 0xa0000000 )
     {
-        ERR("Unknown magic number %08lx in advertised shortcut\n", buffer.dbh.dwSignature);
+        ERR("Unknown magic number %08x in advertised shortcut\n", buffer.dbh.dwSignature);
         return E_FAIL;
     }
 
@@ -1351,7 +1351,7 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA * iface, LPSTR pszFile,
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-    TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)(%s)\n",
+    TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%u)(%s)\n",
           This, pszFile, cchMaxPath, pfd, fFlags, debugstr_w(This->sPath));
 
     if (This->sComponent || This->sProduct)
@@ -1623,7 +1623,7 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR 
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-    TRACE("(%p)->(path=%s %lx)\n",This, pszPathRel, dwReserved);
+    TRACE("(%p)->(path=%s %x)\n",This, pszPathRel, dwReserved);
 
     HeapFree(GetProcessHeap(), 0, This->sPathRel);
     This->sPathRel = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
@@ -1636,7 +1636,7 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-    TRACE("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
+    TRACE("(%p)->(hwnd=%p flags=%x)\n",This, hwnd, fFlags);
 
     return IShellLinkW_Resolve( (IShellLinkW*)&(This->lpvtblw), hwnd, fFlags );
 }
@@ -1721,7 +1721,7 @@ static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
 
-    TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)(%s)\n",
+    TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%u)(%s)\n",
           This, pszFile, cchMaxPath, pfd, fFlags, debugstr_w(This->sPath));
 
     if (This->sComponent || This->sProduct)
@@ -2000,7 +2000,7 @@ static HRESULT WINAPI IShellLinkW_fnSetRelativePath(IShellLinkW * iface, LPCWSTR
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
 
-    TRACE("(%p)->(path=%s %lx)\n",This, debugstr_w(pszPathRel), dwReserved);
+    TRACE("(%p)->(path=%s %x)\n",This, debugstr_w(pszPathRel), dwReserved);
 
     HeapFree(GetProcessHeap(), 0, This->sPathRel);
     This->sPathRel = HeapAlloc( GetProcessHeap(), 0,
@@ -2020,7 +2020,7 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
 
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
 
-    TRACE("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
+    TRACE("(%p)->(hwnd=%p flags=%x)\n",This, hwnd, fFlags);
 
     /*FIXME: use IResolveShellLink interface */
 
@@ -2147,7 +2147,7 @@ static BOOL ShellLink_GetVolumeInfo(LPWSTR path, volume_info *volume)
     volume->type = GetDriveTypeW(drive);
     r = GetVolumeInformationW(drive, volume->label, label_sz,
                               &volume->serial, NULL, NULL, NULL, 0);
-    TRACE("r = %d type %ld serial %08lx name %s\n", r,
+    TRACE("r = %d type %d serial %08x name %s\n", r,
           volume->type, volume->serial, debugstr_w(volume->label));
     return r;
 }
@@ -2274,7 +2274,7 @@ ShellLink_CopyDataBlock( IShellLinkDataList* iface, DWORD dwSig, void** ppDataBl
     LPVOID block = NULL;
     HRESULT r = E_FAIL;
 
-    TRACE("%p %08lx %p\n", iface, dwSig, ppDataBlock );
+    TRACE("%p %08x %p\n", iface, dwSig, ppDataBlock );
 
     switch (dwSig)
     {
@@ -2289,10 +2289,10 @@ ShellLink_CopyDataBlock( IShellLinkDataList* iface, DWORD dwSig, void** ppDataBl
     case NT_FE_CONSOLE_PROPS_SIG:
     case EXP_SPECIAL_FOLDER_SIG:
     case EXP_SZ_ICON_SIG:
-        FIXME("valid but unhandled datablock %08lx\n", dwSig);
+        FIXME("valid but unhandled datablock %08x\n", dwSig);
         break;
     default:
-        ERR("unknown datablock %08lx\n", dwSig);
+        ERR("unknown datablock %08x\n", dwSig);
     }
     *ppDataBlock = block;
     return r;

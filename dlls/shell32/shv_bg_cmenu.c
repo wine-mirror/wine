@@ -110,7 +110,7 @@ static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu2 *iface)
 	BgCmImpl *This = (BgCmImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -123,7 +123,7 @@ static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu2 *iface)
 	BgCmImpl *This = (BgCmImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(count=%li)\n", This, refCount + 1);
+	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
 
 	if (!refCount)
 	{
@@ -180,7 +180,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
     }
     DestroyMenu(hMyMenu);
 
-    TRACE("(%p)->returning 0x%lx\n",This,hr);
+    TRACE("(%p)->returning 0x%x\n",This,hr);
     return hr;
 }
 

@@ -179,7 +179,7 @@ static ULONG WINAPI IUnknown_fnAddRef (IUnknown * iface)
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE ("(%p)->(count=%lu)\n", This, refCount - 1);
+    TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -189,7 +189,7 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE ("(%p)->(count=%lu)\n", This, refCount + 1);
+    TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
 
     if (!refCount) {
         TRACE ("-- destroying IShellFolder(%p)\n", This);
@@ -283,7 +283,7 @@ static ULONG WINAPI IShellFolder_fnAddRef (IShellFolder2 * iface)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef (This->pUnkOuter);
 }
@@ -295,7 +295,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_Release (This->pUnkOuter);
 }
@@ -431,7 +431,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     else
         *ppidl = NULL;
 
-    TRACE ("(%p)->(-- pidl=%p ret=0x%08lx)\n", This, ppidl ? *ppidl : 0, hr);
+    TRACE ("(%p)->(-- pidl=%p ret=0x%08x)\n", This, ppidl ? *ppidl : 0, hr);
 
     return hr;
 }
@@ -449,7 +449,7 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner,
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner,
+    TRACE ("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n", This, hwndOwner,
      dwFlags, ppEnumIDList);
 
     *ppEnumIDList = IEnumIDList_Constructor();
@@ -573,7 +573,7 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
 
     HRESULT hr = S_OK;
 
-    TRACE ("(%p)->(cidl=%d apidl=%p mask=%p (0x%08lx))\n", This, cidl, apidl,
+    TRACE ("(%p)->(cidl=%d apidl=%p mask=%p (0x%08x))\n", This, cidl, apidl,
      rgfInOut, rgfInOut ? *rgfInOut : 0);
 
     if (!rgfInOut)
@@ -605,7 +605,7 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
     /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
     *rgfInOut &= ~SFGAO_VALIDATE;
 
-    TRACE ("-- result=0x%08lx\n", *rgfInOut);
+    TRACE ("-- result=0x%08x\n", *rgfInOut);
 
     return hr;
 }
@@ -686,7 +686,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
 
         *ppvOut = pObj;
     }
-    TRACE ("(%p)->hr=0x%08lx\n", This, hr);
+    TRACE ("(%p)->hr=0x%08x\n", This, hr);
     return hr;
 }
 
@@ -776,7 +776,7 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
     HRESULT hr = S_OK;
     int len = 0;
 
-    TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
+    TRACE ("(%p)->(pidl=%p,0x%08x,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
 
     if (!pidl || !strRet)
@@ -842,7 +842,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     LPWSTR ptr;
     BOOL bIsFolder = _ILIsFolder (ILFindLastID (pidl));
 
-    TRACE ("(%p)->(%p,pidl=%p,%s,%lu,%p)\n", This, hwndOwner, pidl,
+    TRACE ("(%p)->(%p,pidl=%p,%s,%u,%p)\n", This, hwndOwner, pidl,
      debugstr_w (lpName), dwFlags, pPidlOut);
 
     /* build source path */
@@ -1032,7 +1032,7 @@ ISFHelper_fnQueryInterface (ISFHelper * iface, REFIID riid, LPVOID * ppvObj)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_QueryInterface (This->pUnkOuter, riid, ppvObj);
 }
@@ -1041,7 +1041,7 @@ static ULONG WINAPI ISFHelper_fnAddRef (ISFHelper * iface)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef (This->pUnkOuter);
 }
@@ -1327,7 +1327,7 @@ IFSFldr_PersistFolder3_AddRef (IPersistFolder3 * iface)
 {
     IGenericSFImpl *This = impl_from_IPersistFolder3(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef (This->pUnkOuter);
 }
@@ -1341,7 +1341,7 @@ IFSFldr_PersistFolder3_Release (IPersistFolder3 * iface)
 {
     IGenericSFImpl *This = impl_from_IPersistFolder3(iface);
 
-    TRACE ("(%p)->(count=%lu)\n", This, This->ref);
+    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_Release (This->pUnkOuter);
 }
@@ -1429,7 +1429,7 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
 
     TRACE ("(%p)->(%p,%p,%p)\n", This, pbc, pidlRoot, ppfti);
     if (ppfti)
-        TRACE ("--%p %s %s 0x%08lx 0x%08x\n",
+        TRACE ("--%p %s %s 0x%08x 0x%08x\n",
          ppfti->pidlTargetFolder, debugstr_w (ppfti->szTargetParsingName),
          debugstr_w (ppfti->szNetworkProvider), ppfti->dwAttributes,
          ppfti->csidl);

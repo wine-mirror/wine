@@ -200,7 +200,7 @@ SHChangeNotifyRegister(
 
     item = SHAlloc(sizeof(NOTIFICATIONLIST));
 
-    TRACE("(%p,0x%08x,0x%08lx,0x%08x,%d,%p) item=%p\n",
+    TRACE("(%p,0x%08x,0x%08x,0x%08x,%d,%p) item=%p\n",
 	hwnd, fSources, wEventMask, uMsg, cItems, lpItems, item);
 
     item->next = NULL;
@@ -236,7 +236,7 @@ BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 {
     LPNOTIFICATIONLIST node;
 
-    TRACE("(0x%08lx)\n", hNotify);
+    TRACE("(0x%08x)\n", hNotify);
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
@@ -255,7 +255,7 @@ BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 BOOL WINAPI SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
 			      DWORD unknown3, DWORD unknown4)
 {
-    FIXME("(0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
+    FIXME("(0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
           unknown1, unknown2, unknown3, unknown4);
 
     return -1;
@@ -285,7 +285,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     Pidls[0] = NULL;
     Pidls[1] = NULL;
 
-    TRACE("(0x%08lx,0x%08x,%p,%p):stub.\n", wEventId, uFlags, dwItem1, dwItem2);
+    TRACE("(0x%08x,0x%08x,%p,%p):stub.\n", wEventId, uFlags, dwItem1, dwItem2);
 
     if( ( wEventId & SHCNE_NOITEMEVENTS ) && ( dwItem1 || dwItem2 ) )
     {
@@ -341,10 +341,10 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
         WCHAR path[MAX_PATH];
 
         if( Pidls[0] && SHGetPathFromIDListW(Pidls[0], path ))
-            TRACE("notify %08lx on item1 = %s\n", wEventId, debugstr_w(path));
+            TRACE("notify %08x on item1 = %s\n", wEventId, debugstr_w(path));
     
         if( Pidls[1] && SHGetPathFromIDListW(Pidls[1], path ))
-            TRACE("notify %08lx on item2 = %s\n", wEventId, debugstr_w(path));
+            TRACE("notify %08x on item2 = %s\n", wEventId, debugstr_w(path));
     }
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
@@ -382,7 +382,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 
         ptr->pidlSignaled = ILClone(Pidls[0]);
 
-        TRACE("notifying %s, event %s(%lx) before\n", NodeName( ptr ), DumpEvent(
+        TRACE("notifying %s, event %s(%x) before\n", NodeName( ptr ), DumpEvent(
                wEventId ),wEventId );
 
         ptr->wSignalledEvent |= wEventId;
@@ -392,7 +392,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
         else
             SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM)Pidls, wEventId);
 
-        TRACE("notifying %s, event %s(%lx) after\n", NodeName( ptr ), DumpEvent(
+        TRACE("notifying %s, event %s(%x) after\n", NodeName( ptr ), DumpEvent(
                 wEventId ),wEventId );
 
     }
@@ -421,7 +421,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     int count,
     SHChangeNotifyEntry *idlist)
 {
-    FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):semi stub.\n",
+    FIXME("(%p,0x%08x,0x%08x,0x%08x,0x%08x,%p):semi stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
 
     return (DWORD) SHChangeNotifyRegister(hwnd, events1, events2, msg, count, idlist);
@@ -440,7 +440,7 @@ HANDLE WINAPI SHChangeNotification_Lock(
     LPNOTIFICATIONLIST node;
     LPCITEMIDLIST *idlist;
 
-    TRACE("%p %08lx %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
+    TRACE("%p %08x %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
 
     /* EnterCriticalSection(&SHELL32_ChangenotifyCS); */
 
@@ -476,7 +476,7 @@ BOOL WINAPI SHChangeNotification_Unlock ( HANDLE hLock)
  */
 DWORD WINAPI NTSHChangeNotifyDeregister(ULONG x1)
 {
-    FIXME("(0x%08lx):semi stub.\n",x1);
+    FIXME("(0x%08x):semi stub.\n",x1);
 
     return SHChangeNotifyDeregister( x1 );
 }

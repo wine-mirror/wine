@@ -348,7 +348,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     BOOL IconNotYetLoaded=TRUE;
     UINT uGilFlags = 0;
 
-    TRACE("%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x\n",
+    TRACE("%s fattr=0x%x sfi=%p(attr=0x%08x) size=0x%x flags=0x%x\n",
           (flags & SHGFI_PIDL)? "pidl" : debugstr_w(path), dwFileAttributes,
           psfi, psfi->dwAttributes, sizeofpsfi, flags);
 
@@ -617,7 +617,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     SHFree(pidlLast);
 
 #ifdef MORE_DEBUG
-    TRACE ("icon=%p index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n",
+    TRACE ("icon=%p index=0x%08x attr=0x%08x name=%s type=%s ret=0x%08lx\n",
            psfi->hIcon, psfi->iIcon, psfi->dwAttributes,
            debugstr_w(psfi->szDisplayName), debugstr_w(psfi->szTypeName), ret);
 #endif
@@ -793,7 +793,7 @@ VOID WINAPI Printer_LoadIconsW(LPCWSTR wsPrinterName, HICON * pLargeIcon, HICON 
 BOOL WINAPI Printers_RegisterWindowW(LPCWSTR wsPrinter, DWORD dwType,
             HANDLE * phClassPidl, HWND * phwnd)
 {
-    FIXME("(%s, %lx, %p (%p), %p (%p)) stub!\n", debugstr_w(wsPrinter), dwType,
+    FIXME("(%s, %x, %p (%p), %p (%p)) stub!\n", debugstr_w(wsPrinter), dwType,
                 phClassPidl, (phClassPidl != NULL) ? *(phClassPidl) : NULL,
                 phwnd, (phwnd != NULL) ? *(phwnd) : NULL);
 
@@ -896,7 +896,7 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
  */
 DWORD WINAPI SHHelpShortcuts_RunDLLA(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
 {
-    FIXME("(%lx, %lx, %lx, %lx) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
+    FIXME("(%x, %x, %x, %x) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
     return 0;
 }
 
@@ -906,7 +906,7 @@ DWORD WINAPI SHHelpShortcuts_RunDLLA(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
  */
 DWORD WINAPI SHHelpShortcuts_RunDLLW(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
 {
-    FIXME("(%lx, %lx, %lx, %lx) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
+    FIXME("(%x, %x, %x, %x) stub!\n", dwArg1, dwArg2, dwArg3, dwArg4);
     return 0;
 }
 
@@ -1073,7 +1073,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  */
 void WINAPI FreeIconList( DWORD dw )
 {
-    FIXME("%lx: stub\n",dw);
+    FIXME("%x: stub\n",dw);
 }
 
 
@@ -1113,7 +1113,7 @@ HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
                                               WINE_FILEVERSION_BUILD,
                                               WINE_FILEVERSION_PLATFORMID);
         }
-        TRACE("%lu.%lu.%lu.%lu\n",
+        TRACE("%u.%u.%u.%u\n",
               pdvi->dwMajorVersion, pdvi->dwMinorVersion,
               pdvi->dwBuildNumber, pdvi->dwPlatformID);
         return S_OK;
@@ -1143,7 +1143,7 @@ HIMAGELIST   ShellBigIconList = 0;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason)
     {

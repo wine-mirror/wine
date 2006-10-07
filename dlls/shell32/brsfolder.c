@@ -132,7 +132,7 @@ static void InitializeTreeView( browse_info *info )
         IShellFolder *lpsfDesktop;
         hr = SHGetDesktopFolder(&lpsfDesktop);
         if (!SUCCEEDED(hr)) {
-            WARN("SHGetDesktopFolder failed! hr = %08lx\n", hr);
+            WARN("SHGetDesktopFolder failed! hr = %08x\n", hr);
             return;
         }
         hr = IShellFolder_BindToObject(lpsfDesktop, pidlParent, 0, &IID_IShellFolder, (LPVOID*)&lpsfParent);
@@ -140,7 +140,7 @@ static void InitializeTreeView( browse_info *info )
     }
     
     if (!SUCCEEDED(hr)) {
-        WARN("Could not bind to parent shell folder! hr = %08lx\n", hr);
+        WARN("Could not bind to parent shell folder! hr = %08x\n", hr);
         return;
     }
 
@@ -152,7 +152,7 @@ static void InitializeTreeView( browse_info *info )
     }
     
     if (!SUCCEEDED(hr)) {
-        WARN("Could not bind to root shell folder! hr = %08lx\n", hr);
+        WARN("Could not bind to root shell folder! hr = %08x\n", hr);
         IShellFolder_Release(lpsfParent);
         return;
     }
@@ -160,7 +160,7 @@ static void InitializeTreeView( browse_info *info )
     flags = BrowseFlagsToSHCONTF( info->lpBrowseInfo->ulFlags );
     hr = IShellFolder_EnumObjects( lpsfRoot, info->hWnd, flags, &pEnumChildren );
     if (!SUCCEEDED(hr)) {
-        WARN("Could not get child iterator! hr = %08lx\n", hr);
+        WARN("Could not get child iterator! hr = %08x\n", hr);
         IShellFolder_Release(lpsfParent);
         IShellFolder_Release(lpsfRoot);
         return;
@@ -225,7 +225,7 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPCITEMIDLIST lpi, DWORD dwFlags, LPWSTR
 	BOOL   bSuccess=TRUE;
 	STRRET str;
 
-	TRACE("%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
+	TRACE("%p %p %x %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
 	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
           bSuccess = StrRetToStrNW(lpFriendlyName, MAX_PATH, &str, lpi);
 	else

@@ -866,7 +866,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
         
         hr = SHBindToParent(pidlComplete, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
         if (FAILED(hr)) {
-            FIXME("SHBindToParent failed! hr = %08lx\n", hr);
+            FIXME("SHBindToParent failed! hr = %08x\n", hr);
             ILFree(pidlComplete);
             return E_FAIL;
         }
@@ -888,7 +888,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface,
     IUnknown *newIterator;
     HRESULT hr;
     
-    TRACE("(iface=%p, hwndOwner=%p, grfFlags=%08lx, ppEnumIDList=%p)\n", 
+    TRACE("(iface=%p, hwndOwner=%p, grfFlags=%08x, ppEnumIDList=%p)\n", 
             iface, hwndOwner, grfFlags, ppEnumIDList);
 
     if (!This->m_pszPath) {
@@ -1121,7 +1121,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     HRESULT hr = S_OK;    
 
-    TRACE("(iface=%p, pidl=%p, uFlags=%lx, lpName=%p)\n", iface, pidl, uFlags, lpName);
+    TRACE("(iface=%p, pidl=%p, uFlags=%x, lpName=%p)\n", iface, pidl, uFlags, lpName);
     
     if ((GET_SHGDN_FOR(uFlags) & SHGDN_FORPARSING) &&
         (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
@@ -1185,7 +1185,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     LPOLESTR lpwszName;
     HRESULT hr;
    
-    TRACE("(iface=%p, hwnd=%p, pidl=%p, lpcwszName=%s, uFlags=0x%08lx, ppidlOut=%p)\n",
+    TRACE("(iface=%p, hwnd=%p, pidl=%p, lpcwszName=%s, uFlags=0x%08x, ppidlOut=%p)\n",
           iface, hwnd, pidl, debugstr_w(lpcwszName), uFlags, ppidlOut); 
 
     /* prepare to fail */
@@ -1972,7 +1972,7 @@ static HRESULT WINAPI UnixFolder_IDropTarget_DragEnter(IDropTarget *iface, IData
     FORMATETC format;
     STGMEDIUM medium; 
         
-    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p)\n",
+    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%08x, pt={.x=%d, .y=%d}, pdwEffect=%p)\n",
         iface, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
 
     if (!pdwEffect || !pDataObject)
@@ -2008,7 +2008,7 @@ static HRESULT WINAPI UnixFolder_IDropTarget_DragOver(IDropTarget *iface, DWORD 
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IDropTarget, iface);
     
-    TRACE("(iface=%p, dwKeyState=%08lx, pt={.x=%ld, .y=%ld}, pdwEffect=%p)\n", iface, dwKeyState, 
+    TRACE("(iface=%p, dwKeyState=%08x, pt={.x=%d, .y=%d}, pdwEffect=%p)\n", iface, dwKeyState, 
         pt.x, pt.y, pdwEffect);
 
     if (!pdwEffect)
@@ -2037,7 +2037,7 @@ static HRESULT WINAPI UnixFolder_IDropTarget_Drop(IDropTarget *iface, IDataObjec
     STGMEDIUM medium; 
     HRESULT hr;
 
-    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%ld, pt={.x=%ld, .y=%ld}, pdwEffect=%p) semi-stub\n",
+    TRACE("(iface=%p, pDataObject=%p, dwKeyState=%d, pt={.x=%d, .y=%d}, pdwEffect=%p) semi-stub\n",
         iface, pDataObject, dwKeyState, pt.x, pt.y, pdwEffect);
 
     InitFormatEtc(format, cfShellIDList, TYMED_HGLOBAL);
@@ -2298,7 +2298,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Skip(IEnumIDList* iface,
     ULONG cFetched;
     HRESULT hr;
     
-    TRACE("(iface=%p, celt=%ld)\n", iface, celt);
+    TRACE("(iface=%p, celt=%d)\n", iface, celt);
 
     /* Call IEnumIDList::Next and delete the resulting pidls. */
     apidl = (LPITEMIDLIST*)SHAlloc(celt * sizeof(LPITEMIDLIST));

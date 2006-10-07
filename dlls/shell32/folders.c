@@ -138,7 +138,7 @@ static ULONG WINAPI IExtractIconW_fnAddRef(IExtractIconW * iface)
 	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -150,7 +150,7 @@ static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount + 1);
 
 	if (!refCount)
 	{

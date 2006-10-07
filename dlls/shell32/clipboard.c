@@ -239,7 +239,7 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
 	DWORD * pdwFlag;
 	HGLOBAL hGlobal;
 
-	TRACE("(0x%08lx)\n", dwFlags);
+	TRACE("(0x%08x)\n", dwFlags);
 
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, sizeof(DWORD));
 	if(!hGlobal) return hGlobal;

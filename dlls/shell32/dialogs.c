@@ -66,7 +66,7 @@ BOOL WINAPI PickIconDlg(
 	DWORD nMaxFile,
 	LPDWORD lpdwIconIndex)
 {
-	FIXME("(%p,%s,%08lx,%p):stub.\n",
+	FIXME("(%p,%s,%08x,%p):stub.\n",
 	  hwndOwner, lpstrFile, nMaxFile,lpdwIconIndex);
 	return 0xffffffff;
 }

@@ -298,7 +298,7 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
            when starting app immediately before making a DDE connection. */
         if (shWait)
             if (WaitForInputIdle( info.hProcess, 30000 ) == WAIT_FAILED)
-                WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+                WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
         retval = 33;
         if (psei->fMask & SEE_MASK_NOCLOSEPROCESS)
             psei_out->hProcess = info.hProcess;
@@ -1070,7 +1070,7 @@ static HRESULT shellex_run_context_menu_default( IShellExtInit *obj,
     
     r = IContextMenu_InvokeCommand( cm, (LPCMINVOKECOMMANDINFO) &ici );
 
-    TRACE("invoke command returned %08lx\n", r );
+    TRACE("invoke command returned %08x\n", r );
 
 end:
     if ( hmenu )
@@ -1097,7 +1097,7 @@ static HRESULT shellex_load_object_and_run( HKEY hkey, LPCGUID guid, LPSHELLEXEC
                            &IID_IShellExtInit, (LPVOID*)&obj );
     if ( FAILED( r ) )
     {
-        ERR("failed %08lx\n", r );
+        ERR("failed %08x\n", r );
         goto end;
     }
 
@@ -1211,7 +1211,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
     memcpy(&sei_tmp, sei, sizeof(sei_tmp));
 
-    TRACE("mask=0x%08lx hwnd=%p verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
+    TRACE("mask=0x%08x hwnd=%p verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
             sei_tmp.fMask, sei_tmp.hwnd, debugstr_w(sei_tmp.lpVerb),
             debugstr_w(sei_tmp.lpFile), debugstr_w(sei_tmp.lpParameters),
             debugstr_w(sei_tmp.lpDirectory), sei_tmp.nShow,
@@ -1259,7 +1259,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     if (sei_tmp.fMask & unsupportedFlags)
     {
-        FIXME("flags ignored: 0x%08lx\n", sei_tmp.fMask & unsupportedFlags);
+        FIXME("flags ignored: 0x%08x\n", sei_tmp.fMask & unsupportedFlags);
     }
 
     /* process the IDList */

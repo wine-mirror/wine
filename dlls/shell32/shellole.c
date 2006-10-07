@@ -195,7 +195,7 @@ HRESULT WINAPI SHCoCreateInstance(
 		hres = E_ACCESSDENIED;
 	        goto end;
 	    } else if (! SUCCEEDED(hres = DllGetClassObject(myclsid, &IID_IClassFactory, (LPVOID*)&pcf))) {
-		    TRACE("GetClassObject failed 0x%08lx\n", hres);
+		    TRACE("GetClassObject failed 0x%08x\n", hres);
 		    goto end;
 	    }
 
@@ -214,7 +214,7 @@ HRESULT WINAPI SHCoCreateInstance(
 end:
 	if(hres!=S_OK)
 	{
-	  ERR("failed (0x%08lx) to create CLSID:%s IID:%s\n",
+	  ERR("failed (0x%08x) to create CLSID:%s IID:%s\n",
               hres, shdebugstr_guid(myclsid), shdebugstr_guid(refiid));
 	  ERR("class not found in registry\n");
 	}
@@ -333,7 +333,7 @@ LPVOID WINAPI SHAlloc(DWORD len)
 	LPVOID ret;
 
 	ret = CoTaskMemAlloc(len);
-	TRACE("%lu bytes at %p\n",len, ret);
+	TRACE("%u bytes at %p\n",len, ret);
 	return ret;
 }
 
@@ -443,7 +443,7 @@ static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
 	IDefClFImpl *This = (IDefClFImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
 	return refCount;
 }
@@ -455,7 +455,7 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 	IDefClFImpl *This = (IDefClFImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 	
-	TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(count=%u)\n", This, refCount + 1);
 
 	if (!refCount)
 	{

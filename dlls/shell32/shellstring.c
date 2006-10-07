@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 BOOL WINAPI StrRetToStrNA(LPSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-	TRACE("dest=%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	TRACE("dest=%p len=0x%x strret=%p(%s) pidl=%p\n",
 	    dest,len,src,
 	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
 	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
@@ -84,7 +84,7 @@ BOOL WINAPI StrRetToStrNA(LPSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST 
 
 BOOL WINAPI StrRetToStrNW(LPWSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-	TRACE("dest=%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	TRACE("dest=%p len=0x%x strret=%p(%s) pidl=%p\n",
 	    dest,len,src,
 	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
 	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
@@ -243,7 +243,7 @@ DWORD WINAPI CheckEscapesA(
 	LPWSTR wString;
 	DWORD ret = 0;
 
-	TRACE("(%s %ld)\n", debugstr_a(string), len);
+	TRACE("(%s %d)\n", debugstr_a(string), len);
 	wString = (LPWSTR)LocalAlloc(LPTR, len * sizeof(WCHAR));
 	if (wString)
 	{
@@ -269,7 +269,7 @@ DWORD WINAPI CheckEscapesW(
 	DWORD size = lstrlenW(string);
 	LPWSTR s, d;
 
-	TRACE("(%s %ld) stub\n", debugstr_w(string), len);
+	TRACE("(%s %d) stub\n", debugstr_w(string), len);
 
 	if (StrPBrkW(string, strEscapedChars) && size + 2 <= len)
 	{

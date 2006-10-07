@@ -104,7 +104,7 @@ DWORD WINAPI ParseFieldA(
 	LPSTR dst,
 	DWORD len)
 {
-	WARN("(%s,0x%08lx,%p,%ld) semi-stub.\n",debugstr_a(src),nField,dst,len);
+	WARN("(%s,0x%08x,%p,%d) semi-stub.\n",debugstr_a(src),nField,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
@@ -134,7 +134,7 @@ DWORD WINAPI ParseFieldA(
  */
 DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len)
 {
-	WARN("(%s,0x%08lx,%p,%ld) semi-stub.\n", debugstr_w(src), nField, dst, len);
+	WARN("(%s,0x%08x,%p,%d) semi-stub.\n", debugstr_w(src), nField, dst, len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
@@ -183,7 +183,7 @@ BOOL WINAPI GetFileNameFromBrowse(
     OPENFILENAMEA ofn;
     BOOL ret;
 
-    TRACE("%p, %s, %ld, %s, %s, %s, %s)\n",
+    TRACE("%p, %s, %d, %s, %s, %s, %s)\n",
 	  hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt,
 	  lpstrFilter, lpstrTitle);
 
@@ -220,7 +220,7 @@ VOID WINAPI SHGetSetSettings(LPSHELLSTATE lpss, DWORD dwMask, BOOL bSet)
 {
   if(bSet)
   {
-    FIXME("%p 0x%08lx TRUE\n", lpss, dwMask);
+    FIXME("%p 0x%08x TRUE\n", lpss, dwMask);
   }
   else
   {
@@ -242,7 +242,7 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
 	DWORD	dwData;
 	DWORD	dwDataSize = sizeof (DWORD);
 
-	TRACE("(%p 0x%08lx)\n",lpsfs,dwMask);
+	TRACE("(%p 0x%08x)\n",lpsfs,dwMask);
 
 	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
 				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -330,7 +330,7 @@ BOOL WINAPI RegisterShellHook(
 	HWND hWnd,
 	DWORD dwType)
 {
-	FIXME("(%p,0x%08lx):stub.\n",hWnd, dwType);
+	FIXME("(%p,0x%08x):stub.\n",hWnd, dwType);
 	return TRUE;
 }
 
@@ -497,7 +497,7 @@ HRESULT WINAPI SHDoDragDrop(
 	DWORD dwOKEffect,
 	LPDWORD pdwEffect)
 {
-    FIXME("(%p %p %p 0x%08lx %p):stub.\n",
+    FIXME("(%p %p %p 0x%08x %p):stub.\n",
     hWnd, lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
 	return DoDragDrop(lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
 }
@@ -513,7 +513,7 @@ WORD WINAPI ArrangeWindows(
 	WORD cKids,
 	CONST HWND * lpKids)
 {
-    FIXME("(%p 0x%08lx %p 0x%04x %p):stub.\n",
+    FIXME("(%p 0x%08x %p 0x%04x %p):stub.\n",
 	   hwndParent, dwReserved, lpRect, cKids, lpKids);
     return 0;
 }
@@ -527,7 +527,7 @@ WORD WINAPI ArrangeWindows(
 DWORD WINAPI
 SignalFileOpen (DWORD dwParam1)
 {
-    FIXME("(0x%08lx):stub.\n", dwParam1);
+    FIXME("(0x%08x):stub.\n", dwParam1);
 
     return 0;
 }
@@ -703,12 +703,12 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
     if (ret == ERROR_SUCCESS) {
 	if (!( (type == REG_DWORD) ||
 	       ((type == REG_BINARY) && (datalen == 4)) )) {
-	    ERR("Error policy data for \"NoRecentDocsHistory\" not formatted correctly, type=%ld, len=%ld\n",
+	    ERR("Error policy data for \"NoRecentDocsHistory\" not formatted correctly, type=%d, len=%d\n",
 		type, datalen);
 	    return;
 	}
 
-	TRACE("policy value for NoRecentDocsHistory = %08lx\n", data[0]);
+	TRACE("policy value for NoRecentDocsHistory = %08x\n", data[0]);
 	/* now test the actual policy value */
 	if ( data[0] != 0)
 	    return;
@@ -868,7 +868,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 		    if (!DeleteFileA(old_lnk_name)) {
 			if ((attr = GetFileAttributesA(old_lnk_name)) == INVALID_FILE_ATTRIBUTES) {
 			    if ((err = GetLastError()) != ERROR_FILE_NOT_FOUND) {
-				ERR("Delete for %s failed, err=%d, attr=%08lx\n",
+				ERR("Delete for %s failed, err=%d, attr=%08x\n",
 				    old_lnk_name, err, attr);
 			    }
 			    else {
@@ -877,7 +877,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 			    }
 			}
 			else {
-			    ERR("Delete for %s failed, attr=%08lx\n",
+			    ERR("Delete for %s failed, attr=%08x\n",
 				old_lnk_name, attr);
 			}
 		    }
@@ -940,7 +940,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 					     (LPVOID *)&pPf);
 	    if(FAILED(hres)) {
 		/* bombed */
-		ERR("failed QueryInterface for IPersistFile %08lx\n", hres);
+		ERR("failed QueryInterface for IPersistFile %08x\n", hres);
 		goto fail;
 	    }
 
@@ -952,7 +952,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    }
 	    if(FAILED(hres)) {
 		/* bombed */
-		ERR("failed Set{IDList|Path} %08lx\n", hres);
+		ERR("failed Set{IDList|Path} %08x\n", hres);
 		goto fail;
 	    }
 
@@ -961,7 +961,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    hres = IShellLinkA_SetDescription(psl, desc);
 	    if(FAILED(hres)) {
 		/* bombed */
-		ERR("failed SetDescription %08lx\n", hres);
+		ERR("failed SetDescription %08x\n", hres);
 		goto fail;
 	    }
 
@@ -971,7 +971,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    hres = IPersistFile_Save(pPf, widelink, TRUE);
 	    if(FAILED(hres)) {
 		/* bombed */
-		ERR("failed IPersistFile::Save %08lx\n", hres);
+		ERR("failed IPersistFile::Save %08x\n", hres);
 		IPersistFile_Release(pPf);
 		IShellLinkA_Release(psl);
 		goto fail;
@@ -979,11 +979,11 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    hres = IPersistFile_SaveCompleted(pPf, widelink);
 	    IPersistFile_Release(pPf);
 	    IShellLinkA_Release(psl);
-	    TRACE("shortcut %s has been created, result=%08lx\n",
+	    TRACE("shortcut %s has been created, result=%08x\n",
 		  new_lnk_filepath, hres);
 	}
 	else {
-	    ERR("CoCreateInstance failed, hres=%08lx\n", hres);
+	    ERR("CoCreateInstance failed, hres=%08x\n", hres);
 	}
     }
 
@@ -1034,7 +1034,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
  *
  */
 HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
-{	FIXME("0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",v,w,x,z);
+{	FIXME("0x%08x 0x%08x 0x%08x 0x%08x stub\n",v,w,x,z);
 	return 0;
 }
 /*************************************************************************
@@ -1042,7 +1042,7 @@ HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
  *
  */
 HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
-{	FIXME("0x%08lx 0x%08lx stub\n",x,z);
+{	FIXME("0x%08x 0x%08x stub\n",x,z);
 	return 0;
 }
 
@@ -1116,7 +1116,7 @@ BOOL WINAPI DAD_DragEnter(HWND hwnd)
  */
 BOOL WINAPI DAD_DragEnterEx(HWND hwnd, POINT p)
 {
-    FIXME("hwnd = %p (%ld,%ld)\n",hwnd,p.x,p.y);
+    FIXME("hwnd = %p (%d,%d)\n",hwnd,p.x,p.y);
     return FALSE;
 }
 /*************************************************************************
@@ -1125,7 +1125,7 @@ BOOL WINAPI DAD_DragEnterEx(HWND hwnd, POINT p)
  */
 BOOL WINAPI DAD_DragMove(POINT p)
 {
-    FIXME("(%ld,%ld)\n",p.x,p.y);
+    FIXME("(%d,%d)\n",p.x,p.y);
     return FALSE;
 }
 /*************************************************************************
@@ -1312,7 +1312,7 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
  * SetAppStartingCursor				[SHELL32.99]
  */
 HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
-{	FIXME("hwnd=%p 0x%04lx stub\n",u,v );
+{	FIXME("hwnd=%p 0x%04x stub\n",u,v );
 	return 0;
 }
 
@@ -1336,7 +1336,7 @@ HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
  * hack in SHCoCreateInstance)
  */
 HRESULT WINAPI SHLoadOLE(LPARAM lParam)
-{	FIXME("0x%04lx stub\n",lParam);
+{	FIXME("0x%08lx stub\n",lParam);
 	return S_OK;
 }
 /*************************************************************************
@@ -1344,7 +1344,7 @@ HRESULT WINAPI SHLoadOLE(LPARAM lParam)
  *
  */
 HRESULT WINAPI DriveType(DWORD u)
-{	FIXME("0x%04lx stub\n",u);
+{	FIXME("0x%04x stub\n",u);
 	return 0;
 }
 /*************************************************************************
@@ -1393,7 +1393,7 @@ BOOL WINAPI SHWaitForFileToOpen(
 	DWORD dwFlags,
 	DWORD dwTimeout)
 {
-	FIXME("%p 0x%08lx 0x%08lx stub\n", pidl, dwFlags, dwTimeout);
+	FIXME("%p 0x%08x 0x%08x stub\n", pidl, dwFlags, dwTimeout);
 	return 0;
 }
 
@@ -1428,7 +1428,7 @@ DWORD WINAPI RLBuildListOfPaths (void)
  */
 HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
 {
-	FIXME("0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
+	FIXME("0x%08x 0x%08x 0x%08x stub\n",x,y,z);
 	return 0;
 }
 
@@ -1518,7 +1518,7 @@ DWORD WINAPI SHELL32_714(LPVOID x)
  */
 DWORD WINAPI SHAddFromPropSheetExtArray(DWORD a, DWORD b, DWORD c)
 {
- 	FIXME("(%08lx,%08lx,%08lx)stub\n", a, b, c);
+ 	FIXME("(%08x,%08x,%08x)stub\n", a, b, c);
 	return 0;
 }
 
@@ -1527,7 +1527,7 @@ DWORD WINAPI SHAddFromPropSheetExtArray(DWORD a, DWORD b, DWORD c)
  */
 DWORD WINAPI SHCreatePropSheetExtArray(DWORD a, LPCSTR b, DWORD c)
 {
- 	FIXME("(%08lx,%s,%08lx)stub\n", a, debugstr_a(b), c);
+ 	FIXME("(%08x,%s,%08x)stub\n", a, debugstr_a(b), c);
 	return 0;
 }
 
@@ -1536,7 +1536,7 @@ DWORD WINAPI SHCreatePropSheetExtArray(DWORD a, LPCSTR b, DWORD c)
  */
 DWORD WINAPI SHReplaceFromPropSheetExtArray(DWORD a, DWORD b, DWORD c, DWORD d)
 {
- 	FIXME("(%08lx,%08lx,%08lx,%08lx)stub\n", a, b, c, d);
+ 	FIXME("(%08x,%08x,%08x,%08x)stub\n", a, b, c, d);
 	return 0;
 }
 
@@ -1545,7 +1545,7 @@ DWORD WINAPI SHReplaceFromPropSheetExtArray(DWORD a, DWORD b, DWORD c, DWORD d)
  */
 DWORD WINAPI SHDestroyPropSheetExtArray(DWORD a)
 {
- 	FIXME("(%08lx)stub\n", a);
+ 	FIXME("(%08x)stub\n", a);
 	return 0;
 }
 
@@ -1563,7 +1563,7 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
     UINT i;
     HWND hwnd = 0;   /*FIXME: who should be hwnd of owner? set to desktop */
 
-    TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles, lppidlFiles, ppdataObject);
+    TRACE("(%p, %d, %p, %p)\n", pidlFolder, cpidlFiles, lppidlFiles, ppdataObject);
     if (TRACE_ON(pidl))
     {
 	pdump (pidlFolder);
@@ -1588,7 +1588,7 @@ HRESULT WINAPI SHCreateStdEnumFmtEtc(
 {
 	IEnumFORMATETC *pef;
 	HRESULT hRes;
-	TRACE("cf=%ld fe=%p pef=%p\n", cFormats, lpFormats, ppenumFormatetc);
+	TRACE("cf=%d fe=%p pef=%p\n", cFormats, lpFormats, ppenumFormatetc);
 
 	pef = IEnumFORMATETC_Constructor(cFormats, lpFormats);
 	if (!pef)
@@ -1609,7 +1609,7 @@ HRESULT WINAPI SHELL32_256(LPDWORD lpdw0, LPDWORD lpdw1)
 {
     HRESULT ret = S_OK;
 
-    FIXME("stub %p 0x%08lx %p\n", lpdw0, lpdw0 ? *lpdw0 : 0, lpdw1);
+    FIXME("stub %p 0x%08x %p\n", lpdw0, lpdw0 ? *lpdw0 : 0, lpdw1);
 
     if (!lpdw0 || *lpdw0 != 0x10)
         ret = E_INVALIDARG;
@@ -1680,7 +1680,7 @@ INT WINAPI SHHandleUpdateImage(LPCITEMIDLIST pidlExtra)
 
 BOOL WINAPI SHObjectProperties(HWND hwnd, DWORD dwType, LPCWSTR szObject, LPCWSTR szPage)
 {
-    FIXME("%p, 0x%08lx, %s, %s - stub\n", hwnd, dwType, debugstr_w(szObject), debugstr_w(szPage));
+    FIXME("%p, 0x%08x, %s, %s - stub\n", hwnd, dwType, debugstr_w(szObject), debugstr_w(szPage));
 
     return TRUE;
 }
@@ -1705,21 +1705,21 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
 
 HRESULT WINAPI SHStartNetConnectionDialog(HWND hwnd, LPCSTR pszRemoteName, DWORD dwType)
 {
-    FIXME("%p, %s, 0x%08lx - stub\n", hwnd, debugstr_a(pszRemoteName), dwType);
+    FIXME("%p, %s, 0x%08x - stub\n", hwnd, debugstr_a(pszRemoteName), dwType);
 
     return S_OK;
 }
 
 HRESULT WINAPI SHEmptyRecycleBinA(HWND hwnd, LPCSTR pszRootPath, DWORD dwFlags)
 {
-    FIXME("%p, %s, 0x%08lx - stub\n", hwnd, debugstr_a(pszRootPath), dwFlags);
+    FIXME("%p, %s, 0x%08x - stub\n", hwnd, debugstr_a(pszRootPath), dwFlags);
 
     return S_OK;
 }
 
 HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
 {
-    FIXME("%p, %s, 0x%08lx - stub\n", hwnd, debugstr_w(pszRootPath), dwFlags);
+    FIXME("%p, %s, 0x%08x - stub\n", hwnd, debugstr_w(pszRootPath), dwFlags);
 
     return S_OK;
 }

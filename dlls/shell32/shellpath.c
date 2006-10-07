@@ -488,7 +488,7 @@ BOOL WINAPI PathMakeUniqueNameA(
 	LPCSTR lpszLongName,
 	LPCSTR lpszPathName)
 {
-	FIXME("%p %lu %s %s %s stub\n",
+	FIXME("%p %u %s %s %s stub\n",
 	 lpszBuffer, dwBuffSize, debugstr_a(lpszShortName),
 	 debugstr_a(lpszLongName), debugstr_a(lpszPathName));
 	return TRUE;
@@ -504,7 +504,7 @@ BOOL WINAPI PathMakeUniqueNameW(
 	LPCWSTR lpszLongName,
 	LPCWSTR lpszPathName)
 {
-	FIXME("%p %lu %s %s %s stub\n",
+	FIXME("%p %u %s %s %s stub\n",
 	 lpszBuffer, dwBuffSize, debugstr_w(lpszShortName),
 	 debugstr_w(lpszLongName), debugstr_w(lpszPathName));
 	return TRUE;
@@ -667,7 +667,7 @@ BOOL WINAPI PathResolveA(
 	LPCSTR *alpszPaths,
 	DWORD dwFlags)
 {
-	FIXME("(%s,%p,0x%08lx),stub!\n",
+	FIXME("(%s,%p,0x%08x),stub!\n",
 	  lpszPath, *alpszPaths, dwFlags);
 	return 0;
 }
@@ -680,7 +680,7 @@ BOOL WINAPI PathResolveW(
 	LPCWSTR *alpszPaths,
 	DWORD dwFlags)
 {
-	FIXME("(%s,%p,0x%08lx),stub!\n",
+	FIXME("(%s,%p,0x%08x),stub!\n",
 	  debugstr_w(lpszPath), debugstr_w(*alpszPaths), dwFlags);
 	return 0;
 }
@@ -707,7 +707,7 @@ LONG WINAPI PathProcessCommandA (
 	DWORD dwBuffSize,
 	DWORD dwFlags)
 {
-	FIXME("%s %p 0x%04lx 0x%04lx stub\n",
+	FIXME("%s %p 0x%04x 0x%04x stub\n",
 	lpszPath, lpszBuff, dwBuffSize, dwFlags);
 	if(!lpszPath) return -1;
 	if(lpszBuff) strcpy(lpszBuff, lpszPath);
@@ -723,7 +723,7 @@ LONG WINAPI PathProcessCommandW (
 	DWORD dwBuffSize,
 	DWORD dwFlags)
 {
-	FIXME("(%s, %p, 0x%04lx, 0x%04lx) stub\n",
+	FIXME("(%s, %p, 0x%04x, 0x%04x) stub\n",
 	debugstr_w(lpszPath), lpszBuff, dwBuffSize, dwFlags);
 	if(!lpszPath) return -1;
 	if(lpszBuff) strcpyW(lpszBuff, lpszPath);
@@ -1226,7 +1226,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
         hr = E_FAIL;
     RegCloseKey(shellFolderKey);
     RegCloseKey(userShellFolderKey);
-    TRACE("returning 0x%08lx\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 
@@ -1300,7 +1300,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
             strcatW(pszPath, pDefaultPath);
         }
     }
-    TRACE("returning 0x%08lx\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 
@@ -1315,7 +1315,7 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
 {
     HRESULT hr;
 
-    TRACE("0x%08lx,0x%02x,%p\n", dwFlags, folder, pszPath);
+    TRACE("0x%08x,0x%02x,%p\n", dwFlags, folder, pszPath);
 
     if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
         return E_INVALIDARG;
@@ -1355,7 +1355,7 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
             RegCloseKey(hKey);
         }
     }
-    TRACE("returning 0x%08lx (output path is %s)\n", hr, debugstr_w(pszPath));
+    TRACE("returning 0x%08x (output path is %s)\n", hr, debugstr_w(pszPath));
     return hr;
 }
 
@@ -1372,7 +1372,7 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
 {
     HRESULT hr;
 
-    TRACE("%p,0x%08lx,0x%02x,%p\n", hToken, dwFlags, folder, pszPath);
+    TRACE("%p,0x%08x,0x%02x,%p\n", hToken, dwFlags, folder, pszPath);
 
     if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
         return E_INVALIDARG;
@@ -1417,7 +1417,7 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
     }
-    TRACE("returning 0x%08lx (output path is %s)\n", hr, debugstr_w(pszPath));
+    TRACE("returning 0x%08x (output path is %s)\n", hr, debugstr_w(pszPath));
     return hr;
 }
 
@@ -1431,7 +1431,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
 {
     HRESULT hr;
 
-    TRACE("0x%08lx,0x%02x,%p\n", dwFlags, folder, pszPath);
+    TRACE("0x%08x,0x%02x,%p\n", dwFlags, folder, pszPath);
 
     if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
         return E_INVALIDARG;
@@ -1449,7 +1449,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
     }
-    TRACE("returning 0x%08lx (output path is %s)\n", hr, debugstr_w(pszPath));
+    TRACE("returning 0x%08x (output path is %s)\n", hr, debugstr_w(pszPath));
     return hr;
 }
 
@@ -1500,7 +1500,7 @@ static HRESULT _SHGetProfilesValue(HKEY profilesKey, LPCWSTR szValueName,
         else
             hr = S_OK;
     }
-    TRACE("returning 0x%08lx (output value is %s)\n", hr, debugstr_w(szValue));
+    TRACE("returning 0x%08x (output value is %s)\n", hr, debugstr_w(szValue));
     return hr;
 }
 
@@ -1606,7 +1606,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
 end:
     if (key)
         RegCloseKey(key);
-    TRACE("returning 0x%08lx (input was %s, output is %s)\n", hr,
+    TRACE("returning 0x%08x (input was %s, output is %s)\n", hr,
      debugstr_w(szSrc), debugstr_w(szDest));
     return hr;
 }
@@ -1741,7 +1741,7 @@ HRESULT WINAPI SHGetFolderPathW(
 
     TRACE("Created missing system directory '%s'\n", debugstr_w(szBuildPath));
 end:
-    TRACE("returning 0x%08lx (final path is %s)\n", hr, debugstr_w(szBuildPath));
+    TRACE("returning 0x%08x (final path is %s)\n", hr, debugstr_w(szBuildPath));
     return hr;
 }
 
@@ -1847,7 +1847,7 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
     if (hKey)
         RegCloseKey(hKey);
 
-    TRACE("returning 0x%08lx\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 
@@ -1905,7 +1905,7 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
 
     hr = _SHRegisterFolders(hRootKey, hToken, pUserShellFolderPath,
      pShellFolderPath, folders, sizeof(folders) / sizeof(folders[0]));
-    TRACE("returning 0x%08lx\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 
@@ -1926,7 +1926,7 @@ static HRESULT _SHRegisterCommonShellFolders(void)
     TRACE("\n");
     hr = _SHRegisterFolders(HKEY_LOCAL_MACHINE, NULL, szSHUserFolders,
      szSHFolders, folders, sizeof(folders) / sizeof(folders[0]));
-    TRACE("returning 0x%08lx\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 
@@ -2210,7 +2210,7 @@ HRESULT WINAPI SHGetFolderLocation(
 {
     HRESULT hr = E_INVALIDARG;
 
-    TRACE("%p 0x%08x %p 0x%08lx %p\n",
+    TRACE("%p 0x%08x %p 0x%08x %p\n",
      hwndOwner, nFolder, hToken, dwReserved, ppidl);
     
     if (!ppidl)

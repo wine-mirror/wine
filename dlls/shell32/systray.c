@@ -80,7 +80,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     HWND tray;
     COPYDATASTRUCT cds;
 
-    TRACE("dwMessage = %ld\n", dwMessage);
+    TRACE("dwMessage = %d\n", dwMessage);
 
     tray = FindWindowExW(0, NULL, classname, NULL);
     if (!tray) return FALSE;
