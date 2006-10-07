@@ -67,7 +67,7 @@ static HRESULT WINAPI PersistStorage_InitNew(IPersistStorage *iface, LPSTORAGE p
 {
     WebBrowser *This = PERSTORAGE_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pStg);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStorage_Load(IPersistStorage *iface, LPSTORAGE pStg)
