@@ -90,7 +90,7 @@ HRESULT WINAPI DirectInputCreateEx(
     HRESULT res = DIERR_OLDDIRECTINPUTVERSION;
     LPCVOID vtable = NULL;
 
-    TRACE("(%p,%04lx,%s,%p,%p)\n", hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter);
+    TRACE("(%p,%04x,%s,%p,%p)\n", hinst, dwVersion, debugstr_guid(riid), ppDI, punkOuter);
 
     if (IsEqualGUID(&IID_IDirectInputA,riid) ||
         IsEqualGUID(&IID_IDirectInput2A,riid) ||
@@ -196,7 +196,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
     DIDEVICEINSTANCEA devInstance;
     int i, j, r;
     
-    TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
+    TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
@@ -226,7 +226,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
     DIDEVICEINSTANCEW devInstance;
     int i, j, r;
     
-    TRACE("(this=%p,0x%04lx '%s',%p,%p,%04lx)\n",
+    TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
@@ -354,7 +354,7 @@ static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7W iface,
 }
 
 static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD x) {
-	TRACE("(this=%p,%p,%lx)\n",iface, hinst, x);
+	TRACE("(this=%p,%p,%x)\n",iface, hinst, x);
 	
 	/* Initialize can return: DIERR_BETADIRECTINPUTVERSION, DIERR_OLDDIRECTINPUTVERSION and DI_OK.
 	 * Since we already initialized the device, return DI_OK. In the past we returned DIERR_ALREADYINITIALIZED
@@ -376,7 +376,7 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							HWND hwndOwner,
 							DWORD dwFlags) {
   IDirectInputImpl *This = (IDirectInputImpl *)iface;
-  FIXME("(%p)->(%p,%08lx): stub\n",This, hwndOwner, dwFlags);
+  FIXME("(%p)->(%p,%08x): stub\n",This, hwndOwner, dwFlags);
 
   return DI_OK;
 }
@@ -479,7 +479,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 {
       IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
-      FIXME("(this=%p,%s,%p,%p,%p,%04lx): stub\n", This, ptszUserName, lpdiActionFormat,
+      FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, ptszUserName, lpdiActionFormat,
             lpCallback, pvRef, dwFlags);
       return 0;
 }
@@ -492,7 +492,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
 {
       IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
-      FIXME("(this=%p,%s,%p,%p,%p,%04lx): stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
+      FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
             lpCallback, pvRef, dwFlags);
       return 0;
 }
@@ -504,7 +504,7 @@ static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(
 {
       IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
-      FIXME("(this=%p,%p,%p,%04lx,%p): stub\n", This, lpdiCallback, lpdiCDParams,
+      FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams,
             dwFlags, pvRefData);
       return 0;
 }
@@ -516,7 +516,7 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
 {
       IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
-      FIXME("(this=%p,%p,%p,%04lx,%p): stub\n", This, lpdiCallback, lpdiCDParams,
+      FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams,
             dwFlags, pvRefData);
       return 0;
 }
@@ -807,7 +807,7 @@ static BOOL create_hook_thread(void)
     }
 
     ref = ++hook_thread_refcount;
-    TRACE("Refcount %ld\n", ref);
+    TRACE("Refcount %d\n", ref);
     if (ref == 1)
     {
         DWORD tid;
@@ -836,7 +836,7 @@ static void release_hook_thread(void)
 
     EnterCriticalSection(&dinput_hook_crit);
     ref = --hook_thread_refcount;
-    TRACE("Releasing to %ld\n", ref);
+    TRACE("Releasing to %d\n", ref);
     if (ref == 0) 
     {
         HWND hwnd = hook_thread_hwnd;

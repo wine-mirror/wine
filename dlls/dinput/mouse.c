@@ -161,7 +161,7 @@ static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD versio
     
     dwSize = lpddi->dwSize;
 
-    TRACE("%ld %p\n", dwSize, lpddi);
+    TRACE("%d %p\n", dwSize, lpddi);
     
     memset(lpddi, 0, dwSize);
     memset(&ddi, 0, sizeof(ddi));
@@ -185,7 +185,7 @@ static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD versio
     
     dwSize = lpddi->dwSize;
 
-    TRACE("%ld %p\n", dwSize, lpddi);
+    TRACE("%d %p\n", dwSize, lpddi);
     
     memset(lpddi, 0, dwSize);
     memset(&ddi, 0, sizeof(ddi));
@@ -358,7 +358,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
     
-    TRACE("(this=%p,%p,0x%08lx)\n",This,hwnd,dwflags);
+    TRACE("(this=%p,%p,0x%08x)\n", This, hwnd, dwflags);
     
     if (TRACE_ON(dinput)) {
 	TRACE(" cooperative level : ");
@@ -490,7 +490,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	}
     }
     
-    TRACE(" msg %x pt %ld %ld (W=%d)\n",
+    TRACE(" msg %x pt %d %d (W=%d)\n",
           wparam, hook->pt.x, hook->pt.y, (!This->absolute) && This->need_warp );
     
     switch(wparam) {
@@ -532,7 +532,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	    break;
     }
     
-    TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
+    TRACE("(X: %d - Y: %d   L: %02x M: %02x R: %02x)\n",
 	  This->m_state.lX, This->m_state.lY,
 	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
     
@@ -622,7 +622,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
       This->mapped_center.x = This->win_centerX;
       This->mapped_center.y = This->win_centerY;
       MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
-      TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
+      TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
       This->last_warped = GetCurrentTime();
 
@@ -664,7 +664,7 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     
     /* And put the mouse cursor back where it was at acquire time */
     if (This->absolute == 0) {
-      TRACE(" warping mouse back to (%ld , %ld)\n", This->org_coords.x, This->org_coords.y);
+      TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
       SetCursorPos(This->org_coords.x, This->org_coords.y);
     }
 	
@@ -685,8 +685,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     if(This->acquired == 0) return DIERR_NOTACQUIRED;
 
     EnterCriticalSection(&(This->crit));
-    TRACE("(this=%p,0x%08lx,%p):\n", This, len, ptr);
-    TRACE("(X: %ld - Y: %ld - Z: %ld  L: %02x M: %02x R: %02x)\n",
+    TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
+    TRACE("(X: %d - Y: %d - Z: %d  L: %02x M: %02x R: %02x)\n",
 	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
 	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
     
@@ -707,7 +707,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
             LeaveCriticalSection(&(This->crit));
             return DIERR_GENERIC;
         }
-	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
+	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
 
@@ -736,7 +736,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     DWORD len;
     int nqtail = 0;
     
-    TRACE("(%p)->(dods=%ld,dod=%p,entries=%p (%ld)%s,fl=0x%08lx%s)\n",This,dodsize,dod,
+    TRACE("(%p)->(dods=%d,dod=%p,entries=%p (%d)%s,fl=0x%08x%s)\n",This,dodsize,dod,
 	  entries, *entries,*entries == INFINITE ? " (INFINITE)" : "",
 	  flags, (flags & DIGDD_PEEK) ? " (DIGDD_PEEK)": "" );
     
@@ -756,12 +756,12 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	
 	if (!(flags & DIGDD_PEEK)) {
 	    if (len)
-		TRACE("Application discarding %ld event(s).\n", len);
+		TRACE("Application discarding %d event(s).\n", len);
 	    
 	    nqtail = This->queue_tail + len;
 	    while (nqtail >= This->queue_len) nqtail -= This->queue_len;
 	} else {
-	    TRACE("Telling application that %ld event(s) are in the queue.\n", len);
+	    TRACE("Telling application that %d event(s) are in the queue.\n", len);
 	}
     } else {
 	if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
@@ -771,13 +771,13 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	}
 	
 	if (len)
-	    TRACE("Application retrieving %ld event(s):\n", len);
+	    TRACE("Application retrieving %d event(s):\n", len);
 	
 	*entries = 0;
 	nqtail = This->queue_tail;
 	while (len) {
 	    /* Copy the buffered data into the application queue */
-	    TRACE(" - queuing Offs:%2ld Data:%5ld TS:%8ld Seq:%8ld at address %p from queue tail %4d\n",
+	    TRACE(" - queuing Offs:%2d Data:%5d TS:%8d Seq:%8d at address %p from queue tail %4d\n",
 		  (This->data_queue)->dwOfs,
 		  (This->data_queue)->dwData,
 		  (This->data_queue)->dwTimeStamp,
@@ -802,7 +802,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
         if(!dinput_window_check(This))
             return DIERR_GENERIC;
-	TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
+	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
 
@@ -831,7 +831,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 	    case (DWORD) DIPROP_BUFFERSIZE: {
 		LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 		
-		TRACE("buffersize = %ld\n",pd->dwData);
+                TRACE("buffersize = %d\n", pd->dwData);
 		
 		This->data_queue = HeapAlloc(GetProcessHeap(),0, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
 		This->queue_head = 0;
@@ -979,7 +979,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
     SysMouseImpl *This = (SysMouseImpl *)iface;
     DIDEVICEOBJECTINSTANCEA ddoi;
     
-    TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
+    TRACE("(this=%p,%p,%p,%08x)\n", This, lpCallback, lpvRef, dwFlags);
     if (TRACE_ON(dinput)) {
 	TRACE("  - flags = ");
 	_dump_EnumObjects_flags(dwFlags);

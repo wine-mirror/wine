@@ -121,7 +121,7 @@ static void fill_keyboard_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD ver
     
     dwSize = lpddi->dwSize;
 
-    TRACE("%ld %p\n", dwSize, lpddi);
+    TRACE("%d %p\n", dwSize, lpddi);
     
     memset(lpddi, 0, dwSize);
     memset(&ddi, 0, sizeof(ddi));
@@ -145,7 +145,7 @@ static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     
     dwSize = lpddi->dwSize;
 
-    TRACE("%ld %p\n", dwSize, lpddi);
+    TRACE("%d %p\n", dwSize, lpddi);
     
     memset(lpddi, 0, dwSize);
     memset(&ddi, 0, sizeof(ddi));
@@ -284,14 +284,14 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
-            ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+        TRACE("(size=%d,headersize=%d,obj=%d,how=%d\n",
+              ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
 	if (!HIWORD(rguid)) {
 		switch (LOWORD(rguid)) {
 		case (DWORD) DIPROP_BUFFERSIZE: {
 			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 
-			TRACE("(buffersize=%ld)\n",pd->dwData);
+			TRACE("(buffersize=%d)\n", pd->dwData);
 
                         if (This->acquired)
                            return DIERR_INVALIDPARAM;
@@ -315,14 +315,14 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
 	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
-            ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+        TRACE("(size=%d,headersize=%d,obj=%d,how=%d\n",
+              ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
 	if (!HIWORD(rguid)) {
 		switch (LOWORD(rguid)) {
 		case (DWORD) DIPROP_BUFFERSIZE: {
 			LPDIPROPDWORD	pd = (LPDIPROPDWORD)ph;
 
-			TRACE("(buffersize=%ld)\n",pd->dwData);
+			TRACE("(buffersize=%d)\n", pd->dwData);
 
                         if (This->acquired)
                            return DIERR_INVALIDPARAM;
@@ -344,7 +344,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 )
 {
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    TRACE("(%p)->(%ld,%p)\n", This, len, ptr);
+    TRACE("(%p)->(%d,%p)\n", This, len, ptr);
 
     if (This->acquired == 0) return DIERR_NOTACQUIRED;
 
@@ -379,7 +379,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
     HRESULT ret = DI_OK;
     int len;
 
-    TRACE("(%p) %p -> %p(%ld) x%ld, 0x%08lx\n",
+    TRACE("(%p) %p -> %p(%d) x%d, 0x%08x\n",
           This, dod, entries, entries ? *entries : 0, dodsize, flags);
 
     if (!This->acquired)
@@ -421,7 +421,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 
     LeaveCriticalSection(&This->crit);
 
-    TRACE("Returning %ld events queued\n", *entries);
+    TRACE("Returning %d events queued\n", *entries);
     return ret;
 }
 
@@ -435,7 +435,7 @@ static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
     DIDEVICEOBJECTINSTANCEA ddoi;
     int i;
     
-    TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
+    TRACE("(this=%p,%p,%p,%08x)\n", This, lpCallback, lpvRef, dwFlags);
     if (TRACE_ON(dinput)) {
         TRACE("  - flags = ");
 	_dump_EnumObjects_flags(dwFlags);
@@ -595,7 +595,7 @@ SysKeyboardAImpl_GetObjectInfo(
     DIDEVICEOBJECTINSTANCEA ddoi;
     DWORD dwSize = pdidoi->dwSize;
     
-    TRACE("(this=%p,%p,%ld,0x%08lx)\n", This, pdidoi, dwObj, dwHow);
+    TRACE("(this=%p,%p,%d,0x%08x)\n", This, pdidoi, dwObj, dwHow);
 
     if (dwHow == DIPH_BYID) {
         WARN(" querying by id not supported yet...\n");
@@ -628,7 +628,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
     DIDEVICEOBJECTINSTANCEW ddoi;
     DWORD dwSize = pdidoi->dwSize;
     
-    TRACE("(this=%p,%p,%ld,0x%08lx)\n", This, pdidoi, dwObj, dwHow);
+    TRACE("(this=%p,%p,%d,0x%08x)\n", This, pdidoi, dwObj, dwHow);
 
     if (dwHow == DIPH_BYID) {
         WARN(" querying by id not supported yet...\n");

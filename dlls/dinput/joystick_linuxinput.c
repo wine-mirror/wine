@@ -845,17 +845,17 @@ static void calculate_ids(LPDIDATAFORMAT df)
             axis++;
             type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
                 DIDFT_MAKEINSTANCE(axis + axis_base);
-            TRACE("axis type = 0x%08lx\n", type);
+            TRACE("axis type = 0x%08x\n", type);
         } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_POV) {
             pov++;
             type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
                 DIDFT_MAKEINSTANCE(pov + pov_base);
-            TRACE("POV type = 0x%08lx\n", type);
+            TRACE("POV type = 0x%08x\n", type);
         } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_BUTTON) {
             button++;
             type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
                 DIDFT_MAKEINSTANCE(button + button_base);
-            TRACE("button type = 0x%08lx\n", type);
+            TRACE("button type = 0x%08x\n", type);
         }
         df->rgodf[i].dwType = type;
     }
@@ -998,7 +998,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 ) {
     JoystickImpl *This = (JoystickImpl *)iface;
 
-    TRACE("(this=%p,0x%08lx,%p)\n",This,len,ptr);
+    TRACE("(this=%p,0x%08x,%p)\n", This, len, ptr);
 
     if (This->joyfd==-1) {
         WARN("not acquired\n");
@@ -1027,7 +1027,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
   int nqtail;
   HRESULT hr = DI_OK;
 
-  TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
+  TRACE("(%p)->(dods=%d,entries=%d,fl=0x%08x)\n", This, dodsize, *entries, flags);
 
   if (This->joyfd==-!1) {
     WARN("not acquired\n");
@@ -1045,7 +1045,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 
   if (dod == NULL) {
     if (len)
-      TRACE("Application discarding %ld event(s).\n", len);
+      TRACE("Application discarding %d event(s).\n", len);
 
     *entries = len;
     nqtail = This->queue_tail + len;
@@ -1058,7 +1058,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
   }
 
     if (len)
-      TRACE("Application retrieving %ld event(s).\n", len);
+      TRACE("Application retrieving %d event(s).\n", len);
 
     *entries = 0;
     nqtail = This->queue_tail;
@@ -1102,14 +1102,15 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
   }
 
   TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-  TRACE("ph.dwSize = %ld, ph.dwHeaderSize =%ld, ph.dwObj = %ld, ph.dwHow= %ld\n",ph->dwSize, ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+  TRACE("ph.dwSize = %d, ph.dwHeaderSize =%d, ph.dwObj = %d, ph.dwHow= %d\n",
+        ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
     case (DWORD) DIPROP_BUFFERSIZE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 
-      TRACE("buffersize = %ld\n",pd->dwData);
+      TRACE("buffersize = %d\n", pd->dwData);
       if (This->data_queue) {
         This->data_queue = HeapReAlloc(GetProcessHeap(),0, This->data_queue, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
       } else {
@@ -1125,14 +1126,14 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
       if (ph->dwHow == DIPH_DEVICE) {
         int i;
-        TRACE("proprange(%ld,%ld) all\n",pr->lMin,pr->lMax);
+        TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
         for (i = 0; i < This->df->dwNumObjs; i++) {
           This->wantmin[i] = pr->lMin;
           This->wantmax[i] = pr->lMax;
         }
       } else {
         int obj = find_property_offset(This, ph);
-        TRACE("proprange(%ld,%ld) obj=%d\n",pr->lMin,pr->lMax,obj);
+        TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
         if (obj >= 0) {
           This->wantmin[obj] = pr->lMin;
           This->wantmax[obj] = pr->lMax;
@@ -1145,13 +1146,13 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
       if (ph->dwHow == DIPH_DEVICE) {
         int i;
-        TRACE("deadzone(%ld) all\n",pd->dwData);
+        TRACE("deadzone(%d) all\n", pd->dwData);
         for (i = 0; i < This->df->dwNumObjs; i++) {
           This->deadz[i] = pd->dwData;
         }
       } else {
         int obj = find_property_offset(This, ph);
-        TRACE("deadzone(%ld) obj=%d\n",pd->dwData,obj);
+        TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
         if (obj >= 0) {
           This->deadz[obj] = pd->dwData;
         }
@@ -1263,7 +1264,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
   DIDEVICEOBJECTINSTANCEA ddoi;
   int user_offset, user_object;
 
-  TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
+  TRACE("(this=%p,%p,%p,%08x)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
     TRACE("  - flags = ");
     _dump_EnumObjects_flags(dwFlags);
@@ -1446,7 +1447,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
       if (obj >= 0) {
 	pr->lMin = This->joydev->havemin[obj];
 	pr->lMax = This->joydev->havemax[obj];
-	TRACE("range(%ld, %ld) obj=%d\n", pr->lMin, pr->lMax, obj);
+	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
 	return DI_OK;
       }
       break;
@@ -1521,7 +1522,7 @@ static HRESULT WINAPI JoystickAImpl_EnumEffects(LPDIRECTINPUTDEVICE8A iface,
     DWORD type = DIEFT_GETTYPE(dwEffType);
     JoystickImpl* This = (JoystickImpl*)iface;
 
-    TRACE("(this=%p,%p,%ld) type=%ld\n", This, pvRef, dwEffType, type);
+    TRACE("(this=%p,%p,%d) type=%d\n", This, pvRef, dwEffType, type);
 
     dei.dwSize = sizeof(DIEFFECTINFOA);          
 
@@ -1598,7 +1599,7 @@ static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
     JoystickImpl* This = (JoystickImpl*)iface;
     int xfd = This->joyfd;
 
-    TRACE("(this=%p,%p,%ld) type=%ld fd=%d\n", This, pvRef, dwEffType, type, xfd);
+    TRACE("(this=%p,%p,%d) type=%d fd=%d\n", This, pvRef, dwEffType, type, xfd);
 
     dei.dwSize = sizeof(DIEFFECTINFOW);          
 
@@ -1728,7 +1729,7 @@ static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(
 	DWORD dwFlags)
 {
     JoystickImpl* This = (JoystickImpl*)iface;
-    TRACE("(this=%p,%ld)\n", This, dwFlags);
+    TRACE("(this=%p,%d)\n", This, dwFlags);
 
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     if (dwFlags == DISFFC_STOPALL) {
@@ -1778,7 +1779,7 @@ static HRESULT WINAPI JoystickAImpl_EnumCreatedEffectObjects(
 
     JoystickImpl* This = (JoystickImpl*)iface;
     EffectListItem* itr = This->top_effect;
-    TRACE("(this=%p,%p,%p,%ld)\n", This, lpCallback, pvRef, dwFlags);
+    TRACE("(this=%p,%p,%p,%d)\n", This, lpCallback, pvRef, dwFlags);
 
     if (!lpCallback)
 	return DIERR_INVALIDPARAM;

@@ -102,21 +102,21 @@ void _dump_EnumObjects_flags(DWORD dwFlags) {
 		}
 	    }
 	    if (type) {
-		DPRINTF(" (unhandled: %08lx)", type);
+                DPRINTF(" (unhandled: %08x)", type);
 	    }
 	}
 	DPRINTF(" / Instance: ");
 	if (instance == ((DIDFT_ANYINSTANCE >> 8) & 0xFFFF)) {
 	    DPRINTF("DIDFT_ANYINSTANCE");
 	} else {
-	    DPRINTF("%3ld", instance);
+            DPRINTF("%3d", instance);
 	}
     }
 }
 
 void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
     if (TRACE_ON(dinput)) {
-	DPRINTF("  - dwObj = 0x%08lx\n", diph->dwObj);
+        DPRINTF("  - dwObj = 0x%08x\n", diph->dwObj);
 	DPRINTF("  - dwHow = %s\n",
 		((diph->dwHow == DIPH_DEVICE) ? "DIPH_DEVICE" :
 		 ((diph->dwHow == DIPH_BYOFFSET) ? "DIPH_BYOFFSET" :
@@ -126,14 +126,14 @@ void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
 
 void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) {
     if (TRACE_ON(dinput)) {
-	DPRINTF("    - enumerating : %s ('%s') - %2ld - 0x%08lx - %s\n",
+        DPRINTF("    - enumerating : %s ('%s') - %2d - 0x%08x - %s\n",
 		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
     }
 }
 
 void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) {
     if (TRACE_ON(dinput)) {
-	DPRINTF("    - enumerating : %s ('%s'), - %2ld - 0x%08lx - %s\n",
+        DPRINTF("    - enumerating : %s ('%s'), - %2d - 0x%08x - %s\n",
 		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, debugstr_w(ddoi->tszName));
     }
 }
@@ -188,31 +188,31 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
     unsigned int i;
 
     TRACE("Dumping DIDATAFORMAT structure:\n");
-    TRACE("  - dwSize: %ld\n", df->dwSize);
+    TRACE("  - dwSize: %d\n", df->dwSize);
     if (df->dwSize != sizeof(DIDATAFORMAT)) {
-	WARN("Non-standard DIDATAFORMAT structure size %ld\n", df->dwSize);
+        WARN("Non-standard DIDATAFORMAT structure size %d\n", df->dwSize);
     }
-    TRACE("  - dwObjsize: %ld\n", df->dwObjSize);
+    TRACE("  - dwObjsize: %d\n", df->dwObjSize);
     if (df->dwObjSize != sizeof(DIOBJECTDATAFORMAT)) {
-	WARN("Non-standard DIOBJECTDATAFORMAT structure size %ld\n", df->dwObjSize);
+        WARN("Non-standard DIOBJECTDATAFORMAT structure size %d\n", df->dwObjSize);
     }
-    TRACE("  - dwFlags: 0x%08lx (", df->dwFlags);
+    TRACE("  - dwFlags: 0x%08x (", df->dwFlags);
     switch (df->dwFlags) {
         case DIDF_ABSAXIS: TRACE("DIDF_ABSAXIS"); break;
 	case DIDF_RELAXIS: TRACE("DIDF_RELAXIS"); break;
 	default: TRACE("unknown"); break;
     }
     TRACE(")\n");
-    TRACE("  - dwDataSize: %ld\n", df->dwDataSize);
-    TRACE("  - dwNumObjs: %ld\n", df->dwNumObjs);
+    TRACE("  - dwDataSize: %d\n", df->dwDataSize);
+    TRACE("  - dwNumObjs: %d\n", df->dwNumObjs);
     
     for (i = 0; i < df->dwNumObjs; i++) {
 	TRACE("  - Object %d:\n", i);
 	TRACE("      * GUID: %s ('%s')\n", debugstr_guid(df->rgodf[i].pguid), _dump_dinput_GUID(df->rgodf[i].pguid));
-	TRACE("      * dwOfs: %ld\n", df->rgodf[i].dwOfs);
-	TRACE("      * dwType: 0x%08lx\n", df->rgodf[i].dwType);
+        TRACE("      * dwOfs: %d\n", df->rgodf[i].dwOfs);
+        TRACE("      * dwType: 0x%08x\n", df->rgodf[i].dwType);
 	TRACE("        "); _dump_EnumObjects_flags(df->rgodf[i].dwType); TRACE("\n");
-	TRACE("      * dwFlags: 0x%08lx\n", df->rgodf[i].dwFlags);
+        TRACE("      * dwFlags: 0x%08x\n", df->rgodf[i].dwFlags);
     }
 }
 
@@ -336,16 +336,16 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		TRACE("       * GUID: %s ('%s')\n",
 		      debugstr_guid(asked_format->rgodf[j].pguid),
 		      _dump_dinput_GUID(asked_format->rgodf[j].pguid));
-		TRACE("       * Offset: %3ld\n", asked_format->rgodf[j].dwOfs);
-		TRACE("       * dwType: %08lx\n", asked_format->rgodf[j].dwType);
+                TRACE("       * Offset: %3d\n", asked_format->rgodf[j].dwOfs);
+                TRACE("       * dwType: %08x\n", asked_format->rgodf[j].dwType);
 		TRACE("         "); _dump_EnumObjects_flags(asked_format->rgodf[j].dwType); TRACE("\n");
 		
 		TRACE("   - Wine  (%d) :\n", i);
 		TRACE("       * GUID: %s ('%s')\n",
 		      debugstr_guid(wine_format->rgodf[i].pguid),
 		      _dump_dinput_GUID(wine_format->rgodf[i].pguid));
-		TRACE("       * Offset: %3ld\n", wine_format->rgodf[i].dwOfs);
-		TRACE("       * dwType: %08lx\n", wine_format->rgodf[i].dwType);
+                TRACE("       * Offset: %3d\n", wine_format->rgodf[i].dwOfs);
+                TRACE("       * dwType: %08x\n", wine_format->rgodf[i].dwType);
 		TRACE("         "); _dump_EnumObjects_flags(wine_format->rgodf[i].dwType); TRACE("\n");
 		
 		if (wine_format->rgodf[i].dwType & DIDFT_BUTTON)
@@ -354,7 +354,7 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		    dt[index].size = sizeof(DWORD);
 		dt[index].offset_in = wine_format->rgodf[i].dwOfs;
                 if (asked_format->rgodf[j].dwOfs < next) {
-                    WARN("bad format: dwOfs=%ld, changing to %ld\n", asked_format->rgodf[j].dwOfs, next);
+                    WARN("bad format: dwOfs=%d, changing to %d\n", asked_format->rgodf[j].dwOfs, next);
 		    dt[index].offset_out = next;
 		    offset[i] = next;
                 } else {
@@ -383,8 +383,8 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 	    TRACE("       * GUID: %s ('%s')\n",
 		  debugstr_guid(asked_format->rgodf[j].pguid),
 		  _dump_dinput_GUID(asked_format->rgodf[j].pguid));
-	    TRACE("       * Offset: %3ld\n", asked_format->rgodf[j].dwOfs);
-	    TRACE("       * dwType: %08lx\n", asked_format->rgodf[j].dwType);
+            TRACE("       * Offset: %3d\n", asked_format->rgodf[j].dwOfs);
+            TRACE("       * dwType: %08x\n", asked_format->rgodf[j].dwType);
 	    TRACE("         "); _dump_EnumObjects_flags(asked_format->rgodf[j].dwType); TRACE("\n");
 	    
 	    if (asked_format->rgodf[j].dwType & DIDFT_BUTTON)
@@ -467,7 +467,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 	LPDIRECTINPUTDEVICE8A iface,HWND hwnd,DWORD dwflags
 ) {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    TRACE("(this=%p,%p,0x%08lx)\n",This,hwnd,dwflags);
+    TRACE("(this=%p,%p,0x%08x)\n", This, hwnd, dwflags);
     if (TRACE_ON(dinput)) {
 	TRACE(" cooperative level : ");
 	_dump_cooperativelevel_DI(dwflags);
@@ -578,7 +578,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,%08lx): stub!\n", iface, lpCallback, lpvRef, dwFlags);
+    FIXME("(this=%p,%p,%p,%08x): stub!\n", iface, lpCallback, lpvRef, dwFlags);
     if (TRACE_ON(dinput)) {
 	DPRINTF("  - flags = ");
 	_dump_EnumObjects_flags(dwFlags);
@@ -594,7 +594,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,%08lx): stub!\n", iface, lpCallback, lpvRef, dwFlags);
+    FIXME("(this=%p,%p,%p,%08x): stub!\n", iface, lpCallback, lpvRef, dwFlags);
     if (TRACE_ON(dinput)) {
 	DPRINTF("  - flags = ");
 	_dump_EnumObjects_flags(dwFlags);
@@ -624,7 +624,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    FIXME("(this=%p,%p,%ld,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,%d,0x%08x): stub!\n",
 	  iface, pdidoi, dwObj, dwHow);
     
     return DI_OK;
@@ -636,7 +636,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    FIXME("(this=%p,%p,%ld,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,%d,0x%08x): stub!\n",
 	  iface, pdidoi, dwObj, dwHow);
     
     return DI_OK;
@@ -667,7 +667,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	HWND hwndOwner,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,0x%08x): stub!\n",
 	  iface, hwndOwner, dwFlags);
 
     return DI_OK;
@@ -679,7 +679,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	DWORD dwVersion,
 	REFGUID rguid)
 {
-    FIXME("(this=%p,%p,%ld,%s): stub!\n",
+    FIXME("(this=%p,%p,%d,%s): stub!\n",
 	  iface, hinst, dwVersion, debugstr_guid(rguid));
     return DI_OK;
 }
@@ -706,7 +706,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,%p,0x%08x): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
     
     return DI_OK;
@@ -718,7 +718,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,%p,0x%08x): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
     
     return DI_OK;
@@ -757,7 +757,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendForceFeedbackCommand(
 	LPDIRECTINPUTDEVICE8A iface,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,0x%08x): stub!\n",
 	  iface, dwFlags);
     return DI_OK;
 }
@@ -768,7 +768,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumCreatedEffectObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,%p,%p,0x%08x): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
     return DI_OK;
 }
@@ -796,7 +796,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendDeviceData(
 	LPDWORD pdwInOut,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,0x%08lx,%p,%p,0x%08lx): stub!\n",
+    FIXME("(this=%p,0x%08x,%p,%p,0x%08x): stub!\n",
 	  iface, cbObjectData, rgdod, pdwInOut, dwFlags);
     
     return DI_OK;
@@ -808,7 +808,7 @@ HRESULT WINAPI IDirectInputDevice7AImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8A 
 							  LPVOID pvRef,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%p,%p,%08lx): stub !\n", iface, lpszFileName, pec, pvRef, dwFlags);
+    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", iface, lpszFileName, pec, pvRef, dwFlags);
     
     return DI_OK;
 }
@@ -819,7 +819,7 @@ HRESULT WINAPI IDirectInputDevice7WImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8W 
 							  LPVOID pvRef,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%p,%p,%08lx): stub !\n", iface, debugstr_w(lpszFileName), pec, pvRef, dwFlags);
+    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", iface, debugstr_w(lpszFileName), pec, pvRef, dwFlags);
     
     return DI_OK;
 }
@@ -830,7 +830,7 @@ HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8A 
 							  LPDIFILEEFFECT rgDiFileEft,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%08lx,%p,%08lx): stub !\n", iface, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
+    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", iface, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
     
     return DI_OK;
 }
@@ -841,7 +841,7 @@ HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W 
 							  LPDIFILEEFFECT rgDiFileEft,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%08lx,%p,%08lx): stub !\n", iface, debugstr_w(lpszFileName), dwEntries, rgDiFileEft, dwFlags);
+    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", iface, debugstr_w(lpszFileName), dwEntries, rgDiFileEft, dwFlags);
     
     return DI_OK;
 }
@@ -851,7 +851,7 @@ HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A ifa
 						       LPCSTR lpszUserName,
 						       DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08lx): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
     
     return DI_OK;
 }
@@ -861,7 +861,7 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 						       LPCWSTR lpszUserName,
 						       DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08lx): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
   
     return DI_OK;
 }
@@ -871,7 +871,7 @@ HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface
 						     LPCSTR lpszUserName,
 						     DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08lx): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
     
     return DI_OK;
 }
@@ -881,7 +881,7 @@ HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface
 						     LPCWSTR lpszUserName,
 						     DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08lx): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
     
     return DI_OK;
 }

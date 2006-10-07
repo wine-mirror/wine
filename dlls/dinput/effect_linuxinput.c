@@ -120,33 +120,33 @@ static void _dump_DIEFFECT_flags(DWORD dwFlags)
 static void _dump_DIENVELOPE(LPDIENVELOPE env)
 {
     if (env->dwSize != sizeof(DIENVELOPE)) {
-        WARN("Non-standard DIENVELOPE structure size (%ld instead of %d).\n",
+        WARN("Non-standard DIENVELOPE structure size (%d instead of %d).\n",
 	     env->dwSize, sizeof(DIENVELOPE));
     }
-    TRACE("Envelope has attack (level: %ld time: %ld), fade (level: %ld time: %ld)\n",
+    TRACE("Envelope has attack (level: %d time: %d), fade (level: %d time: %d)\n",
 	  env->dwAttackLevel, env->dwAttackTime, env->dwFadeLevel, env->dwFadeTime);
 } 
 
 static void _dump_DICONSTANTFORCE(LPDICONSTANTFORCE frc)
 {
-    TRACE("Constant force has magnitude %ld\n", frc->lMagnitude);
+    TRACE("Constant force has magnitude %d\n", frc->lMagnitude);
 }
 
 static void _dump_DIPERIODIC(LPDIPERIODIC frc)
 {
-    TRACE("Periodic force has magnitude %ld, offset %ld, phase %ld, period %ld\n",
+    TRACE("Periodic force has magnitude %d, offset %d, phase %d, period %d\n",
 	  frc->dwMagnitude, frc->lOffset, frc->dwPhase, frc->dwPeriod);
 }
 
 static void _dump_DIRAMPFORCE(LPDIRAMPFORCE frc)
 {
-    TRACE("Ramp force has start %ld, end %ld\n",
+    TRACE("Ramp force has start %d, end %d\n",
 	  frc->lStart, frc->lEnd);
 }
 
 static void _dump_DICONDITION(LPDICONDITION frc)
 {
-    TRACE("Condition has offset %ld, pos/neg coefficients %ld and %ld, pos/neg saturations %ld and %ld, deadband %ld\n",
+    TRACE("Condition has offset %d, pos/neg coefficients %d and %d, pos/neg saturations %d and %d, deadband %d\n",
 	  frc->lOffset, frc->lPositiveCoefficient, frc->lNegativeCoefficient,
 	  frc->dwPositiveSaturation, frc->dwNegativeSaturation, frc->lDeadBand);
 }
@@ -154,14 +154,14 @@ static void _dump_DICONDITION(LPDICONDITION frc)
 static void _dump_DICUSTOMFORCE(LPDICUSTOMFORCE frc)
 {
     unsigned int i;
-    TRACE("Custom force uses %ld channels, sample period %ld.  Has %ld samples at %p.\n",
+    TRACE("Custom force uses %d channels, sample period %d.  Has %d samples at %p.\n",
 	  frc->cChannels, frc->dwSamplePeriod, frc->cSamples, frc->rglForceData);
     if (frc->cSamples % frc->cChannels != 0)
 	WARN("Custom force has a non-integral samples-per-channel count!\n");
     if (TRACE_ON(dinput)) {
 	DPRINTF("Custom force data (time aligned, axes in order):\n");
 	for (i = 1; i <= frc->cSamples; ++i) {
-	    DPRINTF("%ld ", frc->rglForceData[i]);
+	    DPRINTF("%d ", frc->rglForceData[i]);
 	    if (i % frc->cChannels == 0)
 		DPRINTF("\n");
 	}	
@@ -174,34 +174,34 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     DWORD type = _typeFromGUID(guid);
 
     TRACE("Dumping DIEFFECT structure:\n");
-    TRACE("  - dwSize: %ld\n", eff->dwSize);
+    TRACE("  - dwSize: %d\n", eff->dwSize);
     if ((eff->dwSize != sizeof(DIEFFECT)) && (eff->dwSize != sizeof(DIEFFECT_DX5))) {
-        WARN("Non-standard DIEFFECT structure size (%ld instead of %d or %d).\n",
+        WARN("Non-standard DIEFFECT structure size (%d instead of %d or %d).\n",
 	     eff->dwSize, sizeof(DIEFFECT), sizeof(DIEFFECT_DX5));
     }
-    TRACE("  - dwFlags: %ld\n", eff->dwFlags);
+    TRACE("  - dwFlags: %d\n", eff->dwFlags);
     TRACE("    ");
     _dump_DIEFFECT_flags(eff->dwFlags); 
-    TRACE("  - dwDuration: %ld\n", eff->dwDuration);
-    TRACE("  - dwGain: %ld\n", eff->dwGain);
+    TRACE("  - dwDuration: %d\n", eff->dwDuration);
+    TRACE("  - dwGain: %d\n", eff->dwGain);
     if ((eff->dwGain > 10000) || (eff->dwGain < 0))
 	WARN("dwGain is out of range (0 - 10,000)\n"); 
-    TRACE("  - dwTriggerButton: %ld\n", eff->dwTriggerButton);
-    TRACE("  - dwTriggerRepeatInterval: %ld\n", eff->dwTriggerRepeatInterval);
-    TRACE("  - cAxes: %ld\n", eff->cAxes);
+    TRACE("  - dwTriggerButton: %d\n", eff->dwTriggerButton);
+    TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
+    TRACE("  - cAxes: %d\n", eff->cAxes);
     TRACE("  - rgdwAxes: %p\n", eff->rgdwAxes);
     if (TRACE_ON(dinput)) {
 	TRACE("    ");	
 	for (i = 0; i < eff->cAxes; ++i)
-	    DPRINTF("%ld ", eff->rgdwAxes[i]);
+	    DPRINTF("%d ", eff->rgdwAxes[i]);
 	DPRINTF("\n");
     }
     TRACE("  - rglDirection: %p\n", eff->rglDirection);
     TRACE("  - lpEnvelope: %p\n", eff->lpEnvelope);
-    TRACE("  - cbTypeSpecificParams: %ld\n", eff->cbTypeSpecificParams);
+    TRACE("  - cbTypeSpecificParams: %d\n", eff->cbTypeSpecificParams);
     TRACE("  - lpvTypeSpecificParams: %p\n", eff->lpvTypeSpecificParams);
     if (eff->dwSize > sizeof(DIEFFECT_DX5))
-    	TRACE("  - dwStartDelay: %ld\n", eff->dwStartDelay);
+    	TRACE("  - dwStartDelay: %d\n", eff->dwStartDelay);
     if (eff->lpEnvelope != NULL)
 	_dump_DIENVELOPE(eff->lpEnvelope);
     if (type == DIEFT_CONSTANTFORCE) {
@@ -314,7 +314,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
 {
     HRESULT diErr = DI_OK;
     LinuxInputEffectImpl *This = (LinuxInputEffectImpl *)iface;
-    TRACE("(this=%p,%p,%ld)\n", This, peff, dwFlags);
+    TRACE("(this=%p,%p,%d)\n", This, peff, dwFlags);
 
     /* Major conversion factors are:
      * times: millisecond (linux) -> microsecond (windows) (x * 1000)
@@ -466,7 +466,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Initialize(
 	DWORD dwVersion,
 	REFGUID rguid)
 {
-    FIXME("(this=%p,%p,%ld,%s): stub!\n",
+    FIXME("(this=%p,%p,%d,%s): stub!\n",
 	 iface, hinst, dwVersion, debugstr_guid(rguid));
 
     return DI_OK;
@@ -500,7 +500,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Start(
     struct input_event event;
     LinuxInputEffectImpl* This = (LinuxInputEffectImpl*)iface;
 
-    TRACE("(this=%p,%ld,%ld)\n", This, dwIterations, dwFlags);
+    TRACE("(this=%p,%d,%d)\n", This, dwIterations, dwFlags);
 
     if (!(dwFlags & DIES_NODOWNLOAD)) {
 	/* Download the effect if necessary */
@@ -535,7 +535,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     DWORD type = _typeFromGUID(&This->guid);
     HRESULT retval = DI_OK;
 
-    TRACE("(this=%p,%p,%ld)\n", This, peff, dwFlags);
+    TRACE("(this=%p,%p,%d)\n", This, peff, dwFlags);
 
     _dump_DIEFFECT(peff, &This->guid);
 
@@ -846,7 +846,7 @@ HRESULT linuxinput_get_info_A(
 {
     DWORD type = _typeFromGUID(rguid);
 
-    TRACE("(%d, %s, %p) type=%ld\n", fd, _dump_dinput_GUID(rguid), info, type);
+    TRACE("(%d, %s, %p) type=%d\n", fd, _dump_dinput_GUID(rguid), info, type);
 
     if (!info) return E_POINTER;
 
@@ -880,7 +880,7 @@ HRESULT linuxinput_get_info_W(
 {
     DWORD type = _typeFromGUID(rguid);
 
-    TRACE("(%d, %s, %p) type=%ld\n", fd, _dump_dinput_GUID(rguid), info, type);
+    TRACE("(%d, %s, %p) type=%d\n", fd, _dump_dinput_GUID(rguid), info, type);
 
     if (!info) return E_POINTER;
 
