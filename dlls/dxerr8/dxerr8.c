@@ -54,7 +54,7 @@ typedef struct {
 const char * WINAPI DXGetErrorString8A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
-    TRACE("(0x%08lx)\n", hr);
+    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -73,7 +73,7 @@ const WCHAR * WINAPI DXGetErrorString8W(HRESULT hr)
 {
     static const WCHAR unknown[] = { 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0 };
     unsigned int i, j, k = 0;
-    TRACE("(0x%08lx)\n", hr);
+    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -91,7 +91,7 @@ const WCHAR * WINAPI DXGetErrorString8W(HRESULT hr)
 const char * WINAPI DXGetErrorDescription8A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
-    TRACE("(0x%08lx)\n", hr);
+    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -110,7 +110,7 @@ const WCHAR * WINAPI DXGetErrorDescription8W(HRESULT hr)
 {
     static const WCHAR na[] = { 'n', '/', 'a', 0 };
     unsigned int i, j, k = 0;
-    TRACE("(0x%08lx)\n", hr);
+    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -128,14 +128,14 @@ const WCHAR * WINAPI DXGetErrorDescription8W(HRESULT hr)
 HRESULT WINAPI DXTraceA(const char* strFile, DWORD dwLine, HRESULT hr, const char*  strMsg, BOOL bPopMsgBox)
 {
     char msg[1024];
-    TRACE("(%p,%ld,0x%08lx,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
+    TRACE("(%p,%d,0x%08x,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
 
     if (bPopMsgBox) {
-        snprintf(msg, sizeof(msg), "File: %s\nLine: %ld\nError Code: %s (0x%08lx)\nCalling: %s",
+        snprintf(msg, sizeof(msg), "File: %s\nLine: %d\nError Code: %s (0x%08x)\nCalling: %s",
             strFile, dwLine, DXGetErrorString8A(hr), hr, strMsg);
         MessageBoxA(0, msg, "Unexpected error encountered", MB_OK|MB_ICONERROR);
     } else {
-        snprintf(msg, sizeof(msg), "%s(%ld): %s (hr=%s (0x%08lx))", strFile,
+        snprintf(msg, sizeof(msg), "%s(%d): %s (hr=%s (0x%08x))", strFile,
             dwLine, strMsg, DXGetErrorString8A(hr), hr);
         OutputDebugStringA(msg);
     }
@@ -146,7 +146,7 @@ HRESULT WINAPI DXTraceA(const char* strFile, DWORD dwLine, HRESULT hr, const cha
 HRESULT WINAPI DXTraceW(const char* strFile, DWORD dwLine, HRESULT hr, const WCHAR* strMsg, BOOL bPopMsgBox)
 {
     WCHAR msg[1024];
-    TRACE("(%p,%ld,0x%08lx,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
+    TRACE("(%p,%d,0x%08x,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
 
     if (bPopMsgBox) {
         static const WCHAR format[] = { 'F','i','l','e',':',' ','%','s','\\','n','L','i','n',
