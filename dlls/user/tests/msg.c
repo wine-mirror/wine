@@ -3062,30 +3062,30 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     /* do not be confused by WS_DLGFRAME set */
     if ((style & WS_CAPTION) == WS_CAPTION) style &= ~WS_CAPTION;
 
-    if (clear) ok(style & clear, "style %08lx should be set\n", clear);
-    if (set) ok(!(style & set), "style %08lx should not be set\n", set);
+    if (clear) ok(style & clear, "style %08x should be set\n", clear);
+    if (set) ok(!(style & set), "style %08x should not be set\n", set);
 
     ret = SetScrollRange(hwnd, ctl, min, max, FALSE);
-    ok( ret, "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ok( ret, "SetScrollRange(%d) error %d\n", ctl, GetLastError());
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
         ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC", FALSE);
     else
         ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)", FALSE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    if (set) ok(style & set, "style %08lx should be set\n", set);
-    if (clear) ok(!(style & clear), "style %08lx should not be set\n", clear);
+    if (set) ok(style & set, "style %08x should be set\n", set);
+    if (clear) ok(!(style & clear), "style %08x should not be set\n", clear);
 
     /* a subsequent call should do nothing */
     ret = SetScrollRange(hwnd, ctl, min, max, FALSE);
-    ok( ret, "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ok( ret, "SetScrollRange(%d) error %d\n", ctl, GetLastError());
     ok_sequence(WmEmptySeq, "SetScrollRange(SB_HORZ/SB_VERT) empty sequence", FALSE);
 
     xmin = 0xdeadbeef;
     xmax = 0xdeadbeef;
     trace("Ignore GetScrollRange error below if you are on Win9x\n");
     ret = GetScrollRange(hwnd, ctl, &xmin, &xmax);
-    ok( ret, "GetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ok( ret, "GetScrollRange(%d) error %d\n", ctl, GetLastError());
     ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT) empty sequence", FALSE);
     ok(xmin == min, "unexpected min scroll value %d\n", xmin);
     ok(xmax == max, "unexpected max scroll value %d\n", xmax);
@@ -3102,8 +3102,8 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     /* do not be confused by WS_DLGFRAME set */
     if ((style & WS_CAPTION) == WS_CAPTION) style &= ~WS_CAPTION;
 
-    if (clear) ok(style & clear, "style %08lx should be set\n", clear);
-    if (set) ok(!(style & set), "style %08lx should not be set\n", set);
+    if (clear) ok(style & clear, "style %08x should be set\n", clear);
+    if (set) ok(!(style & set), "style %08x should not be set\n", set);
 
     si.cbSize = sizeof(si);
     si.fMask = SIF_RANGE;
@@ -3116,8 +3116,8 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
         ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)", FALSE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    if (set) ok(style & set, "style %08lx should be set\n", set);
-    if (clear) ok(!(style & clear), "style %08lx should not be set\n", clear);
+    if (set) ok(style & set, "style %08x should be set\n", set);
+    if (clear) ok(!(style & clear), "style %08x should not be set\n", clear);
 
     /* a subsequent call should do nothing */
     SetScrollInfo(hwnd, ctl, &si, TRUE);
@@ -3142,7 +3142,7 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     si.nMin = 0xdeadbeef;
     si.nMax = 0xdeadbeef;
     ret = GetScrollInfo(hwnd, ctl, &si);
-    ok( ret, "GetScrollInfo error %ld\n", GetLastError());
+    ok( ret, "GetScrollInfo error %d\n", GetLastError());
     ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT) empty sequence", FALSE);
     ok(si.nMin == min, "unexpected min scroll value %d\n", si.nMin);
     ok(si.nMax == max, "unexpected max scroll value %d\n", si.nMax);
@@ -3158,14 +3158,14 @@ static void test_scroll_messages(HWND hwnd)
     min = 0xdeadbeef;
     max = 0xdeadbeef;
     ret = GetScrollRange(hwnd, SB_CTL, &min, &max);
-    ok( ret, "GetScrollRange error %ld\n", GetLastError());
+    ok( ret, "GetScrollRange error %d\n", GetLastError());
     if (sequence->message != WmGetScrollRangeSeq[0].message)
         trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
     flush_sequence();
 
     ret = SetScrollRange(hwnd, SB_CTL, 10, 150, FALSE);
-    ok( ret, "SetScrollRange error %ld\n", GetLastError());
+    ok( ret, "SetScrollRange error %d\n", GetLastError());
     if (sequence->message != WmSetScrollRangeSeq[0].message)
         trace("SetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     flush_sequence();
@@ -3173,7 +3173,7 @@ static void test_scroll_messages(HWND hwnd)
     min = 0xdeadbeef;
     max = 0xdeadbeef;
     ret = GetScrollRange(hwnd, SB_CTL, &min, &max);
-    ok( ret, "GetScrollRange error %ld\n", GetLastError());
+    ok( ret, "GetScrollRange error %d\n", GetLastError());
     if (sequence->message != WmGetScrollRangeSeq[0].message)
         trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
@@ -3206,7 +3206,7 @@ static void test_scroll_messages(HWND hwnd)
     si.nMin = 0xdeadbeef;
     si.nMax = 0xdeadbeef;
     ret = GetScrollInfo(hwnd, SB_CTL, &si);
-    ok( ret, "GetScrollInfo error %ld\n", GetLastError());
+    ok( ret, "GetScrollInfo error %d\n", GetLastError());
     if (sequence->message != WmGetScrollInfoSeq[0].message)
         trace("GetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
@@ -3314,7 +3314,7 @@ static void test_showwindow(void)
     GetWindowRect(hwnd, &rc);
     ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
         rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
-        "Invalid maximized size before ShowWindow (%ld,%ld)-(%ld,%ld)\n",
+        "Invalid maximized size before ShowWindow (%d,%d)-(%d,%d)\n",
         rc.left, rc.top, rc.right, rc.bottom);
     /* Reset window's size & position */
     SetWindowPos(hwnd, 0, 10, 10, 200, 200, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -3330,7 +3330,7 @@ static void test_showwindow(void)
     GetWindowRect(hwnd, &rc);
     ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
         rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
-        "Invalid maximized size after ShowWindow (%ld,%ld)-(%ld,%ld)\n",
+        "Invalid maximized size after ShowWindow (%d,%d)-(%d,%d)\n",
         rc.left, rc.top, rc.right, rc.bottom);
     DestroyWindow(hwnd);
     flush_sequence();
@@ -3396,7 +3396,7 @@ static void test_sys_menu(HWND hwnd)
 
     /* test existing window without CS_NOCLOSE style */
     hmenu = GetSystemMenu(hwnd, FALSE);
-    ok(hmenu != 0, "GetSystemMenu error %ld\n", GetLastError());
+    ok(hmenu != 0, "GetSystemMenu error %d\n", GetLastError());
 
     state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
     ok(state != 0xffffffff, "wrong SC_CLOSE state %x\n", state);
@@ -3422,7 +3422,7 @@ static void test_sys_menu(HWND hwnd)
     ok (hwnd != 0, "Failed to create overlapped window\n");
 
     hmenu = GetSystemMenu(hwnd, FALSE);
-    ok(hmenu != 0, "GetSystemMenu error %ld\n", GetLastError());
+    ok(hmenu != 0, "GetSystemMenu error %d\n", GetLastError());
 
     state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
     ok(state == 0xffffffff, "wrong SC_CLOSE state %x\n", state);
@@ -3724,18 +3724,18 @@ static void test_messages(void)
 
     /* MsgWaitForMultipleObjects test */
     ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
-    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %lx\n", ret);
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %x\n", ret);
 
     PostMessageA(hparent, WM_USER, 0, 0);
 
     ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
-    ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %lx\n", ret);
+    ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %x\n", ret);
 
     ok(PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
     ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
 
     ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
-    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %lx\n", ret);
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %x\n", ret);
     /* end of MsgWaitForMultipleObjects test */
 
     /* the following test causes an exception in user.exe under win9x */
@@ -3746,7 +3746,7 @@ static void test_messages(void)
     ok( !PeekMessageW( NULL, 0, 0, 0, PM_REMOVE ), "PeekMessage(NULL) should fail\n" );
     ok( GetLastError() == ERROR_NOACCESS || /* Win2k */
         GetLastError() == 0xdeadbeef, /* NT4 */
-        "last error is %ld\n", GetLastError() );
+        "last error is %d\n", GetLastError() );
     ok( PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n" );
     ok( msg.message == WM_USER+1, "got %x instead of WM_USER+1\n", msg.message );
 
@@ -4057,14 +4057,14 @@ static void test_button_messages(void)
 	ok(hwnd != 0, "Failed to create button window\n");
 
 	dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
-	ok(dlg_code == button[i].dlg_code, "%d: wrong dlg_code %08lx\n", i, dlg_code);
+	ok(dlg_code == button[i].dlg_code, "%d: wrong dlg_code %08x\n", i, dlg_code);
 
 	ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);
 	SetFocus(0);
 	flush_sequence();
 
-	trace("button style %08lx\n", button[i].style);
+	trace("button style %08x\n", button[i].style);
 	SetFocus(hwnd);
 	ok_sequence(button[i].setfocus, "SetFocus(hwnd) on a button", FALSE);
 
@@ -4105,9 +4105,9 @@ void dump_region(HRGN hrgn)
     if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
     if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
     GetRegionData( hrgn, size, data );
-    printf("%ld rects:", data->rdh.nCount );
+    printf("%d rects:", data->rdh.nCount );
     for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
-        printf( " (%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
+        printf( " (%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
     printf("\n");
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -4142,7 +4142,7 @@ static void check_update_rgn( HWND hwnd, HRGN hrgn )
     GetRgnBox( update, &r1 );
     GetUpdateRect( hwnd, &r2, FALSE );
     ok( r1.left == r2.left && r1.top == r2.top && r1.right == r2.right && r1.bottom == r2.bottom,
-        "Rectangles are different: %ld,%ld-%ld,%ld / %ld,%ld-%ld,%ld\n",
+        "Rectangles are different: %d,%d-%d,%d / %d,%d-%d,%d\n",
         r1.left, r1.top, r1.right, r1.bottom, r2.left, r2.top, r2.right, r2.bottom );
 
     DeleteObject( tmp );
@@ -4364,7 +4364,7 @@ static void test_paint_messages(void)
     trace("testing InvalidateRgn(0, NULL, FALSE)\n");
     SetLastError(0xdeadbeef);
     ok(!InvalidateRgn(0, NULL, FALSE), "InvalidateRgn(0, NULL, FALSE) should fail\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %d\n", GetLastError());
     check_update_rgn( hwnd, 0 );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
@@ -4372,7 +4372,7 @@ static void test_paint_messages(void)
     trace("testing ValidateRgn(0, NULL)\n");
     SetLastError(0xdeadbeef);
     ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %d\n", GetLastError());
     check_update_rgn( hwnd, 0 );
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
@@ -4785,7 +4785,7 @@ static void test_interthread_messages(void)
     }
 
     hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     ok(WaitForSingleObject(wnd_event.event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
 
@@ -4793,16 +4793,16 @@ static void test_interthread_messages(void)
 
     SetLastError(0xdeadbeef);
     ok(!DestroyWindow(wnd_event.hwnd), "DestroyWindow succeded\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error code %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error code %d\n", GetLastError());
 
     proc = (WNDPROC)GetWindowLongPtrA(wnd_event.hwnd, GWLP_WNDPROC);
-    ok(proc != NULL, "GetWindowLongPtrA(GWLP_WNDPROC) error %ld\n", GetLastError());
+    ok(proc != NULL, "GetWindowLongPtrA(GWLP_WNDPROC) error %d\n", GetLastError());
 
     expected_len = lstrlenA("window caption text");
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
     len = CallWindowProcA(proc, wnd_event.hwnd, WM_GETTEXT, sizeof(buf), (LPARAM)buf);
-    ok(len == expected_len, "CallWindowProcA(WM_GETTEXT) error %ld, len %d, expected len %d\n", GetLastError(), len, expected_len);
+    ok(len == expected_len, "CallWindowProcA(WM_GETTEXT) error %d, len %d, expected len %d\n", GetLastError(), len, expected_len);
     ok(!lstrcmpA(buf, "window caption text"), "window text mismatch\n");
 
     msg.hwnd = wnd_event.hwnd;
@@ -4813,7 +4813,7 @@ static void test_interthread_messages(void)
     SetLastError(0xdeadbeef);
     len = DispatchMessageA(&msg);
     ok(!len && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
-       "DispatchMessageA(WM_GETTEXT) succeded on another thread window: ret %d, error %ld\n", len, GetLastError());
+       "DispatchMessageA(WM_GETTEXT) succeded on another thread window: ret %d, error %d\n", len, GetLastError());
 
     /* the following test causes an exception in user.exe under win9x */
     msg.hwnd = wnd_event.hwnd;
@@ -4823,10 +4823,10 @@ static void test_interthread_messages(void)
     SetLastError(0xdeadbeef);
     len = DispatchMessageA(&msg);
     ok(!len && GetLastError() == 0xdeadbeef,
-       "DispatchMessageA(WM_TIMER) failed on another thread window: ret %d, error %ld\n", len, GetLastError());
+       "DispatchMessageA(WM_TIMER) failed on another thread window: ret %d, error %d\n", len, GetLastError());
 
     ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok( ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
+    ok( ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
 
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
@@ -5120,7 +5120,7 @@ static void test_accelerators(void)
     ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 1", FALSE);
 
     ret = DestroyAcceleratorTable(hAccel);
-    ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
+    ok( ret, "DestroyAcceleratorTable error %d\n", GetLastError());
 
     hAccel = LoadAccelerators(GetModuleHandleA(0), MAKEINTRESOURCE(2));
     assert(hAccel != 0);
@@ -5195,7 +5195,7 @@ static void test_accelerators(void)
     ok_sequence(WmCtrlAltShiftVkN, "Ctrl+Alt+Shift+VK_N press/release", FALSE);
 
     ret = DestroyAcceleratorTable(hAccel);
-    ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
+    ok( ret, "DestroyAcceleratorTable error %d\n", GetLastError());
 
     trace("testing Alt press/release\n");
     flush_sequence();
@@ -5342,22 +5342,22 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	MINMAXINFO *minmax = (MINMAXINFO *)lParam;
 
 	GetClientRect(parent, &rc);
-	trace("parent %p client size = (%ld x %ld)\n", parent, rc.right, rc.bottom);
+	trace("parent %p client size = (%d x %d)\n", parent, rc.right, rc.bottom);
 
-	trace("ptReserved = (%ld,%ld)\n"
-	      "ptMaxSize = (%ld,%ld)\n"
-	      "ptMaxPosition = (%ld,%ld)\n"
-	      "ptMinTrackSize = (%ld,%ld)\n"
-	      "ptMaxTrackSize = (%ld,%ld)\n",
+	trace("ptReserved = (%d,%d)\n"
+              "ptMaxSize = (%d,%d)\n"
+              "ptMaxPosition = (%d,%d)\n"
+              "ptMinTrackSize = (%d,%d)\n"
+              "ptMaxTrackSize = (%d,%d)\n",
 	      minmax->ptReserved.x, minmax->ptReserved.y,
 	      minmax->ptMaxSize.x, minmax->ptMaxSize.y,
 	      minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
 	      minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
 	      minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
 
-	ok(minmax->ptMaxSize.x == rc.right, "default width of maximized child %ld != %ld\n",
+	ok(minmax->ptMaxSize.x == rc.right, "default width of maximized child %d != %d\n",
 	   minmax->ptMaxSize.x, rc.right);
-	ok(minmax->ptMaxSize.y == rc.bottom, "default height of maximized child %ld != %ld\n",
+	ok(minmax->ptMaxSize.y == rc.bottom, "default height of maximized child %d != %d\n",
 	   minmax->ptMaxSize.y, rc.bottom);
     }
 
@@ -5445,7 +5445,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 RECT rc;
                 INT ret = GetClipBox((HDC)wParam, &rc);
 
-                trace("WM_ERASEBKGND: GetClipBox()=%d, (%ld,%ld-%ld,%ld)\n",
+                trace("WM_ERASEBKGND: GetClipBox()=%d, (%d,%d-%d,%d)\n",
                        ret, rc.left, rc.top, rc.right, rc.bottom);
                 break;
             }
@@ -5680,7 +5680,7 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 {
     char buf[256];
 
-    trace("WEH:%p,event %08lx,hwnd %p,obj %08lx,id %08lx,thread %08lx,time %08lx\n",
+    trace("WEH:%p,event %08x,hwnd %p,obj %08x,id %08x,thread %08x,time %08x\n",
 	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
 
     ok(thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
@@ -5827,35 +5827,35 @@ static void test_message_conversion(void)
     SetLastError(0);
     lRes = PostMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "PostMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "PostMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostThreadMessageA(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "PosThreadtMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = PostThreadMessageW(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "PosThreadtMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendNotifyMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "SendNotifyMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendNotifyMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "SendNotifyMessage on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendMessageCallbackA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "SendMessageCallback on sync only message returned %ld, last error %d\n", lRes, GetLastError());
     SetLastError(0);
     lRes = SendMessageCallbackW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
-        "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+        "SendMessageCallback on sync only message returned %ld, last error %d\n", lRes, GetLastError());
 
     /* Check WM_GETTEXTLENGTH A->W behaviour, whether WM_GETTEXT is also sent or not */
 
@@ -5890,7 +5890,7 @@ static void test_message_conversion(void)
         "got bad length %ld\n", lRes );
 
     ret = DestroyWindow(hwnd);
-    ok( ret, "DestroyWindow() error %ld\n", GetLastError());
+    ok( ret, "DestroyWindow() error %d\n", GetLastError());
 }
 
 struct timer_info
@@ -6034,7 +6034,7 @@ static void CALLBACK win_event_global_hook_proc(HWINEVENTHOOK hevent,
 {
     char buf[256];
 
-    trace("WEH_2:%p,event %08lx,hwnd %p,obj %08lx,id %08lx,thread %08lx,time %08lx\n",
+    trace("WEH_2:%p,event %08x,hwnd %p,obj %08x,id %08x,thread %08x,time %08x\n",
 	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
 
     if (GetClassNameA(hwnd, buf, sizeof(buf)))
@@ -6239,7 +6239,7 @@ static void test_winevents(void)
     hwnd2 = (HWND)hevent;
 
     hthread = CreateThread(NULL, 0, cbt_global_hook_thread_proc, &hwnd2, 0, &tid);
-    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
 
@@ -6254,7 +6254,7 @@ static void test_winevents(void)
     ok_sequence(WmGlobalHookSeq_2, "global hook 2", FALSE);
 
     ret = UnhookWindowsHookEx(hCBT_global_hook);
-    ok( ret, "UnhookWindowsHookEx error %ld\n", GetLastError());
+    ok( ret, "UnhookWindowsHookEx error %d\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -6293,14 +6293,14 @@ static void test_winevents(void)
 	GetModuleHandleA(0), win_event_global_hook_proc,
 	GetCurrentProcessId(), 0,
 	WINEVENT_INCONTEXT);
-    ok(hhook != 0, "SetWinEventHook error %ld\n", GetLastError());
+    ok(hhook != 0, "SetWinEventHook error %d\n", GetLastError());
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
     hwnd2 = (HWND)hevent;
 
     hthread = CreateThread(NULL, 0, win_event_global_thread_proc, &hwnd2, 0, &tid);
-    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
 
@@ -6316,7 +6316,7 @@ static void test_winevents(void)
     ok_sequence(WmWinEventCaretSeq, "caret winevent", FALSE);
 
     ret = pUnhookWinEvent(hhook);
-    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+    ok( ret, "UnhookWinEvent error %d\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -6331,7 +6331,7 @@ static void test_winevents(void)
 	0, win_event_global_hook_proc,
 	GetCurrentProcessId(), 0,
 	WINEVENT_OUTOFCONTEXT);
-    ok(hhook != 0, "SetWinEventHook error %ld\n", GetLastError());
+    ok(hhook != 0, "SetWinEventHook error %d\n", GetLastError());
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
@@ -6340,7 +6340,7 @@ static void test_winevents(void)
     flush_sequence();
 
     hthread = CreateThread(NULL, 0, win_event_global_thread_proc, &hwnd2, 0, &tid);
-    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
 
@@ -6362,7 +6362,7 @@ static void test_winevents(void)
     ok_sequence(WmWinEventCaretSeq_2, "caret winevent for out of context proc", FALSE);
 
     ret = pUnhookWinEvent(hhook);
-    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+    ok( ret, "UnhookWinEvent error %d\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -6385,7 +6385,7 @@ static void test_winevents(void)
     hwnd2 = (HWND)hevent;
 
     hthread = CreateThread(NULL, 0, mouse_ll_global_thread_proc, &hwnd2, 0, &tid);
-    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     while (WaitForSingleObject(hevent, 100) == WAIT_TIMEOUT)
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
@@ -6400,7 +6400,7 @@ static void test_winevents(void)
     ok_sequence(WmMouseLLHookSeq, "MOUSE_LL hook same thread", FALSE);
 
     ret = UnhookWindowsHookEx(hCBT_global_hook);
-    ok( ret, "UnhookWindowsHookEx error %ld\n", GetLastError());
+    ok( ret, "UnhookWindowsHookEx error %d\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -6438,13 +6438,13 @@ static void test_set_hook(void)
     ok(!hhook, "SetWinEventHook with invalid proc should fail\n");
     ok(GetLastError() == ERROR_INVALID_FILTER_PROC || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+       "unexpected error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ok(!UnhookWindowsHookEx((HHOOK)0xdeadbeef), "UnhookWindowsHookEx succeeded\n");
     ok(GetLastError() == ERROR_INVALID_HOOK_HANDLE || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+       "unexpected error %d\n", GetLastError());
 
     if (!pSetWinEventHook || !pUnhookWinEvent) return;
 
@@ -6455,7 +6455,7 @@ static void test_set_hook(void)
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
     ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+       "unexpected error %d\n", GetLastError());
 
     /* even thread local incontext hooks require hmodule */
     SetLastError(0xdeadbeef);
@@ -6464,7 +6464,7 @@ static void test_set_hook(void)
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
     ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+       "unexpected error %d\n", GetLastError());
 
 #if 0 /* these 3 tests don't pass under Win9x */
     SetLastError(0xdeadbeef);
@@ -6489,10 +6489,10 @@ static void test_set_hook(void)
     SetLastError(0xdeadbeef);
     hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(0, 0,
 	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
-    ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
-    ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
+    ok(hwinevent_hook != 0, "SetWinEventHook error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
     ret = pUnhookWinEvent(hwinevent_hook);
-    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+    ok( ret, "UnhookWinEvent error %d\n", GetLastError());
 
 todo_wine {
     /* This call succeeds under win2k SP4, but fails under Wine.
@@ -6500,17 +6500,17 @@ todo_wine {
     SetLastError(0xdeadbeef);
     hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
 	0, win_event_proc, 0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
-    ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
-    ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
+    ok(hwinevent_hook != 0, "SetWinEventHook error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
     ret = pUnhookWinEvent(hwinevent_hook);
-    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+    ok( ret, "UnhookWinEvent error %d\n", GetLastError());
 }
 
     SetLastError(0xdeadbeef);
     ok(!pUnhookWinEvent((HWINEVENTHOOK)0xdeadbeef), "UnhookWinEvent succeeded\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */
 	GetLastError() == 0xdeadbeef, /* Win9x */
-	"unexpected error %ld\n", GetLastError());
+	"unexpected error %d\n", GetLastError());
 }
 
 static const struct message ScrollWindowPaint1[] = {
@@ -6711,7 +6711,7 @@ todo_wine {
 
     test_DestroyWindow_flag = TRUE;
     ret = DestroyWindow(parent);
-    ok( ret, "DestroyWindow() error %ld\n", GetLastError());
+    ok( ret, "DestroyWindow() error %d\n", GetLastError());
     test_DestroyWindow_flag = FALSE;
     ok_sequence(destroy_window_with_children, "destroy window with children", 0);
 
@@ -6812,7 +6812,7 @@ static DWORD CALLBACK send_msg_thread( LPVOID arg )
 {
     struct sendmsg_info *info = arg;
     info->ret = SendMessageTimeoutA( info->hwnd, WM_USER, 0, 0, 0, info->timeout, NULL );
-    if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT, "unexpected error %ld\n", GetLastError());
+    if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT, "unexpected error %d\n", GetLastError());
     return 0;
 }
 
@@ -7054,7 +7054,7 @@ static void test_edit_messages(void)
     ok(hwnd != 0, "Failed to create edit window\n");
 
     dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
-    ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS), "wrong dlg_code %08lx\n", dlg_code);
+    ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS), "wrong dlg_code %08x\n", dlg_code);
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
@@ -7093,7 +7093,7 @@ static void test_edit_messages(void)
 
     dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
     ok(dlg_code == (DLGC_WANTCHARS|DLGC_HASSETSEL|DLGC_WANTARROWS|DLGC_WANTALLKEYS),
-       "wrong dlg_code %08lx\n", dlg_code);
+       "wrong dlg_code %08x\n", dlg_code);
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
@@ -7167,7 +7167,7 @@ static DWORD CALLBACK send_msg_thread_2(void *param)
             break;
 
         default:
-            trace("unexpected return: %04lx\n", ret);
+            trace("unexpected return: %04x\n", ret);
             assert(0);
             break;
         }
@@ -7213,7 +7213,7 @@ static void test_PeekMessage(void)
         qs_all_input &= ~QS_RAWINPUT;
         qs_input &= ~QS_RAWINPUT;
     }
-    ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
+    ok(qstatus == 0, "wrong qstatus %08x\n", qstatus);
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
@@ -7222,12 +7222,12 @@ static void test_PeekMessage(void)
     /* pass invalid QS_xxxx flags */
     SetLastError(0xdeadbeef);
     qstatus = GetQueueStatus(0xffffffff);
-    ok(qstatus == 0, "GetQueueStatus should fail: %08lx\n", qstatus);
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %ld\n", GetLastError());
+    ok(qstatus == 0, "GetQueueStatus should fail: %08x\n", qstatus);
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %d\n", GetLastError());
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
@@ -7237,23 +7237,23 @@ static void test_PeekMessage(void)
     ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-    ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
+    ok(qstatus == 0, "wrong qstatus %08x\n", qstatus);
 
     keybd_event('N', 0, 0, 0);
     keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_KEY, QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     InvalidateRect(info.hwnd, NULL, FALSE);
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
@@ -7261,7 +7261,7 @@ static void test_PeekMessage(void)
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_PAINT|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (qs_input << 16));
@@ -7275,7 +7275,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     trace("signalling to send message\n");
@@ -7285,7 +7285,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_PAINT|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7300,7 +7300,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7315,7 +7315,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7330,7 +7330,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7343,7 +7343,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7356,7 +7356,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     trace("signalling to send message\n");
@@ -7366,7 +7366,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
@@ -7374,7 +7374,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7387,7 +7387,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7400,7 +7400,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
@@ -7408,7 +7408,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     trace("signalling to send message\n");
@@ -7418,7 +7418,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7433,7 +7433,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7448,7 +7448,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE|QS_KEY),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7463,7 +7463,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7476,7 +7476,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7490,7 +7490,7 @@ todo_wine {
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == 0,
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
@@ -7501,7 +7501,7 @@ todo_wine {
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == 0,
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     /* test whether presence of the quit flag in the queue affects
      * the queue state
@@ -7510,13 +7510,13 @@ todo_wine {
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     PostMessageA(info.hwnd, WM_USER, 0, 0);
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
@@ -7526,7 +7526,7 @@ todo_wine {
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
@@ -7539,7 +7539,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 }
 
     msg.message = 0;
@@ -7551,7 +7551,7 @@ todo_wine {
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == 0,
-       "wrong qstatus %08lx\n", qstatus);
+       "wrong qstatus %08x\n", qstatus);
 
     trace("signalling to exit\n");
     SetEvent(info.hevent[EV_START_STOP]);
@@ -7576,20 +7576,20 @@ static void test_quit_message(void)
     PostQuitMessage(0xbeef);
 
     ret = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
-    ok(ret, "PeekMessage failed with error %ld\n", GetLastError());
+    ok(ret, "PeekMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
     ok(msg.wParam == 0xbeef, "wParam was 0x%x instead of 0xbeef\n", msg.wParam);
 
     ret = PostThreadMessage(GetCurrentThreadId(), WM_USER, 0, 0);
-    ok(ret, "PostMessage failed with error %ld\n", GetLastError());
+    ok(ret, "PostMessage failed with error %d\n", GetLastError());
 
     ret = GetMessage(&msg, NULL, 0, 0);
-    ok(ret > 0, "GetMessage failed with error %ld\n", GetLastError());
+    ok(ret > 0, "GetMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
 
     /* note: WM_QUIT message received after WM_USER message */
     ret = GetMessage(&msg, NULL, 0, 0);
-    ok(!ret, "GetMessage return %d with error %ld instead of FALSE\n", ret, GetLastError());
+    ok(!ret, "GetMessage return %d with error %d instead of FALSE\n", ret, GetLastError());
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
     ok(msg.wParam == 0xbeef, "wParam was 0x%x instead of 0xbeef\n", msg.wParam);
 
@@ -7600,21 +7600,21 @@ static void test_quit_message(void)
     PostThreadMessage(GetCurrentThreadId(), WM_QUIT, 0xdead, 0);
 
     ret = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
-    ok(ret, "PeekMessage failed with error %ld\n", GetLastError());
+    ok(ret, "PeekMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
     ok(msg.wParam == 0xdead, "wParam was 0x%x instead of 0xdead\n", msg.wParam);
 
     ret = PostThreadMessage(GetCurrentThreadId(), WM_USER, 0, 0);
-    ok(ret, "PostMessage failed with error %ld\n", GetLastError());
+    ok(ret, "PostMessage failed with error %d\n", GetLastError());
 
     /* note: we receive the WM_QUIT message first this time */
     ret = GetMessage(&msg, NULL, 0, 0);
-    ok(!ret, "GetMessage return %d with error %ld instead of FALSE\n", ret, GetLastError());
+    ok(!ret, "GetMessage return %d with error %d instead of FALSE\n", ret, GetLastError());
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
     ok(msg.wParam == 0xdead, "wParam was 0x%x instead of 0xdead\n", msg.wParam);
 
     ret = GetMessage(&msg, NULL, 0, 0);
-    ok(ret > 0, "GetMessage failed with error %ld\n", GetLastError());
+    ok(ret > 0, "GetMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
 }
 
@@ -7682,7 +7682,7 @@ static void test_TrackMouseEvent(void)
     tme.dwHoverTime = track_hover_time; \
     SetLastError(0xdeadbeef); \
     ret = TrackMouseEvent(&tme); \
-    ok(ret, "TrackMouseEvent(TME_HOVER) error %ld\n", GetLastError())
+    ok(ret, "TrackMouseEvent(TME_HOVER) error %d\n", GetLastError())
 
 #define track_query(expected_track_flags, expected_track_hwnd, expected_hover_time) \
     tme.cbSize = sizeof(tme); \
@@ -7691,14 +7691,14 @@ static void test_TrackMouseEvent(void)
     tme.dwHoverTime = 0xdeadbeef; \
     SetLastError(0xdeadbeef); \
     ret = TrackMouseEvent(&tme); \
-    ok(ret, "TrackMouseEvent(TME_QUERY) error %ld\n", GetLastError());\
-    ok(tme.cbSize == sizeof(tme), "wrong tme.cbSize %lu\n", tme.cbSize); \
+    ok(ret, "TrackMouseEvent(TME_QUERY) error %d\n", GetLastError());\
+    ok(tme.cbSize == sizeof(tme), "wrong tme.cbSize %u\n", tme.cbSize); \
     ok(tme.dwFlags == (expected_track_flags), \
-       "wrong tme.dwFlags %08lx, expected %08x\n", tme.dwFlags, (expected_track_flags)); \
+       "wrong tme.dwFlags %08x, expected %08x\n", tme.dwFlags, (expected_track_flags)); \
     ok(tme.hwndTrack == (expected_track_hwnd), \
        "wrong tme.hwndTrack %p, expected %p\n", tme.hwndTrack, (expected_track_hwnd)); \
     ok(tme.dwHoverTime == (expected_hover_time), \
-       "wrong tme.dwHoverTime %lu, expected %u\n", tme.dwHoverTime, (expected_hover_time))
+       "wrong tme.dwHoverTime %u, expected %u\n", tme.dwHoverTime, (expected_hover_time))
 
 #define track_hover_cancel(track_hwnd) \
     tme.cbSize = sizeof(tme); \
@@ -7707,7 +7707,7 @@ static void test_TrackMouseEvent(void)
     tme.dwHoverTime = 0xdeadbeef; \
     SetLastError(0xdeadbeef); \
     ret = TrackMouseEvent(&tme); \
-    ok(ret, "TrackMouseEvent(TME_HOVER | TME_CANCEL) error %ld\n", GetLastError())
+    ok(ret, "TrackMouseEvent(TME_HOVER | TME_CANCEL) error %d\n", GetLastError())
 
     default_hover_time = 0xdeadbeef;
     ret = SystemParametersInfo(SPI_GETMOUSEHOVERTIME, 0, &default_hover_time, 0);
@@ -7740,7 +7740,7 @@ static void test_TrackMouseEvent(void)
     SetLastError(0xdeadbeef);
     ret = TrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
 
     tme.cbSize = sizeof(tme);
     tme.dwFlags = TME_HOVER;
@@ -7749,7 +7749,7 @@ static void test_TrackMouseEvent(void)
     SetLastError(0xdeadbeef);
     ret = TrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %d\n", GetLastError());
 
     tme.cbSize = sizeof(tme);
     tme.dwFlags = TME_HOVER | TME_CANCEL;
@@ -7758,7 +7758,7 @@ static void test_TrackMouseEvent(void)
     SetLastError(0xdeadbeef);
     ret = TrackMouseEvent(&tme);
     ok(!ret, "TrackMouseEvent should fail\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "not expected error %d\n", GetLastError());
 
     GetWindowRect(hwnd, &rc_parent);
     GetWindowRect(hchild, &rc_child);
@@ -7859,7 +7859,7 @@ START_TEST(msg)
     if (pUnhookWinEvent && hEvent_hook)
     {
         ret = pUnhookWinEvent(hEvent_hook);
-        ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+        ok( ret, "UnhookWinEvent error %d\n", GetLastError());
         pUnhookWinEvent = 0;
     }
     hEvent_hook = 0;
@@ -7888,11 +7888,11 @@ START_TEST(msg)
     if (pUnhookWinEvent)
     {
 	ret = pUnhookWinEvent(hEvent_hook);
-	ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+	ok( ret, "UnhookWinEvent error %d\n", GetLastError());
 	SetLastError(0xdeadbeef);
 	ok(!pUnhookWinEvent(hEvent_hook), "UnhookWinEvent succeeded\n");
 	ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */
 	   GetLastError() == 0xdeadbeef, /* Win9x */
-	   "unexpected error %ld\n", GetLastError());
+           "unexpected error %d\n", GetLastError());
     }
 }

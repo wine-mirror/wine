@@ -106,9 +106,9 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok(!SetClassLongW(hTestWnd,i*sizeof(DWORD),i+1),
-            "GetClassLongW(%ld) initial value nonzero!\n",i*sizeof(DWORD));
+            "GetClassLongW(%d) initial value nonzero!\n",i*sizeof(DWORD));
         ok(!GetLastError(),
-            "SetClassLongW(%ld) failed!\n",i*sizeof(DWORD));
+            "SetClassLongW(%d) failed!\n",i*sizeof(DWORD));
     }
 
     /* test values of valid classwords that we set */
@@ -255,7 +255,7 @@ static void check_instance( const char *name, HINSTANCE inst, HINSTANCE info_ins
         "Wrong GWL instance %p/%p for window %s\n",
         (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), inst, name );
     ok(!UnregisterClassA(name, inst), "UnregisterClassA should fail while exists a class window\n");
-    ok(GetLastError() == ERROR_CLASS_HAS_WINDOWS, "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_CLASS_HAS_WINDOWS, "GetLastError() should be set to ERROR_CLASS_HAS_WINDOWS not %d\n", GetLastError());
     DestroyWindow(hwnd);
 }
 
@@ -286,7 +286,7 @@ static void check_thread_instance( const char *name, HINSTANCE inst, HINSTANCE i
     class_info.gcl_inst = gcl_inst;
 
     hThread = CreateThread(NULL, 0, thread_proc, &class_info, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
 }
@@ -425,7 +425,7 @@ static void test_instances(void)
     cls.lpszMenuName  = "null";
     cls.hInstance = 0;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for null instance\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
     ok( UnregisterClassA( name, main_module ), "Unregister failed for main module\n" );
 
     ok( RegisterClassA( &cls ), "Failed to register local class for null instance\n" );
@@ -434,17 +434,17 @@ static void test_instances(void)
     check_instance( name, main_module, main_module, main_module );
     check_thread_instance( name, main_module, main_module, main_module );
     ok( !GetClassInfo( 0, name, &wc ), "Class found with null instance\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
     ok( UnregisterClassA( name, 0 ), "Unregister failed for null instance\n" );
 
     /* registering for user32 always fails */
     cls.lpszMenuName = "user32";
     cls.hInstance = user32;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for user32\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %d\n", GetLastError() );
     cls.style |= CS_GLOBALCLASS;
     ok( !RegisterClassA( &cls ), "Succeeded registering global class for user32\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error code %d\n", GetLastError() );
 
     /* unregister is OK though */
     cls.hInstance = main_module;
@@ -459,12 +459,12 @@ static void test_instances(void)
     cls.lpszMenuName  = "kernel32";
     cls.hInstance = kernel32;
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
     /* even if global flag is cleared */
     hwnd = CreateWindowExA( 0, name, "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
     SetClassLongA( hwnd, GCL_STYLE, 0 );
     ok( !RegisterClassA( &cls ), "Succeeded registering local class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
 
     check_class( main_module, name, "main_module" );
     check_class( kernel32, name, "main_module" );
@@ -485,7 +485,7 @@ static void test_instances(void)
     DestroyWindow( hwnd );
     ok( UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister failed for main module global\n" );
     ok( !UnregisterClassA( name, (HINSTANCE)0x87654321 ), "Unregister succeeded the second time\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
 
     cls.hInstance = (HINSTANCE)0x12345678;
     ok( RegisterClassA( &cls ), "Failed to register global class for dummy instance\n" );
@@ -503,10 +503,10 @@ static void test_instances(void)
     cls.lpszClassName = "BUTTON";
     cls.hInstance = main_module;
     ok( !RegisterClassA( &cls ), "Succeeded registering global button class for main module\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
     cls.hInstance = kernel32;
     ok( !RegisterClassA( &cls ), "Succeeded registering global button class for kernel32\n" );
-    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_ALREADY_EXISTS, "Wrong error code %d\n", GetLastError() );
 
     /* local class is OK however */
     cls.style &= ~CS_GLOBALCLASS;
@@ -534,9 +534,9 @@ static void test_instances(void)
     ok( GetClassInfo( kernel32, "BUTTON", &wc ), "Button class not found with kernel32\n" );
     ok( UnregisterClass( "BUTTON", (HINSTANCE)0x12345678 ), "Failed to unregister button\n" );
     ok( !UnregisterClass( "BUTTON", (HINSTANCE)0x87654321 ), "Unregistered button a second time\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
     ok( !GetClassInfo( 0, "BUTTON", &wc ), "Button still exists\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
 
     /* we can change the instance of a system class */
     check_instance( "EDIT", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );

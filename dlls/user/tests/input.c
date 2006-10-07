@@ -240,7 +240,7 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
     trace("======== key stroke sequence #%d: %s =============\n",
             seqnr + 1, buf);
     while( PeekMessage(&msg,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) ) {
-        trace("message[%d] %-15s wParam %04x lParam %08lx time %lx\n", i,
+        trace("message[%d] %-15s wParam %04x lParam %08lx time %x\n", i,
                 MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
         if( i < kmctr ) {
             ok( msg.message == expmsg[i].message &&

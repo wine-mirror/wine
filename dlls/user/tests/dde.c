@@ -227,7 +227,7 @@ static void test_dde_transaction(void)
 
     dde_inst = 0;
     ret = DdeInitializeA(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
-    ok(ret == DMLERR_NO_ERROR, "DdeInitializeW failed with error %04lx (%x)\n",
+    ok(ret == DMLERR_NO_ERROR, "DdeInitializeW failed with error %04x (%x)\n",
        ret, DdeGetLastError(dde_inst));
 
     hsz_server = DdeCreateStringHandleW(dde_inst, TEST_DDE_SERVICE, CP_WINUNICODE);
@@ -235,11 +235,11 @@ static void test_dde_transaction(void)
     hconv = DdeConnect(dde_inst, hsz_server, 0, NULL);
     ok(hconv != 0, "DdeConnect error %x\n", DdeGetLastError(dde_inst));
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NO_ERROR, "wrong dde error %lx\n", err);
+    ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
 
     info.cb = sizeof(info);
     ret = DdeQueryConvInfo(hconv, QID_SYNC, &info);
-    ok(ret, "wrong info size %ld, DdeQueryConvInfo error %x\n", ret, DdeGetLastError(dde_inst));
+    ok(ret, "wrong info size %d, DdeQueryConvInfo error %x\n", ret, DdeGetLastError(dde_inst));
     /* should be CP_WINANSI since we used DdeInitializeA */
     ok(info.ConvCtxt.iCodePage == CP_WINANSI, "wrong iCodePage %d\n", info.ConvCtxt.iCodePage);
     ok(!info.hConvPartner, "unexpected info.hConvPartner: %p\n", info.hConvPartner);
@@ -256,26 +256,26 @@ todo_wine {
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)test_cmd, strlen(test_cmd) + 1, hconv, (HSZ)0xdead, 0xbeef, XTYP_EXECUTE, 1000, &ret);
     ok(!hdata, "DdeClientTransaction succeeded\n");
-    ok(ret == DDE_FNOTPROCESSED, "wrong status code %04lx\n", ret);
+    ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NOTPROCESSED, "wrong dde error %lx\n", err);
+    ok(err == DMLERR_NOTPROCESSED, "wrong dde error %x\n", err);
 
     trace("sending ANSI client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdA, lstrlenA(exec_cmdA) + 1, hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
     ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, DdeGetLastError(dde_inst));
-    ok(ret == DDE_FACK, "wrong status code %04lx\n", ret);
+    ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
 
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NO_ERROR, "wrong dde error %lx\n", err);
+    ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
 
     trace("sending unicode client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdW, (lstrlenW(exec_cmdW) + 1) * sizeof(WCHAR), hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
     ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, DdeGetLastError(dde_inst));
-    ok(ret == DDE_FACK, "wrong status code %04lx\n", ret);
+    ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NO_ERROR, "wrong dde error %lx\n", err);
+    ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
 
     ok(DdeDisconnect(hconv), "DdeDisconnect error %x\n", DdeGetLastError(dde_inst));
 
@@ -284,7 +284,7 @@ todo_wine {
     ok(!ret, "DdeQueryConvInfo should fail\n");
     err = DdeGetLastError(dde_inst);
 todo_wine {
-    ok(err == DMLERR_INVALIDPARAMETER, "wrong dde error %lx\n", err);
+    ok(err == DMLERR_INVALIDPARAMETER, "wrong dde error %x\n", err);
 }
 
     ok(DdeFreeStringHandle(dde_inst, hsz_server), "DdeFreeStringHandle error %x\n", DdeGetLastError(dde_inst));
@@ -366,12 +366,12 @@ static void test_DdeCreateStringHandle(void)
         return;
     }
 
-    ok(ret == DMLERR_INVALIDPARAMETER, "DdeInitializeW should fail, but got %04lx instead\n", ret);
+    ok(ret == DMLERR_INVALIDPARAMETER, "DdeInitializeW should fail, but got %04x instead\n", ret);
     ok(DdeGetLastError(dde_inst) == DMLERR_INVALIDPARAMETER, "expected DMLERR_INVALIDPARAMETER\n");
 
     dde_inst = 0;
     ret = DdeInitializeW(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
-    ok(ret == DMLERR_NO_ERROR, "DdeInitializeW failed with error %04lx (%08x)\n",
+    ok(ret == DMLERR_NO_ERROR, "DdeInitializeW failed with error %04x (%08x)\n",
        ret, DdeGetLastError(dde_inst));
 
     test_DdeCreateStringHandleW(dde_inst, 0);

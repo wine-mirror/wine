@@ -46,9 +46,9 @@ static void test_DrawTextCalcRect(void)
     /* Initialization */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
                            0, 0, 200, 200, 0, 0, 0, NULL);
-    ok(hwnd != 0, "CreateWindowExA error %lu\n", GetLastError());
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
     hdc = GetDC(hwnd);
-    ok(hdc != 0, "GetDC error %lu\n", GetLastError());
+    ok(hdc != 0, "GetDC error %u\n", GetLastError());
     trace("hdc %p\n", hdc);
     textlen = lstrlenA(text);
 
@@ -65,23 +65,23 @@ static void test_DrawTextCalcRect(void)
     SetMapMode(hdc, MM_HIENGLISH);
     lf.lfHeight = 100 * 9 / 72; /* 9 point */
     hFont = CreateFontIndirectA(&lf);
-    ok(hFont != 0, "CreateFontIndirectA error %lu\n",
+    ok(hFont != 0, "CreateFontIndirectA error %u\n",
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
     textheight = DrawTextA(hdc, text, textlen, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
        DT_NOPREFIX);
-    ok( textheight, "DrawTextA error %lu\n", GetLastError());
+    ok( textheight, "DrawTextA error %u\n", GetLastError());
 
-    trace("MM_HIENGLISH rect.bottom %ld\n", rect.bottom);
+    trace("MM_HIENGLISH rect.bottom %d\n", rect.bottom);
     todo_wine ok(rect.bottom < 0, "In MM_HIENGLISH, DrawText with "
        "DT_CALCRECT should return a negative rectangle bottom. "
-       "(bot=%ld)\n", rect.bottom);
+       "(bot=%d)\n", rect.bottom);
 
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
-    ok( ret, "DeleteObject error %lu\n", GetLastError());
+    ok( ret, "DeleteObject error %u\n", GetLastError());
 
 
     /* DrawText in MM_TEXT with DT_CALCRECT */
@@ -89,18 +89,18 @@ static void test_DrawTextCalcRect(void)
     lf.lfHeight = -MulDiv(9, GetDeviceCaps(hdc,
        LOGPIXELSY), 72); /* 9 point */
     hFont = CreateFontIndirectA(&lf);
-    ok(hFont != 0, "CreateFontIndirectA error %lu\n",
+    ok(hFont != 0, "CreateFontIndirectA error %u\n",
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
     textheight = DrawTextA(hdc, text, textlen, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
        DT_NOPREFIX);
-    ok( textheight, "DrawTextA error %lu\n", GetLastError());
+    ok( textheight, "DrawTextA error %u\n", GetLastError());
 
-    trace("MM_TEXT rect.bottom %ld\n", rect.bottom);
+    trace("MM_TEXT rect.bottom %d\n", rect.bottom);
     ok(rect.bottom > 0, "In MM_TEXT, DrawText with DT_CALCRECT "
-       "should return a positive rectangle bottom. (bot=%ld)\n",
+       "should return a positive rectangle bottom. (bot=%d)\n",
        rect.bottom);
 
     /* empty or null text should in some cases calc an empty rectangle */
@@ -148,13 +148,13 @@ static void test_DrawTextCalcRect(void)
 
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
-    ok( ret, "DeleteObject error %lu\n", GetLastError());
+    ok( ret, "DeleteObject error %u\n", GetLastError());
 
     /* Clean up */
     ret = ReleaseDC(hwnd, hdc);
-    ok( ret, "ReleaseDC error %lu\n", GetLastError());
+    ok( ret, "ReleaseDC error %u\n", GetLastError());
     ret = DestroyWindow(hwnd);
-    ok( ret, "DestroyWindow error %lu\n", GetLastError());
+    ok( ret, "DestroyWindow error %u\n", GetLastError());
 }
 
 /* replace tabs by \t */
@@ -194,12 +194,12 @@ static void test_TabbedText(void)
     /* Initialization */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
                            0, 0, 200, 200, 0, 0, 0, NULL);
-    ok(hwnd != 0, "CreateWindowExA error %lu\n", GetLastError());
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
     hdc = GetDC(hwnd);
-    ok(hdc != 0, "GetDC error %lu\n", GetLastError());
+    ok(hdc != 0, "GetDC error %u\n", GetLastError());
 
     ret = GetTextMetricsA( hdc, &tm);
-    ok( ret, "GetTextMetrics error %lu\n", GetLastError());
+    ok( ret, "GetTextMetrics error %u\n", GetLastError());
 
     extent = GetTabbedTextExtentA( hdc, "x", 1, 1, tabs);
     cx = LOWORD( extent);

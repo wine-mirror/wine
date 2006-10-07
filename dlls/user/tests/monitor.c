@@ -80,7 +80,7 @@ static void test_enumdisplaydevices(void)
         {
             /* test creating DC */
             dc = CreateDCA(dd.DeviceName, NULL, NULL, NULL);
-            ok(dc != NULL, "Failed to CreateDC(\"%s\") err=%ld\n", dd.DeviceName, GetLastError());
+            ok(dc != NULL, "Failed to CreateDC(\"%s\") err=%d\n", dd.DeviceName, GetLastError());
             DeleteDC(dc);
         }
         num++;
@@ -140,10 +140,10 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
         res = ChangeDisplaySettingsEx(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
-        ok(res == vid_modes_test[i].res, "Failed to change resolution[%d]: %ld\n", i, res);
+        ok(res == vid_modes_test[i].res, "Failed to change resolution[%d]: %d\n", i, res);
     }
     res = ChangeDisplaySettingsEx(NULL, NULL, NULL, CDS_RESET, NULL);
-    ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %ld\n", res);
+    ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %d\n", res);
 }
 
 

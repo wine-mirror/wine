@@ -196,7 +196,7 @@ static BOOL CreateWindows (HINSTANCE hinst)
             exstyle = GetWindowLong (hwnd[p->id], GWL_EXSTYLE);
             if (style != p->style || exstyle != p->exstyle)
             {
-                trace ("Style mismatch at %d: %8.8lx %8.8lx cf %8.8lx %8.8lx\n", p->id, style, exstyle, p->style, p->exstyle);
+                trace ("Style mismatch at %d: %8.8x %8.8x cf %8.8x %8.8x\n", p->id, style, exstyle, p->style, p->exstyle);
             }
         }
         p++;

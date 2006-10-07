@@ -30,7 +30,7 @@ static BOOL is_win9x = FALSE;
     { \
         if (!is_win9x) \
             ok(GetLastError() == expected_error, \
-               "Last error should be set to %d, not %ld\n", \
+               "Last error should be set to %d, not %d\n", \
                 expected_error, GetLastError()); \
     } while (0)
 
@@ -45,12 +45,12 @@ static void test_ClipboardOwner(void)
 
     hWnd1 = CreateWindowExA(0, "static", NULL, WS_POPUP,
                                  0, 0, 10, 10, 0, 0, 0, NULL);
-    ok(hWnd1 != 0, "CreateWindowExA error %ld\n", GetLastError());
+    ok(hWnd1 != 0, "CreateWindowExA error %d\n", GetLastError());
     trace("hWnd1 = %p\n", hWnd1);
 
     hWnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP,
                                  0, 0, 10, 10, 0, 0, 0, NULL);
-    ok(hWnd2 != 0, "CreateWindowExA error %ld\n", GetLastError());
+    ok(hWnd2 != 0, "CreateWindowExA error %d\n", GetLastError());
     trace("hWnd2 = %p\n", hWnd2);
 
     SetLastError(0xdeadbeef);
@@ -61,7 +61,7 @@ static void test_ClipboardOwner(void)
     ok(!GetClipboardOwner(), "clipboard should still be not owned\n");
     ok(!OpenClipboard(hWnd1), "OpenClipboard should fail since clipboard already opened\n");
     ret = CloseClipboard();
-    ok( ret, "CloseClipboard error %ld\n", GetLastError());
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
@@ -72,7 +72,7 @@ static void test_ClipboardOwner(void)
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should still be not owned\n");
     ret = EmptyClipboard();
-    ok( ret, "EmptyClipboard error %ld\n", GetLastError());
+    ok( ret, "EmptyClipboard error %d\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
 
     SetLastError(0xdeadbeef);
@@ -80,13 +80,13 @@ static void test_ClipboardOwner(void)
        "OpenClipboard should fail without setting last error value\n");
 
     ret = CloseClipboard();
-    ok( ret, "CloseClipboard error %ld\n", GetLastError());
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should still be owned\n");
 
     ret = DestroyWindow(hWnd1);
-    ok( ret, "DestroyWindow error %ld\n", GetLastError());
+    ok( ret, "DestroyWindow error %d\n", GetLastError());
     ret = DestroyWindow(hWnd2);
-    ok( ret, "DestroyWindow error %ld\n", GetLastError());
+    ok( ret, "DestroyWindow error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
 }
@@ -157,7 +157,7 @@ todo_wine
 #endif
 
     ret = OpenClipboard(0);
-    ok( ret, "OpenClipboard error %ld\n", GetLastError());
+    ok( ret, "OpenClipboard error %d\n", GetLastError());
 
     trace("# of formats available: %d\n", CountClipboardFormats());
 
@@ -170,16 +170,16 @@ todo_wine
     }
 
     ret = EmptyClipboard();
-    ok( ret, "EmptyClipboard error %ld\n", GetLastError());
+    ok( ret, "EmptyClipboard error %d\n", GetLastError());
     ret =CloseClipboard();
-    ok( ret, "CloseClipboard error %ld\n", GetLastError());
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     if (CountClipboardFormats())
     {
         SetLastError(0xdeadbeef);
         ok(!EnumClipboardFormats(0), "EnumClipboardFormats should fail if clipboard wasn't open\n");
         ok(GetLastError() == ERROR_CLIPBOARD_NOT_OPEN,
-           "Last error should be set to ERROR_CLIPBOARD_NOT_OPEN, not %ld\n", GetLastError());
+           "Last error should be set to ERROR_CLIPBOARD_NOT_OPEN, not %d\n", GetLastError());
     }
 
     SetLastError(0xdeadbeef);

@@ -64,18 +64,18 @@ static void test_LoadStringA (void)
     }
 
     ret = LoadStringA(hInst, 1, buf, sizeof(buf) );
-    ok( ret > 0, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+    ok( ret > 0, "LoadString failed: ret %d err %d\n", ret, GetLastError());
     ok( LoadStringA( hInst, MAKELONG( 1, 0x8000 ), buf, sizeof(buf)) == ret,
-        "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+        "LoadString failed: ret %d err %d\n", ret, GetLastError());
     ok( LoadStringA( hInst, MAKELONG( 1, 0xffff ), buf, sizeof(buf)) == ret,
-        "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+        "LoadString failed: ret %d err %d\n", ret, GetLastError());
 
     ret = LoadStringA(hInst, 65534, buf, sizeof(buf) );
-    ok( ret > 0, "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+    ok( ret > 0, "LoadString failed: ret %d err %d\n", ret, GetLastError());
     ok( LoadStringA( hInst, MAKELONG( 65534, 0x8000 ), buf, sizeof(buf)) == ret,
-        "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+        "LoadString failed: ret %d err %d\n", ret, GetLastError());
     ok( LoadStringA( hInst, MAKELONG( 65534, 0xffff ), buf, sizeof(buf)) == ret,
-        "LoadString failed: ret %d err %ld\n", ret, GetLastError());
+        "LoadString failed: ret %d err %d\n", ret, GetLastError());
 }
 
 static void test_accel1(void)
