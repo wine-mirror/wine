@@ -272,7 +272,7 @@ static int suspend_for_ptrace( struct thread *thread )
 }
 
 /* read an int from a thread address space */
-static int read_thread_int( struct thread *thread, const int *addr, int *data )
+static int read_thread_int( struct thread *thread, int *addr, int *data )
 {
     errno = 0;
     *data = ptrace( PTRACE_PEEKDATA, get_ptrace_pid(thread), (caddr_t)addr, 0 );
