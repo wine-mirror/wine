@@ -33,7 +33,7 @@ static void CommitDecommitTest(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAllocator);
-    ok(hr==S_OK, "Unable to create memory allocator %lx\n", hr);
+    ok(hr==S_OK, "Unable to create memory allocator %x\n", hr);
 
     if (hr == S_OK)
     {
@@ -46,17 +46,17 @@ static void CommitDecommitTest(void)
 	RequestedProps.cbPrefix = 0;
 
 	hr = IMemAllocator_SetProperties(pMemAllocator, &RequestedProps, &ActualProps);
-	ok(hr==S_OK, "SetProperties returned: %lx\n", hr);
+	ok(hr==S_OK, "SetProperties returned: %x\n", hr);
 
 	hr = IMemAllocator_Commit(pMemAllocator);
-	ok(hr==S_OK, "Commit returned: %lx\n", hr);
+	ok(hr==S_OK, "Commit returned: %x\n", hr);
 	hr = IMemAllocator_Commit(pMemAllocator);
-	ok(hr==S_OK, "Commit returned: %lx\n", hr);
+	ok(hr==S_OK, "Commit returned: %x\n", hr);
 
 	hr = IMemAllocator_Decommit(pMemAllocator);
-	ok(hr==S_OK, "Decommit returned: %lx\n", hr);
+	ok(hr==S_OK, "Decommit returned: %x\n", hr);
 	hr = IMemAllocator_Decommit(pMemAllocator);
-	ok(hr==S_OK, "Cecommit returned: %lx\n", hr);
+	ok(hr==S_OK, "Cecommit returned: %x\n", hr);
 
 	IMemAllocator_Release(pMemAllocator);
     }
