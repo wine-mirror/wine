@@ -37,6 +37,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
+static HDC default_hdc = 0;
+
+/* We route all wgl functions from opengl32.dll through gdi32.dll to
+ * the display driver. Various wgl calls have a hDC as one of their parameters.
+ * Using DC_GetDCPtr we get access to the functions exported by the driver.
+ * Some functions don't receive a hDC. This function creates a global hdc and
+ * if there's already a global hdc, it returns it.
+ */
+static DC* OPENGL_GetDefaultDC()
+{
+    if(!default_hdc)
+        default_hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        
+    return DC_GetDCPtr(default_hdc);
+}
+
 /***********************************************************************
  *		wglCreateContext (OPENGL32.@)
  */
@@ -62,7 +78,14 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
     BOOL ret = FALSE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = NULL;
+
+    /* When the context hglrc is NULL, the HDC is ignored and can be NULL.
+     * In that case use the global hDC to get access to the driver.  */
+    if(hglrc == NULL)
+        dc = OPENGL_GetDefaultDC();
+    else
+        dc = DC_GetDCPtr( hdc );
 
     TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
 
@@ -71,7 +94,11 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if (!dc->funcs->pwglMakeCurrent) FIXME(" :stub\n");
     else ret = dc->funcs->pwglMakeCurrent(dc->physDev,hglrc);
 
-    GDI_ReleaseObj( hdc);
+    if(hglrc == NULL)
+        GDI_ReleaseObj(default_hdc);
+    else
+        GDI_ReleaseObj(hdc);
+
     return ret;
 }
 
