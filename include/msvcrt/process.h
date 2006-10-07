@@ -31,7 +31,11 @@ typedef unsigned short wchar_t;
 #ifndef __stdcall
 # ifdef __i386__
 #  ifdef __GNUC__
-#   define __stdcall __attribute__((__stdcall__))
+#   ifdef __APPLE__ /* Mac OSX uses 16-byte aligned stack and not a 4-byte one */
+#    define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
+#   else
+#    define __stdcall __attribute__((__stdcall__))
+#   endif
 #  elif defined(_MSC_VER)
     /* Nothing needs to be done. __stdcall already exists */
 #  else
