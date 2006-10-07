@@ -2378,21 +2378,24 @@ HRESULT WINAPI OleCreate(
     {
         IRunnableObject *pRunnable;
         IOleCache *pOleCache;
+        HRESULT hres2;
 
-        hres = IUnknown_QueryInterface(pUnk, &IID_IRunnableObject, (void **)&pRunnable);
-        if (SUCCEEDED(hres))
+        hres2 = IUnknown_QueryInterface(pUnk, &IID_IRunnableObject, (void **)&pRunnable);
+        if (SUCCEEDED(hres2))
         {
             hres = IRunnableObject_Run(pRunnable, NULL);
             IRunnableObject_Release(pRunnable);
         }
 
         if (SUCCEEDED(hres))
-            hres = IUnknown_QueryInterface(pUnk, &IID_IOleCache, (void **)&pOleCache);
-        if (SUCCEEDED(hres))
         {
-            DWORD dwConnection;
-            hres = IOleCache_Cache(pOleCache, pFormatEtc, ADVF_PRIMEFIRST, &dwConnection);
-            IOleCache_Release(pOleCache);
+            hres2 = IUnknown_QueryInterface(pUnk, &IID_IOleCache, (void **)&pOleCache);
+            if (SUCCEEDED(hres2))
+            {
+                DWORD dwConnection;
+                hres = IOleCache_Cache(pOleCache, pFormatEtc, ADVF_PRIMEFIRST, &dwConnection);
+                IOleCache_Release(pOleCache);
+            }
         }
     }
 

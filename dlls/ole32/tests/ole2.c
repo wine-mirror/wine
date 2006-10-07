@@ -32,8 +32,8 @@
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
 
 static IPersistStorage OleObjectPersistStg;
-static IOleCache OleObjectCache;
-static IRunnableObject OleObjectRunnable;
+static IOleCache *cache;
+static IRunnableObject *runnable;
 
 static char const * const *expected_method_list;
 
@@ -52,33 +52,24 @@ static char const * const *expected_method_list;
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     CHECK_EXPECTED_METHOD("OleObject_QueryInterface");
+
+    *ppv = NULL;
+
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IOleObject))
-    {
         *ppv = (void *)iface;
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
     else if (IsEqualIID(riid, &IID_IPersistStorage))
-    {
         *ppv = &OleObjectPersistStg;
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
     else if (IsEqualIID(riid, &IID_IOleCache))
-    {
-        *ppv = &OleObjectCache;
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
+        *ppv = cache;
     else if (IsEqualIID(riid, &IID_IRunnableObject))
-    {
-        *ppv = &OleObjectRunnable;
-        IUnknown_AddRef((IUnknown *)*ppv);
+        *ppv = runnable;
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
 
     trace("OleObject_QueryInterface: returning E_NOINTERFACE\n");
-    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -722,7 +713,41 @@ static void test_OleCreate(IStorage *pStorage)
         "OleObject_Release",
         NULL
     };
+    static const char *methods_olerender_draw_no_runnable[] =
+    {
+        "OleObject_QueryInterface",
+        "OleObject_AddRef",
+        "OleObject_QueryInterface",
+        "OleObjectPersistStg_AddRef",
+        "OleObjectPersistStg_InitNew",
+        "OleObjectPersistStg_Release",
+        "OleObject_QueryInterface",
+        "OleObject_QueryInterface",
+        "OleObjectCache_AddRef",
+        "OleObjectCache_Cache",
+        "OleObjectCache_Release",
+        "OleObject_Release",
+        NULL
+    };
+    static const char *methods_olerender_draw_no_cache[] =
+    {
+        "OleObject_QueryInterface",
+        "OleObject_AddRef",
+        "OleObject_QueryInterface",
+        "OleObjectPersistStg_AddRef",
+        "OleObjectPersistStg_InitNew",
+        "OleObjectPersistStg_Release",
+        "OleObject_QueryInterface",
+        "OleObjectRunnable_AddRef",
+        "OleObjectRunnable_Run",
+        "OleObjectRunnable_Release",
+        "OleObject_QueryInterface",
+        "OleObject_Release",
+        NULL
+    };
 
+    runnable = &OleObjectRunnable;
+    cache = &OleObjectCache;
     expected_method_list = methods_olerender_none;
     trace("OleCreate with OLERENDER_NONE:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_NONE, NULL, NULL, pStorage, (void **)&pObject);
@@ -756,6 +781,22 @@ static void test_OleCreate(IStorage *pStorage)
     IOleObject_Release(pObject);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
+    runnable = NULL;
+    expected_method_list = methods_olerender_draw_no_runnable;
+    trace("OleCreate with OLERENDER_DRAW (no IOlObjectRunnable):\n");
+    hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
+    ok_ole_success(hr, "OleCreate");
+    IOleObject_Release(pObject);
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    runnable = &OleObjectRunnable;
+    cache = NULL;
+    expected_method_list = methods_olerender_draw_no_cache;
+    trace("OleCreate with OLERENDER_DRAW (no IOlObjectRunnable):\n");
+    hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
+    ok_ole_success(hr, "OleCreate");
+    IOleObject_Release(pObject);
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
     trace("end\n");
 }
 
