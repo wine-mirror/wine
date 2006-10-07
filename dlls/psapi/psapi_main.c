@@ -160,7 +160,7 @@ BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
  */
 BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
 {
-    FIXME("(%p, %ld, %p): stub\n", lpImageBase, cb, lpcbNeeded);
+    FIXME("(%p, %d, %p): stub\n", lpImageBase, cb, lpcbNeeded);
 
     if (lpcbNeeded)
         *lpcbNeeded = 0;
@@ -271,7 +271,7 @@ BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
 DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpBaseName, nSize);
+    FIXME("(%p, %p, %d): stub\n", ImageBase, lpBaseName, nSize);
 
     if (lpBaseName && nSize)
         lpBaseName[0] = '\0';
@@ -285,7 +285,7 @@ DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName,
 DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpBaseName, nSize);
+    FIXME("(%p, %p, %d): stub\n", ImageBase, lpBaseName, nSize);
 
     if (lpBaseName && nSize)
         lpBaseName[0] = '\0';
@@ -299,7 +299,7 @@ DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName,
 DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpFilename, nSize);
+    FIXME("(%p, %p, %d): stub\n", ImageBase, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -313,7 +313,7 @@ DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename,
 DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpFilename, nSize);
+    FIXME("(%p, %p, %d): stub\n", ImageBase, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -327,7 +327,7 @@ DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename,
 DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, 
                                 DWORD nSize)
 {
-    FIXME("(%p, %p, %p, %ld): stub\n", hProcess, lpv, lpFilename, nSize);
+    FIXME("(%p, %p, %p, %d): stub\n", hProcess, lpv, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -341,7 +341,7 @@ DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename,
 DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, 
                                 DWORD nSize)
 {
-    FIXME("(%p, %p, %p, %ld): stub\n", hProcess, lpv, lpFilename, nSize);
+    FIXME("(%p, %p, %p, %d): stub\n", hProcess, lpv, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -364,7 +364,7 @@ DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule,
     }
     lpBaseNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * nSize);
     buflenW = GetModuleBaseNameW(hProcess, hModule, lpBaseNameW, nSize);
-    TRACE("%ld, %s\n", buflenW, debugstr_w(lpBaseNameW));
+    TRACE("%d, %s\n", buflenW, debugstr_w(lpBaseNameW));
     if (buflenW)
     {
         ret = WideCharToMultiByte(CP_ACP, 0, lpBaseNameW, buflenW,
@@ -403,7 +403,7 @@ DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule,
 {
     WCHAR *ptr;
 
-    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
+    TRACE("(hProcess=%p, hModule=%p, %p, %d)\n",
           hProcess, hModule, lpFileName, nSize);
 
     if (!lpFileName || !nSize) return 0;
@@ -481,7 +481,7 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
 {
     NTSTATUS status;
 
-    TRACE( "(%p, %ld)\n", info, size );
+    TRACE( "(%p, %d)\n", info, size );
 
     status = NtQueryInformationProcess( GetCurrentProcess(), SystemPerformanceInformation, info, size, NULL );
 
@@ -498,7 +498,7 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
  */
 DWORD WINAPI GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
 {
-    FIXME("(%p, %p, %ld) stub\n", process, file, size );
+    FIXME("(%p, %p, %d) stub\n", process, file, size );
     return 0;
 }
 
@@ -507,7 +507,7 @@ DWORD WINAPI GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
  */
 DWORD WINAPI GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
 {
-    FIXME("(%p, %p, %ld) stub\n", process, file, size );
+    FIXME("(%p, %p, %d) stub\n", process, file, size );
     return 0;
 }
 
@@ -559,7 +559,7 @@ BOOL WINAPI GetWsChanges( HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo,
 {
     NTSTATUS status;
 
-    TRACE( "(%p, %p, %ld)\n", process, watchinfo, size );
+    TRACE( "(%p, %p, %d)\n", process, watchinfo, size );
 
     status = NtQueryVirtualMemory( process, NULL, ProcessWorkingSetWatch, watchinfo, size, NULL );
 
@@ -588,7 +588,7 @@ BOOL WINAPI QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
 {
     NTSTATUS status;
 
-    TRACE( "(%p, %p, %ld)\n", process, buffer, size );
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
 
     status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL );
 
@@ -607,7 +607,7 @@ BOOL WINAPI QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
 {
     NTSTATUS status;
 
-    TRACE( "(%p, %p, %ld)\n", process, buffer, size );
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
 
     status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL );
 
