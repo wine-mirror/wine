@@ -447,7 +447,7 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ptr = NdrSimpleStructMarshall( &StubMsg,  (unsigned char*)memsrc, formattypes );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
-    ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08lx %08lx %08lx\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
+    ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08x %08x %08x\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
 
 #if 0
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -929,13 +929,13 @@ todo_wine {
  }
     if(mem_list)
     {
-        ok(mem_list->magic == magic_MEML, "magic %08lx\n", mem_list->magic);
+        ok(mem_list->magic == magic_MEML, "magic %08x\n", mem_list->magic);
         ok(mem_list->ptr == p2, "ptr != p2\n");
         ok(mem_list->next != NULL, "next NULL\n");
         mem_list = mem_list->next;
         if(mem_list)
         {
-            ok(mem_list->magic == magic_MEML, "magic %08lx\n", mem_list->magic);
+            ok(mem_list->magic == magic_MEML, "magic %08x\n", mem_list->magic);
             ok(mem_list->ptr == p1, "ptr != p2\n");
             ok(mem_list->next == NULL, "next %p\n", mem_list->next);
         }

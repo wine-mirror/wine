@@ -447,7 +447,7 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
     r = NdrDllGetClassObject(&PSDispatch, &IID_IPSFactoryBuffer, (void**)&ppsf, proxy_file_list,
                          &PSDispatch, &PSFactoryBuffer);
 
-    ok(r == S_OK, "ret %08lx\n", r);
+    ok(r == S_OK, "ret %08x\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
 
     ok(PSFactoryBuffer.pProxyFileList == proxy_file_list, "pfl not the same\n");
@@ -567,7 +567,7 @@ static IRpcStubBuffer *create_stub(IPSFactoryBuffer *ppsf, REFIID iid, IUnknown 
     HRESULT r;
 
     r = IPSFactoryBuffer_CreateStub(ppsf, iid, obj, &pstub);
-    ok(r == expected_result, "CreateStub returned %08lx expected %08lx\n", r, expected_result);
+    ok(r == expected_result, "CreateStub returned %08x expected %08x\n", r, expected_result);
     return pstub;
 }
 
@@ -704,14 +704,14 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
 
     obj = (IUnknown*)&new_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-    ok(r == S_OK, "r %08lx\n", r);
+    ok(r == S_OK, "r %08x\n", r);
     ok(connect_test_orig_release_called == 1, "release called %d\n", connect_test_orig_release_called);
     ok(cstd_stub->pvServerObject == (void*)0xcafebabe, "pvServerObject %p\n", cstd_stub->pvServerObject);
 
     cstd_stub->pvServerObject = (IUnknown*)&orig_vtbl;
     obj = (IUnknown*)&new_fail_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
-    ok(r == E_NOINTERFACE, "r %08lx\n", r);
+    ok(r == E_NOINTERFACE, "r %08x\n", r);
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(connect_test_orig_release_called == 2, "release called %d\n", connect_test_orig_release_called);    
 
@@ -786,15 +786,15 @@ static void test_Release(IPSFactoryBuffer *ppsf)
 todo_wine {
     ok(connect_test_orig_release_called == 0, "release called %d\n", connect_test_orig_release_called);
 }
-    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
 
     /* This shows that NdrCStdStubBuffer_Release calls Release on its 2nd arg, rather than on This->pPSFactory
        (which are usually the same and indeed it's odd that _Release requires this 2nd arg). */
     pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
     NdrCStdStubBuffer_Release(pstub, (IPSFactoryBuffer*)pretend_psfacbuf);
     ok(release_test_psfacbuf_release_called == 1, "pretend_psfacbuf_release called %d\n", release_test_psfacbuf_release_called);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %ld\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
 }
 
 static HRESULT WINAPI delegating_invoke_test_QI(ITypeLib *pUnk, REFIID iid, void** ppv)
@@ -877,8 +877,8 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
 #endif
     if(r == S_OK)
     {
-        ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08lx\n", *(DWORD*)msg.Buffer);
-        ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08lx\n", *((DWORD*)msg.Buffer + 1));
+        ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08x\n", *(DWORD*)msg.Buffer);
+        ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08x\n", *((DWORD*)msg.Buffer + 1));
     }
     IRpcStubBuffer_Release(pstub);
 }
