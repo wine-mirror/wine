@@ -150,7 +150,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
  */
 OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
-    FIXME("(%ld): stub\n",hServer);
+    FIXME("(%d): stub\n",hServer);
     return OLE_OK;
 }
 
@@ -159,7 +159,7 @@ OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
 {
-    FIXME("(%ld): stub\n",hServer);
+    FIXME("(%d): stub\n",hServer);
     return OLE_OK;
 }
 
@@ -168,7 +168,7 @@ OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
  */
 OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
-    FIXME("(%ld): stub\n",hServer);
+    FIXME("(%d): stub\n",hServer);
     /* no more blocked messages :) */
     *block=FALSE;
     return OLE_OK;
@@ -179,7 +179,7 @@ OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
  */
 OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
 {
-    FIXME("(%ld): stub\n",hServer);
+    FIXME("(%d): stub\n",hServer);
     /* no more blocked messages :) */
     *block=FALSE;
     return OLE_OK;
@@ -192,7 +192,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    FIXME("(%ld,%s): stub\n",hServer, docname);
+    FIXME("(%d,%s): stub\n",hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -202,7 +202,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
-    FIXME("%ld  - stub\n",hServerDoc);
+    FIXME("%d  - stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -211,7 +211,7 @@ OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
 {
-    FIXME("(%ld): stub\n",hServerDoc);
+    FIXME("(%d): stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -220,7 +220,7 @@ OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
 {
-    FIXME("%ld - stub\n",hServer);
+    FIXME("%d - stub\n",hServer);
     return OLE_OK;
 }
 
@@ -240,7 +240,7 @@ OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    FIXME("(%ld,%s): stub\n", hServer, docname);
+    FIXME("(%d,%s): stub\n", hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
@@ -251,7 +251,7 @@ OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
 {
-    FIXME("(%ld,%s): stub.\n", hDoc, newName);
+    FIXME("(%d,%s): stub.\n", hDoc, newName);
     return OLE_OK;
 }
 
@@ -261,7 +261,7 @@ OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)
 {
-    FIXME("(%ld,%s): stub.\n",hDoc, newName);
+    FIXME("(%d,%s): stub.\n",hDoc, newName);
     return OLE_OK;
 }
 
@@ -271,7 +271,7 @@ OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
 {
-    FIXME("(%ld): stub.\n", hDoc);
+    FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
 }
 
@@ -281,7 +281,7 @@ OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
  */
 OLESTATUS WINAPI OleRevertServerDoc(LHSERVERDOC hDoc)
 {
-    FIXME("(%ld): stub.\n", hDoc);
+    FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
 }
 
@@ -291,7 +291,7 @@ OLESTATUS WINAPI OleRevertServerDoc(LHSERVERDOC hDoc)
  */
 OLESTATUS WINAPI OleSavedServerDoc16(LHSERVERDOC hDoc)
 {
-    FIXME("(%ld): stub.\n", hDoc);
+    FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
 }
 
@@ -301,6 +301,6 @@ OLESTATUS WINAPI OleSavedServerDoc16(LHSERVERDOC hDoc)
  */
 OLESTATUS WINAPI OleSavedServerDoc(LHSERVERDOC hDoc)
 {
-    FIXME("(%ld): stub.\n", hDoc);
+    FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
 }
