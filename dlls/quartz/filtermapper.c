@@ -152,8 +152,7 @@ static int find_data(struct Vector * v, const BYTE * pData, int size)
 
 static void delete_vector(struct Vector * v)
 {
-    if (v->pData)
-        CoTaskMemFree(v->pData);
+    CoTaskMemFree(v->pData);
     v->current = 0;
     v->capacity = 0;
 }
@@ -288,11 +287,8 @@ static HRESULT WINAPI FilterMapper2_CreateCategory(
     }
 
     CloseHandle(hKey);
-
-    if (wClsidCategory)
-        CoTaskMemFree(wClsidCategory);
-    if (wClsidAMCat)
-        CoTaskMemFree(wClsidAMCat);
+    CoTaskMemFree(wClsidCategory);
+    CoTaskMemFree(wClsidAMCat);
 
     return hr;
 }
@@ -336,10 +332,8 @@ static HRESULT WINAPI FilterMapper2_UnregisterFilter(
         hr = HRESULT_FROM_WIN32(lRet);
     }
 
-    if (wClsidCategory)
-        CoTaskMemFree(wClsidCategory);
-    if (wFilter)
-        CoTaskMemFree(wFilter);
+    CoTaskMemFree(wClsidCategory);
+    CoTaskMemFree(wFilter);
 
     return hr;
 }
@@ -368,8 +362,7 @@ static HRESULT FM2_WriteClsid(IPropertyBag * pPropBag, REFCLSID clsid)
         V_UNION(&var, bstrVal) = wszClsid;
         hr = IPropertyBag_Write(pPropBag, wszClsidName, &var);
     }
-    if (wszClsid)
-        CoTaskMemFree(wszClsid);
+    CoTaskMemFree(wszClsid);
     return hr;
 }
 
@@ -748,11 +741,9 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
             strcpyW(pCurrent+1, szInstance);
         else
         {
-            if (szClsidTemp)
-            {
-                CoTaskMemFree(szClsidTemp);
-                szClsidTemp = NULL;
-            }
+            CoTaskMemFree(szClsidTemp);
+            szClsidTemp = NULL;
+
             hr = StringFromCLSID(clsidFilter, &szClsidTemp);
             if (SUCCEEDED(hr))
                 strcpyW(pCurrent+1, szClsidTemp);
@@ -787,16 +778,14 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
 
     if (pPropBag)
         IPropertyBag_Release(pPropBag);
-    if (szClsidTemp)
-        CoTaskMemFree(szClsidTemp);
+    CoTaskMemFree(szClsidTemp);
 
     if (SUCCEEDED(hr) && ppMoniker)
         *ppMoniker = pMoniker;
     else if (pMoniker)
         IMoniker_Release(pMoniker);
 
-    if (pregfp2)
-        CoTaskMemFree(pregfp2);
+    CoTaskMemFree(pregfp2);
 
     TRACE("-- returning %lx\n", hr);
 
@@ -1360,8 +1349,7 @@ static HRESULT WINAPI FilterMapper_RegisterPin(
         hr = HRESULT_FROM_WIN32(lRet);
     }
 
-    if (wszClsid)
-        CoTaskMemFree(wszClsid);
+    CoTaskMemFree(wszClsid);
     if (hKey)
         CloseHandle(hKey);
     if (hPinsKey)
@@ -1437,12 +1425,9 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
         CloseHandle(hKey);
     }
 
-    if (wszClsid)
-        CoTaskMemFree(wszClsid);
-    if (wszClsidMajorType)
-        CoTaskMemFree(wszClsidMajorType);
-    if (wszClsidSubType)
-        CoTaskMemFree(wszClsidSubType);
+    CoTaskMemFree(wszClsid);
+    CoTaskMemFree(wszClsidMajorType);
+    CoTaskMemFree(wszClsidSubType);
 
     return hr;
 }
@@ -1488,8 +1473,7 @@ static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper * iface, CLSID
         CloseHandle(hKey);
     }
 
-    if (wszClsid)
-        CoTaskMemFree(wszClsid);
+    CoTaskMemFree(wszClsid);
 
     return hr;
 }
@@ -1546,8 +1530,7 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
         CoTaskMemFree(wszPinNameKey);
     }
 
-    if (wszClsid)
-        CoTaskMemFree(wszClsid);
+    CoTaskMemFree(wszClsid);
     if (hKey)
         CloseHandle(hKey);
 

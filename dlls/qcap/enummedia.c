@@ -47,11 +47,9 @@ HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
 
 void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
 {
-    if (pMediaType->pbFormat)
-    {
-        CoTaskMemFree(pMediaType->pbFormat);
-        pMediaType->pbFormat = NULL;
-    }
+    CoTaskMemFree(pMediaType->pbFormat);
+    pMediaType->pbFormat = NULL;
+
     if (pMediaType->pUnk)
     {
         IUnknown_Release(pMediaType->pUnk);

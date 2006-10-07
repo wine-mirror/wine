@@ -1726,8 +1726,7 @@ void CALLBACK ITypeInfo_ReleaseVarDesc_Proxy(
 {
     TRACE("(%p, %p)\n", This, pVarDesc);
 
-    if(pVarDesc->lpstrSchema)
-        CoTaskMemFree(pVarDesc->lpstrSchema);
+    CoTaskMemFree(pVarDesc->lpstrSchema);
 
     if(pVarDesc->varkind == VAR_CONST)
         CoTaskMemFree(pVarDesc->u.lpvarValue);

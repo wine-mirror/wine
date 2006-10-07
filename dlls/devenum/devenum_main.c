@@ -278,9 +278,7 @@ HRESULT WINAPI DllRegisterServer(void)
     if (hkeyClsid)
         RegCloseKey(hkeyClsid);
 
-    if (pszClsidDevMon)
-        CoTaskMemFree(pszClsidDevMon);
-
+    CoTaskMemFree(pszClsidDevMon);
     CoUninitialize();
 
     return res;

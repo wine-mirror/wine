@@ -620,11 +620,10 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
             IPin_Release(This->pOutputPin);
             This->pOutputPin = NULL;
         }
-        if (This->pszFileName)
-        {
-            CoTaskMemFree(This->pszFileName);
-            This->pszFileName = NULL;
-        }
+
+        CoTaskMemFree(This->pszFileName);
+        This->pszFileName = NULL;
+
         CloseHandle(hFile);
     }
 
@@ -1079,12 +1078,8 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         *pdwUser = pDataRq->dwUserData;
     }
 
-    /* clean up */
-    if (pDataRq)
-    {
-        /* no need to close event handle since we will close it when the pin is destroyed */
-        CoTaskMemFree(pDataRq);
-    }
+    /* no need to close event handle since we will close it when the pin is destroyed */
+    CoTaskMemFree(pDataRq);
     
     TRACE("-- %lx\n", hr);
     return hr;

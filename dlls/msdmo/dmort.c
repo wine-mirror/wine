@@ -121,11 +121,8 @@ HRESULT WINAPI MoFreeMediaType(DMO_MEDIA_TYPE* pmedia)
         pmedia->pUnk = NULL;
     }
 
-    if (pmedia->pbFormat)
-    {
-        CoTaskMemFree(pmedia->pbFormat);
-        pmedia->pbFormat = NULL;
-    }
+    CoTaskMemFree(pmedia->pbFormat);
+    pmedia->pbFormat = NULL;
 
     return S_OK;
 }

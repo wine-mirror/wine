@@ -147,8 +147,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     if (pEm)
         IEnumMoniker_Release(pEm);
 
-    if (pszClass)
-        CoTaskMemFree(pszClass);
+    CoTaskMemFree(pszClass);
 
     TRACE("-- returning: %lx\n", res);
     return res;
