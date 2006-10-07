@@ -386,6 +386,7 @@ extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
 typedef UINT (*record_func)( MSIRECORD *, LPVOID );
+extern UINT MSI_ReverseIterateRecords( MSIQUERY *, DWORD *, record_func, LPVOID );
 extern UINT MSI_IterateRecords( MSIQUERY *, DWORD *, record_func, LPVOID );
 extern MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR query, ... );
 extern UINT MSI_DatabaseImport( MSIDATABASE *, LPCWSTR, LPCWSTR );
