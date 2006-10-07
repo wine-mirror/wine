@@ -105,10 +105,10 @@ static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
     IMoniker *mon2 = NULL;
 
     hr = CreateURLMoniker(NULL, url1, &mon1);
-    ok(SUCCEEDED(hr), "failed to create moniker: 0x%08lx\n", hr);
+    ok(SUCCEEDED(hr), "failed to create moniker: 0x%08x\n", hr);
     if(SUCCEEDED(hr)) {
         hr = CreateURLMoniker(mon1, url2, &mon2);
-        ok(SUCCEEDED(hr), "failed to create moniker: 0x%08lx\n", hr);
+        ok(SUCCEEDED(hr), "failed to create moniker: 0x%08x\n", hr);
     }
     if(mon1) IMoniker_Release(mon1);
     if(mon2) IMoniker_Release(mon2);
@@ -158,22 +158,22 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(szUrl && !lstrcmpW(szUrl, urls[test_protocol]), "wrong url\n");
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
     ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
-    ok(grfPI == 0, "grfPI=%ld, expected 0\n", grfPI);
-    ok(dwReserved == 0, "dwReserved=%ld, expected 0\n", dwReserved);
+    ok(grfPI == 0, "grfPI=%d, expected 0\n", grfPI);
+    ok(dwReserved == 0, "dwReserved=%d, expected 0\n", dwReserved);
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
-    ok(hres == S_OK, "GetBindInfo failed: %08lx\n", hres);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
 
     if(test_protocol == FILE_TEST) {
         ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON),
-           "bindf=%08lx\n", bindf);
+           "bindf=%08x\n", bindf);
     }else {
         ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA|
                      BINDF_FROMURLMON|BINDF_NEEDFILE),
-           "bindf=%08lx\n", bindf);
+           "bindf=%08x\n", bindf);
     }
 
     ok(!memcmp(&bindinfo, &bi, sizeof(bindinfo)), "wrong bindinfo\n");
@@ -183,25 +183,25 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_SENDINGREQUEST, &null_char);
         ok(hres == S_OK,
-           "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08lx\n", hres);
+           "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
         CHECK_CALLED(OnProgress_SENDINGREQUEST);
 
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_CACHEFILENAMEAVAILABLE, &null_char);
         ok(hres == S_OK,
-           "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08lx\n", hres);
+           "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
 
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextHtml);
         ok(hres == S_OK,
-           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08lx\n", hres);
+           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
     }else {
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
         ok(hres == S_OK,
-           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08lx\n", hres);
+           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
     }
 
     if(test_protocol == ABOUT_TEST)
@@ -217,7 +217,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     SET_EXPECT(OnStopBinding);
 
     hres = IInternetProtocolSink_ReportData(pOIProtSink, bscf, 13, 13);
-    ok(hres == S_OK, "ReportData failed: %08lx\n", hres);
+    ok(hres == S_OK, "ReportData failed: %08x\n", hres);
 
     CHECK_CALLED(Read);
     if(test_protocol != FILE_TEST)
@@ -230,7 +230,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     SET_EXPECT(Terminate);
     hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
-    ok(hres == S_OK, "ReportResult failed: %08lx\n", hres);
+    ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
     CHECK_CALLED(Terminate);
 
     return S_OK;
@@ -253,7 +253,7 @@ static HRESULT WINAPI Protocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
 static HRESULT WINAPI Protocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     CHECK_EXPECT(Terminate);
-    ok(dwOptions == 0, "dwOptions=%ld, expected 0\n", dwOptions);
+    ok(dwOptions == 0, "dwOptions=%d, expected 0\n", dwOptions);
     return S_OK;
 }
 
@@ -285,7 +285,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     ok(cb != 0, "cb == 0\n");
     ok(pcbRead != NULL, "pcbRead == NULL\n");
     if(pcbRead) {
-        ok(*pcbRead == 0, "*pcbRead=%ld, expected 0\n", *pcbRead);
+        ok(*pcbRead == 0, "*pcbRead=%d, expected 0\n", *pcbRead);
         *pcbRead = 13;
         read = 13;
     }
@@ -423,7 +423,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
             ok(!lstrcmpW(INDEX_HTML+7, szStatusText), "wrong szStatusText\n");
         break;
     default:
-        todo_wine { ok(0, "unexpexted code %ld\n", ulStatusCode); }
+        todo_wine { ok(0, "unexpexted code %d\n", ulStatusCode); }
     };
     return S_OK;
 }
@@ -435,7 +435,7 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESUL
     /* ignore DNS failure */
     if (hresult != HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
     {
-        ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
+        ok(SUCCEEDED(hresult), "Download failed: %08x\n", hresult);
         ok(szError == NULL, "szError should be NULL\n");
     }
     stopped_binding = TRUE;
@@ -487,7 +487,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     if(U(*pstgmed).pstm) {
         do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
         while(hres == S_OK);
-        ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08lx\n", hres);
+        ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
     }
 
     return S_OK;
@@ -523,25 +523,25 @@ static void test_CreateAsyncBindCtx(void)
     BIND_OPTS bindopts;
 
     hres = CreateAsyncBindCtx(0, NULL, NULL, &bctx);
-    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08lx\n", hres);
+    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08x\n", hres);
     ok(bctx == (IBindCtx*)0x0ff00ff0, "bctx should not be changed\n");
 
     hres = CreateAsyncBindCtx(0, NULL, NULL, NULL);
-    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08lx\n", hres);
+    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08x\n", hres);
 
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
-    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n", hres);
+    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n", hres);
 
     bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-    ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
+    ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
     ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
-                "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
+                "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
     ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
-                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                "bindopts.grfMode = %08x, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
                 bindopts.grfMode);
     ok(bindopts.dwTickCountDeadline == 0,
-                "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
+                "bindopts.dwTickCountDeadline = %08x, expected: 0\n", bindopts.dwTickCountDeadline);
 
     ref = IBindCtx_Release(bctx);
     ok(ref == 0, "bctx should be destroyed here\n");
@@ -554,41 +554,41 @@ static void test_CreateAsyncBindCtxEx(void)
     HRESULT hres;
 
     hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, NULL, 0);
-    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed: %08lx, expected E_INVALIDARG\n", hres);
+    ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed: %08x, expected E_INVALIDARG\n", hres);
 
     hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
-    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     if(SUCCEEDED(hres)) {
         bindopts.cbStruct = sizeof(bindopts);
         hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
+        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
         ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
-                "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
+                "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
         ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
-                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                "bindopts.grfMode = %08x, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
                 bindopts.grfMode);
         ok(bindopts.dwTickCountDeadline == 0,
-                "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
+                "bindopts.dwTickCountDeadline = %08x, expected: 0\n", bindopts.dwTickCountDeadline);
 
         IBindCtx_Release(bctx);
     }
 
     CreateBindCtx(0, &bctx_arg);
     hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
-    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     if(SUCCEEDED(hres)) {
         bindopts.cbStruct = sizeof(bindopts);
         hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08lx\n", hres);
+        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
         ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
-                "bindopts.grfFlags = %08lx, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
+                "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
         ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
-                "bindopts.grfMode = %08lx, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
+                "bindopts.grfMode = %08x, expected: STGM_READWRITE | STGM_SHARE_EXCLUSIVE\n",
                 bindopts.grfMode);
         ok(bindopts.dwTickCountDeadline == 0,
-                "bindopts.dwTickCountDeadline = %08lx, expected: 0\n", bindopts.dwTickCountDeadline);
+                "bindopts.dwTickCountDeadline = %08x, expected: 0\n", bindopts.dwTickCountDeadline);
 
         IBindCtx_Release(bctx);
     }
@@ -596,7 +596,7 @@ static void test_CreateAsyncBindCtxEx(void)
     IBindCtx_Release(bctx_arg);
 
     hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
-    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     if(SUCCEEDED(hres))
         IBindCtx_Release(bctx);
@@ -614,18 +614,18 @@ static void test_BindToStorage(void)
     IBinding *bind;
 
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
-    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n\n", hres);
+    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
     if(FAILED(hres))
         return;
 
     hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
-    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08lx\n", hres);
+    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08x\n", hres);
     ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
     if(previousclb)
         IBindStatusCallback_Release(previousclb);
 
     hres = CreateURLMoniker(NULL, urls[test_protocol], &mon);
-    ok(SUCCEEDED(hres), "failed to create moniker: %08lx\n", hres);
+    ok(SUCCEEDED(hres), "failed to create moniker: %08x\n", hres);
     if(FAILED(hres)) {
         IBindCtx_Release(bctx);
         return;
@@ -640,7 +640,7 @@ static void test_BindToStorage(void)
         IBinding_Release(bind);
 
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
-    ok(hres == S_OK, "GetDisplayName failed %08lx\n", hres);
+    ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
 
     SET_EXPECT(GetBindInfo);
@@ -670,7 +670,7 @@ static void test_BindToStorage(void)
         trace( "Network unreachable, skipping tests\n" );
         return;
     }
-    ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08lx\n", hres);
+    ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08x\n", hres);
     if (!SUCCEEDED(hres)) return;
 
     if(test_protocol == HTTP_TEST) {
@@ -755,15 +755,15 @@ static void test_BindToStorage_fail(void)
     HRESULT hres;
 
     hres = CreateURLMoniker(NULL, ABOUT_BLANK, &mon);
-    ok(hres == S_OK, "CreateURLMoniker failed: %08lx\n", hres);
+    ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
-    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08lx\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
-    ok(hres == MK_E_SYNTAX, "hres=%08lx, expected INET_E_SYNTAX\n", hres);
+    ok(hres == MK_E_SYNTAX, "hres=%08x, expected INET_E_SYNTAX\n", hres);
 
     IBindCtx_Release(bctx);
 
