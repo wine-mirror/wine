@@ -158,11 +158,11 @@ static void testGetNumberOfInterfaces(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER, 
-     "GetNumberOfInterfaces(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetNumberOfInterfaces(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetNumberOfInterfaces(&numInterfaces);
     ok(apiReturn == NO_ERROR,
-     "GetNumberOfInterfaces returned %ld, expected 0\n", apiReturn);
+     "GetNumberOfInterfaces returned %d, expected 0\n", apiReturn);
   }
 }
 
@@ -177,17 +177,17 @@ static void testGetIfEntry(DWORD index)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIfEntry(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIfEntry(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     row.dwIndex = -1; /* hope that's always bogus! */
     apiReturn = gGetIfEntry(&row);
     ok(apiReturn == ERROR_INVALID_DATA,
-     "GetIfEntry(bogus row) returned %ld, expected ERROR_INVALID_DATA\n",
+     "GetIfEntry(bogus row) returned %d, expected ERROR_INVALID_DATA\n",
      apiReturn);
     row.dwIndex = index;
     apiReturn = gGetIfEntry(&row);
     ok(apiReturn == NO_ERROR, 
-     "GetIfEntry returned %ld, expected NO_ERROR\n", apiReturn);
+     "GetIfEntry returned %d, expected NO_ERROR\n", apiReturn);
   }
 }
 
@@ -201,18 +201,18 @@ static void testGetIpAddrTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIpAddrTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIpAddrTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIpAddrTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetIpAddrTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetIpAddrTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PMIB_IPADDRTABLE buf = (PMIB_IPADDRTABLE)malloc(dwSize);
 
       apiReturn = gGetIpAddrTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetIpAddrTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
+       "GetIpAddrTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       if (apiReturn == NO_ERROR && buf->dwNumEntries)
         testGetIfEntry(buf->table[0].dwIndex);
@@ -231,18 +231,18 @@ static void testGetIfTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIfTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIfTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIfTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetIfTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetIfTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PMIB_IFTABLE buf = (PMIB_IFTABLE)malloc(dwSize);
 
       apiReturn = gGetIfTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetIfTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n\n",
+       "GetIfTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n\n",
        apiReturn);
       free(buf);
     }
@@ -259,18 +259,18 @@ static void testGetIpForwardTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIpForwardTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIpForwardTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIpForwardTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetIpForwardTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetIpForwardTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PMIB_IPFORWARDTABLE buf = (PMIB_IPFORWARDTABLE)malloc(dwSize);
 
       apiReturn = gGetIpForwardTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetIpForwardTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
+       "GetIpForwardTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -287,11 +287,11 @@ static void testGetIpNetTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIpNetTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIpNetTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIpNetTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_NO_DATA || apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetIpNetTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_NO_DATA or ERROR_INSUFFICIENT_BUFFER\n",
+     "GetIpNetTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_NO_DATA or ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_NO_DATA)
       ; /* empty ARP table's okay */
@@ -300,7 +300,7 @@ static void testGetIpNetTable(void)
 
       apiReturn = gGetIpNetTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetIpNetTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
+       "GetIpNetTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -317,11 +317,11 @@ static void testGetIcmpStatistics(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIcmpStatistics(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIcmpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIcmpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
-     "GetIcmpStatistics returned %ld, expected NO_ERROR\n", apiReturn);
+     "GetIcmpStatistics returned %d, expected NO_ERROR\n", apiReturn);
   }
 }
 
@@ -335,11 +335,11 @@ static void testGetIpStatistics(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIpStatistics(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetIpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetIpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
-      "GetIpStatistics returned %ld, expected NO_ERROR\n", apiReturn);
+      "GetIpStatistics returned %d, expected NO_ERROR\n", apiReturn);
   }
 }
 
@@ -353,11 +353,11 @@ static void testGetTcpStatistics(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetTcpStatistics(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetTcpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetTcpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
-      "GetTcpStatistics returned %ld, expected NO_ERROR\n", apiReturn);
+      "GetTcpStatistics returned %d, expected NO_ERROR\n", apiReturn);
   }
 }
 
@@ -371,11 +371,11 @@ static void testGetUdpStatistics(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetUdpStatistics(NULL) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetUdpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetUdpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
-     "GetUdpStatistics returned %ld, expected NO_ERROR\n", apiReturn);
+     "GetUdpStatistics returned %d, expected NO_ERROR\n", apiReturn);
   }
 }
 
@@ -389,18 +389,18 @@ static void testGetTcpTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetTcpTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetTcpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetTcpTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetTcpTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetTcpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PMIB_TCPTABLE buf = (PMIB_TCPTABLE)malloc(dwSize);
 
       apiReturn = gGetTcpTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetTcpTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
+       "GetTcpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -417,18 +417,18 @@ static void testGetUdpTable(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetUdpTable(NULL, NULL, FALSE) returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetUdpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetUdpTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetUdpTable(NULL, &dwSize, FALSE) returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetUdpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn != ERROR_INSUFFICIENT_BUFFER) {
       PMIB_UDPTABLE buf = (PMIB_UDPTABLE)malloc(dwSize);
 
       apiReturn = gGetUdpTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
-       "GetUdpTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
+       "GetUdpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -475,18 +475,18 @@ static void testGetInterfaceInfo(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetInterfaceInfo returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetInterfaceInfo returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetInterfaceInfo(NULL, &len);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetInterfaceInfo returned %ld, expected ERROR_INSUFFICIENT_BUFFER\n",
+     "GetInterfaceInfo returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PIP_INTERFACE_INFO buf = (PIP_INTERFACE_INFO)malloc(len);
 
       apiReturn = gGetInterfaceInfo(buf, &len);
       ok(apiReturn == NO_ERROR,
-       "GetInterfaceInfo(buf, &dwSize) returned %ld, expected NO_ERROR\n",
+       "GetInterfaceInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -503,11 +503,11 @@ static void testGetAdaptersInfo(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetAdaptersInfo returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetAdaptersInfo returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetAdaptersInfo(NULL, &len);
     ok(apiReturn == ERROR_NO_DATA || apiReturn == ERROR_BUFFER_OVERFLOW,
-     "GetAdaptersInfo returned %ld, expected ERROR_NO_DATA or ERROR_BUFFER_OVERFLOW\n",
+     "GetAdaptersInfo returned %d, expected ERROR_NO_DATA or ERROR_BUFFER_OVERFLOW\n",
      apiReturn);
     if (apiReturn == ERROR_NO_DATA)
       ; /* no adapter's, that's okay */
@@ -516,7 +516,7 @@ static void testGetAdaptersInfo(void)
 
       apiReturn = gGetAdaptersInfo(buf, &len);
       ok(apiReturn == NO_ERROR,
-       "GetAdaptersInfo(buf, &dwSize) returned %ld, expected NO_ERROR\n",
+       "GetAdaptersInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }
@@ -533,18 +533,18 @@ static void testGetNetworkParams(void)
     if (apiReturn == ERROR_NOT_SUPPORTED)
       return;
     ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetNetworkParams returned %ld, expected ERROR_INVALID_PARAMETER\n",
+     "GetNetworkParams returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetNetworkParams(NULL, &len);
     ok(apiReturn == ERROR_BUFFER_OVERFLOW,
-     "GetNetworkParams returned %ld, expected ERROR_BUFFER_OVERFLOW\n",
+     "GetNetworkParams returned %d, expected ERROR_BUFFER_OVERFLOW\n",
      apiReturn);
     if (apiReturn == ERROR_BUFFER_OVERFLOW) {
       PFIXED_INFO buf = (PFIXED_INFO)malloc(len);
 
       apiReturn = gGetNetworkParams(buf, &len);
       ok(apiReturn == NO_ERROR,
-       "GetNetworkParams(buf, &dwSize) returned %ld, expected NO_ERROR\n",
+       "GetNetworkParams(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
       free(buf);
     }

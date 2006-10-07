@@ -111,7 +111,7 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
 {
   DWORD ret;
 
-  TRACE("ppIfTable %p, bOrder %d, heap %p, flags 0x%08lx\n", ppIfTable,
+  TRACE("ppIfTable %p, bOrder %d, heap %p, flags 0x%08x\n", ppIfTable,
         bOrder, heap, flags);
   if (!ppIfTable)
     ret = ERROR_INVALID_PARAMETER;
@@ -124,7 +124,7 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
       ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -163,13 +163,13 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 {
   DWORD ret;
 
-  TRACE("ppIpAddrTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+  TRACE("ppIpAddrTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppIpAddrTable, bOrder, heap, flags);
   ret = getIPAddrTable(ppIpAddrTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppIpAddrTable)->table, (*ppIpAddrTable)->dwNumEntries,
      sizeof(MIB_IPADDRROW), IpAddrTableSorter);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -220,13 +220,13 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
 {
   DWORD ret;
 
-  TRACE("ppIpForwardTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+  TRACE("ppIpForwardTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppIpForwardTable, bOrder, heap, flags);
   ret = getRouteTable(ppIpForwardTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppIpForwardTable)->table, (*ppIpForwardTable)->dwNumEntries,
      sizeof(MIB_IPFORWARDROW), IpForwardTableSorter);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -265,13 +265,13 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
 {
   DWORD ret;
 
-  TRACE("ppIpNetTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+  TRACE("ppIpNetTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppIpNetTable, bOrder, heap, flags);
   ret = getArpTable(ppIpNetTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppIpNetTable)->table, (*ppIpNetTable)->dwNumEntries,
      sizeof(MIB_IPADDRROW), IpNetTableSorter);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -322,13 +322,13 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 {
   DWORD ret;
 
-  TRACE("ppTcpTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+  TRACE("ppTcpTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppTcpTable, bOrder, heap, flags);
   ret = getTcpTable(ppTcpTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppTcpTable)->table, (*ppTcpTable)->dwNumEntries,
      sizeof(MIB_TCPROW), TcpTableSorter);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -373,13 +373,13 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
 {
   DWORD ret;
 
-  TRACE("ppUdpTable %p, bOrder %d, heap %p, flags 0x%08lx\n",
+  TRACE("ppUdpTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppUdpTable, bOrder, heap, flags);
   ret = getUdpTable(ppUdpTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppUdpTable)->table, (*ppUdpTable)->dwNumEntries,
      sizeof(MIB_UDPROW), UdpTableSorter);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -449,7 +449,7 @@ DWORD WINAPI CreateIpNetEntry(PMIB_IPNETROW pArpEntry)
  */
 DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
-  FIXME("(dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx): stub\n",
+  FIXME("(dwAddress 0x%08x, dwMask 0x%08x, dwIfIndex 0x%08x): stub\n",
    dwAddress, dwMask, dwIfIndex);
   return ERROR_NOT_SUPPORTED;
 }
@@ -472,7 +472,7 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
  */
 DWORD WINAPI DeleteIPAddress(ULONG NTEContext)
 {
-  FIXME("(NTEContext %ld): stub\n", NTEContext);
+  FIXME("(NTEContext %d): stub\n", NTEContext);
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -542,7 +542,7 @@ DWORD WINAPI DeleteIpNetEntry(PMIB_IPNETROW pArpEntry)
  */
 DWORD WINAPI DeleteProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
-  FIXME("(dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx): stub\n",
+  FIXME("(dwAddress 0x%08x, dwMask 0x%08x, dwIfIndex 0x%08x): stub\n",
    dwAddress, dwMask, dwIfIndex);
   return ERROR_NOT_SUPPORTED;
 }
@@ -591,7 +591,7 @@ DWORD WINAPI EnableRouter(HANDLE * pHandle, OVERLAPPED * pOverlapped)
  */
 DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 {
-  FIXME("(dwIfIndex 0x%08lx): stub\n", dwIfIndex);
+  FIXME("(dwIfIndex 0x%08x): stub\n", dwIfIndex);
   /* this flushes the arp cache of the given index */
   return ERROR_NOT_SUPPORTED;
 }
@@ -761,7 +761,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
     else
       ret = ERROR_NO_DATA;
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -793,7 +793,7 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
     if (ret == ERROR_SUCCESS)
       *pdwBestIfIndex = ipRow.dwForwardIfIndex;
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -817,7 +817,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
   PMIB_IPFORWARDTABLE table;
   DWORD ret;
 
-  TRACE("dwDestAddr 0x%08lx, dwSourceAddr 0x%08lx, pBestRoute %p\n", dwDestAddr,
+  TRACE("dwDestAddr 0x%08x, dwSourceAddr 0x%08x, pBestRoute %p\n", dwDestAddr,
    dwSourceAddr, pBestRoute);
   if (!pBestRoute)
     return ERROR_INVALID_PARAMETER;
@@ -853,7 +853,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
   }
   else
     ret = ERROR_OUTOFMEMORY;
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -876,7 +876,7 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   /* windows doesn't validate these, either, just makes sure the top byte is
      cleared.  I assume my ifenum module never gives an index with the top
      byte set. */
-  TRACE("returning %ld\n", IfIndex);
+  TRACE("returning %d\n", IfIndex);
   return IfIndex;
 }
 
@@ -899,7 +899,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP pStats)
 
   TRACE("pStats %p\n", pStats);
   ret = getICMPStats(pStats);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -935,7 +935,7 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   }
   else
     ret = ERROR_INVALID_DATA;
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -976,7 +976,7 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
-  TRACE("pIfTable %p, pdwSize %p, bOrder %ld\n", pdwSize, pdwSize,
+  TRACE("pIfTable %p, pdwSize %p, bOrder %d\n", pdwSize, pdwSize,
    (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1019,7 +1019,7 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1094,7 +1094,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
         ret = ERROR_OUTOFMEMORY;
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1124,7 +1124,7 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
 {
   DWORD ret;
 
-  TRACE("pIpAddrTable %p, pdwSize %p, bOrder %ld\n", pIpAddrTable, pdwSize,
+  TRACE("pIpAddrTable %p, pdwSize %p, bOrder %d\n", pIpAddrTable, pdwSize,
    (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1153,7 +1153,7 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
       HeapFree(GetProcessHeap(), 0, table);
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1183,7 +1183,7 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
 {
   DWORD ret;
 
-  TRACE("pIpForwardTable %p, pdwSize %p, bOrder %ld\n", pIpForwardTable,
+  TRACE("pIpForwardTable %p, pdwSize %p, bOrder %d\n", pIpForwardTable,
    pdwSize, (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1219,7 +1219,7 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
       }
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1248,7 +1248,7 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
 {
   DWORD ret;
 
-  TRACE("pIpNetTable %p, pdwSize %p, bOrder %ld\n", pIpNetTable, pdwSize,
+  TRACE("pIpNetTable %p, pdwSize %p, bOrder %d\n", pIpNetTable, pdwSize,
    (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1284,7 +1284,7 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
       }
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1307,7 +1307,7 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS pStats)
 
   TRACE("pStats %p\n", pStats);
   ret = getIPStats(pStats);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1387,7 +1387,7 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   /* FIXME: can check whether routing's enabled in /proc/sys/net/ipv4/ip_forward
      I suppose could also check for a listener on port 53 to set EnableDns */
   ret = NO_ERROR;
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1414,7 +1414,7 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
     *pdwNumIf = getNumInterfaces();
     ret = NO_ERROR;
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1438,7 +1438,7 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
  */
 DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
 {
-  TRACE("(IfIndex %ld, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex,
+  TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex,
    pPerAdapterInfo, pOutBufLen);
   return ERROR_NOT_SUPPORTED;
 }
@@ -1465,7 +1465,7 @@ DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterIn
  */
 BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHops, PULONG RTT)
 {
-  FIXME("(DestIpAddress 0x%08lx, HopCount %p, MaxHops %ld, RTT %p): stub\n",
+  FIXME("(DestIpAddress 0x%08lx, HopCount %p, MaxHops %d, RTT %p): stub\n",
    DestIpAddress, HopCount, MaxHops, RTT);
   return FALSE;
 }
@@ -1489,7 +1489,7 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats)
 
   TRACE("pStats %p\n", pStats);
   ret = getTCPStats(pStats);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1520,7 +1520,7 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
-  TRACE("pTcpTable %p, pdwSize %p, bOrder %ld\n", pTcpTable, pdwSize,
+  TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize,
    (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1557,7 +1557,7 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1580,7 +1580,7 @@ DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS pStats)
 
   TRACE("pStats %p\n", pStats);
   ret = getUDPStats(pStats);
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
@@ -1610,7 +1610,7 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
-  TRACE("pUdpTable %p, pdwSize %p, bOrder %ld\n", pUdpTable, pdwSize,
+  TRACE("pUdpTable %p, pdwSize %p, bOrder %d\n", pUdpTable, pdwSize,
    (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
@@ -1647,7 +1647,7 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
-  TRACE("returning %ld\n", ret);
+  TRACE("returning %d\n", ret);
   return ret;
 }
 
