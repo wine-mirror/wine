@@ -402,8 +402,8 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     /* if we allocated it, free it. The ANSI flag is also set in its Unicode sibling. */
     if ((typeFlag & SHCNF_PATHA) || (typeFlag & SHCNF_PRINTERA))
     {
-        if (Pidls[0]) SHFree((LPITEMIDLIST)Pidls[0]);
-        if (Pidls[1]) SHFree((LPITEMIDLIST)Pidls[1]);
+        SHFree((LPITEMIDLIST)Pidls[0]);
+        SHFree((LPITEMIDLIST)Pidls[1]);
     }
 }
 

@@ -354,9 +354,7 @@ static void FillTreeView( browse_info *info, IShellFolder * lpsf,
 done:
 	ReleaseCapture();
 	SetCursor(LoadCursorW(0, (LPWSTR)IDC_ARROW));
-
-	if (pidlTemp)
-	  SHFree(pidlTemp);
+    SHFree(pidlTemp);
 }
 
 static inline BOOL PIDLIsType(LPCITEMIDLIST pidl, PIDLTYPE type)

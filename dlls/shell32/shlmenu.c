@@ -115,9 +115,7 @@ static LPFMINFO FM_SetMenuParameter(
 
 	menudata = FM_GetMenuInfo(hmenu);
 
-	if ( menudata->pidl)
-	{ SHFree(menudata->pidl);
-	}
+	SHFree(menudata->pidl);
 
 	menudata->uID = uID;
 	menudata->pidl = ILClone(pidl);
@@ -299,9 +297,7 @@ void WINAPI FileMenu_Destroy (HMENU hmenu)
 
 	menudata = FM_GetMenuInfo(hmenu);
 
-	if ( menudata->pidl)
-	{ SHFree( menudata->pidl);
-	}
+	SHFree( menudata->pidl);
 	HeapFree(GetProcessHeap(), 0, menudata);
 
 	DestroyMenu (hmenu);
@@ -692,8 +688,7 @@ BOOL WINAPI FileMenu_DeleteAllItems (HMENU hmenu)
 	for (i = 0; i < GetMenuItemCount( hmenu ); i++)
 	{ GetMenuItemInfoW(hmenu, i, TRUE, &mii );
 
-	  if (mii.dwItemData)
-	    SHFree((LPFMINFO)mii.dwItemData);
+	  SHFree((LPFMINFO)mii.dwItemData);
 
 	  if (mii.hSubMenu)
 	    FileMenu_Destroy(mii.hSubMenu);

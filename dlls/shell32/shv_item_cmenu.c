@@ -166,8 +166,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 	  if(This->pSFParent)
 	    IShellFolder_Release(This->pSFParent);
 
-	  if(This->pidl)
-	    SHFree(This->pidl);
+	  SHFree(This->pidl);
 
 	  /*make sure the pidl is freed*/
 	  _ILFreeaPidl(This->apidl, This->cidl);

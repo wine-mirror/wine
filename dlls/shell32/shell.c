@@ -628,10 +628,10 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 
     SHELL_execute( &seiW, SHELL_Execute16 );
 
-    if (wVerb) SHFree(wVerb);
-    if (wFile) SHFree(wFile);
-    if (wParameters) SHFree(wParameters);
-    if (wDirectory) SHFree(wDirectory);
+    SHFree(wVerb);
+    SHFree(wFile);
+    SHFree(wParameters);
+    SHFree(wDirectory);
 
     return HINSTANCE_16(seiW.hInstApp);
 }

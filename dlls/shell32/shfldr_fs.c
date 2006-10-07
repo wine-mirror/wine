@@ -194,10 +194,8 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
     if (!refCount) {
         TRACE ("-- destroying IShellFolder(%p)\n", This);
 
-        if (This->pidlRoot)
-            SHFree (This->pidlRoot);
-        if (This->sPathTarget)
-            SHFree (This->sPathTarget);
+        SHFree (This->pidlRoot);
+        SHFree (This->sPathTarget);
         LocalFree ((HLOCAL) This);
     }
     return refCount;
@@ -1380,15 +1378,11 @@ IFSFldr_PersistFolder3_Initialize (IPersistFolder3 * iface, LPCITEMIDLIST pidl)
 
     TRACE ("(%p)->(%p)\n", This, pidl);
 
-    if (This->pidlRoot)
-        SHFree (This->pidlRoot);     /* free the old pidl */
+    SHFree (This->pidlRoot);     /* free the old pidl */
     This->pidlRoot = ILClone (pidl); /* set my pidl */
 
-    if (This->sPathTarget)
-    {
-        SHFree (This->sPathTarget);
-        This->sPathTarget = NULL;
-    }
+    SHFree (This->sPathTarget);
+    This->sPathTarget = NULL;
 
     /* set my path */
     if (SHGetPathFromIDListW (pidl, wszTemp)) {

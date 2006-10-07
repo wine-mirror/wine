@@ -614,8 +614,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     if (hr != S_OK)
         ret = FALSE;
 
-    if (pidlLast)
-        SHFree(pidlLast);
+    SHFree(pidlLast);
 
 #ifdef MORE_DEBUG
     TRACE ("icon=%p index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n",

@@ -882,8 +882,8 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
 
     retval = FindExecutableW(wFile, wDirectory, wResult);
     WideCharToMultiByte(CP_ACP, 0, wResult, -1, lpResult, MAX_PATH, NULL, NULL);
-    if (wFile) SHFree( wFile );
-    if (wDirectory) SHFree( wDirectory );
+    SHFree( wFile );
+    SHFree( wDirectory );
 
     TRACE("returning %s\n", lpResult);
     return retval;
@@ -1580,11 +1580,11 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
     if (sei->fMask & SEE_MASK_NOCLOSEPROCESS)
         sei->hProcess = seiW.hProcess;
 
-    if (wVerb) SHFree(wVerb);
-    if (wFile) SHFree(wFile);
-    if (wParameters) SHFree(wParameters);
-    if (wDirectory) SHFree(wDirectory);
-    if (wClass) SHFree(wClass);
+    SHFree(wVerb);
+    SHFree(wFile);
+    SHFree(wParameters);
+    SHFree(wDirectory);
+    SHFree(wClass);
 
     return ret;
 }

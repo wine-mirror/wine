@@ -811,10 +811,7 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 	LVITEMA	lvItem;
 	UINT	i = 0;
 
-	if (This->apidl)
-	{
-	  SHFree(This->apidl);
-	}
+	SHFree(This->apidl);
 
 	This->cidl = ListView_GetSelectedCount(This->hWndList);
 	This->apidl = (LPITEMIDLIST*)SHAlloc(This->cidl * sizeof(LPITEMIDLIST));
@@ -1713,8 +1710,7 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 	  if(This->pSF2Parent)
 	    IShellFolder2_Release(This->pSF2Parent);
 
-	  if(This->apidl)
-	    SHFree(This->apidl);
+	  SHFree(This->apidl);
 
 	  if(This->pAdvSink)
 	    IAdviseSink_Release(This->pAdvSink);

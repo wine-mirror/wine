@@ -97,10 +97,7 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 	if (!refCount)
 	{
 	  TRACE(" destroying IEnumFORMATETC(%p)\n",This);
-	  if (This->pFmt)
-	  {
-	    SHFree (This->pFmt);
-	  }
+	  SHFree (This->pFmt);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}

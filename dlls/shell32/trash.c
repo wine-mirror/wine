@@ -377,8 +377,7 @@ HRESULT TRASH_UnpackItemID(LPCSHITEMID id, TRASH_ELEMENT *element, WIN32_FIND_DA
 
 void TRASH_DisposeElement(TRASH_ELEMENT *element)
 {
-    if (element)
-        SHFree(element->filename);
+    SHFree(element->filename);
 }
 
 HRESULT TRASH_GetDetails(const TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)

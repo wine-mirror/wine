@@ -203,8 +203,7 @@ static ULONG WINAPI ISF_ControlPanel_fnRelease(IShellFolder2 * iface)
 
     if (!refCount) {
         TRACE("-- destroying IShellFolder(%p)\n", This);
-        if (This->pidlRoot)
-            SHFree(This->pidlRoot);
+        SHFree(This->pidlRoot);
         LocalFree((HLOCAL) This);
     }
     return refCount;

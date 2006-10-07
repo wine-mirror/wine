@@ -291,11 +291,8 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 
     TRACE_(shell)("%p %p\n", pStream ,  ppPidl);
 
-    if (*ppPidl)
-    {
-        SHFree(*ppPidl);
-        *ppPidl = NULL;
-    }
+    SHFree(*ppPidl);
+    *ppPidl = NULL;
 
     IStream_AddRef (pStream);
 
@@ -865,8 +862,7 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl, LPCITEMIDLIST item, BOOL bEnd)
     if (_ILIsDesktop(pidl))
     {
         idlRet = ILClone(item);
-        if (pidl)
-            SHFree (pidl);
+        SHFree (pidl);
         return idlRet;
     }
 
@@ -896,8 +892,7 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl, LPCITEMIDLIST item, BOOL bEnd)
 void WINAPI ILFree(LPITEMIDLIST pidl)
 {
     TRACE("(pidl=%p)\n",pidl);
-    if (pidl)
-        SHFree(pidl);
+    SHFree(pidl);
 }
 
 /*************************************************************************
