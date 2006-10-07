@@ -121,11 +121,11 @@ static void X11DRV_desktop_SetCurrentMode(int mode)
 {
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
-    TRACE("Resizing Wine desktop window to %ldx%ld\n", dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
+    TRACE("Resizing Wine desktop window to %dx%d\n", dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
     X11DRV_resize_desktop(dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
     if (dwBpp != dd_modes[mode].dwBPP)
     {
-        FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[mode].dwBPP);
+        FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
     }
 }
 

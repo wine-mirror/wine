@@ -167,7 +167,7 @@ static Pixmap BRUSH_DitherMono( COLORREF color )
     int idx = gray * (sizeof gray_dither/sizeof gray_dither[0] + 1)/256 - 1;
     Pixmap pixmap;
 
-    TRACE("color=%06lx -> gray=%x\n", color, gray);
+    TRACE("color=%06x -> gray=%x\n", color, gray);
 
     wine_tsx11_lock();
     pixmap = XCreateBitmapFromData( gdi_display, root_window, 

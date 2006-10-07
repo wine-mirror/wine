@@ -72,7 +72,7 @@ static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDD
       info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal);
   else
       info->wRefreshRate = 0;
-  TRACE(" width=%ld, height=%ld, refresh=%d\n",
+  TRACE(" width=%d, height=%d, refresh=%d\n",
         info->dwWidth, info->dwHeight, info->wRefreshRate);
   info->lPitch         = 0;
   info->dwBPP          = bpp;
@@ -118,7 +118,7 @@ static void X11DRV_XF86VM_SetCurrentMode(int mode)
   /* only set modes from the original color depth */
   if (dwBpp != dd_modes[mode].dwBPP)
   {
-      FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[mode].dwBPP);
+      FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
   }
   mode = mode % real_xf86vm_mode_count;
 

@@ -1256,7 +1256,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     widthDst  = pts[1].x - pts[0].x;
     heightDst = pts[1].y - pts[0].y;
 
-    TRACE("    rectdst=%d,%d-%d,%d orgdst=%ld,%ld\n",
+    TRACE("    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
                     xDst, yDst, widthDst, heightDst,
                     physDevDst->org.x, physDevDst->org.y );
 
@@ -1273,14 +1273,14 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         heightSrc = pts[1].y - pts[0].y;
 
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
-        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%ld,%ld\n",
+        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
                         xSrc, ySrc, widthSrc, heightSrc,
                         physDevSrc->org.x, physDevSrc->org.y );
         if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, widthDst, heightDst,
                                       physDevSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        TRACE("    vissrc=%ld,%ld-%ld,%ld visdst=%ld,%ld-%ld,%ld\n",
+        TRACE("    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
                         visRectSrc.left, visRectSrc.top,
                         visRectSrc.right, visRectSrc.bottom,
                         visRectDst.left, visRectDst.top,
@@ -1292,7 +1292,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        TRACE("    vissrc=none visdst=%ld,%ld-%ld,%ld\n",
+        TRACE("    vissrc=none visdst=%d,%d-%d,%d\n",
                         visRectDst.left, visRectDst.top,
                         visRectDst.right, visRectDst.bottom );
     }

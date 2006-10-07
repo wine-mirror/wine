@@ -200,11 +200,11 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
     size = pXRRConfigCurrentConfiguration (sc, &rot);
     if (dwBpp != dd_modes[mode].dwBPP)
     {
-        FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[mode].dwBPP);
+        FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
     }
     mode = mode%real_xrandr_modes_count;
 
-    TRACE("Changing Resolution to %ldx%ld @%d Hz\n", 
+    TRACE("Changing Resolution to %dx%d @%d Hz\n", 
 	  dd_modes[mode].dwWidth, 
 	  dd_modes[mode].dwHeight, 
 	  dd_modes[mode].wRefreshRate);
@@ -222,7 +222,7 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
                     if (dd_modes[mode].wRefreshRate == real_xrandr_rates[i][j])
                     {
                         rate = real_xrandr_rates[i][j];
-                        TRACE("Resizing X display to %ldx%ld @%d Hz\n", 
+                        TRACE("Resizing X display to %dx%d @%d Hz\n", 
                               dd_modes[mode].dwWidth, dd_modes[mode].dwHeight, rate);
                         stat = pXRRSetScreenConfigAndRate (gdi_display, sc, root, 
                                                           size, rot, rate, CurrentTime);
@@ -231,7 +231,7 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
             }
             else
             {
-                TRACE("Resizing X display to %ldx%ld <default Hz>\n", 
+                TRACE("Resizing X display to %dx%d <default Hz>\n", 
 		      dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
                 stat = pXRRSetScreenConfig (gdi_display, sc, root, size, rot, CurrentTime);
             }

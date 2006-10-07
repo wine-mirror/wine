@@ -1287,7 +1287,7 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
     RECT rect;
     POINT pt;
 
-    TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n", x, y, color, fillType );
+    TRACE("X11DRV_ExtFloodFill %d,%d %06x %d\n", x, y, color, fillType );
 
     pt.x = x;
     pt.y = y;

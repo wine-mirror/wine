@@ -455,7 +455,7 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
             break;
         gasp += 2;
     }
-    TRACE("got flags %04x for ppem %ld\n", *flags, ppem);
+    TRACE("got flags %04x for ppem %d\n", *flags, ppem);
 
     HeapFree(GetProcessHeap(), 0, buffer);
     return TRUE;
@@ -547,7 +547,7 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     LFANDSIZE lfsz;
 
     GetObjectW(hfont, sizeof(lfsz.lf), &lfsz.lf);
-    TRACE("h=%ld w=%ld weight=%ld it=%d charset=%d name=%s\n",
+    TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
     lfsz.devsize.cx = X11DRV_XWStoDS( physDev, lfsz.lf.lfWidth );
@@ -742,7 +742,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
     formatEntry->realized[glyph] = TRUE;
 
-    TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%ld,%ld\n",
+    TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%d,%d\n",
 	  buflen,
 	  gm.gmBlackBoxX, gm.gmBlackBoxY, gm.gmCellIncX, gm.gmCellIncY,
 	  gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
@@ -1261,7 +1261,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
     assert(formatEntry);
 
-    TRACE("Writing %s at %ld,%ld\n", debugstr_wn(wstr,count),
+    TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
           physDev->org.x + x, physDev->org.y + y);
 
     if(X11DRV_XRender_Installed) {
@@ -1358,7 +1358,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		    cur.y += formatEntry->gis[wstr[idx]].yOff;
 		}
 	    }
-	    TRACE("glyph extents %ld,%ld - %ld,%ld drawable x,y %ld,%ld\n", extents.left, extents.top,
+	    TRACE("glyph extents %d,%d - %d,%d drawable x,y %d,%d\n", extents.left, extents.top,
 		  extents.right, extents.bottom, physDev->org.x + x, physDev->org.y + y);
 
 	    if(physDev->org.x + x + extents.left >= 0) {

@@ -251,7 +251,7 @@ static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
         *size   = header->biSizeImage;
         return 1;
     }
-    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+    ERR("(%d): unknown/wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -2161,7 +2161,7 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 
     default:
     notsupported:
-        WARN("from 16 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+        WARN("from 16 bit DIB (%x,%x,%x) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
               rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
               bmpImage->green_mask, bmpImage->blue_mask );
         /* fall through */
@@ -2514,7 +2514,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
             int rShift,gShift,bShift;
             WORD* dstpixel;
 
-            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 16 bit DIB (%lx,%lx,%lx)\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 16 bit DIB (%x,%x,%x)\n",
                   bmpImage->depth, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask,
                   rDst, gDst, bDst);
@@ -2689,7 +2689,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 
     default:
     notsupported:
-        WARN("from 24 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+        WARN("from 24 bit DIB (%x,%x,%x) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
               rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
               bmpImage->green_mask, bmpImage->blue_mask );
         /* fall through */
@@ -2910,7 +2910,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
             /* ==== any bmp format -> 888 dib ==== */
             BYTE* dstbyte;
 
-            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 24 bit DIB (%lx,%lx,%lx)\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 24 bit DIB (%x,%x,%x)\n",
                   bmpImage->depth, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask,
                   rDst, gDst, bDst );
@@ -3167,7 +3167,7 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
 
     default:
     notsupported:
-        WARN("from 32 bit DIB (%lx,%lx,%lx) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
+        WARN("from 32 bit DIB (%x,%x,%x) to unknown %d bit bitmap (%lx,%lx,%lx)\n",
               rSrc, gSrc, bSrc, bmpImage->bits_per_pixel, bmpImage->red_mask,
               bmpImage->green_mask, bmpImage->blue_mask );
         /* fall through */
@@ -3495,7 +3495,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             int rShift,gShift,bShift;
             DWORD* dstpixel;
 
-            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 32 bit DIB (%lx,%lx,%lx)\n",
+            WARN("from unknown %d bit bitmap (%lx,%lx,%lx) to 32 bit DIB (%x,%x,%x)\n",
                   bmpImage->depth, bmpImage->red_mask,
                   bmpImage->green_mask, bmpImage->blue_mask,
                   rDst,gDst,bDst);
@@ -3580,7 +3580,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         }
     }
 
-    TRACE("Dib: depth=%d r=%lx g=%lx b=%lx\n",
+    TRACE("Dib: depth=%d r=%x g=%x b=%x\n",
           descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
     TRACE("Bmp: depth=%d/%d r=%lx g=%lx b=%lx\n",
           bmpImage->depth,bmpImage->bits_per_pixel,
@@ -3731,7 +3731,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                       bmpImage, descr->xDest, descr->yDest );
     }
 
-    TRACE("Dib: depth=%2d r=%lx g=%lx b=%lx\n",
+    TRACE("Dib: depth=%2d r=%x g=%x b=%x\n",
           descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
     TRACE("Bmp: depth=%2d/%2d r=%lx g=%lx b=%lx\n",
           bmpImage->depth,bmpImage->bits_per_pixel,
@@ -4046,7 +4046,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   core_header = (bitmap_type == 0);
   colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
-  TRACE("%u scanlines of (%i,%i) -> (%li,%i) starting from %u\n",
+  TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
         lines, dib.dsBm.bmWidth, dib.dsBm.bmHeight, width, descr.lines, startscan);
 
   if( lines > dib.dsBm.bmHeight ) lines = dib.dsBm.bmHeight;
@@ -4170,7 +4170,7 @@ static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_
     DWORD old_prot;
 
     VirtualProtect(physBitmap->base, physBitmap->size, new_prot, &old_prot);
-    TRACE("Changed protection from %ld to %ld\n", old_prot, new_prot);
+    TRACE("Changed protection from %d to %d\n", old_prot, new_prot);
 }
 
 /***********************************************************************
@@ -4267,7 +4267,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
   X_PHYSBITMAP *physBitmap;
   int nColorMap = 0, *colorMap = NULL, aColorMap = FALSE;
 
-  TRACE("(%p,%p,%ld,%ld,%ld,%ld,%ld,%ld)\n", physDevSrc->hdc, physDevDst->hdc,
+  TRACE("(%p,%p,%d,%d,%d,%d,%d,%d)\n", physDevSrc->hdc, physDevDst->hdc,
     xSrc, ySrc, xDest, yDest, width, height);
   /* this function is meant as an optimization for BitBlt,
    * not to be called otherwise */
@@ -4496,7 +4496,7 @@ static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
     INT ret = DIB_Status_None;
 
     if (!physBitmap->image) return ret;  /* not a DIB section */
-    TRACE("Locking %p from thread %04lx\n", physBitmap->hbitmap, GetCurrentThreadId());
+    TRACE("Locking %p from thread %04x\n", physBitmap->hbitmap, GetCurrentThreadId());
     EnterCriticalSection(&physBitmap->lock);
     ret = physBitmap->status;
     if (req != DIB_Status_None)

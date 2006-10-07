@@ -165,7 +165,7 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
     TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x\n",
            pWinpos->hwnd, pWinpos->hwndInsertAfter, pWinpos->x, pWinpos->y,
            pWinpos->cx, pWinpos->cy, pWinpos->flags );
-    TRACE( "current %s style %08lx new %s\n",
+    TRACE( "current %s style %08x new %s\n",
            wine_dbgstr_rect( &wndPtr->rectWindow ), wndPtr->dwStyle,
            wine_dbgstr_rect( pNewWindowRect ));
 
@@ -668,7 +668,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         win->dwStyle      = new_style;
         data->window_rect = *rectWindow;
 
-        TRACE( "win %p window %s client %s style %08lx\n",
+        TRACE( "win %p window %s client %s style %08x\n",
                hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style );
 
         /* FIXME: copy the valid bits */
@@ -1294,7 +1294,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     rect.top    = y;
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
-    TRACE( "win %p new X rect %ld,%ld,%ldx%ld (event %d,%d,%dx%d)\n",
+    TRACE( "win %p new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( data, &rect );
@@ -1310,7 +1310,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     GetWindowRect( hwnd, &rect );
     if (rect.left == x && rect.top == y) flags |= SWP_NOMOVE;
     else
-        TRACE( "%p moving from (%ld,%ld) to (%d,%d)\n",
+        TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
                hwnd, rect.left, rect.top, x, y );
 
     if ((rect.right - rect.left == cx && rect.bottom - rect.top == cy) ||
@@ -1321,7 +1321,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         flags |= SWP_NOSIZE;
     }
     else
-        TRACE( "%p resizing from (%ldx%ld) to (%dx%d)\n",
+        TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top, cx, cy );
 
     data->lock_changes++;
@@ -1596,7 +1596,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    TRACE("hwnd %p (%smanaged), command %04x, hittest %ld, pos %ld,%ld\n",
+    TRACE("hwnd %p (%smanaged), command %04x, hittest %d, pos %d,%d\n",
           hwnd, data->managed ? "" : "NOT ", syscommand, hittest, pt.x, pt.y);
 
     /* if we are managed then we let the WM do all the work */
@@ -1621,7 +1621,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             case WMSZ_BOTTOMLEFT:  dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT; break;
             case WMSZ_BOTTOMRIGHT: dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT; break;
             default:
-                ERR("Invalid hittest value: %ld\n", hittest);
+                ERR("Invalid hittest value: %d\n", hittest);
                 dir = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
             }
         X11DRV_WMMoveResizeWindow( hwnd, pt.x, pt.y, dir );

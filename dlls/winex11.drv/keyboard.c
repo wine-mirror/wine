@@ -1808,7 +1808,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
     LANGID langid;
 
     if (dwThreadid && dwThreadid != GetCurrentThreadId())
-        FIXME("couldn't return keyboard layout for thread %04lx\n", dwThreadid);
+        FIXME("couldn't return keyboard layout for thread %04x\n", dwThreadid);
 
 #if 0
     layout = main_key_tab[kbd_layout].lcid;
@@ -2203,7 +2203,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 
   /* Finally issue FIXME for unknown keys   */
 
-  FIXME("(%08lx,%p,%d): unsupported key, vkey=%04x, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
+  FIXME("(%08x,%p,%d): unsupported key, vkey=%04x, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
   if (lpBuffer && nSize)
     *lpBuffer = 0;
   return 0;

@@ -623,7 +623,7 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE16 hData1
 {
     LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormatID);
 
-    TRACE("format=%d lpData=%p hData16=%08x hData32=%p flags=0x%08lx lpFormat=%p override=%d\n",
+    TRACE("format=%d lpData=%p hData16=%08x hData32=%p flags=0x%08x lpFormat=%p override=%d\n",
         wFormatID, lpData, hData16, hData32, flags, lpFormat, override);
 
     if (lpData && !override)
@@ -2333,7 +2333,7 @@ int X11DRV_AcquireClipboard(HWND hWndClipWindow)
         }
         else
         {
-            TRACE("Thread %lx is acquiring selection with thread %lx's window %p\n",
+            TRACE("Thread %x is acquiring selection with thread %x's window %p\n",
                 GetCurrentThreadId(),
                 GetWindowThreadProcessId(hWndClipWindow, NULL), hWndClipWindow);
 
@@ -2773,7 +2773,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     }
     while (lpData != ClipData);
 
-    TRACE(" found %ld formats\n", cTargets);
+    TRACE(" found %d formats\n", cTargets);
 
     /* Allocate temp buffer */
     targets = HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
@@ -2999,7 +2999,7 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
                 if (hClipData && (lpClipData = GlobalLock(hClipData)))
                 {
-                    TRACE("\tUpdating property %s, %ld bytes\n", debugstr_w(lpFormat->Name), cBytes);
+                    TRACE("\tUpdating property %s, %d bytes\n", debugstr_w(lpFormat->Name), cBytes);
 
                     wine_tsx11_lock();
                     XChangeProperty(display, request, rprop, event->target,

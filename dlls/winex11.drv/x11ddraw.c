@@ -363,7 +363,7 @@ static void X11DRV_DDHAL_SetInfo(void)
 
 INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
 {
-  TRACE("(%d,(%ld,%ld,%ld),%p)\n", cbInput, lpCmd->dwCommand,
+  TRACE("(%d,(%d,%d,%d),%p)\n", cbInput, lpCmd->dwCommand,
 	lpCmd->dwParam1, lpCmd->dwParam2, lpOutData);
 
   switch (lpCmd->dwCommand) {

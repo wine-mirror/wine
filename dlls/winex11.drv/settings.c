@@ -171,12 +171,12 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     devmode->dmSize = sizeof(DEVMODEW);
     if (n == ENUM_CURRENT_SETTINGS)
     {
-        TRACE("mode %ld (current) -- getting current mode (%s)\n", n, handler_name);
+        TRACE("mode %d (current) -- getting current mode (%s)\n", n, handler_name);
         n = pGetCurrentMode();
     }
     if (n == ENUM_REGISTRY_SETTINGS)
     {
-        TRACE("mode %ld (registry) -- getting default mode (%s)\n", n, handler_name);
+        TRACE("mode %d (registry) -- getting default mode (%s)\n", n, handler_name);
         n = dd_mode_default;
     }
     if (n < dd_mode_count)
@@ -189,19 +189,19 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
         if (devmode->dmDisplayFrequency)
         {
             devmode->dmFields |= DM_DISPLAYFREQUENCY;
-            TRACE("mode %ld -- %ldx%ldx%ldbpp @%ld Hz (%s)\n", n,
+            TRACE("mode %d -- %dx%dx%dbpp @%d Hz (%s)\n", n,
                   devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel,
                   devmode->dmDisplayFrequency, handler_name);
         }
         else
         {
-            TRACE("mode %ld -- %ldx%ldx%ldbpp (%s)\n", n,
+            TRACE("mode %d -- %dx%dx%dbpp (%s)\n", n,
                   devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel, 
                   handler_name);
         }
         return TRUE;
     }
-    TRACE("mode %ld -- not present (%s)\n", n, handler_name);
+    TRACE("mode %d -- not present (%s)\n", n, handler_name);
     return FALSE;
 }
 
@@ -240,12 +240,12 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     DEVMODEW dm;
     BOOL def_mode = TRUE;
 
-    TRACE("(%s,%p,%p,0x%08lx,%p)\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
+    TRACE("(%s,%p,%p,0x%08x,%p)\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
     TRACE("flags=%s\n",_CDS_flags(flags));
     if (devmode)
     {
         TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
-        TRACE("width=%ld height=%ld bpp=%ld freq=%ld (%s)\n",
+        TRACE("width=%d height=%d bpp=%d freq=%d (%s)\n",
               devmode->dmPelsWidth,devmode->dmPelsHeight,
               devmode->dmBitsPerPel,devmode->dmDisplayFrequency, handler_name);
 
@@ -295,7 +295,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                 continue;
         }
         /* we have a valid mode */
-        TRACE("Requested display settings match mode %ld (%s)\n", i, handler_name);
+        TRACE("Requested display settings match mode %d (%s)\n", i, handler_name);
         if (!(flags & CDS_TEST))
             pSetCurrentMode(i);
         return DISP_CHANGE_SUCCESSFUL;
@@ -315,7 +315,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
  */
 static DWORD PASCAL X11DRV_Settings_SetMode(LPDDHAL_SETMODEDATA data)
 {
-    TRACE("Mode %ld requested by DDHAL (%s)\n", data->dwModeIndex, handler_name);
+    TRACE("Mode %d requested by DDHAL (%s)\n", data->dwModeIndex, handler_name);
     pSetCurrentMode(data->dwModeIndex);
     X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
     data->ddRVal = DD_OK;

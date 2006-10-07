@@ -721,7 +721,7 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
     {
         DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
 
-        TRACE( "setting win %lx pos %ld,%ld,%ldx%ld after %lx changes=%x\n",
+        TRACE( "setting win %lx pos %d,%d,%dx%d after %lx changes=%x\n",
                data->whole_window, data->whole_rect.left, data->whole_rect.top,
                data->whole_rect.right - data->whole_rect.left,
                data->whole_rect.bottom - data->whole_rect.top, changes.sibling, mask );
@@ -1104,7 +1104,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     X11DRV_set_window_pos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, NULL );
 
-    TRACE( "win %p window %ld,%ld,%ld,%ld client %ld,%ld,%ld,%ld whole %ld,%ld,%ld,%ld X client %ld,%ld,%ld,%ld xwin %x\n",
+    TRACE( "win %p window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
            wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
            wndPtr->rectClient.left, wndPtr->rectClient.top,
@@ -1135,7 +1135,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         WIN_ReleasePtr( wndPtr );
         /* send it anyway */
         if (((rect.right-rect.left) <0) ||((rect.bottom-rect.top)<0))
-            WARN("sending bogus WM_SIZE message 0x%08lx\n",
+            WARN("sending bogus WM_SIZE message 0x%08x\n",
                  MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
         SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
                       MAKELONG(rect.right-rect.left, rect.bottom-rect.top));

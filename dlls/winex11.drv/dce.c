@@ -76,7 +76,7 @@ static void dump_cache(void)
 
     LIST_FOR_EACH_ENTRY( dce, &dce_list, struct dce, entry )
     {
-        TRACE("%p: hwnd %p dcx %08lx %s %s\n",
+        TRACE("%p: hwnd %p dcx %08x %s %s\n",
               dce, dce->hwnd, dce->flags,
               (dce->flags & DCX_CACHE) ? "Cache" : "Owned",
               dce->count ? "InUse" : "" );
@@ -432,7 +432,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     HWND parent;
     LONG window_style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    TRACE("hwnd %p, hrgnClip %p, flags %08lx\n", hwnd, hrgnClip, flags);
+    TRACE("hwnd %p, hrgnClip %p, flags %08x\n", hwnd, hrgnClip, flags);
 
     /* fixup flags */
 
@@ -493,7 +493,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                 if (!dce->hwnd) dceEmpty = dce;
                 else if ((dce->hwnd == hwnd) && !((dce->flags ^ flags) & clip_flags))
                 {
-                    TRACE("\tfound valid %p dce [%p], flags %08lx\n",
+                    TRACE("\tfound valid %p dce [%p], flags %08x\n",
                           dce, hwnd, dce->flags );
                     bUpdateVisRgn = FALSE;
                     break;
@@ -554,7 +554,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         SaveDC( dce->hdc );  /* save the state again for next time */
     }
 
-    TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, dce->hdc);
+    TRACE("(%p,%p,0x%x): returning %p\n", hwnd, hrgnClip, flags, dce->hdc);
     return dce->hdc;
 }
 

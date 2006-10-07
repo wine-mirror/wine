@@ -107,8 +107,7 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
     unsigned int byte_selection = selLength * sizeof(WCHAR);
     BOOL rc = FALSE;
 
-    TRACE("( %li, %li, %ld, %p, %ld):\n", dwOffset, selLength, dwIndex, lpComp,
-                                        dwCompLen );
+    TRACE("( %i, %i, %d, %p, %d):\n", dwOffset, selLength, dwIndex, lpComp, dwCompLen );
 
     if (dwIndex == GCS_COMPSTR)
     {

@@ -50,7 +50,7 @@ static void dump_region( const char *p, HRGN hrgn)
     }
     if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
     GetRegionData( hrgn, size, data );
-    TRACE("%s %ld rects:", p, data->rdh.nCount );
+    TRACE("%s %d rects:", p, data->rdh.nCount );
     for (i = 0, rect = (RECT *)data->Buffer; i<20 && i < data->rdh.nCount; i++, rect++)
         TRACE( " %s", wine_dbgstr_rect( rect));
     TRACE("\n");

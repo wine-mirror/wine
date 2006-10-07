@@ -180,7 +180,7 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
 
     if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
 
-    TRACE("(bmp=%p, buffer=%p, count=0x%lx)\n", hbitmap, buffer, count);
+    TRACE("(bmp=%p, buffer=%p, count=0x%x)\n", hbitmap, buffer, count);
 
     wine_tsx11_lock();
 
@@ -310,7 +310,7 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
 
     if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
 
-    TRACE("(bmp=%p, bits=%p, count=0x%lx)\n", hbitmap, bits, count);
+    TRACE("(bmp=%p, bits=%p, count=0x%x)\n", hbitmap, bits, count);
 
     height = count / bitmap.bmWidthBytes;
 

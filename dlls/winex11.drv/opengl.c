@@ -1487,7 +1487,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
          unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
          int height, width_int;
 
-         TRACE("Glyph : %3d / List : %ld\n", glyph, listBase);
+         TRACE("Glyph : %3d / List : %d\n", glyph, listBase);
          if (needed_size == GDI_ERROR) {
              TRACE("  - needed size : %d (GDI_ERROR)\n", needed_size);
              goto error;
@@ -1508,7 +1508,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
              unsigned char *bitmap_ = (unsigned char *) bitmap;
 
              TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-             TRACE("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - origin : (%d , %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
              TRACE("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
              if (needed_size != 0) {
                  TRACE("  - bitmap :\n");
@@ -1582,7 +1582,7 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 {
      Font fid = physDev->font;
 
-     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", physDev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineA);
@@ -1600,7 +1600,7 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 {
      Font fid = physDev->font;
 
-     TRACE("(%p, %ld, %ld, %ld) using font %ld\n", physDev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineW);

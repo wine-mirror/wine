@@ -157,7 +157,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
     if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
         accept = 1;
 
-    TRACE("action req: %ld accept(%d) at x(%ld),y(%ld)\n",
+    TRACE("action req: %ld accept(%d) at x(%d),y(%d)\n",
           event->data.l[4], accept, XDNDxy.x, XDNDxy.y);
 
     /*

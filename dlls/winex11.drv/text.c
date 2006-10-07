@@ -68,7 +68,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	  physDev->hdc, (UINT16)(physDev->font), x, y,
 	  debugstr_wn (wstr, count), count, flags, lpDx);
 
-    if (lprect != NULL) TRACE("\trect=(%ld,%ld - %ld,%ld)\n",
+    if (lprect != NULL) TRACE("\trect=(%d,%d - %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
 
