@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = olecli32.dll
 IMPORTLIB = libolecli32.$(IMPLIBEXT)
 IMPORTS   = ole32 gdi32 kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	olecli_main.c
