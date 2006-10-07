@@ -919,7 +919,7 @@ HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
     UNICODE_STRING dir, title;
     HRESULT hr;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
+    TRACE("(%p, %s, %s, %s, %s, %p, %d, %p)\n",
           hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
           debugstr_a(szDir), debugstr_a(lpszTitle),
           phEXE, dwFlags, pvReserved);
@@ -976,7 +976,7 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
     ADVInfo info;
     HRESULT hr;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
+    TRACE("(%p, %s, %s, %s, %s, %p, %d, %p)\n",
           hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
           debugstr_w(szDir), debugstr_w(lpszTitle),
           phEXE, dwFlags, pvReserved);
