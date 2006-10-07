@@ -156,7 +156,7 @@ static void test_delete(void)
     ok(!file_exists("test1.txt"), "File should be removed\n");
 
     ret = SHFileOperationA(&shfo);
-    ok(!ret, "Directory exists, but is not removed, ret=%ld\n", ret);
+    ok(!ret, "Directory exists, but is not removed, ret=%d\n", ret);
     ok(file_exists("test4.txt"), "Directory should not be removed\n");
 
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
@@ -165,7 +165,7 @@ static void test_delete(void)
     ok(!file_exists("test4.txt"), "Directory should be removed\n");
 
     ret = SHFileOperationA(&shfo);
-    ok(!ret, "The requested file does not exist, ret=%ld\n", ret);
+    ok(!ret, "The requested file does not exist, ret=%d\n", ret);
 
     init_shfo_tests();
     sprintf(buf, "%s\\%s", CURR_DIR, "test4.txt");
@@ -204,7 +204,7 @@ static void test_delete(void)
     shfo.fFlags &= ~FOF_FILESONLY;
     shfo.fAnyOperationsAborted = FALSE;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", ret);
+        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
     ok(!shfo.fAnyOperationsAborted, "Expected no aborted operations\n");
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
@@ -213,7 +213,7 @@ static void test_delete(void)
     shfo.pFrom = "test1.txt\0";
     shfo.wFunc = 0;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+        ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* try an invalid list, only one null terminator */
@@ -221,7 +221,7 @@ static void test_delete(void)
     shfo.pFrom = "";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", ret);
+        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* delete a dir, and then a file inside the dir, same as
@@ -230,7 +230,7 @@ static void test_delete(void)
     init_shfo_tests();
     shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %ld\n", ret);
+        ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
         ok(!file_exists("testdir2"), "Expected testdir2 to not exist\n");
     ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
 
@@ -239,7 +239,7 @@ static void test_delete(void)
     shfo.pFrom = "testdir2\0";
     shfo.fFlags |= FOF_NORECURSION;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
         ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
         ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
 }
@@ -275,7 +275,7 @@ static void test_rename(void)
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
     ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
-       "Can't rename many files, retval = %ld\n", retval);
+       "Can't rename many files, retval = %d\n", retval);
     ok(file_exists("test1.txt"), "The file is renamed - many files are specified\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
@@ -285,38 +285,38 @@ static void test_rename(void)
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
     ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
-       "Can't rename many files, retval = %ld\n", retval);
+       "Can't rename many files, retval = %d\n", retval);
     ok(file_exists("test1.txt"), "The file is not renamed - many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename file failed, retval = %ld\n", retval);
+    ok(!retval, "Rename file failed, retval = %d\n", retval);
     ok(!file_exists("test1.txt"), "The file is not renamed\n");
     ok(file_exists("test6.txt"), "The file is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename file back failed, retval = %ld\n", retval);
+    ok(!retval, "Rename file back failed, retval = %d\n", retval);
 
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename dir failed, retval = %ld\n", retval);
+    ok(!retval, "Rename dir failed, retval = %d\n", retval);
     ok(!file_exists("test4.txt"), "The dir is not renamed\n");
     ok(file_exists("test6.txt"), "The dir is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename dir back failed, retval = %ld\n", retval);
+    ok(!retval, "Rename dir back failed, retval = %d\n", retval);
 
     /* try to rename more than one file to a single file */
     shfo.pFrom = "test1.txt\0test2.txt\0";
     shfo.pTo = "a.txt\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_GEN_FAILURE, "Expected ERROR_GEN_FAILURE, got %ld\n", retval);
+    ok(retval == ERROR_GEN_FAILURE, "Expected ERROR_GEN_FAILURE, got %d\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
 
@@ -324,32 +324,32 @@ static void test_rename(void)
     shfo.pFrom = "idontexist\0";
     shfo.pTo = "newfile\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == 1026, "Expected 1026, got %ld\n", retval);
+    ok(retval == 1026, "Expected 1026, got %d\n", retval);
     ok(!file_exists("newfile"), "Expected newfile to not exist\n");
 
     /* pTo already exist */
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "test2.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_ALREADY_EXISTS, "Expected ERROR_ALREADY_EXISTS, got %ld\n", retval);
+        ok(retval == ERROR_ALREADY_EXISTS, "Expected ERROR_ALREADY_EXISTS, got %d\n", retval);
 
     /* pFrom is valid, but pTo is empty */
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* pFrom is empty */
     shfo.pFrom = "\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", retval);
+        ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", retval);
 
     /* pFrom is NULL, commented out because it crashes on nt 4.0 */
 #if 0
     shfo.pFrom = NULL;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", retval);
+    ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", retval);
 #endif
 }
 
@@ -466,7 +466,7 @@ static void test_copy(void)
     shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
     shfo.pTo = "testdir2\0";
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1 to exist\n");
 
     /* try to copy files to a file */
@@ -477,7 +477,7 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test3.txt\0");
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
     ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
 
@@ -485,7 +485,7 @@ static void test_copy(void)
     DeleteFile(to);
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFile("test3.txt\\test1.txt"), "Expected test3.txt\\test1.txt to exist\n");
         ok(DeleteFile("test3.txt\\test2.txt"), "Expected test3.txt\\test1.txt to exist\n");
         ok(RemoveDirectory(to), "Expected test3.txt to exist\n");
@@ -496,7 +496,7 @@ static void test_copy(void)
     shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0testdir2\\d.txt\0";
     shfo.fFlags |= FOF_NOERRORUI | FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
     ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\a.txt to not exist\n");
 
@@ -505,7 +505,7 @@ static void test_copy(void)
     shfo.pTo = "e.txt\0f.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
     ok(!file_exists("e.txt"), "Expected e.txt to not exist\n");
 
@@ -514,7 +514,7 @@ static void test_copy(void)
     shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
     ok(DeleteFile("testdir2\\b.txt"), "Expected testdir2\\b.txt to exist\n");
     ok(RemoveDirectory("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
@@ -525,7 +525,7 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = FALSE;
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
 
     /* try a glob */
@@ -533,7 +533,7 @@ static void test_copy(void)
     shfo.pTo = "testdir2\0";
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
 
     /* try a glob with FOF_FILESONLY */
@@ -542,7 +542,7 @@ static void test_copy(void)
     shfo.pFrom = "test?.txt\0";
     shfo.fFlags |= FOF_FILESONLY;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
     ok(!file_exists("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to not exist\n");
 
@@ -555,7 +555,7 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_FILESONLY;
     shfo.fFlags |= FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
     ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\test1.txt to not exist\n");
     ok(!RemoveDirectory("b.txt"), "b.txt should not exist\n");
@@ -567,7 +567,7 @@ static void test_copy(void)
     shfo.pTo = "b.txt\0c.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
     ok(!DeleteFile("c.txt"), "Expected c.txt to not exist\n");
 
@@ -575,7 +575,7 @@ static void test_copy(void)
     shfo.pFrom = "test1.txt\0test2.txt\0";
     shfo.pTo = "b.txt\0c.txt\0d.txt\0";
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
     ok(!DeleteFile("b.txt"), "Expected b.txt to not exist\n");
 
@@ -584,7 +584,7 @@ static void test_copy(void)
     shfo.pTo = "b.txt\0c.txt\0d.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
     ok(!DeleteFile("b.txt"), "Expected b.txt to not exist\n");
     ok(!DeleteFile("c.txt"), "Expected c.txt to not exist\n");
@@ -596,7 +596,7 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(DeleteFile("testdir2\\test1.txt"), "Expected newdir\\test1.txt to exist\n");
     ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
     ok(RemoveDirectory("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
@@ -605,7 +605,7 @@ static void test_copy(void)
     shfo.pFrom = "test4.txt\0test4.txt\\a.txt\0";
     shfo.pTo = "testdir2\0";
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(DeleteFile("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
     ok(DeleteFile("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
 
@@ -613,7 +613,7 @@ static void test_copy(void)
     shfo.pFrom = "test4.txt\\a.txt\0test4.txt\0";
     shfo.pTo = "nonexistent\0";
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(shfo.fAnyOperationsAborted, "Expected operations to be aborted\n");
     ok(!file_exists("nonexistent\\test4.txt"), "Expected nonexistent\\test4.txt to not exist\n");
     DeleteFile("test4.txt\\a.txt");
@@ -625,7 +625,7 @@ static void test_copy(void)
     shfo.fFlags = FOF_NOERRORUI | FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
         ok(retval == ERROR_NO_MORE_SEARCH_HANDLES,
-           "Expected ERROR_NO_MORE_SEARCH_HANDLES, got %ld\n", retval);
+           "Expected ERROR_NO_MORE_SEARCH_HANDLES, got %d\n", retval);
         ok(!shfo.fAnyOperationsAborted, "Expected no operations to be aborted\n");
         ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
@@ -635,7 +635,7 @@ static void test_copy(void)
     shfo.pTo = "b.txt\0test4.txt\0c.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
 
@@ -645,7 +645,7 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(!RemoveDirectory("test4.txt\\newdir"), "Expected test4.txt\\newdir to not exist\n");
 
     /* copy a directory to itself, error displayed in UI */
@@ -653,7 +653,7 @@ static void test_copy(void)
     shfo.pTo = "test4.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
 
     /* copy a file into a directory, and the directory into itself */
     shfo.pFrom = "test1.txt\0test4.txt\0";
@@ -661,7 +661,7 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = FALSE;
     shfo.fFlags |= FOF_NOCONFIRMATION;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(DeleteFile("test4.txt\\test1.txt"), "Expected test4.txt\\test1.txt to exist\n");
 
     /* copy a file to a file, and the directory into itself */
@@ -669,7 +669,7 @@ static void test_copy(void)
     shfo.pTo = "test4.txt\\a.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(!file_exists("test4.txt\\a.txt"), "Expected test4.txt\\a.txt to not exist\n");
 
     /* copy a nonexistent file to a nonexistent directory */
@@ -677,7 +677,7 @@ static void test_copy(void)
     shfo.pTo = "nonexistent\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
-    ok(retval == 1026, "Expected 1026, got %ld\n", retval);
+    ok(retval == 1026, "Expected 1026, got %d\n", retval);
     ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
     ok(!file_exists("nonexistent"), "Expected nonexistent to not exist\n");
 }
@@ -773,7 +773,7 @@ static void test_move(void)
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "a.txt\0b.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
         ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
     ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
@@ -782,7 +782,7 @@ static void test_move(void)
     shfo.pFrom = "test2.txt\0test3.txt\0";
     shfo.pTo = "test1.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
         ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
     ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
@@ -791,7 +791,7 @@ static void test_move(void)
     shfo.pFrom = "test4.txt\0";
     shfo.pTo = "test4.txt\\b.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
     ok(!RemoveDirectory("test4.txt\\b.txt"), "Expected test4.txt\\b.txt to not exist\n");
     ok(file_exists("test4.txt"), "Expected test4.txt to exist\n");
 
@@ -799,7 +799,7 @@ static void test_move(void)
     shfo.pFrom = "test2.txt\0test3.txt\0";
     shfo.pTo = "d.txt\0e.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(!DeleteFile("d.txt"), "Expected d.txt to not exist\n");
     ok(!DeleteFile("e.txt"), "Expected e.txt to not exist\n");
 
@@ -807,20 +807,20 @@ static void test_move(void)
     shfo.pTo = "d.txt\0";
     shfo.fFlags |= FOF_MULTIDESTFILES;
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(!DeleteFile("d.txt"), "Expected d.txt to not exist\n");
 
     /* FO_MOVE does not create dest directories */
     shfo.pFrom = "test2.txt\0";
     shfo.pTo = "dir1\\dir2\\test2.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %ld\n", retval);
+        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
     ok(!file_exists("dir1"), "Expected dir1 to not exist\n");
 
     /* try to overwrite an existing file */
     shfo.pTo = "test3.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
     ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
 }

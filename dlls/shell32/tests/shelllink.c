@@ -85,7 +85,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
 
         r=pSHILCreateFromPath(pathW, &pidl, NULL);
         todo_wine {
-        ok(SUCCEEDED(r), "SHILCreateFromPath failed (0x%08lx)\n", r);
+        ok(SUCCEEDED(r), "SHILCreateFromPath failed (0x%08x)\n", r);
         }
         HeapFree(GetProcessHeap(), 0, pathW);
     }
@@ -110,71 +110,71 @@ static void test_get_set(void)
 
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
-    ok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
     if (!SUCCEEDED(r))
         return;
 
     /* Test Getting / Setting the description */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetDescription failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetDescription failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetDescription returned '%s'\n", buffer);
 
     str="Some description";
     r = IShellLinkA_SetDescription(sl, str);
-    ok(SUCCEEDED(r), "SetDescription failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetDescription failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetDescription failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetDescription failed (0x%08x)\n", r);
     ok(lstrcmp(buffer,str)==0, "GetDescription returned '%s'\n", buffer);
 
     /* Test Getting / Setting the work directory */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetWorkingDirectory returned '%s'\n", buffer);
 
     str="c:\\nonexistent\\directory";
     r = IShellLinkA_SetWorkingDirectory(sl, str);
-    ok(SUCCEEDED(r), "SetWorkingDirectory failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetWorkingDirectory failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08x)\n", r);
     ok(lstrcmpi(buffer,str)==0, "GetWorkingDirectory returned '%s'\n", buffer);
 
     /* Test Getting / Setting the work directory */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
     r = IShellLinkA_SetPath(sl, "");
-    ok(r==S_OK, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_OK, "SetPath failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetPath(sl, str);
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
     ok(lstrcmpi(buffer,str)==0, "GetPath returned '%s'\n", buffer);
 
     /* Get some a real path to play with */
     r=GetModuleFileName(NULL, mypath, sizeof(mypath));
-    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%ld)\n", r);
+    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
 
     /* Test the interaction of SetPath and SetIDList */
     tmp_pidl=NULL;
     r = IShellLinkA_GetIDList(sl, &tmp_pidl);
-    ok(SUCCEEDED(r), "GetIDList failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetIDList failed (0x%08x)\n", r);
     if (SUCCEEDED(r))
     {
         strcpy(buffer,"garbage");
@@ -194,11 +194,11 @@ static void test_get_set(void)
     if (pidl)
     {
         r = IShellLinkA_SetIDList(sl, pidl);
-        ok(SUCCEEDED(r), "SetIDList failed (0x%08lx)\n", r);
+        ok(SUCCEEDED(r), "SetIDList failed (0x%08x)\n", r);
 
         tmp_pidl=NULL;
         r = IShellLinkA_GetIDList(sl, &tmp_pidl);
-        ok(SUCCEEDED(r), "GetIDList failed (0x%08lx)\n", r);
+        ok(SUCCEEDED(r), "GetIDList failed (0x%08x)\n", r);
         ok(tmp_pidl && pILIsEqual(pidl, tmp_pidl),
            "GetIDList returned an incorrect pidl\n");
 
@@ -207,60 +207,60 @@ static void test_get_set(void)
 
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-        ok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+        ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
         ok(lstrcmpi(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
     }
 
     /* test path with quotes */
     r = IShellLinkA_SetPath(sl, "\"c:\\nonexistent\\file\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    ok(r==S_OK, "GetPath failed (0x%08lx)\n", r);
+    ok(r==S_OK, "GetPath failed (0x%08x)\n", r);
     ok(!lstrcmp(buffer, "C:\\nonexistent\\file"), "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "c:\\foo\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
 
     /* Test Getting / Setting the arguments */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetArguments(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetArguments failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetArguments failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetArguments returned '%s'\n", buffer);
 
     str="param1 \"spaced param2\"";
     r = IShellLinkA_SetArguments(sl, str);
-    ok(SUCCEEDED(r), "SetArguments failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetArguments failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetArguments(sl, buffer, sizeof(buffer));
-    ok(SUCCEEDED(r), "GetArguments failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetArguments failed (0x%08x)\n", r);
     ok(lstrcmp(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
 
     /* Test Getting / Setting showcmd */
     i=0xdeadbeef;
     r = IShellLinkA_GetShowCmd(sl, &i);
-    ok(SUCCEEDED(r), "GetShowCmd failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetShowCmd failed (0x%08x)\n", r);
     ok(i==SW_SHOWNORMAL, "GetShowCmd returned %d\n", i);
 
     r = IShellLinkA_SetShowCmd(sl, SW_SHOWMAXIMIZED);
-    ok(SUCCEEDED(r), "SetShowCmd failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetShowCmd failed (0x%08x)\n", r);
 
     i=0xdeadbeef;
     r = IShellLinkA_GetShowCmd(sl, &i);
-    ok(SUCCEEDED(r), "GetShowCmd failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetShowCmd failed (0x%08x)\n", r);
     ok(i==SW_SHOWMAXIMIZED, "GetShowCmd returned %d'\n", i);
 
     /* Test Getting / Setting the icon */
@@ -268,33 +268,33 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     todo_wine {
-    ok(SUCCEEDED(r), "GetIconLocation failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetIconLocation failed (0x%08x)\n", r);
     }
     ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
     ok(i==0, "GetIconLocation returned %d\n", i);
 
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
-    ok(SUCCEEDED(r), "SetIconLocation failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetIconLocation failed (0x%08x)\n", r);
 
     i=0xdeadbeef;
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
-    ok(SUCCEEDED(r), "GetIconLocation failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetIconLocation failed (0x%08x)\n", r);
     ok(lstrcmpi(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
     ok(i==0xbabecafe, "GetIconLocation returned %d'\n", i);
 
     /* Test Getting / Setting the hot key */
     w=0xbeef;
     r = IShellLinkA_GetHotkey(sl, &w);
-    ok(SUCCEEDED(r), "GetHotkey failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetHotkey failed (0x%08x)\n", r);
     ok(w==0, "GetHotkey returned %d\n", w);
 
     r = IShellLinkA_SetHotkey(sl, 0x5678);
-    ok(SUCCEEDED(r), "SetHotkey failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "SetHotkey failed (0x%08x)\n", r);
 
     w=0xbeef;
     r = IShellLinkA_GetHotkey(sl, &w);
-    ok(SUCCEEDED(r), "GetHotkey failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "GetHotkey failed (0x%08x)\n", r);
     ok(w==0x5678, "GetHotkey returned %d'\n", w);
 
     IShellLinkA_Release(sl);
@@ -316,65 +316,65 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
 
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
-    lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08lx)\n", r);
+    lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
     if (!SUCCEEDED(r))
         return;
 
     if (desc->description)
     {
         r = IShellLinkA_SetDescription(sl, desc->description);
-        lok(SUCCEEDED(r), "SetDescription failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetDescription failed (0x%08x)\n", r);
     }
     if (desc->workdir)
     {
         r = IShellLinkA_SetWorkingDirectory(sl, desc->workdir);
-        lok(SUCCEEDED(r), "SetWorkingDirectory failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetWorkingDirectory failed (0x%08x)\n", r);
     }
     if (desc->path)
     {
         r = IShellLinkA_SetPath(sl, desc->path);
-        lok(SUCCEEDED(r), "SetPath failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetPath failed (0x%08x)\n", r);
     }
     if (desc->pidl)
     {
         r = IShellLinkA_SetIDList(sl, desc->pidl);
-        lok(SUCCEEDED(r), "SetIDList failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetIDList failed (0x%08x)\n", r);
     }
     if (desc->arguments)
     {
         r = IShellLinkA_SetArguments(sl, desc->arguments);
-        lok(SUCCEEDED(r), "SetArguments failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetArguments failed (0x%08x)\n", r);
     }
     if (desc->showcmd)
     {
         r = IShellLinkA_SetShowCmd(sl, desc->showcmd);
-        lok(SUCCEEDED(r), "SetShowCmd failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetShowCmd failed (0x%08x)\n", r);
     }
     if (desc->icon)
     {
         r = IShellLinkA_SetIconLocation(sl, desc->icon, desc->icon_id);
-        lok(SUCCEEDED(r), "SetIconLocation failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetIconLocation failed (0x%08x)\n", r);
     }
     if (desc->hotkey)
     {
         r = IShellLinkA_SetHotkey(sl, desc->hotkey);
-        lok(SUCCEEDED(r), "SetHotkey failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "SetHotkey failed (0x%08x)\n", r);
     }
 
     r = IShellLinkW_QueryInterface(sl, &IID_IPersistFile, (LPVOID*)&pf);
-    lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08lx)\n", r);
+    lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08x)\n", r);
     if (SUCCEEDED(r))
     {
         r = IPersistFile_Save(pf, path, TRUE);
         if (save_fails)
         {
             todo_wine {
-            lok(SUCCEEDED(r), "save failed (0x%08lx)\n", r);
+            lok(SUCCEEDED(r), "save failed (0x%08x)\n", r);
             }
         }
         else
         {
-            lok(SUCCEEDED(r), "save failed (0x%08lx)\n", r);
+            lok(SUCCEEDED(r), "save failed (0x%08x)\n", r);
         }
         IPersistFile_Release(pf);
     }
@@ -391,12 +391,12 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
 
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
-    lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08lx)\n", r);
+    lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
     if (!SUCCEEDED(r))
         return;
 
     r = IShellLinkA_QueryInterface(sl, &IID_IPersistFile, (LPVOID*)&pf);
-    lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08lx)\n", r);
+    lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08x)\n", r);
     if (!SUCCEEDED(r))
     {
         IShellLinkA_Release(sl);
@@ -404,7 +404,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     }
 
     r = IPersistFile_Load(pf, path, STGM_READ);
-    lok(SUCCEEDED(r), "load failed (0x%08lx)\n", r);
+    lok(SUCCEEDED(r), "load failed (0x%08x)\n", r);
     IPersistFile_Release(pf);
     if (!SUCCEEDED(r))
     {
@@ -416,7 +416,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
-        lok(SUCCEEDED(r), "GetDescription failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetDescription failed (0x%08x)\n", r);
         lok(lstrcmp(buffer, desc->description)==0,
            "GetDescription returned '%s' instead of '%s'\n",
            buffer, desc->description);
@@ -425,7 +425,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
-        lok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08x)\n", r);
         lok(lstrcmpi(buffer, desc->workdir)==0,
            "GetWorkingDirectory returned '%s' instead of '%s'\n",
            buffer, desc->workdir);
@@ -434,7 +434,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-        lok(SUCCEEDED(r), "GetPath failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
         lok(lstrcmpi(buffer, desc->path)==0,
            "GetPath returned '%s' instead of '%s'\n",
            buffer, desc->path);
@@ -443,7 +443,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         LPITEMIDLIST pidl=NULL;
         r = IShellLinkA_GetIDList(sl, &pidl);
-        lok(SUCCEEDED(r), "GetIDList failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetIDList failed (0x%08x)\n", r);
         lok(pILIsEqual(pidl, desc->pidl),
            "GetIDList returned an incorrect pidl\n");
     }
@@ -451,7 +451,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         int i=0xdeadbeef;
         r = IShellLinkA_GetShowCmd(sl, &i);
-        lok(SUCCEEDED(r), "GetShowCmd failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetShowCmd failed (0x%08x)\n", r);
         lok(i==desc->showcmd,
            "GetShowCmd returned 0x%0x instead of 0x%0x\n",
            i, desc->showcmd);
@@ -461,7 +461,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         int i=0xdeadbeef;
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
-        lok(SUCCEEDED(r), "GetIconLocation failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetIconLocation failed (0x%08x)\n", r);
         lok(lstrcmpi(buffer, desc->icon)==0,
            "GetIconLocation returned '%s' instead of '%s'\n",
            buffer, desc->icon);
@@ -473,7 +473,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     {
         WORD i=0xbeef;
         r = IShellLinkA_GetHotkey(sl, &i);
-        lok(SUCCEEDED(r), "GetHotkey failed (0x%08lx)\n", r);
+        lok(SUCCEEDED(r), "GetHotkey failed (0x%08x)\n", r);
         lok(i==desc->hotkey,
            "GetHotkey returned 0x%04x instead of 0x%04x\n",
            i, desc->hotkey);
@@ -516,7 +516,7 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc);
 
     r=GetModuleFileName(NULL, mypath, sizeof(mypath));
-    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%ld)\n", r);
+    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
     strcpy(mydir, mypath);
     p=strrchr(mydir, '\\');
     if (p)
@@ -541,7 +541,7 @@ static void test_load_save(void)
 
     /* DeleteFileW is not implemented on Win9x */
     r=DeleteFileA("c:\\test.lnk");
-    ok(r, "failed to delete link (%ld)\n", GetLastError());
+    ok(r, "failed to delete link (%d)\n", GetLastError());
 }
 
 static void test_datalink(void)
@@ -627,7 +627,7 @@ START_TEST(shelllink)
     pSHILCreateFromPath = (fnSHILCreateFromPath) GetProcAddress(hmod, (LPSTR)28);
 
     r = CoInitialize(NULL);
-    ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
     if (!SUCCEEDED(r))
         return;
 

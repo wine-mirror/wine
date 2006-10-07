@@ -546,12 +546,12 @@ static void test_filename(void)
             rc=0;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -595,12 +595,12 @@ static void test_filename(void)
             rc=0;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -664,7 +664,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+        ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
@@ -699,7 +699,7 @@ static void test_lnks(void)
 
     sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+    ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
@@ -708,7 +708,7 @@ static void test_lnks(void)
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+    ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
@@ -728,7 +728,7 @@ static void test_lnks(void)
             c++;
         }
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-        ok(rc>=32, "%s failed: rc=%d err=%ld\n", shell_call, rc,
+        ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 4);
         okChildString("argvA3", "Lnk");
@@ -747,12 +747,12 @@ static void test_lnks(void)
             rc=0;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%ld\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -832,7 +832,7 @@ static void init_test(void)
     {
         dllver.cbSize=sizeof(dllver);
         pDllGetVersion(&dllver);
-        trace("major=%ld minor=%ld build=%ld platform=%ld\n",
+        trace("major=%d minor=%d build=%d platform=%d\n",
               dllver.dwMajorVersion, dllver.dwMinorVersion,
               dllver.dwBuildNumber, dllver.dwPlatformID);
     }
@@ -842,7 +842,7 @@ static void init_test(void)
     }
 
     r = CoInitialize(NULL);
-    ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\n", r);
+    ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
     if (!SUCCEEDED(r))
         exit(1);
 
@@ -870,7 +870,7 @@ static void init_test(void)
                      FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile==INVALID_HANDLE_VALUE)
         {
-            trace("unable to create '%s': err=%ld\n", filename, GetLastError());
+            trace("unable to create '%s': err=%d\n", filename, GetLastError());
             assert(0);
         }
         CloseHandle(hfile);
