@@ -285,11 +285,19 @@ static void compile(struct options* opts, const char* lang)
 
     if (gcc_defs)
     {
+#ifdef __APPLE__ /* Mac OSX uses 16-byte aligned stack and not a 4-byte one */
+	strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
+	strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
+	strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
+	strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
+#else
 	strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
 	strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
-	strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
 	strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
 	strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
+#endif
+
+	strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
 	strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
 	strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
 	strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
