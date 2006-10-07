@@ -174,11 +174,12 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     LOGFONT16 *font16;
     SEGPTR lpTemplateName;
 
+    TRACE("ChooseFont\n");
+
+    if (!lpChFont) return FALSE;
+
     cf32w.lpLogFont=&lf32w;
     CFn_CHOOSEFONT16to32W(lpChFont, &cf32w);
-
-    TRACE("ChooseFont\n");
-    if (!lpChFont) return FALSE;
 
     if (TRACE_ON(commdlg))
 	_dump_cf_flags(lpChFont->Flags);
