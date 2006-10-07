@@ -559,7 +559,7 @@ static void test_DoVerb(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -577,7 +577,7 @@ static void test_DoVerb(IUnknown *unk)
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                              0, container_hwnd, &rect);
-    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     CHECK_CALLED(CanInPlaceActivate);
     CHECK_CALLED(Site_GetWindow);
@@ -593,7 +593,7 @@ static void test_DoVerb(IUnknown *unk)
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                            0, container_hwnd, &rect);
-    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     IOleObject_Release(oleobj);
 }
@@ -606,10 +606,10 @@ static void test_GetMiscStatus(IOleObject *oleobj)
     for(i=0; i<10; i++) {
         st = 0xdeadbeef;
         hres = IOleObject_GetMiscStatus(oleobj, i, &st);
-        ok(hres == S_OK, "GetMiscStatus failed: %08lx\n", hres);
+        ok(hres == S_OK, "GetMiscStatus failed: %08x\n", hres);
         ok(st == (OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
                   |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE),
-           "st=%08lx, expected OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|"
+           "st=%08x, expected OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|"
            "OLEMISC_INSIDEOUT|OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE)\n", st);
     }
 }
@@ -622,21 +622,21 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08lx\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     test_GetMiscStatus(oleobj);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
-    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08lx\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_OleInPlaceObject) failed: %08x\n", hres);
     if(FAILED(hres)) {
         IOleObject_Release(oleobj);
         return;
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
     ok((hwnd == NULL) ^ (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     if(client) {
@@ -645,7 +645,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
-    ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+    ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
 
     if(client) {
         CHECK_CALLED(GetContainer);
@@ -653,7 +653,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
-    ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
     ok((hwnd == NULL) == (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     shell_embedding_hwnd = hwnd;
@@ -669,27 +669,27 @@ static void test_ClassInfo(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IProvideClassInfo2, (void**)&class_info);
-    ok(hres == S_OK, "QueryInterface(IID_IProvideClassInfo)  failed: %08lx\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IProvideClassInfo)  failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, &guid);
-    ok(hres == S_OK, "GetGUID failed: %08lx\n", hres);
+    ok(hres == S_OK, "GetGUID failed: %08x\n", hres);
     ok(IsEqualGUID(&DIID_DWebBrowserEvents2, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, &guid);
-    ok(hres == E_FAIL, "GetGUID failed: %08lx, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "GetGUID failed: %08x, expected E_FAIL\n", hres);
     ok(IsEqualGUID(&IID_NULL, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, 2, &guid);
-    ok(hres == E_FAIL, "GetGUID failed: %08lx, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "GetGUID failed: %08x, expected E_FAIL\n", hres);
     ok(IsEqualGUID(&IID_NULL, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, NULL);
-    ok(hres == E_POINTER, "GetGUID failed: %08lx, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER, "GetGUID failed: %08x, expected E_POINTER\n", hres);
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, NULL);
-    ok(hres == E_POINTER, "GetGUID failed: %08lx, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER, "GetGUID failed: %08x, expected E_POINTER\n", hres);
 
     IProvideClassInfo2_Release(class_info);
 }
@@ -703,7 +703,7 @@ static void test_ie_funcs(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
-    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08lx\n", hres);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -711,101 +711,101 @@ static void test_ie_funcs(IUnknown *unk)
 
     hwnd = 0xdeadbeef;
     hres = IWebBrowser2_get_HWND(wb, &hwnd);
-    ok(hres == E_FAIL, "get_HWND failed: %08lx, expected E_FAIL\n", hres);
+    ok(hres == E_FAIL, "get_HWND failed: %08x, expected E_FAIL\n", hres);
     ok(hwnd == 0, "unexpected hwnd %lx\n", hwnd);
 
     /* MenuBar */
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_MenuBar(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_MenuBar(wb, 100);
-    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_MenuBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     /* AddressBar */
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_AddressBar(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_MenuBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_AddressBar(wb, 100);
-    ok(hres == S_OK, "put_AddressBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_AddressBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_AddressBar(wb, &b);
-    ok(hres == S_OK, "get_AddressBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_AddressBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_AddressBar(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "put_MenuBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_MenuBar failed: %08x\n", hres);
 
     /* StatusBar */
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_StatusBar(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_StatusBar(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_StatusBar(wb, 100);
-    ok(hres == S_OK, "put_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_StatusBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_StatusBar(wb, &b);
-    ok(hres == S_OK, "get_StatusBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_StatusBar failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     /* ToolBar */
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i == VARIANT_TRUE, "i=%x\n", i);
 
     hres = IWebBrowser2_put_ToolBar(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i == VARIANT_FALSE, "b=%x\n", i);
 
     hres = IWebBrowser2_put_ToolBar(wb, 100);
-    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
 
     hres = IWebBrowser2_get_ToolBar(wb, &i);
-    ok(hres == S_OK, "get_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_ToolBar failed: %08x\n", hres);
     ok(i == VARIANT_TRUE, "i=%x\n", i);
 
     hres = IWebBrowser2_put_ToolBar(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "put_ToolBar failed: %08lx\n", hres);
+    ok(hres == S_OK, "put_ToolBar failed: %08x\n", hres);
 
     IWebBrowser2_Release(wb);
 }
@@ -817,37 +817,37 @@ static void test_Silent(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
-    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08lx\n", hres);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, VARIANT_TRUE);
-    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, 100);
-    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
     ok(b == VARIANT_TRUE, "b=%x\n", b);
 
     hres = IWebBrowser2_put_Silent(wb, VARIANT_FALSE);
-    ok(hres == S_OK, "set_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
-    ok(hres == S_OK, "get_Silent failed: %08lx\n", hres);
+    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
     IWebBrowser_Release(wb);
@@ -860,14 +860,14 @@ static void test_GetControlInfo(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
-    ok(hres == S_OK, "Could not get IOleControl: %08lx\n", hres);
+    ok(hres == S_OK, "Could not get IOleControl: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     hres = IOleControl_GetControlInfo(control, &info);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, exxpected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, exxpected E_NOTIMPL\n", hres);
     hres = IOleControl_GetControlInfo(control, NULL);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08lx, exxpected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, exxpected E_NOTIMPL\n", hres);
 
     IOleControl_Release(control);
 }
@@ -879,59 +879,59 @@ static void test_Extent(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "Could not get IOleObkect: %08lx\n", hres);
+    ok(hres == S_OK, "Could not get IOleObkect: %08x\n", hres);
     if(FAILED(hres))
         return;
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 1323 && size.cy == 529, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 1323 && size.cy == 529, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = 800;
     size.cy = 700;
     hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 800 && size.cy == 700, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 800 && size.cy == 700, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = 900;
     size.cy = 800;
     hres = IOleObject_SetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 900 && size.cy == 800, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 900 && size.cy == 800, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = 1000;
     size.cy = 900;
     hres = IOleObject_SetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "SetExtent failed: %08lx\n", hres);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, 0xdeadbeef, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%d %d}\n", size.cx, size.cy);
 
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
-    ok(hres == S_OK, "GetExtent failed: %08lx\n", hres);
-    ok(size.cx == 1000 && size.cy == 900, "size = {%ld %ld}\n", size.cx, size.cy);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(size.cx == 1000 && size.cy == 900, "size = {%d %d}\n", size.cx, size.cy);
 
     IOleObject_Release(oleobj);
 }
@@ -943,11 +943,11 @@ static void test_QueryInterface(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(qa == NULL, "qa=%p, ezpected NULL\n", qa);
 
     hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08lx, expected E_NOINTERFACE\n", hres);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
 }
 
@@ -959,7 +959,7 @@ static void test_WebBrowser(void)
 
     hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "CoCreateInterface failed: %08lx\n", hres);
+    ok(hres == S_OK, "CoCreateInterface failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -974,7 +974,7 @@ static void test_WebBrowser(void)
     test_Silent(unk);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 0, "ref=%ld, expected 0\n", ref);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
 START_TEST(webbrowser)
