@@ -3048,7 +3048,7 @@ static void calc_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
 {
 	RECT rt = {0, 0, 0, 0};
 
-	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX);
+	DrawText(dis->hDC, str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX);
 
 	if (rt.right > pane->widths[col])
 		pane->widths[col] = rt.right;
@@ -3061,7 +3061,7 @@ static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR
 /*	DRAWTEXTPARAMS dtp = {sizeof(DRAWTEXTPARAMS), 2};
 	DrawTextEx(dis->hDC, (LPTSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
 
-	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
+	DrawText(dis->hDC, str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
 	/*FIXME rt (0,0) ??? */
 
 	if (rt.right > pane->widths[col])
@@ -3079,7 +3079,7 @@ static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str, 
 	rt.right  = x+pane->positions[col+1]-Globals.spaceSize.cx;
 	rt.bottom = dis->rcItem.bottom;
 
-	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|flags);
+	DrawText(dis->hDC, str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|flags);
 }
 
 static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
@@ -3095,7 +3095,7 @@ static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTST
 /*	DRAWTEXTPARAMS dtp = {sizeof(DRAWTEXTPARAMS), 2};
 	DrawTextEx(dis->hDC, (LPTSTR)str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
 
-	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
+	DrawText(dis->hDC, str, -1, &rt, DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
 }
 
 static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
