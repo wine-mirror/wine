@@ -603,7 +603,6 @@ static void shader_constant_teardown_handler(
 }
 
 static void shader_constants_queue_test(
-    IDirect3DDevice9 *device,
     state_test* test,
     const shader_constant_arg* test_arg) {
 
@@ -754,7 +753,6 @@ static void light_teardown_handler(
 }
 
 static void lights_queue_test(
-    IDirect3DDevice9 *device,
     state_test* test,
     const light_arg* test_arg) {
 
@@ -932,7 +930,6 @@ static void transform_teardown_handler(
 }
 
 static void transform_queue_test(
-    IDirect3DDevice9 *device,
     state_test* test) {
 
     test->setup_handler = transform_setup_handler;
@@ -1375,7 +1372,6 @@ static void render_state_teardown_handler(
 }
 
 static void render_states_queue_test(
-    IDirect3DDevice9 *device,
     state_test* test,
     const render_state_arg* test_arg) {
 
@@ -1423,26 +1419,26 @@ static void test_state_management(
     if (caps.VertexShaderVersion & 0xffff) {
         vshader_constant_arg.idx = 0;
         vshader_constant_arg.pshader = FALSE;
-        shader_constants_queue_test(device, &tests[tcount], &vshader_constant_arg);
+        shader_constants_queue_test(&tests[tcount], &vshader_constant_arg);
         tcount++;
     }
 
     if (caps.PixelShaderVersion & 0xffff) {
         pshader_constant_arg.idx = 0;
         pshader_constant_arg.pshader = TRUE;
-        shader_constants_queue_test(device, &tests[tcount], &pshader_constant_arg);
+        shader_constants_queue_test(&tests[tcount], &pshader_constant_arg);
         tcount++;
     }
 
     light_arg.idx = 0;
-    lights_queue_test(device, &tests[tcount], &light_arg);
+    lights_queue_test(&tests[tcount], &light_arg);
     tcount++;
 
-    transform_queue_test(device, &tests[tcount]);
+    transform_queue_test(&tests[tcount]);
     tcount++;
 
     render_state_arg.device_pparams = device_pparams;
-    render_states_queue_test(device, &tests[tcount], &render_state_arg);
+    render_states_queue_test(&tests[tcount], &render_state_arg);
     tcount++;
 
     execute_test_chain_all(device, tests, tcount);
