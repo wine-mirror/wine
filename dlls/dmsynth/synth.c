@@ -41,7 +41,7 @@ static ULONG WINAPI IDirectMusicSynth8Impl_AddRef (LPDIRECTMUSICSYNTH8 iface) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMSYNTH_LockModule();
 
@@ -52,7 +52,7 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release (LPDIRECTMUSICSYNTH8 iface) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -78,7 +78,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Close (LPDIRECTMUSICSYNTH8 iface) {
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_SetNumChannelGroups (LPDIRECTMUSICSYNTH8 iface, DWORD dwGroups) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %ld): stub\n", This, dwGroups);
+	FIXME("(%p, %d): stub\n", This, dwGroups);
 	return S_OK;
 }
 
@@ -96,7 +96,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Unload (LPDIRECTMUSICSYNTH8 iface, 
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_PlayBuffer (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, LPBYTE pbBuffer, DWORD cbBuffer) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, 0x%s, %p, %ld): stub\n", This, wine_dbgstr_longlong(rt), pbBuffer, cbBuffer);
+	FIXME("(%p, 0x%s, %p, %d): stub\n", This, wine_dbgstr_longlong(rt), pbBuffer, cbBuffer);
 	return S_OK;
 }
 
@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink (LPDIRECTMUSICSYNTH8 i
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Render (LPDIRECTMUSICSYNTH8 iface, short* pBuffer, DWORD dwLength, LONGLONG llPosition) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %p, %ld, 0x%s): stub\n", This, pBuffer, dwLength, wine_dbgstr_longlong(llPosition));
+	FIXME("(%p, %p, %d, 0x%s): stub\n", This, pBuffer, dwLength, wine_dbgstr_longlong(llPosition));
 	return S_OK;
 }
 
@@ -155,7 +155,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetChannelPriority (LPDIRECTMUSICSY
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_GetChannelPriority (LPDIRECTMUSICSYNTH8 iface, DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %ld, %ld, %p): stub\n", This, dwChannelGroup, dwChannel, pdwPriority);
+	FIXME("(%p, %d, %d, %p): stub\n", This, dwChannelGroup, dwChannel, pdwPriority);
 	return S_OK;
 }
 
@@ -174,7 +174,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend (LPDIRECTMUSICSYNTH8 ifac
 /* IDirectMusicSynth8Impl IDirectMusicSynth8 part: */
 static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, 0x%s, %ld, %ld, %ld, %ld, %li, %li,0x%s, 0x%s, 0x%s): stub\n",
+	FIXME("(%p, 0x%s, %d, %d, %d, %d, %li, %li,0x%s, 0x%s, 0x%s): stub\n",
 	    This, wine_dbgstr_longlong(rt), dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume,
 	    wine_dbgstr_longlong(stVoiceStart), wine_dbgstr_longlong(stLoopStart), wine_dbgstr_longlong(stLoopEnd));
 	return S_OK;
@@ -182,25 +182,25 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 ifac
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_StopVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, 0x%s, %ld): stub\n", This, wine_dbgstr_longlong(rt), dwVoiceId);
+	FIXME("(%p, 0x%s, %d): stub\n", This, wine_dbgstr_longlong(rt), dwVoiceId);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_GetVoiceState (LPDIRECTMUSICSYNTH8 iface, DWORD dwVoice[], DWORD cbVoice, DMUS_VOICE_STATE dwVoiceState[]) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %p, %ld, %p): stub\n", This, dwVoice, cbVoice, dwVoiceState);
+	FIXME("(%p, %p, %d, %p): stub\n", This, dwVoice, cbVoice, dwVoiceState);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Refresh (LPDIRECTMUSICSYNTH8 iface, DWORD dwDownloadID, DWORD dwFlags) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %ld, %ld): stub\n", This, dwDownloadID, dwFlags);
+	FIXME("(%p, %d, %d): stub\n", This, dwDownloadID, dwFlags);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_AssignChannelToBuses (LPDIRECTMUSICSYNTH8 iface, DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwBuses, DWORD cBuses) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, %ld, %ld, %p, %ld): stub\n", This, dwChannelGroup, dwChannel, pdwBuses, cBuses);
+	FIXME("(%p, %d, %d, %p, %d): stub\n", This, dwChannelGroup, dwChannel, pdwBuses, cBuses);
 	return S_OK;
 }
 

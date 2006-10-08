@@ -516,7 +516,7 @@ const char *debugstr_dmreturn (DWORD code) {
 			return codes[i].name;
 	}
 	/* if we didn't find it, return value */
-	return wine_dbg_sprintf("0x%08lx", code);
+	return wine_dbg_sprintf("0x%08x", code);
 }
 
 /* generic flag-dumping function */
