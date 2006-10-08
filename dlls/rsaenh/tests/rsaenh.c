@@ -626,12 +626,13 @@ static void test_hmac(void) {
     HCRYPTKEY hKey;
     HCRYPTHASH hHash;
     BOOL result;
-    HMAC_INFO hmacInfo = { CALG_MD2, NULL, 0, NULL, 0 };
+    /* Using CALG_MD2 here fails on Windows 2003, why ? */
+    HMAC_INFO hmacInfo = { CALG_MD5, NULL, 0, NULL, 0 };
     DWORD dwLen;
     BYTE abData[256];
     static const BYTE hmac[16] = { 
-        0xfd, 0x16, 0xb5, 0xb6, 0x13, 0x1c, 0x2b, 0xd6, 
-        0x0a, 0xc7, 0xae, 0x92, 0x76, 0xa3, 0x05, 0x71 };
+        0x1a, 0x7d, 0x49, 0xc5, 0x9b, 0x2d, 0x0b, 0x9c, 
+        0xcf, 0x10, 0x6b, 0xb6, 0x7d, 0x0f, 0x13, 0x32 };
     int i;
 
     for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abData[i] = (BYTE)i;
