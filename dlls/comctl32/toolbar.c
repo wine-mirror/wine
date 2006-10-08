@@ -1941,6 +1941,31 @@ static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button)
     }
 }
 
+/* Creates the tooltip control */
+static void
+TOOLBAR_TooltipCreateControl(TOOLBAR_INFO *infoPtr)
+{
+    int i;
+    NMTOOLTIPSCREATED nmttc;
+
+    infoPtr->hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            infoPtr->hwndSelf, 0, 0, 0);
+
+    if (!infoPtr->hwndToolTip)
+        return;
+
+    /* Send NM_TOOLTIPSCREATED notification */
+    nmttc.hwndToolTips = infoPtr->hwndToolTip;
+    TOOLBAR_SendNotify(&nmttc.hdr, infoPtr, NM_TOOLTIPSCREATED);
+
+    for (i = 0; i < infoPtr->nNumButtons; i++)
+    {
+        TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[i]);
+        TOOLBAR_TooltipSetRect(infoPtr, &infoPtr->buttons[i]);
+    }
+}
+
 /* keeps available button list box sorted by button id */
 static void TOOLBAR_Cust_InsertAvailButton(HWND hwnd, PCUSTOMBUTTON btnInfoNew)
 {
@@ -5516,28 +5541,10 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     GetClientRect(hwnd, &infoPtr->client_rect);
     infoPtr->bUnicode = infoPtr->hwndNotify && 
         (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, (LPARAM)NF_REQUERY));
+    infoPtr->hwndToolTip = NULL; /* if needed the tooltip control will be created after a WM_MOUSEMOVE */
 
     SystemParametersInfoW (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectW (&logFont);
-
-    if (dwStyle & TBSTYLE_TOOLTIPS) {
-	/* Create tooltip control */
-	infoPtr->hwndToolTip =
-	    CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			       hwnd, 0, 0, 0);
-
-	/* Send NM_TOOLTIPSCREATED notification */
-	if (infoPtr->hwndToolTip)
-	{
-	    NMTOOLTIPSCREATED nmttc;
-
-	    nmttc.hwndToolTips = infoPtr->hwndToolTip;
-
-	    TOOLBAR_SendNotify (&nmttc.hdr, infoPtr, NM_TOOLTIPSCREATED);
-	}
-    }
     
     OpenThemeData (hwnd, themeClass);
 
@@ -6191,6 +6198,9 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACKMOUSEEVENT trackinfo;
     INT   nHit;
     TBUTTON_INFO *btnPtr;
+    
+    if ((infoPtr->dwStyle & TBSTYLE_TOOLTIPS) && (infoPtr->hwndToolTip == NULL))
+        TOOLBAR_TooltipCreateControl(infoPtr);
     
     if ((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf)) {
         /* fill in the TRACKMOUSEEVENT struct */
