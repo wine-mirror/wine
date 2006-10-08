@@ -2921,9 +2921,8 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	INT len;
 	TRACE("adding string from resource!\n");
 
-        LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
+        len = LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
                              szString, MAX_RESOURCE_STRING_LENGTH);
-        len = lstrlenW(szString);
 
         TRACE("len=%d %s\n", len, debugstr_w(szString));
         if (len == 0 || len == 1)
@@ -2932,11 +2931,15 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TRACE("Delimiter: 0x%x\n", *szString);
         delimiter = *szString;
         p = szString + 1;
-        if (szString[len-1] == delimiter)
-            szString[len-1] = 0;
 
         while ((next_delim = strchrW(p, delimiter)) != NULL) {
             *next_delim = 0;
+            if (next_delim + 1 >= szString + len)
+            {
+                /* this may happen if delimiter == '\0' or if the last char is a
+                 * delimiter (then it is ignored like the native does) */
+                break;
+            }
 
             infoPtr->strings = ReAlloc(infoPtr->strings, sizeof(LPWSTR)*(infoPtr->nNumStrings+1));
             Str_SetPtrW(&infoPtr->strings[infoPtr->nNumStrings], p);

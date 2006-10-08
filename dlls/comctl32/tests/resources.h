@@ -29,9 +29,6 @@
 #define IDS_TBADD3      18
 #define IDS_TBADD4      19
 #define IDS_TBADD5      20
-#define IDS_TBADD6      21
 #define IDS_TBADD7      22
-#define IDS_TBADD8      23
-#define IDS_TBADD9      24
 
 #endif  /* __WINE_COMCTL32_TEST_RESOURCES_H */

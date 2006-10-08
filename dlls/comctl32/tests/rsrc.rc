@@ -37,7 +37,6 @@ STRINGTABLE
     IDS_TBADD3           "*p*q*"
     IDS_TBADD4           "#p#q##"
     IDS_TBADD5           "|p||q|r|"
-    IDS_TBADD6           "\000a\000\000"
     IDS_TBADD7           "abracadabra"
 }
 

@@ -362,9 +362,6 @@ void test_add_string()
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD5);
     ok(ret == 8, "TB_ADDSTRINGA - unexpected return %d\n", ret);
     CHECK_STRING_TABLE(11, ret6);
-    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD6);
-    ok(ret == 11, "TB_ADDSTRINGA - unexpected return %d\n", ret);
-    CHECK_STRING_TABLE(11, ret6);
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD7);
     ok(ret == 11, "TB_ADDSTRINGA - unexpected return %d\n", ret);
     CHECK_STRING_TABLE(14, ret7);
