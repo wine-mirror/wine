@@ -165,7 +165,7 @@ static void UXTHEME_LoadTheme(void)
         }
         else {
             bThemeActive = FALSE;
-            TRACE("Failed to get ThemeActive: %ld\n", GetLastError());
+            TRACE("Failed to get ThemeActive: %d\n", GetLastError());
         }
         buffsize = sizeof(szCurrentColor)/sizeof(szCurrentColor[0]);
         if(RegQueryValueExW(hKey, szColorName, NULL, NULL, (LPBYTE)szCurrentColor, &buffsize))
@@ -725,7 +725,7 @@ DWORD WINAPI GetThemeAppProperties(void)
  */
 void WINAPI SetThemeAppProperties(DWORD dwFlags)
 {
-    TRACE("(0x%08lx)\n", dwFlags);
+    TRACE("(0x%08x)\n", dwFlags);
     dwThemeAppProperties = dwFlags;
 }
 
@@ -748,7 +748,7 @@ HRESULT WINAPI HitTestThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
                                      const RECT *pRect, HRGN hrgn,
                                      POINT ptTest, WORD *pwHitTestCode)
 {
-    FIXME("%d %d 0x%08lx: stub\n", iPartId, iStateId, dwOptions);
+    FIXME("%d %d 0x%08x: stub\n", iPartId, iStateId, dwOptions);
     if(!hTheme)
         return E_HANDLE;
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -867,7 +867,7 @@ HRESULT WINAPI OpenThemeFile(LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
                              LPCWSTR pszSizeName, HTHEMEFILE *hThemeFile,
                              DWORD unknown)
 {
-    TRACE("(%s,%s,%s,%p,%ld)\n", debugstr_w(pszThemeFileName),
+    TRACE("(%s,%s,%s,%p,%d)\n", debugstr_w(pszThemeFileName),
           debugstr_w(pszColorName), debugstr_w(pszSizeName),
           hThemeFile, unknown);
     return MSSTYLES_OpenThemeFile(pszThemeFileName, pszColorName, pszSizeName, (PTHEME_FILE*)hThemeFile);
@@ -947,7 +947,7 @@ HRESULT WINAPI GetThemeDefaults(LPCWSTR pszThemeFileName, LPWSTR pszColorName,
 {
     PTHEME_FILE pt;
     HRESULT hr;
-    TRACE("(%s,%p,%ld,%p,%ld)\n", debugstr_w(pszThemeFileName),
+    TRACE("(%s,%p,%d,%p,%d)\n", debugstr_w(pszThemeFileName),
           pszColorName, dwColorNameLen,
           pszSizeName, dwSizeNameLen);
 
@@ -1066,7 +1066,7 @@ HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
     HRESULT hr;
     LPWSTR tmp;
     UINT resourceId = dwColorNum + 1000;
-    TRACE("(%s,%s,%ld)\n", debugstr_w(pszThemeFileName),
+    TRACE("(%s,%s,%d)\n", debugstr_w(pszThemeFileName),
           debugstr_w(pszSizeName), dwColorNum);
 
     hr = MSSTYLES_OpenThemeFile(pszThemeFileName, NULL, pszSizeName, &pt);
@@ -1126,7 +1126,7 @@ HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
     HRESULT hr;
     LPWSTR tmp;
     UINT resourceId = dwSizeNum + 3000;
-    TRACE("(%s,%s,%ld)\n", debugstr_w(pszThemeFileName),
+    TRACE("(%s,%s,%d)\n", debugstr_w(pszThemeFileName),
           debugstr_w(pszColorName), dwSizeNum);
 
     hr = MSSTYLES_OpenThemeFile(pszThemeFileName, pszColorName, NULL, &pt);

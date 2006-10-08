@@ -115,7 +115,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     }
     if((versize = SizeofResource(hTheme, hrsc)) != 2)
     {
-        TRACE("Version resource found, but wrong size: %ld\n", versize);
+        TRACE("Version resource found, but wrong size: %d\n", versize);
         hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
