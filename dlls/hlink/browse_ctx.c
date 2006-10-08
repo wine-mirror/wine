@@ -91,7 +91,7 @@ static ULONG WINAPI IHlinkBC_fnAddRef (IHlinkBrowseContext* iface)
     HlinkBCImpl  *This = (HlinkBCImpl*)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -101,7 +101,7 @@ static ULONG WINAPI IHlinkBC_fnRelease (IHlinkBrowseContext* iface)
     HlinkBCImpl  *This = (HlinkBCImpl*)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
     if (refCount)
         return refCount;
 
@@ -122,7 +122,7 @@ static HRESULT WINAPI IHlinkBC_Register(IHlinkBrowseContext* iface,
     IMoniker *composite;
     IRunningObjectTable *ROT;
 
-    FIXME("(%p)->(%li %p %p %p)\n", This, dwReserved, piunk, pimk, pdwRegister);
+    FIXME("(%p)->(%i %p %p %p)\n", This, dwReserved, piunk, pimk, pdwRegister);
 
     CreateItemMoniker(NULL, szIdent, &mon);
     CreateGenericComposite(mon, pimk, &composite);
@@ -151,7 +151,7 @@ static HRESULT WINAPI IHlinkBC_Revoke(IHlinkBrowseContext* iface,
     IRunningObjectTable *ROT;
     HlinkBCImpl  *This = (HlinkBCImpl*)iface;
 
-    FIXME("(%p)->(%li)\n", This, dwRegister);
+    FIXME("(%p)->(%i)\n", This, dwRegister);
 
     GetRunningObjectTable(0, &ROT);
     r = IRunningObjectTable_Revoke(ROT, dwRegister);
@@ -203,7 +203,7 @@ static HRESULT WINAPI IHlinkBC_OnNavigateHlink(IHlinkBrowseContext *iface,
 {
     HlinkBCImpl  *This = (HlinkBCImpl*)iface;
 
-    FIXME("(%p)->(%li %p %s %s %p)\n", This, grfHLNF, pmkTarget,
+    FIXME("(%p)->(%i %p %s %s %p)\n", This, grfHLNF, pmkTarget,
             debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), puHLID);
 
     return S_OK;

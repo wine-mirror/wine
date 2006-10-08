@@ -167,7 +167,7 @@ static ULONG WINAPI IHlink_fnAddRef (IHlink* iface)
     HlinkImpl  *This = (HlinkImpl*)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -177,7 +177,7 @@ static ULONG WINAPI IHlink_fnRelease (IHlink* iface)
     HlinkImpl  *This = (HlinkImpl*)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
     if (refCount)
         return refCount;
 
@@ -199,7 +199,7 @@ static HRESULT WINAPI IHlink_fnSetHlinkSite( IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    TRACE("(%p)->(%p %li)\n", This, pihlSite, dwSiteData);
+    TRACE("(%p)->(%p %i)\n", This, pihlSite, dwSiteData);
 
     if (This->Site)
         IHlinkSite_Release(This->Site);
@@ -234,7 +234,7 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    FIXME("(%p)->(%li %p %s)\n", This, rfHLSETF, pmkTarget,
+    FIXME("(%p)->(%i %p %s)\n", This, rfHLSETF, pmkTarget,
             debugstr_w(pwzLocation));
 
     if (This->Moniker)
@@ -255,7 +255,7 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    TRACE("(%p)->(%li %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
+    TRACE("(%p)->(%i %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
             debugstr_w(pwzLocation));
 
     if (grfHLSETF & HLINKSETF_TARGET)
@@ -277,7 +277,7 @@ static HRESULT WINAPI IHlink_fnGetMonikerReference(IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    TRACE("(%p) -> (%li %p %p)\n", This, dwWhichRef, ppimkTarget,
+    TRACE("(%p) -> (%i %p %p)\n", This, dwWhichRef, ppimkTarget,
             ppwzLocation);
 
     if(ppimkTarget)
@@ -294,7 +294,7 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    FIXME("(%p) -> (%li %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
+    FIXME("(%p) -> (%i %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
 
     if (ppwzTarget)
     {
@@ -345,7 +345,7 @@ static HRESULT WINAPI IHlink_fnGetFriendlyName (IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    TRACE("(%p) -> (%li %p)\n", This, grfHLFNAMEF, ppwzFriendlyName);
+    TRACE("(%p) -> (%i %p)\n", This, grfHLFNAMEF, ppwzFriendlyName);
 
     /* FIXME: Only using explicitly set and cached friendly names */
 
@@ -406,7 +406,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
     HlinkImpl  *This = (HlinkImpl*)iface;
     IMoniker *mon = NULL;
 
-    FIXME("Semi-Stub:(%p)->(%li %p %p %p)\n", This, grfHLNF, pbc, pbsc, phbc);
+    FIXME("Semi-Stub:(%p)->(%i %p %p %p)\n", This, grfHLNF, pbc, pbsc, phbc);
 
     if (This->Site)
         IHlinkSite_ReadyToNavigate(This->Site, This->SiteData, 0);
@@ -426,7 +426,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
 
         r = IMoniker_BindToObject(mon, bcxt, NULL, &IID_IHlinkTarget,
                 (LPVOID*)&target);
-        TRACE("IHlinkTarget returned 0x%lx\n", r);
+        TRACE("IHlinkTarget returned 0x%x\n", r);
         if (r == S_OK)
         {
             IHlinkTarget_SetBrowseContext(target, phbc);
@@ -645,7 +645,7 @@ static HRESULT WINAPI IPersistStream_fnLoad(IPersistStream* iface,
     /* FIXME: unknown header values */
 
     r = OleLoadFromStream(pStm, &IID_IMoniker, (LPVOID*)&(This->Moniker));
-    TRACE("Load Result 0x%lx (%p)\n", r, This->Moniker);
+    TRACE("Load Result 0x%x (%p)\n", r, This->Moniker);
 
     return r;
 }
@@ -680,7 +680,7 @@ static HRESULT WINAPI IPersistStream_fnSave(IPersistStream* iface,
         }
         IMoniker_Release(moniker);
     }
-    TRACE("Save Result 0x%lx\n", r);
+    TRACE("Save Result 0x%x\n", r);
 
     return r;
 }
