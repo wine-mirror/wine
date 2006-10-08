@@ -79,7 +79,7 @@ static BOOL IMAGEHLP_GetSecurityDirOffset( HANDLE handle,
     sd = &nt_hdr.OptionalHeader.
                     DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY];
 
-    TRACE("size = %lx addr = %lx\n", sd->Size, sd->VirtualAddress);
+    TRACE("size = %x addr = %x\n", sd->Size, sd->VirtualAddress);
     *pdwSize = sd->Size;
     *pdwOfs = sd->VirtualAddress;
 
@@ -134,7 +134,7 @@ static BOOL IMAGEHLP_GetCertificateOffset( HANDLE handle, DWORD num,
     *pdwOfs = sd_VirtualAddr + offset;
     *pdwSize = len;
 
-    TRACE("len = %lx addr = %lx\n", len, sd_VirtualAddr + offset);
+    TRACE("len = %x addr = %x\n", len, sd_VirtualAddr + offset);
 
     return TRUE;
 }
@@ -166,7 +166,7 @@ BOOL WINAPI ImageEnumerateCertificates(
     const size_t cert_hdr_size = sizeof hdr - sizeof hdr.bCertificate;
     BOOL r;
 
-    TRACE("%p %hd %p %p %ld\n",
+    TRACE("%p %hd %p %p %d\n",
            handle, TypeFilter, CertificateCount, Indices, IndexCount);
 
     if( Indices )
@@ -194,7 +194,7 @@ BOOL WINAPI ImageEnumerateCertificates(
         if( count != cert_hdr_size )
             return FALSE;
 
-        TRACE("Size = %08lx  id = %08hx\n",
+        TRACE("Size = %08x  id = %08hx\n",
                hdr.dwLength, hdr.wCertificateType );
 
         /* check the certificate is not too big or too small */
@@ -227,7 +227,7 @@ BOOL WINAPI ImageGetCertificateData(
 {
     DWORD r, offset, ofs, size, count;
 
-    TRACE("%p %ld %p %p\n", handle, Index, Certificate, RequiredLength);
+    TRACE("%p %d %p %p\n", handle, Index, Certificate, RequiredLength);
 
     if( !IMAGEHLP_GetCertificateOffset( handle, Index, &ofs, &size ) )
         return FALSE;
@@ -271,7 +271,7 @@ BOOL WINAPI ImageGetCertificateHeader(
     DWORD r, offset, ofs, size, count;
     const size_t cert_hdr_size = sizeof *pCert - sizeof pCert->bCertificate;
 
-    TRACE("%p %ld %p\n", handle, index, pCert);
+    TRACE("%p %d %p\n", handle, index, pCert);
 
     if( !IMAGEHLP_GetCertificateOffset( handle, index, &ofs, &size ) )
         return FALSE;
@@ -301,7 +301,7 @@ BOOL WINAPI ImageGetDigestStream(
   HANDLE FileHandle, DWORD DigestLevel,
   DIGEST_FUNCTION DigestFunction, DIGEST_HANDLE DigestHandle)
 {
-  FIXME("(%p, %ld, %p, %p): stub\n",
+  FIXME("(%p, %d, %p, %p): stub\n",
     FileHandle, DigestLevel, DigestFunction, DigestHandle
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -313,7 +313,7 @@ BOOL WINAPI ImageGetDigestStream(
  */
 BOOL WINAPI ImageRemoveCertificate(HANDLE FileHandle, DWORD Index)
 {
-  FIXME("(%p, %ld): stub\n", FileHandle, Index);
+  FIXME("(%p, %d): stub\n", FileHandle, Index);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }

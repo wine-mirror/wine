@@ -174,7 +174,7 @@ BOOL WINAPI MapAndLoad(
     hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL)))
     {
       DWORD dwLastError = GetLastError();
-      WARN("CreateFileMapping: Error = %ld\n", dwLastError);
+      WARN("CreateFileMapping: Error = %d\n", dwLastError);
       SetLastError(dwLastError);
       goto Error;
     }
@@ -185,7 +185,7 @@ BOOL WINAPI MapAndLoad(
     hFileMapping, FILE_MAP_READ, 0, 0, 0)))
     {
       DWORD dwLastError = GetLastError();
-      WARN("MapViewOfFile: Error = %ld\n", dwLastError);
+      WARN("MapViewOfFile: Error = %d\n", dwLastError);
       SetLastError(dwLastError);
       goto Error;
     }

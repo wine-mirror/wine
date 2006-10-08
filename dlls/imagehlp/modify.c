@@ -49,7 +49,7 @@ BOOL WINAPI BindImageEx(
   DWORD Flags, LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath,
   PIMAGEHLP_STATUS_ROUTINE StatusRoutine)
 {
-  FIXME("(%ld, %s, %s, %s, %p): stub\n",
+  FIXME("(%d, %s, %s, %s, %p): stub\n",
     Flags, debugstr_a(ImageName), debugstr_a(DllPath),
     debugstr_a(SymbolPath), StatusRoutine
   );
@@ -95,7 +95,7 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   DWORD CalcSum;
   DWORD HdrSum;
 
-  FIXME("(%p, %ld, %p, %p): stub\n",
+  FIXME("(%p, %d, %p, %p): stub\n",
     BaseAddress, FileLength, HeaderSum, CheckSum
   );
 
@@ -278,7 +278,7 @@ BOOL WINAPI ReBaseImage(
   ULONG *NewImageBase, ULONG TimeStamp)
 {
   FIXME(
-    "(%s, %s, %d, %d, %d, %ld, %p, %p, %p, %p, %ld): stub\n",
+    "(%s, %s, %d, %d, %d, %d, %p, %p, %p, %p, %d): stub\n",
       debugstr_a(CurrentImageName),debugstr_a(SymbolPath), fReBase,
       fRebaseSysfileOk, fGoingDown, CheckImageSize, OldImageSize,
       OldImageBase, NewImageSize, NewImageBase, TimeStamp
@@ -316,7 +316,7 @@ BOOL WINAPI SplitSymbols(
   LPSTR ImageName, LPSTR SymbolsPath,
   LPSTR SymbolFilePath, DWORD Flags)
 {
-  FIXME("(%s, %s, %s, %ld): stub\n",
+  FIXME("(%s, %s, %s, %d): stub\n",
     debugstr_a(ImageName), debugstr_a(SymbolsPath),
     debugstr_a(SymbolFilePath), Flags
   );
@@ -346,7 +346,7 @@ BOOL WINAPI UpdateDebugInfoFileEx(
   LPSTR ImageFileName, LPSTR SymbolPath, LPSTR DebugFilePath,
   PIMAGE_NT_HEADERS NtHeaders, DWORD OldChecksum)
 {
-  FIXME("(%s, %s, %s, %p, %ld): stub\n",
+  FIXME("(%s, %s, %s, %p, %d): stub\n",
     debugstr_a(ImageFileName), debugstr_a(SymbolPath),
     debugstr_a(DebugFilePath), NtHeaders, OldChecksum
   );
