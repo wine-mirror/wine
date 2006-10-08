@@ -57,7 +57,7 @@ static ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -66,7 +66,7 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -172,23 +172,23 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByIndex(PDIRECTPLAY8AD
 static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS iface, CONST WCHAR* CONST pwszName, 
 						    CONST void* CONST lpvData, CONST DWORD dwDataSize, CONST DWORD dwDataType) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
-  TRACE("(%p, %s, %p, %lu, %lx): stub\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
+  TRACE("(%p, %s, %p, %u, %x): stub\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
   
   if (NULL == lpvData) return DPNERR_INVALIDPOINTER;
   switch (dwDataType) {
   case DPNA_DATATYPE_DWORD:
     if (sizeof(DWORD) != dwDataSize) return DPNERR_INVALIDPARAM;
-    TRACE("(%p, %lu): DWORD Type -> %lu\n", lpvData, dwDataSize, *(const DWORD*) lpvData);
+    TRACE("(%p, %u): DWORD Type -> %u\n", lpvData, dwDataSize, *(const DWORD*) lpvData);
     break;
   case DPNA_DATATYPE_GUID:
     if (sizeof(GUID) != dwDataSize) return DPNERR_INVALIDPARAM;
-    TRACE("(%p, %lu): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid((const GUID*) lpvData));
+    TRACE("(%p, %u): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid((const GUID*) lpvData));
     break;
   case DPNA_DATATYPE_STRING:
-    TRACE("(%p, %lu): STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
+    TRACE("(%p, %u): STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
     break;
   case DPNA_DATATYPE_BINARY:
-    TRACE("(%p, %lu): BINARY Type\n", lpvData, dwDataSize);
+    TRACE("(%p, %u): BINARY Type\n", lpvData, dwDataSize);
     break;
   }
   

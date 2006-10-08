@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("%p,%lx,%p\n", hInstDLL, fdwReason, lpvReserved);
+  TRACE("%p,%x,%p\n", hInstDLL, fdwReason, lpvReserved);
   if (fdwReason == DLL_PROCESS_ATTACH) {
     DisableThreadLibraryCalls(hInstDLL);    
   }
