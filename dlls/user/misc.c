@@ -541,8 +541,9 @@ DWORD WINAPI RegisterTasklist (DWORD x)
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, DWORD flags)
 {
-    FIXME("(hwnd=%p, filter=%p,flags=0x%08x), STUB!\n", hnd,notifyfilter,flags );
-    return 0;
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08x),\n\
+          returns a fake device notification handle!\n", hnd,notifyfilter,flags );
+    return (HDEVNOTIFY) 0xcafecafe;
 }
 
 /***********************************************************************
