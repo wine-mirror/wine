@@ -69,7 +69,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
     {
         WORD mode = LOWORD(vffi->dwFileVersionMS);
         WORD ver_rev = HIWORD(vffi->dwFileVersionLS);
-        TRACE("fileversion=%lu.%u.%u.%u (%s.major.minor.release), ",
+        TRACE("fileversion=%u.%u.%u.%u (%s.major.minor.release), ",
             (vffi->dwFileVersionMS),
             HIBYTE(ver_rev), LOBYTE(ver_rev), LOWORD(vffi->dwFileVersionLS),
             (mode == 3) ? "Usermode" : ((mode <= 2) ? "Kernelmode" : "?") );
@@ -84,7 +84,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
           HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
           HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS));
 
-    TRACE("flagmask=0x%lx, flags=0x%lx %s%s%s%s%s%s\n",
+    TRACE("flagmask=0x%x, flags=0x%x %s%s%s%s%s%s\n",
           vffi->dwFileFlagsMask, vffi->dwFileFlags,
           (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
           (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
@@ -105,7 +105,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
     case VOS_NT:TRACE("NT,");break;
     case VOS_UNKNOWN:
     default:
-        TRACE("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
+        TRACE("UNKNOWN(0x%x),",vffi->dwFileOS&0xFFFF0000);break;
     }
 
     switch (LOWORD(vffi->dwFileOS))
@@ -130,7 +130,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
         {
             if(versioned_printer) /* NT3.x/NT4.0 or old w2k Driver  */
                 TRACE(",PRINTER");
-            TRACE(" (subtype=0x%lx)", vffi->dwFileSubtype);
+            TRACE(" (subtype=0x%x)", vffi->dwFileSubtype);
         }
         break;
     case VFT_DRV:
@@ -151,7 +151,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
         case VFT2_DRV_VERSIONED_PRINTER:TRACE("VERSIONED_PRINTER");break;
         case VFT2_UNKNOWN:
         default:
-            TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
+            TRACE("UNKNOWN(0x%x)",vffi->dwFileSubtype);break;
         }
         break;
     case VFT_FONT:
@@ -161,18 +161,18 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
         case VFT2_FONT_RASTER:TRACE("RASTER");break;
         case VFT2_FONT_VECTOR:TRACE("VECTOR");break;
         case VFT2_FONT_TRUETYPE:TRACE("TRUETYPE");break;
-        default:TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);break;
+        default:TRACE("UNKNOWN(0x%x)",vffi->dwFileSubtype);break;
         }
         break;
     case VFT_VXD:TRACE("filetype=VXD");break;
     case VFT_STATIC_LIB:TRACE("filetype=STATIC_LIB");break;
     case VFT_UNKNOWN:
     default:
-        TRACE("filetype=Unknown(0x%lx)",vffi->dwFileType);break;
+        TRACE("filetype=Unknown(0x%x)",vffi->dwFileType);break;
     }
 
     TRACE("\n");
-    TRACE("filedate=0x%lx.0x%lx\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
+    TRACE("filedate=0x%x.0x%x\n",vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
 
 /***********************************************************************
@@ -280,7 +280,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LP
 
     if ( vffi->dwSignature != VS_FFI_SIGNATURE )
     {
-        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+        WARN("vffi->dwSignature is 0x%08x, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
 	len = 0xFFFFFFFF;
 	goto END;
@@ -414,7 +414,7 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
 
     if ( vffi->dwSignature != VS_FFI_SIGNATURE )
     {
-        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+        WARN("vffi->dwSignature is 0x%08x, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
 	len = 0xFFFFFFFF;
 	goto END;
@@ -548,7 +548,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     DWORD len;
     VS_VERSION_INFO_STRUCT32* vvis = (VS_VERSION_INFO_STRUCT32*)data;
 
-    TRACE("(%s,%ld,size=%ld,data=%p)\n",
+    TRACE("(%s,%d,size=%d,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
 
     if (!data)
@@ -615,7 +615,7 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     UNICODE_STRING filenameW;
     BOOL retval;
 
-    TRACE("(%s,%ld,size=%ld,data=%p)\n",
+    TRACE("(%s,%d,size=%d,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
     if(filename)

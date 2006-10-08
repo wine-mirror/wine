@@ -208,7 +208,7 @@ DWORD WINAPI VerFindFileA(
         *lpuCurDirLen = curDirSizeReq;
     }
 
-    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
+    TRACE("ret = %u (%s%s%s) curdir=%s destdir=%s\n", retval,
           (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
           (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
           (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
@@ -299,7 +299,7 @@ DWORD WINAPI VerFindFileW( UINT flags,LPWSTR lpszFilename,LPWSTR lpszWinDir,
         *lpuCurDirLen = curDirSizeReq;
     }
 
-    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
+    TRACE("ret = %u (%s%s%s) curdir=%s destdir=%s\n", retval,
           (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
           (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
           (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
@@ -338,7 +338,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
 	    	*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
 	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
-	    	WARN("Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
+                WARN("Bad VS_FIXEDFILEINFO signature 0x%08x\n",(*vffi)->dwSignature);
 	    return buf;
 	}
     }

@@ -403,7 +403,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
     OFSTRUCT ofs;
     DWORD reslen;
 
-    TRACE("(%s,type=0x%lx,id=0x%lx,off=%p)\n",
+    TRACE("(%s,type=0x%x,id=0x%x,off=%p)\n",
                 debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
                 lpszResId );
 
@@ -440,7 +440,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
 
-    TRACE("(%s,type=%p,id=%p,off=%ld,len=%ld,data=%p)\n",
+    TRACE("(%s,type=%p,id=%p,off=%d,len=%d,data=%p)\n",
 		debugstr_a(lpszFileName), lpszResType, lpszResId,
                 dwFileOffset, dwResLen, lpvData );
 

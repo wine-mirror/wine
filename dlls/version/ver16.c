@@ -44,7 +44,7 @@ DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
                                    DWORD cbBuf, LPVOID lpvData )
 {
-    TRACE("(%s, %08lx, %ld, %p)\n",
+    TRACE("(%s, %08x, %d, %p)\n",
                 debugstr_a(lpszFileName), handle, cbBuf, lpvData );
 
     return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
