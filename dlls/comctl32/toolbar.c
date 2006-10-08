@@ -251,6 +251,7 @@ static LRESULT TOOLBAR_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason);
 static LRESULT TOOLBAR_AutoSize(HWND hwnd);
 static void TOOLBAR_CheckImageListIconSize(TOOLBAR_INFO *infoPtr);
+static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button);
 
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
@@ -1726,19 +1727,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	if (infoPtr->rcBound.bottom < y + cy)
 	    infoPtr->rcBound.bottom = y + cy;
 
-	/* Set the toolTip only for non-hidden, non-separator button */
-	if (infoPtr->hwndToolTip && !(btnPtr->fsStyle & BTNS_SEP ))
-	{
-	    TTTOOLINFOW ti;
-
-	    ZeroMemory (&ti, sizeof(ti));
-	    ti.cbSize = sizeof(ti);
-	    ti.hwnd = hwnd;
-	    ti.uId = btnPtr->idCommand;
-	    ti.rect = btnPtr->rect;
-	    SendMessageW (infoPtr->hwndToolTip, TTM_NEWTOOLRECTW,
-			    0, (LPARAM)&ti);
-	}
+        TOOLBAR_TooltipSetRect(infoPtr, btnPtr);
 
 	/* btnPtr->nRow is zero based. The space between the rows is 	*/
 	/* also considered as a row. 					*/
@@ -1900,6 +1889,56 @@ TOOLBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     msg.pt.y = HIWORD(GetMessagePos ());
 
     SendMessageW (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+static void
+TOOLBAR_TooltipAddTool(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button)
+{
+    if (infoPtr->hwndToolTip && !(button->fsStyle & BTNS_SEP)) {
+        TTTOOLINFOW ti;
+
+        ZeroMemory(&ti, sizeof(TTTOOLINFOW));
+        ti.cbSize   = sizeof (TTTOOLINFOW);
+        ti.hwnd     = infoPtr->hwndSelf;
+        ti.uId      = button->idCommand;
+        ti.hinst    = 0;
+        ti.lpszText = LPSTR_TEXTCALLBACKW;
+        /* ti.lParam = random value from the stack? */
+
+        SendMessageW(infoPtr->hwndToolTip, TTM_ADDTOOLW,
+            0, (LPARAM)&ti);
+    }
+}
+
+static void
+TOOLBAR_TooltipDelTool(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button)
+{
+    if ((infoPtr->hwndToolTip) && !(button->fsStyle & BTNS_SEP)) {
+        TTTOOLINFOW ti;
+
+        ZeroMemory(&ti, sizeof(ti));
+        ti.cbSize   = sizeof(ti);
+        ti.hwnd     = infoPtr->hwndSelf;
+        ti.uId      = button->idCommand;
+
+        SendMessageW(infoPtr->hwndToolTip, TTM_DELTOOLW, 0, (LPARAM)&ti);
+    }
+}
+
+static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button)
+{
+    /* Set the toolTip only for non-hidden, non-separator button */
+    if (infoPtr->hwndToolTip && !(button->fsStyle & BTNS_SEP))
+    {
+        TTTOOLINFOW ti;
+
+        ZeroMemory(&ti, sizeof(ti));
+        ti.cbSize = sizeof(ti);
+        ti.hwnd = infoPtr->hwndSelf;
+        ti.uId = button->idCommand;
+        ti.rect = button->rect;
+        SendMessageW(infoPtr->hwndToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM)&ti);
+    }
 }
 
 /* keeps available button list box sorted by button id */
@@ -2835,19 +2874,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
             btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
-	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
-	    TTTOOLINFOW ti;
-
-	    ZeroMemory (&ti, sizeof(ti));
-	    ti.cbSize   = sizeof(ti);
-	    ti.hwnd     = hwnd;
-	    ti.uId      = btnPtr->idCommand;
-	    ti.hinst    = 0;
-	    ti.lpszText = LPSTR_TEXTCALLBACKW;
-
-	    SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW,
-			    0, (LPARAM)&ti);
-	}
+        TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
     }
 
     TOOLBAR_CalcToolbar (hwnd);
@@ -2903,20 +2930,7 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
             btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
-	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
-	    TTTOOLINFOW ti;
-
-	    ZeroMemory (&ti, sizeof(TTTOOLINFOW));
-	    ti.cbSize   = sizeof (TTTOOLINFOW);
-	    ti.hwnd     = hwnd;
-	    ti.uId      = btnPtr->idCommand;
-	    ti.hinst    = 0;
-	    ti.lpszText = LPSTR_TEXTCALLBACKW;
-	    ti.lParam   = lParam;
-
-	    SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW,
-			    0, (LPARAM)&ti);
-	}
+        TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
     }
 
     TOOLBAR_CalcToolbar (hwnd);
@@ -3251,17 +3265,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nmtb.tbButton.iString = btnPtr->iString;
     TOOLBAR_SendNotify(&nmtb.hdr, infoPtr, TBN_DELETINGBUTTON);
 
-    if ((infoPtr->hwndToolTip) &&
-	!(btnPtr->fsStyle & BTNS_SEP)) {
-	TTTOOLINFOW ti;
-
-	ZeroMemory (&ti, sizeof(ti));
-	ti.cbSize   = sizeof(ti);
-	ti.hwnd     = hwnd;
-	ti.uId      = infoPtr->buttons[nIndex].idCommand;
-
-	SendMessageW (infoPtr->hwndToolTip, TTM_DELTOOLW, 0, (LPARAM)&ti);
-    }
+    TOOLBAR_TooltipDelTool(infoPtr, &infoPtr->buttons[nIndex]);
 
     if (infoPtr->nNumButtons == 1) {
 	TRACE(" simple delete!\n");
@@ -3909,19 +3913,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
         infoPtr->buttons[nIndex].iString   = lpTbb->iString;
 
-    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & BTNS_SEP)) {
-	TTTOOLINFOW ti;
-
-	ZeroMemory (&ti, sizeof(ti));
-	ti.cbSize   = sizeof (ti);
-	ti.hwnd     = hwnd;
-	ti.uId      = lpTbb->idCommand;
-	ti.hinst    = 0;
-	ti.lpszText = LPSTR_TEXTCALLBACKW;
-
-	SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW,
-			0, (LPARAM)&ti);
-    }
+    TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
 
     /* post insert copy */
     if (nIndex < infoPtr->nNumButtons - 1) {
@@ -4010,19 +4002,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
         infoPtr->buttons[nIndex].iString   = lpTbb->iString;
 
-    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & BTNS_SEP)) {
-	TTTOOLINFOW ti;
-
-	ZeroMemory (&ti, sizeof(TTTOOLINFOW));
-	ti.cbSize   = sizeof (TTTOOLINFOW);
-	ti.hwnd     = hwnd;
-	ti.uId      = lpTbb->idCommand;
-	ti.hinst    = 0;
-	ti.lpszText = LPSTR_TEXTCALLBACKW;
-
-	SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW,
-			0, (LPARAM)&ti);
-    }
+    TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
 
     /* post insert copy */
     if (nIndex < infoPtr->nNumButtons - 1) {
@@ -4441,20 +4421,10 @@ static void
 TOOLBAR_DeleteAllButtons(TOOLBAR_INFO *infoPtr)
 {
     INT i;
-    TTTOOLINFOW ti;
-
-    ZeroMemory(&ti, sizeof(ti));
-    ti.cbSize   = sizeof(ti);
-    ti.hwnd     = infoPtr->hwndSelf;
 
     for (i = 0; i < infoPtr->nNumButtons; i++)
     {
-        if ((infoPtr->hwndToolTip) &&
-            !(infoPtr->buttons[i].fsStyle & BTNS_SEP))
-        {
-            ti.uId      = infoPtr->buttons[i].idCommand;
-            SendMessageW(infoPtr->hwndToolTip, TTM_DELTOOLW, 0, (LPARAM)&ti);
-        }
+        TOOLBAR_TooltipDelTool(infoPtr, &infoPtr->buttons[i]);
     }
 
     Free(infoPtr->buttons);
