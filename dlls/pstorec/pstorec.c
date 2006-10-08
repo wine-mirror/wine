@@ -39,7 +39,7 @@ typedef struct
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p %lx %p\n", hinst, fdwReason, fImpLoad);
+    TRACE("%p %x %p\n", hinst, fdwReason, fImpLoad);
 
     switch (fdwReason)
     {
@@ -89,7 +89,7 @@ static ULONG WINAPI PStore_fnAddRef(IPStore* iface)
 {
     PStore_impl *This = (PStore_impl *)iface;
 
-    TRACE("%p %lu\n", This, This->ref);
+    TRACE("%p %u\n", This, This->ref);
 
     return InterlockedIncrement( &This->ref );
 }
@@ -102,7 +102,7 @@ static ULONG WINAPI PStore_fnRelease(IPStore* iface)
     PStore_impl *This = (PStore_impl *)iface;
     LONG ref;
 
-    TRACE("%p %lu\n", This, This->ref);
+    TRACE("%p %u\n", This, This->ref);
 
     ref = InterlockedDecrement( &This->ref );
     if( !ref )
@@ -146,7 +146,7 @@ static HRESULT WINAPI PStore_fnSetProvParam( IPStore* This,
 static HRESULT WINAPI PStore_fnCreateType( IPStore* This,
     PST_KEY Key, const GUID* pType, PPST_TYPEINFO pInfo, DWORD dwFlags)
 {
-    FIXME("%p %08lx %s %p(%ld,%s) %08lx\n", This, Key, debugstr_guid(pType),
+    FIXME("%p %08x %s %p(%d,%s) %08x\n", This, Key, debugstr_guid(pType),
           pInfo, pInfo->cbSize, debugstr_w(pInfo->szDisplayName), dwFlags);
 
     return E_NOTIMPL;
@@ -168,7 +168,7 @@ static HRESULT WINAPI PStore_fnGetTypeInfo( IPStore* This,
 static HRESULT WINAPI PStore_fnDeleteType( IPStore* This,
     PST_KEY Key, const GUID* pType, DWORD dwFlags)
 {
-    FIXME("%p %ld %s %08lx\n", This, Key, debugstr_guid(pType), dwFlags);
+    FIXME("%p %d %s %08x\n", This, Key, debugstr_guid(pType), dwFlags);
     return E_NOTIMPL;
 }
 
@@ -179,7 +179,7 @@ static HRESULT WINAPI PStore_fnCreateSubtype( IPStore* This,
     PST_KEY Key, const GUID* pType, const GUID* pSubtype,
     PPST_TYPEINFO pInfo, PPST_ACCESSRULESET pRules, DWORD dwFlags)
 {
-    FIXME("%p %08lx %s %s %p %p %08lx\n", This, Key, debugstr_guid(pType),
+    FIXME("%p %08x %s %s %p %p %08x\n", This, Key, debugstr_guid(pType),
            debugstr_guid(pSubtype), pInfo, pRules, dwFlags);
     return E_NOTIMPL;
 }
@@ -201,7 +201,7 @@ static HRESULT WINAPI PStore_fnGetSubtypeInfo( IPStore* This,
 static HRESULT WINAPI PStore_fnDeleteSubtype( IPStore* This,
     PST_KEY Key, const GUID* pType, const GUID* pSubtype, DWORD dwFlags)
 {
-    FIXME("%p %lu %s %s %08lx\n", This, Key,
+    FIXME("%p %u %s %s %08x\n", This, Key,
           debugstr_guid(pType), debugstr_guid(pSubtype), dwFlags);
     return E_NOTIMPL;
 }
@@ -266,7 +266,7 @@ static HRESULT WINAPI PStore_fnReadItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
     DWORD *cbData, BYTE** pbData, PPST_PROMPTIFO pPromptInfo, DWORD dwFlags)
 {
-    FIXME("%p %08lx %s %s %s %p %p %p %08lx\n", This, Key,
+    FIXME("%p %08x %s %s %s %p %p %p %08x\n", This, Key,
           debugstr_guid(pItemType), debugstr_guid(pItemSubtype),
           debugstr_w(szItemName), cbData, pbData, pPromptInfo, dwFlags);
     return E_NOTIMPL;
@@ -280,7 +280,7 @@ static HRESULT WINAPI PStore_fnWriteItem( IPStore* This, PST_KEY Key,
     DWORD cbData, BYTE* ppbData, PPST_PROMPTIFO pPromptInfo,
     DWORD dwDefaultConfirmationStyle, DWORD dwFlags)
 {
-    FIXME("%p %08lx %s %s %s %ld %p %p %08lx\n", This, Key,
+    FIXME("%p %08x %s %s %s %d %p %p %08x\n", This, Key,
           debugstr_guid(pItemType), debugstr_guid(pItemSubtype),
           debugstr_w(szItemName), cbData, ppbData, pPromptInfo, dwFlags);
     return E_NOTIMPL;
@@ -293,7 +293,7 @@ static HRESULT WINAPI PStore_fnOpenItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
     PST_ACCESSMODE ModeFlags, PPST_PROMPTIFO pProomptInfo, DWORD dwFlags )
 {
-    FIXME("%p %08lx %s %s %p %08lx %p %08lx\n", This, Key,
+    FIXME("%p %08x %s %s %p %08x %p %08x\n", This, Key,
            debugstr_guid(pItemType), debugstr_guid(pItemSubtype),
            debugstr_w(szItemName), ModeFlags, pProomptInfo, dwFlags);
     return E_NOTIMPL;
@@ -353,7 +353,7 @@ HRESULT WINAPI PStoreCreateInstance( IPStore** ppProvider,
 {
     PStore_impl *ips;
 
-    TRACE("%p %s %p %08lx\n", ppProvider, debugstr_guid(pProviderID), pReserved, dwFlags);
+    TRACE("%p %s %p %08x\n", ppProvider, debugstr_guid(pProviderID), pReserved, dwFlags);
 
     ips = HeapAlloc( GetProcessHeap(), 0, sizeof (PStore_impl) );
     if( !ips )
