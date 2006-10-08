@@ -494,7 +494,7 @@ typedef struct shader_constant_context {
 static void shader_constant_print_handler(
     const void* data) {
 
-    shader_constant_data* scdata = (shader_constant_data*) data;
+    const shader_constant_data* scdata = data;
 
     trace("Integer constant = { %#x, %#x, %#x, %#x }\n",
         scdata->int_constant[0], scdata->int_constant[1],
@@ -513,8 +513,8 @@ static void shader_constant_set_handler(
     IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
-    shader_constant_data* scdata = (shader_constant_data*) data;
-    shader_constant_arg* scarg = (shader_constant_arg*) test->test_arg;
+    const shader_constant_data* scdata = data;
+    const shader_constant_arg* scarg = test->test_arg;
     unsigned int index = scarg->idx;
 
     if (!scarg->pshader) {
@@ -540,7 +540,7 @@ static void shader_constant_get_handler(
 
     HRESULT hret;
     shader_constant_data* scdata = (shader_constant_data*) data;
-    shader_constant_arg* scarg = (shader_constant_arg*) test->test_arg;
+    const shader_constant_arg* scarg = test->test_arg;
     unsigned int index = scarg->idx;
 
     if (!scarg->pshader) {
@@ -635,7 +635,7 @@ typedef struct light_context {
 static void light_print_handler(
     const void* data) {
 
-    light_data* ldata = (light_data*) data;
+    const light_data* ldata = data;
 
     trace("Get Light return value: %#lx\n", ldata->get_light_result);
     trace("Get Light enable return value: %#lx\n", ldata->get_enabled_result);
@@ -668,8 +668,8 @@ static void light_set_handler(
     IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
-    light_data* ldata = (light_data*) data;
-    light_arg* larg = (light_arg*) test->test_arg;
+    const light_data* ldata = data;
+    const light_arg* larg = test->test_arg;
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_SetLight(device, index, &ldata->light);
@@ -683,8 +683,8 @@ static void light_get_handler(
     IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
-    light_data* ldata = (light_data*) data;
-    light_arg* larg = (light_arg*) test->test_arg;
+    light_data* ldata = data;
+    const light_arg* larg = test->test_arg;
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_GetLightEnable(device, index, &ldata->enabled);
@@ -783,7 +783,7 @@ typedef struct transform_context {
 } transform_context;
 
 static inline void print_matrix(
-    const char* name, D3DMATRIX* matrix) {
+    const char* name, const D3DMATRIX* matrix) {
 
     trace("%s Matrix = {\n", name);
     trace("    %f %f %f %f\n", matrix->m[0][0], matrix->m[1][0], matrix->m[2][0], matrix->m[3][0]);
@@ -796,7 +796,8 @@ static inline void print_matrix(
 static void transform_print_handler(
     const void* data) {
 
-    transform_data* tdata = (transform_data*) data;
+    const transform_data* tdata = data;
+
     print_matrix("View", &tdata->view);
     print_matrix("Projection", &tdata->projection);
     print_matrix("Texture0", &tdata->texture0);
@@ -809,7 +810,7 @@ static void transform_set_handler(
     IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
-    transform_data* tdata = (transform_data*) data;
+    const transform_data* tdata = data;
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &tdata->view);
     ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
@@ -1072,7 +1073,7 @@ static void render_state_set_handler(
     IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
-    render_state_data* rsdata = (render_state_data*) data;
+    const render_state_data* rsdata = data;
     unsigned int i;
 
     for (i = 0; i < D3D9_RENDER_STATES; i++) {
@@ -1097,7 +1098,8 @@ static void render_state_get_handler(
 static void render_state_print_handler(
     const void* data) {
 
-    render_state_data* rsdata = (render_state_data*) data;
+    const render_state_data* rsdata = data;
+
     unsigned int i;
     for (i = 0; i < D3D9_RENDER_STATES; i++)
         trace("Index = %u, Value = %#lx\n", i, rsdata->states[i]);
@@ -1343,7 +1345,7 @@ static void render_state_test_data_init(
 static HRESULT render_state_setup_handler(
     state_test* test) {
 
-    render_state_arg* rsarg = (render_state_arg*) test->test_arg;
+    const render_state_arg* rsarg = test->test_arg;
 
     render_state_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(render_state_context));
     if (ctx == NULL) return E_FAIL;
