@@ -40,6 +40,6 @@ STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine - usuwanie programów"
      IDS_ABOUT, "Wine - usuwanie programów (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
      IDS_ABOUTTITLE, "O narzêdziu do usuwania programów"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Nie ma informacji o usuwaniu tego programu w rejestrze (jeszcze), nie ma nic do zrobienia!"
+     IDS_REGISTRYKEYNOTAVAILABLE, "Nie ma (jeszcze) informacji o programach do usuniêcia w rejestrze. Nie ma nic do zrobienia!"
      IDS_UNINSTALLFAILED, "Nie uda³o siê wykonaæ polecenia '%s', które powinno usun¹æ progam. Byæ mo¿e ju¿ by³ usuniêty.\r\nCzy chcesz usun¹æ jego wpis z tej listy?"
 }
