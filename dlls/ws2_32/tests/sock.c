@@ -203,7 +203,7 @@ static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int sendlen )
     int n = 1;
     for ( p = buf; n > 0 && p < last; p += n )
         n = send ( s, p, min ( sendlen, last - p ), 0 );
-    wsa_ok ( n, 0 <=, "do_synchronous_send (%lx): error %d\n" );
+    wsa_ok ( n, 0 <=, "do_synchronous_send (%x): error %d\n" );
     return p - buf;
 }
 
@@ -213,7 +213,7 @@ static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int recvlen )
     int n = 1;
     for ( p = buf; n > 0 && p < last; p += n )
         n = recv ( s, p, min ( recvlen, last - p ), 0 );
-    wsa_ok ( n, 0 <=, "do_synchronous_recv (%lx): error %d:\n" );
+    wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
     return p - buf;
 }
 
@@ -325,7 +325,7 @@ static void client_start ( client_params *par )
 static void client_stop (void)
 {
     client_memory *mem = TlsGetValue ( tls );
-    wsa_ok ( closesocket ( mem->s ), 0 ==, "closesocket error (%lx): %d\n" );
+    wsa_ok ( closesocket ( mem->s ), 0 ==, "closesocket error (%x): %d\n" );
     LocalFree ( (HANDLE) mem->send_buf );
     LocalFree ( (HANDLE) mem );
     ExitThread(0);
@@ -350,8 +350,8 @@ static VOID WINAPI simple_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%lx): failed to set blocking mode: %d\n");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%lx): listen failed: %d\n");
+    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%x): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%x): listen failed: %d\n");
 
     trace ( "simple_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
@@ -363,7 +363,7 @@ static VOID WINAPI simple_server ( server_params *par )
         /* accept a single connection */
         tmp = sizeof ( mem->sock[0].peer );
         mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
-        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%lx): accept failed: %d\n" );
+        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%x): accept failed: %d\n" );
 
         ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
              "simple_server (%x): strange peer address\n", id );
@@ -382,7 +382,7 @@ static VOID WINAPI simple_server ( server_params *par )
 
         /* cleanup */
         read_zero_bytes ( mem->sock[0].s );
-        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%lx): closesocket error: %d\n" );
+        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%x): closesocket error: %d\n" );
         mem->sock[0].s = INVALID_SOCKET;
     }
 
@@ -410,8 +410,8 @@ static VOID WINAPI select_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%lx): failed to set blocking mode: %d\n");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%lx): listen failed: %d\n");
+    wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%x): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%x): listen failed: %d\n");
 
     trace ( "select_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
@@ -431,7 +431,7 @@ static VOID WINAPI select_server ( server_params *par )
         n_set = 0;
 
         wsa_ok ( ( n_ready = select ( 0, &fds_recv, &fds_send, NULL, &timeout ) ), SOCKET_ERROR !=, 
-            "select_server (%lx): select() failed: %d\n" );
+            "select_server (%x): select() failed: %d\n" );
 
         /* check for incoming requests */
         if ( FD_ISSET ( mem->s, &fds_recv ) ) {
@@ -442,7 +442,7 @@ static VOID WINAPI select_server ( server_params *par )
             /* accept a single connection */
             tmp = sizeof ( mem->sock[n_connections].peer );
             mem->sock[n_connections].s = accept ( mem->s, (struct sockaddr*) &mem->sock[n_connections].peer, &tmp );
-            wsa_ok ( mem->sock[n_connections].s, INVALID_SOCKET !=, "select_server (%lx): accept() failed: %d\n" );
+            wsa_ok ( mem->sock[n_connections].s, INVALID_SOCKET !=, "select_server (%x): accept() failed: %d\n" );
 
             ok ( mem->sock[n_connections].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
                 "select_server (%x): strange peer address\n", id );
@@ -513,7 +513,7 @@ static VOID WINAPI select_server ( server_params *par )
     {
         /* cleanup */
         read_zero_bytes ( mem->sock[i].s );
-        wsa_ok ( closesocket ( mem->sock[i].s ),  0 ==, "select_server (%lx): closesocket error: %d\n" );
+        wsa_ok ( closesocket ( mem->sock[i].s ),  0 ==, "select_server (%x): closesocket error: %d\n" );
         mem->sock[i].s = INVALID_SOCKET;
     }
 
@@ -546,7 +546,7 @@ static VOID WINAPI simple_client ( client_params *par )
 
     /* Connect */
     wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
-             0 ==, "simple_client (%lx): connect error: %d\n" );
+             0 ==, "simple_client (%x): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "simple_client (%x): failed to set blocking mode\n", id );
     trace ( "simple_client (%x) connected\n", id );
@@ -557,7 +557,7 @@ static VOID WINAPI simple_client ( client_params *par )
          "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* shutdown send direction */
-    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d\n" );
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
 
     /* Receive data echoed back & check it */
     n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
@@ -604,7 +604,7 @@ static void WINAPI event_client ( client_params *par )
     tmp = WaitForSingleObject ( event, INFINITE );
     ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d\n", id, tmp );
     err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
-    wsa_ok ( err, 0 ==, "event_client (%lx): WSAEnumNetworkEvents error: %d\n" );
+    wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
 
     err = wsa_events.iErrorCode[ FD_CONNECT_BIT ];
     ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
@@ -625,7 +625,7 @@ static void WINAPI event_client ( client_params *par )
         ok ( err == WAIT_OBJECT_0, "event_client (%x): wait failed\n", id );
 
         err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
-        wsa_ok ( err, 0 ==, "event_client (%lx): WSAEnumNetworkEvents error: %d\n" );
+        wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
 
         if ( wsa_events.lNetworkEvents & FD_WRITE )
         {
@@ -662,7 +662,7 @@ static void WINAPI event_client ( client_params *par )
             
             /* First read must succeed */
             n = recv ( mem->s, recv_p, min ( recv_last - recv_p, par->buflen ), 0 );
-            wsa_ok ( n, 0 <=, "event_client (%lx): recv error: %d\n" );
+            wsa_ok ( n, 0 <=, "event_client (%x): recv error: %d\n" );
 
             while ( n >= 0 ) {
                 recv_p += n;
@@ -765,13 +765,13 @@ static void do_test( test_setup *test )
 
     wait = WaitForMultipleObjects ( 1 + n, thread, TRUE, 1000 * TEST_TIMEOUT );
     ok ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n , 
-         "some threads have not completed: %lx\n", wait );
+         "some threads have not completed: %x\n", wait );
 
     if ( ! ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n ) )
     {
         for (i = 0; i <= n; i++)
         {
-            trace ("terminating thread %08lx\n", thread_id[i]);
+            trace ("terminating thread %08x\n", thread_id[i]);
             if ( WaitForSingleObject ( thread[i], 0 ) != WAIT_OBJECT_0 )
                 TerminateThread ( thread [i], 0 );
         }
@@ -1340,7 +1340,7 @@ static VOID WINAPI SelectReadThread(select_thread_params *par)
     addr.sin_port = htons(SERVERPORT);
 
     do_bind(par->s, (struct sockaddr *)&addr, sizeof(addr));
-    wsa_ok(listen(par->s, SOMAXCONN ), 0 ==, "SelectReadThread (%lx): listen failed: %d\n");
+    wsa_ok(listen(par->s, SOMAXCONN ), 0 ==, "SelectReadThread (%x): listen failed: %d\n");
 
     SetEvent(server_ready);
     ret = select(par->s+1, &readfds, NULL, NULL, &select_timeout);
@@ -1396,7 +1396,7 @@ static void test_select(void)
     thread_params.ReadKilled = FALSE;
     server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
     thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, NULL );
-    ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %ld\n", GetLastError());
+    ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
 
     WaitForSingleObject (server_ready, INFINITE);
     Sleep(2000);
