@@ -2858,31 +2858,19 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
     INT nOldButtons, nNewButtons, nAddButtons, nCount;
 
-    TRACE("adding %d buttons!\n", wParam);
+    TRACE("adding %d buttons (unicode=%d)!\n", wParam, fUnicode);
 
     nAddButtons = (UINT)wParam;
     nOldButtons = infoPtr->nNumButtons;
     nNewButtons = nOldButtons + nAddButtons;
 
-    if (infoPtr->nNumButtons == 0) {
-	infoPtr->buttons =
-	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
-    }
-    else {
-	TBUTTON_INFO *oldButtons = infoPtr->buttons;
-	infoPtr->buttons =
-	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
-	memcpy (&infoPtr->buttons[0], &oldButtons[0],
-		nOldButtons * sizeof(TBUTTON_INFO));
-        Free (oldButtons);
-    }
-
+    infoPtr->buttons = ReAlloc(infoPtr->buttons, sizeof(TBUTTON_INFO)*nNewButtons);
     infoPtr->nNumButtons = nNewButtons;
 
     /* insert new button data */
@@ -2893,67 +2881,16 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState   = lpTbb[nCount].fsState;
 	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
 	btnPtr->dwData    = lpTbb[nCount].dwData;
+	btnPtr->bHot      = FALSE;
         if(HIWORD(lpTbb[nCount].iString) && lpTbb[nCount].iString != -1)
-            Str_SetPtrAtoW ((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[nCount].iString );
+        {
+            if (fUnicode)
+                Str_SetPtrW ((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[nCount].iString );
+            else
+                Str_SetPtrAtoW((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[nCount].iString);
+        }
         else
             btnPtr->iString   = lpTbb[nCount].iString;
-	btnPtr->bHot      = FALSE;
-
-        TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
-    }
-
-    TOOLBAR_CalcToolbar (hwnd);
-    TOOLBAR_AutoSize (hwnd);
-
-    TOOLBAR_DumpToolbar (infoPtr, __LINE__);
-
-    InvalidateRect(hwnd, NULL, TRUE);
-
-    return TRUE;
-}
-
-
-static LRESULT
-TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
-    INT nOldButtons, nNewButtons, nAddButtons, nCount;
-
-    TRACE("adding %d buttons!\n", wParam);
-
-    nAddButtons = (UINT)wParam;
-    nOldButtons = infoPtr->nNumButtons;
-    nNewButtons = nOldButtons + nAddButtons;
-
-    if (infoPtr->nNumButtons == 0) {
-	infoPtr->buttons =
-	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
-    }
-    else {
-	TBUTTON_INFO *oldButtons = infoPtr->buttons;
-	infoPtr->buttons =
-	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
-	memcpy (&infoPtr->buttons[0], &oldButtons[0],
-		nOldButtons * sizeof(TBUTTON_INFO));
-        Free (oldButtons);
-    }
-
-    infoPtr->nNumButtons = nNewButtons;
-
-    /* insert new button data */
-    for (nCount = 0; nCount < nAddButtons; nCount++) {
-	TBUTTON_INFO *btnPtr = &infoPtr->buttons[nOldButtons+nCount];
-	btnPtr->iBitmap   = lpTbb[nCount].iBitmap;
-	btnPtr->idCommand = lpTbb[nCount].idCommand;
-	btnPtr->fsState   = lpTbb[nCount].fsState;
-	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
-	btnPtr->dwData    = lpTbb[nCount].dwData;
-        if(HIWORD(lpTbb[nCount].iString) && lpTbb[nCount].iString != -1)
-            Str_SetPtrW ((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[nCount].iString );
-        else
-            btnPtr->iString   = lpTbb[nCount].iString;
-	btnPtr->bHot      = FALSE;
 
         TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
     }
@@ -6783,10 +6720,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_AddBitmap (hwnd, wParam, lParam);
 
 	case TB_ADDBUTTONSA:
-	    return TOOLBAR_AddButtonsA (hwnd, wParam, lParam);
+	    return TOOLBAR_AddButtonsT(hwnd, wParam, lParam, FALSE);
 
 	case TB_ADDBUTTONSW:
-	    return TOOLBAR_AddButtonsW (hwnd, wParam, lParam);
+	    return TOOLBAR_AddButtonsT(hwnd, wParam, lParam, TRUE);
 
 	case TB_ADDSTRINGA:
 	    return TOOLBAR_AddStringA (hwnd, wParam, lParam);
