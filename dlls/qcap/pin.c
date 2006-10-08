@@ -219,7 +219,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
         DeleteMediaType(&This->pin.mtCurrent);
     }
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -318,7 +318,7 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
     } /* if succeeded */
     LeaveCriticalSection(This->pin.pCritSec);
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -361,7 +361,7 @@ HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, 
 {
     HRESULT hr;
 
-    TRACE("(%p, %p, %p, %lx)\n", ppSample, tStart, tStop, dwFlags);
+    TRACE("(%p, %p, %p, %x)\n", ppSample, tStart, tStop, dwFlags);
 
     EnterCriticalSection(This->pin.pCritSec);
     {

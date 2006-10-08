@@ -145,7 +145,7 @@ fnCaptureGraphBuilder2_AddRef(ICaptureGraphBuilder2 * iface)
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
     DWORD ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, ref - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, ref - 1);
     return ref;
 }
 
@@ -155,7 +155,7 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
     DWORD ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, ref + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, ref + 1);
 
     if (!ref)
     {

@@ -116,7 +116,7 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 
     cFetched = min(This->enumPinDetails.cPins, This->uIndex + cPins) - This->uIndex;
 
-    TRACE("(%lu, %p, %p)\n", cPins, ppPins, pcFetched);
+    TRACE("(%u, %p, %p)\n", cPins, ppPins, pcFetched);
 
     if (cFetched > 0)
     {
@@ -141,7 +141,7 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 {
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
-    TRACE("(%lu)\n", cPins);
+    TRACE("(%u)\n", cPins);
 
     if (This->uIndex + cPins < This->enumPinDetails.cPins)
     {

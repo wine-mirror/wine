@@ -178,7 +178,7 @@ static ULONG WINAPI VfwCapture_AddRef(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("%p->() New refcount: %ld\n", This, refCount);
+    TRACE("%p->() New refcount: %d\n", This, refCount);
 
     return refCount;
 }
@@ -188,7 +188,7 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("%p->() New refcount: %ld\n", This, refCount);
+    TRACE("%p->() New refcount: %d\n", This, refCount);
 
     if (!refCount)
     {
@@ -246,7 +246,7 @@ static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
 static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     VfwCapture *This = (VfwCapture *)iface;
-    TRACE("(%lx%08lx)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
+    TRACE("(%x%08x)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
     return qcap_driver_run(This->driver_info, &This->state);
 }
 
@@ -256,7 +256,7 @@ VfwCapture_GetState( IBaseFilter * iface, DWORD dwMilliSecsTimeout,
 {
     VfwCapture *This = (VfwCapture *)iface;
 
-    TRACE("(%lu, %p)\n", dwMilliSecsTimeout, pState);
+    TRACE("(%u, %p)\n", dwMilliSecsTimeout, pState);
 
     *pState = This->state;
     return S_OK;
@@ -412,7 +412,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     if (pin->pConnectedTo != NULL)
     {
         hr = IPin_QueryAccept(pin->pConnectedTo, pmt);
-        TRACE("Would accept: %ld\n", hr);
+        TRACE("Would accept: %d\n", hr);
         if (hr == S_FALSE)
             return VFW_E_INVALIDMEDIATYPE;
     }
@@ -424,7 +424,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
         if (SUCCEEDED(hr))
             TRACE("Reconnection completed, with new media format..\n");
     }
-    TRACE("Returning: %ld\n", hr);
+    TRACE("Returning: %d\n", hr);
     return hr;
 }
 
@@ -796,7 +796,7 @@ static ULONG WINAPI VfwPin_AddRef(IPin * iface)
     VfwPinImpl *This = (VfwPinImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->pin.pin.refCount);
 
-    TRACE("() -> new refcount: %lu\n", refCount);
+    TRACE("() -> new refcount: %u\n", refCount);
 
     return refCount;
 }
@@ -807,7 +807,7 @@ VfwPin_Release(IPin * iface)
    VfwPinImpl *This = (VfwPinImpl *)iface;
    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
 
-   TRACE("() -> new refcount: %lu\n", refCount);
+   TRACE("() -> new refcount: %u\n", refCount);
 
    if (!refCount)
    {
@@ -830,7 +830,7 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
     emd.pMediaTypes = pmt;
     if (SUCCEEDED(hr))
         hr = IEnumMediaTypesImpl_Construct(&emd, ppEnum);
-    TRACE("%p -- %lx\n", This, hr);
+    TRACE("%p -- %x\n", This, hr);
     DeleteMediaType(pmt);
     return hr;
 }

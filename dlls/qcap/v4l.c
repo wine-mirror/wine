@@ -241,7 +241,7 @@ HRESULT qcap_driver_set_format(Capture *capBox, AM_MEDIA_TYPE * mT)
     if (format->bmiHeader.biBitCount != 24 ||
         format->bmiHeader.biCompression != BI_RGB)
     {
-        FIXME("unsupported media type %d %ld\n", format->bmiHeader.biBitCount,
+        FIXME("unsupported media type %d %d\n", format->bmiHeader.biBitCount,
               format->bmiHeader.biCompression );
         return VFW_E_INVALIDMEDIATYPE;
     }
@@ -299,7 +299,7 @@ HRESULT qcap_driver_get_format(Capture *capBox, AM_MEDIA_TYPE ** mT)
     mT[0]->bTemporalCompression = FALSE;
     mT[0]->pUnk = NULL;
     mT[0]->lSampleSize = capBox->outputwidth * capBox->outputheight * capBox->bitDepth / 8;
-    TRACE("Output format: %dx%d - %d bits = %lu KB\n", capBox->outputwidth,
+    TRACE("Output format: %dx%d - %d bits = %u KB\n", capBox->outputwidth,
           capBox->outputheight, capBox->bitDepth, mT[0]->lSampleSize/1024);
     vi->rcSource.left = 0; vi->rcSource.top = 0;
     vi->rcTarget.left = 0; vi->rcTarget.top = 0;
@@ -608,14 +608,14 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             capBox->renderer(capBox, pOutput, pInput);
             Resize(capBox, pTarget, pOutput);
             hr = OutputPin_SendSample((OutputPin *)capBox->pOut, pSample);
-            TRACE("%p -> Frame %lu: %lx\n", capBox, ++framecount, hr);
+            TRACE("%p -> Frame %lu: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
             V4l_FreeFrame(capBox);
         }
         LeaveCriticalSection(&capBox->CritSect);
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
-            ERR("Received error: %lx\n", hr);
+            ERR("Received error: %x\n", hr);
             goto cfail;
         }
     }
@@ -678,7 +678,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             if (pAlloc)
                 IMemAllocator_Release(pAlloc);
 
-            TRACE("Committing allocator: %lx\n", hr);
+            TRACE("Committing allocator: %x\n", hr);
         }
 
         thread = CreateThread(NULL, 0, ReadThread, capBox, 0, NULL);
@@ -689,7 +689,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             LeaveCriticalSection(&capBox->CritSect);
             return S_OK;
         }
-        ERR("Creating thread failed.. %lx\n", GetLastError());
+        ERR("Creating thread failed.. %x\n", GetLastError());
         LeaveCriticalSection(&capBox->CritSect);
         return E_FAIL;
     }
@@ -762,7 +762,7 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
                 IPin_Release(pConnect);
 
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
-                WARN("Decommitting allocator: %lx\n", hr);
+                WARN("Decommitting allocator: %x\n", hr);
         }
         V4l_Unprepare(capBox);
     }
