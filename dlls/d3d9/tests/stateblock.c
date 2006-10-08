@@ -123,13 +123,23 @@ typedef struct state_test {
     /* Return buffer */
     void* return_data;
 
+    /* Size of the data samples above */
     unsigned int data_size;
 
+    /* Test resource management handlers */
+    HRESULT (*setup_handler) (struct state_test* test);
+    void (*teardown_handler) (struct state_test* test);
+
+    /* Test data handlers */
     void (*set_handler) (IDirect3DDevice9* device, const struct state_test* test, const void* data_in);
     void (*get_handler) (IDirect3DDevice9* device, const struct state_test* test, void* data_out);
     void (*print_handler) (const void* data);
 
+    /* Test arguments */
     const void* test_arg;
+
+    /* Test-specific context data */
+    void* test_context;
 
 } state_test;
 
@@ -186,6 +196,7 @@ static void execute_test_chain(
 
                 memcpy(test[i].return_data, test[i].poison_data, test[i].data_size);
                 test[i].get_handler(device, &test[i], test[i].return_data);
+
                 if ((outcome & EVENT_CHECK_TEST) &&
                     memcmp(test[i].test_data_out, test[i].return_data, test[i].data_size)) {
 
@@ -384,6 +395,7 @@ static void execute_test_chain_all(
     state_test* test,
     unsigned int ntests) {
 
+    unsigned int i;
     event_data arg;
 
     event read_events[] = {
@@ -428,6 +440,14 @@ static void execute_test_chain_all(
           { apply_stateblock, EVENT_CHECK_TEST }
     };
 
+    /* Setup each test for execution */
+    for (i=0; i < ntests; i++) {
+        if (test[i].setup_handler(&test[i]) != D3D_OK) {
+            ok(FALSE, "Test \"%s\" failed setup, aborting\n", test[i].test_name);
+            return;
+        }
+    }
+
     trace("Running initial read state tests\n");
     execute_test_chain(device, test, ntests, read_events, 1, NULL);
 
@@ -448,6 +468,10 @@ static void execute_test_chain_all(
 
     trace("Running stateblock apply over rendertarget switch interrupt tests\n");
     execute_test_chain(device, test, ntests, rendertarget_stateblock_events, 5, &arg);
+
+    /* Cleanup resources */
+    for (i=0; i < ntests; i++)
+        test[i].teardown_handler(&test[i]);
 }
 
 /* =================== State test: Pixel and Vertex Shader constants ============ */
@@ -462,6 +486,10 @@ typedef struct shader_constant_arg {
     unsigned int idx;
     BOOL pshader;
 } shader_constant_arg;
+
+typedef struct shader_constant_context {
+    shader_constant_data return_data_buffer;
+} shader_constant_context;
 
 static void shader_constant_print_handler(
     const void* data) {
@@ -549,23 +577,38 @@ static const shader_constant_data shader_constant_test_data = {
     { TRUE, FALSE, FALSE, TRUE }
 };
 
-#define SHADER_CONSTANTS_REQ_BUFFER sizeof(shader_constant_data)
+static HRESULT shader_constant_setup_handler(
+    state_test* test) {
 
-static void shader_constants_queue_test(
-    IDirect3DDevice9 *device,
-    state_test* test,
-    shader_constant_arg* test_arg,
-    void* buffer)
-{
-    shader_constant_data* return_data = buffer;
-
+    shader_constant_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(shader_constant_context));
+    if (ctx == NULL) return E_FAIL;
+    test->test_context = ctx;
+     
+    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &shader_constant_test_data;
     test->test_data_out = &shader_constant_test_data;
     test->default_data = &shader_constant_default_data;
     test->initial_data = &shader_constant_default_data;
     test->poison_data = &shader_constant_poison_data;
-    test->return_data = return_data;
+
     test->data_size = sizeof(shader_constant_data);
+    
+    return D3D_OK;
+}
+
+static void shader_constant_teardown_handler(
+    state_test* test) {
+    
+    HeapFree(GetProcessHeap(), 0, test->test_context);
+}
+
+static void shader_constants_queue_test(
+    IDirect3DDevice9 *device,
+    state_test* test,
+    const shader_constant_arg* test_arg) {
+
+    test->setup_handler = shader_constant_setup_handler;
+    test->teardown_handler = shader_constant_teardown_handler;
     test->set_handler = shader_constant_set_handler;
     test->get_handler = shader_constant_get_handler;
     test->print_handler = shader_constant_print_handler;
@@ -585,6 +628,10 @@ typedef struct light_data {
 typedef struct light_arg {
     unsigned int idx;
 } light_arg;
+
+typedef struct light_context {
+    light_data return_data_buffer;
+} light_context;
 
 static void light_print_handler(
     const void* data) {
@@ -681,23 +728,38 @@ static const light_data light_test_data_out =
         { 5.0, 5.0, 5.0 }, { 6.0, 6.0, 6.0 },
         7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 128, D3D_OK, D3D_OK};
 
-#define LIGHTS_REQ_BUFFER sizeof(light_data)
-
-static void lights_queue_test(
-    IDirect3DDevice9 *device,
-    state_test* test,
-    light_arg* test_arg,
-    void* buffer)
-{
-    light_data* return_data = buffer;
-
+static HRESULT light_setup_handler(
+    state_test* test) {
+     
+    light_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(light_context));
+    if (ctx == NULL) return E_FAIL;
+    test->test_context = ctx;
+ 
+    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &light_test_data_in;
     test->test_data_out = &light_test_data_out;
     test->default_data = &light_default_data;
     test->initial_data = &light_initial_data;
     test->poison_data = &light_poison_data;
-    test->return_data = return_data;
+
     test->data_size = sizeof(light_data);
+    
+    return D3D_OK;
+}
+
+static void light_teardown_handler(
+    state_test* test) {
+    
+    HeapFree(GetProcessHeap(), 0, test->test_context);
+}
+
+static void lights_queue_test(
+    IDirect3DDevice9 *device,
+    state_test* test,
+    const light_arg* test_arg) {
+
+    test->setup_handler = light_setup_handler;
+    test->teardown_handler = light_teardown_handler;
     test->set_handler = light_set_handler;
     test->get_handler = light_get_handler;
     test->print_handler = light_print_handler;
@@ -717,6 +779,10 @@ typedef struct transform_data {
     D3DMATRIX world255;
 
 } transform_data;
+
+typedef struct transform_context {
+    transform_data return_data_buffer;
+} transform_context;
 
 static inline void print_matrix(
     const char* name, D3DMATRIX* matrix) {
@@ -840,22 +906,37 @@ static const transform_data transform_test_data = {
         2.56, 1.829, 23.6, -1.0, 112.3, 0.0, 41.4, 2.5 } } },
 };
 
-#define TRANSFORMS_REQ_BUFFER sizeof(transform_data)
+static HRESULT transform_setup_handler(
+    state_test* test) {
 
-static void transform_queue_test(
-    IDirect3DDevice9 *device,
-    state_test* test,
-    void* buffer)
-{
-    transform_data* return_data = buffer;
+    transform_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(transform_context));
+    if (ctx == NULL) return E_FAIL;
+    test->test_context = ctx;
 
+    test->return_data = &ctx->return_data_buffer;
     test->test_data_in = &transform_test_data;
     test->test_data_out = &transform_test_data;
     test->default_data = &transform_default_data;
     test->initial_data = &transform_default_data;
     test->poison_data = &transform_poison_data;
-    test->return_data = return_data;
+
     test->data_size = sizeof(transform_data);
+
+    return D3D_OK;
+}
+
+static void transform_teardown_handler(
+    state_test* test) {
+    
+    HeapFree(GetProcessHeap(), 0, test->test_context);
+}
+
+static void transform_queue_test(
+    IDirect3DDevice9 *device,
+    state_test* test) {
+
+    test->setup_handler = transform_setup_handler;
+    test->teardown_handler = transform_teardown_handler;
     test->set_handler = transform_set_handler;
     test->get_handler = transform_get_handler;
     test->print_handler = transform_print_handler;
@@ -978,6 +1059,17 @@ const D3DRENDERSTATETYPE render_state_indices[] = {
 typedef struct render_state_data {
     DWORD states[D3D9_RENDER_STATES];
 } render_state_data;
+
+typedef struct render_state_arg {
+    D3DPRESENT_PARAMETERS* device_pparams;
+} render_state_arg;
+
+typedef struct render_state_context {
+   render_state_data return_data_buffer;
+   render_state_data default_data_buffer;
+   render_state_data test_data_buffer;
+   render_state_data poison_data_buffer;
+} render_state_context;
 
 static void render_state_set_handler(
     IDirect3DDevice9* device, const state_test* test, const void* data) {
@@ -1251,35 +1343,49 @@ static void render_state_test_data_init(
    data->states[idx++] = FALSE;                 /* BLENDOPALPHA */
 }
 
-#define RENDER_STATES_REQ_BUFFER (sizeof(render_state_data) * 4)
+static HRESULT render_state_setup_handler(
+    state_test* test) {
+
+    render_state_arg* rsarg = (render_state_arg*) test->test_arg;
+
+    render_state_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(render_state_context));
+    if (ctx == NULL) return E_FAIL;
+    test->test_context = ctx;
+
+    test->return_data = &ctx->return_data_buffer;
+    test->default_data = &ctx->default_data_buffer;
+    test->initial_data = &ctx->default_data_buffer;
+    test->test_data_in = &ctx->test_data_buffer;
+    test->test_data_out = &ctx->test_data_buffer;
+    test->poison_data = &ctx->poison_data_buffer;
+
+    render_state_default_data_init(rsarg->device_pparams, &ctx->default_data_buffer);
+    render_state_test_data_init(&ctx->test_data_buffer);
+    render_state_poison_data_init(&ctx->poison_data_buffer);
+
+    test->data_size = sizeof(render_state_data);
+
+    return D3D_OK;
+}
+
+static void render_state_teardown_handler(
+    state_test* test) {
+
+    HeapFree(GetProcessHeap(), 0, test->test_context);
+}
 
 static void render_states_queue_test(
     IDirect3DDevice9 *device,
-    D3DPRESENT_PARAMETERS *device_pparams,
     state_test* test,
-    void* buffer)
-{
-    render_state_data* return_data = buffer;
-    render_state_data* default_data = return_data + 1;
-    render_state_data* test_data = default_data + 1;
-    render_state_data* poison_data = test_data + 1;
+    const render_state_arg* test_arg) {
 
-    render_state_default_data_init(device_pparams, default_data);
-    render_state_test_data_init(test_data);
-    render_state_poison_data_init(poison_data);
-
-    test->test_data_in = test_data;
-    test->test_data_out = test_data;
-    test->default_data = default_data;
-    test->initial_data = default_data;
-    test->poison_data = poison_data;
-    test->return_data = return_data;
-    test->data_size = sizeof(render_state_data);
+    test->setup_handler = render_state_setup_handler;
+    test->teardown_handler = render_state_teardown_handler;
     test->set_handler = render_state_set_handler;
     test->get_handler = render_state_get_handler;
     test->print_handler = render_state_print_handler;
     test->test_name = "set_get_render_states";
-    test->test_arg = NULL;
+    test->test_arg = test_arg;
 }
 
 /* =================== Main state tests function =============================== */
@@ -1296,17 +1402,13 @@ static void test_state_management(
                    1 for transforms
                    1 for render states
      */
-    state_test tests[2 + 1 + 1 + 1];
-    BYTE buffer[SHADER_CONSTANTS_REQ_BUFFER * 2 +
-                LIGHTS_REQ_BUFFER +
-                TRANSFORMS_REQ_BUFFER + 
-                RENDER_STATES_REQ_BUFFER];
-
+    const int max_tests = 5;
+    state_test tests[5];
     unsigned int tcount = 0;
-    unsigned int bcount = 0;
 
     shader_constant_arg pshader_constant_arg;
     shader_constant_arg vshader_constant_arg;
+    render_state_arg render_state_arg;
     light_arg light_arg;
 
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -1315,33 +1417,32 @@ static void test_state_management(
 
     texture_stages = caps.MaxTextureBlendStages;
 
+    /* Zero test memory */
+    memset(tests, 0, sizeof(state_test) * max_tests);
+
     if (caps.VertexShaderVersion & 0xffff) {
         vshader_constant_arg.idx = 0;
         vshader_constant_arg.pshader = FALSE;
-        shader_constants_queue_test(device, &tests[tcount], &vshader_constant_arg, &buffer[bcount]);
-        bcount += SHADER_CONSTANTS_REQ_BUFFER;
+        shader_constants_queue_test(device, &tests[tcount], &vshader_constant_arg);
         tcount++;
     }
 
     if (caps.PixelShaderVersion & 0xffff) {
         pshader_constant_arg.idx = 0;
         pshader_constant_arg.pshader = TRUE;
-        shader_constants_queue_test(device, &tests[tcount], &pshader_constant_arg, &buffer[bcount]);
-        bcount += SHADER_CONSTANTS_REQ_BUFFER;
+        shader_constants_queue_test(device, &tests[tcount], &pshader_constant_arg);
         tcount++;
     }
 
     light_arg.idx = 0;
-    lights_queue_test(device, &tests[tcount], &light_arg, &buffer[bcount]);
-    bcount += LIGHTS_REQ_BUFFER;
+    lights_queue_test(device, &tests[tcount], &light_arg);
     tcount++;
 
-    transform_queue_test(device, &tests[tcount], &buffer[bcount]);
-    bcount += TRANSFORMS_REQ_BUFFER;
+    transform_queue_test(device, &tests[tcount]);
     tcount++;
 
-    render_states_queue_test(device, device_pparams, &tests[tcount], &buffer[bcount]);
-    bcount += RENDER_STATES_REQ_BUFFER;
+    render_state_arg.device_pparams = device_pparams;
+    render_states_queue_test(device, &tests[tcount], &render_state_arg);
     tcount++;
 
     execute_test_chain_all(device, tests, tcount);
