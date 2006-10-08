@@ -2155,6 +2155,9 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         return E_POINTER; /* unchecked */
     }
 
+    /* According to the msdn this flag is ignored by CreateSurface */
+    DDSD->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+
     /* Modify some flags */
     memset(&desc2, 0, sizeof(desc2));
     desc2.dwSize = sizeof(desc2);   /* For the struct copy */
@@ -2329,6 +2332,11 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         extra_surfaces = DDSD->dwBackBufferCount;
         desc2.ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER; /* It's not a front buffer */
         desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+    }
+    /* Set the DDSCAPS2_MIPMAPSUBLEVEL flag on mipmap sublevels according to the msdn */
+    if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+    {
+        desc2.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
     }
 
     for(i = 0; i < extra_surfaces; i++)
