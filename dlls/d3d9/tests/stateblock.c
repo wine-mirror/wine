@@ -62,7 +62,7 @@ static HRESULT init_d3d9(
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, window,
         D3DCREATE_SOFTWARE_VERTEXPROCESSING, device_pparams, device);
-    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%lx\n", hres);
+    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%x\n", hres);
     return hres;
 }
 
@@ -73,27 +73,27 @@ static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
 
     /* Should succeed */
     hret = IDirect3DDevice9_BeginStateBlock(device_ptr);
-    ok(hret == D3D_OK, "BeginStateBlock returned: hret 0x%lx. Expected hret 0x%lx. Aborting.\n", hret, D3D_OK);
+    ok(hret == D3D_OK, "BeginStateBlock returned: hret 0x%x. Expected hret 0x%x. Aborting.\n", hret, D3D_OK);
     if (hret != D3D_OK) return;
 
     /* Calling BeginStateBlock while recording should return D3DERR_INVALIDCALL */
     hret = IDirect3DDevice9_BeginStateBlock(device_ptr);
-    ok(hret == D3DERR_INVALIDCALL, "BeginStateBlock returned: hret 0x%lx. Expected hret 0x%lx. Aborting.\n", hret, D3DERR_INVALIDCALL);
+    ok(hret == D3DERR_INVALIDCALL, "BeginStateBlock returned: hret 0x%x. Expected hret 0x%x. Aborting.\n", hret, D3DERR_INVALIDCALL);
     if (hret != D3DERR_INVALIDCALL) return;
 
     /* Should succeed */
     state_block_ptr = (IDirect3DStateBlock9 *)0xdeadbeef;
     hret = IDirect3DDevice9_EndStateBlock(device_ptr, &state_block_ptr);
     ok(hret == D3D_OK && state_block_ptr != 0 && state_block_ptr != (IDirect3DStateBlock9 *)0xdeadbeef, 
-        "EndStateBlock returned: hret 0x%lx, state_block_ptr %p. "
-        "Expected hret 0x%lx, state_block_ptr != %p, state_block_ptr != 0xdeadbeef.\n", hret, state_block_ptr, D3D_OK, NULL);
+        "EndStateBlock returned: hret 0x%x, state_block_ptr %p. "
+        "Expected hret 0x%x, state_block_ptr != %p, state_block_ptr != 0xdeadbeef.\n", hret, state_block_ptr, D3D_OK, NULL);
 
     /* Calling EndStateBlock while not recording should return D3DERR_INVALIDCALL. state_block_ptr should not be touched. */
     state_block_ptr = (IDirect3DStateBlock9 *)0xdeadbeef;
     hret = IDirect3DDevice9_EndStateBlock(device_ptr, &state_block_ptr);
     ok(hret == D3DERR_INVALIDCALL && state_block_ptr == (IDirect3DStateBlock9 *)0xdeadbeef, 
-        "EndStateBlock returned: hret 0x%lx, state_block_ptr %p. "
-        "Expected hret 0x%lx, state_block_ptr 0xdeadbeef.\n", hret, state_block_ptr, D3DERR_INVALIDCALL);
+        "EndStateBlock returned: hret 0x%x, state_block_ptr %p. "
+        "Expected hret 0x%x, state_block_ptr 0xdeadbeef.\n", hret, state_block_ptr, D3DERR_INVALIDCALL);
 }
 
 /* ============================ State Testing Framework ========================== */
@@ -274,22 +274,22 @@ static int switch_render_target(
 
     /* Create new swapchain */
     hret = IDirect3DDevice9_CreateAdditionalSwapChain(device, &present_parameters, &swapchain);
-    ok (hret == D3D_OK, "CreateAdditionalSwapChain returned %#lx.\n", hret);
+    ok (hret == D3D_OK, "CreateAdditionalSwapChain returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Get its backbuffer */
     hret = IDirect3DSwapChain9_GetBackBuffer(swapchain, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok (hret == D3D_OK, "GetBackBuffer returned %#lx.\n", hret);
+    ok (hret == D3D_OK, "GetBackBuffer returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Save the current render target */
     hret = IDirect3DDevice9_GetRenderTarget(device, 0, &edata->original_render_target); 
-    ok (hret == D3D_OK, "GetRenderTarget returned %#lx.\n", hret);
+    ok (hret == D3D_OK, "GetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Set the new swapchain's backbuffer as a render target */
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-    ok (hret == D3D_OK, "SetRenderTarget returned %#lx.\n", hret);
+    ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) goto error;
 
     IUnknown_Release(backbuffer);
@@ -311,7 +311,7 @@ static int revert_render_target(
    
     /* Reset the old render target */
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, edata->original_render_target);
-    ok (hret == D3D_OK, "SetRenderTarget returned %#lx.\n", hret);
+    ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
     if (hret != D3D_OK) {
         IUnknown_Release(edata->original_render_target);
         return EVENT_ERROR;
@@ -329,7 +329,7 @@ static int begin_stateblock(
 
     data = NULL;
     hret = IDirect3DDevice9_BeginStateBlock(device);
-    ok(hret == D3D_OK, "BeginStateBlock returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "BeginStateBlock returned %#x.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -342,7 +342,7 @@ static int end_stateblock(
     event_data* edata = (event_data*) data;
 
     hret = IDirect3DDevice9_EndStateBlock(device, &edata->stateblock);
-    ok(hret == D3D_OK, "EndStateBlock returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "EndStateBlock returned %#x.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -365,7 +365,7 @@ static int apply_stateblock(
     HRESULT hret;
 
     hret = IDirect3DStateBlock9_Apply(edata->stateblock);
-    ok(hret == D3D_OK, "Apply returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "Apply returned %#x.\n", hret);
     if (hret != D3D_OK) {
         IUnknown_Release(edata->stateblock);
         return EVENT_ERROR;
@@ -383,7 +383,7 @@ static int capture_stateblock(
     event_data* edata = (event_data*) data;
 
     hret = IDirect3DStateBlock9_Capture(edata->stateblock);
-    ok(hret == D3D_OK, "Capture returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "Capture returned %#x.\n", hret);
     if (hret != D3D_OK)
         return EVENT_ERROR;
 
@@ -519,19 +519,19 @@ static void shader_constant_set_handler(
 
     if (!scarg->pshader) {
         hret = IDirect3DDevice9_SetVertexShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "SetVertexShaderConstantI returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantI returned %#x.\n", hret);
         hret = IDirect3DDevice9_SetVertexShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "SetVertexShaderConstantF returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantF returned %#x.\n", hret);
         hret = IDirect3DDevice9_SetVertexShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "SetVertexShaderConstantB returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantB returned %#x.\n", hret);
 
     } else {
         hret = IDirect3DDevice9_SetPixelShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "SetPixelShaderConstantI returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantI returned %#x.\n", hret);
         hret = IDirect3DDevice9_SetPixelShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "SetPixelShaderConstantF returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantF returned %#x.\n", hret);
         hret = IDirect3DDevice9_SetPixelShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "SetPixelShaderConstantB returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantB returned %#x.\n", hret);
     }
 }
 
@@ -545,19 +545,19 @@ static void shader_constant_get_handler(
 
     if (!scarg->pshader) {
         hret = IDirect3DDevice9_GetVertexShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "GetVertexShaderConstantI returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetVertexShaderConstantI returned %#x.\n", hret);
         hret = IDirect3DDevice9_GetVertexShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "GetVertexShaderConstantF returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetVertexShaderConstantF returned %#x.\n", hret);
         hret = IDirect3DDevice9_GetVertexShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "GetVertexShaderConstantB returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetVertexShaderConstantB returned %#x.\n", hret);
 
     } else {
         hret = IDirect3DDevice9_GetPixelShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "GetPixelShaderConstantI returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetPixelShaderConstantI returned %#x.\n", hret);
         hret = IDirect3DDevice9_GetPixelShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "GetPixelShaderConstantF returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetPixelShaderConstantF returned %#x.\n", hret);
         hret = IDirect3DDevice9_GetPixelShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "GetPixelShaderConstantB returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetPixelShaderConstantB returned %#x.\n", hret);
     }
 }
 
@@ -637,8 +637,8 @@ static void light_print_handler(
 
     const light_data* ldata = data;
 
-    trace("Get Light return value: %#lx\n", ldata->get_light_result);
-    trace("Get Light enable return value: %#lx\n", ldata->get_enabled_result);
+    trace("Get Light return value: %#x\n", ldata->get_light_result);
+    trace("Get Light enable return value: %#x\n", ldata->get_enabled_result);
 
     trace("Light Enabled = %u\n", ldata->enabled);
     trace("Light Type = %u\n", ldata->light.Type);
@@ -673,10 +673,10 @@ static void light_set_handler(
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_SetLight(device, index, &ldata->light);
-    ok(hret == D3D_OK, "SetLight returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetLight returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_LightEnable(device, index, ldata->enabled);
-    ok(hret == D3D_OK, "SetLightEnable returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetLightEnable returned %#x.\n", hret);
 }
 
 static void light_get_handler(
@@ -813,22 +813,22 @@ static void transform_set_handler(
     const transform_data* tdata = data;
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &tdata->view);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &tdata->projection);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &tdata->world0);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(255), &tdata->world255);
-    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
 }
 
 static void transform_get_handler(
@@ -838,22 +838,22 @@ static void transform_get_handler(
     transform_data* tdata = (transform_data*) data;
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &tdata->view);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_PROJECTION, &tdata->projection);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &tdata->world0);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(255), &tdata->world255);
-    ok(hret == D3D_OK, "GetTransform returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
 }
 
 static const transform_data transform_default_data = {
@@ -1078,7 +1078,7 @@ static void render_state_set_handler(
 
     for (i = 0; i < D3D9_RENDER_STATES; i++) {
         hret = IDirect3DDevice9_SetRenderState(device, render_state_indices[i], rsdata->states[i]);
-        ok(hret == D3D_OK, "SetRenderState returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "SetRenderState returned %#x.\n", hret);
     }
 }
 
@@ -1091,7 +1091,7 @@ static void render_state_get_handler(
 
     for (i = 0; i < D3D9_RENDER_STATES; i++) {
         hret = IDirect3DDevice9_GetRenderState(device, render_state_indices[i], &rsdata->states[i]);
-        ok(hret == D3D_OK, "GetRenderState returned %#lx.\n", hret);
+        ok(hret == D3D_OK, "GetRenderState returned %#x.\n", hret);
     }
 }
 
@@ -1102,7 +1102,7 @@ static void render_state_print_handler(
 
     unsigned int i;
     for (i = 0; i < D3D9_RENDER_STATES; i++)
-        trace("Index = %u, Value = %#lx\n", i, rsdata->states[i]);
+        trace("Index = %u, Value = %#x\n", i, rsdata->states[i]);
 }
 
 static inline DWORD to_dword(float fl) {
@@ -1410,7 +1410,7 @@ static void test_state_management(
     light_arg light_arg;
 
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(hret == D3D_OK, "GetDeviceCaps returned %#lx.\n", hret);
+    ok(hret == D3D_OK, "GetDeviceCaps returned %#x.\n", hret);
     if (hret != D3D_OK) return;
 
     texture_stages = caps.MaxTextureBlendStages;

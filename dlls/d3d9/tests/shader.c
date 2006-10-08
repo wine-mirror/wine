@@ -55,7 +55,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%lx\n", hres);
+    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%x\n", hres);
 
     return device_ptr;
 }
@@ -84,24 +84,24 @@ static void test_get_set_vertex_shader(IDirect3DDevice9 *device_ptr)
     int i = 0;
     
     hret = IDirect3DDevice9_CreateVertexShader(device_ptr, simple_vs, &shader_ptr);
-    ok(hret == D3D_OK && shader_ptr != NULL, "CreateVertexShader returned: hret 0x%lx, shader_ptr %p. "
-        "Expected hret 0x%lx, shader_ptr != %p. Aborting.\n", hret, shader_ptr, D3D_OK, NULL);
+    ok(hret == D3D_OK && shader_ptr != NULL, "CreateVertexShader returned: hret 0x%x, shader_ptr %p. "
+        "Expected hret 0x%x, shader_ptr != %p. Aborting.\n", hret, shader_ptr, D3D_OK, NULL);
     if (hret != D3D_OK || shader_ptr == NULL) return;
 
     /* SetVertexShader should not touch the shader's refcount. */
     i = get_refcount((IUnknown *)shader_ptr);
     hret = IDirect3DDevice9_SetVertexShader(device_ptr, shader_ptr);
     shader_refcount = get_refcount((IUnknown *)shader_ptr);
-    ok(hret == D3D_OK && shader_refcount == i, "SetVertexShader returned: hret 0x%lx, refcount %d. "
-        "Expected hret 0x%lx, refcount %d.\n", hret, shader_refcount, D3D_OK, i);
+    ok(hret == D3D_OK && shader_refcount == i, "SetVertexShader returned: hret 0x%x, refcount %d. "
+        "Expected hret 0x%x, refcount %d.\n", hret, shader_refcount, D3D_OK, i);
 
     /* GetVertexShader should increase the shader's refcount by one. */
     i = shader_refcount+1;
     hret = IDirect3DDevice9_GetVertexShader(device_ptr, &current_shader_ptr);
     shader_refcount = get_refcount((IUnknown *)shader_ptr);
     ok(hret == D3D_OK && shader_refcount == i && current_shader_ptr == shader_ptr, 
-        "GetVertexShader returned: hret 0x%lx, current_shader_ptr %p refcount %d. "
-        "Expected hret 0x%lx, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
+        "GetVertexShader returned: hret 0x%x, current_shader_ptr %p refcount %d. "
+        "Expected hret 0x%x, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
 }
 
 static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
@@ -121,24 +121,24 @@ static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
     int i = 0;
 
     hret = IDirect3DDevice9_CreatePixelShader(device_ptr, simple_ps, &shader_ptr);
-    ok(hret == D3D_OK && shader_ptr != NULL, "CreatePixelShader returned: hret 0x%lx, shader_ptr %p. "
-        "Expected hret 0x%lx, shader_ptr != %p. Aborting.\n", hret, shader_ptr, D3D_OK, NULL);
+    ok(hret == D3D_OK && shader_ptr != NULL, "CreatePixelShader returned: hret 0x%x, shader_ptr %p. "
+        "Expected hret 0x%x, shader_ptr != %p. Aborting.\n", hret, shader_ptr, D3D_OK, NULL);
     if (hret != D3D_OK || shader_ptr == NULL) return;
 
     /* SetPixelsShader should not touch the shader's refcount. */
     i = get_refcount((IUnknown *)shader_ptr);
     hret = IDirect3DDevice9_SetPixelShader(device_ptr, shader_ptr);
     shader_refcount = get_refcount((IUnknown *)shader_ptr);
-    ok(hret == D3D_OK && shader_refcount == i, "SetPixelShader returned: hret 0x%lx, refcount %d. "
-        "Expected hret 0x%lx, refcount %d.\n", hret, shader_refcount, D3D_OK, i);
+    ok(hret == D3D_OK && shader_refcount == i, "SetPixelShader returned: hret 0x%x, refcount %d. "
+        "Expected hret 0x%x, refcount %d.\n", hret, shader_refcount, D3D_OK, i);
 
     /* GetPixelShader should increase the shader's refcount by one. */
     i = shader_refcount+1;
     hret = IDirect3DDevice9_GetPixelShader(device_ptr, &current_shader_ptr);
     shader_refcount = get_refcount((IUnknown *)shader_ptr);
     ok(hret == D3D_OK && shader_refcount == i && current_shader_ptr == shader_ptr, 
-        "GetPixelShader returned: hret 0x%lx, current_shader_ptr %p refcount %d. "
-        "Expected hret 0x%lx, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
+        "GetPixelShader returned: hret 0x%x, current_shader_ptr %p refcount %d. "
+        "Expected hret 0x%x, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
 }
 
 START_TEST(shader)

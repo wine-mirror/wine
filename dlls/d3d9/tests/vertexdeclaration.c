@@ -60,7 +60,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%lx\n", hres);
+    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%x\n", hres);
 
     return device_ptr;
 }
@@ -77,8 +77,8 @@ static IDirect3DVertexDeclaration9 *test_create_vertex_declaration(IDirect3DDevi
     HRESULT hret = 0;
 
     hret = IDirect3DDevice9_CreateVertexDeclaration(device_ptr, vertex_decl, &decl_ptr);
-    ok(hret == D3D_OK && decl_ptr != NULL, "CreateVertexDeclaration returned: hret 0x%lx, decl_ptr %p. "
-        "Expected hret 0x%lx, decl_ptr != %p. Aborting.\n", hret, decl_ptr, D3D_OK, NULL);
+    ok(hret == D3D_OK && decl_ptr != NULL, "CreateVertexDeclaration returned: hret 0x%x, decl_ptr %p. "
+        "Expected hret 0x%x, decl_ptr != %p. Aborting.\n", hret, decl_ptr, D3D_OK, NULL);
 
     return decl_ptr;
 }
@@ -94,16 +94,16 @@ static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr, IDirec
     i = get_refcount((IUnknown *)decl_ptr);
     hret = IDirect3DDevice9_SetVertexDeclaration(device_ptr, decl_ptr);
     decl_refcount = get_refcount((IUnknown *)decl_ptr);
-    ok(hret == D3D_OK && decl_refcount == i, "SetVertexDeclaration returned: hret 0x%lx, refcount %d. "
-        "Expected hret 0x%lx, refcount %d.\n", hret, decl_refcount, D3D_OK, i);
+    ok(hret == D3D_OK && decl_refcount == i, "SetVertexDeclaration returned: hret 0x%x, refcount %d. "
+        "Expected hret 0x%x, refcount %d.\n", hret, decl_refcount, D3D_OK, i);
     
     /* GetVertexDeclaration should increase the declaration's refcount by one. */
     i = decl_refcount+1;
     hret = IDirect3DDevice9_GetVertexDeclaration(device_ptr, &current_decl_ptr);
     decl_refcount = get_refcount((IUnknown *)decl_ptr);
     ok(hret == D3D_OK && decl_refcount == i && current_decl_ptr == decl_ptr, 
-        "GetVertexDeclaration returned: hret 0x%lx, current_decl_ptr %p refcount %d. "
-        "Expected hret 0x%lx, current_decl_ptr %p, refcount %d.\n", hret, current_decl_ptr, decl_refcount, D3D_OK, decl_ptr, i);
+        "GetVertexDeclaration returned: hret 0x%x, current_decl_ptr %p refcount %d. "
+        "Expected hret 0x%x, current_decl_ptr %p, refcount %d.\n", hret, current_decl_ptr, decl_refcount, D3D_OK, decl_ptr, i);
 }
 
 static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTEXELEMENT9 *vertex_decl, UINT expected_num_elements)
@@ -117,14 +117,14 @@ static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTE
     num_elements = 0x1337c0de;
     hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, NULL, &num_elements);
     ok(hret == D3D_OK && num_elements == expected_num_elements,
-            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
-            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+            "GetDeclaration returned: hret 0x%x, num_elements %d. "
+            "Expected hret 0x%x, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
 
     num_elements = 0;
     hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, NULL, &num_elements);
     ok(hret == D3D_OK && num_elements == expected_num_elements,
-            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
-            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+            "GetDeclaration returned: hret 0x%x, num_elements %d. "
+            "Expected hret 0x%x, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
 
     /* Also test the returned data */
     decl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(D3DVERTEXELEMENT9) * expected_num_elements);
@@ -132,8 +132,8 @@ static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTE
     num_elements = 0x1337c0de;
     hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, decl, &num_elements);
     ok(hret == D3D_OK && num_elements == expected_num_elements,
-            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
-            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+            "GetDeclaration returned: hret 0x%x, num_elements %d. "
+            "Expected hret 0x%x, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
     i = memcmp(decl, vertex_decl, sizeof(vertex_decl));
     ok (!i, "Original and returned vertexdeclarations are not the same\n");
     ZeroMemory(decl, sizeof(D3DVERTEXELEMENT9) * expected_num_elements);
@@ -141,8 +141,8 @@ static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTE
     num_elements = 0;
     hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, decl, &num_elements);
     ok(hret == D3D_OK && num_elements == expected_num_elements,
-            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
-            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+            "GetDeclaration returned: hret 0x%x, num_elements %d. "
+            "Expected hret 0x%x, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
     i = memcmp(decl, vertex_decl, sizeof(vertex_decl));
     ok (!i, "Original and returned vertexdeclarations are not the same\n");
 
@@ -168,17 +168,17 @@ static HRESULT test_fvf_to_decl(
 
     /* Set a default declaration to make sure it is changed */
     hr = IDirect3DDevice9_SetVertexDeclaration ( device, default_decl );
-    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
 
     /* Set an FVF */
     hr = IDirect3DDevice9_SetFVF( device, test_fvf);
-    ok(SUCCEEDED(hr), "SetFVF returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
 
     /* Check if the declaration object changed underneath */
     hr = IDirect3DDevice9_GetVertexDeclaration ( device, &result_decl);
-    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
     if (object_should_change) {
        ok(result_decl != default_decl, "result declaration matches original\n");
@@ -198,7 +198,7 @@ static HRESULT test_fvf_to_decl(
 
         /* Check if the size changed, and abort if it did */
         hr = IDirect3DVertexDeclaration9_GetDeclaration( result_decl, NULL, &result_size );
-        ok(SUCCEEDED(hr), "GetDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+        ok(SUCCEEDED(hr), "GetDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
         if (FAILED(hr)) goto fail;
         ok(result_size == expected_size, "result declaration size: %d, "
             "expected: %d\n", result_size, expected_size);
@@ -207,7 +207,7 @@ static HRESULT test_fvf_to_decl(
         /* Check the actual elements. Write it them in a caller-allocated array of the correct size
          * That's fine, since we aborted above if the size didn't match the caller's expectations */
         hr = IDirect3DVertexDeclaration9_GetDeclaration( result_decl, result_elements_ptr, &result_size );
-        ok(SUCCEEDED(hr), "GetDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+        ok(SUCCEEDED(hr), "GetDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
         if (FAILED(hr)) goto fail;
 
         ok(result_size == expected_size, "result declaration size: %d, "
@@ -257,25 +257,25 @@ static HRESULT test_decl_to_fvf(
 
     /* Set a default FVF of SPECULAR and DIFFUSE to make sure it is changed back to 0 */
     hr = IDirect3DDevice9_SetFVF( device, default_fvf);
-    ok(SUCCEEDED(hr), "SetFVF returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
 
     /* Create a testing declaration */
     hr = IDirect3DDevice9_CreateVertexDeclaration( device, test_decl, &vdecl );
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
 
     /* Set the declaration */
     hr = IDirect3DDevice9_SetVertexDeclaration ( device, vdecl );
-    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
 
     /* Check the FVF */
     hr = IDirect3DDevice9_GetFVF( device, &result_fvf);
-    ok(SUCCEEDED(hr), "GetFVF returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "GetFVF returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto fail;
     todo_wine {
-       ok(test_fvf == result_fvf, "result FVF was: %#lx, expected: %#lx\n", result_fvf, test_fvf);
+       ok(test_fvf == result_fvf, "result FVF was: %#x, expected: %#x\n", result_fvf, test_fvf);
     }
     if (test_fvf != result_fvf) goto fail;
 
@@ -304,7 +304,7 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
 
     /* Create a default declaration and FVF that does not match any of the tests */
     hr = IDirect3DDevice9_CreateVertexDeclaration( pDevice, default_elements, &default_decl );
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#lx, expected %#lx\n", hr, D3D_OK);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) goto cleanup;
 
     /* Test conversions from vertex declaration to an FVF.

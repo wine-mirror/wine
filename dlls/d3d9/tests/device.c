@@ -57,7 +57,7 @@ static void check_mipmap_levels(
        
     if (SUCCEEDED(hr)) {
         DWORD levels = IDirect3DBaseTexture9_GetLevelCount(texture);
-        ok(levels == count, "Invalid level count. Expected %d got %lu\n", count, levels);
+        ok(levels == count, "Invalid level count. Expected %d got %u\n", count, levels);
     } else 
         trace("CreateTexture failed: %s\n", DXGetErrorString9(hr));
 
@@ -427,46 +427,46 @@ static void test_cursor(void)
     if (FAILED(hr)) goto cleanup;
 
     IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &cursor, 0);
-    ok(cursor != NULL, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %08lx\n", hr);
+    ok(cursor != NULL, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %08x\n", hr);
 
     /* Initially hidden */
     hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
 
     /* Not enabled without a surface*/
     hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
 
     /* Fails */
     hr = IDirect3DDevice9_SetCursorProperties(pDevice, 0, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetCursorProperties returned %08lx\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetCursorProperties returned %08x\n", hr);
 
     hr = IDirect3DDevice9_SetCursorProperties(pDevice, 0, 0, cursor);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetCursorProperties returned %08lx\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetCursorProperties returned %08x\n", hr);
 
     IDirect3DSurface9_Release(cursor);
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     hr = GetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %08lx\n", hr);
-    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08lx)\n", info.flags);
+    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
     /* Still hidden */
     hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
 
     /* Enabled now*/
     hr = IDirect3DDevice9_ShowCursor(pDevice, TRUE);
-    ok(hr == TRUE, "IDirect3DDevice9_ShowCursor returned %08lx\n", hr);
+    ok(hr == TRUE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
 
     /* GDI cursor unchanged */
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     hr = GetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %08lx\n", hr);
-    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08lx)\n", info.flags);
+    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
 cleanup:

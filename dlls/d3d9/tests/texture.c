@@ -53,7 +53,7 @@ static IDirect3DDevice9 *init_d3d9(HMODULE d3d9_handle)
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
             NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(SUCCEEDED(hr), "IDirect3D_CreateDevice returned %#lx\n", hr);
+    ok(SUCCEEDED(hr), "IDirect3D_CreateDevice returned %#x\n", hr);
 
     return device_ptr;
 }
@@ -63,8 +63,8 @@ static void test_texture_stage_state(IDirect3DDevice9 *device_ptr, DWORD stage, 
     DWORD value;
 
     HRESULT hr = IDirect3DDevice9_GetTextureStageState(device_ptr, stage, type, &value);
-    ok(SUCCEEDED(hr) && value == expected, "GetTextureStageState (stage %#lx, type %#x) returned: hr %#lx, value %#lx. "
-        "Expected hr %#lx, value %#lx\n", stage, type, hr, value, D3D_OK, expected);
+    ok(SUCCEEDED(hr) && value == expected, "GetTextureStageState (stage %#x, type %#x) returned: hr %#x, value %#x. "
+        "Expected hr %#x, value %#x\n", stage, type, hr, value, D3D_OK, expected);
 }
 
 /* Test the default texture stage state values */

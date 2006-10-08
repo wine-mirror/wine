@@ -53,7 +53,7 @@ static IDirect3DDevice9 *init_d3d9(HMODULE d3d9_handle)
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
             NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(SUCCEEDED(hr), "IDirect3D_CreateDevice returned %#lx\n", hr);
+    ok(SUCCEEDED(hr), "IDirect3D_CreateDevice returned %#x\n", hr);
 
     return device_ptr;
 }
@@ -67,45 +67,45 @@ static void test_surface_get_container(IDirect3DDevice9 *device_ptr)
 
     hr = IDirect3DDevice9_CreateTexture(device_ptr, 128, 128, 1, 0,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture_ptr, 0);
-    ok(SUCCEEDED(hr) && texture_ptr != NULL, "CreateTexture returned: hr %#lx, texture_ptr %p. "
-        "Expected hr %#lx, texture_ptr != %p\n", hr, texture_ptr, D3D_OK, NULL);
+    ok(SUCCEEDED(hr) && texture_ptr != NULL, "CreateTexture returned: hr %#x, texture_ptr %p. "
+        "Expected hr %#x, texture_ptr != %p\n", hr, texture_ptr, D3D_OK, NULL);
     if (!texture_ptr || FAILED(hr)) goto cleanup;
 
     hr = IDirect3DTexture9_GetSurfaceLevel(texture_ptr, 0, &surface_ptr);
-    ok(SUCCEEDED(hr) && surface_ptr != NULL, "GetSurfaceLevel returned: hr %#lx, surface_ptr %p. "
-        "Expected hr %#lx, surface_ptr != %p\n", hr, surface_ptr, D3D_OK, NULL);
+    ok(SUCCEEDED(hr) && surface_ptr != NULL, "GetSurfaceLevel returned: hr %#x, surface_ptr %p. "
+        "Expected hr %#x, surface_ptr != %p\n", hr, surface_ptr, D3D_OK, NULL);
     if (!surface_ptr || FAILED(hr)) goto cleanup;
 
     /* These should work... */
     container_ptr = (void *)0x1337c0d3;
     hr = IDirect3DSurface9_GetContainer(surface_ptr, &IID_IUnknown, &container_ptr);
-    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#lx, container_ptr %p. "
-        "Expected hr %#lx, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
+    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#x, container_ptr %p. "
+        "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
     if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr);
 
     container_ptr = (void *)0x1337c0d3;
     hr = IDirect3DSurface9_GetContainer(surface_ptr, &IID_IDirect3DResource9, &container_ptr);
-    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#lx, container_ptr %p. "
-        "Expected hr %#lx, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
+    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#x, container_ptr %p. "
+        "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
     if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr);
 
     container_ptr = (void *)0x1337c0d3;
     hr = IDirect3DSurface9_GetContainer(surface_ptr, &IID_IDirect3DBaseTexture9, &container_ptr);
-    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#lx, container_ptr %p. "
-        "Expected hr %#lx, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
+    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#x, container_ptr %p. "
+        "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
     if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr);
 
     container_ptr = (void *)0x1337c0d3;
     hr = IDirect3DSurface9_GetContainer(surface_ptr, &IID_IDirect3DTexture9, &container_ptr);
-    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#lx, container_ptr %p. "
-        "Expected hr %#lx, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
+    ok(SUCCEEDED(hr) && container_ptr == texture_ptr, "GetContainer returned: hr %#x, container_ptr %p. "
+        "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, texture_ptr);
     if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr);
 
     /* ...and this one shouldn't. This should return E_NOINTERFACE and set container_ptr to NULL */
     container_ptr = (void *)0x1337c0d3;
     hr = IDirect3DSurface9_GetContainer(surface_ptr, &IID_IDirect3DSurface9, &container_ptr);
-    ok(hr == E_NOINTERFACE && container_ptr == NULL, "GetContainer returned: hr %#lx, container_ptr %p. "
-        "Expected hr %#lx, container_ptr %p\n", hr, container_ptr, E_NOINTERFACE, NULL);
+    ok(hr == E_NOINTERFACE && container_ptr == NULL, "GetContainer returned: hr %#x, container_ptr %p. "
+        "Expected hr %#x, container_ptr %p\n", hr, container_ptr, E_NOINTERFACE, NULL);
     if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr);
 
 cleanup:
@@ -120,13 +120,13 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
 
     /* Test a sysmem surface as those aren't affected by the hardware's np2 restrictions */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device_ptr, 5, 5, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface_ptr, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08lx\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
 
     if(surface_ptr)
     {
         D3DLOCKED_RECT lockedRect;
         hr = IDirect3DSurface9_LockRect(surface_ptr, &lockedRect, NULL, 0);
-        ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08lx\n", hr);
+        ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
         /* test is deactivated until out np2 support doesn't report the full power of 2 pitch to the app */
         todo_wine ok(lockedRect.Pitch == 12, "Got pitch %d, expected 12\n", lockedRect.Pitch);
         hr = IDirect3DSurface9_UnlockRect(surface_ptr);

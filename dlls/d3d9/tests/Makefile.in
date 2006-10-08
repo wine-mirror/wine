@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 TESTDLL   = d3d9.dll
 IMPORTS   = user32 kernel32
 EXTRALIBS = -ldxerr9 -luuid -ldxguid
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	device.c \
