@@ -125,12 +125,11 @@ typedef struct state_test {
 
     unsigned int data_size;
 
-    void (*set_handler) (IDirect3DDevice9* device, const void* data, void* set_arg);
-    void (*get_handler) (IDirect3DDevice9* device, const void* data, void* get_arg);
+    void (*set_handler) (IDirect3DDevice9* device, const struct state_test* test, const void* data_in);
+    void (*get_handler) (IDirect3DDevice9* device, const struct state_test* test, void* data_out);
     void (*print_handler) (const void* data);
 
-    void* set_arg;
-    void* get_arg;
+    const void* test_arg;
 
 } state_test;
 
@@ -186,7 +185,7 @@ static void execute_test_chain(
             for (i=0; i < ntests; i++) {
 
                 memcpy(test[i].return_data, test[i].poison_data, test[i].data_size);
-                test[i].get_handler(device, test[i].return_data, test[i].get_arg);
+                test[i].get_handler(device, &test[i], test[i].return_data);
                 if ((outcome & EVENT_CHECK_TEST) &&
                     memcmp(test[i].test_data_out, test[i].return_data, test[i].data_size)) {
 
@@ -233,13 +232,13 @@ static void execute_test_chain(
 
         if (outcome & EVENT_APPLY_DATA) {
             for (i=0; i < ntests; i++)
-                test[i].set_handler(device, test[i].test_data_in, test[i].set_arg);
+                test[i].set_handler(device, &test[i], test[i].test_data_in);
         }
      }
 
      /* Attempt to reset any changes made */
      for (i=0; i < ntests; i++)
-         test[i].set_handler(device, test[i].default_data, test[i].set_arg);
+         test[i].set_handler(device, &test[i], test[i].default_data);
 }
 
 typedef struct event_data {
@@ -483,11 +482,11 @@ static void shader_constant_print_handler(
 }
 
 static void shader_constant_set_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
     shader_constant_data* scdata = (shader_constant_data*) data;
-    shader_constant_arg* scarg = (shader_constant_arg*) arg;
+    shader_constant_arg* scarg = (shader_constant_arg*) test->test_arg;
     unsigned int index = scarg->idx;
 
     if (!scarg->pshader) {
@@ -509,11 +508,11 @@ static void shader_constant_set_handler(
 }
 
 static void shader_constant_get_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
     shader_constant_data* scdata = (shader_constant_data*) data;
-    shader_constant_arg* scarg = (shader_constant_arg*) arg;
+    shader_constant_arg* scarg = (shader_constant_arg*) test->test_arg;
     unsigned int index = scarg->idx;
 
     if (!scarg->pshader) {
@@ -550,17 +549,15 @@ static const shader_constant_data shader_constant_test_data = {
     { TRUE, FALSE, FALSE, TRUE }
 };
 
-#define SHADER_CONSTANTS_REQ_BUFFER \
-     (sizeof(shader_constant_data) + sizeof(shader_constant_arg))
+#define SHADER_CONSTANTS_REQ_BUFFER sizeof(shader_constant_data)
 
 static void shader_constants_queue_test(
     IDirect3DDevice9 *device,
     state_test* test,
-    void* buffer,
-    BOOL pshader)
+    shader_constant_arg* test_arg,
+    void* buffer)
 {
-    shader_constant_arg* arg = buffer;
-    shader_constant_data* return_data = (shader_constant_data*) (arg + 1);
+    shader_constant_data* return_data = buffer;
 
     test->test_data_in = &shader_constant_test_data;
     test->test_data_out = &shader_constant_test_data;
@@ -572,10 +569,8 @@ static void shader_constants_queue_test(
     test->set_handler = shader_constant_set_handler;
     test->get_handler = shader_constant_get_handler;
     test->print_handler = shader_constant_print_handler;
-    test->get_arg = test->set_arg = arg;
-    test->test_name = pshader? "set_get_pshader_constants": "set_get_vshader_constants";
-    arg->idx = 0;
-    arg->pshader = pshader;
+    test->test_name = test_arg->pshader? "set_get_pshader_constants": "set_get_vshader_constants";
+    test->test_arg = test_arg;
 }
 
 /* =================== State test: Lights ===================================== */
@@ -624,11 +619,11 @@ static void light_print_handler(
 }
 
 static void light_set_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
     light_data* ldata = (light_data*) data;
-    light_arg* larg = (light_arg*) arg;
+    light_arg* larg = (light_arg*) test->test_arg;
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_SetLight(device, index, &ldata->light);
@@ -639,11 +634,11 @@ static void light_set_handler(
 }
 
 static void light_get_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
     light_data* ldata = (light_data*) data;
-    light_arg* larg = (light_arg*) arg;
+    light_arg* larg = (light_arg*) test->test_arg;
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_GetLightEnable(device, index, &ldata->enabled);
@@ -686,16 +681,15 @@ static const light_data light_test_data_out =
         { 5.0, 5.0, 5.0 }, { 6.0, 6.0, 6.0 },
         7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0 }, 128, D3D_OK, D3D_OK};
 
-#define LIGHTS_REQ_BUFFER \
-     (sizeof(light_data) + sizeof(light_arg))
+#define LIGHTS_REQ_BUFFER sizeof(light_data)
 
 static void lights_queue_test(
     IDirect3DDevice9 *device,
     state_test* test,
+    light_arg* test_arg,
     void* buffer)
 {
-    light_arg* arg = buffer;
-    light_data* return_data = (light_data*) (arg + 1);
+    light_data* return_data = buffer;
 
     test->test_data_in = &light_test_data_in;
     test->test_data_out = &light_test_data_out;
@@ -707,9 +701,8 @@ static void lights_queue_test(
     test->set_handler = light_set_handler;
     test->get_handler = light_get_handler;
     test->print_handler = light_print_handler;
-    test->get_arg = test->set_arg = arg;
     test->test_name = "set_get_light";
-    arg->idx = 0;
+    test->test_arg = test_arg;
 }
 
 /* =================== State test: Transforms ===================================== */
@@ -749,7 +742,7 @@ static void transform_print_handler(
 }
 
 static void transform_set_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
     transform_data* tdata = (transform_data*) data;
@@ -774,7 +767,7 @@ static void transform_set_handler(
 }
 
 static void transform_get_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
     transform_data* tdata = (transform_data*) data;
@@ -847,7 +840,7 @@ static const transform_data transform_test_data = {
         2.56, 1.829, 23.6, -1.0, 112.3, 0.0, 41.4, 2.5 } } },
 };
 
-#define TRANSFORMS_REQ_BUFFER (sizeof(transform_data))
+#define TRANSFORMS_REQ_BUFFER sizeof(transform_data)
 
 static void transform_queue_test(
     IDirect3DDevice9 *device,
@@ -866,8 +859,8 @@ static void transform_queue_test(
     test->set_handler = transform_set_handler;
     test->get_handler = transform_get_handler;
     test->print_handler = transform_print_handler;
-    test->get_arg = test->set_arg = NULL;
     test->test_name = "set_get_transforms";
+    test->test_arg = NULL;
 }
 
 /* =================== State test: Render States ===================================== */
@@ -987,7 +980,7 @@ typedef struct render_state_data {
 } render_state_data;
 
 static void render_state_set_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, const void* data) {
 
     HRESULT hret;
     render_state_data* rsdata = (render_state_data*) data;
@@ -1000,7 +993,7 @@ static void render_state_set_handler(
 }
 
 static void render_state_get_handler(
-    IDirect3DDevice9* device, const void* data, void* arg) {
+    IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
     render_state_data* rsdata = (render_state_data*) data;
@@ -1285,8 +1278,8 @@ static void render_states_queue_test(
     test->set_handler = render_state_set_handler;
     test->get_handler = render_state_get_handler;
     test->print_handler = render_state_print_handler;
-    test->get_arg = test->set_arg = NULL;
     test->test_name = "set_get_render_states";
+    test->test_arg = NULL;
 }
 
 /* =================== Main state tests function =============================== */
@@ -1312,6 +1305,10 @@ static void test_state_management(
     unsigned int tcount = 0;
     unsigned int bcount = 0;
 
+    shader_constant_arg pshader_constant_arg;
+    shader_constant_arg vshader_constant_arg;
+    light_arg light_arg;
+
     hret = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hret == D3D_OK, "GetDeviceCaps returned %#lx.\n", hret);
     if (hret != D3D_OK) return;
@@ -1319,18 +1316,23 @@ static void test_state_management(
     texture_stages = caps.MaxTextureBlendStages;
 
     if (caps.VertexShaderVersion & 0xffff) {
-        shader_constants_queue_test(device, &tests[tcount], &buffer[bcount], FALSE);
+        vshader_constant_arg.idx = 0;
+        vshader_constant_arg.pshader = FALSE;
+        shader_constants_queue_test(device, &tests[tcount], &vshader_constant_arg, &buffer[bcount]);
         bcount += SHADER_CONSTANTS_REQ_BUFFER;
         tcount++;
     }
 
     if (caps.PixelShaderVersion & 0xffff) {
-        shader_constants_queue_test(device, &tests[tcount], &buffer[bcount], TRUE);
+        pshader_constant_arg.idx = 0;
+        pshader_constant_arg.pshader = TRUE;
+        shader_constants_queue_test(device, &tests[tcount], &pshader_constant_arg, &buffer[bcount]);
         bcount += SHADER_CONSTANTS_REQ_BUFFER;
         tcount++;
     }
 
-    lights_queue_test(device, &tests[tcount], &buffer[bcount]);
+    light_arg.idx = 0;
+    lights_queue_test(device, &tests[tcount], &light_arg, &buffer[bcount]);
     bcount += LIGHTS_REQ_BUFFER;
     tcount++;
 
