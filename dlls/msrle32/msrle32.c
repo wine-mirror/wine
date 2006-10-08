@@ -1024,7 +1024,7 @@ static LRESULT MSRLE32_DecompressRLE8(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
 	break;
       default: /* absolute mode */
 	if (pixel_ptr/bytes_per_pixel + code1 > lpbi->biWidth) {
-	  WARN("aborted absolute: (%d=%d/%d+%d) > %ld\n",pixel_ptr/bytes_per_pixel + code1,pixel_ptr,bytes_per_pixel,code1,lpbi->biWidth);
+          WARN("aborted absolute: (%d=%d/%d+%d) > %d\n",pixel_ptr/bytes_per_pixel + code1,pixel_ptr,bytes_per_pixel,code1,lpbi->biWidth);
 	  return ICERR_ERROR;
 	}
 	extra_byte = code1 & 0x01;
@@ -1052,7 +1052,7 @@ static LRESULT MSRLE32_DecompressRLE8(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
     } else {
       /* coded mode */
       if (pixel_ptr/bytes_per_pixel + code0 > lpbi->biWidth) {
-	WARN("aborted coded: (%d=%d/%d+%d) > %ld\n",pixel_ptr/bytes_per_pixel + code1,pixel_ptr,bytes_per_pixel,code1,lpbi->biWidth);
+	WARN("aborted coded: (%d=%d/%d+%d) > %d\n",pixel_ptr/bytes_per_pixel + code1,pixel_ptr,bytes_per_pixel,code1,lpbi->biWidth);
 	return ICERR_ERROR;
       }
 
@@ -1100,7 +1100,7 @@ static CodecInfo* Open(LPICOPEN icinfo)
 
   if (icinfo->fccType != ICTYPE_VIDEO) return NULL;
 
-  TRACE("(%p = {%lu,0x%08lX(%4.4s),0x%08lX(%4.4s),0x%lX,0x%lX,...})\n", icinfo,
+  TRACE("(%p = {%u,0x%08X(%4.4s),0x%08X(%4.4s),0x%X,0x%X,...})\n", icinfo,
 	icinfo->dwSize,	icinfo->fccType, (char*)&icinfo->fccType,
 	icinfo->fccHandler, (char*)&icinfo->fccHandler,
 	icinfo->dwVersion,icinfo->dwFlags);
@@ -1115,7 +1115,7 @@ static CodecInfo* Open(LPICOPEN icinfo)
     icinfo->fccHandler = FOURCC_MRLE;
     break;
   default:
-    WARN("unknown FOURCC = 0x%08lX(%4.4s) !\n",
+    WARN("unknown FOURCC = 0x%08X(%4.4s) !\n",
 	 icinfo->fccHandler,(char*)&icinfo->fccHandler);
     return NULL;
   }
@@ -1422,7 +1422,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
 {
   int i;
 
-  TRACE("(%p,%p,%lu)\n",pi,lpic,dwSize);
+  TRACE("(%p,%p,%u)\n",pi,lpic,dwSize);
 
   /* pre-condition */
   assert(pi != NULL);
@@ -1434,7 +1434,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
       !lpic->lpbiInput  || !lpic->lpInput)
     return ICERR_BADPARAM;
 
-  TRACE("lpic={0x%lX,%p,%p,%p,%p,%p,%p,%ld,%lu,%lu,%p,%p}\n",lpic->dwFlags,lpic->lpbiOutput,lpic->lpOutput,lpic->lpbiInput,lpic->lpInput,lpic->lpckid,lpic->lpdwFlags,lpic->lFrameNum,lpic->dwFrameSize,lpic->dwQuality,lpic->lpbiPrev,lpic->lpPrev);
+  TRACE("lpic={0x%X,%p,%p,%p,%p,%p,%p,%d,%u,%u,%p,%p}\n",lpic->dwFlags,lpic->lpbiOutput,lpic->lpOutput,lpic->lpbiInput,lpic->lpInput,lpic->lpckid,lpic->lpdwFlags,lpic->lFrameNum,lpic->dwFrameSize,lpic->dwQuality,lpic->lpbiPrev,lpic->lpPrev);
 
   if (! pi->bCompress) {
     LRESULT hr = CompressBegin(pi, lpic->lpbiInput, lpic->lpbiOutput);
@@ -1458,13 +1458,13 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
   } else if ((lpic->dwFlags & ICCOMPRESS_KEYFRAME) == 0) {
     LPWORD pTmp;
 
-    WARN(": prev=%ld cur=%ld gone back? -- untested\n",pi->nPrevFrame,lpic->lFrameNum);
+    WARN(": prev=%d cur=%d gone back? -- untested\n",pi->nPrevFrame,lpic->lFrameNum);
     if (lpic->lpbiPrev == NULL || lpic->lpPrev == NULL)
       return ICERR_GOTOKEYFRAME; /* Need a keyframe if you go back */
     if (CompressQuery(pi, lpic->lpbiPrev, lpic->lpbiOutput) != ICERR_OK)
       return ICERR_BADFORMAT;
 
-    WARN(": prev=%ld cur=%ld compute swapped -- untested\n",pi->nPrevFrame,lpic->lFrameNum);
+    WARN(": prev=%d cur=%d compute swapped -- untested\n",pi->nPrevFrame,lpic->lFrameNum);
     computeInternalFrame(pi, lpic->lpbiPrev, lpic->lpPrev);
 
     /* swap buffers for current and previous frame */
@@ -1697,7 +1697,7 @@ static LRESULT DecompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
 static LRESULT Decompress(CodecInfo *pi, ICDECOMPRESS *pic, DWORD dwSize)
 {
-  TRACE("(%p,%p,%lu)\n",pi,pic,dwSize);
+  TRACE("(%p,%p,%u)\n",pi,pic,dwSize);
 
   /* pre-condition */
   assert(pi != NULL);
@@ -1892,7 +1892,7 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD_PTR dwDrvID, HDRVR hDrv, UINT uMsg,
 /* DllMain - library initialization code */
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
-  TRACE("(%p,%ld,%p)\n",(LPVOID)hModule,dwReason,lpReserved);
+  TRACE("(%p,%d,%p)\n",(LPVOID)hModule,dwReason,lpReserved);
 
   switch (dwReason) {
   case DLL_PROCESS_ATTACH:
