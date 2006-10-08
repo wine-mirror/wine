@@ -157,8 +157,6 @@ typedef struct wined3d_settings_s {
     we should use it.  However, until it's fully implemented, we'll leave it as a registry
     setting for developers. */
   BOOL glslRequested;
-  int vs_selected_mode;
-  int ps_selected_mode;
 /* nonpower 2 function */
   int nonpower2_mode;
   int rendertargetlock_mode;
@@ -498,6 +496,10 @@ typedef struct IWineD3DDeviceImpl
 
     /* X and GL Information */
     GLint                   maxConcurrentLights;
+
+    /* Selected capabilities */
+    int vs_selected_mode;
+    int ps_selected_mode;
 
     /* Optimization */
     BOOL                    modelview_valid;

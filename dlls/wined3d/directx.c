@@ -238,9 +238,12 @@ static void select_shader_mode(
 }
 
 /** Select the number of report maximum shader constants based on the selected shader modes */
-void select_shader_max_constants(WineD3D_GL_Info *gl_info) {
+void select_shader_max_constants(
+    int ps_selected_mode,
+    int vs_selected_mode,
+    WineD3D_GL_Info *gl_info) {
 
-    switch (wined3d_settings.vs_selected_mode) {
+    switch (vs_selected_mode) {
         case SHADER_GLSL:
             /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
             gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I - 1;
@@ -259,7 +262,7 @@ void select_shader_max_constants(WineD3D_GL_Info *gl_info) {
             break;
     }
 
-    switch (wined3d_settings.ps_selected_mode) {
+    switch (ps_selected_mode) {
         case SHADER_GLSL:
             /* Subtract the other potential uniforms from the max available (bools & ints) */
             gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
@@ -1808,6 +1811,8 @@ static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface,
 static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
+    int vs_selected_mode;
+    int ps_selected_mode;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -1815,7 +1820,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* FIXME: both the gl_info and the shader_mode should be made per adapter */
+    /* FIXME: GL info should be per adapter */
 
     /* If we don't know the device settings, go query them now */
     if (!This->isGLInfoValid) {
@@ -1825,9 +1830,11 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         /* We are running off a real context, save the values */
         if (rc) This->isGLInfoValid = TRUE;
     }
-    select_shader_mode(&This->gl_info, DeviceType,
-        &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
-    select_shader_max_constants(&This->gl_info);
+    select_shader_mode(&This->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
+
+    /* This function should *not* be modifying GL caps
+     * TODO: move the functionality where it belongs */
+    select_shader_max_constants(ps_selected_mode, vs_selected_mode, &This->gl_info);
 
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
@@ -2192,8 +2199,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
-    /* FIXME: the shader mode should be per adapter */
-    if (wined3d_settings.vs_selected_mode == SHADER_GLSL) {
+    if (vs_selected_mode == SHADER_GLSL) {
         /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
            models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
            vs_nv_version which is based on NV_vertex_program. For Ati cards there's no easy way, so for
@@ -2203,10 +2209,10 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         else
             *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
         TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (GLSL)\n");
-    } else if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
+    } else if (vs_selected_mode == SHADER_ARB) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-    } else if (wined3d_settings.vs_selected_mode == SHADER_SW) {
+    } else if (vs_selected_mode == SHADER_SW) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
         TRACE_(d3d_caps)("Software vertex shader version 3.0 enabled\n");
     } else {
@@ -2216,8 +2222,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     *pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
 
-    /* FIXME: the shader mode should be per adapter */
-    if (wined3d_settings.ps_selected_mode == SHADER_GLSL) {
+    if (ps_selected_mode == SHADER_GLSL) {
         /* See the comment about VS2.0/VS3.0 detection as we do the same here but then based on NV_fragment_program
            in case of GeforceFX cards. */
         if(This->gl_info.ps_nv_version == PS_VERSION_20)
@@ -2227,12 +2232,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         /* FIXME: The following line is card dependent. -1.0 to 1.0 is a safe default clamp range for now */
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (GLSL)\n");
-    } else if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
+    } else if (ps_selected_mode == SHADER_ARB) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
     /* FIXME: Uncomment this when there is support for software Pixel Shader 3.0 and PS_SW is defined
-    } else if (wined3d_settings.ps_selected_mode = SHADER_SW) {
+    } else if (ps_selected_mode = SHADER_SW) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(3,0);
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Software pixel shader version 3.0 enabled\n"); */
@@ -2413,12 +2418,14 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
 
     /* Setup some defaults for creating the implicit swapchain */
     ENTER_GL();
-    /* FIXME: both of those should be made per adapter */
+    /* FIXME: GL info should be per adapter */
     IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
     LEAVE_GL();
-    select_shader_mode(&This->gl_info, DeviceType,
-        &wined3d_settings.ps_selected_mode, &wined3d_settings.vs_selected_mode);
-    select_shader_max_constants(&This->gl_info);
+    select_shader_mode(&This->gl_info, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
+
+    /* This function should *not* be modifying GL caps
+     * TODO: move the functionality where it belongs */
+    select_shader_max_constants(object->ps_selected_mode, object->vs_selected_mode, &This->gl_info);
 
     temp_result = allocate_shader_constants(object->updateStateBlock);
     if (WINED3D_OK != temp_result)

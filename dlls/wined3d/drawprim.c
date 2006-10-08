@@ -1797,15 +1797,14 @@ inline static void drawPrimitiveDrawStrided(
     }
     /* If GLSL is used for either pixel or vertex shaders, make a GLSL program 
      * Otherwise set NULL, to restore fixed function */
-    if ((wined3d_settings.vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
-        (wined3d_settings.ps_selected_mode == SHADER_GLSL && usePixelShaderFunction)) 
+    if ((This->vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
+        (This->ps_selected_mode == SHADER_GLSL && usePixelShaderFunction)) 
         set_glsl_shader_program(iface);
     else
         This->stateBlock->glsl_program = NULL;
 
     /* If GLSL is used now, or might have been used before, (re)set the program */
-    if (wined3d_settings.vs_selected_mode == SHADER_GLSL || 
-        wined3d_settings.ps_selected_mode == SHADER_GLSL) {
+    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
 
         GLhandleARB progId = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;
         if (progId)
@@ -1818,7 +1817,7 @@ inline static void drawPrimitiveDrawStrided(
 
         TRACE("Using vertex shader\n");
 
-        if (wined3d_settings.vs_selected_mode == SHADER_ARB) {
+        if (This->vs_selected_mode == SHADER_ARB) {
             /* Bind the vertex program */
             GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
                 ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
@@ -1836,7 +1835,7 @@ inline static void drawPrimitiveDrawStrided(
 
         TRACE("Using pixel shader\n");
 
-        if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
+        if (This->ps_selected_mode == SHADER_ARB) {
              /* Bind the fragment program */
              GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
                  ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
@@ -1848,12 +1847,12 @@ inline static void drawPrimitiveDrawStrided(
              TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
                  This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
         }
-        }
+    }
        
     /* Load any global constants/uniforms that may have been set by the application */
-    if (wined3d_settings.vs_selected_mode == SHADER_GLSL || wined3d_settings.ps_selected_mode == SHADER_GLSL)
+    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL)
         shader_glsl_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
-    else if (wined3d_settings.vs_selected_mode== SHADER_ARB || wined3d_settings.ps_selected_mode == SHADER_ARB)
+    else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB)
         shader_arb_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction); 
         
     /* Draw vertex-by-vertex */
@@ -1866,14 +1865,14 @@ inline static void drawPrimitiveDrawStrided(
     if (useVertexShaderFunction) {
         unloadNumberedArrays(iface);
 
-        if (wined3d_settings.vs_selected_mode == SHADER_ARB)
+        if (This->vs_selected_mode == SHADER_ARB)
             glDisable(GL_VERTEX_PROGRAM_ARB);
     } else {
         unloadVertexData(iface);
     }
 
     /* Cleanup fragment program */
-    if (usePixelShaderFunction && wined3d_settings.ps_selected_mode == SHADER_ARB) 
+    if (usePixelShaderFunction && This->ps_selected_mode == SHADER_ARB) 
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
@@ -2100,11 +2099,11 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
      * here simply check whether a shader was set, or the user disabled shaders */
-    if (wined3d_settings.vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader && 
+    if (This->vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader && 
         ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL) 
         useVertexShaderFunction = TRUE;
 
-    if (wined3d_settings.ps_selected_mode != SHADER_NONE && This->stateBlock->pixelShader &&
+    if (This->ps_selected_mode != SHADER_NONE && This->stateBlock->pixelShader &&
         ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) 
         usePixelShaderFunction = TRUE;
 

@@ -870,7 +870,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Store the shader object */
         This->baseShader.prgId = shader_obj;
 
-    } else if (wined3d_settings.ps_selected_mode == SHADER_ARB) {
+    } else if (This->baseShader.shader_mode == SHADER_ARB) {
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBfp1.0\n");
 
@@ -921,6 +921,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
@@ -933,7 +934,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsB);
     list_init(&This->baseShader.constantsI);
 
-    This->baseShader.shader_mode = wined3d_settings.ps_selected_mode;
+    This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
 
     TRACE("(%p) : Copying the function\n", This);
     if (NULL != pFunction) {

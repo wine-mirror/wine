@@ -317,7 +317,7 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     This->stateBlock->glsl_program = newLink;
    
     /* Attach GLSL vshader */ 
-    if (NULL != vshader && wined3d_settings.vs_selected_mode == SHADER_GLSL) {
+    if (NULL != vshader && This->vs_selected_mode == SHADER_GLSL) {
         int i;
         int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
         char tmp_name[10];
@@ -343,7 +343,7 @@ void set_glsl_shader_program(IWineD3DDevice *iface) {
     }
     
     /* Attach GLSL pshader */
-    if (NULL != pshader && wined3d_settings.ps_selected_mode == SHADER_GLSL) {
+    if (NULL != pshader && This->ps_selected_mode == SHADER_GLSL) {
         TRACE("Attaching pixel shader to GLSL program\n");
         attach_glsl_shader(iface, (IWineD3DBaseShader*)pshader);
         newLink->pixelShader = pshader;
@@ -574,8 +574,8 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         ** ***************************/
 
         /* Delete any GLSL shader programs that may exist */
-        if (wined3d_settings.vs_selected_mode == SHADER_GLSL ||
-            wined3d_settings.ps_selected_mode == SHADER_GLSL)
+        if (This->vs_selected_mode == SHADER_GLSL ||
+            This->ps_selected_mode == SHADER_GLSL)
             delete_glsl_shader_list(iface);
     
         /* Release the update stateblock */

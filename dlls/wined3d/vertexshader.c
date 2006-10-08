@@ -1207,7 +1207,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
        This->semantics_in, This->semantics_out, pFunction, deviceImpl->stateBlock);
     if (hr != WINED3D_OK) return hr;
 
-    This->baseShader.shader_mode = wined3d_settings.vs_selected_mode;
+    This->baseShader.shader_mode = deviceImpl->vs_selected_mode;
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
