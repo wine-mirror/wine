@@ -129,7 +129,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     {
         res = E_INVALIDARG; /* assume we cannot coerce into right type */
 
-        TRACE("Read %ld bytes (%s)\n", received, type == REG_SZ ? debugstr_w((LPWSTR)pData) : "binary data");
+        TRACE("Read %d bytes (%s)\n", received, type == REG_SZ ? debugstr_w((LPWSTR)pData) : "binary data");
 
         switch (type)
         {
@@ -151,7 +151,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             }
             break;
         case REG_DWORD:
-            TRACE("REG_DWORD: %lx\n", *(DWORD *)pData);
+            TRACE("REG_DWORD: %x\n", *(DWORD *)pData);
             switch (V_VT(pVar))
             {
             case VT_EMPTY:
@@ -170,7 +170,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
                 void * pArrayElements;
                 bound.lLbound = 0;
                 bound.cElements = received;
-                TRACE("REG_BINARY: len = %ld\n", received);
+                TRACE("REG_BINARY: len = %d\n", received);
                 switch (V_VT(pVar))
                 {
                 case VT_EMPTY:
@@ -194,12 +194,12 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             }
         }
         if (res == E_INVALIDARG)
-            FIXME("Variant type %x not supported for regtype %lx\n", V_VT(pVar), type);
+            FIXME("Variant type %x not supported for regtype %x\n", V_VT(pVar), type);
     }
 
     HeapFree(GetProcessHeap(), 0, pData);
 
-    TRACE("<- %lx\n", res);
+    TRACE("<- %x\n", res);
     return res;
 }
 
@@ -226,7 +226,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
         break;
     case VT_I4:
     case VT_UI4:
-        TRACE("writing %lu\n", V_UNION(pVar, ulVal));
+        TRACE("writing %u\n", V_UNION(pVar, ulVal));
         lpData = (LPVOID)&V_UNION(pVar, ulVal);
         dwType = REG_DWORD;
         cbData = sizeof(DWORD);
@@ -239,7 +239,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
         res = SafeArrayGetLBound(V_UNION(pVar, parray), 1, &lLbound);
         res = SafeArrayGetUBound(V_UNION(pVar, parray), 1, &lUbound);
         cbData = (lUbound - lLbound + 1) /* * sizeof(BYTE)*/;
-        TRACE("cbData: %ld\n", cbData);
+        TRACE("cbData: %d\n", cbData);
         res = SafeArrayAccessData(V_UNION(pVar, parray), &lpData);
         break;
     }
@@ -449,7 +449,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
         IPropertyBag_Release(pProp);
     }
 
-    TRACE("<- 0x%lx\n", res);
+    TRACE("<- 0x%x\n", res);
 
     return res;
 }
@@ -486,7 +486,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_Reduce(
     IMoniker** ppmkToLeft,
     IMoniker** ppmkReduced)
 {
-    TRACE("(%p, %ld, %p, %p)\n", pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
+    TRACE("(%p, %d, %p, %p)\n", pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
 
     if (ppmkToLeft)
         *ppmkToLeft = NULL;
@@ -730,7 +730,7 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface)
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
+    TRACE("(%p)->() AddRef from %d\n", iface, ref - 1);
 
     return ref;
 }
@@ -743,7 +743,7 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_Release(LPENUMMONIKER iface)
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
+    TRACE("(%p)->() Release from %d\n", iface, ref + 1);
 
     if (!ref)
     {
@@ -763,7 +763,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(LPENUMMONIKER iface, ULONG celt,
     MediaCatMoniker * pMoniker;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%p)->(%ld, %p, %p)\n", iface, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     while (fetched < celt)
     {
@@ -787,7 +787,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(LPENUMMONIKER iface, ULONG celt,
 
     This->index += fetched;
 
-    TRACE("-- fetched %ld\n", fetched);
+    TRACE("-- fetched %d\n", fetched);
 
     if (pceltFetched)
         *pceltFetched = fetched;
@@ -802,7 +802,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Skip(LPENUMMONIKER iface, ULONG celt)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%p)->(%ld)\n", iface, celt);
+    TRACE("(%p)->(%d)\n", iface, celt);
 
     This->index += celt;
 

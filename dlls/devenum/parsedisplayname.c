@@ -149,7 +149,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
 
     CoTaskMemFree(pszClass);
 
-    TRACE("-- returning: %lx\n", res);
+    TRACE("-- returning: %x\n", res);
     return res;
 }
 

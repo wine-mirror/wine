@@ -110,7 +110,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     HKEY hbasekey;
     CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
 
-    TRACE("(%p)->(%s, %p, %lx)\n\tDeviceClass:\t%s\n", This, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
+    TRACE("(%p)->(%s, %p, %x)\n\tDeviceClass:\t%s\n", This, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
 
     if (!ppEnumMoniker)
         return E_POINTER;
@@ -243,7 +243,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
 
     if (!LoadStringW(DEVENUM_hInstance, IDS_DEVENUM_DS, szDSoundNameFormat, sizeof(szDSoundNameFormat)/sizeof(szDSoundNameFormat[0])-1))
     {
-        ERR("Couldn't get string resource (GetLastError() is %ld)\n", GetLastError());
+        ERR("Couldn't get string resource (GetLastError() is %d)\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 

@@ -48,7 +48,7 @@ const WCHAR clsid_keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -382,6 +382,6 @@ static void DEVENUM_RegisterQuartz()
     {
         HRESULT hr = pDllRegisterServer();
         if (FAILED(hr))
-            ERR("Failed to register Quartz. Error was 0x%lx)\n", hr);
+            ERR("Failed to register Quartz. Error was 0x%x)\n", hr);
     }
 }
