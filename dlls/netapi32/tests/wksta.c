@@ -135,7 +135,7 @@ static void run_wkstatransportenum_tests(void)
     apiReturn = pNetWkstaTransportEnum(NULL, 1, NULL, MAX_PREFERRED_LENGTH,
         NULL, &totalEntries, NULL);
     ok(apiReturn == ERROR_INVALID_LEVEL || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld\n", apiReturn);
+       "NetWkstaTransportEnum returned %d\n", apiReturn);
 
     /* 2nd check: is param 5 passed? (only if level passes?) */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
@@ -146,13 +146,13 @@ static void run_wkstatransportenum_tests(void)
         return;
 
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld\n", apiReturn);
+       "NetWkstaTransportEnum returned %d\n", apiReturn);
 
     /* 3rd check: is param 3 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, NULL, MAX_PREFERRED_LENGTH,
         NULL, NULL, NULL);
     ok(apiReturn == STATUS_ACCESS_VIOLATION || apiReturn == RPC_X_NULL_REF_POINTER || apiReturn == ERROR_INVALID_PARAMETER,
-       "NetWkstaTransportEnum returned %ld\n", apiReturn);
+       "NetWkstaTransportEnum returned %d\n", apiReturn);
 
     /* 4th check: is param 6 passed? */
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
@@ -163,7 +163,7 @@ static void run_wkstatransportenum_tests(void)
     apiReturn = pNetWkstaTransportEnum(NULL, 0, &bufPtr, MAX_PREFERRED_LENGTH,
         &entriesRead, &totalEntries, NULL);
     ok(apiReturn == NERR_Success || apiReturn == ERROR_NETWORK_UNREACHABLE,
-       "NetWkstaTransportEnum returned %ld\n", apiReturn);
+       "NetWkstaTransportEnum returned %d\n", apiReturn);
     if (apiReturn == NERR_Success) {
         /* WKSTA_TRANSPORT_INFO_0 *transports = (WKSTA_TRANSPORT_INFO_0 *)bufPtr; */
 

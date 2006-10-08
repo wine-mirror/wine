@@ -79,7 +79,7 @@ static void run_usergetinfo_tests(void)
     /* Level 0 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 0, (LPBYTE *)&ui0);
     if (rc != NERR_Success) {
-        trace ("Aborting usergetinfo_tests().   NetUserGetInfo: rc=%ld\n", rc);
+        trace ("Aborting usergetinfo_tests().   NetUserGetInfo: rc=%d\n", rc);
 	return;
     }
     ok(!lstrcmpW(sAdminUserName, ui0->usri0_name), "This is really user name\n");
@@ -90,7 +90,7 @@ static void run_usergetinfo_tests(void)
 
     /* Level 10 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 10, (LPBYTE *)&ui10);
-    ok(rc == NERR_Success, "NetUserGetInfo: rc=%ld\n", rc);
+    ok(rc == NERR_Success, "NetUserGetInfo: rc=%d\n", rc);
     ok(!lstrcmpW(sAdminUserName, ui10->usri10_name), "This is really user name\n");
     pNetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
@@ -105,22 +105,22 @@ static void run_usergetinfo_tests(void)
 
     /* errors handling */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 10000, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%ld\n",rc);
+    ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
     rc=pNetUserGetInfo(NULL, sNonexistentUser, 0, (LPBYTE *)&ui0);
-    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%ld\n",rc);
+    ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%d\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
         rc=pNetUserGetInfo(sBadNetPath, sAdminUserName, 0, (LPBYTE *)&ui0);
         ok(rc == ERROR_BAD_NETPATH || rc == ERROR_NETWORK_UNREACHABLE,
-           "Bad Network Path: rc=%ld\n",rc);
+           "Bad Network Path: rc=%d\n",rc);
     }
     rc=pNetUserGetInfo(sEmptyStr, sAdminUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
-       "Bad Network Path: rc=%ld\n",rc);
+       "Bad Network Path: rc=%d\n",rc);
     rc=pNetUserGetInfo(sInvalidName, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld\n",rc);
+    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%d\n",rc);
     rc=pNetUserGetInfo(sInvalidName2, sAdminUserName, 0, (LPBYTE *)&ui0);
-    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%ld\n",rc);
+    ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%d\n",rc);
 }
 
 /* checks Level 1 of NetQueryDisplayInformation */
@@ -177,7 +177,7 @@ static void run_usermodalsget_tests(void)
     USER_MODALS_INFO_2 * umi2 = NULL;
 
     rc = pNetUserModalsGet(NULL, 2, (LPBYTE *)&umi2);
-    ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %ld\n", rc);
+    ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %d\n", rc);
 
     if (umi2)
         pNetApiBufferFree(umi2);
