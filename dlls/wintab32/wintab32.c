@@ -68,7 +68,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     static const WCHAR name[] = {'T','a','b','l','e','t',0};
     HMODULE hx11drv;
 
-    TRACE("%p, %lx, %p\n",hInstDLL,fdwReason,lpReserved);
+    TRACE("%p, %x, %p\n",hInstDLL,fdwReason,lpReserved);
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:

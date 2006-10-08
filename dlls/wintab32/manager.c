@@ -245,7 +245,7 @@ BOOL WINAPI WTMgrCsrButtonMap(HMGR hMgr, UINT wCursor,
 BOOL WINAPI WTMgrCsrPressureBtnMarks(HMGR hMgr, UINT wCsr,
 				     DWORD dwNMarks, DWORD dwTMarks)
 {
-    FIXME("(%p, %u, %lu, %lu): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
+    FIXME("(%p, %u, %u, %u): stub\n", hMgr, wCsr, dwNMarks, dwTMarks);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 

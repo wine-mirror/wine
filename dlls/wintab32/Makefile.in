@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = wintab32.dll
 IMPORTLIB = libwintab32.$(IMPLIBEXT)
 IMPORTS   = user32 kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	context.c \
