@@ -71,7 +71,7 @@ static ULONG WINAPI IDirectMusicWaveImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, UnknownVtbl, iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DSWAVE_LockModule();
 
@@ -82,7 +82,7 @@ static ULONG WINAPI IDirectMusicWaveImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, UnknownVtbl, iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -135,7 +135,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetRepeats (LPDI
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_SetRepeats (LPDIRECTMUSICSEGMENT8 iface, DWORD dwRepeats) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %ld): stub\n", This, dwRepeats);	
+	FIXME("(%p, %d): stub\n", This, dwRepeats);
 	return S_OK;
 }
 
@@ -147,13 +147,13 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetDefaultResolu
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_SetDefaultResolution (LPDIRECTMUSICSEGMENT8 iface, DWORD dwResolution) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %ld): stub\n", This, dwResolution);
+	FIXME("(%p, %d): stub\n", This, dwResolution);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetTrack (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, IDirectMusicTrack** ppTrack) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %s, %ld, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
+	FIXME("(%p, %s, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
 	return S_OK;
 }
 
@@ -165,7 +165,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetTrackGroup (L
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_InsertTrack (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack, DWORD dwGroupBits) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %p, %ld): stub\n", This, pTrack, dwGroupBits);
+	FIXME("(%p, %p, %d): stub\n", This, pTrack, dwGroupBits);
 	return S_OK;
 }
 
@@ -177,7 +177,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_RemoveTrack (LPD
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_InitPlay (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicSegmentState** ppSegState, IDirectMusicPerformance* pPerformance, DWORD dwFlags) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %p, %p, %ld): stub\n", This, ppSegState, pPerformance, dwFlags);
+	FIXME("(%p, %p, %p, %d): stub\n", This, ppSegState, pPerformance, dwFlags);
 	return S_OK;
 }
 
@@ -207,13 +207,13 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_RemoveNotificati
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %s, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+	FIXME("(%p, %s, %d, %d, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_SetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %s, %ld, %ld, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+	FIXME("(%p, %s, %d, %d, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
 	return S_OK;
 }
 
@@ -249,13 +249,13 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_GetLoopPoints (L
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_SetPChannelsUsed (LPDIRECTMUSICSEGMENT8 iface, DWORD dwNumPChannels, DWORD* paPChannels) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %ld, %p): stub\n", This, dwNumPChannels, paPChannels);	
+	FIXME("(%p, %d, %p): stub\n", This, dwNumPChannels, paPChannels);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_SetTrackConfig (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) {
 	ICOM_THIS_MULTI(IDirectMusicWaveImpl, SegmentVtbl, iface);
-	FIXME("(%p, %s, %ld, %ld, %ld, %ld): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
@@ -387,7 +387,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 	memcpy (&pDesc->guidClass, &CLSID_DirectMusicSegment, sizeof(CLSID));
 	
 	IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStream, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -399,7 +399,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 				do {
 					IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 					StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-					TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+					TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 					switch (Chunk.fccID) {
 						case DMUS_FOURCC_GUID_CHUNK: {
 							TRACE_(dmfile)(": GUID chunk\n");
@@ -431,7 +431,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 									do {
 										IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 										ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-										TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+										TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 										switch (Chunk.fccID) {
 											/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                              (though strings seem to be valid unicode) */
@@ -477,7 +477,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 												break;						
 											}
 										}
-										TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+										TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 									} while (ListCount[0] < ListSize[0]);
 									break;
 								}
@@ -497,7 +497,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 							break;						
 						}
 					}
-					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+					TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
@@ -569,7 +569,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 	memcpy (&This->pDesc->guidClass, &CLSID_DirectMusicSegment, sizeof(CLSID));
 	
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -581,7 +581,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 				do {
 					IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 					StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-					TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+					TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 					switch (Chunk.fccID) {
 						case DMUS_FOURCC_GUID_CHUNK: {
 							TRACE_(dmfile)(": GUID chunk\n");
@@ -613,7 +613,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 									do {
 										IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 										ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-										TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+										TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 										switch (Chunk.fccID) {
 											/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                              (though strings seem to be valid unicode) */
@@ -659,7 +659,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 												break;						
 											}
 										}
-										TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+										TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 									} while (ListCount[0] < ListSize[0]);
 									break;
 								}
@@ -679,7 +679,7 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 							break;						
 						}
 					}
-					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+					TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
