@@ -147,11 +147,11 @@ static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
       "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
       name, id, f->needle, f->start, f->end, f->flags, findloc);
   ok(ft.chrgText.cpMin == f->expected_loc,
-      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %ld\n",
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMin);
   ok(ft.chrgText.cpMax == ((f->expected_loc == -1) ? -1
         : f->expected_loc + strlen(f->needle)),
-      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %ld\n",
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %d\n",
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax);
 }
 
@@ -256,7 +256,7 @@ static int get_scroll_pos_y(HWND hwnd)
 {
   POINT p = {-1, -1};
   SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM) &p);
-  ok(p.x != -1 && p.y != -1, "p.x:%ld p.y:%ld\n", p.x, p.y);
+  ok(p.x != -1 && p.y != -1, "p.x:%d p.y:%d\n", p.x, p.y);
   return p.y;
 }
 
@@ -406,7 +406,7 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Compare the two formattings*/
     ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-      "two formats found in plain text mode - cf2.dwEffects: %lx cf2test.dwEffects: %lx\n",
+      "two formats found in plain text mode - cf2.dwEffects: %x cf2test.dwEffects: %x\n",
        cf2.dwEffects, cf2test.dwEffects);
   /*Test TM_RICHTEXT by: switching back to Rich Text mode
                          printing "wine" in the current format(normal)
@@ -450,7 +450,7 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Test that the two formattings are not the same*/
   todo_wine ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects != cf2test.dwEffects),
-      "expected different formats - cf2.dwMask: %lx, cf2test.dwMask: %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+      "expected different formats - cf2.dwMask: %x, cf2test.dwMask: %x, cf2.dwEffects: %x, cf2test.dwEffects: %x\n",
       cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
 
   DestroyWindow(hwndRichEdit);
@@ -501,7 +501,7 @@ static void test_TM_PLAINTEXT(void)
   /*Test that they are the same as plain text allows only one formatting*/
 
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-     "two selections' formats differ - cf2.dwMask: %lx, cf2test.dwMask %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+     "two selections' formats differ - cf2.dwMask: %x, cf2test.dwMask %x, cf2.dwEffects: %x, cf2test.dwEffects: %x\n",
      cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
   
   /*Fill the control with a "wine" string, which when inserted will be bold*/
@@ -553,7 +553,7 @@ static void test_TM_PLAINTEXT(void)
   /*Compare the two formattings. They should be the same.*/
 
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-     "Copied text retained formatting - cf2.dwMask: %lx, cf2test.dwMask: %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+     "Copied text retained formatting - cf2.dwMask: %x, cf2test.dwMask: %x, cf2.dwEffects: %x, cf2test.dwEffects: %x\n",
      cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
   DestroyWindow(hwndRichEdit);
 }
