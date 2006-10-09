@@ -971,10 +971,10 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                     }
 
                     if (i > 0) { /* input reg */
-                        DWORD swizzle = (pToken[i] & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
-                        UINT isNegative = ((pToken[i] & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG);
+                        DWORD swizzle = (pToken[i] & WINED3DVS_SWIZZLE_MASK) >> WINED3DVS_SWIZZLE_SHIFT;
+                        UINT isNegative = ((pToken[i] & WINED3DSP_SRCMOD_MASK) == WINED3DSPSM_NEG);
 
-                        if (!isNegative && (D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) {
+                        if (!isNegative && (WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) == swizzle) {
                             /* TRACE("p[%d] not swizzled\n", i); */
                             p_send[i] = p[i];
                         } else {

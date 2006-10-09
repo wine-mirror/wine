@@ -231,7 +231,7 @@ static void vshader_program_add_output_param_swizzle(const DWORD param, int is_c
 
 static void pshader_get_input_register_swizzle(const DWORD instr, char *swzstring) {
     static const char swizzle_reg_chars[] = "rgba";
-    DWORD swizzle = (instr & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
+    DWORD swizzle = (instr & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
@@ -241,7 +241,7 @@ static void pshader_get_input_register_swizzle(const DWORD instr, char *swzstrin
      *  WWZZYYXX
      */
     *swzstring = 0;
-    if ((D3DSP_NOSWIZZLE >> D3DSP_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle) {
         if (swizzle_x == swizzle_y &&
         swizzle_x == swizzle_z &&
         swizzle_x == swizzle_w) {
@@ -264,7 +264,7 @@ static void vshader_program_add_input_param_swizzle(const DWORD param, int is_co
     char  tmpReg[255];
 
     /** operand input */
-    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
+    DWORD swizzle = (param & WINED3DVS_SWIZZLE_MASK) >> WINED3DVS_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
@@ -280,7 +280,7 @@ static void vshader_program_add_input_param_swizzle(const DWORD param, int is_co
      * swizzle bits fields:
      *  WWZZYYXX
      */
-    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) { /* D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+    if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) == swizzle) {
       if (is_color) {
         sprintf(tmpReg, ".%c%c%c%c",
                 swizzle_regs[swizzle_x],
@@ -368,7 +368,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   char  tmpReg[255];
   BOOL is_color = FALSE;
 
-  if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) {
+  if ((param & WINED3DSP_SRCMOD_MASK) == WINED3DSPSM_NEG) {
       strcat(hwLine, " -");
   } else {
       strcat(hwLine, " ");
@@ -441,41 +441,41 @@ static void pshader_gen_input_modifier_line (
     pshader_get_register_name(instr, regstr);
     pshader_get_input_register_swizzle(instr, swzstr);
 
-    switch (instr & D3DSP_SRCMOD_MASK) {
-    case D3DSPSM_NONE:
+    switch (instr & WINED3DSP_SRCMOD_MASK) {
+    case WINED3DSPSM_NONE:
         sprintf(outregstr, "%s%s", regstr, swzstr);
         insert_line = 0;
         break;
-    case D3DSPSM_NEG:
+    case WINED3DSPSM_NEG:
         sprintf(outregstr, "-%s%s", regstr, swzstr);
         insert_line = 0;
         break;
-    case D3DSPSM_BIAS:
+    case WINED3DSPSM_BIAS:
         shader_addline(buffer, "ADD T%c, %s, -coefdiv.x;\n", 'A' + tmpreg, regstr);
         break;
-    case D3DSPSM_BIASNEG:
+    case WINED3DSPSM_BIASNEG:
         shader_addline(buffer, "ADD T%c, -%s, coefdiv.x;\n", 'A' + tmpreg, regstr);
         break;
-    case D3DSPSM_SIGN:
+    case WINED3DSPSM_SIGN:
         shader_addline(buffer, "MAD T%c, %s, coefmul.x, -one.x;\n", 'A' + tmpreg, regstr);
         break;
-    case D3DSPSM_SIGNNEG:
+    case WINED3DSPSM_SIGNNEG:
         shader_addline(buffer, "MAD T%c, %s, -coefmul.x, one.x;\n", 'A' + tmpreg, regstr);
         break;
-    case D3DSPSM_COMP:
+    case WINED3DSPSM_COMP:
         shader_addline(buffer, "SUB T%c, one.x, %s;\n", 'A' + tmpreg, regstr);
         break;
-    case D3DSPSM_X2:
+    case WINED3DSPSM_X2:
         shader_addline(buffer, "ADD T%c, %s, %s;\n", 'A' + tmpreg, regstr, regstr);
         break;
-    case D3DSPSM_X2NEG:
+    case WINED3DSPSM_X2NEG:
         shader_addline(buffer, "ADD T%c, -%s, -%s;\n", 'A' + tmpreg, regstr, regstr);
         break;
-    case D3DSPSM_DZ:
+    case WINED3DSPSM_DZ:
         shader_addline(buffer, "RCP T%c, %s.z;\n", 'A' + tmpreg, regstr);
         shader_addline(buffer, "MUL T%c, %s, T%c;\n", 'A' + tmpreg, regstr, 'A' + tmpreg);
         break;
-    case D3DSPSM_DW:
+    case WINED3DSPSM_DW:
         shader_addline(buffer, "RCP T%c, %s.w;\n", 'A' + tmpreg, regstr);
         shader_addline(buffer, "MUL T%c, %s, T%c;\n", 'A' + tmpreg, regstr, 'A' + tmpreg);
         break;

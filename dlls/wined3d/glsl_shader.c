@@ -537,51 +537,51 @@ static void shader_glsl_gen_modifier (
     if (instr == WINED3DSIO_TEXKILL)
         return;
 
-    switch (instr & D3DSP_SRCMOD_MASK) {
-    case D3DSPSM_NONE:
+    switch (instr & WINED3DSP_SRCMOD_MASK) {
+    case WINED3DSPSM_NONE:
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_NEG:
+    case WINED3DSPSM_NEG:
         sprintf(out_str, "-%s%s", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_NOT:
+    case WINED3DSPSM_NOT:
         sprintf(out_str, "!%s%s", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_BIAS:
+    case WINED3DSPSM_BIAS:
         sprintf(out_str, "(%s%s - vec4(0.5)%s)", in_reg, in_regswizzle, in_regswizzle);
         break;
-    case D3DSPSM_BIASNEG:
+    case WINED3DSPSM_BIASNEG:
         sprintf(out_str, "-(%s%s - vec4(0.5)%s)", in_reg, in_regswizzle, in_regswizzle);
         break;
-    case D3DSPSM_SIGN:
+    case WINED3DSPSM_SIGN:
         sprintf(out_str, "(2.0 * (%s%s - 0.5))", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_SIGNNEG:
+    case WINED3DSPSM_SIGNNEG:
         sprintf(out_str, "-(2.0 * (%s%s - 0.5))", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_COMP:
+    case WINED3DSPSM_COMP:
         sprintf(out_str, "(1.0 - %s%s)", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_X2:
+    case WINED3DSPSM_X2:
         sprintf(out_str, "(2.0 * %s%s)", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_X2NEG:
+    case WINED3DSPSM_X2NEG:
         sprintf(out_str, "-(2.0 * %s%s)", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_DZ:    /* reg1_db = { reg1.r/b, reg1.g/b, ...}  The g & a components are undefined, so we'll leave them alone */
+    case WINED3DSPSM_DZ:    /* reg1_db = { reg1.r/b, reg1.g/b, ...}  The g & a components are undefined, so we'll leave them alone */
         sprintf(out_str, "vec4(%s.r / %s.b, %s.g / %s.b, %s.b, %s.a)", in_reg, in_reg, in_reg, in_reg, in_reg, in_reg);
         break;
-    case D3DSPSM_DW:
+    case WINED3DSPSM_DW:
         sprintf(out_str, "vec4(%s.r / %s.a, %s.g / %s.a, %s.b, %s.a)", in_reg, in_reg, in_reg, in_reg, in_reg, in_reg);
         break;
-    case D3DSPSM_ABS:
+    case WINED3DSPSM_ABS:
         sprintf(out_str, "abs(%s%s)", in_reg, in_regswizzle);
         break;
-    case D3DSPSM_ABSNEG:
+    case WINED3DSPSM_ABSNEG:
         sprintf(out_str, "-abs(%s%s)", in_reg, in_regswizzle);
         break;
     default:
-        FIXME("Unhandled modifier %u\n", (instr & D3DSP_SRCMOD_MASK));
+        FIXME("Unhandled modifier %u\n", (instr & WINED3DSP_SRCMOD_MASK));
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
     }
 }
@@ -747,7 +747,7 @@ static void shader_glsl_get_input_register_swizzle(
     const char* swizzle_regs = NULL;
    
     /** operand input */
-    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
+    DWORD swizzle = (param & WINED3DVS_SWIZZLE_MASK) >> WINED3DVS_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
@@ -763,7 +763,7 @@ static void shader_glsl_get_input_register_swizzle(
      * swizzle bits fields:
      *  WWZZYYXX
      */
-    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) { /* D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+    if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) == swizzle) {
       if (is_color) {
 	    sprintf(reg_mask, ".%c%c%c%c",
 		swizzle_regs[swizzle_x],

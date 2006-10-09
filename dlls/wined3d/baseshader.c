@@ -507,7 +507,7 @@ void shader_dump_param(
 
     DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
-    DWORD modifier = param & D3DSP_SRCMOD_MASK;
+    DWORD modifier = param & WINED3DSP_SRCMOD_MASK;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
@@ -521,18 +521,18 @@ void shader_dump_param(
     swizzle_reg_chars[3] = pshader? 'a': 'w';
 
     if (input) {
-        if ( (modifier == D3DSPSM_NEG) ||
-             (modifier == D3DSPSM_BIASNEG) ||
-             (modifier == D3DSPSM_SIGNNEG) ||
-             (modifier == D3DSPSM_X2NEG) ||
-             (modifier == D3DSPSM_ABSNEG) )
+        if ( (modifier == WINED3DSPSM_NEG) ||
+             (modifier == WINED3DSPSM_BIASNEG) ||
+             (modifier == WINED3DSPSM_SIGNNEG) ||
+             (modifier == WINED3DSPSM_X2NEG) ||
+             (modifier == WINED3DSPSM_ABSNEG) )
             TRACE("-");
-        else if (modifier == D3DSPSM_COMP)
+        else if (modifier == WINED3DSPSM_COMP)
             TRACE("1-");
-        else if (modifier == D3DSPSM_NOT)
+        else if (modifier == WINED3DSPSM_NOT)
             TRACE("!");
 
-        if (modifier == D3DSPSM_ABS || modifier == D3DSPSM_ABSNEG) 
+        if (modifier == WINED3DSPSM_ABS || modifier == WINED3DSPSM_ABSNEG) 
             TRACE("abs(");
     }
 
@@ -616,7 +616,7 @@ void shader_dump_param(
 
    } else {
         /** operand input */
-        DWORD swizzle = (param & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
+        DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
         DWORD swizzle_r = swizzle & 0x03;
         DWORD swizzle_g = (swizzle >> 2) & 0x03;
         DWORD swizzle_b = (swizzle >> 4) & 0x03;
@@ -624,22 +624,22 @@ void shader_dump_param(
 
         if (0 != modifier) {
             switch (modifier) {
-                case D3DSPSM_NONE:    break;
-                case D3DSPSM_NEG:     break;
-                case D3DSPSM_NOT:     break;
-                case D3DSPSM_BIAS:    TRACE("_bias"); break;
-                case D3DSPSM_BIASNEG: TRACE("_bias"); break;
-                case D3DSPSM_SIGN:    TRACE("_bx2"); break;
-                case D3DSPSM_SIGNNEG: TRACE("_bx2"); break;
-                case D3DSPSM_COMP:    break;
-                case D3DSPSM_X2:      TRACE("_x2"); break;
-                case D3DSPSM_X2NEG:   TRACE("_x2"); break;
-                case D3DSPSM_DZ:      TRACE("_dz"); break;
-                case D3DSPSM_DW:      TRACE("_dw"); break;
-                case D3DSPSM_ABSNEG:  TRACE(")"); break;
-                case D3DSPSM_ABS:     TRACE(")"); break;
+                case WINED3DSPSM_NONE:    break;
+                case WINED3DSPSM_NEG:     break;
+                case WINED3DSPSM_NOT:     break;
+                case WINED3DSPSM_BIAS:    TRACE("_bias"); break;
+                case WINED3DSPSM_BIASNEG: TRACE("_bias"); break;
+                case WINED3DSPSM_SIGN:    TRACE("_bx2"); break;
+                case WINED3DSPSM_SIGNNEG: TRACE("_bx2"); break;
+                case WINED3DSPSM_COMP:    break;
+                case WINED3DSPSM_X2:      TRACE("_x2"); break;
+                case WINED3DSPSM_X2NEG:   TRACE("_x2"); break;
+                case WINED3DSPSM_DZ:      TRACE("_dz"); break;
+                case WINED3DSPSM_DW:      TRACE("_dw"); break;
+                case WINED3DSPSM_ABSNEG:  TRACE(")"); break;
+                case WINED3DSPSM_ABS:     TRACE(")"); break;
                 default:
-                    TRACE("_unknown_modifier(%#x)", modifier >> D3DSP_SRCMOD_SHIFT);
+                    TRACE("_unknown_modifier(%#x)", modifier >> WINED3DSP_SRCMOD_SHIFT);
             }
         }
 
@@ -647,7 +647,7 @@ void shader_dump_param(
         * swizzle bits fields:
         *  RRGGBBAA
         */
-        if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+        if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) != swizzle) {
             if (swizzle_r == swizzle_g &&
                 swizzle_r == swizzle_b &&
                 swizzle_r == swizzle_a) {
