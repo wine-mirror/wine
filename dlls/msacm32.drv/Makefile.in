@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.drv
 IMPORTS   = msacm32 winmm user32 kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 C_SRCS = \
 	wavemap.c
