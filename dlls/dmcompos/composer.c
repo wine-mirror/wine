@@ -40,7 +40,7 @@ static ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+	TRACE("(%p): AddRef from %d\n", This, ref - 1);
 	
 	DMCOMPOS_LockModule();
 	
@@ -51,7 +51,7 @@ static ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER ifac
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	TRACE("(%p): ReleaseRef to %d\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -77,13 +77,13 @@ static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECT
 
 static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-	FIXME("(%p, %p, %p, %ld, %d, %ld, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
+	FIXME("(%p, %p, %p, %ld, %d, %d, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicPerformance* pPerformance, IDirectMusicSegment* pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg, IDirectMusicSegmentState** ppToSegState, IDirectMusicSegmentState** ppTransSegState) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-	FIXME("(%p, %p, %d, %ld, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
+	FIXME("(%p, %p, %d, %d, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
 	return S_OK;
 }
 

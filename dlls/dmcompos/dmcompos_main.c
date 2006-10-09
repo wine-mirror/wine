@@ -684,7 +684,7 @@ const char *debugstr_dmreturn (DWORD code) {
 			return codes[i].name;
 	}
 	/* if we didn't find it, return value */
-	return wine_dbg_sprintf("0x%08lx", code);
+	return wine_dbg_sprintf("0x%08x", code);
 }
 
 /* generic flag-dumping function */
@@ -731,7 +731,7 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
 		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
-		ptr += sprintf(ptr, " - dwSize = %ld\n", pDesc->dwSize);
+		ptr += sprintf(ptr, " - dwSize = %d\n", pDesc->dwSize);
 		ptr += sprintf(ptr, " - dwValidData = %s\n", debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
 		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
 		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
