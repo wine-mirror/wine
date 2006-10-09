@@ -1179,7 +1179,7 @@ static typeref_t *uniq_tref(typeref_t *ref)
 static type_t *type_ref(typeref_t *ref)
 {
   type_t *t = ref->ref;
-  if (ref->name) free(ref->name);
+  free(ref->name);
   free(ref);
   return t;
 }

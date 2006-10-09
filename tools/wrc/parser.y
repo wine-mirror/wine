@@ -2906,10 +2906,8 @@ static resource_t *build_fontdirs(resource_t *tail)
 
 	free(lanfnt);
 clean:
-	if(fnt)
-		free(fnt);
-	if(fnd)
-		free(fnd);
+	free(fnt);
+	free(fnd);
 	free(str.str.cstr);
 	return lst;
 }

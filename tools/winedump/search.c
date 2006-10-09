@@ -348,10 +348,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 void search_cleanup (void) __attribute__ ((destructor));
 void search_cleanup (void)
 {
-  if (grep_buff)
-    free (grep_buff);
-
-  if (fgrep_buff)
-    free (fgrep_buff);
+  free (grep_buff);
+  free (fgrep_buff);
 }
 #endif

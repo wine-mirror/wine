@@ -37,7 +37,7 @@ typedef struct _compound_type
 #define INIT_CT(ct) do { memset (&ct, 0, sizeof (ct)); } while (0)
 
 /* free the memory used by a compound structure */
-#define FREE_CT(ct) do { if (ct.expression) free (ct.expression); } while (0)
+#define FREE_CT(ct) free (ct.expression)
 
 /* Flags for data types */
 #define DATA_VTABLE   0x1

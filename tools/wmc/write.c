@@ -274,8 +274,7 @@ void write_h_file(const char *fname)
 				internal_error(__FILE__, __LINE__, "Invalid base for number print");
 			}
 			free(cptr);
-			if(cast)
-				free(cast);
+			free(cast);
 			break;
 		default:
 			internal_error(__FILE__, __LINE__, "Invalid node type %d", ndp->type);

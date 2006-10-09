@@ -109,19 +109,13 @@ void symbol_clear(parsed_symbol *sym)
  assert (sym->symbol);
 
  free (sym->symbol);
-
- if (sym->return_text)
-   free (sym->return_text);
-
- if (sym->function_name)
-   free (sym->function_name);
+ free (sym->return_text);
+ free (sym->function_name);
 
  for (i = sym->argc - 1; i >= 0; i--)
  {
-   if (sym->arg_text [i])
-     free (sym->arg_text [i]);
-   if (sym->arg_name [i])
-     free (sym->arg_name [i]);
+   free (sym->arg_text [i]);
+   free (sym->arg_name [i]);
  }
  memset (sym, 0, sizeof (parsed_symbol));
 }
