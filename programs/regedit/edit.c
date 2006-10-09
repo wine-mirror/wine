@@ -107,7 +107,7 @@ static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
     DWORD val;
 
     if (!GetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf, COUNT_OF(buf))) return FALSE;
-    if (!_stscanf(buf, toHex ? "%ld" : "%lx", &val)) return FALSE;
+    if (!_stscanf(buf, toHex ? "%d" : "%x", &val)) return FALSE;
     wsprintf(buf, toHex ? "%lx" : "%ld", val);
     return SetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf);    
 }
@@ -308,7 +308,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
 	wsprintf(stringValueData, isDecimal ? "%ld" : "%lx", *((DWORD*)stringValueData));
 	if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
-	    if (_stscanf(stringValueData, isDecimal ? "%ld" : "%lx", &val)) {
+	    if (_stscanf(stringValueData, isDecimal ? "%d" : "%x", &val)) {
 		lRet = RegSetValueEx(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
 		if (lRet == ERROR_SUCCESS) result = TRUE;
 		else error_code_messagebox(hwnd, lRet);

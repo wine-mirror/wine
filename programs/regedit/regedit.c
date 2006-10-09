@@ -177,7 +177,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                 }
                 if (size==0)
                 {
-                    fprintf(stderr,"%s: File not found \"%s\" (%ld)\n",
+                    fprintf(stderr,"%s: File not found \"%s\" (%d)\n",
                             getAppName(),filename,GetLastError());
                     exit(1);
                 }
