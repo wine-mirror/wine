@@ -633,7 +633,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
         {
             memcpy( new_title, title, len );
             new_title[len / sizeof(WCHAR)] = 0;
-            if (console->title) free( console->title );
+            free( console->title );
             console->title = new_title;
 	    evt.event = CONSOLE_RENDERER_TITLE_EVENT;
 	    console_input_events_append( console->evt, &evt );
@@ -963,8 +963,8 @@ static void console_input_destroy( struct object *obj )
     int				i;
 
     assert( obj->ops == &console_input_ops );
-    if (console_in->title) free( console_in->title );
-    if (console_in->records) free( console_in->records );
+    free( console_in->title );
+    free( console_in->records );
 
     if (console_in->active) release_object( console_in->active );
     console_in->active = NULL;
@@ -980,7 +980,7 @@ static void console_input_destroy( struct object *obj )
 
     for (i = 0; i < console_in->history_size; i++)
         if (console_in->history[i]) free( console_in->history[i] );
-    if (console_in->history) free( console_in->history );
+    free( console_in->history );
 }
 
 static void screen_buffer_dump( struct object *obj, int verbose )
@@ -1013,7 +1013,7 @@ static void screen_buffer_destroy( struct object *obj )
             }
         }
     }
-    if (screen_buffer->data) free( screen_buffer->data );
+    free( screen_buffer->data );
 }
 
 /* write data into a screen buffer */

@@ -196,7 +196,7 @@ static void atom_table_destroy( struct object *obj )
         for (i = 0; i <= table->last; i++) free( table->handles[i] );
         free( table->handles );
     }
-    if (table->entries) free( table->entries );
+    free( table->entries );
 }
 
 /* find an atom entry in its hash list */

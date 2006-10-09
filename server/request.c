@@ -251,11 +251,8 @@ static void send_reply( union generic_reply *reply )
             return;
         }
     }
-    if (current->reply_data)
-    {
-        free( current->reply_data );
-        current->reply_data = NULL;
-    }
+    free( current->reply_data );
+    current->reply_data = NULL;
     return;
 
  error:

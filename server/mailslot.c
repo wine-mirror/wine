@@ -305,7 +305,7 @@ static void mailslot_device_destroy( struct object *obj )
     struct mailslot_device *device = (struct mailslot_device*)obj;
     assert( obj->ops == &mailslot_device_ops );
     if (device->fd) release_object( device->fd );
-    if (device->mailslots) free( device->mailslots );
+    free( device->mailslots );
 }
 
 static int mailslot_device_get_file_info( struct fd *fd )

@@ -417,7 +417,7 @@ static void startup_info_destroy( struct object *obj )
 {
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
-    if (info->data) free( info->data );
+    free( info->data );
     if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
 }
@@ -504,7 +504,7 @@ static void process_unload_dll( struct process *process, void *base )
     if (dll && (&dll->entry != list_head( &process->dlls )))  /* main exe can't be unloaded */
     {
         if (dll->file) release_object( dll->file );
-        if (dll->filename) free( dll->filename );
+        free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
         generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
@@ -582,7 +582,7 @@ static void process_killed( struct process *process )
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         if (dll->file) release_object( dll->file );
-        if (dll->filename) free( dll->filename );
+        free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
     }

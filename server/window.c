@@ -347,7 +347,7 @@ void destroy_window( struct window *win )
     if (win->win_region) free_region( win->win_region );
     if (win->update_region) free_region( win->update_region );
     if (win->class) release_class( win->class );
-    if (win->text) free( win->text );
+    free( win->text );
     memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
     free( win );
 }
@@ -1753,7 +1753,7 @@ DECL_HANDLER(set_window_text)
             memcpy( text, get_req_data(), len * sizeof(WCHAR) );
             text[len] = 0;
         }
-        if (win->text) free( win->text );
+        free( win->text );
         win->text = text;
     }
 }

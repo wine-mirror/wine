@@ -149,7 +149,7 @@ static struct hook *add_hook( struct desktop *desktop, struct thread *thread, in
 static void free_hook( struct hook *hook )
 {
     free_user_handle( hook->handle );
-    if (hook->module) free( hook->module );
+    free( hook->module );
     if (hook->thread)
     {
         assert( hook->thread->desktop_users > 0 );
@@ -437,7 +437,7 @@ DECL_HANDLER(set_hook)
         reply->handle = hook->handle;
         reply->active_hooks = get_active_hooks();
     }
-    else if (module) free( module );
+    else free( module );
 
 done:
     if (process) release_object( process );

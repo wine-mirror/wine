@@ -594,12 +594,9 @@ struct token *token_create_admin( void )
                             default_dacl, admin_source );
     }
 
-    if (alias_admins_sid)
-        free( alias_admins_sid );
-    if (alias_users_sid)
-        free( alias_users_sid );
-    if (default_dacl)
-        free( default_dacl );
+    free( alias_admins_sid );
+    free( alias_users_sid );
+    free( default_dacl );
 
     return token;
 }

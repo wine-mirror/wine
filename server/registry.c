@@ -327,20 +327,20 @@ static void key_destroy( struct object *obj )
     struct key *key = (struct key *)obj;
     assert( obj->ops == &key_ops );
 
-    if (key->name) free( key->name );
-    if (key->class) free( key->class );
+    free( key->name );
+    free( key->class );
     for (i = 0; i <= key->last_value; i++)
     {
         if (key->values[i].name) free( key->values[i].name );
         if (key->values[i].data) free( key->values[i].data );
     }
-    if (key->values) free( key->values );
+    free( key->values );
     for (i = 0; i <= key->last_subkey; i++)
     {
         key->subkeys[i]->parent = NULL;
         release_object( key->subkeys[i] );
     }
-    if (key->subkeys) free( key->subkeys );
+    free( key->subkeys );
     /* unconditionally notify everything waiting on this key */
     while ((ptr = list_head( &key->notify_list )))
     {
@@ -656,7 +656,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     if (class && class->len)
     {
         key->classlen = class->len;
-        if (key->class) free(key->class);
+        free(key->class);
         if (!(key->class = memdup( class->str, key->classlen ))) key->classlen = 0;
     }
     grab_object( key );
@@ -887,11 +887,11 @@ static void set_value( struct key *key, const struct unicode_str *name,
     {
         if (!(value = insert_value( key, name, index )))
         {
-            if (ptr) free( ptr );
+            free( ptr );
             return;
         }
     }
-    else if (value->data) free( value->data ); /* already existing, free previous data */
+    else free( value->data ); /* already existing, free previous data */
 
     value->type  = type;
     value->len   = len;
@@ -983,8 +983,8 @@ static void delete_value( struct key *key, const struct unicode_str *name )
         return;
     }
     if (debug_level > 1) dump_operation( key, value, "Delete" );
-    if (value->name) free( value->name );
-    if (value->data) free( value->data );
+    free( value->name );
+    free( value->data );
     for (i = index; i < key->last_value; i++) key->values[i] = key->values[i + 1];
     key->last_value--;
     touch_key( key, REG_NOTIFY_CHANGE_LAST_SET );
@@ -1310,7 +1310,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     if (!len) newptr = NULL;
     else if (!(newptr = memdup( ptr, len ))) return 0;
 
-    if (value->data) free( value->data );
+    free( value->data );
     value->data = newptr;
     value->len  = len;
     value->type = type;

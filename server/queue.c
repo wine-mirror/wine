@@ -404,7 +404,7 @@ static int merge_message( struct thread_input *input, const struct message *msg 
 static void free_result( struct message_result *result )
 {
     if (result->timeout) remove_timeout_user( result->timeout );
-    if (result->data) free( result->data );
+    free( result->data );
     if (result->callback_msg) free_message( result->callback_msg );
     free( result );
 }
@@ -467,7 +467,7 @@ static void free_message( struct message *msg )
         }
         else free_result( result );
     }
-    if (msg->data) free( msg->data );
+    free( msg->data );
     free( msg );
 }
 

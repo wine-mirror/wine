@@ -213,12 +213,12 @@ static void cleanup_thread( struct thread *thread )
     struct thread_apc *apc;
 
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
-    if (thread->req_data) free( thread->req_data );
-    if (thread->reply_data) free( thread->reply_data );
+    free( thread->req_data );
+    free( thread->reply_data );
     if (thread->request_fd) release_object( thread->request_fd );
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
-    if (thread->suspend_context) free( thread->suspend_context );
+    free( thread->suspend_context );
     free_msg_queue( thread );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );

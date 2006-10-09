@@ -474,8 +474,7 @@ static void inode_set_wd( struct inode *inode, int wd )
 
 static void inode_set_name( struct inode *inode, const char *name )
 {
-    if (inode->name)
-        free (inode->name);
+    free (inode->name);
     inode->name = name ? strdup( name ) : NULL;
 }
 

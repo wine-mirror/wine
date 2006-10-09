@@ -196,7 +196,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
  error:
     release_object( mapping->shared_file );
     mapping->shared_file = NULL;
-    if (buffer) free( buffer );
+    free( buffer );
     return 0;
 }
 
@@ -254,7 +254,7 @@ static int get_image_params( struct mapping *mapping )
     return 1;
 
  error:
-    if (sec) free( sec );
+    free( sec );
     release_object( fd );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );
     return 0;

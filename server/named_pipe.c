@@ -435,7 +435,7 @@ static void named_pipe_device_destroy( struct object *obj )
     struct named_pipe_device *device = (struct named_pipe_device*)obj;
     assert( obj->ops == &named_pipe_device_ops );
     if (device->fd) release_object( device->fd );
-    if (device->pipes) free( device->pipes );
+    free( device->pipes );
 }
 
 static int named_pipe_device_get_file_info( struct fd *fd )
