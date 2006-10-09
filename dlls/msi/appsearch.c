@@ -530,7 +530,10 @@ static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
     size_t copied = 0;
 
     if (!src || !dst || !len)
+    {
+        if (dst) *dst = '\0';
         return;
+    }
 
     /* Ignore the short portion of the path, don't think we can use it anyway */
     if ((ptr = strchrW(src, '|')))
