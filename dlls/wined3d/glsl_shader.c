@@ -534,7 +534,7 @@ static void shader_glsl_gen_modifier (
 
     out_str[0] = 0;
     
-    if (instr == D3DSIO_TEXKILL)
+    if (instr == WINED3DSIO_TEXKILL)
         return;
 
     switch (instr & D3DSP_SRCMOD_MASK) {
@@ -881,9 +881,9 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
 
     /* Determine the GLSL operator to use based on the opcode */
     switch (curOpcode->opcode) {
-        case D3DSIO_MUL:    strcat(tmpLine, " * "); break;
-        case D3DSIO_ADD:    strcat(tmpLine, " + "); break;
-        case D3DSIO_SUB:    strcat(tmpLine, " - "); break;
+        case WINED3DSIO_MUL:    strcat(tmpLine, " * "); break;
+        case WINED3DSIO_ADD:    strcat(tmpLine, " + "); break;
+        case WINED3DSIO_SUB:    strcat(tmpLine, " - "); break;
         default:
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
@@ -891,7 +891,7 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%svec4(%s))%s;\n", tmpLine, src1_str, dst_mask);
 }
 
-/* Process the D3DSIO_MOV opcode using GLSL (dst = src) */
+/* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
 void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
@@ -924,7 +924,7 @@ void shader_glsl_dot(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpDest);
  
     /* Need to cast the src vectors to vec3 for dp3, and vec4 for dp4 */
-    if (curOpcode->opcode == D3DSIO_DP4)
+    if (curOpcode->opcode == WINED3DSIO_DP4)
         strcpy(cast, "vec4(");
     else
         strcpy(cast, "vec3(");
@@ -951,20 +951,20 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     /* Determine the GLSL function to use based on the opcode */
     /* TODO: Possibly make this a table for faster lookups */
     switch (curOpcode->opcode) {
-            case D3DSIO_MIN:    strcat(tmpLine, "min"); break;
-            case D3DSIO_MAX:    strcat(tmpLine, "max"); break;
-            case D3DSIO_RSQ:    strcat(tmpLine, "inversesqrt"); break;
-            case D3DSIO_ABS:    strcat(tmpLine, "abs"); break;
-            case D3DSIO_FRC:    strcat(tmpLine, "fract"); break;
-            case D3DSIO_POW:    strcat(tmpLine, "pow"); break;
-            case D3DSIO_CRS:    strcat(tmpLine, "cross"); break;
-            case D3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
-            case D3DSIO_LOGP:
-            case D3DSIO_LOG:    strcat(tmpLine, "log2"); break;
-            case D3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
-            case D3DSIO_SGE:    strcat(tmpLine, "greaterThanEqual"); break;
-            case D3DSIO_SLT:    strcat(tmpLine, "lessThan"); break;
-            case D3DSIO_SGN:    strcat(tmpLine, "sign"); break;
+            case WINED3DSIO_MIN:    strcat(tmpLine, "min"); break;
+            case WINED3DSIO_MAX:    strcat(tmpLine, "max"); break;
+            case WINED3DSIO_RSQ:    strcat(tmpLine, "inversesqrt"); break;
+            case WINED3DSIO_ABS:    strcat(tmpLine, "abs"); break;
+            case WINED3DSIO_FRC:    strcat(tmpLine, "fract"); break;
+            case WINED3DSIO_POW:    strcat(tmpLine, "pow"); break;
+            case WINED3DSIO_CRS:    strcat(tmpLine, "cross"); break;
+            case WINED3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
+            case WINED3DSIO_LOGP:
+            case WINED3DSIO_LOG:    strcat(tmpLine, "log2"); break;
+            case WINED3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
+            case WINED3DSIO_SGE:    strcat(tmpLine, "greaterThanEqual"); break;
+            case WINED3DSIO_SLT:    strcat(tmpLine, "lessThan"); break;
+            case WINED3DSIO_SGN:    strcat(tmpLine, "sign"); break;
         default:
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
@@ -988,7 +988,7 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
 
 }
 
-/** Process the D3DSIO_EXPP instruction in GLSL:
+/** Process the WINED3DSIO_EXPP instruction in GLSL:
  * For shader model 1.x, do the following (and honor the writemask, so use a temporary variable):
  *   dst.x = 2^(floor(src))
  *   dst.y = src - floor(src)
@@ -1057,8 +1057,8 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
         shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
 
         switch (arg->opcode->opcode) {
-            case D3DSIO_SLT:    strcpy(compareStr, "<"); break;
-            case D3DSIO_SGE:    strcpy(compareStr, ">="); break;
+            case WINED3DSIO_SLT:    strcpy(compareStr, "<"); break;
+            case WINED3DSIO_SGE:    strcpy(compareStr, ">="); break;
             default:
                 FIXME("Can't handle opcode %s\n", arg->opcode->name);
         }
@@ -1102,7 +1102,7 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
 
-/** GLSL code generation for D3DSIO_MAD: Multiply the first 2 opcodes, then add the last */
+/** GLSL code generation for WINED3DSIO_MAD: Multiply the first 2 opcodes, then add the last */
 void shader_glsl_mad(SHADER_OPCODE_ARG* arg) {
 
     char tmpLine[256];
@@ -1120,7 +1120,7 @@ void shader_glsl_mad(SHADER_OPCODE_ARG* arg) {
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
 
-/** Handles transforming all D3DSIO_M?x? opcodes for 
+/** Handles transforming all WINED3DSIO_M?x? opcodes for 
     Vertex shaders to GLSL codes */
 void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     int i;
@@ -1138,25 +1138,25 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     tmpArg.reg_maps = arg->reg_maps; 
     
     switch(arg->opcode->opcode) {
-        case D3DSIO_M4x4:
+        case WINED3DSIO_M4x4:
             nComponents = 4;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
             break;
-        case D3DSIO_M4x3:
+        case WINED3DSIO_M4x3:
             nComponents = 3;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
             break;
-        case D3DSIO_M3x4:
+        case WINED3DSIO_M3x4:
             nComponents = 4;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
             break;
-        case D3DSIO_M3x3:
+        case WINED3DSIO_M3x3:
             nComponents = 3;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
             break;
-        case D3DSIO_M3x2:
+        case WINED3DSIO_M3x2:
             nComponents = 2;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
             break;
         default:
             break;
@@ -1192,7 +1192,7 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
                    tmpLine, src2_str, src0_str, src1_str, src2_str, dst_mask);
 }
 
-/** Process the D3DSIO_LIT instruction in GLSL:
+/** Process the WINED3DSIO_LIT instruction in GLSL:
  * dst.x = dst.w = 1.0
  * dst.y = (src0.x > 0) ? src0.x
  * dst.z = (src0.x > 0) ? ((src0.y > 0) ? pow(src0.y, src.w) : 0) : 0
@@ -1212,7 +1212,7 @@ void shader_glsl_lit(SHADER_OPCODE_ARG* arg) {
         dst_str, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, dst_mask);
 }
 
-/** Process the D3DSIO_DST instruction in GLSL:
+/** Process the WINED3DSIO_DST instruction in GLSL:
  * dst.x = 1.0
  * dst.y = src0.x * src0.y
  * dst.z = src0.z
@@ -1232,7 +1232,7 @@ void shader_glsl_dst(SHADER_OPCODE_ARG* arg) {
                    dst_str, src0_reg, src1_reg, src0_reg, src1_reg, dst_mask);
 }
 
-/** Process the D3DSIO_SINCOS instruction in GLSL:
+/** Process the WINED3DSIO_SINCOS instruction in GLSL:
  * VS 2.0 requires that specific cosine and sine constants be passed to this instruction so the hardware
  * can handle it.  But, these functions are built-in for GLSL, so we can just ignore the last 2 params.
  * 
@@ -1254,7 +1254,7 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
                    dst_str, src0_str, src0_str, dst_reg, dst_reg, dst_mask);
 }
 
-/** Process the D3DSIO_LOOP instruction in GLSL:
+/** Process the WINED3DSIO_LOOP instruction in GLSL:
  * Start a for() loop where src0.y is the initial value of aL,
  *  increment aL by src0.z for a total of src0.x iterations.
  *  Need to use a temporary variable for this operation.
@@ -1454,7 +1454,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
    }
 }
 
-/** Process the D3DSIO_TEXDP3TEX instruction in GLSL:
+/** Process the WINED3DSIO_TEXDP3TEX instruction in GLSL:
  * Take a 3-component dot product of the TexCoord[dstreg] and src,
  * then perform a 1D texture lookup from stage dstregnum, place into dst. */
 void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
@@ -1471,7 +1471,7 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "%s = vec4(texture1D(Psampler%u, tmp0.x))%s;\n", dst_str, dstreg, dst_mask);
 }
 
-/** Process the D3DSIO_TEXDP3 instruction in GLSL:
+/** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
  * Take a 3-component dot product of the TexCoord[dstreg] and src. */
 void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
 
@@ -1487,7 +1487,7 @@ void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
             dst_str, dstreg, src0_str, dst_mask);
 }
 
-/** Process the D3DSIO_TEXDEPTH instruction in GLSL:
+/** Process the WINED3DSIO_TEXDEPTH instruction in GLSL:
  * Calculate the depth as dst.x / dst.y   */
 void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
     
@@ -1500,7 +1500,7 @@ void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "gl_FragDepth = %s.x / %s.y;\n", dst_reg, dst_reg);
 }
 
-/** Process the D3DSIO_TEXM3X2DEPTH instruction in GLSL:
+/** Process the WINED3DSIO_TEXM3X2DEPTH instruction in GLSL:
  * Last row of a 3x2 matrix multiply, use the result to calculate the depth:
  * Calculate tmp0.y = TexCoord[dstreg] . src.xyz;  (tmp0.x has already been calculated)
  * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
@@ -1519,7 +1519,7 @@ void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "gl_FragDepth = vec4((tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y)%s;\n", dst_str, dst_name);
 }
 
-/** Process the D3DSIO_TEXM3X2PAD instruction in GLSL
+/** Process the WINED3DSIO_TEXM3X2PAD instruction in GLSL
  * Calculate the 1st of a 2-row matrix multiplication. */
 void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
@@ -1533,7 +1533,7 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "tmp0.x = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
 }
 
-/** Process the D3DSIO_TEXM3X3PAD instruction in GLSL
+/** Process the WINED3DSIO_TEXM3X3PAD instruction in GLSL
  * Calculate the 1st or 2nd row of a 3-row matrix multiplication. */
 void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
@@ -1565,7 +1565,7 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "T%u = texture2D(Psampler%u, tmp0.st);\n", reg, reg);
 }
 
-/** Process the D3DSIO_TEXM3X3TEX instruction in GLSL
+/** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculate coordinates */
 void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
@@ -1596,7 +1596,7 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-/** Process the D3DSIO_TEXM3X3 instruction in GLSL
+/** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply */
 void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
 
@@ -1614,7 +1614,7 @@ void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-/** Process the D3DSIO_TEXM3X3SPEC instruction in GLSL 
+/** Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL 
  * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
@@ -1652,7 +1652,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-/** Process the D3DSIO_TEXM3X3VSPEC instruction in GLSL 
+/** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
  * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
@@ -1688,7 +1688,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-/** Process the D3DSIO_TEXBEM instruction in GLSL.
+/** Process the WINED3DSIO_TEXBEM instruction in GLSL.
  * Apply a fake bump map transform.
  * FIXME: Should apply the BUMPMAPENV matrix.  For now, just sample the texture */
 void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
@@ -1701,7 +1701,7 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
             reg1, reg1, reg1, reg2);
 }
 
-/** Process the D3DSIO_TEXREG2AR instruction in GLSL
+/** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
  * Sample 2D texture at dst using the alpha & red (wx) components of src as texture coordinates */
 void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     
@@ -1719,7 +1719,7 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
 
-/** Process the D3DSIO_TEXREG2GB instruction in GLSL
+/** Process the WINED3DSIO_TEXREG2GB instruction in GLSL
  * Sample 2D texture at dst using the green & blue (yz) components of src as texture coordinates */
 void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
@@ -1737,7 +1737,7 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
 
-/** Process the D3DSIO_TEXREG2RGB instruction in GLSL
+/** Process the WINED3DSIO_TEXREG2RGB instruction in GLSL
  * Sample texture at dst using the rgb (xyz) components of src as texture coordinates */
 void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
@@ -1766,7 +1766,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
             tmpLine, dimensions, src0_regnum, dst_reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz", dst_mask);
 }
 
-/** Process the D3DSIO_TEXKILL instruction in GLSL.
+/** Process the WINED3DSIO_TEXKILL instruction in GLSL.
  * If any of the first 3 components are < 0, discard this pixel */
 void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
 
@@ -1776,7 +1776,7 @@ void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_name);
 }
 
-/** Process the D3DSIO_DP2ADD instruction in GLSL.
+/** Process the WINED3DSIO_DP2ADD instruction in GLSL.
  * dst = dot2(src0, src1) + src2 */
 void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
 

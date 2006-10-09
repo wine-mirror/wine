@@ -218,7 +218,7 @@ HRESULT shader_get_registers_used(
                ++pToken;
 
         /* Handle declarations */
-        } else if (D3DSIO_DCL == curOpcode->opcode) {
+        } else if (WINED3DSIO_DCL == curOpcode->opcode) {
 
             DWORD usage = *pToken++;
             DWORD param = *pToken++;
@@ -247,7 +247,7 @@ HRESULT shader_get_registers_used(
             } else if (D3DSPR_SAMPLER == regtype)
                 reg_maps->samplers[regnum] = usage;
 
-        } else if (D3DSIO_DEF == curOpcode->opcode) {
+        } else if (WINED3DSIO_DEF == curOpcode->opcode) {
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
@@ -256,7 +256,7 @@ HRESULT shader_get_registers_used(
             list_add_head(&This->baseShader.constantsF, &lconst->entry);
             pToken += curOpcode->num_params;
 
-        } else if (D3DSIO_DEFI == curOpcode->opcode) {
+        } else if (WINED3DSIO_DEFI == curOpcode->opcode) {
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
@@ -265,7 +265,7 @@ HRESULT shader_get_registers_used(
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
             pToken += curOpcode->num_params;
 
-        } else if (D3DSIO_DEFB == curOpcode->opcode) {
+        } else if (WINED3DSIO_DEFB == curOpcode->opcode) {
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
@@ -275,13 +275,13 @@ HRESULT shader_get_registers_used(
             pToken += curOpcode->num_params;
 
         /* If there's a loop in the shader */
-        } else if (D3DSIO_LOOP == curOpcode->opcode ||
-                   D3DSIO_REP == curOpcode->opcode) {
+        } else if (WINED3DSIO_LOOP == curOpcode->opcode ||
+                   WINED3DSIO_REP == curOpcode->opcode) {
             reg_maps->loop = 1;
             pToken += curOpcode->num_params;
    
         /* For subroutine prototypes */
-        } else if (D3DSIO_LABEL == curOpcode->opcode) {
+        } else if (WINED3DSIO_LABEL == curOpcode->opcode) {
 
             DWORD snum = *pToken & D3DSP_REGNUM_MASK; 
             reg_maps->labels[snum] = 1;
@@ -293,10 +293,10 @@ HRESULT shader_get_registers_used(
 
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
-                (D3DSIO_TEX == curOpcode->opcode ||
-                 D3DSIO_TEXBEM == curOpcode->opcode ||
-                 D3DSIO_TEXM3x2TEX == curOpcode->opcode ||
-                 D3DSIO_TEXM3x3TEX == curOpcode->opcode)) {
+                (WINED3DSIO_TEX == curOpcode->opcode ||
+                 WINED3DSIO_TEXBEM == curOpcode->opcode ||
+                 WINED3DSIO_TEXM3x2TEX == curOpcode->opcode ||
+                 WINED3DSIO_TEXM3x3TEX == curOpcode->opcode)) {
 
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
@@ -330,8 +330,8 @@ HRESULT shader_get_registers_used(
                 }
 
             } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
-                (D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
-                 D3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
+                (WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
+                 WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
 
                 /* 3D sampler usage, only set reserved bit and ttype
                  * FIXME: This could be either Cube or Volume, but we wouldn't know unless
@@ -340,7 +340,7 @@ HRESULT shader_get_registers_used(
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
             } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
-                (D3DSIO_TEXDP3TEX == curOpcode->opcode)) {
+                (WINED3DSIO_TEXDP3TEX == curOpcode->opcode)) {
                 
                 /* 1D Sampler usage */
                 DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
@@ -724,13 +724,13 @@ void shader_generate_main(
                 pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* Nothing to do */
-            } else if (D3DSIO_DCL == curOpcode->opcode ||
-                       D3DSIO_NOP == curOpcode->opcode ||
-                       D3DSIO_DEF == curOpcode->opcode ||
-                       D3DSIO_DEFI == curOpcode->opcode ||
-                       D3DSIO_DEFB == curOpcode->opcode ||
-                       D3DSIO_PHASE == curOpcode->opcode ||
-                       D3DSIO_RET == curOpcode->opcode) {
+            } else if (WINED3DSIO_DCL == curOpcode->opcode ||
+                       WINED3DSIO_NOP == curOpcode->opcode ||
+                       WINED3DSIO_DEF == curOpcode->opcode ||
+                       WINED3DSIO_DEFI == curOpcode->opcode ||
+                       WINED3DSIO_DEFB == curOpcode->opcode ||
+                       WINED3DSIO_PHASE == curOpcode->opcode ||
+                       WINED3DSIO_RET == curOpcode->opcode) {
 
                 pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
 
@@ -851,7 +851,7 @@ void shader_trace_init(
                 len += tokens_read;
 
             } else {
-                if (curOpcode->opcode == D3DSIO_DCL) {
+                if (curOpcode->opcode == WINED3DSIO_DCL) {
 
                     DWORD usage = *pToken;
                     DWORD param = *(pToken + 1);
@@ -863,7 +863,7 @@ void shader_trace_init(
                     pToken += 2;
                     len += 2;
 
-                } else if (curOpcode->opcode == D3DSIO_DEF) {
+                } else if (curOpcode->opcode == WINED3DSIO_DEF) {
 
                         unsigned int offset = shader_get_float_offset(*pToken);
 
@@ -875,7 +875,7 @@ void shader_trace_init(
 
                         pToken += 5;
                         len += 5;
-                } else if (curOpcode->opcode == D3DSIO_DEFI) {
+                } else if (curOpcode->opcode == WINED3DSIO_DEFI) {
 
                         TRACE("defi i%u = %d, %d, %d, %d", *pToken & D3DSP_REGNUM_MASK,
                             *(pToken + 1),
@@ -886,7 +886,7 @@ void shader_trace_init(
                         pToken += 5;
                         len += 5;
 
-                } else if (curOpcode->opcode == D3DSIO_DEFB) {
+                } else if (curOpcode->opcode == WINED3DSIO_DEFB) {
 
                         TRACE("defb b%u = %s", *pToken & D3DSP_REGNUM_MASK,
                             *(pToken + 1)? "true": "false");
@@ -909,8 +909,8 @@ void shader_trace_init(
 
                     TRACE("%s", curOpcode->name);
 
-                    if (curOpcode->opcode == D3DSIO_IFC ||
-                        curOpcode->opcode == D3DSIO_BREAKC) {
+                    if (curOpcode->opcode == WINED3DSIO_IFC ||
+                        curOpcode->opcode == WINED3DSIO_BREAKC) {
 
                         DWORD op = (opcode_token & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
                         switch (op) {

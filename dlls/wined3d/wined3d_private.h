@@ -39,6 +39,7 @@
 
 #include "d3d9.h"
 #include "d3d9types.h"
+#include "wined3d_private_types.h"
 #include "ddraw.h"
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_gl.h"
@@ -1682,7 +1683,7 @@ inline static BOOL shader_is_vshader_version(DWORD token) {
 }
 
 inline static BOOL shader_is_comment(DWORD token) {
-    return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
+    return WINED3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
 }
 
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,

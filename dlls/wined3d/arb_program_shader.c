@@ -833,7 +833,7 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-/** Handles transforming all D3DSIO_M?x? opcodes for
+/** Handles transforming all WINED3DSIO_M?x? opcodes for
     Vertex shaders to ARB_vertex_program codes */
 void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
 
@@ -852,25 +852,25 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     tmpArg.reg_maps = arg->reg_maps;
 
     switch(arg->opcode->opcode) {
-    case D3DSIO_M4x4:
+    case WINED3DSIO_M4x4:
         nComponents = 4;
-        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
         break;
-    case D3DSIO_M4x3:
+    case WINED3DSIO_M4x3:
         nComponents = 3;
-        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
         break;
-    case D3DSIO_M3x4:
+    case WINED3DSIO_M3x4:
         nComponents = 4;
-        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
         break;
-    case D3DSIO_M3x3:
+    case WINED3DSIO_M3x3:
         nComponents = 3;
-        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
         break;
-    case D3DSIO_M3x2:
+    case WINED3DSIO_M3x2:
         nComponents = 2;
-        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
         break;
     default:
         break;
@@ -896,7 +896,7 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
     char tmpLine[256];
     unsigned int i;
 
-    if (curOpcode->opcode == D3DSIO_MOV && dst_regtype == D3DSPR_ADDR)
+    if (curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == D3DSPR_ADDR)
         strcpy(tmpLine, "ARL");
     else
         strcpy(tmpLine, curOpcode->glname);
