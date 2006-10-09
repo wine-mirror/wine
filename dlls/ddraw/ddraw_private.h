@@ -36,6 +36,7 @@
 #include "ddcomimpl.h"
 
 #include "wine/wined3d_interface.h"
+#include "wine/list.h"
 
 /*****************************************************************************
  * IParent - a helper interface
@@ -143,7 +144,7 @@ struct IDirectDrawImpl
     BOOL                    depthstencil;
 
     /* For the dll unload cleanup code */
-    IDirectDrawImpl *next;
+    struct list ddraw_list_entry;
     LONG surfaces;
 };
 
@@ -182,8 +183,8 @@ HRESULT WINAPI
 IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
                                          DDSURFACEDESC2 *desc,
                                          void *Context);
-/* The cleanup list */
-extern IDirectDrawImpl *ddraw_list;
+void
+remove_ddraw_object(IDirectDrawImpl *ddraw);
 
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType;

@@ -58,6 +58,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
 
+static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
+
 /***********************************************************************
  *
  * Helper function for DirectDrawCreate and friends
@@ -302,9 +304,7 @@ DDRAW_Create(GUID *guid,
 #undef CKEY_CAPS
 #undef FX_CAPS
 
-    /* Add the object to the ddraw cleanup list */
-    This->next = ddraw_list;
-    ddraw_list = This;
+    list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
 
     /* Call QueryInterface to get the pointer to the requested interface. This also initializes
      * The required refcount
@@ -860,16 +860,18 @@ DllMain(HINSTANCE hInstDLL,
 
         if(counter == 0)
         {
-            if(ddraw_list)
+            if(!list_empty(&global_ddraw_list))
             {
-                IDirectDrawImpl *ddraw;
+                struct list *entry, *entry2;
                 WARN("There are still existing DirectDraw interfaces. Wine bug or buggy application?\n");
 
-                for(ddraw = ddraw_list; ddraw; ddraw = ddraw->next)
+                /* We remove elemets from this loop */
+                LIST_FOR_EACH_SAFE(entry, entry2, &global_ddraw_list)
                 {
                     HRESULT hr;
                     DDSURFACEDESC2 desc;
                     int i;
+                    IDirectDrawImpl *ddraw = LIST_ENTRY(entry, IDirectDrawImpl, ddraw_list_entry);
 
                     WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
 
@@ -922,4 +924,10 @@ DllMain(HINSTANCE hInstDLL,
     }
 
     return TRUE;
+}
+
+void
+remove_ddraw_object(IDirectDrawImpl *ddraw)
+{
+    list_remove(&ddraw->ddraw_list_entry);
 }

@@ -62,9 +62,6 @@ static const DDDEVICEIDENTIFIER2 deviceidentifier =
     0
 };
 
-/* This is for cleanup if a broken app doesn't Release its objects */
-IDirectDrawImpl *ddraw_list;
-
 /*****************************************************************************
  * IUnknown Methods
  *****************************************************************************/
@@ -244,8 +241,6 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 void
 IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
 {
-    IDirectDrawImpl *prev;
-
     /* Clear the cooplevel to restore window and display mode */
     IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(This, IDirectDraw7),
                                         NULL,
@@ -262,22 +257,7 @@ IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
     /* Unregister the window class */
     UnregisterClassA(This->classname, 0);
 
-    /* Unchain it from the ddraw list */
-    if(ddraw_list == This)
-    {
-        ddraw_list = This->next;
-        /* No need to search for a predecessor here */
-    }
-    else
-    {
-        for(prev = ddraw_list; prev; prev = prev->next)
-            if(prev->next == This) break;
-
-        if(prev)
-            prev->next = This->next;
-        else
-            ERR("Didn't find the previous ddraw element in the list\n");
-    }
+    remove_ddraw_object(This);
 
     /* Release the attached WineD3D stuff */
     IWineD3DDevice_Release(This->wineD3DDevice);
