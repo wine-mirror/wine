@@ -43,7 +43,16 @@ typedef enum _WINED3DSAMPLER_TEXTURE_TYPE {
   WINED3DSTT_FORCE_DWORD  = 0x7FFFFFFF
 } WINED3DSAMPLER_TEXTURE_TYPE;
 
-/** register types for PS and VS */
+/** Register number mask **/
+#define WINED3DSP_REGNUM_MASK        0x000007FF
+
+/** Register type masks  **/
+#define WINED3DSP_REGTYPE_SHIFT      28
+#define WINED3DSP_REGTYPE_SHIFT2     8
+#define WINED3DSP_REGTYPE_MASK       (0x7 << WINED3DSP_REGTYPE_SHIFT)
+#define WINED3DSP_REGTYPE_MASK2      0x00001800
+
+/** Register types **/
 typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE {
   WINED3DSPR_TEMP         =  0, 
   WINED3DSPR_INPUT        =  1,

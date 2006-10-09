@@ -508,7 +508,7 @@ static void shader_glsl_add_dst(DWORD param, const char* reg_name, char* reg_mas
     char cast[6];
     
     if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT)
-         && ((param & D3DSP_REGNUM_MASK) != 0)) {
+         && ((param & WINED3DSP_REGNUM_MASK) != 0)) {
         /* gl_FogFragCoord or glPointSize - both floats */
         strcpy(cast, "float");
         strcpy(reg_mask, "");
@@ -598,7 +598,7 @@ static void shader_glsl_get_register_name(
     /* oPos, oFog and oPts in D3D */
     const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
-    DWORD reg = param & D3DSP_REGNUM_MASK;
+    DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -1331,13 +1331,13 @@ void shader_glsl_breakc(SHADER_OPCODE_ARG* arg) {
 
 void shader_glsl_label(SHADER_OPCODE_ARG* arg) {
 
-    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
     shader_addline(arg->buffer, "}\n");
     shader_addline(arg->buffer, "void subroutine%lu () {\n",  snum);
 }
 
 void shader_glsl_call(SHADER_OPCODE_ARG* arg) {
-    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
     shader_addline(arg->buffer, "subroutine%lu();\n", snum);
 }
 
@@ -1347,7 +1347,7 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
     char src1_reg[50];
     char src1_mask[6];
    
-    DWORD snum = (arg->src[0]) & D3DSP_REGNUM_MASK;
+    DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
     shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
     shader_addline(arg->buffer, "if (%s) subroutine%lu();\n", src1_str, snum);
 }
@@ -1368,7 +1368,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     char dst_str[100],   dst_reg[50],  dst_mask[6];
     char coord_str[100], coord_reg[50], coord_mask[6];
     char sampler_str[100], sampler_reg[50], sampler_mask[6];
-    DWORD reg_dest_code = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg_dest_code = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD sampler_code, sampler_type;
 
     /* All versions have a destination register */
@@ -1389,7 +1389,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     }       
     else {
         shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, sampler_reg, sampler_mask, sampler_str);
-        sampler_code = arg->src[1] & D3DSP_REGNUM_MASK;
+        sampler_code = arg->src[1] & WINED3DSP_REGNUM_MASK;
     }         
 
     sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
@@ -1446,10 +1446,10 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, tmpReg, tmpMask, tmpStr);
 
     if (hex_version != D3DPS_VERSION(1,4)) {
-        DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+        DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "%s = clamp(gl_TexCoord[%u], 0.0, 1.0);\n", tmpReg, reg);
     } else {
-        DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+        DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "%s = gl_TexCoord[%u]%s;\n", tmpStr, reg2, tmpMask);
    }
 }
@@ -1459,7 +1459,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
  * then perform a 1D texture lookup from stage dstregnum, place into dst. */
 void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
 
-    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
     char src0_str[100], dst_str[100];
     char src0_name[50], dst_name[50];
     char src0_mask[6],  dst_mask[6];
@@ -1475,7 +1475,7 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
  * Take a 3-component dot product of the TexCoord[dstreg] and src. */
 void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
 
-    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
     char src0_str[100], dst_str[100];
     char src0_name[50], dst_name[50];
     char src0_mask[6],  dst_mask[6];
@@ -1507,7 +1507,7 @@ void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
  */
 void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
     
-    DWORD dstreg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
     char src0_str[100], dst_str[100];
     char src0_name[50], dst_name[50];
     char src0_mask[6],  dst_mask[6];
@@ -1523,7 +1523,7 @@ void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
  * Calculate the 1st of a 2-row matrix multiplication. */
 void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_str[100];
     char src0_name[50];
@@ -1538,7 +1538,7 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     char src0_str[100];
@@ -1554,7 +1554,7 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     /* FIXME: Make this work for more than just 2D textures */
     
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_str[100];
     char src0_name[50];
@@ -1573,8 +1573,8 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
     char src0_mask[6];
     char dimensions[5];
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
     DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
@@ -1603,7 +1603,7 @@ void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
     char src0_str[100];
     char src0_name[50];
     char src0_mask[6];
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     
@@ -1619,7 +1619,7 @@ void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
 void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     char dimensions[5];
     char src0_str[100], src0_name[50], src0_mask[6];
     char src1_str[100], src1_name[50], src1_mask[6];
@@ -1657,7 +1657,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     char src0_str[100], src0_name[50], src0_mask[6];
@@ -1693,8 +1693,8 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
  * FIXME: Should apply the BUMPMAPENV matrix.  For now, just sample the texture */
 void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
 
-    DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
-    DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
 
     FIXME("Not applying the BUMPMAPENV matrix for pixel shader instruction texbem.\n");
     shader_addline(arg->buffer, "T%u = texture2D(Psampler%u, gl_TexCoord[%u].xy + T%u.xy);\n",
@@ -1709,7 +1709,7 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     char dst_str[100], src0_str[100];
     char dst_reg[50], src0_reg[50];
     char dst_mask[6], src0_mask[6];
-    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
 
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
@@ -1727,7 +1727,7 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
     char dst_str[100], src0_str[100];
     char dst_reg[50], src0_reg[50];
     char dst_mask[6], src0_mask[6];
-    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
 
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
@@ -1746,7 +1746,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     char dst_reg[50], src0_reg[50];
     char dst_mask[6], src0_mask[6];
     char dimensions[5];
-    DWORD src0_regnum = arg->src[0] & D3DSP_REGNUM_MASK;
+    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
     DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
     switch (stype) {
         case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;

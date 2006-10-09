@@ -627,7 +627,7 @@ static void vshader_set_input(
 
     /* Fake register; set reserved bit, regnum, type: input, wmask: all */
     DWORD reg_token = (0x1 << 31) |
-        D3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << D3DSP_REGTYPE_SHIFT) | regnum;
+        D3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << WINED3DSP_REGTYPE_SHIFT) | regnum;
 
     This->semantics_in[regnum].usage = usage_token;
     This->semantics_in[regnum].reg = reg_token;
@@ -913,7 +913,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             if (curOpcode->num_params > 0) {
                 /* TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken); */
                 for (i = 0; i < curOpcode->num_params; ++i) {
-                    DWORD reg = pToken[i] & D3DSP_REGNUM_MASK;
+                    DWORD reg = pToken[i] & WINED3DSP_REGNUM_MASK;
                     DWORD regtype = shader_get_regtype(pToken[i]);
     
                     switch (regtype) {

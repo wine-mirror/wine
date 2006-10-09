@@ -158,7 +158,7 @@ int shader_skip_unrecognized(
 
 unsigned int shader_get_float_offset(const DWORD reg) {
 
-     unsigned int regnum = reg & D3DSP_REGNUM_MASK;
+     unsigned int regnum = reg & WINED3DSP_REGNUM_MASK;
      int regtype = shader_get_regtype(reg);
 
      switch (regtype) {
@@ -223,7 +223,7 @@ HRESULT shader_get_registers_used(
             DWORD usage = *pToken++;
             DWORD param = *pToken++;
             DWORD regtype = shader_get_regtype(param);
-            unsigned int regnum = param & D3DSP_REGNUM_MASK;
+            unsigned int regnum = param & WINED3DSP_REGNUM_MASK;
 
             /* Vshader: mark attributes used
                Pshader: mark 3.0 input registers used, save token */
@@ -251,7 +251,7 @@ HRESULT shader_get_registers_used(
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
             memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsF, &lconst->entry);
             pToken += curOpcode->num_params;
@@ -260,7 +260,7 @@ HRESULT shader_get_registers_used(
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
             memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
             pToken += curOpcode->num_params;
@@ -269,7 +269,7 @@ HRESULT shader_get_registers_used(
 
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & D3DSP_REGNUM_MASK;
+            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
             memcpy(&lconst->value, pToken + 1, 1 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsB, &lconst->entry);
             pToken += curOpcode->num_params;
@@ -283,7 +283,7 @@ HRESULT shader_get_registers_used(
         /* For subroutine prototypes */
         } else if (WINED3DSIO_LABEL == curOpcode->opcode) {
 
-            DWORD snum = *pToken & D3DSP_REGNUM_MASK; 
+            DWORD snum = *pToken & WINED3DSP_REGNUM_MASK; 
             reg_maps->labels[snum] = 1;
             pToken += curOpcode->num_params;
  
@@ -299,7 +299,7 @@ HRESULT shader_get_registers_used(
                  WINED3DSIO_TEXM3x3TEX == curOpcode->opcode)) {
 
                 /* Fake sampler usage, only set reserved bit and ttype */
-                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
 
                 if(!stateBlock->textures[sampler_code]) {
                     ERR("No texture bound to sampler %d\n", sampler_code);
@@ -337,13 +337,13 @@ HRESULT shader_get_registers_used(
                  * FIXME: This could be either Cube or Volume, but we wouldn't know unless
                  * we waited to generate the shader until the textures were all bound.
                  * For now, use Cube textures because they are more common. */
-                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
             } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
                 (WINED3DSIO_TEXDP3TEX == curOpcode->opcode)) {
                 
                 /* 1D Sampler usage */
-                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_1D;
             }
 
@@ -363,7 +363,7 @@ HRESULT shader_get_registers_used(
                 pToken += shader_get_param(iface, pToken, &param, &addr_token);
 
                 regtype = shader_get_regtype(param);
-                reg = param & D3DSP_REGNUM_MASK;
+                reg = param & WINED3DSP_REGNUM_MASK;
 
                 if (WINED3DSPR_TEXTURE == regtype) { /* vs: WINED3DSPR_ADDR */
 
@@ -505,7 +505,7 @@ void shader_dump_param(
     static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     char swizzle_reg_chars[4];
 
-    DWORD reg = param & D3DSP_REGNUM_MASK;
+    DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
     DWORD modifier = param & D3DSP_SRCMOD_MASK;
 
@@ -877,7 +877,7 @@ void shader_trace_init(
                         len += 5;
                 } else if (curOpcode->opcode == WINED3DSIO_DEFI) {
 
-                        TRACE("defi i%u = %d, %d, %d, %d", *pToken & D3DSP_REGNUM_MASK,
+                        TRACE("defi i%u = %d, %d, %d, %d", *pToken & WINED3DSP_REGNUM_MASK,
                             *(pToken + 1),
                             *(pToken + 2),
                             *(pToken + 3),
@@ -888,7 +888,7 @@ void shader_trace_init(
 
                 } else if (curOpcode->opcode == WINED3DSIO_DEFB) {
 
-                        TRACE("defb b%u = %s", *pToken & D3DSP_REGNUM_MASK,
+                        TRACE("defb b%u = %s", *pToken & WINED3DSP_REGNUM_MASK,
                             *(pToken + 1)? "true": "false");
 
                         pToken += 2;

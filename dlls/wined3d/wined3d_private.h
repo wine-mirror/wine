@@ -1668,8 +1668,8 @@ extern void print_glsl_info_log(
     GLhandleARB obj);
 
 inline static int shader_get_regtype(const DWORD param) {
-    return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
-            ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
+    return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |
+            ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2));
 }
 
 extern unsigned int shader_get_float_offset(const DWORD reg);

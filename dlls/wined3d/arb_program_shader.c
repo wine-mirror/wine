@@ -310,7 +310,7 @@ static void vshader_program_add_input_param_swizzle(const DWORD param, int is_co
 static void pshader_get_register_name(
     const DWORD param, char* regstr) {
 
-    DWORD reg = param & D3DSP_REGNUM_MASK;
+    DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
 
     switch (regtype) {
@@ -363,7 +363,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   /* oPos, oFog and oPts in D3D */
   static const char* hwrastout_reg_names[] = { "TMP_OUT", "TMP_FOG", "result.pointsize" };
 
-  DWORD reg = param & D3DSP_REGNUM_MASK;
+  DWORD reg = param & WINED3DSP_REGNUM_MASK;
   DWORD regtype = shader_get_regtype(param);
   char  tmpReg[255];
   BOOL is_color = FALSE;
@@ -633,7 +633,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     DWORD sampler_type;
 
     /* All versions have a destination register */
-    reg_dest_code = dst & D3DSP_REGNUM_MASK;
+    reg_dest_code = dst & WINED3DSP_REGNUM_MASK;
     pshader_get_register_name(dst, reg_dest);
 
     /* 1.0-1.3: Use destination register as coordinate source.
@@ -648,7 +648,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   if (hex_version < D3DPS_VERSION(2,0))
      reg_sampler_code = reg_dest_code;
   else
-     reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
+     reg_sampler_code = src[1] & WINED3DSP_REGNUM_MASK;
 
   sampler_type = arg->reg_maps->samplers[reg_sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
   switch(sampler_type) {
@@ -693,11 +693,11 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
     char tmp[20];
     pshader_get_write_mask(dst, tmp);
     if (hex_version != D3DPS_VERSION(1,4)) {
-        DWORD reg = dst & D3DSP_REGNUM_MASK;
+        DWORD reg = dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
-        DWORD reg1 = dst & D3DSP_REGNUM_MASK;
-        DWORD reg2 = src[0] & D3DSP_REGNUM_MASK;
+        DWORD reg1 = dst & WINED3DSP_REGNUM_MASK;
+        DWORD reg2 = src[0] & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV R%u%s, fragment.texcoord[%u];\n", reg1, tmp, reg2);
    }
 }
@@ -706,8 +706,8 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
 
-     DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+     DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
      shader_addline(buffer, "MOV TMP.r, T%u.a;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.r;\n", reg2);
      shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
@@ -717,8 +717,8 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
 
-     DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+     DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
      shader_addline(buffer, "MOV TMP.r, T%u.g;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.b;\n", reg2);
      shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
@@ -727,8 +727,8 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
-     DWORD reg1 = arg->dst  & D3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+     DWORD reg1 = arg->dst  & WINED3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
 
      /* FIXME: Should apply the BUMPMAPENV matrix */
      shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%u], T%u;\n", reg1, reg2);
@@ -737,7 +737,7 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
@@ -747,7 +747,7 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
 
@@ -759,7 +759,7 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
@@ -772,7 +772,7 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
@@ -788,7 +788,7 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
@@ -814,8 +814,8 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
-    DWORD reg3 = arg->src[1] & D3DSP_REGNUM_MASK;
+    DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD reg3 = arg->src[1] & WINED3DSP_REGNUM_MASK;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_name[50];
