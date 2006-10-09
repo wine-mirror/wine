@@ -5867,11 +5867,53 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
  * (coclass).
  */
 static HRESULT WINAPI ITypeInfo_fnCreateInstance( ITypeInfo2 *iface,
-        IUnknown *pUnk, REFIID riid, VOID  **ppvObj)
+        IUnknown *pOuterUnk, REFIID riid, VOID  **ppvObj)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    FIXME("(%p) stub!\n", This);
-    return S_OK;
+    HRESULT hr;
+    TYPEATTR *pTA;
+
+    TRACE("(%p)->(%p, %s, %p)\n", This, pOuterUnk, debugstr_guid(riid), ppvObj);
+
+    *ppvObj = NULL;
+
+    if(pOuterUnk)
+    {
+        WARN("Not able to aggregate\n");
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    hr = ITypeInfo_GetTypeAttr(iface, &pTA);
+    if(FAILED(hr)) return hr;
+
+    if(pTA->typekind != TKIND_COCLASS)
+    {
+        WARN("CreateInstance on typeinfo of type %x\n", pTA->typekind);
+        hr = E_INVALIDARG;
+        goto end;
+    }
+
+    hr = S_FALSE;
+    if(pTA->wTypeFlags & TYPEFLAG_FAPPOBJECT)
+    {
+        IUnknown *pUnk;
+        hr = GetActiveObject(&pTA->guid, NULL, &pUnk);
+        TRACE("GetActiveObject rets %08lx\n", hr);
+        if(hr == S_OK)
+        {
+            hr = IUnknown_QueryInterface(pUnk, riid, ppvObj);
+            IUnknown_Release(pUnk);
+        }
+    }
+
+    if(hr != S_OK)
+        hr = CoCreateInstance(&pTA->guid, NULL,
+                              CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER,
+                              riid, ppvObj);
+
+end:
+    ITypeInfo_ReleaseTypeAttr(iface, pTA);
+    return hr;
 }
 
 /* ITypeInfo::GetMops
