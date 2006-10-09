@@ -915,7 +915,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue,
         msi_free(path);
         if (parent)
         {
-            path = msi_alloc(strlenW(parent) + strlenW(expanded) + 1);
+            path = msi_alloc((strlenW(parent) + strlenW(expanded) + 1) * sizeof(WCHAR));
             if (!path)
                 goto end;
             strcpyW(path, parent);
