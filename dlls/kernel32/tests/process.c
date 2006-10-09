@@ -330,13 +330,13 @@ static void     doChild(const char* file, const char* option)
         ok(SetConsoleCP(1252), "Setting CP\n");
         ok(SetConsoleOutputCP(1252), "Setting SB CP\n");
         ret = SetConsoleMode(hConIn, modeIn ^ 1);
-        ok( ret, "Setting mode (%ld)\n", GetLastError());
+        ok( ret, "Setting mode (%d)\n", GetLastError());
         ret = SetConsoleMode(hConOut, modeOut ^ 1);
-        ok( ret, "Setting mode (%ld)\n", GetLastError());
+        ok( ret, "Setting mode (%d)\n", GetLastError());
         sbi.dwCursorPosition.X ^= 1;
         sbi.dwCursorPosition.Y ^= 1;
         ret = SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition);
-        ok( ret, "Setting cursor position (%ld)\n", GetLastError());
+        ok( ret, "Setting cursor position (%d)\n", GetLastError());
     }
     if (option && strcmp(option, "stdhandle") == 0)
     {
@@ -825,7 +825,7 @@ static void test_Directory(void)
     memset(&info, 0, sizeof(info));
     ok(!CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L,
                        NULL, "non\\existent\\directory", &startup, &info), "CreateProcess\n");
-    ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", GetLastError());
     ok(!TerminateProcess(info.hProcess, 0), "Child process should not exist\n");
 }
 
@@ -1182,8 +1182,8 @@ static void test_Console(void)
     okChildInt("Console", "InputMode", modeIn);
     okChildInt("Console", "OutputMode", modeOut);
 
-    todo_wine ok(cpInC == 1252, "Wrong console CP (expected 1252 got %ld/%ld)\n", cpInC, cpIn);
-    todo_wine ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %ld/%ld)\n", cpOutC, cpOut);
+    todo_wine ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
+    todo_wine ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
     ok(modeInC == (modeIn ^ 1), "Wrong console mode\n");
     ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode\n");
     ok(sbiC.dwCursorPosition.X == (sbi.dwCursorPosition.X ^ 1), "Wrong cursor position\n");
@@ -1220,7 +1220,7 @@ static void test_Console(void)
 
     msg_len = strlen(msg) + 1;
     ok(WriteFile(hParentOut, msg, msg_len, &w, NULL), "Writing to child\n");
-    ok(w == msg_len, "Should have written %u bytes, actually wrote %lu\n", msg_len, w);
+    ok(w == msg_len, "Should have written %u bytes, actually wrote %u\n", msg_len, w);
     memset(buffer, 0, sizeof(buffer));
     ok(ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL), "Reading from child\n");
     ok(strcmp(buffer, msg) == 0, "Should have received '%s'\n", msg);

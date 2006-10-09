@@ -188,7 +188,7 @@ static void test_Global(void)
 
 /* Check that a 'zeroing' alloc works */
     mem2=GlobalAlloc(GMEM_ZEROINIT,memchunk);
-    ok(mem2!=NULL,"GlobalAlloc failed: error=%ld\n",GetLastError());
+    ok(mem2!=NULL,"GlobalAlloc failed: error=%d\n",GetLastError());
     if(mem2) {
       ok(GlobalSize(mem2)>=memchunk,"GlobalAlloc should return a big enough memory block\n");
       mem2ptr=GlobalLock(mem2);
@@ -272,18 +272,18 @@ static void test_Local(void)
 
 /* Check that a normal alloc works */
     mem1=LocalAlloc(0,memchunk);
-    ok(mem1!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
+    ok(mem1!=NULL,"LocalAlloc failed: error=%d\n",GetLastError());
     if(mem1) {
       ok(LocalSize(mem1)>=memchunk, "LocalAlloc should return a big enough memory block\n");
     }
 
 /* Check that a 'zeroing' and lock alloc works */
     mem2=LocalAlloc(LMEM_ZEROINIT|LMEM_MOVEABLE,memchunk);
-    ok(mem2!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
+    ok(mem2!=NULL,"LocalAlloc failed: error=%d\n",GetLastError());
     if(mem2) {
       ok(LocalSize(mem2)>=memchunk,"LocalAlloc should return a big enough memory block\n");
       mem2ptr=LocalLock(mem2);
-      ok(mem2ptr!=NULL,"LocalLock: error=%ld\n",GetLastError());
+      ok(mem2ptr!=NULL,"LocalLock: error=%d\n",GetLastError());
       if(mem2ptr) {
         error=0;
         for(i=0;i<memchunk;i++) {
@@ -295,7 +295,7 @@ static void test_Local(void)
         SetLastError(0);
         error=LocalUnlock(mem2);
         ok(error==0 && GetLastError()==NO_ERROR,
-           "LocalUnlock Failed: rc=%d err=%ld\n",error,GetLastError());
+           "LocalUnlock Failed: rc=%d err=%d\n",error,GetLastError());
       }
     }
    mem2a=LocalFree(mem2);
@@ -303,11 +303,11 @@ static void test_Local(void)
 
 /* Reallocate mem2 as moveable memory */
    mem2=LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT,memchunk);
-   ok(mem2!=NULL, "LocalAlloc failed to create moveable memory, error=%ld\n",GetLastError());
+   ok(mem2!=NULL, "LocalAlloc failed to create moveable memory, error=%d\n",GetLastError());
 
 /* Check that ReAllocing memory works as expected */
     mem2a=LocalReAlloc(mem2,2*memchunk,LMEM_MOVEABLE | LMEM_ZEROINIT);
-    ok(mem2a!=NULL,"LocalReAlloc failed, error=%ld\n",GetLastError());
+    ok(mem2a!=NULL,"LocalReAlloc failed, error=%d\n",GetLastError());
     if(mem2a) {
       ok(LocalSize(mem2a)>=2*memchunk,"LocalReAlloc failed\n");
       mem2ptr=LocalLock(mem2a);

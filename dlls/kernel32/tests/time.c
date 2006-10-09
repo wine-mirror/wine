@@ -85,7 +85,7 @@ static void test_conversions(void)
     SETUP_ATIME(st)
     ok (SystemTimeToFileTime(&st,&ft), "Conversion Failed ATIME\n");
     ok( (!((ft.dwHighDateTime != ATIME_HI) || (ft.dwLowDateTime!=ATIME_LOW))),
-        "Wrong time for ATIME: %08lx %08lx (correct %08x %08x)\n",
+        "Wrong time for ATIME: %08x %08x (correct %08x %08x)\n",
         ft.dwLowDateTime, ft.dwHighDateTime, ATIME_LOW, ATIME_HI);
 
 
@@ -94,7 +94,7 @@ static void test_conversions(void)
 
     ok( (!((ft.dwHighDateTime != MAYDAY_2002_HI) ||
          (ft.dwLowDateTime!=MAYDAY_2002_LO))),
-        "Wrong time for 2002 %08lx %08lx (correct %08x %08x)\n", ft.dwLowDateTime,
+        "Wrong time for 2002 %08x %08x (correct %08x %08x)\n", ft.dwLowDateTime,
         ft.dwHighDateTime, MAYDAY_2002_LO, MAYDAY_2002_HI);
 
 
@@ -103,7 +103,7 @@ static void test_conversions(void)
 
     ok( (!((ft.dwHighDateTime!=NEWYEAR_1980_HI) ||
         (ft.dwLowDateTime!=NEWYEAR_1980_LO))) ,
-        "Wrong time for 1980 %08lx %08lx (correct %08x %08x)\n", ft.dwLowDateTime,
+        "Wrong time for 1980 %08x %08x (correct %08x %08x)\n", ft.dwLowDateTime,
          ft.dwHighDateTime, NEWYEAR_1980_LO,NEWYEAR_1980_HI  );
 
     ok(DosDateTimeToFileTime(DOS_DATE(1980,1,1),DOS_TIME(0,0,0),&ft),
@@ -111,7 +111,7 @@ static void test_conversions(void)
 
     ok( (!((ft.dwHighDateTime!=NEWYEAR_1980_HI) ||
          (ft.dwLowDateTime!=NEWYEAR_1980_LO))),
-        "Wrong time DosDateTimeToFileTime %08lx %08lx (correct %08x %08x)\n",
+        "Wrong time DosDateTimeToFileTime %08x %08x (correct %08x %08x)\n",
         ft.dwHighDateTime, ft.dwLowDateTime, NEWYEAR_1980_HI, NEWYEAR_1980_LO);
 
 }
@@ -129,7 +129,7 @@ static void test_invalid_arg(void)
         "DosDateTimeToFileTime() failed\n");
 
     ok( (ft.dwHighDateTime==NEWYEAR_1980_HI) && (ft.dwLowDateTime==NEWYEAR_1980_LO),
-        "filetime for 1/1/80 00:00:00 was %08lx %08lx\n", ft.dwHighDateTime, ft.dwLowDateTime);
+        "filetime for 1/1/80 00:00:00 was %08x %08x\n", ft.dwHighDateTime, ft.dwLowDateTime);
 
     /* now check SystemTimeToFileTime */
     memset(&ft,0,sizeof ft);
@@ -184,7 +184,7 @@ static void test_FileTimeToSystemTime(void)
     ft.dwLowDateTime  = 0;
     ret = FileTimeToSystemTime(&ft, &st);
     ok( ret,
-       "FileTimeToSystemTime() failed with Error 0x%08lx\n",GetLastError());
+       "FileTimeToSystemTime() failed with Error 0x%08x\n",GetLastError());
     ok(((st.wYear == 1601) && (st.wMonth  == 1) && (st.wDay    == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 0) &&
 	(st.wMilliseconds == 0)),
@@ -194,7 +194,7 @@ static void test_FileTimeToSystemTime(void)
     ft.dwLowDateTime  = (UINT)time;
     ret = FileTimeToSystemTime(&ft, &st);
     ok( ret,
-       "FileTimeToSystemTime() failed with Error 0x%08lx\n",GetLastError());
+       "FileTimeToSystemTime() failed with Error 0x%08x\n",GetLastError());
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
 	(st.wMilliseconds == 0)),
@@ -221,7 +221,7 @@ static void test_FileTimeToLocalFileTime(void)
     ft.dwLowDateTime  = (UINT)time;
     ret = FileTimeToLocalFileTime(&ft, &lft);
     ok( ret,
-       "FileTimeToLocalFileTime() failed with Error 0x%08lx\n",GetLastError());
+       "FileTimeToLocalFileTime() failed with Error 0x%08x\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
@@ -235,7 +235,7 @@ static void test_FileTimeToLocalFileTime(void)
     ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     ret = FileTimeToLocalFileTime(&ft, &lft);
     ok( ret,
-       "FileTimeToLocalFileTime() failed with Error 0x%08lx\n",GetLastError());
+       "FileTimeToLocalFileTime() failed with Error 0x%08x\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&

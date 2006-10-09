@@ -108,16 +108,16 @@ static void InitFunctionPointers(void)
 
 #define EXPECT_LEN(len) ok(ret == (len), "Expected Len %d, got %d\n", (int)(len), ret)
 #define EXPECT_INVALID  ok(GetLastError() == ERROR_INVALID_PARAMETER, \
- "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError())
+ "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError())
 #define EXPECT_BUFFER  ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, \
- "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError())
+ "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError())
 #define EXPECT_FLAGS  ok(GetLastError() == ERROR_INVALID_FLAGS, \
- "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError())
+ "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError())
 #define EXPECT_INVALIDFLAGS ok(GetLastError() == ERROR_INVALID_FLAGS || \
   GetLastError() == ERROR_INVALID_PARAMETER, \
- "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError())
+ "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError())
 #define EXPECT_VALID    ok(GetLastError() == 0, \
- "Expected GetLastError() == 0, got %ld\n", GetLastError())
+ "Expected GetLastError() == 0, got %d\n", GetLastError())
 
 #define STRINGSA(x,y) strcpy(input, x); strcpy(Expected, y); SetLastError(0); buffer[0] = '\0'
 #define EXPECT_LENA EXPECT_LEN((int)strlen(Expected)+1)
@@ -140,7 +140,7 @@ static void test_GetLocaleInfoA(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   char buffer[BUFFER_SIZE];
 
-  ok(lcid == 0x409, "wrong LCID calculated - %ld\n", lcid);
+  ok(lcid == 0x409, "wrong LCID calculated - %d\n", lcid);
 
   /* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
    * partially fill the buffer even if it is too short. See bug 637.
@@ -779,12 +779,12 @@ static void test_CompareStringA(void)
     SetLastError(0xdeadbeef);
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x10, "NULL", -1, "NULL", -1);
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-        "unexpected error code %ld\n", GetLastError());
+        "unexpected error code %d\n", GetLastError());
     ok(!ret, "CompareStringA must fail with invalid flag\n");
 
     SetLastError(0xdeadbeef);
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, LOCALE_USE_CP_ACP, "NULL", -1, "NULL", -1);
-    ok(GetLastError() == 0xdeadbeef, "unexpected error code %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "unexpected error code %d\n", GetLastError());
     ok(ret == CSTR_EQUAL, "CompareStringA error: %d != CSTR_EQUAL\n", ret);
     /* end of test for CompareStringA flags */
 
@@ -957,7 +957,7 @@ static void test_LCMapStringA(void)
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP | LCMAP_LOWERCASE,
                        lower_case, -1, buf, sizeof(buf));
     ok(ret == lstrlenA(lower_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenA(lower_case) + 1);
     ok(!memcmp(buf, lower_case, ret), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
 
@@ -965,38 +965,38 @@ static void test_LCMapStringA(void)
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HIRAGANA | LCMAP_KATAKANA,
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
                        upper_case, -1, buf, sizeof(buf));
     ok(!ret, "LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
     SetLastError(0xdeadbeef);
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | SORT_STRINGSORT,
                        upper_case, -1, buf, sizeof(buf));
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
     ok(!ret, "SORT_STRINGSORT without LCMAP_SORTKEY must fail\n");
 
     /* test LCMAP_LOWERCASE */
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
                        upper_case, -1, buf, sizeof(buf));
     ok(ret == lstrlenA(upper_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenA(upper_case) + 1);
     ok(!lstrcmpA(buf, lower_case), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
 
@@ -1004,7 +1004,7 @@ static void test_LCMapStringA(void)
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
                        lower_case, -1, buf, sizeof(buf));
     ok(ret == lstrlenA(lower_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenA(lower_case) + 1);
     ok(!lstrcmpA(buf, upper_case), "LCMapStringA should return %s, but not %s\n", upper_case, buf);
 
@@ -1024,7 +1024,7 @@ static void test_LCMapStringA(void)
     else
     {
         ok(ret == lstrlenA(lower_case) + 1,
-           "ret %d, error %ld, expected value %d\n",
+           "ret %d, error %d, expected value %d\n",
            ret, GetLastError(), lstrlenA(lower_case) + 1);
         ok(!lstrcmpA(buf, upper_case), "LCMapStringA should return %s, but not %s\n", upper_case, buf);
     }
@@ -1036,7 +1036,7 @@ static void test_LCMapStringA(void)
     else
     {
         ok(ret == lstrlenA(upper_case) + 1,
-           "ret %d, error %ld, expected value %d\n",
+           "ret %d, error %d, expected value %d\n",
            ret, GetLastError(), lstrlenA(lower_case) + 1);
         ok(!lstrcmpA(buf, lower_case), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
     }
@@ -1047,7 +1047,7 @@ static void test_LCMapStringA(void)
                        buf, 10, buf, sizeof(buf));
     ok(GetLastError() == ERROR_INVALID_FLAGS /* NT */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* Win9x */,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
     ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
 
     /* test whether '\0' is always appended */
@@ -1111,7 +1111,7 @@ static void test_LCMapStringA(void)
     ret = LCMapStringA(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
     ok(!ret, "LCMapStringA should fail with srclen = 0\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 }
 
 static void test_LCMapStringW(void)
@@ -1133,38 +1133,38 @@ static void test_LCMapStringW(void)
     }
     ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_HIRAGANA | LCMAP_KATAKANA,
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(!ret, "LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(!ret, "LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n");
     ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 
     /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
     SetLastError(0xdeadbeef);
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | SORT_STRINGSORT,
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
     ok(!ret, "SORT_STRINGSORT without LCMAP_SORTKEY must fail\n");
 
     /* test LCMAP_LOWERCASE */
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(upper_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenW(upper_case) + 1);
     ok(!lstrcmpW(buf, lower_case), "string compare mismatch\n");
 
@@ -1172,7 +1172,7 @@ static void test_LCMapStringW(void)
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
                        lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(lower_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, upper_case), "string compare mismatch\n");
 
@@ -1188,7 +1188,7 @@ static void test_LCMapStringW(void)
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
                        buf, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(lower_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, upper_case), "string compare mismatch\n");
 
@@ -1196,7 +1196,7 @@ static void test_LCMapStringW(void)
     ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
                        buf, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(upper_case) + 1,
-       "ret %d, error %ld, expected value %d\n",
+       "ret %d, error %d, expected value %d\n",
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, lower_case), "string compare mismatch\n");
 
@@ -1206,7 +1206,7 @@ static void test_LCMapStringW(void)
                        buf, 10, buf, sizeof(buf));
     ok(GetLastError() == ERROR_INVALID_FLAGS /* NT */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* Win9x */,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
     ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
 
     /* test whether '\0' is always appended */
@@ -1270,7 +1270,7 @@ static void test_LCMapStringW(void)
     ret = LCMapStringW(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
     ok(!ret, "LCMapStringW should fail with srclen = 0\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "unexpected error code %ld\n", GetLastError());
+       "unexpected error code %d\n", GetLastError());
 }
 
 /* this requires collation table patch to make it MS compatible */
@@ -1774,7 +1774,7 @@ static void test_FoldStringW(void)
   ret = pFoldStringW(MAP_FOLDCZONE, src, -1, dst, 256);
   EXPECT_LEN(2); EXPECT_VALID;
   ok(dst[0] == 'A' && dst[1] == '\0',
-     "srclen=-1: Expected ret=2 [%d,%d], got ret=%d [%d,%d], err=%ld\n",
+     "srclen=-1: Expected ret=2 [%d,%d], got ret=%d [%d,%d], err=%d\n",
      'A', '\0', ret, dst[0], dst[1], GetLastError());
 
   /* If size is given, result is not NUL terminated */
@@ -1786,7 +1786,7 @@ static void test_FoldStringW(void)
   ret = pFoldStringW(MAP_FOLDCZONE, src, 1, dst, 256);
   EXPECT_LEN(1); EXPECT_VALID;
   ok(dst[0] == 'A' && dst[1] == 'X',
-     "srclen=1: Expected ret=1, [%d,%d], got ret=%d,[%d,%d], err=%ld\n",
+     "srclen=1: Expected ret=1, [%d,%d], got ret=%d,[%d,%d], err=%d\n",
      'A','X', ret, dst[0], dst[1], GetLastError());
 
   /* MAP_FOLDDIGITS */
@@ -1893,7 +1893,7 @@ static void test_FoldStringW(void)
 
 
 #define LCID_OK(l) \
-  ok(lcid == l, "Expected lcid = %08lx, got %08lx\n", l, lcid)
+  ok(lcid == l, "Expected lcid = %08x, got %08x\n", l, lcid)
 #define MKLCID(x,y,z) MAKELCID(MAKELANGID(x, y), z)
 #define LCID_RES(src, res) lcid = ConvertDefaultLocale(src); LCID_OK(res)
 #define TEST_LCIDLANG(a,b) LCID_RES(MAKELCID(a,b), MAKELCID(a,b))
@@ -1935,15 +1935,15 @@ static void test_ConvertDefaultLocale(void)
 static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
                                     DWORD dwFlags, LONG_PTR lParam)
 {
-  trace("%08lx, %s, %s, %08lx, %08lx\n",
+  trace("%08x, %s, %s, %08x, %08lx\n",
         lgrpid, lpszNum, lpszName, dwFlags, lParam);
 
   ok(pIsValidLanguageGroup(lgrpid, dwFlags) == TRUE,
-     "Enumerated grp %ld not valid (flags %ld)\n", lgrpid, dwFlags);
+     "Enumerated grp %d not valid (flags %d)\n", lgrpid, dwFlags);
 
   /* If lParam is one, we are calling with flags defaulted from 0 */
   ok(!lParam || (dwFlags == LGRPID_INSTALLED || dwFlags == LGRPID_SUPPORTED),
-	 "Expected dwFlags == LGRPID_INSTALLED || dwFlags == LGRPID_SUPPORTED, got %ld\n", dwFlags);
+         "Expected dwFlags == LGRPID_INSTALLED || dwFlags == LGRPID_SUPPORTED, got %d\n", dwFlags);
 
   return TRUE;
 }
@@ -1976,12 +1976,12 @@ static void test_EnumSystemLanguageGroupsA(void)
 static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
                                       LONG_PTR lParam)
 {
-  trace("%08lx, %08lx, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
+  trace("%08x, %08x, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
 
   ok(pIsValidLanguageGroup(lgrpid, LGRPID_SUPPORTED) == TRUE,
-     "Enumerated grp %ld not valid\n", lgrpid);
+     "Enumerated grp %d not valid\n", lgrpid);
   ok(IsValidLocale(lcid, LCID_SUPPORTED) == TRUE,
-     "Enumerated grp locale %ld not valid\n", lcid);
+     "Enumerated grp locale %d not valid\n", lcid);
   return TRUE;
 }
 
@@ -2101,56 +2101,56 @@ static void test_EnumDateFormatsA(void)
     trace("EnumDateFormatsA 0\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, 0);
-    ok(ret, "EnumDateFormatsA(0) error %ld\n", GetLastError());
+    ok(ret, "EnumDateFormatsA(0) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
     trace("EnumDateFormatsA LOCALE_USE_CP_ACP\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, LOCALE_USE_CP_ACP);
-    ok(ret, "EnumDateFormatsA(LOCALE_USE_CP_ACP) error %ld\n", GetLastError());
+    ok(ret, "EnumDateFormatsA(LOCALE_USE_CP_ACP) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
     trace("EnumDateFormatsA DATE_SHORTDATE\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_SHORTDATE);
-    ok(ret, "EnumDateFormatsA(DATE_SHORTDATE) error %ld\n", GetLastError());
+    ok(ret, "EnumDateFormatsA(DATE_SHORTDATE) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
     trace("EnumDateFormatsA DATE_LONGDATE\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_LONGDATE);
-    ok(ret, "EnumDateFormatsA(DATE_LONGDATE) error %ld\n", GetLastError());
+    ok(ret, "EnumDateFormatsA(DATE_LONGDATE) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SLONGDATE, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_SLONGDATE) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_SLONGDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
     trace("EnumDateFormatsA DATE_YEARMONTH\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_YEARMONTH);
-    ok(ret, "EnumDateFormatsA(DATE_YEARMONTH) error %ld\n", GetLastError());
+    ok(ret, "EnumDateFormatsA(DATE_YEARMONTH) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SYEARMONTH, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_SYEARMONTH) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_SYEARMONTH) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 }
 
@@ -2163,23 +2163,23 @@ static void test_EnumTimeFormatsA(void)
     trace("EnumTimeFormatsA 0\n");
     date_fmt_buf[0] = 0;
     ret = EnumTimeFormatsA(enum_datetime_procA, lcid, 0);
-    ok(ret, "EnumTimeFormatsA(0) error %ld\n", GetLastError());
+    ok(ret, "EnumTimeFormatsA(0) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_STIMEFORMAT) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_STIMEFORMAT) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
     trace("EnumTimeFormatsA LOCALE_USE_CP_ACP\n");
     date_fmt_buf[0] = 0;
     ret = EnumTimeFormatsA(enum_datetime_procA, lcid, LOCALE_USE_CP_ACP);
-    ok(ret, "EnumTimeFormatsA(LOCALE_USE_CP_ACP) error %ld\n", GetLastError());
+    ok(ret, "EnumTimeFormatsA(LOCALE_USE_CP_ACP) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT, buf, sizeof(buf));
-    ok(ret, "GetLocaleInfoA(LOCALE_STIMEFORMAT) error %ld\n", GetLastError());
+    ok(ret, "GetLocaleInfoA(LOCALE_STIMEFORMAT) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 }
 

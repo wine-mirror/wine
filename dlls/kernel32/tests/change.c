@@ -49,7 +49,7 @@ static DWORD CALLBACK NotificationThread(LPVOID arg)
     }
 
     ret = FindCloseChangeNotification(change);
-    ok( ret, "FindCloseChangeNotification error: %ld\n",
+    ok( ret, "FindCloseChangeNotification error: %d\n",
        GetLastError());
 
     ExitThread((DWORD)ret);
@@ -61,11 +61,11 @@ static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
     DWORD threadId;
 
     change = FindFirstChangeNotificationA(path, subtree, flags);
-    ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %ld\n", GetLastError());
+    ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %d\n", GetLastError());
 
     thread = CreateThread(NULL, 0, NotificationThread, (LPVOID)change,
                           0, &threadId);
-    ok(thread != INVALID_HANDLE_VALUE, "CreateThread error: %ld\n", GetLastError());
+    ok(thread != INVALID_HANDLE_VALUE, "CreateThread error: %d\n", GetLastError());
 
     return thread;
 }
@@ -75,7 +75,7 @@ static DWORD FinishNotificationThread(HANDLE thread)
     DWORD status, exitcode;
 
     status = WaitForSingleObject(thread, 5000);
-    ok(status == WAIT_OBJECT_0, "WaitForSingleObject status %ld error %ld\n", status, GetLastError());
+    ok(status == WAIT_OBJECT_0, "WaitForSingleObject status %d error %d\n", status, GetLastError());
 
     ok(GetExitCodeThread(thread, &exitcode), "Could not retrieve thread exit code\n");
 
@@ -97,45 +97,45 @@ static void test_FindFirstChangeNotification(void)
 
     change = FindFirstChangeNotificationA("not-a-file", FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(change == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,
-       "FindFirstChangeNotification error: %ld\n", GetLastError());
+       "FindFirstChangeNotification error: %d\n", GetLastError());
 
     if (0) /* This documents win2k behavior. It crashes on win98. */
     { 
         change = FindFirstChangeNotificationA(NULL, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
         ok(change == NULL && GetLastError() == ERROR_PATH_NOT_FOUND,
-        "FindFirstChangeNotification error: %ld\n", GetLastError());
+        "FindFirstChangeNotification error: %d\n", GetLastError());
     }
 
     ret = FindNextChangeNotification(NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindNextChangeNotification error: %ld\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindNextChangeNotification error: %d\n",
        GetLastError());
 
     ret = FindCloseChangeNotification(NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindCloseChangeNotification error: %ld\n",
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindCloseChangeNotification error: %d\n",
        GetLastError());
 
     ret = GetTempPathA(MAX_PATH, workdir);
-    ok(ret, "GetTempPathA error: %ld\n", GetLastError());
+    ok(ret, "GetTempPathA error: %d\n", GetLastError());
 
     lstrcatA(workdir, "testFileChangeNotification");
 
     ret = CreateDirectoryA(workdir, NULL);
-    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
 
     ret = GetTempFileNameA(workdir, prefix, 0, filename1);
-    ok(ret, "GetTempFileNameA error: %ld\n", GetLastError());
+    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
 
     file = CreateFileA(filename1, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %ld\n", GetLastError());
+    ok( ret, "CloseHandle error: %d\n", GetLastError());
 
     /* Try to register notification for a file. win98 and win2k behave differently here */
     change = FindFirstChangeNotificationA(filename1, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ok(change == INVALID_HANDLE_VALUE && (GetLastError() == ERROR_DIRECTORY ||
                                           GetLastError() == ERROR_FILE_NOT_FOUND),
-       "FindFirstChangeNotification error: %ld\n", GetLastError());
+       "FindFirstChangeNotification error: %d\n", GetLastError());
 
     lstrcpyA(dirname1, filename1);
     lstrcatA(dirname1, "dir");
@@ -144,18 +144,18 @@ static void test_FindFirstChangeNotification(void)
     lstrcatA(dirname2, "new");
 
     ret = CreateDirectoryA(dirname1, NULL);
-    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
 
     /* What if we move the directory we registered notification for? */
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
-    ok(ret, "MoveFileA error: %ld\n", GetLastError());
+    ok(ret, "MoveFileA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* What if we remove the directory we registered notification for? */
     thread = StartNotificationThread(dirname2, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = RemoveDirectoryA(dirname2);
-    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
 
     /* win98 and win2k behave differently here */
     ret = FinishNotificationThread(thread);
@@ -166,19 +166,19 @@ static void test_FindFirstChangeNotification(void)
     /* Create a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = CreateDirectoryA(dirname1, NULL);
-    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Rename a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
-    ok(ret, "MoveFileA error: %ld\n", GetLastError());
+    ok(ret, "MoveFileA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Delete a directory */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = RemoveDirectoryA(dirname2);
-    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     lstrcpyA(filename2, filename1);
@@ -187,63 +187,63 @@ static void test_FindFirstChangeNotification(void)
     /* Rename a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ret = MoveFileA(filename1, filename2);
-    ok(ret, "MoveFileA error: %ld\n", GetLastError());
+    ok(ret, "MoveFileA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Delete a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     ret = DeleteFileA(filename2);
-    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
+    ok(ret, "DeleteFileA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Create a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
     file = CreateFileA(filename2, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %ld\n", GetLastError());
+    ok( ret, "CloseHandle error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     attributes = GetFileAttributesA(filename2);
-    ok(attributes != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA error: %ld\n", GetLastError());
+    ok(attributes != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA error: %d\n", GetLastError());
     attributes &= FILE_ATTRIBUTE_READONLY;
 
     /* Change file attributes */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_ATTRIBUTES);
     ret = SetFileAttributesA(filename2, attributes);
-    ok(ret, "SetFileAttributesA error: %ld\n", GetLastError());
+    ok(ret, "SetFileAttributesA error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Change last write time by writing to a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
     file = CreateFileA(filename2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
     ret = WriteFile(file, buffer, sizeof(buffer), &count, NULL);
-    ok(ret && count == sizeof(buffer), "WriteFile error: %ld\n", GetLastError());
+    ok(ret && count == sizeof(buffer), "WriteFile error: %d\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %ld\n", GetLastError());
+    ok( ret, "CloseHandle error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Change file size by truncating a file */
     thread = StartNotificationThread(workdir, FALSE, FILE_NOTIFY_CHANGE_SIZE);
     file = CreateFileA(filename2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
     ret = WriteFile(file, buffer, sizeof(buffer) / 2, &count, NULL);
-    ok(ret && count == sizeof(buffer) / 2, "WriteFileA error: %ld\n", GetLastError());
+    ok(ret && count == sizeof(buffer) / 2, "WriteFileA error: %d\n", GetLastError());
     ret = CloseHandle(file);
-    ok( ret, "CloseHandle error: %ld\n", GetLastError());
+    ok( ret, "CloseHandle error: %d\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* clean up */
     
     ret = DeleteFileA(filename2);
-    ok(ret, "DeleteFileA error: %ld\n", GetLastError());
+    ok(ret, "DeleteFileA error: %d\n", GetLastError());
 
     ret = RemoveDirectoryA(workdir);
-    ok(ret, "RemoveDirectoryA error: %ld\n", GetLastError());
+    ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
 }
 
 /* this test concentrates more on the wait behaviour of the handle */

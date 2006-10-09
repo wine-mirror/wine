@@ -54,11 +54,11 @@ static void testGetModuleFileName(const char* name)
         ok(len1W > 0, "Getting module filename for handle %p\n", hMod);
     }
 
-    ok(len1A == strlen(bufA), "Unexpected length of GetModuleFilenameA (%ld/%d)\n", len1A, lstrlenA(bufA));
+    ok(len1A == strlen(bufA), "Unexpected length of GetModuleFilenameA (%d/%d)\n", len1A, lstrlenA(bufA));
 
     if (is_unicode_enabled)
     {
-        ok(len1W == lstrlenW(bufW), "Unexpected length of GetModuleFilenameW (%ld/%d)\n", len1W, lstrlenW(bufW));
+        ok(len1W == lstrlenW(bufW), "Unexpected length of GetModuleFilenameW (%d/%d)\n", len1W, lstrlenW(bufW));
         ok(cmpStrAW(bufA, bufW, len1A, len1W), "Comparing GetModuleFilenameAW results\n");
     }
 
@@ -73,12 +73,12 @@ static void testGetModuleFileName(const char* name)
         len2W = GetModuleFileNameW(hMod, bufW, len1W / 2);
         ok(len2W > 0, "Getting module filename for handle %p\n", hMod);
         ok(cmpStrAW(bufA, bufW, len2A, len2W), "Comparing GetModuleFilenameAW results with buffer too small\n" );
-        ok(len1W / 2 == len2W, "Correct length in GetModuleFilenameW with buffer too small (%ld/%ld)\n", len1W / 2, len2W);
+        ok(len1W / 2 == len2W, "Correct length in GetModuleFilenameW with buffer too small (%d/%d)\n", len1W / 2, len2W);
     }
 
     ok(len1A / 2 == len2A || 
        len1A / 2 == len2A + 1, /* Win9x */
-       "Correct length in GetModuleFilenameA with buffer too small (%ld/%ld)\n", len1A / 2, len2A);
+       "Correct length in GetModuleFilenameA with buffer too small (%d/%d)\n", len1A / 2, len2A);
 }
 
 static void testGetModuleFileName_Wrong(void)
@@ -109,11 +109,11 @@ static void testLoadLibraryA(void)
     SetLastError(0xdeadbeef);
     hModule = LoadLibraryA("kernel32.dll");
     ok( hModule != NULL, "kernel32.dll should be loadable\n");
-    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08lx\n", GetLastError());
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
 
     fp = GetProcAddress(hModule, "CreateFileA");
     ok( fp != NULL, "CreateFileA should be there\n");
-    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08lx\n", GetLastError());
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hModule1 = LoadLibraryA("kernel32   ");
@@ -121,7 +121,7 @@ static void testLoadLibraryA(void)
     if (GetLastError() != ERROR_DLL_NOT_FOUND)
     {
         ok( hModule1 != NULL, "\"kernel32   \" should be loadable\n");
-        ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08lx\n", GetLastError());
+        ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
         ok( hModule == hModule1, "Loaded wrong module\n");
         FreeLibrary(hModule1);
     }
@@ -137,7 +137,7 @@ static void testLoadLibraryA_Wrong(void)
     hModule = LoadLibraryA("non_ex_pv.dll");
     ok( !hModule, "non_ex_pv.dll should be not loadable\n");
     ok( GetLastError() == ERROR_MOD_NOT_FOUND || GetLastError() == ERROR_DLL_NOT_FOUND, 
-        "Expected ERROR_MOD_NOT_FOUND or ERROR_DLL_NOT_FOUND (win9x), got %08lx\n", GetLastError());
+        "Expected ERROR_MOD_NOT_FOUND or ERROR_DLL_NOT_FOUND (win9x), got %08x\n", GetLastError());
 
     /* Just in case */
     FreeLibrary(hModule);
@@ -151,13 +151,13 @@ static void testGetProcAddress_Wrong(void)
     fp = GetProcAddress(NULL, "non_ex_call");
     ok( !fp, "non_ex_call should not be found\n");
     ok( GetLastError() == ERROR_PROC_NOT_FOUND || GetLastError() == ERROR_INVALID_HANDLE,
-        "Expected ERROR_PROC_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08lx\n", GetLastError());
+        "Expected ERROR_PROC_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     fp = GetProcAddress((HMODULE)0xdeadbeef, "non_ex_call");
     ok( !fp, "non_ex_call should not be found\n");
     ok( GetLastError() == ERROR_MOD_NOT_FOUND || GetLastError() == ERROR_INVALID_HANDLE,
-        "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08lx\n", GetLastError());
+        "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08x\n", GetLastError());
 }
 
 START_TEST(module)

@@ -211,12 +211,12 @@ static void test_get_atom_name(void)
 	{
 	    ok(GetLastError() == (i ? ERROR_MORE_DATA : ERROR_INVALID_PARAMETER) ||
                GetLastError() == 0xdeadbeef,  /* the Win 9x way */
-	       "wrong error conditions %lu for %u\n", GetLastError(), i);
+               "wrong error conditions %u for %u\n", GetLastError(), i);
 	}
 	else /* the Win 9x way */
 	{
 	    ok(GetLastError() == 0xdeadbeef,
-	       "wrong error conditions %lu for %u\n", GetLastError(), i);
+               "wrong error conditions %u for %u\n", GetLastError(), i);
 	}
     }
 
@@ -251,11 +251,11 @@ static void test_get_atom_name(void)
     len = GlobalGetAtomNameA(atom, out, 10);
     if (!len) /* the NT way */
     {
-        ok(GetLastError() == ERROR_MORE_DATA, "wrong error code (%lu instead of %u)\n", GetLastError(), ERROR_MORE_DATA);
+        ok(GetLastError() == ERROR_MORE_DATA, "wrong error code (%u instead of %u)\n", GetLastError(), ERROR_MORE_DATA);
     }
     else /* the Win9x way */
     {
-        ok(GetLastError() == 0xdeadbeef, "wrong error code (%lu instead of %u)\n", GetLastError(), 0xdeadbeef);
+        ok(GetLastError() == 0xdeadbeef, "wrong error code (%u instead of %u)\n", GetLastError(), 0xdeadbeef);
     }
     for (i = 0; i < 9; i++)
     {
@@ -292,7 +292,7 @@ static void test_get_atom_name(void)
             {
                 /* len == 0 with ERROR_MORE_DATA is on NT3.51 */
                 ok(len == 1 || (len == 0 && GetLastError() == ERROR_MORE_DATA),
-                         "0x%04x: got %u with %ld (excepted '1' or '0' with " \
+                         "0x%04x: got %u with %d (excepted '1' or '0' with " \
                          "ERROR_MORE_DATA)\n", i, len, GetLastError());
                 ok(outW[1] == DOUBLE('.'), "buffer overwrite\n");
             }
@@ -499,12 +499,12 @@ static void test_local_get_atom_name(void)
             ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
                GetLastError() == ERROR_MORE_DATA ||
                GetLastError() == 0xdeadbeef, /* the Win 9x way */
-               "wrong error conditions %lu for %u\n", GetLastError(), i);
+               "wrong error conditions %u for %u\n", GetLastError(), i);
         else
             ok(GetLastError() == ERROR_INVALID_PARAMETER ||
                GetLastError() == ERROR_MORE_DATA ||
                GetLastError() == 0xdeadbeef, /* the Win 9x way */
-               "wrong error conditions %lu for %u\n", GetLastError(), i);
+               "wrong error conditions %u for %u\n", GetLastError(), i);
     }
     /* test string limits & overflow */
     do_initA(in, "abcdefghij", 255);
@@ -534,7 +534,7 @@ static void test_local_get_atom_name(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER ||
        GetLastError() == ERROR_MORE_DATA ||
        GetLastError() == 0xdeadbeef, /* the Win 9x way */
-       "wrong error code (%lu)\n", GetLastError());
+       "wrong error code (%u)\n", GetLastError());
 
     if (unicode_OS)
     {
@@ -561,7 +561,7 @@ static void test_local_get_atom_name(void)
             /* ERROR_MORE_DATA is on nt3.51 sp5 */
             ok(GetLastError() == ERROR_MORE_DATA ||
                GetLastError() == (i ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
-               "wrong error conditions %lu for %u\n", GetLastError(), i);
+               "wrong error conditions %u for %u\n", GetLastError(), i);
         }
         do_initW(inW, "abcdefghij", 255);
         atom = AddAtomW(inW);
@@ -589,7 +589,7 @@ static void test_local_get_atom_name(void)
         /* ERROR_MORE_DATA is on nt3.51 sp5 */
         ok(GetLastError() == ERROR_INVALID_PARAMETER ||
            GetLastError() == ERROR_MORE_DATA,
-           "wrong error code (%lu)\n", GetLastError());
+           "wrong error code (%u)\n", GetLastError());
     }
 }
 

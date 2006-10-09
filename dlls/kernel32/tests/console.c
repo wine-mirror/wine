@@ -74,7 +74,7 @@ static void testCursor(HANDLE hCon, COORD sbSize)
 
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(0, c) == 0, "No handle\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %lu\n",
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
     c.X = c.Y = 0;
@@ -89,25 +89,25 @@ static void testCursor(HANDLE hCon, COORD sbSize)
     c.X = sbSize.X;
     c.Y = sbSize.Y - 1;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = sbSize.X - 1;
     c.Y = sbSize.Y;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = -1;
     c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     c.X = 0;
     c.Y = -1;
     ok(SetConsoleCursorPosition(hCon, c) == 0, "Cursor is outside\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %lu\n",
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 }
 
@@ -150,7 +150,7 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
     ret = WriteConsole(hCon, mytest, mylen, &len, NULL);
-    ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %ld\n", ret, len);
+    ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %d\n", ret, len);
     c.Y = 0;
     for (p = mylen - 3; p < mylen; p++)
     {
@@ -524,7 +524,7 @@ static BOOL WINAPI mch(DWORD event)
 static void testCtrlHandler(void)
 {
     ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %u\n", GetLastError());
     ok(SetConsoleCtrlHandler(mch, TRUE), "Couldn't set handler\n");
     /* wine requires the event for the test, as we cannot insure, so far, that event
      * are processed synchronously in GenerateConsoleCtrlEvent()
@@ -549,7 +549,7 @@ static void testCtrlHandler(void)
     CloseHandle(mch_event);
     ok(SetConsoleCtrlHandler(mch, FALSE), "Couldn't remove handler\n");
     ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %u\n", GetLastError());
 }
 
 START_TEST(console)

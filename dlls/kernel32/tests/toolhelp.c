@@ -120,7 +120,7 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (pe.th32ProcessID == curr_pid) found++;
             if (pe.th32ProcessID == sub_pcs_pid) found++;
-            trace("PID=%lx %s\n", pe.th32ProcessID, pe.szExeFile);
+            trace("PID=%x %s\n", pe.th32ProcessID, pe.szExeFile);
             num++;
         } while (pProcess32Next( hSnapshot, &pe ));
     }
@@ -134,7 +134,7 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (pe.th32ProcessID == curr_pid) found++;
             if (pe.th32ProcessID == sub_pcs_pid) found++;
-            trace("PID=%lx %s\n", pe.th32ProcessID, pe.szExeFile);
+            trace("PID=%x %s\n", pe.th32ProcessID, pe.szExeFile);
             num--;
         } while (pProcess32Next( hSnapshot, &pe ));
     }
@@ -172,7 +172,7 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (te.th32OwnerProcessID == curr_pid) curr_found++;
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
-            trace("PID=%lx TID=%lx %ld\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
+            trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num++;
         } while (pThread32Next( hSnapshot, &te ));
     }
@@ -188,7 +188,7 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (te.th32OwnerProcessID == curr_pid) curr_found++;
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
-            trace("PID=%lx TID=%lx %ld\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
+            trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num--;
         } while (pThread32Next( hSnapshot, &te ));
     }
@@ -240,7 +240,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     {
         do
         {
-            trace("PID=%lx base=%p size=%lx %s %s\n",
+            trace("PID=%x base=%p size=%x %s %s\n",
                   me.th32ProcessID, me.modBaseAddr, me.modBaseSize, me.szExePath, me.szModule);
             ok(me.th32ProcessID == pid, "wrong returned process id\n");
             for (i = 0; i < num_expected; i++)
@@ -259,7 +259,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     {
         do
         {
-            trace("PID=%lx base=%p size=%lx %s %s\n",
+            trace("PID=%x base=%p size=%x %s %s\n",
                   me.th32ProcessID, me.modBaseAddr, me.modBaseSize, me.szExePath, me.szModule);
             for (i = 0; i < num_expected; i++)
                 if (!lstrcmpi(expected[i], me.szModule)) found[i]++;
@@ -322,7 +322,7 @@ START_TEST(toolhelp)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(buffer, "%s tests/toolhelp.c %lu %lu", selfname, (DWORD)ev1, (DWORD)ev2);
+    sprintf(buffer, "%s tests/toolhelp.c %u %u", selfname, (DWORD)ev1, (DWORD)ev2);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to be initialized */
     w = WaitForSingleObject(ev1, WAIT_TIME);

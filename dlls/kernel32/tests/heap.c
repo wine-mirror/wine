@@ -87,39 +87,39 @@ START_TEST(heap)
 
     SetLastError(MAGIC_DEAD);
     mem = GlobalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
+    ok(mem != NULL, "returned %p with %d (expected '!= NULL')\n", mem, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
+    ok( flags == 1, "returned 0x%04x with %d (expected '0x0001')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     msecond = GlobalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
+    ok( msecond == mem, "returned %p with %d (expected '%p')\n",
         msecond, GetLastError(), mem);
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
+    ok( flags == 2, "returned 0x%04x with %d (expected '0x0002')\n",
         flags, GetLastError());
     SetLastError(MAGIC_DEAD);
 
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);    /* #1 */
-    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
+    ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
+    ok( flags , "returned 0x%04x with %d (expected '!= 0')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);    /* #0 */
     /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
     ok(!res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == MAGIC_DEAD)),
-        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or " \
+        "returned %d with %d (expected '0' with: ERROR_SUCCESS or " \
         "MAGIC_DEAD)\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
+    ok( !flags , "returned 0x%04x with %d (expected '0')\n",
         flags, GetLastError());
 
     /* Unlock an already unlocked Handle */
@@ -128,7 +128,7 @@ START_TEST(heap)
     /* NT: ERROR_NOT_LOCKED,  9x: untouched */
     ok( !res &&
         ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or " \
+        "returned %d with %d (expected '0' with: ERROR_NOT_LOCKED or " \
         "MAGIC_DEAD)\n", res, GetLastError());
  
     GlobalFree(gbl);
@@ -136,23 +136,23 @@ START_TEST(heap)
     SetLastError(MAGIC_DEAD);
     hsecond = GlobalFree(gbl);      /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08x (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
     SetLastError(MAGIC_DEAD);
     flags = GlobalFlags(gbl);
     ok( (flags == GMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08lx (expected GMEM_INVALID_HANDLE with " \
+        "returned 0x%04x with 0x%08x (expected GMEM_INVALID_HANDLE with " \
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
     SetLastError(MAGIC_DEAD);
     size = GlobalSize(gbl);
     ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %ld with 0x%08x (expected '0' with ERROR_INVALID_HANDLE)\n",
         size, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     mem = GlobalLock(gbl);
     ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08x (expected NULL with ERROR_INVALID_HANDLE)\n",
         mem, GetLastError());
 
     /* documented on MSDN: GlobalUnlock() return FALSE on failure.
@@ -162,7 +162,7 @@ START_TEST(heap)
     SetLastError(MAGIC_DEAD);
     res = GlobalUnlock(gbl);
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-        "returned %ld with %ld (expected ERROR_INVALID_HANDLE)\n",
+        "returned %d with %d (expected ERROR_INVALID_HANDLE)\n",
         res, GetLastError());
 
 
@@ -192,39 +192,39 @@ START_TEST(heap)
     gbl = LocalAlloc(LMEM_MOVEABLE, 256);
     SetLastError(MAGIC_DEAD);
     mem = LocalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
+    ok(mem != NULL, "returned %p with %d (expected '!= NULL')\n", mem, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
+    ok( flags == 1, "returned 0x%04x with %d (expected '0x0001')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     msecond = LocalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
+    ok( msecond == mem, "returned %p with %d (expected '%p')\n",
         msecond, GetLastError(), mem);
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
+    ok( flags == 2, "returned 0x%04x with %d (expected '0x0002')\n",
         flags, GetLastError());
     SetLastError(MAGIC_DEAD);
 
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);    /* #1 */
-    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
+    ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
+    ok( flags , "returned 0x%04x with %d (expected '!= 0')\n",
         flags, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);    /* #0 */
     /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
     ok(!res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == MAGIC_DEAD)),
-        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or " \
+        "returned %d with %d (expected '0' with: ERROR_SUCCESS or " \
         "MAGIC_DEAD)\n", res, GetLastError());
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
+    ok( !flags , "returned 0x%04x with %d (expected '0')\n",
         flags, GetLastError());
 
     /* Unlock an already unlocked Handle */
@@ -233,7 +233,7 @@ START_TEST(heap)
     /* NT: ERROR_NOT_LOCKED,  9x: untouched */
     ok( !res &&
         ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or " \
+        "returned %d with %d (expected '0' with: ERROR_NOT_LOCKED or " \
         "MAGIC_DEAD)\n", res, GetLastError());
 
     LocalFree(gbl);
@@ -241,30 +241,30 @@ START_TEST(heap)
     SetLastError(MAGIC_DEAD);
     hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08x (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
     SetLastError(MAGIC_DEAD);
     flags = LocalFlags(gbl);
     ok( (flags == LMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08lx (expected LMEM_INVALID_HANDLE with " \
+        "returned 0x%04x with 0x%08x (expected LMEM_INVALID_HANDLE with " \
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
     SetLastError(MAGIC_DEAD);
     size = LocalSize(gbl);
     ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %ld with 0x%08x (expected '0' with ERROR_INVALID_HANDLE)\n",
         size, GetLastError());
 
     SetLastError(MAGIC_DEAD);
     mem = LocalLock(gbl);
     ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
+        "returned %p with 0x%08x (expected NULL with ERROR_INVALID_HANDLE)\n",
         mem, GetLastError());
 
     /* This Test works the same on all Systems (GlobalUnlock() is different) */
     SetLastError(MAGIC_DEAD);
     res = LocalUnlock(gbl);
     ok(!res && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with %ld (expected '0' with ERROR_INVALID_HANDLE)\n",
+        "returned %d with %d (expected '0' with ERROR_INVALID_HANDLE)\n",
         res, GetLastError());
 
     /* trying to lock empty memory should give an error */
@@ -275,7 +275,7 @@ START_TEST(heap)
     /* NT: ERROR_DISCARDED,  9x: untouched */
     ok( (mem == NULL) &&
         ((GetLastError() == ERROR_DISCARDED) || (GetLastError() == MAGIC_DEAD)),
-        "returned %p with 0x%lx/%ld (expected 'NULL' with: ERROR_DISCARDED or " \
+        "returned %p with 0x%x/%d (expected 'NULL' with: ERROR_DISCARDED or " \
         "MAGIC_DEAD)\n", mem, GetLastError(), GetLastError());
 
     GlobalFree(gbl);

@@ -246,16 +246,16 @@ static VOID test_CreateThread_basic(void)
   thread[0] = CreateThread(NULL,0,threadFunc2,NULL,0,NULL);
   GLE = GetLastError();
   if (thread[0]) { /* NT */
-    ok(GLE==0xFACEaBAD, "CreateThread set last error to %ld, expected 4207848365\n", GLE);
+    ok(GLE==0xFACEaBAD, "CreateThread set last error to %d, expected 4207848365\n", GLE);
     ret = WaitForSingleObject(thread[0],100);
     ok(ret==WAIT_OBJECT_0, "threadFunc2 did not exit during 100 ms\n");
     ret = GetExitCodeThread(thread[0],&exitCode);
-    ok(ret!=0, "GetExitCodeThread returned %ld (expected nonzero)\n", ret);
-    ok(exitCode==99, "threadFunc2 exited with code: %ld (expected 99)\n", exitCode);
+    ok(ret!=0, "GetExitCodeThread returned %d (expected nonzero)\n", ret);
+    ok(exitCode==99, "threadFunc2 exited with code: %d (expected 99)\n", exitCode);
     ok(CloseHandle(thread[0])!=0,"Error closing thread handle\n");
   }
   else { /* 9x */
-    ok(GLE==ERROR_INVALID_PARAMETER, "CreateThread set last error to %ld, expected 87\n", GLE);
+    ok(GLE==ERROR_INVALID_PARAMETER, "CreateThread set last error to %d, expected 87\n", GLE);
   }
 }
 
@@ -336,8 +336,8 @@ static VOID test_SuspendThread(void)
   }
   /* Trying to suspend a terminated thread should fail */
   error=SuspendThread(thread);
-  ok(error==~0U, "wrong return code: %ld\n", error);
-  ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %ld\n", GetLastError());
+  ok(error==~0U, "wrong return code: %d\n", error);
+  ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %d\n", GetLastError());
 
   ok(CloseHandle(thread)!=0,"CloseHandle Failed\n");
 }
@@ -481,19 +481,19 @@ static VOID test_thread_priority(void)
    }
 
    todo_wine {
-     ok(rc!=0,"error=%ld\n",GetLastError());
+     ok(rc!=0,"error=%d\n",GetLastError());
 
      rc = pSetThreadPriorityBoost(curthread,1);
-     ok( rc != 0, "error=%ld\n",GetLastError());
+     ok( rc != 0, "error=%d\n",GetLastError());
      rc=pGetThreadPriorityBoost(curthread,&disabled);
      ok(rc!=0 && disabled==1,
-        "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
+        "rc=%d error=%d disabled=%d\n",rc,GetLastError(),disabled);
 
      rc = pSetThreadPriorityBoost(curthread,0);
-     ok( rc != 0, "error=%ld\n",GetLastError());
+     ok( rc != 0, "error=%d\n",GetLastError());
      rc=pGetThreadPriorityBoost(curthread,&disabled);
      ok(rc!=0 && disabled==0,
-        "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
+        "rc=%d error=%d disabled=%d\n",rc,GetLastError(),disabled);
    }
 }
 
@@ -555,7 +555,7 @@ static VOID test_GetThreadTimes(void)
 static VOID test_thread_processor(void)
 {
    HANDLE curthread,curproc;
-   DWORD processMask,systemMask;
+   DWORD_PTR processMask,systemMask;
    SYSTEM_INFO sysInfo;
    int error=0;
 
@@ -603,17 +603,17 @@ static VOID test_GetThreadExitCode(void)
     HANDLE thread;
 
     ret = GetExitCodeThread((HANDLE)0x2bad2bad,&exitCode);
-    ok(ret==0, "GetExitCodeThread returned non zero value: %ld\n", ret);
+    ok(ret==0, "GetExitCodeThread returned non zero value: %d\n", ret);
     GLE = GetLastError();
-    ok(GLE==ERROR_INVALID_HANDLE, "GetLastError returned %ld (expected 6)\n", GLE);
+    ok(GLE==ERROR_INVALID_HANDLE, "GetLastError returned %d (expected 6)\n", GLE);
 
     thread = CreateThread(NULL,0,threadFunc2,NULL,0,&threadid);
     ret = WaitForSingleObject(thread,100);
     ok(ret==WAIT_OBJECT_0, "threadFunc2 did not exit during 100 ms\n");
     ret = GetExitCodeThread(thread,&exitCode);
     ok(ret==exitCode || ret==1, 
-       "GetExitCodeThread returned %ld (expected 1 or %ld)\n", ret, exitCode);
-    ok(exitCode==99, "threadFunc2 exited with code %ld (expected 99)\n", exitCode);
+       "GetExitCodeThread returned %d (expected 1 or %d)\n", ret, exitCode);
+    ok(exitCode==99, "threadFunc2 exited with code %d (expected 99)\n", exitCode);
     ok(CloseHandle(thread)!=0,"Error closing thread handle\n");
 }
 
@@ -646,7 +646,7 @@ static void test_SetThreadContext(void)
     SetLastError(0xdeadbeef);
     event = CreateEvent( NULL, TRUE, FALSE, NULL );
     thread = CreateThread( NULL, 0, threadFunc6, (void *)2, 0, &threadid );
-    ok( thread != NULL, "CreateThread failed : (%ld)\n", GetLastError() );
+    ok( thread != NULL, "CreateThread failed : (%d)\n", GetLastError() );
     if (!thread)
     {
         trace("Thread creation failed, skipping rest of test\n");
@@ -658,7 +658,7 @@ static void test_SetThreadContext(void)
 
     ctx.ContextFlags = CONTEXT_FULL;
     SetLastError(0xdeadbeef);
-    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed : (%ld)\n", GetLastError() );
+    ok( GetThreadContext( thread, &ctx ), "GetThreadContext failed : (%d)\n", GetLastError() );
 
     /* simulate a call to set_test_val(10) */
     stack = (int *)ctx.Esp;
@@ -667,11 +667,11 @@ static void test_SetThreadContext(void)
     ctx.Esp -= 2 * sizeof(int *);
     ctx.Eip = (DWORD)set_test_val;
     SetLastError(0xdeadbeef);
-    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%ld)\n", GetLastError() );
+    ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%d)\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     prevcount = ResumeThread( thread );
-    ok ( prevcount == 1, "Previous suspend count (%ld) instead of 1, last error : (%ld)\n",
+    ok ( prevcount == 1, "Previous suspend count (%d) instead of 1, last error : (%d)\n",
                          prevcount, GetLastError() );
 
     WaitForSingleObject( thread, INFINITE );
@@ -708,14 +708,14 @@ static void test_QueueUserWorkItem(void)
     for (i = 0; i < 100; i++)
     {
         BOOL ret = pQueueUserWorkItem(work_function, (void *)i, WT_EXECUTEDEFAULT);
-        ok(ret, "QueueUserWorkItem failed with error %ld\n", GetLastError());
+        ok(ret, "QueueUserWorkItem failed with error %d\n", GetLastError());
     }
 
     wait_result = WaitForSingleObject(finish_event, 10000);
 
     after = GetTickCount();
-    trace("100 QueueUserWorkItem calls took %ldms\n", after - before);
-    ok(wait_result == WAIT_OBJECT_0, "wait failed with error 0x%lx\n", wait_result);
+    trace("100 QueueUserWorkItem calls took %dms\n", after - before);
+    ok(wait_result == WAIT_OBJECT_0, "wait failed with error 0x%x\n", wait_result);
 
     ok(times_executed == 100, "didn't execute all of the work items\n");
 }
