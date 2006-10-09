@@ -41,7 +41,7 @@ static ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRA
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+	TRACE("(%p): AddRef from %d\n", This, ref - 1);
 
 	DMIME_LockModule();
 
@@ -51,7 +51,7 @@ static ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRA
 static ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface) {
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
-	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	TRACE("(%p): ReleaseRef to %d\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -71,13 +71,13 @@ static HRESULT WINAPI IDirectMusicPatternTrackImpl_CreateSegment (LPDIRECTMUSICP
 
 static HRESULT WINAPI IDirectMusicPatternTrackImpl_SetVariation (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, DWORD dwVariationFlags, DWORD dwPart) {
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
-	FIXME("(%p, %p, %ld, %ld): stub\n", This, pSegState, dwVariationFlags, dwPart);
+	FIXME("(%p, %p, %d, %d): stub\n", This, pSegState, dwVariationFlags, dwPart);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, WCHAR* wszName, IDirectMusicStyle* pStyle, DWORD dwPatternType, DWORD* pdwLength) {
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
-	FIXME("(%p, %p, %p, %p, %ld, %p): stub\n", This, pSegState, wszName, pStyle, dwPatternType, pdwLength);
+	FIXME("(%p, %p, %p, %p, %d, %p): stub\n", This, pSegState, wszName, pStyle, dwPatternType, pdwLength);
 	return S_OK;
 }
 

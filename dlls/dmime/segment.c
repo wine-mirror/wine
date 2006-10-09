@@ -59,7 +59,7 @@ static ULONG WINAPI IDirectMusicSegment8Impl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+	TRACE("(%p): AddRef from %d\n", This, ref - 1);
 
 	DMIME_LockModule();
 
@@ -69,7 +69,7 @@ static ULONG WINAPI IDirectMusicSegment8Impl_IUnknown_AddRef (LPUNKNOWN iface) {
 static ULONG WINAPI IDirectMusicSegment8Impl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, UnknownVtbl, iface);
 	ULONG ref = InterlockedDecrement(&This->ref);
-	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	TRACE("(%p): ReleaseRef to %d\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -131,7 +131,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetRepeats (
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetRepeats (LPDIRECTMUSICSEGMENT8 iface, DWORD dwRepeats) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  TRACE("(%p, %ld)\n", This, dwRepeats);	
+  TRACE("(%p, %d)\n", This, dwRepeats);
   This->header.dwRepeats = dwRepeats;
   return S_OK;
 }
@@ -148,7 +148,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetDefaultRe
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetDefaultResolution (LPDIRECTMUSICSEGMENT8 iface, DWORD dwResolution) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  TRACE("(%p, %ld)\n", This, dwResolution);
+  TRACE("(%p, %d)\n", This, dwResolution);
   This->header.dwResolution = dwResolution;
   return S_OK;
 }
@@ -162,7 +162,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack (LP
   IPersistStream* pCLSIDStream = NULL;
   HRESULT hr = S_OK;
 
-  TRACE("(%p, %s, %ld, 0x%lx, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
+  TRACE("(%p, %s, %d, 0x%x, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
 
   if (NULL == ppTrack) {
     return E_POINTER;
@@ -170,7 +170,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack (LP
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - %p -> 0x%lx,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - %p -> 0x%x,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
     if (FALSE == IsEqualGUID(&GUID_NULL, rguidType)) {
       /**
@@ -215,7 +215,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrackGrou
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - %p -> %ld,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - %p -> %d,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       *pdwGroupBits = pIt->dwGroupBits;
       return S_OK;
@@ -233,12 +233,12 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack 
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack = NULL;
 
-  TRACE("(%p, %p, %ld)\n", This, pTrack, dwGroupBits);
+  TRACE("(%p, %p, %d)\n", This, pTrack, dwGroupBits);
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     i++;
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - #%lu: %p -> %ld,%p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - #%u: %p -> %d,%p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       ERR("(%p, %p): track is already in list\n", This, pTrack);
       return E_FAIL;
@@ -287,7 +287,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveTrack 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InitPlay (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicSegmentState** ppSegState, IDirectMusicPerformance* pPerformance, DWORD dwFlags) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   HRESULT hr;
-  FIXME("(%p, %p, %p, %ld): semi-stub\n", This, ppSegState, pPerformance, dwFlags);
+  FIXME("(%p, %p, %p, %d): semi-stub\n", This, ppSegState, pPerformance, dwFlags);
   if (NULL == ppSegState) {
     return E_POINTER;
   }
@@ -353,14 +353,14 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   HRESULT hr = S_OK;
 
-  FIXME("(%p, %s, 0x%lx, %ld, %ld, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+  FIXME("(%p, %s, 0x%x, %d, %ld, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
   
   if (DMUS_SEG_ANYTRACK == dwIndex) {
     
     LIST_FOR_EACH (pEntry, &This->Tracks) {
       pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
 
-      TRACE(" - %p -> 0x%lx,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+      TRACE(" - %p -> 0x%x,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
 
       if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
       hr = IPersistStream_GetClassID(pCLSIDStream, &pIt_clsid);
@@ -392,7 +392,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  FIXME("(%p, %s, %ld, %ld, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+  FIXME("(%p, %s, %d, %d, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
   return S_OK;
 }
 
@@ -446,13 +446,13 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLoopPoint
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetPChannelsUsed (LPDIRECTMUSICSEGMENT8 iface, DWORD dwNumPChannels, DWORD* paPChannels) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-	FIXME("(%p, %ld, %p): stub\n", This, dwNumPChannels, paPChannels);	
+	FIXME("(%p, %d, %p): stub\n", This, dwNumPChannels, paPChannels);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetTrackConfig (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-	FIXME("(%p, %s, %ld, %ld, %ld, %ld): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
@@ -585,7 +585,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 	memcpy (&pDesc->guidClass, &CLSID_DirectMusicSegment, sizeof(CLSID));
 	
 	IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStream, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -597,7 +597,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 				do {
 					IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 					StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-					TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+					TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 					switch (Chunk.fccID) {
 						case DMUS_FOURCC_GUID_CHUNK: {
 							TRACE_(dmfile)(": GUID chunk\n");
@@ -629,7 +629,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 									do {
 										IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 										ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-										TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+										TRACE_(dmfile)(": %s chunk (size = 0x%04x)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 										switch (Chunk.fccID) {
 											/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
 											   (though strings seem to be valid unicode) */
@@ -675,7 +675,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 												break;						
 											}
 										}
-										TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+										TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 									} while (ListCount[0] < ListSize[0]);
 									break;
 								}
@@ -684,7 +684,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 								  do {
 								    IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 								    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-								    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+                                                                    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 								    switch (Chunk.fccID) {
 								    default: {
 								      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
@@ -693,7 +693,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 								      break;						
 								    }
 								    }
-								    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+                                                                    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 								  } while (ListCount[0] < ListSize[0]);
 								  break;
 								}
@@ -713,7 +713,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 							break;						
 						}
 					}
-					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+					TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
 				break;
 			} else if (Chunk.fccID == mmioFOURCC('W','A','V','E')) {
@@ -841,14 +841,14 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     
     switch (Chunk.fccID) {
     case DMUS_FOURCC_TRACK_CHUNK: {
       TRACE_(dmfile)(": track chunck\n");
       IStream_Read (pStm, &track_hdr, sizeof(DMUS_IO_TRACK_HEADER), NULL);
       TRACE_(dmfile)(" - class: %s\n", debugstr_guid (&track_hdr.guidClassID));
-      TRACE_(dmfile)(" - dwGroup: %ld\n", track_hdr.dwGroup);
+      TRACE_(dmfile)(" - dwGroup: %d\n", track_hdr.dwGroup);
       TRACE_(dmfile)(" - ckid: %s\n", debugstr_fourcc (track_hdr.ckid));
       TRACE_(dmfile)(" - fccType: %s\n", debugstr_fourcc (track_hdr.fccType));
       break;
@@ -973,7 +973,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
       break;						
     }
     }
-    TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+    TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
   } while (StreamCount < StreamSize);  
 
   return S_OK;
@@ -997,7 +997,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case FOURCC_RIFF: {
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
@@ -1027,7 +1027,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
       break;						
     }
     }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
 
   return S_OK;
@@ -1051,7 +1051,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     
     hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
     if (FAILED(hr)) return hr;
@@ -1075,12 +1075,12 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	checkSz += sizeof(This->header.mtLoopEnd);
 	IStream_Read (pStm, &This->header.dwResolution, sizeof(This->header.dwResolution), NULL);
 	checkSz += sizeof(This->header.dwResolution);
-	TRACE_(dmfile)("dwRepeats: %lu\n", This->header.dwRepeats);
+	TRACE_(dmfile)("dwRepeats: %u\n", This->header.dwRepeats);
 	TRACE_(dmfile)("mtLength: %lu\n",  This->header.mtLength);
 	TRACE_(dmfile)("mtPlayStart: %lu\n",  This->header.mtPlayStart);
 	TRACE_(dmfile)("mtLoopStart: %lu\n",  This->header.mtLoopStart);
 	TRACE_(dmfile)("mtLoopEnd: %lu\n",  This->header.mtLoopEnd);
-	TRACE_(dmfile)("dwResolution: %lu\n", This->header.dwResolution);
+	TRACE_(dmfile)("dwResolution: %u\n", This->header.dwResolution);
 	/** DX 8 */
 	if (Chunk.dwSize > checkSz) {
 	  IStream_Read (pStm, &This->header.rtLength,    sizeof(This->header.rtLength), NULL);
@@ -1113,7 +1113,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	  do {
 	    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-	    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+            TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
 	    hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
 	    if (FAILED(hr)) return hr;
@@ -1129,7 +1129,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	      }
 	    }
 
-	    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+            TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 	  } while (ListCount[0] < ListSize[0]);
 	  break;
 	}
@@ -1156,7 +1156,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
       }
       }
     }
-    TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+    TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
   } while (StreamCount < StreamSize);
 
   return S_OK;
@@ -1203,7 +1203,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
   
   TRACE("(%p, %p): Loading\n", This, pStm);
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
   case FOURCC_RIFF: {
     IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				

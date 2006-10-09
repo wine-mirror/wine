@@ -41,7 +41,7 @@ static ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTST
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+	TRACE("(%p): AddRef from %d\n", This, ref - 1);
 
 	DMIME_LockModule();
 
@@ -51,7 +51,7 @@ static ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTST
 static ULONG WINAPI IDirectMusicSegmentState8Impl_Release (LPDIRECTMUSICSEGMENTSTATE8 iface) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
-	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+	TRACE("(%p): ReleaseRef to %d\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -96,13 +96,13 @@ static HRESULT WINAPI IDirectMusicSegmentState8Impl_GetStartPoint (LPDIRECTMUSIC
 /* IDirectMusicSegmentState8Impl IDirectMusicSegmentState8 part: */
 static HRESULT WINAPI IDirectMusicSegmentState8Impl_SetTrackConfig (LPDIRECTMUSICSEGMENTSTATE8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
-	FIXME("(%p, %s, %ld, %ld, %ld, %ld): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGMENTSTATE8 iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
-	FIXME("(%p, %ld, %ld, %ld, %s, %ld, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
+	FIXME("(%p, %d, %d, %d, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
 	return S_OK;
 }
 

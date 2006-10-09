@@ -40,7 +40,7 @@ static ULONG WINAPI IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+	TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
 	DMIME_LockModule();
 
@@ -50,7 +50,7 @@ static ULONG WINAPI IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface) {
 static ULONG WINAPI IDirectMusicTool8Impl_Release (LPDIRECTMUSICTOOL8 iface) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
-	TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+	TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -82,7 +82,7 @@ static HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypeArraySize (LPDIRECTMUSIC
 
 static HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypes (LPDIRECTMUSICTOOL8 iface, DWORD** padwMediaTypes, DWORD dwNumElements) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
-	FIXME("(%p, %p, %ld): stub\n", This, padwMediaTypes, dwNumElements);
+	FIXME("(%p, %p, %d): stub\n", This, padwMediaTypes, dwNumElements);
 	return S_OK;
 }
 
