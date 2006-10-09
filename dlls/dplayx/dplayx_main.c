@@ -73,7 +73,7 @@ DWORD gdwDPlaySPRefCount = 0; /* FIXME: Should it be initialized here? */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 
-  TRACE( "(%p,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved );
+  TRACE( "(%p,%d,%p)\n", hinstDLL, fdwReason, lpvReserved );
 
   switch ( fdwReason )
   {
@@ -105,7 +105,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
    *        as well
    */
 
-  TRACE( ": returning 0x%08lx\n", hr );
+  TRACE( ": returning 0x%08x\n", hr );
 
   return hr;
 }

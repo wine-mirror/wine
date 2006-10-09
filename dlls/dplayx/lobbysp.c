@@ -224,7 +224,7 @@ ULONG WINAPI DPLSP_AddRef
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
 
-  TRACE( "ref count incremented to %lu:%lu for %p\n",
+  TRACE( "ref count incremented to %u:%u for %p\n",
          ulInterfaceRefCount, ulObjRefCount, This );
 
   return ulObjRefCount;
@@ -240,7 +240,7 @@ ULONG WINAPI DPLSP_Release
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
 
-  TRACE( "ref count decremented to %lu:%lu for %p\n",
+  TRACE( "ref count decremented to %u:%u for %p\n",
          ulInterfaceRefCount, ulObjRefCount, This );
 
   /* Deallocate if this is the last reference to the object */

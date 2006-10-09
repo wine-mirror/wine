@@ -620,7 +620,7 @@ static ULONG WINAPI DP_AddRef
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
 
-  TRACE( "ref count incremented to %lu:%lu for %p\n",
+  TRACE( "ref count incremented to %u:%u for %p\n",
          ulInterfaceRefCount, ulObjRefCount, This );
 
   return ulObjRefCount;
@@ -636,7 +636,7 @@ static ULONG WINAPI DP_Release
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
 
-  TRACE( "ref count decremented to %lu:%lu for %p\n",
+  TRACE( "ref count decremented to %u:%u for %p\n",
          ulInterfaceRefCount, ulObjRefCount, This );
 
   /* Deallocate if this is the last reference to the object */
@@ -670,7 +670,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
                           WORD wCommandId, WORD wVersion,
                           LPVOID* lplpReply, LPDWORD lpdwMsgSize )
 {
-  TRACE( "(%p)->(%p,0x%08lx,%p,%u,%u)\n",
+  TRACE( "(%p)->(%p,0x%08x,%p,%u,%u)\n",
          This, lpcMessageBody, dwMessageBodySize, lpcMessageHeader, wCommandId,
          wVersion );
 
@@ -707,7 +707,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 
       *lplpReply = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, *lpdwMsgSize );
 
-      FIXME( "Ignoring dwFlags 0x%08lx in request msg\n",
+      FIXME( "Ignoring dwFlags 0x%08x in request msg\n",
              lpcMsg->dwFlags );
 
       /* Setup the reply */
@@ -720,7 +720,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 
       lpReply->dpidNewPlayerId = DP_NextObjectId();
 
-      TRACE( "Allocating new playerid 0x%08lx from remote request\n",
+      TRACE( "Allocating new playerid 0x%08x from remote request\n",
              lpReply->dpidNewPlayerId );
 
       break;
@@ -742,7 +742,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 #if 1
     case DPMSGCMD_JUSTENVELOPE:
     {
-      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", lpcMessageHeader, ((const DWORD *)lpcMessageHeader)[1] );
+      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08x\n", lpcMessageHeader, ((const DWORD *)lpcMessageHeader)[1] );
       NS_SetLocalAddr( This->dp2->lpNameServerData, lpcMessageHeader, 20 );
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
     }
@@ -788,7 +788,7 @@ static HRESULT WINAPI DP_IF_AddPlayerToGroup
   lpPlayerList lpPList;
   lpPlayerList lpNewPList;
 
-  TRACE( "(%p)->(%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,0x%08x,0x%08x,%u)\n",
          This, lpMsgHdr, idGroup, idPlayer, bAnsi );
 
   /* Find the group */
@@ -944,7 +944,7 @@ lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, LPDPID lpid,
   /* FIXME: Should we validate the dwFlags? */
   lpGData->dwFlags = dwFlags;
 
-  TRACE( "Created group id 0x%08lx\n", *lpid );
+  TRACE( "Created group id 0x%08x\n", *lpid );
 
   return lpGData;
 }
@@ -955,13 +955,13 @@ DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid )
 {
   lpGroupList lpGList;
 
-  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+  TRACE( "(%p)->(0x%08x)\n", This, dpid );
 
   DPQ_REMOVE_ENTRY( This->dp2->lpSysGroup->groups, groups, lpGData->dpid, ==, dpid, lpGList );
 
   if( lpGList == NULL )
   {
-    ERR( "DPID 0x%08lx not found\n", dpid );
+    ERR( "DPID 0x%08x not found\n", dpid );
     return;
   }
 
@@ -984,7 +984,7 @@ static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid )
 {
   lpGroupList lpGroups;
 
-  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+  TRACE( "(%p)->(0x%08x)\n", This, dpid );
 
   if( dpid == DPID_SYSTEM_GROUP )
   {
@@ -1010,7 +1010,7 @@ static HRESULT WINAPI DP_IF_CreateGroup
 {
   lpGroupData lpGData;
 
-  TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,%p,%p,%p,0x%08x,0x%08x,%u)\n",
          This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize,
          dwFlags, bAnsi );
 
@@ -1223,7 +1223,7 @@ lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* This, LPDPID lpid,
   /* Initialize the SP data section */
   lpPData->lpSPPlayerData = DPSP_CreateSPPlayerData();
 
-  TRACE( "Created player id 0x%08lx\n", *lpid );
+  TRACE( "Created player id 0x%08x\n", *lpid );
 
   return lpPData;
 }
@@ -1242,13 +1242,13 @@ DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid )
 {
   lpPlayerList lpPList;
 
-  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+  TRACE( "(%p)->(0x%08x)\n", This, dpid );
 
   DPQ_REMOVE_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPList );
 
   if( lpPList == NULL )
   {
-    ERR( "DPID 0x%08lx not found\n", dpid );
+    ERR( "DPID 0x%08x not found\n", dpid );
     return;
   }
 
@@ -1273,7 +1273,7 @@ static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
 {
   lpPlayerList lpPlayers;
 
-  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+  TRACE( "(%p)->(0x%08x)\n", This, dpid );
 
   DPQ_FIND_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPlayers );
 
@@ -1397,7 +1397,7 @@ static HRESULT WINAPI DP_IF_CreatePlayer
   lpPlayerList lpPList;
   DWORD dwCreateFlags = 0;
 
-  TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,%p,%p,%p,0x%08x,0x%08x,%u)\n",
          This, lpidPlayer, lpPlayerName, hEvent, lpData,
          dwDataSize, dwFlags, bAnsi );
 
@@ -1447,7 +1447,7 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     )
   {
     /* Assume non fatal failure */
-    ERR( "unknown dwFlags = 0x%08lx\n", dwFlags );
+    ERR( "unknown dwFlags = 0x%08x\n", dwFlags );
   }
 
   /* If the name is not specified, we must provide one */
@@ -1512,7 +1512,7 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     data.lpSPMessageHeader = lpMsgHdr;
     data.lpISP             = This->dp2->spData.lpISP;
 
-    TRACE( "Calling SP CreatePlayer 0x%08lx: dwFlags: 0x%08lx lpMsgHdr: %p\n",
+    TRACE( "Calling SP CreatePlayer 0x%08x: dwFlags: 0x%08x lpMsgHdr: %p\n",
            *lpidPlayer, data.dwFlags, data.lpSPMessageHeader );
 
     hr = (*This->dp2->spData.lpCB->CreatePlayer)( &data );
@@ -1647,7 +1647,7 @@ static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
   lpGroupData  lpGData;
   lpPlayerList lpPList;
 
-  TRACE( "(%p)->(%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,0x%08x,0x%08x,%u)\n",
          This, lpMsgHdr, idGroup, idPlayer, bAnsi );
 
   /* Find the group */
@@ -1727,7 +1727,7 @@ cbRemoveGroupOrPlayer(
 {
   lpDPRGOPContext lpCtxt = (lpDPRGOPContext)lpContext;
 
-  TRACE( "Removing element:0x%08lx (type:0x%08lx) from element:0x%08lx\n",
+  TRACE( "Removing element:0x%08x (type:0x%08x) from element:0x%08x\n",
            dpId, dwPlayerType, lpCtxt->idGroup );
 
   if( dwPlayerType == DPPLAYERTYPE_GROUP )
@@ -1737,7 +1737,7 @@ cbRemoveGroupOrPlayer(
               )
       )
     {
-      ERR( "Unable to delete group 0x%08lx from group 0x%08lx\n",
+      ERR( "Unable to delete group 0x%08x from group 0x%08x\n",
              dpId, lpCtxt->idGroup );
     }
   }
@@ -1749,7 +1749,7 @@ cbRemoveGroupOrPlayer(
               )
       )
     {
-      ERR( "Unable to delete player 0x%08lx from grp 0x%08lx\n",
+      ERR( "Unable to delete player 0x%08x from grp 0x%08x\n",
              dpId, lpCtxt->idGroup );
     }
   }
@@ -1763,7 +1763,7 @@ static HRESULT WINAPI DP_IF_DestroyGroup
   lpGroupData lpGData;
   DPRGOPContext context;
 
-  FIXME( "(%p)->(%p,0x%08lx,%u): semi stub\n",
+  FIXME( "(%p)->(%p,0x%08x,%u): semi stub\n",
          This, lpMsgHdr, idGroup, bAnsi );
 
   /* Find the group */
@@ -1841,7 +1841,7 @@ static HRESULT WINAPI DP_IF_DestroyPlayer
 {
   DPFAGContext cbContext;
 
-  FIXME( "(%p)->(%p,0x%08lx,%u): semi stub\n",
+  FIXME( "(%p)->(%p,0x%08x,%u): semi stub\n",
          This, lpMsgHdr, idPlayer, bAnsi );
 
   if( This->dp2->connectionInitialized == NO_PROVIDER )
@@ -1914,7 +1914,7 @@ cbDeletePlayerFromAllGroups(
   }
   else
   {
-    ERR( "Group callback has dwPlayerType = 0x%08lx\n", dwPlayerType );
+    ERR( "Group callback has dwPlayerType = 0x%08x\n", dwPlayerType );
   }
 
   return TRUE;
@@ -1942,7 +1942,7 @@ static HRESULT WINAPI DP_IF_EnumGroupPlayers
   lpGroupData  lpGData;
   lpPlayerList lpPList;
 
-  FIXME("(%p)->(0x%08lx,%p,%p,%p,0x%08lx,%u): semi stub\n",
+  FIXME("(%p)->(0x%08x,%p,%p,%p,0x%08x,%u): semi stub\n",
           This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
           lpContext, dwFlags, bAnsi );
 
@@ -2122,7 +2122,7 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
   HANDLE hSuicideRequest = data->hSuicideRequest;
   DWORD dwTimeout = data->dwTimeout;
 
-  TRACE( "Thread started with timeout = 0x%08lx\n", dwTimeout );
+  TRACE( "Thread started with timeout = 0x%08x\n", dwTimeout );
 
   for( ;; )
   {
@@ -2190,7 +2190,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
 {
   HRESULT hr = DP_OK;
 
-  TRACE( "(%p)->(%p,0x%08lx,%p,%p,0x%08lx,%u)\n",
+  TRACE( "(%p)->(%p,0x%08x,%p,%p,0x%08x,%u)\n",
          This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags,
          bAnsi );
 
@@ -2366,7 +2366,7 @@ static HRESULT WINAPI DP_IF_GetPlayerCaps
 {
   DPSP_GETCAPSDATA data;
 
-  TRACE("(%p)->(0x%08lx,%p,0x%08lx)\n", This, idPlayer, lpDPCaps, dwFlags);
+  TRACE("(%p)->(0x%08x,%p,0x%08x)\n", This, idPlayer, lpDPCaps, dwFlags);
 
   /* Query the service provider */
   data.idPlayer = idPlayer;
@@ -2405,7 +2405,7 @@ static HRESULT WINAPI DP_IF_GetGroupData
   DWORD dwRequiredBufferSize;
   LPVOID lpCopyDataFrom;
 
-  TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,%p,0x%08x,%u)\n",
          This, idGroup, lpData, lpdwDataSize, dwFlags, bAnsi );
 
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
@@ -2465,7 +2465,7 @@ static HRESULT WINAPI DP_IF_GetGroupName
   LPDPNAME    lpName = (LPDPNAME)lpData;
   DWORD       dwRequiredDataSize;
 
-  FIXME("(%p)->(0x%08lx,%p,%p,%u) ANSI ignored\n",
+  FIXME("(%p)->(0x%08x,%p,%p,%u) ANSI ignored\n",
           This, idGroup, lpData, lpdwDataSize, bAnsi );
 
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
@@ -2539,7 +2539,7 @@ static HRESULT WINAPI DP_IF_GetMessageCount
           ( IDirectPlay2Impl* This, DPID idPlayer,
             LPDWORD lpdwCount, BOOL bAnsi )
 {
-  FIXME("(%p)->(0x%08lx,%p,%u): stub\n", This, idPlayer, lpdwCount, bAnsi );
+  FIXME("(%p)->(0x%08x,%p,%u): stub\n", This, idPlayer, lpdwCount, bAnsi );
   return DP_IF_GetMessageQueue( (IDirectPlay4Impl*)This, 0, idPlayer,
                                 DPMESSAGEQUEUE_RECEIVE, lpdwCount, NULL,
                                 bAnsi );
@@ -2563,7 +2563,7 @@ static HRESULT WINAPI DirectPlay2AImpl_GetPlayerAddress
           ( LPDIRECTPLAY2A iface, DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p,%p): stub\n", This, idPlayer, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,%p,%p): stub\n", This, idPlayer, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -2571,7 +2571,7 @@ static HRESULT WINAPI DirectPlay2WImpl_GetPlayerAddress
           ( LPDIRECTPLAY2 iface, DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p,%p): stub\n", This, idPlayer, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,%p,%p): stub\n", This, idPlayer, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -2599,7 +2599,7 @@ static HRESULT WINAPI DP_IF_GetPlayerData
   DWORD dwRequiredBufferSize;
   LPVOID lpCopyDataFrom;
 
-  TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,%p,0x%08x,%u)\n",
          This, idPlayer, lpData, lpdwDataSize, dwFlags, bAnsi );
 
   if( This->dp2->connectionInitialized == NO_PROVIDER )
@@ -2664,7 +2664,7 @@ static HRESULT WINAPI DP_IF_GetPlayerName
   LPDPNAME    lpName = (LPDPNAME)lpData;
   DWORD       dwRequiredDataSize;
 
-  FIXME( "(%p)->(0x%08lx,%p,%p,%u): ANSI\n",
+  FIXME( "(%p)->(0x%08x,%p,%p,%u): ANSI\n",
          This, idPlayer, lpData, lpdwDataSize, bAnsi );
 
   if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
@@ -2808,7 +2808,7 @@ static HRESULT WINAPI DP_SecureOpen
 {
   HRESULT hr = DP_OK;
 
-  FIXME( "(%p)->(%p,0x%08lx,%p,%p): partial stub\n",
+  FIXME( "(%p)->(%p,0x%08x,%p,%p): partial stub\n",
          This, lpsd, dwFlags, lpSecurity, lpCredentials );
 
   if( This->dp2->bConnectionOpen )
@@ -2906,7 +2906,7 @@ static HRESULT WINAPI DirectPlay2AImpl_Open
           ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwFlags )
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  TRACE("(%p)->(%p,0x%08lx)\n", This, lpsd, dwFlags );
+  TRACE("(%p)->(%p,0x%08x)\n", This, lpsd, dwFlags );
   return DP_SecureOpen( This, lpsd, dwFlags, NULL, NULL, TRUE );
 }
 
@@ -2914,7 +2914,7 @@ static HRESULT WINAPI DirectPlay2WImpl_Open
           ( LPDIRECTPLAY2 iface, LPDPSESSIONDESC2 lpsd, DWORD dwFlags )
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  TRACE("(%p)->(%p,0x%08lx)\n", This, lpsd, dwFlags );
+  TRACE("(%p)->(%p,0x%08x)\n", This, lpsd, dwFlags );
   return DP_SecureOpen( This, lpsd, dwFlags, NULL, NULL, FALSE );
 }
 
@@ -2924,7 +2924,7 @@ static HRESULT WINAPI DP_IF_Receive
 {
   LPDPMSG lpMsg = NULL;
 
-  FIXME( "(%p)->(%p,%p,0x%08lx,%p,%p,%u): stub\n",
+  FIXME( "(%p)->(%p,%p,0x%08x,%p,%p,%u): stub\n",
          This, lpidFrom, lpidTo, dwFlags, lpData, lpdwDataSize, bAnsi );
 
   if( This->dp2->connectionInitialized == NO_PROVIDER )
@@ -2958,11 +2958,11 @@ static HRESULT WINAPI DP_IF_Receive
            ( dwFlags & DPRECEIVE_FROMPLAYER )
          )
   {
-    FIXME( "Find matching message 0x%08lx\n", dwFlags );
+    FIXME( "Find matching message 0x%08x\n", dwFlags );
   }
   else
   {
-    ERR( "Hmmm..dwFlags 0x%08lx\n", dwFlags );
+    ERR( "Hmmm..dwFlags 0x%08x\n", dwFlags );
   }
 
   if( lpMsg == NULL )
@@ -3016,7 +3016,7 @@ static HRESULT WINAPI DP_IF_SetGroupData
 {
   lpGroupData lpGData;
 
-  TRACE( "(%p)->(0x%08lx,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x,%u)\n",
          This, idGroup, lpData, dwDataSize, dwFlags, bAnsi );
 
   /* Parameter check */
@@ -3076,7 +3076,7 @@ static HRESULT WINAPI DP_IF_SetGroupName
 {
   lpGroupData lpGData;
 
-  TRACE( "(%p)->(0x%08lx,%p,0x%08lx,%u)\n", This, idGroup,
+  TRACE( "(%p)->(0x%08x,%p,0x%08x,%u)\n", This, idGroup,
          lpGroupName, dwFlags, bAnsi );
 
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
@@ -3114,7 +3114,7 @@ static HRESULT WINAPI DP_IF_SetPlayerData
 {
   lpPlayerList lpPList;
 
-  TRACE( "(%p)->(0x%08lx,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x,%u)\n",
          This, idPlayer, lpData, dwDataSize, dwFlags, bAnsi );
 
   /* Parameter check */
@@ -3173,7 +3173,7 @@ static HRESULT WINAPI DP_IF_SetPlayerName
 {
   lpPlayerList lpPList;
 
-  TRACE( "(%p)->(0x%08lx,%p,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,0x%08x,%u)\n",
          This, idPlayer, lpPlayerName, dwFlags, bAnsi );
 
   if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
@@ -3212,7 +3212,7 @@ static HRESULT WINAPI DP_SetSessionDesc
   DWORD            dwRequiredSize;
   LPDPSESSIONDESC2 lpTempSessDesc;
 
-  TRACE( "(%p)->(%p,0x%08lx,%u,%u)\n",
+  TRACE( "(%p)->(%p,0x%08x,%u,%u)\n",
          This, lpSessDesc, dwFlags, bInitial, bAnsi );
 
   if( This->dp2->connectionInitialized == NO_PROVIDER )
@@ -3384,7 +3384,7 @@ static HRESULT WINAPI DP_IF_AddGroupToGroup
   lpGroupData lpGData;
   lpGroupList lpNewGList;
 
-  TRACE( "(%p)->(0x%08lx,0x%08lx)\n", This, idParentGroup, idGroup );
+  TRACE( "(%p)->(0x%08x,0x%08x)\n", This, idParentGroup, idGroup );
 
   if( ( lpGParentData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idParentGroup ) ) == NULL )
   {
@@ -3439,7 +3439,7 @@ static HRESULT WINAPI DP_IF_CreateGroupInGroup
   lpGroupList lpGList;
   lpGroupData lpGData;
 
-  TRACE( "(%p)->(0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
+  TRACE( "(%p)->(0x%08x,%p,%p,%p,0x%08x,0x%08x,%u)\n",
          This, idParentGroup, lpidGroup, lpGroupName, lpData,
          dwDataSize, dwFlags, bAnsi );
 
@@ -3553,7 +3553,7 @@ static HRESULT WINAPI DP_IF_DeleteGroupFromGroup
   lpGroupList lpGList;
   lpGroupData lpGParentData;
 
-  TRACE("(%p)->(0x%08lx,0x%08lx)\n", This, idParentGroup, idGroup );
+  TRACE("(%p)->(0x%08x,0x%08x)\n", This, idParentGroup, idGroup );
 
   /* Is the parent group valid? */
   if( ( lpGParentData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idParentGroup ) ) == NULL )
@@ -3638,7 +3638,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
           ( LPDIRECTPLAY3A iface, LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  TRACE("(%p)->(%p,%p,%p,0x%08lx)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
+  TRACE("(%p)->(%p,%p,%p,0x%08x)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
 
   /* A default dwFlags (0) is backwards compatible -- DPCONNECTION_DIRECTPLAY */
   if( dwFlags == 0 )
@@ -3864,7 +3864,7 @@ static HRESULT WINAPI DirectPlay3WImpl_EnumConnections
           ( LPDIRECTPLAY3 iface, LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(%p,%p,%p,0x%08lx): stub\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
+  FIXME("(%p)->(%p,%p,%p,0x%08x): stub\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
   return DP_OK;
 }
 
@@ -3876,7 +3876,7 @@ static HRESULT WINAPI DP_IF_EnumGroupsInGroup
   lpGroupList lpGList;
   lpGroupData lpGData;
 
-  FIXME( "(%p)->(0x%08lx,%p,%p,%p,0x%08lx,%u): semi stub\n",
+  FIXME( "(%p)->(0x%08x,%p,%p,%p,0x%08x,%u): semi stub\n",
          This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
          lpContext, dwFlags, bAnsi );
 
@@ -3941,7 +3941,7 @@ static HRESULT WINAPI DirectPlay3AImpl_GetGroupConnectionSettings
           ( LPDIRECTPLAY3A iface, DWORD dwFlags, DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p,%p): stub\n", This, dwFlags, idGroup, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,0x%08x,%p,%p): stub\n", This, dwFlags, idGroup, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -3949,7 +3949,7 @@ static HRESULT WINAPI DirectPlay3WImpl_GetGroupConnectionSettings
           ( LPDIRECTPLAY3 iface, DWORD dwFlags, DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p,%p): stub\n", This, dwFlags, idGroup, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,0x%08x,%p,%p): stub\n", This, dwFlags, idGroup, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -3964,12 +3964,12 @@ static BOOL CALLBACK DP_GetSpLpGuidFromCompoundAddress(
       ( IsEqualGUID( guidDataType, &DPAID_LobbyProvider ) )
     )
   {
-    TRACE( "Found SP/LP (%s) %s (data size = 0x%08lx)\n",
+    TRACE( "Found SP/LP (%s) %s (data size = 0x%08x)\n",
            debugstr_guid( guidDataType ), debugstr_guid( lpData ), dwDataSize );
 
     if( dwDataSize != sizeof( GUID ) )
     {
-      ERR( "Invalid sp/lp guid size 0x%08lx\n", dwDataSize );
+      ERR( "Invalid sp/lp guid size 0x%08x\n", dwDataSize );
     }
 
     memcpy( lpContext, lpData, dwDataSize );
@@ -4103,7 +4103,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
                             NULL, NULL, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) ) != ERROR_SUCCESS )
       {
-        ERR(": missing PATH registry data members: 0x%08lx\n", dwTemp );
+        ERR(": missing PATH registry data members: 0x%08x\n", dwTemp );
         continue;
       }
 
@@ -4205,7 +4205,7 @@ static HRESULT WINAPI DP_IF_InitializeConnection
   const DWORD dwAddrSize = 80; /* FIXME: Need to calculate it correctly */
   BOOL bIsDpSp; /* TRUE if Direct Play SP, FALSE if Direct Play Lobby SP */
 
-  TRACE("(%p)->(%p,0x%08lx,%u)\n", This, lpConnection, dwFlags, bAnsi );
+  TRACE("(%p)->(%p,0x%08x,%u)\n", This, lpConnection, dwFlags, bAnsi );
 
   if( dwFlags != 0 )
   {
@@ -4305,7 +4305,7 @@ static HRESULT WINAPI DirectPlay3AImpl_SendChatMessage
           ( LPDIRECTPLAY3A iface, DPID idFrom, DPID idTo, DWORD dwFlags, LPDPCHAT lpChatMessage )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,0x%08lx,%p): stub\n", This, idFrom, idTo, dwFlags, lpChatMessage );
+  FIXME("(%p)->(0x%08x,0x%08x,0x%08x,%p): stub\n", This, idFrom, idTo, dwFlags, lpChatMessage );
   return DP_OK;
 }
 
@@ -4313,7 +4313,7 @@ static HRESULT WINAPI DirectPlay3WImpl_SendChatMessage
           ( LPDIRECTPLAY3 iface, DPID idFrom, DPID idTo, DWORD dwFlags, LPDPCHAT lpChatMessage )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,0x%08lx,%p): stub\n", This, idFrom, idTo, dwFlags, lpChatMessage );
+  FIXME("(%p)->(0x%08x,0x%08x,0x%08x,%p): stub\n", This, idFrom, idTo, dwFlags, lpChatMessage );
   return DP_OK;
 }
 
@@ -4321,7 +4321,7 @@ static HRESULT WINAPI DirectPlay3AImpl_SetGroupConnectionSettings
           ( LPDIRECTPLAY3A iface, DWORD dwFlags, DPID idGroup, LPDPLCONNECTION lpConnection )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p): stub\n", This, dwFlags, idGroup, lpConnection );
+  FIXME("(%p)->(0x%08x,0x%08x,%p): stub\n", This, dwFlags, idGroup, lpConnection );
   return DP_OK;
 }
 
@@ -4329,7 +4329,7 @@ static HRESULT WINAPI DirectPlay3WImpl_SetGroupConnectionSettings
           ( LPDIRECTPLAY3 iface, DWORD dwFlags, DPID idGroup, LPDPLCONNECTION lpConnection )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p): stub\n", This, dwFlags, idGroup, lpConnection );
+  FIXME("(%p)->(0x%08x,0x%08x,%p): stub\n", This, dwFlags, idGroup, lpConnection );
   return DP_OK;
 }
 
@@ -4337,7 +4337,7 @@ static HRESULT WINAPI DirectPlay3AImpl_StartSession
           ( LPDIRECTPLAY3A iface, DWORD dwFlags, DPID idGroup )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx): stub\n", This, dwFlags, idGroup );
+  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, dwFlags, idGroup );
   return DP_OK;
 }
 
@@ -4345,7 +4345,7 @@ static HRESULT WINAPI DirectPlay3WImpl_StartSession
           ( LPDIRECTPLAY3 iface, DWORD dwFlags, DPID idGroup )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx): stub\n", This, dwFlags, idGroup );
+  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, dwFlags, idGroup );
   return DP_OK;
 }
 
@@ -4353,7 +4353,7 @@ static HRESULT WINAPI DirectPlay3AImpl_GetGroupFlags
           ( LPDIRECTPLAY3A iface, DPID idGroup, LPDWORD lpdwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idGroup, lpdwFlags );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpdwFlags );
   return DP_OK;
 }
 
@@ -4361,7 +4361,7 @@ static HRESULT WINAPI DirectPlay3WImpl_GetGroupFlags
           ( LPDIRECTPLAY3 iface, DPID idGroup, LPDWORD lpdwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idGroup, lpdwFlags );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpdwFlags );
   return DP_OK;
 }
 
@@ -4371,7 +4371,7 @@ static HRESULT WINAPI DP_IF_GetGroupParent
 {
   lpGroupData lpGData;
 
-  TRACE("(%p)->(0x%08lx,%p,%u)\n", This, idGroup, lpidGroup, bAnsi );
+  TRACE("(%p)->(0x%08x,%p,%u)\n", This, idGroup, lpidGroup, bAnsi );
 
   if( ( lpGData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idGroup ) ) == NULL )
   {
@@ -4400,7 +4400,7 @@ static HRESULT WINAPI DirectPlay3AImpl_GetPlayerAccount
           ( LPDIRECTPLAY3A iface, DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p,%p): stub\n", This, idPlayer, dwFlags, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,0x%08x,%p,%p): stub\n", This, idPlayer, dwFlags, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -4408,7 +4408,7 @@ static HRESULT WINAPI DirectPlay3WImpl_GetPlayerAccount
           ( LPDIRECTPLAY3 iface, DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx,%p,%p): stub\n", This, idPlayer, dwFlags, lpData, lpdwDataSize );
+  FIXME("(%p)->(0x%08x,0x%08x,%p,%p): stub\n", This, idPlayer, dwFlags, lpData, lpdwDataSize );
   return DP_OK;
 }
 
@@ -4416,7 +4416,7 @@ static HRESULT WINAPI DirectPlay3AImpl_GetPlayerFlags
           ( LPDIRECTPLAY3A iface, DPID idPlayer, LPDWORD lpdwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idPlayer, lpdwFlags );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idPlayer, lpdwFlags );
   return DP_OK;
 }
 
@@ -4424,7 +4424,7 @@ static HRESULT WINAPI DirectPlay3WImpl_GetPlayerFlags
           ( LPDIRECTPLAY3 iface, DPID idPlayer, LPDWORD lpdwFlags )
 {
   IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idPlayer, lpdwFlags );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idPlayer, lpdwFlags );
   return DP_OK;
 }
 
@@ -4432,7 +4432,7 @@ static HRESULT WINAPI DirectPlay4AImpl_GetGroupOwner
           ( LPDIRECTPLAY4A iface, DPID idGroup, LPDPID lpidGroupOwner )
 {
   IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idGroup, lpidGroupOwner );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpidGroupOwner );
   return DP_OK;
 }
 
@@ -4440,7 +4440,7 @@ static HRESULT WINAPI DirectPlay4WImpl_GetGroupOwner
           ( LPDIRECTPLAY4 iface, DPID idGroup, LPDPID lpidGroupOwner )
 {
   IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
-  FIXME("(%p)->(0x%08lx,%p): stub\n", This, idGroup, lpidGroupOwner );
+  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpidGroupOwner );
   return DP_OK;
 }
 
@@ -4448,7 +4448,7 @@ static HRESULT WINAPI DirectPlay4AImpl_SetGroupOwner
           ( LPDIRECTPLAY4A iface, DPID idGroup , DPID idGroupOwner )
 {
   IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx): stub\n", This, idGroup, idGroupOwner );
+  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, idGroup, idGroupOwner );
   return DP_OK;
 }
 
@@ -4456,7 +4456,7 @@ static HRESULT WINAPI DirectPlay4WImpl_SetGroupOwner
           ( LPDIRECTPLAY4 iface, DPID idGroup , DPID idGroupOwner )
 {
   IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
-  FIXME("(%p)->(0x%08lx,0x%08lx): stub\n", This, idGroup, idGroupOwner );
+  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, idGroup, idGroupOwner );
   return DP_OK;
 }
 
@@ -4469,7 +4469,7 @@ static HRESULT WINAPI DP_SendEx
   lpGroupData  lpGData;
   BOOL         bValidDestination = FALSE;
 
-  FIXME( "(%p)->(0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx,0x%08lx,0x%08lx,%p,%p,%u)"
+  FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,0x%08x,0x%08x,0x%08x,%p,%p,%u)"
          ": stub\n",
          This, idFrom, idTo, dwFlags, lpData, dwDataSize, dwPriority,
          dwTimeout, lpContext, lpdwMsgID, bAnsi );
@@ -4488,7 +4488,7 @@ static HRESULT WINAPI DP_SendEx
   {
     if( ( lpPList = DP_FindPlayer( This, idFrom ) ) == NULL )
     {
-      WARN( "INFO: Invalid from player 0x%08lx\n", idFrom );
+      WARN( "INFO: Invalid from player 0x%08x\n", idFrom );
       return DPERR_INVALIDPLAYER;
     }
   }
@@ -4624,7 +4624,7 @@ static HRESULT WINAPI DP_IF_GetMessageQueue
 {
   HRESULT hr = DP_OK;
 
-  FIXME( "(%p)->(0x%08lx,0x%08lx,0x%08lx,%p,%p,%u): semi stub\n",
+  FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,%p,%u): semi stub\n",
          This, idFrom, idTo, dwFlags, lpdwNumMsgs, lpdwNumBytes, bAnsi );
 
   /* FIXME: Do we need to do idFrom and idTo sanity checking here? */
@@ -4679,7 +4679,7 @@ static HRESULT WINAPI DP_IF_CancelMessage
 {
   HRESULT hr = DP_OK;
 
-  FIXME( "(%p)->(0x%08lx,0x%08lx,%u): semi stub\n",
+  FIXME( "(%p)->(0x%08x,0x%08x,%u): semi stub\n",
          This, dwMsgID, dwFlags, bAnsi );
 
   if( This->dp2->spData.lpCB->Cancel )
