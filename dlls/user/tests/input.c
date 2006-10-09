@@ -534,9 +534,88 @@ static void test_keynames(void)
     }
 }
 
+static POINT pt_old, pt_new;
+#define STEP 20
+
+static LRESULT CALLBACK hook_proc1( int code, WPARAM wparam, LPARAM lparam )
+{
+    MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
+    POINT pt, pt1;
+
+    if (code == HC_ACTION)
+    {
+        /* This is our new cursor position */
+        pt_new = hook->pt;
+        /* Should return previous position */
+        GetCursorPos(&pt);
+        ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%d,%d)\n", pt.x, pt.y);
+
+        /* Should set new position until hook chain is finished. */
+        pt.x = pt_old.x + STEP;
+        pt.y = pt_old.y + STEP;
+        SetCursorPos(pt.x, pt.y);
+        GetCursorPos(&pt1);
+        ok(pt.x == pt1.x && pt.y == pt1.y, "Wrong set pos: (%d,%d)\n", pt1.x, pt1.y);
+    }
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
+static LRESULT CALLBACK hook_proc2( int code, WPARAM wparam, LPARAM lparam )
+{
+    MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
+    POINT pt;
+
+    if (code == HC_ACTION)
+    {
+        ok(hook->pt.x == pt_new.x && hook->pt.y == pt_new.y,
+           "Wrong hook coords: (%d,%d)\n", pt_new.x, pt_new.y);
+
+        /* Should match position set above */
+        GetCursorPos(&pt);
+        ok(pt.x == pt_old.x +STEP && pt.y == pt_old.y +STEP, "GetCursorPos: (%d,%d)\n",
+           pt.x, pt.y);
+    }
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
+static void test_mouse_ll_hook(void)
+{
+    HWND hwnd;
+    HHOOK hook1, hook2;
+    POINT pt_org;
+
+    GetCursorPos(&pt_org);
+    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
+                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    SetCursorPos(300, 300);
+
+    hook2 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc2, GetModuleHandleA(0), 0);
+    hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc1, GetModuleHandleA(0), 0);
+
+    GetCursorPos(&pt_old);
+    mouse_event(MOUSEEVENTF_MOVE, -STEP,  0, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE, +STEP,  0, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE,  0, -STEP, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE,  0, +STEP, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+
+    UnhookWindowsHookEx(hook1);
+    UnhookWindowsHookEx(hook2);
+    DestroyWindow(hwnd);
+    SetCursorPos(pt_org.x, pt_org.y);
+}
+
 START_TEST(input)
 {
     test_Input_whitebox();
     test_Input_blackbox();
     test_keynames();
+    test_mouse_ll_hook();
 }
