@@ -511,7 +511,7 @@ Child process has not completed
 MessageId=130
 SymbolicName=ERROR_DIRECT_ACCESS_HANDLE
 Language=ENU
-Invalid use of direct acess handle
+Invalid use of direct access handle
 .
 MessageId=131
 SymbolicName=ERROR_NEGATIVE_SEEK
@@ -831,7 +831,7 @@ Invalid signal number
 MessageId=210
 SymbolicName=ERROR_THREAD_1_INACTIVE
 Language=ENU
-Erros setting signal handler
+Error setting signal handler
 .
 MessageId=212
 SymbolicName=ERROR_LOCKED
@@ -1866,7 +1866,7 @@ Already initialised
 MessageId=1248
 SymbolicName=ERROR_NO_MORE_DEVICES
 Language=ENU
-No more local devics
+No more local devices
 .
 MessageId=1249
 SymbolicName=ERROR_NO_SUCH_SITE
@@ -3281,7 +3281,7 @@ Character translation table open failed
 MessageId=1774
 SymbolicName=RPC_X_SS_CHAR_TRANS_SHORT_FILE
 Language=ENU
-Character translation tble file too small
+Character translation table file too small
 .
 MessageId=1775
 SymbolicName=RPC_X_SS_IN_NULL_CONTEXT
