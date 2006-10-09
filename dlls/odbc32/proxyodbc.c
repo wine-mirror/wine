@@ -220,14 +220,14 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                         if ((reg_ret = RegSetValueExA (hDrivers, desc, 0,
                                 REG_SZ, (const BYTE *)"Installed", 10)) != ERROR_SUCCESS)
                         {
-                            TRACE ("Error %ld replicating driver %s\n",
+                            TRACE ("Error %d replicating driver %s\n",
                                     reg_ret, desc);
                             success = 0;
                         }
                     }
                     else if (reg_ret != ERROR_SUCCESS)
                     {
-                        TRACE ("Error %ld checking for %s in drivers\n",
+                        TRACE ("Error %d checking for %s in drivers\n",
                                 reg_ret, desc);
                         success = 0;
                     }
@@ -244,12 +244,12 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                          */
                         if ((reg_ret = RegCloseKey (hThis)) !=
                                 ERROR_SUCCESS)
-                            TRACE ("Error %ld closing %s key\n", reg_ret,
+                            TRACE ("Error %d closing %s key\n", reg_ret,
                                     desc);
                     }
                     else
                     {
-                        TRACE ("Error %ld ensuring driver key %s\n",
+                        TRACE ("Error %d ensuring driver key %s\n",
                                 reg_ret, desc);
                         success = 0;
                     }
@@ -268,21 +268,21 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
             }
             if ((reg_ret = RegCloseKey (hDrivers)) != ERROR_SUCCESS)
             {
-                TRACE ("Error %ld closing hDrivers\n", reg_ret);
+                TRACE ("Error %d closing hDrivers\n", reg_ret);
             }
         }
         else
         {
-            TRACE ("Error %ld opening HKLM\\S\\O\\OI\\Drivers\n", reg_ret);
+            TRACE ("Error %d opening HKLM\\S\\O\\OI\\Drivers\n", reg_ret);
         }
         if ((reg_ret = RegCloseKey (hODBCInst)) != ERROR_SUCCESS)
         {
-            TRACE ("Error %ld closing HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
+            TRACE ("Error %d closing HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
         }
     }
     else
     {
-        TRACE ("Error %ld opening HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
+        TRACE ("Error %d opening HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
     }
     if (!success)
     {
@@ -355,26 +355,26 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
                         if ((reg_ret = RegSetValueExA (hDSN, DRIVERKEY, 0,
                                 REG_SZ, (LPBYTE)desc, sizedesc)) != ERROR_SUCCESS)
                         {
-                            TRACE ("Error %ld replicating description of "
+                            TRACE ("Error %d replicating description of "
                                     "%s(%s)\n", reg_ret, dsn, desc);
                             success = 0;
                         }
                     }
                     else if (reg_ret != ERROR_SUCCESS)
                     {
-                        TRACE ("Error %ld checking for description of %s\n",
+                        TRACE ("Error %d checking for description of %s\n",
                                 reg_ret, dsn);
                         success = 0;
                     }
                     if ((reg_ret = RegCloseKey (hDSN)) != ERROR_SUCCESS)
                     {
-                        TRACE ("Error %ld closing %s DSN key %s\n",
+                        TRACE ("Error %d closing %s DSN key %s\n",
                                 reg_ret, which, dsn);
                     }
                 }
                 else
                 {
-                    TRACE ("Error %ld opening %s DSN key %s\n",
+                    TRACE ("Error %d opening %s DSN key %s\n",
                             reg_ret, which, dsn);
                     success = 0;
                 }
@@ -394,13 +394,13 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
         }
         if ((reg_ret = RegCloseKey (hODBC)) != ERROR_SUCCESS)
         {
-            TRACE ("Error %ld closing %s ODBC.INI registry key\n", reg_ret,
+            TRACE ("Error %d closing %s ODBC.INI registry key\n", reg_ret,
                     which);
         }
     }
     else
     {
-        TRACE ("Error %ld creating/opening %s ODBC.INI registry key\n",
+        TRACE ("Error %d creating/opening %s ODBC.INI registry key\n",
                 reg_ret, which);
     }
     if (!success)
@@ -467,7 +467,7 @@ static void ODBC_ReplicateToRegistry (void)
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     int i;
-    TRACE("Initializing or Finalizing proxy ODBC: %p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("Initializing or Finalizing proxy ODBC: %p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
