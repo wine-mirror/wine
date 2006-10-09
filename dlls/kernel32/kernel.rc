@@ -18,6 +18,7 @@
 
 #include "locale_rc.rc"
 
+#include "nls/winerr_deu.mc.rc"
 #include "nls/winerr_enu.mc.rc"
 
 #include "version.rc"
