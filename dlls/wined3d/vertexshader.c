@@ -623,7 +623,7 @@ static void vshader_set_input(
 
     /* Fake usage: set reserved bit, usage, usage_idx */
     DWORD usage_token = (0x1 << 31) |
-        (usage << D3DSP_DCL_USAGE_SHIFT) | (usage_idx << D3DSP_DCL_USAGEINDEX_SHIFT);
+        (usage << WINED3DSP_DCL_USAGE_SHIFT) | (usage_idx << WINED3DSP_DCL_USAGEINDEX_SHIFT);
 
     /* Fake register; set reserved bit, regnum, type: input, wmask: all */
     DWORD reg_token = (0x1 << 31) |
@@ -643,8 +643,8 @@ BOOL vshader_get_input(
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
         DWORD usage_token = This->semantics_in[i].usage;
-        DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-        DWORD usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+        DWORD usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+        DWORD usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
 
         if (usage_token && (usage == usage_req && usage_idx == usage_idx_req)) {
             *regnum = i;
@@ -662,8 +662,8 @@ BOOL vshader_input_is_color(
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
 
     DWORD usage_token = This->semantics_in[regnum].usage;
-    DWORD usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-    DWORD usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+    DWORD usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+    DWORD usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
 
     IWineD3DVertexDeclarationImpl *vertexDeclaration = NULL;
     if (This->vertexDeclaration) {

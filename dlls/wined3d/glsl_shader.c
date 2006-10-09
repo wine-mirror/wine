@@ -1809,8 +1809,8 @@ void pshader_glsl_input_pack(
 
        /* Uninitialized */
        if (!usage_token) continue;
-       usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-       usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+       usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+       usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
        shader_glsl_get_output_register_swizzle(register_token, reg_mask);
 
        switch(usage) {
@@ -1864,8 +1864,8 @@ void vshader_glsl_output_unpack(
        /* Uninitialized */
        if (!usage_token) continue;
 
-       usage = (usage_token & D3DSP_DCL_USAGE_MASK) >> D3DSP_DCL_USAGE_SHIFT;
-       usage_idx = (usage_token & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+       usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+       usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
        shader_glsl_get_output_register_swizzle(register_token, reg_mask);
 
        switch(usage) {

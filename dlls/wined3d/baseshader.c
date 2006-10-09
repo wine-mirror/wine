@@ -409,8 +409,8 @@ static void shader_dump_decl_usage(
 
     } else { 
 
-        DWORD usage = decl & D3DSP_DCL_USAGE_MASK;
-        DWORD idx = (decl & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
+        DWORD usage = decl & WINED3DSP_DCL_USAGE_MASK;
+        DWORD idx = (decl & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
 
         /* Pixel shaders 3.0 don't have usage semantics */
         char pshader = shader_is_pshader_version(This->baseShader.hex_version);
