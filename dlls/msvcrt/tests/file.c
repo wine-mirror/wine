@@ -384,8 +384,8 @@ static void test_fgetwc( void )
     }
   ok(!(diff_found), "fgetwc difference found in BINARY mode\n");
   ok(*wptr == '\n', "Should get newline\n");
-  
-  if(mytextW) free (mytextW);
+
+  free(mytextW);
   fclose(tempfh);
   unlink(tempf);
 }
@@ -481,7 +481,7 @@ static void test_file_put_get( void )
       diff_found |= (*aptr != *wptr);
     }
   ok(!(diff_found), "fgetwc doesn't strip CR in TEXT mode\n");
-  if(mytextW) free (mytextW);
+  free(mytextW);
   fclose(tempfh);
   unlink(tempf);
 }

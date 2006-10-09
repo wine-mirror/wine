@@ -1379,8 +1379,7 @@ buffer_resize(WINE_WAVEOUT* wwo, int len)
         void *oldbuf = wwo->SoundBuffer;
         memcpy(newbuf, oldbuf, wwo->BufferUsed);
         wwo->SoundBuffer = newbuf;
-        if (oldbuf != NULL)
-           free(oldbuf);
+        free(oldbuf);
 }
 
 static int nas_add_buffer(WINE_WAVEOUT* wwo) {

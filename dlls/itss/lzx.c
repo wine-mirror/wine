@@ -208,8 +208,7 @@ void LZXteardown(struct LZXstate *pState)
 {
     if (pState)
     {
-        if (pState->window)
-            free(pState->window);
+        free(pState->window);
         free(pState);
     }
 }

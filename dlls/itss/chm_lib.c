@@ -805,8 +805,7 @@ void chm_close(struct chmFile *h)
             h->cache_blocks = NULL;
         }
 
-        if (h->cache_block_indices)
-            free(h->cache_block_indices);
+        free(h->cache_block_indices);
         h->cache_block_indices = NULL;
 
         free(h);

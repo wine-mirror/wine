@@ -80,7 +80,7 @@ void wpp_add_define( const char *name, const char *value )
     {
         if (!strcmp( def->name, name ))
         {
-            if (def->value) free( def->value );
+            free( def->value );
             def->value = pp_xstrdup(value);
             return;
         }
@@ -103,7 +103,7 @@ void wpp_del_define( const char *name )
     {
         if (!strcmp( def->name, name ))
         {
-            if (def->value) free( def->value );
+            free( def->value );
             def->value = NULL;
             return;
         }

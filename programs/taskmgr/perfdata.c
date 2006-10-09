@@ -178,9 +178,7 @@ void PerfDataRefresh(void)
     /*
      * Save system processor time info
      */
-    if (SystemProcessorTimeInfo) {
-        free(SystemProcessorTimeInfo);
-    }
+    free(SystemProcessorTimeInfo);
     SystemProcessorTimeInfo = SysProcessorTimeInfo;
     
     /*
@@ -231,9 +229,7 @@ void PerfDataRefresh(void)
     }
 
     /* Now alloc a new PERFDATA array and fill in the data */
-    if (pPerfDataOld) {
-        free(pPerfDataOld);
-    }
+    free(pPerfDataOld);
     pPerfDataOld = pPerfData;
     pPerfData = (PPERFDATA)malloc(sizeof(PERFDATA) * ProcessCount);
     pSPI = (PSYSTEM_PROCESS_INFORMATION)pBuffer;

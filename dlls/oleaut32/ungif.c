@@ -231,8 +231,7 @@ FreeSavedImages(GifFileType * GifFile) {
             sp->ImageDesc.ColorMap = NULL;
         }
 
-        if (sp->RasterBits)
-            free(sp->RasterBits);
+        free(sp->RasterBits);
 
         if (sp->ExtensionBlocks)
             FreeExtension(sp);
@@ -962,10 +961,8 @@ DGifCloseFile(GifFileType * GifFile) {
         GifFile->SColorMap = NULL;
     }
 
-    if (Private) {
-        free(Private);
-        Private = NULL;
-    }
+    free(Private);
+    Private = NULL;
 
     if (GifFile->SavedImages) {
         FreeSavedImages(GifFile);

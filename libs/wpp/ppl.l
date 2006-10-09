@@ -1249,11 +1249,10 @@ static bufferstackentry_t *pop_buffer(void)
 					if(pp_status.debug)
 						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", pp_status.input, pp_status.line_number, pp_incl_state.ppp, iep->filename);
 				}
-				else if(bufferstack[bufferstackidx].include_filename)
+				else
 					free(bufferstack[bufferstackidx].include_filename);
 			}
-			if(pp_incl_state.ppp)
-				free(pp_incl_state.ppp);
+			free(pp_incl_state.ppp);
 			pp_incl_state	= bufferstack[bufferstackidx].incl;
 			pass_data	= bufferstack[bufferstackidx].pass_data;
 
@@ -1320,12 +1319,9 @@ static void free_macro(macexpstackentry_t *mep)
 
 	for(i = 0; i < mep->nargs; i++)
 		free(mep->args[i]);
-	if(mep->args)
-		free(mep->args);
-	if(mep->nnls)
-		free(mep->nnls);
-	if(mep->curarg)
-		free(mep->curarg);
+	free(mep->args);
+	free(mep->nnls);
+	free(mep->curarg);
 	free(mep);
 }
 
