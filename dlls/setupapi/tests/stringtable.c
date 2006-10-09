@@ -99,15 +99,15 @@ static void test_StringTableAddString(void)
     
     retval=pStringTableAddString(table,String,0);
     ok(retval!=-1,"Failed to add String to String Table\n");    
-    ok(hstring==retval,"string handle %lx != String handle %lx in String Table\n", hstring, retval);        
+    ok(hstring==retval,"string handle %x != String handle %x in String Table\n", hstring, retval);        
     
     hfoo=pStringTableAddString(table,foo,0);
     ok(hfoo!=-1,"Failed to add foo to String Table\n");        
-    ok(hfoo!=hstring,"foo and string share the same ID %lx in String Table\n", hfoo);            
+    ok(hfoo!=hstring,"foo and string share the same ID %x in String Table\n", hfoo);            
     
     /* case sensitive */    
     hString=pStringTableAddString(table,String,ST_CASE_SENSITIVE_COMPARE);
-    ok(hstring!=hString,"String handle and string share same ID %lx in Table\n", hstring);        
+    ok(hstring!=hString,"String handle and string share same ID %x in Table\n", hstring);        
 }
 
 static void test_StringTableDuplicate(void)
@@ -124,7 +124,7 @@ static void test_StringTableLookUpString(void)
     retval=pStringTableLookUpString(table,string,0);
     ok(retval!=-1,"Failed find string in String Table 1\n");
     ok(retval==hstring,
-        "Lookup for string (%lx) does not match previous handle (%lx) in String Table 1\n",
+        "Lookup for string (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hstring);    
 
     retval=pStringTableLookUpString(table2,string,0);
@@ -139,7 +139,7 @@ static void test_StringTableLookUpString(void)
     retval=pStringTableLookUpString(table,foo,0);
     ok(retval!=-1,"Failed find foo in String Table 1\n");    
     ok(retval==hfoo,
-        "Lookup for foo (%lx) does not match previous handle (%lx) in String Table 1\n",
+        "Lookup for foo (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hfoo);        
     
     retval=pStringTableLookUpString(table2,foo,0);
@@ -150,7 +150,7 @@ static void test_StringTableLookUpString(void)
     retval2=pStringTableLookUpString(table,String,ST_CASE_SENSITIVE_COMPARE);    
     ok(retval!=retval2,"Lookup of string equals String in Table 1\n");
     ok(retval2==hString,
-        "Lookup for String (%lx) does not match previous handle (%lx) in String Table 1\n",
+        "Lookup for String (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hString);        
 }
 

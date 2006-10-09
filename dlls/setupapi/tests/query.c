@@ -139,7 +139,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA(NULL, INFINFO_INF_SPEC_IS_HINF, NULL, 0, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "Expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
 
     /* try an invalid inf filename */
@@ -148,7 +148,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA(NULL, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, 0, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
 
     create_inf_file(inf_filename);
@@ -159,7 +159,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA(inf_filename, -1, NULL, 0, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
 
     /* try a nonexistent inf file */
@@ -168,7 +168,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA("idontexist", INFINFO_INF_NAME_IS_ABSOLUTE, NULL, 0, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
 
     /* successfully open the inf file */
@@ -182,7 +182,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* set ReturnBuffer to NULL and ReturnBufferSize to non-zero value 'size-1' */
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size-1, &size);
@@ -203,7 +203,7 @@ static void test_SetupGetInfInformation(void)
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, info, size - 1, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
     /* successfully get the inf information */
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, info, size, &size);

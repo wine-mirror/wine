@@ -62,24 +62,24 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
 
     error = GetLastError();
-    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %ld, (expected %d)\n", error, ERROR_INVALID_PARAMETER);
+    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
+    ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %d, (expected %d)\n", error, ERROR_INVALID_PARAMETER);
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set MachineName to something */
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
 
     error = GetLastError();
-    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %ld, (expected %d)\n", error, ERROR_INVALID_MACHINENAME);
+    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
+    ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %d, (expected %d)\n", error, ERROR_INVALID_MACHINENAME);
 
     /* create empty DeviceInfoList */
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
-    ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %ld (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
+    ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
 
     /* destroy DeviceInfoList */
     ret = pSetupDiDestroyDeviceInfoList(devlist);
-    ok(ret, "SetupDiDestroyDeviceInfoList failed : %ld\n", error);
+    ok(ret, "SetupDiDestroyDeviceInfoList failed : %d\n", error);
 }
 
 static void test_SetupDiOpenClassRegKeyExA(void)
@@ -108,7 +108,7 @@ static void test_SetupDiOpenClassRegKeyExA(void)
             classKey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
                 DIOCR_INSTALLER, NULL, NULL);
             ok(classKey != INVALID_HANDLE_VALUE,
-                "opening class registry key failed with error %ld\n",
+                "opening class registry key failed with error %d\n",
                 GetLastError());
             if (classKey != INVALID_HANDLE_VALUE)
                 RegCloseKey(classKey);
