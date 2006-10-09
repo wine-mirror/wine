@@ -58,7 +58,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
 
+/* DDraw list and critical section */
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
+
+static CRITICAL_SECTION ddraw_list_cs;
+static CRITICAL_SECTION_DEBUG ddraw_list_cs_debug =
+{
+    0, 0, &ddraw_list_cs,
+    { &ddraw_list_cs_debug.ProcessLocksList, 
+    &ddraw_list_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": ddraw_list_cs") }
+};
+static CRITICAL_SECTION ddraw_list_cs = { &ddraw_list_cs_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  *
@@ -304,7 +315,9 @@ DDRAW_Create(GUID *guid,
 #undef CKEY_CAPS
 #undef FX_CAPS
 
+    EnterCriticalSection(&ddraw_list_cs);
     list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
+    LeaveCriticalSection(&ddraw_list_cs);
 
     /* Call QueryInterface to get the pointer to the requested interface. This also initializes
      * The required refcount
@@ -929,5 +942,7 @@ DllMain(HINSTANCE hInstDLL,
 void
 remove_ddraw_object(IDirectDrawImpl *ddraw)
 {
+    EnterCriticalSection(&ddraw_list_cs);
     list_remove(&ddraw->ddraw_list_entry);
+    LeaveCriticalSection(&ddraw_list_cs);
 }
