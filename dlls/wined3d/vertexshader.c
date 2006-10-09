@@ -627,7 +627,7 @@ static void vshader_set_input(
 
     /* Fake register; set reserved bit, regnum, type: input, wmask: all */
     DWORD reg_token = (0x1 << 31) |
-        D3DSP_WRITEMASK_ALL | (D3DSPR_INPUT << D3DSP_REGTYPE_SHIFT) | regnum;
+        D3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << D3DSP_REGTYPE_SHIFT) | regnum;
 
     This->semantics_in[regnum].usage = usage_token;
     This->semantics_in[regnum].reg = reg_token;
@@ -917,22 +917,22 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                     DWORD regtype = shader_get_regtype(pToken[i]);
     
                     switch (regtype) {
-                    case D3DSPR_TEMP:
+                    case WINED3DSPR_TEMP:
                         /* TRACE("p[%d]=R[%d]\n", i, reg); */
                         p[i] = &R[reg];
                         break;
-                    case D3DSPR_INPUT:
+                    case WINED3DSPR_INPUT:
                         /* TRACE("p[%d]=V[%s]\n", i, VertexShaderDeclRegister[reg]); */
                         p[i] = &input->V[reg];
                         break;
-                    case D3DSPR_CONST:
+                    case WINED3DSPR_CONST:
                         if (pToken[i] & D3DVS_ADDRMODE_RELATIVE) {
                             p[i] = &This->data->C[(DWORD) A[0].x + reg];
                         } else {
                             p[i] = &This->data->C[reg];
                         }
                         break;
-                    case D3DSPR_ADDR: /* case D3DSPR_TEXTURE: */
+                    case WINED3DSPR_ADDR: /* case WINED3DSPR_TEXTURE: */
                         if (0 != reg) {
                             ERR("cannot handle address registers != a0, forcing use of a0\n");
                             reg = 0;
@@ -940,7 +940,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                         /* TRACE("p[%d]=A[%d]\n", i, reg); */
                         p[i] = &A[reg];
                         break;
-                    case D3DSPR_RASTOUT:
+                    case WINED3DSPR_RASTOUT:
                         switch (reg) {
                         case D3DSRO_POSITION:
                             p[i] = &output->oPos;
@@ -953,18 +953,18 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                             break;
                         }
                         break;
-                    case D3DSPR_ATTROUT:
+                    case WINED3DSPR_ATTROUT:
                         /* TRACE("p[%d]=oD[%d]\n", i, reg); */
                         p[i] = &output->oD[reg];
                         break;
-                    case D3DSPR_TEXCRDOUT:
+                    case WINED3DSPR_TEXCRDOUT:
                         /* TRACE("p[%d]=oT[%d]\n", i, reg); */
                         p[i] = &output->oT[reg];
                         break;
                     /* TODO Decls and defs */
 #if 0
-                    case D3DSPR_DCL:
-                    case D3DSPR_DEF:
+                    case WINED3DSPR_DCL:
+                    case WINED3DSPR_DEF:
 #endif
                     default:
                         break;

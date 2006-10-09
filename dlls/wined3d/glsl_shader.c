@@ -507,7 +507,7 @@ static void shader_glsl_add_dst(DWORD param, const char* reg_name, char* reg_mas
     int shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
     char cast[6];
     
-    if ((shader_get_regtype(param) == D3DSPR_RASTOUT)
+    if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT)
          && ((param & D3DSP_REGNUM_MASK) != 0)) {
         /* gl_FogFragCoord or glPointSize - both floats */
         strcpy(cast, "float");
@@ -610,10 +610,10 @@ static void shader_glsl_get_register_name(
     *is_color = FALSE;   
  
     switch (regtype) {
-    case D3DSPR_TEMP:
+    case WINED3DSPR_TEMP:
         sprintf(tmpStr, "R%u", reg);
     break;
-    case D3DSPR_INPUT:
+    case WINED3DSPR_INPUT:
         if (pshader) {
             /* Pixel shaders >= 3.0 */
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
@@ -630,7 +630,7 @@ static void shader_glsl_get_register_name(
             sprintf(tmpStr, "attrib%u", reg);
         } 
         break;
-    case D3DSPR_CONST:
+    case WINED3DSPR_CONST:
     {
         const char* prefix = pshader? "PC":"VC";
 
@@ -651,35 +651,35 @@ static void shader_glsl_get_register_name(
 
         break;
     }
-    case D3DSPR_CONSTINT:
+    case WINED3DSPR_CONSTINT:
         if (pshader)
             sprintf(tmpStr, "PI[%u]", reg);
         else
             sprintf(tmpStr, "VI[%u]", reg);
         break;
-    case D3DSPR_CONSTBOOL:
+    case WINED3DSPR_CONSTBOOL:
         if (pshader)
             sprintf(tmpStr, "PB[%u]", reg);
         else
             sprintf(tmpStr, "VB[%u]", reg);
         break;
-    case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
+    case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
         if (pshader) {
             sprintf(tmpStr, "T%u", reg);
         } else {
             sprintf(tmpStr, "A%u", reg);
         }
     break;
-    case D3DSPR_LOOP:
+    case WINED3DSPR_LOOP:
         sprintf(tmpStr, "aL");
     break;
-    case D3DSPR_SAMPLER:
+    case WINED3DSPR_SAMPLER:
         if (pshader)
             sprintf(tmpStr, "Psampler%u", reg);
         else
             sprintf(tmpStr, "Vsampler%u", reg);
     break;
-    case D3DSPR_COLOROUT:
+    case WINED3DSPR_COLOROUT:
         if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
             sprintf(tmpStr, "gl_FragData[%u]", reg);
             if (reg > 0) {
@@ -693,21 +693,21 @@ static void shader_glsl_get_register_name(
                 sprintf(tmpStr, "gl_FragColor");
         }
     break;
-    case D3DSPR_RASTOUT:
+    case WINED3DSPR_RASTOUT:
         sprintf(tmpStr, "%s", hwrastout_reg_names[reg]);
     break;
-    case D3DSPR_DEPTHOUT:
+    case WINED3DSPR_DEPTHOUT:
         sprintf(tmpStr, "gl_FragDepth");
     break;
-    case D3DSPR_ATTROUT:
+    case WINED3DSPR_ATTROUT:
         if (reg == 0) {
             sprintf(tmpStr, "gl_FrontColor");
         } else {
             sprintf(tmpStr, "gl_FrontSecondaryColor");
         }
     break;
-    case D3DSPR_TEXCRDOUT:
-        /* Vertex shaders >= 3.0: D3DSPR_OUTPUT */
+    case WINED3DSPR_TEXCRDOUT:
+        /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
         if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
             sprintf(tmpStr, "OUT%u", reg);
         else

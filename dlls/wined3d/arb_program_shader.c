@@ -314,23 +314,23 @@ static void pshader_get_register_name(
     DWORD regtype = shader_get_regtype(param);
 
     switch (regtype) {
-    case D3DSPR_TEMP:
+    case WINED3DSPR_TEMP:
         sprintf(regstr, "R%u", reg);
     break;
-    case D3DSPR_INPUT:
+    case WINED3DSPR_INPUT:
         if (reg==0) {
             strcpy(regstr, "fragment.color.primary");
         } else {
             strcpy(regstr, "fragment.color.secondary");
         }
     break;
-    case D3DSPR_CONST:
+    case WINED3DSPR_CONST:
         sprintf(regstr, "C[%u]", reg);
     break;
-    case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
+    case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
         sprintf(regstr,"T%u", reg);
     break;
-    case D3DSPR_COLOROUT:
+    case WINED3DSPR_COLOROUT:
         if (reg == 0)
             sprintf(regstr, "result.color");
         else {
@@ -339,13 +339,13 @@ static void pshader_get_register_name(
             sprintf(regstr, "unsupported_register");
         }
     break;
-    case D3DSPR_DEPTHOUT:
+    case WINED3DSPR_DEPTHOUT:
         sprintf(regstr, "result.depth");
     break;
-    case D3DSPR_ATTROUT:
+    case WINED3DSPR_ATTROUT:
         sprintf(regstr, "oD[%u]", reg);
     break;
-    case D3DSPR_TEXCRDOUT:
+    case WINED3DSPR_TEXCRDOUT:
         sprintf(regstr, "oT[%u]", reg);
     break;
     default:
@@ -375,11 +375,11 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   }
 
   switch (regtype) {
-  case D3DSPR_TEMP:
+  case WINED3DSPR_TEMP:
     sprintf(tmpReg, "R%u", reg);
     strcat(hwLine, tmpReg);
     break;
-  case D3DSPR_INPUT:
+  case WINED3DSPR_INPUT:
 
     if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
         is_color = TRUE;
@@ -387,26 +387,26 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     sprintf(tmpReg, "vertex.attrib[%u]", reg);
     strcat(hwLine, tmpReg);
     break;
-  case D3DSPR_CONST:
+  case WINED3DSPR_CONST:
     sprintf(tmpReg, "C[%s%u]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     strcat(hwLine, tmpReg);
     break;
-  case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
+  case WINED3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
     sprintf(tmpReg, "A%u", reg);
     strcat(hwLine, tmpReg);
     break;
-  case D3DSPR_RASTOUT:
+  case WINED3DSPR_RASTOUT:
     sprintf(tmpReg, "%s", hwrastout_reg_names[reg]);
     strcat(hwLine, tmpReg);
     break;
-  case D3DSPR_ATTROUT:
+  case WINED3DSPR_ATTROUT:
     if (reg==0) {
        strcat(hwLine, "result.color.primary");
     } else {
        strcat(hwLine, "result.color.secondary");
     }
     break;
-  case D3DSPR_TEXCRDOUT:
+  case WINED3DSPR_TEXCRDOUT:
     sprintf(tmpReg, "result.texcoord[%u]", reg);
     strcat(hwLine, tmpReg);
     break;
@@ -896,7 +896,7 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
     char tmpLine[256];
     unsigned int i;
 
-    if (curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == D3DSPR_ADDR)
+    if (curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR)
         strcpy(tmpLine, "ARL");
     else
         strcpy(tmpLine, curOpcode->glname);

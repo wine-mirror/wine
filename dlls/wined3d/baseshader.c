@@ -162,10 +162,10 @@ unsigned int shader_get_float_offset(const DWORD reg) {
      int regtype = shader_get_regtype(reg);
 
      switch (regtype) {
-        case D3DSPR_CONST: return regnum;
-        case D3DSPR_CONST2: return 2048 + regnum;
-        case D3DSPR_CONST3: return 4096 + regnum;
-        case D3DSPR_CONST4: return 6144 + regnum;
+        case WINED3DSPR_CONST: return regnum;
+        case WINED3DSPR_CONST2: return 2048 + regnum;
+        case WINED3DSPR_CONST3: return 4096 + regnum;
+        case WINED3DSPR_CONST4: return 6144 + regnum;
         default:
             FIXME("Unsupported register type: %d\n", regtype);
             return regnum;
@@ -227,7 +227,7 @@ HRESULT shader_get_registers_used(
 
             /* Vshader: mark attributes used
                Pshader: mark 3.0 input registers used, save token */
-            if (D3DSPR_INPUT == regtype) {
+            if (WINED3DSPR_INPUT == regtype) {
 
                 if (!pshader)
                     reg_maps->attributes[regnum] = 1;
@@ -238,13 +238,13 @@ HRESULT shader_get_registers_used(
                 semantics_in[regnum].reg = param;
 
             /* Vshader: mark 3.0 output registers used, save token */
-            } else if (D3DSPR_OUTPUT == regtype) {
+            } else if (WINED3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
                 semantics_out[regnum].usage = usage;
                 semantics_out[regnum].reg = param;
 
             /* Save sampler usage token */
-            } else if (D3DSPR_SAMPLER == regtype)
+            } else if (WINED3DSPR_SAMPLER == regtype)
                 reg_maps->samplers[regnum] = usage;
 
         } else if (WINED3DSIO_DEF == curOpcode->opcode) {
@@ -365,7 +365,7 @@ HRESULT shader_get_registers_used(
                 regtype = shader_get_regtype(param);
                 reg = param & D3DSP_REGNUM_MASK;
 
-                if (D3DSPR_TEXTURE == regtype) { /* vs: D3DSPR_ADDR */
+                if (WINED3DSPR_TEXTURE == regtype) { /* vs: WINED3DSPR_ADDR */
 
                     if (pshader)
                         reg_maps->texcoord[reg] = 1;
@@ -373,13 +373,13 @@ HRESULT shader_get_registers_used(
                         reg_maps->address[reg] = 1;
                 }
 
-                else if (D3DSPR_TEMP == regtype)
+                else if (WINED3DSPR_TEMP == regtype)
                     reg_maps->temporary[reg] = 1;
 
-                else if (D3DSPR_INPUT == regtype && !pshader)
+                else if (WINED3DSPR_INPUT == regtype && !pshader)
                     reg_maps->attributes[reg] = 1;
 
-                else if (D3DSPR_RASTOUT == regtype && reg == 1)
+                else if (WINED3DSPR_RASTOUT == regtype && reg == 1)
                     reg_maps->fog = 1;
              }
         }
@@ -397,7 +397,7 @@ static void shader_dump_decl_usage(
 
     TRACE("dcl");
 
-    if (regtype == D3DSPR_SAMPLER) {
+    if (regtype == WINED3DSPR_SAMPLER) {
         DWORD ttype = decl & WINED3DSP_TEXTURETYPE_MASK;
 
         switch (ttype) {
@@ -537,39 +537,39 @@ void shader_dump_param(
     }
 
     switch (regtype) {
-        case D3DSPR_TEMP:
+        case WINED3DSPR_TEMP:
             TRACE("r%u", reg);
             break;
-        case D3DSPR_INPUT:
+        case WINED3DSPR_INPUT:
             TRACE("v");
             shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
-        case D3DSPR_CONST:
-        case D3DSPR_CONST2:
-        case D3DSPR_CONST3:
-        case D3DSPR_CONST4:
+        case WINED3DSPR_CONST:
+        case WINED3DSPR_CONST2:
+        case WINED3DSPR_CONST3:
+        case WINED3DSPR_CONST4:
             TRACE("c");
             shader_dump_arr_entry(iface, param, addr_token, shader_get_float_offset(param), input);
             break;
-        case D3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
+        case WINED3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%u", (pshader? 't':'a'), reg);
             break;        
-        case D3DSPR_RASTOUT:
+        case WINED3DSPR_RASTOUT:
             TRACE("%s", rastout_reg_names[reg]);
             break;
-        case D3DSPR_COLOROUT:
+        case WINED3DSPR_COLOROUT:
             TRACE("oC%u", reg);
             break;
-        case D3DSPR_DEPTHOUT:
+        case WINED3DSPR_DEPTHOUT:
             TRACE("oDepth");
             break;
-        case D3DSPR_ATTROUT:
+        case WINED3DSPR_ATTROUT:
             TRACE("oD%u", reg);
             break;
-        case D3DSPR_TEXCRDOUT: 
+        case WINED3DSPR_TEXCRDOUT: 
 
             /* Vertex shaders >= 3.0 use general purpose output registers
-             * (D3DSPR_OUTPUT), which can include an address token */
+             * (WINED3DSPR_OUTPUT), which can include an address token */
 
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
                 TRACE("o");
@@ -578,24 +578,24 @@ void shader_dump_param(
             else 
                TRACE("oT%u", reg);
             break;
-        case D3DSPR_CONSTINT:
+        case WINED3DSPR_CONSTINT:
             TRACE("i");
             shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
-        case D3DSPR_CONSTBOOL:
+        case WINED3DSPR_CONSTBOOL:
             TRACE("b");
             shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
-        case D3DSPR_LABEL:
+        case WINED3DSPR_LABEL:
             TRACE("l%u", reg);
             break;
-        case D3DSPR_LOOP:
+        case WINED3DSPR_LOOP:
             TRACE("aL");
             break;
-        case D3DSPR_SAMPLER:
+        case WINED3DSPR_SAMPLER:
             TRACE("s%u", reg);
             break;
-        case D3DSPR_PREDICATE:
+        case WINED3DSPR_PREDICATE:
             TRACE("p%u", reg);
             break;
         default:
