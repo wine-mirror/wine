@@ -425,8 +425,8 @@ static HRESULT get_working_dir(ADVInfo *info, LPCWSTR inf_filename, LPCWSTR work
 }
 
 /* loads the INF file and performs checks on it */
-HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
-                     LPCWSTR working_dir, DWORD flags, ADVInfo *info)
+static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
+                            LPCWSTR working_dir, DWORD flags, ADVInfo *info)
 {
     DWORD len;
     HRESULT hr;
@@ -500,7 +500,7 @@ HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
 }
 
 /* release the install instance information */
-void install_release(ADVInfo *info)
+static void install_release(ADVInfo *info)
 {
     if (info->hinf && info->hinf != INVALID_HANDLE_VALUE)
         SetupCloseInfFile(info->hinf);

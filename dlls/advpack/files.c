@@ -165,14 +165,14 @@ HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
 /* FIXME: this is only for the local case, X:\ */
 #define ROOT_LENGTH 3
 
-UINT CALLBACK pQuietQueueCallback(PVOID Context, UINT Notification,
-                                  UINT_PTR Param1, UINT_PTR Param2)
+static UINT CALLBACK pQuietQueueCallback(PVOID Context, UINT Notification,
+                                         UINT_PTR Param1, UINT_PTR Param2)
 {
     return 1;
 }
 
-UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
-                             UINT_PTR Param1, UINT_PTR Param2)
+static UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
+                                    UINT_PTR Param1, UINT_PTR Param2)
 {
     /* only be verbose for error notifications */
     if (!Notification ||
