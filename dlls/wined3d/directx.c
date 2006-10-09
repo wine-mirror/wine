@@ -1111,13 +1111,14 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     }
 
     if (Adapter == 0) { /* Display */
+        int bpp;
 #if !defined( DEBUG_SINGLE_MODE )
         DEVMODEW DevModeW;
         int ModeIdx = 0;
 
         /* Work out the current screen bpp */
         HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        int bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        bpp = GetDeviceCaps(hdc, BITSPIXEL);
         DeleteDC(hdc);
 
         /* If we are filtering to a specific format, then need to skip all unrelated
