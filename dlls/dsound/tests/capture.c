@@ -95,7 +95,7 @@ const char * format_string(const WAVEFORMATEX* wfx)
 {
     static char str[64];
 
-    sprintf(str, "%5ldx%2dx%d %s",
+    sprintf(str, "%5dx%2dx%d %s",
 	wfx->nSamplesPerSec, wfx->wBitsPerSample, wfx->nChannels,
         get_format_str(wfx->wFormatTag));
 
@@ -354,7 +354,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCaps() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Caps: size = %ld flags=0x%08lx buffer size=%ld\n",
+	trace("    Caps: size = %d flags=0x%08x buffer size=%d\n",
 	    dscbcaps.dwSize,dscbcaps.dwFlags,dscbcaps.dwBufferBytes);
     }
 
@@ -369,14 +369,14 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     size=0;
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,&size);
     ok(rc==DS_OK && size!=0,"IDirectSoundCaptureBuffer_GetFormat() should "
-       "have returned the needed size: rc=%s, size=%ld\n",
+       "have returned the needed size: rc=%s, size=%d\n",
        DXGetErrorString8(rc),size);
 
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,&wfx,sizeof(wfx),NULL);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetFormat() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Format: tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+	trace("    Format: tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
 	      wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
 	      wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
     }
@@ -391,7 +391,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("    Status=0x%04lx\n",status);
+	trace("    Status=0x%04x\n",status);
     }
 
     ZeroMemory(&state, sizeof(state));
@@ -439,7 +439,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %s\n",
            DXGetErrorString8(rc));
 	ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
-	   "GetStatus: bad status: %lx\n",status);
+           "GetStatus: bad status: %x\n",status);
 	if (rc!=DS_OK)
 	    return;
 
@@ -447,10 +447,10 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 	for (i = 0; i < (NOTIFICATIONS * 2); i++) {
 	    rc=WaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE,3000);
 	    ok(rc==(WAIT_OBJECT_0+(i%NOTIFICATIONS)),
-               "WaitForMultipleObjects failed: 0x%lx\n",rc);
+               "WaitForMultipleObjects failed: 0x%x\n",rc);
 	    if (rc!=(WAIT_OBJECT_0+(i%NOTIFICATIONS))) {
 		ok((rc==WAIT_TIMEOUT)||(rc==WAIT_FAILED),
-                   "Wrong notification: should be %d, got %ld\n",
+                   "Wrong notification: should be %d, got %d\n",
 		    i%NOTIFICATIONS,rc-WAIT_OBJECT_0);
 	    }
 	    if (!capture_buffer_service(&state))
@@ -512,7 +512,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     ok(rc==DS_OK,"IDirectSoundCapture_GetCaps() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-	trace("  Caps: size=%ld flags=0x%08lx formats=%05lx channels=%ld\n",
+	trace("  Caps: size=%d flags=0x%08x formats=%05x channels=%d\n",
 	      dsccaps.dwSize,dsccaps.dwFlags,dsccaps.dwFormats,
               dsccaps.dwChannels);
     }

@@ -225,7 +225,7 @@ static int buffer_service(play_state_t* state)
         state->played+=play_pos-last_play_pos;
 
     if (winetest_debug > 1)
-        trace("buf size=%ld last_play_pos=%ld play_pos=%ld played=%ld / %ld\n",
+        trace("buf size=%d last_play_pos=%d play_pos=%d played=%d / %d\n",
               state->buffer_size,last_play_pos,play_pos,state->played,
               state->wave_len);
 
@@ -242,7 +242,7 @@ static int buffer_service(play_state_t* state)
         buf_free=state->buffer_size-state->offset+play_pos;
 
     if (winetest_debug > 1)
-        trace("offset=%ld free=%ld written=%ld / %ld\n",
+        trace("offset=%d free=%d written=%d / %d\n",
               state->offset,buf_free,state->written,state->wave_len);
     if (buf_free==0)
         return 1;
@@ -254,14 +254,14 @@ static int buffer_service(play_state_t* state)
             goto STOP;
         buf_free-=w;
         if (state->written==state->wave_len && winetest_debug > 1)
-            trace("last sound byte at %ld\n",
+            trace("last sound byte at %d\n",
                   (state->written % state->buffer_size));
     }
 
     if (buf_free>0) {
         /* Fill with silence */
         if (winetest_debug > 1)
-            trace("writing %ld bytes of silence\n",buf_free);
+            trace("writing %d bytes of silence\n",buf_free);
         if (buffer_silence(state,buf_free)==-1)
             goto STOP;
     }
@@ -315,7 +315,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
     ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-        trace("    Caps: flags=0x%08lx size=%ld\n",dsbcaps.dwFlags,
+        trace("    Caps: flags=0x%08x size=%d\n",dsbcaps.dwFlags,
               dsbcaps.dwBufferBytes);
     }
 
@@ -323,13 +323,13 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
     size=0;
     rc=IDirectSoundBuffer_GetFormat(*dsbo,NULL,0,&size);
     ok(rc==DS_OK && size!=0,"IDirectSoundBuffer_GetFormat() should have "
-       "returned the needed size: rc=%s size=%ld\n",DXGetErrorString8(rc),size);
+       "returned the needed size: rc=%s size=%d\n",DXGetErrorString8(rc),size);
 
     rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,sizeof(wfx),NULL);
     ok(rc==DS_OK,"IDirectSoundBuffer_GetFormat() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && winetest_debug > 1) {
-        trace("    Format: %s tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+        trace("    Format: %s tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
               is_primary ? "Primary" : "Secondary",
               wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
               wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
@@ -348,7 +348,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
     if (rc==DS_OK) {
         DWORD f = set_frequency?frequency:wfx.nSamplesPerSec;
         ok(freq==f,"The frequency returned by GetFrequency "
-           "%ld does not match the format %ld\n",freq,f);
+           "%d does not match the format %d\n",freq,f);
     }
 
     /* DSOUND: Error: Invalid status pointer */
@@ -359,7 +359,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
     rc=IDirectSoundBuffer_GetStatus(*dsbo,&status);
     ok(rc==DS_OK,"IDirectSoundBuffer_GetStatus() failed: %s\n",
        DXGetErrorString8(rc));
-    ok(status==0,"status=0x%lx instead of 0\n",status);
+    ok(status==0,"status=0x%x instead of 0\n",status);
 
     if (is_primary) {
         DSBCAPS new_dsbcaps;
@@ -393,10 +393,10 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
              wfx.nSamplesPerSec!=wfx2.nSamplesPerSec ||
              wfx.wBitsPerSample!=wfx2.wBitsPerSample ||
              wfx.nChannels!=wfx2.nChannels)) {
-            trace("Requested format tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+            trace("Requested format tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
                   wfx2.wFormatTag,wfx2.nSamplesPerSec,wfx2.wBitsPerSample,
                   wfx2.nChannels,wfx2.nAvgBytesPerSec,wfx2.nBlockAlign);
-            trace("Got tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+            trace("Got tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
                   wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
                   wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
         }
@@ -407,20 +407,20 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
         ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() failed: %s\n",
            DXGetErrorString8(rc));
         if (rc==DS_OK && winetest_debug > 1) {
-            trace("    new Caps: flags=0x%08lx size=%ld\n",new_dsbcaps.dwFlags,
+            trace("    new Caps: flags=0x%08x size=%d\n",new_dsbcaps.dwFlags,
                   new_dsbcaps.dwBufferBytes);
         }
 
         /* Check for primary buffer size change */
         ok(new_dsbcaps.dwBufferBytes == dsbcaps.dwBufferBytes,
            "    buffer size changed after SetFormat() - "
-           "previous size was %lu, current size is %lu\n",
+           "previous size was %u, current size is %u\n",
            dsbcaps.dwBufferBytes, new_dsbcaps.dwBufferBytes);
 
         /* Check for primary buffer flags change */
         ok(new_dsbcaps.dwFlags == dsbcaps.dwFlags,
            "    flags changed after SetFormat() - "
-           "previous flags were %08lx, current flags are %08lx\n",
+           "previous flags were %08x, current flags are %08x\n",
            dsbcaps.dwFlags, new_dsbcaps.dwFlags);
 
         /* Set the CooperativeLevel back to normal */
@@ -441,12 +441,12 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
 
         if (winetest_interactive) {
             if (set_frequency)
-                trace("    Playing %g second 440Hz tone at %ldx%dx%d with a "
-                      "frequency of %ld (%ldHz)\n", duration,
+                trace("    Playing %g second 440Hz tone at %dx%dx%d with a "
+                      "frequency of %d (%dHz)\n", duration,
                       wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nChannels,
                       frequency, (440 * frequency) / wfx.nSamplesPerSec);
             else
-                trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
+                trace("    Playing %g second 440Hz tone at %dx%dx%d\n", duration,
                       wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nChannels);
         }
 
@@ -594,7 +594,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
         ok(rc==DS_OK,"IDirectSoundBuffer_GetStatus() failed: %s\n",
            DXGetErrorString8(rc));
         ok(status==(DSBSTATUS_PLAYING|DSBSTATUS_LOOPING),
-           "GetStatus: bad status: %lx\n",status);
+           "GetStatus: bad status: %x\n",status);
 
         if (listener) {
             ZeroMemory(&listener_param,sizeof(listener_param));
@@ -655,7 +655,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
         /* Check the sound duration was within 10% of the expected value */
         now=GetTickCount();
         ok(fabs(1000*duration-now+start_time)<=100*duration,
-           "The sound played for %ld ms instead of %g ms\n",
+           "The sound played for %d ms instead of %g ms\n",
            now-start_time,1000*duration);
 
         free(state.wave);
@@ -783,8 +783,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                                     wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         if (winetest_interactive) {
-            trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d "
-                  "with a primary buffer at %ldx%dx%d\n",
+            trace("  Testing a %s%ssecondary buffer %s%s%s%sat %dx%dx%d "
+                  "with a primary buffer at %dx%dx%d\n",
                   has_3dbuffer?"3D ":"",
                   has_duplicate?"duplicated ":"",
                   listener!=NULL||move_sound?"with ":"",
@@ -797,7 +797,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         }
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"IDirectSound_CreateSoundBuffer() "
-           "failed to create a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d (%s): %s\n",
+           "failed to create a %s%ssecondary buffer %s%s%s%sat %dx%dx%d (%s): %s\n",
            has_3dbuffer?"3D ":"", has_duplicate?"duplicated ":"",
            listener!=NULL||move_sound?"with ":"", move_listener?"moving ":"",
            listener!=NULL?"listener ":"",
@@ -813,11 +813,11 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 rc=IDirectSoundBuffer_GetVolume(secondary,&vol);
                 ok(rc==DS_OK,"IDirectSoundBuffer_GetVolume(secondary) failed: "
                    "%s\n",DXGetErrorString8(rc));
-                ok(vol==0,"wrong volume for a new secondary buffer: %ld\n",vol);
+                ok(vol==0,"wrong volume for a new secondary buffer: %d\n",vol);
                 rc=IDirectSoundBuffer_GetPan(secondary,&pan);
                 ok(rc==DS_OK,"IDirectSoundBuffer_GetPan(secondary) failed: "
                    "%s\n",DXGetErrorString8(rc));
-                ok(pan==0,"wrong pan for a new secondary buffer: %ld\n",pan);
+                ok(pan==0,"wrong pan for a new secondary buffer: %d\n",pan);
 
                 /* Check that changing the secondary buffer's volume and pan
                  * does not impact the primary buffer's volume and pan
@@ -835,7 +835,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 rc=IDirectSoundBuffer_GetVolume(secondary,&vol);
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetVolume(secondary) failed: "
                    "%s\n",DXGetErrorString8(rc));
-                ok(vol==-1000,"secondary: wrong volume %ld instead of -1000\n",
+                ok(vol==-1000,"secondary: wrong volume %d instead of -1000\n",
                    vol);
                 rc=IDirectSoundBuffer_SetPan(secondary,-1000);
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetPan(secondary) failed: "
@@ -843,18 +843,18 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 rc=IDirectSoundBuffer_GetPan(secondary,&pan);
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetPan(secondary) failed: "
                    "%s\n",DXGetErrorString8(rc));
-                ok(pan==-1000,"secondary: wrong pan %ld instead of -1000\n",
+                ok(pan==-1000,"secondary: wrong pan %d instead of -1000\n",
                    pan);
 
                 rc=IDirectSoundBuffer_GetVolume(primary,&vol);
                 ok(rc==DS_OK,"IDirectSoundBuffer_GetVolume(primary) failed: "
                    "%s\n",DXGetErrorString8(rc));
-                ok(vol==refvol,"The primary volume changed from %ld to %ld\n",
+                ok(vol==refvol,"The primary volume changed from %d to %d\n",
                    refvol,vol);
                 rc=IDirectSoundBuffer_GetPan(primary,&pan);
                 ok(rc==DS_OK,"IDirectSoundBuffer_GetPan(primary) failed: %s\n",
                    DXGetErrorString8(rc));
-                ok(pan==refpan,"The primary pan changed from %ld to %ld\n",
+                ok(pan==refpan,"The primary pan changed from %d to %d\n",
                    refpan,pan);
 
                 rc=IDirectSoundBuffer_SetVolume(secondary,0);

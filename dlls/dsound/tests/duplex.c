@@ -124,7 +124,7 @@ static void IDirectSoundFullDuplex_tests(void)
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
     ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG||rc==CLASS_E_CLASSNOTAVAILABLE,
-       "CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08lx)\n",
+       "CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08x)\n",
        DXGetErrorString8(rc), rc);
     if (rc==REGDB_E_CLASSNOTREG) {
         trace("  Class Not Registered\n");
@@ -141,7 +141,7 @@ static void IDirectSoundFullDuplex_tests(void)
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08lx)\n",
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08x)\n",
        DXGetErrorString8(rc), rc);
     if (dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, FALSE, &DSDEVID_DefaultCapture,
@@ -152,7 +152,7 @@ static void IDirectSoundFullDuplex_tests(void)
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
-    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08lx)\n",
+    ok(rc==S_OK,"CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08x)\n",
        DXGetErrorString8(rc), rc);
     if (dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, FALSE, &DSDEVID_DefaultVoiceCapture,
@@ -165,7 +165,7 @@ static void IDirectSoundFullDuplex_tests(void)
                         (void**)&dsfdo);
     ok(rc==E_NOINTERFACE,
        "CoCreateInstance(CLSID_DirectSoundFullDuplex,CLSID_DirectSoundPrivate) "
-       "should have failed: %s (0x%08lx)\n",DXGetErrorString8(rc), rc);
+       "should have failed: %s (0x%08x)\n",DXGetErrorString8(rc), rc);
 
     ZeroMemory(&wfex, sizeof(wfex));
     wfex.wFormatTag = WAVE_FORMAT_PCM;

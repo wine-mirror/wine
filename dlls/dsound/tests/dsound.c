@@ -159,7 +159,7 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
            DXGetErrorString8(rc));
         if (rc==DS_OK && speaker_config!=new_speaker_config)
                trace("IDirectSound_GetSpeakerConfig() failed to set speaker "
-               "config: expected 0x%08lx, got 0x%08lx\n",
+               "config: expected 0x%08x, got 0x%08x\n",
                speaker_config,new_speaker_config);
     }
 
@@ -472,7 +472,7 @@ static HRESULT test_primary(LPGUID lpGuid)
             trace("Playing a 5 seconds reference tone at the current "
                   "volume.\n");
             if (rc==DS_OK)
-                trace("(the current volume is %ld according to DirectSound)\n",
+                trace("(the current volume is %d according to DirectSound)\n",
                       vol);
             trace("All subsequent tones should be identical to this one.\n");
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
@@ -576,11 +576,11 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                  wfx.nSamplesPerSec!=wfx2.nSamplesPerSec ||
                  wfx.wBitsPerSample!=wfx2.wBitsPerSample ||
                  wfx.nChannels!=wfx2.nChannels)) {
-                trace("Requested primary format tag=0x%04x %ldx%dx%d "
-                      "avg.B/s=%ld align=%d\n",
+                trace("Requested primary format tag=0x%04x %dx%dx%d "
+                      "avg.B/s=%d align=%d\n",
                       wfx2.wFormatTag,wfx2.nSamplesPerSec,wfx2.wBitsPerSample,
                       wfx2.nChannels,wfx2.nAvgBytesPerSec,wfx2.nBlockAlign);
-                trace("Got tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+                trace("Got tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
                       wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
                       wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
             }
@@ -601,8 +601,8 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx2;
             if (winetest_interactive) {
-                trace("  Testing a primary buffer at %ldx%dx%d with a "
-                      "secondary buffer at %ldx%dx%d\n",
+                trace("  Testing a primary buffer at %dx%dx%d with a "
+                      "secondary buffer at %dx%dx%d\n",
                       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
                       wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
             }
@@ -714,8 +714,8 @@ static HRESULT test_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
-                trace("  Testing a secondary buffer at %ldx%dx%d "
-                      "with a primary buffer at %ldx%dx%d\n",
+                trace("  Testing a secondary buffer at %dx%dx%d "
+                      "with a primary buffer at %dx%dx%d\n",
                       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
                       wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
             }
@@ -790,8 +790,8 @@ static HRESULT test_block_align(LPGUID lpGuid)
            "returned: %s\n", DXGetErrorString8(rc));
         if (rc==DS_OK)
             ok(dsbcaps.dwBufferBytes==(wfx.nAvgBytesPerSec + wfx.nBlockAlign),
-               "Buffer size not a multiple of nBlockAlign: requested %ld, "
-               "got %ld, should be %ld\n", bufdesc.dwBufferBytes,
+               "Buffer size not a multiple of nBlockAlign: requested %d, "
+               "got %d, should be %d\n", bufdesc.dwBufferBytes,
                dsbcaps.dwBufferBytes, wfx.nAvgBytesPerSec + wfx.nBlockAlign);
         ref=IDirectSoundBuffer_Release(secondary);
         ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, "
@@ -874,8 +874,8 @@ static HRESULT test_frequency(LPGUID lpGuid)
                                         BUFFER_LEN/1000,wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
-                trace("  Testing a secondary buffer at %ldx%dx%d "
-                      "with a primary buffer at %ldx%dx%d\n",
+                trace("  Testing a secondary buffer at %dx%dx%d "
+                      "with a primary buffer at %dx%dx%d\n",
                       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
                       wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
             }

@@ -83,7 +83,7 @@ BOOL CALLBACK callback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_DATA data,
     trace("    Description: %s\n", data->Description);
     trace("    Module: %s\n", data->Module);
     trace("    Interface: %s\n", data->Interface);
-    trace("    WaveDeviceId: %ld\n", data->WaveDeviceId);
+    trace("    WaveDeviceId: %d\n", data->WaveDeviceId);
 
     return TRUE;
 }
@@ -115,7 +115,7 @@ BOOL CALLBACK callback1(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA data,
     trace("    ModuleA: %s\n", data->ModuleA);
     WideCharToMultiByte(CP_ACP, 0, data->ModuleW, -1, moduleA, sizeof(moduleA), NULL, NULL);
     trace("    ModuleW: %s\n", moduleA);
-    trace("    WaveDeviceId: %ld\n", data->WaveDeviceId);
+    trace("    WaveDeviceId: %d\n", data->WaveDeviceId);
 
     return TRUE;
 }
@@ -141,7 +141,7 @@ BOOL CALLBACK callbackA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA data,
     trace("    Description: %s\n", data->Description);
     trace("    Module: %s\n", data->Module);
     trace("    Interface: %s\n", data->Interface);
-    trace("    WaveDeviceId: %ld\n", data->WaveDeviceId);
+    trace("    WaveDeviceId: %d\n", data->WaveDeviceId);
 
     return TRUE;
 }
@@ -174,7 +174,7 @@ BOOL CALLBACK callbackW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA data,
     trace("\tDescription: %s\n", descriptionA);
     trace("\tModule: %s\n", moduleA);
     trace("\tInterface: %s\n", interfaceA);
-    trace("\tWaveDeviceId: %ld\n", data->WaveDeviceId);
+    trace("\tWaveDeviceId: %d\n", data->WaveDeviceId);
 
     return TRUE;
 }
@@ -324,10 +324,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),
        "Shouldn't be able to set DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1 */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -345,10 +345,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),
        "Shouldn't be able to set DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -366,10 +366,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),
        "Shouldn't be able to set DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -387,10 +387,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),
        "Shouldn't be able to set DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
 
     /* test generic DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -403,10 +403,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET), "Shouldn't be able to set "
        "DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING: support = "
-       "0x%lx\n",support);
+       "0x%x\n",support);
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -419,10 +419,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET), "Shouldn't be able to set "
        "DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A: support = "
-       "0x%lx\n",support);
+       "0x%x\n",support);
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
@@ -435,10 +435,10 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET), "Shouldn't be able to set "
        "DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W: support = "
-       "0x%lx\n",support);
+       "0x%x\n",support);
 
     /* test generic DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE */
     trace("*** Testing DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE ***\n");
@@ -453,9 +453,9 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),"Shouldn't be able to set "
-       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE: support = 0x%lx\n",support);
+       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE: support = 0x%x\n",support);
 
     if (support & KSPROPERTY_SUPPORT_GET) {
         DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_DATA data;
@@ -467,7 +467,7 @@ static void propset_private_tests(void)
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
                               DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
                               NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
+        ok(rc==DS_OK, "Couldn't enumerate: 0x%x\n",rc);
    }
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1 */
@@ -483,9 +483,9 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),"Shouldn't be able to set "
-       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1: support = 0x%lx\n",support);
+       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1: support = 0x%x\n",support);
 
     if (support & KSPROPERTY_SUPPORT_GET) {
         DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1_DATA data;
@@ -497,7 +497,7 @@ static void propset_private_tests(void)
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
                               DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1,
                               NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
+        ok(rc==DS_OK, "Couldn't enumerate: 0x%x\n",rc);
     }
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A */
@@ -513,9 +513,9 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),"Shouldn't be able to set "
-       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A: support = 0x%lx\n",support);
+       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A: support = 0x%x\n",support);
 
     if (support & KSPROPERTY_SUPPORT_GET) {
         DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA data;
@@ -527,7 +527,7 @@ static void propset_private_tests(void)
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
                               DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A,
                               NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
+        ok(rc==DS_OK, "Couldn't enumerate: 0x%x\n",rc);
     }
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W */
@@ -543,9 +543,9 @@ static void propset_private_tests(void)
 
     ok(support & KSPROPERTY_SUPPORT_GET,
        "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W: "
-       "support = 0x%lx\n",support);
+       "support = 0x%x\n",support);
     ok(!(support & KSPROPERTY_SUPPORT_SET),"Shouldn't be able to set "
-       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W: support = 0x%lx\n",support);
+       "DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W: support = 0x%x\n",support);
 
     if (support & KSPROPERTY_SUPPORT_GET) {
         DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA data;
@@ -557,7 +557,7 @@ static void propset_private_tests(void)
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
                               DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W,
                               NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
+        ok(rc==DS_OK, "Couldn't enumerate: 0x%x\n",rc);
     }
 
 error:
@@ -618,7 +618,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2;
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
         bufdesc.lpwfxFormat=&wfx;
-        trace("  Testing a secondary buffer at %ldx%dx%d\n",
+        trace("  Testing a secondary buffer at %dx%dx%d\n",
             wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK&&secondary!=NULL,"IDirectSound_CreateSoundBuffer() "

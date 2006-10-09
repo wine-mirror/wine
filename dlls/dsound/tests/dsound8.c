@@ -174,7 +174,7 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
            DXGetErrorString8(rc));
         if (rc==DS_OK && speaker_config!=new_speaker_config)
                trace("IDirectSound8_GetSpeakerConfig() failed to set speaker "
-               "config: expected 0x%08lx, got 0x%08lx\n",
+               "config: expected 0x%08x, got 0x%08x\n",
                speaker_config,new_speaker_config);
     }
 
@@ -503,7 +503,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
         if (winetest_interactive) {
             trace("Playing a 5 seconds reference tone at the current volume.\n");
             if (rc==DS_OK)
-                trace("(the current volume is %ld according to DirectSound)\n",
+                trace("(the current volume is %d according to DirectSound)\n",
                       vol);
             trace("All subsequent tones should be identical to this one.\n");
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
@@ -608,11 +608,11 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
                  wfx.nSamplesPerSec!=wfx2.nSamplesPerSec ||
                  wfx.wBitsPerSample!=wfx2.wBitsPerSample ||
                  wfx.nChannels!=wfx2.nChannels)) {
-                trace("Requested primary format tag=0x%04x %ldx%dx%d "
-                      "avg.B/s=%ld align=%d\n",
+                trace("Requested primary format tag=0x%04x %dx%dx%d "
+                      "avg.B/s=%d align=%d\n",
                       wfx2.wFormatTag,wfx2.nSamplesPerSec,wfx2.wBitsPerSample,
                       wfx2.nChannels,wfx2.nAvgBytesPerSec,wfx2.nBlockAlign);
-                trace("Got tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+                trace("Got tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
                       wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
                       wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
             }
@@ -633,8 +633,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx2;
             if (winetest_interactive) {
-                trace("  Testing a primary buffer at %ldx%dx%d with a "
-                      "secondary buffer at %ldx%dx%d\n",
+                trace("  Testing a primary buffer at %dx%dx%d with a "
+                      "secondary buffer at %dx%dx%d\n",
                       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
                       wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
             }
@@ -746,8 +746,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
-                trace("  Testing a secondary buffer at %ldx%dx%d "
-                      "with a primary buffer at %ldx%dx%d\n",
+                trace("  Testing a secondary buffer at %dx%dx%d "
+                      "with a primary buffer at %dx%dx%d\n",
                       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
                       wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
             }
@@ -829,7 +829,7 @@ const char * get_file_version(const char * file_name)
                 VS_FIXEDFILEINFO *pFixedVersionInfo;
                 UINT len;
                 if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%ld.%ld.%ld.%ld",
+                    sprintf(version, "%d.%d.%d.%d",
                             pFixedVersionInfo->dwFileVersionMS >> 16,
                             pFixedVersionInfo->dwFileVersionMS & 0xffff,
                             pFixedVersionInfo->dwFileVersionLS >> 16,
