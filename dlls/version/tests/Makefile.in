@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = version.dll
 IMPORTS   = version kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	info.c \

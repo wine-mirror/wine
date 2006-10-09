@@ -60,7 +60,7 @@ static void test_find_file(void)
            "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
         break;
     default:
-        ok(0, "Got unexpected return value %lx\n", ret);
+        ok(0, "Got unexpected return value %x\n", ret);
     }
 
     if(!GetWindowsDirectoryA(windir, MAX_PATH))
@@ -89,7 +89,7 @@ static void test_find_file(void)
                    "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
                 break;
             default:
-                todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+                todo_wine ok(0, "Got unexpected return value %x\n", ret);
             }
 
             dwCur=MAX_PATH;
@@ -111,7 +111,7 @@ static void test_find_file(void)
                    "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
                 break;
             default:
-                todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+                todo_wine ok(0, "Got unexpected return value %x\n", ret);
             }
         }
     }
@@ -142,7 +142,7 @@ static void test_find_file(void)
                "got %d(%s) expected MAX_PATH\n", dwOut, outBuf);
             break;
         default:
-            todo_wine ok(0, "Got unexpected return value %lx\n", ret);
+            todo_wine ok(0, "Got unexpected return value %x\n", ret);
         }
 
         dwCur=MAX_PATH;
@@ -150,7 +150,7 @@ static void test_find_file(void)
         memset(outBuf, 0, MAX_PATH);
         memset(curdir, 0, MAX_PATH);
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %x expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(windir), "Wrong length of buffer for current location: "
            "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(windir)+1);
 
@@ -159,7 +159,7 @@ static void test_find_file(void)
         memset(outBuf, 0, MAX_PATH);
         memset(curdir, 0, MAX_PATH);
         ret = VerFindFileA(0, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
-        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
+        todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %x expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(appdir), "Wrong length of buffer for current location: "
            "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(appdir)+1);
     }
