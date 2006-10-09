@@ -812,8 +812,6 @@ DllMain(HINSTANCE hInstDLL,
         DWORD Reason,
         void *lpv)
 {
-    static LONG counter = 0;
-
     TRACE("(%p,%lx,%p)\n", hInstDLL, Reason, lpv);
     if (Reason == DLL_PROCESS_ATTACH)
     {
@@ -865,73 +863,67 @@ DllMain(HINSTANCE hInstDLL,
         }
 
         DisableThreadLibraryCalls(hInstDLL);
-        TRACE("Attach counter: %ld\n", InterlockedIncrement(&counter));
     }
     else if (Reason == DLL_PROCESS_DETACH)
     {
-        TRACE("Attach counter: %ld\n", InterlockedDecrement(&counter));
-
-        if(counter == 0)
+        if(!list_empty(&global_ddraw_list))
         {
-            if(!list_empty(&global_ddraw_list))
+            struct list *entry, *entry2;
+            WARN("There are still existing DirectDraw interfaces. Wine bug or buggy application?\n");
+
+            /* We remove elemets from this loop */
+            LIST_FOR_EACH_SAFE(entry, entry2, &global_ddraw_list)
             {
-                struct list *entry, *entry2;
-                WARN("There are still existing DirectDraw interfaces. Wine bug or buggy application?\n");
+                HRESULT hr;
+                DDSURFACEDESC2 desc;
+                int i;
+                IDirectDrawImpl *ddraw = LIST_ENTRY(entry, IDirectDrawImpl, ddraw_list_entry);
 
-                /* We remove elemets from this loop */
-                LIST_FOR_EACH_SAFE(entry, entry2, &global_ddraw_list)
+                WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
+
+                /* Add references to each interface to avoid freeing them unexpectadely */
+                IDirectDraw_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw));
+                IDirectDraw2_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw2));
+                IDirectDraw4_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw4));
+                IDirectDraw7_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw7));
+
+                /* Does a D3D device exist? Destroy it
+                    * TODO: Destroy all Vertex buffers, Lights, Materials
+                    * and execture buffers too
+                    */
+                if(ddraw->d3ddevice)
                 {
-                    HRESULT hr;
-                    DDSURFACEDESC2 desc;
-                    int i;
-                    IDirectDrawImpl *ddraw = LIST_ENTRY(entry, IDirectDrawImpl, ddraw_list_entry);
-
-                    WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
-
-                    /* Add references to each interface to avoid freeing them unexpectadely */
-                    IDirectDraw_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw));
-                    IDirectDraw2_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw2));
-                    IDirectDraw4_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw4));
-                    IDirectDraw7_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw7));
-
-                    /* Does a D3D device exist? Destroy it
-                     * TODO: Destroy all Vertex buffers, Lights, Materials
-                     * and execture buffers too
-                     */
-                    if(ddraw->d3ddevice)
-                    {
-                        WARN("DDraw %p has d3ddevice %p attached\n", ddraw, ddraw->d3ddevice);
-                        while(IDirect3DDevice7_Release(ICOM_INTERFACE(ddraw->d3ddevice, IDirect3DDevice7)));
-                    }
-
-                    /* Try to release the objects
-                     * Do an EnumSurfaces to find any hanging surfaces
-                     */
-                    memset(&desc, 0, sizeof(desc));
-                    desc.dwSize = sizeof(desc);
-                    for(i = 0; i <= 1; i++)
-                    {
-                        hr = IDirectDraw7_EnumSurfaces(ICOM_INTERFACE(ddraw, IDirectDraw7),
-                                                        DDENUMSURFACES_ALL,
-                                                        &desc,
-                                                        (void *) ddraw,
-                                                        DestroyCallback);
-                        if(hr != D3D_OK)
-                            ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);
-                    }
-
-                    /* Check the surface count */
-                    if(ddraw->surfaces > 0)
-                        ERR("DDraw %p still has %ld surfaces attached\n", ddraw, ddraw->surfaces);
-
-                    /* Release all hanging references to destroy the objects. This
-                     * restores the screen mode too
-                     */
-                    while(IDirectDraw_Release(ICOM_INTERFACE(ddraw, IDirectDraw)));
-                    while(IDirectDraw2_Release(ICOM_INTERFACE(ddraw, IDirectDraw2)));
-                    while(IDirectDraw4_Release(ICOM_INTERFACE(ddraw, IDirectDraw4)));
-                    while(IDirectDraw7_Release(ICOM_INTERFACE(ddraw, IDirectDraw7)));
+                    WARN("DDraw %p has d3ddevice %p attached\n", ddraw, ddraw->d3ddevice);
+                    while(IDirect3DDevice7_Release(ICOM_INTERFACE(ddraw->d3ddevice, IDirect3DDevice7)));
                 }
+
+                /* Try to release the objects
+                    * Do an EnumSurfaces to find any hanging surfaces
+                    */
+                memset(&desc, 0, sizeof(desc));
+                desc.dwSize = sizeof(desc);
+                for(i = 0; i <= 1; i++)
+                {
+                    hr = IDirectDraw7_EnumSurfaces(ICOM_INTERFACE(ddraw, IDirectDraw7),
+                                                    DDENUMSURFACES_ALL,
+                                                    &desc,
+                                                    (void *) ddraw,
+                                                    DestroyCallback);
+                    if(hr != D3D_OK)
+                        ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);
+                }
+
+                /* Check the surface count */
+                if(ddraw->surfaces > 0)
+                    ERR("DDraw %p still has %ld surfaces attached\n", ddraw, ddraw->surfaces);
+
+                /* Release all hanging references to destroy the objects. This
+                    * restores the screen mode too
+                    */
+                while(IDirectDraw_Release(ICOM_INTERFACE(ddraw, IDirectDraw)));
+                while(IDirectDraw2_Release(ICOM_INTERFACE(ddraw, IDirectDraw2)));
+                while(IDirectDraw4_Release(ICOM_INTERFACE(ddraw, IDirectDraw4)));
+                while(IDirectDraw7_Release(ICOM_INTERFACE(ddraw, IDirectDraw7)));
             }
         }
     }
