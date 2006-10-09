@@ -426,7 +426,7 @@ static void free_feature( MSIFEATURE *feature )
     msi_free( feature );
 }
 
-void free_extension( MSIEXTENSION *ext )
+static void free_extension( MSIEXTENSION *ext )
 {
     struct list *item, *cursor;
 

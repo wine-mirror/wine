@@ -58,8 +58,6 @@ extern const WCHAR szRemoveFiles[];
 
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
-extern LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename );
-
 /*
  * This is a helper function for handling embedded cabinet media
  */

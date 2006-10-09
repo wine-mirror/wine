@@ -3850,7 +3850,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
-UINT ACTION_ResolveSource(MSIPACKAGE* package)
+static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
     DWORD attrib;
     UINT rc;

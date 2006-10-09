@@ -120,7 +120,7 @@ static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR acti
 /* stores the CustomActionData before the action:
  *     [CustomActionData]Action
  */
-LPWSTR msi_get_deferred_action(LPCWSTR action, LPWSTR actiondata)
+static LPWSTR msi_get_deferred_action(LPCWSTR action, LPWSTR actiondata)
 {
     LPWSTR deferred;
     DWORD len;

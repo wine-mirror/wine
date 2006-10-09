@@ -150,8 +150,8 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
 /***********************************************************************
  * MsiGetTargetPath   (internal)
  */
-UINT WINAPI MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
-                               awstring *szPathBuf, DWORD* pcchPathBuf )
+static UINT WINAPI MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
+                                      awstring *szPathBuf, DWORD* pcchPathBuf )
 {
     MSIPACKAGE *package;
     LPWSTR path;

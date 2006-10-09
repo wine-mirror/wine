@@ -47,8 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-extern void msi_ui_error( DWORD msg_id, DWORD type );
-
 static void msi_free_properties( MSIPACKAGE *package );
 
 static void MSI_FreePackage( MSIOBJECTHDR *arg)

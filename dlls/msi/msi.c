@@ -431,8 +431,8 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
-                               awstring *szValue, DWORD *pcchValueBuf)
+static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
+                                      awstring *szValue, DWORD *pcchValueBuf)
 {
     UINT r;
     HKEY hkey;
@@ -960,8 +960,8 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return r;
 }
 
-INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
-                                         awstring* lpPathBuf, DWORD* pcchBuf)
+static INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
+                                                awstring* lpPathBuf, DWORD* pcchBuf)
 {
     WCHAR squished_pc[GUID_SIZE], squished_comp[GUID_SIZE];
     UINT rc;
@@ -1409,7 +1409,7 @@ INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
 /***********************************************************************
  * MSI_ProvideQualifiedComponentEx [internal]
  */
-UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
+static UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
                 LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR szProduct,
                 DWORD Unused1, DWORD Unused2, awstring *lpPathBuf,
                 DWORD* pcchPathBuf)
@@ -1534,7 +1534,7 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
 /***********************************************************************
  * MSI_GetUserInfo [internal]
  */
-USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
+static USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
                 awstring *lpUserNameBuf, DWORD* pcchUserNameBuf,
                 awstring *lpOrgNameBuf, DWORD* pcchOrgNameBuf,
                 awstring *lpSerialBuf, DWORD* pcchSerialBuf)

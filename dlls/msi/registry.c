@@ -855,7 +855,7 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     return r;
 }
 
-UINT WINAPI MSI_EnumComponentQualifiers( LPCWSTR szComponent, DWORD iIndex,
+static UINT WINAPI MSI_EnumComponentQualifiers( LPCWSTR szComponent, DWORD iIndex,
                 awstring *lpQualBuf, DWORD* pcchQual,
                 awstring *lpAppBuf, DWORD* pcchAppBuf )
 {
