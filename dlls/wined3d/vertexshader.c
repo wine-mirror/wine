@@ -627,7 +627,7 @@ static void vshader_set_input(
 
     /* Fake register; set reserved bit, regnum, type: input, wmask: all */
     DWORD reg_token = (0x1 << 31) |
-        D3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << WINED3DSP_REGTYPE_SHIFT) | regnum;
+        WINED3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << WINED3DSP_REGTYPE_SHIFT) | regnum;
 
     This->semantics_in[regnum].usage = usage_token;
     This->semantics_in[regnum].reg = reg_token;
@@ -991,7 +991,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                             p_send[i] = &s[i];
                         }
                     } else { /* output reg */
-                        if ((pToken[i] & D3DSP_WRITEMASK_ALL) == D3DSP_WRITEMASK_ALL) {
+                        if ((pToken[i] & WINED3DSP_WRITEMASK_ALL) == WINED3DSP_WRITEMASK_ALL) {
                             p_send[i] = p[i];
                         } else {
                             p_send[i] = &d; /* to be post-processed for modifiers management */
@@ -1027,11 +1027,13 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             }
 
             /* check if output reg modifier post-process */
-            if (curOpcode->num_params > 0 && (pToken[0] & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
-                if (pToken[0] & D3DSP_WRITEMASK_0) p[0]->x = d.x; 
-                if (pToken[0] & D3DSP_WRITEMASK_1) p[0]->y = d.y; 
-                if (pToken[0] & D3DSP_WRITEMASK_2) p[0]->z = d.z; 
-                if (pToken[0] & D3DSP_WRITEMASK_3) p[0]->w = d.w; 
+            if (curOpcode->num_params > 0 &&
+                (pToken[0] & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
+
+                if (pToken[0] & WINED3DSP_WRITEMASK_0) p[0]->x = d.x; 
+                if (pToken[0] & WINED3DSP_WRITEMASK_1) p[0]->y = d.y; 
+                if (pToken[0] & WINED3DSP_WRITEMASK_2) p[0]->z = d.z; 
+                if (pToken[0] & WINED3DSP_WRITEMASK_3) p[0]->w = d.w; 
             }
 #if 0
             TRACE_VSVECTOR(output->oPos);

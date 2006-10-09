@@ -504,7 +504,7 @@ static const char* shift_glsl_tab[] = {
  * Will also change the reg_mask if necessary (not all register types are equal in DX vs GL)  */
 static void shader_glsl_add_dst(DWORD param, const char* reg_name, char* reg_mask, char* outStr) {
 
-    int shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+    int shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     char cast[6];
     
     if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT)
@@ -728,12 +728,12 @@ static void shader_glsl_get_output_register_swizzle(
     char *write_mask) {
    
     *write_mask = 0;
-    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+    if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
         strcat(write_mask, ".");
-        if (param & D3DSP_WRITEMASK_0) strcat(write_mask, "x");
-        if (param & D3DSP_WRITEMASK_1) strcat(write_mask, "y");
-        if (param & D3DSP_WRITEMASK_2) strcat(write_mask, "z");
-        if (param & D3DSP_WRITEMASK_3) strcat(write_mask, "w");
+        if (param & WINED3DSP_WRITEMASK_0) strcat(write_mask, "x");
+        if (param & WINED3DSP_WRITEMASK_1) strcat(write_mask, "y");
+        if (param & WINED3DSP_WRITEMASK_2) strcat(write_mask, "z");
+        if (param & WINED3DSP_WRITEMASK_3) strcat(write_mask, "w");
     }
 }
 
@@ -816,7 +816,7 @@ static void shader_glsl_add_param(
 /** Process GLSL instruction modifiers */
 void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
     
-    DWORD mask = arg->dst & D3DSP_DSTMOD_MASK;
+    DWORD mask = arg->dst & WINED3DSP_DSTMOD_MASK;
  
     if (arg->opcode->dst_token && mask != 0) {
         char dst_reg[50];
@@ -825,14 +825,14 @@ void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
        
         shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
 
-        if (mask & D3DSPDM_SATURATE) {
+        if (mask & WINED3DSPDM_SATURATE) {
             /* _SAT means to clamp the value of the register to between 0 and 1 */
             shader_addline(arg->buffer, "%s%s = clamp(%s%s, 0.0, 1.0);\n", dst_reg, dst_mask, dst_reg, dst_mask);
         }
-        if (mask & D3DSPDM_MSAMPCENTROID) {
+        if (mask & WINED3DSPDM_MSAMPCENTROID) {
             FIXME("_centroid modifier not handled\n");
         }
-        if (mask & D3DSPDM_PARTIALPRECISION) {
+        if (mask & WINED3DSPDM_PARTIALPRECISION) {
             /* MSDN says this modifier can be safely ignored, so that's what we'll do. */
         }
     }
@@ -1163,7 +1163,7 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     }
 
     for (i = 0; i < nComponents; i++) {
-        tmpArg.dst = ((arg->dst) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
+        tmpArg.dst = ((arg->dst) & ~WINED3DSP_WRITEMASK_ALL)|(WINED3DSP_WRITEMASK_0<<i);
         tmpArg.src[1]      = arg->src[1]+i;
         shader_glsl_dot(&tmpArg);
     }

@@ -606,12 +606,12 @@ void shader_dump_param(
    if (!input) {
        /* operand output (for modifiers and shift, see dump_ins_modifiers) */
 
-       if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+       if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
            TRACE(".");
-           if (param & D3DSP_WRITEMASK_0) TRACE("%c", swizzle_reg_chars[0]);
-           if (param & D3DSP_WRITEMASK_1) TRACE("%c", swizzle_reg_chars[1]);
-           if (param & D3DSP_WRITEMASK_2) TRACE("%c", swizzle_reg_chars[2]);
-           if (param & D3DSP_WRITEMASK_3) TRACE("%c", swizzle_reg_chars[3]);
+           if (param & WINED3DSP_WRITEMASK_0) TRACE("%c", swizzle_reg_chars[0]);
+           if (param & WINED3DSP_WRITEMASK_1) TRACE("%c", swizzle_reg_chars[1]);
+           if (param & WINED3DSP_WRITEMASK_2) TRACE("%c", swizzle_reg_chars[2]);
+           if (param & WINED3DSP_WRITEMASK_3) TRACE("%c", swizzle_reg_chars[3]);
        }
 
    } else {
@@ -782,8 +782,8 @@ void shader_generate_main(
 
 void shader_dump_ins_modifiers(const DWORD output) {
 
-    DWORD shift = (output & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-    DWORD mmask = output & D3DSP_DSTMOD_MASK;
+    DWORD shift = (output & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    DWORD mmask = output & WINED3DSP_DSTMOD_MASK;
 
     switch (shift) {
         case 0: break;
@@ -796,13 +796,13 @@ void shader_dump_ins_modifiers(const DWORD output) {
         default: TRACE("_unhandled_shift(%d)", shift); break;
     }
 
-    if (mmask & D3DSPDM_SATURATE)         TRACE("_sat");
-    if (mmask & D3DSPDM_PARTIALPRECISION) TRACE("_pp");
-    if (mmask & D3DSPDM_MSAMPCENTROID)    TRACE("_centroid");
+    if (mmask & WINED3DSPDM_SATURATE)         TRACE("_sat");
+    if (mmask & WINED3DSPDM_PARTIALPRECISION) TRACE("_pp");
+    if (mmask & WINED3DSPDM_MSAMPCENTROID)    TRACE("_centroid");
 
-    mmask &= ~(D3DSPDM_SATURATE | D3DSPDM_PARTIALPRECISION | D3DSPDM_MSAMPCENTROID);
+    mmask &= ~(WINED3DSPDM_SATURATE | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_MSAMPCENTROID);
     if (mmask)
-        FIXME("_unrecognized_modifier(%#x)", mmask >> D3DSP_DSTMOD_SHIFT);
+        FIXME("_unrecognized_modifier(%#x)", mmask >> WINED3DSP_DSTMOD_SHIFT);
 }
 
 /* First pass: trace shader, initialize length and version */

@@ -208,24 +208,24 @@ static const char* shift_tab[] = {
 
 static void pshader_get_write_mask(const DWORD output_reg, char *write_mask) {
     *write_mask = 0;
-    if ((output_reg & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+    if ((output_reg & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
         strcat(write_mask, ".");
-        if (output_reg & D3DSP_WRITEMASK_0) strcat(write_mask, "r");
-        if (output_reg & D3DSP_WRITEMASK_1) strcat(write_mask, "g");
-        if (output_reg & D3DSP_WRITEMASK_2) strcat(write_mask, "b");
-        if (output_reg & D3DSP_WRITEMASK_3) strcat(write_mask, "a");
+        if (output_reg & WINED3DSP_WRITEMASK_0) strcat(write_mask, "r");
+        if (output_reg & WINED3DSP_WRITEMASK_1) strcat(write_mask, "g");
+        if (output_reg & WINED3DSP_WRITEMASK_2) strcat(write_mask, "b");
+        if (output_reg & WINED3DSP_WRITEMASK_3) strcat(write_mask, "a");
     }
 }
 
 /* TODO: merge with pixel shader */
 static void vshader_program_add_output_param_swizzle(const DWORD param, int is_color, char *hwLine) {
     /** operand output */
-    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+    if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
       strcat(hwLine, ".");
-      if (param & D3DSP_WRITEMASK_0) { strcat(hwLine, "x"); }
-      if (param & D3DSP_WRITEMASK_1) { strcat(hwLine, "y"); }
-      if (param & D3DSP_WRITEMASK_2) { strcat(hwLine, "z"); }
-      if (param & D3DSP_WRITEMASK_3) { strcat(hwLine, "w"); }
+      if (param & WINED3DSP_WRITEMASK_0) { strcat(hwLine, "x"); }
+      if (param & WINED3DSP_WRITEMASK_1) { strcat(hwLine, "y"); }
+      if (param & WINED3DSP_WRITEMASK_2) { strcat(hwLine, "z"); }
+      if (param & WINED3DSP_WRITEMASK_3) { strcat(hwLine, "w"); }
     }
 }
 
@@ -569,20 +569,20 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
      strcpy(tmpLine, curOpcode->glname);
 
      /* Process modifiers */
-     if (0 != (dst & D3DSP_DSTMOD_MASK)) {
-         DWORD mask = dst & D3DSP_DSTMOD_MASK;
+     if (0 != (dst & WINED3DSP_DSTMOD_MASK)) {
+         DWORD mask = dst & WINED3DSP_DSTMOD_MASK;
 
-         saturate = mask & D3DSPDM_SATURATE;
-         centroid = mask & D3DSPDM_MSAMPCENTROID;
-         partialprecision = mask & D3DSPDM_PARTIALPRECISION;
-         mask &= ~(D3DSPDM_MSAMPCENTROID | D3DSPDM_PARTIALPRECISION | D3DSPDM_SATURATE);
+         saturate = mask & WINED3DSPDM_SATURATE;
+         centroid = mask & WINED3DSPDM_MSAMPCENTROID;
+         partialprecision = mask & WINED3DSPDM_PARTIALPRECISION;
+         mask &= ~(WINED3DSPDM_MSAMPCENTROID | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_SATURATE);
          if (mask)
-            FIXME("Unrecognized modifier(0x%#x)\n", mask >> D3DSP_DSTMOD_SHIFT);
+            FIXME("Unrecognized modifier(0x%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
 
          if (centroid)
-             FIXME("Unhandled modifier(0x%#x)\n", mask >> D3DSP_DSTMOD_SHIFT);
+             FIXME("Unhandled modifier(0x%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
      }
-     shift = (dst & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+     shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
       /* Generate input and output registers */
       if (curOpcode->num_params > 0) {
@@ -877,7 +877,7 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     }
 
     for (i = 0; i < nComponents; i++) {
-        tmpArg.dst = ((arg->dst) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
+        tmpArg.dst = ((arg->dst) & ~WINED3DSP_WRITEMASK_ALL)|(WINED3DSP_WRITEMASK_0<<i);
         tmpArg.src[1] = arg->src[1]+i;
         vshader_hw_map2gl(&tmpArg);
     }
