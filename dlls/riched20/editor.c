@@ -377,7 +377,10 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
       else if (info->rtfParam != rtfNoParam)
       {
         RTFColor *c = RTFGetColor(info, info->rtfParam);
-        fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+        if (c)
+          fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+        else
+          fmt.crTextColor = 0;
       }
       break;
     case rtfFontNum:
