@@ -1833,6 +1833,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
+    /* read the transform data */
     read_stream_data( stg, name, &rawdata, &rawsize );
     if ( !rawdata )
     {
@@ -1848,15 +1849,6 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     r = tv->view.ops->execute( &tv->view, NULL );
     if( r != ERROR_SUCCESS )
         goto err;
-
-    /* read the transform data */
-    r = ERROR_FUNCTION_FAILED;
-    read_stream_data( stg, name, &rawdata, &rawsize );
-    if( !rawdata || (rawsize < 2) )
-    {
-        ERR("odd sized transform for table %s\n", debugstr_w(name));
-        goto err;
-    }
 
     TRACE("name = %s columns = %u row_size = %u raw size = %u\n",
           debugstr_w(name), tv->num_cols, tv->row_size, rawsize );
