@@ -421,50 +421,50 @@ static void shader_dump_decl_usage(
 
         switch(usage) {
         case D3DDECLUSAGE_POSITION:
-            TRACE("%s%d", "position", idx);
+            TRACE("position%d", idx);
             break;
         case D3DDECLUSAGE_BLENDINDICES:
-            TRACE("%s", "blend");
+            TRACE("blend");
             break;
         case D3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("%s", "weight");
+            TRACE("weight");
             break;
         case D3DDECLUSAGE_NORMAL:
-            TRACE("%s%d", "normal", idx);
+            TRACE("normal%d", idx);
             break;
         case D3DDECLUSAGE_PSIZE:
-            TRACE("%s", "psize");
+            TRACE("psize");
             break;
         case D3DDECLUSAGE_COLOR:
             if(idx == 0)  {
-                TRACE("%s", "color");
+                TRACE("color");
             } else {
-                TRACE("%s%d", "specular", (idx - 1));
+                TRACE("specular%d", (idx - 1));
             }
             break;
         case D3DDECLUSAGE_TEXCOORD:
-            TRACE("%s%d", "texture", idx);
+            TRACE("texture%d", idx);
             break;
         case D3DDECLUSAGE_TANGENT:
-            TRACE("%s", "tangent");
+            TRACE("tangent");
             break;
         case D3DDECLUSAGE_BINORMAL:
-            TRACE("%s", "binormal");
+            TRACE("binormal");
             break;
         case D3DDECLUSAGE_TESSFACTOR:
-            TRACE("%s", "tessfactor");
+            TRACE("tessfactor");
             break;
         case D3DDECLUSAGE_POSITIONT:
-            TRACE("%s%d", "positionT", idx);
+            TRACE("positionT%d", idx);
             break;
         case D3DDECLUSAGE_FOG:
-            TRACE("%s", "fog");
+            TRACE("fog");
             break;
         case D3DDECLUSAGE_DEPTH:
-            TRACE("%s", "depth");
+            TRACE("depth");
             break;
         case D3DDECLUSAGE_SAMPLE:
-            TRACE("%s", "sample");
+            TRACE("sample");
             break;
         default:
             FIXME("unknown_semantics(%08x)", usage);
