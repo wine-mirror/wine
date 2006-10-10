@@ -100,7 +100,7 @@ BEGIN
   POPUP ""
   BEGIN
 	MENUITEM "수정(&M)",                     ID_EDIT_MODIFY
-	MENUITEM "Modify Binary Data",          ID_EDIT_MODIFY_BIN
+	MENUITEM "이진값 고치기",          ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "삭제(&D)\tDel",                ID_EDIT_DELETE
 	MENUITEM "이름 바꾸기(&R)",               ID_EDIT_RENAME
