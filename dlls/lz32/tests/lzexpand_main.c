@@ -363,16 +363,23 @@ static void test_LZOpenFileA(void)
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", 
      GetLastError());
 
-  /* Check various opening options. */
+  /* Check various opening options: */
+  /* a, for reading. */
   file = LZOpenFileA(filename_, &test, OF_READ);
   ok(file >= 0, "LZOpenFileA failed on read\n");
   LZClose(file);
+
+  /* b, for writing. */
   file = LZOpenFileA(filename_, &test, OF_WRITE);
   ok(file >= 0, "LZOpenFileA failed on write\n");
   LZClose(file);
+
+  /* c, for reading and writing. */
   file = LZOpenFileA(filename_, &test, OF_READWRITE);
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
   LZClose(file);
+
+  /* d, for checking file existance. */
   file = LZOpenFileA(filename_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
   LZClose(file);
@@ -456,8 +463,7 @@ static void test_LZCopy(void)
   LZClose(source);
   LZClose(dest);
 
-  file = CreateFileA(filename2, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		    0, 0);
+  file = CreateFileA(filename2, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
   ok(file != INVALID_HANDLE_VALUE,
      "CreateFileA: error %ld\n", GetLastError());
 
@@ -695,28 +701,35 @@ static void test_LZOpenFileW(void)
     trace("LZOpenFileW call not implemented, skipping rest of the test\n");
     return;
   }
-  ok(file == LZERROR_BADINHANDLE, 
-     "LZOpenFileW succeeded on nonexistent file\n");
+  ok(file == LZERROR_BADINHANDLE, "LZOpenFileW succeeded on nonexistent file\n");
   LZClose(file);
 
   /* Create an empty file. */
   file = LZOpenFileW(filenameW_, &test, OF_CREATE);
   ok(file >= 0, "LZOpenFile failed on creation\n");
+
   LZClose(file);
   retval = GetFileAttributesW(filenameW_);
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
     GetLastError());
 
-  /* Check various opening options. */
+  /* Check various opening options: */
+  /* a, for reading. */
   file = LZOpenFileW(filenameW_, &test, OF_READ);
   ok(file >= 0, "LZOpenFileW failed on read\n");
   LZClose(file);
+
+  /* b, for writing. */
   file = LZOpenFileW(filenameW_, &test, OF_WRITE);
   ok(file >= 0, "LZOpenFileW failed on write\n");
   LZClose(file);
+
+  /* c, for reading and writing. */
   file = LZOpenFileW(filenameW_, &test, OF_READWRITE);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
   LZClose(file);
+
+  /* d, for checking file existance. */
   file = LZOpenFileW(filenameW_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
   LZClose(file);
