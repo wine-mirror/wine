@@ -353,6 +353,7 @@ static void test_LZOpenFileA(void)
   INT file;
   static char badfilename_[] = "badfilename_";
   char expected[MAX_PATH];
+  char short_expected[MAX_PATH];
 
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
@@ -384,6 +385,7 @@ static void test_LZOpenFileA(void)
 
   /* Check various opening options: */
   memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, short_expected, TRUE);
 
   /* a, for reading. */
   file = LZOpenFileA(filename_, &test, OF_READ);
@@ -392,9 +394,10 @@ static void test_LZOpenFileA(void)
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-  ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
-     test.szPathName, expected);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     lstrcmpA(test.szPathName, short_expected) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n",
+     test.szPathName, expected, short_expected);
   LZClose(file);
 
   memset(&test, 0xA5, sizeof(test));
@@ -406,9 +409,10 @@ static void test_LZOpenFileA(void)
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-  ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
-     test.szPathName, expected);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     lstrcmpA(test.szPathName, short_expected) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n",
+     test.szPathName, expected, short_expected);
   LZClose(file);
 
   memset(&test, 0xA5, sizeof(test));
@@ -420,9 +424,10 @@ static void test_LZOpenFileA(void)
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-  ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
-     test.szPathName, expected);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     lstrcmpA(test.szPathName, short_expected) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n",
+     test.szPathName, expected, short_expected);
   LZClose(file);
 
   memset(&test, 0xA5, sizeof(test));
@@ -434,9 +439,10 @@ static void test_LZOpenFileA(void)
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-  ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
-     test.szPathName, expected);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     lstrcmpA(test.szPathName, short_expected) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n",
+     test.szPathName, expected, short_expected);
   LZClose(file);
 
   memset(&test, 0xA5, sizeof(test));
@@ -448,9 +454,10 @@ static void test_LZOpenFileA(void)
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
-  ok(lstrcmpA(test.szPathName, expected) == 0,
-     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
-     test.szPathName, expected);
+  ok(lstrcmpA(test.szPathName, expected) == 0 ||
+     lstrcmpA(test.szPathName, short_expected) == 0, /* Win9x */
+     "LZOpenFileA returned '%s', but was expected to return '%s' or '%s'\n",
+     test.szPathName, expected, short_expected);
   LZClose(file);
 
   retval = GetFileAttributesA(filename_);
