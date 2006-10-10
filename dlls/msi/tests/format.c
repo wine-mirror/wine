@@ -2240,6 +2240,7 @@ static void test_formatrecord_tables(void)
     DeleteFile( "C:\\I am a really long directory\\temporal.txt" );
     RemoveDirectory( "C:\\I am a really long directory" );
 
+    MsiCloseHandle( hrec );
     MsiCloseHandle( hpkg );
     DeleteFile( msifile );
 }

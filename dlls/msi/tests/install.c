@@ -705,6 +705,7 @@ static void test_packagecoltypes(void)
     ok(check_record(rec, 4, "Cabinet"), "wrong column label\n");
     ok(check_record(rec, 5, "VolumeLabel"), "wrong column label\n");
     ok(check_record(rec, 6, "Source"), "wrong column label\n");
+    MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo( view, MSICOLINFO_TYPES, &rec );
     count = MsiRecordGetFieldCount( rec );
@@ -720,6 +721,8 @@ static void test_packagecoltypes(void)
         ok(check_record(rec, 3, "L64"), "wrong column label\n");
     }
 
+    MsiCloseHandle(rec);
+    MsiCloseHandle(view);
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
@@ -731,10 +734,10 @@ START_TEST(install)
 
     create_test_files();
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
-    
+
     test_MsiInstallProduct();
     test_MsiSetComponentState();
     test_packagecoltypes();
-    
+
     delete_test_files();
 }

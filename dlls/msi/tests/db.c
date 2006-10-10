@@ -1313,6 +1313,7 @@ static void test_where(void)
     ok( 2 == r, "field wrong\n");
     r = MsiRecordGetInteger(rec, 2);
     ok( 1 == r, "field wrong\n");
+    MsiCloseHandle( rec );
 
     query = "SELECT `DiskId` FROM `Media` WHERE `LastSequence` >= 1 AND DiskId >= 0";
     r = MsiDatabaseOpenView(hdb, query, &view);
@@ -1332,6 +1333,7 @@ static void test_where(void)
     ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
     ok( !lstrcmp( buf, "2" ),
         "For (row %d, column 1) expected '%d', got %s\n", 0, 2, buf );
+    MsiCloseHandle( rec );
 
     r = MsiViewFetch(view, &rec);
     ok( r == ERROR_SUCCESS, "failed to fetch view: %d\n", r );
@@ -1341,6 +1343,7 @@ static void test_where(void)
     ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
     ok( !lstrcmp( buf, "3" ),
         "For (row %d, column 1) expected '%d', got %s\n", 1, 3, buf );
+    MsiCloseHandle( rec );
 
     r = MsiViewFetch(view, &rec);
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
@@ -1414,6 +1417,7 @@ static void test_msiimport(void)
     ok(check_record(rec, 7, "String"), "Expected String\n");
     ok(check_record(rec, 8, "LocalizableString"), "Expected LocalizableString\n");
     ok(check_record(rec, 9, "LocalizableStringNullable"), "Expected LocalizableStringNullable\n");
+    MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
     count = MsiRecordGetFieldCount(rec);
@@ -1430,6 +1434,7 @@ static void test_msiimport(void)
         ok(check_record(rec, 3, "i2"), "Expected i2\n");
         ok(check_record(rec, 5, "i4"), "Expected i4\n");
     }
+    MsiCloseHandle(rec);
 
     query = "SELECT * FROM `TestTable`";
     r = do_query(hdb, query, &rec);
@@ -1508,18 +1513,18 @@ static void test_markers(void)
     query = "CREATE TABLE `Mable` ( `?` SHORT NOT NULL, `Two` CHAR(255) PRIMARY KEY `One`)";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try column names as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(2);
     MsiRecordSetString(rec, 1, "One");
     MsiRecordSetString(rec, 2, "Two");
     query = "CREATE TABLE `Mable` ( `?` SHORT NOT NULL, `?` CHAR(255) PRIMARY KEY `One`)";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try names with backticks */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(3);
     MsiRecordSetString(rec, 1, "One");
     MsiRecordSetString(rec, 2, "Two");
@@ -1537,17 +1542,17 @@ static void test_markers(void)
     query = "CREATE TABLE `Mable` ( ? SHORT NOT NULL, ? CHAR(255) PRIMARY KEY ?)";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try one long marker */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(1);
     MsiRecordSetString(rec, 1, "`One` SHORT NOT NULL, `Two` CHAR(255) PRIMARY KEY `One`");
     query = "CREATE TABLE `Mable` ( ? )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try all names as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(4);
     MsiRecordSetString(rec, 1, "Mable");
     MsiRecordSetString(rec, 2, "One");
@@ -1556,6 +1561,7 @@ static void test_markers(void)
     query = "CREATE TABLE `?` ( `?` SHORT NOT NULL, `?` CHAR(255) PRIMARY KEY `?`)";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try a legit insert */
     query = "INSERT INTO `Table` ( `One`, `Two` ) VALUES ( 5, 'hello' )";
@@ -1566,16 +1572,15 @@ static void test_markers(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* try values as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(2);
     MsiRecordSetInteger(rec, 1, 4);
     MsiRecordSetString(rec, 2, "hi");
     query = "INSERT INTO `Table` ( `One`, `Two` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try column names and values as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(4);
     MsiRecordSetString(rec, 1, "One");
     MsiRecordSetString(rec, 2, "Two");
@@ -1584,26 +1589,26 @@ static void test_markers(void)
     query = "INSERT INTO `Table` ( `?`, `?` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try column names as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(2);
     MsiRecordSetString(rec, 1, "One");
     MsiRecordSetString(rec, 2, "Two");
     query = "INSERT INTO `Table` ( `?`, `?` ) VALUES ( 3, 'yellow' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try table name as a marker */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(1);
     MsiRecordSetString(rec, 1, "Table");
     query = "INSERT INTO `?` ( `One`, `Two` ) VALUES ( 2, 'green' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try table name and values as markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(3);
     MsiRecordSetString(rec, 1, "Table");
     MsiRecordSetInteger(rec, 2, 10);
@@ -1611,9 +1616,9 @@ static void test_markers(void)
     query = "INSERT INTO `?` ( `One`, `Two` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* try all markers */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(5);
     MsiRecordSetString(rec, 1, "Table");
     MsiRecordSetString(rec, 1, "One");
@@ -1623,18 +1628,18 @@ static void test_markers(void)
     query = "INSERT INTO `?` ( `?`, `?` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* insert an integer as a string */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(2);
     MsiRecordSetString(rec, 1, "11");
     MsiRecordSetString(rec, 2, "hi");
     query = "INSERT INTO `Table` ( `One`, `Two` ) VALUES ( ?, '?' )";
     r = run_query(hdb, rec, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    MsiCloseHandle(rec);
 
     /* leave off the '' for the string */
-    MsiCloseHandle(rec);
     rec = MsiCreateRecord(2);
     MsiRecordSetInteger(rec, 1, 12);
     MsiRecordSetString(rec, 2, "hi");
@@ -2460,9 +2465,11 @@ static void test_temporary_table(void)
     rec = 0;
     r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'B'", &rec);
     ok( r == ERROR_NO_MORE_ITEMS, "temporary table exists in _Columns\n");
+    if (rec) MsiCloseHandle( rec );
 
     r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'C'", &rec);
     ok( r == ERROR_NO_MORE_ITEMS, "temporary table exists in _Columns\n");
+    if (rec) MsiCloseHandle( rec );
     }
 
     MsiCloseHandle( hdb );

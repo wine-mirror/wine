@@ -2715,6 +2715,7 @@ static void test_installprops(void)
     r = MsiGetProperty(hpkg, "DATABASE", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    MsiCloseHandle(hpkg);
 }
 
 START_TEST(package)
