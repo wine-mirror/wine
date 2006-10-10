@@ -43,7 +43,6 @@
 #include "msidefs.h"
 
 #include "msipriv.h"
-#include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 

@@ -36,7 +36,6 @@
 #include "msidefs.h"
 #include "msipriv.h"
 #include "winuser.h"
-#include "action.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);

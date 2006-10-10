@@ -39,7 +39,6 @@
 #include "shobjidl.h"
 #include "objidl.h"
 #include "wine/unicode.h"
-#include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 

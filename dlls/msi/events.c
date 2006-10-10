@@ -32,7 +32,6 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/contr
 #include "winreg.h"
 #include "msi.h"
 #include "msipriv.h"
-#include "action.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
