@@ -53,7 +53,7 @@ static ULONG WINAPI IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface) {
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedIncrement(&This->ref);
-        TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+        TRACE("(%p) : AddRef from %d\n", This, ref - 1);
         return ref;
     }
 }
@@ -73,7 +73,7 @@ static ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
     else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedDecrement(&This->ref);
-        TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+        TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
         if (ref == 0) {
             IWineD3DVolume_Release(This->wineD3DVolume);
@@ -151,7 +151,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DV
 
 static HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX *pLockedVolume, CONST D3DBOX *pBox, DWORD Flags) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
-    TRACE("(%p) relay %p %p %p %ld\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
+    TRACE("(%p) relay %p %p %p %d\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
     return IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *) pLockedVolume, (WINED3DBOX *) pBox, Flags);
 }
 

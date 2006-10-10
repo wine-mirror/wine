@@ -58,7 +58,7 @@ static ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -67,7 +67,7 @@ static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
         TRACE("Releasing wined3d %p\n", This->WineD3D);

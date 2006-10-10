@@ -50,7 +50,7 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion) {
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    TRACE("fdwReason=%ld\n", fdwReason);
+    TRACE("fdwReason=%d\n", fdwReason);
     if (fdwReason == DLL_PROCESS_ATTACH)
         DisableThreadLibraryCalls(hInstDLL);
 

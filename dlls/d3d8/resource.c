@@ -43,7 +43,7 @@ static ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -52,7 +52,7 @@ static ULONG WINAPI IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
         IWineD3DResource_Release(This->wineD3DResource);

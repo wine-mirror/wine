@@ -45,7 +45,7 @@ static ULONG WINAPI IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 ifac
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -54,7 +54,7 @@ static ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 ifa
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
         IWineD3DBaseTexture_Release(This->wineD3DBaseTexture);
