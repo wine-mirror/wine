@@ -337,7 +337,7 @@ static int kw_token(const char *kw)
 	}
 #endif
 	if (kwp) {
-		parser_lval.str = (char*)kwp->kw;
+		parser_lval.str = xstrdup(kwp->kw);
 		return kwp->token;
 	}
 	parser_lval.str = xstrdup(kw);
