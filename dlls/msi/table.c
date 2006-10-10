@@ -977,6 +977,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             {
                 ERR("oops. data in the _Columns table isn't in the right "
                     "order for table %s\n", debugstr_w(szTableName));
+                msi_free_colinfo(colinfo, n+1 );
                 return ERROR_FUNCTION_FAILED;
             }
         }
