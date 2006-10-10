@@ -44,7 +44,7 @@ static ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 if
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -53,7 +53,7 @@ static ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 i
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
         IWineD3DVertexShader_Release(This->wineD3DVertexShader);
@@ -141,7 +141,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
     TRACE("(%p) : Relay\n", This);
     hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, pShader==NULL?NULL:((IDirect3DVertexShader9Impl *)pShader)->wineD3DVertexShader);
 
-    TRACE("(%p) : returning hr(%lu)\n", This, hrc);
+    TRACE("(%p) : returning hr(%u)\n", This, hrc);
     return hrc;
 }
 
@@ -156,7 +156,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(LPDIRECT3DDEVICE9 iface, IDi
        hrc = IWineD3DVertexShader_GetParent(pShader, (IUnknown **)ppShader);
        IWineD3DVertexShader_Release(pShader);
     } else {
-        WARN("(%p) : Call to IWineD3DDevice_GetVertexShader failed %lu (device %p)\n", This, hrc, This->WineD3DDevice);
+        WARN("(%p) : Call to IWineD3DDevice_GetVertexShader failed %u (device %p)\n", This, hrc, This->WineD3DDevice);
     }
     TRACE("(%p) : returning %p\n", This, *ppShader);
     return hrc;

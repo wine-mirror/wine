@@ -55,7 +55,7 @@ static ULONG WINAPI IDirect3DSurface9Impl_AddRef(LPDIRECT3DSURFACE9 iface) {
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedIncrement(&This->ref);
-        TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+        TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
         return ref;
     }
@@ -76,7 +76,7 @@ static ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedDecrement(&This->ref);
-        TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+        TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
         if (ref == 0) {
             IWineD3DSurface_Release(This->wineD3DSurface);
@@ -198,7 +198,7 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(LPDIRECT3DSURFACE9 iface, D3
 static HRESULT WINAPI IDirect3DSurface9Impl_LockRect(LPDIRECT3DSURFACE9 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %ld\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
+    TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %d\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
     return IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
 }
 

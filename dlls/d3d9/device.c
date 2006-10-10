@@ -46,7 +46,7 @@ static ULONG WINAPI IDirect3DDevice9Impl_AddRef(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -55,7 +55,7 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
       IWineD3DDevice_Uninit3D(This->WineD3DDevice);
@@ -246,13 +246,13 @@ static HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 ifac
     IDirect3DDevice9Impl  *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     if(MultisampleQuality < 0) { 
-        FIXME("MultisampleQuality out of range %ld, substituting 0\n", MultisampleQuality);
+        FIXME("MultisampleQuality out of range %d, substituting 0\n", MultisampleQuality);
     /*FIXME: Find out what windows does with a MultisampleQuality < 0 */
         MultisampleQuality=0;
     }
     
     if(MultisampleQuality > 0){
-        FIXME("MultisampleQuality set to %ld, bstituting 0\n", MultisampleQuality);
+        FIXME("MultisampleQuality set to %d, bstituting 0\n", MultisampleQuality);
     /*
     MultisampleQuality
  [in] Quality level. The valid range is between zero and one less than the level returned by pQualityLevels used by IDirect3D9::CheckDeviceMultiSampleType. Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality values of paired render targets, depth stencil surfaces, and the MultiSample type must all match.
@@ -577,7 +577,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9 iface,
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
         IWineD3DBaseTexture_Release(retTexture);
     }else{
-        FIXME("Call to get texture  (%ld) failed (%p)\n", Stage, retTexture);
+        FIXME("Call to get texture  (%d) failed (%p)\n", Stage, retTexture);
         *ppTexture = NULL;
     }
     return rc;
@@ -585,7 +585,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9 iface,
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTexture(LPDIRECT3DDEVICE9 iface, DWORD Stage, IDirect3DBaseTexture9* pTexture) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) Relay %ld %p\n" , This, Stage, pTexture);
+    TRACE("(%p) Relay %d %p\n" , This, Stage, pTexture);
     return IWineD3DDevice_SetTexture(This->WineD3DDevice, Stage,
                                      pTexture==NULL ? NULL:((IDirect3DBaseTexture9Impl *)pTexture)->wineD3DBaseTexture); 
 }

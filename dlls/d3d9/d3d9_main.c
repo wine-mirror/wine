@@ -53,7 +53,7 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    TRACE("fdwReason=%ld\n", fdwReason);
+    TRACE("fdwReason=%d\n", fdwReason);
     if (fdwReason == DLL_PROCESS_ATTACH)
         DisableThreadLibraryCalls(hInstDLL);
 
@@ -64,7 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  *              D3DPERF_BeginEvent (D3D9.@)
  */
 int WINAPI D3DPERF_BeginEvent(D3DCOLOR color, LPCWSTR name) {
-    FIXME("(color %#lx, name %s) : stub\n", color, debugstr_w(name));
+    FIXME("(color %#x, name %s) : stub\n", color, debugstr_w(name));
 
     return D3DPERF_event_level++;
 }
@@ -93,7 +93,7 @@ DWORD WINAPI D3DPERF_GetStatus(void) {
  */
 void WINAPI D3DPERF_SetOptions(DWORD options)
 {
-  FIXME("(%#lx) : stub\n", options);
+  FIXME("(%#x) : stub\n", options);
 }
 
 /***********************************************************************
@@ -109,12 +109,12 @@ BOOL WINAPI D3DPERF_QueryRepeatFrame(void) {
  *              D3DPERF_SetMarker (D3D9.@)
  */
 void WINAPI D3DPERF_SetMarker(D3DCOLOR color, LPCWSTR name) {
-    FIXME("(color %#lx, name %s) : stub\n", color, debugstr_w(name));
+    FIXME("(color %#x, name %s) : stub\n", color, debugstr_w(name));
 }
 
 /***********************************************************************
  *              D3DPERF_SetRegion (D3D9.@)
  */
 void WINAPI D3DPERF_SetRegion(D3DCOLOR color, LPCWSTR name) {
-    FIXME("(color %#lx, name %s) : stub\n", color, debugstr_w(name));
+    FIXME("(color %#x, name %s) : stub\n", color, debugstr_w(name));
 }

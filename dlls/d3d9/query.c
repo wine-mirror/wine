@@ -46,7 +46,7 @@ static ULONG WINAPI IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
     return ref;
 }
 
@@ -54,7 +54,7 @@ static ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
         IUnknown_Release(This->parentDevice);
@@ -152,6 +152,6 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
         *ppQuery = (LPDIRECT3DQUERY9) object;
         TRACE("(%p) : Created query %p\n", This , object);
     }
-    TRACE("(%p) : returning %lx\n", This, hr);
+    TRACE("(%p) : returning %x\n", This, hr);
     return hr;
 }
