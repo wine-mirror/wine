@@ -77,14 +77,18 @@ static void full_file_path_name_in_a_CWD(const char *src, char *dst, BOOL expect
   char shortname[MAX_PATH];
 
   retval = GetCurrentDirectoryA(MAX_PATH, dst);
-  ok(retval > 0, "GetCurrentDirectoryA returned %ld, GLE=0x%lx\n", 
+  ok(retval > 0, "GetCurrentDirectoryA returned %ld, GLE=%ld\n",
      retval, GetLastError());
-  lstrcatA(dst, "\\");
+  if(dst[retval-1] != '\\')
+    /* Append backslash only when it's missing */
+      lstrcatA(dst, "\\");
   lstrcatA(dst, src);
   if(expect_short) 
   {
     memcpy(shortname, dst, MAX_PATH);
-    GetShortPathName(shortname, dst, MAX_PATH-1);
+    retval = GetShortPathName(shortname, dst, MAX_PATH-1);
+    ok(retval > 0, "GetShortPathName returned %ld for '%s', GLE=%ld\n",
+       retval, dst, GetLastError());
   }
 }
 
@@ -95,7 +99,7 @@ static void create_file(char *fname)
   DWORD retval;
 
   file = LZOpenFileA(fname, &ofs, OF_CREATE);
-  ok(file >= 0, "LZOpenFileA failed on creation\n");
+  ok(file >= 0, "LZOpenFileA failed to create '%s'\n", fname);
   LZClose(file);
   retval = GetFileAttributesA(fname);
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA('%s'): error %ld\n", ofs.szPathName, GetLastError());
@@ -108,7 +112,7 @@ static void delete_file(char *fname)
   DWORD retval;
 
   file = LZOpenFileA(fname, &ofs, OF_DELETE);
-  ok(file >= 0, "LZOpenFileA failed on delete\n");
+  ok(file >= 0, "LZOpenFileA failed to delete '%s'\n", fname);
   LZClose(file);
   retval = GetFileAttributesA(fname);
   ok(retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file ('%s')\n", ofs.szPathName);
