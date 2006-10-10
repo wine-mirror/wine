@@ -221,7 +221,7 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     ULONG ref = InterlockedIncrement(&This->ref7);
 
-    TRACE("(%p) : incrementing IDirectDraw7 refcount from %lu.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw7 refcount from %u.\n", This, ref -1);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -280,7 +280,7 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     ULONG ref = InterlockedDecrement(&This->ref7);
 
-    TRACE("(%p)->() decrementing IDirectDraw7 refcount from %lu.\n", This, ref +1);
+    TRACE("(%p)->() decrementing IDirectDraw7 refcount from %u.\n", This, ref +1);
 
     if(ref == 0)
     {
@@ -336,7 +336,7 @@ IDirectDrawImpl_SetupFullscreenWindow(IDirectDrawImpl *This,
     /* Make sure the window is managed, otherwise we won't get keyboard input */
     style |= WS_POPUP | WS_SYSMENU;
 
-    TRACE("Old style was %08lx,%08lx, setting to %08lx,%08lx\n",
+    TRACE("Old style was %08x,%08x, setting to %08x,%08x\n",
           This->style, This->exStyle, style, exStyle);
 
     SetWindowLongW(window, GWL_STYLE, style);
@@ -372,7 +372,7 @@ IDirectDrawImpl_RestoreWindow(IDirectDrawImpl *This,
          */
         return;
     }
-    TRACE("(%p): Restoring window settings of window %p to %08lx, %08lx\n",
+    TRACE("(%p): Restoring window settings of window %p to %08x, %08x\n",
           This, window, This->style, This->exStyle);
 
     SetWindowLongW(window, GWL_STYLE, This->style);
@@ -441,14 +441,14 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     HWND window;
     HRESULT hr;
 
-    FIXME("(%p)->(%p,%08lx)\n",This,hwnd,cooplevel);
+    FIXME("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
 
     /* Get the old window */
     hr = IWineD3DDevice_GetHWND(This->wineD3DDevice, &window);
     if(hr != D3D_OK)
     {
-        ERR("IWineD3DDevice::GetHWND failed, hr = %08lx\n", hr);
+        ERR("IWineD3DDevice::GetHWND failed, hr = %08x\n", hr);
         return hr;
     }
 
@@ -649,11 +649,11 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     WINED3DDISPLAYMODE Mode;
-    TRACE("(%p)->(%ld,%ld,%ld,%ld,%lx: Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
+    TRACE("(%p)->(%d,%d,%d,%d,%x: Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
 
     if( !Width || !Height )
     {
-        ERR("Width=%ld, Height=%ld, what to do?\n", Width, Height);
+        ERR("Width=%d, Height=%d, what to do?\n", Width, Height);
         /* It looks like Need for Speed Porsche Unleashed expects DD_OK here */
         return DD_OK;
     }
@@ -835,7 +835,7 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
                                       &Mode);
     if( hr != D3D_OK )
     {
-        ERR(" (%p) IWineD3DDevice::GetDisplayMode returned %08lx\n", This, hr);
+        ERR(" (%p) IWineD3DDevice::GetDisplayMode returned %08x\n", This, hr);
         return hr;
     }
 
@@ -1064,7 +1064,7 @@ IDirectDrawImpl_WaitForVerticalBlank(IDirectDraw7 *iface,
                                      HANDLE h)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    FIXME("(%p)->(%lx,%p): Stub\n", This, Flags, h);
+    FIXME("(%p)->(%x,%p): Stub\n", This, Flags, h);
 
     /* MSDN says DDWAITVB_BLOCKBEGINEVENT is not supported */
     if(Flags & DDWAITVB_BLOCKBEGINEVENT)
@@ -1164,7 +1164,7 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
 
         case WINED3DERR_DRIVERINTERNALERROR:
         default:
-            ERR("(%p) Unexpected return value %08lx from wineD3D, " \
+            ERR("(%p) Unexpected return value %08x from wineD3D, " \
                 " returning DD_OK\n", This, hr);
     }
 
@@ -1226,7 +1226,7 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
                                                 GDISurface);
     if(hr != DD_OK)
     {
-        ERR("IDirectDrawSurface7::GetAttachedSurface failed, hr = %lx\n", hr);
+        ERR("IDirectDrawSurface7::GetAttachedSurface failed, hr = %x\n", hr);
     }
 
     /* The AddRef is OK this time */
@@ -1354,7 +1354,7 @@ IDirectDrawImpl_EvaluateMode(IDirectDraw7 *iface,
                              DWORD *Timeout)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    FIXME("(%p)->(%ld,%p): Stub!\n", This, Flags, Timeout);
+    FIXME("(%p)->(%d,%p): Stub!\n", This, Flags, Timeout);
 
     /* When implementing this, implement it in WineD3D */
 
@@ -1382,7 +1382,7 @@ IDirectDrawImpl_GetDeviceIdentifier(IDirectDraw7 *iface,
                                     DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    TRACE("(%p)->(%p,%08lx)\n", This, DDDI, Flags);
+    TRACE("(%p)->(%p,%08x)\n", This, DDDI, Flags);
 
     if(!DDDI)
         return DDERR_INVALIDPARAMS;
@@ -1477,7 +1477,7 @@ IDirectDrawImpl_StartModeTest(IDirectDraw7 *iface,
                               DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    WARN("(%p)->(%p, %ld, %lx): Semi-Stub, most likely harmless\n", This, Modes, NumModes, Flags);
+    WARN("(%p)->(%p, %d, %x): Semi-Stub, most likely harmless\n", This, Modes, NumModes, Flags);
 
     /* This looks sane */
     if( (!Modes) || (NumModes == 0) ) return DDERR_INVALIDPARAMS;
@@ -1888,7 +1888,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     if(hr != D3D_OK)
     {
-        ERR("IWineD3DDevice::CreateSurface failed. hr = %08lx\n", hr);
+        ERR("IWineD3DDevice::CreateSurface failed. hr = %08x\n", hr);
         return hr;
     }
 
@@ -2237,7 +2237,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
                     (rect.bottom - rect.top) <= 1 )
                 {
                     FIXME("Wanted to get surface dimensions from window %p, but it has only \
-                           a size of %ldx%ld. Using full screen dimensions\n",
+                           a size of %dx%d. Using full screen dimensions\n",
                            window, rect.right - rect.left, rect.bottom - rect.top);
                 }
                 else
@@ -2245,7 +2245,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
                     /* Not sure if this is correct */
                     desc2.dwWidth = rect.right - rect.left;
                     desc2.dwHeight = rect.bottom - rect.top;
-                    TRACE("Using window %p's dimensions: %ldx%ld\n", window, desc2.dwWidth, desc2.dwHeight);
+                    TRACE("Using window %p's dimensions: %dx%d\n", window, desc2.dwWidth, desc2.dwHeight);
                 }
             }
         }
@@ -2297,7 +2297,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     hr = IDirectDrawImpl_CreateNewSurface(This, &desc2, &object, 0);
     if( hr != DD_OK)
     {
-        ERR("IDirectDrawImpl_CreateNewSurface failed with %08lx\n", hr);
+        ERR("IDirectDrawImpl_CreateNewSurface failed with %08x\n", hr);
         return hr;
     }
 
@@ -2398,7 +2398,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         hr = IDirectDrawImpl_AttachD3DDevice(This, target->first_complex);
         if(hr != D3D_OK)
         {
-            ERR("IDirectDrawImpl_AttachD3DDevice failed, hr = %lx\n", hr);
+            ERR("IDirectDrawImpl_AttachD3DDevice failed, hr = %x\n", hr);
         }
     }
 
@@ -2605,7 +2605,7 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     all = Flags & DDENUMSURFACES_ALL;
     nomatch = Flags & DDENUMSURFACES_NOMATCH;
 
-    TRACE("(%p)->(%lx,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
+    TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
 
     if(!Callback)
         return DDERR_INVALIDPARAMS;
@@ -2722,7 +2722,7 @@ D3D7CB_CreateDepthStencilSurface(IUnknown *device,
     This->depthstencil = FALSE;
     if(FAILED(hr))
     {
-        ERR(" (%p) Creating a DepthStencil Surface failed, result = %lx\n", This, hr);
+        ERR(" (%p) Creating a DepthStencil Surface failed, result = %x\n", This, hr);
         return hr;
     }
     *ppSurface = This->DepthStencilBuffer->WineD3DSurface;
@@ -2921,7 +2921,7 @@ DirectDrawCreateClipper(DWORD Flags,
                         IUnknown *UnkOuter)
 {
     IDirectDrawClipperImpl* object;
-    TRACE("(%08lx,%p,%p)\n", Flags, Clipper, UnkOuter);
+    TRACE("(%08x,%p,%p)\n", Flags, Clipper, UnkOuter);
 
     if (UnkOuter != NULL) return CLASS_E_NOAGGREGATION;
 
@@ -2951,7 +2951,7 @@ IDirectDrawImpl_CreateClipper(IDirectDraw7 *iface,
                               IUnknown *UnkOuter)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    TRACE("(%p)->(%lx,%p,%p)\n", This, Flags, Clipper, UnkOuter);
+    TRACE("(%p)->(%x,%p,%p)\n", This, Flags, Clipper, UnkOuter);
     return DirectDrawCreateClipper(Flags, Clipper, UnkOuter);
 }
 
@@ -2982,7 +2982,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     IDirectDrawPaletteImpl *object;
     HRESULT hr = DDERR_GENERIC;
-    TRACE("(%p)->(%lx,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
+    TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
 
     if(pUnkOuter != NULL)
     {

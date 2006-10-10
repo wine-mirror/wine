@@ -851,7 +851,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
                                                 This->d3d_target->WineD3DSurface,
                                                 target->WineD3DSurface);
         if(hr != D3D_OK)
-            ERR("(%p) Error %08lx setting the front and back buffer\n", This, hr);
+            ERR("(%p) Error %08x setting the front and back buffer\n", This, hr);
 
         object->OffScreenTarget = TRUE;
     }
@@ -946,13 +946,13 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     IDirect3DVertexBufferImpl *object;
     HRESULT hr;
-    TRACE("(%p)->(%p,%p,%08lx)\n", This, Desc, VertexBuffer, Flags);
+    TRACE("(%p)->(%p,%p,%08x)\n", This, Desc, VertexBuffer, Flags);
 
     TRACE("(%p) Vertex buffer description:\n", This);
-    TRACE("(%p)  dwSize=%ld\n", This, Desc->dwSize);
-    TRACE("(%p)  dwCaps=%08lx\n", This, Desc->dwCaps);
-    TRACE("(%p)  FVF=%08lx\n", This, Desc->dwFVF);
-    TRACE("(%p)  dwNumVertices=%ld\n", This, Desc->dwNumVertices);
+    TRACE("(%p)  dwSize=%d\n", This, Desc->dwSize);
+    TRACE("(%p)  dwCaps=%08x\n", This, Desc->dwCaps);
+    TRACE("(%p)  FVF=%08x\n", This, Desc->dwFVF);
+    TRACE("(%p)  dwNumVertices=%d\n", This, Desc->dwNumVertices);
 
     /* D3D7 SDK: "No Flags are currently defined for this method. This
      * parameter must be 0"
@@ -993,7 +993,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
                                            (IUnknown *) ICOM_INTERFACE(object, IDirect3DVertexBuffer7));
     if(hr != D3D_OK)
     {
-        ERR("(%p) IWineD3DDevice::CreateVertexBuffer failed with hr=%08lx\n", This, hr);
+        ERR("(%p) IWineD3DDevice::CreateVertexBuffer failed with hr=%08x\n", This, hr);
         HeapFree(GetProcessHeap(), 0, object);
         if (hr == WINED3DERR_INVALIDCALL)
             return DDERR_INVALIDPARAMS;
@@ -1017,7 +1017,7 @@ Thunk_IDirect3DImpl_3_CreateVertexBuffer(IDirect3D3 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     HRESULT hr;
-    TRACE("(%p)->(%p,%p,%08lx,%p): Relaying to IDirect3D7\n", This, Desc, VertexBuffer, Flags, UnkOuter);
+    TRACE("(%p)->(%p,%p,%08x,%p): Relaying to IDirect3D7\n", This, Desc, VertexBuffer, Flags, UnkOuter);
 
     if(UnkOuter != NULL) return CLASS_E_NOAGGREGATION;
 

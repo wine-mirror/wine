@@ -81,7 +81,7 @@ IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -101,7 +101,7 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (ref == 0)
     {
@@ -137,7 +137,7 @@ IDirectDrawPaletteImpl_Initialize(IDirectDrawPalette *iface,
                                   DWORD Flags,
                                   PALETTEENTRY *ColorTable)
 {
-    TRACE("(%p)->(%p,%lx,%p)\n", iface, DD, Flags, ColorTable);
+    TRACE("(%p)->(%p,%x,%p)\n", iface, DD, Flags, ColorTable);
     return DDERR_ALREADYINITIALIZED;
 }
 
@@ -191,7 +191,7 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
                                   PALETTEENTRY *PalEnt)
 {
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
-    TRACE("(%p)->(%lx,%ld,%ld,%p): Relay\n", This, Flags, Start, Count, PalEnt);
+    TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
@@ -224,7 +224,7 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
                                   PALETTEENTRY *PalEnt)
 {
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
-    TRACE("(%p)->(%lx,%ld,%ld,%p): Relay\n", This, Flags, Start, Count, PalEnt);
+    TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;

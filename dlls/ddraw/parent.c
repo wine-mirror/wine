@@ -103,7 +103,7 @@ IParentImpl_AddRef(IParent *iface)
     ICOM_THIS_FROM(IParentImpl, IParent, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
     return ref;
 }
@@ -128,7 +128,7 @@ IParentImpl_Release(IParent *iface)
     ICOM_THIS_FROM(IParentImpl, IParent, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0)
     {

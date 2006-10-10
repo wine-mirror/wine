@@ -78,7 +78,7 @@ IDirectDrawImpl_AddRef(LPDIRECTDRAW iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
     ULONG ref = InterlockedIncrement(&This->ref1);
 
-    TRACE("(%p) : incrementing IDirectDraw refcount from %lu.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw refcount from %u.\n", This, ref -1);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -91,7 +91,7 @@ IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
     ULONG ref = InterlockedIncrement(&This->ref2);
 
-    TRACE("(%p) : incrementing IDirectDraw2 refcount from %lu.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw2 refcount from %u.\n", This, ref -1);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -104,7 +104,7 @@ IDirectDraw4Impl_AddRef(LPDIRECTDRAW4 iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
     ULONG ref = InterlockedIncrement(&This->ref4);
 
-    TRACE("(%p) : incrementing IDirectDraw4 refcount from %lu.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw4 refcount from %u.\n", This, ref -1);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -117,7 +117,7 @@ IDirectDrawImpl_Release(LPDIRECTDRAW iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
     ULONG ref = InterlockedDecrement(&This->ref1);
 
-    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw refcount from %lu.\n", This, ref +1);
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw refcount from %u.\n", This, ref +1);
 
     if(ref == 0)
     {
@@ -134,7 +134,7 @@ IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
     ULONG ref = InterlockedDecrement(&This->ref2);
 
-    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw2 refcount from %lu.\n", This, ref +1);
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw2 refcount from %u.\n", This, ref +1);
 
     if(ref == 0)
     {
@@ -151,7 +151,7 @@ IDirectDraw4Impl_Release(LPDIRECTDRAW4 iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
     ULONG ref = InterlockedDecrement(&This->ref4);
 
-    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw4 refcount from %lu.\n", This, ref +1);
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw4 refcount from %u.\n", This, ref +1);
 
     if(ref == 0)
     {

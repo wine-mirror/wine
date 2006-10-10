@@ -222,7 +222,7 @@ DDRAW_Create(GUID *guid,
                                (IUnknown *) ICOM_INTERFACE(This, IDirectDraw7));
     if(FAILED(hr))
     {
-        ERR("Failed to create a wineD3DDevice, result = %lx\n", hr);
+        ERR("Failed to create a wineD3DDevice, result = %x\n", hr);
         goto err_out;
     }
     This->wineD3DDevice = wineD3DDevice;
@@ -592,7 +592,7 @@ IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
     ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %ld.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %d.\n", This, ref - 1);
 
     return ref;
 }
@@ -612,7 +612,7 @@ IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
 {
     ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->() decrementing from %ld.\n", This, ref+1);
+    TRACE("(%p)->() decrementing from %d.\n", This, ref+1);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -768,7 +768,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
     ULONG ref;
 
     ref = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */
-    WARN("Surface %p has an reference count of %ld\n", Impl, ref);
+    WARN("Surface %p has an reference count of %d\n", Impl, ref);
 
     /* Skip surfaces which are attached somewhere or which are
      * part of a complex compound. They will get released when destroying
@@ -812,7 +812,7 @@ DllMain(HINSTANCE hInstDLL,
         DWORD Reason,
         void *lpv)
 {
-    TRACE("(%p,%lx,%p)\n", hInstDLL, Reason, lpv);
+    TRACE("(%p,%x,%p)\n", hInstDLL, Reason, lpv);
     if (Reason == DLL_PROCESS_ATTACH)
     {
         char buffer[MAX_PATH+10];
@@ -879,7 +879,7 @@ DllMain(HINSTANCE hInstDLL,
                 int i;
                 IDirectDrawImpl *ddraw = LIST_ENTRY(entry, IDirectDrawImpl, ddraw_list_entry);
 
-                WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
+                WARN("DDraw %p has a refcount of %d\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref2 + ddraw->ref1);
 
                 /* Add references to each interface to avoid freeing them unexpectadely */
                 IDirectDraw_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw));
@@ -915,7 +915,7 @@ DllMain(HINSTANCE hInstDLL,
 
                 /* Check the surface count */
                 if(ddraw->surfaces > 0)
-                    ERR("DDraw %p still has %ld surfaces attached\n", ddraw, ddraw->surfaces);
+                    ERR("DDraw %p still has %d surfaces attached\n", ddraw, ddraw->surfaces);
 
                 /* Release all hanging references to destroy the objects. This
                     * restores the screen mode too

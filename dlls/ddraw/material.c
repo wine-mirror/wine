@@ -49,7 +49,7 @@ WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
 static void dump_material(LPD3DMATERIAL mat)
 {
-    DPRINTF("  dwSize : %ld\n", mat->dwSize);
+    DPRINTF("  dwSize : %d\n", mat->dwSize);
 }
 
 /*****************************************************************************
@@ -124,7 +124,7 @@ IDirect3DMaterialImpl_AddRef(IDirect3DMaterial3 *iface)
     ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -145,7 +145,7 @@ IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
     ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (!ref)
     {
@@ -324,7 +324,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
         device->Handles[This->Handle - 1].type = DDrawHandle_Material;
     }
     *lpHandle = This->Handle;
-    TRACE(" returning handle %08lx.\n", *lpHandle);
+    TRACE(" returning handle %08x.\n", *lpHandle);
 
     return D3D_OK;
 }

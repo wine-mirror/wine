@@ -159,7 +159,7 @@ IDirect3DTextureImpl_PaletteChanged(IDirect3DTexture2 *iface,
                                          DWORD Count)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
-    FIXME("(%p)->(%08lx,%08lx): stub!\n", This, Start, Count);
+    FIXME("(%p)->(%08x,%08x): stub!\n", This, Start, Count);
     return D3D_OK;
 }
 
@@ -169,7 +169,7 @@ Thunk_IDirect3DTextureImpl_1_PaletteChanged(IDirect3DTexture *iface,
                                             DWORD Count)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture, iface);
-    TRACE("(%p)->(%08lx,%08lx) thunking to IDirect3DTexture2 interface.\n", This, Start, Count);
+    TRACE("(%p)->(%08x,%08x) thunking to IDirect3DTexture2 interface.\n", This, Start, Count);
 
     return IDirect3DTexture2_PaletteChanged(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, iface),
                                             Start,
@@ -230,7 +230,7 @@ IDirect3DTextureImpl_GetHandle(IDirect3DTexture2 *iface,
     }
     *lpHandle = This->Handle;
 
-    TRACE(" returning handle %08lx.\n", *lpHandle);
+    TRACE(" returning handle %08x.\n", *lpHandle);
 
     return D3D_OK;
 }

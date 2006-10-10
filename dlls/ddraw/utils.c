@@ -437,7 +437,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
             case 1:
             case 2:
             case 4:
-                ERR("Unsupported Alpha-Only bit depth 0x%lx\n", DDPixelFormat->u1.dwAlphaBitDepth);
+                ERR("Unsupported Alpha-Only bit depth 0x%x\n", DDPixelFormat->u1.dwAlphaBitDepth);
             case 8:
                 return WINED3DFMT_A8;
 
@@ -484,7 +484,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                     return WINED3DFMT_L8;
 
                 default:
-                    ERR("Unknown luminance-only bit depth 0x%lx\n", DDPixelFormat->u1.dwLuminanceBitCount);
+                    ERR("Unknown luminance-only bit depth 0x%x\n", DDPixelFormat->u1.dwLuminanceBitCount);
                     return WINED3DFMT_UNKNOWN;
              }
         }
@@ -505,7 +505,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                     if(DDPixelFormat->u2.dwStencilBitDepth == 1)
                         return WINED3DFMT_D15S1;
 
-                    ERR("Don't know how to handle a 16 bit Z buffer with %ld bit stencil buffer pixelformat\n", DDPixelFormat->u2.dwStencilBitDepth);
+                    ERR("Don't know how to handle a 16 bit Z buffer with %d bit stencil buffer pixelformat\n", DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 case 24:
@@ -519,7 +519,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                         return WINED3DFMT_D24X4S4;
 
                 default:
-                    ERR("Unknown Z buffer depth %ld\n", DDPixelFormat->u1.dwZBufferBitDepth);
+                    ERR("Unknown Z buffer depth %d\n", DDPixelFormat->u1.dwZBufferBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -541,7 +541,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
                     return WINED3DFMT_D32;
 
                 default:
-                    ERR("Unsupported Z buffer depth %ld\n", DDPixelFormat->u1.dwZBufferBitDepth);
+                    ERR("Unsupported Z buffer depth %d\n", DDPixelFormat->u1.dwZBufferBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -617,7 +617,7 @@ PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
 static void
 DDRAW_dump_DWORD(const void *in)
 {
-    DPRINTF("%ld", *((const DWORD *) in));
+    DPRINTF("%d", *((const DWORD *) in));
 }
 static void
 DDRAW_dump_PTR(const void *in)
@@ -627,7 +627,7 @@ DDRAW_dump_PTR(const void *in)
 void
 DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 {
-    DPRINTF(" Low : %ld  - High : %ld", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
+    DPRINTF(" Low : %d  - High : %d", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
 void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
 {
@@ -769,7 +769,7 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
     DDRAW_dump_pixelformat_flag(pf->dwFlags);
     if (pf->dwFlags & DDPF_FOURCC)
     {
-        DPRINTF(", dwFourCC code '%c%c%c%c' (0x%08lx) - %ld bits per pixel",
+        DPRINTF(", dwFourCC code '%c%c%c%c' (0x%08x) - %d bits per pixel",
                 (unsigned char)( pf->dwFourCC     &0xff),
                 (unsigned char)((pf->dwFourCC>> 8)&0xff),
                 (unsigned char)((pf->dwFourCC>>16)&0xff),
@@ -781,7 +781,7 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
     if (pf->dwFlags & DDPF_RGB)
     {
         const char *cmd;
-        DPRINTF(", RGB bits: %ld, ", pf->u1.dwRGBBitCount);
+        DPRINTF(", RGB bits: %d, ", pf->u1.dwRGBBitCount);
         switch (pf->u1.dwRGBBitCount)
         {
         case 4: cmd = "%1lx"; break;
@@ -805,16 +805,16 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
     }
     if (pf->dwFlags & DDPF_ZBUFFER)
     {
-        DPRINTF(", Z bits : %ld", pf->u1.dwZBufferBitDepth);
+        DPRINTF(", Z bits : %d", pf->u1.dwZBufferBitDepth);
     }
     if (pf->dwFlags & DDPF_ALPHA)
     {
-        DPRINTF(", Alpha bits : %ld", pf->u1.dwAlphaBitDepth);
+        DPRINTF(", Alpha bits : %d", pf->u1.dwAlphaBitDepth);
     }
     if (pf->dwFlags & DDPF_BUMPDUDV)
     {
         const char *cmd = "%08lx";
-        DPRINTF(", Bump bits: %ld, ", pf->u1.dwBumpBitCount);
+        DPRINTF(", Bump bits: %d, ", pf->u1.dwBumpBitCount);
         DPRINTF(" U "); DPRINTF(cmd, pf->u2.dwBumpDuBitMask);
         DPRINTF(" V "); DPRINTF(cmd, pf->u3.dwBumpDvBitMask);
         DPRINTF(" L "); DPRINTF(cmd, pf->u4.dwBumpLuminanceBitMask);
@@ -1098,7 +1098,7 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
       FE(DDSVCAPS_STEREOSEQUENTIAL),
     };
 
-    DPRINTF(" - dwSize : %ld\n", lpcaps->dwSize);
+    DPRINTF(" - dwSize : %d\n", lpcaps->dwSize);
     DPRINTF(" - dwCaps : "); DDRAW_dump_flags(lpcaps->dwCaps, flags1, sizeof(flags1)/sizeof(flags1[0]));
     DPRINTF(" - dwCaps2 : "); DDRAW_dump_flags(lpcaps->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
     DPRINTF(" - dwCKeyCaps : "); DDRAW_dump_flags(lpcaps->dwCKeyCaps, flags3, sizeof(flags3)/sizeof(flags3[0]));
@@ -1107,10 +1107,10 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
     DPRINTF(" - dwPalCaps : "); DDRAW_dump_flags(lpcaps->dwPalCaps, flags6, sizeof(flags6)/sizeof(flags6[0]));
     DPRINTF(" - dwSVCaps : "); DDRAW_dump_flags(lpcaps->dwSVCaps, flags7, sizeof(flags7)/sizeof(flags7[0]));
     DPRINTF("...\n");
-    DPRINTF(" - dwNumFourCCCodes : %ld\n", lpcaps->dwNumFourCCCodes);
-    DPRINTF(" - dwCurrVisibleOverlays : %ld\n", lpcaps->dwCurrVisibleOverlays);
-    DPRINTF(" - dwMinOverlayStretch : %ld\n", lpcaps->dwMinOverlayStretch);
-    DPRINTF(" - dwMaxOverlayStretch : %ld\n", lpcaps->dwMaxOverlayStretch);
+    DPRINTF(" - dwNumFourCCCodes : %d\n", lpcaps->dwNumFourCCCodes);
+    DPRINTF(" - dwCurrVisibleOverlays : %d\n", lpcaps->dwCurrVisibleOverlays);
+    DPRINTF(" - dwMinOverlayStretch : %d\n", lpcaps->dwMinOverlayStretch);
+    DPRINTF(" - dwMaxOverlayStretch : %d\n", lpcaps->dwMaxOverlayStretch);
     DPRINTF("...\n");
     DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps); DPRINTF("\n");
 }

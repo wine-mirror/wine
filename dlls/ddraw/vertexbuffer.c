@@ -130,7 +130,7 @@ IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, ref - 1);
+    TRACE("(%p/%p)->() incrementing from %u.\n", This, iface, ref - 1);
 
     return ref;
 }
@@ -160,7 +160,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (ref == 0)
     {
@@ -212,7 +212,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     WINED3DVERTEXBUFFER_DESC Desc;
     HRESULT hr;
-    TRACE("(%p)->(%08lx,%p,%p)\n", This, Flags, Data, Size);
+    TRACE("(%p)->(%08x,%p,%p)\n", This, Flags, Data, Size);
 
     if(Size)
     {
@@ -221,7 +221,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
                                           &Desc);
         if(hr != D3D_OK)
         {
-            ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08lx\n", This, hr);
+            ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08x\n", This, hr);
             return hr;
         }
         *Size = Desc.Size;
@@ -241,7 +241,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface,
                                        DWORD *Size)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
-    TRACE_(ddraw_thunk)("(%p)->(%08lx,%p,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Flags, Data, Size);
+    TRACE_(ddraw_thunk)("(%p)->(%08x,%p,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Flags, Data, Size);
 
     return IDirect3DVertexBuffer7_Lock(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
                                        Flags,
@@ -316,7 +316,7 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
     BOOL oldClip, doClip;
     HRESULT hr;
 
-    TRACE("(%p)->(%08lx,%ld,%ld,%p,%ld,%p,%08lx)\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
+    TRACE("(%p)->(%08x,%d,%d,%p,%d,%p,%08x)\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
 
     /* Vertex operations:
      * D3DVOP_CLIP: Clips vertices outside the viewing frustrum. Needs clipping information
@@ -376,7 +376,7 @@ Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
     IDirect3DVertexBufferImpl *Src = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, SrcBuffer);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, D3DDevice);
 
-    TRACE_(ddraw_thunk)("(%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx) thunking to IDirect3DVertexBuffer7 interface.\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
+    TRACE_(ddraw_thunk)("(%p)->(%08x,%08x,%08x,%p,%08x,%p,%08x) thunking to IDirect3DVertexBuffer7 interface.\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
 
     return IDirect3DVertexBuffer7_ProcessVertices(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
                                                   VertexOp,
@@ -417,7 +417,7 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
                                       &WDesc);
     if(hr != D3D_OK)
     {
-        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08lx\n", This, hr);
+        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08x\n", This, hr);
         return hr;
     }
 
@@ -466,7 +466,7 @@ IDirect3DVertexBufferImpl_Optimize(IDirect3DVertexBuffer7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
-    FIXME("(%p)->(%p,%08lx): stub!\n", This, D3D, Flags);
+    FIXME("(%p)->(%p,%08x): stub!\n", This, D3D, Flags);
 
     /* We could forward this call to WineD3D and take advantage
      * of it once we use OpenGL vertex buffers
@@ -483,7 +483,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, D3DDevice);
-    TRACE_(ddraw_thunk)("(%p)->(%p,%08lx) thunking to IDirect3DVertexBuffer7 interface.\n", This, D3D, Flags);
+    TRACE_(ddraw_thunk)("(%p)->(%p,%08x) thunking to IDirect3DVertexBuffer7 interface.\n", This, D3D, Flags);
 
     return IDirect3DVertexBuffer7_Optimize(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
                                            ICOM_INTERFACE(D3D, IDirect3DDevice7),
@@ -524,7 +524,7 @@ IDirect3DVertexBufferImpl_ProcessVerticesStrided(IDirect3DVertexBuffer7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
-    FIXME("(%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx): stub!\n", This, VertexOp, DestIndex, Count, StrideData, VertexTypeDesc, D3D, Flags);
+    FIXME("(%p)->(%08x,%08x,%08x,%p,%08x,%p,%08x): stub!\n", This, VertexOp, DestIndex, Count, StrideData, VertexTypeDesc, D3D, Flags);
     return DD_OK;
 }
 

@@ -97,9 +97,9 @@ void viewport_activate(IDirect3DViewportImpl* This) {
  *****************************************************************************/
 static void _dump_D3DVIEWPORT(D3DVIEWPORT *lpvp)
 {
-    TRACE("    - dwSize = %ld   dwX = %ld   dwY = %ld\n",
+    TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
 	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
-    TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+    TRACE("    - dwWidth = %d   dwHeight = %d\n",
 	  lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvScaleX = %f   dvScaleY = %f\n",
 	  lpvp->dvScaleX, lpvp->dvScaleY);
@@ -111,9 +111,9 @@ static void _dump_D3DVIEWPORT(D3DVIEWPORT *lpvp)
 
 static void _dump_D3DVIEWPORT2(D3DVIEWPORT2 *lpvp)
 {
-    TRACE("    - dwSize = %ld   dwX = %ld   dwY = %ld\n",
+    TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
 	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
-    TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+    TRACE("    - dwWidth = %d   dwHeight = %d\n",
 	  lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvClipX = %f   dvClipY = %f\n",
 	  lpvp->dvClipX, lpvp->dvClipY);
@@ -181,7 +181,7 @@ IDirect3DViewportImpl_AddRef(IDirect3DViewport3 *iface)
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -201,7 +201,7 @@ IDirect3DViewportImpl_Release(IDirect3DViewport3 *iface)
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -339,7 +339,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
                                         DWORD *lpOffScreen)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p)->(%08lx,%p,%08lx,%p): stub!\n", This, dwVertexCount, lpData, dwFlags, lpOffScreen);
+    FIXME("(%p)->(%08x,%p,%08x,%p): stub!\n", This, dwVertexCount, lpData, dwFlags, lpOffScreen);
     if (lpOffScreen)
 	*lpOffScreen = 0;
     return DD_OK;
@@ -363,7 +363,7 @@ IDirect3DViewportImpl_LightElements(IDirect3DViewport3 *iface,
                                     LPD3DLIGHTDATA lpData)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    TRACE("(%p)->(%08lx,%p): Unimplemented!\n", This, dwElementCount, lpData);
+    TRACE("(%p)->(%08x,%p): Unimplemented!\n", This, dwElementCount, lpData);
     return DDERR_UNSUPPORTED;
 }
 
@@ -384,16 +384,16 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE hMat)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    TRACE("(%p)->(%ld)\n", This, (DWORD) hMat);
+    TRACE("(%p)->(%d)\n", This, (DWORD) hMat);
 
     if(hMat && hMat > This->ddraw->d3ddevice->numHandles)
     {
-        WARN("Specified Handle %ld out of range\n", hMat);
+        WARN("Specified Handle %d out of range\n", hMat);
         return DDERR_INVALIDPARAMS;
     }
     else if(hMat && This->ddraw->d3ddevice->Handles[hMat - 1].type != DDrawHandle_Material)
     {
-        WARN("Handle %ld is not a material handle\n", hMat);
+        WARN("Handle %d is not a material handle\n", hMat);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -526,7 +526,7 @@ IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     DWORD color = 0x00000000;
     
-    TRACE("(%p/%p)->(%08lx,%p,%08lx)\n", This, iface, dwCount, lpRects, dwFlags);
+    TRACE("(%p/%p)->(%08x,%p,%08x)\n", This, iface, dwCount, lpRects, dwFlags);
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
 	return D3DERR_VIEWPORTHASNODEVICE;
@@ -664,7 +664,7 @@ IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
                                 DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p)->(%p,%p,%08lx): stub!\n", This, lpDirect3DLight, lplpDirect3DLight, dwFlags);
+    FIXME("(%p)->(%p,%p,%08x): stub!\n", This, lpDirect3DLight, lplpDirect3DLight, dwFlags);
     return D3D_OK;
 }
 
@@ -824,7 +824,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
                              DWORD dwStencil)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    TRACE("(%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
+    TRACE("(%p)->(%08x,%p,%08x,%08x,%f,%08x)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
 	return D3DERR_VIEWPORTHASNODEVICE;

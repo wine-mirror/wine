@@ -134,7 +134,7 @@ IDirectDrawGammaControlImpl_GetGammaRamp(IDirectDrawGammaControl *iface,
                                          DDGAMMARAMP *GammaRamp)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
-    TRACE("(%p)->(%08lx,%p)\n", This,Flags,GammaRamp);
+    TRACE("(%p)->(%08x,%p)\n", This,Flags,GammaRamp);
 
     /* This looks sane */
     if(!GammaRamp)
@@ -178,7 +178,7 @@ IDirectDrawGammaControlImpl_SetGammaRamp(IDirectDrawGammaControl *iface,
                                          DDGAMMARAMP *GammaRamp)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
-    TRACE("(%p)->(%08lx,%p)\n", This,Flags,GammaRamp);
+    TRACE("(%p)->(%08x,%p)\n", This,Flags,GammaRamp);
 
     /* This looks sane */
     if(!GammaRamp)

@@ -86,7 +86,7 @@ static ULONG WINAPI IDirectDrawClipperImpl_AddRef( LPDIRECTDRAWCLIPPER iface )
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -102,7 +102,7 @@ static ULONG WINAPI IDirectDrawClipperImpl_Release(IDirectDrawClipper *iface) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (ref == 0)
     {
@@ -132,9 +132,9 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetHwnd(
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
-    TRACE("(%p)->(0x%08lx,0x%08lx)\n", This, dwFlags, (DWORD)hWnd);
+    TRACE("(%p)->(0x%08x,0x%08x)\n", This, dwFlags, (DWORD)hWnd);
     if( dwFlags ) {
-	FIXME("dwFlags = 0x%08lx, not supported.\n",dwFlags);
+	FIXME("dwFlags = 0x%08x, not supported.\n",dwFlags);
 	return DDERR_INVALIDPARAMS;
     }
 
@@ -227,7 +227,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetClipList(
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     static int warned = 0;
     if (warned++ < 10 || lprgn == NULL)
-        FIXME("(%p,%p,%ld),stub!\n",This,lprgn,dwFlag);
+        FIXME("(%p,%p,%d),stub!\n",This,lprgn,dwFlag);
     return DD_OK;
 }
 
@@ -272,7 +272,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(
 ) {
     IDirectDrawImpl* pOwner;
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    TRACE("(%p)->(%p,0x%08lx)\n", This, lpDD, dwFlags);
+    TRACE("(%p)->(%p,0x%08x)\n", This, lpDD, dwFlags);
 
     if (This->ddraw_owner != NULL) return DDERR_ALREADYINITIALIZED;
 

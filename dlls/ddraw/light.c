@@ -88,7 +88,7 @@ IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -109,7 +109,7 @@ IDirect3DLightImpl_Release(IDirect3DLight *iface)
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -160,7 +160,7 @@ IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
  *****************************************************************************/
 static void dump_light(LPD3DLIGHT2 light)
 {
-    DPRINTF("    - dwSize : %ld\n", light->dwSize);
+    DPRINTF("    - dwSize : %d\n", light->dwSize);
 }
 
 static const float zero_value[] = {

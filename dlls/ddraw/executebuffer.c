@@ -56,17 +56,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
  *****************************************************************************/
 
 static void _dump_executedata(LPD3DEXECUTEDATA lpData) {
-    DPRINTF("dwSize : %ld\n", lpData->dwSize);
-    DPRINTF("Vertex      Offset : %ld  Count  : %ld\n", lpData->dwVertexOffset, lpData->dwVertexCount);
-    DPRINTF("Instruction Offset : %ld  Length : %ld\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
-    DPRINTF("HVertex     Offset : %ld\n", lpData->dwHVertexOffset);
+    DPRINTF("dwSize : %d\n", lpData->dwSize);
+    DPRINTF("Vertex      Offset : %d  Count  : %d\n", lpData->dwVertexOffset, lpData->dwVertexCount);
+    DPRINTF("Instruction Offset : %d  Length : %d\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
+    DPRINTF("HVertex     Offset : %d\n", lpData->dwHVertexOffset);
 }
 
 static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
-    DPRINTF("dwSize       : %ld\n", lpDesc->dwSize);
-    DPRINTF("dwFlags      : %lx\n", lpDesc->dwFlags);
-    DPRINTF("dwCaps       : %lx\n", lpDesc->dwCaps);
-    DPRINTF("dwBufferSize : %ld\n", lpDesc->dwBufferSize);
+    DPRINTF("dwSize       : %d\n", lpDesc->dwSize);
+    DPRINTF("dwFlags      : %x\n", lpDesc->dwFlags);
+    DPRINTF("dwCaps       : %x\n", lpDesc->dwCaps);
+    DPRINTF("dwBufferSize : %d\n", lpDesc->dwBufferSize);
     DPRINTF("lpData       : %p\n", lpDesc->lpData);
 }
 
@@ -225,9 +225,9 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                     if(!ci->u2.dwArg[0]) {
                         ERR("Setting a NULL matrix handle, what should I do?\n");
                     } else if(ci->u2.dwArg[0] > lpDevice->numHandles) {
-                        ERR("Handle %ld is out of bounds\n", ci->u2.dwArg[0]);
+                        ERR("Handle %d is out of bounds\n", ci->u2.dwArg[0]);
                     } else if(lpDevice->Handles[ci->u2.dwArg[0] - 1].type != DDrawHandle_Matrix) {
-                        ERR("Handle %ld is not a matrix handle\n", ci->u2.dwArg[0]);
+                        ERR("Handle %d is not a matrix handle\n", ci->u2.dwArg[0]);
                     } else {
                         IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
                                                       ci->u1.drstRenderStateType, (LPD3DMATRIX) lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
@@ -243,7 +243,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 
-		    TRACE("(%08x,%08lx)\n",ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
+                    TRACE("(%08x,%08x)\n",ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
 
 		    if (!ci->u1.dlstLightStateType && (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
 			ERR("Unexpected Light State Type\n");
@@ -340,7 +340,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DPROCESSVERTICES ci = (LPD3DPROCESSVERTICES) instr;
 
-		    TRACE("  Start : %d Dest : %d Count : %ld\n",
+                    TRACE("  Start : %d Dest : %d Count : %d\n",
 			  ci->wStart, ci->wDest, ci->dwCount);
 		    TRACE("  Flags : ");
 		    if (TRACE_ON(d3d7)) {
@@ -512,13 +512,13 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
 		    if ((This->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 		        if (!ci->bNegate) {
-			    TRACE(" Branch to %ld\n", ci->dwOffset);
+                            TRACE(" Branch to %d\n", ci->dwOffset);
 			    instr = (char*)current + ci->dwOffset;
 			    break;
 			}
 		    } else {
 		        if (ci->bNegate) {
-			    TRACE(" Branch to %ld\n", ci->dwOffset);
+                            TRACE(" Branch to %d\n", ci->dwOffset);
 			    instr = (char*)current + ci->dwOffset;
 			    break;
 			}
@@ -617,7 +617,7 @@ IDirect3DExecuteBufferImpl_AddRef(IDirect3DExecuteBuffer *iface)
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    FIXME("(%p)->()incrementing from %lu.\n", This, ref - 1);
+    FIXME("(%p)->()incrementing from %u.\n", This, ref - 1);
 
     return ref;
 }
@@ -637,7 +637,7 @@ IDirect3DExecuteBufferImpl_Release(IDirect3DExecuteBuffer *iface)
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->()decrementing from %lu.\n", This, ref + 1);
+    TRACE("(%p)->()decrementing from %u.\n", This, ref + 1);
 
     if (!ref) {
         if (This->need_free)
@@ -811,7 +811,7 @@ IDirect3DExecuteBufferImpl_Validate(IDirect3DExecuteBuffer *iface,
                                     DWORD Reserved)
 {
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
-    TRACE("(%p)->(%p,%p,%p,%08lx): Unimplemented!\n", This, Offset, Func, UserArg, Reserved);
+    TRACE("(%p)->(%p,%p,%p,%08x): Unimplemented!\n", This, Offset, Func, UserArg, Reserved);
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
 
@@ -833,7 +833,7 @@ IDirect3DExecuteBufferImpl_Optimize(IDirect3DExecuteBuffer *iface,
                                     DWORD Dummy)
 {
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
-    TRACE("(%p)->(%08lx): Unimplemented\n", This, Dummy);
+    TRACE("(%p)->(%08x): Unimplemented\n", This, Dummy);
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
 
