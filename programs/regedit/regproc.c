@@ -170,7 +170,7 @@ DWORD convertHexToDWord(char *str, BYTE *buf)
 
     memcpy(xbuf,str,8);
     xbuf[8]='\0';
-    sscanf(xbuf,"%08lx",&dw);
+    sscanf(xbuf,"%08x",&dw);
     memcpy(buf,&dw,sizeof(DWORD));
     return sizeof(DWORD);
 }
@@ -218,7 +218,7 @@ char* convertHexToDWORDStr(BYTE *buf, ULONG bufLen)
     str = HeapAlloc(GetProcessHeap(), 0, (bufLen*2)+1);
 
     memcpy(&dw,buf,sizeof(DWORD));
-    sprintf(str, "%08lx", dw);
+    sprintf(str, "%08x", dw);
 
     /* Get rid of the last comma */
     return str;
@@ -1057,7 +1057,7 @@ static void REGPROC_print_error(void)
     status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL, error_code, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
     if (!status) {
-        fprintf(stderr,"%s: Cannot display message for error %ld, status %ld\n",
+        fprintf(stderr,"%s: Cannot display message for error %d, status %d\n",
                 getAppName(), error_code, GetLastError());
         exit(1);
     }
@@ -1203,11 +1203,11 @@ static void export_hkey(FILE *file, HKEY key,
                 break;
 
             case REG_DWORD:
-                fprintf(file, "dword:%08lx\n", *((DWORD *)*val_buf));
+                fprintf(file, "dword:%08x\n", *((DWORD *)*val_buf));
                 break;
 
             default:
-                fprintf(stderr,"%s: warning - unsupported registry format '%ld', "
+                fprintf(stderr,"%s: warning - unsupported registry format '%d', "
                         "treat as binary\n",
                         getAppName(), value_type);
                 fprintf(stderr,"key name: \"%s\"\n", *reg_key_name_buf);
@@ -1225,7 +1225,7 @@ static void export_hkey(FILE *file, HKEY key,
                         hex_prefix = "hex:";
                     } else {
                         hex_prefix = buf;
-                        sprintf(buf, "hex(%ld):", value_type);
+                        sprintf(buf, "hex(%d):", value_type);
                     }
 
                     /* position of where the next character will be printed */
