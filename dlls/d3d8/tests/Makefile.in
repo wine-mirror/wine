@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 TESTDLL   = d3d8.dll
 IMPORTS   = user32 kernel32
 EXTRALIBS = -ldxerr8
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	d3d8_main.c \

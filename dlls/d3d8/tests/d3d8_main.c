@@ -32,37 +32,37 @@ static void test_ValidateVertexShader(void)
         0x0000FFFF};
 
     ret=ValidateVertexShader(0,0,0,0,0);
-    ok(ret==E_FAIL,"ValidateVertexShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidateVertexShader returned %x but expected E_FAIL\n",ret);
 
     ret=ValidateVertexShader(0,0,0,1,0);
-    ok(ret==E_FAIL,"ValidateVertexShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidateVertexShader returned %x but expected E_FAIL\n",ret);
 
     ret=ValidateVertexShader(simple_vs,0,0,0,0);
-    ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidateVertexShader returned %x but expected S_OK\n",ret);
 
     ret=ValidateVertexShader(simple_vs,0,0,1,0);
-    ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidateVertexShader returned %x but expected S_OK\n",ret);
     /* seems to do some version checking */
     *simple_vs=0xFFFE0100;             /* vs_1_0               */
     ret=ValidateVertexShader(simple_vs,0,0,0,0);
-    ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidateVertexShader returned %x but expected S_OK\n",ret);
 
     *simple_vs=0xFFFE0102;            /* bogus version         */
     ret=ValidateVertexShader(simple_vs,0,0,1,0);
-    ok(ret==E_FAIL,"ValidateVertexShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidateVertexShader returned %x but expected E_FAIL\n",ret);
     /* I've seen that applications pass 2nd and 3rd parameter always as 0;simple test with non-zero parameters */
     *simple_vs=0xFFFE0101;             /* vs_1_1               */
     ret=ValidateVertexShader(simple_vs,simple_vs,0,1,0);
-    ok(ret==E_FAIL,"ValidateVertexShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidateVertexShader returned %x but expected E_FAIL\n",ret);
 
     ret=ValidateVertexShader(simple_vs,0,simple_vs,1,0);
-    ok(ret==E_FAIL,"ValidateVertexShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidateVertexShader returned %x but expected E_FAIL\n",ret);
     /* I've seen 4th parameter is always passed as either 0 or 1, but passing other values doesn't seem to hurt*/
     ret=ValidateVertexShader(simple_vs,0,0,12345,0);
-    ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidateVertexShader returned %x but expected S_OK\n",ret);
     /* What is 5th parameter ???? Following works ok */
     ret=ValidateVertexShader(simple_vs,0,0,1,simple_vs);
-    ok(ret==S_OK,"ValidateVertexShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidateVertexShader returned %x but expected S_OK\n",ret);
 }
 
 static void test_ValidatePixelShader(void)
@@ -77,30 +77,30 @@ static void test_ValidatePixelShader(void)
         0x0000FFFF};                                                            /* END                          */
 
     ret=ValidatePixelShader(0,0,0,0);
-    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %x but expected E_FAIL\n",ret);
 
     ret=ValidatePixelShader(0,0,1,0);
-    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %x but expected E_FAIL\n",ret);
 
     ret=ValidatePixelShader(simple_ps,0,0,0);
-    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidatePixelShader returned %x but expected S_OK\n",ret);
 
     ret=ValidatePixelShader(simple_ps,0,1,0);
-    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidatePixelShader returned %x but expected S_OK\n",ret);
     /* seems to do some version checking */
     *simple_ps=0xFFFF0105;             /* bogus version  */
     ret=ValidatePixelShader(simple_ps,0,1,0);
-    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %x but expected E_FAIL\n",ret);
     /* I've seen that applications pass 2nd parameter always as 0;simple test with non-zero parameter */
     *simple_ps=0xFFFF0101;             /* ps_1_1         */
     ret=ValidatePixelShader(simple_ps,simple_ps,1,0);
-    ok(ret==E_FAIL,"ValidatePixelShader returned %lx but expected E_FAIL\n",ret);
+    ok(ret==E_FAIL,"ValidatePixelShader returned %x but expected E_FAIL\n",ret);
     /* I've seen 3rd parameter is always passed as either 0 or 1, but passing other values doesn't seem to hurt*/
     ret=ValidatePixelShader(simple_ps,0,12345,0);
-    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidatePixelShader returned %x but expected S_OK\n",ret);
     /* What is 4th parameter ???? Following works ok */
     ret=ValidatePixelShader(simple_ps,0,1,simple_ps);
-    ok(ret==S_OK,"ValidatePixelShader returned %lx but expected S_OK\n",ret);
+    ok(ret==S_OK,"ValidatePixelShader returned %x but expected S_OK\n",ret);
 }
 
 START_TEST(d3d8_main)

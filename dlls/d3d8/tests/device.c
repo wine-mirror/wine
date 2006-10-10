@@ -270,13 +270,13 @@ static void test_refcount(void)
         BYTE *data;
         /* Vertex buffers can be locked multiple times */
         hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08lx\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08x\n", hr);
         hr = IDirect3DVertexBuffer8_Lock(pVertexBuffer, 0, 0, &data, 0);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08lx\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Lock failed with %08x\n", hr);
         hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08lx\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08x\n", hr);
         hr = IDirect3DVertexBuffer8_Unlock(pVertexBuffer);
-        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08lx\n", hr);
+        ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08x\n", hr);
     }
 
 cleanup:
