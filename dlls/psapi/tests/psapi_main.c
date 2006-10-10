@@ -42,7 +42,7 @@
      ? (ok(1, "succeeded\n"), 1) \
      : GetLastError() == 0xdeadbeef \
        ? (ok(0, "failed without error code\n"), 0) \
-       : (ok(0, "failed with %ld\n", GetLastError()), 0))
+       : (ok(0, "failed with %d\n", GetLastError()), 0))
 
 #define w32_err(x, e) \
   (SetLastError(0xdeadbeef), \
@@ -52,7 +52,7 @@
        ? (ok(1, "failed with %d\n", e), 1) \
        : GetLastError() == 0xdeadbeef \
          ? (ok(0, "failed without error code\n"), 0) \
-         : (ok(0, "expected error=%d but failed with %ld\n", \
+         : (ok(0, "expected error=%d but failed with %d\n", \
 	         e, GetLastError()), 0))
 
 static BOOL  (WINAPI *pEmptyWorkingSet)(HANDLE);
@@ -95,9 +95,9 @@ static void test_EnumProcesses(void)
     DWORD pid, cbUsed = 0xdeadbeef;
 
     if(w32_suc(pEnumProcesses(NULL, 0, &cbUsed)))
-        ok(cbUsed == 0, "cbUsed=%ld\n", cbUsed);
+        ok(cbUsed == 0, "cbUsed=%d\n", cbUsed);
     if(w32_suc(pEnumProcesses(&pid, 4, &cbUsed)))
-        ok(cbUsed == 4, "cbUsed=%ld\n", cbUsed);
+        ok(cbUsed == 4, "cbUsed=%d\n", cbUsed);
 }
 
 static void test_EnumProcessModules(void)
@@ -111,7 +111,7 @@ static void test_EnumProcessModules(void)
     if(!w32_suc(pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), &cbNeeded)))
         return;
     ok(cbNeeded / sizeof(HMODULE) >= 3 && cbNeeded / sizeof(HMODULE) <= 5 * sizeof(HMODULE),
-       "cbNeeded=%ld\n", cbNeeded);
+       "cbNeeded=%d\n", cbNeeded);
     ok(hMod == GetModuleHandle(NULL),
        "hMod=%p GetModuleHandle(NULL)=%p\n", hMod, GetModuleHandle(NULL));
 }
@@ -149,7 +149,7 @@ static void test_GetMappedFileName(void)
     w32_err(pGetMappedFileNameA(hpSR, hMod, szMapPath, sizeof(szMapPath)), ERROR_ACCESS_DENIED);
     if(!w32_suc(ret = pGetMappedFileNameA(hpQI, hMod, szMapPath, sizeof(szMapPath))))
         return;
-    ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%ld\n", szMapPath, ret);
+    ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%d\n", szMapPath, ret);
     ok(szMapPath[0] == '\\', "szMapPath=\"%s\"\n", szMapPath);
     szMapBaseName = strrchr(szMapPath, '\\'); /* That's close enough for us */
     if(!szMapBaseName || !*szMapBaseName)
@@ -180,7 +180,7 @@ static void test_GetProcessImageFileName(void)
 	else if(GetLastError() == 0xdeadbeef)
 	    ok(0, "failed without error code\n");
 	else
-	    ok(0, "failed with %ld\n", GetLastError());
+	    ok(0, "failed with %d\n", GetLastError());
 
         return;
     }
@@ -192,7 +192,7 @@ static void test_GetProcessImageFileName(void)
        !w32_suc(pGetMappedFileNameA(hpQV, hMod, szMapPath, sizeof(szMapPath))))
         return;
     /* Windows returns 2*strlen-1 */
-    ok(ret >= strlen(szImgPath), "szImgPath=\"%s\" ret=%ld\n", szImgPath, ret);
+    ok(ret >= strlen(szImgPath), "szImgPath=\"%s\" ret=%d\n", szImgPath, ret);
     ok(!strcmp(szImgPath, szMapPath),
        "szImgPath=\"%s\" szMapPath=\"%s\"\n", szImgPath, szMapPath);    
 }
@@ -208,7 +208,7 @@ static void test_GetModuleFileNameEx(void)
     w32_err(pGetModuleFileNameExA(hpQV, hBad, szModExPath, sizeof(szModExPath)), ERROR_INVALID_HANDLE);
     if(!w32_suc(ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, sizeof(szModExPath))))
         return;
-    ok(ret == strlen(szModExPath), "szModExPath=\"%s\" ret=%ld\n", szModExPath, ret);
+    ok(ret == strlen(szModExPath), "szModExPath=\"%s\" ret=%d\n", szModExPath, ret);
     GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
     ok(!strncmp(szModExPath, szModPath, MAX_PATH), 
        "szModExPath=\"%s\" szModPath=\"%s\"\n", szModExPath, szModPath);
@@ -225,7 +225,7 @@ static void test_GetModuleBaseName(void)
     w32_err(pGetModuleBaseNameA(hpQV, hBad, szModBaseName, sizeof(szModBaseName)), ERROR_INVALID_HANDLE);
     if(!w32_suc(ret = pGetModuleBaseNameA(hpQV, NULL, szModBaseName, sizeof(szModBaseName))))
         return;
-    ok(ret == strlen(szModBaseName), "szModBaseName=\"%s\" ret=%ld\n", szModBaseName, ret);
+    ok(ret == strlen(szModBaseName), "szModBaseName=\"%s\" ret=%d\n", szModBaseName, ret);
     GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
     ok(!strcmp(strrchr(szModPath, '\\') + 1, szModBaseName),
        "szModPath=\"%s\" szModBaseName=\"%s\"\n", szModPath, szModBaseName);
@@ -250,7 +250,7 @@ static void test_ws_functions(void)
 
     if(!VirtualLock(addr, 1))
     {
-        trace("locking failed (error=%ld) - skipping test\n", GetLastError());
+        trace("locking failed (error=%d) - skipping test\n", GetLastError());
         goto free_page;
     }
 	
