@@ -390,11 +390,10 @@ UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
 
             if( type & MSITYPE_STRING )
             {
-                LPWSTR sval;
+                LPCWSTR sval;
 
-                sval = MSI_makestring( query->db, ival );
+                sval = msi_string_lookup_id( query->db->strings, ival );
                 MSI_RecordSetStringW( rec, i, sval );
-                msi_free( sval );
             }
             else
             {
