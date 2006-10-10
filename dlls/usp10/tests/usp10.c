@@ -112,7 +112,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = 5;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -132,7 +132,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         hr = ScriptShape(NULL, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == E_PENDING, "If psc is NULL (%08lx) the E_PENDING should be returned\n", hr);
+        ok (hr == E_PENDING, "If psc is NULL (%08x) the E_PENDING should be returned\n", hr);
         cMaxGlyphs = 4;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
@@ -144,16 +144,16 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08lx)\n", hr);
+        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "ScriptPlace should return 0 not (%08lx)\n", hr);
+            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
             hr = ScriptPlace(NULL, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "ScriptPlace should return 0 not (%08lx)\n", hr);
+            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
             for (cnt=0; cnt < pcGlyphs; cnt++)
                 pwOutGlyphs[cnt] = pwOutGlyphs1[cnt];                 /* Send to next function */
         }
@@ -164,7 +164,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         cInChars = 5;
         cMaxItems = 255;
         hr = ScriptItemize(TestItem2, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-        ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+        ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
         /*  This test is for the intertrim operation of ScriptItemize where only one SCRIPT_ITEM is *
          *  returned.                                                                               */
         ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
@@ -178,8 +178,8 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
              hr = ScriptShape(NULL, &psc, TestItem2, cChars,
                               cMaxGlyphs, &pItem[0].a,
                               pwOutGlyphs2, pwLogClust, psva, &pcGlyphs);
-             ok (hr != E_PENDING, "If psc should not be NULL (%08lx) and the E_PENDING should be returned\n", hr);
-             ok (hr == 0, "ScriptShape should return 0 not (%08lx)\n", hr);
+             ok (hr != E_PENDING, "If psc should not be NULL (%08x) and the E_PENDING should be returned\n", hr);
+             ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
              ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
              ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
              for (cnt=0; cnt < cChars && TestItem2[cnt] == pwOutGlyphs2[cnt]; cnt++) {}
@@ -188,7 +188,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
              if (hr ==0) {
                  hr = ScriptPlace(hdc, &psc, pwOutGlyphs2, pcGlyphs, psva, &pItem[0].a, piAdvance,
                                   pGoffset, pABC);
-                 ok (hr == 0, "ScriptPlace should return 0 not (%08lx)\n", hr);
+                 ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
              }
         }
         hr = ScriptFreeCache( &psc);
@@ -200,7 +200,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = (sizeof(TestItem3)/2)-1;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem3, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     if  (hr == 0)
 	{
         ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
@@ -224,7 +224,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = (sizeof(TestItem4)/2)-1;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem4, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     if  (hr == 0)
 	{
         ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
@@ -263,34 +263,34 @@ void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
 
     hr = ScriptGetCMap(NULL, NULL, NULL, 0, 0, NULL);
     ok( hr == E_INVALIDARG, "(NULL,NULL,NULL,0,0,NULL), "
-                            "expected E_INVALIDARG, got %08lx\n", hr);
+                            "expected E_INVALIDARG, got %08x\n", hr);
 
     hr = ScriptGetCMap(NULL, NULL, TestItem1, cInChars, dwFlags, pwOutGlyphs3);
     ok( hr == E_INVALIDARG, "(NULL,NULL,TestItem1, cInChars, dwFlags, pwOutGlyphs3), "
-                            "expected E_INVALIDARG, got %08lx\n", hr);
+                            "expected E_INVALIDARG, got %08x\n", hr);
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetCMap(NULL, &psc, NULL, 0, 0, NULL);
     ok( hr == E_PENDING, "(NULL,&psc,NULL,0,0NULL), expected E_PENDING, "
-                         "got %08lx\n", hr);
+                         "got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
     /* Set psc to NULL but add hdc, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetCMap(hdc, &psc, NULL, 0, 0, NULL);
     ok( hr == S_OK, "ScriptGetCMap(NULL,&psc,NULL,0,0,NULL), expected S_OK, "
-                    "got %08lx\n", hr);
+                    "got %08x\n", hr);
     ok( psc != NULL, "ScritpGetCMap expected psc to be not NULL\n");
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetCMap(NULL, &psc, TestItem1, cInChars, dwFlags, pwOutGlyphs3);
-    ok( hr == E_PENDING, "(NULL,&psc,), expected E_PENDING, got %08lx\n", hr);
+    ok( hr == E_PENDING, "(NULL,&psc,), expected E_PENDING, got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
     /*  Check to see if the results are the same as those returned by ScriptShape  */
     hr = ScriptGetCMap(hdc, &psc, TestItem1, cInChars, dwFlags, pwOutGlyphs3);
-    ok (hr == 0, "ScriptGetCMap should return 0 not (%08lx)\n", hr);
+    ok (hr == 0, "ScriptGetCMap should return 0 not (%08x)\n", hr);
     ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
     for (cnt=0; cnt < cChars && pwOutGlyphs[cnt] == pwOutGlyphs3[cnt]; cnt++) {}
     ok (cnt == cInChars, "Translation not correct. WCHAR %d - %04x != %04x\n",
@@ -319,39 +319,39 @@ void test_ScriptGetFontProperties(void)
     /* Some sanity checks for ScriptGetFontProperties */
 
     hr = ScriptGetFontProperties(NULL,NULL,NULL);
-    ok( hr == E_INVALIDARG, "(NULL,NULL,NULL), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(NULL,NULL,NULL), expected E_INVALIDARG, got %08x\n", hr);
 
     hr = ScriptGetFontProperties(NULL,NULL,&sfp);
-    ok( hr == E_INVALIDARG, "(NULL,NULL,&sfp), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(NULL,NULL,&sfp), expected E_INVALIDARG, got %08x\n", hr);
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetFontProperties(NULL,&psc,NULL);
-    ok( hr == E_INVALIDARG, "(NULL,&psc,NULL), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(NULL,&psc,NULL), expected E_INVALIDARG, got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetFontProperties(NULL,&psc,&sfp);
-    ok( hr == E_PENDING, "(NULL,&psc,&sfp), expected E_PENDING, got %08lx\n", hr);
+    ok( hr == E_PENDING, "(NULL,&psc,&sfp), expected E_PENDING, got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
     hr = ScriptGetFontProperties(hdc,NULL,NULL);
-    ok( hr == E_INVALIDARG, "(hdc,NULL,NULL), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(hdc,NULL,NULL), expected E_INVALIDARG, got %08x\n", hr);
 
     hr = ScriptGetFontProperties(hdc,NULL,&sfp);
-    ok( hr == E_INVALIDARG, "(hdc,NULL,&sfp), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(hdc,NULL,&sfp), expected E_INVALIDARG, got %08x\n", hr);
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetFontProperties(hdc,&psc,NULL);
-    ok( hr == E_INVALIDARG, "(hdc,&psc,NULL), expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(hdc,&psc,NULL), expected E_INVALIDARG, got %08x\n", hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
     /* Pass an uninitialized sfp */
     psc = NULL;
     hr = ScriptGetFontProperties(hdc,&psc,&sfp);
-    ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) partly uninitialized, expected E_INVALIDARG, got %08lx\n", hr);
+    ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) partly uninitialized, expected E_INVALIDARG, got %08x\n", hr);
     ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
     ScriptFreeCache(&psc);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
@@ -360,14 +360,14 @@ void test_ScriptGetFontProperties(void)
     sfp.cBytes = sizeof(SCRIPT_FONTPROPERTIES);
     psc = NULL;
     hr = ScriptGetFontProperties(hdc,&psc,&sfp);
-    ok( hr == S_OK, "(hdc,&psc,&sfp) partly initialized, expected S_OK, got %08lx\n", hr);
+    ok( hr == S_OK, "(hdc,&psc,&sfp) partly initialized, expected S_OK, got %08x\n", hr);
     ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
 
     /* Save the psc pointer */
     old_psc = psc;
     /* Now a NULL hdc again */
     hr = ScriptGetFontProperties(NULL,&psc,&sfp);
-    ok( hr == S_OK, "(NULL,&psc,&sfp), expected S_OK, got %08lx\n", hr);
+    ok( hr == S_OK, "(NULL,&psc,&sfp), expected S_OK, got %08x\n", hr);
     ok( psc == old_psc, "Expected psc not to be changed, was %p is now %p\n", old_psc, psc);
     ScriptFreeCache(&psc);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
@@ -421,7 +421,7 @@ void test_ScriptTextOut(void)
     cInChars = 5;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08lx\n", hr);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -442,31 +442,31 @@ void test_ScriptTextOut(void)
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08lx)\n", hr);
+        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             /* Note hdc is needed as glyph info is not yet in psc                  */
             hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08lx)\n", hr);
+            ok (hr == 0, "Should return 0 not (%08x)\n", hr);
             ScriptFreeCache(&psc);              /* Get rid of psc for next test set */
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
             hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
-            ok (hr == E_INVALIDARG, "Should return 0 not (%08lx)\n", hr);
+            ok (hr == E_INVALIDARG, "Should return 0 not (%08x)\n", hr);
 
             hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok( hr == E_INVALIDARG, "(NULL,NULL,TestItem1, cInChars, dwFlags, pwOutGlyphs3), "
-                                    "expected E_INVALIDARG, got %08lx\n", hr);
+                                    "expected E_INVALIDARG, got %08x\n", hr);
 
             /* Set psc to NULL, to be able to check if a pointer is returned in psc */
             psc = NULL;
             hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0,
                                NULL, NULL, NULL);
             ok( hr == E_INVALIDARG, "(NULL,&psc,NULL,0,0,0,NULL,), expected E_INVALIDARG, "
-                                    "got %08lx\n", hr);
+                                    "got %08x\n", hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
             /* Set psc to NULL, to be able to check if a pointer is returned in psc
@@ -474,13 +474,13 @@ void test_ScriptTextOut(void)
             psc = NULL;
             hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok( hr == E_INVALIDARG, "(NULL,&psc,), expected E_INVALIDARG, got %08lx\n", hr);
+            ok( hr == E_INVALIDARG, "(NULL,&psc,), expected E_INVALIDARG, got %08x\n", hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
             /* Set that is gets a psc and that returns 0 status */
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08lx)\n", hr);
+            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
 
             /* Test Rect Rgn is acceptable */
@@ -490,17 +490,17 @@ void test_ScriptTextOut(void)
             rect.right = 40;
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08lx)\n", hr);
+            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
 
             iCP = 1;
             hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
                             (const SCRIPT_VISATTR *) &psva, (const int *)&piAdvance, &pItem[0].a, &piX);
-            ok(hr == S_OK, "ScriptCPtoX Stub should return S_OK not %08lx\n", hr);
+            ok(hr == S_OK, "ScriptCPtoX Stub should return S_OK not %08x\n", hr);
 
             psla = (SCRIPT_LOGATTR *)&sla;
             hr = ScriptBreak(TestItem1, cChars, &pItem[0].a, psla);
-            ok(hr == S_OK, "ScriptBreak Stub should return S_OK not %08lx\n", hr);
+            ok(hr == S_OK, "ScriptBreak Stub should return S_OK not %08x\n", hr);
 
             /* Clean up and go   */
             ScriptFreeCache(&psc);
@@ -532,35 +532,35 @@ static void test_ScriptXtoX(void)
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
-    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
     ok(piTrailing == TRUE, "Negative iX should return piTrailing=TRUE not %d\n", piTrailing);
     iX = 1954;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
-    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 10, "Excessive iX should return piCP=10 not %d\n", piCP);
     ok(piTrailing == FALSE, "Excessive iX should return piTrailing=FALSE not %d\n", piTrailing);
     iX = 779;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
-    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
     iX = 780;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
-    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
     iX = 868;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
-    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 4, "iX=%d should return piCP=4 not %d\n", iX, piCP);
 
     iCP=5;
@@ -568,35 +568,35 @@ static void test_ScriptXtoX(void)
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
-    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
     ok(piX == 976, "iCP=%d should return piX=976 not %d\n", iCP, piX);
     iCP=5;
     fTrailing = TRUE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
-    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
     ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);   
     iCP=6;
     fTrailing = FALSE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
-    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
     ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);
     iCP=11;
     fTrailing = FALSE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
-    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
     ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX);
     iCP=11;
     fTrailing = TRUE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
-    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08lx\n", hr);
+    ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
     ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX); 
 
 }
@@ -656,22 +656,22 @@ static void test_ScriptString(void)
     hr = ScriptStringAnalyse( NULL, pString, cString, cGlyphs, iCharset, dwFlags,
                              iReqWidth, &psControl, &psState, piDx, &pTabdef,
                              &pbInClass, &pssa);
-    ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08lx\n", hr);
+    ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
 
     /* test with hdc, this should be a valid test  */
     hr = ScriptStringAnalyse( hdc, pString, cString, cGlyphs, iCharset, dwFlags,
                               iReqWidth, &psControl, &psState, piDx, &pTabdef,
                               &pbInClass, &pssa);
-    ok(hr == E_NOTIMPL, "ScriptStringAnalyse Stub should return E_NOTIMPL not %08lx\n", hr);
+    ok(hr == E_NOTIMPL, "ScriptStringAnalyse Stub should return E_NOTIMPL not %08x\n", hr);
 /*    Commented code it pending new code in ScriptStringAnalysis */
 /*    ok(hr == S_OK, "ScriptStringAnalyse Stub should return S_OK not %08x\n", (unsigned int) hr);*/
 /*    ok(pssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");*/
     if  (hr == 0)
     {
         hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
-        ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08lx\n", hr);
+        ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", hr);
         hr = ScriptStringFree(&pssa);
-        ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08lx\n", hr);
+        ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08x\n", hr);
     }
 }
 
@@ -679,21 +679,21 @@ void test_ScriptCacheGetHeight(HDC hdc)
 {
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    LONG height;
+    long height;
 
     hr = ScriptCacheGetHeight(NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
     hr = ScriptCacheGetHeight(NULL, &sc, NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
     hr = ScriptCacheGetHeight(NULL, &sc, &height);
-    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08lx\n", hr);
+    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08x\n", hr);
 
     height = 0;
 
     hr = ScriptCacheGetHeight(hdc, &sc, &height);
-    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 
     ok(height > 0, "expected height > 0\n");
 }
@@ -713,18 +713,18 @@ void test_ScriptGetGlyphABCWidth(HDC hdc)
     hfont = SelectObject(hdc, hfont);
 
     hr = ScriptGetGlyphABCWidth(NULL, NULL, 'a', NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
     hr = ScriptGetGlyphABCWidth(NULL, &sc, 'a', NULL);
-    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08lx\n", hr);
+    ok(hr == E_PENDING, "expected E_PENDING, got 0x%08x\n", hr);
 
     if (0) {    /* crashes on WinXP */
     hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
     }
 
     hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', &abc);
-    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 }
 
 void test_ScriptLayout(void)
@@ -747,15 +747,15 @@ void test_ScriptLayout(void)
     int i, j, vistolog[sizeof(levels[0])], logtovis[sizeof(levels[0])];
 
     hr = ScriptLayout(sizeof(levels[0]), NULL, vistolog, logtovis);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
     hr = ScriptLayout(sizeof(levels[0]), levels[0], NULL, NULL);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
     for (i = 0; i < sizeof(levels)/sizeof(levels[0]); i++)
     {
         hr = ScriptLayout(sizeof(levels[0]), levels[i], vistolog, logtovis);
-        ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 
         for (j = 0; j < sizeof(levels[i]); j++)
         {
@@ -970,10 +970,10 @@ static BOOL CALLBACK enum_proc(LGRPID group, LCID lcid, LPSTR locale, LONG_PTR l
     if (!SetThreadLocale(lcid)) return TRUE;
 
     hr = ScriptRecordDigitSubstitution(lcid, &sds);
-    ok(hr == S_OK, "ScriptRecordDigitSubstitution failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ScriptRecordDigitSubstitution failed: 0x%08x\n", hr);
 
     hr = ScriptApplyDigitSubstitution(&sds, &sc, &ss);
-    ok(hr == S_OK, "ScriptApplyDigitSubstitution failed: 0x%08lx\n", hr);
+    ok(hr == S_OK, "ScriptApplyDigitSubstitution failed: 0x%08x\n", hr);
 
     for (i = 0; i < sizeof(subst_data)/sizeof(subst_data[0]); i++)
     {
@@ -1022,7 +1022,7 @@ static void test_digit_substitution(void)
     for (i = 0; i < sizeof(groups)/sizeof(groups[0]); i++)
     {
         ret = EnumLanguageGroupLocales(enum_proc, groups[i], 0, 0);
-        ok(ret, "EnumLanguageGroupLocales failed unexpectedly: 0x%08lx\n", GetLastError());
+        ok(ret, "EnumLanguageGroupLocales failed unexpectedly: 0x%08x\n", GetLastError());
     }
 }
 
