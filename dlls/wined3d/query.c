@@ -163,12 +163,12 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
             GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
 
             GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
-            checkGLcall("glGetQueryObjectiv(GL_QUERY_RESULT_AVAILABLE)\n");
+            checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
             TRACE("(%p) : available %d.\n", This, available);
 
             if (available || dwGetDataFlags & WINED3DGETDATA_FLUSH) {
                 GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
-                checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT)\n");
+                checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
                 TRACE("(%p) : Returning %d samples.\n", This, samples);
                 *data = samples;
                 res = S_OK;
