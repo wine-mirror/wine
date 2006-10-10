@@ -2078,25 +2078,25 @@ static void test_getproperty(void)
     size = 0;
     r = MsiGetProperty(hPackage, "Name", NULL, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( size == 5, "Expected 5, got %d\n", size);
 
     /* retrieve the size, empty string */
     size = 0;
     r = MsiGetProperty(hPackage, "Name", empty, &size);
     ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( size == 5, "Expected 5, got %d\n", size);
 
     /* don't change size */
     r = MsiGetProperty(hPackage, "Name", prop, &size);
     ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( size == 5, "Expected 5, got %d\n", size);
     ok( !lstrcmp(prop, "Valu"), "Expected Valu, got %s\n", prop);
 
     /* increase the size by 1 */
     size++;
     r = MsiGetProperty(hPackage, "Name", prop, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok( size == 5, "Expected 5, got %ld\n", size);
+    ok( size == 5, "Expected 5, got %d\n", size);
     ok( !lstrcmp(prop, "Value"), "Expected Value, got %s\n", prop);
 
     r = MsiCloseHandle( hPackage);

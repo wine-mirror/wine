@@ -353,7 +353,7 @@ static MSIHANDLE helper_createpackage( const char *szName )
     res = MsiCloseHandle( suminfo);
     ok( res == ERROR_SUCCESS , "Failed to close suminfo\n" );
 
-    sprintf(szPackage,"#%li",(DWORD)hdb);
+    sprintf(szPackage,"#%li",hdb);
     res = MsiOpenPackage(szPackage,&hPackage);
     ok( res == ERROR_SUCCESS , "Failed to open package\n" );
 
@@ -432,7 +432,7 @@ static void test_formatrecord(void)
     sz = 123;
     r = MsiFormatRecord(0, hrec, NULL, &sz);
     ok( r == ERROR_SUCCESS, "format failed with empty buffer\n");
-    ok( sz == 2, "size wrong (%li)\n",sz);
+    ok( sz == 2, "size wrong (%i)\n",sz);
     sz = sizeof buffer;
     buffer[0] = 'x';
     buffer[1] = 0;
@@ -512,7 +512,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 30, "size wrong %li\n",sz);
+    ok( sz == 30, "size wrong %i\n",sz);
     ok( 0 == strcmp(buffer,"1: boo 2: hoo 3:  4:  5:  6:  "), 
                     "wrong output(%s)\n",buffer);
 
@@ -524,7 +524,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong,(%li)\n",sz);
+    ok( sz == 7, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"hey hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[[1]] [2]");
@@ -534,7 +534,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 9, "size wrong,(%li)\n",sz);
+    ok( sz == 9, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[[2]] hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[[[3]]] [2]");
@@ -545,7 +545,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong,(%li)\n",sz);
+    ok( sz == 7, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"hey hey"), "wrong output (%s)\n",buffer);
 
     r = MsiCloseHandle(hrec);
@@ -562,7 +562,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong,(%li)\n",sz);
+    ok( sz == 7, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"big hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[[3][4][1]] [2]");
@@ -575,7 +575,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong,(%li)\n",sz);
+    ok( sz == 7, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"big hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[[3][[4]][1]] [2]");
@@ -588,7 +588,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 10, "size wrong,(%li)\n",sz);
+    ok( sz == 10, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[1[]2] hey"), "wrong output (%s)\n",buffer);
 
     /* incorrect  formats */
@@ -602,7 +602,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 18, "size wrong,(%li)\n",sz);
+    ok( sz == 18, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[[[3][[4]][1]] [2]"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[[3][[4]][1]] [2]]");
@@ -615,7 +615,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 11, "size wrong,(%li)\n",sz);
+    ok( sz == 11, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[1[]2] hey]"), "wrong output (%s)\n",buffer);
 
 
@@ -631,7 +631,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 6, "size wrong,(%li)\n",sz);
+    ok( sz == 6, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"12 hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[{[3][1]}] [2]");
@@ -644,7 +644,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 8, "size wrong,(%li)\n",sz);
+    ok( sz == 8, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[12] hey"), "wrong output (%s)\n",buffer);
 
 
@@ -658,7 +658,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 10, "size wrong,(%li)\n",sz);
+    ok( sz == 10, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{test} hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "{[test]} [2]");
@@ -671,7 +671,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 12, "size wrong,(%li)\n",sz);
+    ok( sz == 12, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{[test]} hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "{[1][2][3][4]} [2]");
@@ -684,7 +684,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 4, "size wrong,(%li)\n",sz);
+    ok( sz == 4, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer," hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "{[1][2][3][dummy]} [2]");
@@ -697,7 +697,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 18, "size wrong,(%li)\n",sz);
+    ok( sz == 18, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{2hey1[dummy]} hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "{[1][2][3][4][dummy]} [2]");
@@ -710,7 +710,7 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 18, "size wrong,(%li)\n",sz);
+    ok( sz == 18, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{2hey1[dummy]} hey"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "{{[1][2]}[3][4][dummy]}");
@@ -725,7 +725,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     todo_wine{
-    ok( sz == 16, "size wrong,(%li)\n",sz);
+    ok( sz == 16, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{{2hey}1[dummy]}"), "wrong output (%s)\n",buffer);
     }
 
@@ -740,7 +740,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 0, "size wrong,(%li)\n",sz);
+    ok( sz == 0, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -755,7 +755,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 12, "size wrong,(%li)\n",sz);
+    ok( sz == 12, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{{12}3} {12}"), "wrong output (%s)\n",buffer);
     }
 
@@ -770,7 +770,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 15, "size wrong,(%li)\n",sz);
+    ok( sz == 15, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"12 {{12}3} {12}"), "wrong output (%s)\n",buffer);
     }
 
@@ -785,7 +785,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 15, "size wrong,(%li)\n",sz);
+    ok( sz == 15, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"12 {{12}3} {12}"), "wrong output (%s)\n",buffer);
     }
 
@@ -801,7 +801,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 22, "size wrong,(%li)\n",sz);
+    ok( sz == 22, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{blah} 12 {{12}3} {12}"), "wrong output (%s)\n",buffer);
     }
 
@@ -816,7 +816,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 13, "size wrong,(%li)\n",sz);
+    ok( sz == 13, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{{1}2} {}{12}"), "wrong output (%s)\n",buffer);
     }
 
@@ -831,7 +831,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 3, "size wrong,(%li)\n",sz);
+    ok( sz == 3, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer," 12"), "wrong output (%s)\n",buffer);
     }
 
@@ -846,7 +846,7 @@ static void test_formatrecord(void)
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine{
-    ok( sz == 3, "size wrong,(%li)\n",sz);
+    ok( sz == 3, "size wrong,(%i)\n",sz);
     ok( 0 == strcmp(buffer," 12"), "wrong output (%s)\n",buffer);
     }
     
@@ -876,28 +876,28 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 4, "size wrong: %ld\n", sz);
+    ok( sz == 4, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"[\\x]"), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "{\\x}");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 4, "size wrong: %ld\n", sz);
+    ok( sz == 4, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"{\\x}"), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "[abc\\x]");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong: %ld\n", sz);
+    ok( sz == 7, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"[abc\\x]"), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "[\\[]Bracket Text[\\]]");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 20, "size wrong: %ld\n", sz);
+    ok( sz == 20, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"[\\[]Bracket Text[\\]]"), "wrong output: %s\n", buffer);
 
     /* now try other formats without a package */
@@ -1343,7 +1343,7 @@ static void test_formatrecord(void)
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 12, "size wrong: got %lu, expected 12\n", sz);
+    ok( sz == 12, "size wrong: got %u, expected 12\n", sz);
     ok( 0 == strcmp(buffer,"{[1{{boo}}]}"), "wrong output: got %s, expected [1]\n", buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
@@ -1352,7 +1352,7 @@ static void test_formatrecord(void)
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 6, "size wrong: got %lu, expected 3\n", sz);
+    ok( sz == 6, "size wrong: got %u, expected 3\n", sz);
     ok( 0 == strcmp(buffer,"{{hoo}"), "wrong output: got %s, expected [1]\n", buffer);
     }
     ok( r == ERROR_SUCCESS, "format failed\n");
@@ -1489,42 +1489,42 @@ static void test_formatrecord(void)
     MsiRecordSetString(hrec, 0, "{abcd}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 6, "size wrong(%li)\n",sz);
+    ok( sz == 6, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{abcd}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{a[one]bc[two]de[one]f}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 23, "size wrong(%li)\n",sz);
+    ok( sz == 23, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{a[one]bc[two]de[one]f}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{a[one]bc[bad]de[two]f}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 23, "size wrong(%li)\n",sz);
+    ok( sz == 23, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{a[one]bc[bad]de[two]f}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{[bad]}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong(%li)\n",sz);
+    ok( sz == 7, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{[bad]}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{abc{d[one]ef}"); /* missing final brace */
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 14, "size wrong(%li)\n",sz);
+    ok( sz == 14, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{abc{d[one]ef}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{abc{d[one]ef}}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 15, "size wrong(%li)\n",sz);
+    ok( sz == 15, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{abc{d[one]ef}}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
@@ -1533,7 +1533,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 5, "size wrong(%li)\n",sz);
+        ok( sz == 5, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,"{abc}"), "wrong output (%s)\n",buffer);
     }
 
@@ -1543,7 +1543,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -1553,7 +1553,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -1563,7 +1563,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 7, "size wrong(%li)\n",sz);
+        ok( sz == 7, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,"hi{jk}}"), "wrong output (%s)\n",buffer);
     }
 
@@ -1573,7 +1573,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 1, "size wrong(%li)\n",sz);
+        ok( sz == 1, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,"}"), "wrong output (%s)\n",buffer);
     }
 
@@ -1583,7 +1583,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -1593,7 +1593,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -1601,21 +1601,21 @@ static void test_formatrecord(void)
     MsiRecordSetString(hrec, 0, "{a{b}c}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong(%li)\n",sz);
+    ok( sz == 7, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{a{b}c}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{a{b}}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 6, "size wrong(%li)\n",sz);
+    ok( sz == 6, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{a{b}}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
     MsiRecordSetString(hrec, 0, "{{b}c}");
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 6, "size wrong(%li)\n",sz);
+    ok( sz == 6, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{{b}c}"), "wrong output (%s)\n",buffer);
 
     sz = sizeof buffer;
@@ -1624,7 +1624,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 2, "size wrong(%li)\n",sz);
+        ok( sz == 2, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,"}}"), "wrong output (%s)\n",buffer);
     }
 
@@ -1670,7 +1670,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed with empty buffer (%i)\n",r);
-    ok( sz == 51, "size wrong (%li)\n",sz);
+    ok( sz == 51, "size wrong (%i)\n",sz);
     ok( 0 == strcmp(buffer,"1:  2:  3:  4:  5:  6:  7:  8:  9:  10:  11:  12:  "), "wrong output(%s)\n",buffer);
 
     r = MsiSetProperty(package, "prop", "val");
@@ -1687,7 +1687,7 @@ static void test_formatrecord_package(void)
     ok( r == ERROR_SUCCESS, "format failed with empty buffer (%i)\n",r);
     todo_wine
     {
-        ok( sz == 66, "size wrong (%li)\n",sz);
+        ok( sz == 66, "size wrong (%i)\n",sz);
         ok( 0 == strcmp(buffer,"1: [2] 2: stuff 3: prop 4: val 5:  6:  7:  8:  9:  10:  11:  12:  "), "wrong output(%s)\n",buffer);
     }
 
@@ -1699,7 +1699,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 9, "size wrong(%li)\n",sz);
+    ok( sz == 9, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"boo hoo 3"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[1] [2] [\\x]");
@@ -1709,42 +1709,42 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 9, "size wrong(%li)\n",sz);
+    ok( sz == 9, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"boo hoo x"), "wrong output (%s)\n",buffer);
 
     MsiRecordSetString(hrec, 0, "[\\x]");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 1, "size wrong: %ld\n", sz);
+    ok( sz == 1, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"x"), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "{\\x}");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 4, "size wrong: %ld\n", sz);
+    ok( sz == 4, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"{\\x}"), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "[abc\\x]");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 0, "size wrong: %ld\n", sz);
+    ok( sz == 0, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,""), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "[abc\\xdef]");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 0, "size wrong: %ld\n", sz);
+    ok( sz == 0, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,""), "wrong output: %s\n", buffer);
 
     MsiRecordSetString(hrec, 0, "[\\[]Bracket Text[\\]]");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 14, "size wrong: %ld\n", sz);
+    ok( sz == 14, "size wrong: %d\n", sz);
     ok( 0 == strcmp(buffer,"[Bracket Text]"), "wrong output: %s\n", buffer);
 
     /* null characters */
@@ -1795,7 +1795,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 12, "size wrong(%li)\n",sz);
+    ok( sz == 12, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"foo baa whoa"), "wrong output (%s)\n",buffer);
 
 
@@ -1810,7 +1810,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 9, "size wrong(%li)\n",sz);
+    ok( sz == 9, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"1 [1] [2]"), "wrong output (%s)\n",buffer);
 
     r = MsiSetProperty(package,"dummya","1");
@@ -1826,7 +1826,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 10, "size wrong(%li)\n",sz);
+    ok( sz == 10, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"\\blath b 1"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[1] [2] [[\\3asdf]]");
@@ -1837,7 +1837,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 11, "size wrong(%li)\n",sz);
+    ok( sz == 11, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"boo hoo [3]"), "wrong output (%s)\n",buffer);
 
     r = MsiRecordSetString(hrec, 0, "[1] [2] [[3]]");
@@ -1848,7 +1848,7 @@ static void test_formatrecord_package(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 9, "size wrong(%li)\n",sz);
+    ok( sz == 9, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"boo hoo h"), "wrong output (%s)\n",buffer);
 
     /* nested properties */
@@ -1859,7 +1859,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[PropC]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong(%li)\n",sz);
+    ok( sz == 7, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[PropB]"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "PropA", "surprise");
@@ -1869,7 +1869,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[PropC]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 5, "size wrong(%li)\n",sz);
+    ok( sz == 5, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"PropB"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "PropA", "surprise");
@@ -1879,7 +1879,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[[PropC]]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 0, "size wrong(%li)\n",sz);
+    ok( sz == 0, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "PropA", "surprise");
@@ -1889,7 +1889,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[[PropC]]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 7, "size wrong(%li)\n",sz);
+    ok( sz == 7, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"[PropA]"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "PropA", "surprise");
@@ -1899,7 +1899,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[[PropC]]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 5, "size wrong(%li)\n",sz);
+    ok( sz == 5, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"PropA"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "PropA", "surprise");
@@ -1909,7 +1909,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "[[[PropC]]]");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 8, "size wrong(%li)\n",sz);
+    ok( sz == 8, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"surprise"), "wrong output (%s)\n",buffer);
 
     /* properties inside braces */
@@ -1917,7 +1917,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{abcd}");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 6, "size wrong(%li)\n",sz);
+    ok( sz == 6, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"{abcd}"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "one", "mercury");
@@ -1926,7 +1926,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{a[one]bc[two]de[one]f}");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 25, "size wrong(%li)\n",sz);
+    ok( sz == 25, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"amercurybcvenusdemercuryf"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "one", "mercury");
@@ -1938,7 +1938,7 @@ static void test_formatrecord_package(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 
@@ -1947,7 +1947,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{[bad]}");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 0, "size wrong(%li)\n",sz);
+    ok( sz == 0, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "one", "mercury");
@@ -1955,7 +1955,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{abc{d[one]ef}"); /* missing final brace */
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 14, "size wrong(%li)\n",sz);
+    ok( sz == 14, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"abc{dmercuryef"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "one", "mercury");
@@ -1963,7 +1963,7 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{abc{d[one]ef}}");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    ok( sz == 15, "size wrong(%li)\n",sz);
+    ok( sz == 15, "size wrong(%i)\n",sz);
     ok( 0 == strcmp(buffer,"abc{dmercuryef}"), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "one", "mercury");
@@ -1973,7 +1973,7 @@ static void test_formatrecord_package(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 5, "size wrong(%li)\n",sz);
+        ok( sz == 5, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,"{abc}"), "wrong output (%s)\n",buffer);
     }
 
@@ -1984,7 +1984,7 @@ static void test_formatrecord_package(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     todo_wine
     {
-        ok( sz == 0, "size wrong(%li)\n",sz);
+        ok( sz == 0, "size wrong(%i)\n",sz);
         ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
     }
 

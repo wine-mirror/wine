@@ -619,12 +619,12 @@ static void test_MsiInstallProduct(void)
     }
 
     res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
     type = REG_SZ;
     res = RegQueryValueExA(hkey, "Name", NULL, &type, (LPBYTE)path, &size);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
 
     size = MAX_PATH;
@@ -632,14 +632,14 @@ static void test_MsiInstallProduct(void)
     res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
     todo_wine
     {
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
     }
 
     size = sizeof(num);
     type = REG_DWORD;
     res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-    ok(num == 314, "Expected 314, got %ld\n", num);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(num == 314, "Expected 314, got %d\n", num);
 
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
 }

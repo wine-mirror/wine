@@ -1940,7 +1940,7 @@ static void test_join(void)
         if (i == 2 || i == 3) todo_wine
         {
             ok( !lstrcmp( buf, join_res_first[i].one ),
-                "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_first[i].one, buf );
+                "For (row %d, column 1) expected '%s', got %s\n", i, join_res_first[i].one, buf );
         }
 
         size = MAX_PATH;
@@ -1949,7 +1949,7 @@ static void test_join(void)
         if (i == 3) todo_wine
         {
             ok( !lstrcmp( buf, join_res_first[i].two ),
-                "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_first[i].two, buf );
+                "For (row %d, column 2) expected '%s', got %s\n", i, join_res_first[i].two, buf );
         }
 
         i++;
@@ -1958,7 +1958,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 5, "Expected 5 rows, got %ld\n", i );
+        ok( i == 5, "Expected 5 rows, got %d\n", i );
     }
 
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
@@ -1991,13 +1991,13 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_second[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_second[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_second[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_second[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_second[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_second[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2005,7 +2005,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 2, "Expected 2 rows, got %ld\n", i );
+        ok( i == 2, "Expected 2 rows, got %d\n", i );
     }
 
     todo_wine
@@ -2036,19 +2036,19 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_third[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_third[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_third[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_third[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_third[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_third[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
     }
 
-    ok( i == 2, "Expected 2 rows, got %ld\n", i );
+    ok( i == 2, "Expected 2 rows, got %d\n", i );
 
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
@@ -2075,19 +2075,19 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_fourth[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_fourth[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_fourth[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_fourth[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_fourth[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_fourth[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
     }
 
-    ok( i == 1, "Expected 1 rows, got %ld\n", i );
+    ok( i == 1, "Expected 1 rows, got %d\n", i );
 
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
@@ -2121,13 +2121,13 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_fifth[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_fifth[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_fifth[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_fifth[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_fifth[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_fifth[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2135,7 +2135,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 1, "Expected 1 rows, got %ld\n", i );
+        ok( i == 1, "Expected 1 rows, got %d\n", i );
     }
 
     todo_wine
@@ -2172,13 +2172,13 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_sixth[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_sixth[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_sixth[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_sixth[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_sixth[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_sixth[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2186,7 +2186,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+        ok( i == 6, "Expected 6 rows, got %d\n", i );
     }
 
     todo_wine
@@ -2224,13 +2224,13 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_seventh[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_seventh[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_seventh[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_seventh[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_seventh[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_seventh[i].two, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2238,7 +2238,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 3, "Expected 3 rows, got %ld\n", i );
+        ok( i == 3, "Expected 3 rows, got %d\n", i );
     }
 
     todo_wine
@@ -2273,13 +2273,13 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].four ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2287,7 +2287,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+        ok( i == 6, "Expected 6 rows, got %d\n", i );
         ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
     }
 
@@ -2317,25 +2317,25 @@ static void test_join(void)
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].one ),
-            "For (row %ld, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
+            "For (row %d, column 1) expected '%s', got %s\n", i, join_res_eighth[i].one, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].two ),
-            "For (row %ld, column 2) expected '%s', got %s\n", i, join_res_eighth[i].two, buf );
+            "For (row %d, column 2) expected '%s', got %s\n", i, join_res_eighth[i].two, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 3, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].three ),
-            "For (row %ld, column 3) expected '%s', go %s\n", i, join_res_eighth[i].three, buf );
+            "For (row %d, column 3) expected '%s', go %s\n", i, join_res_eighth[i].three, buf );
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 4, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
         ok( !lstrcmp( buf, join_res_eighth[i].four ),
-            "For (row %ld, column 4) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
+            "For (row %d, column 4) expected '%s', got %s\n", i, join_res_eighth[i].four, buf );
 
         i++;
         MsiCloseHandle(hrec);
@@ -2343,7 +2343,7 @@ static void test_join(void)
 
     todo_wine
     {
-        ok( i == 6, "Expected 6 rows, got %ld\n", i );
+        ok( i == 6, "Expected 6 rows, got %d\n", i );
         ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
     }
 
