@@ -398,7 +398,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue,
              appValue);
             break;
         case msidbLocatorTypeFileName:
-            *appValue = (LPWSTR)value;
+            *appValue = strdupW((LPCWSTR)value);
             break;
         case msidbLocatorTypeRawValue:
             ACTION_ConvertRegValue(regType, value, sz, appValue);
@@ -996,7 +996,7 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
         while (!rc)
         {
             MSISIGNATURE sig;
-            LPWSTR value;
+            LPWSTR value = NULL;
 
             rc = MSI_ViewFetch(view,&row);
             if (rc != ERROR_SUCCESS)

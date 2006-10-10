@@ -668,6 +668,7 @@ done:
     msi_free(data);
     msi_free(columns);
     msi_free(types);
+    msi_free(labels);
 
     for (i = 0; i < num_records; i++)
         msi_free(records[i]);

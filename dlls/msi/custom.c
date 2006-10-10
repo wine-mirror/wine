@@ -167,7 +167,10 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
 
     row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
     if (!row)
+    {
+        msi_free(action_copy);
         return ERROR_CALL_NOT_IMPLEMENTED;
+    }
 
     type = MSI_RecordGetInteger(row,2);
 
