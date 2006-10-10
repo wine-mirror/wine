@@ -179,7 +179,7 @@ static const char* getSecError(SECURITY_STATUS status)
         _SEC_ERR(SEC_E_OUT_OF_SEQUENCE);
         _SEC_ERR(SEC_E_MESSAGE_ALTERED);
         default:
-            sprintf(buf, "%08lx\n", status);
+            sprintf(buf, "%08x\n", status);
             return buf;
     }
 #undef _SEC_ERR

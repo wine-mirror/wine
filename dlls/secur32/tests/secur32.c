@@ -53,7 +53,7 @@ static void testGetComputerObjectNameA(void)
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
            (GetLastError() == ERROR_NO_SUCH_DOMAIN),
-           "GetComputerObjectNameA(%d) failed: %ld\n",
+           "GetComputerObjectNameA(%d) failed: %d\n",
            formats[i], GetLastError());
         if (rc)
             trace("GetComputerObjectNameA() returned %s\n", name);
@@ -75,7 +75,7 @@ static void testGetComputerObjectNameW(void)
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
            (GetLastError() == ERROR_NO_SUCH_DOMAIN),
-           "GetComputerObjectNameW(%d) failed: %ld\n",
+           "GetComputerObjectNameW(%d) failed: %d\n",
            formats[i], GetLastError());
         if (rc) {
             char name[256];
