@@ -325,7 +325,6 @@ extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data,
 extern UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
 extern UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz );
 
-extern LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid);
 extern UINT msi_string2idW( string_table *st, LPCWSTR buffer, UINT *id );
 extern UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id );
 extern string_table *msi_init_stringtable( int entries, UINT codepage );

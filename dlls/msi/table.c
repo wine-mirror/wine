@@ -917,7 +917,7 @@ static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count )
     }
 }
 
-LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
+static LPWSTR msi_makestring( MSIDATABASE *db, UINT stringid)
 {
     return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
@@ -958,9 +958,9 @@ static UINT get_tablecolumns( MSIDATABASE *db,
         if( colinfo )
         {
             UINT id = table->data[ i ] [ 2 ];
-            colinfo[n].tablename = MSI_makestring( db, table_id );
+            colinfo[n].tablename = msi_makestring( db, table_id );
             colinfo[n].number = table->data[ i ][ 1 ] - (1<<15);
-            colinfo[n].colname = MSI_makestring( db, id );
+            colinfo[n].colname = msi_makestring( db, id );
             colinfo[n].type = table->data[ i ] [ 3 ] ^ 0x8000;
             colinfo[n].hash_table = NULL;
             /* this assumes that columns are in order in the table */
