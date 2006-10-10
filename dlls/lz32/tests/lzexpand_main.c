@@ -140,6 +140,7 @@ static void test_LZOpenFileA_existing_compressed(void)
      operating systems.  Doesn't seem to on my copy of Win98.   
    */
   if(file != LZERROR_BADINHANDLE) {
+    ok(file >= 0, "LZOpenFileA returns negative file descriptor for '%s'\n", filename);
     ok(test.cBytes == sizeof(OFSTRUCT), 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
     ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
@@ -168,6 +169,7 @@ static void test_LZOpenFileA_existing_compressed(void)
   /* b, using dotless file name. */
   file = LZOpenFileA(dotless, &test, OF_EXIST);
   if(file != LZERROR_BADINHANDLE) {
+    ok(file >= 0, "LZOpenFileA returns negative file descriptor for '%s'\n", dotless);
     ok(test.cBytes == sizeof(OFSTRUCT), 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
     ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
@@ -198,6 +200,7 @@ static void test_LZOpenFileA_existing_compressed(void)
   /* c, using extensionless file name. */
   file = LZOpenFileA(extless, &test, OF_EXIST);
   if(file != LZERROR_BADINHANDLE) {
+    ok(file >= 0, "LZOpenFileA returns negative file descriptor for '%s'\n", extless);
     ok(test.cBytes == sizeof(OFSTRUCT), 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
     ok(test.nErrCode == 0, "LZOpenFileA set test.nErrCode to %d\n", 
@@ -345,6 +348,7 @@ static void test_LZOpenFileA(void)
   DWORD retval;
   INT file;
   static char badfilename_[] = "badfilename_";
+  char expected[MAX_PATH];
 
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
@@ -355,38 +359,94 @@ static void test_LZOpenFileA(void)
      "GetLastError() returns %ld\n", GetLastError());
   LZClose(file);
 
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+
   /* Create an empty file. */
   file = LZOpenFileA(filename_, &test, OF_CREATE);
   ok(file >= 0, "LZOpenFileA failed on creation\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
   retval = GetFileAttributesA(filename_);
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", 
      GetLastError());
 
   /* Check various opening options: */
+  memset(&test, 0xA5, sizeof(test));
+
   /* a, for reading. */
   file = LZOpenFileA(filename_, &test, OF_READ);
   ok(file >= 0, "LZOpenFileA failed on read\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* b, for writing. */
   file = LZOpenFileA(filename_, &test, OF_WRITE);
   ok(file >= 0, "LZOpenFileA failed on write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* c, for reading and writing. */
   file = LZOpenFileA(filename_, &test, OF_READWRITE);
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* d, for checking file existance. */
   file = LZOpenFileA(filename_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFileA(filename_, &test, OF_DELETE);
   ok(file >= 0, "LZOpenFileA failed on delete\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileA returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
 
   retval = GetFileAttributesA(filename_);
@@ -690,6 +750,7 @@ static void test_LZOpenFileW(void)
   DWORD retval;
   INT file;
   static WCHAR badfilenameW[] = {'b','a','d','f','i','l','e','n','a','m','e','.','x','t','n',0};
+  char expected[MAX_PATH];
 
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
@@ -704,39 +765,94 @@ static void test_LZOpenFileW(void)
   ok(file == LZERROR_BADINHANDLE, "LZOpenFileW succeeded on nonexistent file\n");
   LZClose(file);
 
+  memset(&test, 0xA5, sizeof(test));
+  full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+
   /* Create an empty file. */
   file = LZOpenFileW(filenameW_, &test, OF_CREATE);
   ok(file >= 0, "LZOpenFile failed on creation\n");
-
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
   retval = GetFileAttributesW(filenameW_);
   ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
     GetLastError());
 
   /* Check various opening options: */
+  memset(&test, 0xA5, sizeof(test));
+
   /* a, for reading. */
   file = LZOpenFileW(filenameW_, &test, OF_READ);
   ok(file >= 0, "LZOpenFileW failed on read\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* b, for writing. */
   file = LZOpenFileW(filenameW_, &test, OF_WRITE);
   ok(file >= 0, "LZOpenFileW failed on write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* c, for reading and writing. */
   file = LZOpenFileW(filenameW_, &test, OF_READWRITE);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* d, for checking file existance. */
   file = LZOpenFileW(filenameW_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
+
+  memset(&test, 0xA5, sizeof(test));
 
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFileW(filenameW_, &test, OF_DELETE);
   ok(file >= 0, "LZOpenFileW failed on delete\n");
+  ok(test.cBytes == sizeof(OFSTRUCT),
+     "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
+  ok(test.nErrCode == ERROR_SUCCESS,
+     "LZOpenFileW set test.nErrCode to %d\n", test.nErrCode);
+  ok(lstrcmpA(test.szPathName, expected) == 0,
+     "LZOpenFileW returned '%s', but was expected to return '%s'\n",
+     test.szPathName, expected);
   LZClose(file);
 
   retval = GetFileAttributesW(filenameW_);
