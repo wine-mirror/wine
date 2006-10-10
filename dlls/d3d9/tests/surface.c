@@ -127,8 +127,13 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
         D3DLOCKED_RECT lockedRect;
         hr = IDirect3DSurface9_LockRect(surface_ptr, &lockedRect, NULL, 0);
         ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
-        /* test is deactivated until out np2 support doesn't report the full power of 2 pitch to the app */
-        todo_wine ok(lockedRect.Pitch == 12, "Got pitch %d, expected 12\n", lockedRect.Pitch);
+        ok(!(lockedRect.Pitch & 3), "Surface pitch %d is not 32-bit aligned\n", lockedRect.Pitch);
+#if 0
+        /* Some applications also depend on the exact pitch, rather than just
+         * the alignment. However, this test will fail or succeed depending
+         * on the NP2 mode we're using. */
+        ok(lockedRect.Pitch == 12, "Got pitch %d, expected 12\n", lockedRect.Pitch);
+#endif
         hr = IDirect3DSurface9_UnlockRect(surface_ptr);
         IDirect3DSurface9_Release(surface_ptr);
     }
