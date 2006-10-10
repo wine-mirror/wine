@@ -72,7 +72,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = sizeof(bufW)/sizeof(bufW[0]);
     TRACE_2("Call IMultiLanguage2_ConvertStringToUnicode\n");
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, 1252, stringA, &lenA, bufW, &lenW);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08x\n", ret);
     ok(lenA == 0, "expected lenA 0, got %u\n", lenA);
     ok(lenW == 0, "expected lenW 0, got %u\n", lenW);
 
@@ -81,7 +81,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = sizeof(bufW)/sizeof(bufW[0]);
     TRACE_2("Call IMultiLanguage2_ConvertStringToUnicode\n");
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, 1252, stringA, &lenA, bufW, &lenW);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     ok(bufW[lenW] != 0, "buf should not be 0 terminated\n");
@@ -93,7 +93,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = 5;
     TRACE_2("Call IMultiLanguage2_ConvertStringToUnicode\n");
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, 1252, stringA, &lenA, bufW, &lenW);
-    ok(ret == E_FAIL, "IMultiLanguage2_ConvertStringToUnicode should fail: %08lx\n", ret);
+    ok(ret == E_FAIL, "IMultiLanguage2_ConvertStringToUnicode should fail: %08x\n", ret);
     ok(lenW == 0, "expected lenW 0, got %u\n", lenW);
     /* still has to do partial conversion */
     ok(!memcmp(bufW, stringW, 5 * sizeof(WCHAR)), "bufW/stringW mismatch\n");
@@ -103,7 +103,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = sizeof(bufW)/sizeof(bufW[0]);
     TRACE_2("Call IMultiLanguage2_ConvertStringToUnicode\n");
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, CP_UNICODE, stringA, &lenA, bufW, &lenW);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     ok(lenW == lstrlenW(stringW)/(int)sizeof(WCHAR), "wrong lenW %u\n", lenW);
     ok(bufW[lenW] != 0, "buf should not be 0 terminated\n");
@@ -114,7 +114,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = lstrlenA(stringA);
     lenW = 0;
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, 1252, stringA, &lenA, NULL, &lenW);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
     ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
@@ -123,7 +123,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = lstrlenA(stringA);
     lenW = sizeof(bufW)/sizeof(bufW[0]);
     ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
-    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
     ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
@@ -132,7 +132,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = lstrlenA(stringA);
     lenW = 0;
     ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
-    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
     ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
@@ -144,7 +144,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = sizeof(bufA);
     TRACE_2("Call IMultiLanguage2_ConvertStringFromUnicode\n");
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, bufA, &lenA);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08x\n", ret);
     ok(lenA == 0, "expected lenA 0, got %u\n", lenA);
     ok(lenW == 0, "expected lenW 0, got %u\n", lenW);
 
@@ -153,7 +153,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = sizeof(bufA);
     TRACE_2("Call IMultiLanguage2_ConvertStringFromUnicode\n");
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, bufA, &lenA);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     ok(bufA[lenA] != 0, "buf should not be 0 terminated\n");
@@ -165,7 +165,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = 5;
     TRACE_2("Call IMultiLanguage2_ConvertStringFromUnicode\n");
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, bufA, &lenA);
-    ok(ret == E_FAIL, "IMultiLanguage2_ConvertStringFromUnicode should fail: %08lx\n", ret);
+    ok(ret == E_FAIL, "IMultiLanguage2_ConvertStringFromUnicode should fail: %08x\n", ret);
     ok(lenA == 0, "expected lenA 0, got %u\n", lenA);
     /* still has to do partial conversion */
     ok(!memcmp(bufA, stringA, 5), "bufW/stringW mismatch\n");
@@ -175,7 +175,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = sizeof(bufA);
     TRACE_2("Call IMultiLanguage2_ConvertStringFromUnicode\n");
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, CP_UNICODE, stringW, &lenW, bufA, &lenA);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA) * (int)sizeof(WCHAR), "wrong lenA %u\n", lenA);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     ok(bufA[lenA] != 0 && bufA[lenA+1] != 0, "buf should not be 0 terminated\n");
@@ -187,7 +187,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = lstrlenW(stringW);
     lenA = 0;
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, NULL, &lenA);
-    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08x\n", ret);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
     ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
@@ -196,7 +196,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = lstrlenW(stringW);
     lenA = sizeof(bufA);
     ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
-    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08lx\n", ret);
+    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08x\n", ret);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
     ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
@@ -205,7 +205,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenW = lstrlenW(stringW);
     lenA = 0;
     ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
-    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08lx\n", ret);
+    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08x\n", ret);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
     ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
@@ -213,7 +213,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
 
 inline static void cpinfo_cmp(MIMECPINFO *cpinfo1, MIMECPINFO *cpinfo2)
 {
-    ok(cpinfo1->dwFlags == cpinfo2->dwFlags, "dwFlags mismatch: %08lx != %08lx\n", cpinfo1->dwFlags, cpinfo2->dwFlags);
+    ok(cpinfo1->dwFlags == cpinfo2->dwFlags, "dwFlags mismatch: %08x != %08x\n", cpinfo1->dwFlags, cpinfo2->dwFlags);
     ok(cpinfo1->uiCodePage == cpinfo2->uiCodePage, "uiCodePage mismatch: %u != %u\n", cpinfo1->uiCodePage, cpinfo2->uiCodePage);
     ok(cpinfo1->uiFamilyCodePage == cpinfo2->uiFamilyCodePage, "uiFamilyCodePage mismatch: %u != %u\n", cpinfo1->uiFamilyCodePage, cpinfo2->uiFamilyCodePage);
     ok(!lstrcmpW(cpinfo1->wszDescription, cpinfo2->wszDescription), "wszDescription mismatch\n");
@@ -262,44 +262,44 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     total = 0;
     TRACE_2("Call IMultiLanguage2_GetNumberOfCodePageInfo\n");
     ret = IMultiLanguage2_GetNumberOfCodePageInfo(iML2, &total);
-    ok(ret == S_OK && total != 0, "IMultiLanguage2_GetNumberOfCodePageInfo: expected S_OK/!0, got %08lx/%u\n", ret, total);
+    ok(ret == S_OK && total != 0, "IMultiLanguage2_GetNumberOfCodePageInfo: expected S_OK/!0, got %08x/%u\n", ret, total);
 
     trace("total mlang supported codepages %u\n", total);
 
     TRACE_2("Call IMultiLanguage2_EnumCodePages\n");
     ret = IMultiLanguage2_EnumCodePages(iML2, flags, LANG_NEUTRAL, &iEnumCP);
-    trace("IMultiLanguage2_EnumCodePages = %08lx, iEnumCP = %p\n", ret, iEnumCP);
-    ok(ret == S_OK && iEnumCP, "IMultiLanguage2_EnumCodePages: expected S_OK/!NULL, got %08lx/%p\n", ret, iEnumCP);
+    trace("IMultiLanguage2_EnumCodePages = %08x, iEnumCP = %p\n", ret, iEnumCP);
+    ok(ret == S_OK && iEnumCP, "IMultiLanguage2_EnumCodePages: expected S_OK/!NULL, got %08x/%p\n", ret, iEnumCP);
 
     TRACE_2("Call IEnumCodePage_Reset\n");
     ret = IEnumCodePage_Reset(iEnumCP);
-    ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08x\n", ret);
     n = 65536;
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, 0, NULL, &n);
-    ok(n == 0 && ret == S_FALSE, "IEnumCodePage_Next: expected 0/S_FALSE, got %lu/%08lx\n", n, ret);
+    ok(n == 0 && ret == S_FALSE, "IEnumCodePage_Next: expected 0/S_FALSE, got %u/%08x\n", n, ret);
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, 0, NULL, NULL);
-    ok(ret == S_FALSE, "IEnumCodePage_Next: expected S_FALSE, got %08lx\n", ret);
+    ok(ret == S_FALSE, "IEnumCodePage_Next: expected S_FALSE, got %08x\n", ret);
 
     cpinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*cpinfo) * total * 2);
 
     n = total * 2;
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, 0, cpinfo, &n);
-    trace("IEnumCodePage_Next = %08lx, n = %lu\n", ret, n);
-    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+    trace("IEnumCodePage_Next = %08x, n = %u\n", ret, n);
+    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08x/%u\n", ret, n);
 
     n = total * 2;
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, n, cpinfo, &n);
-    ok(ret == S_OK && n != 0, "IEnumCodePage_Next: expected S_OK/!0, got %08lx/%lu\n", ret, n);
+    ok(ret == S_OK && n != 0, "IEnumCodePage_Next: expected S_OK/!0, got %08x/%u\n", ret, n);
 
-    trace("flags %08lx, enumerated codepages %lu\n", flags, n);
+    trace("flags %08x, enumerated codepages %u\n", flags, n);
 
     if (!flags)
     {
-	ok(n == total, "IEnumCodePage_Next: expected %u, got %lu\n", total, n);
+	ok(n == total, "IEnumCodePage_Next: expected %u, got %u\n", total, n);
 
 	flags = MIMECONTF_MIME_LATEST;
     }
@@ -337,7 +337,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	      wine_dbgstr_w(cpinfo[i].wszProportionalFont),
 	      cpinfo[i].bGDICharset);
 #endif
-	ok(cpinfo[i].dwFlags & flags, "enumerated flags %08lx do not include requested %08lx\n", cpinfo[i].dwFlags, flags);
+	ok(cpinfo[i].dwFlags & flags, "enumerated flags %08x do not include requested %08x\n", cpinfo[i].dwFlags, flags);
 
 	if (TranslateCharsetInfo((DWORD *)cpinfo[i].uiFamilyCodePage, &csi, TCI_SRCCODEPAGE))
 	    ok(cpinfo[i].bGDICharset == csi.ciCharset, "%d != %d\n", cpinfo[i].bGDICharset, csi.ciCharset);
@@ -366,17 +366,17 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	{
 	    TRACE_2("Call IMultiLanguage2_IsConvertible\n");
 	    ret = IMultiLanguage2_IsConvertible(iML2, cpinfo[i].uiCodePage, CP_UNICODE);
-	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(%u -> CP_UNICODE) = %08lx\n", cpinfo[i].uiCodePage, ret);
+	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(%u -> CP_UNICODE) = %08x\n", cpinfo[i].uiCodePage, ret);
 	    TRACE_2("Call IMultiLanguage2_IsConvertible\n");
 	    ret = IMultiLanguage2_IsConvertible(iML2, CP_UNICODE, cpinfo[i].uiCodePage);
-	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> %u) = %08lx\n", cpinfo[i].uiCodePage, ret);
+	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> %u) = %08x\n", cpinfo[i].uiCodePage, ret);
 
 	    TRACE_2("Call IMultiLanguage2_IsConvertible\n");
 	    ret = IMultiLanguage2_IsConvertible(iML2, cpinfo[i].uiCodePage, CP_UTF8);
-	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(%u -> CP_UTF8) = %08lx\n", cpinfo[i].uiCodePage, ret);
+	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(%u -> CP_UTF8) = %08x\n", cpinfo[i].uiCodePage, ret);
 	    TRACE_2("Call IMultiLanguage2_IsConvertible\n");
 	    ret = IMultiLanguage2_IsConvertible(iML2, CP_UTF8, cpinfo[i].uiCodePage);
-	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UTF8 -> %u) = %08lx\n", cpinfo[i].uiCodePage, ret);
+	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UTF8 -> %u) = %08x\n", cpinfo[i].uiCodePage, ret);
 	}
 	else
 	    trace("IsValidCodePage failed for cp %u\n", cpinfo[i].uiCodePage);
@@ -385,7 +385,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
 	if (memcmp(cpinfo[i].wszWebCharset, autoW, 5 * sizeof(WCHAR)))
 	{
-	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
 #ifdef DUMP_CP_INFO
 	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszWebCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
 #endif
@@ -409,7 +409,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
 	if (memcmp(cpinfo[i].wszHeaderCharset, autoW, 5 * sizeof(WCHAR)))
 	{
-	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
 #ifdef DUMP_CP_INFO
 	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszHeaderCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
 #endif
@@ -433,7 +433,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
 	if (memcmp(cpinfo[i].wszBodyCharset, autoW, 5 * sizeof(WCHAR)))
 	{
-	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
 #ifdef DUMP_CP_INFO
 	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszBodyCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
 #endif
@@ -459,13 +459,13 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     /* now IEnumCodePage_Next should fail, since pointer is at the end */
     n = 1;
     ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
-    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08x/%u\n", ret, n);
 
     ret = IEnumCodePage_Reset(iEnumCP);
-    ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08x\n", ret);
     n = 0;
     ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
-    ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+    ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
     cpinfo_cmp(&cpinfo[0], &cpinfo2);
 
 #if 0
@@ -473,13 +473,13 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
      * it's not used here.
      */
     ret = IEnumCodePage_Skip(iEnumCP, 1);
-    ok(ret == S_OK, "IEnumCodePage_Skip: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumCodePage_Skip: expected S_OK, got %08x\n", ret);
 #endif
     for (i = 0; i < total - 1; i++)
     {
         n = 0;
         ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
-        ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+        ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
         cpinfo_cmp(&cpinfo[i + 1], &cpinfo2);
     }
 
@@ -508,43 +508,43 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     total = 0;
     TRACE_2("Call IMultiLanguage2_GetNumberOfScripts\n");
     ret = IMultiLanguage2_GetNumberOfScripts(iML2, &total);
-    ok(ret == S_OK && total != 0, "IMultiLanguage2_GetNumberOfScripts: expected S_OK/!0, got %08lx/%u\n", ret, total);
+    ok(ret == S_OK && total != 0, "IMultiLanguage2_GetNumberOfScripts: expected S_OK/!0, got %08x/%u\n", ret, total);
 
     trace("total mlang supported scripts %u\n", total);
 
     TRACE_2("Call IMultiLanguage2_EnumScripts\n");
     ret = IMultiLanguage2_EnumScripts(iML2, flags, LANG_NEUTRAL, &iEnumScript);
-    trace("IMultiLanguage2_EnumScripts = %08lx, iEnumScript = %p\n", ret, iEnumScript);
-    ok(ret == S_OK && iEnumScript, "IMultiLanguage2_EnumScripts: expected S_OK/!NULL, got %08lx/%p\n", ret, iEnumScript);
+    trace("IMultiLanguage2_EnumScripts = %08x, iEnumScript = %p\n", ret, iEnumScript);
+    ok(ret == S_OK && iEnumScript, "IMultiLanguage2_EnumScripts: expected S_OK/!NULL, got %08x/%p\n", ret, iEnumScript);
 
     TRACE_2("Call IEnumScript_Reset\n");
     ret = IEnumScript_Reset(iEnumScript);
-    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08x\n", ret);
     n = 65536;
     TRACE_2("Call IEnumScript_Next\n");
     ret = IEnumScript_Next(iEnumScript, 0, NULL, &n);
-    ok(n == 65536 && ret == E_FAIL, "IEnumScript_Next: expected 65536/E_FAIL, got %lu/%08lx\n", n, ret);
+    ok(n == 65536 && ret == E_FAIL, "IEnumScript_Next: expected 65536/E_FAIL, got %u/%08x\n", n, ret);
     TRACE_2("Call IEnumScript_Next\n");
     ret = IEnumScript_Next(iEnumScript, 0, NULL, NULL);
-    ok(ret == E_FAIL, "IEnumScript_Next: expected E_FAIL, got %08lx\n", ret);
+    ok(ret == E_FAIL, "IEnumScript_Next: expected E_FAIL, got %08x\n", ret);
 
     sinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*sinfo) * total * 2);
 
     n = total * 2;
     TRACE_2("Call IEnumScript_Next\n");
     ret = IEnumScript_Next(iEnumScript, 0, sinfo, &n);
-    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08x/%u\n", ret, n);
 
     n = total * 2;
     TRACE_2("Call IEnumScript_Next\n");
     ret = IEnumScript_Next(iEnumScript, n, sinfo, &n);
-    ok(ret == S_OK && n != 0, "IEnumScript_Next: expected S_OK, got %08lx/%lu\n", ret, n);
+    ok(ret == S_OK && n != 0, "IEnumScript_Next: expected S_OK, got %08x/%u\n", ret, n);
 
-    trace("flags %08lx, enumerated scripts %lu\n", flags, n);
+    trace("flags %08x, enumerated scripts %u\n", flags, n);
 
     if (!flags)
     {
-	ok(n == total, "IEnumScript_Next: expected %u, got %lu\n", total, n);
+	ok(n == total, "IEnumScript_Next: expected %u, got %u\n", total, n);
 	flags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
     }
 
@@ -578,13 +578,13 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     /* now IEnumScript_Next should fail, since pointer is at the end */
     n = 1;
     ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
-    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08x/%u\n", ret, n);
 
     ret = IEnumScript_Reset(iEnumScript);
-    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08x\n", ret);
     n = 0;
     ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
-    ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+    ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
     scriptinfo_cmp(&sinfo[0], &sinfo2);
 
 #if 0
@@ -592,13 +592,13 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
      * it's not used here.
      */
     ret = IEnumScript_Skip(iEnumScript, 1);
-    ok(ret == S_OK, "IEnumScript_Skip: expected S_OK, got %08lx\n", ret);
+    ok(ret == S_OK, "IEnumScript_Skip: expected S_OK, got %08x\n", ret);
 #endif
     for (i = 0; i < total - 1; i++)
     {
         n = 0;
         ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
-        ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+        ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
         scriptinfo_cmp(&sinfo[i + 1], &sinfo2);
     }
 
@@ -649,7 +649,7 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
     HRESULT ret;
 
     ret = IMultiLanguage2_EnumRfc1766(iML2, LANG_NEUTRAL, &pEnumRfc1766);
-    ok(ret == S_OK, "IMultiLanguage2_EnumRfc1766 error %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_EnumRfc1766 error %08x\n", ret);
 
     while (1)
     {
@@ -662,7 +662,7 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
 #endif
 
         ok(n == 1, "couldn't fetch 1 RFC1766INFO structure\n");
-        ok(IsValidLocale(info.lcid, LCID_SUPPORTED), "invalid lcid %04lx\n", info.lcid);
+        ok(IsValidLocale(info.lcid, LCID_SUPPORTED), "invalid lcid %04x\n", info.lcid);
     }
 }
 
@@ -679,7 +679,7 @@ START_TEST(mlang)
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMultiLanguage2, (void **)&iML2);
 
-    trace("ret = %08lx, MultiLanguage2 iML2 = %p\n", ret, iML2);
+    trace("ret = %08x, MultiLanguage2 iML2 = %p\n", ret, iML2);
     if (ret != S_OK || !iML2) return;
 
     test_rfc1766(iML2);
@@ -698,10 +698,10 @@ START_TEST(mlang)
 
     TRACE_2("Call IMultiLanguage2_IsConvertible\n");
     ret = IMultiLanguage2_IsConvertible(iML2, CP_UTF8, CP_UNICODE);
-    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UTF8 -> CP_UNICODE) = %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UTF8 -> CP_UNICODE) = %08x\n", ret);
     TRACE_2("Call IMultiLanguage2_IsConvertible\n");
     ret = IMultiLanguage2_IsConvertible(iML2, CP_UNICODE, CP_UTF8);
-    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> CP_UTF8) = %08lx\n", ret);
+    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> CP_UTF8) = %08x\n", ret);
 
     test_multibyte_to_unicode_translations(iML2);
 
@@ -710,7 +710,7 @@ START_TEST(mlang)
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink, (void **)&iMLFL);
 
-    trace("ret = %08lx, IMLangFontLink iMLFL = %p\n", ret, iMLFL);
+    trace("ret = %08x, IMLangFontLink iMLFL = %p\n", ret, iMLFL);
     if (ret != S_OK || !iML2) return;
 
     IMLangFontLink_Test(iMLFL);
