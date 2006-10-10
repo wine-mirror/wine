@@ -1655,6 +1655,8 @@ static void test_states(void)
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
 
+    MsiCloseHandle( hdb );
+
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
@@ -2057,6 +2059,7 @@ static void test_states(void)
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
     
     MsiCloseHandle( hpkg );
+    DeleteFileA( msifile );
 }
 
 static void test_getproperty(void)
@@ -2194,6 +2197,8 @@ static void test_removefiles(void)
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
 
+    MsiCloseHandle( hdb );
+
     create_test_file( "hydrogen.txt" );
     create_test_file( "helium.txt" );
     create_test_file( "lithium.txt" );
@@ -2279,6 +2284,8 @@ static void test_appsearch(void)
 
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle( hdb );
 
     r = MsiDoAction( hpkg, "AppSearch" );
     ok( r == ERROR_SUCCESS, "AppSearch failed: %d\n", r);
@@ -2465,6 +2472,8 @@ static void test_featureparents(void)
 
     hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle( hdb );
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
@@ -2689,6 +2698,7 @@ static void test_featureparents(void)
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     
     MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
 }
 
 static void test_installprops(void)
