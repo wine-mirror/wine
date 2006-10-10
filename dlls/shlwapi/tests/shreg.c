@@ -39,8 +39,8 @@ static SHCopyKeyA_func pSHCopyKeyA;
 typedef DWORD (WINAPI *SHRegGetPathA_func)(HKEY,LPCSTR,LPCSTR,LPSTR,DWORD);
 static SHRegGetPathA_func pSHRegGetPathA;
 
-static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
-static const char * sTestpath2 = "%FOO%\\subdir1";
+static char sTestpath1[] = "%LONGSYSTEMVAR%\\subdir1";
+static char sTestpath2[] = "%FOO%\\subdir1";
 
 static const char * sEnvvar1 = "bar";
 static const char * sEnvvar2 = "ImARatherLongButIndeedNeededString";
