@@ -137,7 +137,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
       0, 0, 1000, 100, hWnd, (HMENU)IDC_EDITOR, hInstance, NULL);
     if (!hEditorWnd)
     {
-        fprintf(stderr, "Error code %lu\n", GetLastError());
+        fprintf(stderr, "Error code %u\n", GetLastError());
         return -1;
     }
     assert(hEditorWnd);
@@ -189,7 +189,7 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SELCHANGE *pSC = (SELCHANGE *)lParam;
         char buf[128];
 
-        sprintf( buf,"selection = %ld..%ld, line count=%ld\n",
+        sprintf( buf,"selection = %d..%d, line count=%ld\n",
                  pSC->chrg.cpMin, pSC->chrg.cpMax,
         SendMessage(hwndEditor, EM_GETLINECOUNT, 0, 0));
         SetWindowText(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
@@ -312,7 +312,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessage(hwndEditor, EM_EXGETSEL, 0, (LPARAM)&range);
         data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * (range.cpMax-range.cpMin+1));
         SendMessage(hwndEditor, EM_GETSELTEXT, 0, (LPARAM)data);
-        sprintf(buf, "Start = %ld, End = %ld", range.cpMin, range.cpMax);
+        sprintf(buf, "Start = %d, End = %d", range.cpMin, range.cpMax);
         MessageBoxA(hWnd, buf, "Editor", MB_OK);
         MessageBoxW(hWnd, data, xszAppTitle, MB_OK);
         HeapFree( GetProcessHeap(), 0, data);
