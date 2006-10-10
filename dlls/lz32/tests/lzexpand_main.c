@@ -131,6 +131,7 @@ static void test_LZOpenFileA_existing_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* a, using 8.3-conformant file name. */
   file = LZOpenFileA(filename, &test, OF_EXIST);
@@ -148,6 +149,8 @@ static void test_LZOpenFileA_existing_compressed(void)
        test.szPathName, expected);
     LZClose(file);
   } else { /* Win9x */
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "GetLastError() returns %ld\n", GetLastError());
     ok(test.cBytes == 0xA5, 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
     ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
@@ -160,6 +163,7 @@ static void test_LZOpenFileA_existing_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(dotless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* b, using dotless file name. */
   file = LZOpenFileA(dotless, &test, OF_EXIST);
@@ -173,6 +177,8 @@ static void test_LZOpenFileA_existing_compressed(void)
        test.szPathName, expected);
     LZClose(file);
   } else { /* Win9x */
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "GetLastError() returns %ld\n", GetLastError());
     todo_wine
     ok(test.cBytes == 0xA5, 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
@@ -187,6 +193,7 @@ static void test_LZOpenFileA_existing_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(extless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* c, using extensionless file name. */
   file = LZOpenFileA(extless, &test, OF_EXIST);
@@ -200,6 +207,8 @@ static void test_LZOpenFileA_existing_compressed(void)
        test.szPathName, expected);
     LZClose(file);
   } else { /* Win9x */
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "GetLastError() returns %ld\n", GetLastError());
     ok(test.cBytes == 0xA5, 
        "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
     ok(test.nErrCode == ERROR_FILE_NOT_FOUND, 
@@ -244,6 +253,7 @@ static void test_LZOpenFileA_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* a, using 8.3-conformant file name. */
   file = LZOpenFileA(filename, &test, OF_EXIST);
@@ -253,6 +263,8 @@ static void test_LZOpenFileA_nonexisting_compressed(void)
    */
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
@@ -266,11 +278,14 @@ static void test_LZOpenFileA_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(dotless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* b, using dotless file name. */
   file = LZOpenFileA(dotless, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
@@ -284,11 +299,14 @@ static void test_LZOpenFileA_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(extless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* c, using extensionless file name. */
   file = LZOpenFileA(extless, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
@@ -302,11 +320,14 @@ static void test_LZOpenFileA_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(_terminated_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* d, using underscore-terminated file name. */
   file = LZOpenFileA(_terminated, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileA succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
@@ -575,6 +596,7 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(filename_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* a, using 8.3-conformant file name. */
   file = LZOpenFileW(filenameW, &test, OF_EXIST);
@@ -584,6 +606,8 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
    */
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileW succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
@@ -596,11 +620,14 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(dotless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* b, using dotless file name. */
   file = LZOpenFileW(dotlessW, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileW succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
@@ -613,11 +640,14 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(extless_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* c, using extensionless file name. */
   file = LZOpenFileW(extlessW, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileW succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
@@ -630,11 +660,14 @@ static void test_LZOpenFileW_nonexisting_compressed(void)
   memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
   memset(&test, 0xA5, sizeof(test));
   full_file_path_name_in_a_CWD(_terminated_, expected, FALSE);
+  SetLastError(0xfaceabee);
 
   /* d, using underscore-terminated file name. */
   file = LZOpenFileW(_terminatedW, &test, OF_EXIST);
   ok(file == LZERROR_BADINHANDLE, 
      "LZOpenFileW succeeded on nonexistent file\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %ld\n", GetLastError());
   todo_wine
   ok(test.cBytes == 0xA5, 
      "LZOpenFileW set test.cBytes to %d\n", test.cBytes);
@@ -655,6 +688,8 @@ static void test_LZOpenFileW(void)
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
   file = LZOpenFileW(badfilenameW, &test, OF_READ);
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+     "GetLastError() returns %ld\n", GetLastError());
   if(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
     trace("LZOpenFileW call not implemented, skipping rest of the test\n");
