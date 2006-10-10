@@ -71,9 +71,9 @@ static BOOL createdirectdraw(void)
     HRESULT rc;
 
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", rc);
     if (!lpDD) {
-        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        trace("DirectDrawCreateEx() failed with an error %x\n", rc);
         return FALSE;
     }
     return TRUE;
@@ -108,7 +108,7 @@ static void flushdisplaymodes(void)
 
 static HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
 {
-    trace("Width = %li, Height = %li, Refresh Rate = %li\r\n",
+    trace("Width = %i, Height = %i, Refresh Rate = %i\r\n",
         lpddsd->dwWidth, lpddsd->dwHeight,
         U2(*lpddsd).dwRefreshRate);
     adddisplaymode(lpddsd);
@@ -128,7 +128,7 @@ static void enumdisplaymodes(void)
 
     rc = IDirectDraw_EnumDisplayModes(lpDD,
         DDEDM_STANDARDVGAMODES, &ddsd, 0, enummodescallback);
-    ok(rc==DD_OK || rc==E_INVALIDARG,"EnumDisplayModes returned: %lx\n",rc);
+    ok(rc==DD_OK || rc==E_INVALIDARG,"EnumDisplayModes returned: %x\n",rc);
 }
 
 static void setdisplaymode(int i)
@@ -137,7 +137,7 @@ static void setdisplaymode(int i)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    ok(rc==DD_OK,"SetCooperativeLevel returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel returned: %x\n",rc);
     if (modes[i].dwFlags & DDSD_PIXELFORMAT)
     {
         if (modes[i].ddpfPixelFormat.dwFlags & DDPF_RGB)
@@ -145,10 +145,10 @@ static void setdisplaymode(int i)
             rc = IDirectDraw_SetDisplayMode(lpDD,
                 modes[i].dwWidth, modes[i].dwHeight,
                 U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
-            ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %lx\n",rc);
+            ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %x\n",rc);
 	    if (DD_OK==rc) {
                 rc = IDirectDraw_RestoreDisplayMode(lpDD);
-                ok(DD_OK==rc,"RestoreDisplayMode returned: %lx\n",rc);
+                ok(DD_OK==rc,"RestoreDisplayMode returned: %x\n",rc);
             }
         }
     }
@@ -167,10 +167,10 @@ static void createsurface(void)
         DDSCAPS_COMPLEX;
     ddsd.dwBackBufferCount = 1;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSPrimary, NULL );
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
     ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
     rc = IDirectDrawSurface_GetAttachedSurface(lpDDSPrimary, &ddscaps, &lpDDSBack);
-    ok(rc==DD_OK,"GetAttachedSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"GetAttachedSurface returned: %x\n",rc);
 }
 
 static void destroysurface(void)
@@ -189,17 +189,17 @@ static void testsurface(void)
     HRESULT rc;
     
     rc = IDirectDrawSurface_GetDC(lpDDSBack, &hdc);
-    ok(rc==DD_OK, "IDirectDrawSurface_GetDC returned: %lx\n",rc);
+    ok(rc==DD_OK, "IDirectDrawSurface_GetDC returned: %x\n",rc);
     SetBkColor(hdc, RGB(0, 0, 255));
     SetTextColor(hdc, RGB(255, 255, 0));
     TextOut(hdc, 0, 0, testMsg, lstrlen(testMsg));
     IDirectDrawSurface_ReleaseDC(lpDDSBack, hdc);
-    ok(rc==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %lx\n",rc);
+    ok(rc==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n",rc);
     
     while (1)
     {
         rc = IDirectDrawSurface_Flip(lpDDSPrimary, NULL, DDFLIP_WAIT);
-        ok(rc==DD_OK || rc==DDERR_SURFACELOST, "IDirectDrawSurface_BltFast returned: %lx\n",rc);
+        ok(rc==DD_OK || rc==DDERR_SURFACELOST, "IDirectDrawSurface_BltFast returned: %x\n",rc);
 
         if (rc == DD_OK)
         {
@@ -208,7 +208,7 @@ static void testsurface(void)
         else if (rc == DDERR_SURFACELOST)
         {
             rc = IDirectDrawSurface_Restore(lpDDSPrimary);
-            ok(rc==DD_OK, "IDirectDrawSurface_Restore returned: %lx\n",rc);
+            ok(rc==DD_OK, "IDirectDrawSurface_Restore returned: %x\n",rc);
         }
     }
 }
@@ -243,72 +243,72 @@ static void testcooperativelevels_normal(void)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %x\n",rc);
 
     /* Try creating a double buffered primary in normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
-    ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08lx\n", rc);
+    ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
     ok(surface == NULL, "Returned surface pointer is %p\n", surface);
     if(surface) IDirectDrawSurface_Release(surface);
 
     /* Set the focus window */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     /* Set the focus window a second time*/
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) the second time returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) the second time returned: %x\n",rc);
 
     /* Test DDSCL_SETFOCUSWINDOW with the other flags. They should all fail, except of DDSCL_NOWINDOWCHANGES */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     /* This one succeeds */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NOWINDOWCHANGES | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NOWINDOWCHANGES | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NOWINDOWCHANGES | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_MULTITHREADED | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_MULTITHREADED | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_MULTITHREADED | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FPUSETUP | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUSETUP | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUSETUP | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FPUPRESERVE | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUPRESERVE | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUPRESERVE | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWREBOOT | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWREBOOT | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWREBOOT | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWMODEX | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWMODEX | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     /* Set the device window without any other flags. Should give an error */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETDEVICEWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETDEVICEWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETDEVICEWINDOW) returned: %x\n",rc);
 
     /* Set device window with DDSCL_NORMAL */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW) returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW) returned: %x\n",rc);
  
     /* Also set the focus window. Should give an error */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETDEVICEWINDOW | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW | DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     /* All done */
 }
@@ -322,22 +322,22 @@ static void testcooperativelevels_exclusive(void)
     /* Try to set exclusive mode only */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_EXCLUSIVE);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE) returned: %x\n",rc);
 
     /* Full screen mode only */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FULLSCREEN) returned: %lx\n",rc);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FULLSCREEN) returned: %x\n",rc);
 
     /* Full screen mode + exclusive mode */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN) returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN) returned: %x\n",rc);
 
     /* Set the focus window. Should fail */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_HWNDALREADYSET,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
+    ok(rc==DDERR_HWNDALREADYSET,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
 
     /* All done */

@@ -68,18 +68,18 @@ static BOOL CreateDirect3D(void)
 
     rc = pDirectDrawCreateEx(NULL, (void**)&lpDD,
         &IID_IDirectDraw7, NULL);
-    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", rc);
     if (!lpDD) {
-        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        trace("DirectDrawCreateEx() failed with an error %x\n", rc);
         return FALSE;
     }
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
-    ok(rc==DD_OK, "SetCooperativeLevel returned: %lx\n", rc);
+    ok(rc==DD_OK, "SetCooperativeLevel returned: %x\n", rc);
 
     rc = IDirectDraw7_QueryInterface(lpDD, &IID_IDirect3D7, (void**) &lpD3D);
     if (rc == E_NOINTERFACE) return FALSE;
-    ok(rc==DD_OK, "QueryInterface returned: %lx\n", rc);
+    ok(rc==DD_OK, "QueryInterface returned: %x\n", rc);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -88,13 +88,13 @@ static BOOL CreateDirect3D(void)
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDS, NULL);
-    ok(rc==DD_OK, "CreateSurface returned: %lx\n", rc);
+    ok(rc==DD_OK, "CreateSurface returned: %x\n", rc);
 
     rc = IDirect3D7_CreateDevice(lpD3D, &IID_IDirect3DTnLHalDevice, lpDDS,
         &lpD3DDevice);
-    ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED || rc==E_OUTOFMEMORY, "CreateDevice returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED || rc==E_OUTOFMEMORY, "CreateDevice returned: %x\n", rc);
     if (!lpD3DDevice) {
-        trace("IDirect3D7::CreateDevice() failed with an error %lx\n", rc);
+        trace("IDirect3D7::CreateDevice() failed with an error %x\n", rc);
         return FALSE;
     }
 
@@ -144,29 +144,29 @@ static void LightTest(void)
     U2(light.dvDirection).y = 1.f;
 
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 5, &light);
-    ok(rc==D3D_OK, "SetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 10, &light);
-    ok(rc==D3D_OK, "SetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 45, &light);
-    ok(rc==D3D_OK, "SetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 
 
     /* Try to retrieve a light beyond the indices of the lights that have
        been set. */
     rc = IDirect3DDevice7_GetLight(lpD3DDevice, 50, &light);
-    ok(rc==DDERR_INVALIDPARAMS, "GetLight returned: %lx\n", rc);
+    ok(rc==DDERR_INVALIDPARAMS, "GetLight returned: %x\n", rc);
     rc = IDirect3DDevice7_GetLight(lpD3DDevice, 2, &light);
-    ok(rc==DDERR_INVALIDPARAMS, "GetLight returned: %lx\n", rc);
+    ok(rc==DDERR_INVALIDPARAMS, "GetLight returned: %x\n", rc);
 
 
     /* Try to retrieve one of the lights that have been set */
     rc = IDirect3DDevice7_GetLight(lpD3DDevice, 10, &light);
-    ok(rc==D3D_OK, "GetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "GetLight returned: %x\n", rc);
 
 
     /* Enable a light that have been previously set. */
     rc = IDirect3DDevice7_LightEnable(lpD3DDevice, 10, TRUE);
-    ok(rc==D3D_OK, "LightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "LightEnable returned: %x\n", rc);
 
 
     /* Enable some lights that have not been previously set, and verify that
@@ -179,45 +179,45 @@ static void LightTest(void)
     U3(defaultlight.dvDirection).z = 1.f;
 
     rc = IDirect3DDevice7_LightEnable(lpD3DDevice, 20, TRUE);
-    ok(rc==D3D_OK, "LightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "LightEnable returned: %x\n", rc);
     memset(&light, 0, sizeof(D3DLIGHT7));
     rc = IDirect3DDevice7_GetLight(lpD3DDevice, 20, &light);
-    ok(rc==D3D_OK, "GetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "GetLight returned: %x\n", rc);
     ok(!memcmp(&light, &defaultlight, sizeof(D3DLIGHT7)),
         "light data doesn't match expected default values\n" );
 
     rc = IDirect3DDevice7_LightEnable(lpD3DDevice, 50, TRUE);
-    ok(rc==D3D_OK, "LightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "LightEnable returned: %x\n", rc);
     memset(&light, 0, sizeof(D3DLIGHT7));
     rc = IDirect3DDevice7_GetLight(lpD3DDevice, 50, &light);
-    ok(rc==D3D_OK, "GetLight returned: %lx\n", rc);
+    ok(rc==D3D_OK, "GetLight returned: %x\n", rc);
     ok(!memcmp(&light, &defaultlight, sizeof(D3DLIGHT7)),
         "light data doesn't match expected default values\n" );
 
 
     /* Disable one of the light that have been previously enabled. */
     rc = IDirect3DDevice7_LightEnable(lpD3DDevice, 20, FALSE);
-    ok(rc==D3D_OK, "LightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "LightEnable returned: %x\n", rc);
 
     /* Try to retrieve the enable status of some lights */
     /* Light 20 is supposed to be disabled */
     rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, 20, &bEnabled );
-    ok(rc==D3D_OK, "GetLightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "GetLightEnable returned: %x\n", rc);
     ok(!bEnabled, "GetLightEnable says the light is enabled\n");
 
     /* Light 10 is supposed to be enabled */
     bEnabled = FALSE;
     rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, 10, &bEnabled );
-    ok(rc==D3D_OK, "GetLightEnable returned: %lx\n", rc);
+    ok(rc==D3D_OK, "GetLightEnable returned: %x\n", rc);
     ok(bEnabled, "GetLightEnable says the light is disabled\n");
 
     /* Light 80 has not been set */
     rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, 80, &bEnabled );
-    ok(rc==DDERR_INVALIDPARAMS, "GetLightEnable returned: %lx\n", rc);
+    ok(rc==DDERR_INVALIDPARAMS, "GetLightEnable returned: %x\n", rc);
 
     /* Light 23 has not been set */
     rc = IDirect3DDevice7_GetLightEnable(lpD3DDevice, 23, &bEnabled );
-    ok(rc==DDERR_INVALIDPARAMS, "GetLightEnable returned: %lx\n", rc);
+    ok(rc==DDERR_INVALIDPARAMS, "GetLightEnable returned: %x\n", rc);
 }
 
 static void ProcessVerticesTest(void)
@@ -250,10 +250,10 @@ static void ProcessVerticesTest(void)
     desc.dwFVF = D3DFVF_XYZ;
     desc.dwNumVertices = 16;
     rc = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufSrc, 0);
-    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %x\n", rc);
     if (!lpVBufSrc)
     {
-        trace("IDirect3D7::CreateVertexBuffer() failed with an error %lx\n", rc);
+        trace("IDirect3D7::CreateVertexBuffer() failed with an error %x\n", rc);
         goto out;
     }
 
@@ -264,10 +264,10 @@ static void ProcessVerticesTest(void)
     desc.dwNumVertices = 16;
     /* Msdn says that the last parameter must be 0 - check that */
     rc = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufDest1, 4);
-    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %x\n", rc);
     if (!lpVBufDest1)
     {
-        trace("IDirect3D7::CreateVertexBuffer() failed with an error %lx\n", rc);
+        trace("IDirect3D7::CreateVertexBuffer() failed with an error %x\n", rc);
         goto out;
     }
 
@@ -278,15 +278,15 @@ static void ProcessVerticesTest(void)
     desc.dwNumVertices = 16;
     /* Msdn says that the last parameter must be 0 - check that */
     rc = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufDest2, 12345678);
-    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %lx\n", rc);
+    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %x\n", rc);
     if (!lpVBufDest2)
     {
-        trace("IDirect3D7::CreateVertexBuffer() failed with an error %lx\n", rc);
+        trace("IDirect3D7::CreateVertexBuffer() failed with an error %x\n", rc);
         goto out;
     }
 
     rc = IDirect3DVertexBuffer7_Lock(lpVBufSrc, 0, (void **) &in, NULL);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!in) goto out;
 
     /* Check basic transformation */
@@ -307,16 +307,16 @@ static void ProcessVerticesTest(void)
     in[3].y = -0.5;
     in[3].z = 0.25;
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufSrc);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
 
     rc = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %x\n", rc);
 
     rc = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest2, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %x\n", rc);
 
     rc = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **) &out, NULL);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out) goto out;
 
     /* Check the results */
@@ -345,11 +345,11 @@ static void ProcessVerticesTest(void)
         "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
     out = NULL;
 
     rc = IDirect3DVertexBuffer7_Lock(lpVBufDest2, 0, (void **) &out2, NULL);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out2) goto out;
     /* Small thing without much practial meaning, but I stumbled upon it,
      * so let's check for it: If the output vertex buffer has to RHW value,
@@ -361,7 +361,7 @@ static void ProcessVerticesTest(void)
         "Output 4 vertex is (%f , %f , %f)\n", out2[4].x, out2[4].y, out2[4].z);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest2);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
     out = NULL;
 
     /* Try a more complicated viewport, same vertices */
@@ -373,14 +373,14 @@ static void ProcessVerticesTest(void)
     vp.dvMinZ = -2.0;
     vp.dvMaxZ = 4.0;
     rc = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed with rc=%lx\n", rc);
+    ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed with rc=%x\n", rc);
 
     /* Process again */
     rc = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %x\n", rc);
 
     rc = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **) &out, NULL);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out) goto out;
 
     /* Check the results */
@@ -409,7 +409,7 @@ static void ProcessVerticesTest(void)
         "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
     out = NULL;
 
     /* Play with some matrices. */
@@ -424,10 +424,10 @@ static void ProcessVerticesTest(void)
     ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed\n");
 
     rc = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %x\n", rc);
 
     rc = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **) &out, NULL);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out) goto out;
 
     /* Keep the viewport simpler, otherwise we get bad numbers to compare */
@@ -466,7 +466,7 @@ static void ProcessVerticesTest(void)
         "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
+    ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
     out = NULL;
 
 out:

@@ -31,14 +31,14 @@ static BOOL CreateDirectDraw(void)
     HRESULT rc;
 
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %lx\n", rc);
+    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", rc);
     if (!lpDD) {
-        trace("DirectDrawCreateEx() failed with an error %lx\n", rc);
+        trace("DirectDrawCreateEx() failed with an error %x\n", rc);
         return FALSE;
     }
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
-    ok(rc==DD_OK,"SetCooperativeLevel returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel returned: %x\n",rc);
 
     return TRUE;
 }
@@ -69,16 +69,16 @@ static void MipMapCreationTest(void)
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     rc = IDirectDrawSurface_GetSurfaceDesc(lpDDSMipMapTest, &ddsd);
-    ok(rc==DD_OK,"GetSurfaceDesc returned: %lx\n",rc);
+    ok(rc==DD_OK,"GetSurfaceDesc returned: %x\n",rc);
     ok(ddsd.dwFlags & DDSD_MIPMAPCOUNT,
         "GetSurfaceDesc returned no mipmapcount.\n");
-    ok(U2(ddsd).dwMipMapCount == 3, "Incorrect mipmap count: %ld.\n",
+    ok(U2(ddsd).dwMipMapCount == 3, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
 
     /* Destroy the surface. */
@@ -95,16 +95,16 @@ static void MipMapCreationTest(void)
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     rc = IDirectDrawSurface_GetSurfaceDesc(lpDDSMipMapTest, &ddsd);
-    ok(rc==DD_OK,"GetSurfaceDesc returned: %lx\n",rc);
+    ok(rc==DD_OK,"GetSurfaceDesc returned: %x\n",rc);
     ok(ddsd.dwFlags & DDSD_MIPMAPCOUNT,
         "GetSurfaceDesc returned no mipmapcount.\n");
-    ok(U2(ddsd).dwMipMapCount == 1, "Incorrect mipmap count: %ld.\n",
+    ok(U2(ddsd).dwMipMapCount == 1, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
 
 
@@ -121,16 +121,16 @@ static void MipMapCreationTest(void)
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     rc = IDirectDrawSurface_GetSurfaceDesc(lpDDSMipMapTest, &ddsd);
-    ok(rc==DD_OK,"GetSurfaceDesc returned: %lx\n",rc);
+    ok(rc==DD_OK,"GetSurfaceDesc returned: %x\n",rc);
     ok(ddsd.dwFlags & DDSD_MIPMAPCOUNT,
         "GetSurfaceDesc returned no mipmapcount.\n");
-    ok(U2(ddsd).dwMipMapCount == 6, "Incorrect mipmap count: %ld.\n",
+    ok(U2(ddsd).dwMipMapCount == 6, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
 
 
@@ -145,16 +145,16 @@ static void MipMapCreationTest(void)
     ddsd.dwWidth = 32;
     ddsd.dwHeight = 64;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     rc = IDirectDrawSurface_GetSurfaceDesc(lpDDSMipMapTest, &ddsd);
-    ok(rc==DD_OK,"GetSurfaceDesc returned: %lx\n",rc);
+    ok(rc==DD_OK,"GetSurfaceDesc returned: %x\n",rc);
     ok(ddsd.dwFlags & DDSD_MIPMAPCOUNT,
         "GetSurfaceDesc returned no mipmapcount.\n");
-    ok(U2(ddsd).dwMipMapCount == 6, "Incorrect mipmap count: %ld.\n",
+    ok(U2(ddsd).dwMipMapCount == 6, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
 
     /* Destroy the surface. */
@@ -185,43 +185,43 @@ static void SrcColorKey32BlitTest(void)
     U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x00FF00;
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDst, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
 
     ddsd.dwFlags |= DDSD_CKSRCBLT;
     ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0xFF00FF;
     ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0xFF00FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSrc, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %lx\n",rc);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
     
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
-    ok(rc==DD_OK,"Lock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[0] = 0xCCCCCCCC;
     lpData[1] = 0xCCCCCCCC;
     lpData[2] = 0xCCCCCCCC;
     lpData[3] = 0xCCCCCCCC;
     rc = IDirectDrawSurface_Unlock(lpDst, NULL);
-    ok(rc==DD_OK,"Unlock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
 
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
-    ok(rc==DD_OK,"Lock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[0] = 0x77010203;
     lpData[1] = 0x00010203;
     lpData[2] = 0x77FF00FF;
     lpData[3] = 0x00FF00FF;
     rc = IDirectDrawSurface_Unlock(lpSrc, NULL);
-    ok(rc==DD_OK,"Unlock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
 
     IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRC, NULL);
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
-    ok(rc==DD_OK,"Lock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
     lpData = (LPDWORD)ddsd2.lpSurface;
     ok((lpData[0]==0x77010203)&&(lpData[1]==0x00010203)&&(lpData[2]==0xCCCCCCCC)&&(lpData[3]==0xCCCCCCCC),
        "Destination data after blitting is not correct\n");
     rc = IDirectDrawSurface_Unlock(lpDst, NULL);
-    ok(rc==DD_OK,"Unlock returned: %lx\n",rc);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
 
     IDirectDrawSurface_Release(lpSrc);
     IDirectDrawSurface_Release(lpDst);
@@ -243,13 +243,13 @@ static void QueryInterface(void)
     ret = IDirectDraw_CreateSurface(lpDD, &surface, &dsurface, NULL);
     if(ret != DD_OK)
     {
-        ok(FALSE, "IDirectDraw::CreateSurface failed with error %lx\n", ret);
+        ok(FALSE, "IDirectDraw::CreateSurface failed with error %x\n", ret);
         return;
     }
 
     /* Call IUnknown::QueryInterface */
     ret = IDirectDrawSurface_QueryInterface(dsurface, 0, &object);
-    ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface::QueryInterface returned %lx\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface::QueryInterface returned %x\n", ret);
 
     IDirectDrawSurface_Release(dsurface);
 }
