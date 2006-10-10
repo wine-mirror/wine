@@ -113,15 +113,6 @@
 #define TEST_TYPE_UNSIGNED(type) \
      ok((type) -1 > 0, "(" #type ") -1 > 0\n");
 
-static void test_pack_ACCEL(void)
-{
-    /* ACCEL (pack 4) */
-    TEST_TYPE(ACCEL, 6, 2);
-    TEST_FIELD(ACCEL, BYTE, fVirt, 0, 1, 1);
-    TEST_FIELD(ACCEL, WORD, key, 2, 2, 2);
-    TEST_FIELD(ACCEL, WORD, cmd, 4, 2, 2);
-}
-
 static void test_pack_ACCESSTIMEOUT(void)
 {
     /* ACCESSTIMEOUT (pack 4) */
@@ -591,13 +582,6 @@ static void test_pack_KEYBDINPUT(void)
     TEST_FIELD(KEYBDINPUT, DWORD, dwFlags, 4, 4, 4);
     TEST_FIELD(KEYBDINPUT, DWORD, time, 8, 4, 4);
     TEST_FIELD(KEYBDINPUT, ULONG_PTR, dwExtraInfo, 12, 4, 4);
-}
-
-static void test_pack_LPACCEL(void)
-{
-    /* LPACCEL */
-    TEST_TYPE(LPACCEL, 4, 4);
-    TEST_TYPE_POINTER(LPACCEL, 6, 2);
 }
 
 static void test_pack_LPACCESSTIMEOUT(void)
@@ -2243,7 +2227,6 @@ static void test_pack_WNDPROC(void)
 
 static void test_pack(void)
 {
-    test_pack_ACCEL();
     test_pack_ACCESSTIMEOUT();
     test_pack_ANIMATIONINFO();
     test_pack_CBTACTIVATESTRUCT();
@@ -2291,7 +2274,6 @@ static void test_pack(void)
     test_pack_INPUT();
     test_pack_KBDLLHOOKSTRUCT();
     test_pack_KEYBDINPUT();
-    test_pack_LPACCEL();
     test_pack_LPACCESSTIMEOUT();
     test_pack_LPANIMATIONINFO();
     test_pack_LPCBTACTIVATESTRUCT();

@@ -435,7 +435,6 @@ static void test_pack_CRITICAL_SECTION(void)
 static void test_pack_CRITICAL_SECTION_DEBUG(void)
 {
     /* CRITICAL_SECTION_DEBUG */
-    TEST_TYPE(CRITICAL_SECTION_DEBUG, 32, 4);
 }
 
 static void test_pack_DCB(void)
@@ -671,7 +670,6 @@ static void test_pack_LPOVERLAPPED(void)
 {
     /* LPOVERLAPPED */
     TEST_TYPE(LPOVERLAPPED, 4, 4);
-    TEST_TYPE_POINTER(LPOVERLAPPED, 20, 4);
 }
 
 static void test_pack_LPOVERLAPPED_COMPLETION_ROUTINE(void)
@@ -819,7 +817,7 @@ static void test_pack_OFSTRUCT(void)
     TEST_FIELD(OFSTRUCT, WORD, nErrCode, 2, 2, 2);
     TEST_FIELD(OFSTRUCT, WORD, Reserved1, 4, 2, 2);
     TEST_FIELD(OFSTRUCT, WORD, Reserved2, 6, 2, 2);
-    TEST_FIELD(OFSTRUCT, BYTE[OFS_MAXPATHNAME], szPathName, 8, 128, 1);
+    TEST_FIELD(OFSTRUCT, CHAR[OFS_MAXPATHNAME], szPathName, 8, 128, 1);
 }
 
 static void test_pack_OUTPUT_DEBUG_STRING_INFO(void)
@@ -829,17 +827,6 @@ static void test_pack_OUTPUT_DEBUG_STRING_INFO(void)
     TEST_FIELD(OUTPUT_DEBUG_STRING_INFO, LPSTR, lpDebugStringData, 0, 4, 4);
     TEST_FIELD(OUTPUT_DEBUG_STRING_INFO, WORD, fUnicode, 4, 2, 2);
     TEST_FIELD(OUTPUT_DEBUG_STRING_INFO, WORD, nDebugStringLength, 6, 2, 2);
-}
-
-static void test_pack_OVERLAPPED(void)
-{
-    /* OVERLAPPED (pack 4) */
-    TEST_TYPE(OVERLAPPED, 20, 4);
-    TEST_FIELD(OVERLAPPED, ULONG_PTR, Internal, 0, 4, 4);
-    TEST_FIELD(OVERLAPPED, ULONG_PTR, InternalHigh, 4, 4, 4);
-    /*TEST_FIELD(OVERLAPPED, DWORD, Offset, 8, 4, 4);*/
-    /*TEST_FIELD(OVERLAPPED, DWORD, OffsetHigh, 12, 4, 4);*/
-    TEST_FIELD(OVERLAPPED, HANDLE, hEvent, 16, 4, 4);
 }
 
 static void test_pack_PACTCTXA(void)
@@ -1293,7 +1280,6 @@ static void test_pack(void)
     test_pack_OSVERSIONINFOEXW();
     test_pack_OSVERSIONINFOW();
     test_pack_OUTPUT_DEBUG_STRING_INFO();
-    test_pack_OVERLAPPED();
     test_pack_PACTCTXA();
     test_pack_PACTCTXW();
     test_pack_PACTCTX_SECTION_KEYED_DATA();

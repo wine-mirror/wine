@@ -459,7 +459,7 @@ TTPOLYCURVE
 TTPOLYGONHEADER
 XFORM
 
-%%%dlls/kernel/tests
+%%%dlls/kernel32/tests
 
 %%pack
 
@@ -562,7 +562,7 @@ OSVERSIONINFOEXA
 OSVERSIONINFOEXW
 OSVERSIONINFOW
 OUTPUT_DEBUG_STRING_INFO
-OVERLAPPED
+!OVERLAPPED             # Definition contains preprocessor directives
 PACTCTXA
 PACTCTXW
 PACTCTX_SECTION_KEYED_DATA
@@ -730,7 +730,7 @@ LPCRECT
 LPCRECTL
 LPCVOID
 LPPOINT
-LPPOINTS
+!LPPOINTS               # Definition contains preprocessor directives
 LPRECT
 LPRECTL
 LPSIZE
@@ -814,10 +814,10 @@ PNT_TIB
 POBJECT_TYPE_LIST
 POINT
 POINTL
-POINTS
+!POINTS                 # Definition contains preprocessor directives
 PPOINT
 PPOINTL
-PPOINTS
+!PPOINTS                # Definition contains preprocessor directives
 PPRIVILEGE_SET
 PRECT
 PRECTL
@@ -1317,7 +1317,7 @@ winuser.h
 
 %type
 
-ACCEL
+!ACCEL                  # Definition contains preprocessor directives
 ACCESSTIMEOUT
 ANIMATIONINFO
 CBTACTIVATESTRUCT
@@ -1365,7 +1365,7 @@ ICONMETRICSW
 INPUT
 KBDLLHOOKSTRUCT
 KEYBDINPUT
-LPACCEL
+!LPACCEL                # Definition contains preprocessor directives
 LPACCESSTIMEOUT
 LPANIMATIONINFO
 LPCBTACTIVATESTRUCT

@@ -130,7 +130,7 @@ static void test_pack_IBindHost(void)
 
 static void test_pack_IBindHostVtbl(void)
 {
-    /* IBindHostVtbl */
+    /* IBindHostVtbl (pack 4) */
 }
 
 static void test_pack_IBindStatusCallback(void)
@@ -140,7 +140,7 @@ static void test_pack_IBindStatusCallback(void)
 
 static void test_pack_IBindStatusCallbackVtbl(void)
 {
-    /* IBindStatusCallbackVtbl */
+    /* IBindStatusCallbackVtbl (pack 4) */
 }
 
 static void test_pack_IBinding(void)
@@ -150,7 +150,7 @@ static void test_pack_IBinding(void)
 
 static void test_pack_IBindingVtbl(void)
 {
-    /* IBindingVtbl */
+    /* IBindingVtbl (pack 4) */
 }
 
 static void test_pack_IInternetProtocolInfo(void)
@@ -160,7 +160,7 @@ static void test_pack_IInternetProtocolInfo(void)
 
 static void test_pack_IInternetProtocolInfoVtbl(void)
 {
-    /* IInternetProtocolInfoVtbl */
+    /* IInternetProtocolInfoVtbl (pack 4) */
 }
 
 static void test_pack_IInternetSession(void)
@@ -170,7 +170,7 @@ static void test_pack_IInternetSession(void)
 
 static void test_pack_IInternetSessionVtbl(void)
 {
-    /* IInternetSessionVtbl */
+    /* IInternetSessionVtbl (pack 4) */
 }
 
 static void test_pack_IPersistMoniker(void)
@@ -180,7 +180,7 @@ static void test_pack_IPersistMoniker(void)
 
 static void test_pack_IPersistMonikerVtbl(void)
 {
-    /* IPersistMonikerVtbl */
+    /* IPersistMonikerVtbl (pack 4) */
 }
 
 static void test_pack_IWinInetHttpInfo(void)
@@ -190,7 +190,7 @@ static void test_pack_IWinInetHttpInfo(void)
 
 static void test_pack_IWinInetHttpInfoVtbl(void)
 {
-    /* IWinInetHttpInfoVtbl */
+    /* IWinInetHttpInfoVtbl (pack 4) */
 }
 
 static void test_pack_IWinInetInfo(void)
@@ -200,7 +200,7 @@ static void test_pack_IWinInetInfo(void)
 
 static void test_pack_IWinInetInfoVtbl(void)
 {
-    /* IWinInetInfoVtbl */
+    /* IWinInetInfoVtbl (pack 4) */
 }
 
 static void test_pack_LPBINDHOST(void)
@@ -243,14 +243,12 @@ static void test_pack_LPREMFORMATETC(void)
 {
     /* LPREMFORMATETC */
     TEST_TYPE(LPREMFORMATETC, 4, 4);
-    TEST_TYPE_POINTER(LPREMFORMATETC, 20, 4);
 }
 
 static void test_pack_LPREMSECURITY_ATTRIBUTES(void)
 {
     /* LPREMSECURITY_ATTRIBUTES */
     TEST_TYPE(LPREMSECURITY_ATTRIBUTES, 4, 4);
-    TEST_TYPE_POINTER(LPREMSECURITY_ATTRIBUTES, 12, 4);
 }
 
 static void test_pack_LPWININETHTTPINFO(void)
@@ -269,7 +267,6 @@ static void test_pack_PREMSECURITY_ATTRIBUTES(void)
 {
     /* PREMSECURITY_ATTRIBUTES */
     TEST_TYPE(PREMSECURITY_ATTRIBUTES, 4, 4);
-    TEST_TYPE_POINTER(PREMSECURITY_ATTRIBUTES, 12, 4);
 }
 
 static void test_pack_REMSECURITY_ATTRIBUTES(void)

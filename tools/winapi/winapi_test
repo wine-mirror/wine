@@ -266,6 +266,10 @@ sub _find_align_kind_size($) {
 	$align = 8;
 	$kind = "union";
 	$size = 8;
+    } elsif (/^(?:POINTS)$/) {
+	$align = 2;
+	$kind = "struct";
+	$size = 4;
     } elsif (/^(struct|union)$/) {
 	$kind = $1;
 	if (!$size_parse_reported{$_}) {

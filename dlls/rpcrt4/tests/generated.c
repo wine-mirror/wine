@@ -355,12 +355,14 @@ static void test_pack_FULL_PTR_XLAT_TABLES(void)
 
 static void test_pack_GENERIC_BINDING_INFO(void)
 {
-    /* GENERIC_BINDING_INFO */
+    /* GENERIC_BINDING_INFO (pack 4) */
+    TEST_FIELD(GENERIC_BINDING_INFO, void *, pObj, 0, 4, 4);
+    TEST_FIELD(GENERIC_BINDING_INFO, unsigned int, Size, 4, 4, 4);
 }
 
 static void test_pack_GENERIC_BINDING_ROUTINE_PAIR(void)
 {
-    /* GENERIC_BINDING_ROUTINE_PAIR */
+    /* GENERIC_BINDING_ROUTINE_PAIR (pack 4) */
 }
 
 static void test_pack_MALLOC_FREE_STRUCT(void)
@@ -488,6 +490,18 @@ static void test_pack_PFULL_PTR_XLAT_TABLES(void)
     TEST_TYPE(PFULL_PTR_XLAT_TABLES, 4, 4);
 }
 
+static void test_pack_PGENERIC_BINDING_INFO(void)
+{
+    /* PGENERIC_BINDING_INFO */
+    TEST_TYPE(PGENERIC_BINDING_INFO, 4, 4);
+}
+
+static void test_pack_PGENERIC_BINDING_ROUTINE_PAIR(void)
+{
+    /* PGENERIC_BINDING_ROUTINE_PAIR */
+    TEST_TYPE(PGENERIC_BINDING_ROUTINE_PAIR, 4, 4);
+}
+
 static void test_pack_PMIDL_SERVER_INFO(void)
 {
     /* PMIDL_SERVER_INFO */
@@ -563,6 +577,15 @@ static void test_pack_STUB_THUNK(void)
     /* STUB_THUNK */
 }
 
+static void test_pack_USER_MARSHAL_CB(void)
+{
+    /* USER_MARSHAL_CB (pack 4) */
+    TEST_FIELD(USER_MARSHAL_CB, unsigned long, Flags, 0, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, PMIDL_STUB_MESSAGE, pStubMsg, 4, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, PFORMAT_STRING, pReserve, 8, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, unsigned long, Signature, 12, 4, 4);
+}
+
 static void test_pack_USER_MARSHAL_FREEING_ROUTINE(void)
 {
     /* USER_MARSHAL_FREEING_ROUTINE */
@@ -630,6 +653,8 @@ static void test_pack(void)
     test_pack_PFORMAT_STRING();
     test_pack_PFULL_PTR_TO_REFID_ELEMENT();
     test_pack_PFULL_PTR_XLAT_TABLES();
+    test_pack_PGENERIC_BINDING_INFO();
+    test_pack_PGENERIC_BINDING_ROUTINE_PAIR();
     test_pack_PMIDL_SERVER_INFO();
     test_pack_PMIDL_STUBLESS_PROXY_INFO();
     test_pack_PMIDL_STUB_DESC();
@@ -667,6 +692,7 @@ static void test_pack(void)
     test_pack_SCONTEXT_QUEUE();
     test_pack_SERVER_ROUTINE();
     test_pack_STUB_THUNK();
+    test_pack_USER_MARSHAL_CB();
     test_pack_USER_MARSHAL_FREEING_ROUTINE();
     test_pack_USER_MARSHAL_MARSHALLING_ROUTINE();
     test_pack_USER_MARSHAL_ROUTINE_QUADRUPLE();
