@@ -424,6 +424,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )
         list_init( &package->RunningActions );
 
         package->WordCount = msi_get_word_count( package );
+        package->PackagePath = strdupW( db->path );
 
         /* OK, here is where we do a slew of things to the database to 
          * prep for all that is to come as a package */

@@ -768,6 +768,7 @@ extern void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *);
 
 /* string consts use a number of places  and defined in helpers.c*/
 extern const WCHAR cszSourceDir[];
+extern const WCHAR cszSOURCEDIR[];
 extern const WCHAR szProductCode[];
 extern const WCHAR cszRootDrive[];
 extern const WCHAR cszbs[];

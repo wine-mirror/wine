@@ -2728,6 +2728,68 @@ static void test_installprops(void)
     MsiCloseHandle(hpkg);
 }
 
+static void test_sourcedirprop(void)
+{
+    MSIHANDLE hpkg, hdb;
+    CHAR source_dir[MAX_PATH];
+    CHAR path[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n" );
+
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
+    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r );
+
+    hpkg = package_from_db( hdb );
+    ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle( hdb );
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SourceDir", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrlenA(source_dir), "Expected emtpy source dir, got %s\n", source_dir);
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SOURCEDIR", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrlenA(source_dir), "Expected emtpy source dir, got %s\n", source_dir);
+
+    r = MsiDoAction( hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "cost init failed\n");
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SourceDir", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrlenA(source_dir), "Expected emtpy source dir, got %s\n", source_dir);
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SOURCEDIR", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrlenA(source_dir), "Expected emtpy source dir, got %s\n", source_dir);
+
+    r = MsiDoAction( hpkg, "ResolveSource");
+    ok( r == ERROR_SUCCESS, "file cost failed\n");
+
+    GetCurrentDirectory(MAX_PATH, path);
+    lstrcatA(path, "\\");
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SourceDir", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmpA(source_dir, path), "Expected %s, got %s\n", path, source_dir);
+
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SOURCEDIR", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmpA(source_dir, path), "Expected %s, got %s\n", path, source_dir);
+
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -2746,4 +2808,5 @@ START_TEST(package)
     test_appsearch();
     test_featureparents();
     test_installprops();
+    test_sourcedirprop();
 }

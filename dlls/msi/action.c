@@ -573,7 +573,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         LPWSTR p, check, path;
  
-        package->PackagePath = strdupW(szPackagePath);
         path = strdupW(szPackagePath);
         p = strrchrW(path,'\\');    
         if (p)
@@ -592,8 +591,10 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         check = msi_dup_property( package, cszSourceDir );
         if (!check)
             MSI_SetPropertyW(package, cszSourceDir, path);
+
+        package->PackagePath = path;
+
         msi_free(check);
-        msi_free(path);
     }
 
     msi_parse_command_line( package, szCommandLine );
@@ -3851,14 +3852,29 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
 
 static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
-    DWORD attrib;
+    DWORD attrib, len;
+    LPWSTR ptr, source;
     UINT rc;
+    
     /*
      * we are currently doing what should be done here in the top level Install
      * however for Adminastrative and uninstalls this step will be needed
      */
     if (!package->PackagePath)
         return ERROR_SUCCESS;
+
+    ptr = strrchrW(package->PackagePath, '\\');
+    if (!ptr)
+        return ERROR_SUCCESS;
+
+    len = ptr - package->PackagePath + 2;
+    source = msi_alloc(len * sizeof(WCHAR));
+    lstrcpynW(source,  package->PackagePath, len);
+
+    MSI_SetPropertyW(package, cszSourceDir, source);
+    MSI_SetPropertyW(package, cszSOURCEDIR, source);
+
+    msi_free(source);
 
     attrib = GetFileAttributesW(package->PackagePath);
     if (attrib == INVALID_FILE_ATTRIBUTES)

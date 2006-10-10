@@ -40,6 +40,7 @@ static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
 
 const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
+const WCHAR cszSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
 const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 const WCHAR cszbs[]={'\\',0};
 
