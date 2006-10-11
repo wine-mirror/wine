@@ -1185,9 +1185,9 @@ typedef struct IWineD3DQueryImpl
 #else
     IWineD3DDeviceImpl       *wineD3DDevice;
 #endif
-    /* IWineD3DQuery fields */
 
-    D3DQUERYTYPE              type;
+    /* IWineD3DQuery fields */
+    WINED3DQUERYTYPE         type;
     /* TODO: Think about using a IUnknown instead of a void* */
     void                     *extendedData;
     
