@@ -2100,7 +2100,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if ((msg >= WM_USER) && (msg < WM_APP))
 		ERR("unknown msg %04x wp=%04x lp=%08lx\n",
 		     msg, wParam, lParam );
-	    return DefWindowProcA (hwnd, msg, wParam, lParam);
+	    return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 }
 
