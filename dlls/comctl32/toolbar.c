@@ -826,6 +826,33 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     rc = btnPtr->rect;
     CopyRect (&rcArrow, &rc);
 
+    /* separator - doesn't send NM_CUSTOMDRAW */
+    if (btnPtr->fsStyle & BTNS_SEP) {
+        if (theme)
+        {
+            DrawThemeBackground (theme, hdc, 
+                (dwStyle & CCS_VERT) ? TP_SEPARATORVERT : TP_SEPARATOR, 0, 
+                &rc, NULL);
+        }
+        else
+        /* with the FLAT style, iBitmap is the width and has already */
+        /* been taken into consideration in calculating the width    */
+        /* so now we need to draw the vertical separator             */
+        /* empirical tests show that iBitmap can/will be non-zero    */
+        /* when drawing the vertical bar...      */
+        if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
+	    if (btnPtr->fsStyle & BTNS_DROPDOWN)
+		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, btnPtr, infoPtr);
+	    else
+		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
+	}
+	else if (btnPtr->fsStyle != BTNS_SEP) {
+	    FIXME("Draw some kind of separator: fsStyle=%x\n",
+		  btnPtr->fsStyle);
+	}
+	return;
+    }
+
     /* get a pointer to the text */
     lpText = TOOLBAR_GetText(infoPtr, btnPtr);
 
@@ -943,33 +970,6 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	rcText.bottom = tbcd.rcText.bottom + rc.top;
     }
 
-    /* separator */
-    if (btnPtr->fsStyle & BTNS_SEP) {
-        if (theme)
-        {
-            DrawThemeBackground (theme, hdc, 
-                (dwStyle & CCS_VERT) ? TP_SEPARATORVERT : TP_SEPARATOR, 0, 
-                &tbcd.nmcd.rc, NULL);
-        }
-        else
-        /* with the FLAT style, iBitmap is the width and has already */
-        /* been taken into consideration in calculating the width    */
-        /* so now we need to draw the vertical separator             */
-        /* empirical tests show that iBitmap can/will be non-zero    */
-        /* when drawing the vertical bar...      */
-        if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
-	    if (btnPtr->fsStyle & BTNS_DROPDOWN)
-		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, btnPtr, infoPtr);
-	    else
-		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
-	}
-	else if (btnPtr->fsStyle != BTNS_SEP) {
-	    FIXME("Draw some kind of separator: fsStyle=%x\n",
-		  btnPtr->fsStyle);
-	}
-	goto FINALNOTIFY;
-    }
-
     if (!(infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) &&
         (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
         OffsetRect(&rcText, 1, 1);
@@ -1058,7 +1058,6 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, comctl32_color.clrBtnText);
     }
 
-FINALNOTIFY:
     if (infoPtr->dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
     {
         tbcd.nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
