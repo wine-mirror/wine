@@ -60,7 +60,7 @@ static inline void CRYPT_CloseStores(DWORD cStores, HCERTSTORE *stores)
 
 static const WCHAR rootW[] = { 'R','o','o','t',0 };
 
-BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
+static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
 {
     BOOL ret = TRUE;
 
