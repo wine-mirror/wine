@@ -244,6 +244,7 @@ UINT wsaHerrno(int errnr);
 static const int ws_sock_map[][2] =
 {
     MAP_OPTION( SO_DEBUG ),
+    MAP_OPTION( SO_ACCEPTCONN ),
     MAP_OPTION( SO_REUSEADDR ),
     MAP_OPTION( SO_KEEPALIVE ),
     MAP_OPTION( SO_DONTROUTE ),
