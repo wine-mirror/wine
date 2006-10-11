@@ -191,21 +191,18 @@ DEFINE_GUID(IID_IWineD3DQuery,
 /* TODO: remove the d3d8/d3d9 dependencies by making a all inclusive WINED3D version */
 #if defined( __WINE_D3D9_H )
  /* Identical: */ 
-# define WINED3DLIGHT           D3DLIGHT9
 # define WINED3DMATERIAL        D3DMATERIAL9
 # define WINED3DVIEWPORT        D3DVIEWPORT9
 # define WINED3DGAMMARAMP       D3DGAMMARAMP
 
 #elif defined( __WINE_D3D8_H )
  /* Identical: */ 
-# define WINED3DLIGHT           D3DLIGHT8
 # define WINED3DMATERIAL        D3DMATERIAL8
 # define WINED3DVIEWPORT        D3DVIEWPORT8
 # define WINED3DGAMMARAMP       D3DGAMMARAMP
 
 #else /* defined (__WINE_D3D_H ) */
  /* Identical: */
-# define WINED3DLIGHT           D3DLIGHT7
 # define WINED3DMATERIAL        D3DMATERIAL7
 # define WINED3DVIEWPORT        D3DVIEWPORT7
 # define WINED3DGAMMARAMP       DDGAMMARAMP

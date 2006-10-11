@@ -4154,9 +4154,11 @@ IDirect3DDeviceImpl_7_SetLight(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08x,%p): Relay!\n", This, LightIndex, Light);
 
+    /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
     hr = IWineD3DDevice_SetLight(This->wineD3DDevice,
                                  LightIndex,
-                                 Light);
+                                 (WINED3DLIGHT*) Light);
+
     return hr_ddraw_from_wined3d(hr);
 }
 
@@ -4183,9 +4185,10 @@ IDirect3DDeviceImpl_7_GetLight(IDirect3DDevice7 *iface,
     HRESULT rc;
     TRACE("(%p)->(%08x,%p): Relay!\n", This, LightIndex, Light);
 
+    /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
     rc =  IWineD3DDevice_GetLight(This->wineD3DDevice,
                                   LightIndex,
-                                  Light);
+                                  (WINED3DLIGHT*) Light);
 
     /* Translate the result. WineD3D returns other values than D3D7 */
     return hr_ddraw_from_wined3d(rc);

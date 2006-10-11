@@ -30,6 +30,44 @@
 # error You must include d3d.h, d3d8.h or d3d9.h header to use this header
 #endif
 
+typedef enum _WINED3DLIGHTTYPE {
+  WINED3DLIGHT_POINT          = 1,
+  WINED3DLIGHT_SPOT           = 2,
+  WINED3DLIGHT_DIRECTIONAL    = 3,
+  WINED3DLIGHT_PARALLELPOINT  = 4, /* D3D7 */
+  WINED3DLIGHT_GLSPOT         = 5, /* D3D7 */
+  WINED3DLIGHT_FORCE_DWORD    = 0x7fffffff
+} WINED3DLIGHTTYPE;
+
+typedef struct _WINED3DCOLORVALUE {
+    float r;
+    float g;
+    float b;
+    float a;
+} WINED3DCOLORVALUE;
+
+typedef struct _WINED3DVECTOR {
+    float x;
+    float y;
+    float z;
+} WINED3DVECTOR;
+
+typedef struct _WINED3DLIGHT {
+    WINED3DLIGHTTYPE    Type;
+    WINED3DCOLORVALUE   Diffuse;
+    WINED3DCOLORVALUE   Specular;
+    WINED3DCOLORVALUE   Ambient;
+    WINED3DVECTOR       Position;
+    WINED3DVECTOR       Direction;
+    float               Range;
+    float               Falloff;
+    float               Attenuation0;
+    float               Attenuation1;
+    float               Attenuation2;
+    float               Theta;
+    float               Phi;
+} WINED3DLIGHT;
+
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
 #define WINED3D_PSHADER_MAX_CONSTANTS 32
 

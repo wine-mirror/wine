@@ -38,17 +38,17 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 /* Define the default light parameters as specified by MSDN */
 const WINED3DLIGHT WINED3D_default_light = {
 
-    D3DLIGHT_DIRECTIONAL,    /* Type */
-    { 1.0, 1.0, 1.0, 0.0 },  /* Diffuse r,g,b,a */
-    { 0.0, 0.0, 0.0, 0.0 },  /* Specular r,g,b,a */
-    { 0.0, 0.0, 0.0, 0.0 },  /* Ambient r,g,b,a, */
-    { 0.0, 0.0, 0.0 },       /* Position x,y,z */
-    { 0.0, 0.0, 1.0 },       /* Direction x,y,z */
-    0.0,                     /* Range */
-    0.0,                     /* Falloff */
-    0.0, 0.0, 0.0,           /* Attenuation 0,1,2 */
-    0.0,                     /* Theta */
-    0.0                      /* Phi */
+    WINED3DLIGHT_DIRECTIONAL, /* Type */
+    { 1.0, 1.0, 1.0, 0.0 },   /* Diffuse r,g,b,a */
+    { 0.0, 0.0, 0.0, 0.0 },   /* Specular r,g,b,a */
+    { 0.0, 0.0, 0.0, 0.0 },   /* Ambient r,g,b,a, */
+    { 0.0, 0.0, 0.0 },        /* Position x,y,z */
+    { 0.0, 0.0, 1.0 },        /* Direction x,y,z */
+    0.0,                      /* Range */
+    0.0,                      /* Falloff */
+    0.0, 0.0, 0.0,            /* Attenuation 0,1,2 */
+    0.0,                      /* Theta */
+    0.0                       /* Phi */
 };
 
 /* x11drv GDI escapes */
@@ -154,7 +154,7 @@ const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed
 /**********************************************************
  * Utility functions follow
  **********************************************************/
-/* Convert the D3DLIGHT properties into equivalent gl lights */
+/* Convert the WINED3DLIGHT properties into equivalent gl lights */
 static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightInfo) {
 
     float quad_att;
@@ -207,7 +207,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     checkGLcall("glLightf");
 
     switch (lightInfo->OriginalParms.Type) {
-    case D3DLIGHT_POINT:
+    case WINED3DLIGHT_POINT:
         /* Position */
         glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
         checkGLcall("glLightfv");
@@ -216,7 +216,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
         /* FIXME: Range */
         break;
 
-    case D3DLIGHT_SPOT:
+    case WINED3DLIGHT_SPOT:
         /* Position */
         glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
         checkGLcall("glLightfv");
@@ -230,7 +230,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
         /* FIXME: Range */
         break;
 
-    case D3DLIGHT_DIRECTIONAL:
+    case WINED3DLIGHT_DIRECTIONAL:
         /* Direction */
         glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]); /* Note gl uses w position of 0 for direction! */
         checkGLcall("glLightfv");
@@ -2644,7 +2644,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
 
 /*****
  * Get / Set Light
- *   WARNING: This code relies on the fact that D3DLIGHT8 == D3DLIGHT9
  *****/
 /* Note lights are real special cases. Although the device caps state only eg. 8 are supported,
    you can reference any indexes you want as long as that number max are enabled at any
@@ -2665,7 +2664,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         if (NULL == object) {
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
-        memcpy(&object->OriginalParms, pLight, sizeof(D3DLIGHT9));
+        memcpy(&object->OriginalParms, pLight, sizeof(WINED3DLIGHT));
         object->OriginalIndex = Index;
         object->glIndex = -1;
         object->changed = TRUE;
@@ -2733,10 +2732,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
     TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n", pLight->Range, pLight->Falloff, pLight->Theta, pLight->Phi);
 
     /* Save away the information */
-    memcpy(&object->OriginalParms, pLight, sizeof(D3DLIGHT9));
+    memcpy(&object->OriginalParms, pLight, sizeof(WINED3DLIGHT));
 
     switch (pLight->Type) {
-    case D3DLIGHT_POINT:
+    case WINED3DLIGHT_POINT:
         /* Position */
         object->lightPosn[0] = pLight->Position.x;
         object->lightPosn[1] = pLight->Position.y;
@@ -2746,7 +2745,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         /* FIXME: Range */
         break;
 
-    case D3DLIGHT_DIRECTIONAL:
+    case WINED3DLIGHT_DIRECTIONAL:
         /* Direction */
         object->lightPosn[0] = -pLight->Direction.x;
         object->lightPosn[1] = -pLight->Direction.y;
@@ -2756,7 +2755,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         object->cutoff       = 180.0f;
         break;
 
-    case D3DLIGHT_SPOT:
+    case WINED3DLIGHT_SPOT:
         /* Position */
         object->lightPosn[0] = pLight->Position.x;
         object->lightPosn[1] = pLight->Position.y;
@@ -2816,7 +2815,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD I
         return WINED3DERR_INVALIDCALL;
     }
 
-    memcpy(pLight, &lightInfo->OriginalParms, sizeof(D3DLIGHT9));
+    memcpy(pLight, &lightInfo->OriginalParms, sizeof(WINED3DLIGHT));
     return WINED3D_OK;
 }
 

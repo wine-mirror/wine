@@ -504,12 +504,16 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetMaterial(LPDIRECT3DDEVICE9 iface
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetLight(LPDIRECT3DDEVICE9 iface, DWORD Index, CONST D3DLIGHT9* pLight) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
+
+    /* Note: D3DLIGHT9 is compatible with WINED3DLIGHT */
     return IWineD3DDevice_SetLight(This->WineD3DDevice, Index, (const WINED3DLIGHT *)pLight);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetLight(LPDIRECT3DDEVICE9 iface, DWORD Index, D3DLIGHT9* pLight) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
+
+    /* Note: D3DLIGHT9 is compatible with WINED3DLIGHT */
     return IWineD3DDevice_GetLight(This->WineD3DDevice, Index, (WINED3DLIGHT *)pLight);
 }
 
