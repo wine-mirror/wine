@@ -139,8 +139,6 @@ typedef struct
     INT      nButtonDrag;     /* toolbar button being dragged or -1 if none */
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
-    DWORD    dwBaseCustDraw;  /* CDRF_ response (w/o TBCDRF_) from PREPAINT */
-    DWORD    dwItemCDFlag;    /* TBCDRF_ flags from last ITEMPREPAINT    */
     SIZE     szPadding;       /* padding values around button */
     INT      iListGap;        /* default gap between text and image for toolbar with list style */
     HFONT    hDefaultFont;
@@ -551,7 +549,7 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, COLORREF clr)
  */
 static void
 TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
-                    NMTBCUSTOMDRAW *tbcd)
+                    NMTBCUSTOMDRAW *tbcd, DWORD dwItemCDFlag)
 {
     HDC hdc = tbcd->nmcd.hdc;
     HFONT  hOldFont = 0;
@@ -566,7 +564,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
 	      rcText->left, rcText->top, rcText->right, rcText->bottom);
 
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
-	if ((state & CDIS_HOT) && (infoPtr->dwItemCDFlag & TBCDRF_HILITEHOTTRACK )) {
+	if ((state & CDIS_HOT) && (dwItemCDFlag & TBCDRF_HILITEHOTTRACK )) {
 	    clrOld = SetTextColor (hdc, tbcd->clrTextHighlight);
 	}
 	else if (state & CDIS_DISABLED) {
@@ -579,7 +577,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
 	else if (state & CDIS_INDETERMINATE) {
 	    clrOld = SetTextColor (hdc, comctl32_color.clr3dShadow);
 	}
-	else if ((state & CDIS_MARKED) && !(infoPtr->dwItemCDFlag & TBCDRF_NOMARK)) {
+	else if ((state & CDIS_MARKED) && !(dwItemCDFlag & TBCDRF_NOMARK)) {
 	    clrOld = SetTextColor (hdc, tbcd->clrTextHighlight);
 	    clrOldBk = SetBkColor (hdc, tbcd->clrMark);
 	    oldBkMode = SetBkMode (hdc, tbcd->nHLStringBkMode);
@@ -590,7 +588,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
 
 	DrawTextW (hdc, lpText, -1, rcText, infoPtr->dwDTFlags);
 	SetTextColor (hdc, clrOld);
-	if ((state & CDIS_MARKED) && !(infoPtr->dwItemCDFlag & TBCDRF_NOMARK))
+	if ((state & CDIS_MARKED) && !(dwItemCDFlag & TBCDRF_NOMARK))
 	{
 	    SetBkColor (hdc, clrOldBk);
 	    SetBkMode (hdc, oldBkMode);
@@ -680,7 +678,8 @@ TOOLBAR_TranslateState(TBUTTON_INFO *btnPtr)
 
 /* draws the image on a toolbar button */
 static void
-TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top, const NMTBCUSTOMDRAW *tbcd)
+TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top,
+    const NMTBCUSTOMDRAW *tbcd, DWORD dwItemCDFlag)
 {
     HIMAGELIST himl = NULL;
     BOOL draw_masked = FALSE;
@@ -713,11 +712,11 @@ TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top
     if (!himl)
         return;
 
-    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) && 
+    if (!(dwItemCDFlag & TBCDRF_NOOFFSET) && 
         (tbcd->nmcd.uItemState & (CDIS_SELECTED | CDIS_CHECKED)))
         offset = 1;
 
-    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOMARK) &&
+    if (!(dwItemCDFlag & TBCDRF_NOMARK) &&
         (tbcd->nmcd.uItemState & CDIS_MARKED))
         draw_flags |= ILD_BLEND50;
 
@@ -732,7 +731,7 @@ TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top
 
 /* draws a blank frame for a toolbar button */
 static void
-TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd)
+TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, DWORD dwItemCDFlag)
 {
     HDC hdc = tbcd->nmcd.hdc;
     RECT rc = tbcd->nmcd.rc;
@@ -745,7 +744,7 @@ TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd)
                          (tbcd->nmcd.uItemState & CDIS_CHECKED));
 
     /* app don't want us to draw any edges */
-    if (infoPtr->dwItemCDFlag & TBCDRF_NOEDGES)
+    if (dwItemCDFlag & TBCDRF_NOEDGES)
         return;
 
     if (infoPtr->dwStyle & TBSTYLE_FLAT)
@@ -766,7 +765,7 @@ TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd)
 }
 
 static void
-TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, RECT *rcArrow, BOOL bDropDownPressed)
+TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, RECT *rcArrow, BOOL bDropDownPressed, DWORD dwItemCDFlag)
 {
     HDC hdc = tbcd->nmcd.hdc;
     int offset = 0;
@@ -792,7 +791,7 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, 
     }
 
     if (pressed)
-        offset = (infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
+        offset = (dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
 
     if (tbcd->nmcd.uItemState & (CDIS_DISABLED | CDIS_INDETERMINATE))
     {
@@ -805,7 +804,7 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, 
 
 /* draws a complete toolbar button */
 static void
-TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
+TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDraw)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = infoPtr->dwStyle;
@@ -821,6 +820,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     INT offset;
     INT oldBkMode;
     DWORD dwItemCustDraw;
+    DWORD dwItemCDFlag;
     HTHEME theme = GetWindowTheme (hwnd);
 
     rc = btnPtr->rect;
@@ -950,8 +950,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     /* Issue Item Prepaint notify */
     dwItemCustDraw = 0;
-    infoPtr->dwItemCDFlag = 0;
-    if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYITEMDRAW)
+    dwItemCDFlag = 0;
+    if (dwBaseCustDraw & CDRF_NOTIFYITEMDRAW)
     {
 	tbcd.nmcd.dwDrawStage = CDDS_ITEMPREPAINT;
 	tbcd.nmcd.dwItemSpec = btnPtr->idCommand;
@@ -962,7 +962,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         tbcd.nmcd.rc = rc;
 
 	dwItemCustDraw = ntfret & 0xffff;
-	infoPtr->dwItemCDFlag = ntfret & 0xffff0000;
+	dwItemCDFlag = ntfret & 0xffff0000;
 	if (dwItemCustDraw & CDRF_SKIPDEFAULT)
 	    return;
 	/* save the only part of the rect that the user can change */
@@ -970,7 +970,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	rcText.bottom = tbcd.rcText.bottom + rc.top;
     }
 
-    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) &&
+    if (!(dwItemCDFlag & TBCDRF_NOOFFSET) &&
         (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
         OffsetRect(&rcText, 1, 1);
 
@@ -981,7 +981,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf)) 
         && (tbcd.nmcd.uItemState & CDIS_HOT))
     {
-        if ( infoPtr->dwItemCDFlag & TBCDRF_HILITEHOTTRACK )
+        if ( dwItemCDFlag & TBCDRF_HILITEHOTTRACK )
         {
             COLORREF oldclr;
 
@@ -1011,7 +1011,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         DrawThemeBackground (theme, hdc, partId, stateId, &tbcd.nmcd.rc, NULL);
     }
     else
-        TOOLBAR_DrawFrame(infoPtr, &tbcd);
+        TOOLBAR_DrawFrame(infoPtr, &tbcd, dwItemCDFlag);
 
     if (drawSepDropDownArrow)
     {
@@ -1032,15 +1032,15 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             DrawThemeBackground (theme, hdc, TP_SPLITBUTTONDROPDOWN, stateId, &rcArrow, NULL);
         }
         else
-            TOOLBAR_DrawSepDDArrow(infoPtr, &tbcd, &rcArrow, btnPtr->bDropDownPressed);
+            TOOLBAR_DrawSepDDArrow(infoPtr, &tbcd, &rcArrow, btnPtr->bDropDownPressed, dwItemCDFlag);
     }
 
     oldBkMode = SetBkMode (hdc, tbcd.nStringBkMode);
     if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-        TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
+        TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd, dwItemCDFlag);
     SetBkMode (hdc, oldBkMode);
 
-    TOOLBAR_DrawImage(infoPtr, btnPtr, rcBitmap.left, rcBitmap.top, &tbcd);
+    TOOLBAR_DrawImage(infoPtr, btnPtr, rcBitmap.left, rcBitmap.top, &tbcd, dwItemCDFlag);
 
     if (hasDropDownArrow && !drawSepDropDownArrow)
     {
@@ -1051,7 +1051,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         }
         else if (tbcd.nmcd.uItemState & (CDIS_SELECTED | CDIS_CHECKED))
         {
-            offset = (infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
+            offset = (dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
             TOOLBAR_DrawArrow(hdc, rcArrow.left + offset, rcArrow.top + offset + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, comctl32_color.clrBtnText);
         }
         else
@@ -1076,6 +1076,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     RECT rcTemp, rcClient;
     NMTBCUSTOMDRAW tbcd;
     DWORD ntfret;
+    DWORD dwBaseCustDraw;
 
     /* the app has told us not to redraw the toolbar */
     if (!infoPtr->bDoRedraw)
@@ -1101,7 +1102,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     tbcd.nmcd.hdc = hdc;
     tbcd.nmcd.rc = ps->rcPaint;
     ntfret = TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
-    infoPtr->dwBaseCustDraw = ntfret & 0xffff;
+    dwBaseCustDraw = ntfret & 0xffff;
 
     GetClientRect(hwnd, &rcClient);
 
@@ -1120,7 +1121,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
         bDraw &= IntersectRect(&rcTemp, &(ps->rcPaint), &(btnPtr->rect));
         bDraw = (btnPtr->fsState & TBSTATE_HIDDEN) ? FALSE : bDraw;
         if (bDraw)
-            TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+            TOOLBAR_DrawButton(hwnd, btnPtr, hdc, dwBaseCustDraw);
     }
 
     /* draw insert mark if required */
@@ -1137,7 +1138,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
         COMCTL32_DrawInsertMark(hdc, &rcInsertMark, infoPtr->clrInsertMark, FALSE);
     }
 
-    if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYPOSTPAINT)
+    if (dwBaseCustDraw & CDRF_NOTIFYPOSTPAINT)
     {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_POSTPAINT;
@@ -5435,6 +5436,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT ret = FALSE;
     DWORD ntfret;
     HTHEME theme = GetWindowTheme (hwnd);
+    DWORD dwEraseCustDraw = 0;
 
     /* the app has told us not to redraw the toolbar */
     if (!infoPtr->bDoRedraw)
@@ -5445,10 +5447,10 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	tbcd.nmcd.dwDrawStage = CDDS_PREERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
 	ntfret = TOOLBAR_SendNotify (&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
-	infoPtr->dwBaseCustDraw = ntfret & 0xffff;
+	dwEraseCustDraw = ntfret & 0xffff;
 
 	/* FIXME: in general the return flags *can* be or'ed together */
-	switch (infoPtr->dwBaseCustDraw)
+	switch (dwEraseCustDraw)
 	    {
 	    case CDRF_DODEFAULT:
 		break;
@@ -5479,14 +5481,13 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (!ret)
 	ret = DefWindowProcW (hwnd, WM_ERASEBKGND, wParam, lParam);
 
-    if ((infoPtr->dwStyle & TBSTYLE_CUSTOMERASE) &&
-	(infoPtr->dwBaseCustDraw & CDRF_NOTIFYPOSTERASE)) {
+    if (dwEraseCustDraw & CDRF_NOTIFYPOSTERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_POSTERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
 	ntfret = TOOLBAR_SendNotify (&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
-	infoPtr->dwBaseCustDraw = ntfret & 0xffff;
-	switch (infoPtr->dwBaseCustDraw)
+	dwEraseCustDraw = ntfret & 0xffff;
+	switch (dwEraseCustDraw)
 	    {
 	    case CDRF_DODEFAULT:
 		break;
