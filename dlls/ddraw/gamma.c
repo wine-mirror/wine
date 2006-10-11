@@ -145,7 +145,7 @@ IDirectDrawGammaControlImpl_GetGammaRamp(IDirectDrawGammaControl *iface,
 
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        /* This returns a void */
+        /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
         IWineD3DDevice_GetGammaRamp(This->ddraw->wineD3DDevice,
                                     0 /* Swapchain */,
                                     (WINED3DGAMMARAMP *) GammaRamp);
@@ -189,7 +189,8 @@ IDirectDrawGammaControlImpl_SetGammaRamp(IDirectDrawGammaControl *iface,
 
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        /* This returns a void */
+
+        /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
         IWineD3DDevice_SetGammaRamp(This->ddraw->wineD3DDevice,
                                     0 /* Swapchain */,
                                     Flags,

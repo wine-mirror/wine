@@ -184,25 +184,6 @@ DEFINE_GUID(IID_IWineD3DStateBlock,
 DEFINE_GUID(IID_IWineD3DQuery, 
 0x905ddbac, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
 
-
-/* The following have differing names, but actually are the same layout. */
-/* Also, D3DCAPS8 is a subset of D3DCAPS9 so can be typecase as long as
-     none of the 9 fields are accessed when the device is d3d8           */
-/* TODO: remove the d3d8/d3d9 dependencies by making a all inclusive WINED3D version */
-#if defined( __WINE_D3D9_H )
- /* Identical: */ 
-# define WINED3DGAMMARAMP       D3DGAMMARAMP
-
-#elif defined( __WINE_D3D8_H )
- /* Identical: */ 
-# define WINED3DGAMMARAMP       D3DGAMMARAMP
-
-#else /* defined (__WINE_D3D_H ) */
- /* Identical: */
-# define WINED3DGAMMARAMP       DDGAMMARAMP
-
-#endif
-
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
  */

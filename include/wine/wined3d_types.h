@@ -85,6 +85,12 @@ typedef struct _WINED3DVIEWPORT {
     float       MaxZ;
 } WINED3DVIEWPORT;
 
+typedef struct _WINED3DGAMMARAMP {
+    WORD                red  [256];
+    WORD                green[256];
+    WORD                blue [256];
+} WINED3DGAMMARAMP;
+
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
 #define WINED3D_PSHADER_MAX_CONSTANTS 32
 

@@ -228,7 +228,8 @@ static void WINAPI IDirect3DDevice9Impl_SetGammaRamp(LPDIRECT3DDEVICE9 iface, UI
     
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    
+   
+    /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */ 
     return IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, iSwapChain, Flags, (WINED3DGAMMARAMP *) pRamp);
 }
 
@@ -236,6 +237,7 @@ static void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9 iface, UI
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     
+    /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
     return IWineD3DDevice_GetGammaRamp(This->WineD3DDevice, iSwapChain, (WINED3DGAMMARAMP *) pRamp);
 }
 
