@@ -494,12 +494,12 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
           and if so using the fixed pipeline how do we handle it               */
     if (thisFVF & D3DFVF_POSITION_MASK) {
         strided->u.s.position.lpData    = data;
-        strided->u.s.position.dwType    = D3DDECLTYPE_FLOAT3;
+        strided->u.s.position.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.position.dwStride  = stride;
         strided->u.s.position.VBO       = streamVBO;
         data += 3 * sizeof(float);
         if (thisFVF & D3DFVF_XYZRHW) {
-            strided->u.s.position.dwType = D3DDECLTYPE_FLOAT4;
+            strided->u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
             strided->u.s.position_transformed = TRUE;
             data += sizeof(float);
         } else
@@ -514,14 +514,14 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     if ((thisFVF & D3DFVF_XYZB5 ) > D3DFVF_XYZRHW) {
         TRACE("Setting blend Weights to %p\n", data);
         strided->u.s.blendWeights.lpData    = data;
-        strided->u.s.blendWeights.dwType    = D3DDECLTYPE_FLOAT1 + numBlends - 1;
+        strided->u.s.blendWeights.dwType    = WINED3DDECLTYPE_FLOAT1 + numBlends - 1;
         strided->u.s.blendWeights.dwStride  = stride;
         strided->u.s.blendWeights.VBO       = streamVBO;
         data += numBlends * sizeof(FLOAT);
 
         if (thisFVF & D3DFVF_LASTBETA_UBYTE4) {
             strided->u.s.blendMatrixIndices.lpData = data;
-            strided->u.s.blendMatrixIndices.dwType  = D3DDECLTYPE_UBYTE4;
+            strided->u.s.blendMatrixIndices.dwType  = WINED3DDECLTYPE_UBYTE4;
             strided->u.s.blendMatrixIndices.dwStride= stride;
             strided->u.s.blendMatrixIndices.VBO     = streamVBO;
             data += sizeof(DWORD);
@@ -531,7 +531,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     /* Normal is always 3 floats */
     if (thisFVF & D3DFVF_NORMAL) {
         strided->u.s.normal.lpData    = data;
-        strided->u.s.normal.dwType    = D3DDECLTYPE_FLOAT3;
+        strided->u.s.normal.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.normal.dwStride  = stride;
         strided->u.s.normal.VBO     = streamVBO;
         data += 3 * sizeof(FLOAT);
@@ -540,7 +540,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     /* Pointsize is a single float */
     if (thisFVF & D3DFVF_PSIZE) {
         strided->u.s.pSize.lpData    = data;
-        strided->u.s.pSize.dwType    = D3DDECLTYPE_FLOAT1;
+        strided->u.s.pSize.dwType    = WINED3DDECLTYPE_FLOAT1;
         strided->u.s.pSize.dwStride  = stride;
         strided->u.s.pSize.VBO       = streamVBO;
         data += sizeof(FLOAT);
@@ -549,7 +549,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     /* Diffuse is 4 unsigned bytes */
     if (thisFVF & D3DFVF_DIFFUSE) {
         strided->u.s.diffuse.lpData    = data;
-        strided->u.s.diffuse.dwType    = D3DDECLTYPE_SHORT4;
+        strided->u.s.diffuse.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.diffuse.dwStride  = stride;
         strided->u.s.diffuse.VBO       = streamVBO;
         data += sizeof(DWORD);
@@ -558,7 +558,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     /* Specular is 4 unsigned bytes */
     if (thisFVF & D3DFVF_SPECULAR) {
         strided->u.s.specular.lpData    = data;
-        strided->u.s.specular.dwType    = D3DDECLTYPE_SHORT4;
+        strided->u.s.specular.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.specular.dwStride  = stride;
         strided->u.s.specular.VBO       = streamVBO;
         data += sizeof(DWORD);
@@ -578,7 +578,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     for (textureNo = 0; textureNo < numTextures; ++textureNo) {
 
         strided->u.s.texCoords[textureNo].lpData    = data;
-        strided->u.s.texCoords[textureNo].dwType    = D3DDECLTYPE_FLOAT1;
+        strided->u.s.texCoords[textureNo].dwType    = WINED3DDECLTYPE_FLOAT1;
         strided->u.s.texCoords[textureNo].dwStride  = stride;
         strided->u.s.texCoords[textureNo].VBO       = streamVBO;
         numCoords[textureNo] = coordIdxInfo & 0x03;
@@ -586,13 +586,13 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         /* Always one set */
         data += sizeof(float);
         if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT1) {
-            strided->u.s.texCoords[textureNo].dwType = D3DDECLTYPE_FLOAT2;
+            strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT2;
             data += sizeof(float);
             if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT2) {
-                strided->u.s.texCoords[textureNo].dwType = D3DDECLTYPE_FLOAT3;
+                strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT3;
                 data += sizeof(float);
                 if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT3) {
-                    strided->u.s.texCoords[textureNo].dwType = D3DDECLTYPE_FLOAT4;
+                    strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT4;
                     data += sizeof(float);
                 }
             }
@@ -1408,7 +1408,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     continue;
                 } else {
 
-                    int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == D3DDECLTYPE_FLOAT1 etc */
+                    int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == WINED3DDECLTYPE_FLOAT1 etc */
 
                     /* The coords to supply depend completely on the fvf / vertex shader */
                     switch (coordsToUse) {
@@ -1508,7 +1508,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         if (sd->u.s.specular.lpData != NULL) {
             /* special case where the fog density is stored in the diffuse alpha channel */
             if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
-              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == D3DFOG_NONE || sd->u.s.position.dwType == D3DDECLTYPE_FLOAT4 )&&
+              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == D3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
               This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
                     GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));

@@ -92,25 +92,25 @@ typedef struct _WINED3DGLTYPE {
     int         typesize;
 } WINED3DGLTYPE;
 
-/* NOTE: Make sure these are in the correct numerical order. (see /include/d3d9types.h typedef enum _D3DDECLTYPE) */
-static WINED3DGLTYPE const glTypeLookup[D3DDECLTYPE_UNUSED] = {
-                                  {D3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {D3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {D3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {D3DDECLTYPE_FLOAT4,    4, GL_FLOAT           , GL_FALSE ,sizeof(float)},
-                                  {D3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
-                                  {D3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
-                                  {D3DDECLTYPE_SHORT2,    2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_SHORT4,    4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
-                                  {D3DDECLTYPE_SHORT2N,   2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_SHORT4N,   4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
-                                  {D3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
+/* NOTE: Make sure these are in the correct numerical order. (see /include/wined3d_types.h) */
+static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
+                                  {WINED3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_FLOAT4,    4, GL_FLOAT           , GL_FALSE ,sizeof(float)},
+                                  {WINED3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE   , GL_TRUE  ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_SHORT2,    2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_SHORT4,    4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE   , GL_FALSE ,sizeof(BYTE)},
+                                  {WINED3DDECLTYPE_SHORT2N,   2, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_SHORT4N,   4, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
+                                  {WINED3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
 
 #define WINED3D_ATR_TYPE(type)          glTypeLookup[type].d3dType
 #define WINED3D_ATR_SIZE(type)          glTypeLookup[type].size
