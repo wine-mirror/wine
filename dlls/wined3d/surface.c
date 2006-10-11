@@ -668,7 +668,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         if (NULL == pRect) {
             pLockedRect->pBits = This->resource.allocatedMemory;
         }  else{
-            if (This->resource.format == D3DFMT_DXT1) { /* DXT1 is half byte per pixel */
+            if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
                 pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel / 2));
             } else {
                 pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);

@@ -505,13 +505,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *if
     DeleteDC(hdc);
 
     switch (bpp) {
-    case  8: pMode->Format       = D3DFMT_R8G8B8; break;
-    case 16: pMode->Format       = D3DFMT_R5G6B5; break;
-    case 24: /*pMode->Format       = D3DFMT_R8G8B8; break; */ /* 32bpp and 24bpp can be aliased for X */
-    case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+    case  8: pMode->Format       = WINED3DFMT_R8G8B8; break;
+    case 16: pMode->Format       = WINED3DFMT_R5G6B5; break;
+    case 24: /*pMode->Format       = WINED3DFMT_R8G8B8; break; */ /* 32bpp and 24bpp can be aliased for X */
+    case 32: pMode->Format       = WINED3DFMT_A8R8G8B8; break;
     default:
        FIXME("Unrecognized display mode format\n");
-       pMode->Format       = D3DFMT_UNKNOWN;
+       pMode->Format       = WINED3DFMT_UNKNOWN;
     }
 
     TRACE("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate,

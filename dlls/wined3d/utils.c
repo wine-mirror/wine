@@ -208,9 +208,9 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
       fourcc[3] = (char)(fmt >> 24);
       fourcc[4] = 0;
       if( isprint(fourcc[0]) && isprint(fourcc[1]) && isprint(fourcc[2]) && isprint(fourcc[3]) )
-        FIXME("Unrecognized %u (as fourcc: %s) D3DFORMAT!\n", fmt, fourcc);
+        FIXME("Unrecognized %u (as fourcc: %s) WINED3DFORMAT!\n", fmt, fourcc);
       else
-        FIXME("Unrecognized %u D3DFORMAT!\n", fmt);
+        FIXME("Unrecognized %u WINED3DFORMAT!\n", fmt);
     }
     return "unrecognized";
   }
@@ -2271,7 +2271,7 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
 /* Convertes a D3D format into a OpenGL configuration format */
-int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate){
+int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate){
 #define PUSH1(att)        attribs[(*nAttribs)++] = (att);
 #define PUSH2(att,value)  attribs[(*nAttribs)++] = (att); attribs[(*nAttribs)++] = (value);
     /*We need to do some Card specific stuff in here at some point,
@@ -2441,7 +2441,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
 /* DirectDraw stuff */
 WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
     switch(depth) {
-        case 8:  return D3DFMT_P8; break;
+        case 8:  return WINED3DFMT_P8; break;
         case 15: return WINED3DFMT_X1R5G5B5; break;
         case 16: return WINED3DFMT_R5G6B5; break;
         case 24: return WINED3DFMT_R8G8B8; break;

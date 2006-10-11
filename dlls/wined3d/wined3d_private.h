@@ -727,7 +727,7 @@ typedef struct IWineD3DBaseTextureClass
 {
     UINT                    levels;
     BOOL                    dirty;
-    D3DFORMAT               format;
+    WINED3DFORMAT           format;
     DWORD                   usage;
     UINT                    textureName;
     UINT                    LOD;
@@ -1266,7 +1266,7 @@ void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
 
-int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
+int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
 
 /* Math utils */
 void multiply_matrix(D3DMATRIX *dest, D3DMATRIX *src1, D3DMATRIX *src2);

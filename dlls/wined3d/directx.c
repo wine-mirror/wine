@@ -1044,7 +1044,7 @@ static HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adap
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
-/* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
+/* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, Format: %s)\n", This, Adapter, debug_d3dformat(Format));
@@ -1068,17 +1068,17 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
             j++;
             switch (Format)
             {
-            case D3DFMT_UNKNOWN:
+            case WINED3DFMT_UNKNOWN:
                    i++;
                    break;
-            case D3DFMT_X8R8G8B8:
-            case D3DFMT_A8R8G8B8:
+            case WINED3DFMT_X8R8G8B8:
+            case WINED3DFMT_A8R8G8B8:
                    if (min(DevModeW.dmBitsPerPel, bpp) == 32) i++;
                    if (min(DevModeW.dmBitsPerPel, bpp) == 24) i++;
                    break;
-            case D3DFMT_X1R5G5B5:
-            case D3DFMT_A1R5G5B5:
-            case D3DFMT_R5G6B5:
+            case WINED3DFMT_X1R5G5B5:
+            case WINED3DFMT_A1R5G5B5:
+            case WINED3DFMT_R5G6B5:
                    if (min(DevModeW.dmBitsPerPel, bpp) == 16) i++;
                    break;
             default:
@@ -1098,7 +1098,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
     return 0;
 }
 
-/* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
+/* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format, UINT Mode, WINED3DDISPLAYMODE* pMode) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p, format:%s)\n", This, Adapter, Mode, pMode, debug_d3dformat(Format));
@@ -1123,7 +1123,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
 
         /* If we are filtering to a specific format, then need to skip all unrelated
            modes, but if mode is irrelevant, then we can use the index directly      */
-        if (Format == D3DFMT_UNKNOWN)
+        if (Format == WINED3DFMT_UNKNOWN)
         {
             ModeIdx = Mode;
         } else {
@@ -1136,17 +1136,17 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
                 j++;
                 switch (Format)
                 {
-                case D3DFMT_UNKNOWN:
+                case WINED3DFMT_UNKNOWN:
                        i++;
                        break;
-                case D3DFMT_X8R8G8B8:
-                case D3DFMT_A8R8G8B8:
+                case WINED3DFMT_X8R8G8B8:
+                case WINED3DFMT_A8R8G8B8:
                        if (min(DevModeWtmp.dmBitsPerPel, bpp) == 32) i++;
                        if (min(DevModeWtmp.dmBitsPerPel, bpp) == 24) i++;
                        break;
-                case D3DFMT_X1R5G5B5:
-                case D3DFMT_A1R5G5B5:
-                case D3DFMT_R5G6B5:
+                case WINED3DFMT_X1R5G5B5:
+                case WINED3DFMT_A1R5G5B5:
+                case WINED3DFMT_R5G6B5:
                        if (min(DevModeWtmp.dmBitsPerPel, bpp) == 16) i++;
                        break;
                 default:
@@ -1169,14 +1169,14 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
             }
 
-            if (Format == D3DFMT_UNKNOWN)
+            if (Format == WINED3DFMT_UNKNOWN)
             {
                 switch (bpp) {
-                case  8: pMode->Format = D3DFMT_R3G3B2;   break;
-                case 16: pMode->Format = D3DFMT_R5G6B5;   break;
+                case  8: pMode->Format = WINED3DFMT_R3G3B2;   break;
+                case 16: pMode->Format = WINED3DFMT_R5G6B5;   break;
                 case 24: /* Robots and EVE Online need 24 and 32 bit as A8R8G8B8 to start */
-                case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
-                default: pMode->Format = D3DFMT_UNKNOWN;
+                case 32: pMode->Format = WINED3DFMT_A8R8G8B8; break;
+                default: pMode->Format = WINED3DFMT_UNKNOWN;
                 }
             } else {
                 pMode->Format = Format;
@@ -1194,7 +1194,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         pMode->Width        = 800;
         pMode->Height       = 600;
         pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-        pMode->Format       = (Format == D3DFMT_UNKNOWN) ? D3DFMT_A8R8G8B8 : Format;
+        pMode->Format       = (Format == WINED3DFMT_UNKNOWN) ? WINED3DFMT_A8R8G8B8 : Format;
         bpp = 32;
 #endif
         TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n", pMode->Width, pMode->Height,
@@ -1231,11 +1231,11 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
         }
 
         switch (bpp) {
-        case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: pMode->Format       = D3DFMT_X8R8G8B8; break; /* Robots needs 24bit to be X8R8G8B8 */
-        case 32: pMode->Format       = D3DFMT_X8R8G8B8; break; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
-        default: pMode->Format       = D3DFMT_UNKNOWN;
+        case  8: pMode->Format       = WINED3DFMT_R3G3B2;   break;
+        case 16: pMode->Format       = WINED3DFMT_R5G6B5;   break;
+        case 24: pMode->Format       = WINED3DFMT_X8R8G8B8; break; /* Robots needs 24bit to be X8R8G8B8 */
+        case 32: pMode->Format       = WINED3DFMT_X8R8G8B8; break; /* EVE online and the Fur demo need 32bit AdapterDisplatMode to return X8R8G8B8 */
+        default: pMode->Format       = WINED3DFMT_UNKNOWN;
         }
 
     } else {
@@ -1656,11 +1656,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (CheckFormat) {
-        case D3DFMT_DXT1:
-        case D3DFMT_DXT2:
-        case D3DFMT_DXT3:
-        case D3DFMT_DXT4:
-        case D3DFMT_DXT5:
+        case WINED3DFMT_DXT1:
+        case WINED3DFMT_DXT2:
+        case WINED3DFMT_DXT3:
+        case WINED3DFMT_DXT4:
+        case WINED3DFMT_DXT5:
           TRACE_(d3d_caps)("[OK]\n");
           return WINED3D_OK;
         default:
@@ -1673,11 +1673,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         BOOL half_pixel_support = GL_SUPPORT(ARB_HALF_FLOAT_PIXEL);
 
         switch (CheckFormat) {
-            case D3DFMT_R16F:
-            case D3DFMT_A16B16G16R16F:
+            case WINED3DFMT_R16F:
+            case WINED3DFMT_A16B16G16R16F:
                 if (!half_pixel_support) break;
-            case D3DFMT_R32F:
-            case D3DFMT_A32B32G32R32F:
+            case WINED3DFMT_R32F:
+            case WINED3DFMT_A32B32G32R32F:
                 TRACE_(d3d_caps)("[OK]\n");
                 return WINED3D_OK;
             default:

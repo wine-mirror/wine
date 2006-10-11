@@ -1151,7 +1151,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1237,7 +1237,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1338,7 +1338,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
+        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -7375,8 +7375,8 @@ static GLXFBConfig* device_find_fbconfigs(
     int nAttribs = 0;
 
     IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
-    D3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
-    D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
+    WINED3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
+    WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
 
     /**TODO:
         if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off, 
