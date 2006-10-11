@@ -529,7 +529,7 @@ typedef struct IWineD3DDeviceImpl
     /* Internal use fields  */
     WINED3DDEVICE_CREATION_PARAMETERS createParms;
     UINT                            adapterNo;
-    D3DDEVTYPE                      devType;
+    WINED3DDEVTYPE                  devType;
 
     IWineD3DSwapChain     **swapchains;
     uint                    NumberOfSwapChains;
@@ -1245,7 +1245,7 @@ extern IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 
 /* Trace routines */
 const char* debug_d3dformat(WINED3DFORMAT fmt);
-const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
+const char* debug_d3ddevicetype(WINED3DDEVTYPE devtype);
 const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dusagequery(DWORD usagequery);

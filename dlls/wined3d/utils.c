@@ -216,15 +216,15 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
   }
 }
 
-const char* debug_d3ddevicetype(D3DDEVTYPE devtype) {
+const char* debug_d3ddevicetype(WINED3DDEVTYPE devtype) {
   switch (devtype) {
 #define DEVTYPE_TO_STR(dev) case dev: return #dev
-    DEVTYPE_TO_STR(D3DDEVTYPE_HAL);
-    DEVTYPE_TO_STR(D3DDEVTYPE_REF);
-    DEVTYPE_TO_STR(D3DDEVTYPE_SW);
+    DEVTYPE_TO_STR(WINED3DDEVTYPE_HAL);
+    DEVTYPE_TO_STR(WINED3DDEVTYPE_REF);
+    DEVTYPE_TO_STR(WINED3DDEVTYPE_SW);
 #undef DEVTYPE_TO_STR
   default:
-    FIXME("Unrecognized %u D3DDEVTYPE!\n", devtype);
+    FIXME("Unrecognized %u WINED3DDEVTYPE!\n", devtype);
     return "unrecognized";
   }
 }
