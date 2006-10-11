@@ -1945,6 +1945,18 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+static LRESULT HEADER_SetRedraw(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    /* ignoring the InvalidateRect calls is handled by user32. But some apps expect
+     * that we invalidate the header and this has to be done manually  */
+    LRESULT ret;
+
+    ret = DefWindowProcW(hwnd, WM_SETREDRAW, wParam, lParam);
+    if (wParam)
+        InvalidateRect(hwnd, NULL, TRUE);
+    return ret;
+}
+
 /* Update the theme handle after a theme change */
 static LRESULT HEADER_ThemeChanged(HWND hwnd)
 {
@@ -2080,6 +2092,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_SETFONT:
             return HEADER_SetFont (hwnd, wParam, lParam);
+
+        case WM_SETREDRAW:
+            return HEADER_SetRedraw(hwnd, wParam, lParam);
 
         default:
             if ((msg >= WM_USER) && (msg < WM_APP))
