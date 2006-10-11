@@ -17,21 +17,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#define COBJMACROS
+
 #include <stdio.h>
 
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
 
+#include <objidl.h>
+
 #include "wine/test.h"
 
 static const char *msifile = "winetest.msi";
 static const char *msifile2 = "winetst2.msi";
 static const char *mstfile = "winetst.mst";
-
-#ifndef ERROR_INSTALL_TRANSFORM_FAILURE
-#define ERROR_INSTALL_TRANSFORM_FAILURE 1624
-#endif
 
 static void test_msidatabase(void)
 {
@@ -1691,15 +1692,11 @@ static void test_handle_limit(void)
     ok( r == ERROR_SUCCESS, "failed to close database\n");
 }
 
-static void test_generate_transform(void)
+static void generate_transform(void)
 {
     MSIHANDLE hdb1, hdb2;
     LPCSTR query;
     UINT r;
-
-    DeleteFile(msifile);
-    DeleteFile(msifile2);
-    DeleteFile(mstfile);
 
     /* create an empty database */
     r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb1 );
@@ -1709,11 +1706,8 @@ static void test_generate_transform(void)
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
     /* create another empty database */
-    r = MsiOpenDatabase(msifile2, MSIDBOPEN_CREATE, &hdb2 );
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_READONLY, &hdb2 );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
-
-    r = MsiDatabaseCommit( hdb2 );
-    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
     /* the transform between two empty database should be empty */
     r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
@@ -1733,13 +1727,6 @@ static void test_generate_transform(void)
     r = run_query(hdb1, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add row 2\n");
 
-    todo_wine {
-    r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
-    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
-
-    r = MsiDatabaseGenerateTransform(hdb1, hdb2, mstfile, 0, 0);
-    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
-
     /* database needs to be committed */
     MsiDatabaseCommit(hdb1);
 
@@ -1747,33 +1734,142 @@ static void test_generate_transform(void)
     ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
 
     MsiCloseHandle( hdb1 );
+    MsiCloseHandle( hdb2 );
+}
 
-    r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
-    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+static const WCHAR name1[] = { 0x4840, 0x3a8a, 0x481b, 0 }; /* AAR */
+static const WCHAR name2[] = { 0x4840, 0x3b3f, 0x43f2, 0x4438, 0x45b1, 0 }; /* _Columns */
+static const WCHAR name3[] = { 0x4840, 0x3f7f, 0x4164, 0x422f, 0x4836, 0 }; /* _Tables */
+static const WCHAR name4[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0 }; /* _StringData */
+static const WCHAR name5[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0 }; /* _StringPool */
 
-    MsiDatabaseCommit(hdb2);
+static const WCHAR data1[] = { /* AAR */
+    0x0201, 0x0004, 0x8001,
+    0x0201, 0x0005, 0x8002,
+};
+static const WCHAR data2[] = { /* _Columns */
+    0x0401, 0x0001, 0x0000, 0x0002, 0xbdff,
+    0x0401, 0x0001, 0x0000, 0x0003, 0x8502,
+};
+static const WCHAR data3[] = { /* _Tables */
+    0x0101, 0x0001,
+};
+static const char data4[] = /* _StringData */
+    "AARCARBARvwbmw";
+static const WCHAR data5[] = { /* _StringPool */
+/*  len, refs */
+    0,   0,
+    3,   3,  /* string 1 */
+    3,   1,  /* string 2 */
+    3,   1,  /* string 3 */
+    2,   1,  /* string 4 */
+    3,   1,  /* string 5 */
+};
 
-    /* apply the same transform again? */
-    r = MsiDatabaseApplyTransform( hdb2, mstfile, 0 );
-    ok( r == ERROR_INSTALL_TRANSFORM_FAILURE,
-       "return code %d, should be ERROR_INSTALL_TRANSFORM_FAILURE\n", r );
+static const struct {
+    LPCWSTR name;
+    const void *data;
+    DWORD size;
+} table_transform_data[] =
+{
+    { name1, data1, sizeof data1 },
+    { name2, data2, sizeof data2 },
+    { name3, data3, sizeof data3 },
+    { name4, data4, sizeof data4 },
+    { name5, data5, sizeof data5 },
+};
+
+#define NUM_TRANSFORM_TABLES (sizeof table_transform_data/sizeof table_transform_data[0])
+
+static void generate_transform_manual(void)
+{
+    IStorage *stg = NULL;
+    IStream *stm;
+    WCHAR name[0x20];
+    HRESULT r;
+    DWORD i, count;
+    const DWORD mode = STGM_CREATE|STGM_READWRITE|STGM_DIRECT|STGM_SHARE_EXCLUSIVE;
+
+    const CLSID CLSID_MsiTransform = { 0xc1082,0,0,{0xc0,0,0,0,0,0,0,0x46}};
+
+    MultiByteToWideChar(CP_ACP, 0, mstfile, -1, name, 0x20);
+
+    r = StgCreateDocfile(name, mode, 0, &stg);
+    ok(r == S_OK, "failed to create storage\n");
+    if (!stg)
+        return;
+
+    r = IStorage_SetClass( stg, &CLSID_MsiTransform );
+    ok(r == S_OK, "failed to set storage type\n");
+
+    for (i=0; i<NUM_TRANSFORM_TABLES; i++)
+    {
+        r = IStorage_CreateStream( stg, table_transform_data[i].name,
+                            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm );
+        if (FAILED(r))
+        {
+            ok(0, "failed to create stream\n");
+            continue;
+        }
+
+        r = IStream_Write( stm, table_transform_data[i].data,
+                          table_transform_data[i].size, &count );
+        if (FAILED(r) || count != table_transform_data[i].size)
+            ok(0, "failed to write stream\n");
+        IStream_Release(stm);
     }
 
-    MsiCloseHandle( hdb2 );
+    IStorage_Release(stg);
+}
+
+static void test_try_transform(void)
+{
+    MSIHANDLE hdb;
+    LPCSTR query;
+    UINT r;
 
     DeleteFile(msifile);
+    DeleteFile(msifile2);
+    DeleteFile(mstfile);
 
-    r = MsiOpenDatabase(msifile2, MSIDBOPEN_READONLY, &hdb1 );
+    /* create an empty database */
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_CREATE, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
-    todo_wine {
-    query = "select `BAR`,`CAR` from `AAR`";
-    r = run_query(hdb1, 0, query);
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    MsiCloseHandle( hdb );
+
+    /*
+     * Both these generate an equivilent transform,
+     *  but the first doesn't work in Wine yet
+     *  because MsiDatabaseGenerateTransform is unimplemented.
+     */
+    if (0)
+        generate_transform();
+    else
+        generate_transform_manual();
+
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_DIRECT, &hdb );
+    ok( r == ERROR_SUCCESS , "Failed to create database\n" );
+
+    r = MsiDatabaseApplyTransform( hdb, mstfile, 0 );
+    ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
+
+    MsiDatabaseCommit( hdb );
+
+    query = "select `BAR`,`CAR` from `AAR` where `BAR` = 1 AND `CAR` = 'vw'";
+    r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "select query failed\n");
-    }
 
-    MsiCloseHandle( hdb1 );
+    query = "select `BAR`,`CAR` from `AAR` where `BAR` = 2 AND `CAR` = 'bmw'";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "select query failed\n");
 
+    MsiCloseHandle( hdb );
+
+    DeleteFile(msifile);
     DeleteFile(msifile2);
     DeleteFile(mstfile);
 }
@@ -2537,7 +2633,7 @@ START_TEST(db)
     test_msiimport();
     test_markers();
     test_handle_limit();
-    test_generate_transform();
+    test_try_transform();
     test_join();
     test_temporary_table();
     test_alter();
