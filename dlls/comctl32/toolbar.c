@@ -140,7 +140,6 @@ typedef struct
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
     DWORD    dwBaseCustDraw;  /* CDRF_ response (w/o TBCDRF_) from PREPAINT */
-    DWORD    dwItemCustDraw;  /* CDRF_ response (w/o TBCDRF_) from ITEMPREP */
     DWORD    dwItemCDFlag;    /* TBCDRF_ flags from last ITEMPREPAINT    */
     SIZE     szPadding;       /* padding values around button */
     INT      iListGap;        /* default gap between text and image for toolbar with list style */
@@ -821,6 +820,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     DWORD ntfret;
     INT offset;
     INT oldBkMode;
+    DWORD dwItemCustDraw;
     HTHEME theme = GetWindowTheme (hwnd);
 
     rc = btnPtr->rect;
@@ -949,7 +949,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     tbcd.hpenLines = 0;
 
     /* Issue Item Prepaint notify */
-    infoPtr->dwItemCustDraw = 0;
+    dwItemCustDraw = 0;
     infoPtr->dwItemCDFlag = 0;
     if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYITEMDRAW)
     {
@@ -961,9 +961,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         tbcd.nmcd.hdc = hdc;
         tbcd.nmcd.rc = rc;
 
-	infoPtr->dwItemCustDraw = ntfret & 0xffff;
+	dwItemCustDraw = ntfret & 0xffff;
 	infoPtr->dwItemCDFlag = ntfret & 0xffff0000;
-	if (infoPtr->dwItemCustDraw & CDRF_SKIPDEFAULT)
+	if (dwItemCustDraw & CDRF_SKIPDEFAULT)
 	    return;
 	/* save the only part of the rect that the user can change */
 	rcText.right = tbcd.rcText.right + rc.left;
@@ -1058,7 +1058,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, comctl32_color.clrBtnText);
     }
 
-    if (infoPtr->dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
+    if (dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
     {
         tbcd.nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
         TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
