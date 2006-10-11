@@ -337,6 +337,7 @@ void test_add_string()
     LPCSTR ret6[] = {"a", "b", "|a|b||", "p", "q", "p", "p", "q", "p", "", "q"};
     LPCSTR ret7[] = {"a", "b", "|a|b||", "p", "q", "p", "p", "q", "p", "", "q", "br", "c", "d"};
     HWND hToolbar = NULL;
+    TBBUTTON button;
     int ret;
 
     rebuild_toolbar(&hToolbar);
@@ -364,6 +365,13 @@ void test_add_string()
     CHECK_STRING_TABLE(11, ret6);
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD7);
     ok(ret == 11, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    CHECK_STRING_TABLE(14, ret7);
+
+    ZeroMemory(&button, sizeof(button));
+    button.iString = (UINT_PTR)"Test";
+    SendMessageA(hToolbar, TB_INSERTBUTTONA, 0, (LPARAM)&button);
+    CHECK_STRING_TABLE(14, ret7);
+    SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&button);
     CHECK_STRING_TABLE(14, ret7);
 }
 

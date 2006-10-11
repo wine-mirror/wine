@@ -3833,22 +3833,6 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     } else if (nIndex < 0)
        return FALSE;
 
-    /* If the string passed is not an index, assume address of string
-       and do our own AddString */
-    if ((HIWORD(lpTbb->iString) != 0) && (lpTbb->iString != -1)) {
-        LPSTR ptr;
-	INT len;
-
-        TRACE("string %s passed instead of index, adding string\n",
-              debugstr_a((LPSTR)lpTbb->iString));
-        len = strlen((LPSTR)lpTbb->iString) + 2;
-        ptr = Alloc(len);
-        strcpy(ptr, (LPSTR)lpTbb->iString);
-        ptr[len - 1] = 0; /* ended by two '\0' */
-        lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
-        Free(ptr);
-    }
-
     TRACE("inserting button index=%d\n", nIndex);
     if (nIndex > infoPtr->nNumButtons) {
 	nIndex = infoPtr->nNumButtons;
@@ -3921,22 +3905,6 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     } else if (nIndex < 0)
        return FALSE;
-
-    /* If the string passed is not an index, assume address of string
-       and do our own AddString */
-    if ((HIWORD(lpTbb->iString) != 0) && (lpTbb->iString != -1)) {
-	LPWSTR ptr;
-        INT len;
-
-	TRACE("string %s passed instead of index, adding string\n",
-	      debugstr_w((LPWSTR)lpTbb->iString));
-	len = strlenW((LPWSTR)lpTbb->iString) + 2;
-	ptr = Alloc(len*sizeof(WCHAR));
-	strcpyW(ptr, (LPWSTR)lpTbb->iString);
-	ptr[len - 1] = 0; /* ended by two '\0' */
-	lpTbb->iString = TOOLBAR_AddStringW(hwnd, 0, (LPARAM)ptr);
-	Free(ptr);
-    }
 
     TRACE("inserting button index=%d\n", nIndex);
     if (nIndex > infoPtr->nNumButtons) {
