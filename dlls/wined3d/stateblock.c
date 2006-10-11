@@ -985,24 +985,24 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     for (i = 0; i < GL_LIMITS(texture_stages); i++) {
         TRACE("Setting up default texture states for texture Stage %d\n", i);
         memcpy(&This->transforms[WINED3DTS_TEXTURE0 + i], &identity, sizeof(identity));
-        This->textureState[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
-        This->textureState[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
-        This->textureState[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;
-        This->textureState[i][D3DTSS_ALPHAOP               ] = (i==0)? D3DTOP_SELECTARG1 :  D3DTOP_DISABLE;
-        This->textureState[i][D3DTSS_ALPHAARG1             ] = D3DTA_TEXTURE;
-        This->textureState[i][D3DTSS_ALPHAARG2             ] = D3DTA_CURRENT;
-        This->textureState[i][D3DTSS_BUMPENVMAT00          ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_BUMPENVMAT01          ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_BUMPENVMAT10          ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_BUMPENVMAT11          ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_TEXCOORDINDEX         ] = i;
-        This->textureState[i][D3DTSS_BUMPENVLSCALE         ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_BUMPENVLOFFSET        ] = (DWORD) 0.0;
-        This->textureState[i][D3DTSS_TEXTURETRANSFORMFLAGS ] = D3DTTFF_DISABLE;
-        This->textureState[i][D3DTSS_ADDRESSW              ] = D3DTADDRESS_WRAP;
-        This->textureState[i][D3DTSS_COLORARG0             ] = D3DTA_CURRENT;
-        This->textureState[i][D3DTSS_ALPHAARG0             ] = D3DTA_CURRENT;
-        This->textureState[i][D3DTSS_RESULTARG             ] = D3DTA_CURRENT;
+        This->textureState[i][WINED3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
+        This->textureState[i][WINED3DTSS_COLORARG2             ] = D3DTA_CURRENT;
+        This->textureState[i][WINED3DTSS_ALPHAOP               ] = (i==0)? D3DTOP_SELECTARG1 :  D3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_ALPHAARG1             ] = D3DTA_TEXTURE;
+        This->textureState[i][WINED3DTSS_ALPHAARG2             ] = D3DTA_CURRENT;
+        This->textureState[i][WINED3DTSS_BUMPENVMAT00          ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_BUMPENVMAT01          ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_BUMPENVMAT10          ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_BUMPENVMAT11          ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_TEXCOORDINDEX         ] = i;
+        This->textureState[i][WINED3DTSS_BUMPENVLSCALE         ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_BUMPENVLOFFSET        ] = (DWORD) 0.0;
+        This->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS ] = D3DTTFF_DISABLE;
+        This->textureState[i][WINED3DTSS_ADDRESSW              ] = D3DTADDRESS_WRAP;
+        This->textureState[i][WINED3DTSS_COLORARG0             ] = D3DTA_CURRENT;
+        This->textureState[i][WINED3DTSS_ALPHAARG0             ] = D3DTA_CURRENT;
+        This->textureState[i][WINED3DTSS_RESULTARG             ] = D3DTA_CURRENT;
     }
 
         /* Sampler states*/

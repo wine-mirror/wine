@@ -570,7 +570,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
 
     /* numTextures indicates the number of texture coordinates supplied */
     /* However, the first set may not be for stage 0 texture - it all   */
-    /*   depends on D3DTSS_TEXCOORDINDEX.                               */
+    /*   depends on WINED3DTSS_TEXCOORDINDEX.                           */
     /* The number of bytes for each coordinate set is based off         */
     /*   D3DFVF_TEXCOORDSIZEn, which are the bottom 2 bits              */
 
@@ -715,7 +715,7 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
         /* Query tex coords */
         if (This->stateBlock->textures[textureNo] != NULL) {
 
-            int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+            int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 continue;
@@ -1179,7 +1179,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
         }
 
         if (This->stateBlock->textures[textureNo] != NULL) {
-            int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+            int coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
@@ -1387,7 +1387,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             /* Query tex coords */
             if (This->stateBlock->textures[textureNo] != NULL) {
 
-                int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+                int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
                 float *ptrToCoords = NULL;
                 float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
@@ -1419,11 +1419,11 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     }
 
                     /* Projected is more 'fun' - Move the last coord to the 'q'
-                          parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
-                    if ((This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
-                        (This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
+                          parameter (see comments under WINED3DTSS_TEXTURETRANSFORMFLAGS */
+                    if ((This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
+                        (This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
 
-                        if (This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+                        if (This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
                             switch (coordsToUse) {
                             case 0:  /* Drop Through */
                             case 1:
@@ -1442,8 +1442,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                             case 4:  /* Nop here */
                                 break;
                             default:
-                                FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %d\n",
-                                      This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
+                                FIXME("Unexpected WINED3DTSS_TEXTURETRANSFORMFLAGS value of %d\n",
+                                      This->stateBlock->textureState[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
                             }
                         }
                     }
@@ -1683,8 +1683,8 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
                texcoords[textureNo].y = vertexShader->output.oT[textureNo].y;
                texcoords[textureNo].z = vertexShader->output.oT[textureNo].z;
                texcoords[textureNo].w = vertexShader->output.oT[textureNo].w;
-               if (This->stateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
-                   numcoords[textureNo]    = This->stateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+               if (This->stateBlock->texture_state[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
+                   numcoords[textureNo]    = This->stateBlock->texture_state[textureNo][WINED3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
                } else {
                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->stateBlock->textures[textureNo])) {
                    case WINED3DRTYPE_TEXTURE:       numcoords[textureNo] = 2; break;

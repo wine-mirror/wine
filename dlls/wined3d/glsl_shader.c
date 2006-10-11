@@ -1393,7 +1393,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     }         
 
     sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
-    if(deviceImpl->stateBlock->textureState[sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+    if(deviceImpl->stateBlock->textureState[sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
         switch(sampler_type) {
 
             case WINED3DSTT_2D:

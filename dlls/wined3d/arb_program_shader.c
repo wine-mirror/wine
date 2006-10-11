@@ -673,7 +673,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
          tex_type = "2D";
   }
 
-  if (deviceImpl->stateBlock->textureState[reg_sampler_code][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+  if (deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
       shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n",
           reg_dest, reg_coord, reg_sampler_code, tex_type);
   } else {

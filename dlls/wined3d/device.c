@@ -5528,7 +5528,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
             /* FIXME: From MSDN: The WINED3DTSS_TCI_* flags are mutually exclusive. If you include
                   one flag, you can still specify an index value, which the system uses to
                   determine the texture wrapping mode.
-                  eg. SetTextureStageState( 0, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
+                  eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
                   means use the vertex position (camera-space) as the input texture coordinates
                   for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
                   state. We do not (yet) support the D3DRENDERSTATE_WRAPx values, nor tie them up

@@ -563,7 +563,7 @@ const char* debug_d3dtexturestate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DTSS_CONSTANT              );
 #undef D3DSTATE_TO_STR
   case 12:
-    /* Note D3DTSS are not consecutive, so skip these */
+    /* Note WINED3DTSS are not consecutive, so skip these */
     return "unused";
     break;
   default:
@@ -701,12 +701,12 @@ static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx)
             return GL_SECONDARY_COLOR_NV;
 
         case D3DTA_TEMP:
-            /* TODO: Support D3DTSS_RESULTARG */
+            /* TODO: Support WINED3DTSS_RESULTARG */
             FIXME("D3DTA_TEMP, not properly supported.\n");
             return GL_SPARE1_NV;
 
         case D3DTA_CONSTANT:
-            /* TODO: Support per stage constants (D3DTSS_CONSTANT, NV_register_combiners2) */
+            /* TODO: Support per stage constants (WINED3DTSS_CONSTANT, NV_register_combiners2) */
             FIXME("D3DTA_CONSTANT, not properly supported.\n");
             return GL_CONSTANT_COLOR1_NV;
 
@@ -784,7 +784,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
     {
         case D3DTOP_DISABLE:
             /* Only for alpha */
-            if (!is_alpha) ERR("Shouldn't be called for D3DTSS_COLOROP (D3DTOP_DISABLE)\n");
+            if (!is_alpha) ERR("Shouldn't be called for WINED3DTSS_COLOROP (D3DTOP_DISABLE)\n");
             /* Input, prev_alpha*1 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                     GL_SPARE0_NV, GL_UNSIGNED_IDENTITY_NV, GL_ALPHA));
@@ -932,7 +932,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
 
         case D3DTOP_MODULATEALPHA_ADDCOLOR:
             /* Input, arg1_alpha*arg2_rgb+arg1_rgb*1 */
-            if (is_alpha) ERR("Only supported for D3DTSS_COLOROP (D3DTOP_MODULATEALPHA_ADDCOLOR)\n");
+            if (is_alpha) ERR("Only supported for WINED3DTSS_COLOROP (D3DTOP_MODULATEALPHA_ADDCOLOR)\n");
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                     tex_op_args.input[0], tex_op_args.mapping[0], GL_ALPHA));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
@@ -949,7 +949,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
 
         case D3DTOP_MODULATECOLOR_ADDALPHA:
             /* Input, arg1_rgb*arg2_rgb+arg1_alpha*1 */
-            if (is_alpha) ERR("Only supported for D3DTSS_COLOROP (D3DTOP_MODULATECOLOR_ADDALPHA)\n");
+            if (is_alpha) ERR("Only supported for WINED3DTSS_COLOROP (D3DTOP_MODULATECOLOR_ADDALPHA)\n");
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                     tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
@@ -966,7 +966,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
 
         case D3DTOP_MODULATEINVALPHA_ADDCOLOR:
             /* Input, (1-arg1_alpha)*arg2_rgb+arg1_rgb*1 */
-            if (is_alpha) ERR("Only supported for D3DTSS_COLOROP (D3DTOP_MODULATEINVALPHA_ADDCOLOR)\n");
+            if (is_alpha) ERR("Only supported for WINED3DTSS_COLOROP (D3DTOP_MODULATEINVALPHA_ADDCOLOR)\n");
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                     tex_op_args.input[0], invert_mapping(tex_op_args.mapping[0]), GL_ALPHA));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
@@ -983,7 +983,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, D3DTEXTURE
 
         case D3DTOP_MODULATEINVCOLOR_ADDALPHA:
             /* Input, (1-arg1_rgb)*arg2_rgb+arg1_alpha*1 */
-            if (is_alpha) ERR("Only supported for D3DTSS_COLOROP (D3DTOP_MODULATEINVCOLOR_ADDALPHA)\n");
+            if (is_alpha) ERR("Only supported for WINED3DTSS_COLOROP (D3DTOP_MODULATEINVCOLOR_ADDALPHA)\n");
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                     tex_op_args.input[0], invert_mapping(tex_op_args.mapping[0]), tex_op_args.component_usage[0]));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
