@@ -804,7 +804,10 @@ static UINT save_string_table( MSIDATABASE *db )
         if( sz && (sz < (datasize - used ) ) )
             sz--;
 
-        pool[ n*2 + 1 ] = msi_id_refcount( db->strings, i );
+        if (sz)
+            pool[ n*2 + 1 ] = msi_id_refcount( db->strings, i );
+        else
+            pool[ n*2 + 1 ] = 0;
         if (sz < 0x10000)
         {
             pool[ n*2 ] = sz;
