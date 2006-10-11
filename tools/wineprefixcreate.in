@@ -74,9 +74,9 @@ then
     WINESERVER="$topdir/server/wineserver"
     if [ -n "$LD_LIBRARY_PATH" ]
     then
-        LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+        LD_LIBRARY_PATH="$topdir/libs/wine:$LD_LIBRARY_PATH"
     else
-        LD_LIBRARY_PATH="$topdir/libs"
+        LD_LIBRARY_PATH="$topdir/libs/wine"
     fi
     export LD_LIBRARY_PATH
 
