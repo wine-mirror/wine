@@ -1373,8 +1373,8 @@ LONG WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
  *
  * Helper function for RegGetValueA/W.
  */
-VOID ADVAPI_ApplyRestrictions( DWORD dwFlags, DWORD dwType, DWORD cbData,
-                               PLONG ret )
+static VOID ADVAPI_ApplyRestrictions( DWORD dwFlags, DWORD dwType,
+                                      DWORD cbData, PLONG ret )
 {
     /* Check if the type is restricted by the passed flags */
     if (*ret == ERROR_SUCCESS || *ret == ERROR_MORE_DATA)
