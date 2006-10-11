@@ -68,6 +68,14 @@ typedef struct _WINED3DLIGHT {
     float               Phi;
 } WINED3DLIGHT;
 
+typedef struct _WINED3DMATERIAL {
+    WINED3DCOLORVALUE   Diffuse;
+    WINED3DCOLORVALUE   Ambient;
+    WINED3DCOLORVALUE   Specular;
+    WINED3DCOLORVALUE   Emissive;
+    float           Power;
+} WINED3DMATERIAL;
+
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
 #define WINED3D_PSHADER_MAX_CONSTANTS 32
 

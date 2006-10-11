@@ -520,9 +520,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         if (This->set.material && memcmp(&targetStateBlock->material,
                                                     &This->material,
-                                                    sizeof(D3DMATERIAL9)) != 0) {
+                                                    sizeof(WINED3DMATERIAL)) != 0) {
             TRACE("Updating material\n");
-            memcpy(&This->material, &targetStateBlock->material, sizeof(D3DMATERIAL9));
+            memcpy(&This->material, &targetStateBlock->material, sizeof(WINED3DMATERIAL));
         }
 
         if (This->set.viewport && memcmp(&targetStateBlock->viewport,

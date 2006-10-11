@@ -3139,7 +3139,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetClipStatus(IWineD3DDevice *iface, 
 
 /*****
  * Get / Set Material
- *   WARNING: This code relies on the fact that D3DMATERIAL8 == D3DMATERIAL9
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED3DMATERIAL* pMaterial) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;

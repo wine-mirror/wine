@@ -4095,8 +4095,10 @@ IDirect3DDeviceImpl_7_SetMaterial(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p): Relay!\n", This, Mat);
 
+    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
     hr = IWineD3DDevice_SetMaterial(This->wineD3DDevice,
-                                    Mat);
+                                    (WINED3DMATERIAL*) Mat);
+
     return hr_ddraw_from_wined3d(hr);
 }
 
@@ -4124,8 +4126,10 @@ IDirect3DDeviceImpl_7_GetMaterial(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p): Relay!\n", This, Mat);
 
+    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */ 
     hr = IWineD3DDevice_GetMaterial(This->wineD3DDevice,
-                                    Mat);
+                                    (WINED3DMATERIAL*) Mat);
+
     return hr_ddraw_from_wined3d(hr);
 }
 
