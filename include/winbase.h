@@ -1819,6 +1819,9 @@ BOOL        WINAPI NotifyChangeEventLog(HANDLE,HANDLE);
 BOOL        WINAPI ObjectCloseAuditAlarmA(LPCSTR,LPVOID,BOOL);
 BOOL        WINAPI ObjectCloseAuditAlarmW(LPCWSTR,LPVOID,BOOL);
 #define     ObjectCloseAuditAlarm WINELIB_NAME_AW(ObjectCloseAuditAlarm)
+BOOL        WINAPI ObjectDeleteAuditAlarmA(LPCSTR,LPVOID,BOOL);
+BOOL        WINAPI ObjectDeleteAuditAlarmW(LPCWSTR,LPVOID,BOOL);
+#define     ObjectDeleteAuditAlarm WINELIB_NAME_AW(ObjectDeleteAuditAlarm)
 BOOL        WINAPI ObjectOpenAuditAlarmA(LPCSTR,LPVOID,LPSTR,LPSTR,PSECURITY_DESCRIPTOR,HANDLE,
                                          DWORD,DWORD,PPRIVILEGE_SET,BOOL,BOOL,LPBOOL);
 BOOL        WINAPI ObjectOpenAuditAlarmW(LPCWSTR,LPVOID,LPWSTR,LPWSTR,PSECURITY_DESCRIPTOR,HANDLE,
