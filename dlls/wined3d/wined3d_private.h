@@ -82,7 +82,7 @@ extern int minLookup[MAX_LOOKUPS];
 extern int maxLookup[MAX_LOOKUPS];
 extern DWORD *stateLookup[MAX_LOOKUPS];
 
-extern DWORD minMipLookup[D3DTEXF_ANISOTROPIC + 1][D3DTEXF_LINEAR + 1];
+extern DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 
 typedef struct _WINED3DGLTYPE {
     int         d3dType;
