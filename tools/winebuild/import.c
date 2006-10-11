@@ -147,10 +147,11 @@ inline static ORDDEF *find_export( const char *name, ORDDEF **table, int size )
 {
     ORDDEF func, *odp, **res = NULL;
 
-    func.name = (char *)name;
+    func.name = xstrdup(name);
     func.ordinal = -1;
     odp = &func;
     if (table) res = bsearch( &odp, table, size, sizeof(*table), func_cmp );
+    free( func.name );
     return res ? *res : NULL;
 }
 
