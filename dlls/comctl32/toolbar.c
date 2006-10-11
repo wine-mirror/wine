@@ -3808,12 +3808,11 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_InsertButtonT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
     INT nIndex = (INT)wParam;
-    TBUTTON_INFO *oldButtons;
 
     if (lpTbb == NULL)
 	return FALSE;
@@ -3823,7 +3822,6 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nIndex == -1) {
        /* EPP: this seems to be an undocumented call (from my IE4)
 	* I assume in that case that:
-	* - lpTbb->iString is a string pointer (not a string index in strings[] table
 	* - index of insertion is at the end of existing buttons
 	* I only see this happen with nIndex == -1, but it could have a special
 	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
@@ -3839,14 +3837,10 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("adjust index=%d\n", nIndex);
     }
 
-    oldButtons = infoPtr->buttons;
     infoPtr->nNumButtons++;
-    infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
-    /* pre insert copy */
-    if (nIndex > 0) {
-	memcpy (&infoPtr->buttons[0], &oldButtons[0],
-		nIndex * sizeof(TBUTTON_INFO));
-    }
+    infoPtr->buttons = ReAlloc(infoPtr->buttons, sizeof(TBUTTON_INFO) * infoPtr->nNumButtons);
+    memmove(&infoPtr->buttons[nIndex+1], &infoPtr->buttons[nIndex],
+	    (infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
 
     /* insert new button */
     infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
@@ -3856,20 +3850,15 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->buttons[nIndex].dwData    = lpTbb->dwData;
     /* if passed string and not index, then add string */
     if(HIWORD(lpTbb->iString) && lpTbb->iString!=-1) {
-        Str_SetPtrAtoW ((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPCSTR )lpTbb->iString);
+        if (fUnicode)
+            Str_SetPtrW((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPWSTR)lpTbb->iString);
+        else
+            Str_SetPtrAtoW((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPCSTR )lpTbb->iString);
     }
     else
         infoPtr->buttons[nIndex].iString   = lpTbb->iString;
 
     TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
-
-    /* post insert copy */
-    if (nIndex < infoPtr->nNumButtons - 1) {
-	memcpy (&infoPtr->buttons[nIndex+1], &oldButtons[nIndex],
-		(infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
-    }
-
-    Free (oldButtons);
 
     TOOLBAR_CalcToolbar (hwnd);
     TOOLBAR_AutoSize (hwnd);
@@ -3878,80 +3867,6 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     return TRUE;
 }
-
-
-static LRESULT
-TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
-    INT nIndex = (INT)wParam;
-    TBUTTON_INFO *oldButtons;
-
-    if (lpTbb == NULL)
-	return FALSE;
-
-    TOOLBAR_DumpButton(infoPtr, (TBUTTON_INFO *)lpTbb, nIndex, FALSE);
-
-    if (nIndex == -1) {
-       /* EPP: this seems to be an undocumented call (from my IE4)
-	* I assume in that case that:
-	* - lpTbb->iString is a string pointer (not a string index in strings[] table
-	* - index of insertion is at the end of existing buttons
-	* I only see this happen with nIndex == -1, but it could have a special
-	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
-	*/
-	nIndex = infoPtr->nNumButtons;
-
-    } else if (nIndex < 0)
-       return FALSE;
-
-    TRACE("inserting button index=%d\n", nIndex);
-    if (nIndex > infoPtr->nNumButtons) {
-	nIndex = infoPtr->nNumButtons;
-	TRACE("adjust index=%d\n", nIndex);
-    }
-
-    oldButtons = infoPtr->buttons;
-    infoPtr->nNumButtons++;
-    infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
-    /* pre insert copy */
-    if (nIndex > 0) {
-	memcpy (&infoPtr->buttons[0], &oldButtons[0],
-		nIndex * sizeof(TBUTTON_INFO));
-    }
-
-    /* insert new button */
-    infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
-    infoPtr->buttons[nIndex].idCommand = lpTbb->idCommand;
-    infoPtr->buttons[nIndex].fsState   = lpTbb->fsState;
-    infoPtr->buttons[nIndex].fsStyle   = lpTbb->fsStyle;
-    infoPtr->buttons[nIndex].dwData    = lpTbb->dwData;
-    /* if passed string and not index, then add string */
-    if(HIWORD(lpTbb->iString) && lpTbb->iString!=-1) {
-        Str_SetPtrW ((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPWSTR)lpTbb->iString);
-    }
-    else
-        infoPtr->buttons[nIndex].iString   = lpTbb->iString;
-
-    TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
-
-    /* post insert copy */
-    if (nIndex < infoPtr->nNumButtons - 1) {
-	memcpy (&infoPtr->buttons[nIndex+1], &oldButtons[nIndex],
-		(infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
-    }
-
-    Free (oldButtons);
-
-    TOOLBAR_CalcToolbar (hwnd);
-    TOOLBAR_AutoSize (hwnd);
-
-    InvalidateRect (hwnd, NULL, TRUE);
-
-    return TRUE;
-}
-
 
 /* << TOOLBAR_InsertMarkHitTest >> */
 
@@ -4441,8 +4356,8 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, LPTBSAVEPARAMSW lpSave)
                 if (HIWORD(nmtbr.tbButton.iString))
                     nmtbr.tbButton.iString = 0;
 
-                TOOLBAR_InsertButtonW(infoPtr->hwndSelf, -1,
-                    (LPARAM)&nmtbr.tbButton);
+                TOOLBAR_InsertButtonT(infoPtr->hwndSelf, -1,
+                    (LPARAM)&nmtbr.tbButton, TRUE);
             }
 
             /* do legacy notifications */
@@ -5885,7 +5800,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     memset(&tbb, 0, sizeof(tbb));
                     tbb.fsStyle = BTNS_SEP;
                     tbb.iString = -1;
-                    TOOLBAR_InsertButtonW(hwnd, nButton, (LPARAM)&tbb);
+                    TOOLBAR_InsertButtonT(hwnd, nButton, (LPARAM)&tbb, TRUE);
                 }
             }
             else
@@ -6824,10 +6739,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Indeterminate (hwnd, wParam, lParam);
 
 	case TB_INSERTBUTTONA:
-	    return TOOLBAR_InsertButtonA (hwnd, wParam, lParam);
+	    return TOOLBAR_InsertButtonT(hwnd, wParam, lParam, FALSE);
 
 	case TB_INSERTBUTTONW:
-	    return TOOLBAR_InsertButtonW (hwnd, wParam, lParam);
+	    return TOOLBAR_InsertButtonT(hwnd, wParam, lParam, TRUE);
 
 /*	case TB_INSERTMARKHITTEST:		*/ /* 4.71 */
 
