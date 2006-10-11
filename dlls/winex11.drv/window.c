@@ -465,6 +465,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     XClassHint *class_hints;
     XWMHints* wm_hints;
     Atom protocols[3];
+    Atom window_type;
     MwmHints mwm_hints;
     Atom dndVersion = 4;
     int i;
@@ -523,13 +524,15 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_PID),
                     XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&i, 1);
 
-   /* map WS_EX_TOOLWINDOW to _NET_WM_WINDOW_TYPE_UTILITY */
-   if (ex_style & WS_EX_TOOLWINDOW)
-   {
-      Atom a = x11drv_atom(_NET_WM_WINDOW_TYPE_UTILITY);
-      XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
-                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&a, 1);
-   }
+    /* set the WM_WINDOW_TYPE */
+    window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+    if (ex_style & WS_EX_TOOLWINDOW) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_UTILITY);
+    else if (style & WS_THICKFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+    else if (style & WS_DLGFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+    else if (ex_style & WS_EX_DLGMODALFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+
+    XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
+		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
     mwm_hints.functions = MWM_FUNC_MOVE;
