@@ -4035,8 +4035,9 @@ IDirect3DDeviceImpl_7_SetViewport(IDirect3DDevice7 *iface,
     if(!Data)
         return DDERR_INVALIDPARAMS;
 
+    /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
     return IWineD3DDevice_SetViewport(This->wineD3DDevice,
-                                      Data);
+                                      (WINED3DVIEWPORT*) Data);
 }
 
 /*****************************************************************************
@@ -4066,8 +4067,10 @@ IDirect3DDeviceImpl_7_GetViewport(IDirect3DDevice7 *iface,
     if(!Data)
         return DDERR_INVALIDPARAMS;
 
+    /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
     hr = IWineD3DDevice_GetViewport(This->wineD3DDevice,
-                                    Data);
+                                    (WINED3DVIEWPORT*) Data);
+
     return hr_ddraw_from_wined3d(hr);
 }
 

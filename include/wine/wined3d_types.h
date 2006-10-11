@@ -76,6 +76,15 @@ typedef struct _WINED3DMATERIAL {
     float           Power;
 } WINED3DMATERIAL;
 
+typedef struct _WINED3DVIEWPORT {
+    DWORD       X;
+    DWORD       Y;
+    DWORD       Width;
+    DWORD       Height;
+    float       MinZ;
+    float       MaxZ;
+} WINED3DVIEWPORT;
+
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
 #define WINED3D_PSHADER_MAX_CONSTANTS 32
 

@@ -2114,7 +2114,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     list_init(&This->glsl_shader_progs);
 
     { /* Set a default viewport */
-        D3DVIEWPORT9 vp;
+        WINED3DVIEWPORT vp;
         vp.X      = 0;
         vp.Y      = 0;
         vp.Width  = *(pPresentationParameters->BackBufferWidth);
@@ -5083,7 +5083,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     char *dest_ptr, *dest_conv = NULL;
     unsigned int i;
     DWORD DestFVF = dest->fvf;
-    D3DVIEWPORT9 vp;
+    WINED3DVIEWPORT vp;
     D3DMATRIX mat, proj_mat, view_mat, world_mat;
     BOOL doClip;
     int numTextures;

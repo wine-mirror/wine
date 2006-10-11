@@ -527,9 +527,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         if (This->set.viewport && memcmp(&targetStateBlock->viewport,
                                                     &This->viewport,
-                                                    sizeof(D3DVIEWPORT9)) != 0) {
+                                                    sizeof(WINED3DVIEWPORT)) != 0) {
             TRACE("Updating viewport\n");
-            memcpy(&This->viewport, &targetStateBlock->viewport, sizeof(D3DVIEWPORT9));
+            memcpy(&This->viewport, &targetStateBlock->viewport, sizeof(WINED3DVIEWPORT));
         }
 
         for (i = 0; i < MAX_STREAMS; i++) {
