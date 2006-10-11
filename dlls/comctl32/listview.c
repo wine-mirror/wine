@@ -9921,7 +9921,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
  *
  * RETURN:
  */
-LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return EditLblWndProcT(hwnd, uMsg, wParam, lParam, TRUE);
 }
@@ -9938,7 +9938,7 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
  *
  * RETURN:
  */
-LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return EditLblWndProcT(hwnd, uMsg, wParam, lParam, FALSE);
 }
