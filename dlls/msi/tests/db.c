@@ -1698,18 +1698,19 @@ static void generate_transform(void)
     LPCSTR query;
     UINT r;
 
-    /* create an empty database */
-    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb1 );
+    /* start with two identical databases */
+    CopyFile(msifile2, msifile, FALSE);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_TRANSACT, &hdb1 );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
     r = MsiDatabaseCommit( hdb1 );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
-    /* create another empty database */
     r = MsiOpenDatabase(msifile2, MSIDBOPEN_READONLY, &hdb2 );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
-    /* the transform between two empty database should be empty */
+    /* the transform between two identical database should be empty */
     r = MsiDatabaseGenerateTransform(hdb1, hdb2, NULL, 0, 0);
     todo_wine {
     ok( r == ERROR_NO_DATA, "return code %d, should be ERROR_NO_DATA\n", r );
@@ -1727,6 +1728,10 @@ static void generate_transform(void)
     r = run_query(hdb1, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add row 2\n");
 
+    query = "UPDATE `MOO` SET `OOO` = 'c' WHERE `NOO` = 1";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+
     /* database needs to be committed */
     MsiDatabaseCommit(hdb1);
 
@@ -1737,33 +1742,43 @@ static void generate_transform(void)
     MsiCloseHandle( hdb2 );
 }
 
+/* data for generating a transform */
+
+/* tables transform names - encoded as they would be in an msi database file */
 static const WCHAR name1[] = { 0x4840, 0x3a8a, 0x481b, 0 }; /* AAR */
 static const WCHAR name2[] = { 0x4840, 0x3b3f, 0x43f2, 0x4438, 0x45b1, 0 }; /* _Columns */
 static const WCHAR name3[] = { 0x4840, 0x3f7f, 0x4164, 0x422f, 0x4836, 0 }; /* _Tables */
 static const WCHAR name4[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0 }; /* _StringData */
 static const WCHAR name5[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0 }; /* _StringPool */
+static const WCHAR name6[] = { 0x4840, 0x3e16, 0x4181, 0};
 
+/* data in each table */
 static const WCHAR data1[] = { /* AAR */
-    0x0201, 0x0004, 0x8001,
-    0x0201, 0x0005, 0x8002,
+    0x0201, 0x0005, 0x8001,  /* 0x0201 = add row (1), two shorts */
+    0x0201, 0x0006, 0x8002,
 };
 static const WCHAR data2[] = { /* _Columns */
-    0x0401, 0x0001, 0x0000, 0x0002, 0xbdff,
-    0x0401, 0x0001, 0x0000, 0x0003, 0x8502,
+    0x0401, 0x0002, 0x0000, 0x0003, 0xbdff,  /* 0x0401 = add row (1), 4 shorts */
+    0x0401, 0x0002, 0x0000, 0x0004, 0x8502,
 };
 static const WCHAR data3[] = { /* _Tables */
-    0x0101, 0x0001,
+    0x0101, 0x0002, /* 0x0101 = add row (1), 1 short */
 };
 static const char data4[] = /* _StringData */
-    "AARCARBARvwbmw";
+    "cAARCARBARvwbmw";  /* all the strings squashed together */
 static const WCHAR data5[] = { /* _StringPool */
 /*  len, refs */
-    0,   0,
-    3,   3,  /* string 1 */
-    3,   1,  /* string 2 */
-    3,   1,  /* string 3 */
-    2,   1,  /* string 4 */
-    3,   1,  /* string 5 */
+    0,   0,    /* string 0 ''    */
+    1,   1,    /* string 1 'c'   */
+    3,   3,    /* string 2 'AAR' */
+    3,   1,    /* string 3 'CAR' */
+    3,   1,    /* string 4 'BAR' */
+    2,   1,    /* string 5 'vw'  */
+    3,   1,    /* string 6 'bmw' */
+};
+/* update row, 0x0002 is a bitmask of present column data, keys are excluded */
+static const WCHAR data6[] = { /* MOO */
+    0x0002, 0x8001, 0x0001,
 };
 
 static const struct {
@@ -1775,8 +1790,9 @@ static const struct {
     { name1, data1, sizeof data1 },
     { name2, data2, sizeof data2 },
     { name3, data3, sizeof data3 },
-    { name4, data4, sizeof data4 },
+    { name4, data4, sizeof data4 - 1 },
     { name5, data5, sizeof data5 },
+    { name6, data6, sizeof data6 },
 };
 
 #define NUM_TRANSFORM_TABLES (sizeof table_transform_data/sizeof table_transform_data[0])
@@ -1836,6 +1852,18 @@ static void test_try_transform(void)
     r = MsiOpenDatabase(msifile2, MSIDBOPEN_CREATE, &hdb );
     ok( r == ERROR_SUCCESS , "Failed to create database\n" );
 
+    query = "CREATE TABLE `MOO` ( `NOO` SHORT NOT NULL, `OOO` CHAR(255) PRIMARY KEY `NOO`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
+
+    query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 1, 'a' )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+
+    query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 2, 'b' )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+
     r = MsiDatabaseCommit( hdb );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
@@ -1859,11 +1887,22 @@ static void test_try_transform(void)
 
     MsiDatabaseCommit( hdb );
 
+    /* check new values */
     query = "select `BAR`,`CAR` from `AAR` where `BAR` = 1 AND `CAR` = 'vw'";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "select query failed\n");
 
     query = "select `BAR`,`CAR` from `AAR` where `BAR` = 2 AND `CAR` = 'bmw'";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "select query failed\n");
+
+    /* check updated values */
+    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "select query failed\n");
+
+    /* check unchanged values */
+    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "select query failed\n");
 
