@@ -1125,7 +1125,7 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
 /*********************************************************
  * fdi_Zipinflate_codes (internal)
  */
-cab_LONG fdi_Zipinflate_codes(struct Ziphuft *tl, struct Ziphuft *td,
+static cab_LONG fdi_Zipinflate_codes(struct Ziphuft *tl, struct Ziphuft *td,
   cab_LONG bl, cab_LONG bd, fdi_decomp_state *decomp_state)
 {
   register cab_ULONG e;  /* table entry flag/number of extra bits */
