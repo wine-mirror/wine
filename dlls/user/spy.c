@@ -410,7 +410,9 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x01E0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,
+    "MN_GETHMENU",              /* 0x01E1 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x01F0 */
@@ -571,9 +573,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PALETTECHANGED",
     "WM_HOTKEY",                /* 0x0312 */
           NULL, NULL, NULL, NULL,
-    "WM_PRINT",
-    "WM_PRINTCLIENT",
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_PRINT",                 /* 0x0317 */
+    "WM_PRINTCLIENT",           /* 0x0318 */
+    "WM_APPCOMMAND",            /* 0x0319 */
+    "WM_THEMECHANGED",          /* 0x031A */
+    NULL, NULL, NULL, NULL, NULL,
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -583,10 +587,18 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     /* 0x0340 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    /* 0x0350 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_HANDHELDFIRST",     /* 0x0358 */
+    "WM_HANDHELDFIRST+1",   /* 0x0359 */
+    "WM_HANDHELDFIRST+2",   /* 0x035A */
+    "WM_HANDHELDFIRST+3",   /* 0x035B */
+    "WM_HANDHELDFIRST+4",   /* 0x035C */
+    "WM_HANDHELDFIRST+5",   /* 0x035D */
+    "WM_HANDHELDFIRST+6",   /* 0x035E */
+    "WM_HANDHELDLAST",      /* 0x035F */
 
-    "WM_QUERYAFXWNDPROC",   /*  0x0360 */
+    "WM_QUERYAFXWNDPROC",   /*  0x0360 WM_AFXFIRST */
     "WM_SIZEPARENT",        /*  0x0361 */
     "WM_SETMESSAGESTRING",  /*  0x0362 */
     "WM_IDLEUPDATECMDUI",   /*  0x0363 */
@@ -613,7 +625,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_OCC_LOADFROMSTREAM_EX",  /* 0x037A */
     "WM_OCC_LOADFROMSTORAGE_EX", /* 0x037B */
 
-    NULL,NULL,NULL,NULL,
+    NULL,NULL,NULL,
+    "WM_AFXLAST",               /* 0x037F */
 
     "WM_PENWINFIRST",           /* 0x0380 */
     "WM_RCRESULT",              /* 0x0381 */

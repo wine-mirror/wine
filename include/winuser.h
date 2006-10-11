@@ -1189,8 +1189,6 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_MOVING	    0x0216
 #define WM_POWERBROADCAST   0x0218
 #define WM_DEVICECHANGE     0x0219
-/* Win32 5.1 messages */
-#define WM_THEMECHANGED     0x031A
 
 /* wParam for WM_SIZING message */
 #define WMSZ_LEFT           1
@@ -1293,6 +1291,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 
 #define WM_PRINT             0x0317
 #define WM_PRINTCLIENT       0x0318
+#define WM_APPCOMMAND        0x0319
+#define WM_THEMECHANGED      0x031A
 
 #define WM_HANDHELDFIRST     0x0358
 #define WM_HANDHELDLAST      0x035F
