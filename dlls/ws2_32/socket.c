@@ -367,7 +367,7 @@ inline static DWORD NtStatusToWSAError( const DWORD status )
         else
         {
             wserr = RtlNtStatusToDosError( status );
-            FIXME( "Status code %08lx converted to DOS error code %lx\n", status, wserr );
+            FIXME( "Status code %08x converted to DOS error code %x\n", status, wserr );
         }
     }
     return wserr;
@@ -499,7 +499,7 @@ static void free_per_thread_data(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
         break;
@@ -1263,7 +1263,7 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
 {
     struct msghdr hdr;
     int n;
-    TRACE( "fd %d, iovec %p, count %d addr %s, len %p, flags %lx\n",
+    TRACE( "fd %d, iovec %p, count %d addr %s, len %p, flags %x\n",
            fd, iov, count, debugstr_sockaddr(lpFrom), lpFromlen, *lpFlags);
 
     hdr.msg_name = NULL;
@@ -1327,7 +1327,7 @@ static void WINAPI WS2_async_recv( void* ovp, IO_STATUS_BLOCK* iosb, ULONG statu
     ws2_async* wsa = (ws2_async*) ovp;
     int result, err;
 
-    TRACE( "(%p %p %lx)\n", wsa, iosb, status );
+    TRACE( "(%p %p %x)\n", wsa, iosb, status );
 
     switch (status)
     {
@@ -1362,7 +1362,7 @@ static void WINAPI WS2_async_recv( void* ovp, IO_STATUS_BLOCK* iosb, ULONG statu
             ws2_async_terminate(wsa, iosb);
         break;
     default:
-        FIXME( "status: %ld\n", status );
+        FIXME( "status: %d\n", status );
         iosb->u.Status = status;
         ws2_async_terminate(wsa, iosb);
         return;
@@ -1379,7 +1379,7 @@ static int WS2_send( int fd, struct iovec* iov, int count,
 {
     struct msghdr hdr;
     int n = -1;
-    TRACE( "fd %d, iovec %p, count %d addr %s, len %d, flags %lx\n",
+    TRACE( "fd %d, iovec %p, count %d addr %s, len %d, flags %x\n",
            fd, iov, count, debugstr_sockaddr(to), tolen, dwFlags);
 
     hdr.msg_name = NULL;
@@ -1447,12 +1447,12 @@ static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
     ws2_async* wsa = (ws2_async*) as;
     int result;
 
-    TRACE( "(%p %p %lx)\n", wsa, iosb, status );
+    TRACE( "(%p %p %x)\n", wsa, iosb, status );
 
     switch (status)
     {
     case STATUS_ALERTED:
-        if (iosb->u.Status != STATUS_PENDING) FIXME("wrong %08lx\n", iosb->u.Status);
+        if (iosb->u.Status != STATUS_PENDING) FIXME("wrong %08x\n", iosb->u.Status);
         /* check to see if the data is ready (non-blocking) */
         result = WS2_send( wsa->fd, wsa->iovec, wsa->n_iovecs,
                            wsa->addr, wsa->addrlen.val, wsa->flags );
@@ -1487,7 +1487,7 @@ static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
             ws2_async_terminate(wsa, iosb);
         break;
     default:
-        FIXME( "status: %ld\n", status );
+        FIXME( "status: %d\n", status );
         iosb->u.Status = status;
         ws2_async_terminate(wsa, iosb);
         return;
@@ -2114,7 +2114,7 @@ INT WINAPI WSAIoctl(SOCKET s,
                     LPWSAOVERLAPPED lpOverlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-   TRACE("%d, 0x%08lx, %p, %ld, %p, %ld, %p, %p, %p\n", 
+   TRACE("%d, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
        s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpbOutBuffer,
        cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
 
@@ -2173,7 +2173,7 @@ INT WINAPI WSAIoctl(SOCKET s,
 
                      if (size*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > cbOutBuffer)
                      {
-                        WARN("Buffer too small = %lu, cbOutBuffer = %lu\n", size, cbOutBuffer);
+                        WARN("Buffer too small = %u, cbOutBuffer = %u\n", size, cbOutBuffer);
                         HeapFree(GetProcessHeap(),0,table);
                         release_sock_fd( s, fd );
                         WSASetLastError(WSAEFAULT);
@@ -2274,7 +2274,7 @@ INT WINAPI WSAIoctl(SOCKET s,
 	break;
 
    default:
-       FIXME("unsupported WS_IOCTL cmd (%08lx)\n", dwIoControlCode);
+       FIXME("unsupported WS_IOCTL cmd (%08x)\n", dwIoControlCode);
        WSASetLastError(WSAEOPNOTSUPP);
        return SOCKET_ERROR;
    }
@@ -2535,7 +2535,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
-    TRACE("socket %04x, wsabuf %p, nbufs %ld, flags %ld, to %p, tolen %d, ovl %p, func %p\n",
+    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
           to, tolen, lpOverlapped, lpCompletionRoutine);
 
@@ -2743,7 +2743,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     /* Is a privileged and useless operation, so we don't. */
     if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET))
     {
-        FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%ld)) attempted (is privileged). Ignoring.\n",s,optval,*(DWORD*)optval);
+        FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%d)) attempted (is privileged). Ignoring.\n",s,optval,*(DWORD*)optval);
         return 0;
     }
 
@@ -3262,7 +3262,7 @@ int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
     const struct sockaddr* sa_u;
     unsigned int size;
 
-    TRACE("%s %d %p %ld %p %ld %d\n", debugstr_sockaddr(sa), salen, host, hostlen,
+    TRACE("%s %d %p %d %p %d %d\n", debugstr_sockaddr(sa), salen, host, hostlen,
           serv, servlen, flags);
 
     sa_u = ws_sockaddr_ws2u(sa, salen, &size);
@@ -3495,7 +3495,7 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
     INT len;
     WSAPROTOCOL_INFOW info;
 
-    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n",
+    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%x\n",
           af, type, protocol, lpProtocolInfo, g, dwFlags);
 
     if (!lpProtocolInfo) return WSASocketW(af, type, protocol, NULL, g, dwFlags);
@@ -3528,7 +3528,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
       g, dwFlags except WSA_FLAG_OVERLAPPED) are ignored.
    */
 
-   TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n",
+   TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%x\n",
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
     /* hack for WSADuplicateSocket */
@@ -3936,7 +3936,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
-    TRACE("socket %04x, wsabuf %p, nbufs %ld, flags %ld, from %p, fromlen %ld, ovl %p, func %p\n",
+    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %ld, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
           (lpFromlen ? *lpFromlen : -1L),
           lpOverlapped, lpCompletionRoutine);
@@ -4052,7 +4052,7 @@ INT WINAPI WSCInstallProvider( const LPGUID lpProviderId,
                                DWORD dwNumberOfEntries,
                                LPINT lpErrno )
 {
-    FIXME("(%s, %s, %p, %ld, %p): stub !\n", debugstr_guid(lpProviderId),
+    FIXME("(%s, %s, %p, %d, %p): stub !\n", debugstr_guid(lpProviderId),
           debugstr_w(lpszProviderDllPath), lpProtocolInfoList,
           dwNumberOfEntries, lpErrno);
     *lpErrno = 0;
@@ -4085,7 +4085,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket  %04x, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
+       TRACE("Socket  %04x, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %d\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
 
@@ -4146,7 +4146,7 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
 {
    HANDLE hProcess;
 
-   TRACE("(%d,%lx,%p)\n", s, dwProcessId, lpProtocolInfo);
+   TRACE("(%d,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
    memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
    /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
    /* I don't know what the real Windoze does next, this is a hack */
@@ -4169,7 +4169,7 @@ int WINAPI WSADuplicateSocketW( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW
 {
    HANDLE hProcess;
 
-   TRACE("(%d,%lx,%p)\n", s, dwProcessId, lpProtocolInfo);
+   TRACE("(%d,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
 
    memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
    hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
@@ -4367,7 +4367,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
     CHAR *p;
 
-    TRACE( "(%p, %ld, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
+    TRACE( "(%p, %d, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
@@ -4429,7 +4429,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     static const WCHAR format[] = { '%','u','.','%','u','.','%','u','.','%','u',':','%','u',0 };
     WCHAR *p;
 
-    TRACE( "(%p, %lx, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
+    TRACE( "(%p, %x, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
@@ -4537,7 +4537,7 @@ INT WINAPI WSALookupServiceBeginA( LPWSAQUERYSETA lpqsRestrictions,
                                    DWORD dwControlFlags,
                                    LPHANDLE lphLookup)
 {
-    FIXME("(%p 0x%08lx %p) Stub!\n", lpqsRestrictions, dwControlFlags,
+    FIXME("(%p 0x%08x %p) Stub!\n", lpqsRestrictions, dwControlFlags,
             lphLookup);
     WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
     return SOCKET_ERROR;
@@ -4550,7 +4550,7 @@ INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW lpqsRestrictions,
                                    DWORD dwControlFlags,
                                    LPHANDLE lphLookup)
 {
-    FIXME("(%p 0x%08lx %p) Stub!\n", lpqsRestrictions, dwControlFlags,
+    FIXME("(%p 0x%08x %p) Stub!\n", lpqsRestrictions, dwControlFlags,
             lphLookup);
     WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
     return SOCKET_ERROR;
@@ -4570,7 +4570,7 @@ INT WINAPI WSALookupServiceEnd( HANDLE lookup )
  */
 INT WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETA results )
 {
-    FIXME( "(%p 0x%08lx %p %p) Stub!\n", lookup, flags, len, results );
+    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
     return 0;
 }
 
@@ -4579,7 +4579,7 @@ INT WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
  */
 INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETW results )
 {
-    FIXME( "(%p 0x%08lx %p %p) Stub!\n", lookup, flags, len, results );
+    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
     return 0;
 }
 
@@ -4588,7 +4588,7 @@ INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
  */
 INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
 {
-    TRACE( "(0x%04x 0x%08lx %p)\n", s, netlong, lphostlong );
+    TRACE( "(0x%04x 0x%08x %p)\n", s, netlong, lphostlong );
 
     if (!lphostlong) return WSAEFAULT;
 
@@ -4634,7 +4634,7 @@ INT WINAPI WSARecvDisconnect( SOCKET s, LPWSABUF disconnectdata )
  */
 INT WINAPI WSASetServiceA( LPWSAQUERYSETA query, WSAESETSERVICEOP operation, DWORD flags )
 {
-    FIXME( "(%p 0x%08x 0x%08lx) Stub!\n", query, operation, flags );
+    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
     return 0;
 }
 
@@ -4643,7 +4643,7 @@ INT WINAPI WSASetServiceA( LPWSAQUERYSETA query, WSAESETSERVICEOP operation, DWO
  */
 INT WINAPI WSASetServiceW( LPWSAQUERYSETW query, WSAESETSERVICEOP operation, DWORD flags )
 {
-    FIXME( "(%p 0x%08x 0x%08lx) Stub!\n", query, operation, flags );
+    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
     return 0;
 }
 
@@ -4675,7 +4675,7 @@ INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT er
 INT WINAPI WSCInstallNameSpace( LPWSTR identifier, LPWSTR path, DWORD namespace,
                                 DWORD version, LPGUID provider )
 {
-    FIXME( "(%s %s 0x%08lx 0x%08lx %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
+    FIXME( "(%s %s 0x%08x 0x%08x %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
            namespace, version, debugstr_guid(provider) );
     return 0;
 }
@@ -4694,6 +4694,6 @@ INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
  */
 INT WINAPI WSCWriteProviderOrder( LPDWORD entry, DWORD number )
 {
-    FIXME("(%p 0x%08lx) Stub!\n", entry, number);
+    FIXME("(%p 0x%08x) Stub!\n", entry, number);
     return 0;
 }

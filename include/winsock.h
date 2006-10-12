@@ -115,13 +115,21 @@
 typedef unsigned char  WS_u_char;
 typedef unsigned short WS_u_short;
 typedef unsigned int   WS_u_int;
+#ifdef _MSC_VER
 typedef unsigned long  WS_u_long;
+#else
+typedef unsigned int   WS_u_long;
+#endif
 #elif (defined(_MSC_VER) || defined(__MINGW_H) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
-typedef unsigned char u_char;
+typedef unsigned char  u_char;
 typedef unsigned short u_short;
-typedef unsigned int  u_int;
-typedef unsigned long u_long;
+typedef unsigned int   u_int;
+#ifdef _MSC_VER
+typedef unsigned long  u_long;
+#else
+typedef unsigned int   u_long;
+#endif
 #define _BSDTYPES_DEFINED
 #endif
 
