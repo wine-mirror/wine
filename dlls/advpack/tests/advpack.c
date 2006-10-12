@@ -88,28 +88,28 @@ static void version_test(void)
     major = minor = 0;
     hr = pGetVersionFromFile("kernel32.dll", &major, &minor, FALSE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
-        "0x%08lx\n", hr);
-    trace("kernel32.dll Language ID: 0x%08lx, Codepage ID: 0x%08lx\n",
+        "0x%08x\n", hr);
+    trace("kernel32.dll Language ID: 0x%08x, Codepage ID: 0x%08x\n",
            major, minor);
 
     major = minor = 0;
     hr = pGetVersionFromFile("kernel32.dll", &major, &minor, TRUE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
-        "0x%08lx\n", hr);
+        "0x%08x\n", hr);
     trace("kernel32.dll version: %d.%d.%d.%d\n", HIWORD(major), LOWORD(major),
           HIWORD(minor), LOWORD(minor));
 
     major = minor = 0;
     hr = pGetVersionFromFile("advpack.dll", &major, &minor, FALSE);
     ok (hr == S_OK, "GetVersionFromFileEx(advpack.dll) failed, returned "
-        "0x%08lx\n", hr);
-    trace("advpack.dll Language ID: 0x%08lx, Codepage ID: 0x%08lx\n",
+        "0x%08x\n", hr);
+    trace("advpack.dll Language ID: 0x%08x, Codepage ID: 0x%08x\n",
            major, minor);
 
     major = minor = 0;
     hr = pGetVersionFromFile("advpack.dll", &major, &minor, TRUE);
     ok (hr == S_OK, "GetVersionFromFileEx(advpack.dll) failed, returned "
-        "0x%08lx\n", hr);
+        "0x%08x\n", hr);
     trace("advpack.dll version: %d.%d.%d.%d\n", HIWORD(major), LOWORD(major),
           HIWORD(minor), LOWORD(minor));
 }
@@ -246,7 +246,7 @@ static void translateinfstring_test()
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
     ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
-    ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+    ok(dwSize == 25, "Expected size 25, got %d\n", dwSize);
 
     buffer[0] = 0;
     /* try other nonexistent section */
@@ -272,7 +272,7 @@ static void translateinfstring_test()
     if(hr == ERROR_SUCCESS)
     {
         ok(!strcmp(buffer, PROG_FILES), "Expected '%s', got '%s'\n", PROG_FILES, buffer);
-        ok(dwSize == PROG_FILES_LEN, "Expected size %ld, got %ld\n", PROG_FILES_LEN, dwSize);
+        ok(dwSize == PROG_FILES_LEN, "Expected size %d, got %d\n", PROG_FILES_LEN, dwSize);
     }
 
     buffer[0] = 0;
@@ -283,7 +283,7 @@ static void translateinfstring_test()
     todo_wine
     {
         ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
-        ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+        ok(dwSize == 25, "Expected size 25, got %d\n", dwSize);
     }
 
     DeleteFile("c:\\a.inf");
@@ -303,30 +303,30 @@ static void translateinfstringex_test(void)
 
     /* try a NULL filename */
     hr = pOpenINFEngine(NULL, "Options.NTx86", 0, &hinf, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* try an empty filename */
     hr = pOpenINFEngine("", "Options.NTx86", 0, &hinf, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
+        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %d\n", hr);
 
     /* try a NULL hinf */
     hr = pOpenINFEngine("c:\\test.inf", "Options.NTx86", 0, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* open the INF without the Install section specified */
     hr = pOpenINFEngine("c:\\test.inf", NULL, 0, &hinf, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
     /* try a NULL hinf */
     hr = pTranslateInfStringEx(NULL, "c:\\test.inf", "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* try a NULL filename */
     hr = pTranslateInfStringEx(hinf, NULL, "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* try an empty filename */
     size = MAX_PATH;
@@ -336,63 +336,63 @@ static void translateinfstringex_test(void)
     todo_wine
     {
         ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
-        ok(size == 25, "Expected size 25, got %ld\n", size);
+        ok(size == 25, "Expected size 25, got %d\n", size);
     }
 
     /* try a NULL translate section */
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", NULL, "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* try an empty translate section */
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "", "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %ld\n", hr);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %d\n", hr);
 
     /* try a NULL translate key */
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", NULL,
                               buffer, size, &size, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* try an empty translate key */
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "",
                               buffer, size, &size, NULL);
-    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %ld\n", hr);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %d\n", hr);
 
     /* successfully translate the string */
     size = MAX_PATH;
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     todo_wine
     {
         ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
-        ok(size == 25, "Expected size 25, got %ld\n", size);
+        ok(size == 25, "Expected size 25, got %d\n", size);
     }
 
     /* try a NULL hinf */
     hr = pCloseINFEngine(NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     /* successfully close the hinf */
     hr = pCloseINFEngine(hinf);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
     /* open the inf with the install section */
     hr = pOpenINFEngine("c:\\test.inf", "section", 0, &hinf, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
     /* translate the string with the install section specified */
     size = MAX_PATH;
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!strcmp(buffer, PROG_FILES), "Expected %s, got %s\n", PROG_FILES, buffer);
-    ok(size == PROG_FILES_LEN, "Expected size %ld, got %ld\n", PROG_FILES_LEN, size);
+    ok(size == PROG_FILES_LEN, "Expected size %d, got %d\n", PROG_FILES_LEN, size);
 
     /* close the INF again */
     hr = pCloseINFEngine(hinf);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
     DeleteFileA("c:\\test.inf");
 }
@@ -436,19 +436,19 @@ static void setperusersecvalues_test(void)
     /* try a NULL pPerUser */
     hr = pSetPerUserSecValues(NULL);
     todo_wine
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
 
     /* at the very least, szGUID must be valid */
     peruser.szGUID[0] = '\0';
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
 
     /* set initial values */
     lstrcpy(peruser.szGUID, "guid");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
@@ -465,7 +465,7 @@ static void setperusersecvalues_test(void)
     /* raise the version, but bRollback is FALSE, so vals not saved */
     lstrcpy(peruser.szVersion, "2,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
     ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
@@ -482,7 +482,7 @@ static void setperusersecvalues_test(void)
     peruser.bRollback = TRUE;
     lstrcpy(peruser.szVersion, "3,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
     ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");

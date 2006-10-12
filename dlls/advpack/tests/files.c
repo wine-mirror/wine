@@ -139,7 +139,7 @@ static void test_AddDelBackupEntry(void)
 
     /* try a NULL file list */
     res = pAddDelBackupEntry(NULL, "backup", "basename", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA(path), "Expected path to not exist\n");
 
     lstrcpyA(path, CURR_DIR);
@@ -147,7 +147,7 @@ static void test_AddDelBackupEntry(void)
 
     /* try an empty base name */
     res = pAddDelBackupEntry("one\0two\0three\0", "backup", "", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA(path), "Expected path to not exist\n");
 
     lstrcpyA(path, CURR_DIR);
@@ -155,14 +155,14 @@ static void test_AddDelBackupEntry(void)
 
     /* try an invalid flag */
     res = pAddDelBackupEntry("one\0two\0three\0", NULL, "basename", 0);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!DeleteFileA(path), "Expected path to not exist\n");
 
     lstrcpyA(path, "c:\\basename.INI");
 
     /* create the INF file */
     res = pAddDelBackupEntry("one\0two\0three\0", "c:\\", "basename", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
     ok(DeleteFileA(path), "Expected path to exist\n");
@@ -173,7 +173,7 @@ static void test_AddDelBackupEntry(void)
     /* try to create the INI file in a nonexistent directory */
     RemoveDirectoryA("backup");
     res = pAddDelBackupEntry("one\0two\0three\0", "backup", "basename", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(!check_ini_file_attr(path), "Expected ini file to not be hidden\n");
     ok(!check_ini_contents(path, TRUE), "Expected ini contents to not match\n");
     ok(!DeleteFileA(path), "Expected path to not exist\n");
@@ -181,7 +181,7 @@ static void test_AddDelBackupEntry(void)
     /* try an existent, relative backup directory */
     CreateDirectoryA("backup", NULL);
     res = pAddDelBackupEntry("one\0two\0three\0", "backup", "basename", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
     ok(DeleteFileA(path), "Expected path to exist\n");
@@ -191,14 +191,14 @@ static void test_AddDelBackupEntry(void)
 
     /* try a NULL backup dir, INI is created in c:\windows */
     res = pAddDelBackupEntry("one\0two\0three\0", NULL, "basename", AADBE_ADD_ENTRY);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
 
     /* remove the entries with AADBE_DEL_ENTRY */
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
     res = pAddDelBackupEntry("one\0three\0", NULL, "basename", AADBE_DEL_ENTRY);
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
-    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(check_ini_contents(path, FALSE), "Expected ini contents to match\n");
     ok(DeleteFileA(path), "Expected path to exist\n");
 }
@@ -419,18 +419,18 @@ static void test_ExtractFiles(void)
 
     /* try NULL cab file */
     hr = pExtractFiles(NULL, destFolder, 0, NULL, NULL, 0);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(RemoveDirectoryA("dest"), "Expected dest to exist\n");
     
     /* try NULL destination */
     hr = pExtractFiles("extract.cab", NULL, 0, NULL, NULL, 0);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(!RemoveDirectoryA("dest"), "Expected dest to not exist\n");
 
     /* extract all files in the cab to nonexistent destination directory */
     hr = pExtractFiles("extract.cab", destFolder, 0, NULL, NULL, 0);
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND),
-       "Expected %ld, got %ld\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
+       "Expected %d, got %d\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
@@ -439,7 +439,7 @@ static void test_ExtractFiles(void)
     /* extract all files in the cab to the destination directory */
     CreateDirectoryA("dest", NULL);
     hr = pExtractFiles("extract.cab", destFolder, 0, NULL, NULL, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
@@ -448,7 +448,7 @@ static void test_ExtractFiles(void)
 
     /* extract all files to a relative destination directory */
     hr = pExtractFiles("extract.cab", "dest", 0, NULL, NULL, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
@@ -457,7 +457,7 @@ static void test_ExtractFiles(void)
 
     /* only extract two of the files from the cab */
     hr = pExtractFiles("extract.cab", "dest", 0, "a.txt:testdir\\c.txt", NULL, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
@@ -466,7 +466,7 @@ static void test_ExtractFiles(void)
 
     /* use valid chars before and after file list */
     hr = pExtractFiles("extract.cab", "dest", 0, " :\t: a.txt:testdir\\c.txt  \t:", NULL, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
     ok(RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to exist\n");
@@ -475,20 +475,20 @@ static void test_ExtractFiles(void)
 
     /* use invalid chars before and after file list */
     hr = pExtractFiles("extract.cab", "dest", 0, " +-\\ a.txt:testdir\\c.txt  a_:", NULL, 0);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %ld\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %d\n", hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
 
     /* try an empty file list */
     hr = pExtractFiles("extract.cab", "dest", 0, "", NULL, 0);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %ld\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %d\n", hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
 
     /* try a nonexistent file in the file list */
     hr = pExtractFiles("extract.cab", "dest", 0, "a.txt:idontexist:testdir\\c.txt", NULL, 0);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %ld\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %d\n", hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Exepected dest\\testdir to not exist\n");
@@ -510,22 +510,22 @@ static void test_AdvInstallFile(void)
 
     /* try invalid source directory */
     hr = pAdvInstallFile(NULL, NULL, "source.txt", destFolder, "destination.txt", 0, 0);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
 
     /* try invalid source file */
     hr = pAdvInstallFile(NULL, CURR_DIR, NULL, destFolder, "destination.txt", 0, 0);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
 
     /* try invalid destination directory */
     hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", NULL, "destination.txt", 0, 0);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
     ok(!DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to not exist\n");
 
     /* try copying to nonexistent destination directory */
     hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", destFolder, "destination.txt", 0, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to exist\n");
 
     /* native windows screws up if the source file doesn't exist */
@@ -534,7 +534,7 @@ static void test_AdvInstallFile(void)
     createTestFile("dest\\destination.txt");
     hr = pAdvInstallFile(NULL, CURR_DIR, "source.txt", destFolder,
                          "destination.txt", AIF_NOOVERWRITE | AIF_QUIET, 0);
-    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(DeleteFileA("dest\\destination.txt"), "Expected dest\\destination.txt to exist\n");
     ok(RemoveDirectoryA("dest"), "Expected dest to exist\n");
 
