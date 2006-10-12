@@ -53,7 +53,7 @@ static ULONG WINAPI IDirectMusicBandTrack_IUnknown_AddRef (LPUNKNOWN iface) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, UnknownVtbl, iface);
   ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+  TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
   DMBAND_LockModule();
 
@@ -64,7 +64,7 @@ static ULONG WINAPI IDirectMusicBandTrack_IUnknown_Release (LPUNKNOWN iface) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, UnknownVtbl, iface);
   ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+  TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
   if (ref == 0) {
     HeapFree(GetProcessHeap(), 0, This);
@@ -105,7 +105,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Init (LPDIRECTMUSI
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+  FIXME("(%p, %p, %p, %p, %d, %d): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
   return S_OK;
 }
 
@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_EndPlay (LPDIRECTM
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
   
-  FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): semi-stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+  FIXME("(%p, %p, %ld, %ld, %ld, %d, %p, %p, %d): semi-stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
   /* Sends following pMSG:
      - DMUS_PATCH_PMSG
      - DMUS_TRANSPOSE_PMSG
@@ -184,34 +184,34 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Clone (LPDIRECTMUS
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart), 
+  FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %d, %p, %p, %d): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
       wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+  FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
       wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %ld, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
+  FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %ld, %p, %ld, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+  FIXME("(%p, %p, %ld, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
   return S_OK;
 }
 
@@ -333,7 +333,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case FOURCC_LIST: {
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
@@ -343,7 +343,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
       do {
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 	ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) { 
 	case DMUS_FOURCC_BANDITEM_CHUNK: {
 	  DMUS_IO_BAND_ITEM_HEADER tmp_header;
@@ -414,7 +414,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 	  break;						
 	 }
 	}
-	TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
+	TRACE_(dmfile)(": ListCount[1] = %d < ListSize[1] = %d\n", ListCount[1], ListSize[1]);
       } while (ListCount[1] < ListSize[1]);
       break;
     }
@@ -425,7 +425,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
       break;						
     }
     }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
 
   return S_OK;
@@ -450,7 +450,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     
     hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
     if (FAILED(hr)) return hr;
@@ -474,7 +474,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
 	  do {
 	    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-	    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+            TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	    
 	    hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
 	    if (FAILED(hr)) return hr;
@@ -489,7 +489,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
 	      }
 	      }
 	    }  
-	    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+            TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
 	  } while (ListCount[0] < ListSize[0]);
 	  break;
 	}
@@ -516,7 +516,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
       }
       }
     }
-    TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
+    TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
   } while (StreamCount < StreamSize);  
 
   return S_OK;
@@ -533,11 +533,11 @@ static HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_Load (LPPERSISTSTREAM
   TRACE("(%p, %p): Loading\n", This, pStm);
 
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {
   case FOURCC_RIFF: {
     IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case DMUS_FOURCC_BANDTRACK_FORM: {
       TRACE_(dmfile)(": Band track form\n");

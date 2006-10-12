@@ -184,7 +184,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
     hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &ref_desc);
     if (FAILED(hr)) return hr;
@@ -196,7 +196,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
 	if (Chunk.dwSize != sizeof(DMUS_IO_REFERENCE)) return E_FAIL;
 	IStream_Read (pStm, &ref, sizeof(DMUS_IO_REFERENCE), NULL);
 	TRACE_(dmfile)(" - guidClassID: %s\n", debugstr_dmguid(&ref.guidClassID));
-	TRACE_(dmfile)(" - dwValidData: %lu\n", ref.dwValidData);
+	TRACE_(dmfile)(" - dwValidData: %u\n", ref.dwValidData);
 	break;
       } 
       default: {
@@ -207,7 +207,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
       }
       }
     }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
   
   ref_desc.dwValidData |= DMUS_OBJ_CLASS;
@@ -623,7 +623,7 @@ const char *debugstr_dmreturn (DWORD code) {
 	}
 	
 	/* if we didn't find it, return value */
-	return wine_dbg_sprintf("0x%08lX", code);
+	return wine_dbg_sprintf("0x%08X", code);
 }
 
 
@@ -685,8 +685,8 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
 		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
-		ptr += sprintf(ptr, " - dwSize = 0x%08lX\n", pDesc->dwSize);
-		ptr += sprintf(ptr, " - dwValidData = 0x%08lX ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+		ptr += sprintf(ptr, " - dwSize = 0x%08X\n", pDesc->dwSize);
+		ptr += sprintf(ptr, " - dwValidData = 0x%08X ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
 		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
 		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
 		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, " - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
@@ -707,7 +707,7 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 void debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 	if (pDesc) {
 		TRACE("DMUS_OBJECTDESC (%p):\n", pDesc);
-                TRACE(" - dwSize = %ld\n", pDesc->dwSize);
+                TRACE(" - dwSize = %d\n", pDesc->dwSize);
                 TRACE(" - dwValidData = %s\n", debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
                 if (pDesc->dwValidData & DMUS_OBJ_NAME)     TRACE(" - wszName = %s\n", debugstr_w(pDesc->wszName));
                 if (pDesc->dwValidData & DMUS_OBJ_CLASS)    TRACE(" - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
