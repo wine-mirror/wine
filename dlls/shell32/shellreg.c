@@ -68,6 +68,16 @@ HRESULT WINAPI SHRegOpenKeyW (
 }
 
 /*************************************************************************
+ * SHRegQueryValueA   [SHELL32.508]
+ *
+ */
+HRESULT WINAPI SHRegQueryValueA(HKEY hkey, LPSTR lpSubKey, LPSTR lpValue, LPDWORD lpcbValue)
+{
+	TRACE("(%p %s %p %p)\n", hkey, debugstr_a(lpSubKey), lpValue, lpcbValue);
+	return RegQueryValueA(hkey, lpSubKey, lpValue, (LONG*)lpcbValue);
+}
+
+/*************************************************************************
  * SHRegQueryValueExA   [SHELL32.509]
  *
  */

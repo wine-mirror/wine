@@ -215,7 +215,7 @@
  505 stdcall SHRegCloseKey (long)
  506 stdcall SHRegOpenKeyA (long str long)
  507 stdcall SHRegOpenKeyW (long wstr long)
- 508 stub SHRegQueryValueA
+ 508 stdcall SHRegQueryValueA(long str ptr ptr)
  509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr)
  510 stdcall SHRegQueryValueW (long long long long)
  511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr)
