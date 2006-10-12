@@ -111,7 +111,12 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
-#if (defined(_MSC_VER) || defined(__MINGW_H) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
+#ifdef USE_WS_PREFIX
+typedef unsigned char  WS_u_char;
+typedef unsigned short WS_u_short;
+typedef unsigned int   WS_u_int;
+typedef unsigned long  WS_u_long;
+#elif (defined(_MSC_VER) || defined(__MINGW_H) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char u_char;
 typedef unsigned short u_short;
@@ -286,7 +291,7 @@ struct WS(netent)
     char* n_name;                  /* official name of net */
     char** n_aliases;              /* alias list */
     short n_addrtype;              /* net address type */
-    u_long n_net;              /* network # */
+    WS(u_long) n_net;              /* network # */
 };
 
 
@@ -387,14 +392,14 @@ typedef UINT_PTR SOCKET;
 
 typedef struct WS(sockaddr)
 {
-        u_short sa_family;
-        char    sa_data[14];
+        WS(u_short) sa_family;
+        char        sa_data[14];
 } SOCKADDR, *PSOCKADDR, *LPSOCKADDR;
 
 typedef struct WS(linger)
 {
-    u_short l_onoff;           /* option on/off */
-    u_short l_linger;          /* linger time */
+    WS(u_short) l_onoff;           /* option on/off */
+    WS(u_short) l_linger;          /* linger time */
 } LINGER, *PLINGER, *LPLINGER;
 
 /*
@@ -416,7 +421,7 @@ typedef struct WS(linger)
 
 typedef struct WS(fd_set)
 {
-    u_int fd_count;            /* how many are SET? */
+    WS(u_int) fd_count;            /* how many are SET? */
 # ifndef USE_WS_PREFIX
     SOCKET fd_array[FD_SETSIZE];   /* an array of SOCKETs */
 # else
@@ -434,7 +439,7 @@ typedef struct WS(timeval)
 #endif
 
 #define __WS_FD_CLR(fd, set, cast) do { \
-    u_int __i; \
+    unsigned int __i; \
     for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
     { \
         if (((cast*)(set))->fd_array[__i] == fd) \
@@ -458,7 +463,7 @@ typedef struct WS(timeval)
  * only if it's not the case
  */
 #define __WS_FD_SET2(fd, set, cast) do { \
-    u_int __i; \
+    unsigned int __i; \
     for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
     { \
         if (((cast*)(set))->fd_array[__i]==(fd)) \
@@ -503,20 +508,20 @@ int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
 
 #ifdef WORDS_BIGENDIAN
 
-#define htonl(l) ((u_long)(l))
-#define htons(s) ((u_short)(s))
-#define ntohl(l) ((u_long)(l))
-#define ntohs(s) ((u_short)(s))
+#define htonl(l) ((WS(u_long))(l))
+#define htons(s) ((WS(u_short))(s))
+#define ntohl(l) ((WS(u_long))(l))
+#define ntohs(s) ((WS(u_short))(s))
 
 #else  /* WORDS_BIGENDIAN */
 
-inline static u_short __wine_ushort_swap(u_short s)
+inline static WS(u_short) __wine_ushort_swap(WS(u_short) s)
 {
     return (s >> 8) | (s << 8);
 }
-inline static u_long __wine_ulong_swap(u_long l)
+inline static WS(u_long) __wine_ulong_swap(WS(u_long) l)
 {
-    return ((u_long)__wine_ushort_swap((u_short)l) << 16) | __wine_ushort_swap((u_short)(l >> 16));
+    return ((WS(u_long))__wine_ushort_swap((WS(u_short))l) << 16) | __wine_ushort_swap((WS(u_short))(l >> 16));
 }
 #define htonl(l) __wine_ulong_swap(l)
 #define htons(s) __wine_ushort_swap(s)
@@ -564,14 +569,14 @@ inline static u_long __wine_ulong_swap(u_long l)
 #endif /* USE_WS_PREFIX */
 
 #ifndef USE_WS_PREFIX
-#define INADDR_ANY                 (u_long)0x00000000
+#define INADDR_ANY                 ((u_long)0x00000000)
 #define INADDR_LOOPBACK            0x7f000001
-#define INADDR_BROADCAST           (u_long)0xffffffff
+#define INADDR_BROADCAST           ((u_long)0xffffffff)
 #define INADDR_NONE                0xffffffff
 #else
-#define WS_INADDR_ANY              (u_long)0x00000000
+#define WS_INADDR_ANY              ((WS_u_long)0x00000000)
 #define WS_INADDR_LOOPBACK         0x7f000001
-#define WS_INADDR_BROADCAST        (u_long)0xffffffff
+#define WS_INADDR_BROADCAST        ((WS_u_long)0xffffffff)
 #define WS_INADDR_NONE             0xffffffff
 #endif /* USE_WS_PREFIX */
 
@@ -579,12 +584,12 @@ typedef struct WS(in_addr)
 {
     union {
         struct {
-            u_char s_b1,s_b2,s_b3,s_b4;
+            WS(u_char) s_b1,s_b2,s_b3,s_b4;
         } S_un_b;
         struct {
-            u_short s_w1,s_w2;
+            WS(u_short) s_w1,s_w2;
         } S_un_w;
-        u_long S_addr;
+        WS(u_long) S_addr;
     } S_un;
 #ifndef USE_WS_PREFIX
 #define s_addr  S_un.S_addr
@@ -606,7 +611,7 @@ typedef struct WS(in_addr)
 typedef struct WS(sockaddr_in)
 {
     short              sin_family;
-    u_short               sin_port;
+    WS(u_short)        sin_port;
     struct WS(in_addr) sin_addr;
     char               sin_zero[8];
 } SOCKADDR_IN, *PSOCKADDR_IN, *LPSOCKADDR_IN;
@@ -656,7 +661,7 @@ typedef struct WS(WSAData)
 #define SO_USELOOPBACK             0x0040
 #define SO_LINGER                  0x0080
 #define SO_OOBINLINE               0x0100
-#define SO_DONTLINGER              (u_int)(~SO_LINGER)
+#define SO_DONTLINGER              ((u_int)(~SO_LINGER))
 #define SO_SNDBUF                  0x1001
 #define SO_RCVBUF                  0x1002
 #define SO_SNDLOWAT                0x1003
@@ -689,7 +694,7 @@ typedef struct WS(WSAData)
 #define WS_SO_USELOOPBACK          0x0040
 #define WS_SO_LINGER               0x0080
 #define WS_SO_OOBINLINE            0x0100
-#define WS_SO_DONTLINGER           (u_int)(~WS_SO_LINGER)
+#define WS_SO_DONTLINGER           ((WS_u_int)(~WS_SO_LINGER))
 #define WS_SO_SNDBUF               0x1001
 #define WS_SO_RCVBUF               0x1002
 #define WS_SO_SNDLOWAT             0x1003
@@ -757,14 +762,14 @@ typedef struct WS(WSAData)
 #define SIOCGLOWAT                 _IOR('s',  3, u_long)
 #define SIOCATMARK                 _IOR('s',  7, u_long)
 #else
-#define WS_FIONREAD                WS__IOR('f', 127, u_long)
-#define WS_FIONBIO                 WS__IOW('f', 126, u_long)
-#define WS_FIOASYNC                WS__IOW('f', 125, u_long)
-#define WS_SIOCSHIWAT              WS__IOW('s',  0, u_long)
-#define WS_SIOCGHIWAT              WS__IOR('s',  1, u_long)
-#define WS_SIOCSLOWAT              WS__IOW('s',  2, u_long)
-#define WS_SIOCGLOWAT              WS__IOR('s',  3, u_long)
-#define WS_SIOCATMARK              WS__IOR('s',  7, u_long)
+#define WS_FIONREAD                WS__IOR('f', 127, WS_u_long)
+#define WS_FIONBIO                 WS__IOW('f', 126, WS_u_long)
+#define WS_FIOASYNC                WS__IOW('f', 125, WS_u_long)
+#define WS_SIOCSHIWAT              WS__IOW('s',  0, WS_u_long)
+#define WS_SIOCGHIWAT              WS__IOR('s',  1, WS_u_long)
+#define WS_SIOCSLOWAT              WS__IOW('s',  2, WS_u_long)
+#define WS_SIOCGLOWAT              WS__IOR('s',  3, WS_u_long)
+#define WS_SIOCATMARK              WS__IOR('s',  7, WS_u_long)
 #endif
 
 /*
@@ -984,13 +989,13 @@ typedef struct WS(WSAData)
  * "Winsock Function Typedefs" section in winsock2.h.
  */
 #if !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES
-HANDLE WINAPI WSAAsyncGetHostByAddr(HWND,u_int,const char*,int,int,char*,int);
-HANDLE WINAPI WSAAsyncGetHostByName(HWND,u_int,const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetProtoByName(HWND,u_int,const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND,u_int,int,char*,int);
-HANDLE WINAPI WSAAsyncGetServByName(HWND,u_int,const char*,const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetServByPort(HWND,u_int,int,const char*,char*,int);
-int WINAPI WSAAsyncSelect(SOCKET,HWND,u_int,long);
+HANDLE WINAPI WSAAsyncGetHostByAddr(HWND,WS(u_int),const char*,int,int,char*,int);
+HANDLE WINAPI WSAAsyncGetHostByName(HWND,WS(u_int),const char*,char*,int);
+HANDLE WINAPI WSAAsyncGetProtoByName(HWND,WS(u_int),const char*,char*,int);
+HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND,WS(u_int),int,char*,int);
+HANDLE WINAPI WSAAsyncGetServByName(HWND,WS(u_int),const char*,const char*,char*,int);
+HANDLE WINAPI WSAAsyncGetServByPort(HWND,WS(u_int),int,const char*,char*,int);
+int WINAPI WSAAsyncSelect(SOCKET,HWND,WS(u_int),long);
 int WINAPI WSACancelAsyncRequest(HANDLE);
 int WINAPI WSACancelBlockingCall(void);
 int WINAPI WSACleanup(void);
@@ -1018,9 +1023,9 @@ struct WS(servent)* WINAPI WS(getservbyname)(const char*,const char*);
 struct WS(servent)* WINAPI WS(getservbyport)(int,const char*);
 int WINAPI WS(getsockname)(SOCKET,struct WS(sockaddr)*,int*);
 int WINAPI WS(getsockopt)(SOCKET,int,int,char*,int*);
-unsigned long WINAPI WS(inet_addr)(const char*);
+WS(u_long) WINAPI WS(inet_addr)(const char*);
 char* WINAPI WS(inet_ntoa)(struct WS(in_addr));
-int WINAPI WS(ioctlsocket)(SOCKET,long,u_long*);
+int WINAPI WS(ioctlsocket)(SOCKET,long,WS(u_long)*);
 int WINAPI WS(listen)(SOCKET,int);
 int WINAPI WS(recv)(SOCKET,char*,int,int);
 int WINAPI WS(recvfrom)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*);

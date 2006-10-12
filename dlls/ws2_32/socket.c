@@ -1996,7 +1996,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
  *		htonl			(WINSOCK.8)
  *		htonl			(WS2_32.8)
  */
-u_long WINAPI WS_htonl(u_long hostlong)
+WS_u_long WINAPI WS_htonl(WS_u_long hostlong)
 {
     return htonl(hostlong);
 }
@@ -2006,7 +2006,7 @@ u_long WINAPI WS_htonl(u_long hostlong)
  *		htons			(WINSOCK.9)
  *		htons			(WS2_32.9)
  */
-u_short WINAPI WS_htons(u_short hostshort)
+WS_u_short WINAPI WS_htons(WS_u_short hostshort)
 {
     return htons(hostshort);
 }
@@ -2018,7 +2018,7 @@ u_short WINAPI WS_htons(u_short hostshort)
  *  socket. But why? This function only translates a host byte order
  *  u_long into a network byte order u_long...
  */
-int WINAPI WSAHtonl(SOCKET s, u_long hostlong, u_long *lpnetlong)
+int WINAPI WSAHtonl(SOCKET s, WS_u_long hostlong, WS_u_long *lpnetlong)
 {
     if (lpnetlong)
     {
@@ -2036,7 +2036,7 @@ int WINAPI WSAHtonl(SOCKET s, u_long hostlong, u_long *lpnetlong)
  *  socket. But why? This function only translates a host byte order
  *  u_short into a network byte order u_short...
  */
-int WINAPI WSAHtons(SOCKET s, u_short hostshort, u_short *lpnetshort)
+int WINAPI WSAHtons(SOCKET s, WS_u_short hostshort, WS_u_short *lpnetshort)
 {
 
     if (lpnetshort)
@@ -2053,7 +2053,7 @@ int WINAPI WSAHtons(SOCKET s, u_short hostshort, u_short *lpnetshort)
  *		inet_addr		(WINSOCK.10)
  *		inet_addr		(WS2_32.11)
  */
-u_long WINAPI WS_inet_addr(const char *cp)
+WS_u_long WINAPI WS_inet_addr(const char *cp)
 {
     return inet_addr(cp);
 }
@@ -2063,7 +2063,7 @@ u_long WINAPI WS_inet_addr(const char *cp)
  *		ntohl			(WINSOCK.14)
  *		ntohl			(WS2_32.14)
  */
-u_long WINAPI WS_ntohl(u_long netlong)
+WS_u_long WINAPI WS_ntohl(WS_u_long netlong)
 {
     return ntohl(netlong);
 }
@@ -2073,7 +2073,7 @@ u_long WINAPI WS_ntohl(u_long netlong)
  *		ntohs			(WINSOCK.15)
  *		ntohs			(WS2_32.15)
  */
-u_short WINAPI WS_ntohs(u_short netshort)
+WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
 {
     return ntohs(netshort);
 }
@@ -2121,14 +2121,14 @@ INT WINAPI WSAIoctl(SOCKET s,
    switch( dwIoControlCode )
    {
    case WS_FIONBIO:
-        if (cbInBuffer != sizeof(u_long)) {
+        if (cbInBuffer != sizeof(WS_u_long)) {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
         return WS_ioctlsocket( s, WS_FIONBIO, lpvInBuffer);
 
    case WS_FIONREAD:
-        if (cbOutBuffer != sizeof(u_long)) {
+        if (cbOutBuffer != sizeof(WS_u_long)) {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
@@ -2286,7 +2286,7 @@ INT WINAPI WSAIoctl(SOCKET s,
 /***********************************************************************
  *		ioctlsocket		(WS2_32.10)
  */
-int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
+int WINAPI WS_ioctlsocket(SOCKET s, long cmd, WS_u_long *argp)
 {
     int fd;
     long newcmd  = cmd;
@@ -3628,7 +3628,7 @@ int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 {
   int i = set->fd_count;
 
-  TRACE("(%d,%8lx(%i))\n", s,(unsigned long)set, i);
+  TRACE("(%d,%p(%i))\n", s, set, i);
 
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -4254,7 +4254,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                         ptrPort = strchr(workBuffer,':');
                         if (ptrPort)
                         {
-                            ((LPSOCKADDR_IN)lpAddress)->sin_port = (u_short)atoi(ptrPort+1);
+                            ((LPSOCKADDR_IN)lpAddress)->sin_port = (WS_u_short)atoi(ptrPort+1);
                             *ptrPort = '\0';
                         }
                         else
@@ -4586,7 +4586,7 @@ INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
 /***********************************************************************
  *              WSANtohl                                   (WS2_32.64)
  */
-INT WINAPI WSANtohl( SOCKET s, u_long netlong, u_long* lphostlong )
+INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
 {
     TRACE( "(0x%04x 0x%08lx %p)\n", s, netlong, lphostlong );
 
@@ -4599,7 +4599,7 @@ INT WINAPI WSANtohl( SOCKET s, u_long netlong, u_long* lphostlong )
 /***********************************************************************
  *              WSANtohs                                   (WS2_32.65)
  */
-INT WINAPI WSANtohs( SOCKET s, u_short netshort, u_short* lphostshort )
+INT WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short* lphostshort )
 {
     TRACE( "(0x%04x 0x%08x %p)\n", s, netshort, lphostshort );
 
