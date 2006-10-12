@@ -2538,6 +2538,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
       /* If the buffer fill reaches eof but fread wouldn't, clear eof. */
       if (i > 0 && i < file->_cnt) {
         MSVCRT_fdesc[file->_file].wxflag &= ~WX_ATEOF;
+        file->_flag &= ~MSVCRT__IOEOF;
       }
       if (i > 0) {
         memcpy(ptr, file->_ptr, i);
