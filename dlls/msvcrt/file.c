@@ -2524,7 +2524,29 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
   }
   while(rcnt>0)
   {
-    int i = _read(file->_file,ptr, rcnt);
+    int i;
+    /* Fill the buffer on small reads.
+     * TODO: Use a better buffering strategy.
+     */
+    if (!file->_cnt && size*nmemb <= MSVCRT_BUFSIZ/2 && !(file->_flag & MSVCRT__IONBF)) {
+      if (file->_bufsiz == 0) {
+        msvcrt_alloc_buffer(file);
+      }
+      file->_cnt = _read(file->_file, file->_base, file->_bufsiz);
+      file->_ptr = file->_base;
+      i = (file->_cnt<rcnt) ? file->_cnt : rcnt;
+      /* If the buffer fill reaches eof but fread wouldn't, clear eof. */
+      if (i > 0 && i < file->_cnt) {
+        MSVCRT_fdesc[file->_file].wxflag &= ~WX_ATEOF;
+      }
+      if (i > 0) {
+        memcpy(ptr, file->_ptr, i);
+        file->_cnt -= i;
+        file->_ptr += i;
+      }
+    } else {
+      i = _read(file->_file,ptr, rcnt);
+    }
     pread += i;
     rcnt -= i;
     /* expose feof condition in the flags
