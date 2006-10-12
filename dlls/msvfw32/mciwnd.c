@@ -104,7 +104,7 @@ BOOL VFWAPIV MCIWndRegisterClass(void)
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                            DWORD dwStyle, LPCWSTR szFile)
 {
-    TRACE("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
+    TRACE("%p %p %x %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 
     MCIWndRegisterClass();
 
@@ -753,7 +753,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETLENGTH: %ld\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETLENGTH: %d\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 
@@ -770,7 +770,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETSTART: %ld\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETSTART: %d\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 
@@ -1066,7 +1066,7 @@ end_of_mci_open:
         return 0;
 
     case MCIWNDM_GETSTYLES:
-        TRACE("MCIWNDM_GETSTYLES: %08lx\n", mwi->dwStyle & 0xffff);
+        TRACE("MCIWNDM_GETSTYLES: %08x\n", mwi->dwStyle & 0xffff);
         return mwi->dwStyle & 0xffff;
 
     case MCIWNDM_GETDEVICEA:

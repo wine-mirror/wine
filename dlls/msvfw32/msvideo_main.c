@@ -82,7 +82,7 @@ HMODULE MSVFW32_hModule;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("%p,%lx,%p\n", hinst, reason, reserved);
+    TRACE("%p,%x,%p\n", hinst, reason, reserved);
 
     switch(reason)
     {
@@ -205,7 +205,7 @@ static BOOL ICInfo_enum_handler(const char *drv, int nr, void *param)
  */
 BOOL VFWAPI ICInfo( DWORD fccType, DWORD fccHandler, ICINFO *lpicinfo)
 {
-    TRACE("(%s,%s/%08lx,%p)\n", 
+    TRACE("(%s,%s/%08x,%p)\n",
           wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), fccHandler, lpicinfo);
 
     lpicinfo->fccType = fccType;
@@ -394,7 +394,7 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     ICOPEN      icopen;
     WINE_HIC*   whic;
 
-    TRACE("(%s,%s,%d,%p,%08lx)\n", 
+    TRACE("(%s,%s,%d,%p,%08x)\n",
           wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler, lpfnHandler16);
 
     icopen.dwSize		= sizeof(ICOPEN);
@@ -462,7 +462,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
     LRESULT	ret;
     WINE_HIC*   whic = MSVIDEO_GetHicPtr(hic);
 
-    TRACE("(%p,%p,%ld)\n", hic, picinfo, cb);
+    TRACE("(%p,%p,%d)\n", hic, picinfo, cb);
 
     whic = MSVIDEO_GetHicPtr(hic);
     if (!whic) return ICERR_BADHANDLE;
@@ -607,11 +607,11 @@ HIC VFWAPI ICGetDisplayFormat(
 	ICDecompressGetFormat(tmphic,lpbiIn,lpbiOut);
 
 	if (lpbiOut->biCompression != 0) {
-	   FIXME("Ooch, how come decompressor outputs compressed data (%ld)??\n",
+           FIXME("Ooch, how come decompressor outputs compressed data (%d)??\n",
 			 lpbiOut->biCompression);
 	}
 	if (lpbiOut->biSize < sizeof(*lpbiOut)) {
-	   FIXME("Ooch, size of output BIH is too small (%ld)\n",
+           FIXME("Ooch, size of output BIH is too small (%d)\n",
 			 lpbiOut->biSize);
 	   lpbiOut->biSize = sizeof(*lpbiOut);
 	}
@@ -649,7 +649,7 @@ ICCompress(
 {
 	ICCOMPRESS	iccmp;
 
-	TRACE("(%p,%ld,%p,%p,%p,%p,...)\n",hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
+	TRACE("(%p,%d,%p,%p,%p,%p,...)\n",hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
 
 	iccmp.dwFlags		= dwFlags;
 
@@ -677,9 +677,9 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	ICDECOMPRESS	icd;
 	DWORD ret;
 
-	TRACE("(%p,%ld,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
+	TRACE("(%p,%d,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
-	TRACE("lpBits[0] == %lx\n",((LPDWORD)lpBits)[0]);
+	TRACE("lpBits[0] == %x\n",((LPDWORD)lpBits)[0]);
 
 	icd.dwFlags	= dwFlags;
 	icd.lpbiInput	= lpbiFormat;
@@ -690,9 +690,9 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.ckid	= 0;
 	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD_PTR)&icd,sizeof(ICDECOMPRESS));
 
-	TRACE("lpBits[0] == %lx\n",((LPDWORD)lpBits)[0]);
+	TRACE("lpBits[0] == %x\n",((LPDWORD)lpBits)[0]);
 
-	TRACE("-> %ld\n",ret);
+	TRACE("-> %d\n",ret);
 
 	return ret;
 }
@@ -739,7 +739,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv, BOOL enum_all)
             {
                 if (ICCompressQuery(hic, pcv->lpbiIn, NULL) != ICERR_OK)
                 {
-                    TRACE("fccHandler %s doesn't support input DIB format %ld\n",
+                    TRACE("fccHandler %s doesn't support input DIB format %d\n",
                           wine_dbgstr_fcc(icinfo.fccHandler), pcv->lpbiIn->bmiHeader.biCompression);
                     ICClose(hic);
                     continue;
@@ -1087,7 +1087,7 @@ LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, DWORD_P
         XX(ICM_DECOMPRESSEX_END);
         XX(ICM_SET_STATUS_PROC);
     default:
-        FIXME("(%p,0x%08lx,0x%08lx,0x%08lx) unknown message\n",whic,(DWORD)msg,lParam1,lParam2);
+        FIXME("(%p,0x%08x,0x%08lx,0x%08lx) unknown message\n",whic,(DWORD)msg,lParam1,lParam2);
     }
     
 #undef XX
@@ -1138,7 +1138,7 @@ DWORD VFWAPIV ICDrawBegin(
 
 	ICDRAWBEGIN	icdb;
 
-	TRACE("(%p,%ld,%p,%p,%p,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
+	TRACE("(%p,%d,%p,%p,%p,%u,%u,%u,%u,%p,%u,%u,%u,%u,%d,%d)\n",
 		  hic, dwFlags, hpal, hwnd, hdc, xDst, yDst, dxDst, dyDst,
 		  lpbi, xSrc, ySrc, dxSrc, dySrc, dwRate, dwScale);
 
@@ -1166,7 +1166,7 @@ DWORD VFWAPIV ICDrawBegin(
 DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWORD cbData, LONG lTime) {
 	ICDRAW	icd;
 
-	TRACE("(%p,%ld,%p,%p,%ld,%ld)\n",hic,dwFlags,lpFormat,lpData,cbData,lTime);
+	TRACE("(%p,%d,%p,%p,%d,%d)\n",hic,dwFlags,lpFormat,lpData,cbData,lTime);
 
 	icd.dwFlags = dwFlags;
 	icd.lpFormat = lpFormat;
@@ -1225,7 +1225,7 @@ HANDLE VFWAPI ICImageCompress(
 	LPBITMAPINFO lpbiOut, LONG lQuality,
 	LONG* plSize)
 {
-	FIXME("(%p,%08x,%p,%p,%p,%ld,%p)\n",
+	FIXME("(%p,%08x,%p,%p,%p,%d,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut, lQuality, plSize);
 
 	return NULL;
@@ -1329,7 +1329,7 @@ HANDLE VFWAPI ICImageDecompress(
 		goto err;
 	bInDecompress = TRUE;
 
-	TRACE( "cbHdr %ld, biSizeImage %ld\n", cbHdr, biSizeImage );
+	TRACE( "cbHdr %d, biSizeImage %d\n", cbHdr, biSizeImage );
 
 	hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_ZEROINIT, cbHdr + biSizeImage );
 	if ( hMem == NULL )
@@ -1374,7 +1374,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
 
     if (pc->cbState != sizeof(ICCOMPRESS))
     {
-       ERR("Invalid cbState %li\n", pc->cbState);
+       ERR("Invalid cbState %i\n", pc->cbState);
        return NULL;
     }
 
@@ -1404,7 +1404,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
        *pfKey = FALSE;
 
     *plSize = icComp->lpbiOutput->biSizeImage;
-    TRACE(" -- 0x%08lx\n", ret);
+    TRACE(" -- 0x%08x\n", ret);
     if (ret == ICERR_OK)
     {
        LPVOID oldprev, oldout;
@@ -1428,7 +1428,7 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
     DWORD ret;
     TRACE("(%p)\n", pc);
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
-    TRACE(" -- %lx\n", ret);
+    TRACE(" -- %x\n", ret);
     HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
     HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
     HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
@@ -1475,19 +1475,19 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
        return FALSE;
     }
     TRACE("Compvars:\n"
-	  "\tpc:\n"
-	  "\tsize: %li\n"
-	  "\tflags: %li\n"
-	  "\thic: %p\n"
-	  "\ttype: %lx\n"
-	  "\thandler: %lx\n"
-	  "\tin/out: %p/%p\n"
-	  "key/data/quality: %li/%li/%li\n",
+          "\tpc:\n"
+          "\tsize: %i\n"
+          "\tflags: %i\n"
+          "\thic: %p\n"
+          "\ttype: %x\n"
+          "\thandler: %x\n"
+          "\tin/out: %p/%p\n"
+          "key/data/quality: %i/%i/%i\n",
 	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, pc->fccHandler,
 	     pc->lpbiIn, pc->lpbiOut, pc->lKey, pc->lDataRate, pc->lQ);
 
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
-    TRACE(" -- %lx\n", ret);
+    TRACE(" -- %x\n", ret);
     if (ret == ICERR_OK)
     {
        ICCOMPRESS* icComp = (ICCOMPRESS *)pc->lpState;
