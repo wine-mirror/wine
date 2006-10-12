@@ -1913,7 +1913,7 @@ static void test_try_transform(void)
     hrec = 0;
     query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
     r = do_query(hdb, query, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "select query failed\n");
+    ok(r == ERROR_SUCCESS, "select query failed\n");
     MsiCloseHandle(hrec);
 
     /* check unchanged value */
@@ -1927,7 +1927,7 @@ static void test_try_transform(void)
     hrec = 0;
     query = "select * from `MOO` where `NOO` = 3";
     r = do_query(hdb, query, &hrec);
-    todo_wine ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
+    ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
     if (hrec) MsiCloseHandle(hrec);
 
     MsiCloseHandle( hdb );

@@ -1762,7 +1762,13 @@ static UINT* msi_record_to_row( MSITABLEVIEW *tv, MSIRECORD *rec )
             }
         }
         else
+        {
             data[i] = MSI_RecordGetInteger( rec, i+1 );
+            if ((tv->columns[i].type&0xff) == 2)
+                data[i] += 0x8000;
+            else
+                data[i] += 0x80000000;
+        }
     }
     return data;
 }
