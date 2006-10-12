@@ -30,6 +30,8 @@
 # error You must include d3d.h, d3d8.h or d3d9.h header to use this header
 #endif
 
+typedef DWORD WINED3DCOLOR;
+
 typedef enum _WINED3DLIGHTTYPE {
   WINED3DLIGHT_POINT          = 1,
   WINED3DLIGHT_SPOT           = 2,
