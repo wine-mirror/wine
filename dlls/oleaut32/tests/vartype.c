@@ -81,7 +81,7 @@ int val_empty, val_null;
 
 #define _EXPECTRES(res, x, fs) \
   ok((hres == S_OK && out == (CONV_TYPE)(x)) || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected " #x ", got " fs "; hres=0x%08lx\n", out, hres)
+     "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #define EXPECT(x)       EXPECTRES(S_OK, (x))
 #define EXPECT_OVERFLOW EXPECTRES(DISP_E_OVERFLOW, DISP_E_OVERFLOW)
 #define EXPECT_MISMATCH EXPECTRES(DISP_E_TYPEMISMATCH,DISP_E_TYPEMISMATCH)
@@ -91,7 +91,7 @@ int val_empty, val_null;
 #define EXPECT_GT       EXPECTRES(VARCMP_GT, VARCMP_GT)
 #define EXPECT_EQ       EXPECTRES(VARCMP_EQ, VARCMP_EQ)
 #define EXPECT_DBL(x)   \
-  ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08lx\n", (x), out, hres)
+  ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08x\n", (x), out, hres)
 
 #define CONVERT(func, val) in = val; hres = p##func(in, &out)
 #define CONVERTRANGE(func,start,end) for (i = start; i < end; i+=1) { CONVERT(func, i); EXPECT(i); };
@@ -138,25 +138,25 @@ int val_empty, val_null;
   V_VT(&vSrc) = vt; srcval = in; \
   hres = VariantCopy(&vDst, &vSrc); \
   ok(hres == S_OK && V_VT(&vDst) == vt && dstval == in, \
-     "copy hres 0x%lX, type %d, value (" fs ") " fs "\n", hres, V_VT(&vDst), val, dstval); \
+     "copy hres 0x%X, type %d, value (" fs ") " fs "\n", hres, V_VT(&vDst), val, dstval); \
   V_VT(&vSrc) = vt|VT_BYREF; srcref = &in; \
   hres = VariantCopy(&vDst, &vSrc); \
   ok(hres == S_OK && V_VT(&vDst) == (vt|VT_BYREF) && dstref == &in, \
-     "ref hres 0x%lX, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, dstref); \
+     "ref hres 0x%X, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, dstref); \
   hres = VariantCopyInd(&vDst, &vSrc); \
   ok(hres == S_OK && V_VT(&vDst) == vt && dstval == in, \
-     "ind hres 0x%lX, type %d, value (" fs ") " fs "\n", hres, V_VT(&vDst), val, dstval); \
+     "ind hres 0x%X, type %d, value (" fs ") " fs "\n", hres, V_VT(&vDst), val, dstval); \
   } while(0)
 
 #define CHANGETYPEEX(typ) hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, typ)
 
 #define TYPETEST(typ,res,fs) CHANGETYPEEX(typ); \
   ok(hres == S_OK && V_VT(&vDst) == typ && (CONV_TYPE)res == in, \
-     "hres=0x%lX, type=%d (should be %d(" #typ ")), value=" fs " (should be " fs ")\n", \
+     "hres=0x%X, type=%d (should be %d(" #typ ")), value=" fs " (should be " fs ")\n", \
       hres, V_VT(&vDst), typ, (CONV_TYPE)res, in);
 #define TYPETESTI8(typ,res) CHANGETYPEEX(typ); \
   ok(hres == S_OK && V_VT(&vDst) == typ && (CONV_TYPE)res == in, \
-     "hres=0x%lX, type=%d (should be %d(" #typ ")), value=%d (should be 1)\n", \
+     "hres=0x%X, type=%d (should be %d(" #typ ")), value=%d (should be 1)\n", \
       hres, V_VT(&vDst), typ, (int)res);
 #define BADVAR(typ)   CHANGETYPEEX(typ); out = (CONV_TYPE)hres; EXPECT_BADVAR
 #define MISMATCH(typ) CHANGETYPEEX(typ); out = (CONV_TYPE)hres; EXPECT_MISMATCH
@@ -220,13 +220,13 @@ int val_empty, val_null;
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_BOOL); \
   ok(hres == S_OK && V_VT(&vDst) == VT_BOOL && \
      (V_BOOL(&vDst) == VARIANT_TRUE || (V_VT(&vSrc) == VT_BOOL && V_BOOL(&vDst) == 1)), \
-     "->VT_BOOL hres=0x%lX, type=%d (should be VT_BOOL), value %d (should be VARIANT_TRUE)\n", \
+     "->VT_BOOL hres=0x%X, type=%d (should be VT_BOOL), value %d (should be VARIANT_TRUE)\n", \
      hres, V_VT(&vDst), V_BOOL(&vDst)); \
   if (HAVE_OLEAUT32_CY) \
   { \
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_CY); \
     ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == CY_MULTIPLIER, \
-       "->VT_CY hres=0x%lX, type=%d (should be VT_CY), value (%08lx,%08lx) (should be CY_MULTIPLIER)\n", \
+       "->VT_CY hres=0x%X, type=%d (should be VT_CY), value (%08x,%08x) (should be CY_MULTIPLIER)\n", \
        hres, V_VT(&vDst), S(V_CY(&vDst)).Hi, S(V_CY(&vDst)).Lo); \
   } \
   if (V_VT(&vSrc) != VT_DATE) \
@@ -234,7 +234,7 @@ int val_empty, val_null;
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_BSTR); \
     ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && \
        V_BSTR(&vDst) && V_BSTR(&vDst)[0] == '1' && V_BSTR(&vDst)[1] == '\0', \
-       "->VT_BSTR hres=0x%lX, type=%d (should be VT_BSTR), *bstr='%c'\n", \
+       "->VT_BSTR hres=0x%X, type=%d (should be VT_BSTR), *bstr='%c'\n", \
        hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?'); \
   } \
   if (HAVE_OLEAUT32_DECIMAL) \
@@ -243,14 +243,14 @@ int val_empty, val_null;
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && \
        S(U(V_DECIMAL(&vDst))).sign == 0 && S(U(V_DECIMAL(&vDst))).scale == 0 && \
        V_DECIMAL(&vDst).Hi32 == 0 && U1(V_DECIMAL(&vDst)).Lo64 == (ULONGLONG)in, \
-       "->VT_DECIMAL hres=0x%lX, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%lu, lo=(%8lx %8lx),\n", \
+       "->VT_DECIMAL hres=0x%X, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%u, lo=(%8x %8x),\n", \
        hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign, S(U(V_DECIMAL(&vDst))).scale, \
        V_DECIMAL(&vDst).Hi32, S1(U1(V_DECIMAL(&vDst))).Mid32, S1(U1(V_DECIMAL(&vDst))).Lo32); \
   } \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_EMPTY); \
-  ok(hres == S_OK && V_VT(&vDst) == VT_EMPTY, "->VT_EMPTY hres=0x%lX, type=%d (should be VT_EMPTY)\n", hres, V_VT(&vDst)); \
+  ok(hres == S_OK && V_VT(&vDst) == VT_EMPTY, "->VT_EMPTY hres=0x%X, type=%d (should be VT_EMPTY)\n", hres, V_VT(&vDst)); \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_NULL); \
-  ok(hres == S_OK && V_VT(&vDst) == VT_NULL, "->VT_NULL hres=0x%lX, type=%d (should be VT_NULL)\n", hres, V_VT(&vDst)); \
+  ok(hres == S_OK && V_VT(&vDst) == VT_NULL, "->VT_NULL hres=0x%X, type=%d (should be VT_NULL)\n", hres, V_VT(&vDst)); \
   MISMATCH(VT_DISPATCH); \
   MISMATCH(VT_ERROR); \
   MISMATCH(VT_UNKNOWN); \
@@ -1107,18 +1107,18 @@ static void test_VarUI1FromDisp(void)
   dispatch.bFailInvoke = FALSE;
 
   hres = VarUI1FromDisp((IDispatch*)&dispatch, in, &out);
-  trace("0x%08lx\n", hres);
+  trace("0x%08x\n", hres);
 
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
-  trace("0x%08lx\n", hres);
+  trace("0x%08x\n", hres);
 
   dispatch.bFailInvoke = TRUE;
 
   hres = VarUI1FromDisp((IDispatch*)&dispatch, in, &out);
-  trace("0x%08lx\n", hres);
+  trace("0x%08x\n", hres);
 
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
-  trace("0x%08lx\n", hres);
+  trace("0x%08x\n", hres);
 }
 
 static void test_VarUI1Copy(void)
@@ -1636,7 +1636,7 @@ static void test_VarUI2ChangeTypeEx(void)
 #undef CONV_TYPE
 #define CONV_TYPE LONG
 #undef EXPECTRES
-#define EXPECTRES(res, x) _EXPECTRES(res, x, "%ld")
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 
 
 static void test_VarI4FromI1(void)
@@ -1866,7 +1866,7 @@ static void test_VarI4FromStr(void)
 
 static void test_VarI4Copy(void)
 {
-  COPYTEST(1l, VT_I4, V_I4(&vSrc), V_I4(&vDst), V_I4REF(&vSrc), V_I4REF(&vDst), "%ld");
+  COPYTEST(1, VT_I4, V_I4(&vSrc), V_I4(&vDst), V_I4REF(&vSrc), V_I4REF(&vDst), "%d");
 }
 
 static void test_VarI4ChangeTypeEx(void)
@@ -1876,15 +1876,15 @@ static void test_VarI4ChangeTypeEx(void)
 
   in = 1;
 
-  INITIAL_TYPETEST(VT_I4, V_I4, "%ld");
+  INITIAL_TYPETEST(VT_I4, V_I4, "%d");
   COMMON_TYPETEST;
-  NEGATIVE_TYPETEST(VT_I4, V_I4, "%ld", VT_UI4, V_UI4);
+  NEGATIVE_TYPETEST(VT_I4, V_I4, "%d", VT_UI4, V_UI4);
 }
 
 #undef CONV_TYPE
 #define CONV_TYPE ULONG
 #undef EXPECTRES
-#define EXPECTRES(res, x) _EXPECTRES(res, x, "%lu")
+#define EXPECTRES(res, x) _EXPECTRES(res, x, "%u")
 
 static void test_VarUI4FromI1(void)
 {
@@ -2099,7 +2099,7 @@ static void test_VarUI4Copy(void)
 {
   if (!IS_ANCIENT)
   {
-      COPYTEST(1ul, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%lu");
+      COPYTEST(1u, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%u");
   }
 }
 
@@ -2112,9 +2112,9 @@ static void test_VarUI4ChangeTypeEx(void)
 
   if (!IS_ANCIENT)
   {
-    INITIAL_TYPETEST(VT_UI4, V_UI4, "%lu");
+    INITIAL_TYPETEST(VT_UI4, V_UI4, "%u");
     COMMON_TYPETEST;
-    NEGATIVE_TYPETEST(VT_UI4, V_UI4, "%lu", VT_I4, V_I4);
+    NEGATIVE_TYPETEST(VT_UI4, V_UI4, "%u", VT_I4, V_I4);
   }
 }
 
@@ -2127,17 +2127,17 @@ static void test_VarUI4ChangeTypeEx(void)
 #undef EXPECTRES
 #define EXPECTRES(res, x) \
   ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08lx\n", hres)
+     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTI8(x) \
   ok((hres == S_OK && out == (CONV_TYPE)(x)), \
-     "expected " #x "(%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
+     "expected " #x "(%u,%u), got (%u,%u); hres=0x%08x\n", \
       (ULONG)((LONG64)(x) >> 32), (ULONG)((x) & 0xffffffff), \
       (ULONG)(out >> 32), (ULONG)(out & 0xffffffff), hres)
 
 #define EXPECTI864(x,y) \
   ok(hres == S_OK && (out >> 32) == (CONV_TYPE)(x) && (out & 0xffffffff) == (CONV_TYPE)(y), \
-     "expected " #x "(%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
+     "expected " #x "(%u,%u), got (%u,%u); hres=0x%08x\n", \
       (ULONG)(x), (ULONG)(y), \
       (ULONG)(out >> 32), (ULONG)(out & 0xffffffff), hres)
 
@@ -2364,16 +2364,16 @@ static void test_VarI8Copy(void)
   V_I8(&vSrc) = in;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == VT_I8 && V_I8(&vDst) == in,
-     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
      hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_I8(&vDst) >> 32), (UINT)V_I8(&vDst) );
   V_VT(&vSrc) = VT_I8|VT_BYREF;
   V_I8REF(&vSrc) = &in;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == (VT_I8|VT_BYREF) && V_I8REF(&vDst) == &in,
-     "ref hres 0x%lX, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_I8REF(&vDst));
+     "ref hres 0x%X, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_I8REF(&vDst));
   hres = VariantCopyInd(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == VT_I8 && V_I8(&vDst) == in,
-     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
      hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_I8(&vDst) >> 32), (UINT)V_I8(&vDst) );
 }
 
@@ -2618,16 +2618,16 @@ static void test_VarUI8Copy(void)
   V_UI8(&vSrc) = in;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
-     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
      hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
   V_VT(&vSrc) = VT_UI8|VT_BYREF;
   V_UI8REF(&vSrc) = &in;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == (VT_UI8|VT_BYREF) && V_UI8REF(&vDst) == &in,
-     "ref hres 0x%lX, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_UI8REF(&vDst));
+     "ref hres 0x%X, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_UI8REF(&vDst));
   hres = VariantCopyInd(&vDst, &vSrc);
   ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
-     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     "copy hres 0x%X, type %d, value (%x%08x) %x%08x\n",
      hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
 }
 
@@ -3470,7 +3470,7 @@ static void test_VarDateChangeTypeEx(void)
   hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR); 
   ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) &&
           (!lstrcmpW(V_BSTR(&vDst), sz25570) || !lstrcmpW(V_BSTR(&vDst), sz25570_2)),
-          "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
+          "hres=0x%X, type=%d (should be VT_BSTR), *bstr=%s\n", 
           hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
@@ -3478,7 +3478,7 @@ static void test_VarDateChangeTypeEx(void)
   {
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE|VARIANT_USE_NLS, VT_BSTR);
     ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !lstrcmpW(V_BSTR(&vDst), sz25570Nls), 
-            "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
+            "hres=0x%X, type=%d (should be VT_BSTR), *bstr=%s\n", 
             hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
   }
 }
@@ -3492,15 +3492,15 @@ static void test_VarDateChangeTypeEx(void)
 #undef EXPECTRES
 #define EXPECTRES(res, x) \
   ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08lx\n", hres)
+     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTCY(x) \
   ok((hres == S_OK && out.int64 == (LONGLONG)(x*CY_MULTIPLIER)), \
-     "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", S(out).Hi, S(out).Lo, hres)
+     "expected " #x "*CY_MULTIPLIER, got (%8x %8x); hres=0x%08x\n", S(out).Hi, S(out).Lo, hres)
 
 #define EXPECTCY64(x,y) \
   ok(hres == S_OK && S(out).Hi == (LONG)x && S(out).Lo == y, \
-     "expected " #x #y "(%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
+     "expected " #x #y "(%u,%u), got (%u,%u); hres=0x%08x\n", \
       (ULONG)(x), (ULONG)(y), S(out).Hi, S(out).Lo, hres)
 
 static void test_VarCyFromI1(void)
@@ -3991,12 +3991,12 @@ static void test_VarCyInt(void)
 #undef EXPECTRES
 #define EXPECTRES(res, x) \
   ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08lx\n", hres)
+     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
   S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
   out.Hi32 == (ULONG)(hi) && U1(out).Lo64 == (ULONG64)(lo), \
-  "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
+  "expected (%d,%d,%d,(%x %x)), got (%d,%d,%d,(%x %x)) hres 0x%08x\n", \
   scl, sgn, hi, (LONG)((LONG64)(lo) >> 32), (LONG)((lo) & 0xffffffff), S(U(out)).scale, \
   S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
@@ -4004,7 +4004,7 @@ static void test_VarCyInt(void)
   S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
   out.Hi32 == (ULONG)(hi) && S1(U1(out)).Mid32 == (ULONG)(mid) && \
   S1(U1(out)).Lo32 == (ULONG)(lo), \
-  "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
+  "expected (%d,%d,%d,(%x %x)), got (%d,%d,%d,(%x %x)) hres 0x%08x\n", \
   scl, sgn, hi, (LONG)(mid), (LONG)(lo), S(U(out)).scale, \
   S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
@@ -4279,7 +4279,7 @@ static void test_VarDecAdd(void)
   SETDEC64(l,0,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd);
   EXPECTDEC64(0,0,0xffffffff,0xffffffff,0xfffffffe);
   SETDEC64(l,0,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,0,0,0,1); MATH2(VarDecAdd);
-  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
 
   /* Promotes to the highest scale, so here the results are in the scale of 2 */
@@ -4331,7 +4331,7 @@ static void test_VarDecMul(void)
   SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC(r,0,0,0,2000000000);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
   /* actual overflow - right operand is 10 times the previous value */
   SETDEC64(l,0,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);
-  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
   /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
   SETDEC64(l,1,0,0,0xFFFFFFFF,0xFFFFFFFF);    SETDEC64(r,0,0,0,4,0xA817C800);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
@@ -4340,7 +4340,7 @@ static void test_VarDecMul(void)
   SETDEC64(l,0,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC(r,0,0,0,1000000000);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
   /* actual overflow - right operand is 10 times the previous value */
   SETDEC64(l,0,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);
-  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
   /* here, native oleaut32 has an opportunity to avert the overflow, by reducing the scale of the result  */
   SETDEC64(l,1,0,1,0xFFFFFFFF,0xFFFFFFFE);    SETDEC64(r,0,0,0,2,0x540BE400);  MATH2(VarDecMul);EXPECTDEC64(0,0,1999999999,0xFFFFFFFF,0x88CA6C00);
@@ -4389,10 +4389,10 @@ static void test_VarDecDiv(void)
   
   /* oddballs */
   SETDEC(l,0,0,0,0);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* indeterminate */
-  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
   SETDEC(l,0,0,0,1);    SETDEC(r,0,0,0,0);  MATH2(VarDecDiv);/* division by zero */
-  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
+  ok(hres == DISP_E_DIVBYZERO,"Expected division-by-zero, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
   
 }
@@ -4416,7 +4416,7 @@ static void test_VarDecCmp(void)
 #undef _EXPECTRES
 #define _EXPECTRES(res, x, fs) \
   ok((hres == S_OK && out == (CONV_TYPE)(x)) || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected " #x ", got " fs "; hres=0x%08lx\n", out, hres)
+     "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #undef EXPECTRES
 #define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 #undef CONVERTRANGE
@@ -4664,7 +4664,7 @@ static void test_VarBoolCopy(void)
 #define BOOL_STR(flags, str) hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, flags, VT_BSTR); \
   ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && \
      V_BSTR(&vDst) && !memcmp(V_BSTR(&vDst), str, sizeof(str)), \
-     "hres=0x%lX, type=%d (should be VT_BSTR), *bstr='%c'\n", \
+     "hres=0x%X, type=%d (should be VT_BSTR), *bstr='%c'\n", \
      hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?')
 
 static void test_VarBoolChangeTypeEx(void)
@@ -4730,7 +4730,7 @@ static void test_VarBstrFromR4(void)
   lcid_spanish = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT);
   f = 654322.23456f;
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
     todo_wine {
@@ -4744,7 +4744,7 @@ static void test_VarBstrFromR4(void)
 
   f = -1e-400;    /* deliberately cause underflow */
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
     ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
@@ -4753,14 +4753,14 @@ static void test_VarBstrFromR4(void)
   /* The following tests that lcid is used for decimal separator even without LOCALE_USE_NLS */
   f = 0.5;
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
     ok(memcmp(bstr, szOneHalf_English, sizeof(szOneHalf_English)) == 0, "English locale failed (got %s)\n", wtoascii(bstr));
   }
   f = 0.5;
   hres = pVarBstrFromR4(f, lcid_spanish, 0, &bstr);
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
     ok(memcmp(bstr, szOneHalf_Spanish, sizeof(szOneHalf_Spanish)) == 0, "Spanish locale failed (got %s)\n", wtoascii(bstr));
@@ -4771,7 +4771,7 @@ static void test_VarBstrFromR4(void)
   hres = pVarBstrFromDate(dt,lcid,LOCALE_NOUSEROVERRIDE,&bstr); \
   if (bstr) WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0); \
   else buff[0] = 0; \
-  ok(hres == S_OK && !strcmp(str,buff), "Expected '%s', got '%s', hres = 0x%08lx\n", \
+  ok(hres == S_OK && !strcmp(str,buff), "Expected '%s', got '%s', hres = 0x%08x\n", \
      str, buff, hres)
 
 static void test_VarBstrFromDate(void)
@@ -4796,7 +4796,7 @@ static void test_VarBstrFromDate(void)
 #define BSTR_DEC(l, a, b, c, d, e) \
   SETDEC(l, a,b,c,d);\
   hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);\
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
     ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
@@ -4805,7 +4805,7 @@ static void test_VarBstrFromDate(void)
 #define BSTR_DEC64(l, a, b, c, x, d, e) \
   SETDEC64(l, a,b,c,x,d);\
   hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
-  ok(hres == S_OK, "got hres 0x%08lx\n", hres);\
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
     ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
@@ -4897,7 +4897,7 @@ static void test_VarBstrFromDec(void)
 
 #define _VARBSTRCMP(left,right,lcid,flags,result) \
         hres = pVarBstrCmp(left,right,lcid,flags); \
-        ok(hres == result, "VarBstrCmp: expected " #result ", got hres=0x%lx\n", hres)
+        ok(hres == result, "VarBstrCmp: expected " #result ", got hres=0x%x\n", hres)
 #define VARBSTRCMP(left,right,flags,result) \
         _VARBSTRCMP(left,right,lcid,flags,result)
 
@@ -4997,7 +4997,7 @@ static void test_SysAllocString(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 8, "Expected 8, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
     SysFreeString(str);
   }
@@ -5022,7 +5022,7 @@ static void test_SysAllocStringLen(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 0, "Expected 0, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 0, "Expected 0, got %d\n", bstr->dwLen);
     ok (!bstr->szString[0], "String not empty\n");
     SysFreeString(str);
   }
@@ -5033,7 +5033,7 @@ static void test_SysAllocStringLen(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 8, "Expected 8, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
     SysFreeString(str);
   }
@@ -5054,7 +5054,7 @@ static void test_SysAllocStringByteLen(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 0, "Expected 0, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 0, "Expected 0, got %d\n", bstr->dwLen);
     ok (!bstr->szString[0], "String not empty\n");
     SysFreeString(str);
   }
@@ -5065,7 +5065,7 @@ static void test_SysAllocStringByteLen(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 4, "Expected 4, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 4, "Expected 4, got %d\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestA), "String different\n");
     SysFreeString(str);
   }
@@ -5078,7 +5078,7 @@ static void test_SysAllocStringByteLen(void)
     const CHAR szTestTruncA[4] = { 'T','e','s','\0' };
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 3, "Expected 3, got %d\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
     SysFreeString(str);
   }
@@ -5089,7 +5089,7 @@ static void test_SysAllocStringByteLen(void)
   {
     LPINTERNAL_BSTR bstr = Get(str);
 
-    ok (bstr->dwLen == 8, "Expected 8, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
     SysFreeString(str);
   }
@@ -5111,14 +5111,14 @@ static void test_SysReAllocString(void)
     int changed;
 
     bstr = Get(str);
-    ok (bstr->dwLen == 8, "Expected 8, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
 
     changed = SysReAllocString(&str, szSmaller);
     ok (changed == 1, "Expected 1, got %d\n", changed);
     ok (str == oldstr, "Created new string\n");
     bstr = Get(str);
-    ok (bstr->dwLen == 2, "Expected 2, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
 
     oldstr = str;
@@ -5127,7 +5127,7 @@ static void test_SysReAllocString(void)
     /* Early versions always make new strings rather than resizing */
     /* ok (str == oldstr, "Created new string\n"); */
     bstr = Get(str);
-    ok (bstr->dwLen == 12, "Expected 12, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 12, "Expected 12, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szLarger), "String different\n");
 
     SysFreeString(str);
@@ -5150,14 +5150,14 @@ static void test_SysReAllocStringLen(void)
     int changed;
 
     bstr = Get(str);
-    ok (bstr->dwLen == 8, "Expected 8, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
 
     changed = SysReAllocStringLen(&str, szSmaller, 1);
     ok (changed == 1, "Expected 1, got %d\n", changed);
     ok (str == oldstr, "Created new string\n");
     bstr = Get(str);
-    ok (bstr->dwLen == 2, "Expected 2, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
 
     oldstr = str;
@@ -5166,7 +5166,7 @@ static void test_SysReAllocStringLen(void)
     /* Early versions always make new strings rather than resizing */
     /* ok (str == oldstr, "Created new string\n"); */
     bstr = Get(str);
-    ok (bstr->dwLen == 12, "Expected 12, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 12, "Expected 12, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szLarger), "String different\n");
 
     changed = SysReAllocStringLen(&str, str, 6);
@@ -5193,9 +5193,9 @@ static void test_BstrCopy(void)
     V_BSTR(&vt1) = str;
     V_VT(&vt2) = VT_EMPTY;
     hres = VariantCopy(&vt2, &vt1);
-    ok (hres == S_OK,"Failed to copy binary bstring with hres 0x%08lx\n", hres);
+    ok (hres == S_OK,"Failed to copy binary bstring with hres 0x%08x\n", hres);
     bstr = Get(V_BSTR(&vt2));
-    ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
+    ok (bstr->dwLen == 3, "Expected 3, got %d\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
   }
 }
@@ -5217,7 +5217,7 @@ static void test_VarBstrCat(void)
 
     /* Concatenation of two NULL strings works */
     ret = VarBstrCat(NULL, NULL, &res);
-    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == 0, "Expected a 0-length string\n");
     SysFreeString(res);
@@ -5226,13 +5226,13 @@ static void test_VarBstrCat(void)
 
     /* Concatenation with one NULL arg */
     ret = VarBstrCat(NULL, str1, &res);
-    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
     ok(!memcmp(res, sz1, SysStringLen(str1)), "Unexpected value\n");
     SysFreeString(res);
     ret = VarBstrCat(str1, NULL, &res);
-    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
     ok(!memcmp(res, sz1, SysStringLen(str1)), "Unexpected value\n");
@@ -5241,7 +5241,7 @@ static void test_VarBstrCat(void)
     /* Concatenation of two zero-terminated strings */
     str2 = SysAllocString(sz2);
     ret = VarBstrCat(str1, str2, &res);
-    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == sizeof(sz1sz2) / sizeof(WCHAR) - 1,
      "Unexpected length\n");
@@ -5256,7 +5256,7 @@ static void test_VarBstrCat(void)
     str2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
 
     ret = VarBstrCat(str1, str2, &res);
-    ok(ret == S_OK, "VarBstrCat failed: %08lx\n", ret);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == sizeof(s1s2) / sizeof(WCHAR),
      "Unexpected length\n");
@@ -5281,7 +5281,7 @@ static void test_IUnknownClear(void)
   V_UNKNOWN(&v) = (IUnknown*)&u;
   hres = VariantClear(&v);
   ok(hres == S_OK && u.ref == 0 && V_VT(&v) == VT_EMPTY,
-     "clear unknown: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "clear unknown: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 0, VT_EMPTY, hres, u.ref, V_VT(&v));
 
   /* But not when clearing a by-reference*/
@@ -5290,7 +5290,7 @@ static void test_IUnknownClear(void)
   V_UNKNOWNREF(&v) = &pu;
   hres = VariantClear(&v);
   ok(hres == S_OK && u.ref == 1 && V_VT(&v) == VT_EMPTY,
-     "clear dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "clear dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 1, VT_EMPTY, hres, u.ref, V_VT(&v));
 }
 
@@ -5307,7 +5307,7 @@ static void test_IUnknownCopy(void)
   V_UNKNOWN(&vSrc) = pu;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && u.ref == 2 && V_VT(&vDst) == VT_UNKNOWN,
-     "copy unknown: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy unknown: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_EMPTY, hres, u.ref, V_VT(&vDst));
 
   /* AddRef is skipped on copy of by-reference IDispatch */
@@ -5317,7 +5317,7 @@ static void test_IUnknownCopy(void)
   V_UNKNOWNREF(&vSrc) = &pu;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && u.ref == 1 && V_VT(&vDst) == (VT_UNKNOWN|VT_BYREF),
-     "copy unknown: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy unknown: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 1, VT_DISPATCH, hres, u.ref, V_VT(&vDst));
 
   /* AddRef is called copying by-reference IDispatch with indirection */
@@ -5327,7 +5327,7 @@ static void test_IUnknownCopy(void)
   V_UNKNOWNREF(&vSrc) = &pu;
   hres = VariantCopyInd(&vDst, &vSrc);
   ok(hres == S_OK && u.ref == 2 && V_VT(&vDst) == VT_UNKNOWN,
-     "copy unknown: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy unknown: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_DISPATCH, hres, u.ref, V_VT(&vDst));
 
   /* Indirection in place also calls AddRef */
@@ -5336,7 +5336,7 @@ static void test_IUnknownCopy(void)
   V_UNKNOWNREF(&vSrc) = &pu;
   hres = VariantCopyInd(&vSrc, &vSrc);
   ok(hres == S_OK && u.ref == 2 && V_VT(&vSrc) == VT_UNKNOWN,
-     "copy unknown: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy unknown: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_DISPATCH, hres, u.ref, V_VT(&vSrc));
 }
 
@@ -5358,7 +5358,7 @@ static void test_IUnknownChangeTypeEx(void)
   hres = VariantChangeTypeEx(&vSrc, &vSrc, lcid, 0, VT_DISPATCH);
   ok(hres == S_OK && u.ref == 1 &&
      V_VT(&vSrc) == VT_DISPATCH && V_DISPATCH(&vSrc) == (IDispatch*)pu,
-     "change unk(src=src): expected 0x%08lx,%d,%d,%p, got 0x%08lx,%ld,%d,%p\n",
+     "change unk(src=src): expected 0x%08x,%d,%d,%p, got 0x%08x,%d,%d,%p\n",
      S_OK, 1, VT_DISPATCH, pu, hres, u.ref, V_VT(&vSrc), V_DISPATCH(&vSrc));
 
   /* =>IDispatch */
@@ -5370,7 +5370,7 @@ static void test_IUnknownChangeTypeEx(void)
   /* Note vSrc is not cleared, as final refcount is 2 */
   ok(hres == S_OK && u.ref == 2 &&
      V_VT(&vDst) == VT_UNKNOWN && V_UNKNOWN(&vDst) == (IUnknown*)pu,
-     "change unk(src,dst): expected 0x%08lx,%d,%d,%p, got 0x%08lx,%ld,%d,%p\n",
+     "change unk(src,dst): expected 0x%08x,%d,%d,%p, got 0x%08x,%d,%d,%p\n",
      S_OK, 2, VT_UNKNOWN, pu, hres, u.ref, V_VT(&vDst), V_UNKNOWN(&vDst));
 
   /* Can't change unknown to anything else */
@@ -5404,7 +5404,7 @@ static void test_IUnknownChangeTypeEx(void)
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
     ok(hres == hExpected,
-       "change unk(badvar): vt %d expected 0x%08lx, got 0x%08lx\n",
+       "change unk(badvar): vt %d expected 0x%08x, got 0x%08x\n",
        vt, hExpected, hres);
   }
 }
@@ -5423,7 +5423,7 @@ static void test_IDispatchClear(void)
   V_DISPATCH(&v) = pd;
   hres = VariantClear(&v);
   ok(hres == S_OK && d.ref == 0 && V_VT(&v) == VT_EMPTY,
-     "clear dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "clear dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 0, VT_EMPTY, hres, d.ref, V_VT(&v));
 
   d.ref = 1;
@@ -5431,7 +5431,7 @@ static void test_IDispatchClear(void)
   V_DISPATCHREF(&v) = &pd;
   hres = VariantClear(&v);
   ok(hres == S_OK && d.ref == 1 && V_VT(&v) == VT_EMPTY,
-     "clear dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "clear dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 1, VT_EMPTY, hres, d.ref, V_VT(&v));
 }
 
@@ -5449,7 +5449,7 @@ static void test_IDispatchCopy(void)
   V_DISPATCH(&vSrc) = pd;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && d.ref == 2 && V_VT(&vDst) == VT_DISPATCH,
-     "copy dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_EMPTY, hres, d.ref, V_VT(&vDst));
 
   VariantInit(&vDst);
@@ -5458,7 +5458,7 @@ static void test_IDispatchCopy(void)
   V_DISPATCHREF(&vSrc) = &pd;
   hres = VariantCopy(&vDst, &vSrc);
   ok(hres == S_OK && d.ref == 1 && V_VT(&vDst) == (VT_DISPATCH|VT_BYREF),
-     "copy dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 1, VT_DISPATCH, hres, d.ref, V_VT(&vDst));
 
   VariantInit(&vDst);
@@ -5467,7 +5467,7 @@ static void test_IDispatchCopy(void)
   V_DISPATCHREF(&vSrc) = &pd;
   hres = VariantCopyInd(&vDst, &vSrc);
   ok(hres == S_OK && d.ref == 2 && V_VT(&vDst) == VT_DISPATCH,
-     "copy dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_DISPATCH, hres, d.ref, V_VT(&vDst));
 
   d.ref = 1;
@@ -5475,7 +5475,7 @@ static void test_IDispatchCopy(void)
   V_DISPATCHREF(&vSrc) = &pd;
   hres = VariantCopyInd(&vSrc, &vSrc);
   ok(hres == S_OK && d.ref == 2 && V_VT(&vSrc) == VT_DISPATCH,
-     "copy dispatch: expected 0x%08lx, %d, %d, got 0x%08lx, %ld, %d\n",
+     "copy dispatch: expected 0x%08x, %d, %d, got 0x%08x, %d, %d\n",
      S_OK, 2, VT_DISPATCH, hres, d.ref, V_VT(&vSrc));
 }
 
@@ -5496,7 +5496,7 @@ static void test_IDispatchChangeTypeEx(void)
   hres = VariantChangeTypeEx(&vSrc, &vSrc, lcid, 0, VT_UNKNOWN);
   ok(hres == S_OK && d.ref == 1 &&
      V_VT(&vSrc) == VT_UNKNOWN && V_UNKNOWN(&vSrc) == (IUnknown*)pd,
-     "change disp(src=src): expected 0x%08lx,%d,%d,%p, got 0x%08lx,%ld,%d,%p\n",
+     "change disp(src=src): expected 0x%08x,%d,%d,%p, got 0x%08x,%d,%d,%p\n",
      S_OK, 1, VT_UNKNOWN, pd, hres, d.ref, V_VT(&vSrc), V_UNKNOWN(&vSrc));
 
   /* =>IUnknown */
@@ -5508,7 +5508,7 @@ static void test_IDispatchChangeTypeEx(void)
   /* Note vSrc is not cleared, as final refcount is 2 */
   ok(hres == S_OK && d.ref == 2 &&
      V_VT(&vDst) == VT_UNKNOWN && V_UNKNOWN(&vDst) == (IUnknown*)pd,
-     "change disp(src,dst): expected 0x%08lx,%d,%d,%p, got 0x%08lx,%ld,%d,%p\n",
+     "change disp(src,dst): expected 0x%08x,%d,%d,%p, got 0x%08x,%d,%d,%p\n",
      S_OK, 2, VT_UNKNOWN, pd, hres, d.ref, V_VT(&vDst), V_UNKNOWN(&vDst));
 
   /* FIXME: Verify that VARIANT_NOVALUEPROP prevents conversion to integral
@@ -5556,7 +5556,7 @@ static void test_ErrorChangeTypeEx(void)
         hExpected = DISP_E_BADVARTYPE;
 
     ok(hres == hExpected,
-     "change err: vt %d expected 0x%08lx, got 0x%08lx\n", vt, hExpected, hres);
+     "change err: vt %d expected 0x%08x, got 0x%08x\n", vt, hExpected, hres);
   }
 }
 
@@ -5602,7 +5602,7 @@ static void test_EmptyChangeTypeEx(void)
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
     ok(hres == hExpected && (hres != S_OK || V_VT(&vDst) == vt),
-       "change empty: vt %d expected 0x%08lx, got 0x%08lx, vt %d\n",
+       "change empty: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
        vt, hExpected, hres, V_VT(&vDst));
   }
 }
@@ -5651,7 +5651,7 @@ static void test_NullChangeTypeEx(void)
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
     ok(hres == hExpected && (hres != S_OK || V_VT(&vDst) == vt),
-       "change null: vt %d expected 0x%08lx, got 0x%08lx, vt %d\n",
+       "change null: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
        vt, hExpected, hres, V_VT(&vDst));
   }
 }
@@ -5672,7 +5672,7 @@ static void test_UintChangeTypeEx(void)
   V_UI4(&vSrc) = -1;
   hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, VT_I4);
   ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == -1,
-     "change uint: Expected %d,0x%08lx,%d got %d,0x%08lx,%ld\n",
+     "change uint: Expected %d,0x%08x,%d got %d,0x%08x,%d\n",
      VT_I4, S_OK, -1, V_VT(&vDst), hres, V_I4(&vDst));
 }
 
@@ -5745,12 +5745,12 @@ static void test_ChangeType_keep_dst(void)
      V_VT(&v1) = VT_BSTR;
      V_BSTR(&v1) = bstr;
      hres = VariantChangeTypeEx(&v1, &v1, 0, 0, VT_INT);
-     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08lx\n", hres);
+     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08x\n", hres);
      ok(V_VT(&v1) == VT_BSTR && V_BSTR(&v1) == bstr, "VariantChangeTypeEx changed dst variant\n");
      V_VT(&v2) = VT_INT;
      V_INT(&v2) = 4;
      hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_INT);
-     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08lx\n", hres);
+     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08x\n", hres);
      ok(V_VT(&v2) == VT_INT && V_INT(&v2) == 4, "VariantChangeTypeEx changed dst variant\n");     
      SysFreeString(bstr);
 }
@@ -5762,7 +5762,7 @@ START_TEST(vartype)
   if (!hOleaut32)
     return;
 
-  trace("LCID's: System=0x%08lx, User=0x%08lx\n", GetSystemDefaultLCID(),
+  trace("LCID's: System=0x%08x, User=0x%08x\n", GetSystemDefaultLCID(),
         GetUserDefaultLCID());
 
   test_VarI1FromI2();

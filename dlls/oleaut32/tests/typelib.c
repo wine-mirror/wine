@@ -30,7 +30,7 @@
 #include "oleauto.h"
 #include "ocidl.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
 
@@ -129,7 +129,7 @@ static void test_TypeComp(void)
     ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszSavePicture);
     hr = ITypeComp_Bind(pTypeComp, wszSavePicture, ulHash, INVOKE_PROPERTYGET, &pTypeInfo, &desckind, &bindptr);
     todo_wine ok(hr == TYPE_E_TYPEMISMATCH,
-        "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08lx\n",
+        "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08x\n",
         hr);
 
     ok(desckind == DESCKIND_NONE,
@@ -238,7 +238,7 @@ static void test_TypeComp(void)
 
     ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszClone);
     hr = ITypeComp_Bind(pTypeComp, wszClone, ulHash, INVOKE_PROPERTYGET, &pTypeInfo, &desckind, &bindptr);
-    ok(hr == TYPE_E_TYPEMISMATCH, "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08lx\n", hr);
+    ok(hr == TYPE_E_TYPEMISMATCH, "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08x\n", hr);
 
     ok(desckind == DESCKIND_NONE,
         "desckind should have been DESCKIND_NONE instead of %d\n",
@@ -329,10 +329,10 @@ static void test_CreateDispTypeInfo(void)
     methdata[3].vtReturn = VT_I4;
 
     hr = CreateDispTypeInfo(&ifdata, LOCALE_NEUTRAL, &pTypeInfo);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
 
     hr = ITypeInfo_GetTypeAttr(pTypeInfo, &pTypeAttr);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
 
     ok(pTypeAttr->typekind == TKIND_COCLASS, "typekind %0x\n", pTypeAttr->typekind);
     ok(pTypeAttr->cImplTypes == 1, "cImplTypes %d\n", pTypeAttr->cImplTypes);
@@ -341,19 +341,19 @@ static void test_CreateDispTypeInfo(void)
     ITypeInfo_ReleaseTypeAttr(pTypeInfo, pTypeAttr);
 
     hr = ITypeInfo_GetRefTypeOfImplType(pTypeInfo, 0, &href);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     todo_wine {
-    ok(href == 0, "href = 0x%lx\n", href);
+    ok(href == 0, "href = 0x%x\n", href);
     }
     hr = ITypeInfo_GetRefTypeInfo(pTypeInfo, href, &pTI2);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI2, &pTypeAttr);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTypeAttr->typekind == TKIND_INTERFACE, "typekind %0x\n", pTypeAttr->typekind);
     ITypeInfo_ReleaseTypeAttr(pTI2, pTypeAttr);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 0, &pFuncDesc);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFuncDesc->funckind == FUNC_VIRTUAL, "funckind %d\n", pFuncDesc->funckind);
     ok(pFuncDesc->invkind == methdata[0].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[0].cc, "callconv %d\n", pFuncDesc->callconv);
@@ -369,7 +369,7 @@ static void test_CreateDispTypeInfo(void)
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 1, &pFuncDesc);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFuncDesc->funckind == FUNC_VIRTUAL, "funckind %d\n", pFuncDesc->funckind);
     ok(pFuncDesc->invkind == methdata[1].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[1].cc, "callconv %d\n", pFuncDesc->callconv);
@@ -380,7 +380,7 @@ static void test_CreateDispTypeInfo(void)
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 2, &pFuncDesc);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFuncDesc->funckind == FUNC_VIRTUAL, "funckind %d\n", pFuncDesc->funckind);
     ok(pFuncDesc->invkind == methdata[2].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[2].cc, "callconv %d\n", pFuncDesc->callconv);
@@ -393,7 +393,7 @@ static void test_CreateDispTypeInfo(void)
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 3, &pFuncDesc);
-    ok(hr == S_OK, "hr %08lx\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFuncDesc->funckind == FUNC_VIRTUAL, "funckind %d\n", pFuncDesc->funckind);
     ok(pFuncDesc->invkind == methdata[3].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[3].cc, "callconv %d\n", pFuncDesc->callconv);
@@ -405,8 +405,8 @@ static void test_CreateDispTypeInfo(void)
 
     /* test GetIDsOfNames on a coclass to see if it searches its interfaces */
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &name, 1, &memid);
-    ok(hr == S_OK, "hr 0x%08lx\n", hr);
-    ok(memid == 0x123, "memid 0x%08lx\n", memid);
+    ok(hr == S_OK, "hr 0x%08x\n", hr);
+    ok(memid == 0x123, "memid 0x%08x\n", memid);
 
     ITypeInfo_Release(pTI2);
     ITypeInfo_Release(pTypeInfo);
@@ -443,7 +443,7 @@ static void test_TypeInfo(void)
     /* test nonexistent method name */
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &bogus, 1, &dispidMember);
     ok(hr == DISP_E_UNKNOWNNAME,
-       "ITypeInfo_GetIDsOfNames should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n",
+       "ITypeInfo_GetIDsOfNames should have returned DISP_E_UNKNOWNNAME instead of 0x%08x\n",
        hr);
 
     /* test invalid memberid */
@@ -452,23 +452,23 @@ static void test_TypeInfo(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = NULL;
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &pwszClone, 1, &dispidMember);
     ok_ole_success(hr, ITypeInfo_GetIDsOfNames);
 
     /* test correct memberid, but wrong flags */
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     /* test NULL dispparams */
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     /* test dispparams->cNamedArgs being bigger than dispparams->cArgs */
     dispparams.cNamedArgs = 1;
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     ITypeInfo_Release(pTypeInfo);
 
@@ -481,7 +481,7 @@ static void test_TypeInfo(void)
     /* test invoking a method with a [restricted] keyword */
     hr = ITypeInfo_Invoke(pTypeInfo, NULL, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     todo_wine {
-    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
     }
 
     ITypeInfo_Release(pTypeInfo);

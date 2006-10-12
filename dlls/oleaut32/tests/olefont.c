@@ -44,7 +44,7 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
 /* Create a font with cySize given by lo_size, hi_size,  */
 /* SetRatio to ratio_logical, ratio_himetric,            */
@@ -77,37 +77,37 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	/* Create font, test that it worked. */
 	hres = pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj);
 	ifnt = pvObj;
-	ok(hres == S_OK,"%s: OCFI returns 0x%08lx instead of S_OK.\n",
+	ok(hres == S_OK,"%s: OCFI returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 	ok(pvObj != NULL,"%s: OCFI returns NULL.\n", test_name);
 
 	/* Read back size.  Hi part was ignored. */
 	hres = IFont_get_Size(ifnt, &psize);
-	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08lx instead of S_OK.\n",
+	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: get_Size: Lo=%ld, Hi=%ld; expected Lo=%ld, Hi=%ld.\n",
+		"%s: get_Size: Lo=%d, Hi=%d; expected Lo=%ld, Hi=%ld.\n",
 		test_name, S(psize).Lo, S(psize).Hi, lo_size, 0L);
 
 	/* Change ratio, check size unchanged.  Standard is 72, 2540. */
 	hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
-	ok(hres == S_OK,"%s: IFont_SR returns 0x%08lx instead of S_OK.\n",
+	ok(hres == S_OK,"%s: IFont_SR returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 	hres = IFont_get_Size(ifnt, &psize);
-	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08lx instead of S_OK.\n",
+	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
                 test_name, hres);
 	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: gS after SR: Lo=%ld, Hi=%ld; expected Lo=%ld, Hi=%ld.\n",
+		"%s: gS after SR: Lo=%d, Hi=%d; expected Lo=%ld, Hi=%ld.\n",
 		test_name, S(psize).Lo, S(psize).Hi, lo_size, 0L);
 
 	/* Check hFont size with this ratio.  This tests an important 	*/
 	/* conversion for which MSDN is very wrong.			*/
 	hres = IFont_get_hFont (ifnt, &hfont);
-	ok(hres == S_OK, "%s: IFont_get_hFont returns 0x%08lx instead of S_OK.\n",
+	ok(hres == S_OK, "%s: IFont_get_hFont returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 	hres = GetObject (hfont, sizeof(LOGFONT), &lf);
 	ok(lf.lfHeight == hfont_height,
-		"%s: hFont has lf.lfHeight=%ld, expected %ld.\n",
+		"%s: hFont has lf.lfHeight=%d, expected %ld.\n",
 		test_name, lf.lfHeight, hfont_height);
 
 	/* Free IFont. */
@@ -124,7 +124,7 @@ void test_QueryInterface(void)
         hres = pOleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
         font = pvObj;
 
-        ok(hres == S_OK,"OCFI (NULL,..) does not return 0, but 0x%08lx\n",hres);
+        ok(hres == S_OK,"OCFI (NULL,..) does not return 0, but 0x%08x\n",hres);
         ok(font != NULL,"OCFI (NULL,..) returns NULL, instead of !NULL\n");
 
         pvObj = NULL;
@@ -132,10 +132,10 @@ void test_QueryInterface(void)
 
         /* Test if QueryInterface increments ref counter for IFONTs */
         ret = IFont_AddRef(font);
-        ok(ret == 3, "IFont_QI expected ref value 3 but instead got %12lu\n",ret);
+        ok(ret == 3, "IFont_QI expected ref value 3 but instead got %12u\n",ret);
         IFont_Release(font);
 
-        ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08lx\n", hres);
+        ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08x\n", hres);
         ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
 
         /* Orignial ref and QueryInterface ref both have to be released */
@@ -161,11 +161,11 @@ void test_type_info(void)
         fontdisp = pvObj;
 
 	hres = IFontDisp_GetTypeInfo(fontdisp, 0, en_us, &pTInfo);
-	ok(hres == S_OK, "GTI returned 0x%08lx instead of S_OK.\n", hres);
+	ok(hres == S_OK, "GTI returned 0x%08x instead of S_OK.\n", hres);
 	ok(pTInfo != NULL, "GTI returned NULL.\n");
 
 	hres = ITypeInfo_GetNames(pTInfo, DISPID_FONT_NAME, names, 3, &n);
-	ok(hres == S_OK, "GetNames returned 0x%08lx instead of S_OK.\n", hres);
+	ok(hres == S_OK, "GetNames returned 0x%08x instead of S_OK.\n", hres);
 	ok(n == 1, "GetNames returned %d names instead of 1.\n", n);
 	ok(!lstrcmpiW(names[0],name_Name), "DISPID_FONT_NAME doesn't get 'Names'.\n");
 
@@ -179,7 +179,7 @@ void test_type_info(void)
         hres = IFontDisp_Invoke(fontdisp, DISPID_FONT_NAME, &IID_NULL,
             LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult,
             NULL, NULL);
-        ok(hres == S_OK, "IFontDisp_Invoke return 0x%08lx instead of S_OK.\n", hres);
+        ok(hres == S_OK, "IFontDisp_Invoke return 0x%08x instead of S_OK.\n", hres);
         VariantClear(&varresult);
 
 	IFontDisp_Release(fontdisp);
@@ -230,7 +230,7 @@ static HRESULT WINAPI FontEventsDisp_Invoke(
 {
     static const WCHAR wszBold[] = {'B','o','l','d',0};
     ok(wFlags == INVOKE_FUNC, "invoke flags should have been INVOKE_FUNC instead of 0x%x\n", wFlags);
-    ok(dispIdMember == DISPID_FONT_CHANGED, "dispIdMember should have been DISPID_FONT_CHANGED instead of 0x%lx\n", dispIdMember);
+    ok(dispIdMember == DISPID_FONT_CHANGED, "dispIdMember should have been DISPID_FONT_CHANGED instead of 0x%x\n", dispIdMember);
     ok(pDispParams->cArgs == 1, "pDispParams->cArgs should have been 1 instead of %d\n", pDispParams->cArgs);
     ok(V_VT(&pDispParams->rgvarg[0]) == VT_BSTR, "VT of first param should have been VT_BSTR instead of %d\n", V_VT(&pDispParams->rgvarg[0]));
     ok(!lstrcmpW(V_BSTR(&pDispParams->rgvarg[0]), wszBold), "String in first param should have been \"Bold\"\n");
@@ -343,19 +343,19 @@ void test_names_ids(WCHAR* w_name_1, const char* a_name_1,
 
     /* test hres */
     ok(hres == hres_expect,
-        "GetIDsOfNames: \"%s\", \"%s\" returns 0x%08lx, expected 0x%08lx.\n",
+        "GetIDsOfNames: \"%s\", \"%s\" returns 0x%08x, expected 0x%08x.\n",
         a_name_1, a_name_2, hres, hres_expect);
 
     /* test first DISPID */
     ok(rgDispId[0]==id_1,
-        "GetIDsOfNames: \"%s\" gets DISPID 0x%08lx, expected 0x%08lx.\n",
+        "GetIDsOfNames: \"%s\" gets DISPID 0x%08x, expected 0x%08x.\n",
         a_name_1, rgDispId[0], id_1);
 
     /* test second DISPID is present */
     if (numnames == 2)
     {
         ok(rgDispId[1]==id_2,
-            "GetIDsOfNames: ..., \"%s\" gets DISPID 0x%08lx, expected 0x%08lx.\n",
+            "GetIDsOfNames: ..., \"%s\" gets DISPID 0x%08x, expected 0x%08x.\n",
             a_name_2, rgDispId[1], id_2);
     }
 
@@ -451,27 +451,27 @@ static void test_Invoke(void)
     dispparams.cArgs = 1;
     dispparams.rgvarg = &vararg;
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_IFontDisp, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_UNKNOWNINTERFACE, "IFontDisp_Invoke should have returned DISP_E_UNKNOWNINTERFACE instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_UNKNOWNINTERFACE, "IFontDisp_Invoke should have returned DISP_E_UNKNOWNINTERFACE instead of 0x%08x\n", hr);
 
     dispparams.cArgs = 0;
     dispparams.rgvarg = NULL;
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_BADPARAMCOUNT, "IFontDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IFontDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, NULL, NULL, NULL);
-    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08x\n", hr);
 
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
-    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IFontDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08x\n", hr);
 
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
     ok_ole_success(hr, "IFontDisp_Invoke");
 
     hr = IFontDisp_Invoke(fontdisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_METHOD, NULL, &varresult, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "IFontDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IFontDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     hr = IFontDisp_Invoke(fontdisp, 0xdeadbeef, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "IFontDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IFontDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     dispparams.cArgs = 1;
     dispparams.rgvarg = &vararg;
@@ -512,20 +512,20 @@ static void test_IsEqual()
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_OK,
-        "IFont_IsEqual: (EQUAL) Expected S_OK but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (EQUAL) Expected S_OK but got 0x%08x\n",hres);
     IFont_Release(ifnt2);
 
     /* Check for bad pointer */
     hres = IFont_IsEqual(ifnt,NULL);
     ok(hres == E_POINTER,
-        "IFont_IsEqual: (NULL) Expected 0x80004003 but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (NULL) Expected 0x80004003 but got 0x%08x\n",hres);
 
     /* Test strName */
     fd.lpstrName = (WCHAR*)arial_font;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (strName) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (strName) Expected S_FALSE but got 0x%08x\n",hres);
     fd.lpstrName = (WCHAR*)system_font;
     IFont_Release(ifnt2);
 
@@ -535,7 +535,7 @@ static void test_IsEqual()
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Lo font size) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Lo font size) Expected S_FALSE but got 0x%08x\n",hres);
     S(fd.cySize).Lo = 100;
     IFont_Release(ifnt2);
 
@@ -545,7 +545,7 @@ static void test_IsEqual()
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Hi font size) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Hi font size) Expected S_FALSE but got 0x%08x\n",hres);
     S(fd.cySize).Hi = 100;
     IFont_Release(ifnt2);
 
@@ -555,7 +555,7 @@ static void test_IsEqual()
     ifnt2 = pvObj2;
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Weight) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Weight) Expected S_FALSE but got 0x%08x\n",hres);
     fd.sWeight = 0;
     IFont_Release(ifnt2);
 
@@ -564,7 +564,7 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Charset) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Charset) Expected S_FALSE but got 0x%08x\n",hres);
     fd.sCharset = 0;
     IFont_Release(ifnt2);
 
@@ -573,7 +573,7 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Italic) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Italic) Expected S_FALSE but got 0x%08x\n",hres);
     fd.fItalic = 0;
     IFont_Release(ifnt2);
 
@@ -582,7 +582,7 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Underline) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Underline) Expected S_FALSE but got 0x%08x\n",hres);
     fd.fUnderline = 0;
     IFont_Release(ifnt2);
 
@@ -591,7 +591,7 @@ static void test_IsEqual()
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
-        "IFont_IsEqual: (Strikethrough) Expected S_FALSE but got 0x%08lx\n",hres);
+        "IFont_IsEqual: (Strikethrough) Expected S_FALSE but got 0x%08x\n",hres);
     fd.fStrikethrough = 0;
     IFont_Release(ifnt2);
 
@@ -635,36 +635,36 @@ static void test_ReleaseHfont(void)
     /* Try invalid HFONT */
     hres = IFont_ReleaseHfont(ifnt1,NULL);
     ok(hres == E_INVALIDARG,
-        "IFont_ReleaseHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08lx\n",
+        "IFont_ReleaseHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08x\n",
         hres);
 
     /* Try to add a bad HFONT */
     hres = IFont_ReleaseHfont(ifnt1,(HFONT)32);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_ReleaseHfont: (Bad HFONT) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_ReleaseHfont: (Bad HFONT) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     /* Release all refs */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);
 
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
     ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);
 
     /* Check that both lists are empty */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     /* The list should be empty */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     IFont_Release(ifnt1);
@@ -710,59 +710,59 @@ static void test_AddRefHfont(void)
     /* Try invalid HFONT */
     hres = IFont_AddRefHfont(ifnt1,NULL);
     ok(hres == E_INVALIDARG,
-        "IFont_AddRefHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Bad HFONT) Expected E_INVALIDARG but got 0x%08x\n",
         hres);
 
     /* Try to add a bad HFONT */
     hres = IFont_AddRefHfont(ifnt1,(HFONT)32);
     todo_wine{ ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Bad HFONT) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Bad HFONT) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     /* Add simple IFONT HFONT pair */
     hres = IFont_AddRefHfont(ifnt1,hfnt1);
     ok(hres == S_OK,
-        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
         hres);
 
     /* IFONT and HFONT do not have to be the same (always looks at HFONT) */
     hres = IFont_AddRefHfont(ifnt2,hfnt1);
     todo_wine {ok(hres == S_OK,
-        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     /* Release all hfnt1 refs */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);
 
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     todo_wine {ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     todo_wine {ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     /* Check if hfnt1 is empty */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     /* Release all hfnt2 refs */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
     ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);
 
     /* Check if hfnt2 is empty */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
         hres);}
 
     /* Show that releasing an IFONT does not always release it from the HFONT cache. */
@@ -772,13 +772,13 @@ static void test_AddRefHfont(void)
     /* Add a reference for destroyed hfnt1 */
     hres = IFont_AddRefHfont(ifnt2,hfnt1);
     todo_wine {ok(hres == S_OK,
-        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     /* Decrement reference for destroyed hfnt1 */
     hres = IFont_ReleaseHfont(ifnt2,hfnt1);
     todo_wine {ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     /* Shows that releasing all IFONT's does clear the HFONT cache. */
@@ -794,13 +794,13 @@ static void test_AddRefHfont(void)
     /* Add a reference for destroyed hfnt1 */
     hres = IFont_AddRefHfont(ifnt3,hfnt1);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     /* Decrement reference for destroyed hfnt1 */
     hres = IFont_ReleaseHfont(ifnt3,hfnt1);
     todo_wine {ok(hres == S_FALSE,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08lx\n",
+        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
         hres);}
 
     hres = IFont_Release(ifnt3);

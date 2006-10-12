@@ -107,7 +107,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
 
     if(!lpsa)
     {
-        ok(*(void **)wiresa == NULL, "wiresa + 0x0 should be NULL instead of 0x%08lx\n", *(DWORD *)wiresa);
+        ok(*(void **)wiresa == NULL, "wiresa + 0x0 should be NULL instead of 0x%08x\n", *(DWORD *)wiresa);
         return;
     }
 
@@ -115,23 +115,23 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     sftype = get_union_type(lpsa);
     cell_count = get_cell_count(lpsa);
 
-    ok(*(DWORD *)wiresa, "wiresa + 0x0 should be non-NULL instead of 0x%08lx\n", *(DWORD *)wiresa); /* win2k: this is lpsa. winxp: this is 0x00000001 */
+    ok(*(DWORD *)wiresa, "wiresa + 0x0 should be non-NULL instead of 0x%08x\n", *(DWORD *)wiresa); /* win2k: this is lpsa. winxp: this is 0x00000001 */
     wiresa += sizeof(DWORD);
-    ok(*(DWORD *)wiresa == lpsa->cDims, "wiresa + 0x4 should be lpsa->cDims instead of 0x%08lx\n", *(DWORD *)wiresa);
+    ok(*(DWORD *)wiresa == lpsa->cDims, "wiresa + 0x4 should be lpsa->cDims instead of 0x%08x\n", *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
     ok(*(WORD *)wiresa == lpsa->cDims, "wiresa + 0x8 should be lpsa->cDims instead of 0x%04x\n", *(WORD *)wiresa);
     wiresa += sizeof(WORD);
     ok(*(WORD *)wiresa == lpsa->fFeatures, "wiresa + 0xc should be lpsa->fFeatures instead of 0x%08x\n", *(WORD *)wiresa);
     wiresa += sizeof(WORD);
-    ok(*(DWORD *)wiresa == lpsa->cbElements, "wiresa + 0x10 should be lpsa->cbElements instead of 0x%08lx\n", *(DWORD *)wiresa);
+    ok(*(DWORD *)wiresa == lpsa->cbElements, "wiresa + 0x10 should be lpsa->cbElements instead of 0x%08x\n", *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
     ok(*(WORD *)wiresa == lpsa->cLocks, "wiresa + 0x16 should be lpsa->cLocks instead of 0x%04x\n", *(WORD *)wiresa);
     wiresa += sizeof(WORD);
     ok(*(WORD *)wiresa == vt, "wiresa + 0x14 should be %04x instead of 0x%04x\n", vt, *(WORD *)wiresa);
     wiresa += sizeof(WORD);
-    ok(*(DWORD *)wiresa == sftype, "wiresa + 0x18 should be %08lx instead of 0x%08lx\n", (DWORD)sftype, *(DWORD *)wiresa);
+    ok(*(DWORD *)wiresa == sftype, "wiresa + 0x18 should be %08x instead of 0x%08x\n", (DWORD)sftype, *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
-    ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x1c should be %lu instead of %lu\n", cell_count, *(DWORD *)wiresa);
+    ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x1c should be %u instead of %u\n", cell_count, *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
     ok(*(DWORD_PTR *)wiresa == (DWORD_PTR)lpsa->pvData, "wiresa + 0x20 should be lpsa->pvData instead of 0x%08lx\n", *(DWORD_PTR *)wiresa);
     wiresa += sizeof(DWORD_PTR);
@@ -145,7 +145,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     ok(!memcmp(wiresa, lpsa->rgsabound, sizeof(lpsa->rgsabound[0]) * lpsa->cDims), "bounds mismatch\n");
     wiresa += sizeof(lpsa->rgsabound[0]) * lpsa->cDims;
 
-    ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x2c should be %lu instead of %lu\n", cell_count, *(DWORD*)wiresa);
+    ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x2c should be %u instead of %u\n", cell_count, *(DWORD*)wiresa);
     wiresa += sizeof(DWORD);
     /* elements are now pointed to by wiresa */
 }
@@ -235,14 +235,14 @@ static void check_bstr(void *buffer, BSTR b)
     DWORD *wireb = buffer;
     DWORD len = SysStringByteLen(b);
 
-    ok(*wireb == (len + 1) / 2, "wv[0] %08lx\n", *wireb);
+    ok(*wireb == (len + 1) / 2, "wv[0] %08x\n", *wireb);
     wireb++;
     if(b)
-        ok(*wireb == len, "wv[1] %08lx\n", *wireb);
+        ok(*wireb == len, "wv[1] %08x\n", *wireb);
     else
-        ok(*wireb == 0xffffffff, "wv[1] %08lx\n", *wireb);
+        ok(*wireb == 0xffffffff, "wv[1] %08x\n", *wireb);
     wireb++;
-    ok(*wireb == (len + 1) / 2, "wv[2] %08lx\n", *wireb);
+    ok(*wireb == (len + 1) / 2, "wv[2] %08x\n", *wireb);
     if(len)
     {
         wireb++;
@@ -267,7 +267,7 @@ static void test_marshal_BSTR(void)
 
     b = SysAllocString(str);
     len = SysStringLen(b);
-    ok(len == 13, "get %ld\n", len);
+    ok(len == 13, "get %d\n", len);
 
     /* BSTRs are DWORD aligned */
     size = BSTR_UserSize(&umcb.Flags, 1, &b);
@@ -316,9 +316,9 @@ static void test_marshal_BSTR(void)
     b = SysAllocStringByteLen("abc", 3);
     *(((char*)b) + 3) = 'd';
     len = SysStringLen(b);
-    ok(len == 1, "get %ld\n", len);
+    ok(len == 1, "get %d\n", len);
     len = SysStringByteLen(b);
-    ok(len == 3, "get %ld\n", len);
+    ok(len == 3, "get %d\n", len);
 
     size = BSTR_UserSize(&umcb.Flags, 0, &b);
     ok(size == 16, "size %ld\n", size);
@@ -344,9 +344,9 @@ static void test_marshal_BSTR(void)
 
     b = SysAllocStringByteLen("", 0);
     len = SysStringLen(b);
-    ok(len == 0, "get %ld\n", len);
+    ok(len == 0, "get %d\n", len);
     len = SysStringByteLen(b);
-    ok(len == 0, "get %ld\n", len);
+    ok(len == 0, "get %d\n", len);
 
     size = BSTR_UserSize(&umcb.Flags, 0, &b);
     ok(size == 12, "size %ld\n", size);
@@ -363,7 +363,7 @@ static void test_marshal_BSTR(void)
         ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
         ok(b2 != NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
         len = SysStringByteLen(b2);
-        ok(len == 0, "byte len %ld\n", len);
+        ok(len == 0, "byte len %d\n", len);
         BSTR_UserFree(&umcb.Flags, &b2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -375,9 +375,9 @@ static void check_variant_header(DWORD *wirev, VARIANT *v, unsigned long size)
     WORD *wp;
     DWORD switch_is;
 
-    ok(*wirev == (size + 7) >> 3, "wv[0] %08lx, expected %08lx\n", *wirev, (size + 7) >> 3);
+    ok(*wirev == (size + 7) >> 3, "wv[0] %08x, expected %08lx\n", *wirev, (size + 7) >> 3);
     wirev++;
-    ok(*wirev == 0, "wv[1] %08lx\n", *wirev);
+    ok(*wirev == 0, "wv[1] %08x\n", *wirev);
     wirev++;
     wp = (WORD*)wirev;
     ok(*wp == V_VT(v), "vt %04x expected %04x\n", *wp, V_VT(v));
@@ -392,7 +392,7 @@ static void check_variant_header(DWORD *wirev, VARIANT *v, unsigned long size)
     switch_is = V_VT(v);
     if(switch_is & VT_ARRAY)
         switch_is &= ~VT_TYPEMASK;
-    ok(*wirev == switch_is, "switch_is %08lx expected %08lx\n", *wirev, switch_is);
+    ok(*wirev == switch_is, "switch_is %08x expected %08x\n", *wirev, switch_is);
 }
 
 static void test_marshal_VARIANT(void)
@@ -435,7 +435,7 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*(char*)wirev == V_I1(&v), "wv[5] %08lx\n", *wirev);
+    ok(*(char*)wirev == V_I1(&v), "wv[5] %08x\n", *wirev);
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -463,7 +463,7 @@ static void test_marshal_VARIANT(void)
 
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*(short*)wirev == V_I2(&v), "wv[5] %08lx\n", *wirev);
+    ok(*(short*)wirev == V_I2(&v), "wv[5] %08x\n", *wirev);
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -492,9 +492,9 @@ static void test_marshal_VARIANT(void)
 
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 0x4, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*(short*)wirev == s, "wv[6] %08lx\n", *wirev);
+    ok(*(short*)wirev == s, "wv[6] %08x\n", *wirev);
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -522,7 +522,7 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == V_I4(&v), "wv[5] %08lx\n", *wirev);
+    ok(*wirev == V_I4(&v), "wv[5] %08x\n", *wirev);
 
     if (VARIANT_UNMARSHAL_WORKS)
     {
@@ -530,7 +530,7 @@ static void test_marshal_VARIANT(void)
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
         ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
         ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_I4(&v) == V_I4(&v2), "got i4 %lx expect %lx\n", V_I4(&v), V_I4(&v2));
+        ok(V_I4(&v) == V_I4(&v2), "got i4 %x expect %x\n", V_I4(&v), V_I4(&v2));
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
@@ -552,14 +552,14 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0x1234, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 0x1234, "wv[5] %08x\n", *wirev);
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
         ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
         ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_UI4(&v) == V_UI4(&v2), "got ui4 %lx expect %lx\n", V_UI4(&v), V_UI4(&v2));
+        ok(V_UI4(&v) == V_UI4(&v2), "got ui4 %x expect %x\n", V_UI4(&v), V_UI4(&v2));
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
@@ -582,9 +582,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 0x4, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*wirev == ul, "wv[6] %08lx\n", *wirev);
+    ok(*wirev == ul, "wv[6] %08x\n", *wirev);
 
     if (VARIANT_UNMARSHAL_WORKS)
     {
@@ -592,7 +592,7 @@ static void test_marshal_VARIANT(void)
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
         ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
         ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(*V_UI4REF(&v) == *V_UI4REF(&v2), "got ui4 ref %lx expect ui4 ref %lx\n", *V_UI4REF(&v), *V_UI4REF(&v2));
+        ok(*V_UI4REF(&v) == *V_UI4REF(&v2), "got ui4 ref %x expect ui4 ref %x\n", *V_UI4REF(&v), *V_UI4REF(&v2));
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
@@ -613,7 +613,7 @@ static void test_marshal_VARIANT(void)
      
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*(float*)wirev == V_R4(&v), "wv[5] %08lx\n", *wirev);
+    ok(*(float*)wirev == V_R4(&v), "wv[5] %08x\n", *wirev);
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -642,9 +642,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0xcccccccc, "wv[5] %08lx\n", *wirev); /* pad */
+    ok(*wirev == 0xcccccccc, "wv[5] %08x\n", *wirev); /* pad */
     wirev++;
-    ok(*(double*)wirev == V_R8(&v), "wv[6] %08lx, wv[7] %08lx\n", *wirev, *(wirev+1));
+    ok(*(double*)wirev == V_R8(&v), "wv[6] %08x, wv[7] %08x\n", *wirev, *(wirev+1));
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -673,9 +673,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 8, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 8, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*(double*)wirev == d, "wv[6] %08lx wv[7] %08lx\n", *wirev, *(wirev+1));
+    ok(*(double*)wirev == d, "wv[6] %08x wv[7] %08x\n", *wirev, *(wirev+1));
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -733,11 +733,11 @@ static void test_marshal_VARIANT(void)
 
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0xcccccccc, "wirev[5] %08lx\n", *wirev); /* pad */
+    ok(*wirev == 0xcccccccc, "wirev[5] %08x\n", *wirev); /* pad */
     wirev++;
     dec2 = dec;
     dec2.wReserved = VT_DECIMAL;
-    ok(!memcmp(wirev, &dec2, sizeof(dec2)), "wirev[6] %08lx wirev[7] %08lx wirev[8] %08lx wirev[9] %08lx\n",
+    ok(!memcmp(wirev, &dec2, sizeof(dec2)), "wirev[6] %08x wirev[7] %08x wirev[8] %08x wirev[9] %08x\n",
        *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
     if (VARIANT_UNMARSHAL_WORKS)
     {
@@ -766,9 +766,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 16, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 16, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(!memcmp(wirev, &dec, sizeof(dec)), "wirev[6] %08lx wirev[7] %08lx wirev[8] %08lx wirev[9] %08lx\n", *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
+    ok(!memcmp(wirev, &dec, sizeof(dec)), "wirev[6] %08x wirev[7] %08x wirev[8] %08x wirev[9] %08x\n", *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
@@ -844,7 +844,7 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev, "wv[5] %08lx\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
+    ok(*wirev, "wv[5] %08x\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
     wirev++;
     check_bstr(wirev, V_BSTR(&v));
     if (VARIANT_UNMARSHAL_WORKS)
@@ -874,9 +874,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 0x4, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*wirev, "wv[6] %08lx\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
+    ok(*wirev, "wv[6] %08x\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
     wirev++;
     check_bstr(wirev, b);
     if (VARIANT_UNMARSHAL_WORKS)
@@ -915,7 +915,7 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev, "wv[5] %08lx\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
+    ok(*wirev, "wv[5] %08x\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
     wirev++;
     check_safearray(wirev, lpsa);
     if (VARIANT_UNMARSHAL_WORKS)
@@ -954,9 +954,9 @@ static void test_marshal_VARIANT(void)
     
     check_variant_header(wirev, &v, size);
     wirev += 5;
-    ok(*wirev == 4, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 4, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*wirev, "wv[6] %08lx\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
+    ok(*wirev, "wv[6] %08x\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
     wirev++;
     check_safearray(wirev, lpsa);
     if (VARIANT_UNMARSHAL_WORKS)
@@ -1000,17 +1000,17 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, size);
     wirev += 5;
 
-    ok(*wirev == 16, "wv[5] %08lx\n", *wirev);
+    ok(*wirev == 16, "wv[5] %08x\n", *wirev);
     wirev++;
-    ok(*wirev == ('U' | 's' << 8 | 'e' << 16 | 'r' << 24), "wv[6] %08lx\n", *wirev); /* 'User' */
+    ok(*wirev == ('U' | 's' << 8 | 'e' << 16 | 'r' << 24), "wv[6] %08x\n", *wirev); /* 'User' */
     wirev++;
-    ok(*wirev == 0xcccccccc, "wv[7] %08lx\n", *wirev); /* pad */
+    ok(*wirev == 0xcccccccc, "wv[7] %08x\n", *wirev); /* pad */
     wirev++;
     check_variant_header(wirev, &v2, size - 32);
     wirev += 5;
-    ok(*wirev == 0xcccccccc, "wv[13] %08lx\n", *wirev); /* pad for VT_R8 */
+    ok(*wirev == 0xcccccccc, "wv[13] %08x\n", *wirev); /* pad for VT_R8 */
     wirev++;
-    ok(*(double*)wirev == V_R8(&v2), "wv[6] %08lx wv[7] %08lx\n", *wirev, *(wirev+1));
+    ok(*(double*)wirev == V_R8(&v2), "wv[6] %08x wv[7] %08x\n", *wirev, *(wirev+1));
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VARIANT v3;

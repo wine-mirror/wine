@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 TESTDLL   = oleaut32.dll
 IMPORTS   = oleaut32 ole32 gdi32 kernel32
 EXTRALIBS = -luuid
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	olefont.c \

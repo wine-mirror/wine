@@ -62,7 +62,7 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 #define FMT_NUMBER(vt,val) \
   VariantInit(&v); V_VT(&v) = vt; val(&v) = 1; \
   hres = pVarFormatNumber(&v,2,0,0,0,0,&str); \
-  ok(hres == S_OK, "VarFormatNumber (vt %d): returned %8lx\n", vt, hres); \
+  ok(hres == S_OK, "VarFormatNumber (vt %d): returned %8x\n", vt, hres); \
   if (hres == S_OK) \
     ok(str && strcmpW(str,szResult1) == 0, \
        "VarFormatNumber (vt %d): string different\n", vt)
@@ -106,7 +106,7 @@ static void test_VarFormatNumber(void)
   V_BSTR(&v) = SysAllocString(szSrc1);
 
   hres = pVarFormatNumber(&v,2,0,0,0,0,&str);
-  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8lx\n", hres);
+  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
   if (hres == S_OK)
     ok(str && strcmpW(str, szResult1) == 0, "VarFormatNumber (bstr): string different\n");
   SysFreeString(V_BSTR(&v));
@@ -114,7 +114,7 @@ static void test_VarFormatNumber(void)
 
   V_BSTR(&v) = SysAllocString(szSrc2);
   hres = pVarFormatNumber(&v,2,0,-1,0,0,&str);
-  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8lx\n", hres);
+  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
   if (hres == S_OK)
     ok(str && strcmpW(str, szResult2) == 0, "VarFormatNumber (-bstr): string different\n");
   SysFreeString(V_BSTR(&v));
@@ -123,7 +123,7 @@ static void test_VarFormatNumber(void)
 
 #define SIGNED_VTBITS (VTBIT_I1|VTBIT_I2|VTBIT_I4|VTBIT_I8|VTBIT_R4|VTBIT_R8)
 
-static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08lx, '%s', got 0x%08lx, '%s'\n";
+static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08x, '%s', got 0x%08x, '%s'\n";
 #define VARFMT(vt,v,val,fmt,ret,str) do { \
   if (out) SysFreeString(out); out = NULL; \
   V_VT(&in) = (vt); v(&in) = val; \
@@ -374,14 +374,14 @@ static void test_VarFormat(void)
   /* VT_NULL */
   V_VT(&in) = VT_NULL;
   hres = pVarFormat(&in,NULL,fd,fw,0,&out);
-  ok(hres == S_OK, "VarFormat failed with 0x%08lx\n", hres);
+  ok(hres == S_OK, "VarFormat failed with 0x%08x\n", hres);
   ok(out == NULL, "expected NULL formatted string\n");
 
   /* Invalid args */
   hres = pVarFormat(&in,NULL,fd,fw,flags,NULL);
-  ok(hres == E_INVALIDARG, "Null out: expected E_INVALIDARG, got 0x%08lx\n", hres);
+  ok(hres == E_INVALIDARG, "Null out: expected E_INVALIDARG, got 0x%08x\n", hres);
   hres = pVarFormat(NULL,NULL,fd,fw,flags,&out);
-  ok(hres == E_INVALIDARG, "Null in: expected E_INVALIDARG, got 0x%08lx\n", hres);
+  ok(hres == E_INVALIDARG, "Null in: expected E_INVALIDARG, got 0x%08x\n", hres);
   fd = -1;
   VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
   fd = 8;

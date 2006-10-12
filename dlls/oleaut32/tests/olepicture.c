@@ -44,7 +44,7 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleLoadPicture)(LPSTREAM,LONG,BOOL,REFIID,LPVOID*);
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
 /* 1x1 pixel gif */
 static const unsigned char gifimage[35] = {
@@ -133,7 +133,7 @@ test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
 	hres = pOleLoadPicture(stream, imgsize, TRUE, &IID_IPicture, &pvObj);
 	pic = pvObj;
 
-	ok(hres == S_OK,"OLP (NULL,..) does not return 0, but 0x%08lx\n",hres);
+	ok(hres == S_OK,"OLP (NULL,..) does not return 0, but 0x%08x\n",hres);
 	ok(pic != NULL,"OLP (NULL,..) returns NULL, instead of !NULL\n");
 	if (pic == NULL)
 		return;
@@ -141,44 +141,44 @@ test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
 	pvObj = NULL;
 	hres = IPicture_QueryInterface (pic, &IID_IPicture, &pvObj);
 
-	ok(hres == S_OK,"IPicture_QI does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_QI does not return S_OK, but 0x%08x\n", hres);
 	ok(pvObj != NULL,"IPicture_QI does return NULL, instead of a ptr\n");
 
 	IPicture_Release ((IPicture*)pvObj);
 
 	handle = 0;
 	hres = IPicture_get_Handle (pic, &handle);
-	ok(hres == S_OK,"IPicture_get_Handle does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_get_Handle does not return S_OK, but 0x%08x\n", hres);
 	ok(handle != 0, "IPicture_get_Handle returns a NULL handle, but it should be non NULL\n");
 
 	width = 0;
 	hres = IPicture_get_Width (pic, &width);
-	ok(hres == S_OK,"IPicture_get_Width does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_get_Width does not return S_OK, but 0x%08x\n", hres);
 	ok(width != 0, "IPicture_get_Width returns 0, but it should not be 0.\n");
 
 	height = 0;
 	hres = IPicture_get_Height (pic, &height);
-	ok(hres == S_OK,"IPicture_get_Height does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_get_Height does not return S_OK, but 0x%08x\n", hres);
 	ok(height != 0, "IPicture_get_Height returns 0, but it should not be 0.\n");
 
 	type = 0;
 	hres = IPicture_get_Type (pic, &type);
-	ok(hres == S_OK,"IPicture_get_Type does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
 	ok(type == PICTYPE_BITMAP, "IPicture_get_Type returns %d, but it should be PICTYPE_BITMAP(%d).\n", type, PICTYPE_BITMAP);
 
 	attr = 0;
 	hres = IPicture_get_Attributes (pic, &attr);
-	ok(hres == S_OK,"IPicture_get_Attributes does not return S_OK, but 0x%08lx\n", hres);
-	ok(attr == 0, "IPicture_get_Attributes returns %ld, but it should be 0.\n", attr);
+	ok(hres == S_OK,"IPicture_get_Attributes does not return S_OK, but 0x%08x\n", hres);
+	ok(attr == 0, "IPicture_get_Attributes returns %d, but it should be 0.\n", attr);
 
 	hPal = 0;
 	hres = IPicture_get_hPal (pic, &hPal);
-	ok(hres == S_OK,"IPicture_get_hPal does not return S_OK, but 0x%08lx\n", hres);
+	ok(hres == S_OK,"IPicture_get_hPal does not return S_OK, but 0x%08x\n", hres);
 	/* a single pixel b/w image has no palette */
-	ok(hPal == 0, "IPicture_get_hPal returns %ld, but it should be 0.\n", (long)hPal);
+	ok(hPal == 0, "IPicture_get_hPal returns %d, but it should be 0.\n", hPal);
 
 	res = IPicture_Release (pic);
-	ok (res == 0, "refcount after release is %ld, but should be 0?\n", res);
+	ok (res == 0, "refcount after release is %d, but should be 0?\n", res);
 }
 
 static void
@@ -197,11 +197,11 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	memcpy(data, imgdata, imgsize);
 
 	hres = CreateStreamOnHGlobal (hglob, FALSE, &stream);
-	ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08x\n", hres);
 
 	memset(&seekto,0,sizeof(seekto));
 	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
-	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08x\n", hres);
 	test_pic_with_stream(stream, imgsize);
 
 	/* again with Non Statable and Non Seekable stream */
@@ -227,24 +227,24 @@ static void test_empty_image(void) {
 	memcpy(data,"lt\0\0",4);
 	((DWORD*)data)[1] = 0;
 	hres = CreateStreamOnHGlobal (hglob, TRUE, &stream);
-	ok (hres == S_OK, "CreatestreamOnHGlobal failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "CreatestreamOnHGlobal failed? doubt it... hres 0x%08x\n", hres);
 
 	memset(&seekto,0,sizeof(seekto));
 	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
-	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08x\n", hres);
 
 	pvObj = NULL;
 	hres = pOleLoadPicture(stream, 8, TRUE, &IID_IPicture, &pvObj);
 	pic = pvObj;
-	ok(hres == S_OK,"empty picture not loaded, hres 0x%08lx\n", hres);
+	ok(hres == S_OK,"empty picture not loaded, hres 0x%08x\n", hres);
 	ok(pic != NULL,"empty picture not loaded, pic is NULL\n");
 
 	hres = IPicture_get_Type (pic, &type);
-	ok (hres == S_OK,"empty picture get type failed with hres 0x%08lx\n", hres);
+	ok (hres == S_OK,"empty picture get type failed with hres 0x%08x\n", hres);
 	ok (type == PICTYPE_NONE,"type is %d, but should be PICTYPE_NONE(0)\n", type);
 
 	hres = IPicture_get_Handle (pic, &handle);
-	ok (hres == S_OK,"empty picture get handle failed with hres 0x%08lx\n", hres);
+	ok (hres == S_OK,"empty picture get handle failed with hres 0x%08x\n", hres);
 	ok (handle == 0, "empty picture get handle did not return 0, but 0x%08x\n", handle);
 	IPicture_Release (pic);
 }
@@ -267,21 +267,21 @@ static void test_empty_image_2(void) {
 	memcpy(data,"lt\0\0",4);
 	((DWORD*)data)[1] = 0;
 	hres = CreateStreamOnHGlobal (hglob, TRUE, &stream);
-	ok (hres == S_OK, "CreatestreamOnHGlobal failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "CreatestreamOnHGlobal failed? doubt it... hres 0x%08x\n", hres);
 
 	memset(&seekto,0,sizeof(seekto));
 	seekto.u.LowPart = 42;
 	hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
-	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08lx\n", hres);
+	ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08x\n", hres);
 
 	pvObj = NULL;
 	hres = pOleLoadPicture(stream, 8, TRUE, &IID_IPicture, &pvObj);
 	pic = pvObj;
-	ok(hres == S_OK,"empty picture not loaded, hres 0x%08lx\n", hres);
+	ok(hres == S_OK,"empty picture not loaded, hres 0x%08x\n", hres);
 	ok(pic != NULL,"empty picture not loaded, pic is NULL\n");
 
 	hres = IPicture_get_Type (pic, &type);
-	ok (hres == S_OK,"empty picture get type failed with hres 0x%08lx\n", hres);
+	ok (hres == S_OK,"empty picture get type failed with hres 0x%08x\n", hres);
 	ok (type == PICTYPE_NONE,"type is %d, but should be PICTYPE_NONE(0)\n", type);
 
 	IPicture_Release (pic);
@@ -317,43 +317,43 @@ static void test_Invoke(void)
     dispparams.cArgs = 1;
     dispparams.rgvarg = &vararg;
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_IPictureDisp, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08x\n", hr);
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_IUnknown, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_UNKNOWNNAME, "IPictureDisp_Invoke should have returned DISP_E_UNKNOWNNAME instead of 0x%08x\n", hr);
 
     dispparams.cArgs = 0;
     dispparams.rgvarg = NULL;
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, NULL, NULL, NULL);
-    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08x\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
-    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08x\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, NULL, &varresult, NULL, NULL);
-    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_PARAMNOTOPTIONAL, "IPictureDisp_Invoke should have returned DISP_E_PARAMNOTOPTIONAL instead of 0x%08x\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
     ok_ole_success(hr, "IPictureDisp_Invoke");
     ok(V_VT(&varresult) == VT_I4, "V_VT(&varresult) should have been VT_UINT instead of %d\n", V_VT(&varresult));
 
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &varresult, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     hr = IPictureDisp_Invoke(picdisp, 0xdeadbeef, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
-    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IPictureDisp_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     dispparams.cArgs = 1;
     dispparams.rgvarg = &vararg;
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
-    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     dispparams.cArgs = 1;
     dispparams.rgvarg = &vararg;
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_HPAL, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
-    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08lx\n", hr);
+    ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     IPictureDisp_Release(picdisp);
 }
