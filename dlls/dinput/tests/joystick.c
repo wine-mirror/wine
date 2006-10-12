@@ -141,7 +141,7 @@ static BOOL CALLBACK EnumJoysticks(
     HWND hWnd = get_hwnd();
     char oldstate[248], curstate[248];
 
-    ok(data->version > 0x0300, "Joysticks not supported in version 0x%04lx\n", data->version);
+    ok(data->version > 0x0300, "Joysticks not supported in version 0x%04x\n", data->version);
  
     hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, NULL, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
@@ -270,8 +270,8 @@ static BOOL CALLBACK EnumJoysticks(
            DXGetErrorString8(hr));
         if (hr != DI_OK)
             break;
-        sprintf(curstate, "X%5ld Y%5ld Z%5ld Rx%5ld Ry%5ld Rz%5ld "
-              "S0%5ld S1%5ld POV0%5ld POV1%5ld POV2%5ld POV3%5ld "
+        sprintf(curstate, "X%5d Y%5d Z%5d Rx%5d Ry%5d Rz%5d "
+              "S0%5d S1%5d POV0%5d POV1%5d POV2%5d POV3%5d "
               "B %d %d %d %d %d %d %d %d %d %d %d %d\n",
               js.lX, js.lY, js.lZ, js.lRx, js.lRy, js.lRz,
               js.rglSlider[0], js.rglSlider[1],
@@ -295,7 +295,7 @@ static BOOL CALLBACK EnumJoysticks(
 
 RELEASE:
     ref = IDirectInputDevice_Release(pJoystick);
-    ok(ref==0,"IDirectInputDevice_Release() reference count = %ld\n", ref);
+    ok(ref==0,"IDirectInputDevice_Release() reference count = %d\n", ref);
 
 DONE:
     return DIENUM_CONTINUE;
@@ -308,7 +308,7 @@ static void joystick_tests(DWORD version)
     ULONG ref;
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
-    trace("-- Testing Direct Input Version 0x%04lx --\n", version);
+    trace("-- Testing Direct Input Version 0x%04x --\n", version);
     hr = DirectInputCreate(hInstance, version, &pDI, NULL);
     ok(hr==DI_OK||hr==DIERR_OLDDIRECTINPUTVERSION,
        "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
@@ -321,7 +321,7 @@ static void joystick_tests(DWORD version)
         ok(hr==DI_OK,"IDirectInput_EnumDevices() failed: %s\n",
            DXGetErrorString8(hr));
         ref = IDirectInput_Release(pDI);
-        ok(ref==0,"IDirectInput_Release() reference count = %ld\n", ref);
+        ok(ref==0,"IDirectInput_Release() reference count = %d\n", ref);
     } else if (hr==DIERR_OLDDIRECTINPUTVERSION)
         trace("  Version Not Supported\n");
 }

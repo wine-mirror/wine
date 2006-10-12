@@ -48,7 +48,7 @@ const char * get_file_version(const char * file_name)
                 VS_FIXEDFILEINFO *pFixedVersionInfo;
                 UINT len;
                 if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%ld.%ld.%ld.%ld",
+                    sprintf(version, "%d.%d.%d.%d",
                             pFixedVersionInfo->dwFileVersionMS >> 16,
                             pFixedVersionInfo->dwFileVersionMS & 0xffff,
                             pFixedVersionInfo->dwFileVersionLS >> 16,
@@ -105,7 +105,7 @@ static void keyboard_tests(DWORD version)
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
     
     ref = IDirectInput_Release(pDI);
-    ok(!ref, "IDirectInput_Release() reference count = %ld\n", ref);
+    ok(!ref, "IDirectInput_Release() reference count = %d\n", ref);
 }
 
 START_TEST(keyboard)

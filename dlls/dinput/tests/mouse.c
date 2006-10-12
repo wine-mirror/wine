@@ -83,7 +83,7 @@ static void mouse_tests(void)
 
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "err: %ld\n", GetLastError());
+    ok(hwnd != NULL, "err: %d\n", GetLastError());
     if (!hwnd) return;
 
     ShowWindow(hwnd, SW_SHOW);
