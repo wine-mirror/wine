@@ -40,7 +40,7 @@ static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDO
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -51,7 +51,7 @@ static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICD
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);

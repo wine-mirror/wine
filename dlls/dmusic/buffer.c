@@ -39,7 +39,7 @@ static ULONG WINAPI IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -50,7 +50,7 @@ static ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -76,13 +76,13 @@ static HRESULT WINAPI IDirectMusicBufferImpl_TotalTime (LPDIRECTMUSICBUFFER ifac
 
 static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, 0x%s, %ld, %ld): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, dwChannelMessage);
+	FIXME("(%p, 0x%s, %d, %d): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, dwChannelMessage);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, 0x%s, %ld, %ld, %p): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, cb, lpb);
+	FIXME("(%p, 0x%s, %d, %d, %p): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, cb, lpb);
 	return S_OK;
 }
 
@@ -136,7 +136,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime (LPDIRECTMUSICBUFFER i
 
 static HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, DWORD cb) {
 	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
-	FIXME("(%p, %ld): stub\n", This, cb);
+	FIXME("(%p, %d): stub\n", This, cb);
 	return S_OK;
 }
 

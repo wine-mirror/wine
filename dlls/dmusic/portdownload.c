@@ -39,7 +39,7 @@ static ULONG WINAPI IDirectMusicPortDownloadImpl_AddRef (LPDIRECTMUSICPORTDOWNLO
 	IDirectMusicPortDownloadImpl *This = (IDirectMusicPortDownloadImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -50,7 +50,7 @@ static ULONG WINAPI IDirectMusicPortDownloadImpl_Release (LPDIRECTMUSICPORTDOWNL
 	IDirectMusicPortDownloadImpl *This = (IDirectMusicPortDownloadImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -64,19 +64,19 @@ static ULONG WINAPI IDirectMusicPortDownloadImpl_Release (LPDIRECTMUSICPORTDOWNL
 /* IDirectMusicPortDownload Interface follow: */
 static HRESULT WINAPI IDirectMusicPortDownloadImpl_GetBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwDLId, IDirectMusicDownload** ppIDMDownload) {
 	IDirectMusicPortDownloadImpl *This = (IDirectMusicPortDownloadImpl *)iface;
-	FIXME("(%p, %ld, %p): stub\n", This, dwDLId, ppIDMDownload);
+	FIXME("(%p, %d, %p): stub\n", This, dwDLId, ppIDMDownload);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPortDownloadImpl_AllocateBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwSize, IDirectMusicDownload** ppIDMDownload) {
 	IDirectMusicPortDownloadImpl *This = (IDirectMusicPortDownloadImpl *)iface;
-	FIXME("(%p, %ld, %p): stub\n", This, dwSize, ppIDMDownload);
+	FIXME("(%p, %d, %p): stub\n", This, dwSize, ppIDMDownload);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPortDownloadImpl_GetDLId (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* pdwStartDLId, DWORD dwCount) {
 	IDirectMusicPortDownloadImpl *This = (IDirectMusicPortDownloadImpl *)iface;
-	FIXME("(%p, %p, %ld): stub\n", This, pdwStartDLId, dwCount);
+	FIXME("(%p, %p, %d): stub\n", This, pdwStartDLId, dwCount);
 	return S_OK;
 }
 

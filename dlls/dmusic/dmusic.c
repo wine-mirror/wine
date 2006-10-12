@@ -42,7 +42,7 @@ static ULONG WINAPI IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -53,7 +53,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -67,7 +67,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 /* IDirectMusic8Impl IDirectMusic part: */
 static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
-	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
+	TRACE("(%p, %d, %p)\n", This, dwIndex, pPortCaps);
 	if (NULL == pPortCaps) { return E_POINTER; }
 	/* i guess the first port shown is always software synthesizer */
 	if (dwIndex == 0) 
@@ -144,7 +144,7 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLS
 
 static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
-	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, lpClockInfo);
+	FIXME("(%p, %d, %p): stub\n", This, dwIndex, lpClockInfo);
 	return S_FALSE;
 }
 

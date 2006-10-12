@@ -39,7 +39,7 @@ static ULONG WINAPI IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -50,7 +50,7 @@ static ULONG WINAPI IDirectMusicPortImpl_Release (LPDIRECTMUSICPORT iface) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -82,7 +82,7 @@ static HRESULT WINAPI IDirectMusicPortImpl_Read (LPDIRECTMUSICPORT iface, LPDIRE
 
 static HRESULT WINAPI IDirectMusicPortImpl_DownloadInstrument (LPDIRECTMUSICPORT iface, IDirectMusicInstrument* pInstrument, IDirectMusicDownloadedInstrument** ppDownloadedInstrument, DMUS_NOTERANGE* pNoteRanges, DWORD dwNumNoteRanges) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	FIXME("(%p, %p, %p, %p, %ld): stub\n", This, pInstrument, ppDownloadedInstrument, pNoteRanges, dwNumNoteRanges);
+	FIXME("(%p, %p, %p, %p, %d): stub\n", This, pInstrument, ppDownloadedInstrument, pNoteRanges, dwNumNoteRanges);
 	return S_OK;
 }
 
@@ -121,13 +121,13 @@ static HRESULT WINAPI IDirectMusicPortImpl_GetCaps (LPDIRECTMUSICPORT iface, LPD
 
 static HRESULT WINAPI IDirectMusicPortImpl_DeviceIoControl (LPDIRECTMUSICPORT iface, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	FIXME("(%p, %ld, %p, %ld, %p, %ld, %p, %p): stub\n", This, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+	FIXME("(%p, %d, %p, %d, %p, %d, %p, %p): stub\n", This, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPortImpl_SetNumChannelGroups (LPDIRECTMUSICPORT iface, DWORD dwChannelGroups) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	FIXME("(%p, %ld): semi-stub\n", This, dwChannelGroups);
+	FIXME("(%p, %d): semi-stub\n", This, dwChannelGroups);
 	This->nrofgroups = dwChannelGroups;
 	return S_OK;
 }
@@ -148,9 +148,9 @@ HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fAct
 
 static HRESULT WINAPI IDirectMusicPortImpl_SetChannelPriority (LPDIRECTMUSICPORT iface, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	FIXME("(%p, %ld, %ld, %ld): semi-stub\n", This, dwChannelGroup, dwChannel, dwPriority);
+	FIXME("(%p, %d, %d, %d): semi-stub\n", This, dwChannelGroup, dwChannel, dwPriority);
 	if (dwChannel > 16) {
-		WARN("isn't there supposed to be 16 channels (no. %ld requested)?! (faking as it is ok)\n", dwChannel);
+		WARN("isn't there supposed to be 16 channels (no. %d requested)?! (faking as it is ok)\n", dwChannel);
 		/*return E_INVALIDARG;*/
 	}	
 	return S_OK;
@@ -158,7 +158,7 @@ static HRESULT WINAPI IDirectMusicPortImpl_SetChannelPriority (LPDIRECTMUSICPORT
 
 static HRESULT WINAPI IDirectMusicPortImpl_GetChannelPriority (LPDIRECTMUSICPORT iface, DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
-	TRACE("(%p, %ld, %ld, %p)\n", This, dwChannelGroup, dwChannel, pdwPriority);
+	TRACE("(%p, %d, %d, %p)\n", This, dwChannelGroup, dwChannel, pdwPriority);
 	*pdwPriority = This->group[dwChannelGroup-1].channel[dwChannel].priority;
 	return S_OK;
 }

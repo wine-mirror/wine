@@ -40,7 +40,7 @@ static ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface) {
 	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
 
 	DMUSIC_LockModule();
 
@@ -51,7 +51,7 @@ static ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface) {
 	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
@@ -84,7 +84,7 @@ static HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface
 
 static HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie) {
 	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
-	FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
+	FIXME("(%p, %d): stub\n", This, dwAdviseCookie);
 	return S_OK;
 }
 
