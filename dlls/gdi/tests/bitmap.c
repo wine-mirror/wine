@@ -300,26 +300,26 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ret == sizeof(ds), "wrong size %d\n", ret);
 
     ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
-    ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%lu != %u\n",
+    ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%u != %u\n",
        ds.dsBmih.biSizeImage, ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight);
-    ok(bmih->biSizeImage == 0, "%lu != 0\n", bmih->biSizeImage);
+    ok(bmih->biSizeImage == 0, "%u != 0\n", bmih->biSizeImage);
     ds.dsBmih.biSizeImage = 0;
 
-    ok(ds.dsBmih.biSize == bmih->biSize, "%lu != %lu\n", ds.dsBmih.biSize, bmih->biSize);
-    ok(ds.dsBmih.biWidth == bmih->biWidth, "%lu != %lu\n", ds.dsBmih.biWidth, bmih->biWidth);
-    ok(ds.dsBmih.biHeight == bmih->biHeight, "%lu != %lu\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBmih.biSize == bmih->biSize, "%u != %u\n", ds.dsBmih.biSize, bmih->biSize);
+    ok(ds.dsBmih.biWidth == bmih->biWidth, "%u != %u\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBmih.biHeight == bmih->biHeight, "%u != %u\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBmih.biPlanes == bmih->biPlanes, "%u != %u\n", ds.dsBmih.biPlanes, bmih->biPlanes);
     ok(ds.dsBmih.biBitCount == bmih->biBitCount, "%u != %u\n", ds.dsBmih.biBitCount, bmih->biBitCount);
-    ok(ds.dsBmih.biCompression == bmih->biCompression, "%lu != %lu\n", ds.dsBmih.biCompression, bmih->biCompression);
-    ok(ds.dsBmih.biSizeImage == bmih->biSizeImage, "%lu != %lu\n", ds.dsBmih.biSizeImage, bmih->biSizeImage);
-    ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%lu != %lu\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
-    ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%lu != %lu\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
+    ok(ds.dsBmih.biCompression == bmih->biCompression, "%u != %u\n", ds.dsBmih.biCompression, bmih->biCompression);
+    ok(ds.dsBmih.biSizeImage == bmih->biSizeImage, "%u != %u\n", ds.dsBmih.biSizeImage, bmih->biSizeImage);
+    ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%u != %u\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
+    ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%u != %u\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
 
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(ds) - 4, &ds);
     ok(ret == sizeof(ds.dsBm), "wrong size %d\n", ret);
-    ok(ds.dsBm.bmWidth == bmih->biWidth, "%lu != %lu\n", ds.dsBmih.biWidth, bmih->biWidth);
-    ok(ds.dsBm.bmHeight == bmih->biHeight, "%lu != %lu\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBm.bmWidth == bmih->biWidth, "%u != %u\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBm.bmHeight == bmih->biHeight, "%u != %u\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
 
     ret = GetObject(hbm, 0, &ds);
@@ -383,7 +383,7 @@ static void test_dibsections(void)
 
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %ld\n", GetLastError());
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
     ok(dibsec.dsBm.bmBits == bits, "dibsec.dsBits %p != bits %p\n", dibsec.dsBm.bmBits, bits);
 
@@ -392,11 +392,11 @@ static void test_dibsections(void)
         "VirtualQuery failed\n");
     ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
     ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
-    ok(info.AllocationProtect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect);
     ok(info.RegionSize == 0x26000, "0x%lx != 0x26000\n", info.RegionSize);
-    ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
-    ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
-    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
@@ -406,7 +406,7 @@ static void test_dibsections(void)
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib == NULL, "CreateDIBSection should fail when asked to create a compressed DIB section\n");
-    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "wrong error %d\n", GetLastError());
 
     pbmi->bmiHeader.biBitCount = 16;
     pbmi->bmiHeader.biCompression = BI_BITFIELDS;
@@ -415,18 +415,18 @@ static void test_dibsections(void)
     ((PDWORD)pbmi->bmiColors)[2] = 0x001f;
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %ld\n", GetLastError());
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
 
     /* test the DIB memory */
     ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
         "VirtualQuery failed\n");
     ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
     ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
-    ok(info.AllocationProtect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect);
     ok(info.RegionSize == 0x19000, "0x%lx != 0x19000\n", info.RegionSize);
-    ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
-    ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
-    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
@@ -449,7 +449,7 @@ static void test_dibsections(void)
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");
     ok(dibsec.dsBmih.biClrUsed == 2,
-        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
+        "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* Test if the old BITMAPCOREINFO structure is supported */    
         
@@ -549,7 +549,7 @@ static void test_dibsections(void)
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 16,
-       "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 16);
+       "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 16);
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
@@ -567,7 +567,7 @@ static void test_dibsections(void)
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256,
-        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
+        "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     oldbm = SelectObject(hdcmem, hdib);
 
@@ -602,7 +602,7 @@ static void test_dibsections(void)
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 2,
-        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
+        "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* The colour table has already been grabbed from the dc, so we select back the
        old palette */
@@ -654,8 +654,8 @@ static void test_dibsections(void)
 
     BitBlt(hdcmem2, 0, 0, 16,16, hdcmem, 0, 0, SRCCOPY);
 
-    ok(bits32[0] == 0xff00, "lower left pixel is %08lx\n", bits32[0]);
-    ok(bits32[17] == 0xff00ff, "bottom but one, left pixel is %08lx\n", bits32[17]);
+    ok(bits32[0] == 0xff00, "lower left pixel is %08x\n", bits32[0]);
+    ok(bits32[17] == 0xff00ff, "bottom but one, left pixel is %08x\n", bits32[17]);
 
     SelectObject(hdcmem2, oldbm2);
     test_dib_info(hdib2, bits32, &pbmi->bmiHeader);
@@ -694,7 +694,7 @@ static void test_dibsections(void)
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256,
-        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
+        "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
 

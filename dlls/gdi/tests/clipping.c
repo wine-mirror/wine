@@ -52,7 +52,7 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 1);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
  
     ret = GetRandomRgn(hdc, hrgn, 2);
@@ -61,7 +61,7 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 3);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
     /* Move the clip to the meta and clear the clip */
@@ -72,13 +72,13 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 2);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
     ret = GetRandomRgn(hdc, hrgn, 3);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
     /* Set a new clip (still got the meta) */
@@ -88,13 +88,13 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 1);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc2, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc2, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
     ret = GetRandomRgn(hdc, hrgn, 2);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
  
     IntersectRect(&rc2, &rc, &rc2);
@@ -102,7 +102,7 @@ static void test_GetRandomRgn(void)
     ret = GetRandomRgn(hdc, hrgn, 3);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
-    ok(EqualRect(&rc2, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&rc2, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
 
@@ -111,7 +111,7 @@ static void test_GetRandomRgn(void)
     GetRgnBox(hrgn, &ret_rc);
     if(GetVersion() & 0x80000000)
         OffsetRect(&window_rc, -window_rc.left, -window_rc.top);
-    ok(EqualRect(&window_rc, &ret_rc), "GetRandomRgn %ld,%ld - %ld,%ld\n",
+    ok(EqualRect(&window_rc, &ret_rc), "GetRandomRgn %d,%d - %d,%d\n",
        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom);
 
     DeleteObject(hrgn);

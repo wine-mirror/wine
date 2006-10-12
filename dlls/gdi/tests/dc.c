@@ -42,9 +42,9 @@ static void dump_region(HRGN hrgn)
     if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
     if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
     GetRegionData( hrgn, size, data );
-    printf( "%ld rects:", data->rdh.nCount );
+    printf( "%d rects:", data->rdh.nCount );
     for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
-        printf( " (%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
+        printf( " (%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
     printf( "\n" );
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -74,12 +74,12 @@ static void test_savedc_2(void)
     ret = GetClipRgn(hdc, hrgn);
     ok(ret == 0, "GetClipRgn returned %d instead of 0\n", ret);
     ret = GetRgnBox(hrgn, &rc);
-    ok(ret == NULLREGION, "GetRgnBox returned %d (%ld,%ld-%ld,%ld) instead of NULLREGION\n",
+    ok(ret == NULLREGION, "GetRgnBox returned %d (%d,%d-%d,%d) instead of NULLREGION\n",
        ret, rc.left, rc.top, rc.right, rc.bottom);
     /*dump_region(hrgn);*/
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip),
-       "rects are not equal: (%ld,%ld-%ld,%ld) - (%ld,%ld-%ld,%ld)\n",
+       "rects are not equal: (%d,%d-%d,%d) - (%d,%d-%d,%d)\n",
        rc.left, rc.top, rc.right, rc.bottom,
        rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
 

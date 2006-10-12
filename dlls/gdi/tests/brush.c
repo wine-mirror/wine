@@ -58,15 +58,15 @@ static void test_solidbrush(void)
             stockBrush = NULL;
         memset(&br, 0, sizeof(br));
         ret = GetObject(solidBrush, sizeof(br), &br);
-        ok( ret !=0, "GetObject on solid %s brush failed, error=%ld\n", stock[i].name, GetLastError());
+        ok( ret !=0, "GetObject on solid %s brush failed, error=%d\n", stock[i].name, GetLastError());
         ok(br.lbStyle==BS_SOLID, "%s brush has wrong style, got %d expected %d\n", stock[i].name, br.lbStyle, BS_SOLID);
-        ok(br.lbColor==stock[i].color, "%s brush has wrong color, got 0x%08lx expected 0x%08lx\n", stock[i].name, br.lbColor, stock[i].color);
+        ok(br.lbColor==stock[i].color, "%s brush has wrong color, got 0x%08x expected 0x%08x\n", stock[i].name, br.lbColor, stock[i].color);
         
         if(stockBrush) {
             /* Sanity check, make sure the colors being compared do in fact have a stock brush */
             ret = GetObject(stockBrush, sizeof(br), &br);
-            ok( ret !=0, "GetObject on stock %s brush failed, error=%ld\n", stock[i].name, GetLastError());
-            ok(br.lbColor==stock[i].color, "stock %s brush unexpected color, got 0x%08lx expected 0x%08lx\n", stock[i].name, br.lbColor, stock[i].color);
+            ok( ret !=0, "GetObject on stock %s brush failed, error=%d\n", stock[i].name, GetLastError());
+            ok(br.lbColor==stock[i].color, "stock %s brush unexpected color, got 0x%08x expected 0x%08x\n", stock[i].name, br.lbColor, stock[i].color);
         }
 
         DeleteObject(solidBrush);

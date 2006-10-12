@@ -130,15 +130,15 @@ static void test_font_metrics(HDC hdc, HFONT hfont, const char *test_str,
 
     GetTextMetricsA(hdc, &tm);
 
-    ok(tm.tmHeight == tm_orig->tmHeight * scale_y, "%ld != %ld\n", tm.tmHeight, tm_orig->tmHeight * scale_y);
-    ok(tm.tmAscent == tm_orig->tmAscent * scale_y, "%ld != %ld\n", tm.tmAscent, tm_orig->tmAscent * scale_y);
-    ok(tm.tmDescent == tm_orig->tmDescent * scale_y, "%ld != %ld\n", tm.tmDescent, tm_orig->tmDescent * scale_y);
-    ok(tm.tmAveCharWidth == tm_orig->tmAveCharWidth * scale_x, "%ld != %ld\n", tm.tmAveCharWidth, tm_orig->tmAveCharWidth * scale_x);
+    ok(tm.tmHeight == tm_orig->tmHeight * scale_y, "%d != %d\n", tm.tmHeight, tm_orig->tmHeight * scale_y);
+    ok(tm.tmAscent == tm_orig->tmAscent * scale_y, "%d != %d\n", tm.tmAscent, tm_orig->tmAscent * scale_y);
+    ok(tm.tmDescent == tm_orig->tmDescent * scale_y, "%d != %d\n", tm.tmDescent, tm_orig->tmDescent * scale_y);
+    ok(tm.tmAveCharWidth == tm_orig->tmAveCharWidth * scale_x, "%d != %d\n", tm.tmAveCharWidth, tm_orig->tmAveCharWidth * scale_x);
 
     GetTextExtentPoint32A(hdc, test_str, test_str_len, &size);
 
-    ok(size.cx == size_orig->cx * scale_x, "%ld != %ld\n", size.cx, size_orig->cx * scale_x);
-    ok(size.cy == size_orig->cy * scale_y, "%ld != %ld\n", size.cy, size_orig->cy * scale_y);
+    ok(size.cx == size_orig->cx * scale_x, "%d != %d\n", size.cx, size_orig->cx * scale_x);
+    ok(size.cy == size_orig->cy * scale_y, "%d != %d\n", size.cy, size_orig->cy * scale_y);
 
     GetCharWidthA(hdc, 'A', 'A', &width);
 
@@ -169,7 +169,7 @@ static void test_bitmap_font(void)
 	return;
     }
 
-    trace("found bitmap font %s, height %ld\n", bitmap_lf.lfFaceName, bitmap_lf.lfHeight);
+    trace("found bitmap font %s, height %d\n", bitmap_lf.lfFaceName, bitmap_lf.lfHeight);
 
     height_orig = bitmap_lf.lfHeight;
     hfont = create_font("bitmap", &bitmap_lf);
@@ -331,24 +331,24 @@ static void test_bitmap_font_metrics(void)
             ret = EnumFontFamiliesEx(hdc, &lf, find_font_proc, (LPARAM)&lf, 0);
             if (ret) continue;
 
-            trace("found font %s, height %ld charset %x\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet);
+            trace("found font %s, height %d charset %x\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet);
 
             hfont = create_font(lf.lfFaceName, &lf);
             old_hfont = SelectObject(hdc, hfont);
-            ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %ld\n", GetLastError());
+            ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %d\n", GetLastError());
 
-            ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
-            ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
-            ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
-            ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
-            ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
-            ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
-            ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
+            ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
+            ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
+            ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
+            ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
+            ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
+            ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %d != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
+            ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %d != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
 
             /* Don't run the max char width test on System/ANSI_CHARSET.  We have extra characters in our font
                that make the max width bigger */
             if(strcmp(lf.lfFaceName, "System") || lf.lfCharSet != ANSI_CHARSET)
-                ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
+                ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %d != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
 
             SelectObject(hdc, old_hfont);
             DeleteObject(hfont);
@@ -376,19 +376,19 @@ static void test_GdiGetCharDimensions(void)
     avgwidth = ((size.cx / 26) + 1) / 2;
 
     ret = GdiGetCharDimensions(hdc, &tm, &height);
-    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
-    ok(height == tm.tmHeight, "GdiGetCharDimensions should have set height to %ld instead of %ld\n", tm.tmHeight, height);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
+    ok(height == tm.tmHeight, "GdiGetCharDimensions should have set height to %d instead of %d\n", tm.tmHeight, height);
 
     ret = GdiGetCharDimensions(hdc, &tm, NULL);
-    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
 
     ret = GdiGetCharDimensions(hdc, NULL, NULL);
-    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
 
     height = 0;
     ret = GdiGetCharDimensions(hdc, NULL, &height);
-    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
-    ok(height == size.cy, "GdiGetCharDimensions should have set height to %ld instead of %ld\n", size.cy, height);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
+    ok(height == size.cy, "GdiGetCharDimensions should have set height to %d instead of %d\n", size.cy, height);
 
     DeleteDC(hdc);
 }
@@ -426,7 +426,7 @@ static void test_text_extents(void)
     hfont = SelectObject(hdc, hfont);
     GetTextMetricsA(hdc, &tm);
     GetTextExtentPointA(hdc, "o", 1, &sz);
-    ok(sz.cy == tm.tmHeight, "cy %ld tmHeight %ld\n", sz.cy, tm.tmHeight);
+    ok(sz.cy == tm.tmHeight, "cy %d tmHeight %d\n", sz.cy, tm.tmHeight);
 
     SetLastError(0xdeadbeef);
     GetTextExtentExPointW(hdc, wt, 1, 1, &fit1, &fit2, &sz1);
@@ -447,7 +447,7 @@ static void test_text_extents(void)
     GetTextExtentExPointW(hdc, wt, len, 32767, &fit1, extents, &sz1);
     GetTextExtentPointW(hdc, wt, len, &sz2);
     ok(sz1.cy == sz2.cy,
-       "cy from GetTextExtentExPointW (%ld) and GetTextExtentPointW (%ld) differ\n", sz1.cy, sz2.cy);
+       "cy from GetTextExtentExPointW (%d) and GetTextExtentPointW (%d) differ\n", sz1.cy, sz2.cy);
     /* Because of the '\n' in the string GetTextExtentExPoint and
        GetTextExtentPoint return different widths under Win2k, but
        under WinXP they return the same width.  So we don't test that
@@ -513,11 +513,11 @@ static void test_GetGlyphIndices()
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
     charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
     ok(glyphs[4] == 0x001f, "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
     flags = 0;
     charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %ld\n", charcount);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
     ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n", 
                     textm.tmDefaultChar, glyphs[4]);
 }
@@ -630,7 +630,7 @@ static void test_GetKerningPairs(void)
             continue;
         }
 
-        trace("testing font %s, height %ld\n", kd[i].face_name, kd[i].height);
+        trace("testing font %s, height %d\n", kd[i].face_name, kd[i].height);
 
         memset(&lf, 0, sizeof(lf));
         strcpy(lf.lfFaceName, kd[i].face_name);
@@ -642,13 +642,13 @@ static void test_GetKerningPairs(void)
 
         SetLastError(0xdeadbeef);
         otm.otmSize = sizeof(otm); /* just in case for Win9x compatibility */
-        ok(GetOutlineTextMetricsW(hdc, sizeof(otm), &otm) == sizeof(otm), "GetOutlineTextMetricsW error %ld\n", GetLastError());
+        ok(GetOutlineTextMetricsW(hdc, sizeof(otm), &otm) == sizeof(otm), "GetOutlineTextMetricsW error %d\n", GetLastError());
 
-        ok(kd[i].tmHeight == otm.otmTextMetrics.tmHeight, "expected %ld, got %ld\n",
+        ok(kd[i].tmHeight == otm.otmTextMetrics.tmHeight, "expected %d, got %d\n",
            kd[i].tmHeight, otm.otmTextMetrics.tmHeight);
-        ok(kd[i].tmAscent == otm.otmTextMetrics.tmAscent, "expected %ld, got %ld\n",
+        ok(kd[i].tmAscent == otm.otmTextMetrics.tmAscent, "expected %d, got %d\n",
            kd[i].tmAscent, otm.otmTextMetrics.tmAscent);
-        ok(kd[i].tmDescent == otm.otmTextMetrics.tmDescent, "expected %ld, got %ld\n",
+        ok(kd[i].tmDescent == otm.otmTextMetrics.tmDescent, "expected %d, got %d\n",
            kd[i].tmDescent, otm.otmTextMetrics.tmDescent);
 
         ok(kd[i].otmEMSquare == otm.otmEMSquare, "expected %u, got %u\n",
@@ -677,7 +677,7 @@ todo_wine {
 }
 
         total_kern_pairs = GetKerningPairsW(hdc, 0, NULL);
-        trace("total_kern_pairs %lu\n", total_kern_pairs);
+        trace("total_kern_pairs %u\n", total_kern_pairs);
         kern_pair = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pair));
 
 #if 0 /* Win98 (GetKerningPairsA) and XP behave differently here, the test passes on XP */
@@ -689,13 +689,13 @@ todo_wine {
 #endif
 
         ret = GetKerningPairsW(hdc, 100, NULL);
-        ok(ret == total_kern_pairs, "got %lu, expected %lu\n", ret, total_kern_pairs);
+        ok(ret == total_kern_pairs, "got %u, expected %u\n", ret, total_kern_pairs);
 
         ret = GetKerningPairsW(hdc, total_kern_pairs/2, kern_pair);
-        ok(ret == total_kern_pairs/2, "got %lu, expected %lu\n", ret, total_kern_pairs/2);
+        ok(ret == total_kern_pairs/2, "got %u, expected %u\n", ret, total_kern_pairs/2);
 
         ret = GetKerningPairsW(hdc, total_kern_pairs, kern_pair);
-        ok(ret == total_kern_pairs, "got %lu, expected %lu\n", ret, total_kern_pairs);
+        ok(ret == total_kern_pairs, "got %u, expected %u\n", ret, total_kern_pairs);
 
         matches = 0;
 
@@ -721,7 +721,7 @@ todo_wine {
             }
         }
 
-        ok(matches == kd[i].total_kern_pairs, "got matches %lu, expected %lu\n",
+        ok(matches == kd[i].total_kern_pairs, "got matches %u, expected %u\n",
            matches, kd[i].total_kern_pairs);
 
         HeapFree(GetProcessHeap(), 0, kern_pair);

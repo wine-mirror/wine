@@ -66,7 +66,7 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     LOGFONTA device_lf;
     INT ret;
 
-    trace("hdc %p, emr->iType %ld, emr->nSize %ld, param %p\n",
+    trace("hdc %p, emr->iType %d, emr->nSize %d, param %p\n",
            hdc, emr->iType, emr->nSize, (void *)param);
 
     if(!hdc) return 1;
@@ -77,8 +77,8 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     {
     case EMR_HEADER:
         ok(GetTextAlign(hdc) == 0, "text align %08x\n", GetTextAlign(hdc));
-        ok(GetBkColor(hdc) == RGB(0xff, 0xff, 0xff), "bk color %08lx\n", GetBkColor(hdc));
-        ok(GetTextColor(hdc) == RGB(0x0, 0x0, 0x0), "text color %08lx\n", GetTextColor(hdc));
+        ok(GetBkColor(hdc) == RGB(0xff, 0xff, 0xff), "bk color %08x\n", GetBkColor(hdc));
+        ok(GetTextColor(hdc) == RGB(0x0, 0x0, 0x0), "text color %08x\n", GetTextColor(hdc));
         ok(GetROP2(hdc) == R2_COPYPEN, "rop %d\n", GetROP2(hdc));
         ok(GetArcDirection(hdc) == AD_COUNTERCLOCKWISE, "arc dir %d\n", GetArcDirection(hdc));
         ok(GetPolyFillMode(hdc) == ALTERNATE, "poly fill %d\n", GetPolyFillMode(hdc));
@@ -98,7 +98,7 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         dx = (const INT *)((const char *)emr + emr_ExtTextOutA->emrtext.offDx);
 
         ret = GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf);
-        ok( ret == sizeof(device_lf), "GetObjectA error %ld\n", GetLastError());
+        ok( ret == sizeof(device_lf), "GetObjectA error %d\n", GetLastError());
 
         /* compare up to lfOutPrecision, other values are not interesting,
          * and in fact sometimes arbitrary adapted by Win9x.
@@ -108,7 +108,7 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
         for(i = 0; i < emr_ExtTextOutA->emrtext.nChars; i++)
         {
-            ok(orig_dx[i] == dx[i], "pass %d: dx[%ld] (%d) didn't match %d\n",
+            ok(orig_dx[i] == dx[i], "pass %d: dx[%d] (%d) didn't match %d\n",
                                      n_record, i, dx[i], orig_dx[i]);
         }
         n_record++;
@@ -122,7 +122,7 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         dx = (const INT *)((const char *)emr + emr_ExtTextOutW->emrtext.offDx);
 
         ret = GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf);
-        ok( ret == sizeof(device_lf), "GetObjectA error %ld\n", GetLastError());
+        ok( ret == sizeof(device_lf), "GetObjectA error %d\n", GetLastError());
 
         /* compare up to lfOutPrecision, other values are not interesting,
          * and in fact sometimes arbitrary adapted by Win9x.
@@ -132,7 +132,7 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
         for(i = 0; i < emr_ExtTextOutW->emrtext.nChars; i++)
         {
-            ok(orig_dx[i] == dx[i], "pass %d: dx[%ld] (%d) didn't match %d\n",
+            ok(orig_dx[i] == dx[i], "pass %d: dx[%d] (%d) didn't match %d\n",
                                      n_record, i, dx[i], orig_dx[i]);
         }
         n_record++;
@@ -163,10 +163,10 @@ static void test_ExtTextOut(void)
     /* Win9x doesn't play EMFs on invisible windows */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
                            0, 0, 200, 200, 0, 0, 0, NULL);
-    ok(hwnd != 0, "CreateWindowExA error %ld\n", GetLastError());
+    ok(hwnd != 0, "CreateWindowExA error %d\n", GetLastError());
 
     hdcDisplay = GetDC(hwnd);
-    ok(hdcDisplay != 0, "GetDC error %ld\n", GetLastError());
+    ok(hdcDisplay != 0, "GetDC error %d\n", GetLastError());
 
     trace("hdcDisplay %p\n", hdcDisplay);
 
@@ -181,7 +181,7 @@ static void test_ExtTextOut(void)
     orig_lf.lfQuality = DEFAULT_QUALITY;
     lstrcpyA(orig_lf.lfFaceName, "Arial");
     hFont = CreateFontIndirectA(&orig_lf);
-    ok(hFont != 0, "CreateFontIndirectA error %ld\n", GetLastError());
+    ok(hFont != 0, "CreateFontIndirectA error %d\n", GetLastError());
 
     hFont = SelectObject(hdcDisplay, hFont);
 
@@ -189,12 +189,12 @@ static void test_ExtTextOut(void)
     for (i = 0; i < len; i++)
     {
         ret = GetCharWidthA(hdcDisplay, text[i], text[i], &dx[i]);
-        ok( ret, "GetCharWidthA error %ld\n", GetLastError());
+        ok( ret, "GetCharWidthA error %d\n", GetLastError());
     }
     hFont = SelectObject(hdcDisplay, hFont);
 
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
-    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
 
     trace("hdcMetafile %p\n", hdcMetafile);
 
@@ -205,23 +205,23 @@ static void test_ExtTextOut(void)
 
     /* 1. pass NULL lpDx */
     ret = ExtTextOutA(hdcMetafile, 0, 0, 0, &rc, text, lstrlenA(text), NULL);
-    ok( ret, "ExtTextOutA error %ld\n", GetLastError());
+    ok( ret, "ExtTextOutA error %d\n", GetLastError());
 
     /* 2. pass custom lpDx */
     ret = ExtTextOutA(hdcMetafile, 0, 20, 0, &rc, text, lstrlenA(text), dx);
-    ok( ret, "ExtTextOutA error %ld\n", GetLastError());
+    ok( ret, "ExtTextOutA error %d\n", GetLastError());
 
     hFont = SelectObject(hdcMetafile, hFont);
     ret = DeleteObject(hFont);
-    ok( ret, "DeleteObject error %ld\n", GetLastError());
+    ok( ret, "DeleteObject error %d\n", GetLastError());
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     ok(!GetObjectType(hdcMetafile), "CloseEnhMetaFile has to destroy metafile hdc\n");
 
     ret = PlayEnhMetaFile(hdcDisplay, hMetafile, &rc);
-    ok( ret, "PlayEnhMetaFile error %ld\n", GetLastError());
+    ok( ret, "PlayEnhMetaFile error %d\n", GetLastError());
 
     SetTextAlign(hdcDisplay, TA_UPDATECP | TA_CENTER | TA_BASELINE | TA_RTLREADING );
     SetBkColor(hdcDisplay, RGB(0xff, 0, 0));
@@ -235,12 +235,12 @@ static void test_ExtTextOut(void)
     SetBkMode(hdcDisplay, OPAQUE);
 
     ret = EnumEnhMetaFile(hdcDisplay, hMetafile, eto_emf_enum_proc, dx, &rc);
-    ok( ret, "EnumEnhMetaFile error %ld\n", GetLastError());
+    ok( ret, "EnumEnhMetaFile error %d\n", GetLastError());
 
     ok( GetTextAlign(hdcDisplay) == (TA_UPDATECP | TA_CENTER | TA_BASELINE | TA_RTLREADING),
         "text align %08x\n", GetTextAlign(hdcDisplay));
-    ok( GetBkColor(hdcDisplay) == RGB(0xff, 0, 0), "bk color %08lx\n", GetBkColor(hdcDisplay));
-    ok( GetTextColor(hdcDisplay) == RGB(0, 0xff, 0), "text color %08lx\n", GetTextColor(hdcDisplay));
+    ok( GetBkColor(hdcDisplay) == RGB(0xff, 0, 0), "bk color %08x\n", GetBkColor(hdcDisplay));
+    ok( GetTextColor(hdcDisplay) == RGB(0, 0xff, 0), "text color %08x\n", GetTextColor(hdcDisplay));
     ok( GetROP2(hdcDisplay) == R2_NOT, "rop2 %d\n", GetROP2(hdcDisplay));
     ok( GetArcDirection(hdcDisplay) == AD_CLOCKWISE, "arc dir  %d\n", GetArcDirection(hdcDisplay));
     ok( GetPolyFillMode(hdcDisplay) == WINDING, "poly fill %d\n", GetPolyFillMode(hdcDisplay));
@@ -255,9 +255,9 @@ static void test_ExtTextOut(void)
        "A null hdc does not require a valid rc\n");
 
     ret = DeleteEnhMetaFile(hMetafile);
-    ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ok( ret, "DeleteEnhMetaFile error %d\n", GetLastError());
     ret = ReleaseDC(hwnd, hdcDisplay);
-    ok( ret, "ReleaseDC error %ld\n", GetLastError());
+    ok( ret, "ReleaseDC error %d\n", GetLastError());
     DestroyWindow(hwnd);
 }
 
@@ -284,14 +284,14 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
             switch(++restore_no)
             {
             case 1:
-                ok(restoredc->iRelative == -1, "first restore %ld\n", restoredc->iRelative);
+                ok(restoredc->iRelative == -1, "first restore %d\n", restoredc->iRelative);
                 break;
 
             case 2:
-                ok(restoredc->iRelative == -3, "second restore %ld\n", restoredc->iRelative);
+                ok(restoredc->iRelative == -3, "second restore %d\n", restoredc->iRelative);
                 break;
             case 3:
-                ok(restoredc->iRelative == -2, "third restore %ld\n", restoredc->iRelative);
+                ok(restoredc->iRelative == -2, "third restore %d\n", restoredc->iRelative);
                 break;
             }
             ok(restore_no <= 3, "restore_no %d\n", restore_no);
@@ -318,13 +318,13 @@ void test_SaveDC(void)
     /* Win9x doesn't play EMFs on invisible windows */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
                            0, 0, 200, 200, 0, 0, 0, NULL);
-    ok(hwnd != 0, "CreateWindowExA error %ld\n", GetLastError());
+    ok(hwnd != 0, "CreateWindowExA error %d\n", GetLastError());
 
     hdcDisplay = GetDC(hwnd);
-    ok(hdcDisplay != 0, "GetDC error %ld\n", GetLastError());
+    ok(hdcDisplay != 0, "GetDC error %d\n", GetLastError());
 
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
-    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
 
     /* Need to write something to the emf, otherwise Windows won't play it back */
     LineTo(hdcMetafile, 100, 100);
@@ -354,15 +354,15 @@ void test_SaveDC(void)
     ok(ret == 2, "ret = %d\n", ret);
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     ret = EnumEnhMetaFile(hdcDisplay, hMetafile, savedc_emf_enum_proc, 0, &rc);
     ok( ret == 1, "EnumEnhMetaFile rets %d\n", ret);
 
     ret = DeleteEnhMetaFile(hMetafile);
-    ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ok( ret, "DeleteEnhMetaFile error %d\n", GetLastError());
     ret = ReleaseDC(hwnd, hdcDisplay);
-    ok( ret, "ReleaseDC error %ld\n", GetLastError());
+    ok( ret, "ReleaseDC error %d\n", GetLastError());
     DestroyWindow(hwnd);
 }
 
@@ -598,7 +598,7 @@ static const unsigned char EMF_LINETO_MM_TEXT_BITS[] = {
 static INT CALLBACK mf_enum_proc(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
                                  INT nobj, LPARAM param)
 {
-    trace("hdc %p, mr->rdFunction %04x, mr->rdSize %lu, param %p\n",
+    trace("hdc %p, mr->rdFunction %04x, mr->rdSize %u, param %p\n",
            hdc, mr->rdFunction, mr->rdSize, (void *)param);
     return TRUE;
 }
@@ -683,11 +683,11 @@ static int compare_mf_disk_bits(LPCSTR name, const BYTE *bits, UINT bsize, const
     assert(mfsize <= MF_BUFSIZE);
 
     ret = ReadFile(hfile, buf, sizeof(buf), &rd_size, NULL);
-    ok( ret && rd_size == mfsize, "ReadFile: error %ld\n", GetLastError());
+    ok( ret && rd_size == mfsize, "ReadFile: error %d\n", GetLastError());
 
     CloseHandle(hfile);
 
-    ok(mfsize == bsize, "%s: mfsize=%ld, bsize=%d.\n", desc, mfsize, bsize);
+    ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d.\n", desc, mfsize, bsize);
 
     if (mfsize != bsize)
         return -1;
@@ -698,7 +698,7 @@ static int compare_mf_disk_bits(LPCSTR name, const BYTE *bits, UINT bsize, const
         if (buf[i] != bits[i])
             diff++;
     }
-    ok(diff == 0, "%s: mfsize=%ld, bsize=%d, diff=%d\n",
+    ok(diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
         desc, mfsize, bsize, diff);
 
     return diff; 
@@ -740,7 +740,7 @@ static void dump_emf_records(const HENHMETAFILE mf, const char *desc)
     if (!winetest_debug) return;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
-    ok (mfsize > 0, "%s: GetEnhMetaFileBits error %ld\n", desc, GetLastError());
+    ok (mfsize > 0, "%s: GetEnhMetaFileBits error %d\n", desc, GetLastError());
 
     printf("EMF %s has records:\n", desc);
 
@@ -749,7 +749,7 @@ static void dump_emf_records(const HENHMETAFILE mf, const char *desc)
     while(offset < mfsize)
     {
         EMR *emr = (EMR *)(emf + offset);
-        printf("emr->iType %ld, emr->nSize %lu\n", emr->iType, emr->nSize);
+        printf("emr->iType %d, emr->nSize %u\n", emr->iType, emr->nSize);
         /*trace("emr->iType 0x%04lx, emr->nSize 0x%04lx\n", emr->iType, emr->nSize);*/
         offset += emr->nSize;
     }
@@ -769,7 +769,7 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
     int diff;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
-    ok (mfsize > 0, "%s: GetEnhMetaFileBits error %ld\n", desc, GetLastError());
+    ok (mfsize > 0, "%s: GetEnhMetaFileBits error %d\n", desc, GetLastError());
 
     if (mfsize < MF_BUFSIZE)
     {
@@ -823,7 +823,7 @@ static void test_mf_Blank(void)
     INT type;
 
     hdcMetafile = CreateMetaFileA(NULL);
-    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
 /* Tests on metafile initialization */
@@ -832,7 +832,7 @@ static void test_mf_Blank(void)
         "GetDeviceCaps: TECHNOLOGY=%d != DT_METAFILE.\n", caps);
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     type = GetObjectType(hMetafile);
     ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
     ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
@@ -845,7 +845,7 @@ static void test_mf_Blank(void)
     }
 
     ret = DeleteMetaFile(hMetafile);
-    ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+    ok( ret, "DeleteMetaFile(%p) error %d\n", hMetafile, GetLastError());
 }
 
 static void test_CopyMetaFile(void)
@@ -858,11 +858,11 @@ static void test_CopyMetaFile(void)
     INT type;
 
     hdcMetafile = CreateMetaFileA(NULL);
-    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     type = GetObjectType(hMetafile);
     ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
 
@@ -877,13 +877,13 @@ static void test_CopyMetaFile(void)
     GetTempFileNameA(temp_path, "wmf", 0, mf_name);
 
     hmf_copy = CopyMetaFileA(hMetafile, mf_name);
-    ok(hmf_copy != 0, "CopyMetaFile error %ld\n", GetLastError());
+    ok(hmf_copy != 0, "CopyMetaFile error %d\n", GetLastError());
 
     type = GetObjectType(hmf_copy);
     ok(type == OBJ_METAFILE, "CopyMetaFile created object with type %d\n", type);
 
     ret = DeleteMetaFile(hMetafile);
-    ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+    ok( ret, "DeleteMetaFile(%p) error %d\n", hMetafile, GetLastError());
 
     if (compare_mf_disk_bits(mf_name, MF_BLANK_BITS, sizeof(MF_BLANK_BITS), "mf_blank") != 0)
     {
@@ -892,7 +892,7 @@ static void test_CopyMetaFile(void)
     }
 
     ret = DeleteMetaFile(hmf_copy);
-    ok( ret, "DeleteMetaFile(%p) error %ld\n", hmf_copy, GetLastError());
+    ok( ret, "DeleteMetaFile(%p) error %d\n", hmf_copy, GetLastError());
 
     DeleteFileA(mf_name);
 }
@@ -906,7 +906,7 @@ static void test_SetMetaFileBits(void)
     METAHEADER *mh;
 
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), MF_GRAPHICS_BITS);
-    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+    ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
     type = GetObjectType(hmf);
     ok(type == OBJ_METAFILE, "SetMetaFileBitsEx created object with type %d\n", type);
 
@@ -917,7 +917,7 @@ static void test_SetMetaFileBits(void)
     }
 
     ret = DeleteMetaFile(hmf);
-    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
 
     /* NULL data crashes XP SP1 */
     /*hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), NULL);*/
@@ -926,13 +926,13 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
 
     /* Now with not even size */
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS) - 1, MF_GRAPHICS_BITS);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == 0xdeadbeef /* XP SP1 */, "wrong error %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef /* XP SP1 */, "wrong error %d\n", GetLastError());
 
     /* Now with zeroed out or faked some header fields */
     assert(sizeof(buf) >= sizeof(MF_GRAPHICS_BITS));
@@ -945,7 +945,7 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
 
     /* Now with corrupted mtSize field */
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
@@ -953,7 +953,7 @@ static void test_SetMetaFileBits(void)
     /* corruption of mtSize doesn't lead to a failure */
     mh->mtSize *= 2;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
-    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+    ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
     {
@@ -962,7 +962,7 @@ static void test_SetMetaFileBits(void)
     }
 
     ret = DeleteMetaFile(hmf);
-    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
 
     /* Now with zeroed out mtSize field */
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
@@ -970,7 +970,7 @@ static void test_SetMetaFileBits(void)
     /* zeroing mtSize doesn't lead to a failure */
     mh->mtSize = 0;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
-    ok(hmf != 0, "SetMetaFileBitsEx error %ld\n", GetLastError());
+    ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
     {
@@ -979,7 +979,7 @@ static void test_SetMetaFileBits(void)
     }
 
     ret = DeleteMetaFile(hmf);
-    ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
 }
 
 /* Simple APIs from mfdrv/graphics.c
@@ -993,15 +993,15 @@ static void test_mf_Graphics(void)
     BOOL ret;
 
     hdcMetafile = CreateMetaFileA(NULL);
-    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
     ret = MoveToEx(hdcMetafile, 1, 1, NULL);
-    ok( ret, "MoveToEx error %ld.\n", GetLastError());
+    ok( ret, "MoveToEx error %d.\n", GetLastError());
     ret = LineTo(hdcMetafile, 2, 2);
-    ok( ret, "LineTo error %ld.\n", GetLastError());
+    ok( ret, "LineTo error %d.\n", GetLastError());
     ret = MoveToEx(hdcMetafile, 1, 1, &oldpoint);
-    ok( ret, "MoveToEx error %ld.\n", GetLastError());
+    ok( ret, "MoveToEx error %d.\n", GetLastError());
 
 /* oldpoint gets garbage under Win XP, so the following test would
  * work under Wine but fails under Windows:
@@ -1012,10 +1012,10 @@ static void test_mf_Graphics(void)
  */
 
     ret = Ellipse(hdcMetafile, 0, 0, 2, 2);
-    ok( ret, "Ellipse error %ld.\n", GetLastError());
+    ok( ret, "Ellipse error %d.\n", GetLastError());
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
 
     if (compare_mf_bits (hMetafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS),
@@ -1026,7 +1026,7 @@ static void test_mf_Graphics(void)
     }
 
     ret = DeleteMetaFile(hMetafile);
-    ok( ret, "DeleteMetaFile(%p) error %ld\n",
+    ok( ret, "DeleteMetaFile(%p) error %d\n",
         hMetafile, GetLastError());
 }
 
@@ -1043,20 +1043,20 @@ static void test_mf_PatternBrush(void)
     orig_lb->lbStyle = BS_PATTERN;
     orig_lb->lbColor = RGB(0, 0, 0);
     orig_lb->lbHatch = (ULONG_PTR)CreateBitmap (8, 8, 1, 1, SAMPLE_PATTERN_BRUSH);
-    ok((HBITMAP)orig_lb->lbHatch != NULL, "CreateBitmap error %ld.\n", GetLastError());
+    ok((HBITMAP)orig_lb->lbHatch != NULL, "CreateBitmap error %d.\n", GetLastError());
 
     hBrush = CreateBrushIndirect (orig_lb);
-    ok(hBrush != 0, "CreateBrushIndirect error %ld\n", GetLastError());
+    ok(hBrush != 0, "CreateBrushIndirect error %d\n", GetLastError());
 
     hdcMetafile = CreateMetaFileA(NULL);
-    ok(hdcMetafile != 0, "CreateMetaFileA error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateMetaFileA error %d\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
     hBrush = SelectObject(hdcMetafile, hBrush);
-    ok(hBrush != 0, "SelectObject error %ld.\n", GetLastError());
+    ok(hBrush != 0, "SelectObject error %d.\n", GetLastError());
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
 
     if (compare_mf_bits (hMetafile, MF_PATTERN_BRUSH_BITS, sizeof(MF_PATTERN_BRUSH_BITS),
@@ -1067,11 +1067,11 @@ static void test_mf_PatternBrush(void)
     }
 
     ret = DeleteMetaFile(hMetafile);
-    ok( ret, "DeleteMetaFile error %ld\n", GetLastError());
+    ok( ret, "DeleteMetaFile error %d\n", GetLastError());
     ret = DeleteObject(hBrush);
-    ok( ret, "DeleteObject(HBRUSH) error %ld\n", GetLastError());
+    ok( ret, "DeleteObject(HBRUSH) error %d\n", GetLastError());
     ret = DeleteObject((HBITMAP)orig_lb->lbHatch);
-    ok( ret, "DeleteObject(HBITMAP) error %ld\n",
+    ok( ret, "DeleteObject(HBITMAP) error %d\n",
         GetLastError());
     HeapFree (GetProcessHeap(), 0, orig_lb);
 }
@@ -1084,20 +1084,20 @@ static void test_mf_ExtTextOut_on_path(void)
     static const INT dx[4] = { 3, 5, 8, 12 };
 
     hdcMetafile = CreateMetaFileA(NULL);
-    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
     ret = BeginPath(hdcMetafile);
     ok(!ret, "BeginPath on metafile DC should fail\n");
 
     ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
-    ok(ret, "ExtTextOut error %ld\n", GetLastError());
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcMetafile);
     ok(!ret, "EndPath on metafile DC should fail\n");
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
 
     if (compare_mf_bits(hMetafile, MF_TEXTOUT_ON_PATH_BITS, sizeof(MF_TEXTOUT_ON_PATH_BITS),
         "mf_TextOut_on_path") != 0)
@@ -1107,7 +1107,7 @@ static void test_mf_ExtTextOut_on_path(void)
     }
 
     ret = DeleteMetaFile(hMetafile);
-    ok(ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hMetafile, GetLastError());
 }
 
 static void test_emf_ExtTextOut_on_path(void)
@@ -1121,25 +1121,25 @@ static void test_emf_ExtTextOut_on_path(void)
     /* Win9x doesn't play EMFs on invisible windows */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
                            0, 0, 200, 200, 0, 0, 0, NULL);
-    ok(hwnd != 0, "CreateWindowExA error %ld\n", GetLastError());
+    ok(hwnd != 0, "CreateWindowExA error %d\n", GetLastError());
 
     hdcDisplay = GetDC(hwnd);
-    ok(hdcDisplay != 0, "GetDC error %ld\n", GetLastError());
+    ok(hdcDisplay != 0, "GetDC error %d\n", GetLastError());
 
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
-    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %ld\n", GetLastError());
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
 
     ret = BeginPath(hdcMetafile);
-    ok(ret, "BeginPath error %ld\n", GetLastError());
+    ok(ret, "BeginPath error %d\n", GetLastError());
 
     ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
-    ok(ret, "ExtTextOut error %ld\n", GetLastError());
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcMetafile);
-    ok(ret, "EndPath error %ld\n", GetLastError());
+    ok(ret, "EndPath error %d\n", GetLastError());
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
+    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     /* this doesn't succeed yet: EMF has correct size, all EMF records
      * are there, but their contents don't match for different reasons.
@@ -1152,9 +1152,9 @@ static void test_emf_ExtTextOut_on_path(void)
     }
 
     ret = DeleteEnhMetaFile(hMetafile);
-    ok(ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ok(ret, "DeleteEnhMetaFile error %d\n", GetLastError());
     ret = ReleaseDC(hwnd, hdcDisplay);
-    ok(ret, "ReleaseDC error %ld\n", GetLastError());
+    ok(ret, "ReleaseDC error %d\n", GetLastError());
     DestroyWindow(hwnd);
 }
 
@@ -1166,7 +1166,7 @@ static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETAREC
      * until a record is played which actually outputs something */
     PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
     LPtoDP(hdc, mapping, 2);
-    trace("Meta record: iType %ld, nSize %ld, (%ld,%ld)-(%ld,%ld)\n",
+    trace("Meta record: iType %d, nSize %d, (%d,%d)-(%d,%d)\n",
            lpEMFR->iType, lpEMFR->nSize,
            mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
 
@@ -1182,7 +1182,7 @@ static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETAREC
         }
         else
         {
-            ok(lpMFP->mm == MM_ANISOTROPIC, "mm=%ld\n", lpMFP->mm);
+            ok(lpMFP->mm == MM_ANISOTROPIC, "mm=%d\n", lpMFP->mm);
             
             x0 = MulDiv(0, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
             y0 = MulDiv(0, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
@@ -1190,7 +1190,7 @@ static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETAREC
             y1 = MulDiv(10, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
         }
         ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
-            "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
+            "(%d,%d)->(%d,%d), expected (%d,%d)->(%d,%d)\n",
             mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
             x0, y0, x1, y1);
     }
@@ -1206,11 +1206,11 @@ static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
     LPBYTE pBits;
 
     hdcMf = CreateMetaFile(NULL);
-    ok(hdcMf != NULL, "CreateMetaFile failed with error %ld\n", GetLastError());
+    ok(hdcMf != NULL, "CreateMetaFile failed with error %d\n", GetLastError());
     ret = LineTo(hdcMf, (INT)LINE_X, (INT)LINE_Y);
-    ok(ret, "LineTo failed with error %ld\n", GetLastError());
+    ok(ret, "LineTo failed with error %d\n", GetLastError());
     hmf = CloseMetaFile(hdcMf);
-    ok(hmf != NULL, "CloseMetaFile failed with error %ld\n", GetLastError());
+    ok(hmf != NULL, "CloseMetaFile failed with error %d\n", GetLastError());
 
     if (compare_mf_bits (hmf, MF_LINETO_BITS, sizeof(MF_LINETO_BITS), "mf_LineTo") != 0)
     {
@@ -1219,7 +1219,7 @@ static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
     }
 
     size = GetMetaFileBitsEx(hmf, 0, NULL);
-    ok(size, "GetMetaFileBitsEx failed with error %ld\n", GetLastError());
+    ok(size, "GetMetaFileBitsEx failed with error %d\n", GetLastError());
     pBits = HeapAlloc(GetProcessHeap(), 0, size);
     GetMetaFileBitsEx(hmf, size, pBits);
     DeleteMetaFile(hmf);
@@ -1354,18 +1354,18 @@ static void checkConvertedFrameAndBounds(UINT buffer_size, BYTE * buffer, BOOL m
          case MM_ISOTROPIC:   mm_str = "MM_ISOTROPIC"; break;
          default:             mm_str = "Unexpected";
       }
-      sprintf(buf, "mm=%s, xExt=%ld, yExt=%ld", mm_str, xExt, yExt);
+      sprintf(buf, "mm=%s, xExt=%d, yExt=%d", mm_str, xExt, yExt);
       msg = buf;
     }
 
-    ok(rclBounds.left == rclBoundsExpected->left, "rclBounds.left: Expected %ld, got %ld (%s)\n", rclBoundsExpected->left, rclBounds.left, msg);
-    ok(rclBounds.top == rclBoundsExpected->top, "rclBounds.top: Expected %ld, got %ld (%s)\n", rclBoundsExpected->top, rclBounds.top, msg);
-    ok(rclBounds.right == rclBoundsExpected->right, "rclBounds.right: Expected %ld, got %ld (%s)\n", rclBoundsExpected->right, rclBounds.right, msg);
-    ok(rclBounds.bottom == rclBoundsExpected->bottom, "rclBounds.bottom: Expected %ld, got %ld (%s)\n", rclBoundsExpected->bottom, rclBounds.bottom, msg);
-    ok(rclFrame.left == rclFrameExpected->left, "rclFrame.left: Expected %ld, got %ld (%s)\n", rclFrameExpected->left, rclFrame.left, msg);
-    ok(rclFrame.top == rclFrameExpected->top, "rclFrame.top: Expected %ld, got %ld (%s)\n", rclFrameExpected->top, rclFrame.top, msg);
-    ok(rclFrame.right == rclFrameExpected->right, "rclFrame.right: Expected %ld, got %ld (%s)\n", rclFrameExpected->right, rclFrame.right, msg);
-    ok(rclFrame.bottom == rclFrameExpected->bottom, "rclFrame.bottom: Expected %ld, got %ld (%s)\n", rclFrameExpected->bottom, rclFrame.bottom, msg);
+    ok(rclBounds.left == rclBoundsExpected->left, "rclBounds.left: Expected %d, got %d (%s)\n", rclBoundsExpected->left, rclBounds.left, msg);
+    ok(rclBounds.top == rclBoundsExpected->top, "rclBounds.top: Expected %d, got %d (%s)\n", rclBoundsExpected->top, rclBounds.top, msg);
+    ok(rclBounds.right == rclBoundsExpected->right, "rclBounds.right: Expected %d, got %d (%s)\n", rclBoundsExpected->right, rclBounds.right, msg);
+    ok(rclBounds.bottom == rclBoundsExpected->bottom, "rclBounds.bottom: Expected %d, got %d (%s)\n", rclBoundsExpected->bottom, rclBounds.bottom, msg);
+    ok(rclFrame.left == rclFrameExpected->left, "rclFrame.left: Expected %d, got %d (%s)\n", rclFrameExpected->left, rclFrame.left, msg);
+    ok(rclFrame.top == rclFrameExpected->top, "rclFrame.top: Expected %d, got %d (%s)\n", rclFrameExpected->top, rclFrame.top, msg);
+    ok(rclFrame.right == rclFrameExpected->right, "rclFrame.right: Expected %d, got %d (%s)\n", rclFrameExpected->right, rclFrame.right, msg);
+    ok(rclFrame.bottom == rclFrameExpected->bottom, "rclFrame.bottom: Expected %d, got %d (%s)\n", rclFrameExpected->bottom, rclFrame.bottom, msg);
   }
 }
 
@@ -1439,7 +1439,7 @@ static void test_SetWinMetaFileBits(void)
   {
   ok(rclBoundsAnisotropic.right == GetDeviceCaps(dc, HORZRES) / 2 - 1 &&
      rclBoundsAnisotropic.bottom == GetDeviceCaps(dc, VERTRES) / 2 - 1,
-     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference bounds: The whole device surface must be used (%dx%d), but got (%ldx%ld)\n",
+     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference bounds: The whole device surface must be used (%dx%d), but got (%dx%d)\n",
      GetDeviceCaps(dc, HORZRES) / 2 - 1, GetDeviceCaps(dc, VERTRES) / 2 - 1, rclBoundsAnisotropic.right, rclBoundsAnisotropic.bottom);
   }
 
@@ -1451,7 +1451,7 @@ static void test_SetWinMetaFileBits(void)
   todo_wine
   {
   ok(diffx <= 1 && diffy <= 1,
-     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference frame: The whole device surface must be used (%dx%d), but got (%ldx%ld)\n",
+     "SetWinMetaFileBits (MM_ANISOTROPIC): Reference frame: The whole device surface must be used (%dx%d), but got (%dx%d)\n",
      GetDeviceCaps(dc, HORZSIZE) / 2, GetDeviceCaps(dc, VERTSIZE) / 2, rclFrameAnisotropic.right / 100, rclFrameAnisotropic.bottom / 100);
   }
   DeleteDC(dc);
