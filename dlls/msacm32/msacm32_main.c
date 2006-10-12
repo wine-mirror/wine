@@ -45,7 +45,7 @@ HINSTANCE	MSACM_hInstance32 = 0;
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, lpvReserved);
+    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -87,7 +87,7 @@ DWORD WINAPI acmGetVersion(void)
     case VER_PLATFORM_WIN32_NT:
 	return 0x04000565; /* 4.0.1381 */
     default:
-        FIXME("%lx not supported\n", version.dwPlatformId);
+        FIXME("%x not supported\n", version.dwPlatformId);
     case VER_PLATFORM_WIN32_WINDOWS:
 	return 0x04030000; /* 4.3.0 */
     }

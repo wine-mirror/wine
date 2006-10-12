@@ -58,7 +58,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
     PWINE_ACMSTREAM	was;
     MMRESULT		ret;
 
-    TRACE("(%p, %ld)\n", has, fdwClose);
+    TRACE("(%p, %d)\n", has, fdwClose);
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");
@@ -84,7 +84,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(%p, %p, %ld)\n", has, pash, fdwConvert);
+    TRACE("(%p, %p, %d)\n", has, pash, fdwConvert);
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");
@@ -152,7 +152,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     int			wfxDstSize;
     WAVEFORMATEX	wfxSrc, wfxDst;
 
-    TRACE("(%p, %p, %p, %p, %p, %ld, %ld, %ld)\n",
+    TRACE("(%p, %p, %p, %p, %p, %d, %d, %d)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
 
     /* NOTE: pwfxSrc and/or pwfxDst can point to a structure smaller than
@@ -171,11 +171,11 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
         pwfxDst = &wfxDst;
     }
 
-    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
 	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec,
 	  pwfxSrc->nBlockAlign, pwfxSrc->wBitsPerSample, pwfxSrc->cbSize);
 
-    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
 	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec,
 	  pwfxDst->nBlockAlign, pwfxDst->wBitsPerSample, pwfxDst->cbSize);
 
@@ -296,7 +296,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(%p, %p, %ld)\n", has, pash, fdwPrepare);
+    TRACE("(%p, %p, %d)\n", has, pash, fdwPrepare);
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");
@@ -360,7 +360,7 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
     PWINE_ACMSTREAM	was;
     MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %ld)\n", has, fdwReset);
+    TRACE("(%p, %d)\n", has, fdwReset);
 
     if (fdwReset) {
         WARN("invalid flag\n");
@@ -385,7 +385,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
     ACMDRVSTREAMSIZE	adss;
     MMRESULT		ret;
 
-    TRACE("(%p, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
+    TRACE("(%p, %d, %p, %d)\n", has, cbInput, pdwOutputBytes, fdwSize);
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");
@@ -426,7 +426,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 	    break;
 	}
     }
-    TRACE("=> (%d) [%lu]\n", ret, *pdwOutputBytes);
+    TRACE("=> (%d) [%u]\n", ret, *pdwOutputBytes);
     return ret;
 }
 
@@ -440,7 +440,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     MMRESULT		ret = MMSYSERR_NOERROR;
     PACMDRVSTREAMHEADER	padsh;
 
-    TRACE("(%p, %p, %ld)\n", has, pash, fdwUnprepare);
+    TRACE("(%p, %p, %d)\n", has, pash, fdwUnprepare);
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");

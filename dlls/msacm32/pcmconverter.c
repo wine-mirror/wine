@@ -66,7 +66,7 @@ static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
  */
 static	DWORD	PCM_drvClose(DWORD dwDevID)
 {
-    TRACE("(%ld)\n", dwDevID);
+    TRACE("(%d)\n", dwDevID);
 
     return 1;
 }
@@ -393,7 +393,7 @@ static	void cvtSS88C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		      DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = *src;
@@ -413,7 +413,7 @@ static	void cvtSM88C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		      DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = M8(src[0], src[1]);
@@ -432,7 +432,7 @@ static	void cvtMS88C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		      DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = *src;
@@ -452,7 +452,7 @@ static	void cvtMM88C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		      DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = *src;
@@ -471,7 +471,7 @@ static	void cvtSS816C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
 	W16(dst, C816(src[0]));	dst += 2;
@@ -491,7 +491,7 @@ static	void cvtSM816C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, M16(C816(src[0]), C816(src[1]))); dst += 2;
@@ -510,7 +510,7 @@ static	void cvtMS816C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, C816(*src)); dst += 2;
@@ -530,7 +530,7 @@ static	void cvtMM816C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, C816(*src)); dst += 2;
@@ -549,7 +549,7 @@ static	void cvtSS168C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = C168(R16(src));
@@ -569,7 +569,7 @@ static	void cvtSM168C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
 	*dst++ = C168(M16(R16(src), R16(src + 2)));
@@ -588,7 +588,7 @@ static	void cvtMS168C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = C168(R16(src));
@@ -608,7 +608,7 @@ static	void cvtMM168C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 		       DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         *dst++ = C168(R16(src));
@@ -627,7 +627,7 @@ static	void cvtSS1616C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 			DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, R16(src)); dst += 2;
@@ -647,7 +647,7 @@ static	void cvtSM1616C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 			DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, M16(R16(src), R16(src + 2))); dst += 2;
@@ -666,7 +666,7 @@ static	void cvtMS1616C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 			DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while((*ndst)--) {
         W16(dst, R16(src)); dst += 2;
@@ -686,7 +686,7 @@ static	void cvtMM1616C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
 			DWORD dstRate, unsigned char* dst, LPDWORD ndst)
 {
     DWORD error = dstRate / 2;
-    TRACE("(%ld, %p, %p, %ld, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
+    TRACE("(%d, %p, %p, %d, %p, %p)\n", srcRate, src, nsrc, dstRate, dst, ndst);
 
     while ((*ndst)--) {
         W16(dst, R16(src)); dst += 2;
@@ -746,7 +746,7 @@ static	LRESULT PCM_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    TRACE("(%p, %08lx)\n", aftd, dwQuery);
+    TRACE("(%p, %08x)\n", aftd, dwQuery);
 
     switch (dwQuery) {
     case ACM_FORMATTAGDETAILSF_INDEX:
@@ -769,7 +769,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
         }
 	break;
     default:
-	WARN("Unsupported query %08lx\n", dwQuery);
+	WARN("Unsupported query %08x\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
 
@@ -789,7 +789,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
  */
 static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
-    TRACE("(%p, %08lx)\n", afd, dwQuery);
+    TRACE("(%p, %08x)\n", afd, dwQuery);
 
     switch (dwQuery) {
     case ACM_FORMATDETAILSF_FORMAT:
@@ -813,7 +813,7 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nSamplesPerSec * afd->pwfx->nBlockAlign;
 	break;
     default:
-	WARN("Unsupported query %08lx\n", dwQuery);
+	WARN("Unsupported query %08x\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
 
@@ -956,7 +956,7 @@ static	LRESULT PCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss
 				       adsi->pwfxSrc->nAvgBytesPerSec) & dstMask;
 	break;
     default:
-	WARN("Unsupported query %08lx\n", adss->fdwSize);
+	WARN("Unsupported query %08x\n", adss->fdwSize);
 	return MMSYSERR_NOTSUPPORTED;
     }
     return MMSYSERR_NOERROR;
@@ -974,12 +974,12 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 
     TRACE("(%p, %p)\n", adsi, adsh);
 
-    TRACE("nsrc=%ld,adsh->cbSrcLength=%ld\n", nsrc, adsh->cbSrcLength);
-    TRACE("ndst=%ld,adsh->cbDstLength=%ld\n", ndst, adsh->cbDstLength);
-    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("nsrc=%d,adsh->cbSrcLength=%d\n", nsrc, adsh->cbSrcLength);
+    TRACE("ndst=%d,adsh->cbDstLength=%d\n", ndst, adsh->cbDstLength);
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
           adsi->pwfxSrc->wFormatTag, adsi->pwfxSrc->nChannels, adsi->pwfxSrc->nSamplesPerSec, adsi->pwfxSrc->nAvgBytesPerSec,
           adsi->pwfxSrc->nBlockAlign, adsi->pwfxSrc->wBitsPerSample, adsi->pwfxSrc->cbSize);
-    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
           adsi->pwfxDst->wFormatTag, adsi->pwfxDst->nChannels, adsi->pwfxDst->nSamplesPerSec, adsi->pwfxDst->nAvgBytesPerSec,
           adsi->pwfxDst->nBlockAlign, adsi->pwfxDst->wBitsPerSample, adsi->pwfxDst->cbSize);
 
@@ -987,7 +987,7 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
 	~(ACM_STREAMCONVERTF_BLOCKALIGN|
 	  ACM_STREAMCONVERTF_END|
 	  ACM_STREAMCONVERTF_START)) {
-	FIXME("Unsupported fdwConvert (%08lx), ignoring it\n", adsh->fdwConvert);
+	FIXME("Unsupported fdwConvert (%08x), ignoring it\n", adsh->fdwConvert);
     }
     /* ACM_STREAMCONVERTF_BLOCKALIGN
      *	currently all conversions are block aligned, so do nothing for this flag
