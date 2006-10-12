@@ -3335,7 +3335,7 @@ static void renderstate_stencil_twosided(
             }
 }
 
-static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE State, DWORD Value) {
+static void renderstate_stencil(IWineD3DDeviceImpl *This, WINED3DRENDERSTATETYPE State, DWORD Value) {
     DWORD onesided_enable = FALSE;
     DWORD twosided_enable = FALSE;
     GLint func = GL_ALWAYS;
@@ -3405,7 +3405,7 @@ static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE Sta
  * Get / Set Render States
  * TODO: Verify against dx9 definitions
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE State, DWORD Value) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD Value) {
 
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
     DWORD                OldValue = This->stateBlock->renderState[State];
@@ -3748,7 +3748,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
             if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
                 /* And now the default texture color as well */
                 for (i = 0; i < GL_LIMITS(texture_stages); i++) {
-                    /* Note the D3DRS value applies to all textures, but GL has one
+                    /* Note the WINED3DRS value applies to all textures, but GL has one
                        per texture, so apply it now ready to be used!               */
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
@@ -4585,7 +4585,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE State, DWORD *pValue) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD *pValue) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) for State %d = %d\n", This, State, This->stateBlock->renderState[State]);
     *pValue = This->stateBlock->renderState[State];
@@ -5140,7 +5140,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     }
 
     /* Should I clip?
-     * a) D3DRS_CLIPPING is enabled
+     * a) WINED3DRS_CLIPPING is enabled
      * b) WINED3DVOP_CLIP is passed
      */
     if(This->stateBlock->renderState[WINED3DRS_CLIPPING]) {
@@ -5529,7 +5529,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
                   eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
                   means use the vertex position (camera-space) as the input texture coordinates
                   for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
-                  state. We do not (yet) support the D3DRENDERSTATE_WRAPx values, nor tie them up
+                  state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
                   to the TEXCOORDINDEX value */
 
             /**

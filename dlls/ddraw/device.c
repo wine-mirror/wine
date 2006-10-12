@@ -2090,6 +2090,8 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
     if(!Value)
         return DDERR_INVALIDPARAMS;
 
+    /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+
     return IWineD3DDevice_GetRenderState(This->wineD3DDevice,
                                          RenderStateType,
                                          Value);
@@ -2288,6 +2290,9 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
         }
 
         default:
+
+            /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+
             return IWineD3DDevice_SetRenderState(This->wineD3DDevice,
                                                  RenderStateType,
                                                  Value);
