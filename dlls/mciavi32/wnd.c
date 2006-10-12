@@ -150,7 +150,7 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     RECT		rc;
 
-    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -202,7 +202,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
 
-    TRACE("(%04x, %08lx, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -268,7 +268,7 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSW lpPar
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
 
-    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;

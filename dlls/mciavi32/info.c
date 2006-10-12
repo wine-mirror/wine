@@ -40,9 +40,9 @@ DWORD 	MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRe
 	ret = val;
 	break;
     default:
-	WARN("Bad time format %lu!\n", wma->dwMciTimeFormat);
+	WARN("Bad time format %u!\n", wma->dwMciTimeFormat);
     }
-    TRACE("val=%lu=0x%08lx [tf=%lu] => ret=%lu\n", val, val, wma->dwMciTimeFormat, ret);
+    TRACE("val=%u=0x%08x [tf=%u] => ret=%u\n", val, val, wma->dwMciTimeFormat, ret);
     *lpRet = 0;
     return ret;
 }
@@ -62,9 +62,9 @@ DWORD 	MCIAVI_ConvertTimeFormatToFrame(WINE_MCIAVI* wma, DWORD val)
 	ret = val;
 	break;
     default:
-	WARN("Bad time format %lu!\n", wma->dwMciTimeFormat);
+	WARN("Bad time format %u!\n", wma->dwMciTimeFormat);
     }
-    TRACE("val=%lu=0x%08lx [tf=%lu] => ret=%lu\n", val, val, wma->dwMciTimeFormat, ret);
+    TRACE("val=%u=0x%08x [tf=%u] => ret=%u\n", val, val, wma->dwMciTimeFormat, ret);
     return ret;
 }
 
@@ -76,7 +76,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret;
 
-    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -131,7 +131,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
-	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
+            FIXME("Unknown capability (%08x) !\n", lpParms->dwItem);
            ret = MCIERR_UNRECOGNIZED_COMMAND;
             break;
 	}
@@ -158,7 +158,7 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
 
-    TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
+    TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
     EnterCriticalSection(&wma->cs);
 
@@ -167,7 +167,7 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
     else if (dwFlags & MCI_INFO_FILE)
 	str = wma->lpFileName;
     else {
-	WARN("Don't know this info command (%lu)\n", dwFlags);
+	WARN("Don't know this info command (%u)\n", dwFlags);
 	ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (str) {
@@ -207,7 +207,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	    wma->dwMciTimeFormat = MCI_FORMAT_FRAMES;
 	    break;
 	default:
-	    WARN("Bad time format %lu!\n", lpParms->dwTimeFormat);
+            WARN("Bad time format %u!\n", lpParms->dwTimeFormat);
             LeaveCriticalSection(&wma->cs);
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
@@ -249,7 +249,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 		wma->dwSet |= 2;
 		break;
 	    default:
-		WARN("Unknown audio chanel %lu\n", lpParms->dwAudio);
+		WARN("Unknown audio chanel %u\n", lpParms->dwAudio);
 		break;
 	    }
 	}
@@ -283,7 +283,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 		wma->dwSet &= ~2;
 		break;
 	    default:
-		WARN("Unknown audio chanel %lu\n", lpParms->dwAudio);
+		WARN("Unknown audio chanel %u\n", lpParms->dwAudio);
 		break;
 	    }
 	}
@@ -306,12 +306,12 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	case MCI_DGV_FF_MPEG: 	FIXME("Setting file format (%s) to 'MPEG'\n", str); 	break;
 	case MCI_DGV_FF_RDIB:	FIXME("Setting file format (%s) to 'RLE DIB'\n", str);	break;
 	case MCI_DGV_FF_RJPEG: 	FIXME("Setting file format (%s) to 'RJPEG'\n", str);	break;
-	default:		FIXME("Setting unknown file format (%s): %ld\n", str, lpParms->dwFileFormat);
+	default:		FIXME("Setting unknown file format (%s): %d\n", str, lpParms->dwFileFormat);
 	}
     }
 
     if (dwFlags & MCI_DGV_SET_SPEED) {
-	FIXME("Setting speed to %ld\n", lpParms->dwSpeed);
+	FIXME("Setting speed to %d\n", lpParms->dwSpeed);
     }
 
     LeaveCriticalSection(&wma->cs);
@@ -452,8 +452,8 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpPar
 	case MCI_STATUS_MEDIA_PRESENT:
 #endif
 	default:
-	    FIXME("Unknowm command %08lX !\n", lpParms->dwItem);
-	    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+            FIXME("Unknowm command %08X !\n", lpParms->dwItem);
+            TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
             LeaveCriticalSection(&wma->cs);
     	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
