@@ -220,6 +220,17 @@ static void test_readmode( BOOL ascii_mode )
     j = fp+10;
     i=fread(buffer,1,j,file);
     ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
+    /* test fread eof */
+    ok(fseek(file,0,SEEK_END)==0,"seek failure in %s\n", IOMODE);
+    ok(feof(file)==0,"feof failure in %s\n", IOMODE);
+    ok(fread(buffer,1,1,file)==0,"fread failure in %s\n", IOMODE);
+    ok(feof(file)!=0,"feof failure in %s\n", IOMODE);
+    ok(fseek(file,-3,SEEK_CUR)==0,"seek failure in %s\n", IOMODE);
+    todo_wine ok(feof(file)==0,"feof failure in %s\n", IOMODE);
+    ok(fread(buffer,2,1,file)==1,"fread failed in %s\n", IOMODE);
+    todo_wine ok(feof(file)==0,"feof failure in %s\n", IOMODE);
+    ok(fread(buffer,2,1,file)==0,"fread failure in %s\n",IOMODE);
+    ok(feof(file)!=0,"feof failure in %s\n", IOMODE);
     
     /* test some additional functions */
     rewind(file);
