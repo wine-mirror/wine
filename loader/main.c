@@ -18,12 +18,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include "wine/library.h"
 #include "main.h"
 
 #ifdef __APPLE__
+
 asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x60000000");
 asm(".zerofill WINE_SHARED_HEAP, WINE_SHARED_HEAP, ___wine_shared_heap, 0x02000000");
 extern char __wine_dos[0x60000000], __wine_shared_heap[0x02000000];
@@ -34,10 +42,24 @@ static const struct wine_preload_info wine_main_preload_info[] =
     { __wine_shared_heap, sizeof(__wine_shared_heap) },  /* shared user data + shared heap */
     { 0, 0 }  /* end of list */
 };
-#else
+
+static inline void reserve_area( void *addr, size_t size )
+{
+    wine_anon_mmap( addr, size, PROT_NONE, MAP_FIXED | MAP_NORESERVE );
+    wine_mmap_add_reserved_area( addr, size );
+}
+
+#else  /* __APPLE__ */
+
 /* the preloader will set this variable */
 const struct wine_preload_info *wine_main_preload_info = NULL;
-#endif
+
+static inline void reserve_area( void *addr, size_t size )
+{
+    wine_mmap_add_reserved_area( addr, size );
+}
+
+#endif  /* __APPLE__ */
 
 /**********************************************************************
  *           main
@@ -50,8 +72,7 @@ int main( int argc, char *argv[] )
     if (wine_main_preload_info)
     {
         for (i = 0; wine_main_preload_info[i].size; i++)
-            wine_mmap_add_reserved_area( wine_main_preload_info[i].addr,
-                                         wine_main_preload_info[i].size );
+            reserve_area( wine_main_preload_info[i].addr, wine_main_preload_info[i].size );
     }
 
     wine_pthread_set_functions( &pthread_functions, sizeof(pthread_functions) );
