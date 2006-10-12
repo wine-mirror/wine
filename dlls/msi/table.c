@@ -1900,13 +1900,9 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
         rec = msi_get_transform_record( tv, st, &rawdata[n] );
         if (rec)
         {
-            UINT row = 0;
-
-            r = msi_table_find_row( tv, rec, &row );
-
-            if( rawdata[n] & 1)
+            if ( mask & 1 )
             {
-                TRACE("insert [%d]: \n", row);
+                TRACE("inserting record\n");
 
                 /*
                  * Native msi seems writes nul into the
@@ -1921,24 +1917,33 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                         ERR("_Columns has non-null data...\n");
                 }
 
-                TABLE_insert_row( &tv->view, rec );
-            }
-            else if( mask & 0xff )
-            {
-                TRACE("modify [%d]: \n", row);
-                msi_table_modify_row( tv, rec, row, mask );
+                r = TABLE_insert_row( &tv->view, rec );
+                if (r != ERROR_SUCCESS)
+                    ERR("insert row failed\n");
             }
             else
             {
-                TRACE("delete [%d]: \n", row);
-                msi_delete_row( tv, row );
+                UINT row = 0;
+
+                r = msi_table_find_row( tv, rec, &row );
+                if (r != ERROR_SUCCESS)
+                    ERR("no matching row to transform\n");
+                else if ( mask )
+                {
+                    TRACE("modifying row [%d]: \n", row);
+                    msi_table_modify_row( tv, rec, row, mask );
+                }
+                else
+                {
+                    TRACE("deleting row [%d]: \n", row);
+                    msi_delete_row( tv, row );
+                }
             }
             if( TRACE_ON(msidb) ) dump_record( rec );
             msiobj_release( &rec->hdr );
         }
 
         n += sz/2;
-        
     }
 
 err:
