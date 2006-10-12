@@ -111,7 +111,7 @@ unsigned char * WINAPI CLEANLOCALSTORAGE_UserMarshal(unsigned long *pFlags, unsi
         break;
 
     default:
-        ERR("Unknown type %lx\n", pstg->flags);
+        ERR("Unknown type %x\n", pstg->flags);
     }
 
     *(VOID**)pstg->pStorage = NULL;
@@ -182,7 +182,7 @@ unsigned char * WINAPI BSTR_UserUnmarshal(unsigned long *pFlags, unsigned char *
     ALIGN_POINTER(Buffer, 3);
     header = (bstr_wire_t*)Buffer;
     if(header->len != header->len2)
-        FIXME("len %08lx != len2 %08lx\n", header->len, header->len2);
+        FIXME("len %08x != len2 %08x\n", header->len, header->len2);
     
     if(*pstr)
     {
@@ -287,11 +287,11 @@ static unsigned interface_variant_size(unsigned long *pFlags, REFIID riid, VARIA
     if (!V_DISPATCH(pvar))
       WARN("NULL dispatch pointer\n");
     else
-      ERR("Dispatch variant buffer size calculation failed, HRESULT=0x%lx\n", hr);
+      ERR("Dispatch variant buffer size calculation failed, HRESULT=0x%x\n", hr);
     return 0;
   }
   size += sizeof(ULONG); /* we have to store the buffersize in the stream */
-  TRACE("wire-size extra of dispatch variant is %ld\n", size);
+  TRACE("wire-size extra of dispatch variant is %d\n", size);
   return size;
 }
 
@@ -373,7 +373,7 @@ static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned 
   IStream_Release(working);
 
   /* size includes the ULONG for the size written above */
-  TRACE("done, size=%ld\n", size);
+  TRACE("done, size=%d\n", size);
   return Buffer + size;
 }
 
@@ -393,7 +393,7 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
   
   /* get the buffersize */
   memcpy(&size, Buffer, sizeof(ULONG));
-  TRACE("buffersize=%ld\n", size);
+  TRACE("buffersize=%d\n", size);
 
   working_mem = GlobalAlloc(0, size);
   if (!working_mem) return oldpos;
@@ -419,7 +419,7 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
   IStream_Release(working); /* this also frees the underlying hglobal */
 
   /* size includes the ULONG for the size written above */
-  TRACE("done, processed=%ld bytes\n", size);
+  TRACE("done, processed=%d bytes\n", size);
   return Buffer + size;
 }
 
@@ -540,7 +540,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(unsigned long *pFlags, unsigned char 
         }
     }
     header->clSize = ((Pos - Buffer) + 7) >> 3;
-    TRACE("marshalled size=%ld\n", header->clSize);
+    TRACE("marshalled size=%d\n", header->clSize);
     return Pos;
 }
 
@@ -1100,7 +1100,7 @@ HRESULT CALLBACK IDispatch_Invoke_Proxy(
   UINT uArgErr;
   EXCEPINFO ExcepInfo;
 
-  TRACE("(%p)->(%ld,%s,%lx,%x,%p,%p,%p,%p)\n", This,
+  TRACE("(%p)->(%d,%s,%x,%x,%p,%p,%p,%p)\n", This,
         dispIdMember, debugstr_guid(riid),
         lcid, wFlags, pDispParams, pVarResult,
         pExcepInfo, puArgErr);
@@ -1548,7 +1548,7 @@ HRESULT CALLBACK ITypeInfo_GetDocumentation_Proxy(
     DWORD help_context;
     BSTR name, doc_string, help_file;
     HRESULT hr;
-    TRACE("(%p, %08lx, %p, %p, %p, %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p, %08x, %p, %p, %p, %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 
     /* FIXME: presumably refPtrFlags is supposed to be a bitmask of which ptrs we actually want? */
     hr = ITypeInfo_RemoteGetDocumentation_Proxy(This, memid, 0, &name, &doc_string, &help_context, &help_file);
@@ -1577,7 +1577,7 @@ HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(
     DWORD* pdwHelpContext,
     BSTR* pBstrHelpFile)
 {
-    TRACE("(%p, %08lx, %08lx, %p, %p, %p, %p)\n", This, memid, refPtrFlags, pBstrName, pBstrDocString,
+    TRACE("(%p, %08x, %08x, %p, %p, %p, %p)\n", This, memid, refPtrFlags, pBstrName, pBstrDocString,
           pdwHelpContext, pBstrHelpFile);
     return ITypeInfo_GetDocumentation(This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 }

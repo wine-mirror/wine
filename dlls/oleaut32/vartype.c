@@ -6258,7 +6258,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
   DWORD dwFormatFlags = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR date[128], *time;
 
-  TRACE("(%g,0x%08lx,0x%08lx,%p)\n", dateIn, lcid, dwFlags, pbstrOut);
+  TRACE("(%g,0x%08x,0x%08x,%p)\n", dateIn, lcid, dwFlags, pbstrOut);
 
   if (!pbstrOut || !VariantTimeToSystemTime(dateIn, &st))
     return E_INVALIDARG;
@@ -6333,7 +6333,7 @@ HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BS
   DWORD dwResId = IDS_TRUE;
   LANGID langId;
 
-  TRACE("%d,0x%08lx,0x%08lx,%p\n", boolIn, lcid, dwFlags, pbstrOut);
+  TRACE("%d,0x%08x,0x%08x,%p\n", boolIn, lcid, dwFlags, pbstrOut);
 
   if (!pbstrOut)
     return E_INVALIDARG;
@@ -6635,7 +6635,7 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
 {
     HRESULT hres;
 
-    TRACE("%s,%s,%ld,%08lx\n",
+    TRACE("%s,%s,%d,%08x\n",
      debugstr_wn(pbstrLeft, SysStringLen(pbstrLeft)),
      debugstr_wn(pbstrRight, SysStringLen(pbstrRight)), lcid, dwFlags);
 
@@ -6650,7 +6650,7 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
 
     hres = CompareStringW(lcid, dwFlags, pbstrLeft, SysStringLen(pbstrLeft),
             pbstrRight, SysStringLen(pbstrRight)) - 1;
-    TRACE("%ld\n", hres);
+    TRACE("%d\n", hres);
     return hres;
 }
 
@@ -6864,7 +6864,7 @@ static inline HRESULT VARIANT_MakeDate(DATEPARSE *dp, DWORD iDate,
   else
     v3 = dp->dwValues[offset + 2];
 
-  TRACE("(%ld,%ld,%ld,%ld,%ld)\n", v1, v2, v3, iDate, offset);
+  TRACE("(%d,%d,%d,%d,%d)\n", v1, v2, v3, iDate, offset);
 
   /* If one number must be a month (Because a month name was given), then only
    * consider orders with the month in that position.
@@ -6892,7 +6892,7 @@ static inline HRESULT VARIANT_MakeDate(DATEPARSE *dp, DWORD iDate,
   }
 
 VARIANT_MakeDate_Start:
-  TRACE("dwAllOrders is 0x%08lx\n", dwAllOrders);
+  TRACE("dwAllOrders is 0x%08x\n", dwAllOrders);
 
   while (dwAllOrders)
   {
@@ -6924,7 +6924,7 @@ VARIANT_MakeDate_Start:
       dwTry = dwAllOrders;
     }
 
-    TRACE("Attempt %ld, dwTry is 0x%08lx\n", dwCount, dwTry);
+    TRACE("Attempt %d, dwTry is 0x%08x\n", dwCount, dwTry);
 
     dwCount++;
     if (!dwTry)
@@ -7013,7 +7013,7 @@ VARIANT_MakeDate_OK:
    * But Wine doesn't have/use that key as at the time of writing.
    */
   st->wYear = v3 < 30 ? 2000 + v3 : v3 < 100 ? 1900 + v3 : v3;
-  TRACE("Returning date %ld/%ld/%d\n", v1, v2, st->wYear);
+  TRACE("Returning date %d/%d/%d\n", v1, v2, st->wYear);
   return S_OK;
 }
 
@@ -7081,13 +7081,13 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
 
   *pdateOut = 0.0;
 
-  TRACE("(%s,0x%08lx,0x%08lx,%p)\n", debugstr_w(strIn), lcid, dwFlags, pdateOut);
+  TRACE("(%s,0x%08x,0x%08x,%p)\n", debugstr_w(strIn), lcid, dwFlags, pdateOut);
 
   memset(&dp, 0, sizeof(dp));
 
   GetLocaleInfoW(lcid, LOCALE_IDATE|LOCALE_RETURN_NUMBER|(dwFlags & LOCALE_NOUSEROVERRIDE),
                  (LPWSTR)&iDate, sizeof(iDate)/sizeof(WCHAR));
-  TRACE("iDate is %ld\n", iDate);
+  TRACE("iDate is %d\n", iDate);
 
   /* Get the month/day/am/pm tokens for this locale */
   for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
@@ -7222,7 +7222,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
      * magic here occurs in VARIANT_MakeDate() above, where we determine what
      * each date number must represent in the context of iDate.
      */
-    TRACE("0x%08lx\n", TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4));
+    TRACE("0x%08x\n", TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4));
 
     switch (TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4))
     {

@@ -517,7 +517,7 @@ ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR lpStr)
   switch (PRIMARYLANGID(LANGIDFROMLCID(lcid)))
   {
   default:
-    ERR("Unknown lcid %lx, treating as latin-based, please report\n", lcid);
+    ERR("Unknown lcid %x, treating as latin-based, please report\n", lcid);
     /* .. Fall Through .. */
   case LANG_AFRIKAANS:  case LANG_ALBANIAN:   case LANG_ARMENIAN:
   case LANG_ASSAMESE:   case LANG_AZERI:      case LANG_BASQUE:

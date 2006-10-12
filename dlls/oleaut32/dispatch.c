@@ -252,7 +252,7 @@ static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
     StdDispatch *This = (StdDispatch *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
+    TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
 
     return refCount;
 }
@@ -267,7 +267,7 @@ static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
     StdDispatch *This = (StdDispatch *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
+    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount)
     {
@@ -325,7 +325,7 @@ static HRESULT WINAPI StdDispatch_GetTypeInfoCount(LPDISPATCH iface, UINT * pcti
 static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
 {
     StdDispatch *This = (StdDispatch *)iface;
-    TRACE("(%d, %lx, %p)\n", iTInfo, lcid, ppTInfo);
+    TRACE("(%d, %x, %p)\n", iTInfo, lcid, ppTInfo);
 
     *ppTInfo = NULL;
     if (iTInfo != 0)
@@ -368,7 +368,7 @@ static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCI
 static HRESULT WINAPI StdDispatch_GetIDsOfNames(LPDISPATCH iface, REFIID riid, LPOLESTR * rgszNames, UINT cNames, LCID lcid, DISPID * rgDispId)
 {
     StdDispatch *This = (StdDispatch *)iface;
-    TRACE("(%s, %p, %d, 0x%lx, %p)\n", debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%s, %p, %d, 0x%x, %p)\n", debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     if (!IsEqualGUID(riid, &IID_NULL))
     {
@@ -406,7 +406,7 @@ static HRESULT WINAPI StdDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMember, 
                                          EXCEPINFO * pExcepInfo, UINT * puArgErr)
 {
     StdDispatch *This = (StdDispatch *)iface;
-    TRACE("(%ld, %s, 0x%lx, 0x%x, %p, %p, %p, %p)\n", dispIdMember, debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    TRACE("(%d, %s, 0x%x, 0x%x, %p, %p, %p, %p)\n", dispIdMember, debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     if (!IsEqualGUID(riid, &IID_NULL))
     {

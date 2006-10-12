@@ -85,7 +85,7 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
   VARTYPE vtFrom =  V_TYPE(ps);
   DWORD dwFlags = 0;
 
-  TRACE("(%p->(%s%s),0x%08lx,0x%04x,%p->(%s%s),%s%s)\n", pd, debugstr_VT(pd),
+  TRACE("(%p->(%s%s),0x%08x,0x%04x,%p->(%s%s),%s%s)\n", pd, debugstr_VT(pd),
         debugstr_VF(pd), lcid, wFlags, ps, debugstr_VT(ps), debugstr_VF(ps),
         debugstr_vt(vt), debugstr_vf(vt));
 
@@ -893,7 +893,7 @@ VariantCopyInd_Return:
   if (pSrc != pvargSrc)
     VariantClear(pSrc);
 
-  TRACE("returning 0x%08lx, %p->(%s%s)\n", hres, pvargDest,
+  TRACE("returning 0x%08x, %p->(%s%s)\n", hres, pvargDest,
         debugstr_VT(pvargDest), debugstr_VF(pvargDest));
   return hres;
 }
@@ -948,7 +948,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 {
   HRESULT res = S_OK;
 
-  TRACE("(%p->(%s%s),%p->(%s%s),0x%08lx,0x%04x,%s%s)\n", pvargDest,
+  TRACE("(%p->(%s%s),%p->(%s%s),0x%08x,0x%04x,%s%s)\n", pvargDest,
         debugstr_VT(pvargDest), debugstr_VF(pvargDest), pvargSrc,
         debugstr_VT(pvargSrc), debugstr_VF(pvargSrc), lcid, wFlags,
         debugstr_vt(vt), debugstr_vf(vt));
@@ -999,7 +999,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
     }
   }
 
-  TRACE("returning 0x%08lx, %p->(%s%s)\n", res, pvargDest,
+  TRACE("returning 0x%08x, %p->(%s%s)\n", res, pvargDest,
         debugstr_VT(pvargDest), debugstr_VF(pvargDest));
   return res;
 }
@@ -1304,7 +1304,7 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
   UDATE ud;
   double dateVal;
 
-  TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08lx,0x%08lx,%p)\n", pUdateIn,
+  TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08x,0x%08x,%p)\n", pUdateIn,
         pUdateIn->st.wMonth, pUdateIn->st.wDay, pUdateIn->st.wYear,
         pUdateIn->st.wHour, pUdateIn->st.wMinute, pUdateIn->st.wSecond,
         pUdateIn->st.wMilliseconds, pUdateIn->st.wDayOfWeek,
@@ -1384,7 +1384,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
   double datePart, timePart;
   int julianDays;
 
-  TRACE("(%g,0x%08lx,%p)\n", dateIn, dwFlags, lpUdate);
+  TRACE("(%g,0x%08x,%p)\n", dateIn, dwFlags, lpUdate);
 
   if (dateIn <= (DATE_MIN - 1.0) || dateIn >= (DATE_MAX + 1.0))
     return E_INVALIDARG;
@@ -1462,7 +1462,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
     WARN("buffer too small for " #fld "\n"); \
   else \
     if (buff[0]) lpChars->name = buff[0]; \
-  TRACE("lcid 0x%lx, " #name "=%d '%c'\n", lcid, lpChars->name, lpChars->name)
+  TRACE("lcid 0x%x, " #name "=%d '%c'\n", lcid, lpChars->name, lpChars->name)
 
 /* Get the valid number characters for an lcid */
 void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
@@ -1488,7 +1488,7 @@ void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, D
             break;
     default: WARN("buffer too small for LOCALE_SCURRENCY\n");
   }
-  TRACE("lcid 0x%lx, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
+  TRACE("lcid 0x%x, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
         lpChars->cCurrencyLocal2, lpChars->cCurrencyLocal, lpChars->cCurrencyLocal2);
 }
 
@@ -1540,7 +1540,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   int iMaxDigits = sizeof(rgbTmp) / sizeof(BYTE);
   int cchUsed = 0;
 
-  TRACE("(%s,%ld,0x%08lx,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
+  TRACE("(%s,%d,0x%08x,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
   if (!pNumprs || !rgbDig)
     return E_INVALIDARG;
@@ -1947,7 +1947,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
 
   int wholeNumberDigits, fractionalDigits, divisor10 = 0, multiplier10 = 0;
 
-  TRACE("(%p,%p,0x%lx,%p)\n", pNumprs, rgbDig, dwVtBits, pVarDst);
+  TRACE("(%p,%p,0x%x,%p)\n", pNumprs, rgbDig, dwVtBits, pVarDst);
 
   if (pNumprs->nBaseShift)
   {
@@ -2046,7 +2046,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
       return S_OK;
     }
 
-    TRACE("Overflow: possible return types: 0x%lx, value: %s\n", dwVtBits, wine_dbgstr_longlong(ul64));
+    TRACE("Overflow: possible return types: 0x%x, value: %s\n", dwVtBits, wine_dbgstr_longlong(ul64));
     return DISP_E_OVERFLOW;
   }
 
@@ -2696,7 +2696,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     DWORD       xmask;
     HRESULT     rc;
 
-    TRACE("(%p->(%s%s),%p->(%s%s),0x%08lx,0x%08lx)\n", left, debugstr_VT(left),
+    TRACE("(%p->(%s%s),%p->(%s%s),0x%08x,0x%08x)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), lcid, flags);
 
     lvt = V_VT(left) & VT_TYPEMASK;
@@ -3244,7 +3244,7 @@ end:
     VariantClear(&lv);
     VariantClear(&rv);
     VariantClear(&tv);
-    TRACE("returning 0x%8lx (variant type %s)\n", hres, debugstr_VT(result));
+    TRACE("returning 0x%8x (variant type %s)\n", hres, debugstr_VT(result));
     return hres;
 }
 
@@ -3415,7 +3415,7 @@ end:
     VariantClear(&lv);
     VariantClear(&rv);
     VariantClear(&tv);
-    TRACE("returning 0x%8lx (variant type %s)\n", hres, debugstr_VT(result));
+    TRACE("returning 0x%8x (variant type %s)\n", hres, debugstr_VT(result));
     return hres;
 }
 
@@ -4825,7 +4825,7 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
     if (FAILED(hRet))
       V_VT(pVarOut) = VT_EMPTY;
 
-    TRACE("returning 0x%08lx (%s%s),%f\n", hRet, debugstr_VT(pVarOut),
+    TRACE("returning 0x%08x (%s%s),%f\n", hRet, debugstr_VT(pVarOut),
 	debugstr_VF(pVarOut), (V_VT(pVarOut) == VT_R4) ? V_R4(pVarOut) :
 	(V_VT(pVarOut) == VT_R8) ? V_R8(pVarOut) : 0);
 
@@ -5160,14 +5160,14 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     rc = VariantChangeType(&lv, left, 0, VT_I8);
     if(FAILED(rc))
     {
-      FIXME("Could not convert left type %d to %d? rc == 0x%lX\n", V_VT(left), VT_I8, rc);
+      FIXME("Could not convert left type %d to %d? rc == 0x%X\n", V_VT(left), VT_I8, rc);
       return rc;
     }
 
     rc = VariantChangeType(&rv, right, 0, VT_I8);
     if(FAILED(rc))
     {
-      FIXME("Could not convert right type %d to %d? rc == 0x%lX\n", V_VT(right), VT_I8, rc);
+      FIXME("Could not convert right type %d to %d? rc == 0x%X\n", V_VT(right), VT_I8, rc);
       return rc;
     }
 

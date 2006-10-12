@@ -388,7 +388,7 @@ static ULONG WINAPI OLEPictureImpl_AddRef(
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   ULONG refCount = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%ld)\n", This, refCount - 1);
+  TRACE("(%p)->(ref before=%d)\n", This, refCount - 1);
 
   return refCount;
 }
@@ -404,7 +404,7 @@ static ULONG WINAPI OLEPictureImpl_Release(
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   ULONG refCount = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)->(ref before=%ld)\n", This, refCount + 1);
+  TRACE("(%p)->(ref before=%d)\n", This, refCount + 1);
 
   /*
    * If the reference count goes down to 0, perform suicide.
@@ -560,7 +560,7 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
       hres = S_OK;
   }
 
-  TRACE("returning 0x%08lx, palette handle %08x\n", hres, *phandle);
+  TRACE("returning 0x%08x, palette handle %08x\n", hres, *phandle);
   return hres;
 }
 
@@ -583,7 +583,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Width(IPicture *iface,
 					       OLE_XSIZE_HIMETRIC *pwidth)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
-  TRACE("(%p)->(%p): width is %ld\n", This, pwidth, This->himetricWidth);
+  TRACE("(%p)->(%p): width is %d\n", This, pwidth, This->himetricWidth);
   *pwidth = This->himetricWidth;
   return S_OK;
 }
@@ -595,7 +595,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Height(IPicture *iface,
 						OLE_YSIZE_HIMETRIC *pheight)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
-  TRACE("(%p)->(%p): height is %ld\n", This, pheight, This->himetricHeight);
+  TRACE("(%p)->(%p): height is %d\n", This, pheight, This->himetricHeight);
   *pheight = This->himetricHeight;
   return S_OK;
 }
@@ -612,10 +612,10 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 					    LPCRECT prcWBounds)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
-  TRACE("(%p)->(%p, (%ld,%ld), (%ld,%ld) <- (%ld,%ld), (%ld,%ld), %p)\n",
+  TRACE("(%p)->(%p, (%d,%d), (%d,%d) <- (%d,%d), (%d,%d), %p)\n",
 	This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, prcWBounds);
   if(prcWBounds)
-    TRACE("prcWBounds (%ld,%ld) - (%ld,%ld)\n", prcWBounds->left, prcWBounds->top,
+    TRACE("prcWBounds (%d,%d) - (%d,%d)\n", prcWBounds->left, prcWBounds->top,
 	  prcWBounds->right, prcWBounds->bottom);
 
   /*
@@ -1426,14 +1426,14 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
    */
   hr=IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
   if (hr) {
-      TRACE("stat failed with hres %lx, proceeding to read all data.\n",hr);
+      TRACE("stat failed with hres %x, proceeding to read all data.\n",hr);
       statfailed = TRUE;
       /* we will read at least 8 byte ... just right below */
       statstg.cbSize.QuadPart = 8;
   }
   hr=IStream_Read(pStm,header,8,&xread);
   if (hr || xread!=8) {
-      FIXME("Failure while reading picture header (hr is %lx, nread is %ld).\n",hr,xread);
+      FIXME("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
       return hr;
   }
 
@@ -1452,7 +1452,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
           toread = statstg.cbSize.QuadPart-8;
           xread = 8;
       } else {
-          FIXME("Unknown stream header magic: %08lx\n", header[0]);
+          FIXME("Unknown stream header magic: %08x\n", header[0]);
           toread = header[1];
       }
   }
@@ -1482,8 +1482,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
           }
       }
       if (hr)
-          TRACE("hr in no-stat loader case is %08lx\n", hr);
-      TRACE("loaded %ld bytes.\n", xread);
+          TRACE("hr in no-stat loader case is %08x\n", hr);
+      TRACE("loaded %d bytes.\n", xread);
       This->datalen = xread;
       This->data    = xbuf;
   } else {
@@ -1501,7 +1501,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
               break;
       }
       if (xread != This->datalen)
-          FIXME("Could only read %ld of %d bytes out of stream?\n",xread,This->datalen);
+          FIXME("Could only read %d of %d bytes out of stream?\n",xread,This->datalen);
   }
   if (This->datalen == 0) { /* Marks the "NONE" picture */
       This->desc.picType = PICTYPE_NONE;
@@ -1531,7 +1531,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   default:
   {
     unsigned int i;
-    FIXME("Unknown magic %04x, %ld read bytes:\n",magic,xread);
+    FIXME("Unknown magic %04x, %d read bytes:\n",magic,xread);
     hr=E_FAIL;
     for (i=0;i<xread+8;i++) {
 	if (i<8) MESSAGE("%02x ",((unsigned char*)&header)[i]);
@@ -1656,7 +1656,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 				pInfoBitmap->bmiHeader.biBitCount);
 			FIXME("DEBUG: bitmap nplanes is %d\n",
 				pInfoBitmap->bmiHeader.biPlanes);
-			FIXME("DEBUG: bitmap biSizeImage is %lu\n",
+			FIXME("DEBUG: bitmap biSizeImage is %u\n",
 				pInfoBitmap->bmiHeader.biSizeImage);
 */
 			/* Let's start with one CURSORICONFILEDIR and one CURSORICONFILEDIRENTRY */
@@ -1731,7 +1731,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 				&& GetDIBits(hDC, infoIcon.hbmMask, 0, pIconEntry->bHeight,
 					pIconData + iOffsetMaskData, pInfoBitmap, DIB_RGB_COLORS))) {
 
-                printf("ERROR: unable to get bitmap mask (error %lu)\n",
+                printf("ERROR: unable to get bitmap mask (error %u)\n",
 					GetLastError());
 
 			}
@@ -1744,7 +1744,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 			iSuccess = 1;
 		} else {
 /*
-			printf("ERROR: unable to get bitmap information via GetDIBits() (error %lu)\n",
+			printf("ERROR: unable to get bitmap information via GetDIBits() (error %u)\n",
 				GetLastError());
 */
 		}
@@ -1761,7 +1761,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 		if (infoIcon.hbmColor) DeleteObject(infoIcon.hbmColor);
 		HeapFree(GetProcessHeap(), 0, pInfoBitmap);
 	} else {
-		printf("ERROR: Unable to get icon information (error %lu)\n",
+		printf("ERROR: Unable to get icon information (error %u)\n",
 			GetLastError());
 	}
 	return iSuccess;
@@ -1964,7 +1964,7 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfo(
 
   hres = ITypeLib_GetTypeInfoOfGuid(tl, &IID_IPictureDisp, ppTInfo);
   if (FAILED(hres))
-    ERR("Did not get IPictureDisp typeinfo from typelib, hres %lx\n", hres);
+    ERR("Did not get IPictureDisp typeinfo from typelib, hres %x\n", hres);
 
   return hres;
 }
@@ -2101,7 +2101,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
     break;
   }
 
-  ERR("invalid dispid 0x%lx or wFlags 0x%x\n", dispIdMember, wFlags);
+  ERR("invalid dispid 0x%x or wFlags 0x%x\n", dispIdMember, wFlags);
   return DISP_E_MEMBERNOTFOUND;
 }
 
@@ -2211,7 +2211,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   IPicture	*newpic;
   HRESULT hr;
 
-  TRACE("(%p,%ld,%d,%s,%p), partially implemented.\n",
+  TRACE("(%p,%d,%d,%s,%p), partially implemented.\n",
 	lpstream, lSize, fRunmode, debugstr_guid(riid), ppvObj);
 
   hr = OleCreatePictureIndirect(NULL,riid,!fRunmode,(LPVOID*)&newpic);
@@ -2243,7 +2243,7 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   IPicture	*newpic;
   HRESULT hr;
 
-  FIXME("(%p,%ld,%d,%s,x=%ld,y=%ld,f=%lx,%p), partially implemented.\n",
+  FIXME("(%p,%d,%d,%s,x=%d,y=%d,f=%x,%p), partially implemented.\n",
 	lpstream, lSize, fRunmode, debugstr_guid(riid), xsiz, ysiz, flags, ppvObj);
 
   hr = OleCreatePictureIndirect(NULL,riid,!fRunmode,(LPVOID*)&newpic);
@@ -2283,7 +2283,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
   IPersistStream *pStream;
   HRESULT hRes;
 
-  TRACE("(%s,%p,%ld,%08lx,%s,%p): stub\n",
+  TRACE("(%s,%p,%d,%08x,%s,%p): stub\n",
         debugstr_w(szURLorPath), punkCaller, dwReserved, clrReserved,
         debugstr_guid(riid), ppvRet);
 

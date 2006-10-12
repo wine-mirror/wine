@@ -58,9 +58,8 @@ HRESULT WINAPI OleCreatePropertyFrame(
     LPUNKNOWN* ppUnk, ULONG cPages, LPCLSID pPageClsID, LCID lcid,
     DWORD dwReserved, LPVOID pvReserved )
 {
-	FIXME("(%p,%d,%d,%s,%ld,%p,%ld,%p,%x,%ld,%p), not implemented (olepro32.dll)\n",
+	FIXME("(%p,%d,%d,%s,%d,%p,%d,%p,%x,%d,%p), not implemented (olepro32.dll)\n",
 		hwndOwner,x,y,debugstr_w(lpszCaption),cObjects,ppUnk,cPages,
 		pPageClsID, (int)lcid,dwReserved,pvReserved);
 	return S_OK;
 }
-
