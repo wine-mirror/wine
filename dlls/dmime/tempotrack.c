@@ -340,7 +340,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
     IStream_Read (pStm, &StreamSize, sizeof(DWORD), NULL);
     StreamSize -= sizeof(DWORD);
     StreamCount = 0;
-    TRACE_(dmfile)(" - sizeof(DMUS_IO_TEMPO_ITEM): %u (chunkSize = %u)\n", StreamSize, Chunk.dwSize - sizeof(DWORD));
+    TRACE_(dmfile)(" - sizeof(DMUS_IO_TEMPO_ITEM): %u (chunkSize = %u)\n", StreamSize, Chunk.dwSize);
     do {
       IStream_Read (pStm, &item, sizeof(item), NULL);
       ++nItem;

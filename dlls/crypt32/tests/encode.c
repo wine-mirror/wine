@@ -1830,8 +1830,7 @@ static void test_decodeBits(DWORD dwEncoding)
             CRYPT_BIT_BLOB *blob;
 
             ok(bufSize >= sizeof(CRYPT_BIT_BLOB) + bits[i].cbDecoded,
-             "Got unexpected size %d, expected >= %d\n", bufSize,
-             sizeof(CRYPT_BIT_BLOB) + bits[i].cbDecoded);
+               "Got unexpected size %d\n", bufSize);
             blob = (CRYPT_BIT_BLOB *)buf;
             ok(blob->cbData == bits[i].cbDecoded,
              "Got unexpected length %d, expected %d\n", blob->cbData,
@@ -4081,8 +4080,7 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     {
         CRL_INFO *info = (CRL_INFO *)buf;
 
-        ok(size >= sizeof(CRL_INFO), "Expected size at least %d, got %d\n",
-         sizeof(CRL_INFO), size);
+        ok(size >= sizeof(CRL_INFO), "Got size %d\n", size);
         ok(info->cCRLEntry == 209, "Expected 209 CRL entries, got %d\n",
          info->cCRLEntry);
         ok(info->cExtension == 0, "Expected 0 extensions, got %d\n",

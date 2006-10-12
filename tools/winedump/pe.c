@@ -208,7 +208,6 @@ static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *dire
 {
     unsigned i;
     printf("Data Directory\n");
-    printf("%d\n", n * sizeof(IMAGE_DATA_DIRECTORY));
 
     for (i = 0; i < n && i < 16; i++)
     {

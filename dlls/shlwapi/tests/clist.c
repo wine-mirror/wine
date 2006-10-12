@@ -312,8 +312,7 @@ static void test_CList(void)
       else if (inserted)
       {
         ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %d size wrong (%d!=%d)\n", inserted->ulId, inserted->ulSize,
-           item->ulSize+sizeof(SHLWAPI_CLIST));
+           "id %d wrong size %d\n", inserted->ulId, inserted->ulSize);
       }
       if (inserted)
       {
@@ -437,8 +436,7 @@ static void test_CList(void)
       else if (inserted)
       {
         ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %d size wrong (%d!=%d)\n", inserted->ulId, inserted->ulSize,
-           item->ulSize+sizeof(SHLWAPI_CLIST));
+           "id %d wrong size %d\n", inserted->ulId, inserted->ulSize);
       }
       ok(!inserted || inserted->ulId==item->ulId, "find got wrong item\n");
       if (inserted)

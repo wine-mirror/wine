@@ -422,8 +422,8 @@ static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count
     r = ReadFile(pipe, args, count*sizeof(WCHAR), &read, NULL);
     if (!r || count!=read/sizeof(WCHAR) || args[count-1])
     {
-        ERR("pipe read failed r = %d count = %d/%d args[n-1]=%s\n",
-            r, count, read/sizeof(WCHAR), debugstr_wn(args, count));
+        ERR("pipe read failed r = %d count = %d read = %d args[n-1]=%s\n",
+            r, count, read, debugstr_wn(args, count));
         goto end;
     }
 

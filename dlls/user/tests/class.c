@@ -106,9 +106,9 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok(!SetClassLongW(hTestWnd,i*sizeof(DWORD),i+1),
-            "GetClassLongW(%d) initial value nonzero!\n",i*sizeof(DWORD));
+            "GetClassLongW(%d) initial value nonzero!\n",i);
         ok(!GetLastError(),
-            "SetClassLongW(%d) failed!\n",i*sizeof(DWORD));
+            "SetClassLongW(%d) failed!\n",i);
     }
 
     /* test values of valid classwords that we set */
