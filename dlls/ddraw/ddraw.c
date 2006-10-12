@@ -2331,8 +2331,8 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         {
             level++;
-            desc2.dwWidth /= 2;
-            desc2.dwHeight /= 2;
+            if(desc2.dwWidth > 1) desc2.dwWidth /= 2;
+            if(desc2.dwHeight > 1) desc2.dwHeight /= 2;
         }
 
         hr = IDirectDrawImpl_CreateNewSurface(This,
