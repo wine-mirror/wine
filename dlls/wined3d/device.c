@@ -6141,7 +6141,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 /*****
  * Drawing functions
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex,
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT StartVertex,
                                                 UINT PrimitiveCount) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -6159,7 +6159,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3
 
 /* TODO: baseVIndex needs to be provided from This->stateBlock->baseVertexIndex when called from d3d8 */
 static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
-                                                           D3DPRIMITIVETYPE PrimitiveType,
+                                                           WINED3DPRIMITIVETYPE PrimitiveType,
                                                            INT baseVIndex, UINT minIndex,
                                                            UINT NumVertices, UINT startIndex, UINT primCount) {
 
@@ -6188,7 +6188,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType,
                                                     UINT PrimitiveCount, CONST void* pVertexStreamZeroData,
                                                     UINT VertexStreamZeroStride) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -6218,7 +6218,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType,
                                                              UINT MinVertexIndex, UINT NumVertices,
                                                              UINT PrimitiveCount, CONST void* pIndexData,
                                                              WINED3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,
@@ -6260,7 +6260,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0, DrawPrimStrideData);
     return WINED3D_OK;

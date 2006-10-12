@@ -355,18 +355,18 @@ const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res) {
   }
 }
 
-const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType) {
+const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType) {
   switch (PrimitiveType) {
 #define PRIM_TO_STR(prim) case prim: return #prim;
-    PRIM_TO_STR(D3DPT_POINTLIST);
-    PRIM_TO_STR(D3DPT_LINELIST);
-    PRIM_TO_STR(D3DPT_LINESTRIP);
-    PRIM_TO_STR(D3DPT_TRIANGLELIST);
-    PRIM_TO_STR(D3DPT_TRIANGLESTRIP);
-    PRIM_TO_STR(D3DPT_TRIANGLEFAN);
+    PRIM_TO_STR(WINED3DPT_POINTLIST);
+    PRIM_TO_STR(WINED3DPT_LINELIST);
+    PRIM_TO_STR(WINED3DPT_LINESTRIP);
+    PRIM_TO_STR(WINED3DPT_TRIANGLELIST);
+    PRIM_TO_STR(WINED3DPT_TRIANGLESTRIP);
+    PRIM_TO_STR(WINED3DPT_TRIANGLEFAN);
 #undef  PRIM_TO_STR
   default:
-    FIXME("Unrecognized %u D3DPRIMITIVETYPE!\n", PrimitiveType);
+    FIXME("Unrecognized %u WINED3DPRIMITIVETYPE!\n", PrimitiveType);
     return "unrecognized";
   }
 }

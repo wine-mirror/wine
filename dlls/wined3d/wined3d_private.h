@@ -1252,7 +1252,7 @@ const char* debug_d3dusagequery(DWORD usagequery);
 const char* debug_d3ddeclmethod(WINED3DDECLMETHOD method);
 const char* debug_d3ddecltype(WINED3DDECLTYPE type);
 const char* debug_d3ddeclusage(BYTE usage);
-const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
+const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
 const char* debug_d3dsamplerstate(DWORD state);
 const char* debug_d3dtexturestate(DWORD state);

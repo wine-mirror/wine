@@ -28,10 +28,6 @@
 # error You must include config.h to use this header
 #endif
 
-#if !defined( __WINE_D3D_H ) && !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
-# error You must include d3d.h, d3d8.h or d3d9.h header to use this header
-#endif
-
 #if !defined( __WINE_DDRAW_H)
 #error You must include ddraw.h to use this header
 #endif
@@ -448,11 +444,11 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
     STDMETHOD(Clear)(THIS_ DWORD Count, CONST WINED3DRECT * pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) PURE;
-    STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount) PURE;
-    STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
-    STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
-    STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,WINED3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
-    STDMETHOD(DrawPrimitiveStrided)(THIS_ D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) PURE;
+    STDMETHOD(DrawPrimitive)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) PURE;
+    STDMETHOD(DrawIndexedPrimitive)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, INT baseVIdx, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount) PURE;
+    STDMETHOD(DrawPrimitiveUP)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void * pVertexStreamZeroData, UINT VertexStreamZeroStride) PURE;
+    STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void * pIndexData, WINED3DFORMAT IndexDataFormat, CONST void * pVertexStreamZeroData, UINT VertexStreamZeroStride) PURE;
+    STDMETHOD(DrawPrimitiveStrided)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) PURE;
     STDMETHOD(DrawRectPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST WINED3DRECTPATCH_INFO* pRectPatchInfo) PURE;
     STDMETHOD(DrawTriPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST WINED3DTRIPATCH_INFO* pTriPatchInfo) PURE;
     STDMETHOD(DeletePatch)(THIS_ UINT Handle) PURE;

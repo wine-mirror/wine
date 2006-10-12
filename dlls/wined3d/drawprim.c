@@ -39,44 +39,44 @@ extern IWineD3DPixelShaderImpl*             PixelShaders[64];
 #endif
 
 /* Issues the glBegin call for gl given the primitive type and count */
-static DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
+static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
                     DWORD            NumPrimitives,
                     GLenum          *primType)
 {
     DWORD   NumVertexes = NumPrimitives;
 
     switch (PrimitiveType) {
-    case D3DPT_POINTLIST:
+    case WINED3DPT_POINTLIST:
         TRACE("POINTS\n");
         *primType   = GL_POINTS;
         NumVertexes = NumPrimitives;
         break;
 
-    case D3DPT_LINELIST:
+    case WINED3DPT_LINELIST:
         TRACE("LINES\n");
         *primType   = GL_LINES;
         NumVertexes = NumPrimitives * 2;
         break;
 
-    case D3DPT_LINESTRIP:
+    case WINED3DPT_LINESTRIP:
         TRACE("LINE_STRIP\n");
         *primType   = GL_LINE_STRIP;
         NumVertexes = NumPrimitives + 1;
         break;
 
-    case D3DPT_TRIANGLELIST:
+    case WINED3DPT_TRIANGLELIST:
         TRACE("TRIANGLES\n");
         *primType   = GL_TRIANGLES;
         NumVertexes = NumPrimitives * 3;
         break;
 
-    case D3DPT_TRIANGLESTRIP:
+    case WINED3DPT_TRIANGLESTRIP:
         TRACE("TRIANGLE_STRIP\n");
         *primType   = GL_TRIANGLE_STRIP;
         NumVertexes = NumPrimitives + 2;
         break;
 
-    case D3DPT_TRIANGLEFAN:
+    case WINED3DPT_TRIANGLEFAN:
         TRACE("TRIANGLE_FAN\n");
         *primType   = GL_TRIANGLE_FAN;
         NumVertexes = NumPrimitives + 2;
