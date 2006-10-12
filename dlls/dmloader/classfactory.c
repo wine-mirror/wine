@@ -44,7 +44,7 @@ static HRESULT WINAPI IDirectMusicLoaderCF_QueryInterface (LPCLASSFACTORY iface,
 
 static ULONG WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -52,7 +52,7 @@ static ULONG WINAPI IDirectMusicLoaderCF_Release (LPCLASSFACTORY iface) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
 	if (dwRef == 0) {
 		HeapFree(GetProcessHeap (), 0, This);
 		/* decrease number of instances */
@@ -133,7 +133,7 @@ static HRESULT WINAPI IDirectMusicContainerCF_QueryInterface (LPCLASSFACTORY ifa
 
 static ULONG WINAPI IDirectMusicContainerCF_AddRef (LPCLASSFACTORY iface) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -141,7 +141,7 @@ static ULONG WINAPI IDirectMusicContainerCF_Release (LPCLASSFACTORY iface) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
 	if (dwRef == 0) {
 		HeapFree(GetProcessHeap (), 0, This);
 		/* decrease number of instances */

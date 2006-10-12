@@ -60,7 +60,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInter
 
 static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_AddRef (LPDIRECTMUSICCONTAINER iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -68,7 +68,7 @@ static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPD
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
+	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
 	if (dwRef == 0) {
 		DMUSIC_DestroyDirectMusicContainerImpl (iface);
 		HeapFree(GetProcessHeap(), 0, This);
@@ -83,7 +83,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject
 	LPWINE_CONTAINER_ENTRY pContainedObject;
 	DWORD dwCount = 0;
 
-	TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc, pwszAlias);
+	TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc, pwszAlias);
 
 	/* check if we can write to whole pDesc */
 	if (pDesc) {
@@ -265,7 +265,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 	
 	/* here we go... */
 	IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStream, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -280,7 +280,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 				do {
 					IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 					StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-					TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+					TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 					switch (Chunk.fccID) {
 						case DMUS_FOURCC_GUID_CHUNK: {
 							TRACE_(dmfile)(": GUID chunk\n");
@@ -330,7 +330,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 									do {
 										IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 										ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-										TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+										TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 										switch (Chunk.fccID) {
 											/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                              (though strings seem to be valid unicode) */
@@ -357,7 +357,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 												break;						
 											}
 										}
-										TRACE_(dmfile)(": ListCount[0] = 0x%08lX < ListSize[0] = 0x%08lX\n", ListCount[0], ListSize[0]);
+										TRACE_(dmfile)(": ListCount[0] = 0x%08X < ListSize[0] = 0x%08X\n", ListCount[0], ListSize[0]);
 									} while (ListCount[0] < ListSize[0]);
 									break;
 								}
@@ -377,7 +377,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 							break;						
 						}
 					}
-					TRACE_(dmfile)(": StreamCount[0] = 0x%08lX < StreamSize[0] = 0x%08lX\n", StreamCount, StreamSize);
+					TRACE_(dmfile)(": StreamCount[0] = 0x%08X < StreamSize[0] = 0x%08X\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
@@ -480,7 +480,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 	
 	/* start with load */
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
 			IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -495,7 +495,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 					do {
 						IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 						StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-						TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+						TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 						switch (Chunk.fccID) {
 							case DMUS_FOURCC_CONTAINER_CHUNK: {
 								TRACE_(dmfile)(": container header chunk\n");
@@ -550,7 +550,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 										do {
 											IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-											TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+											TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 											switch (Chunk.fccID) {
 												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                               (though strings seem to be valid unicode) */
@@ -577,7 +577,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 													break;						
 												}
 											}
-											TRACE_(dmfile)(": ListCount[0] = 0x%08lX < ListSize[0] = 0x%08lX\n", ListCount[0], ListSize[0]);
+											TRACE_(dmfile)(": ListCount[0] = 0x%08X < ListSize[0] = 0x%08X\n", ListCount[0], ListSize[0]);
 										} while (ListCount[0] < ListSize[0]);
 										break;
 									}
@@ -586,7 +586,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 										do {
 											IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-											TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+											TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 											switch (Chunk.fccID) {
 												case FOURCC_LIST: {
 													IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
@@ -602,7 +602,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 															do {
 																IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 																ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-																TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+																TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 																switch (Chunk.fccID) {
 																	case DMUS_FOURCC_CONTAINED_ALIAS_CHUNK: {
 																		TRACE_(dmfile)(": alias chunk\n");
@@ -637,7 +637,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																				do {
 																					IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 																					ListCount[2] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-																					TRACE_(dmfile)(": %s chunk (size = 0x%08lX)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+																					TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 																					switch (Chunk.fccID) {
 																						case DMUS_FOURCC_REF_CHUNK: {
 																							DMUS_IO_REFERENCE tmpReferenceHeader; /* temporary structure */
@@ -695,7 +695,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																							break;
 																						}
 																					}
-																					TRACE_(dmfile)(": ListCount[2] = 0x%08lX < ListSize[2] = 0x%08lX\n", ListCount[2], ListSize[2]);
+																					TRACE_(dmfile)(": ListCount[2] = 0x%08X < ListSize[2] = 0x%08X\n", ListCount[2], ListSize[2]);
 																				} while (ListCount[2] < ListSize[2]);
 																				break;
 																			}
@@ -740,7 +740,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																		break;						
 																	}
 																}
-																TRACE_(dmfile)(": ListCount[1] = 0x%08lX < ListSize[1] = 0x%08lX\n", ListCount[1], ListSize[1]);
+																TRACE_(dmfile)(": ListCount[1] = 0x%08X < ListSize[1] = 0x%08X\n", ListCount[1], ListSize[1]);
 															} while (ListCount[1] < ListSize[1]);
 															/* SetObject: this will fill descriptor with additional info	and add alias in loader's cache */
 															IDirectMusicLoader_SetObject (pLoader, &pNewEntry->Desc);
@@ -773,7 +773,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 													break;						
 												}
 											}
-											TRACE_(dmfile)(": ListCount[0] = 0x%08lX < ListSize[0] = 0x%08lX\n", ListCount[0], ListSize[0]);
+											TRACE_(dmfile)(": ListCount[0] = 0x%08X < ListSize[0] = 0x%08X\n", ListCount[0], ListSize[0]);
 										} while (ListCount[0] < ListSize[0]);
 										break;
 									}									
@@ -793,7 +793,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 								break;						
 							}
 						}
-						TRACE_(dmfile)(": StreamCount[0] = 0x%08lX < StreamSize[0] = 0x%08lX\n", StreamCount, StreamSize);
+						TRACE_(dmfile)(": StreamCount[0] = 0x%08X < StreamSize[0] = 0x%08X\n", StreamCount, StreamSize);
 					} while (StreamCount < StreamSize);
 					break;
 				}

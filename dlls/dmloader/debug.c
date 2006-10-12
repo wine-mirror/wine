@@ -423,7 +423,7 @@ const char *debugstr_dmreturn (DWORD code) {
 	}
 	
 	/* if we didn't find it, return value */
-	return wine_dbg_sprintf("0x%08lX", code);
+	return wine_dbg_sprintf("0x%08X", code);
 }
 
 
@@ -485,8 +485,8 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
 		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):", pDesc);
-		ptr += sprintf(ptr, "\n - dwSize = 0x%08lX", pDesc->dwSize);
-		ptr += sprintf(ptr, "\n - dwValidData = 0x%08lX (%s)", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+		ptr += sprintf(ptr, "\n - dwSize = 0x%08X", pDesc->dwSize);
+		ptr += sprintf(ptr, "\n - dwValidData = 0x%08X (%s)", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
 		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, "\n - guidClass = %s", debugstr_dmguid(&pDesc->guidClass));
 		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, "\n - guidObject = %s", debugstr_guid(&pDesc->guidObject));
 		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, "\n - ftDate = %s", debugstr_filetime (&pDesc->ftDate));

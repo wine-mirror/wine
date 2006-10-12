@@ -47,7 +47,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface (
 
 static ULONG WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef (LPDIRECTMUSICLOADER8 iface) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
+	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
@@ -55,7 +55,7 @@ static ULONG WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_Release (LPDIRECTM
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->dwRef);
+	TRACE("(%p): ReleaseRef to %d\n", This, This->dwRef);
 	if (dwRef == 0) {
 		DMUSIC_DestroyDirectMusicLoaderImpl (iface);
 		HeapFree (GetProcessHeap(), 0, This);
@@ -689,7 +689,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnumObject (LPDI
 	struct list *pEntry;
 	LPWINE_LOADER_ENTRY pObjectEntry;
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
+	TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
 	
 	DM_STRUCT_INIT(pDesc);
 	
