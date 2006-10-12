@@ -46,7 +46,7 @@ static const char szCardsKey[] =
  */
 DWORD WINAPI lineAccept(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
-    FIXME("(%p, %s, %ld): stub.\n", hCall, lpsUserUserInfo, dwSize);
+    FIXME("(%p, %s, %d): stub.\n", hCall, lpsUserUserInfo, dwSize);
     return 1;
 }
 
@@ -73,7 +73,7 @@ DWORD WINAPI lineAddToConference(HCALL hConfCall, HCALL hConsultCall)
  */
 DWORD WINAPI lineAnswer(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
-    FIXME("(%p, %s, %ld): stub.\n", hCall, lpsUserUserInfo, dwSize);
+    FIXME("(%p, %s, %d): stub.\n", hCall, lpsUserUserInfo, dwSize);
     return 1;
 }
 
@@ -82,7 +82,7 @@ DWORD WINAPI lineAnswer(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
  */
 DWORD WINAPI lineBlindTransferA(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode)
 {
-    FIXME("(%p, %s, %08lx): stub.\n", hCall, lpszDestAddress, dwCountryCode);
+    FIXME("(%p, %s, %08x): stub.\n", hCall, lpszDestAddress, dwCountryCode);
     return 1;
 }
 
@@ -100,7 +100,7 @@ DWORD WINAPI lineClose(HLINE hLine)
  */
 DWORD WINAPI lineCompleteCall(HCALL hCall, LPDWORD lpdwCompletionID, DWORD dwCompletionMode, DWORD dwMessageID)
 {
-    FIXME("(%p, %p, %08lx, %08lx): stub.\n", hCall, lpdwCompletionID, dwCompletionMode, dwMessageID);
+    FIXME("(%p, %p, %08x, %08x): stub.\n", hCall, lpdwCompletionID, dwCompletionMode, dwMessageID);
     return 1;
 }
 
@@ -109,7 +109,7 @@ DWORD WINAPI lineCompleteCall(HCALL hCall, LPDWORD lpdwCompletionID, DWORD dwCom
  */
 DWORD WINAPI lineCompleteTransfer(HCALL hCall, HCALL hConsultCall, LPHCALL lphConfCall, DWORD dwTransferMode)
 {
-    FIXME("(%p, %p, %p, %08lx): stub.\n", hCall, hConsultCall, lphConfCall, dwTransferMode);
+    FIXME("(%p, %p, %p, %08x): stub.\n", hCall, hConsultCall, lphConfCall, dwTransferMode);
     return 1;
 }
 
@@ -118,7 +118,7 @@ DWORD WINAPI lineCompleteTransfer(HCALL hCall, HCALL hConsultCall, LPHCALL lphCo
  */
 DWORD WINAPI lineConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%08lx, %p, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
+    FIXME("(%08x, %p, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
     return 0;
 }
 
@@ -136,7 +136,7 @@ DWORD WINAPI lineConfigDialogEditA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpsz
  */
 DWORD WINAPI lineConfigProvider(HWND hwndOwner, DWORD dwPermanentProviderID)
 {
-    FIXME("(%p, %08lx): stub.\n", hwndOwner, dwPermanentProviderID);
+    FIXME("(%p, %08x): stub.\n", hwndOwner, dwPermanentProviderID);
     return 0;
 }
 
@@ -154,7 +154,7 @@ DWORD WINAPI lineDeallocateCall(HCALL hCall)
  */
 DWORD WINAPI lineDevSpecific(HLINE hLine, DWORD dwAddressId, HCALL hCall, LPVOID lpParams, DWORD dwSize)
 {
-    FIXME("(%p, %08lx, %p, %p, %ld): stub.\n", hLine, dwAddressId, hCall, lpParams, dwSize);
+    FIXME("(%p, %08x, %p, %p, %d): stub.\n", hLine, dwAddressId, hCall, lpParams, dwSize);
     return 1;
 }
 
@@ -163,7 +163,7 @@ DWORD WINAPI lineDevSpecific(HLINE hLine, DWORD dwAddressId, HCALL hCall, LPVOID
  */
 DWORD WINAPI lineDevSpecificFeature(HLINE hLine, DWORD dwFeature, LPVOID lpParams, DWORD dwSize)
 {
-    FIXME("(%p, %08lx, %p, %ld): stub.\n", hLine, dwFeature, lpParams, dwSize);
+    FIXME("(%p, %08x, %p, %d): stub.\n", hLine, dwFeature, lpParams, dwSize);
     return 1;
 }
 
@@ -172,7 +172,7 @@ DWORD WINAPI lineDevSpecificFeature(HLINE hLine, DWORD dwFeature, LPVOID lpParam
  */
 DWORD WINAPI lineDialA(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode)
 {
-    FIXME("(%p, %s, %08lx): stub.\n", hCall, lpszDestAddress, dwCountryCode);
+    FIXME("(%p, %s, %08x): stub.\n", hCall, lpszDestAddress, dwCountryCode);
     return 1;
 }
 
@@ -181,7 +181,7 @@ DWORD WINAPI lineDialA(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode)
  */
 DWORD WINAPI lineDrop(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
-    FIXME("(%p, %s, %08lx): stub.\n", hCall, lpsUserUserInfo, dwSize);
+    FIXME("(%p, %s, %08x): stub.\n", hCall, lpsUserUserInfo, dwSize);
     return 1;
 }
 
@@ -208,7 +208,7 @@ DWORD WINAPI lineGatherDigitsA(HCALL hCall, DWORD dwDigitModes, LPSTR lpsDigits,
  */
 DWORD WINAPI lineGenerateDigitsA(HCALL hCall, DWORD dwDigitModes, LPCSTR lpszDigits, DWORD dwDuration)
 {
-    FIXME("(%p, %08lx, %s, %ld): stub.\n", hCall, dwDigitModes, lpszDigits, dwDuration);
+    FIXME("(%p, %08x, %s, %d): stub.\n", hCall, dwDigitModes, lpszDigits, dwDuration);
     return 0;
 }
 
@@ -217,7 +217,7 @@ DWORD WINAPI lineGenerateDigitsA(HCALL hCall, DWORD dwDigitModes, LPCSTR lpszDig
  */
 DWORD WINAPI lineGenerateTone(HCALL hCall, DWORD dwToneMode, DWORD dwDuration, DWORD dwNumTones, LPLINEGENERATETONE lpTones)
 {
-    FIXME("(%p, %08lx, %ld, %ld, %p): stub.\n", hCall, dwToneMode, dwDuration, dwNumTones, lpTones);
+    FIXME("(%p, %08x, %d, %d, %p): stub.\n", hCall, dwToneMode, dwDuration, dwNumTones, lpTones);
     return 0;
 }
 
@@ -226,7 +226,7 @@ DWORD WINAPI lineGenerateTone(HCALL hCall, DWORD dwToneMode, DWORD dwDuration, D
  */
 DWORD WINAPI lineGetAddressCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAddressID, DWORD dwAPIVersion, DWORD dwExtVersion, LPLINEADDRESSCAPS lpAddressCaps)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx, %08lx, %p): stub.\n", hLineApp, dwDeviceID, dwAddressID, dwAPIVersion, dwExtVersion, lpAddressCaps);
+    FIXME("(%p, %08x, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAddressID, dwAPIVersion, dwExtVersion, lpAddressCaps);
     return 0;
 }
 
@@ -235,7 +235,7 @@ DWORD WINAPI lineGetAddressCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAd
  */
 DWORD WINAPI lineGetAddressIDA(HLINE hLine, LPDWORD lpdwAddressID, DWORD dwAddressMode, LPCSTR lpsAddress, DWORD dwSize)
 {
-    FIXME("%p, %p, %08lx, %s, %ld): stub.\n", hLine, lpdwAddressID, dwAddressMode, lpsAddress, dwSize);
+    FIXME("%p, %p, %08x, %s, %d): stub.\n", hLine, lpdwAddressID, dwAddressMode, lpsAddress, dwSize);
     return 0;
 }
 
@@ -244,7 +244,7 @@ DWORD WINAPI lineGetAddressIDA(HLINE hLine, LPDWORD lpdwAddressID, DWORD dwAddre
  */
 DWORD WINAPI lineGetAddressStatusA(HLINE hLine, DWORD dwAddressID, LPLINEADDRESSSTATUS lpAddressStatus)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hLine, dwAddressID, lpAddressStatus);
+    FIXME("(%p, %08x, %p): stub.\n", hLine, dwAddressID, lpAddressStatus);
     return 0;
 }
 
@@ -253,7 +253,7 @@ DWORD WINAPI lineGetAddressStatusA(HLINE hLine, DWORD dwAddressID, LPLINEADDRESS
  */
 DWORD WINAPI lineGetAppPriorityA(LPCSTR lpszAppFilename, DWORD dwMediaMode, LPLINEEXTENSIONID const lpExtensionID, DWORD dwRequestMode, LPVARSTRING lpExtensionName, LPDWORD lpdwPriority)
 {
-    FIXME("(%s, %08lx, %p, %08lx, %p, %p): stub.\n", lpszAppFilename, dwMediaMode, lpExtensionID, dwRequestMode, lpExtensionName, lpdwPriority);
+    FIXME("(%s, %08x, %p, %08x, %p, %p): stub.\n", lpszAppFilename, dwMediaMode, lpExtensionID, dwRequestMode, lpExtensionName, lpdwPriority);
     return 0;
 }
 
@@ -305,12 +305,12 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
     char *subkey_name;
 
     if(!lpLineCountryList) {
-	TRACE("(%08lx, %08lx, %p): stub. Returning LINEERR_INVALPOINTER\n",
+	TRACE("(%08x, %08x, %p): stub. Returning LINEERR_INVALPOINTER\n",
 	      dwCountryID, dwAPIVersion, lpLineCountryList);
         return LINEERR_INVALPOINTER;
     }
 
-    TRACE("(%08lx, %08lx, %p(%ld)): stub.\n",
+    TRACE("(%08x, %08x, %p(%d)): stub.\n",
 	  dwCountryID, dwAPIVersion, lpLineCountryList,
 	  lpLineCountryList->dwTotalSize);
 
@@ -446,7 +446,7 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
 
     lpLineCountryList->dwNeededSize = dwOffset;
 
-    TRACE("%ld available %ld required\n", dwAvailSize, dwOffset);
+    TRACE("%d available %d required\n", dwAvailSize, dwOffset);
 
     HeapFree(GetProcessHeap(), 0, subkey_name);
     RegCloseKey(hkey);
@@ -459,7 +459,7 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
  */
 DWORD WINAPI lineGetDevCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion, DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpLineDevCaps);
+    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpLineDevCaps);
     return 0;
 }
 
@@ -468,7 +468,7 @@ DWORD WINAPI lineGetDevCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVer
  */
 DWORD WINAPI lineGetDevConfigA(DWORD dwDeviceID, LPVARSTRING lpDeviceConfig, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%08lx, %p, %s): stub.\n", dwDeviceID, lpDeviceConfig, lpszDeviceClass);
+    FIXME("(%08x, %p, %s): stub.\n", dwDeviceID, lpDeviceConfig, lpszDeviceClass);
     return 0;
 }
 
@@ -477,7 +477,7 @@ DWORD WINAPI lineGetDevConfigA(DWORD dwDeviceID, LPVARSTRING lpDeviceConfig, LPC
  */
 DWORD WINAPI lineGetIDA(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect, LPVARSTRING lpDeviceID, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%p, %08lx, %p, %08lx, %p, %s): stub.\n", hLine, dwAddressID, hCall, dwSelect, lpDeviceID, lpszDeviceClass);
+    FIXME("(%p, %08x, %p, %08x, %p, %s): stub.\n", hLine, dwAddressID, hCall, dwSelect, lpDeviceID, lpszDeviceClass);
     return 0;
 }
 
@@ -486,7 +486,7 @@ DWORD WINAPI lineGetIDA(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSel
  */
 DWORD WINAPI lineGetIconA(DWORD dwDeviceID, LPCSTR lpszDeviceClass, HICON *lphIcon)
 {
-    FIXME("(%08lx, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
+    FIXME("(%08x, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
     return 0;
 }
 
@@ -504,7 +504,7 @@ DWORD WINAPI lineGetLineDevStatusA(HLINE hLine, LPLINEDEVSTATUS lpLineDevStatus)
  */
 DWORD WINAPI lineGetNewCalls(HLINE hLine, DWORD dwAddressID, DWORD dwSelect, LPLINECALLLIST lpCallList)
 {
-    FIXME("(%p, %08lx, %08lx, %p): stub.\n", hLine, dwAddressID, dwSelect, lpCallList);
+    FIXME("(%p, %08x, %08x, %p): stub.\n", hLine, dwAddressID, dwSelect, lpCallList);
     return 0;
 }
 
@@ -513,7 +513,7 @@ DWORD WINAPI lineGetNewCalls(HLINE hLine, DWORD dwAddressID, DWORD dwSelect, LPL
  */
 DWORD WINAPI lineGetNumRings(HLINE hLine, DWORD dwAddressID, LPDWORD lpdwNumRings)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hLine, dwAddressID, lpdwNumRings);
+    FIXME("(%p, %08x, %p): stub.\n", hLine, dwAddressID, lpdwNumRings);
     return 0;
 }
 
@@ -522,7 +522,7 @@ DWORD WINAPI lineGetNumRings(HLINE hLine, DWORD dwAddressID, LPDWORD lpdwNumRing
  */
 DWORD WINAPI lineGetProviderListA(DWORD dwAPIVersion, LPLINEPROVIDERLIST lpProviderList)
 {
-    FIXME("(%08lx, %p): stub.\n", dwAPIVersion, lpProviderList);
+    FIXME("(%08x, %p): stub.\n", dwAPIVersion, lpProviderList);
     return 0;
 }
 
@@ -531,7 +531,7 @@ DWORD WINAPI lineGetProviderListA(DWORD dwAPIVersion, LPLINEPROVIDERLIST lpProvi
  */
 DWORD WINAPI lineGetRequestA(HLINEAPP hLineApp, DWORD dwRequestMode, LPVOID lpRequestBuffer)
 {
-    FIXME("%p, %08lx, %p): stub.\n", hLineApp, dwRequestMode, lpRequestBuffer);
+    FIXME("%p, %08x, %p): stub.\n", hLineApp, dwRequestMode, lpRequestBuffer);
     return 0;
 }
 
@@ -607,7 +607,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
     LPLINELOCATIONENTRY pLocEntry;
     LPLINECARDENTRY pCardEntry;
     
-    TRACE("(%p, %08lx, %p (tot. size %ld)\n", hLineApp, dwAPIVersion,
+    TRACE("(%p, %08x, %p (tot. size %d)\n", hLineApp, dwAPIVersion,
             lpTranslateCaps, lpTranslateCaps->dwTotalSize );
     if( lpTranslateCaps->dwTotalSize < sizeof(LINETRANSLATECAPS))
         return LINEERR_STRUCTURETOOSMALL;
@@ -744,7 +744,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
         HeapFree(GetProcessHeap(), 0, loc_key_name);
         HeapFree(GetProcessHeap(), 0, card_key_name);
         lpTranslateCaps->dwUsedSize = sizeof(LINETRANSLATECAPS);
-        TRACE("Insufficient space: total %ld needed %ld used %ld\n",
+        TRACE("Insufficient space: total %d needed %d used %d\n",
                 lpTranslateCaps->dwTotalSize,
                 lpTranslateCaps->dwNeededSize,
                 lpTranslateCaps->dwUsedSize);
@@ -847,9 +847,9 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
         if(pLocEntry->dwPermanentLocationID == currentid )
             lpTranslateCaps->dwCurrentPreferredCardID =
                     pLocEntry->dwPreferredCardID;
-        TRACE("added: ID %ld %s CountryCode %ld CityCode %s CardID %ld "
-                "LocalAccess: %s LongDistanceAccess: %s CountryID %ld "
-                "Options %ld CancelCallWait %s\n",
+        TRACE("added: ID %d %s CountryCode %d CityCode %s CardID %d "
+                "LocalAccess: %s LongDistanceAccess: %s CountryID %d "
+                "Options %d CancelCallWait %s\n",
                 pLocEntry->dwPermanentLocationID,
                 debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwLocationNameOffset),
                 pLocEntry->dwCountryCode,
@@ -904,7 +904,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             size_val=sizeof(DWORD);
             RegQueryValueExA(hsubkey, "Flags",NULL, NULL,
                     (LPBYTE) &(pCardEntry->dwOptions), &size_val); 
-            TRACE( "added card: ID %ld name %s SameArea %s LongDistance %s International %s Options 0x%lx\n", 
+            TRACE( "added card: ID %d name %s SameArea %s LongDistance %s International %s Options 0x%x\n", 
                     pCardEntry->dwPermanentCardID,
                     debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwCardNameOffset),
                     debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwSameAreaRuleOffset),
@@ -921,7 +921,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
     if(hkCardLocations) RegCloseKey(hkCardLocations);
     HeapFree(GetProcessHeap(), 0, loc_key_name);
     HeapFree(GetProcessHeap(), 0, card_key_name);
-    TRACE(" returning success tot %ld needed %ld used %ld\n",
+    TRACE(" returning success tot %d needed %d used %d\n",
             lpTranslateCaps->dwTotalSize,
             lpTranslateCaps->dwNeededSize,
             lpTranslateCaps->dwUsedSize );
@@ -933,7 +933,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
  */
 DWORD WINAPI lineHandoffA(HCALL hCall, LPCSTR lpszFileName, DWORD dwMediaMode)
 {
-    FIXME("(%p, %s, %08lx): stub.\n", hCall, lpszFileName, dwMediaMode);
+    FIXME("(%p, %s, %08x): stub.\n", hCall, lpszFileName, dwMediaMode);
     return 0;
 }
 
@@ -966,7 +966,7 @@ DWORD WINAPI lineInitialize(
  */
 DWORD WINAPI lineMakeCallA(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress, DWORD dwCountryCode, LPLINECALLPARAMS lpCallParams)
 {
-    FIXME("(%p, %p, %s, %08lx, %p): stub.\n", hLine, lphCall, lpszDestAddress, dwCountryCode, lpCallParams);
+    FIXME("(%p, %p, %s, %08x, %p): stub.\n", hLine, lphCall, lpszDestAddress, dwCountryCode, lpCallParams);
     return 1;
 }
 
@@ -975,7 +975,7 @@ DWORD WINAPI lineMakeCallA(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress,
  */
 DWORD WINAPI lineMonitorDigits(HCALL hCall, DWORD dwDigitModes)
 {
-    FIXME("(%p, %08lx): stub.\n", hCall, dwDigitModes);
+    FIXME("(%p, %08x): stub.\n", hCall, dwDigitModes);
     return 0;
 }
 
@@ -984,7 +984,7 @@ DWORD WINAPI lineMonitorDigits(HCALL hCall, DWORD dwDigitModes)
  */
 DWORD WINAPI lineMonitorMedia(HCALL hCall, DWORD dwMediaModes)
 {
-    FIXME("(%p, %08lx): stub.\n", hCall, dwMediaModes);
+    FIXME("(%p, %08x): stub.\n", hCall, dwMediaModes);
     return 0;
 }
 
@@ -993,7 +993,7 @@ DWORD WINAPI lineMonitorMedia(HCALL hCall, DWORD dwMediaModes)
  */
 DWORD WINAPI lineMonitorTones(HCALL hCall, LPLINEMONITORTONE lpToneList, DWORD dwNumEntries)
 {
-    FIXME("(%p, %p, %08lx): stub.\n", hCall, lpToneList, dwNumEntries);
+    FIXME("(%p, %p, %08x): stub.\n", hCall, lpToneList, dwNumEntries);
     return 0;
 }
 
@@ -1009,7 +1009,7 @@ DWORD WINAPI lineNegotiateAPIVersion(
   LPLINEEXTENSIONID lpExtensionID
 )
 {
-    FIXME("(%p, %ld, %ld, %ld, %p, %p): stub.\n", hLineApp, dwDeviceID,
+    FIXME("(%p, %d, %d, %d, %p, %p): stub.\n", hLineApp, dwDeviceID,
 	  dwAPILowVersion, dwAPIHighVersion, lpdwAPIVersion, lpExtensionID);
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
@@ -1038,7 +1038,7 @@ DWORD WINAPI lineOpenA(HLINEAPP hLineApp, DWORD dwDeviceID, LPHLINE lphLine, DWO
  */
 DWORD WINAPI lineParkA(HCALL hCall, DWORD dwParkMode, LPCSTR lpszDirAddress, LPVARSTRING lpNonDirAddress)
 {
-    FIXME("(%p, %08lx, %s, %p): stub.\n", hCall, dwParkMode, lpszDirAddress, lpNonDirAddress);
+    FIXME("(%p, %08x, %s, %p): stub.\n", hCall, dwParkMode, lpszDirAddress, lpNonDirAddress);
     return 1;
 }
 
@@ -1047,7 +1047,7 @@ DWORD WINAPI lineParkA(HCALL hCall, DWORD dwParkMode, LPCSTR lpszDirAddress, LPV
  */
 DWORD WINAPI linePickupA(HLINE hLine, DWORD dwAddressID, LPHCALL lphCall, LPCSTR lpszDestAddress, LPCSTR lpszGroupID)
 {
-    FIXME("(%p, %08lx, %p, %s, %s): stub.\n", hLine, dwAddressID, lphCall, lpszDestAddress, lpszGroupID);
+    FIXME("(%p, %08x, %p, %s, %s): stub.\n", hLine, dwAddressID, lphCall, lpszDestAddress, lpszGroupID);
     return 1;
 }
 
@@ -1077,7 +1077,7 @@ DWORD WINAPI lineRedirectA(
  */
 DWORD WINAPI lineRegisterRequestRecipient(HLINEAPP hLineApp, DWORD dwRegistrationInstance, DWORD dwRequestMode, DWORD dwEnable)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx): stub.\n", hLineApp, dwRegistrationInstance, dwRequestMode, dwEnable);
+    FIXME("(%p, %08x, %08x, %08x): stub.\n", hLineApp, dwRegistrationInstance, dwRequestMode, dwEnable);
     return 1;
 }
 
@@ -1104,7 +1104,7 @@ DWORD WINAPI lineRemoveFromConference(HCALL hCall)
  */
 DWORD WINAPI lineRemoveProvider(DWORD dwPermanentProviderID, HWND hwndOwner)
 {
-    FIXME("(%08lx, %p): stub.\n", dwPermanentProviderID, hwndOwner);
+    FIXME("(%08x, %p): stub.\n", dwPermanentProviderID, hwndOwner);
     return 1;
 }
 
@@ -1122,7 +1122,7 @@ DWORD WINAPI lineSecureCall(HCALL hCall)
  */
 DWORD WINAPI lineSendUserUserInfo(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
-    FIXME("(%p, %s, %08lx): stub.\n", hCall, lpsUserUserInfo, dwSize);
+    FIXME("(%p, %s, %08x): stub.\n", hCall, lpsUserUserInfo, dwSize);
     return 1;
 }
 
@@ -1131,7 +1131,7 @@ DWORD WINAPI lineSendUserUserInfo(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwS
  */
 DWORD WINAPI lineSetAppPriorityA(LPCSTR lpszAppFilename, DWORD dwMediaMode, LPLINEEXTENSIONID const lpExtensionID, DWORD dwRequestMode, LPCSTR lpszExtensionName, DWORD dwPriority)
 {
-    FIXME("(%s, %08lx, %p, %08lx, %s, %08lx): stub.\n", lpszAppFilename, dwMediaMode, lpExtensionID, dwRequestMode, lpszExtensionName, dwPriority);
+    FIXME("(%s, %08x, %p, %08x, %s, %08x): stub.\n", lpszAppFilename, dwMediaMode, lpExtensionID, dwRequestMode, lpszExtensionName, dwPriority);
     return 0;
 }
 
@@ -1140,7 +1140,7 @@ DWORD WINAPI lineSetAppPriorityA(LPCSTR lpszAppFilename, DWORD dwMediaMode, LPLI
  */
 DWORD WINAPI lineSetAppSpecific(HCALL hCall, DWORD dwAppSpecific)
 {
-    FIXME("(%p, %08lx): stub.\n", hCall, dwAppSpecific);
+    FIXME("(%p, %08x): stub.\n", hCall, dwAppSpecific);
     return 0;
 }
 
@@ -1149,7 +1149,7 @@ DWORD WINAPI lineSetAppSpecific(HCALL hCall, DWORD dwAppSpecific)
  */
 DWORD WINAPI lineSetCallParams(HCALL hCall, DWORD dwBearerMode, DWORD dwMinRate, DWORD dwMaxRate, LPLINEDIALPARAMS lpDialParams)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx, %p): stub.\n", hCall, dwBearerMode, dwMinRate, dwMaxRate, lpDialParams);
+    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hCall, dwBearerMode, dwMinRate, dwMaxRate, lpDialParams);
     return 1;
 }
 
@@ -1158,7 +1158,7 @@ DWORD WINAPI lineSetCallParams(HCALL hCall, DWORD dwBearerMode, DWORD dwMinRate,
  */
 DWORD WINAPI lineSetCallPrivilege(HCALL hCall, DWORD dwCallPrivilege)
 {
-    FIXME("(%p, %08lx): stub.\n", hCall, dwCallPrivilege);
+    FIXME("(%p, %08x): stub.\n", hCall, dwCallPrivilege);
     return 0;
 }
 
@@ -1167,7 +1167,7 @@ DWORD WINAPI lineSetCallPrivilege(HCALL hCall, DWORD dwCallPrivilege)
  */
 DWORD WINAPI lineSetCurrentLocation(HLINEAPP hLineApp, DWORD dwLocation)
 {
-    FIXME("(%p, %08lx): stub.\n", hLineApp, dwLocation);
+    FIXME("(%p, %08x): stub.\n", hLineApp, dwLocation);
     return 0;
 }
 
@@ -1176,7 +1176,7 @@ DWORD WINAPI lineSetCurrentLocation(HLINEAPP hLineApp, DWORD dwLocation)
  */
 DWORD WINAPI lineSetDevConfigA(DWORD dwDeviceID, LPVOID lpDeviceConfig, DWORD dwSize, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%08lx, %p, %08lx, %s): stub.\n", dwDeviceID, lpDeviceConfig, dwSize, lpszDeviceClass);
+    FIXME("(%08x, %p, %08x, %s): stub.\n", dwDeviceID, lpDeviceConfig, dwSize, lpszDeviceClass);
     return 0;
 }
 
@@ -1206,7 +1206,7 @@ DWORD dwCallStateNumEntries)
  */
 DWORD WINAPI lineSetMediaMode(HCALL hCall, DWORD dwMediaModes)
 {
-    FIXME("(%p, %08lx): stub.\n", hCall, dwMediaModes);
+    FIXME("(%p, %08x): stub.\n", hCall, dwMediaModes);
     return 0;
 }
 
@@ -1215,7 +1215,7 @@ DWORD WINAPI lineSetMediaMode(HCALL hCall, DWORD dwMediaModes)
  */
 DWORD WINAPI lineSetNumRings(HLINE hLine, DWORD dwAddressID, DWORD dwNumRings)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hLine, dwAddressID, dwNumRings);
+    FIXME("(%p, %08x, %08x): stub.\n", hLine, dwAddressID, dwNumRings);
     return 0;
 }
 
@@ -1224,7 +1224,7 @@ DWORD WINAPI lineSetNumRings(HLINE hLine, DWORD dwAddressID, DWORD dwNumRings)
  */
 DWORD WINAPI lineSetStatusMessages(HLINE hLine, DWORD dwLineStates, DWORD dwAddressStates)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hLine, dwLineStates, dwAddressStates);
+    FIXME("(%p, %08x, %08x): stub.\n", hLine, dwLineStates, dwAddressStates);
     return 0;
 }
 
@@ -1233,7 +1233,7 @@ DWORD WINAPI lineSetStatusMessages(HLINE hLine, DWORD dwLineStates, DWORD dwAddr
  */
 DWORD WINAPI lineSetTerminal(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect, DWORD dwTerminalModes, DWORD dwTerminalID, DWORD bEnable)
 {
-    FIXME("(%p, %08lx, %p, %08lx, %08lx, %08lx, %08lx): stub.\n", hLine, dwAddressID, hCall, dwSelect, dwTerminalModes, dwTerminalID, bEnable);
+    FIXME("(%p, %08x, %p, %08x, %08x, %08x, %08x): stub.\n", hLine, dwAddressID, hCall, dwSelect, dwTerminalModes, dwTerminalID, bEnable);
     return 1;
 }
 
@@ -1242,7 +1242,7 @@ DWORD WINAPI lineSetTerminal(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD 
  */
 DWORD WINAPI lineSetTollListA(HLINEAPP hLineApp, DWORD dwDeviceID, LPCSTR lpszAddressIn, DWORD dwTollListOption)
 {
-    FIXME("(%p, %08lx, %s, %08lx): stub.\n", hLineApp, dwDeviceID, lpszAddressIn, dwTollListOption);
+    FIXME("(%p, %08x, %s, %08x): stub.\n", hLineApp, dwDeviceID, lpszAddressIn, dwTollListOption);
     return 0;
 }
 
@@ -1251,7 +1251,7 @@ DWORD WINAPI lineSetTollListA(HLINEAPP hLineApp, DWORD dwDeviceID, LPCSTR lpszAd
  */
 DWORD WINAPI lineSetupConferenceA(HCALL hCall, HLINE hLine, LPHCALL lphConfCall, LPHCALL lphConsultCall, DWORD dwNumParties, LPLINECALLPARAMS lpCallParams)
 {
-    FIXME("(%p, %p, %p, %p, %08lx, %p): stub.\n", hCall, hLine, lphConfCall, lphConsultCall, dwNumParties, lpCallParams);
+    FIXME("(%p, %p, %p, %p, %08x, %p): stub.\n", hCall, hLine, lphConfCall, lphConsultCall, dwNumParties, lpCallParams);
     return 1;
 }
 
@@ -1287,7 +1287,7 @@ DWORD WINAPI lineSwapHold(HCALL hActiveCall, HCALL hHeldCall)
  */
 DWORD WINAPI lineTranslateAddressA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion, LPCSTR lpszAddressIn, DWORD dwCard, DWORD dwTranslateOptions, LPLINETRANSLATEOUTPUT lpTranslateOutput)
 {
-    FIXME("(%p, %08lx, %08lx, %s, %08lx, %08lx, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, lpszAddressIn, dwCard, dwTranslateOptions, lpTranslateOutput);
+    FIXME("(%p, %08x, %08x, %s, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, lpszAddressIn, dwCard, dwTranslateOptions, lpTranslateOutput);
     return 0;
 }
 
@@ -1296,7 +1296,7 @@ DWORD WINAPI lineTranslateAddressA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dw
  */
 DWORD WINAPI lineTranslateDialogA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion, HWND hwndOwner, LPCSTR lpszAddressIn)
 {
-    FIXME("(%p, %08lx, %08lx, %p, %s): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, hwndOwner, lpszAddressIn);
+    FIXME("(%p, %08x, %08x, %p, %s): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, hwndOwner, lpszAddressIn);
     return 0;
 }
 
@@ -1305,7 +1305,7 @@ DWORD WINAPI lineTranslateDialogA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwA
  */
 DWORD WINAPI lineUncompleteCall(HLINE hLine, DWORD dwCompletionID)
 {
-    FIXME("(%p, %08lx): stub.\n", hLine, dwCompletionID);
+    FIXME("(%p, %08x): stub.\n", hLine, dwCompletionID);
     return 1;
 }
 
@@ -1323,6 +1323,6 @@ DWORD WINAPI lineUnhold(HCALL hCall)
  */
 DWORD WINAPI lineUnparkA(HLINE hLine, DWORD dwAddressID, LPHCALL lphCall, LPCSTR lpszDestAddress)
 {
-    FIXME("(%p, %08lx, %p, %s): stub.\n", hLine, dwAddressID, lphCall, lpszDestAddress);
+    FIXME("(%p, %08x, %p, %s): stub.\n", hLine, dwAddressID, lphCall, lpszDestAddress);
     return 1;
 }

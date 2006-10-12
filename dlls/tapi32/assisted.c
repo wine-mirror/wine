@@ -47,7 +47,7 @@ DWORD WINAPI tapiGetLocationInfoA(LPSTR lpszCountryCode, LPSTR lpszCityCode)
         if(!RegQueryValueExA(hkey, "CurrentID", 0, &type, (LPBYTE) &currid,
                     &valsize) && type == REG_DWORD) {
             /* find a subkey called Location1, Location2... */
-            sprintf( szlockey, "Location%lu", currid); 
+            sprintf( szlockey, "Location%u", currid); 
             if( !RegOpenKeyA( hkey, szlockey, &hsubkey)) {
                 if( lpszCityCode) {
                     bufsize=sizeof(buf);
@@ -61,7 +61,7 @@ DWORD WINAPI tapiGetLocationInfoA(LPSTR lpszCountryCode, LPSTR lpszCityCode)
                     bufsize=sizeof(buf);
                     if( !RegQueryValueExA( hsubkey, "Country", 0, &type, buf,
                                 &bufsize) && type == REG_DWORD)
-                        snprintf( lpszCountryCode, 8, "%lu", *(LPDWORD) buf );
+                        snprintf( lpszCountryCode, 8, "%u", *(LPDWORD) buf );
                     else
                         lpszCountryCode[0] = '\0';
                 }

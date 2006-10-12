@@ -50,7 +50,7 @@ DWORD WINAPI phoneClose(HPHONE hPhone)
  */
 DWORD WINAPI phoneConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%08lx, %p, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
+    FIXME("(%08x, %p, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
     return 0;
 }
 
@@ -59,7 +59,7 @@ DWORD WINAPI phoneConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDev
  */
 DWORD WINAPI phoneDevSpecific(HPHONE hPhone, LPVOID lpParams, DWORD dwSize)
 {
-    FIXME("(%p, %p, %ld): stub.\n", hPhone, lpParams, dwSize);
+    FIXME("(%p, %p, %d): stub.\n", hPhone, lpParams, dwSize);
     return 1;
 }
 
@@ -69,7 +69,7 @@ DWORD WINAPI phoneDevSpecific(HPHONE hPhone, LPVOID lpParams, DWORD dwSize)
 DWORD WINAPI phoneGetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID,
                                 LPPHONEBUTTONINFO lpButtonInfo)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
+    FIXME("(%p, %08x, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
     return 0;
 }
 
@@ -78,7 +78,7 @@ DWORD WINAPI phoneGetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID,
  */
 DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dwSize)
 {
-    FIXME("(%p, %08lx, %p, %ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
+    FIXME("(%p, %08x, %p, %d): stub.\n", hPhone, dwDataID, lpData, dwSize);
     return 0;
 }
 
@@ -88,7 +88,7 @@ DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dw
 DWORD WINAPI phoneGetDevCapsA(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
                DWORD dwAPIVersion, DWORD dwExtVersion, LPPHONECAPS lpPhoneCaps)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx, %p): stub.\n", hPhoneApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpPhoneCaps);
+    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hPhoneApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpPhoneCaps);
     /* call TSPI function here ! */
     return 0;
 }
@@ -107,7 +107,7 @@ DWORD WINAPI phoneGetDisplay(HPHONE hPhone, LPVARSTRING lpDisplay)
  */
 DWORD WINAPI phoneGetGain(HPHONE hPhone, DWORD dwHookSwitchDev, LPDWORD lpdwGain)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwHookSwitchDev, lpdwGain);
+    FIXME("(%p, %08x, %p): stub.\n", hPhone, dwHookSwitchDev, lpdwGain);
     /* call TSPI function here ! */
     return 0;
 }
@@ -139,7 +139,7 @@ DWORD WINAPI phoneGetIDA(HPHONE hPhone, LPVARSTRING lpDeviceID,
 DWORD WINAPI phoneGetIconA(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
 		          HICON *lphIcon)
 {
-    FIXME("(%08lx, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
+    FIXME("(%08x, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
     /* call TSPI function here ! */
     return 0;
 }
@@ -150,7 +150,7 @@ DWORD WINAPI phoneGetIconA(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
 DWORD WINAPI phoneGetLamp(HPHONE hPhone, DWORD dwButtonLampID,
 		          LPDWORD lpdwLampMode)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpdwLampMode);
+    FIXME("(%p, %08x, %p): stub.\n", hPhone, dwButtonLampID, lpdwLampMode);
     return 0;
 }
 
@@ -189,7 +189,7 @@ DWORD WINAPI phoneGetStatusMessages(HPHONE hPhone, LPDWORD lpdwPhoneStates,
 DWORD WINAPI phoneGetVolume(HPHONE hPhone, DWORD dwHookSwitchDevs,
 		            LPDWORD lpdwVolume)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwHookSwitchDevs, lpdwVolume);
+    FIXME("(%p, %08x, %p): stub.\n", hPhone, dwHookSwitchDevs, lpdwVolume);
     /* call TSPI function here ! */
     return 0;
 }
@@ -239,7 +239,7 @@ DWORD WINAPI phoneOpen(HPHONEAPP hPhoneApp, DWORD dwDeviceID, LPHPHONE lphPhone,
  */
 DWORD WINAPI phoneSetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID, LPPHONEBUTTONINFO lpButtonInfo)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
+    FIXME("(%p, %08x, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
     return 0;
 }
 
@@ -248,7 +248,7 @@ DWORD WINAPI phoneSetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID, LPPHONEBUT
  */
 DWORD WINAPI phoneSetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dwSize)
 {
-    FIXME("(%p, %08lx, %p, %ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
+    FIXME("(%p, %08x, %p, %d): stub.\n", hPhone, dwDataID, lpData, dwSize);
     return 1;
 }
 
@@ -257,7 +257,7 @@ DWORD WINAPI phoneSetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dw
  */
 DWORD WINAPI phoneSetDisplay(HPHONE hPhone, DWORD dwRow, DWORD dwColumn, LPCSTR lpszDisplay, DWORD dwSize)
 {
-    FIXME("(%p, '%s' at %ld/%ld, len %ld): stub.\n", hPhone, lpszDisplay, dwRow, dwColumn, dwSize);
+    FIXME("(%p, '%s' at %d/%d, len %d): stub.\n", hPhone, lpszDisplay, dwRow, dwColumn, dwSize);
     return 1;
 }
 
@@ -266,7 +266,7 @@ DWORD WINAPI phoneSetDisplay(HPHONE hPhone, DWORD dwRow, DWORD dwColumn, LPCSTR 
  */
 DWORD WINAPI phoneSetGain(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwGain)
 {
-    FIXME("(%p, %08lx, %ld): stub.\n", hPhone, dwHookSwitchDev, dwGain);
+    FIXME("(%p, %08x, %d): stub.\n", hPhone, dwHookSwitchDev, dwGain);
     /* call TSPI function here ! */
     return 1;
 }
@@ -276,7 +276,7 @@ DWORD WINAPI phoneSetGain(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwGain)
  */
 DWORD WINAPI phoneSetHookSwitch(HPHONE hPhone, DWORD dwHookSwitchDevs, DWORD dwHookSwitchMode)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hPhone, dwHookSwitchDevs, dwHookSwitchMode);
+    FIXME("(%p, %08x, %08x): stub.\n", hPhone, dwHookSwitchDevs, dwHookSwitchMode);
     /* call TSPI function here ! */
     return 1;
 }
@@ -286,7 +286,7 @@ DWORD WINAPI phoneSetHookSwitch(HPHONE hPhone, DWORD dwHookSwitchDevs, DWORD dwH
  */
 DWORD WINAPI phoneSetLamp(HPHONE hPhone, DWORD dwButtonLampID, DWORD lpdwLampMode)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hPhone, dwButtonLampID, lpdwLampMode);
+    FIXME("(%p, %08x, %08x): stub.\n", hPhone, dwButtonLampID, lpdwLampMode);
     return 1;
 }
 
@@ -295,7 +295,7 @@ DWORD WINAPI phoneSetLamp(HPHONE hPhone, DWORD dwButtonLampID, DWORD lpdwLampMod
  */
 DWORD WINAPI phoneSetRing(HPHONE hPhone, DWORD dwRingMode, DWORD dwVolume)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hPhone, dwRingMode, dwVolume);
+    FIXME("(%p, %08x, %08x): stub.\n", hPhone, dwRingMode, dwVolume);
     return 1;
 }
 
@@ -304,7 +304,7 @@ DWORD WINAPI phoneSetRing(HPHONE hPhone, DWORD dwRingMode, DWORD dwVolume)
  */
 DWORD WINAPI phoneSetStatusMessages(HPHONE hPhone, DWORD dwPhoneStates, DWORD dwButtonModes, DWORD dwButtonStates)
 {
-    FIXME("(%p, %08lx, %08lx, %08lx): stub.\n", hPhone, dwPhoneStates, dwButtonModes, dwButtonStates);
+    FIXME("(%p, %08x, %08x, %08x): stub.\n", hPhone, dwPhoneStates, dwButtonModes, dwButtonStates);
     /* call TSPI function here ! */
     return 0; /* FIXME ? */
 }
@@ -314,7 +314,7 @@ DWORD WINAPI phoneSetStatusMessages(HPHONE hPhone, DWORD dwPhoneStates, DWORD dw
  */
 DWORD WINAPI phoneSetVolume(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwVolume)
 {
-    FIXME("(%p, %08lx, %08lx): stub.\n", hPhone, dwHookSwitchDev, dwVolume);
+    FIXME("(%p, %08x, %08x): stub.\n", hPhone, dwHookSwitchDev, dwVolume);
     /* call TSPI function here ! */
     return 1;
 }
