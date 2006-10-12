@@ -37,7 +37,7 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR ComputerName, LPCWSTR AvoidDCName,
  GUID* DomainGuid, LPCWSTR SiteName, ULONG Flags,
  PDOMAIN_CONTROLLER_INFOW *DomainControllerInfo)
 {
-    FIXME("(%s, %s, %s, %s, %08lx, %p): stub\n", debugstr_w(ComputerName),
+    FIXME("(%s, %s, %s, %s, %08x, %p): stub\n", debugstr_w(ComputerName),
      debugstr_w(AvoidDCName), debugstr_guid(DomainGuid),
      debugstr_w(SiteName), Flags, DomainControllerInfo);
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -47,7 +47,7 @@ DWORD WINAPI DsGetDcNameA(LPCSTR ComputerName, LPCSTR AvoidDCName,
  GUID* DomainGuid, LPCSTR SiteName, ULONG Flags,
  PDOMAIN_CONTROLLER_INFOA *DomainControllerInfo)
 {
-    FIXME("(%s, %s, %s, %s, %08lx, %p): stub\n", debugstr_a(ComputerName),
+    FIXME("(%s, %s, %s, %s, %08x, %p): stub\n", debugstr_a(ComputerName),
      debugstr_a(AvoidDCName), debugstr_guid(DomainGuid),
      debugstr_a(SiteName), Flags, DomainControllerInfo);
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -117,7 +117,7 @@ DWORD WINAPI DsRoleGetPrimaryDomainInformation(
              POLICY_VIEW_LOCAL_INFORMATION, &PolicyHandle);
             if (NtStatus != STATUS_SUCCESS)
             {
-                ERR("LsaOpenPolicyFailed with NT status %lx\n",
+                ERR("LsaOpenPolicyFailed with NT status %x\n",
                     LsaNtStatusToWinError(NtStatus));
                 return ERROR_OUTOFMEMORY;
             }

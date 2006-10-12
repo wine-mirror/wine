@@ -255,7 +255,7 @@ NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
 {
     NET_API_STATUS ret;
 
-    TRACE(":%s, 0x%08lx, %p, 0x%08lx, %p, %p, %p\n", debugstr_w(ServerName), 
+    TRACE(":%s, 0x%08x, %p, 0x%08x, %p, %p, %p\n", debugstr_w(ServerName), 
      level, pbuf, prefmaxlen, read_entries, total_entries,hresume);
     if (!NETAPI_IsLocalComputer(ServerName))
     {
@@ -296,7 +296,7 @@ NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
                 break;
             }
             default:
-                ERR("Invalid level %ld is specified\n", level);
+                ERR("Invalid level %d is specified\n", level);
                 ret = ERROR_INVALID_LEVEL;
         }
     }
@@ -310,7 +310,7 @@ NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
 NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level,
                                           PBYTE* bufptr)
 {
-    TRACE("(%s, %ld, %p)\n", debugstr_w(reserved), level, bufptr);
+    TRACE("(%s, %d, %p)\n", debugstr_w(reserved), level, bufptr);
     switch (level)
     {
     case 0:
@@ -367,7 +367,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level,
                                  &PolicyHandle);
         if (NtStatus != STATUS_SUCCESS)
         {
-            ERR("LsaOpenPolicyFailed with NT status %lx\n",
+            ERR("LsaOpenPolicyFailed with NT status %x\n",
                 LsaNtStatusToWinError(NtStatus));
             NetApiBufferFree(ui0);
             return ERROR_NOT_ENOUGH_MEMORY;
@@ -427,7 +427,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level,
         break;
     }
     default:
-        ERR("Invalid level %ld is specified\n", level);
+        ERR("Invalid level %d is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -476,7 +476,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
 {
     NET_API_STATUS ret;
 
-    TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
+    TRACE("%s %d %p\n", debugstr_w( servername ), level, bufptr );
     if (servername)
     {
         if (!NETAPI_IsLocalComputer(servername))
@@ -543,7 +543,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
         }
 
         default:
-            FIXME("level %ld unimplemented\n", level);
+            FIXME("level %d unimplemented\n", level);
             ret = ERROR_INVALID_LEVEL;
     }
     return ret;

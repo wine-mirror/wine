@@ -104,7 +104,7 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
                   DWORD level, LPBYTE bufptr, LPDWORD parm_err)
 {
     NET_API_STATUS status;
-    FIXME("(%s, %ld, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
+    FIXME("(%s, %d, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
 
     status = NETAPI_ValidateServername(servername);
     if (status != NERR_Success)
@@ -113,9 +113,9 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
     if ((bufptr != NULL) && (level > 0) && (level <= 4))
     {
         PUSER_INFO_1 ui = (PUSER_INFO_1) bufptr;
-        TRACE("usri%ld_name: %s\n", level, debugstr_w(ui->usri1_name));
-        TRACE("usri%ld_password: %s\n", level, debugstr_w(ui->usri1_password));
-        TRACE("usri%ld_comment: %s\n", level, debugstr_w(ui->usri1_comment));
+        TRACE("usri%d_name: %s\n", level, debugstr_w(ui->usri1_name));
+        TRACE("usri%d_password: %s\n", level, debugstr_w(ui->usri1_password));
+        TRACE("usri%d_comment: %s\n", level, debugstr_w(ui->usri1_comment));
     }
     return status;
 }
@@ -147,7 +147,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
                LPBYTE* bufptr)
 {
     NET_API_STATUS status;
-    TRACE("(%s, %s, %ld, %p)\n", debugstr_w(servername), debugstr_w(username),
+    TRACE("(%s, %s, %d, %p)\n", debugstr_w(servername), debugstr_w(username),
           level, bufptr);
     status = NETAPI_ValidateServername(servername);
     if (status != NERR_Success)
@@ -293,11 +293,11 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     case 1052:
     case 1053:
     {
-        FIXME("Level %ld is not implemented\n", level);
+        FIXME("Level %d is not implemented\n", level);
         return NERR_InternalError;
     }
     default:
-        ERR("Invalid level %ld is specified\n", level);
+        ERR("Invalid level %d is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -311,7 +311,7 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
                       DWORD flags, LPBYTE* bufptr, DWORD prefmaxlen,
                       LPDWORD entriesread, LPDWORD totalentries)
 {
-    FIXME("(%s, %s, %ld, %08lx, %p %ld, %p, %p) stub!\n",
+    FIXME("(%s, %s, %d, %08x, %p %d, %p, %p) stub!\n",
           debugstr_w(servername), debugstr_w(username), level, flags, bufptr,
           prefmaxlen, entriesread, totalentries);
     return NERR_InternalError;
@@ -325,7 +325,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
 	    DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
 	    LPDWORD resume_handle)
 {
-  FIXME("(%s,%ld, 0x%ld,%p,%ld,%p,%p,%p) stub!\n", debugstr_w(servername), level,
+  FIXME("(%s,%d, 0x%d,%p,%d,%p,%p,%p) stub!\n", debugstr_w(servername), level,
         filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
 
   return ERROR_ACCESS_DENIED;
@@ -454,7 +454,7 @@ NetQueryDisplayInformation(
     DWORD PreferredMaximumLength, LPDWORD ReturnedEntryCount,
     PVOID *SortedBuffer)
 {
-    TRACE("(%s, %ld, %ld, %ld, %ld, %p, %p)\n", debugstr_w(ServerName),
+    TRACE("(%s, %d, %d, %d, %d, %p, %p)\n", debugstr_w(ServerName),
           Level, Index, EntriesRequested, PreferredMaximumLength,
           ReturnedEntryCount, SortedBuffer);
     NETAPI_ForceLocalComputer(ServerName, ERROR_ACCESS_DENIED);
@@ -479,7 +479,7 @@ NetQueryDisplayInformation(
          */
         int records = 3;
 
-        FIXME("Level %ld partially implemented\n", Level);
+        FIXME("Level %d partially implemented\n", Level);
         *ReturnedEntryCount = records;
         comment_sz = 1;
         full_name_sz = 1;
@@ -539,12 +539,12 @@ NetQueryDisplayInformation(
     case 2:
     case 3:
     {
-        FIXME("Level %ld is not implemented\n", Level);
+        FIXME("Level %d is not implemented\n", Level);
         break;
     }
 
     default:
-        ERR("Invalid level %ld is specified\n", Level);
+        ERR("Invalid level %d is specified\n", Level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -594,7 +594,7 @@ NetGetDCName(LPCWSTR servername, LPCWSTR domainname, LPBYTE *bufptr)
 NET_API_STATUS WINAPI NetUserModalsGet(
     LPCWSTR szServer, DWORD level, LPBYTE *pbuffer)
 {
-    TRACE("(%s %ld %p)\n", debugstr_w(szServer), level, pbuffer);
+    TRACE("(%s %d %p)\n", debugstr_w(szServer), level, pbuffer);
     
     switch (level)
     {
@@ -627,7 +627,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                                      &policyHandle);
             if (ntStatus != STATUS_SUCCESS)
             {
-                WARN("LsaOpenPolicy failed with NT status %lx\n",
+                WARN("LsaOpenPolicy failed with NT status %x\n",
                      LsaNtStatusToWinError(ntStatus));
                 return ntStatus;
             }
@@ -637,7 +637,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
                                                  (PVOID *)&domainInfo);
             if (ntStatus != STATUS_SUCCESS)
             {
-                WARN("LsaQueryInformationPolicy failed with NT status %lx\n",
+                WARN("LsaQueryInformationPolicy failed with NT status %x\n",
                      LsaNtStatusToWinError(ntStatus));
                 LsaClose(policyHandle);
                 return ntStatus;
@@ -681,7 +681,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
             *pbuffer = NULL;
             return NERR_InternalError;
         default:
-            WARN("Invalid level %ld is specified\n", level);
+            WARN("Invalid level %d is specified\n", level);
             *pbuffer = NULL;
             return ERROR_INVALID_LEVEL;
     }

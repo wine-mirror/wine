@@ -28,7 +28,7 @@ HMODULE NETAPI32_hModule = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
@@ -64,7 +64,7 @@ NET_API_STATUS  WINAPI NetServerEnum(
   LPDWORD resume_handle
 )
 {
-    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %p)\n", debugstr_w(servername),
+    FIXME("Stub (%s %d %p %d %p %p %d %s %p)\n", debugstr_w(servername),
      level, bufptr, prefmaxlen, entriesread, totalentries, servertype,
      debugstr_w(domain), resume_handle);
 
@@ -85,7 +85,7 @@ NET_API_STATUS WINAPI NetServerEnumEx(
     LPCWSTR domain,
     LPCWSTR FirstNameToReturn)
 {
-    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %p)\n", debugstr_w(ServerName),
+    FIXME("Stub (%s %d %p %d %p %p %d %s %p)\n", debugstr_w(ServerName),
      Level, Bufptr, PrefMaxlen, EntriesRead, totalentries, servertype,
      debugstr_w(domain), debugstr_w(FirstNameToReturn));
                                                                                 
@@ -97,7 +97,7 @@ NET_API_STATUS WINAPI NetServerEnumEx(
  */
 NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bufptr)
 {
-    FIXME("stub (%p, %ld, %p)\n", servername, level, bufptr);
+    FIXME("stub (%p, %d, %p)\n", servername, level, bufptr);
     return ERROR_ACCESS_DENIED;
 }
 
@@ -109,7 +109,7 @@ NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR server, LPWSTR service,
                                        DWORD level, DWORD options,
                                        LPBYTE *bufptr)
 {
-    TRACE("(%p, %p, %ld, %ld, %p)\n", server, service, level, options, bufptr);
+    TRACE("(%p, %p, %d, %d, %p)\n", server, service, level, options, bufptr);
     return NERR_InternalError;
 }
 

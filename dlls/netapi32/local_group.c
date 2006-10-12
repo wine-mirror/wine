@@ -47,7 +47,7 @@ NET_API_STATUS WINAPI NetLocalGroupAdd(
     LPBYTE buf,
     LPDWORD parm_err)
 {
-    FIXME("(%s %ld %p %p) stub!\n", debugstr_w(servername), level, buf,
+    FIXME("(%s %d %p %p) stub!\n", debugstr_w(servername), level, buf,
           parm_err);
     return NERR_Success;
 }
@@ -75,7 +75,7 @@ NET_API_STATUS WINAPI NetLocalGroupAddMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }
@@ -114,7 +114,7 @@ NET_API_STATUS WINAPI NetLocalGroupDelMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }
@@ -131,7 +131,7 @@ NET_API_STATUS WINAPI NetLocalGroupEnum(
     LPDWORD totalentries,
     PDWORD_PTR resumehandle)
 {
-    FIXME("(%s %ld %p %ld %p %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %d %p %d %p %p %p) stub!\n", debugstr_w(servername),
           level, bufptr, prefmaxlen, entriesread, totalentries, resumehandle);
     *entriesread = 0;
     *totalentries = 0;
@@ -147,7 +147,7 @@ NET_API_STATUS WINAPI NetLocalGroupGetInfo(
     DWORD level,
     LPBYTE* bufptr)
 {
-    FIXME("(%s %s %ld %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, bufptr);
     return NERR_Success;
 }
@@ -165,7 +165,7 @@ NET_API_STATUS WINAPI NetLocalGroupGetMembers(
     LPDWORD totalentries,
     PDWORD_PTR resumehandle)
 {
-    FIXME("(%s %s %ld %p %ld, %p %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p %d, %p %p %p) stub!\n", debugstr_w(servername),
           debugstr_w(localgroupname), level, bufptr, prefmaxlen, entriesread,
           totalentries, resumehandle);
     return NERR_Success;
@@ -181,7 +181,7 @@ NET_API_STATUS WINAPI NetLocalGroupSetInfo(
     LPBYTE buf,
     LPDWORD parm_err)
 {
-    FIXME("(%s %s %ld %p %p) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p %p) stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, buf, parm_err);
     return NERR_Success;
 }
@@ -196,7 +196,7 @@ NET_API_STATUS WINAPI NetLocalGroupSetMembers(
     LPBYTE buf,
     DWORD totalentries)
 {
-    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername),
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
             debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
 }

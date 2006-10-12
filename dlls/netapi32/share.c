@@ -51,7 +51,7 @@ NET_API_STATUS WINAPI NetSessionEnum(LPWSTR servername, LPWSTR UncClientName,
     LPWSTR username, DWORD level, LPBYTE* bufptr, DWORD prefmaxlen, LPDWORD entriesread,
     LPDWORD totalentries, LPDWORD resume_handle)
 {
-    FIXME("Stub (%s %s %s %ld %p %ld %p %p %p)\n", debugstr_w(servername),
+    FIXME("Stub (%s %s %s %d %p %d %p %p %p)\n", debugstr_w(servername),
         debugstr_w(UncClientName), debugstr_w(username),
         level, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
 
@@ -78,7 +78,7 @@ NET_API_STATUS WINAPI NetSessionEnum(LPWSTR servername, LPWSTR UncClientName,
 NET_API_STATUS WINAPI NetShareEnum( LPWSTR servername, DWORD level, LPBYTE* bufptr,
     DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
 {
-    FIXME("Stub (%s %ld %p %ld %p %p %p)\n", debugstr_w(servername), level, bufptr,
+    FIXME("Stub (%s %d %p %d %p %p %p)\n", debugstr_w(servername), level, bufptr,
         prefmaxlen, entriesread, totalentries, resume_handle);
 
     return ERROR_NOT_SUPPORTED;
