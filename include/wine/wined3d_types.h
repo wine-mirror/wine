@@ -25,11 +25,6 @@
 #ifndef __WINE_WINED3D_TYPES_H
 #define __WINE_WINED3D_TYPES_H
 
-/* TODO: remove the dependency on d3d9 or d3d8 */
-#if !defined( __WINE_D3D_H ) && !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
-# error You must include d3d.h, d3d8.h or d3d9.h header to use this header
-#endif
-
 typedef DWORD WINED3DCOLOR;
 
 typedef enum _WINED3DLIGHTTYPE {
@@ -986,6 +981,8 @@ typedef struct glDescriptor {
     int/*GLenum*/ glType;
 } glDescriptor;
 
+#define WINED3DDP_MAXTEXCOORD 8
+
 typedef enum _WINED3DDECLMETHOD {
     WINED3DDECLMETHOD_DEFAULT          = 0,
     WINED3DDECLMETHOD_PARTIALU         = 1,
@@ -1038,7 +1035,7 @@ typedef struct WineDirect3DVertexStridedData {
              WineDirect3DStridedData  pSize;
              WineDirect3DStridedData  diffuse;
              WineDirect3DStridedData  specular;
-             WineDirect3DStridedData  texCoords[D3DDP_MAXTEXCOORD];
+             WineDirect3DStridedData  texCoords[WINED3DDP_MAXTEXCOORD];
              WineDirect3DStridedData  position2; /* tween data */
              WineDirect3DStridedData  normal2;   /* tween data */
              WineDirect3DStridedData  tangent;

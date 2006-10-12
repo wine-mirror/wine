@@ -368,24 +368,24 @@ static BOOL fixed_get_input(
         *regnum = 5;
     else if (usage == D3DDECLUSAGE_COLOR && usage_idx == 1)
         *regnum = 6;
-    else if (usage == D3DDECLUSAGE_TEXCOORD && usage_idx < D3DDP_MAXTEXCOORD)
+    else if (usage == D3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
         *regnum = 7 + usage_idx;
     else if ((usage == D3DDECLUSAGE_POSITION || usage == D3DDECLUSAGE_POSITIONT) && usage_idx == 1)
-        *regnum = 7 + D3DDP_MAXTEXCOORD;
+        *regnum = 7 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_NORMAL && usage_idx == 1)
-        *regnum = 8 + D3DDP_MAXTEXCOORD;
+        *regnum = 8 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_TANGENT && usage_idx == 0)
-        *regnum = 9 + D3DDP_MAXTEXCOORD;
+        *regnum = 9 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_BINORMAL && usage_idx == 0)
-        *regnum = 10 + D3DDP_MAXTEXCOORD;
+        *regnum = 10 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_TESSFACTOR && usage_idx == 0)
-        *regnum = 11 + D3DDP_MAXTEXCOORD;
+        *regnum = 11 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_FOG && usage_idx == 0)
-        *regnum = 12 + D3DDP_MAXTEXCOORD;
+        *regnum = 12 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_DEPTH && usage_idx == 0)
-        *regnum = 13 + D3DDP_MAXTEXCOORD;
+        *regnum = 13 + WINED3DDP_MAXTEXCOORD;
     else if (usage == D3DDECLUSAGE_SAMPLE && usage_idx == 0)
-        *regnum = 14 + D3DDP_MAXTEXCOORD;
+        *regnum = 14 + WINED3DDP_MAXTEXCOORD;
 
     if (*regnum < 0) {
         FIXME("Unsupported input stream [usage=%s, usage_idx=%u]\n",
