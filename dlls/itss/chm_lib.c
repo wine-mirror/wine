@@ -99,7 +99,7 @@ typedef ULONGLONG  UInt64;
 
 /* utilities for unmarshalling data */
 static int _unmarshal_char_array(unsigned char **pData,
-                                 unsigned long *pLenRemain,
+                                 unsigned int *pLenRemain,
                                  char *dest,
                                  int count)
 {
@@ -112,7 +112,7 @@ static int _unmarshal_char_array(unsigned char **pData,
 }
 
 static int _unmarshal_uchar_array(unsigned char **pData,
-                                  unsigned long *pLenRemain,
+                                  unsigned int *pLenRemain,
                                   unsigned char *dest,
                                   int count)
 {
@@ -125,7 +125,7 @@ static int _unmarshal_uchar_array(unsigned char **pData,
 }
 
 static int _unmarshal_int32(unsigned char **pData,
-                            unsigned long *pLenRemain,
+                            unsigned int *pLenRemain,
                             Int32 *dest)
 {
     if (4 > *pLenRemain)
@@ -137,7 +137,7 @@ static int _unmarshal_int32(unsigned char **pData,
 }
 
 static int _unmarshal_uint32(unsigned char **pData,
-                             unsigned long *pLenRemain,
+                             unsigned int *pLenRemain,
                              UInt32 *dest)
 {
     if (4 > *pLenRemain)
@@ -149,7 +149,7 @@ static int _unmarshal_uint32(unsigned char **pData,
 }
 
 static int _unmarshal_int64(unsigned char **pData,
-                            unsigned long *pLenRemain,
+                            unsigned int *pLenRemain,
                             Int64 *dest)
 {
     Int64 temp;
@@ -169,7 +169,7 @@ static int _unmarshal_int64(unsigned char **pData,
 }
 
 static int _unmarshal_uint64(unsigned char **pData,
-                             unsigned long *pLenRemain,
+                             unsigned int *pLenRemain,
                              UInt64 *dest)
 {
     UInt64 temp;
@@ -189,7 +189,7 @@ static int _unmarshal_uint64(unsigned char **pData,
 }
 
 static int _unmarshal_uuid(unsigned char **pData,
-                           unsigned long *pDataLen,
+                           unsigned int *pDataLen,
                            unsigned char *dest)
 {
     return _unmarshal_uchar_array(pData, pDataLen, dest, 16);
@@ -251,7 +251,7 @@ struct chmItsfHeader
 }; /* __attribute__ ((aligned (1))); */
 
 static int _unmarshal_itsf_header(unsigned char **pData,
-                                  unsigned long *pDataLen,
+                                  unsigned int *pDataLen,
                                   struct chmItsfHeader *dest)
 {
     /* we only know how to deal with the 0x58 and 0x60 byte structures */
@@ -329,7 +329,7 @@ struct chmItspHeader
 }; /* __attribute__ ((aligned (1))); */
 
 static int _unmarshal_itsp_header(unsigned char **pData,
-                                  unsigned long *pDataLen,
+                                  unsigned int *pDataLen,
                                   struct chmItspHeader *dest)
 {
     /* we only know how to deal with a 0x54 byte structures */
@@ -377,7 +377,7 @@ struct chmPmglHeader
 }; /* __attribute__ ((aligned (1))); */
 
 static int _unmarshal_pmgl_header(unsigned char **pData,
-                                  unsigned long *pDataLen,
+                                  unsigned int *pDataLen,
                                   struct chmPmglHeader *dest)
 {
     /* we only know how to deal with a 0x14 byte structures */
@@ -408,7 +408,7 @@ struct chmPmgiHeader
 }; /* __attribute__ ((aligned (1))); */
 
 static int _unmarshal_pmgi_header(unsigned char **pData,
-                                  unsigned long *pDataLen,
+                                  unsigned int *pDataLen,
                                   struct chmPmgiHeader *dest)
 {
     /* we only know how to deal with a 0x8 byte structures */
@@ -440,7 +440,7 @@ struct chmLzxcResetTable
 }; /* __attribute__ ((aligned (1))); */
 
 static int _unmarshal_lzxc_reset_table(unsigned char **pData,
-                                       unsigned long *pDataLen,
+                                       unsigned int *pDataLen,
                                        struct chmLzxcResetTable *dest)
 {
     /* we only know how to deal with a 0x28 byte structures */
@@ -478,7 +478,7 @@ struct chmLzxcControlData
 };
 
 static int _unmarshal_lzxc_control_data(unsigned char **pData,
-                                        unsigned long *pDataLen,
+                                        unsigned int *pDataLen,
                                         struct chmLzxcControlData *dest)
 {
     /* we want at least 0x18 bytes */
@@ -603,7 +603,7 @@ static Int64 _chm_fetch_bytes(struct chmFile *h,
 struct chmFile *chm_openW(const WCHAR *filename)
 {
     unsigned char               sbuffer[256];
-    unsigned long               sremain;
+    unsigned int                sremain;
     unsigned char              *sbufpos;
     struct chmFile             *newHandle=NULL;
     struct chmItsfHeader        itsfHeader;
@@ -1401,7 +1401,7 @@ int chm_enumerate(struct chmFile *h,
     struct chmPmglHeader header;
     UChar *end;
     UChar *cur;
-    unsigned long lenRemain;
+    unsigned int lenRemain;
     UInt64 ui_path_len;
 
     /* the current ui */
@@ -1514,7 +1514,7 @@ int chm_enumerate_dir(struct chmFile *h,
     struct chmPmglHeader header;
     UChar *end;
     UChar *cur;
-    unsigned long lenRemain;
+    unsigned int lenRemain;
 
     /* set to 1 once we've started */
     int it_has_begun=0;
