@@ -2315,7 +2315,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
     }
     /* Set the DDSCAPS2_MIPMAPSUBLEVEL flag on mipmap sublevels according to the msdn */
-    if((DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)&&(DDSD->dwSize >= sizeof(DDSURFACEDESC2)))
+    if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
     {
         desc2.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
     }
