@@ -199,7 +199,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *size   = v5hdr->bV5SizeImage;
         return 5;
     }
-    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+    ERR("(%d): unknown/wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -1013,9 +1013,9 @@ INT WINAPI GetDIBits(
 
     if (!core_header)
     {
-        TRACE("biSizeImage = %ld, ", info->bmiHeader.biSizeImage);
+        TRACE("biSizeImage = %d, ", info->bmiHeader.biSizeImage);
     }
-    TRACE("biWidth = %ld, biHeight = %ld\n", width, height);
+    TRACE("biWidth = %d, biHeight = %d\n", width, height);
 
     GDI_ReleaseObj( hdc );
     GDI_ReleaseObj( hbitmap );
@@ -1052,7 +1052,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     /* Top-down DIBs have a negative height */
     if (height < 0) height = -height;
 
-    TRACE("hdc=%p, header=%p, init=%lu, bits=%p, data=%p, coloruse=%u (bitmap: width=%ld, height=%ld, bpp=%u, compr=%lu)\n",
+    TRACE("hdc=%p, header=%p, init=%u, bits=%p, data=%p, coloruse=%u (bitmap: width=%d, height=%d, bpp=%u, compr=%u)\n",
            hdc, header, init, bits, data, coloruse, width, height, bpp, compr);
     
     if (hdc == NULL)
@@ -1149,13 +1149,13 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (compression != BI_RGB && compression != BI_BITFIELDS)
     {
-        TRACE("can't create a compressed (%lu) dibsection\n", compression);
+        TRACE("can't create a compressed (%u) dibsection\n", compression);
         return 0;
     }
 
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
 
-    TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, %s\n",
+    TRACE("format (%d,%d), planes %d, bpp %d, size %d, %s\n",
           width, height, planes, bpp, sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
     dib->dsBm.bmType       = 0;

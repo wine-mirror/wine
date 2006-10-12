@@ -65,7 +65,7 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
     LOGPEN logpen;
 
-    TRACE("%d %d %06lx\n", style, width, color );
+    TRACE("%d %d %06x\n", style, width, color );
 
     logpen.lopnStyle = style;
     logpen.lopnWidth.x = width;

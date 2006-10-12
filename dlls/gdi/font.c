@@ -401,7 +401,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
-	    TRACE("(%ld %ld %ld %ld %x %d %x %d %d) %s %s %s %s => %p\n",
+            TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
                   plf->lfHeight, plf->lfWidth,
                   plf->lfEscapement, plf->lfOrientation,
                   plf->lfPitchAndFamily,
@@ -1030,7 +1030,7 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 	HeapFree( GetProcessHeap(), 0, p );
     }
 
-    TRACE("(%p %s %d %p): returning %ld x %ld\n",
+    TRACE("(%p %s %d %p): returning %d x %d\n",
           hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
     return ret;
 }
@@ -1089,7 +1089,7 @@ BOOL WINAPI GetTextExtentPointI(
 
     GDI_ReleaseObj( hdc );
 
-    TRACE("(%p %p %d %p): returning %ld x %ld\n",
+    TRACE("(%p %p %d %p): returning %d x %d\n",
           hdc, indices, count, size, size->cx, size->cy );
     return ret;
 }
@@ -1248,7 +1248,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 
     GDI_ReleaseObj( hdc );
 
-    TRACE("returning %d %ld x %ld\n",nFit,size->cx,size->cy);
+    TRACE("returning %d %d x %d\n",nFit,size->cx,size->cy);
     return ret;
 }
 
@@ -1302,16 +1302,16 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 #undef WDPTOLP
 #undef HDPTOLP
     TRACE("text metrics:\n"
-          "    Weight = %03li\t FirstChar = %i\t AveCharWidth = %li\n"
-          "    Italic = % 3i\t LastChar = %i\t\t MaxCharWidth = %li\n"
-          "    UnderLined = %01i\t DefaultChar = %i\t Overhang = %li\n"
+          "    Weight = %03i\t FirstChar = %i\t AveCharWidth = %i\n"
+          "    Italic = % 3i\t LastChar = %i\t\t MaxCharWidth = %i\n"
+          "    UnderLined = %01i\t DefaultChar = %i\t Overhang = %i\n"
           "    StruckOut = %01i\t BreakChar = %i\t CharSet = %i\n"
           "    PitchAndFamily = %02x\n"
           "    --------------------\n"
-          "    InternalLeading = %li\n"
-          "    Ascent = %li\n"
-          "    Descent = %li\n"
-          "    Height = %li\n",
+          "    InternalLeading = %i\n"
+          "    Ascent = %i\n"
+          "    Descent = %i\n"
+          "    Height = %i\n",
           metrics->tmWeight, metrics->tmFirstChar, metrics->tmAveCharWidth,
           metrics->tmItalic, metrics->tmLastChar, metrics->tmMaxCharWidth,
           metrics->tmUnderlined, metrics->tmDefaultChar, metrics->tmOverhang,
@@ -1799,7 +1799,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         glyphs = reordered_str;
 
     if(lprect)
-        TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
+        TRACE("rect: %d,%d - %d,%d\n", lprect->left, lprect->top, lprect->right,
               lprect->bottom);
     TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
 
@@ -2253,7 +2253,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
         /* FIXME: ret is just a success flag, we should return a proper value */
     }
     else
-        FIXME("(%p, 0x%08lx): stub - harmless\n", hDC, dwFlag);
+        FIXME("(%p, 0x%08x): stub - harmless\n", hDC, dwFlag);
     GDI_ReleaseObj( hDC );
     return ret;
 }
@@ -2454,7 +2454,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     DC *dc = DC_GetDCPtr(hdc);
     DWORD ret;
 
-    TRACE("(%p, %04x, %04x, %p, %ld, %p, %p)\n",
+    TRACE("(%p, %04x, %04x, %p, %d, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
 
     if(!dc) return GDI_ERROR;
@@ -2484,7 +2484,7 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
-    FIXME("(%ld,%s,%s,%s): stub\n",
+    FIXME("(%d,%s,%s,%s): stub\n",
           fHidden, debugstr_a(lpszResourceFile), debugstr_a(lpszFontFile),
           debugstr_a(lpszCurrentPath) );
 
@@ -2505,7 +2505,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
 {
-    FIXME("(%ld,%p,%p,%p): stub\n",
+    FIXME("(%d,%p,%p,%p): stub\n",
 	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
@@ -2586,7 +2586,7 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
     DC *dc;
     DWORD ret = 0;
 
-    TRACE("(%p,%ld,%p)\n", hDC, cPairs, lpKerningPairs);
+    TRACE("(%p,%d,%p)\n", hDC, cPairs, lpKerningPairs);
 
     if (!cPairs && lpKerningPairs)
     {
@@ -2737,7 +2737,7 @@ DWORD WINAPI GetGlyphIndicesA(HDC hdc, LPCSTR lpstr, INT count,
     WCHAR *lpstrW;
     INT countW;
 
-    TRACE("(%p, %s, %d, %p, 0x%lx)\n",
+    TRACE("(%p, %s, %d, %p, 0x%x)\n",
           hdc, debugstr_an(lpstr, count), count, pgi, flags);
 
     lpstrW = FONT_mbtowc(lpstr, count, &countW);
@@ -2756,7 +2756,7 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
     DC *dc = DC_GetDCPtr(hdc);
     DWORD ret = GDI_ERROR;
 
-    TRACE("(%p, %s, %d, %p, 0x%lx)\n",
+    TRACE("(%p, %s, %d, %p, 0x%x)\n",
           hdc, debugstr_wn(lpstr, count), count, pgi, flags);
 
     if(!dc) return GDI_ERROR;
@@ -2786,7 +2786,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     GCP_RESULTSW resultsW;
     DWORD ret;
 
-    TRACE("%s, %d, %d, 0x%08lx\n",
+    TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_an(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
     /* both structs are equal in size */
@@ -2844,16 +2844,16 @@ GetCharacterPlacementW(
     SIZE size;
     UINT i, nSet;
 
-    TRACE("%s, %d, %d, 0x%08lx\n",
+    TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
-    TRACE("lStructSize=%ld, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
-	  "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
+    TRACE("lStructSize=%d, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
+          "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
 	    lpResults->lStructSize, lpResults->lpOutString, lpResults->lpOrder,
 	    lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
 	    lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
-    if(dwFlags&(~GCP_REORDER))			FIXME("flags 0x%08lx ignored\n", dwFlags);
+    if(dwFlags&(~GCP_REORDER))			FIXME("flags 0x%08x ignored\n", dwFlags);
     if(lpResults->lpClass)	FIXME("classes not implemented\n");
     if (lpResults->lpCaretPos && (dwFlags & GCP_REORDER))
         FIXME("Caret positions for complex scripts not implemented\n");
@@ -3083,7 +3083,7 @@ BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
  */
 HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
 {
-    FIXME("(%p,%08lx,%p,%p): stub\n", pbFont, cbFont, pdv, pcFonts);
+    FIXME("(%p,%08x,%p,%p): stub\n", pbFont, cbFont, pdv, pcFonts);
     return NULL;
 }
 

@@ -494,7 +494,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
     INT ret = -1;
     INT (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
 
-    TRACE("(%p, %p, %s, %s, %p, %s, %ld)\n",
+    TRACE("(%p, %p, %s, %s, %p, %s, %d)\n",
           hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, fwMode );
 
     if (!lpszDevice) return -1;

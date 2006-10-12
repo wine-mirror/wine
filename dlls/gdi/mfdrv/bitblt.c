@@ -98,7 +98,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
-    TRACE("MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
+    TRACE("MF_StretchBltViaDIB->len = %d  rop=%x  PixYPM=%d Caps=%d\n",
 	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(physDevSrc->hdc, LOGPIXELSY));
 
     if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBMI->biHeight,

@@ -181,7 +181,7 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE("%d %06lx\n", style, color );
+    TRACE("%d %06x\n", style, color );
 
     logbrush.lbStyle = BS_HATCHED;
     logbrush.lbColor = color;
@@ -279,7 +279,7 @@ HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
     if (!data)
         return NULL;
 
-    TRACE("%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
+    TRACE("%p %dx%d %dbpp\n", info, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
 
     logbrush.lbStyle = BS_DIBPATTERNPT;
@@ -311,7 +311,7 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
     LOGBRUSH logbrush;
 
-    TRACE("%06lx\n", color );
+    TRACE("%06x\n", color );
 
     logbrush.lbStyle = BS_SOLID;
     logbrush.lbColor = color;
@@ -464,7 +464,7 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
     BRUSHOBJ * brushPtr;
     BOOL16 res = FALSE;
 
-    TRACE("(hBrush %04x, newColor %08lx)\n", hBrush, (DWORD)newColor);
+    TRACE("(hBrush %04x, newColor %08x)\n", hBrush, (DWORD)newColor);
     if (!(brushPtr = (BRUSHOBJ *) GDI_GetObjPtr( HBRUSH_32(hBrush), BRUSH_MAGIC )))
 	return FALSE;
 

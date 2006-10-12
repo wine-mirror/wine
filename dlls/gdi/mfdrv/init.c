@@ -441,7 +441,7 @@ BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
             mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, size);
             if (!mh) return FALSE;
             physDev->mh = mh;
-            TRACE("Reallocated metafile: new size is %ld\n",size);
+            TRACE("Reallocated metafile: new size is %d\n",size);
         }
 	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
         break;

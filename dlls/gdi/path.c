@@ -1278,7 +1278,7 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
 
         if (header->dwType != TT_POLYGON_TYPE)
         {
-            FIXME("Unknown header type %ld\n", header->dwType);
+            FIXME("Unknown header type %d\n", header->dwType);
             return FALSE;
         }
 
@@ -1441,7 +1441,7 @@ BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
    /* FIXME: If newStroke is true, perhaps we want to check that we're
     * getting a PT_MOVETO
     */
-   TRACE("(%ld,%ld) - %d\n", pPoint->x, pPoint->y, flags);
+   TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -1696,7 +1696,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	}
         switch(pPath->pFlags[i]) {
 	case PT_MOVETO:
-	    TRACE("Got PT_MOVETO (%ld, %ld)\n",
+            TRACE("Got PT_MOVETO (%d, %d)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
 	    if(nLinePts >= 2)
 	        Polyline(dc->hSelf, pLinePts, nLinePts);
@@ -1705,7 +1705,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	    break;
 	case PT_LINETO:
 	case (PT_LINETO | PT_CLOSEFIGURE):
-	    TRACE("Got PT_LINETO (%ld, %ld)\n",
+            TRACE("Got PT_LINETO (%d, %d)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
 	    pLinePts[nLinePts++] = pPath->pPoints[i];
 	    break;

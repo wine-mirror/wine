@@ -357,7 +357,7 @@ LONG WINAPI GetBitmapBits(
     }
 
     if (count < 0) {
-	WARN("(%ld): Negative number of bytes passed???\n", count );
+	WARN("(%d): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -373,7 +373,7 @@ LONG WINAPI GetBitmapBits(
       }
 
 
-    TRACE("(%p, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+    TRACE("(%p, %d, %p) %dx%d %d colors fetched height: %d\n",
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 
@@ -420,7 +420,7 @@ LONG WINAPI SetBitmapBits(
 	return 0;
 
     if (count < 0) {
-	WARN("(%ld): Negative number of bytes passed???\n", count );
+	WARN("(%d): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -454,7 +454,7 @@ LONG WINAPI SetBitmapBits(
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     count = height * bmp->bitmap.bmWidthBytes;
 
-    TRACE("(%p, %ld, %p) %dx%d %d colors fetched height: %ld\n",
+    TRACE("(%p, %d, %p) %dx%d %d colors fetched height: %d\n",
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
           1 << bmp->bitmap.bmBitsPixel, height );
 

@@ -188,7 +188,7 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
     ENHMETAHEADER *emh;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
 
-    TRACE("record %ld, size %ld %s\n",
+    TRACE("record %d, size %d %s\n",
           emr->iType, emr->nSize, physDev->hFile ? "(to disk)" : "");
 
     assert( !(emr->nSize & 3) );

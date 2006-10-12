@@ -110,7 +110,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase
     BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+    TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
 
     if (!dc) return FALSE;
 
@@ -129,7 +129,7 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("(%p, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+    TRACE("(%p, %d, %d, %d)\n", hdc, first, count, listBase);
 
     if (!dc) return FALSE;
 

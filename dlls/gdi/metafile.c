@@ -417,10 +417,10 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     while (offset < mh->mtSize * 2)
     {
         mr = (METARECORD *)((char *)mh + offset);
-	TRACE("offset=%04x,size=%08lx\n",
+	TRACE("offset=%04x,size=%08x\n",
             offset, mr->rdSize);
 	if (mr->rdSize < 3) { /* catch illegal record sizes */
-            TRACE("Entry got size %ld at offset %d, total mf length is %ld\n",
+            TRACE("Entry got size %d at offset %d, total mf length is %d\n",
                   mr->rdSize,offset,mh->mtSize*2);
             break;
 	}
@@ -1270,8 +1270,8 @@ static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr)
             if (dx) for (i = 0; i < s1; i++) dx[i] = (SHORT)dxx[i];
         }
 	else {
-	    TRACE("%s  len: %ld\n",  sot, mr->rdSize);
-	    WARN("Please report: ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
+            TRACE("%s  len: %d\n",  sot, mr->rdSize);
+            WARN("Please report: ExtTextOut len=%d slen=%d rdSize=%d opt=%04x\n",
 		 len, s1, mr->rdSize, mr->rdParm[3]);
 	    dxx = NULL; /* should't happen -- but if, we continue with NULL */
 	}
@@ -1284,7 +1284,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr)
                  s1, dx);                    /* length, dx array */
     if (dx)
     {
-        TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dx[0]);
+        TRACE("%s  len: %d  dx0: %d\n", sot, mr->rdSize, dx[0]);
         HeapFree( GetProcessHeap(), 0, dx );
     }
     return TRUE;

@@ -886,7 +886,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                 face->scalable = FALSE;
             }
 
-            TRACE("fsCsb = %08lx %08lx/%08lx %08lx %08lx %08lx\n",
+            TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
                   face->fs.fsCsb[0], face->fs.fsCsb[1],
                   face->fs.fsUsb[0], face->fs.fsUsb[1],
                   face->fs.fsUsb[2], face->fs.fsUsb[3]);
@@ -931,7 +931,7 @@ static void DumpFontList(void)
         TRACE("Family: %s\n", debugstr_w(family->FamilyName));
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-	    TRACE("\t%s\t%08lx", debugstr_w(face->StyleName), face->fs.fsCsb[0]);
+            TRACE("\t%s\t%08x", debugstr_w(face->StyleName), face->fs.fsCsb[0]);
             if(!face->scalable)
                 TRACE(" %d", face->size.height);
             TRACE("\n");
@@ -1414,7 +1414,7 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
         char *unixname;
 
         if(flags)
-            FIXME("Ignoring flags %lx\n", flags);
+            FIXME("Ignoring flags %x\n", flags);
 
         if((unixname = wine_get_unix_file_name(file)))
         {
@@ -1558,11 +1558,11 @@ static void update_font_info(void)
             RegCloseKey(hkey);
             return;
         }
-        TRACE("updating registry, locale changed %s -> %08lx\n", debugstr_a(buf), lcid);
+        TRACE("updating registry, locale changed %s -> %08x\n", debugstr_a(buf), lcid);
     }
-    else TRACE("updating registry, locale changed none -> %08lx\n", lcid);
+    else TRACE("updating registry, locale changed none -> %08x\n", lcid);
 
-    sprintf(buf, "%08lx", lcid);
+    sprintf(buf, "%08x", lcid);
     RegSetValueExA(hkey, "Locale", 0, REG_SZ, (const BYTE *)buf, strlen(buf)+1);
     RegCloseKey(hkey);
 
@@ -1595,7 +1595,7 @@ static void update_font_info(void)
             return;
         }
     }
-    FIXME("there is no font defaults for lcid %04lx/ansi_cp %u\n", lcid, ansi_cp);
+    FIXME("there is no font defaults for lcid %04x/ansi_cp %u\n", lcid, ansi_cp);
 }
 
 /*************************************************************
@@ -1874,7 +1874,7 @@ static FT_Face OpenFontFile(GdiFont *font, char *file, FT_Long face_index, LONG 
     FT_Error err;
     FT_Face ft_face;
 
-    TRACE("%s, %ld, %ld x %ld\n", debugstr_a(file), face_index, width, height);
+    TRACE("%s, %ld, %d x %d\n", debugstr_a(file), face_index, width, height);
     err = pFT_New_Face(library, file, face_index, &ft_face);
     if(err) {
         ERR("FT_New_Face rets %d\n", err);
@@ -1891,11 +1891,11 @@ static FT_Face OpenFontFile(GdiFont *font, char *file, FT_Long face_index, LONG 
             font->ppem = calc_ppem_for_height(ft_face, height);
 
         if((err = pFT_Set_Pixel_Sizes(ft_face, 0, font->ppem)) != 0)
-            WARN("FT_Set_Pixel_Sizes %d, %ld rets %x\n", 0, font->ppem, err);
+            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, font->ppem, err);
     } else {
         font->ppem = height;
         if((err = pFT_Set_Pixel_Sizes(ft_face, width, height)) != 0)
-            WARN("FT_Set_Pixel_Sizes %ld, %ld rets %x\n", width, height, err);
+            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", width, height, err);
     }
     return ft_face;
 }
@@ -1925,11 +1925,11 @@ static int get_nearest_charset(Face *face, int *cp)
 	        return csi.ciCharset;
             }
 	    else
-	        FIXME("TCI failing on %lx\n", fs0);
+                FIXME("TCI failing on %x\n", fs0);
 	}
     }
 
-    FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08lx file = %s\n",
+    FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08x file = %s\n",
 	  face->fs.fsCsb[0], face->file);
     *cp = acp;
     return DEFAULT_CHARSET;
@@ -2090,7 +2090,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 		if(yMax + -yMin == height) {
 		    font->yMax = yMax;
 		    font->yMin = yMin;
-		    TRACE("ppem %ld found; height=%ld  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
 		if(yMax + -yMin > height) {
@@ -2101,13 +2101,13 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
 		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
                     ppem = GET_BE_WORD(vTable[i * 3]);
-                    TRACE("ppem %ld found; height=%ld  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
 	    }
 	    if(!font->yMax) {
 		ppem = 0;
-		TRACE("ppem not found for height %ld\n", height);
+		TRACE("ppem not found for height %d\n", height);
 	    }
 	} else {
 	    ppem = -height;
@@ -2124,7 +2124,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 		if(yPelHeight == ppem) {
 		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
 		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
-		    TRACE("ppem %ld found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
+                    TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
 		    break;
 		}
 	    }
@@ -2280,7 +2280,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
 
-    TRACE("%s, h=%ld, it=%d, weight=%ld, PandF=%02x, charset=%d orient %ld escapement %ld\n",
+    TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
 	  lf.lfEscapement);
@@ -2541,14 +2541,14 @@ static void dump_gdi_font_list(void)
     TRACE("---------- gdiFont Cache ----------\n");
     LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
         gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        TRACE("gdiFont=%p %s %ld\n",
+        TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
     }
 
     TRACE("---------- Unused gdiFont Cache ----------\n");
     LIST_FOR_EACH(elem_ptr, &unused_gdi_font_list) {
         gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        TRACE("gdiFont=%p %s %ld\n",
+        TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
     }
 }
@@ -2780,7 +2780,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
                                     FIXME("Unknown elfscript for bit %d\n", i);
                             }
                         }
-                        TRACE("enuming face %s full %s style %s charset %d type %ld script %s it %d weight %ld ntmflags %08lx\n",
+                        TRACE("enuming face %s full %s style %s charset %d type %d script %s it %d weight %d ntmflags %08x\n",
                               debugstr_w(elf.elfLogFont.lfFaceName),
                               debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
                               csi.ciCharset, type, debugstr_w(elf.elfScript),
@@ -2821,7 +2821,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 			      FIXME("Unknown elfscript for bit %d\n", i);
                     }
                 }
-                TRACE("enuming face %s full %s style %s charset = %d type %ld script %s it %d weight %ld ntmflags %08lx\n",
+                TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
                       debugstr_w(elf.elfLogFont.lfFaceName),
                       debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
                       csi.ciCharset, type, debugstr_w(elf.elfScript),
@@ -2947,7 +2947,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
     BOOL needsTransform = FALSE;
 
 
-    TRACE("%p, %04x, %08x, %p, %08lx, %p, %p\n", font, glyph, format, lpgm,
+    TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
 
     if(format & GGO_GLYPH_INDEX) {
@@ -3900,7 +3900,7 @@ BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
     if (pnfit)
         *pnfit = nfit;
 
-    TRACE("return %ld, %ld, %d\n", size->cx, size->cy, nfit);
+    TRACE("return %d, %d, %d\n", size->cx, size->cy, nfit);
     return TRUE;
 }
 
@@ -3927,7 +3927,7 @@ BOOL WineEngGetTextExtentPointI(GdiFont *font, const WORD *indices, INT count,
 			       NULL);
 	size->cx += font->gm[indices[idx]].adv;
     }
-    TRACE("return %ld,%ld\n", size->cx, size->cy);
+    TRACE("return %d,%d\n", size->cx, size->cy);
     return TRUE;
 }
 
@@ -3942,7 +3942,7 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     FT_ULong len;
     FT_Error err;
 
-    TRACE("font=%p, table=%08lx, offset=%08lx, buf=%p, cbData=%lx\n",
+    TRACE("font=%p, table=%08x, offset=%08x, buf=%p, cbData=%x\n",
 	font, table, offset, buf, cbData);
 
     if(!FT_IS_SFNT(ft_face))
@@ -4003,7 +4003,7 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     }
 #endif
     if(err) {
-        TRACE("Can't find table %08lx.\n", table);
+        TRACE("Can't find table %08x.\n", table);
 	return GDI_ERROR;
     }
     return len;
@@ -4157,7 +4157,7 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
     USHORT i, nPairs;
     const struct TT_kern_pair *tt_kern_pair;
 
-    TRACE("font height %ld, units_per_EM %d\n", font->ppem, font->ft_face->units_per_EM);
+    TRACE("font height %d, units_per_EM %d\n", font->ppem, font->ft_face->units_per_EM);
 
     nPairs = GET_BE_WORD(tt_f0_ks->nPairs);
 

@@ -734,7 +734,7 @@ INT16 WINAPI EndSpoolPage16(HPJOB16 hJob)
 DWORD WINAPI GetSpoolJob16(int nOption, LONG param)
 {
     DWORD retval = 0;
-    TRACE("In GetSpoolJob param 0x%lx noption %d\n",param, nOption);
+    TRACE("In GetSpoolJob param 0x%x noption %d\n",param, nOption);
     return retval;
 }
 
@@ -888,7 +888,7 @@ DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
             TRACE("profile %s\n",lpProfile);
     else
             TRACE("profile %p\n",lpProfile);
-    TRACE("lpType %08lx\n",lpType);
+    TRACE("lpType %08x\n",lpType);
 
     if ((!lpPrinter) || (!lpProfile) ||
     ((DWORD)lpProfile == INT_PD_DEFAULT_MODEL) || (HIWORD(lpProfile) &&

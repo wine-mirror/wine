@@ -1608,7 +1608,7 @@ UINT16 WINAPI GetBoundsRect16( HDC16 hdc, LPRECT16 rect, UINT16 flags)
  */
 WORD WINAPI EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    FIXME("(%s,%p,%lx),stub\n",fontname,proc,data);
+    FIXME("(%s,%p,%x),stub\n",fontname,proc,data);
     return 0;
 }
 
@@ -1655,7 +1655,7 @@ WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform
  */
 WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
 {
-    FIXME("(%08lx,%08lx,%08lx,%08lx),stub\n",l1,l2,l3,l4);
+    FIXME("(%08x,%08x,%08x,%08x),stub\n",l1,l2,l3,l4);
 
     return 0;
 }

@@ -329,7 +329,7 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, 
 
     LPtoDP( hdc, pt, 2 );
 
-    TRACE("%p %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
     else
@@ -362,7 +362,7 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right
 
     LPtoDP( hdc, pt, 2 );
 
-    TRACE("%p %ld,%ld - %ld,%ld\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
 
     if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
@@ -410,7 +410,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     HRGN clip;
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
-    TRACE("%p %ld,%ldx%ld,%ld\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
+    TRACE("%p %d,%dx%d,%d\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
 
     tmpRect = *rect;
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );

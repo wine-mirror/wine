@@ -1151,7 +1151,7 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
 {
   unsigned int i;
 
-  TRACE("vert_array:0x%08lx nvert:%ld grad_array:0x%08lx ngrad:%ld\n",
+  TRACE("vert_array:0x%08lx nvert:%d grad_array:0x%08lx ngrad:%d\n",
         (long)vert_array, nvert, (long)grad_array, ngrad);
 
   switch(mode) 

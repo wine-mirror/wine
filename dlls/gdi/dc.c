@@ -933,7 +933,7 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE("hdc=%p color=0x%08lx\n", hdc, color);
+    TRACE("hdc=%p color=0x%08x\n", hdc, color);
 
     if (!dc) return CLR_INVALID;
     oldColor = dc->backgroundColor;
@@ -976,7 +976,7 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
 
-    TRACE(" hdc=%p color=0x%08lx\n", hdc, color);
+    TRACE(" hdc=%p color=0x%08x\n", hdc, color);
 
     if (!dc) return CLR_INVALID;
     oldColor = dc->textColor;
@@ -1168,7 +1168,7 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 BOOL WINAPI GetTransform( HDC hdc, DWORD unknown, LPXFORM xform )
 {
     if (unknown == 0x0203) return GetWorldTransform( hdc, xform );
-    FIXME("stub: don't know what to do for code %lx\n", unknown );
+    FIXME("stub: don't know what to do for code %x\n", unknown );
     return FALSE;
 }
 
@@ -1944,7 +1944,7 @@ DWORD WINAPI GetLayout(HDC hdc)
         GDI_ReleaseObj( hdc );
     }
 
-    TRACE("hdc : %p, layout : %08lx\n", hdc, layout);
+    TRACE("hdc : %p, layout : %08x\n", hdc, layout);
 
     return layout;
 }
@@ -1967,7 +1967,7 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
         GDI_ReleaseObj( hdc );
     }
 
-    TRACE("hdc : %p, old layout : %08lx, new layout : %08lx\n", hdc, oldlayout, layout);
+    TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, oldlayout, layout);
 
     return oldlayout;
 }
@@ -2009,7 +2009,7 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
     DC *dc;
     COLORREF oldClr = CLR_INVALID;
 
-    TRACE("hdc(%p) crColor(%08lx)\n", hdc, crColor);
+    TRACE("hdc(%p) crColor(%08x)\n", hdc, crColor);
 
     dc = DC_GetDCPtr( hdc );
     if (dc)
@@ -2073,7 +2073,7 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
     DC *dc;
     COLORREF oldClr = CLR_INVALID;
 
-    TRACE("hdc(%p) crColor(%08lx)\n", hdc, crColor);
+    TRACE("hdc(%p) crColor(%08x)\n", hdc, crColor);
 
     dc = DC_GetDCPtr( hdc );
     if (dc)
@@ -2108,7 +2108,7 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
  */
 DWORD WINAPI SetVirtualResolution(HDC hdc, DWORD dw2, DWORD dw3, DWORD dw4, DWORD dw5)
 {
-    FIXME("(%p %08lx %08lx %08lx %08lx): stub!\n", hdc, dw2, dw3, dw4, dw5);
+    FIXME("(%p %08x %08x %08x %08x): stub!\n", hdc, dw2, dw3, dw4, dw5);
     return FALSE;
 }
 

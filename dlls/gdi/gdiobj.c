@@ -684,7 +684,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     obj->funcs   = funcs;
     obj->hdcs    = NULL;
 
-    TRACE("(%p): enter %ld\n", *handle, GDI_level.crst.RecursionCount);
+    TRACE("(%p): enter %d\n", *handle, GDI_level.crst.RecursionCount);
     return obj;
 
 error:
@@ -714,7 +714,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
     else ERR( "Invalid handle %p\n", handle );
     if (!new_ptr)
     {
-        TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
+        TRACE("(%p): leave %d\n", handle, GDI_level.crst.RecursionCount);
         _LeaveSysLevel( &GDI_level );
     }
     return new_ptr;
@@ -738,7 +738,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
         large_handles[i] = NULL;
     }
     else ERR( "Invalid handle %p\n", handle );
-    TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
+    TRACE("(%p): leave %d\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
     return TRUE;
 }
@@ -770,7 +770,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
         _LeaveSysLevel( &GDI_level );
         WARN( "Invalid handle %p\n", handle );
     }
-    else TRACE("(%p): enter %ld\n", handle, GDI_level.crst.RecursionCount);
+    else TRACE("(%p): enter %d\n", handle, GDI_level.crst.RecursionCount);
 
     return ptr;
 }
@@ -782,7 +782,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
+    TRACE("(%p): leave %d\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
 }
 
@@ -846,7 +846,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     if (header->dwCount)
     {
-        TRACE("delayed for %p because object in use, count %ld\n", obj, header->dwCount );
+        TRACE("delayed for %p because object in use, count %d\n", obj, header->dwCount );
         header->dwCount |= 0x80000000; /* mark for delete */
         GDI_ReleaseObj( obj );
         return TRUE;
@@ -1237,7 +1237,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
             pen.lopnWidth.y = 0;
             pen.lopnColor   = solid_colors[i];
             retval = lpEnumFunc( &pen, lParam );
-            TRACE("solid pen %08lx, ret=%d\n",
+            TRACE("solid pen %08x, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -1251,7 +1251,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
             brush.lbColor = solid_colors[i];
             brush.lbHatch = 0;
             retval = lpEnumFunc( &brush, lParam );
-            TRACE("solid brush %08lx, ret=%d\n",
+            TRACE("solid brush %08x, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }

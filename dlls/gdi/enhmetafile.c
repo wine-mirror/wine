@@ -193,7 +193,7 @@ static const char *get_emr_name(DWORD type)
     unsigned int i;
     for(i = 0; i < sizeof(emr_names) / sizeof(emr_names[0]); i++)
         if(type == emr_names[i].type) return emr_names[i].name;
-    TRACE("Unknown record type %ld\n", type);
+    TRACE("Unknown record type %d\n", type);
    return NULL;
 }
 
@@ -313,7 +313,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
     if (!emh) return 0;
 
     if (emh->iType != EMR_HEADER || emh->dSignature != ENHMETA_SIGNATURE) {
-        WARN("Invalid emf header type 0x%08lx sig 0x%08lx.\n",
+        WARN("Invalid emf header type 0x%08x sig 0x%08x.\n",
 	     emh->iType, emh->dSignature);
         goto err;
     }
@@ -799,14 +799,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_RESTOREDC:
       {
 	const EMRRESTOREDC *pRestoreDC = (const EMRRESTOREDC *)mr;
-        TRACE("EMR_RESTORE: %ld\n", pRestoreDC->iRelative);
+        TRACE("EMR_RESTORE: %d\n", pRestoreDC->iRelative);
 	RestoreDC(hdc, pRestoreDC->iRelative);
 	break;
       }
     case EMR_INTERSECTCLIPRECT:
       {
 	const EMRINTERSECTCLIPRECT *pClipRect = (const EMRINTERSECTCLIPRECT *)mr;
-        TRACE("EMR_INTERSECTCLIPRECT: rect %ld,%ld - %ld, %ld\n",
+        TRACE("EMR_INTERSECTCLIPRECT: rect %d,%d - %d, %d\n",
               pClipRect->rclClip.left, pClipRect->rclClip.top,
               pClipRect->rclClip.right, pClipRect->rclClip.bottom);
         IntersectClipRect(hdc, pClipRect->rclClip.left, pClipRect->rclClip.top,
@@ -1099,7 +1099,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	rc.top = pExtTextOutA->emrtext.rcl.top;
 	rc.right = pExtTextOutA->emrtext.rcl.right;
 	rc.bottom = pExtTextOutA->emrtext.rcl.bottom;
-        TRACE("EMR_EXTTEXTOUTA: x,y = %ld, %ld. rect = %ld, %ld - %ld, %ld. flags %08lx\n",
+        TRACE("EMR_EXTTEXTOUTA: x,y = %d, %d. rect = %d, %d - %d, %d. flags %08x\n",
               pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
               rc.left, rc.top, rc.right, rc.bottom, pExtTextOutA->emrtext.fOptions);
 
@@ -1127,7 +1127,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	rc.top = pExtTextOutW->emrtext.rcl.top;
 	rc.right = pExtTextOutW->emrtext.rcl.right;
 	rc.bottom = pExtTextOutW->emrtext.rcl.bottom;
-        TRACE("EMR_EXTTEXTOUTW: x,y = %ld, %ld.  rect = %ld, %ld - %ld, %ld. flags %08lx\n",
+        TRACE("EMR_EXTTEXTOUTW: x,y = %d, %d.  rect = %d, %d - %d, %d. flags %08x\n",
               pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
               rc.left, rc.top, rc.right, rc.bottom, pExtTextOutW->emrtext.fOptions);
 
@@ -1348,7 +1348,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (info->mode == MM_ISOTROPIC)
             EMF_FixIsotropic(hdc, info);
 
-        TRACE("EMRSCALEVIEWPORTEXTEX %ld/%ld %ld/%ld\n",
+        TRACE("EMRSCALEVIEWPORTEXTEX %d/%d %d/%d\n",
              lpScaleViewportExtEx->xNum,lpScaleViewportExtEx->xDenom,
              lpScaleViewportExtEx->yNum,lpScaleViewportExtEx->yDenom);
 
@@ -1373,7 +1373,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (info->mode == MM_ISOTROPIC)
             EMF_FixIsotropic(hdc, info);
 
-        TRACE("EMRSCALEWINDOWEXTEX %ld/%ld %ld/%ld\n",
+        TRACE("EMRSCALEWINDOWEXTEX %d/%d %d/%d\n",
              lpScaleWindowExtEx->xNum,lpScaleWindowExtEx->xDenom,
              lpScaleWindowExtEx->yNum,lpScaleWindowExtEx->yDenom);
 
@@ -1399,7 +1399,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
                              &lpModifyWorldTrans->xform);
             break;
         default:
-            FIXME("Unknown imode %ld\n", lpModifyWorldTrans->iMode);
+            FIXME("Unknown imode %d\n", lpModifyWorldTrans->iMode);
             break;
         }
         break;
@@ -1792,7 +1792,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMRSTRETCHBLT *pStretchBlt = (const EMRSTRETCHBLT *)mr;
 
-        TRACE("EMR_STRETCHBLT: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld. rop %08lx offBitsSrc %ld\n",
+        TRACE("EMR_STRETCHBLT: %d, %d %dx%d -> %d, %d %dx%d. rop %08x offBitsSrc %d\n",
 	       pStretchBlt->xSrc, pStretchBlt->ySrc, pStretchBlt->cxSrc, pStretchBlt->cySrc,
 	       pStretchBlt->xDest, pStretchBlt->yDest, pStretchBlt->cxDest, pStretchBlt->cyDest,
 	       pStretchBlt->dwRop, pStretchBlt->offBitsSrc);
@@ -1835,7 +1835,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMRALPHABLEND *pAlphaBlend = (const EMRALPHABLEND *)mr;
 
-        TRACE("EMR_ALPHABLEND: %ld, %ld %ldx%ld -> %ld, %ld %ldx%ld. blendfn %08lx offBitsSrc %ld\n",
+        TRACE("EMR_ALPHABLEND: %d, %d %dx%d -> %d, %d %dx%d. blendfn %08x offBitsSrc %d\n",
 	       pAlphaBlend->xSrc, pAlphaBlend->ySrc, pAlphaBlend->cxSrc, pAlphaBlend->cySrc,
 	       pAlphaBlend->xDest, pAlphaBlend->yDest, pAlphaBlend->cxDest, pAlphaBlend->cyDest,
 	       pAlphaBlend->dwRop, pAlphaBlend->offBitsSrc);
@@ -2152,7 +2152,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
   tmprc.left = tmprc.top = 0;
   tmprc.right = tmprc.bottom = 1000;
   LPtoDP(hdc, (POINT*)&tmprc, 2);
-  TRACE("L:0,0 - 1000,1000 -> D:%ld,%ld - %ld,%ld\n", tmprc.left,
+  TRACE("L:0,0 - 1000,1000 -> D:%d,%d - %d,%d\n", tmprc.left,
 	tmprc.top, tmprc.right, tmprc.bottom);
 
   if ( !IS_WIN9X() )
@@ -2316,7 +2316,7 @@ BOOL WINAPI EnumEnhMetaFile(
         FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
         XFORM xform;
 
-        TRACE("rect: %ld,%ld - %ld,%ld. rclFrame: %ld,%ld - %ld,%ld\n",
+        TRACE("rect: %d,%d - %d,%d. rclFrame: %d,%d - %d,%d\n",
            lpRect->left, lpRect->top, lpRect->right, lpRect->bottom,
            emh->rclFrame.left, emh->rclFrame.top, emh->rclFrame.right,
            emh->rclFrame.bottom);
@@ -2353,7 +2353,7 @@ BOOL WINAPI EnumEnhMetaFile(
     while(ret && offset < emh->nBytes)
     {
 	emr = (ENHMETARECORD *)((char *)emh + offset);
-	TRACE("Calling EnumFunc with record %s, size %ld\n", get_emr_name(emr->iType), emr->nSize);
+	TRACE("Calling EnumFunc with record %s, size %d\n", get_emr_name(emr->iType), emr->nSize);
 	ret = (*callback)(hdc, ht, emr, emh->nHandles, (LPARAM)data);
 	offset += emr->nSize;
     }
@@ -2538,7 +2538,7 @@ static INT CALLBACK cbEnhPaletteCopy( HDC a,
     EMF_PaletteCopy* info = (EMF_PaletteCopy*)lpData;
     DWORD dwNumPalToCopy = min( lpEof->nPalEntries, info->cEntries );
 
-    TRACE( "copying 0x%08lx palettes\n", dwNumPalToCopy );
+    TRACE( "copying 0x%08x palettes\n", dwNumPalToCopy );
 
     memcpy( (LPVOID)info->lpPe,
             (LPCVOID)(((LPCSTR)lpEof) + lpEof->offPalEntries),
@@ -2643,7 +2643,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
     if (lpmfp)
     {
-        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
+        TRACE("mm = %d %dx%d\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
 
         mm = lpmfp->mm;
         xExt = lpmfp->xExt;

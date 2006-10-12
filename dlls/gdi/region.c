@@ -474,11 +474,11 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 {
     RECT *pRect, *pRectEnd = pReg->rects + pReg->numRects;
 
-    TRACE("Region %p: %ld,%ld - %ld,%ld %d rects\n", pReg,
+    TRACE("Region %p: %d,%d - %d,%d %d rects\n", pReg,
 	    pReg->extents.left, pReg->extents.top,
 	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
     for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
-        TRACE("\t%ld,%ld - %ld,%ld\n", pRect->left, pRect->top,
+        TRACE("\t%d,%d - %d,%d\n", pRect->left, pRect->top,
 		       pRect->right, pRect->bottom);
     return;
 }
@@ -648,7 +648,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
 	rect->bottom = obj->rgn->extents.bottom;
-	TRACE("%p (%ld,%ld-%ld,%ld)\n", hrgn,
+	TRACE("%p (%d,%d-%d,%d)\n", hrgn,
                rect->left, rect->top, rect->right, rect->bottom);
 	ret = get_region_type( obj );
 	GDI_ReleaseObj(hrgn);
@@ -957,7 +957,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     DWORD size;
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
-    TRACE(" %p count = %ld, rgndata = %p\n", hrgn, count, rgndata);
+    TRACE(" %p count = %d, rgndata = %p\n", hrgn, count, rgndata);
 
     if(!obj) return 0;
 
@@ -1008,7 +1008,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 {
     HRGN hrgn;
 
-    TRACE(" %p %ld %p\n", lpXform, dwCount, rgndata );
+    TRACE(" %p %d %p\n", lpXform, dwCount, rgndata );
 
     if( lpXform )
         WARN("(Xform not implemented - ignored)\n");
@@ -1018,7 +1018,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 	/* FIXME: We can use CreatePolyPolygonRgn() here
 	 *        for trapezoidal data */
 
-        WARN("(Unsupported region data type: %lu)\n", rgndata->rdh.iType);
+        WARN("(Unsupported region data type: %u)\n", rgndata->rdh.iType);
 	goto fail;
     }
 

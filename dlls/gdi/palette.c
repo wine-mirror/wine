@@ -604,7 +604,7 @@ UINT WINAPI GetNearestPaletteIndex(
         }
         GDI_ReleaseObj( hpalette );
     }
-    TRACE("(%p,%06lx): returning %d\n", hpalette, color, index );
+    TRACE("(%p,%06x): returning %d\n", hpalette, color, index );
     return index;
 }
 
@@ -657,7 +657,7 @@ COLORREF WINAPI GetNearestColor(
 
         if (!GetPaletteEntries( hpal, index, 1, &entry ))
         {
-            WARN("RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, index );
+            WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
             if (!GetPaletteEntries( hpal, 0, 1, &entry ))
             {
                 GDI_ReleaseObj( hdc );
@@ -669,7 +669,7 @@ COLORREF WINAPI GetNearestColor(
     nearest = color & 0x00ffffff;
     GDI_ReleaseObj( hdc );
 
-    TRACE("(%06lx): returning %06lx\n", color, nearest );
+    TRACE("(%06x): returning %06x\n", color, nearest );
     return nearest;
 }
 
@@ -913,7 +913,7 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
  */
 BOOL WINAPI SetMagicColors(HDC hdc, ULONG u1, ULONG u2)
 {
-    FIXME("(%p 0x%08lx 0x%08lx): stub\n", hdc, u1, u2);
+    FIXME("(%p 0x%08x 0x%08x): stub\n", hdc, u1, u2);
     return TRUE;
 }
 
@@ -1003,7 +1003,7 @@ BOOL WINAPI GetICMProfileW(HDC hDC, LPDWORD lpcbName, LPWSTR lpszFilename)
  */
 BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEA lpBuffer, DWORD nSize)
 {
-    FIXME("%p %p 0x%08lx: stub!\n", hColorSpace, lpBuffer, nSize);
+    FIXME("%p %p 0x%08x: stub!\n", hColorSpace, lpBuffer, nSize);
     return FALSE;
 }
 
@@ -1013,7 +1013,7 @@ BOOL WINAPI GetLogColorSpaceA(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEA lpBuffer
  */
 BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEW lpBuffer, DWORD nSize)
 {
-    FIXME("%p %p 0x%08lx: stub!\n", hColorSpace, lpBuffer, nSize);
+    FIXME("%p %p 0x%08x: stub!\n", hColorSpace, lpBuffer, nSize);
     return FALSE;
 }
 
@@ -1043,7 +1043,7 @@ BOOL WINAPI SetICMProfileW(HDC hDC, LPWSTR lpszFilename)
  */
 BOOL WINAPI UpdateICMRegKeyA(DWORD dwReserved, LPSTR lpszCMID, LPSTR lpszFileName, UINT nCommand)
 {
-    FIXME("(0x%08lx, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_a(lpszCMID),
+    FIXME("(0x%08x, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_a(lpszCMID),
           debugstr_a(lpszFileName), nCommand);
     return TRUE; /* success */
 }
@@ -1054,7 +1054,7 @@ BOOL WINAPI UpdateICMRegKeyA(DWORD dwReserved, LPSTR lpszCMID, LPSTR lpszFileNam
  */
 BOOL WINAPI UpdateICMRegKeyW(DWORD dwReserved, LPWSTR lpszCMID, LPWSTR lpszFileName, UINT nCommand)
 {
-    FIXME("(0x%08lx, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_w(lpszCMID),
+    FIXME("(0x%08x, %s, %s, 0x%08x): stub!\n", dwReserved, debugstr_w(lpszCMID),
           debugstr_w(lpszFileName), nCommand);
     return TRUE; /* success */
 }
