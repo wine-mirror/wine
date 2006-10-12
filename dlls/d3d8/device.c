@@ -678,21 +678,24 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface,
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
-    return IWineD3DDevice_SetTransform(This->WineD3DDevice, State, lpMatrix);
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    return IWineD3DDevice_SetTransform(This->WineD3DDevice, State, (CONST WINED3DMATRIX*) lpMatrix);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State,D3DMATRIX* pMatrix) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
-    return IWineD3DDevice_GetTransform(This->WineD3DDevice, State, pMatrix);
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    return IWineD3DDevice_GetTransform(This->WineD3DDevice, State, (WINED3DMATRIX*) pMatrix);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_MultiplyTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
-    return IWineD3DDevice_MultiplyTransform(This->WineD3DDevice, State, pMatrix);
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    return IWineD3DDevice_MultiplyTransform(This->WineD3DDevice, State, (CONST WINED3DMATRIX*) pMatrix);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST D3DVIEWPORT8* pViewport) {

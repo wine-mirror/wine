@@ -2589,9 +2589,10 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
        Unhandled: D3DTRANSFORMSTATE_WORLD3
      */
 
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     return IWineD3DDevice_SetTransform(This->wineD3DDevice,
                                        type,
-                                       Matrix);
+                                       (WINED3DMATRIX*) Matrix);
 }
 
 static HRESULT WINAPI
@@ -2660,7 +2661,8 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
        Unhandled: D3DTRANSFORMSTATE_WORLD3
      */
 
-    return IWineD3DDevice_GetTransform(This->wineD3DDevice, type, Matrix);
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    return IWineD3DDevice_GetTransform(This->wineD3DDevice, type, (WINED3DMATRIX*) Matrix);
 }
 
 static HRESULT WINAPI
@@ -2726,9 +2728,10 @@ IDirect3DDeviceImpl_7_MultiplyTransform(IDirect3DDevice7 *iface,
        Unhandled: D3DTRANSFORMSTATE_WORLD3
      */
 
+    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     return IWineD3DDevice_MultiplyTransform(This->wineD3DDevice,
                                             TransformStateType,
-                                            D3DMatrix);
+                                            (WINED3DMATRIX*) D3DMatrix);
 }
 
 static HRESULT WINAPI

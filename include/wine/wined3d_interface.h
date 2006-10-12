@@ -425,8 +425,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetTexture)(THIS_ DWORD Stage, struct IWineD3DBaseTexture** ppTexture) PURE;
     STDMETHOD(SetTextureStageState)(THIS_ DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type,DWORD Value) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type,DWORD *pValue) PURE;
-    STDMETHOD(SetTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
-    STDMETHOD(GetTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(SetTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, CONST WINED3DMATRIX * pMatrix) PURE;
+    STDMETHOD(GetTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, WINED3DMATRIX * pMatrix) PURE;
     STDMETHOD(SetVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration* pDecl) PURE;
     STDMETHOD(GetVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl) PURE;
     STDMETHOD(SetVertexShader)(THIS_ struct IWineD3DVertexShader* pShader) PURE;
@@ -439,7 +439,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetVertexShaderConstantF)(THIS_ UINT StartRegister, float*       pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(SetViewport)(THIS_ CONST WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
-    STDMETHOD(MultiplyTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(MultiplyTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, CONST WINED3DMATRIX * pMatrix) PURE;
     STDMETHOD(ValidateDevice)(THIS_ DWORD* pNumPasses) PURE;
     STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, struct IWineD3DVertexBuffer* pDestBuffer, struct IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) PURE;
     STDMETHOD(BeginStateBlock)(THIS) PURE;

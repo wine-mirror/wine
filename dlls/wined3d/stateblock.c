@@ -182,7 +182,7 @@ void stateblock_copy(
     memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DVertexBuffer*) * MAX_STREAMS);
     memcpy(Dest->streamFreq,   This->streamFreq,   sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->streamFlags,  This->streamFlags,  sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->transforms,   This->transforms,   sizeof(D3DMATRIX) * (HIGHEST_TRANSFORMSTATE + 1));
+    memcpy(Dest->transforms,   This->transforms,   sizeof(WINED3DMATRIX) * (HIGHEST_TRANSFORMSTATE + 1));
     memcpy(Dest->clipplane,    This->clipplane,    sizeof(double) * MAX_CLIPPLANES * 4);
     memcpy(Dest->renderState,  This->renderState,  sizeof(DWORD) * (WINEHIGHEST_RENDER_STATE + 1));
     memcpy(Dest->textures,     This->textures,     sizeof(IWineD3DBaseTexture*) * MAX_SAMPLERS);
@@ -487,9 +487,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
             if (This->set.transform[i] && memcmp(&targetStateBlock->transforms[i],
                                     &This->transforms[i],
-                                    sizeof(D3DMATRIX)) != 0) {
+                                    sizeof(WINED3DMATRIX)) != 0) {
                 TRACE("Updating transform %d\n", i);
-                memcpy(&This->transforms[i], &targetStateBlock->transforms[i], sizeof(D3DMATRIX));
+                memcpy(&This->transforms[i], &targetStateBlock->transforms[i], sizeof(WINED3DMATRIX));
             }
         }
 

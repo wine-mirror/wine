@@ -325,17 +325,19 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                 TRACE("PROCESSVERTICES  (%d)\n", count);
 
                 /* Get the transform and world matrix */
+                /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+
                 IWineD3DDevice_GetTransform(lpDevice->wineD3DDevice,
                                             D3DTRANSFORMSTATE_VIEW,
-                                            &view_mat);
+                                            (WINED3DMATRIX*) &view_mat);
 
                 IWineD3DDevice_GetTransform(lpDevice->wineD3DDevice,
                                             D3DTRANSFORMSTATE_PROJECTION,
-                                            &proj_mat);
+                                            (WINED3DMATRIX*) &proj_mat);
 
                 IWineD3DDevice_GetTransform(lpDevice->wineD3DDevice,
                                             D3DTRANSFORMSTATE_WORLD,
-                                            &world_mat);
+                                            (WINED3DMATRIX*) &world_mat);
 
 		for (i = 0; i < count; i++) {
 		    LPD3DPROCESSVERTICES ci = (LPD3DPROCESSVERTICES) instr;

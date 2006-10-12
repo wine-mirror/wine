@@ -2506,7 +2506,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *ifa
 /*****
  * Get / Set & Multiply Transform
  *****/
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
+static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE d3dts, CONST WINED3DMATRIX* lpmatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
@@ -2517,7 +2517,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
         TRACE("Recording... not performing anything\n");
         This->updateStateBlock->changed.transform[d3dts] = TRUE;
         This->updateStateBlock->set.transform[d3dts]     = TRUE;
-        memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(D3DMATRIX));
+        memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(WINED3DMATRIX));
         return WINED3D_OK;
     }
 
@@ -2529,7 +2529,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
      *
      * From here on we assume that the new matrix is different, wherever it matters.
      */
-    if (!memcmp(&This->stateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(D3DMATRIX))) {
+    if (!memcmp(&This->stateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(WINED3DMATRIX))) {
         TRACE("The app is setting the same matrix over again\n");
         return WINED3D_OK;
     } else {
@@ -2610,16 +2610,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     return WINED3D_OK;
 
 }
-static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, WINED3DMATRIX* pMatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : for Transform State %s\n", This, debug_d3dtstype(State));
-    memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(D3DMATRIX));
+    memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(WINED3DMATRIX));
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
-    D3DMATRIX *mat = NULL;
-    D3DMATRIX temp;
+static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, CONST WINED3DMATRIX* pMatrix) {
+    WINED3DMATRIX *mat = NULL;
+    WINED3DMATRIX temp;
 
     /* Note: Using 'updateStateBlock' rather than 'stateblock' in the code
      * below means it will be recorded in a state block change, but it
@@ -2636,7 +2636,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
         FIXME("Unhandled transform state!!\n");
     }
 
-    multiply_matrix(&temp, mat, (D3DMATRIX *) pMatrix);
+    multiply_matrix(&temp, mat, (WINED3DMATRIX *) pMatrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way */
     return IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
@@ -5084,7 +5084,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     unsigned int i;
     DWORD DestFVF = dest->fvf;
     WINED3DVIEWPORT vp;
-    D3DMATRIX mat, proj_mat, view_mat, world_mat;
+    WINED3DMATRIX mat, proj_mat, view_mat, world_mat;
     BOOL doClip;
     int numTextures;
 
