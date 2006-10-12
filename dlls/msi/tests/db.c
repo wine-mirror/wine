@@ -1730,7 +1730,11 @@ static void generate_transform(void)
 
     query = "UPDATE `MOO` SET `OOO` = 'c' WHERE `NOO` = 1";
     r = run_query(hdb1, 0, query);
-    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+    ok(r == ERROR_SUCCESS, "failed to modify row\n");
+
+    query = "DELETE FROM `MOO` WHERE `NOO` = 3";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to delete row\n");
 
     /* database needs to be committed */
     MsiDatabaseCommit(hdb1);
@@ -1750,7 +1754,7 @@ static const WCHAR name2[] = { 0x4840, 0x3b3f, 0x43f2, 0x4438, 0x45b1, 0 }; /* _
 static const WCHAR name3[] = { 0x4840, 0x3f7f, 0x4164, 0x422f, 0x4836, 0 }; /* _Tables */
 static const WCHAR name4[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0 }; /* _StringData */
 static const WCHAR name5[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0 }; /* _StringPool */
-static const WCHAR name6[] = { 0x4840, 0x3e16, 0x4181, 0};
+static const WCHAR name6[] = { 0x4840, 0x3e16, 0x4818, 0}; /* MOO */
 
 /* data in each table */
 static const WCHAR data1[] = { /* AAR */
@@ -1778,7 +1782,8 @@ static const WCHAR data5[] = { /* _StringPool */
 };
 /* update row, 0x0002 is a bitmask of present column data, keys are excluded */
 static const WCHAR data6[] = { /* MOO */
-    0x0002, 0x8001, 0x0001,
+    0x0002, 0x8001, 0x0001, /* update row */
+    0x0000, 0x8003,         /* delete row */
 };
 
 static const struct {
@@ -1840,7 +1845,7 @@ static void generate_transform_manual(void)
 
 static void test_try_transform(void)
 {
-    MSIHANDLE hdb;
+    MSIHANDLE hdb, hrec;
     LPCSTR query;
     UINT r;
 
@@ -1858,11 +1863,15 @@ static void test_try_transform(void)
 
     query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 1, 'a' )";
     r = run_query(hdb, 0, query);
-    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+    ok(r == ERROR_SUCCESS, "failed to add row\n");
 
     query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 2, 'b' )";
     r = run_query(hdb, 0, query);
-    ok(r == ERROR_SUCCESS, "failed to add row 1\n");
+    ok(r == ERROR_SUCCESS, "failed to add row\n");
+
+    query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 3, 'c' )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add row\n");
 
     r = MsiDatabaseCommit( hdb );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
@@ -1888,23 +1897,38 @@ static void test_try_transform(void)
     MsiDatabaseCommit( hdb );
 
     /* check new values */
+    hrec = 0;
     query = "select `BAR`,`CAR` from `AAR` where `BAR` = 1 AND `CAR` = 'vw'";
-    r = run_query(hdb, 0, query);
+    r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "select query failed\n");
+    MsiCloseHandle(hrec);
 
     query = "select `BAR`,`CAR` from `AAR` where `BAR` = 2 AND `CAR` = 'bmw'";
-    r = run_query(hdb, 0, query);
+    hrec = 0;
+    r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "select query failed\n");
+    MsiCloseHandle(hrec);
 
     /* check updated values */
+    hrec = 0;
     query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
-    r = run_query(hdb, 0, query);
-    ok(r == ERROR_SUCCESS, "select query failed\n");
+    r = do_query(hdb, query, &hrec);
+    todo_wine ok(r == ERROR_SUCCESS, "select query failed\n");
+    MsiCloseHandle(hrec);
 
-    /* check unchanged values */
-    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
-    r = run_query(hdb, 0, query);
+    /* check unchanged value */
+    hrec = 0;
+    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 2 AND `OOO` = 'b'";
+    r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "select query failed\n");
+    MsiCloseHandle(hrec);
+
+    /* check deleted value */
+    hrec = 0;
+    query = "select * from `MOO` where `NOO` = 3";
+    r = do_query(hdb, query, &hrec);
+    todo_wine ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
+    if (hrec) MsiCloseHandle(hrec);
 
     MsiCloseHandle( hdb );
 
