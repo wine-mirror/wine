@@ -2583,6 +2583,12 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
     if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
         type = (D3DTRANSFORMSTATETYPE)(0 + 256);
 
+    /* FIXME:
+       Unhandled: D3DTRANSFORMSTATE_WORLD1
+       Unhandled: D3DTRANSFORMSTATE_WORLD2
+       Unhandled: D3DTRANSFORMSTATE_WORLD3
+     */
+
     return IWineD3DDevice_SetTransform(This->wineD3DDevice,
                                        type,
                                        Matrix);
@@ -2648,6 +2654,12 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
     if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
         type = (D3DTRANSFORMSTATETYPE)(0 + 256);
 
+    /* FIXME:
+       Unhandled: D3DTRANSFORMSTATE_WORLD1
+       Unhandled: D3DTRANSFORMSTATE_WORLD2
+       Unhandled: D3DTRANSFORMSTATE_WORLD3
+     */
+
     return IWineD3DDevice_GetTransform(This->wineD3DDevice, type, Matrix);
 }
 
@@ -2707,6 +2719,12 @@ IDirect3DDeviceImpl_7_MultiplyTransform(IDirect3DDevice7 *iface,
      */
     if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
         TransformStateType = (D3DTRANSFORMSTATETYPE)(0 + 256);
+
+    /* FIXME:
+       Unhandled: D3DTRANSFORMSTATE_WORLD1
+       Unhandled: D3DTRANSFORMSTATE_WORLD2
+       Unhandled: D3DTRANSFORMSTATE_WORLD3
+     */
 
     return IWineD3DDevice_MultiplyTransform(This->wineD3DDevice,
                                             TransformStateType,

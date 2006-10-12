@@ -2506,7 +2506,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *ifa
 /*****
  * Get / Set & Multiply Transform
  *****/
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
+static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
@@ -2610,14 +2610,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D
     return WINED3D_OK;
 
 }
-static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : for Transform State %s\n", This, debug_d3dtstype(State));
     memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(D3DMATRIX));
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
+static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
     D3DMATRIX *mat = NULL;
     D3DMATRIX temp;
 

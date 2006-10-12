@@ -220,7 +220,7 @@ extern int num_lock;
                             See MaxStreams in MSDN under GetDeviceCaps */
                          /* Maximum number of constants provided to the shaders */
 #define HIGHEST_TRANSFORMSTATE 512 
-                         /* Highest value in D3DTRANSFORMSTATETYPE */
+                         /* Highest value in WINED3DTRANSFORMSTATETYPE */
 #define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
 
 #define MAX_PALETTES      256
