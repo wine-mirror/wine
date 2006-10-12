@@ -24,6 +24,7 @@
 
 #include "wldap32_De.rc"
 #include "wldap32_En.rc"
+#include "wldap32_Es.rc"
 #include "wldap32_Fr.rc"
 #include "wldap32_Ko.rc"
 #include "wldap32_Nl.rc"
