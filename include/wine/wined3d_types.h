@@ -64,6 +64,13 @@ typedef struct _WINED3DMATRIX {
     } DUMMYUNIONNAME;
 } WINED3DMATRIX;
 
+typedef struct _WINED3DRECT {
+    LONG x1;
+    LONG y1;
+    LONG x2;
+    LONG y2;
+} WINED3DRECT;
+
 typedef struct _WINED3DLIGHT {
     WINED3DLIGHTTYPE    Type;
     WINED3DCOLORVALUE   Diffuse;

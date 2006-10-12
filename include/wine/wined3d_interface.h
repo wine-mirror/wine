@@ -447,7 +447,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
-    STDMETHOD(Clear)(THIS_ DWORD  Count,CONST D3DRECT * pRects,DWORD  Flags,D3DCOLOR  Color,float  Z,DWORD  Stencil) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD  Count, CONST WINED3DRECT * pRects, DWORD Flags, D3DCOLOR  Color,float Z, DWORD  Stencil) PURE;
     STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount) PURE;
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
     STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
@@ -456,7 +456,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(DrawRectPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST WINED3DRECTPATCH_INFO* pRectPatchInfo) PURE;
     STDMETHOD(DrawTriPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST WINED3DTRIPATCH_INFO* pTriPatchInfo) PURE;
     STDMETHOD(DeletePatch)(THIS_ UINT Handle) PURE;
-    STDMETHOD(ColorFill)(THIS_ struct IWineD3DSurface* pSurface, CONST D3DRECT* pRect, D3DCOLOR color) PURE;
+    STDMETHOD(ColorFill)(THIS_ struct IWineD3DSurface* pSurface, CONST WINED3DRECT* pRect, D3DCOLOR color) PURE;
     STDMETHOD(UpdateTexture)(THIS_ struct IWineD3DBaseTexture *pSourceTexture, struct IWineD3DBaseTexture *pDestinationTexture) PURE;
     STDMETHOD(UpdateSurface)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
     STDMETHOD(CopyRects)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPointsArray);

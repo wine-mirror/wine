@@ -361,7 +361,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9 iface, 
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *surface = (IDirect3DSurface9Impl *)pSurface;
     TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (CONST D3DRECT*)pRect, color);    
+
+    /* Note: D3DRECT is compatible with WINED3DRECT */
+    return IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (CONST WINED3DRECT*)pRect, color);    
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9 **ppSurface, HANDLE* pSharedHandle) {
@@ -458,7 +460,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_EndScene(LPDIRECT3DDEVICE9 iface) {
 static HRESULT  WINAPI  IDirect3DDevice9Impl_Clear(LPDIRECT3DDEVICE9 iface, DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_Clear(This->WineD3DDevice, Count, pRects, Flags, Color, Z, Stencil);
+
+    /* Note: D3DRECT is compatible with WINED3DRECT */
+    return IWineD3DDevice_Clear(This->WineD3DDevice, Count, (CONST WINED3DRECT*) pRects, Flags, Color, Z, Stencil);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTransform(LPDIRECT3DDEVICE9 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* lpMatrix) {

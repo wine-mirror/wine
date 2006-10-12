@@ -4031,7 +4031,8 @@ IDirect3DDeviceImpl_7_Clear(IDirect3DDevice7 *iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p)->(%08x,%p,%08x,%08x,%f,%08x): Relay\n", This, Count, Rects, Flags, (DWORD) Color, Z, Stencil);
 
-    return IWineD3DDevice_Clear(This->wineD3DDevice, Count, Rects, Flags, Color, Z, Stencil);
+    /* Note; D3DRECT is compatible with WINED3DRECT */
+    return IWineD3DDevice_Clear(This->wineD3DDevice, Count, (WINED3DRECT*) Rects, Flags, Color, Z, Stencil);
 }
 
 /*****************************************************************************

@@ -2237,7 +2237,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
 
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
-    D3DRECT rect;
+    WINED3DRECT rect;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
@@ -2580,7 +2580,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             if( ( (IWineD3DSurface *) This != swapchain->frontBuffer) &&
                 ( swapchain->backBuffer && (IWineD3DSurface *) This != swapchain->backBuffer[0]) ) {
                 UINT row;
-                D3DRECT srect;
+                WINED3DRECT srect;
                 float xrel, yrel;
 
                 TRACE("Blt from rendertarget to texture\n");

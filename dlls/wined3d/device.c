@@ -6021,7 +6021,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST D3DRECT* pRects,
+static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST WINED3DRECT* pRects,
                                         DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -6034,7 +6034,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     GLint          old_stencil_clear_value;
     GLfloat        old_color_clear_value[4];
     unsigned int   i;
-    CONST D3DRECT* curRect;
+    CONST WINED3DRECT* curRect;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, Z, Stencil);
@@ -6108,7 +6108,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         checkGLcall("glClear");
 
         /* Step to the next rectangle */
-        if (curRect) curRect = curRect + sizeof(D3DRECT);
+        if (curRect) curRect = curRect + sizeof(WINED3DRECT);
     }
 
     /* Restore the old values (why..?) */
@@ -6995,7 +6995,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST D3DRECT* pRect, D3DCOLOR color) {
+static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST WINED3DRECT* pRect, D3DCOLOR color) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
     DDBLTFX BltFx;

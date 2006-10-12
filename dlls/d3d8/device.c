@@ -671,7 +671,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD 
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
-    return IWineD3DDevice_Clear(This->WineD3DDevice, Count, pRects, Flags, Color, Z, Stencil);
+    /* Note: D3DRECT is compatible with WINED3DRECT */
+    return IWineD3DDevice_Clear(This->WineD3DDevice, Count, (CONST WINED3DRECT*) pRects, Flags, Color, Z, Stencil);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* lpMatrix) {
