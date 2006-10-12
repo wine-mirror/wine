@@ -66,7 +66,7 @@ static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
     result = ICDecompressBegin(This->hvid, This->pBihIn, This->pBihOut);
     if (result != ICERR_OK)
     {
-        ERR("Cannot start processing (%ld)\n", result);
+        ERR("Cannot start processing (%d)\n", result);
 	return E_FAIL;
     }
     return S_OK;
@@ -83,7 +83,7 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, L
     DWORD cbDstStream;
     LPBYTE pbDstStream;
 
-    TRACE("(%p)->(%p,%ld)\n", This, data, size);
+    TRACE("(%p)->(%p,%d)\n", This, data, size);
     
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -97,7 +97,7 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, L
 
     hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pSample, NULL, NULL, 0);
     if (FAILED(hr)) {
-	ERR("Unable to get delivery buffer (%lx)\n", hr);
+	ERR("Unable to get delivery buffer (%x)\n", hr);
 	goto error;
     }
 
@@ -106,23 +106,23 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, L
 
     hr = IMediaSample_GetPointer(pSample, &pbDstStream);
     if (FAILED(hr)) {
-	ERR("Unable to get pointer to buffer (%lx)\n", hr);
+	ERR("Unable to get pointer to buffer (%x)\n", hr);
 	goto error;
     }
     cbDstStream = IMediaSample_GetSize(pSample);
     if (cbDstStream < This->pBihOut->biSizeImage) {
-        ERR("Sample size is too small %ld < %ld\n", cbDstStream, This->pBihOut->biSizeImage);
+        ERR("Sample size is too small %d < %d\n", cbDstStream, This->pBihOut->biSizeImage);
 	hr = E_FAIL;
 	goto error;
     }
 
     res = ICDecompress(This->hvid, 0, This->pBihIn, data, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
-        ERR("Error occurred during the decompression (%lx)\n", res);
+        ERR("Error occurred during the decompression (%x)\n", res);
 
     hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
-        ERR("Error sending sample (%lx)\n", hr);
+        ERR("Error sending sample (%x)\n", hr);
 	goto error;
     }
 
@@ -143,7 +143,7 @@ static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
     result = ICDecompressEnd(This->hvid);
     if (result != ICERR_OK)
     {
-        ERR("Cannot stop processing (%ld)\n", result);
+        ERR("Cannot stop processing (%d)\n", result);
 	return E_FAIL;
     }
     return S_OK;
@@ -212,7 +212,7 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
             result = ICDecompressQuery(This->hvid, This->pBihIn, This->pBihOut);
             if (result != ICERR_OK)
             {
-                TRACE("Unable to found a suitable output format (%ld)\n", result);
+                TRACE("Unable to found a suitable output format (%d)\n", result);
                 goto failed;
             }
 

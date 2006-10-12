@@ -256,13 +256,13 @@ const char * qzdebugstr_State(FILTER_STATE state)
 
 LONG WINAPI AmpFactorToDB(LONG ampfactor)
 {
-    FIXME("(%ld) Stub!\n", ampfactor);
+    FIXME("(%d) Stub!\n", ampfactor);
     return 0;
 }
 
 LONG WINAPI DBToAmpFactor(LONG db)
 {
-    FIXME("(%ld) Stub!\n", db);
+    FIXME("(%d) Stub!\n", db);
     /* Avoid divide by zero (probably during range computation) in Windows Media Player 6.4 */
     if (db < -1000)
 	return 0;
@@ -272,10 +272,10 @@ LONG WINAPI DBToAmpFactor(LONG db)
 DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
 {
     int len;
-    static const char format[] = "Error: 0x%lx";
+    static const char format[] = "Error: 0x%x";
     char error[MAX_ERROR_TEXT_LEN];
 
-    FIXME("(%lx,%p,%ld) stub\n", hr, buffer, maxlen);
+    FIXME("(%x,%p,%d) stub\n", hr, buffer, maxlen);
 
     if (!buffer) return 0;
     wsprintfA(error, format, hr);
@@ -290,7 +290,7 @@ DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen)
     static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
     WCHAR error[MAX_ERROR_TEXT_LEN];
 
-    FIXME("(%lx,%p,%ld) stub\n", hr, buffer, maxlen);
+    FIXME("(%x,%p,%d) stub\n", hr, buffer, maxlen);
 
     if (!buffer) return 0;
     wsprintfW(error, format, hr);

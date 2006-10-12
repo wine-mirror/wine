@@ -73,7 +73,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     BOOL unprepare_header = FALSE;
     MMRESULT res;
 
-    TRACE("(%p)->(%p,%ld)\n", This, data, size);
+    TRACE("(%p)->(%p,%d)\n", This, data, size);
 
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -98,7 +98,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
   
 	hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pSample, NULL, NULL, 0);
 	if (FAILED(hr)) {
-	    ERR("Unable to get delivery buffer (%lx)\n", hr);
+	    ERR("Unable to get delivery buffer (%x)\n", hr);
 	    goto error;
 	}
 
@@ -107,7 +107,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 
 	hr = IMediaSample_GetPointer(pSample, &pbDstStream);
 	if (FAILED(hr)) {
-	    ERR("Unable to get pointer to buffer (%lx)\n", hr);
+	    ERR("Unable to get pointer to buffer (%x)\n", hr);
 	    goto error;
 	}
 	cbDstStream = IMediaSample_GetSize(pSample);
@@ -133,7 +133,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	}
 	This->reinit_codec = FALSE;
 
-	TRACE("used in %lu, used out %lu\n", ash.cbSrcLengthUsed, ash.cbDstLengthUsed);
+	TRACE("used in %u, used out %u\n", ash.cbSrcLengthUsed, ash.cbDstLengthUsed);
 
 	hr = IMediaSample_SetActualDataLength(pSample, ash.cbDstLengthUsed);
 	assert(hr == S_OK);
@@ -147,7 +147,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 
 	hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pSample);
 	if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
-	    ERR("Error sending sample (%lx)\n", hr);
+	    ERR("Error sending sample (%x)\n", hr);
 	    goto error;
         }
 
@@ -202,7 +202,7 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
 		This->max_size = INPUT_BUFFER_SIZE;
 	    }
 
-	    TRACE("input buffer size %ld\n", This->max_size);
+	    TRACE("input buffer size %d\n", This->max_size);
 
             /* Update buffer size of media samples in output */
             ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = OUTPUT_BUFFER_SIZE;

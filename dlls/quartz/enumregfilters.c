@@ -43,7 +43,7 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER* pInRegFilters, const ULONG size
     REGFILTER* pRegFilters = NULL;
     unsigned int i;
 
-    TRACE("(%p, %ld, %p)\n", pInRegFilters, size, ppEnum);
+    TRACE("(%p, %d, %p)\n", pInRegFilters, size, ppEnum);
 
     pEnumRegFilters = CoTaskMemAlloc(sizeof(IEnumRegFiltersImpl));
     if (!pEnumRegFilters)
@@ -145,7 +145,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
 
     cFetched = min(This->size, This->uIndex + cFilters) - This->uIndex;
 
-    TRACE("(%p)->(%lu, %p, %p)\n", iface, cFilters, ppRegFilter, pcFetched);
+    TRACE("(%p)->(%u, %p, %p)\n", iface, cFilters, ppRegFilter, pcFetched);
 
     if (cFetched > 0)
     {
@@ -178,7 +178,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
 
 static HRESULT WINAPI IEnumRegFiltersImpl_Skip(IEnumRegFilters * iface, ULONG n)
 {
-    TRACE("(%p)->(%lu)\n", iface, n);
+    TRACE("(%p)->(%u)\n", iface, n);
 
     return E_NOTIMPL;
 }

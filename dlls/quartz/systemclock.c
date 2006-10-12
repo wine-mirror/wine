@@ -196,7 +196,7 @@ static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
   SystemClockImpl *This = (SystemClockImpl *)iface;
   ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+  TRACE("(%p): AddRef from %d\n", This, ref - 1);
 
   return ref;
 }
@@ -219,7 +219,7 @@ static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REF
 static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
   SystemClockImpl *This = (SystemClockImpl *)iface;
   ULONG ref = InterlockedDecrement(&This->ref);
-  TRACE("(%p): ReleaseRef to %ld\n", This, ref);
+  TRACE("(%p): ReleaseRef to %d\n", This, ref);
   if (ref == 0) {
     if (SystemClockPostMessageToAdviseThread(This, ADVISE_EXIT)) {
       WaitForSingleObject(This->adviseThread, INFINITE);

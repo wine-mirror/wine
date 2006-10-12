@@ -67,13 +67,13 @@ static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Cannot get pointer to sample data (%lx)\n", hr);
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
 	return hr;
     }
 
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
-        ERR("Cannot get sample time (%lx)\n", hr);
+        ERR("Cannot get sample time (%x)\n", hr);
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
@@ -214,7 +214,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
         hr = TransformFilter_OutputPin_Construct(&piOutput, &props, pTransformFilter, TransformFilter_Output_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
 	if (FAILED(hr))
-	    ERR("Cannot create output pin (%lx)\n", hr);
+	    ERR("Cannot create output pin (%x)\n", hr);
     }
     else
     {
@@ -258,7 +258,7 @@ static ULONG WINAPI TransformFilter_AddRef(IBaseFilter * iface)
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
 
     return refCount;
 }
@@ -268,7 +268,7 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
 
     if (!refCount)
     {
@@ -367,7 +367,7 @@ static HRESULT WINAPI TransformFilter_GetState(IBaseFilter * iface, DWORD dwMill
 {
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
 
-    TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
+    TRACE("(%p/%p)->(%d, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&This->csFilter);
     {
@@ -519,7 +519,7 @@ static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
     }
 
     if (FAILED(hr))
-        ERR("%lx\n", hr);
+        ERR("%x\n", hr);
     return hr;
 }
 

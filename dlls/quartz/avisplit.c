@@ -175,7 +175,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
                 FIXME("handle palette change\n");
                 break;
             default:
-                FIXME("Skipping unknown chunk type: %s at file offset 0x%lx\n", debugstr_an((LPSTR)&This->CurrentChunk.fcc, 4), (DWORD)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset));
+                FIXME("Skipping unknown chunk type: %s at file offset 0x%x\n", debugstr_an((LPSTR)&This->CurrentChunk.fcc, 4), (DWORD)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset));
                 if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                     bMoreData = FALSE;
                 continue;
@@ -187,7 +187,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
         if (streamId > This->Parser.cStreams)
         {
-            ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %ld streams)\n", streamId, This->Parser.cStreams);
+            ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %d streams)\n", streamId, This->Parser.cStreams);
             hr = E_FAIL;
             break;
         }
@@ -207,7 +207,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
             }
             else
             {
-                TRACE("Skipping sending sample for stream %02d due to error (%lx)\n", streamId, hr);
+                TRACE("Skipping sending sample for stream %02d due to error (%x)\n", streamId, hr);
                 This->pCurrentSample = NULL;
                 if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                     bMoreData = FALSE;
@@ -227,7 +227,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
             assert(chunk_remaining_bytes <= cbDstStream - IMediaSample_GetActualDataLength(This->pCurrentSample));
 
             /* trace removed for performance reasons */
-/*          TRACE("chunk_remaining_bytes: 0x%lx, cbSrcStream: 0x%lx, offset_src: 0x%lx\n", chunk_remaining_bytes, cbSrcStream, offset_src); */
+/*          TRACE("chunk_remaining_bytes: 0x%x, cbSrcStream: 0x%x, offset_src: 0x%x\n", chunk_remaining_bytes, cbSrcStream, offset_src); */
         }
 
         if (chunk_remaining_bytes <= cbSrcStream - offset_src)
@@ -264,7 +264,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
                 hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
                 if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
-                    ERR("Error sending sample (%lx)\n", hr);
+                    ERR("Error sending sample (%x)\n", hr);
             }
 
             if (This->pCurrentSample)
@@ -308,7 +308,7 @@ skip:
             }
             if (FAILED(hr))
             {
-                ERR("%lx\n", hr);
+                ERR("%x\n", hr);
                 break;
             }
         }
@@ -455,8 +455,8 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
 
     dump_AM_MEDIA_TYPE(&amt);
     TRACE("fSamplesPerSec = %f\n", (double)fSamplesPerSec);
-    TRACE("dwSampleSize = %lx\n", dwSampleSize);
-    TRACE("dwLength = %lx\n", dwLength);
+    TRACE("dwSampleSize = %x\n", dwSampleSize);
+    TRACE("dwLength = %x\n", dwLength);
 
     hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt, fSamplesPerSec, dwSampleSize, dwLength);
 

@@ -118,15 +118,15 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     TRACE("MajorType %s\n", debugstr_guid(&amt.majortype));
     TRACE("SubType %s\n", debugstr_guid(&amt.subtype));
     TRACE("Format %s\n", debugstr_guid(&amt.formattype));
-    TRACE("Size %ld\n", amt.cbFormat);
+    TRACE("Size %d\n", amt.cbFormat);
 
     dump_AM_MEDIA_TYPE(&amt);
     
     format = (WAVEFORMATEX*)amt.pbFormat;
     TRACE("wFormatTag = %x %x\n", format->wFormatTag, WAVE_FORMAT_PCM);
     TRACE("nChannels = %d\n", format->nChannels);
-    TRACE("nSamplesPerSec = %lu\n", format->nSamplesPerSec);
-    TRACE("nAvgBytesPerSec = %lu\n", format->nAvgBytesPerSec);
+    TRACE("nSamplesPerSec = %u\n", format->nSamplesPerSec);
+    TRACE("nAvgBytesPerSec = %u\n", format->nAvgBytesPerSec);
     TRACE("nBlockAlign = %d\n", format->nBlockAlign);
     TRACE("wBitsPerSample = %d\n", format->wBitsPerSample);
     TRACE("cbSize = %d\n", format->cbSize);
@@ -171,7 +171,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
         if (hr != DS_OK)
         {
-            ERR("Error GetCurrentPosition: %lx\n", hr);
+            ERR("Error GetCurrentPosition: %x\n", hr);
             break;
         }
         if (This->write_pos < play_pos)
@@ -189,10 +189,10 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         size2 = min(buf_free, size);
         hr = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, &lpbuf1, &dwsize1, &lpbuf2, &dwsize2, 0);
         if (hr != DS_OK) {
-            ERR("Unable to lock sound buffer! (%lx)\n", hr);
+            ERR("Unable to lock sound buffer! (%x)\n", hr);
             break;
         }
-        /* TRACE("write_pos=%ld, size=%ld, sz1=%ld, sz2=%ld\n", This->write_pos, size2, dwsize1, dwsize2); */
+        /* TRACE("write_pos=%d, size=%d, sz1=%d, sz2=%d\n", This->write_pos, size2, dwsize1, dwsize2); */
 
         memcpy(lpbuf1, data, dwsize1);
         if (dwsize2)
@@ -200,14 +200,14 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
 
         hr = IDirectSoundBuffer_Unlock(This->dsbuffer, lpbuf1, dwsize1, lpbuf2, dwsize2);
         if (hr != DS_OK)
-            ERR("Unable to unlock sound buffer! (%lx)\n", hr);
+            ERR("Unable to unlock sound buffer! (%x)\n", hr);
         if (!This->started)
         {
             hr = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
             if (hr == DS_OK)
                 This->started = TRUE;
             else
-                ERR("Can't start playing! (%lx)\n", hr);
+                ERR("Can't start playing! (%x)\n", hr);
         }
         size -= dwsize1 + dwsize2;
         data += dwsize1 + dwsize2;
@@ -234,13 +234,13 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Cannot get pointer to sample data (%lx)\n", hr);
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
 	return hr;
     }
 
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
-        ERR("Cannot get sample time (%lx)\n", hr);
+        ERR("Cannot get sample time (%x)\n", hr);
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
@@ -281,8 +281,8 @@ static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     WAVEFORMATEX* format = (WAVEFORMATEX*)pmt->pbFormat;
     TRACE("wFormatTag = %x %x\n", format->wFormatTag, WAVE_FORMAT_PCM);
     TRACE("nChannels = %d\n", format->nChannels);
-    TRACE("nSamplesPerSec = %ld\n", format->nAvgBytesPerSec);
-    TRACE("nAvgBytesPerSec = %ld\n", format->nAvgBytesPerSec);
+    TRACE("nSamplesPerSec = %d\n", format->nAvgBytesPerSec);
+    TRACE("nAvgBytesPerSec = %d\n", format->nAvgBytesPerSec);
     TRACE("nBlockAlign = %d\n", format->nBlockAlign);
     TRACE("wBitsPerSample = %d\n", format->wBitsPerSample);
 
@@ -373,7 +373,7 @@ static ULONG WINAPI DSoundRender_AddRef(IBaseFilter * iface)
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
 
     return refCount;
 }
@@ -383,7 +383,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
 
     if (!refCount)
     {
@@ -473,7 +473,7 @@ static HRESULT WINAPI DSoundRender_GetState(IBaseFilter * iface, DWORD dwMilliSe
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
-    TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
+    TRACE("(%p/%p)->(%d, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&This->csFilter);
     {
@@ -703,7 +703,7 @@ static HRESULT WINAPI Basicaudio_GetTypeInfo(IBasicAudio *iface,
 					     ITypeInfo**ppTInfo) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%d, %ld, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
+    TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
     return S_OK;
 }
@@ -716,7 +716,7 @@ static HRESULT WINAPI Basicaudio_GetIDsOfNames(IBasicAudio *iface,
 					       DISPID*rgDispId) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p, %d, %ld, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
 
     return S_OK;
 }
@@ -732,7 +732,7 @@ static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
 					UINT*puArgErr) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld, %s (%p), %ld, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    TRACE("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
     return S_OK;
 }

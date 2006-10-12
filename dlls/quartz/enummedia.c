@@ -154,7 +154,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
     IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p)->() AddRef from %ld\n", iface, refCount - 1);
+    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
 
     return refCount;
 }
@@ -164,7 +164,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
     IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
 
     if (!refCount)
     {
@@ -185,8 +185,8 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
 
     cFetched = min(This->enumMediaDetails.cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
 
-    TRACE("(%lu, %p, %p)\n", cMediaTypes, ppMediaTypes, pcFetched);
-    TRACE("Next uIndex: %lu, cFetched: %lu\n", This->uIndex, cFetched);
+    TRACE("(%u, %p, %p)\n", cMediaTypes, ppMediaTypes, pcFetched);
+    TRACE("Next uIndex: %u, cFetched: %u\n", This->uIndex, cFetched);
 
     if (cFetched > 0)
     {
@@ -215,7 +215,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cM
 {
     IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
 
-    TRACE("(%lu)\n", cMediaTypes);
+    TRACE("(%u)\n", cMediaTypes);
 
     if (This->uIndex + cMediaTypes < This->enumMediaDetails.cMediaTypes)
     {

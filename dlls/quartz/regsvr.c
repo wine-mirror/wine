@@ -629,7 +629,7 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 	    }
 
 	    if (FAILED(hr)) {
-		ERR("failed to register with hresult 0x%lx\n", hr);
+		ERR("failed to register with hresult 0x%x\n", hr);
 		CoTaskMemFree(prfp2);
 		break;
 	    }

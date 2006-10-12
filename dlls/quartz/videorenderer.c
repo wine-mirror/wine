@@ -125,7 +125,7 @@ static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     switch(uMsg)
     {
         case WM_SIZING:
-            /* TRACE("WM_SIZING %ld %ld %ld %ld\n", lprect->left, lprect->top, lprect->right, lprect->bottom); */
+            /* TRACE("WM_SIZING %d %d %d %d\n", lprect->left, lprect->top, lprect->right, lprect->bottom); */
             SetWindowPos(hwnd, NULL, lprect->left, lprect->top, lprect->right - lprect->left, lprect->bottom - lprect->top, SWP_NOZORDER);
             GetClientRect(hwnd, &pVideoRenderer->DestRect);
             return TRUE;
@@ -156,7 +156,7 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
     {
         if (!RegisterClassA(&winclass))
         {
-            ERR("Unable to register window %lx\n", GetLastError());
+            ERR("Unable to register window %x\n", GetLastError());
             return FALSE;
         }
         wnd_class_registered = TRUE;
@@ -283,7 +283,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     LPBYTE palette = NULL;
     HDC hDC;
 
-    TRACE("%p %p %ld\n", This, data, size);
+    TRACE("%p %p %d\n", This, data, size);
 
     sdesc.dwSize = sizeof(sdesc);
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
@@ -293,13 +293,13 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     }
     format = (VIDEOINFOHEADER*)amt.pbFormat;
 
-    TRACE("biSize = %ld\n", format->bmiHeader.biSize);
-    TRACE("biWidth = %ld\n", format->bmiHeader.biWidth);
-    TRACE("biHeigth = %ld\n", format->bmiHeader.biHeight);
+    TRACE("biSize = %d\n", format->bmiHeader.biSize);
+    TRACE("biWidth = %d\n", format->bmiHeader.biWidth);
+    TRACE("biHeigth = %d\n", format->bmiHeader.biHeight);
     TRACE("biPlanes = %d\n", format->bmiHeader.biPlanes);
     TRACE("biBitCount = %d\n", format->bmiHeader.biBitCount);
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(format->bmiHeader.biCompression), 4));
-    TRACE("biSizeImage = %ld\n", format->bmiHeader.biSizeImage);
+    TRACE("biSizeImage = %d\n", format->bmiHeader.biSizeImage);
 
     width = format->bmiHeader.biWidth;
     height = format->bmiHeader.biHeight;
@@ -330,8 +330,8 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         return E_FAIL;
     }
 
-    TRACE("Src Rect: %ld %ld %ld %ld\n", This->SourceRect.left, This->SourceRect.top, This->SourceRect.right, This->SourceRect.bottom);
-    TRACE("Dst Rect: %ld %ld %ld %ld\n", This->DestRect.left, This->DestRect.top, This->DestRect.right, This->DestRect.bottom);
+    TRACE("Src Rect: %d %d %d %d\n", This->SourceRect.left, This->SourceRect.top, This->SourceRect.right, This->SourceRect.bottom);
+    TRACE("Dst Rect: %d %d %d %d\n", This->DestRect.left, This->DestRect.top, This->DestRect.right, This->DestRect.bottom);
 
     StretchDIBits(hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
                   This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
@@ -359,13 +359,13 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Cannot get pointer to sample data (%lx)\n", hr);
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
         return hr;
     }
 
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
-        ERR("Cannot get sample time (%lx)\n", hr);
+        ERR("Cannot get sample time (%x)\n", hr);
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
@@ -506,7 +506,7 @@ static ULONG WINAPI VideoRenderer_AddRef(IBaseFilter * iface)
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
 
     return refCount;
 }
@@ -516,7 +516,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
 
     if (!refCount)
     {
@@ -609,7 +609,7 @@ static HRESULT WINAPI VideoRenderer_GetState(IBaseFilter * iface, DWORD dwMilliS
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
-    TRACE("(%p/%p)->(%ld, %p)\n", This, iface, dwMilliSecsTimeout, pState);
+    TRACE("(%p/%p)->(%d, %p)\n", This, iface, dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&This->csFilter);
     {
@@ -825,7 +825,7 @@ static HRESULT WINAPI Basicvideo_GetTypeInfo(IBasicVideo *iface,
 					     ITypeInfo**ppTInfo) {
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
 
-    FIXME("(%p/%p)->(%d, %ld, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
+    FIXME("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
     return S_OK;
 }
@@ -838,7 +838,7 @@ static HRESULT WINAPI Basicvideo_GetIDsOfNames(IBasicVideo *iface,
 					       DISPID*rgDispId) {
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
 
-    FIXME("(%p/%p)->(%s (%p), %p, %d, %ld, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
+    FIXME("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
 
     return S_OK;
 }
@@ -854,7 +854,7 @@ static HRESULT WINAPI Basicvideo_Invoke(IBasicVideo *iface,
 					UINT*puArgErr) {
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
 
-    FIXME("(%p/%p)->(%ld, %s (%p), %ld, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    FIXME("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
     return S_OK;
 }
@@ -1322,7 +1322,7 @@ static HRESULT WINAPI Videowindow_GetTypeInfo(IVideoWindow *iface,
 					      ITypeInfo**ppTInfo) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    FIXME("(%p/%p)->(%d, %ld, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
+    FIXME("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
     return S_OK;
 }
@@ -1335,7 +1335,7 @@ static HRESULT WINAPI Videowindow_GetIDsOfNames(IVideoWindow *iface,
 						DISPID*rgDispId) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    FIXME("(%p/%p)->(%s (%p), %p, %d, %ld, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
+    FIXME("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
 
     return S_OK;
 }
@@ -1351,7 +1351,7 @@ static HRESULT WINAPI Videowindow_Invoke(IVideoWindow *iface,
 					 UINT*puArgErr) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    FIXME("(%p/%p)->(%ld, %s (%p), %ld, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    FIXME("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
     return S_OK;
 }
@@ -1387,7 +1387,7 @@ static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
 
     old = GetWindowLongA(This->hWnd, GWL_STYLE);
     
-    TRACE("(%p/%p)->(%lx -> %lx)\n", This, iface, old, WindowStyle);
+    TRACE("(%p/%p)->(%x -> %lx)\n", This, iface, old, WindowStyle);
 
     if (WindowStyle & (WS_DISABLED|WS_HSCROLL|WS_ICONIC|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
         return E_INVALIDARG;
@@ -1618,7 +1618,7 @@ static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
 					    OAHWND Owner) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08lx)\n", This, iface, (DWORD) Owner);
+    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
 
     SetParent(This->hWnd, (HWND)Owner);
 
@@ -1629,7 +1629,7 @@ static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
 					    OAHWND *Owner) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08lx)\n", This, iface, (DWORD) Owner);
+    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
 
     *(HWND*)Owner = GetParent(This->hWnd);
 
@@ -1640,7 +1640,7 @@ static HRESULT WINAPI Videowindow_put_MessageDrain(IVideoWindow *iface,
 						   OAHWND Drain) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08lx)\n", This, iface, (DWORD) Drain);
+    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Drain);
 
     This->hWndMsgDrain = (HWND)Drain;
 
@@ -1728,7 +1728,7 @@ static HRESULT WINAPI Videowindow_NotifyOwnerMessage(IVideoWindow *iface,
 						     LONG_PTR lParam) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08lx, %ld, %08lx, %08lx)\n", This, iface, (DWORD) hwnd, uMsg, wParam, lParam);
+    TRACE("(%p/%p)->(%08x, %ld, %08lx, %08lx)\n", This, iface, (DWORD) hwnd, uMsg, wParam, lParam);
 
     if (!PostMessageA(This->hWnd, uMsg, wParam, lParam))
         return E_FAIL;

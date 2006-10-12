@@ -186,7 +186,7 @@ HRESULT WINAPI MediaSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * p
     BOOL bChangeStart = FALSE, bChangeStop = FALSE;
     LONGLONG llNewStart, llNewStop;
 
-    TRACE("(%p, %lx, %p, %lx)\n", pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    TRACE("(%p, %x, %p, %x)\n", pCurrent, dwCurrentFlags, pStop, dwStopFlags);
 
     llNewStart = Adjust(This->llStart, pCurrent, dwCurrentFlags);
     llNewStop = Adjust(This->llStop, pStop, dwStopFlags);

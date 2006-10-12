@@ -113,7 +113,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
         FreeMediaType(&This->pin.mtCurrent);
     }
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -232,7 +232,7 @@ ULONG WINAPI IPinImpl_AddRef(IPin * iface)
     IPinImpl *This = (IPinImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
     
-    TRACE("(%p)->() AddRef from %ld\n", iface, refCount - 1);
+    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
     
     return refCount;
 }
@@ -411,7 +411,7 @@ ULONG WINAPI InputPin_Release(IPin * iface)
     InputPin *This = (InputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
     
-    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
     
     if (!refCount)
     {
@@ -497,7 +497,7 @@ HRESULT WINAPI InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENC
 {
     InputPin *This = (InputPin *)iface;
 
-    TRACE("(%lx%08lx, %lx%08lx, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+    TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
     This->tStart = tStart;
     This->tStop = tStop;
@@ -670,7 +670,7 @@ ULONG WINAPI OutputPin_Release(IPin * iface)
     OutputPin *This = (OutputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
     
-    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
     
     if (!refCount)
     {
@@ -748,7 +748,7 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
     } /* if succeeded */
     LeaveCriticalSection(This->pin.pCritSec);
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -816,7 +816,7 @@ HRESULT WINAPI OutputPin_EndFlush(IPin * iface)
 
 HRESULT WINAPI OutputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    TRACE("(%p)->(%lx%08lx, %lx%08lx, %e)\n", iface, (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+    TRACE("(%p)->(%x%08x, %x%08x, %e)\n", iface, (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
     /* not supposed to do anything in an output pin */
 
@@ -849,7 +849,7 @@ HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, 
 {
     HRESULT hr;
 
-    TRACE("(%p, %p, %p, %lx)\n", ppSample, tStart, tStop, dwFlags);
+    TRACE("(%p, %p, %p, %x)\n", ppSample, tStart, tStop, dwFlags);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -1173,7 +1173,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
          * it is harder to debug so for the moment it will stay as it is */
         IMediaSample * pSample = NULL;
         REFERENCE_TIME rtSampleStop;
-        DWORD dwUser;
+        DWORD_PTR dwUser;
 
         TRACE("Process sample\n");
 
@@ -1197,7 +1197,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
         if (SUCCEEDED(hr))
             hr = This->fnSampleProc(This->pin.pUserData, pSample);
         else
-            ERR("Processing error: %lx\n", hr);
+            ERR("Processing error: %x\n", hr);
         
         if (pSample)
             IMediaSample_Release(pSample);
@@ -1221,7 +1221,7 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
         CloseHandle(This->hThread);
         This->hThread = NULL;
         if (FAILED(hr = IMemAllocator_Decommit(This->pAlloc)))
-            ERR("Allocator decommit failed with error %lx. Possible memory leak\n", hr);
+            ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -1256,7 +1256,7 @@ HRESULT PullPin_InitProcessing(PullPin * This)
         LeaveCriticalSection(This->pin.pCritSec);
     }
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
 
     return hr;
 }
@@ -1313,7 +1313,7 @@ HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds)
 
 HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop)
 {
-    FIXME("(%p)->(%lx%08lx, %lx%08lx)\n", This, (LONG)(rtStart >> 32), (LONG)rtStart, (LONG)(rtStop >> 32), (LONG)rtStop);
+    FIXME("(%p)->(%x%08x, %x%08x)\n", This, (LONG)(rtStart >> 32), (LONG)rtStart, (LONG)(rtStop >> 32), (LONG)rtStop);
 
     PullPin_BeginFlush((IPin *)This);
     /* FIXME: need critical section? */

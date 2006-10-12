@@ -95,7 +95,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
             }
             else
             {
-                TRACE("Skipping sending sample due to error (%lx)\n", hr);
+                TRACE("Skipping sending sample due to error (%x)\n", hr);
                 This->pCurrentSample = NULL;
                 break;
             }
@@ -147,7 +147,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
 
                 hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
                 if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
-                    ERR("Error sending sample (%lx)\n", hr);
+                    ERR("Error sending sample (%x)\n", hr);
             }
 
             if (This->pCurrentSample)
@@ -188,7 +188,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
             }
             if (FAILED(hr))
             {
-                ERR("%lx\n", hr);
+                ERR("%x\n", hr);
                 break;
             }
         }

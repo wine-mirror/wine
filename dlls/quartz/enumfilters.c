@@ -41,7 +41,7 @@ HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEn
      * they should have been previously AddRef'd. */
     IEnumFiltersImpl * pEnumFilters = CoTaskMemAlloc(sizeof(IEnumFiltersImpl));
 
-    TRACE("(%p, %ld, %p)\n", ppFilters, nFilters, ppEnum);
+    TRACE("(%p, %d, %p)\n", ppFilters, nFilters, ppEnum);
 
     *ppEnum = NULL;
 
@@ -124,7 +124,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Next(IEnumFilters * iface, ULONG cFilters
 
     cFetched = min(This->nFilters, This->uIndex + cFilters) - This->uIndex;
 
-    TRACE("(%p)->(%lu, %p, %p)\n", iface, cFilters, ppFilters, pcFetched);
+    TRACE("(%p)->(%u, %p, %p)\n", iface, cFilters, ppFilters, pcFetched);
 
     for (i = 0; i < cFetched; i++)
     {
@@ -146,7 +146,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Skip(IEnumFilters * iface, ULONG cFilters
 {
     IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
 
-    TRACE("(%p)->(%lu)\n", iface, cFilters);
+    TRACE("(%p)->(%u)\n", iface, cFilters);
 
     if (This->uIndex + cFilters < This->nFilters)
     {

@@ -50,7 +50,7 @@ HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnum
      * IMonikers */
     EnumMonikerImpl * pemi = CoTaskMemAlloc(sizeof(EnumMonikerImpl));
 
-    TRACE("(%p, %ld, %p)\n", ppMoniker, nMonikerCount, ppEnum);
+    TRACE("(%p, %d, %p)\n", ppMoniker, nMonikerCount, ppEnum);
 
     *ppEnum = NULL;
 
@@ -106,7 +106,7 @@ static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface)
 
     ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
+    TRACE("(%p)->() AddRef from %d\n", iface, ref - 1);
 
     return ref;
 }
@@ -119,7 +119,7 @@ static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
+    TRACE("(%p)->() Release from %d\n", iface, ref + 1);
 
     if (!ref)
     {
@@ -136,7 +136,7 @@ static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMon
     ULONG fetched;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%p)->(%ld, %p, %p)\n", iface, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     for (fetched = 0; (This->index + fetched < This->nMonikerCount) && (fetched < celt); fetched++)
     {
@@ -146,7 +146,7 @@ static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMon
 
     This->index += fetched;
 
-    TRACE("-- fetched %ld\n", fetched);
+    TRACE("-- fetched %d\n", fetched);
 
     if (pceltFetched)
         *pceltFetched = fetched;
@@ -161,7 +161,7 @@ static HRESULT WINAPI EnumMonikerImpl_Skip(LPENUMMONIKER iface, ULONG celt)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%p)->(%ld)\n", iface, celt);
+    TRACE("(%p)->(%d)\n", iface, celt);
 
     This->index += celt;
 

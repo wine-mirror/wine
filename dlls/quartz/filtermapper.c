@@ -248,7 +248,7 @@ static HRESULT WINAPI FilterMapper2_CreateCategory(
     LONG lRet;
     HRESULT hr;
 
-    TRACE("(%s, %lx, %s)\n", debugstr_guid(clsidCategory), dwCategoryMerit, debugstr_w(szDescription));
+    TRACE("(%s, %x, %s)\n", debugstr_guid(clsidCategory), dwCategoryMerit, debugstr_w(szDescription));
 
     hr = StringFromCLSID(&CLSID_ActiveMovieCategories, &wClsidAMCat);
 
@@ -515,7 +515,7 @@ static HRESULT FM2_ReadFilterData(IPropertyBag * pPropBag, REGFILTER2 * prf2)
 
         if (prrf->dwVersion != 2)
         {
-            FIXME("Filter registry version %ld not supported\n", prrf->dwVersion);
+            FIXME("Filter registry version %d not supported\n", prrf->dwVersion);
             ZeroMemory(prf2, sizeof(*prf2));
             hr = E_FAIL;
         }
@@ -523,7 +523,7 @@ static HRESULT FM2_ReadFilterData(IPropertyBag * pPropBag, REGFILTER2 * prf2)
 
     if (SUCCEEDED(hr))
     {
-        TRACE("version = %ld, merit = %lx, #pins = %ld, unused = %lx\n",
+        TRACE("version = %d, merit = %x, #pins = %d, unused = %x\n",
             prrf->dwVersion, prrf->dwMerit, prrf->dwPins, prrf->dwUnused);
 
         prf2->dwVersion = prrf->dwVersion;
@@ -544,7 +544,7 @@ static HRESULT FM2_ReadFilterData(IPropertyBag * pPropBag, REGFILTER2 * prf2)
 
             TRACE("\tsignature = %s\n", debugstr_an((const char*)prrfp->signature, 4));
 
-            TRACE("\tpin[%ld]: flags = %lx, instances = %ld, media types = %ld, mediums = %ld\n",
+            TRACE("\tpin[%d]: flags = %x, instances = %d, media types = %d, mediums = %d\n",
                 i, prrfp->dwFlags, prrfp->dwInstances, prrfp->dwMediaTypes, prrfp->dwMediums);
 
             rgPins2[i].dwFlags = prrfp->dwFlags;
@@ -787,7 +787,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
 
     CoTaskMemFree(pregfp2);
 
-    TRACE("-- returning %lx\n", hr);
+    TRACE("-- returning %x\n", hr);
 
     return hr;
 }
@@ -866,7 +866,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
     HRESULT hr;
     struct Vector monikers = {NULL, 0, 0};
 
-    TRACE("(%p, %lx, %s, %lx, %s, %ld, %p, %p, %p, %s, %s, %p, %p, %p)\n",
+    TRACE("(%p, %x, %s, %x, %s, %d, %p, %p, %p, %s, %s, %p, %p, %p)\n",
         ppEnum,
         dwFlags,
         bExactMatch ? "true" : "false",
@@ -884,7 +884,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
 
     if (dwFlags != 0)
     {
-        FIXME("dwFlags = %lx not implemented\n", dwFlags);
+        FIXME("dwFlags = %x not implemented\n", dwFlags);
     }
 
     *ppEnum = NULL;
@@ -1095,7 +1095,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     REGFILTER* regfilters;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%p, %lx, %s, %s, %s, %s, %s, %s, %s) stub!\n",
+    TRACE("(%p/%p)->(%p, %x, %s, %s, %s, %s, %s, %s, %s) stub!\n",
         iface,This,
         ppEnum,
         dwMerit,
@@ -1220,7 +1220,7 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
     LONG lRet;
     WCHAR wszKeyName[strlenW(wszFilterSlash) + (CHARS_IN_GUID-1) + 1];
 
-    TRACE("(%p)->(%s, %s, %lx)\n", iface, debugstr_guid(&clsid), debugstr_w(szName), dwMerit);
+    TRACE("(%p)->(%s, %s, %x)\n", iface, debugstr_guid(&clsid), debugstr_w(szName), dwMerit);
 
     hr = StringFromCLSID(&clsid, &wszClsid);
 

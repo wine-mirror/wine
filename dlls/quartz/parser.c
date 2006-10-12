@@ -169,7 +169,7 @@ static ULONG WINAPI Parser_AddRef(IBaseFilter * iface)
     ParserImpl *This = (ParserImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
 
     return refCount;
 }
@@ -179,7 +179,7 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
     ParserImpl *This = (ParserImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
     
     if (!refCount)
     {
@@ -342,7 +342,7 @@ static HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTime
 {
     ParserImpl *This = (ParserImpl *)iface;
 
-    TRACE("(%ld, %p)\n", dwMilliSecsTimeout, pState);
+    TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&This->csFilter);
     {
@@ -503,7 +503,7 @@ HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTI
     {
         HeapFree(GetProcessHeap(), 0, This->ppPins);
         This->ppPins = ppOldPins;
-        ERR("Failed with error %lx\n", hr);
+        ERR("Failed with error %x\n", hr);
     }
 
     return hr;
@@ -627,7 +627,7 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
-    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
     
     if (!refCount)
     {

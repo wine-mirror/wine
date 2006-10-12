@@ -362,7 +362,7 @@ static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
     AsyncReader *This = (AsyncReader *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
     
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
+    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
     
     return refCount;
 }
@@ -372,7 +372,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
     AsyncReader *This = (AsyncReader *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
     
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
+    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
     
     if (!refCount)
     {
@@ -426,7 +426,7 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 {
     AsyncReader *This = (AsyncReader *)iface;
 
-    TRACE("(%lx%08lx)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
+    TRACE("(%x%08x)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
 
     This->state = State_Running;
 
@@ -437,7 +437,7 @@ static HRESULT WINAPI AsyncReader_GetState(IBaseFilter * iface, DWORD dwMilliSec
 {
     AsyncReader *This = (AsyncReader *)iface;
 
-    TRACE("(%lu, %p)\n", dwMilliSecsTimeout, pState);
+    TRACE("(%u, %p)\n", dwMilliSecsTimeout, pState);
 
     *pState = This->state;
     
@@ -828,7 +828,7 @@ static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceiveP
         FreeMediaType(&This->pin.mtCurrent);
     }
 
-    TRACE(" -- %lx\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -908,7 +908,7 @@ static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMe
         {
             IMemAllocator_AddRef(pPreferred);
             *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %lx\n", hr);
+            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
             return S_OK;
         }
     }
@@ -926,7 +926,7 @@ static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMe
         {
             IMemAllocator_AddRef(pPreferred);
             *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %lx\n", hr);
+            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
             return S_OK;
         }
     }
@@ -938,7 +938,7 @@ static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMe
             IMemAllocator_Release(pPreferred);
     }
 
-    TRACE("-- %lx\n", hr);
+    TRACE("-- %x\n", hr);
     return hr;
 }
 
@@ -1021,7 +1021,7 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
         CoTaskMemFree(pDataRq);
     }
 
-    TRACE("-- %lx\n", hr);
+    TRACE("-- %x\n", hr);
     return hr;
 }
 
@@ -1031,7 +1031,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     DATAREQUEST * pDataRq = NULL;
     FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
-    TRACE("(%lu, %p, %p)\n", dwTimeout, ppSample, pdwUser);
+    TRACE("(%u, %p, %p)\n", dwTimeout, ppSample, pdwUser);
 
     /* FIXME: we could do with improving this by waiting for an array of event handles
      * and then determining which one finished and removing that from the list, otherwise
@@ -1081,7 +1081,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     /* no need to close event handle since we will close it when the pin is destroyed */
     CoTaskMemFree(pDataRq);
     
-    TRACE("-- %lx\n", hr);
+    TRACE("-- %x\n", hr);
     return hr;
 }
 
@@ -1107,7 +1107,7 @@ static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader * iface, IMed
             (LONG) BYTES_FROM_MEDIATIME(tStop - tStart),
             pBuffer);
 
-    TRACE("-- %lx\n", hr);
+    TRACE("-- %x\n", hr);
     return hr;
 }
 
@@ -1117,7 +1117,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader * iface, LONGLONG ll
     HRESULT hr = S_OK;
     FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
-    TRACE("(%lx%08lx, %ld, %p)\n", (ULONG)(llPosition >> 32), (ULONG)llPosition, lLength, pBuffer);
+    TRACE("(%x%08x, %d, %p)\n", (ULONG)(llPosition >> 32), (ULONG)llPosition, lLength, pBuffer);
 
     ZeroMemory(&ovl, sizeof(ovl));
 
@@ -1142,7 +1142,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader * iface, LONGLONG ll
 
     CloseHandle(ovl.hEvent);
 
-    TRACE("-- %lx\n", hr);
+    TRACE("-- %x\n", hr);
     return hr;
 }
 
