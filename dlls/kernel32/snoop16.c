@@ -260,7 +260,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		dll=dll->next;
 	}
 	if (!dll) {
-		FIXME("entrypoint 0x%08lx not found\n",entry);
+		FIXME("entrypoint 0x%08x not found\n",entry);
 		return; /* oops */
 	}
 	while (*rets) {
@@ -291,7 +291,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	context->SegCs = HIWORD(fun->origfun);
 
 
-	DPRINTF("%04lx:CALL %s.%ld: %s(",GetCurrentThreadId(), dll->name,ordinal,fun->name);
+	DPRINTF("%04x:CALL %s.%d: %s(",GetCurrentThreadId(), dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -320,7 +320,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	}
 	context->Eip = LOWORD(ret->origreturn);
 	context->SegCs  = HIWORD(ret->origreturn);
-        DPRINTF("%04lx:RET  %s.%ld: %s(",
+        DPRINTF("%04x:RET  %s.%d: %s(",
                 GetCurrentThreadId(),ret->dll->name,ret->ordinal,
                 ret->dll->funs[ret->ordinal].name);
 	if (ret->args) {

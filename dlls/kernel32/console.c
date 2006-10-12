@@ -357,7 +357,7 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
 {
     BOOL ret;
 
-    TRACE("(%p,%p,%ld,%p)\n", handle, buffer, count, written);
+    TRACE("(%p,%p,%d,%p)\n", handle, buffer, count, written);
 
     if (written) *written = 0;
     SERVER_START_REQ( write_console_input )
@@ -467,7 +467,7 @@ BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWO
     LPWSTR strW;
     DWORD lenW;
 
-    TRACE("(%p,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
+    TRACE("(%p,%s,%d,%dx%d,%p)\n", hConsoleOutput,
           debugstr_an(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
     lenW = MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, NULL, 0 );
@@ -504,7 +504,7 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
 {
     BOOL ret;
 
-    TRACE("(%p,%p,%ld,%dx%d,%p)\n", hConsoleOutput,attr,length,coord.X,coord.Y,lpNumAttrsWritten);
+    TRACE("(%p,%p,%d,%dx%d,%p)\n", hConsoleOutput,attr,length,coord.X,coord.Y,lpNumAttrsWritten);
 
     SERVER_START_REQ( write_console_output )
     {
@@ -558,7 +558,7 @@ BOOL WINAPI FillConsoleOutputCharacterW( HANDLE hConsoleOutput, WCHAR ch, DWORD 
 {
     BOOL ret;
 
-    TRACE("(%p,%s,%ld,(%dx%d),%p)\n",
+    TRACE("(%p,%s,%d,(%dx%d),%p)\n",
           hConsoleOutput, debugstr_wn(&ch, 1), length, coord.X, coord.Y, lpNumCharsWritten);
 
     SERVER_START_REQ( fill_console_output )
@@ -599,7 +599,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD attr, DWORD 
 {
     BOOL ret;
 
-    TRACE("(%p,%d,%ld,(%dx%d),%p)\n",
+    TRACE("(%p,%d,%d,(%dx%d),%p)\n",
           hConsoleOutput, attr, length, coord.X, coord.Y, lpNumAttrsWritten);
 
     SERVER_START_REQ( fill_console_output )
@@ -654,7 +654,7 @@ BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, D
 {
     BOOL ret;
 
-    TRACE( "(%p,%p,%ld,%dx%d,%p)\n", hConsoleOutput, buffer, count, coord.X, coord.Y, read_count );
+    TRACE( "(%p,%p,%d,%dx%d,%p)\n", hConsoleOutput, buffer, count, coord.X, coord.Y, read_count );
 
     SERVER_START_REQ( read_console_output )
     {
@@ -682,7 +682,7 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
 {
     BOOL ret;
 
-    TRACE("(%p,%p,%ld,%dx%d,%p)\n",
+    TRACE("(%p,%p,%d,%dx%d,%p)\n",
           hConsoleOutput, lpAttribute, length, coord.X, coord.Y, read_count);
 
     SERVER_START_REQ( read_console_output )
@@ -982,7 +982,7 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
     } x;
     x.c.X = 80;
     x.c.Y = 24;
-    TRACE("(%p), returning %dx%d (%lx)\n", hConsoleOutput, x.c.X, x.c.Y, x.w);
+    TRACE("(%p), returning %dx%d (%x)\n", hConsoleOutput, x.c.X, x.c.Y, x.w);
     return x.w;
 }
 #endif /* defined(__i386__) */
@@ -1047,7 +1047,7 @@ static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA*
     {
         if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) return FALSE;
 
-        TRACE("Started wineconsole pid=%08lx tid=%08lx\n",
+        TRACE("Started wineconsole pid=%08x tid=%08x\n",
               pi.dwProcessId, pi.dwThreadId);
 
         return TRUE;
@@ -1218,7 +1218,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     LPWSTR	xbuf = (LPWSTR)lpBuffer;
     DWORD	mode;
 
-    TRACE("(%p,%p,%ld,%p,%p)\n",
+    TRACE("(%p,%p,%d,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
 
     if (!GetConsoleMode(hConsoleInput, &mode))
@@ -1316,7 +1316,7 @@ BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DW
 {
     BOOL ret;
 
-    TRACE("(%p,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
+    TRACE("(%p,%s,%d,%dx%d,%p)\n", hConsoleOutput,
           debugstr_wn(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
     SERVER_START_REQ( write_console_output )
@@ -1416,7 +1416,7 @@ BOOL WINAPI SetConsoleInputExeNameA(LPCSTR name)
  */
 static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
 {
-    FIXME("Terminating process %lx on event %lx\n", GetCurrentProcessId(), dwCtrlType);
+    FIXME("Terminating process %x on event %x\n", GetCurrentProcessId(), dwCtrlType);
     ExitProcess(0);
     /* should never go here */
     return TRUE;
@@ -1521,7 +1521,7 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 
 static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
 {
-    TRACE("(%lx)\n", GetExceptionCode());
+    TRACE("(%x)\n", GetExceptionCode());
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -1607,11 +1607,11 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
 {
     BOOL ret;
 
-    TRACE("(%ld, %ld)\n", dwCtrlEvent, dwProcessGroupID);
+    TRACE("(%d, %d)\n", dwCtrlEvent, dwProcessGroupID);
 
     if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
     {
-	ERR("Invalid event %ld for PGID %ld\n", dwCtrlEvent, dwProcessGroupID);
+	ERR("Invalid event %d for PGID %d\n", dwCtrlEvent, dwProcessGroupID);
 	return FALSE;
     }
 
@@ -1654,7 +1654,7 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
 {
     HANDLE	ret = INVALID_HANDLE_VALUE;
 
-    TRACE("(%ld,%ld,%p,%ld,%p)\n",
+    TRACE("(%d,%d,%p,%d,%p)\n",
 	  dwDesiredAccess, dwShareMode, sa, dwFlags, lpScreenBufferData);
 
     if (dwFlags != CONSOLE_TEXTMODE_BUFFER || lpScreenBufferData != NULL)
@@ -1791,7 +1791,7 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
      * empty the S_EditString buffer
      */
 
-    TRACE("(%p,%lx) retval == %d\n", hcon, mode, ret);
+    TRACE("(%p,%x) retval == %d\n", hcon, mode, ret);
 
     return ret;
 }
@@ -1920,7 +1920,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     int				k, first = 0;
 
-    TRACE("%p %s %ld %p %p\n",
+    TRACE("%p %s %d %p %p\n",
 	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
 	  nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 
@@ -2113,7 +2113,7 @@ BOOL WINAPI GetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
     }
     SERVER_END_REQ;
 
-    TRACE("(%p) returning (%ld,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
+    TRACE("(%p) returning (%d,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
     return ret;
 }
 
@@ -2132,7 +2132,7 @@ BOOL WINAPI SetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
 {
     BOOL ret;
 
-    TRACE("(%p,%ld,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
+    TRACE("(%p,%d,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
     SERVER_START_REQ(set_console_output_info)
     {
         req->handle         = console_handle_unmap(hCon);

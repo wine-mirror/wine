@@ -388,7 +388,7 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
                      (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
-            TRACE_(io)( "0x%x < %08lx @ %04x:%04x\n", port, res,
+            TRACE_(io)( "0x%x < %08x @ %04x:%04x\n", port, res,
                      (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }
@@ -420,7 +420,7 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         case 4:
-            TRACE_(io)("0x%x > %08lx @ %04x:%04x\n", port, val,
+            TRACE_(io)("0x%x > %08x @ %04x:%04x\n", port, val,
                     (WORD)context->SegCs, LOWORD(context->Eip));
             break;
         }
@@ -527,7 +527,7 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                 switch (instr[2])
                 {
 		case 0xc0:
-			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
+			ERR("mov eax,cr0 at 0x%08x, EAX=0x%08x\n",
                             context->Eip,context->Eax );
                         context->Eip += prefixlen+3;
 			return ExceptionContinueExecution;
@@ -550,12 +550,12 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 		     * bit 7: PGE   Enable global pages
 		     * bit 8: PCE	Enable performance counters at IPL3
 		     */
-                    ERR("mov cr4,eax at 0x%08lx\n",context->Eip);
+                    ERR("mov cr4,eax at 0x%08x\n",context->Eip);
                     context->Eax = 0;
                     context->Eip += prefixlen+3;
 		    return ExceptionContinueExecution;
 		case 0xc0: /* mov cr0, eax */
-                    ERR("mov cr0,eax at 0x%08lx\n",context->Eip);
+                    ERR("mov cr0,eax at 0x%08x\n",context->Eip);
                     context->Eax = 0x10; /* FIXME: set more bits ? */
                     context->Eip += prefixlen+3;
 		    return ExceptionContinueExecution;
@@ -568,12 +568,12 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                 switch (instr[2])
                 {
                 case 0xc8: /* mov dr1, eax */
-                    TRACE("mov dr1,eax at 0x%08lx\n",context->Eip);
+                    TRACE("mov dr1,eax at 0x%08x\n",context->Eip);
                     context->Eax = context->Dr1;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
                 case 0xf8: /* mov dr7, eax */
-                    TRACE("mov dr7,eax at 0x%08lx\n",context->Eip);
+                    TRACE("mov dr7,eax at 0x%08x\n",context->Eip);
                     context->Eax = 0x400;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;

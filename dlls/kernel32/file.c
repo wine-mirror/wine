@@ -365,7 +365,7 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     NTSTATUS            status;
     PIO_STATUS_BLOCK    io_status;
 
-    TRACE("(hFile=%p, buffer=%p, bytes=%lu, ovl=%p, ovl_fn=%p)\n", hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
+    TRACE("(hFile=%p, buffer=%p, bytes=%u, ovl=%p, ovl_fn=%p)\n", hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
 
     if (!overlapped)
     {
@@ -403,7 +403,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     HANDLE              hEvent = 0;
     NTSTATUS            status;
 
-    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToRead,
+    TRACE("%p %p %d %p %p\n", hFile, buffer, bytesToRead,
           bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
@@ -448,7 +448,7 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     NTSTATUS            status;
     PIO_STATUS_BLOCK    io_status;
 
-    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
+    TRACE("%p %p %d %p %p\n", hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
 
     if (overlapped == NULL)
     {
@@ -482,7 +482,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     IO_STATUS_BLOCK iosb;
     PIO_STATUS_BLOCK piosb = &iosb;
 
-    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite, bytesWritten, overlapped );
+    TRACE("%p %p %d %p %p\n", hFile, buffer, bytesToWrite, bytesWritten, overlapped );
 
     if (is_console_handle(hFile))
         return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
@@ -507,7 +507,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
                              buffer, bytesToWrite, poffset, NULL);
         if (status != STATUS_INVALID_USER_BUFFER)
-            FIXME("Could not access memory (%p,%ld) at first, now OK. Protected by DIBSection code?\n",
+            FIXME("Could not access memory (%p,%d) at first, now OK. Protected by DIBSection code?\n",
                   buffer, bytesToWrite);
     }
 
@@ -567,7 +567,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
             {
                 TRACE( "waiting on %p\n", lpOverlapped );
                 r = WaitForSingleObjectEx( lpOverlapped->hEvent, INFINITE, TRUE );
-                TRACE( "wait on %p returned %ld\n", lpOverlapped, r );
+                TRACE( "wait on %p returned %d\n", lpOverlapped, r );
             } while ( r == WAIT_IO_COMPLETION );
         }
         else
@@ -586,7 +586,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
         {
             TRACE( "waiting on %p\n", lpOverlapped );
             r = WaitForSingleObjectEx( lpOverlapped->hEvent, 0, TRUE );
-            TRACE( "wait on %p returned %ld\n", lpOverlapped, r );
+            TRACE( "wait on %p returned %d\n", lpOverlapped, r );
         } while ( r == WAIT_IO_COMPLETION );
         if ( r == WAIT_OBJECT_0 && lpOverlapped->hEvent )
             NtSetEvent( lpOverlapped->hEvent, NULL );
@@ -660,7 +660,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 {
     DWORD result;
 
-    TRACE("%d %p %ld\n", handle, buffer, count );
+    TRACE("%d %p %d\n", handle, buffer, count );
 
     if (!count)
     {
@@ -945,7 +945,7 @@ BOOL WINAPI SetFilePointerEx( HANDLE hFile, LARGE_INTEGER distance,
     NTSTATUS status;
     int fd;
 
-    TRACE("handle %p offset %s newpos %p origin %ld\n",
+    TRACE("handle %p offset %s newpos %p origin %d\n",
           hFile, wine_dbgstr_longlong(distance.QuadPart), newpos, method );
 
     if (method > FILE_END)
@@ -1058,7 +1058,7 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
     NTSTATUS            status;
     LARGE_INTEGER       count, offset;
 
-    TRACE( "%p %lx%08lx %lx%08lx\n", 
+    TRACE( "%p %x%08x %x%08x\n",
            hFile, offset_high, offset_low, count_high, count_low );
 
     count.u.LowPart = count_low;
@@ -1098,7 +1098,7 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
         return FALSE;
     }
 
-    TRACE( "%p %lx%08lx %lx%08lx flags %lx\n",
+    TRACE( "%p %x%08x %x%08x flags %x\n",
            hFile, overlapped->u.s.OffsetHigh, overlapped->u.s.Offset, 
            count_high, count_low, flags );
 
@@ -1297,7 +1297,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         return INVALID_HANDLE_VALUE;
     }
 
-    TRACE("%s %s%s%s%s%s%s creation %ld attributes 0x%lx\n", debugstr_w(filename),
+    TRACE("%s %s%s%s%s%s%s creation %d attributes 0x%x\n", debugstr_w(filename),
           (access & GENERIC_READ)?"GENERIC_READ ":"",
           (access & GENERIC_WRITE)?"GENERIC_WRITE ":"",
           (!access)?"QUERY_ACCESS ":"",
@@ -1412,7 +1412,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                            options, NULL, 0 );
     if (status)
     {
-        WARN("Unable to create file %s (status %lx)\n", debugstr_w(filename), status);
+        WARN("Unable to create file %s (status %x)\n", debugstr_w(filename), status);
         ret = INVALID_HANDLE_VALUE;
 
         /* In the case file creation was rejected due to CREATE_NEW flag
@@ -1518,7 +1518,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName,LPCWSTR lpReplacementFileNam
                          LPCWSTR lpBackupFileName, DWORD dwReplaceFlags,
                          LPVOID lpExclude, LPVOID lpReserved)
 {
-    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",debugstr_w(lpReplacedFileName),debugstr_w(lpReplacementFileName),
+    FIXME("(%s,%s,%s,%08x,%p,%p) stub\n",debugstr_w(lpReplacedFileName),debugstr_w(lpReplacementFileName),
                                           debugstr_w(lpBackupFileName),dwReplaceFlags,lpExclude,lpReserved);
     SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
     return FALSE;
@@ -1532,7 +1532,7 @@ BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
                          LPCSTR lpBackupFileName, DWORD dwReplaceFlags,
                          LPVOID lpExclude, LPVOID lpReserved)
 {
-    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",lpReplacedFileName,lpReplacementFileName,
+    FIXME("(%s,%s,%s,%08x,%p,%p) stub\n",lpReplacedFileName,lpReplacementFileName,
                                           lpBackupFileName,dwReplaceFlags,lpExclude,lpReserved);
     SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
     return FALSE;
@@ -1553,12 +1553,12 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
-    TRACE("%s %d %p %d %p %lx\n", debugstr_w(filename), level, data, search_op, filter, flags);
+    TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
     if ((search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
 	|| flags != 0)
     {
-        FIXME("options not implemented 0x%08x 0x%08lx\n", search_op, flags );
+        FIXME("options not implemented 0x%08x 0x%08x\n", search_op, flags );
         return INVALID_HANDLE_VALUE;
     }
     if (level != FindExInfoStandard)
@@ -1915,7 +1915,7 @@ BOOL WINAPI SetFileAttributesW( LPCWSTR name, DWORD attributes )
     NTSTATUS status;
     HANDLE handle;
 
-    TRACE("%s %lx\n", debugstr_w(name), attributes);
+    TRACE("%s %x\n", debugstr_w(name), attributes);
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {

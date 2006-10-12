@@ -309,7 +309,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
         return 0;
     }
 
-    TRACE("%s,%p,%ld\n", debugstr_w(shortpath), longpath, longlen);
+    TRACE("%s,%p,%d\n", debugstr_w(shortpath), longpath, longlen);
 
     if (shortpath[0] == '\\' && shortpath[1] == '\\')
     {
@@ -580,7 +580,7 @@ DWORD WINAPI GetTempPathW( DWORD count, LPWSTR path )
     WCHAR tmp_path[MAX_PATH];
     UINT ret;
 
-    TRACE("%lu,%p\n", count, path);
+    TRACE("%u,%p\n", count, path);
 
     if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )))
         if (!(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )))
@@ -994,7 +994,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     HANDLE source_handle = 0, dest_handle;
     ANSI_STRING source_unix, dest_unix;
 
-    TRACE("(%s,%s,%04lx)\n", debugstr_w(source), debugstr_w(dest), flag);
+    TRACE("(%s,%s,%04x)\n", debugstr_w(source), debugstr_w(dest), flag);
 
     if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
         return add_boot_rename_entry( source, dest, flag );

@@ -91,7 +91,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     struct kernel_thread_data *thread_data = kernel_get_thread_data();
     int i;
 
-    TRACE("(%p, level %d): thread %lx count before %ld\n",
+    TRACE("(%p, level %d): thread %x count before %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
@@ -106,7 +106,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     thread_data->sys_count[lock->level]++;
     thread_data->sys_mutex[lock->level] = lock;
 
-    TRACE("(%p, level %d): thread %lx count after  %ld\n",
+    TRACE("(%p, level %d): thread %x count after  %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
 #ifdef __i386__
@@ -122,12 +122,12 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
     struct kernel_thread_data *thread_data = kernel_get_thread_data();
 
-    TRACE("(%p, level %d): thread %lx count before %ld\n",
+    TRACE("(%p, level %d): thread %x count before %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
     if ( thread_data->sys_count[lock->level] <= 0 || thread_data->sys_mutex[lock->level] != lock )
     {
-        ERR("(%p, level %d): Invalid state: count %ld mutex %p.\n",
+        ERR("(%p, level %d): Invalid state: count %d mutex %p.\n",
                     lock, lock->level, thread_data->sys_count[lock->level],
                     thread_data->sys_mutex[lock->level] );
     }
@@ -139,7 +139,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 
     RtlLeaveCriticalSection( &lock->crst );
 
-    TRACE("(%p, level %d): thread %lx count after  %ld\n",
+    TRACE("(%p, level %d): thread %x count after  %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 }
 

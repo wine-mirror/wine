@@ -418,7 +418,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     if (!TRACE_ON(relay) || !RELAY_ShowDebugmsgRelay( module, ordinal, func ))
         return relay_call_from_16_no_debug( entry_point, args16, context, call );
 
-    DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
+    DPRINTF( "%04x:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
 
     /* look for the ret instruction */
     for (j = 0; j < sizeof(call->ret)/sizeof(call->ret[0]); j++)
@@ -534,7 +534,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     if (!j)  /* register function */
     {
         args32[nb_args++] = (int)context;
-        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08x\n",
                 (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                 (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );
@@ -546,12 +546,12 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    DPRINTF( "%04lx:Ret  %s.%d: %s() ",GetCurrentThreadId(), module, ordinal, func );
+    DPRINTF( "%04x:Ret  %s.%d: %s() ",GetCurrentThreadId(), module, ordinal, func );
     if (!j)  /* register function */
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)context->SegCs, LOWORD(context->Eip), (WORD)context->SegDs);
-        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08x\n",
                 (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                 (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );

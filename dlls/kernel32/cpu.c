@@ -214,7 +214,7 @@ static void create_env_registry_keys( const SYSTEM_INFO *info )
     RtlInitUnicodeString( &nameW, EnvironW );
     if (NtCreateKey( &env_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
 
-    sprintf( nProc, "%ld", info->dwNumberOfProcessors );
+    sprintf( nProc, "%d", info->dwNumberOfProcessors );
     RtlMultiByteToUnicodeN( nProcW, sizeof(nProcW), NULL, nProc, strlen(nProc)+1 );
     RtlInitUnicodeString( &valueW, NumProcW );
     NtSetValueKey( env_key, &valueW, 0, REG_SZ, nProcW, (strlenW(nProcW)+1)*sizeof(WCHAR) );
@@ -770,8 +770,8 @@ VOID WINAPI GetSystemInfo(
 #else
 	FIXME("not yet supported on this system\n");
 #endif
-        TRACE("<- CPU arch %d, res'd %d, pagesize %ld, minappaddr %p, maxappaddr %p,"
-              " act.cpumask %08lx, numcpus %ld, CPU type %ld, allocgran. %ld, CPU level %d, CPU rev %d\n",
+        TRACE("<- CPU arch %d, res'd %d, pagesize %d, minappaddr %p, maxappaddr %p,"
+              " act.cpumask %08x, numcpus %d, CPU type %d, allocgran. %d, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
               si->lpMinimumApplicationAddress, si->lpMaximumApplicationAddress,
               si->dwActiveProcessorMask, si->dwNumberOfProcessors, si->dwProcessorType,

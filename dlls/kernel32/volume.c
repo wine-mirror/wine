@@ -524,7 +524,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         if (serial) *serial = VOLUME_GetSuperblockSerial( type, superblock );
         goto fill_fs_info;
     }
-    else TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
+    else TRACE( "cannot open device %s: err %d\n", debugstr_w(device), GetLastError() );
 
     /* we couldn't open the device, fallback to default strategy */
 
@@ -689,7 +689,7 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
     }
     else
     {
-        TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
+        TRACE( "cannot open device %s: err %d\n", debugstr_w(device), GetLastError() );
         if (GetLastError() == ERROR_ACCESS_DENIED) return FALSE;
     }
 
@@ -752,7 +752,7 @@ BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
  */
 BOOL WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR str, LPWSTR dst, DWORD size)
 {
-    FIXME("(%s, %p, %lx): stub\n", debugstr_w(str), dst, size);
+    FIXME("(%s, %p, %x): stub\n", debugstr_w(str), dst, size);
     return 0;
 }
 
@@ -766,13 +766,13 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
     BOOL ret = FALSE;
     char *path = NULL, *target, *p;
 
-    TRACE("%lx, %s, %s\n", flags, debugstr_w(devname), debugstr_w(targetpath));
+    TRACE("%x, %s, %s\n", flags, debugstr_w(devname), debugstr_w(targetpath));
 
     if (!(flags & DDD_REMOVE_DEFINITION))
     {
         if (!(flags & DDD_RAW_TARGET_PATH))
         {
-            FIXME( "(0x%08lx,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
+            FIXME( "(0x%08x,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
                    flags, debugstr_w(devname), debugstr_w(targetpath) );
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return FALSE;
@@ -1340,7 +1340,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
  */
 BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD buflen)
 {
-    FIXME("(%s, %p, %ld), stub!\n", debugstr_a(filename), volumepathname, buflen);
+    FIXME("(%s, %p, %d), stub!\n", debugstr_a(filename), volumepathname, buflen);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1350,7 +1350,7 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
  */
 BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
 {
-    FIXME("(%s, %p, %ld), stub!\n", debugstr_w(filename), volumepathname, buflen);
+    FIXME("(%s, %p, %d), stub!\n", debugstr_w(filename), volumepathname, buflen);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

@@ -834,7 +834,7 @@ BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
     QUEUEDRESOURCE *current_resource = NULL;
     BOOL ret = FALSE;
 
-    TRACE("%p %s %s %08x %p %ld\n",hUpdate,debugstr_w(lpType),debugstr_w(lpName),wLanguage,lpData,cbData);
+    TRACE("%p %s %s %08x %p %d\n",hUpdate,debugstr_w(lpType),debugstr_w(lpName),wLanguage,lpData,cbData);
 
     if(!(current_updates = GlobalLock(hUpdate)))
     {

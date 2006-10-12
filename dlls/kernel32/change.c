@@ -67,7 +67,7 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     NTSTATUS status;
     HANDLE handle = INVALID_HANDLE_VALUE;
 
-    TRACE( "%s %d %lx\n", debugstr_w(lpPathName), bWatchSubtree, dwNotifyFilter );
+    TRACE( "%s %d %x\n", debugstr_w(lpPathName), bWatchSubtree, dwNotifyFilter );
 
     if (!RtlDosPathNameToNtPathName_U( lpPathName, &nt_name, NULL, NULL ))
     {
@@ -156,7 +156,7 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
     NTSTATUS status;
     BOOL ret = TRUE;
 
-    TRACE("%p %p %08lx %d %08lx %p %p %p\n", handle, buffer, len, subtree, filter,
+    TRACE("%p %p %08x %d %08x %p %p %p\n", handle, buffer, len, subtree, filter,
            returned, overlapped, completion );
 
     if (!overlapped)

@@ -305,14 +305,14 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
 
     if (TD32 && TD16->checksum != TD32->checksum)
     {
-        ERR("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+        ERR("(%s, %s, %s): Wrong checksum %08x (should be %08x)\n",
                    module, func, module32, TD16->checksum, TD32->checksum);
         return 0;
     }
 
     if (!TD32 && checksum && checksum != *(LPDWORD)TD16)
     {
-        ERR("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+        ERR("(%s, %s, %s): Wrong checksum %08x (should be %08x)\n",
                    module, func, module32, *(LPDWORD)TD16, checksum);
         return 0;
     }
@@ -355,14 +355,14 @@ UINT WINAPI ThunkConnect32(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
+        TRACE("SL01 thunk %s (%p) <- %s (%s), Reason: %d\n",
               module32, TD, module16, thunkfun16, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
+        TRACE("LS01 thunk %s (%p) -> %s (%s), Reason: %d\n",
               module32, TD, module16, thunkfun16, dwReason);
     }
     else
@@ -401,7 +401,7 @@ UINT WINAPI ThunkConnect32(
                 tdb->next = SL32->data->targetDB;   /* FIXME: not thread-safe! */
                 SL32->data->targetDB = tdb;
 
-                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %p\n",
+                TRACE("Process %08x allocated TargetDB entry for ThunkDataSL %p\n",
                       GetCurrentProcessId(), SL32->data);
             }
             else
@@ -1057,9 +1057,9 @@ DWORD WINAPIV SSCall(
 
     if(TRACE_ON(thunk))
     {
-      DPRINTF("(%ld,0x%08lx,%p,[",nr,flags,fun);
+      DPRINTF("(%d,0x%08x,%p,[",nr,flags,fun);
       for (i=0;i<nr/4;i++)
-          DPRINTF("0x%08lx,",args[i]);
+          DPRINTF("0x%08x,",args[i]);
       DPRINTF("])\n");
     }
     switch (nr) {
@@ -1090,12 +1090,12 @@ DWORD WINAPIV SSCall(
     case 48:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
 		break;
     default:
-	WARN("Unsupported nr of arguments, %ld\n",nr);
+	WARN("Unsupported nr of arguments, %d\n",nr);
 	ret = 0;
 	break;
 
     }
-    TRACE(" returning %ld ...\n",ret);
+    TRACE(" returning %d ...\n",ret);
     return ret;
 }
 
@@ -1182,7 +1182,7 @@ void WINAPI
 FreeSLCallback(
 	DWORD x	/* [in] 16 bit callback (segmented pointer?) */
 ) {
-	FIXME("(0x%08lx): stub\n",x);
+	FIXME("(0x%08x): stub\n",x);
 }
 
 
@@ -1269,7 +1269,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
       WORD  stackSel  = SELECTOROF(frame32->frame16);
       DWORD stackBase = GetSelectorBase(stackSel);
 
-      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
@@ -1282,7 +1282,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
       context->Esp = (DWORD)stack32 + 4;
       context->Ebp = context->Esp + argSize;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
    }
 
@@ -1315,7 +1315,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
 
       DWORD nArgsPopped = context->Esp - (DWORD)stack32;
 
-      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
 
       NtCurrentTeb()->WOW32Reserved = frame16->frame32;
@@ -1323,7 +1323,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
       context->Esp = (DWORD)stack16 + nArgsPopped;
       context->Ebp = frame16->ebp;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
    }
 }
@@ -1374,14 +1374,14 @@ UINT WINAPI ThunkConnect16(
     {
         directionSL = TRUE;
 
-        TRACE("SL01 thunk %s (%p) -> %s (%s), Reason: %ld\n",
+        TRACE("SL01 thunk %s (%p) -> %s (%s), Reason: %d\n",
               module16, TD, module32, thunkfun32, dwReason);
     }
     else if (!strncmp(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE("LS01 thunk %s (%p) <- %s (%s), Reason: %ld\n",
+        TRACE("LS01 thunk %s (%p) <- %s (%s), Reason: %d\n",
               module16, TD, module32, thunkfun32, dwReason);
     }
     else
@@ -1551,7 +1551,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         DWORD targetNr = LOWORD(context->Ecx) / 4;
         struct SLTargetDB *tdb;
 
-        TRACE("Process %08lx calling target %ld of ThunkDataSL %p\n",
+        TRACE("Process %08x calling target %d of ThunkDataSL %p\n",
               GetCurrentProcessId(), targetNr, td);
 
         for (tdb = td->targetDB; tdb; tdb = tdb->next)
@@ -1572,7 +1572,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         {
             context->Edx = tdb->targetTable[targetNr];
 
-            TRACE("Call target is %08lx\n", context->Edx);
+            TRACE("Call target is %08x\n", context->Edx);
         }
         else
         {
@@ -1583,7 +1583,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
             context->SegCs  = stack[3];
             context->Esp += td->apiDB[targetNr].nrArgBytes + 4;
 
-            ERR("Process %08lx did not ThunkConnect32 %s to %s\n",
+            ERR("Process %08x did not ThunkConnect32 %s to %s\n",
                 GetCurrentProcessId(), td->pszDll32, td->pszDll16);
         }
     }
@@ -2157,7 +2157,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
  */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 {
-	FIXME("(%p,%ld,0x%08lx): stub\n",threadid,exitcode,x);
+	FIXME("(%p,%d,0x%08x): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
@@ -2170,7 +2170,7 @@ BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
  */
 DWORD WINAPI _KERNEL32_99(DWORD x)
 {
-	FIXME("(0x%08lx): stub\n",x);
+	FIXME("(0x%08x): stub\n",x);
 	return 1;
 }
 

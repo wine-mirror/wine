@@ -276,7 +276,7 @@ void COMPUTERNAME_Init (void)
     }
 
     NtClose( hsubkey );
-    TRACE(" ComputerName: %s (%lu)\n", debugstr_w ( computer_name ), len / sizeof(WCHAR));
+    TRACE(" ComputerName: %s (%u)\n", debugstr_w ( computer_name ), len / sizeof(WCHAR));
 
     RtlInitUnicodeString( &nameW, ActiveComputerNameW );
     if ( ( st = NtCreateKey( &hsubkey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL ) )
@@ -294,7 +294,7 @@ out:
         TRACE( "success\n" );
     else
     {
-        WARN( "status trying to set ComputerName: %lx\n", st );
+        WARN( "status trying to set ComputerName: %x\n", st );
         SetLastError ( RtlNtStatusToDosError ( st ) );
     }
 }
@@ -331,7 +331,7 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
         goto out;
 
     len = (len -offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof (WCHAR) - 1;
-    TRACE ("ComputerName is %s (length %lu)\n", debugstr_w ( theName ), len);
+    TRACE ("ComputerName is %s (length %u)\n", debugstr_w ( theName ), len);
 
     __TRY
     {
@@ -365,7 +365,7 @@ out:
     else
     {
         SetLastError ( RtlNtStatusToDosError ( st ) );
-        WARN ( "Status %lu reading computer name from registry\n", st );
+        WARN ( "Status %u reading computer name from registry\n", st );
         return FALSE;
     }
 }
@@ -623,7 +623,7 @@ out:
     else
     {
         SetLastError ( RtlNtStatusToDosError ( st ) );
-        WARN ( "status %lu\n", st );
+        WARN ( "status %u\n", st );
         return FALSE;
     }
 }

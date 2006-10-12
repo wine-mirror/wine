@@ -333,7 +333,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     if (!ReadFile(hFile, pBuffer, dwFileSize, &dwFileSize, NULL))
     {
         HeapFree(GetProcessHeap(), 0, pBuffer);
-        WARN("Error %ld reading file\n", GetLastError());
+        WARN("Error %d reading file\n", GetLastError());
         return NULL;
     }
     len = dwFileSize;
@@ -670,7 +670,7 @@ static BOOL PROFILE_FlushFile(void)
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        WARN("could not save profile file %s (error was %ld)\n", debugstr_w(CurProfile->filename), GetLastError());
+        WARN("could not save profile file %s (error was %d)\n", debugstr_w(CurProfile->filename), GetLastError());
         return FALSE;
     }
 
@@ -757,7 +757,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
     
     if ((hFile == INVALID_HANDLE_VALUE) && (GetLastError() != ERROR_FILE_NOT_FOUND))
     {
-        WARN("Error %ld opening file %s\n", GetLastError(), debugstr_w(buffer));
+        WARN("Error %d opening file %s\n", GetLastError(), debugstr_w(buffer));
         return FALSE;
     }
 
@@ -1330,7 +1330,7 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 {
     int		ret = 0;
 
-    TRACE("(%s, %p, %ld, %s)\n", debugstr_w(section), buffer, len, debugstr_w(filename));
+    TRACE("(%s, %p, %d, %s)\n", debugstr_w(section), buffer, len, debugstr_w(filename));
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 

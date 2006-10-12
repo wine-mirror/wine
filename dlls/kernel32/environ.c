@@ -210,7 +210,7 @@ DWORD WINAPI GetEnvironmentVariableW( LPCWSTR name, LPWSTR val, DWORD size )
     NTSTATUS            status;
     unsigned            len;
 
-    TRACE("(%s %p %lu)\n", debugstr_w(name), val, size);
+    TRACE("(%s %p %u)\n", debugstr_w(name), val, size);
 
     if (!name || !*name)
     {
@@ -342,7 +342,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
     NTSTATUS            status;
     DWORD               res;
 
-    TRACE("(%s %p %lu)\n", debugstr_w(src), dst, len);
+    TRACE("(%s %p %u)\n", debugstr_w(src), dst, len);
 
     RtlInitUnicodeString(&us_src, src);
 

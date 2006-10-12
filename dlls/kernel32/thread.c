@@ -69,7 +69,7 @@ static void CALLBACK THREAD_Start( void *ptr )
     RtlFreeHeap( GetProcessHeap(), 0, info );
 
     if (TRACE_ON(relay))
-        DPRINTF("%04lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
+        DPRINTF("%04x:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
 
     __TRY
     {
@@ -506,7 +506,7 @@ BOOL WINAPI QueueUserWorkItem( LPTHREAD_START_ROUTINE Function, PVOID Context, U
 {
     NTSTATUS status;
 
-    TRACE("(%p,%p,0x%08lx)\n", Function, Context, Flags);
+    TRACE("(%p,%p,0x%08x)\n", Function, Context, Flags);
 
     status = RtlQueueWorkItem( Function, Context, Flags );
 
@@ -568,7 +568,7 @@ BOOL WINAPI GetThreadTimes(
  */
 VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
 {
-    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
+    FIXME("(0x%08x,%d): stub\n", threadId, boost);
 }
 
 
@@ -577,7 +577,7 @@ VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT boost )
  */
 VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 {
-    FIXME("(0x%08lx,%d): stub\n", threadId, boost);
+    FIXME("(0x%08x,%d): stub\n", threadId, boost);
 }
 
 

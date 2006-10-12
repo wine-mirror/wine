@@ -1303,7 +1303,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 
     memcpy(&cached_memstatus,lpmemex,sizeof(*lpmemex));
 
-    TRACE("<-- LPMEMORYSTATUSEX: dwLength %ld, dwMemoryLoad %ld, ullTotalPhys %s, ullAvailPhys %s,"
+    TRACE("<-- LPMEMORYSTATUSEX: dwLength %d, dwMemoryLoad %d, ullTotalPhys %s, ullAvailPhys %s,"
           " ullTotalPageFile %s, ullAvailPageFile %s, ullTotalVirtual %s, ullAvailVirtual %s\n",
           lpmemex->dwLength, lpmemex->dwMemoryLoad, wine_dbgstr_longlong(lpmemex->ullTotalPhys),
           wine_dbgstr_longlong(lpmemex->ullAvailPhys), wine_dbgstr_longlong(lpmemex->ullTotalPageFile),

@@ -370,7 +370,7 @@ BOOL WINAPI SetSystemTime( const SYSTEMTIME *systime )
 BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmentDisabled )
 {
     /* Fake function for now... */
-    FIXME("(%08lx,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
+    FIXME("(%08x,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
     return TRUE;
 }
 
@@ -649,16 +649,16 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
      * for the CALTYPES not requiring GetLocaleInfoA */
     switch (CalType & ~(CAL_NOUSEROVERRIDE|CAL_RETURN_NUMBER|CAL_USE_CP_ACP)) {
 	case CAL_ICALINTVALUE:
-	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+            FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
 	    return E_FAIL;
 	case CAL_SCALNAME:
-	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+            FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
 	    return E_FAIL;
 	case CAL_IYEAROFFSETRANGE:
-	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+            FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
 	    return E_FAIL;
 	case CAL_SERASTRING:
-	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+            FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
 	    return E_FAIL;
 	case CAL_SSHORTDATE:
 	    return GetLocaleInfoW(Locale, LOCALE_SSHORTDATE, lpCalData, cchData);
@@ -749,7 +749,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_ITWODIGITYEARMAX:
 	    if (lpValue) *lpValue = CALINFO_MAX_YEAR;
 	    break;
-	default: MESSAGE("Unknown caltype %ld\n",CalType & 0xffff);
+	default: MESSAGE("Unknown caltype %d\n",CalType & 0xffff);
 		 return E_FAIL;
     }
     return 0;
@@ -761,7 +761,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
  */
 int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR lpCalData)
 {
-    FIXME("(%08lx,%08lx,%08lx,%s): stub\n",
+    FIXME("(%08x,%08x,%08x,%s): stub\n",
 	  Locale, Calendar, CalType, debugstr_a(lpCalData));
     return 0;
 }
@@ -773,7 +773,7 @@ int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR
  */
 int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
 {
-    FIXME("(%08lx,%08lx,%08lx,%s): stub\n",
+    FIXME("(%08x,%08x,%08x,%s): stub\n",
 	  Locale, Calendar, CalType, debugstr_w(lpCalData));
     return 0;
 }

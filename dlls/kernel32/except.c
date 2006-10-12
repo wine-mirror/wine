@@ -155,14 +155,14 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
         len = snprintf( buffer, size, "Unhandled PIC return in vm86 mode");
         break;
     default:
-        len = snprintf( buffer, size, "Unhandled exception 0x%08lx", rec->ExceptionCode);
+        len = snprintf( buffer, size, "Unhandled exception 0x%08x", rec->ExceptionCode);
         break;
     }
     if ((len<0) || (len>=size))
         return -1;
 #ifdef __i386__
     if (ptr->ContextRecord->SegCs != wine_get_cs())
-        len2 = snprintf(buffer+len, size-len, " at address 0x%04lx:0x%08lx",
+        len2 = snprintf(buffer+len, size-len, " at address 0x%04x:0x%08x",
                         ptr->ContextRecord->SegCs,
                         (DWORD)ptr->ExceptionRecord->ExceptionAddress);
     else
@@ -203,7 +203,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     static const WCHAR AutoW[] = {'A','u','t','o',0};
 
     format_exception_msg( epointers, buffer, sizeof(buffer) );
-    MESSAGE("wine: %s (thread %04lx), starting debugger...\n", buffer, GetCurrentThreadId());
+    MESSAGE("wine: %s (thread %04x), starting debugger...\n", buffer, GetCurrentThreadId());
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -274,7 +274,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     else
     {
         cmdline = HeapAlloc(GetProcessHeap(), 0, 80);
-        sprintf(cmdline, "winedbg --auto %ld %ld",
+        sprintf(cmdline, "winedbg --auto %d %ld",
                 GetCurrentProcessId(), (ULONG_PTR)hEvent);
     }
 
@@ -322,7 +322,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     FreeEnvironmentStringsA( env );
 
     if (ret) WaitForSingleObject(hEvent, INFINITE);  /* wait for debugger to come up... */
-    else ERR("Couldn't start debugger (%s) (%ld)\n"
+    else ERR("Couldn't start debugger (%s) (%d)\n"
              "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
              debugstr_a(cmdline), GetLastError());
 EXIT:

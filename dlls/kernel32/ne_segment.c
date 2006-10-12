@@ -552,7 +552,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
             if (entry->segnum == segnum)
             {
                 pFunc = ((BYTE *)pSeg+entry->offs);
-                TRACE("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
+                TRACE("pFunc: %p, *(DWORD *)pFunc: %08x, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
                 if (*(pFunc+2) == 0x90)
                 {
                     if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
@@ -697,7 +697,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
     context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     pModule->ne_csip = 0;  /* Don't initialize it twice */
-    TRACE_(dll)("Calling LibMain for %.*s, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
+    TRACE_(dll)("Calling LibMain for %.*s, cs:ip=%04x:%04x ds=%04x di=%04x cx=%04x\n",
                 *((BYTE*)pModule + pModule->ne_restab),
                 (char *)pModule + pModule->ne_restab + 1,
                 context.SegCs, context.Eip, context.SegDs,

@@ -814,7 +814,7 @@ static void start_process( void *arg )
                                          nt->OptionalHeader.AddressOfEntryPoint);
 
         if (TRACE_ON(relay))
-            DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
+            DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
                      debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
 
         SetLastError( 0 );  /* clear error code */
@@ -1614,7 +1614,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
                  CREATE_NEW_PROCESS_GROUP | CREATE_SEPARATE_WOW_VDM | CREATE_SHARED_WOW_VDM |
                  CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW |
                  PROFILE_USER | PROFILE_KERNEL | PROFILE_SERVER))
-        WARN("(%s,...): ignoring some flags in %lx\n", debugstr_w(name), flags);
+        WARN("(%s,...): ignoring some flags in %x\n", debugstr_w(name), flags);
 
     if (cur_dir)
     {
@@ -1817,7 +1817,7 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
     {
         /* Give 30 seconds to the app to come up */
         if (wait_input_idle( info.hProcess, 30000 ) == WAIT_FAILED)
-            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+            WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
         ret = 33;
         /* Close off the handles */
         CloseHandle( info.hThread );
@@ -1875,7 +1875,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     {
         /* Give 30 seconds to the app to come up */
         if (wait_input_idle( info.hProcess, 30000 ) == WAIT_FAILED)
-            WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+            WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
         hInstance = (HINSTANCE)33;
         /* Close off the handles */
         CloseHandle( info.hThread );
@@ -2157,11 +2157,11 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     DWORD               x, y;
     STARTUPINFOW        siw;
 
-    TRACE("(%ld, %d)\n", dwProcessID, offset );
+    TRACE("(%d, %d)\n", dwProcessID, offset );
 
     if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
-        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
+        ERR("%d: process %x not accessible\n", offset, dwProcessID);
         return 0;
     }
 
@@ -2223,11 +2223,11 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
  */
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 {
-    TRACE("(%ld, %d)\n", dwProcessID, offset );
+    TRACE("(%d, %d)\n", dwProcessID, offset );
 
     if (dwProcessID && dwProcessID != GetCurrentProcessId())
     {
-        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
+        ERR("%d: process %x not accessible\n", offset, dwProcessID);
         return;
     }
 
@@ -2470,7 +2470,7 @@ HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
  */
 BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context)
 {
-    FIXME("(%p,%ld), stub. In case this got called by WSOCK32/WS2_32: "
+    FIXME("(%p,%d), stub. In case this got called by WSOCK32/WS2_32: "
           "the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd,context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
@@ -2675,7 +2675,7 @@ BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
  */
 BOOL WINAPI SetProcessShutdownParameters(DWORD level, DWORD flags)
 {
-    FIXME("(%08lx, %08lx): partial stub.\n", level, flags);
+    FIXME("(%08x, %08x): partial stub.\n", level, flags);
     shutdown_flags = flags;
     shutdown_priority = level;
     return TRUE;

@@ -310,11 +310,11 @@ void LOCALE_InitRegistry(void)
             NtClose( hkey );
             return;
         }
-        TRACE( "updating registry, locale changed %s -> %08lx\n", debugstr_w(szValueText), lcid );
+        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(szValueText), lcid );
     }
-    else TRACE( "updating registry, locale changed none -> %08lx\n", lcid );
+    else TRACE( "updating registry, locale changed none -> %08x\n", lcid );
 
-    sprintf( buffer, "%08lx", lcid );
+    sprintf( buffer, "%08x", lcid );
     /* Note: '9' constant below is strlen(buffer) + 1 */
     RtlMultiByteToUnicodeN( bufferW, sizeof(bufferW), NULL, buffer, 9 );
     NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, 9 * sizeof(WCHAR) );
@@ -863,7 +863,7 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
     WCHAR *bufferW;
     INT lenW, ret;
 
-    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
+    TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d)\n", lcid, lctype, buffer, len );
 
     if (len < 0 || (len && !buffer))
     {
@@ -935,7 +935,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= 0xffff;
 
-    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
+    TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d)\n", lcid, lctype, buffer, len );
 
     /* first check for overrides in the registry */
 
@@ -1022,7 +1022,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
         }
         HeapFree( GetProcessHeap(), 0, tmp );
 
-        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning number %d\n",
+        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning number %d\n",
                lcid, lctype, buffer, len, number );
     }
     else
@@ -1030,7 +1030,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
         memcpy( buffer, p + 1, *p * sizeof(WCHAR) );
         if (lctype != LOCALE_FONTSIGNATURE) buffer[ret-1] = 0;
 
-        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning %d %s\n",
+        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning %d %s\n",
                lcid, lctype, buffer, len, ret, debugstr_w(buffer) );
     }
     return ret;
@@ -1123,11 +1123,11 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     if (lcid != GetUserDefaultLCID())
     {
         /* Windows does not check that the lcid matches the current lcid */
-        WARN("locale 0x%08lx isn't the current locale (0x%08lx), setting anyway!\n",
+        WARN("locale 0x%08x isn't the current locale (0x%08x), setting anyway!\n",
              lcid, GetUserDefaultLCID());
     }
 
-    TRACE("setting %lx (%s) to %s\n", lctype, debugstr_w(value), debugstr_w(data) );
+    TRACE("setting %x (%s) to %s\n", lctype, debugstr_w(value), debugstr_w(data) );
 
     /* FIXME: should check that data to set is sane */
 
@@ -1700,7 +1700,7 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL WINAPI SetThreadLocale( LCID lcid )
 {
-    TRACE("(0x%04lX)\n", lcid);
+    TRACE("(0x%04X)\n", lcid);
 
     lcid = ConvertDefaultLocale(lcid);
 
@@ -1840,7 +1840,7 @@ static BOOL CALLBACK enum_lang_proc_w( HMODULE hModule, LPCWSTR type,
  */
 BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
 {
-    TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
+    TRACE("(%p,%08x)\n", lpfnLocaleEnum, dwFlags);
     EnumResourceLanguagesA( kernel32_handle, (LPSTR)RT_STRING,
                             (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
                             (LONG_PTR)lpfnLocaleEnum);
@@ -1855,7 +1855,7 @@ BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
  */
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD dwFlags )
 {
-    TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
+    TRACE("(%p,%08x)\n", lpfnLocaleEnum, dwFlags);
     EnumResourceLanguagesW( kernel32_handle, (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
                             (LONG_PTR)lpfnLocaleEnum);
@@ -1996,7 +1996,7 @@ BOOL WINAPI GetStringTypeA( LCID locale, DWORD type, LPCSTR src, INT count, LPWO
 
     if (!(cp = get_lcid_codepage( locale )))
     {
-        FIXME("For locale %04lx using current ANSI code page\n", locale);
+        FIXME("For locale %04x using current ANSI code page\n", locale);
         cp = GetACP();
     }
 
@@ -2078,7 +2078,7 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 
         if (srclen < 0) srclen = strlenW(src);
 
-        TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+        TRACE("(0x%04x,0x%08x,%s,%d,%p,%d)\n",
               lcid, flags, debugstr_wn(src, srclen), srclen, dst, dstlen);
 
         return wine_get_sortkey(flags, src, srclen, (char *)dst, dstlen);
@@ -2093,7 +2093,7 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 
     if (srclen < 0) srclen = strlenW(src) + 1;
 
-    TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+    TRACE("(0x%04x,0x%08x,%s,%d,%p,%d)\n",
           lcid, flags, debugstr_wn(src, srclen), srclen, dst, dstlen);
 
     if (!dst) /* return required string length */
@@ -2647,7 +2647,7 @@ static BOOL NLS_RegEnumSubKey(HANDLE hKey, UINT ulIndex, LPWSTR szKeyName,
         return FALSE;
     }
 
-    TRACE("info->Name %s info->NameLength %ld\n", debugstr_w(info->Name), info->NameLength);
+    TRACE("info->Name %s info->NameLength %d\n", debugstr_w(info->Name), info->NameLength);
 
     memcpy( szKeyName, info->Name, info->NameLength);
     szKeyName[info->NameLength / sizeof(WCHAR)] = '\0';
@@ -2672,7 +2672,7 @@ static BOOL NLS_RegEnumValue(HANDLE hKey, UINT ulIndex,
         return FALSE;
     }
 
-    TRACE("info->Name %s info->DataLength %ld\n", debugstr_w(info->Name), info->DataLength);
+    TRACE("info->Name %s info->DataLength %d\n", debugstr_w(info->Name), info->DataLength);
 
     memcpy( szValueName, info->Name, info->NameLength);
     szValueName[info->NameLength / sizeof(WCHAR)] = '\0';
@@ -2873,7 +2873,7 @@ BOOL WINAPI EnumSystemLanguageGroupsA(LANGUAGEGROUP_ENUMPROCA pLangGrpEnumProc,
 {
     ENUMLANGUAGEGROUP_CALLBACKS procs;
 
-    TRACE("(%p,0x%08lX,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
+    TRACE("(%p,0x%08X,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
 
     procs.procA = pLangGrpEnumProc;
     procs.procW = NULL;
@@ -2893,7 +2893,7 @@ BOOL WINAPI EnumSystemLanguageGroupsW(LANGUAGEGROUP_ENUMPROCW pLangGrpEnumProc,
 {
     ENUMLANGUAGEGROUP_CALLBACKS procs;
 
-    TRACE("(%p,0x%08lX,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
+    TRACE("(%p,0x%08X,0x%08lX)\n", pLangGrpEnumProc, dwFlags, lParam);
 
     procs.procA = NULL;
     procs.procW = pLangGrpEnumProc;
@@ -3003,7 +3003,7 @@ static BOOL NLS_EnumLanguageGroupLocales(ENUMLANGUAGEGROUPLOCALE_CALLBACKS *lpPr
         {
             lgrpid = strtoulW( szValue, NULL, 16 );
 
-            TRACE("lcid %s, grpid %ld (%smatched)\n", debugstr_w(szNumber),
+            TRACE("lcid %s, grpid %d (%smatched)\n", debugstr_w(szNumber),
                    lgrpid, lgrpid == lpProcs->lgrpid ? "" : "not ");
 
             if (lgrpid == lpProcs->lgrpid)
@@ -3075,7 +3075,7 @@ BOOL WINAPI EnumLanguageGroupLocalesA(LANGGROUPLOCALE_ENUMPROCA pLangGrpLcEnumPr
 {
     ENUMLANGUAGEGROUPLOCALE_CALLBACKS callbacks;
 
-    TRACE("(%p,0x%08lX,0x%08lX,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
+    TRACE("(%p,0x%08X,0x%08X,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
 
     callbacks.procA   = pLangGrpLcEnumProc;
     callbacks.procW   = NULL;
@@ -3096,7 +3096,7 @@ BOOL WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW pLangGrpLcEnumPr
 {
     ENUMLANGUAGEGROUPLOCALE_CALLBACKS callbacks;
 
-    TRACE("(%p,0x%08lX,0x%08lX,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
+    TRACE("(%p,0x%08X,0x%08X,0x%08lX)\n", pLangGrpLcEnumProc, lgrpid, dwFlags, lParam);
 
     callbacks.procA   = NULL;
     callbacks.procW   = pLangGrpLcEnumProc;
@@ -3130,7 +3130,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeo
     HANDLE hKey;
     ULONG ulIndex = 0;
 
-    TRACE("(0x%08lX,0x%08lX,%p)\n", geoclass, reserved, pGeoEnumProc);
+    TRACE("(0x%08X,0x%08X,%p)\n", geoclass, reserved, pGeoEnumProc);
 
     if (geoclass != GEOCLASS_NATION || reserved || !pGeoEnumProc)
     {
@@ -3150,7 +3150,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeo
         {
             if (NLS_RegGetDword( hSubKey, szCountryCodeValueName, &dwGeoId ))
             {
-                TRACE("Got geoid %ld\n", dwGeoId);
+                TRACE("Got geoid %d\n", dwGeoId);
 
                 if (!pGeoEnumProc( dwGeoId ))
                     bContinue = FALSE;
@@ -3194,7 +3194,7 @@ BOOL WINAPI InvalidateNLSCache(void)
  */
 GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
 {
-    FIXME("%ld\n",GeoClass);
+    FIXME("%d\n",GeoClass);
     return GEOID_NOT_AVAILABLE;
 }
 
@@ -3203,7 +3203,7 @@ GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
  */
 BOOL WINAPI SetUserGeoID( GEOID GeoID )
 {
-    FIXME("%ld\n",GeoID);
+    FIXME("%d\n",GeoID);
     return FALSE;
 }
 
@@ -3246,7 +3246,7 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags
 {
     ENUM_UILANG_CALLBACK enum_uilang;
 
-    TRACE("%p, %lx, %lx\n", pUILangEnumProc, dwFlags, lParam);
+    TRACE("%p, %x, %lx\n", pUILangEnumProc, dwFlags, lParam);
 
     if(!pUILangEnumProc) {
 	SetLastError(ERROR_INVALID_PARAMETER);
@@ -3274,7 +3274,7 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
 {
     ENUM_UILANG_CALLBACK enum_uilang;
 
-    TRACE("%p, %lx, %lx\n", pUILangEnumProc, dwFlags, lParam);
+    TRACE("%p, %x, %lx\n", pUILangEnumProc, dwFlags, lParam);
 
 
     if(!pUILangEnumProc) {
@@ -3299,13 +3299,13 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
 INT WINAPI GetGeoInfoW(GEOID GeoId, GEOTYPE GeoType, LPWSTR lpGeoData, 
                 int cchData, LANGID language)
 {
-    FIXME("%ld %ld %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
+    FIXME("%d %d %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
     return 0;
 }
 
 INT WINAPI GetGeoInfoA(GEOID GeoId, GEOTYPE GeoType, LPSTR lpGeoData, 
                 int cchData, LANGID language)
 {
-    FIXME("%ld %ld %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
+    FIXME("%d %d %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
     return 0;
 }

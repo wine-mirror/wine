@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(stress);
  */
 INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 {
-	FIXME("(%d, %ld) - stub\n",
+	FIXME("(%d, %d) - stub\n",
 		       uDrive, lLeft);
 
 	return 1;
@@ -64,7 +64,7 @@ BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
  */
 BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
-	FIXME("(%ld) - stub\n", dwLeft);
+	FIXME("(%d) - stub\n", dwLeft);
 
 	return 1;
 }

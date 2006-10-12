@@ -224,7 +224,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
     void *ptr;
     HGLOBAL16 handle;
 
-    TRACE("%ld flags=%04x\n", size, flags );
+    TRACE("%d flags=%04x\n", size, flags );
 
     /* If size is 0, create a discarded block */
 
@@ -295,7 +295,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel16( handle );
 
-    TRACE("%04x %ld flags=%04x\n",
+    TRACE("%04x %d flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
 
@@ -347,7 +347,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
-    TRACE("oldbase %p oldsize %08lx newsize %08lx\n", ptr,oldsize,size);
+    TRACE("oldbase %p oldsize %08x newsize %08x\n", ptr,oldsize,size);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     if (pArena->flags & GA_DOSMEM)
@@ -475,7 +475,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 handle )
 {
     WORD sel = GlobalHandleToSel16( handle );
-    TRACE("(%04x) -> %08lx\n", handle, MAKELONG( 0, sel ) );
+    TRACE("(%04x) -> %08x\n", handle, MAKELONG( 0, sel ) );
 
     if (handle)
     {

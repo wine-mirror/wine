@@ -809,7 +809,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
     while (!ctx.done && !ctx.error && WCEL_Get(&ctx, &ir))
     {
 	if (ir.EventType != KEY_EVENT) continue;
-	TRACE("key%s repeatCount=%u, keyCode=%02x scanCode=%02x char=%02x keyState=%08lx\n",
+	TRACE("key%s repeatCount=%u, keyCode=%02x scanCode=%02x char=%02x keyState=%08x\n",
 	      ir.Event.KeyEvent.bKeyDown ? "Down" : "Up  ", ir.Event.KeyEvent.wRepeatCount,
 	      ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualScanCode,
 	      ir.Event.KeyEvent.uChar.UnicodeChar, ir.Event.KeyEvent.dwControlKeyState);

@@ -148,14 +148,14 @@ DWORD WINAPI FormatMessageA(
     BOOL    eos = FALSE;
     CHAR	ch;
 
-    TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+    TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
     if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
-        FIXME("line wrapping (%lu) not supported.\n", width);
+        FIXME("line wrapping (%u) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
     {
@@ -334,7 +334,7 @@ DWORD WINAPI FormatMessageA(
     HeapFree(GetProcessHeap(),0,from);
     ret = (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? strlen(*(LPSTR*)lpBuffer) : strlen(lpBuffer);
 #endif /* __i386__ */
-    TRACE("-- returning %ld\n", ret);
+    TRACE("-- returning %d\n", ret);
     return ret;
 }
 #undef ADD_TO_T
@@ -362,7 +362,7 @@ DWORD WINAPI FormatMessageW(
     BOOL eos = FALSE;
     WCHAR ch;
 
-    TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+    TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
     if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)

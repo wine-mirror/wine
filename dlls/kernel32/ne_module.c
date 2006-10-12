@@ -1323,7 +1323,7 @@ DWORD NE_StartTask(void)
 
         /* Now call 16-bit entry point */
 
-        TRACE("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
+        TRACE("Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
               context.SegCs, context.Eip, context.SegDs,
               SELECTOROF(NtCurrentTeb()->WOW32Reserved),
               OFFSETOF(NtCurrentTeb()->WOW32Reserved) );

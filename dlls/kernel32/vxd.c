@@ -301,7 +301,7 @@ void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
     if (proc) context->Eax = proc( service, context );
     else
     {
-        FIXME( "Unknown/unimplemented VxD (%08lx)\n", service);
+        FIXME( "Unknown/unimplemented VxD (%08x)\n", service);
         context->Eax = 0xffffffff; /* FIXME */
     }
 }
@@ -342,7 +342,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 {
     NTSTATUS status;
 
-    TRACE( "(%p,%lx,%p,%ld,%p,%ld,%p,%p)\n",
+    TRACE( "(%p,%x,%p,%d,%p,%d,%p,%p)\n",
            hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
            lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped );
 

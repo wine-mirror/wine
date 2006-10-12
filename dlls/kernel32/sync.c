@@ -270,7 +270,7 @@ BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject,
                 WAITORTIMERCALLBACK Callback, PVOID Context,
                 ULONG dwMilliseconds, ULONG dwFlags)
 {
-    FIXME("%p %p %p %p %ld %ld\n",
+    FIXME("%p %p %p %p %d %d\n",
           phNewWaitObject,hObject,Callback,Context,dwMilliseconds,dwFlags);
     return FALSE;
 }
@@ -282,7 +282,7 @@ HANDLE WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject,
                 WAITORTIMERCALLBACK Callback, PVOID Context,
                 ULONG dwMilliseconds, ULONG dwFlags ) 
 {
-    FIXME("%p %p %p %ld %ld\n",
+    FIXME("%p %p %p %d %d\n",
           hObject,Callback,Context,dwMilliseconds,dwFlags);
     return 0;
 }
@@ -317,7 +317,7 @@ DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn
     NTSTATUS status;
     LARGE_INTEGER timeout, *ptimeout = NULL;
 
-    TRACE("%p %p %ld %d\n", hObjectToSignal,
+    TRACE("%p %p %d %d\n", hObjectToSignal,
           hObjectToWaitOn, dwMilliseconds, bAlertable);
 
     if (dwMilliseconds != INFINITE)
@@ -1133,7 +1133,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     IO_STATUS_BLOCK iosb;
     LARGE_INTEGER timeout;
 
-    TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n",
+    TRACE("(%s, %#08x, %#08x, %d, %d, %d, %d, %p)\n",
           debugstr_w(name), dwOpenMode, dwPipeMode, nMaxInstances,
           nOutBufferSize, nInBufferSize, nDefaultTimeOut, sa );
 
@@ -1197,7 +1197,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 #ifdef FIONREAD
     int avail=0, fd, ret, flags;
 
-    TRACE("(%p,%p,%lu,%p,%p,%p)\n", hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
+    TRACE("(%p,%p,%u,%p,%p,%p)\n", hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
 
     ret = wine_server_handle_to_fd( hPipe, FILE_READ_DATA, &fd, &flags );
     if (ret)
@@ -1307,7 +1307,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     ULONG sz_pipe_wait;
     HANDLE pipe_dev;
 
-    TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
+    TRACE("%s 0x%08x\n",debugstr_w(name),nTimeOut);
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
         return FALSE;
@@ -1436,7 +1436,7 @@ BOOL WINAPI TransactNamedPipe(
     BOOL r;
     DWORD count;
 
-    TRACE("%p %p %ld %p %ld %p %p\n",
+    TRACE("%p %p %d %p %d %p %p\n",
           handle, lpInput, dwInputSize, lpOutput,
           dwOutputSize, lpBytesRead, lpOverlapped);
 
@@ -1495,7 +1495,7 @@ BOOL WINAPI GetNamedPipeHandleStateA(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%p %p %p %p %p %p %ld\n",
+    FIXME("%p %p %p %p %p %p %d\n",
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
@@ -1511,7 +1511,7 @@ BOOL WINAPI GetNamedPipeHandleStateW(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPWSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%p %p %p %p %p %p %ld\n",
+    FIXME("%p %p %p %p %p %p %d\n",
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
@@ -1528,7 +1528,7 @@ BOOL WINAPI SetNamedPipeHandleState(
 {
     /* should be a fixme, but this function is called a lot by the RPC
      * runtime, and it slows down InstallShield a fair bit. */
-    WARN("stub: %p %p/%ld %p %p\n",
+    WARN("stub: %p %p/%d %p %p\n",
           hNamedPipe, lpMode, lpMode ? *lpMode : 0, lpMaxCollectionCount, lpCollectDataTimeout);
     return FALSE;
 }
@@ -1545,7 +1545,7 @@ BOOL WINAPI CallNamedPipeA(
     LPWSTR str = NULL;
     BOOL ret;
 
-    TRACE("%s %p %ld %p %ld %p %ld\n",
+    TRACE("%s %p %d %p %d %p %d\n",
            debugstr_a(lpNamedPipeName), lpInput, dwInputSize,
            lpOutput, dwOutputSize, lpBytesRead, nTimeout);
 
@@ -1571,7 +1571,7 @@ BOOL WINAPI CallNamedPipeW(
     LPVOID lpOutput, DWORD lpOutputSize,
     LPDWORD lpBytesRead, DWORD nTimeout)
 {
-    FIXME("%s %p %ld %p %ld %p %ld\n",
+    FIXME("%s %p %d %p %d %p %d\n",
            debugstr_w(lpNamedPipeName), lpInput, lpInputSize,
            lpOutput, lpOutputSize, lpBytesRead, nTimeout);
     return FALSE;
@@ -1657,7 +1657,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
     HANDLE handle;
     LPWSTR name = NULL;
 
-    TRACE("%s %ld %ld %p\n", debugstr_a(lpName),
+    TRACE("%s %d %d %p\n", debugstr_a(lpName),
           nMaxMessageSize, lReadTimeout, sa);
 
     if( lpName )
@@ -1700,7 +1700,7 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
-    TRACE("%s %ld %ld %p\n", debugstr_w(lpName),
+    TRACE("%s %d %d %p\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
 
     if (!RtlDosPathNameToNtPathName_U( lpName, &nameW, NULL, NULL ))
@@ -1809,7 +1809,7 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
-    TRACE("%p %ld\n", hMailslot, dwReadTimeout);
+    TRACE("%p %d\n", hMailslot, dwReadTimeout);
 
     info.ReadTimeout.QuadPart = dwReadTimeout * -10000;
     status = NtSetInformationFile( hMailslot, &iosb, &info, sizeof info,
@@ -1829,7 +1829,7 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingCompletionPort,
                                      ULONG_PTR CompletionKey, DWORD dwNumberOfConcurrentThreads)
 {
-    FIXME("(%p, %p, %08lx, %08lx): stub.\n",
+    FIXME("(%p, %p, %08lx, %08x): stub.\n",
           hFileHandle, hExistingCompletionPort, CompletionKey, dwNumberOfConcurrentThreads);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
@@ -1843,7 +1843,7 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
                                        PULONG_PTR pCompletionKey, LPOVERLAPPED *lpOverlapped,
                                        DWORD dwMilliseconds )
 {
-    FIXME("(%p,%p,%p,%p,%ld), stub!\n",
+    FIXME("(%p,%p,%p,%p,%d), stub!\n",
           CompletionPort,lpNumberOfBytesTransferred,pCompletionKey,lpOverlapped,dwMilliseconds);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
@@ -1852,7 +1852,7 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
 BOOL WINAPI PostQueuedCompletionStatus( HANDLE CompletionPort, DWORD dwNumberOfBytes,
                                         ULONG_PTR dwCompletionKey, LPOVERLAPPED lpOverlapped)
 {
-    FIXME("%p %ld %08lx %p\n", CompletionPort, dwNumberOfBytes, dwCompletionKey, lpOverlapped );
+    FIXME("%p %d %08lx %p\n", CompletionPort, dwNumberOfBytes, dwCompletionKey, lpOverlapped );
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

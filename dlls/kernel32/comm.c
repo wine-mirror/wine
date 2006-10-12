@@ -753,14 +753,14 @@ BOOL WINAPI GetCommMask(HANDLE handle, LPDWORD evtmask)
  */
 BOOL WINAPI SetCommMask(HANDLE handle, DWORD evtmask)
 {
-    TRACE("handle %p, mask %lx\n", handle, evtmask);
+    TRACE("handle %p, mask %x\n", handle, evtmask);
     return DeviceIoControl(handle, IOCTL_SERIAL_SET_WAIT_MASK,
                            &evtmask, sizeof(evtmask), NULL, 0, NULL, NULL);
 }
 
 static void dump_dcb(const DCB* lpdcb)
 {
-    TRACE("bytesize=%d baudrate=%ld fParity=%d Parity=%d stopbits=%d\n",
+    TRACE("bytesize=%d baudrate=%d fParity=%d Parity=%d stopbits=%d\n",
           lpdcb->ByteSize, lpdcb->BaudRate, lpdcb->fParity, lpdcb->Parity,
           (lpdcb->StopBits == ONESTOPBIT) ? 1 :
           (lpdcb->StopBits == TWOSTOPBITS) ? 2 : 0);
@@ -1323,7 +1323,7 @@ BOOL WINAPI SetDefaultCommConfigW(
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
-    TRACE("(%p %p %lx)\n",lpszDevice, lpCommConfig, dwSize);
+    TRACE("(%p %p %x)\n",lpszDevice, lpCommConfig, dwSize);
 
     hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
@@ -1357,7 +1357,7 @@ BOOL WINAPI SetDefaultCommConfigA(
     LPWSTR lpDeviceW = NULL;
     DWORD len;
 
-    TRACE("(%s %p %lx)\n",debugstr_a(lpszDevice),lpCommConfig,dwSize);
+    TRACE("(%s %p %x)\n",debugstr_a(lpszDevice),lpCommConfig,dwSize);
 
     if (lpszDevice)
     {
@@ -1398,7 +1398,7 @@ BOOL WINAPI GetDefaultCommConfigW(
         return FALSE;
      }
 
-     TRACE("(%s %p %ld)\n", debugstr_w(lpszName), lpCC, *lpdwSize );
+     TRACE("(%s %p %d)\n", debugstr_w(lpszName), lpCC, *lpdwSize );
      if (*lpdwSize < sizeof(COMMCONFIG)) {
          *lpdwSize = sizeof(COMMCONFIG);
          return FALSE;
@@ -1438,7 +1438,7 @@ BOOL WINAPI GetDefaultCommConfigA(
 	BOOL ret = FALSE;
 	UNICODE_STRING lpszNameW;
 
-	TRACE("(%s,%p,%ld)\n",lpszName,lpCC,*lpdwSize);
+	TRACE("(%s,%p,%d)\n",lpszName,lpCC,*lpdwSize);
 	if(lpszName) RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
 	else lpszNameW.Buffer = NULL;
 

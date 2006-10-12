@@ -526,7 +526,7 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
 
     if ((flags & GET_MODULE_HANDLE_EX_FLAG_PIN) ||
         !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
-        FIXME( "should update refcount, flags %lx\n", flags );
+        FIXME( "should update refcount, flags %x\n", flags );
 
     if (module) *module = ret;
     return TRUE;

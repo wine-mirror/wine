@@ -101,7 +101,7 @@ static void WIN87_Init( CONTEXT86 *context )
  */
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
-    TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx=%04x)\n",
+    TRACE("(cs:eip=%x:%x es=%x bx=%04x ax=%04x dx=%04x)\n",
                  (WORD)context->SegCs, context->Eip,
                  (WORD)context->SegEs, (WORD)context->Ebx,
                  (WORD)context->Eax, (WORD)context->Edx );
@@ -164,7 +164,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
            __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
            __asm__ __volatile__("fldcw %0" : : "m" (save));
 #endif
-            TRACE("On top of stack is %ld\n",dw);
+            TRACE("On top of stack is %d\n",dw);
         }
         break;
 
@@ -178,7 +178,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
              */
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
-            TRACE("On top of stack was %ld\n",dw);
+            TRACE("On top of stack was %d\n",dw);
             context->Eax = (context->Eax & ~0xffff) | LOWORD(dw);
             context->Edx = (context->Edx & ~0xffff) | HIWORD(dw);
         }

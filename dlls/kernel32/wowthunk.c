@@ -570,7 +570,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             DWORD count = cbArgs / sizeof(WORD);
             WORD * wstack = (WORD *)stack;
 
-            DPRINTF("%04lx:CallTo16(func=%04lx:%04x,ds=%04lx",
+            DPRINTF("%04x:CallTo16(func=%04x:%04x,ds=%04x",
                     GetCurrentThreadId(),
                     context->SegCs, LOWORD(context->Eip), context->SegDs );
             while (count) DPRINTF( ",%04x", wstack[--count] );
@@ -629,7 +629,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
         if (TRACE_ON(relay))
         {
-            DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x ",
+            DPRINTF("%04x:RetFrom16() ss:sp=%04x:%04x ",
                     GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->WOW32Reserved),
                     OFFSETOF(NtCurrentTeb()->WOW32Reserved));
             DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
@@ -647,7 +647,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             DWORD count = cbArgs / sizeof(WORD);
             WORD * wstack = (WORD *)stack;
 
-            DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
+            DPRINTF("%04x:CallTo16(func=%04x:%04x,ds=%04x",
                     GetCurrentThreadId(), HIWORD(vpfn16), LOWORD(vpfn16),
                     SELECTOROF(NtCurrentTeb()->WOW32Reserved) );
             while (count) DPRINTF( ",%04x", wstack[--count] );
@@ -674,7 +674,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
         if (TRACE_ON(relay))
         {
-            DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x retval=%08lx\n",
+            DPRINTF("%04x:RetFrom16() ss:sp=%04x:%04x retval=%08x\n",
                     GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->WOW32Reserved),
                     OFFSETOF(NtCurrentTeb()->WOW32Reserved), ret);
             SYSLEVEL_CheckNotLevel( 2 );
@@ -830,14 +830,14 @@ static DWORD WOW_CallProc32W16( FARPROC proc32, DWORD nrofargs, DWORD *args )
             break;
     default:
             /* FIXME: should go up to 32  arguments */
-            ERR("Unsupported number of arguments %ld, please report.\n",nrofargs);
+            ERR("Unsupported number of arguments %d, please report.\n",nrofargs);
             ret = 0;
             break;
     }
 
     RestoreThunkLock( mutex_count );
 
-    TRACE("returns %08lx\n",ret);
+    TRACE("returns %08x\n",ret);
     return ret;
 }
 
@@ -849,7 +849,7 @@ DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, 
     DWORD args[32];
     unsigned int i;
 
-    TRACE("(%ld,%ld,%p args[",nrofargs,argconvmask,proc32);
+    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
 
     for (i=0;i<nrofargs;i++)
     {
@@ -858,14 +858,14 @@ DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, 
             SEGPTR ptr = VA_ARG16( valist, SEGPTR );
             /* pascal convention, have to reverse the arguments order */
             args[nrofargs - i - 1] = (DWORD)MapSL(ptr);
-            TRACE("%08lx(%p),",ptr,MapSL(ptr));
+            TRACE("%08x(%p),",ptr,MapSL(ptr));
         }
         else
         {
             DWORD arg = VA_ARG16( valist, DWORD );
             /* pascal convention, have to reverse the arguments order */
             args[nrofargs - i - 1] = arg;
-            TRACE("%ld,", arg);
+            TRACE("%d,", arg);
         }
     }
     TRACE("])\n");
@@ -884,7 +884,7 @@ DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32
     DWORD args[32];
     unsigned int i;
 
-    TRACE("(%ld,%ld,%p args[",nrofargs,argconvmask,proc32);
+    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
 
     for (i=0;i<nrofargs;i++)
     {
@@ -892,13 +892,13 @@ DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32
         {
             SEGPTR ptr = VA_ARG16( valist, SEGPTR );
             args[i] = (DWORD)MapSL(ptr);
-            TRACE("%08lx(%p),",ptr,MapSL(ptr));
+            TRACE("%08x(%p),",ptr,MapSL(ptr));
         }
         else
         {
             DWORD arg = VA_ARG16( valist, DWORD );
             args[i] = arg;
-            TRACE("%ld,", arg);
+            TRACE("%d,", arg);
         }
     }
     TRACE("])\n");
@@ -924,6 +924,6 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
         }
         calladdr = VA_ARG16(args,DWORD);
         stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
-        DPRINTF(") calling address was 0x%08lx\n",calladdr);
+        DPRINTF(") calling address was 0x%08x\n",calladdr);
         return 0;
 }

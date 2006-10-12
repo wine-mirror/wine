@@ -95,7 +95,7 @@ EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
         ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
     EXECUTION_STATE old = current;
 
-    WARN("(0x%lx): stub, harmless.\n", flags);
+    WARN("(0x%x): stub, harmless.\n", flags);
 
     if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
         current = flags;
