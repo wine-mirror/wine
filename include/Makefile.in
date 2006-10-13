@@ -78,6 +78,7 @@ WINDOWS_INCLUDES = \
 	cderr.h \
 	cguid.h \
 	cierror.h \
+	clusapi.h \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
