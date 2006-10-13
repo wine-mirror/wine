@@ -143,7 +143,7 @@ static HRESULT WINAPI IDirectMusicMotifTrack_IDirectMusicTrack_SetParam (LPDIREC
 static HRESULT WINAPI IDirectMusicMotifTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicMotifTrack, TrackVtbl, iface);
 
-	TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
+	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
 	if (IsEqualGUID (rguidType, &GUID_DisableTimeSig)
 		|| IsEqualGUID (rguidType, &GUID_EnableTimeSig)
 		|| IsEqualGUID (rguidType, &GUID_SeedVariations)

@@ -138,7 +138,7 @@ static HRESULT WINAPI IDirectMusicSysExTrack_IDirectMusicTrack_SetParam (LPDIREC
 static HRESULT WINAPI IDirectMusicSysExTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicSysExTrack, TrackVtbl, iface);
 
-	TRACE("(%p, %s): ", This, debugstr_guid(rguidType));
+	TRACE("(%p, %s)\n", This, debugstr_guid(rguidType));
 	/* didn't find any params */
 	TRACE("param unsupported\n");
 	return DMUS_E_TYPE_UNSUPPORTED;

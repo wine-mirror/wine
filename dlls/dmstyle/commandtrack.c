@@ -144,7 +144,7 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_SetParam (LPDIR
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
 
-	TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
+	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
 	if (IsEqualGUID (rguidType, &GUID_CommandParam)
 		|| IsEqualGUID (rguidType, &GUID_CommandParam2)
 		|| IsEqualGUID (rguidType, &GUID_CommandParamNext)) {

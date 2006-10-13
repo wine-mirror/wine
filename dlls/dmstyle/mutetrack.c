@@ -143,7 +143,7 @@ static HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_SetParam (LPDIRECT
 static HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 
-	TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
+	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
 	if (IsEqualGUID (rguidType, &GUID_MuteParam)) {
 		TRACE("param supported\n");
 		return S_OK;

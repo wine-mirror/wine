@@ -134,7 +134,7 @@ static HRESULT WINAPI IDirectMusicMarkerTrack_IDirectMusicTrack_SetParam (LPDIRE
 static HRESULT WINAPI IDirectMusicMarkerTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicMarkerTrack, TrackVtbl, iface);
 
-	TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
+	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
 	if (IsEqualGUID (rguidType, &GUID_Play_Marker)
 		|| IsEqualGUID (rguidType, &GUID_Valid_Start_Time)) {
 		TRACE("param supported\n");

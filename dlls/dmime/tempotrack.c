@@ -205,7 +205,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_SetParam (LPDIREC
 static HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, TrackVtbl, iface);
 
-  TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
+  TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
   if (IsEqualGUID (rguidType, &GUID_DisableTempo)
       || IsEqualGUID (rguidType, &GUID_EnableTempo)
       || IsEqualGUID (rguidType, &GUID_TempoParam)) {
