@@ -908,7 +908,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SPECULARMATERIALSOURCE,   D3DMCS_COLOR2);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_AMBIENTMATERIALSOURCE,    D3DMCS_MATERIAL);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_EMISSIVEMATERIALSOURCE,   D3DMCS_MATERIAL);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_VERTEXBLEND,              D3DVBF_DISABLE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_VERTEXBLEND,              WINED3DVBF_DISABLE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CLIPPLANEENABLE,          0);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
     tmpfloat.f = 1.0f;

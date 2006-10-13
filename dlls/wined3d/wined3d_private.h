@@ -1135,7 +1135,7 @@ struct IWineD3DStateBlockImpl
     float                     *pixelShaderConstantF;
 
     /* Indexed Vertex Blending */
-    D3DVERTEXBLENDFLAGS       vertex_blend;
+    WINED3DVERTEXBLENDFLAGS   vertex_blend;
     FLOAT                     tween_factor;
 
     /* RenderState */
