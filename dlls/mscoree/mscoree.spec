@@ -20,7 +20,7 @@
 @ stub CorBindToRuntimeByPath
 @ stub CorBindToRuntimeByPathEx
 @ stub CorBindToRuntimeEx
-@ stub CorBindToRuntimeHost
+@ stdcall CorBindToRuntimeHost(wstr wstr wstr ptr long ptr ptr ptr)
 @ stub CorDllMainWorker
 @ stub CorExitProcess
 @ stub CorGetSvc
@@ -40,7 +40,7 @@
 @ stub GetCORRequiredVersion
 @ stub GetCORRootDirectory
 @ stub GetCORSystemDirectory
-@ stub GetCORVersion
+@ stdcall GetCORVersion(wstr long ptr)
 @ stub GetCompileInfo
 @ stub GetFileVersion
 @ stub GetHashFromAssemblyFile

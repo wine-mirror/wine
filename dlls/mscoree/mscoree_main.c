@@ -28,6 +28,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
+HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor,
+                                    LPCWSTR pwszHostConfigFile, VOID *pReserved,
+                                    DWORD startupFlags, REFCLSID rclsid,
+                                    REFIID riid, LPVOID *ppv)
+{
+    FIXME("(%s, %s, %s, %p, %d, %p, %p, %p): stub!\n", debugstr_w(pwszVersion),
+          debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
+          startupFlags, rclsid, riid, ppv);
+
+    return E_FAIL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -82,4 +94,24 @@ DWORD _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
 {
     TRACE("(%p, %s): stub\n", imageBase, debugstr_w(imageName));
     return E_FAIL;
+}
+
+HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
+{
+    static const WCHAR version[] = {'1','.','1','.','4','3','2','2',0};
+
+    FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
+
+    if (!dwLength)
+        return E_POINTER;
+
+    *dwLength = lstrlenW(version);
+
+    if (cchBuffer < *dwLength)
+        return ERROR_INSUFFICIENT_BUFFER;
+
+    if (pbuffer)
+        lstrcpyW(pbuffer, version);
+
+    return S_OK;
 }
