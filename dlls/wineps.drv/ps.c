@@ -192,7 +192,7 @@ static const char psarrayget[] =
 "%s %d get\n";
 
 static const char psarrayput[] =
-"%s %d %ld put\n";
+"%s %d %d put\n";
 
 static const char psarraydef[] =
 "/%s %d array def\n";

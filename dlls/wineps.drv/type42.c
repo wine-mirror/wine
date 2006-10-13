@@ -157,11 +157,11 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
             " currentdict end def\n"
 	    " /sfnts [\n";
     static const char TT_offset_table[] = "<00010000%04x%04x%04x%04x\n";
-    static const char TT_table_dir_entry[] = "%08lx%08lx%08lx%08lx\n";
+    static const char TT_table_dir_entry[] = "%08x%08x%08x%08x\n";
     static const char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
     static const char end[] = "] def\n"
       "havetype42gdir{/GlyphDirectory 256 dict def\n"
-      " sfnts 0 get dup %ld (locx) putinterval %ld (glfx) putinterval}if\n"
+      " sfnts 0 get dup %d (locx) putinterval %d (glfx) putinterval}if\n"
       "currentdict end dup /FontName get exch definefont pop\n";
 
 
@@ -187,7 +187,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 	    t42->maxp_tab = i;
     }
     if(i < num_of_tables) {
-        TRACE("Table %ld has length %ld.  Will use Type 1 font instead.\n", i, t42->tables[i].len);
+        TRACE("Table %d has length %d.  Will use Type 1 font instead.\n", i, t42->tables[i].len);
         T42_free(t42);
 	return NULL;
     }
@@ -262,7 +262,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 
     PSDRV_WriteSpool(physDev, "[ ", 2);
     for(i = 1; t42->glyf_blocks[i]; i++) {
-        sprintf(buf,"%ld ", t42->glyf_blocks[i] - t42->glyf_blocks[i-1] + 1);
+        sprintf(buf,"%d ", t42->glyf_blocks[i] - t42->glyf_blocks[i-1] + 1);
         /* again add one byte for old PostScript rips */
         PSDRV_WriteSpool(physDev, buf, strlen(buf));
         if(i % 8 == 0)
@@ -290,16 +290,16 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     const char glyph_def[] = 
       "/%s findfont exch 1 index\n"
       "havetype42gdir\n"
-      "{/GlyphDirectory get begin %ld exch def end}\n"
+      "{/GlyphDirectory get begin %d exch def end}\n"
       "{/sfnts get 4 index get 3 index 2 index putinterval pop}\n"
       "ifelse\n"
       "/CharStrings get\n"
       "begin\n"
-      " /%s %ld def\n"
+      " /%s %d def\n"
       "end\n"
       "pop pop\n";
 
-    TRACE("%ld %s\n", index, glyph_name);
+    TRACE("%d %s\n", index, glyph_name);
     assert(pdl->type == Type42);
     t42 = pdl->typeinfo.Type42;
 
@@ -317,7 +317,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 		    strlen(pdl->ps_name) + 100);
 
     if(!get_glyf_pos(t42, index, &start, &end)) return FALSE;
-    TRACE("start = %lx end = %lx\n", start, end);
+    TRACE("start = %x end = %x\n", start, end);
 
     awidth = GET_BE_WORD(t42->tables[t42->hmtx_tab].data + index * 4);
     lsb = GET_BE_WORD(t42->tables[t42->hmtx_tab].data + index * 4 + 2);
@@ -332,7 +332,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 	    sg_flags = GET_BE_WORD(sg_start);
 	    sg_index = GET_BE_WORD(sg_start + 2);
 
-	    TRACE("Sending subglyph %04lx for glyph %04lx\n", sg_index, index);
+	    TRACE("Sending subglyph %04x for glyph %04x\n", sg_index, index);
 	    get_glyph_name(physDev->hdc, sg_index, sg_name);
 	    T42_download_glyph(physDev, pdl, sg_index, sg_name);
 	    sg_start += 4;
@@ -353,7 +353,7 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
         if(start < t42->glyf_blocks[i]) break;
     /* we don't have a string for the gdir and glyf tables, but we do have a 
        string for the TT header.  So the offset we need is tables - 2 */
-    sprintf(buf, "%ld %ld\n", t42->num_of_written_tables - 2 + i, start - t42->glyf_blocks[i-1]);
+    sprintf(buf, "%d %d\n", t42->num_of_written_tables - 2 + i, start - t42->glyf_blocks[i-1]);
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     PSDRV_WriteSpool(physDev, "<", 1);

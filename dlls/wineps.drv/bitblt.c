@@ -66,7 +66,7 @@ BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, D
 	return TRUE;
       }
     default:
-        FIXME("Unsupported rop %ld\n", dwRop);
+        FIXME("Unsupported rop %d\n", dwRop);
 	return FALSE;
     }
 }

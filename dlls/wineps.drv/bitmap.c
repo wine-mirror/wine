@@ -75,7 +75,7 @@ static BOOL get_bitmap_info( const void *ptr, LONG *width, LONG *height, WORD *b
         *compr  = header->biCompression;
         return TRUE;
     default:
-        ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+        ERR("(%d): unknown/wrong size for header\n", header->biSize );
         return FALSE;
     }
 }
@@ -243,7 +243,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 
     widthbytes = get_dib_width_bytes(fullSrcWidth, bpp);
 
-    TRACE("full size=%ldx%ld bpp=%d compression=%d rop=%08lx\n", fullSrcWidth,
+    TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", fullSrcWidth,
 	  fullSrcHeight, bpp, compression, dwRop);
 
 

@@ -61,7 +61,7 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
         HeapFree( GetProcessHeap(), 0, elp );
     }
 
-    TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
+    TRACE("hpen = %p colour = %08x\n", hpen, logpen.lopnColor);
 
     physDev->pen.width = logpen.lopnWidth.x;
     if ((logpen.lopnStyle & PS_GEOMETRIC) || (physDev->pen.width > 1))

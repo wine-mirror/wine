@@ -94,7 +94,7 @@ void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
     float r, g, b;
 
     if(ctype != 0 && ctype != 2)
-        FIXME("Colour is %08lx\n", wincolor);
+        FIXME("Colour is %08x\n", wincolor);
 
     r = (wincolor & 0xff) / 256.0;
     g = ((wincolor >> 8) & 0xff) / 256.0;
@@ -133,4 +133,3 @@ COLORREF PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color )
     physDev->font.set = FALSE;
     return color;
 }
-

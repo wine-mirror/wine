@@ -67,7 +67,7 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
     USHORT  	    	usUnitsPerEm, usWinAscent, usWinDescent;
     SHORT   	    	sAscender, sDescender, sLineGap, sAvgCharWidth;
 
-    TRACE("'%s' %li\n", afm->FontName, lfHeight);
+    TRACE("'%s' %i\n", afm->FontName, lfHeight);
 
     if (lfHeight < 0)   	    	    	    	/* match em height */
     {
@@ -139,9 +139,9 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
     font->strikeoutPosition = tm->tmAscent / 2;
     font->strikeoutThickness = font->underlineThickness;
 
-    TRACE("Selected PS font '%s' size %d weight %ld.\n", afm->FontName,
+    TRACE("Selected PS font '%s' size %d weight %d.\n", afm->FontName,
     	    font->size, tm->tmWeight );
-    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n", tm->tmHeight,
+    TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", tm->tmHeight,
     	    tm->tmAscent, tm->tmDescent, tm->tmInternalLeading,
     	    tm->tmExternalLeading);
 }
@@ -296,7 +296,7 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 
     if (needle == NULL)
     {
-    	WARN("No glyph for U+%.4lX in %s\n", UV, afm->FontName);
+    	WARN("No glyph for U+%.4X in %s\n", UV, afm->FontName);
     	needle = afm->Metrics;
     }
 
@@ -336,7 +336,7 @@ BOOL PSDRV_GetTextExtentExPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
     if (lpnFit)
 	*lpnFit = nfit;
 
-    TRACE("cx=%li cy=%li\n", size->cx, size->cy);
+    TRACE("cx=%i cy=%i\n", size->cx, size->cy);
 
     return TRUE;
 }

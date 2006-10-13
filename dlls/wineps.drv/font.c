@@ -43,7 +43,7 @@ HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFont )
 
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return HGDI_ERROR;
 
-    TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
+    TRACE("FaceName = %s Height = %d Italic = %d Weight = %d\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight);
 

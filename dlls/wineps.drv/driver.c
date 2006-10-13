@@ -334,7 +334,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
   PRINTERINFO *pi = PSDRV_FindPrinterInfo(lpszDevice);
   if(!pi) return -1;
 
-  TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04lx)\n",
+  TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
   lpszDriver, hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, dwMode);
 
   /* If dwMode == 0, return size of DEVMODE structure */
@@ -343,7 +343,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 
   /* If DM_MODIFY is set, change settings in accordance with lpdmInput */
   if((dwMode & DM_MODIFY) && lpdmInput) {
-    TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", lpdmInput->dmFields);
+    TRACE("DM_MODIFY set. devIn->dmFields = %08x\n", lpdmInput->dmFields);
     PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODEA *)lpdmInput, pi);
   }
 
@@ -556,7 +556,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
     ret = 0;
     if(pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
       ret = 1;
-    TRACE("DC_DUPLEX: returning %ld\n", ret);
+    TRACE("DC_DUPLEX: returning %d\n", ret);
     return ret;
 
   case DC_EMF_COMPLIANT:

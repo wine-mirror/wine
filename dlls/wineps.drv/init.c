@@ -120,7 +120,7 @@ static LOGFONTA DefaultLogFont = {
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("(%p, %ld, %p)\n", hinst, reason, reserved);
+    TRACE("(%p, %d, %p)\n", hinst, reason, reserved);
 
     switch(reason) {
 
@@ -219,7 +219,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	  physDev->Devmode->dmPublic.u1.s1.dmPaperLength *
 	  physDev->logPixelsY / 254;
     } else {
-        FIXME("Odd dmFields %lx\n", physDev->Devmode->dmPublic.dmFields);
+        FIXME("Odd dmFields %x\n", physDev->Devmode->dmPublic.dmFields);
 	physDev->ImageableArea.left = 0;
 	physDev->ImageableArea.right = 0;
 	physDev->ImageableArea.bottom = 0;
@@ -228,7 +228,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	physDev->PageSize.cy = 0;
     }
 
-    TRACE("ImageableArea = %ld,%ld - %ld,%ld: PageSize = %ldx%ld\n",
+    TRACE("ImageableArea = %d,%d - %d,%d: PageSize = %dx%d\n",
 	  physDev->ImageableArea.left, physDev->ImageableArea.bottom,
 	  physDev->ImageableArea.right, physDev->ImageableArea.top,
 	  physDev->PageSize.cx, physDev->PageSize.cy);
@@ -572,7 +572,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     }
 
     if (OpenPrinterA (pi->FriendlyName, &hPrinter, NULL) == 0) {
-	ERR ("OpenPrinterA failed with code %li\n", GetLastError ());
+	ERR ("OpenPrinterA failed with code %i\n", GetLastError ());
 	goto cleanup;
     }
 
@@ -638,7 +638,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         else
         {
             res = ERROR_FILE_NOT_FOUND;
-            ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
+            ERR ("Error %i getting PPD file name for printer '%s'\n", res, name);
             goto closeprinter;
         }
         ppdFileName = HeapAlloc( PSDRV_Heap, 0, strlen(data_dir) + strlen(filename) + 1 );
@@ -705,7 +705,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     else if (res == ERROR_FILE_NOT_FOUND)
 	TRACE ("No 'Paper Size' for printer '%s'\n", name);
     else {
-	ERR ("GetPrinterDataA returned %li\n", res);
+	ERR ("GetPrinterDataA returned %i\n", res);
 	goto closeprinter;
     }
 
@@ -731,7 +731,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     else if (res == ERROR_MORE_DATA) {
 	pi->FontSubTable = HeapAlloc (PSDRV_Heap, 0, needed);
 	if (pi->FontSubTable == NULL) {
-	    ERR ("Failed to allocate %li bytes from heap\n", needed);
+	    ERR ("Failed to allocate %i bytes from heap\n", needed);
 	    goto closeprinter;
 	}
 
@@ -739,17 +739,17 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 		(LPBYTE) pi->FontSubTable, needed, &needed,
 		&pi->FontSubTableSize);
 	if (res != ERROR_SUCCESS) {
-	    ERR ("EnumPrinterDataExA returned %li\n", res);
+	    ERR ("EnumPrinterDataExA returned %i\n", res);
 	    goto closeprinter;
 	}
     }
     else {
-	ERR("EnumPrinterDataExA returned %li\n", res);
+	ERR("EnumPrinterDataExA returned %i\n", res);
 	goto closeprinter;
     }
 
     if (ClosePrinter (hPrinter) == 0) {
-	ERR ("ClosePrinter failed with code %li\n", GetLastError ());
+	ERR ("ClosePrinter failed with code %i\n", GetLastError ());
 	goto cleanup;
     }
 

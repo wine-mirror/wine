@@ -235,7 +235,7 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
         {
 	    BITMAPINFO *bmi = GlobalLock16(logbrush.lbHatch);
 	    UINT usage = logbrush.lbColor;
-	    TRACE("size %ldx%ldx%d\n", bmi->bmiHeader.biWidth,
+	    TRACE("size %dx%dx%d\n", bmi->bmiHeader.biWidth,
 		  bmi->bmiHeader.biHeight, bmi->bmiHeader.biBitCount);
 	    if(physDev->pi->ppd->LanguageLevel > 1) {
 	        PSDRV_WriteGSave(physDev);

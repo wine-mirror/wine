@@ -204,7 +204,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
       "ND\n"
       "end end\n";
 
-    TRACE("%ld %s\n", index, glyph_name);
+    TRACE("%d %s\n", index, glyph_name);
     assert(pdl->type == Type1);
     t1 = pdl->typeinfo.Type1;
 
@@ -247,7 +247,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 
     pph = (TTPOLYGONHEADER*)glyph_buf;
     while((char*)pph < glyph_buf + len) {
-        TRACE("contour len %ld\n", pph->cb);
+        TRACE("contour len %d\n", pph->cb);
 	ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
 
 	str_add_point(charstring, &pph->pfxStart, &curpos);
@@ -285,7 +285,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(glyph_def_begin) +
 		    strlen(pdl->ps_name) + strlen(glyph_name) + 100);
 
-    sprintf(buf, "%%%%glyph %04lx\n", index);
+    sprintf(buf, "%%%%glyph %04x\n", index);
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     len = str_get_bytes(charstring, &bytes);
