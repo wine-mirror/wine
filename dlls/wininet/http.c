@@ -915,7 +915,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
     WCHAR* url;
-    static const WCHAR szNul[] = { 0 };
+    static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 }, szSlash[] = { '/',0 } ;
     static const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',0 };
@@ -938,7 +938,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
         return FALSE;
 
     if( !lpwhr->lpszPath )
-        lpwhr->lpszPath = (LPWSTR)szNul;
+        lpwhr->lpszPath = szNul;
     TRACE("server='%s' path='%s'\n",
           debugstr_w(lpwhs->lpszHostName), debugstr_w(lpwhr->lpszPath));
     /* for constant 15 see above */
@@ -1689,6 +1689,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
     INTERNET_BUFFERSW BuffersInW;
     BOOL rc = FALSE;
     DWORD headerlen;
+    LPWSTR header = NULL;
 
     TRACE("(%p, %p, %p, %08x, %08x): stub\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
@@ -1700,16 +1701,15 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
         {
             headerlen = MultiByteToWideChar(CP_ACP,0,lpBuffersIn->lpcszHeader,
                     lpBuffersIn->dwHeadersLength,0,0);
-            BuffersInW.lpcszHeader = HeapAlloc(GetProcessHeap(),0,headerlen*
-                    sizeof(WCHAR));
-            if (!BuffersInW.lpcszHeader)
+            header = HeapAlloc(GetProcessHeap(),0,headerlen*sizeof(WCHAR));
+            if (!(BuffersInW.lpcszHeader = header))
             {
                 SetLastError(ERROR_OUTOFMEMORY);
                 return FALSE;
             }
             BuffersInW.dwHeadersLength = MultiByteToWideChar(CP_ACP, 0,
                     lpBuffersIn->lpcszHeader, lpBuffersIn->dwHeadersLength,
-                    (LPWSTR)BuffersInW.lpcszHeader, headerlen);
+                    header, headerlen);
         }
         else
             BuffersInW.lpcszHeader = NULL;
@@ -1722,8 +1722,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 
     rc = HttpSendRequestExW(hRequest, lpBuffersIn ? &BuffersInW : NULL, NULL, dwFlags, dwContext);
 
-    if (lpBuffersIn)
-        HeapFree(GetProcessHeap(),0,(LPVOID)BuffersInW.lpcszHeader);
+    HeapFree(GetProcessHeap(),0,header);
 
     return rc;
 }
@@ -1949,14 +1948,14 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
     {
         URL_COMPONENTSW urlComponents;
         WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
-        static const WCHAR szHttp[] = {'h','t','t','p',0};
-        static const WCHAR szHttps[] = {'h','t','t','p','s',0};
+        static WCHAR szHttp[] = {'h','t','t','p',0};
+        static WCHAR szHttps[] = {'h','t','t','p','s',0};
         DWORD url_length = 0;
         LPWSTR orig_url;
         LPWSTR combined_url;
 
         urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
-        urlComponents.lpszScheme = (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE) ? (LPWSTR)szHttps : (LPWSTR)szHttp;
+        urlComponents.lpszScheme = (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
         urlComponents.dwSchemeLength = 0;
         urlComponents.lpszHostName = lpwhs->lpszHostName;
         urlComponents.dwHostNameLength = 0;
