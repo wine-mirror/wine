@@ -231,7 +231,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
         if (!hGlobal16)
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-            ERR("alloc failure for %ld bytes\n", size);
+            ERR("alloc failure for %d bytes\n", size);
             return FALSE;
         }
         template = GlobalLock16(hGlobal16);

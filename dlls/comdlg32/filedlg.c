@@ -255,7 +255,7 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     /* test for missing functionality */
     if (fodInfos->ofnInfos->Flags & UNIMPLEMENTED_FLAGS)
     {
-      FIXME("Flags 0x%08lx not yet implemented\n",
+      FIXME("Flags 0x%08x not yet implemented\n",
          fodInfos->ofnInfos->Flags & UNIMPLEMENTED_FLAGS);
     }
 
@@ -1915,7 +1915,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       if(SUCCEEDED(IShellFolder_ParseDisplayName(lpsf, hwnd, NULL, lpwstrTemp, &dwEaten, &pidl, &dwAttributes)))
       {
         /* the path component is valid, we have a pidl of the next path component */
-        TRACE("parse OK attr=0x%08lx pidl=%p\n", dwAttributes, pidl);
+        TRACE("parse OK attr=0x%08x pidl=%p\n", dwAttributes, pidl);
         if(dwAttributes & SFGAO_FOLDER)
         {
           if(FAILED(IShellFolder_BindToObject(lpsf, pidl, 0, &IID_IShellFolder, (LPVOID*)&lpsfChild)))
@@ -2832,7 +2832,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
                   SHGFI_DISPLAYNAME | SHGFI_SYSICONINDEX
                   | SHGFI_PIDL | SHGFI_SMALLICON | SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED);
 
-  TRACE("-- Add %s attr=%08lx\n", sfi.szDisplayName, sfi.dwAttributes);
+  TRACE("-- Add %s attr=%08x\n", sfi.szDisplayName, sfi.dwAttributes);
 
   if((sfi.dwAttributes & SFGAO_FILESYSANCESTOR) || (sfi.dwAttributes & SFGAO_FILESYSTEM))
   {
@@ -3425,7 +3425,7 @@ BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl)
 
   	ret = IShellFolder_GetAttributesOf( psf, 1, &pidl, &uAttr );
 
-	TRACE("-- 0x%08lx 0x%08lx\n", uAttr, ret);
+	TRACE("-- 0x%08x 0x%08x\n", uAttr, ret);
 	/* see documentation shell 4.1*/
         return uAttr & (SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
 }
@@ -3757,7 +3757,7 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* addess of structure with da
 
     if (!lpofn || !FD31_Init()) return FALSE;
 
-    TRACE("ofn flags %08lx\n", lpofn->Flags);
+    TRACE("ofn flags %08x\n", lpofn->Flags);
     FD32_SetupCallbacks(&callbacks);
     lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) FALSE);
     if (lfs)
@@ -3820,7 +3820,7 @@ BOOL WINAPI GetOpenFileNameA(
 {
     BOOL win16look = FALSE;
 
-    TRACE("flags %08lx\n", ofn->Flags);
+    TRACE("flags %08x\n", ofn->Flags);
 
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)
@@ -3850,7 +3850,7 @@ BOOL WINAPI GetOpenFileNameW(
 {
     BOOL win16look = FALSE;
 
-    TRACE("flags %08lx\n", ofn->Flags);
+    TRACE("flags %08x\n", ofn->Flags);
 
     /* OFN_FILEMUSTEXIST implies OFN_PATHMUSTEXIST */
     if (ofn->Flags & OFN_FILEMUSTEXIST)

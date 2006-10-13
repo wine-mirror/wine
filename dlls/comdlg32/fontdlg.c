@@ -471,7 +471,7 @@ INT AddFontStyle( const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *lpNTM,
     HDC hdc;
 
     TRACE("(nFontType=%d)\n",nFontType);
-    TRACE("  %s h=%ld w=%ld e=%ld o=%ld wg=%ld i=%d u=%d s=%d"
+    TRACE("  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d"
             " ch=%d op=%d cp=%d q=%d pf=%xh\n",
             debugstr_w(lplf->lfFaceName),lplf->lfHeight,lplf->lfWidth,
             lplf->lfEscapement,lplf->lfOrientation,
@@ -869,7 +869,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
     HDC hdc;
     LPLOGFONTW lpxx=lpcf->lpLogFont;
 
-    TRACE("WM_COMMAND wParam=%08lX lParam=%08lX\n", (LONG)wParam, lParam);
+    TRACE("WM_COMMAND wParam=%08X lParam=%08lX\n", (LONG)wParam, lParam);
     switch (LOWORD(wParam))
     {
     case cmb1:
@@ -1082,7 +1082,7 @@ LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcf)
         MapWindowPoints( 0, hDlg, (LPPOINT) &info.rcWindow, 2);
         hdc = BeginPaint( hDlg, &ps );
 
-        TRACE("erase %d, rect=(%ld,%ld)-(%ld,%ld)\n", ps.fErase,
+        TRACE("erase %d, rect=(%d,%d)-(%d,%d)\n", ps.fErase,
               ps.rcPaint.left, ps.rcPaint.top,
               ps.rcPaint.right, ps.rcPaint.bottom);
 

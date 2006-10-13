@@ -164,7 +164,7 @@ static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 /* copied from shell32 to avoid linking to it */
 static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITEMIDLIST pidl)
 {
-	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%x strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
 	{
@@ -275,7 +275,7 @@ static ULONG WINAPI IShellBrowserImpl_AddRef(IShellBrowser * iface)
     IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p,%lu)\n", This, ref - 1);
+    TRACE("(%p,%u)\n", This, ref - 1);
 
     return ref;
 }
@@ -288,7 +288,7 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p,%lu)\n", This, ref + 1);
+    TRACE("(%p,%u)\n", This, ref + 1);
 
     if (!ref)
     {
@@ -488,7 +488,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     return hRes;
 error:
-    ERR("Failed with error 0x%08lx\n", hRes);
+    ERR("Failed with error 0x%08x\n", hRes);
     return hRes;
 }
 
@@ -533,7 +533,7 @@ static HRESULT WINAPI IShellBrowserImpl_GetViewStateStream(IShellBrowser *iface,
 {
     IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
 
-    FIXME("(%p 0x%08lx %p)\n", This, grfMode, ppStrm);
+    FIXME("(%p 0x%08x %p)\n", This, grfMode, ppStrm);
 
     /* Feature not implemented */
     return E_NOTIMPL;

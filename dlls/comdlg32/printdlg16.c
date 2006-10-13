@@ -249,7 +249,7 @@ static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(LPCSTR PrintResourceName)
         if (!hGlobal16)
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-            ERR("alloc failure for %ld bytes\n", size);
+            ERR("alloc failure for %d bytes\n", size);
             return 0;
         }
         template = GlobalLock16(hGlobal16);
@@ -355,15 +355,15 @@ BOOL16 WINAPI PrintDlg16(
 	        strcat(flagstr, pflag->name);
 	}
 	TRACE("(%p): hwndOwner = %08x, hDevMode = %08x, hDevNames = %08x\n"
-	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %08x\n"
-	      "flags %08lx (%s)\n",
+              "pp. %d-%d, min p %d, max p %d, copies %d, hinst %08x\n"
+              "flags %08x (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
 	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
     }
 
     if(lppd->lStructSize != sizeof(PRINTDLG16)) {
-        ERR("structure size %ld\n",lppd->lStructSize);
+        ERR("structure size %d\n",lppd->lStructSize);
 	COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
 	return FALSE;
     }
@@ -391,7 +391,7 @@ BOOL16 WINAPI PrintDlg16(
 	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-	    ERR("GetPrinterDriverA failed for %s, le %ld, fix your config!\n",
+            ERR("GetPrinterDriverA failed for %s, le %d, fix your config!\n",
 		    pbuf->pPrinterName,GetLastError());
             HeapFree(GetProcessHeap(), 0, dbuf);
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);

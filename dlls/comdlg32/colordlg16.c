@@ -447,7 +447,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
         if (!hGlobal16)
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-            ERR("alloc failure for %ld bytes\n", size);
+            ERR("alloc failure for %d bytes\n", size);
             return FALSE;
         }
         template = GlobalLock16(hGlobal16);

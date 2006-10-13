@@ -126,7 +126,7 @@ static BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
         if (!hGlobal16)
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-            ERR("alloc failure for %ld bytes\n", size);
+            ERR("alloc failure for %d bytes\n", size);
             return FALSE;
         }
         lfr->template = GlobalLock16(hGlobal16);

@@ -826,7 +826,7 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   lfs->hwnd = hWnd;
   ofn = lfs->ofnW;
 
-  TRACE("flags=%lx initialdir=%s\n", ofn->Flags, debugstr_w(ofn->lpstrInitialDir));
+  TRACE("flags=%x initialdir=%s\n", ofn->Flags, debugstr_w(ofn->lpstrInitialDir));
 
   SetWindowTextW( hWnd, ofn->lpstrTitle );
   /* read custom filter information */
@@ -872,7 +872,7 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);
   lstrcpynW(tmpstr, FD31_GetFileType(ofn->lpstrCustomFilter,
 	     (LPWSTR)ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
-  TRACE("nFilterIndex = %ld, SetText of edt1 to %s\n",
+  TRACE("nFilterIndex = %d, SetText of edt1 to %s\n",
   			ofn->nFilterIndex, debugstr_w(tmpstr));
   SetDlgItemTextW( hWnd, edt1, tmpstr );
   /* get drive list */

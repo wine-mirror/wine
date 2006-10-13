@@ -2005,8 +2005,8 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	        strcat(flagstr, pflag->name);
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
-	      "flags %08lx (%s)\n",
+              "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
+              "flags %08x (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
 	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
@@ -2042,7 +2042,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-	    ERR("GetPrinterDriverA failed, le %ld, fix your config for printer %s!\n",GetLastError(),pbuf->pPrinterName);
+            ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",GetLastError(),pbuf->pPrinterName);
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
 	    return FALSE;
 	}
@@ -2147,8 +2147,8 @@ BOOL WINAPI PrintDlgW(
 	        strcat(flagstr, pflag->name);
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-	      "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
-	      "flags %08lx (%s)\n",
+              "pp. %d-%d, min p %d, max p %d, copies %d, hinst %p\n"
+              "flags %08x (%s)\n",
 	      lppd, lppd->hwndOwner, lppd->hDevMode, lppd->hDevNames,
 	      lppd->nFromPage, lppd->nToPage, lppd->nMinPage, lppd->nMaxPage,
 	      lppd->nCopies, lppd->hInstance, lppd->Flags, flagstr);
@@ -2184,7 +2184,7 @@ BOOL WINAPI PrintDlgW(
 	GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
 	dbuf = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*needed);
 	if (!GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
-	    ERR("GetPrinterDriverA failed, le %ld, fix your config for printer %s!\n",GetLastError(),debugstr_w(pbuf->pPrinterName));
+            ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",GetLastError(),debugstr_w(pbuf->pPrinterName));
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
 	    return FALSE;
 	}
@@ -2378,15 +2378,15 @@ static void
 _c_size2strA(PageSetupDataA *pda,DWORD size,LPSTR strout) {
     strcpy(strout,"<undef>");
     if (pda->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS) {
-	sprintf(strout,"%ld",(size)/100);
+	sprintf(strout,"%d",(size)/100);
 	return;
     }
     if (pda->dlga->Flags & PSD_INTHOUSANDTHSOFINCHES) {
-	sprintf(strout,"%ldin",(size)/1000);
+	sprintf(strout,"%din",(size)/1000);
 	return;
     }
     pda->dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
-    sprintf(strout,"%ld",(size)/100);
+    sprintf(strout,"%d",(size)/100);
     return;
 }
 static void
@@ -2687,7 +2687,7 @@ PRINTDLG_PS_ChangePaperPrev(PageSetupDataA *pda)
     }
     x = (pda->rtDrawRect.right + pda->rtDrawRect.left - width) / 2;
     y = (pda->rtDrawRect.bottom + pda->rtDrawRect.top - height) / 2;
-    TRACE("rtDrawRect(%ld, %ld, %ld, %ld) x=%ld, y=%ld, w=%ld, h=%ld\n",
+    TRACE("rtDrawRect(%d, %d, %d, %d) x=%d, y=%d, w=%d, h=%d\n",
 	pda->rtDrawRect.left, pda->rtDrawRect.top, pda->rtDrawRect.right, pda->rtDrawRect.bottom,
 	x, y, width, height);
 
@@ -3343,7 +3343,7 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	    }
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-	      "hinst %p, flags %08lx (%s)\n",
+              "hinst %p, flags %08x (%s)\n",
 	      setupdlg, setupdlg->hwndOwner, setupdlg->hDevMode,
 	      setupdlg->hDevNames,
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
@@ -3445,7 +3445,7 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 	    }
 	}
 	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-	      "hinst %p, flags %08lx (%s)\n",
+              "hinst %p, flags %08x (%s)\n",
 	      setupdlg, setupdlg->hwndOwner, setupdlg->hDevMode,
 	      setupdlg->hDevNames,
 	      setupdlg->hInstance, setupdlg->Flags, flagstr);
