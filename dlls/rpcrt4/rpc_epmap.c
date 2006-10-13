@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  *             RpcEpRegisterA (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
-                                  UUID_VECTOR *UuidVector, unsigned char *Annotation )
+                                  UUID_VECTOR *UuidVector, RPC_CSTR Annotation )
 {
   RPCSS_NP_MESSAGE msg;
   RPCSS_NP_REPLY reply;

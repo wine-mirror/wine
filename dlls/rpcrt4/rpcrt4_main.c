@@ -174,7 +174,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  *  S_OK if successful.
  */
-RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
+RPC_STATUS WINAPI RpcStringFreeA(RPC_CSTR* String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
@@ -190,7 +190,7 @@ RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
  *
  *  S_OK if successful.
  */
-RPC_STATUS WINAPI RpcStringFreeW(unsigned short** String)
+RPC_STATUS WINAPI RpcStringFreeW(RPC_WSTR* String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
@@ -509,7 +509,7 @@ unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
  *  S_OK if successful.
  *  S_OUT_OF_MEMORY if unsuccessful.
  */
-RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
+RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, RPC_CSTR* StringUuid)
 {
   *StringUuid = HeapAlloc( GetProcessHeap(), 0, sizeof(char) * 37);
 
@@ -535,7 +535,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
  *  S_OK if successful.
  *  S_OUT_OF_MEMORY if unsuccessful.
  */
-RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, unsigned short** StringUuid)
+RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, RPC_WSTR* StringUuid)
 {
   char buf[37];
 
@@ -569,7 +569,7 @@ static const BYTE hex2bin[] =
 /***********************************************************************
  *		UuidFromStringA (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringA(unsigned char* s, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringA(RPC_CSTR s, UUID *uuid)
 {
     int i;
 
@@ -609,7 +609,7 @@ RPC_STATUS WINAPI UuidFromStringA(unsigned char* s, UUID *uuid)
 /***********************************************************************
  *		UuidFromStringW (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringW(unsigned short* s, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringW(RPC_WSTR s, UUID *uuid)
 {
     int i;
 
@@ -762,7 +762,7 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
  * 4. The MSDN documentation currently declares that the second argument is
  *    unsigned char *, even for the W version.  I don't believe it.
  */
-RPC_STATUS RPC_ENTRY DceErrorInqTextW (RPC_STATUS e, unsigned short *buffer)
+RPC_STATUS RPC_ENTRY DceErrorInqTextW (RPC_STATUS e, RPC_WSTR buffer)
 {
     DWORD count;
     count = FormatMessageW (FORMAT_MESSAGE_FROM_SYSTEM |
@@ -785,7 +785,7 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextW (RPC_STATUS e, unsigned short *buffer)
 /******************************************************************************
  * DceErrorInqTextA   (rpcrt4.@)
  */
-RPC_STATUS RPC_ENTRY DceErrorInqTextA (RPC_STATUS e, unsigned char *buffer)
+RPC_STATUS RPC_ENTRY DceErrorInqTextA (RPC_STATUS e, RPC_CSTR buffer)
 {
     RPC_STATUS status;
     WCHAR bufferW [MAX_RPC_ERROR_TEXT];

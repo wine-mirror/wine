@@ -590,7 +590,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
 /***********************************************************************
  *             RpcServerUseProtseqEpA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqEpA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor )
+RPC_STATUS WINAPI RpcServerUseProtseqEpA( RPC_CSTR Protseq, UINT MaxCalls, RPC_CSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
   
@@ -607,7 +607,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpA( unsigned char *Protseq, UINT MaxCalls,
 /***********************************************************************
  *             RpcServerUseProtseqEpW (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor )
+RPC_STATUS WINAPI RpcServerUseProtseqEpW( RPC_WSTR Protseq, UINT MaxCalls, RPC_WSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
   
@@ -639,7 +639,7 @@ static RpcServerProtseq *alloc_serverprotoseq(UINT MaxCalls, char *Protseq, char
 /***********************************************************************
  *             RpcServerUseProtseqEpExA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqEpExA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor,
+RPC_STATUS WINAPI RpcServerUseProtseqEpExA( RPC_CSTR Protseq, UINT MaxCalls, RPC_CSTR Endpoint, LPVOID SecurityDescriptor,
                                             PRPC_POLICY lpPolicy )
 {
   char *szps = (char*)Protseq, *szep = (char*)Endpoint;
@@ -657,7 +657,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( unsigned char *Protseq, UINT MaxCall
 /***********************************************************************
  *             RpcServerUseProtseqEpExW (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
+RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC_WSTR Endpoint, LPVOID SecurityDescriptor,
                                             PRPC_POLICY lpPolicy )
 {
   RpcServerProtseq* ps;
@@ -675,7 +675,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
 /***********************************************************************
  *             RpcServerUseProtseqA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqA(unsigned char *Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
+RPC_STATUS WINAPI RpcServerUseProtseqA(RPC_CSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
 {
   TRACE("(Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)\n", debugstr_a((char*)Protseq), MaxCalls, SecurityDescriptor);
   return RpcServerUseProtseqEpA(Protseq, MaxCalls, NULL, SecurityDescriptor);
@@ -684,7 +684,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqA(unsigned char *Protseq, unsigned int MaxC
 /***********************************************************************
  *             RpcServerUseProtseqW (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
+RPC_STATUS WINAPI RpcServerUseProtseqW(RPC_WSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
 {
   TRACE("Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)\n", debugstr_w(Protseq), MaxCalls, SecurityDescriptor);
   return RpcServerUseProtseqEpW(Protseq, MaxCalls, NULL, SecurityDescriptor);
@@ -858,7 +858,7 @@ RPC_STATUS WINAPI RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid )
 /***********************************************************************
  *             RpcServerRegisterAuthInfoA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( unsigned char *ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
@@ -869,7 +869,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( unsigned char *ServerPrincName, un
 /***********************************************************************
  *             RpcServerRegisterAuthInfoW (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );

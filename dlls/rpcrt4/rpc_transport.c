@@ -963,7 +963,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
  * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
  *
  */
-RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(LPWSTR protseq)
+RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(RPC_WSTR protseq)
 {
   char ps[0x10];
 
@@ -980,7 +980,7 @@ RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(LPWSTR protseq)
 /***********************************************************************
  *             RpcNetworkIsProtseqValidA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcNetworkIsProtseqValidA(unsigned char *protseq)
+RPC_STATUS WINAPI RpcNetworkIsProtseqValidA(RPC_CSTR protseq)
 {
   UNICODE_STRING protseqW;
 
