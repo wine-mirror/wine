@@ -570,12 +570,63 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8 *pSourceSurface, CONST RECT *pSourceRects, UINT cRects, IDirect3DSurface8 *pDestinationSurface, CONST POINT *pDestPoints) {
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IDirect3DSurface8Impl *Source = (IDirect3DSurface8Impl *) pSourceSurface;
+    IDirect3DSurface8Impl *Dest = (IDirect3DSurface8Impl *) pDestinationSurface;
 
-    TRACE("(%p) Relay\n" , This);
+    HRESULT              hr = WINED3D_OK;
+    WINED3DFORMAT        srcFormat, destFormat;
+    UINT                 srcWidth,  destWidth;
+    UINT                 srcHeight, destHeight;
+    UINT                 srcSize;
+    WINED3DSURFACE_DESC  winedesc;
 
-    return IWineD3DDevice_CopyRects(This->WineD3DDevice, pSourceSurface == NULL ? NULL : ((IDirect3DSurface8Impl *)pSourceSurface)->wineD3DSurface,
-            pSourceRects, cRects, pDestinationSurface == NULL ? NULL : ((IDirect3DSurface8Impl *)pDestinationSurface)->wineD3DSurface, pDestPoints);
+    TRACE("(%p) pSrcSur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", iface,
+          pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
+
+
+    /* Check that the source texture is in WINED3DPOOL_SYSTEMMEM and the destination texture is in WINED3DPOOL_DEFAULT */
+    memset(&winedesc, 0, sizeof(winedesc));
+
+    winedesc.Format = &srcFormat;
+    winedesc.Width  = &srcWidth;
+    winedesc.Height = &srcHeight;
+    winedesc.Size   = &srcSize;
+    IWineD3DSurface_GetDesc(Source->wineD3DSurface, &winedesc);
+
+    winedesc.Format = &destFormat;
+    winedesc.Width  = &destWidth;
+    winedesc.Height = &destHeight;
+    winedesc.Size   = NULL;
+    IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &winedesc);
+
+    /* Check that the source and destination formats match */
+    if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {
+        WARN("(%p) source %p format must match the dest %p format, returning WINED3DERR_INVALIDCALL\n", iface, pSourceSurface, pDestinationSurface);
+        return WINED3DERR_INVALIDCALL;
+    } else if (WINED3DFMT_UNKNOWN == destFormat) {
+        TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", iface);
+        IWineD3DSurface_SetFormat(Dest->wineD3DSurface, srcFormat);
+        destFormat = srcFormat;
+    }
+
+    /* Quick if complete copy ... */
+    if (cRects == 0 && pSourceRects == NULL && pDestPoints == NULL) {
+        IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, NULL, DDBLTFAST_NOCOLORKEY);
+    } else {
+        unsigned int i;
+        /* Copy rect by rect */
+        if (NULL != pSourceRects && NULL != pDestPoints) {
+            for (i = 0; i < cRects; ++i) {
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, (RECT *) &pSourceRects[i], DDBLTFAST_NOCOLORKEY);
+            }
+        } else {
+            for (i = 0; i < cRects; ++i) {
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, (RECT *) &pSourceRects[i], DDBLTFAST_NOCOLORKEY);
+            }
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture, IDirect3DBaseTexture8* pDestinationTexture) {
