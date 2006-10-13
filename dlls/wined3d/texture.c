@@ -216,7 +216,7 @@ static void WINAPI IWineD3DTextureImpl_ApplyStateChanges(IWineD3DTexture *iface,
     if(This->pow2scalingFactorX != 1.0f || This->pow2scalingFactorY != 1.0f) {
         /* Apply non-power2 mappings and texture offsets so long as the texture coords aren't projected or generated */
         if(((textureStates[WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) == D3DTSS_TCI_PASSTHRU) &&
-                      (~textureStates[WINED3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
+                      (~textureStates[WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED)) {
             glMatrixMode(GL_TEXTURE);
             memset(matrix, 0 , sizeof(matrix));
             matrix[0] = This->pow2scalingFactorX;

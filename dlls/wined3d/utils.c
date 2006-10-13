@@ -2229,32 +2229,32 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
     glMatrixMode(GL_TEXTURE);
     checkGLcall("glMatrixMode(GL_TEXTURE)");
 
-    if (flags == D3DTTFF_DISABLE) {
+    if (flags == WINED3DTTFF_DISABLE) {
         glLoadIdentity();
         checkGLcall("glLoadIdentity()");
         return;
     }
 
-    if (flags == (D3DTTFF_COUNT1|D3DTTFF_PROJECTED)) {
-        ERR("Invalid texture transform flags: D3DTTFF_COUNT1|D3DTTFF_PROJECTED\n");
+    if (flags == (WINED3DTTFF_COUNT1|WINED3DTTFF_PROJECTED)) {
+        ERR("Invalid texture transform flags: WINED3DTTFF_COUNT1|WINED3DTTFF_PROJECTED\n");
         return;
     }
 
     memcpy(mat, smat, 16 * sizeof(float));
 
-    switch (flags & ~D3DTTFF_PROJECTED) {
-    case D3DTTFF_COUNT1: mat[1] = mat[5] = mat[13] = 0;
-    case D3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
+    switch (flags & ~WINED3DTTFF_PROJECTED) {
+    case WINED3DTTFF_COUNT1: mat[1] = mat[5] = mat[13] = 0;
+    case WINED3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
     default: mat[3] = mat[7] = mat[11] = 0, mat[15] = 1;
     }
 
-    if (flags & D3DTTFF_PROJECTED) {
-        switch (flags & ~D3DTTFF_PROJECTED) {
-        case D3DTTFF_COUNT2:
+    if (flags & WINED3DTTFF_PROJECTED) {
+        switch (flags & ~WINED3DTTFF_PROJECTED) {
+        case WINED3DTTFF_COUNT2:
             mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
             mat[1] = mat[5] = mat[9] = mat[13] = 0;
             break;
-        case D3DTTFF_COUNT3:
+        case WINED3DTTFF_COUNT3:
             mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
             mat[2] = mat[6] = mat[10] = mat[14] = 0;
             break;
