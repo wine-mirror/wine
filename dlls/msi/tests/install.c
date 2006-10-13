@@ -71,7 +71,8 @@ static const CHAR component_dat[] = "Component\tComponentId\tDirectory_\tAttribu
                                     "One\t{783B242E-E185-4A56-AF86-C09815EC053C}\tMSITESTDIR\t2\t\tone.txt\n"
                                     "Three\t{010B6ADD-B27D-4EDD-9B3D-34C4F7D61684}\tCHANGEDDIR\t2\t\tthree.txt\n"
                                     "Two\t{BF03D1A6-20DA-4A65-82F3-6CAC995915CE}\tFIRSTDIR\t2\t\ttwo.txt\n"
-                                    "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata";
+                                    "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata\n"
+                                    "component\t\tTARGETDIR\t0\t1\tfile";
 
 static const CHAR directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
                                     "s72\tS72\tl255\n"
@@ -91,7 +92,8 @@ static const CHAR feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\t
                                   "Four\t\tFour\tThe Four Feature\t4\t3\tCABOUTDIR\t0\n"
                                   "One\t\tOne\tThe One Feature\t1\t3\tMSITESTDIR\t0\n"
                                   "Three\t\tThree\tThe Three Feature\t3\t3\tCHANGEDDIR\t0\n"
-                                  "Two\t\tTwo\tThe Two Feature\t2\t3\tFIRSTDIR\t0";
+                                  "Two\t\tTwo\tThe Two Feature\t2\t3\tFIRSTDIR\t0\n"
+                                  "feature\t\t\t\t2\t1\tTARGETDIR\t0";
 
 static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
                                        "s38\ts72\n"
@@ -100,7 +102,8 @@ static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
                                        "Four\tFour\n"
                                        "One\tOne\n"
                                        "Three\tThree\n"
-                                       "Two\tTwo";
+                                       "Two\tTwo\n"
+                                       "feature\tcomponent";
 
 static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
@@ -109,7 +112,8 @@ static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tL
                                "four.txt\tFour\tfour.txt\t1000\t\t\t16384\t4\n"
                                "one.txt\tOne\tone.txt\t1000\t\t\t0\t1\n"
                                "three.txt\tThree\tthree.txt\t1000\t\t\t0\t3\n"
-                               "two.txt\tTwo\ttwo.txt\t1000\t\t\t0\t2";
+                               "two.txt\tTwo\ttwo.txt\t1000\t\t\t0\t2\n"
+                               "file\tcomponent\tfilename\t100\t\t\t8192\t1";
 
 static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "s72\tS255\tI2\n"
@@ -123,7 +127,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "InstallInitialize\t\t1500\n"
                                            "InstallValidate\t\t1400\n"
                                            "LaunchConditions\t\t100\n"
-                                           "WriteRegistryValues\t\t5000";
+                                           "WriteRegistryValues\tSourceDir And SOURCEDIR\t5000";
 
 static const CHAR media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                 "i2\ti4\tL64\tS255\tS32\tS72\n"
@@ -153,7 +157,8 @@ static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_
                                    "Registry\tRegistry\n"
                                    "Apples\t2\tSOFTWARE\\Wine\\msitest\tName\timaname\tOne\n"
                                    "Oranges\t2\tSOFTWARE\\Wine\\msitest\tnumber\t#314\tTwo\n"
-                                   "regdata\t2\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler";
+                                   "regdata\t2\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler\n"
+                                   "OrderTest\t2\tSOFTWARE\\Wine\\msitest\tOrderTestName\tOrderTestValue\tcomponent";
 
 typedef struct _msi_table
 {
@@ -473,14 +478,6 @@ static void create_file(const CHAR *name)
 
 static void create_test_files(void)
 {
-    int len;
-
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
-    len = lstrlenA(CURR_DIR);
-
-    if(len && (CURR_DIR[len-1] == '\\'))
-        CURR_DIR[len - 1] = 0;
-
     get_program_files_dir(PROG_FILES_DIR);
 
     CreateDirectoryA("msitest", NULL);
@@ -493,6 +490,8 @@ static void create_test_files(void)
     create_file("four.txt");
     create_file("five.txt");
     create_cab_file("msitest.cab");
+
+    create_file("filename");
 
     DeleteFileA("four.txt");
     DeleteFileA("five.txt");
@@ -514,6 +513,7 @@ static BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
 
 static void delete_test_files(void)
 {
+    DeleteFileA("filename");
     DeleteFileA("msitest.msi");
     DeleteFileA("msitest.cab");
     DeleteFileA("msitest\\second\\three.txt");
@@ -601,6 +601,9 @@ static void test_MsiInstallProduct(void)
     HKEY hkey;
     DWORD num, size, type;
 
+    create_test_files();
+    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
+
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
@@ -641,7 +644,16 @@ static void test_MsiInstallProduct(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     ok(num == 314, "Expected 314, got %d\n", num);
 
+    size = MAX_PATH;
+    type = REG_SZ;
+    res = RegQueryValueExA(hkey, "OrderTestName", NULL, &type, (LPBYTE)path, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(path, "OrderTestValue"), "Expected imaname, got %s\n", path);
+
+
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+
+    delete_test_files();
 }
 
 static void test_MsiSetComponentState(void)
@@ -649,6 +661,8 @@ static void test_MsiSetComponentState(void)
     MSIHANDLE package;
     char path[MAX_PATH];
     UINT r;
+
+    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
 
     CoInitialize(NULL);
 
@@ -673,6 +687,8 @@ static void test_MsiSetComponentState(void)
 
     MsiCloseHandle(package);
     CoUninitialize();
+
+    DeleteFileA(msifile);
 }
 
 static void test_packagecoltypes(void)
@@ -681,6 +697,8 @@ static void test_packagecoltypes(void)
     char path[MAX_PATH];
     LPCSTR query;
     UINT r, count;
+
+    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
 
     CoInitialize(NULL);
 
@@ -729,15 +747,18 @@ static void test_packagecoltypes(void)
 
 START_TEST(install)
 {
+    DWORD len;
+
     if (!init_function_pointers())
         return;
 
-    create_test_files();
-    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    len = lstrlenA(CURR_DIR);
+
+    if(len && (CURR_DIR[len-1] == '\\'))
+        CURR_DIR[len - 1] = 0;
 
     test_MsiInstallProduct();
     test_MsiSetComponentState();
     test_packagecoltypes();
-
-    delete_test_files();
 }

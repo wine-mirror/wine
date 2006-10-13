@@ -592,6 +592,10 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         if (!check)
             MSI_SetPropertyW(package, cszSourceDir, path);
 
+        check = msi_dup_property( package, cszSOURCEDIR );
+        if (!check)
+            MSI_SetPropertyW(package, cszSOURCEDIR, path);
+
         package->PackagePath = path;
 
         msi_free(check);
