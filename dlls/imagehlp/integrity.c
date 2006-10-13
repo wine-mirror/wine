@@ -171,7 +171,7 @@ BOOL WINAPI ImageEnumerateCertificates(
 
     if( Indices )
     {
-        FIXME("Indicies not handled!\n");
+        FIXME("Indices not handled!\n");
         return FALSE;
     }
 

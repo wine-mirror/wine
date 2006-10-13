@@ -1914,7 +1914,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     add_dispatch(typelib);
     msft_typeinfo->typeinfo->cImplTypes = 1;
 
-    /* count the no of funcs, as the variable indicies come after the funcs */
+    /* count the no of funcs, as the variable indices come after the funcs */
     if((func = dispinterface->funcs)) {
         idx++;
         while(NEXT_LINK(func)) {

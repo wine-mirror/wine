@@ -76,7 +76,7 @@ static HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADE
     } else {
         *ppDevice = NULL;
     }
-    TRACE("(%p) returing (%p)\n", This, *ppDevice);
+    TRACE("(%p) returning (%p)\n", This, *ppDevice);
     return hr;
 }
 

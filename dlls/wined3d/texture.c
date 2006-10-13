@@ -65,7 +65,7 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
             if (This->surfaces[i] != NULL) {
                 /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
                 IUnknown* surfaceParent;
-                /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
+                /* Clean out the texture name we gave to the surface so that the surface doesn't try and release it */
                 IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, 0);
                 /* Cleanup the container */
                 IWineD3DSurface_SetContainer(This->surfaces[i], 0);

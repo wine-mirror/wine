@@ -1634,7 +1634,7 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
 	    }
 	    strcpyW(pszOut, pszIn);
 	    *pcchOut = strlenW(pszOut);
-	    TRACE("valid scheme, returing copy\n");
+	    TRACE("valid scheme, returning copy\n");
 	    return S_OK;
 	}
     }

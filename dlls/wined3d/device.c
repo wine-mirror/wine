@@ -1064,14 +1064,14 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
 
     TRACE("Pool %d %d %d %d\n",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
 
-    /** Quick lockable sanity check TODO: remove this after surfaces, usage and locablility have been debugged properly
-    * this function is too deap to need to care about things like this.
-    * Levels need to be checked too, and possibly Type wince they all affect what can be done.
+    /** Quick lockable sanity check TODO: remove this after surfaces, usage and lockability have been debugged properly
+    * this function is too deep to need to care about things like this.
+    * Levels need to be checked too, and possibly Type since they all affect what can be done.
     * ****************************************/
     switch(Pool) {
     case WINED3DPOOL_SCRATCH:
         if(!Lockable)
-            FIXME("Create suface called with a pool of SCRATCH and a Lockable of FALSE \
+            FIXME("Create surface called with a pool of SCRATCH and a Lockable of FALSE \
                 which are mutually exclusive, setting lockable to true\n");
                 Lockable = TRUE;
     break;
@@ -1097,7 +1097,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
         FIXME("Trying to create a render target that isn't in the default pool\n");
     }
 
-    /* mark the texture as dirty so that it get's loaded first time around*/
+    /* mark the texture as dirty so that it gets loaded first time around*/
     IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
@@ -1277,7 +1277,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         D3DCB_CreateVolume(This->parent, Width, Height, Depth, Format, Pool, Usage,
                            (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
 
-        /* Set it's container to this object */
+        /* Set its container to this object */
         IWineD3DVolume_SetContainer(object->volumes[i], (IWineD3DBase *)object);
 
         /* calcualte the next mipmap level */
@@ -1592,7 +1592,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             glXGetConfig(object->display, object->visInfo, GLX_STENCIL_SIZE, &value);
             TRACE("   gl_stencil_size : %d\n",  value);
         }
-        /* Now choose a simila visual ID*/
+        /* Now choose a similar visual ID*/
     }
 #ifdef USE_CONTEXT_MANAGER
 

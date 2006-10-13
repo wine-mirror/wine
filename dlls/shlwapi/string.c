@@ -2807,7 +2807,7 @@ HRESULT WINAPI SHLoadIndirectString(LPCWSTR src, LPWSTR dst, UINT dst_len, void 
                 hr = S_OK;
         }
         else
-            FIXME("can't handle non-negative indicies (%d)\n", index);
+            FIXME("can't handle non-negative indices (%d)\n", index);
     }
     else
     {
@@ -2816,7 +2816,7 @@ HRESULT WINAPI SHLoadIndirectString(LPCWSTR src, LPWSTR dst, UINT dst_len, void 
         hr = S_OK;
     }
 
-    TRACE("returing %s\n", debugstr_w(dst));
+    TRACE("returning %s\n", debugstr_w(dst));
 end:
     if(hmod) FreeLibrary(hmod);
     HeapFree(GetProcessHeap(), 0, dllname);

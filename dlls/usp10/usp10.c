@@ -397,8 +397,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         }
     }
 
-    /* While not strickly necessary according to the spec, make sure the n+1
-     * item is set up to prevent random behaviour if the caller eroneously
+    /* While not strictly necessary according to the spec, make sure the n+1
+     * item is set up to prevent random behaviour if the caller erroneously
      * checks the n+1 structure                                              */
     pItems[index+1].a.eScript = 0;
     pItems[index+1].a.fRTL = 0;
@@ -891,7 +891,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 
     /*  We need a valid hdc to do any of the font calls.  The spec says that hdc is optional and 
      *  psc will be used first.  If psc and hdc are not specified E_PENDING is returned to get 
-     *  the caller to return the hdc.  For convience, the hdc is cached in SCRIPT_CACHE.    */
+     *  the caller to return the hdc.  For convenience, the hdc is cached in SCRIPT_CACHE.    */
 
     if  (!hdc && !*psc) {
         TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
@@ -909,7 +909,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
             }
 
     /*   Here we need to calculate the width of the run unit.  At this point the input string
-     *   has been converted to glyphs and we till need to translate back to the original chars
+     *   has been converted to glyphs and we still need to translate back to the original chars
      *   to get the correct ABC widths.   */
 
      lpABC = HeapAlloc(GetProcessHeap(), 0 , sizeof(ABC)*cGlyphs);
@@ -1026,7 +1026,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
-        fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do tranlastion to glyph */
+        fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
     hr = ExtTextOutW(phdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL);
 

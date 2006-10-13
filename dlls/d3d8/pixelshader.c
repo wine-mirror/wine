@@ -72,7 +72,7 @@ static HRESULT WINAPI IDirect3DPixelShader8Impl_GetDevice(IDirect3DPixelShader8 
     IWineD3DPixelShader_GetDevice(This->wineD3DPixelShader, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     IWineD3DDevice_Release(myDevice);
-    TRACE("(%p) returing (%p)\n", This, *ppDevice);
+    TRACE("(%p) returning (%p)\n", This, *ppDevice);
     return D3D_OK;
 }
 

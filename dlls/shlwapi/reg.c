@@ -661,7 +661,7 @@ BOOL WINAPI SHRegGetBoolUSValueA(
 		FIXME("Unsupported registry data type %d\n", type);
 		ret = FALSE;
 	    }
-	    TRACE("got value (type=%d), returing <%s>\n", type,
+	    TRACE("got value (type=%d), returning <%s>\n", type,
 		  (ret) ? "TRUE" : "FALSE");
 	}
 	else {
@@ -722,7 +722,7 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 		FIXME("Unsupported registry data type %d\n", type);
 		ret = FALSE;
 	    }
-	    TRACE("got value (type=%d), returing <%s>\n", type,
+	    TRACE("got value (type=%d), returning <%s>\n", type,
 		  (ret) ? "TRUE" : "FALSE");
 	}
 	else {

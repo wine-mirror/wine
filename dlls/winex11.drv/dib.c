@@ -406,7 +406,7 @@ static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WO
  *           X11DRV_DIB_BuildColorTable
  *
  * Build the dib color table. This either keeps a copy of the bmiColors array if
- * usage is DIB_RGB_COLORS, or looks up the palette indicies if usage is
+ * usage is DIB_RGB_COLORS, or looks up the palette indices if usage is
  * DIB_PAL_COLORS.
  * Should not be called for a >8-bit deep bitmap.
  */

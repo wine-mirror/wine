@@ -1693,7 +1693,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     install_level = msi_get_property_int( package, szlevel, 1 );
 
-    /* ok hereis the _real_ rub
+    /* ok here is the _real_ rub
      * all these activation/deactivation things happen in order and things
      * later on the list override things earlier on the list.
      * 1) INSTALLLEVEL processing
