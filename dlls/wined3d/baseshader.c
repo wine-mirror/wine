@@ -74,7 +74,7 @@ const SHADER_OPCODE* shader_get_opcode(
 
     /** TODO: use dichotomic search */
     while (NULL != shader_ins[i].name) {
-        if (((code & D3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
+        if (((code & WINED3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
             (((hex_version >= shader_ins[i].min_version) && (hex_version <= shader_ins[i].max_version)) ||
             ((shader_ins[i].min_version == 0) && (shader_ins[i].max_version == 0)))) {
             return &shader_ins[i];
@@ -82,7 +82,7 @@ const SHADER_OPCODE* shader_get_opcode(
         ++i;
     }
     FIXME("Unsupported opcode %#x(%d) masked %#x, shader version %#x\n", 
-       code, code, code & D3DSI_OPCODE_MASK, hex_version);
+       code, code, code & WINED3DSI_OPCODE_MASK, hex_version);
     return NULL;
 }
 
@@ -119,7 +119,7 @@ static inline int shader_skip_opcode(
     * have a useful legnth mask - use it here. Shaders 1.0 contain no such tokens */
 
     return (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
-        ((opcode_token & D3DSI_INSTLENGTH_MASK) >> D3DSI_INSTLENGTH_SHIFT):
+        ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT):
         curOpcode->num_params;
 }
 
@@ -202,7 +202,7 @@ HRESULT shader_get_registers_used(
 
         /* Skip comments */
         } else if (shader_is_comment(*pToken)) {
-             DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+             DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
              ++pToken;
              pToken += comment_len;
              continue;
@@ -354,7 +354,7 @@ HRESULT shader_get_registers_used(
              * okay, since we'll catch any address registers when 
              * they are initialized (required by spec) */
 
-            limit = (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED)?
+            limit = (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED)?
                 curOpcode->num_params + 1: curOpcode->num_params;
 
             for (i = 0; i < limit; ++i) {
@@ -699,7 +699,7 @@ void shader_generate_main(
 
             /* Skip comment tokens */
             if (shader_is_comment(*pToken)) {
-                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+                DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
                 TRACE("#%s\n", (char*)pToken);
                 pToken += comment_len;
@@ -749,7 +749,7 @@ void shader_generate_main(
                 }
 
                 /* Predication token */
-                if (hw_arg.opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
+                if (hw_arg.opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) 
                     hw_arg.predicate = *pToken++;
 
                 /* Other source tokens */
@@ -832,7 +832,7 @@ void shader_trace_init(
                 continue;
             }
             if (shader_is_comment(*pToken)) { /** comment */
-                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+                DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
                 TRACE("//%s\n", (char*)pToken);
                 pToken += comment_len;
@@ -901,7 +901,7 @@ void shader_trace_init(
 
                     /* Print out predication source token first - it follows
                      * the destination token. */
-                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                    if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) {
                         TRACE("(");
                         shader_dump_param(iface, *(pToken + 2), 0, 1);
                         TRACE(") ");
@@ -939,7 +939,7 @@ void shader_trace_init(
                     }
 
                     /* Predication token - already printed out, just skip it */
-                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                    if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) {
                         pToken++;
                         len++;
                     }

@@ -1683,7 +1683,7 @@ inline static BOOL shader_is_vshader_version(DWORD token) {
 }
 
 inline static BOOL shader_is_comment(DWORD token) {
-    return WINED3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
+    return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
 }
 
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
