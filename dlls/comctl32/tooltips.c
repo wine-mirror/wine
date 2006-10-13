@@ -530,7 +530,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
-    TRACE("size %ld x %ld\n", size.cx, size.cy);
+    TRACE("size %d x %d\n", size.cx, size.cy);
 
     if (toolPtr->uFlags & TTF_CENTERTIP) {
 	RECT rc;
@@ -587,7 +587,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
         }
     }
 
-    TRACE("pos %ld - %ld\n", rect.left, rect.top);
+    TRACE("pos %d - %d\n", rect.left, rect.top);
 
     rect.right = rect.left + size.cx;
     rect.bottom = rect.top + size.cy;
@@ -744,7 +744,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
-    TRACE("size %ld x %ld\n", size.cx, size.cy);
+    TRACE("size %d x %d\n", size.cx, size.cy);
 
     if (toolPtr->uFlags & TTF_ABSOLUTE) {
 	rect.left = infoPtr->xTrackPos;
@@ -779,7 +779,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	    rect.left = rcTool.right;
     }
 
-    TRACE("pos %ld - %ld\n", rect.left, rect.top);
+    TRACE("pos %d - %d\n", rect.left, rect.top);
 
     rect.right = rect.left + size.cx;
     rect.bottom = rect.top + size.cy;
@@ -1364,7 +1364,7 @@ TOOLTIPS_GetBubbleSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("tool %d\n", nTool);
 
     TOOLTIPS_CalcTipSize (hwnd, infoPtr, &size);
-    TRACE("size %ld x %ld\n", size.cx, size.cy);
+    TRACE("size %d x %d\n", size.cx, size.cy);
 
     return MAKELRESULT(size.cx, size.cy);
 }
@@ -1794,7 +1794,7 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 						       &pt);
 	    TRACE("tool (%p) %d %d %d\n", hwnd, nOldTool,
 		  infoPtr->nTool, infoPtr->nCurrentTool);
-	    TRACE("WM_MOUSEMOVE (%p %ld %ld)\n", hwnd, pt.x, pt.y);
+            TRACE("WM_MOUSEMOVE (%p %d %d)\n", hwnd, pt.x, pt.y);
 
 	    if (infoPtr->nTool != nOldTool) {
 	        if(infoPtr->nTool == -1) { /* Moved out of all tools */

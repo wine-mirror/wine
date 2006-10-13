@@ -138,7 +138,7 @@ void THEMING_Initialize (void)
 
         if (!RegisterClassExW (&class))
         {
-            ERR("Could not re-register class %s: %lx\n", 
+            ERR("Could not re-register class %s: %x\n",
                 debugstr_w (subclasses[i].className), GetLastError ());
         }
         else

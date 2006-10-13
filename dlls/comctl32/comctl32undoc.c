@@ -319,7 +319,7 @@ static void MRU_SaveChanged ( LPWINEMRULIST mp )
 	    if (err) {
 		ERR("error saving /%s/, err=%d\n", debugstr_w(realname), err);
 	    }
-	    TRACE("saving value for name /%s/ size=%ld\n",
+            TRACE("saving value for name /%s/ size=%d\n",
 		  debugstr_w(realname), witem->size);
 	}
     }
@@ -431,7 +431,7 @@ INT WINAPI FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData,
     if (lpRegNum && (ret != -1))
 	*lpRegNum = 'a' + i;
 
-    TRACE("(%p, %p, %ld, %p) returning %d\n",
+    TRACE("(%p, %p, %d, %p) returning %d\n",
 	   hList, lpData, cbData, lpRegNum, ret);
 
     return ret;
@@ -497,7 +497,7 @@ INT WINAPI AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
     mp->wineFlags |= WMRUF_CHANGED;
     mp->realMRU[0] = replace + 'a';
 
-    TRACE("(%p, %p, %ld) adding data, /%c/ now most current\n",
+    TRACE("(%p, %p, %d) adding data, /%c/ now most current\n",
           hList, lpData, cbData, replace+'a');
 
     if (!(mp->extview.dwFlags & MRUF_DELAYED_SAVE)) {
@@ -671,7 +671,7 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 				&newkey,
 				&dwdisp))) {
 	/* error - what to do ??? */
-	ERR("(%lu %lu %lx %p %s %p): Could not open key, error=%d\n",
+	ERR("(%u %u %x %p %s %p): Could not open key, error=%d\n",
 	    mp->extview.cbSize, mp->extview.nMaxItems, mp->extview.dwFlags,
 	    mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
 				 mp->extview.lpfnCompare, err);
@@ -690,7 +690,7 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
         else
             datasize /= sizeof(WCHAR);
 
-	TRACE("MRU list = %s, datasize = %ld\n", debugstr_w(mp->realMRU), datasize);
+	TRACE("MRU list = %s, datasize = %d\n", debugstr_w(mp->realMRU), datasize);
 
 	mp->cursize = datasize - 1;
 	/* datasize now has number of items in the MRUList */
@@ -716,7 +716,7 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     else
 	mp->cursize = 0;
 
-    TRACE("(%lu %lu %lx %p %s %p): Current Size = %ld\n",
+    TRACE("(%u %u %x %p %s %p): Current Size = %d\n",
 	  mp->extview.cbSize, mp->extview.nMaxItems, mp->extview.dwFlags,
 	  mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey),
 	  mp->extview.lpfnCompare, mp->cursize);
@@ -844,7 +844,7 @@ INT WINAPI EnumMRUListW (HANDLE hList, INT nItemPos, LPVOID lpBuffer,
     witem = mp->array[desired];
     datasize = min( witem->size, nBufferSize );
     memcpy( lpBuffer, &witem->datastart, datasize);
-    TRACE("(%p, %d, %p, %ld): returning len=%d\n",
+    TRACE("(%p, %d, %p, %d): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
@@ -878,7 +878,7 @@ INT WINAPI EnumMRUListA (HANDLE hList, INT nItemPos, LPVOID lpBuffer,
 	WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1,
 			    lpBuffer, datasize, NULL, NULL);
     }
-    TRACE("(%p, %d, %p, %ld): returning len=%d\n",
+    TRACE("(%p, %d, %p, %d): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
@@ -1173,7 +1173,7 @@ static LRESULT DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
     LPNMHDR lpNmh = NULL;
     UINT idFrom = 0;
 
-    TRACE("(%p %p %d %p 0x%08lx)\n",
+    TRACE("(%p %p %d %p 0x%08x)\n",
 	   lpNotify->hwndFrom, lpNotify->hwndTo, uCode, lpHdr,
 	   lpNotify->dwParam5);
 
@@ -1262,7 +1262,7 @@ LRESULT WINAPI SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
     NOTIFYDATA notify;
     HWND hwndNotify;
 
-    TRACE("(%p %p %d %p 0x%08lx)\n",
+    TRACE("(%p %p %d %p 0x%08x)\n",
 	   hwndFrom, hwndTo, uCode, lpHdr, dwParam5);
 
     hwndNotify = hwndTo;

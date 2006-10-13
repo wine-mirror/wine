@@ -667,7 +667,7 @@ DATETIME_HitTest (DATETIME_INFO *infoPtr, POINT pt)
 {
     int i;
 
-    TRACE ("%ld, %ld\n", pt.x, pt.y);
+    TRACE ("%d, %d\n", pt.x, pt.y);
 
     if (PtInRect (&infoPtr->calbutton, pt)) return DTHT_MCPOPUP;
     if (PtInRect (&infoPtr->checkbox, pt)) return DTHT_CHECKBOX;
@@ -1095,7 +1095,7 @@ DATETIME_Size (DATETIME_INFO *infoPtr, WORD flags, INT width, INT height)
     infoPtr->rcClient.bottom = height;
     infoPtr->rcClient.right = width;
 
-    TRACE("Height=%ld, Width=%ld\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
+    TRACE("Height=%d, Width=%d\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
 
     infoPtr->rcDraw = infoPtr->rcClient;
     
@@ -1132,7 +1132,7 @@ DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, LPSTYLESTRUCT l
 {
     static const WCHAR buttonW[] = { 'b', 'u', 't', 't', 'o', 'n', 0 };
 
-    TRACE("(styletype=%x, styleOld=0x%08lx, styleNew=0x%08lx)\n",
+    TRACE("(styletype=%x, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;

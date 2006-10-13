@@ -285,7 +285,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     HBITMAP hMaskBitmap=0;
     COLORREF bkColor;
 
-    TRACE("himl=%p hbitmap=%p clrmask=%lx\n", himl, hBitmap, clrMask);
+    TRACE("himl=%p hbitmap=%p clrmask=%x\n", himl, hBitmap, clrMask);
     if (!is_valid(himl))
         return -1;
 
@@ -2440,7 +2440,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 BOOL WINAPI
 ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 {
-    FIXME("(%p 0x%x 0x%lx):empty stub!\n", himl, i, dwFilter);
+    FIXME("(%p 0x%x 0x%x):empty stub!\n", himl, i, dwFilter);
 
     return FALSE;
 }
@@ -2465,7 +2465,7 @@ ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 DWORD WINAPI
 ImageList_SetFlags(HIMAGELIST himl, DWORD flags)
 {
-    FIXME("(%p %08lx):empty stub\n", himl, flags);
+    FIXME("(%p %08x):empty stub\n", himl, flags);
     return 0;
 }
 
