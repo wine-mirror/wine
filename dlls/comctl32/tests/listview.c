@@ -113,7 +113,7 @@ static void test_checkboxes(void)
     item.iSubItem = 0;
     item.pszText = text;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
-    ok(r == 0, "ret %ld\n", r);
+    ok(r == 0, "ret %d\n", r);
 
     item.iItem = 0;
     item.mask = LVIF_STATE;
@@ -129,7 +129,7 @@ static void test_checkboxes(void)
     item.iSubItem = 0;
     item.pszText = text;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
-    ok(r == 1, "ret %ld\n", r);
+    ok(r == 1, "ret %d\n", r);
 
     item.iItem = 1;
     item.mask = LVIF_STATE;
@@ -153,7 +153,7 @@ static void test_checkboxes(void)
     item.state = 0;
     item.pszText = text2;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
-    ok(r == 2, "ret %ld\n", r);
+    ok(r == 2, "ret %d\n", r);
 
     item.iItem = 2;
     item.mask = LVIF_STATE;
@@ -168,7 +168,7 @@ static void test_checkboxes(void)
     item.state = 0x2aaa;
     item.pszText = text3;
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
-    ok(r == 3, "ret %ld\n", r);
+    ok(r == 3, "ret %d\n", r);
 
     item.iItem = 3;
     item.mask = LVIF_STATE;
@@ -201,7 +201,7 @@ static void test_checkboxes(void)
 
     /* Set the style again and check that doesn't change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
-    ok(r == LVS_EX_CHECKBOXES, "ret %lx\n", r);
+    ok(r == LVS_EX_CHECKBOXES, "ret %x\n", r);
 
     item.iItem = 3;
     item.mask = LVIF_STATE;
@@ -211,7 +211,7 @@ static void test_checkboxes(void)
 
     /* Unsetting the checkbox extended style doesn't change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, 0);
-    ok(r == LVS_EX_CHECKBOXES, "ret %lx\n", r);
+    ok(r == LVS_EX_CHECKBOXES, "ret %x\n", r);
 
     item.iItem = 3;
     item.mask = LVIF_STATE;
@@ -221,7 +221,7 @@ static void test_checkboxes(void)
 
     /* Now setting the style again will change an item's state */
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
-    ok(r == 0, "ret %lx\n", r);
+    ok(r == 0, "ret %x\n", r);
 
     item.iItem = 3;
     item.mask = LVIF_STATE;

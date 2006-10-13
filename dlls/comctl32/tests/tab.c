@@ -39,15 +39,15 @@
 #define CheckSize(hwnd,width,height,msg)\
     SendMessage (hwnd, TCM_GETITEMRECT, 0, (LPARAM) &rTab);\
     if ((width  >= 0) && (height < 0))\
-	ok (width  == rTab.right  - rTab.left, "%s: Expected width [%d] got [%ld]\n",\
+	ok (width  == rTab.right  - rTab.left, "%s: Expected width [%d] got [%d]\n",\
         msg, (int)width,  rTab.right  - rTab.left);\
     else if ((height >= 0) && (width  < 0))\
-	ok (height == rTab.bottom - rTab.top,  "%s: Expected height [%d] got [%ld]\n",\
+	ok (height == rTab.bottom - rTab.top,  "%s: Expected height [%d] got [%d]\n",\
         msg, (int)height, rTab.bottom - rTab.top);\
     else\
 	ok ((width  == rTab.right  - rTab.left) &&\
 	    (height == rTab.bottom - rTab.top ),\
-	    "%s: Expected [%d,%d] got [%ld,%ld]\n", msg, (int)width, (int)height,\
+	    "%s: Expected [%d,%d] got [%d,%d]\n", msg, (int)width, (int)height,\
             rTab.right - rTab.left, rTab.bottom - rTab.top);
 
 static HFONT hFont = 0;
@@ -110,7 +110,7 @@ static void test_tab(INT nMinTabWidth)
     hdc = GetDC(hwTab);
     hOldFont = SelectObject(hdc, (HFONT)SendMessage(hwTab, WM_GETFONT, 0, 0));
     GetTextExtentPoint32A(hdc, "Tab 1", strlen("Tab 1"), &size);
-    trace("Tab1 text size: size.cx=%ld size.cy=%ld\n", size.cx, size.cy);
+    trace("Tab1 text size: size.cx=%d size.cy=%d\n", size.cx, size.cy);
     SelectObject(hdc, hOldFont);
     ReleaseDC(hwTab, hdc);
 

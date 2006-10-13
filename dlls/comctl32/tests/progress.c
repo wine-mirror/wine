@@ -175,7 +175,7 @@ static void test_redraw(void)
     SendMessage(hProgressWnd, PBM_SETPOS, 10, 0);
     GetClientRect(hProgressWnd, &client_rect);
     ok(EqualRect(&last_paint_rect, &client_rect),
-       "last_paint_rect was { %ld, %ld, %ld, %ld } instead of { %ld, %ld, %ld, %ld }\n",
+       "last_paint_rect was { %d, %d, %d, %d } instead of { %d, %d, %d, %d }\n",
        last_paint_rect.left, last_paint_rect.top, last_paint_rect.right, last_paint_rect.bottom,
        client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
     update_window(hProgressWnd);
@@ -187,7 +187,7 @@ static void test_redraw(void)
     SendMessage(hProgressWnd, PBM_SETPOS, 0, 0);
     GetClientRect(hProgressWnd, &client_rect);
     ok(EqualRect(&last_paint_rect, &client_rect),
-       "last_paint_rect was { %ld, %ld, %ld, %ld } instead of { %ld, %ld, %ld, %ld }\n",
+       "last_paint_rect was { %d, %d, %d, %d } instead of { %d, %d, %d, %d }\n",
        last_paint_rect.left, last_paint_rect.top, last_paint_rect.right, last_paint_rect.bottom,
        client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
     update_window(hProgressWnd);

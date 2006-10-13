@@ -141,9 +141,9 @@ static HRESULT CALLBACK CB_Save(LPITEMDATA pInfo, IStream *pStm, LPARAM lp)
     
     ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
     hRes = IStream_Write(pStm, &pInfo->iPos, sizeof(INT), NULL);
-    ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     hRes = IStream_Write(pStm, &pInfo->pvData, sizeof(PVOID), NULL);
-    ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     return S_OK;
 }
 
@@ -155,10 +155,10 @@ static HRESULT CALLBACK CB_Load(LPITEMDATA pInfo, IStream *pStm, LPARAM lp)
     iOldPos = pInfo->iPos;
     ok(lp == 0xdeadbeef, "lp=%ld\n", lp);
     hRes = IStream_Read(pStm, &pInfo->iPos, sizeof(INT), NULL);
-    ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     ok(pInfo->iPos == iOldPos, "iPos=%d iOldPos=%d\n", pInfo->iPos, iOldPos);
     hRes = IStream_Read(pStm, &pInfo->pvData, sizeof(PVOID), NULL);
-    ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+    ok(hRes == S_OK, "hRes=0x%x\n", hRes);
     return S_OK;
 }
 
@@ -205,12 +205,12 @@ static void test_dpa(void)
     
     GetSystemInfo(&si);
     hHeap = HeapCreate(0, 1, 2);
-    ok(hHeap != NULL, "error=%ld\n", GetLastError());
+    ok(hHeap != NULL, "error=%d\n", GetLastError());
     dpa3 = pDPA_CreateEx(0, hHeap);
     ok(dpa3 != NULL, "\n");
     ret = pDPA_Grow(dpa3, si.dwPageSize + 1);
     todo_wine ok(!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY, 
-       "ret=%d error=%ld\n", ret, GetLastError());
+       "ret=%d error=%d\n", ret, GetLastError());
         
     dpa = pDPA_Create(0);
     ok(dpa != NULL, "\n");
@@ -219,7 +219,7 @@ static void test_dpa(void)
     ok(pDPA_SetPtr(dpa, 1, (PVOID)6), "\n");
     /* Fill the greated gap */
     ok(pDPA_SetPtr(dpa, 0, (PVOID)5), "\n");
-    ok(CheckDPA(dpa, 0x56, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x56, &dw), "dw=0x%x\n", dw);
     
     /* Prepend item */
     ret = pDPA_InsertPtr(dpa, 1, (PVOID)1);
@@ -234,7 +234,7 @@ static void test_dpa(void)
     ret = pDPA_InsertPtr(dpa, DPA_APPEND, (PVOID)4);
     ok(ret == 5, "ret=%d\n", ret);
 
-    ok(CheckDPA(dpa, 0x516324, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x516324, &dw), "dw=0x%x\n", dw);
 
     for(i = 1; i <= 6; i++)
     {
@@ -247,24 +247,24 @@ static void test_dpa(void)
 
     /* Sort DPA */
     ok(pDPA_Sort(dpa, CB_CmpGT, 0xdeadbeef), "\n");
-    ok(CheckDPA(dpa, 0x654321, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x654321, &dw), "dw=0x%x\n", dw);
     
     /* Clone into a new DPA */
     dpa2 = pDPA_Clone(dpa, NULL);
     ok(dpa2 != NULL, "\n");
     /* The old data should have been preserved */
-    ok(CheckDPA(dpa2, 0x654321, &dw2), "dw=0x%lx\n", dw2);
+    ok(CheckDPA(dpa2, 0x654321, &dw2), "dw=0x%x\n", dw2);
     ok(pDPA_Sort(dpa, CB_CmpLT, 0xdeadbeef), "\n");
     
     /* Test if the DPA itself was really copied */
-    ok(CheckDPA(dpa,  0x123456, &dw),  "dw=0x%lx\n",  dw );
-    ok(CheckDPA(dpa2, 0x654321, &dw2), "dw2=0x%lx\n", dw2);
+    ok(CheckDPA(dpa,  0x123456, &dw),  "dw=0x%x\n",  dw );
+    ok(CheckDPA(dpa2, 0x654321, &dw2), "dw2=0x%x\n", dw2);
 
     /* Clone into an old DPA */
     p = NULL; SetLastError(ERROR_SUCCESS);
     p = pDPA_Clone(dpa, dpa3);
     ok(p == dpa3, "p=%p\n", p);
-    ok(CheckDPA(dpa3, 0x123456, &dw3), "dw3=0x%lx\n", dw3);
+    ok(CheckDPA(dpa3, 0x123456, &dw3), "dw3=0x%x\n", dw3);
 
     for(i = 1; i <= 6; i++)
     {
@@ -297,7 +297,7 @@ static void test_dpa(void)
     /* Delete the third item */
     p = pDPA_DeletePtr(dpa, 2);
     ok(p == (PVOID)3, "p=%p\n", p);
-    ok(CheckDPA(dpa, 0x12456, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x12456, &dw), "dw=0x%x\n", dw);
 
     /* Check where to re-insert the deleted item */
     i = pDPA_Search(dpa, (PVOID)3, 0, 
@@ -315,7 +315,7 @@ static void test_dpa(void)
     /* Re-insert the item */
     ret = pDPA_InsertPtr(dpa, 2, (PVOID)3);
     ok(ret == 2, "ret=%d i=%d\n", ret, 2);
-    ok(CheckDPA(dpa, 0x123456, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x123456, &dw), "dw=0x%x\n", dw);
     
     /* When doing a binary search while claiming reverse order all indexes
      * should be bogus */
@@ -332,12 +332,12 @@ static void test_dpa(void)
         p = pDPA_DeletePtr(dpa, 1);
         p = pDPA_DeletePtr(dpa, 2);
         p = pDPA_DeletePtr(dpa, 3);
-        ok(CheckDPA(dpa, 0x135, &dw), "dw=0x%lx\n", dw);
+        ok(CheckDPA(dpa, 0x135, &dw), "dw=0x%x\n", dw);
     
         /* Delete all odd entries from dpa2 */
         pDPA_Merge(dpa2, dpa, DPAM_DELETE, 
                    CB_CmpLT, CB_MergeDeleteOddSrc, 0xdeadbeef);
-        todo_wine ok(CheckDPA(dpa2, 0x246, &dw2), "dw=0x%lx\n", dw2);
+        todo_wine ok(CheckDPA(dpa2, 0x246, &dw2), "dw=0x%x\n", dw2);
     
         /* Merge dpa3 into dpa2 and dpa */
         pDPA_Merge(dpa, dpa3, DPAM_INSERT|DPAM_NOSORT, 
@@ -345,16 +345,16 @@ static void test_dpa(void)
         pDPA_Merge(dpa2, dpa3, DPAM_INSERT|DPAM_NOSORT, 
                    CB_CmpLT, CB_MergeInsertSrc, 0xdeadbeef);
     
-        ok(CheckDPA(dpa,  0x123456, &dw ), "dw=0x%lx\n",  dw);
-        ok(CheckDPA(dpa2, 0x123456, &dw2), "dw2=0x%lx\n", dw2);
-        ok(CheckDPA(dpa3, 0x123456, &dw3), "dw3=0x%lx\n", dw3);
+        ok(CheckDPA(dpa,  0x123456, &dw ), "dw=0x%x\n",  dw);
+        ok(CheckDPA(dpa2, 0x123456, &dw2), "dw2=0x%x\n", dw2);
+        ok(CheckDPA(dpa3, 0x123456, &dw3), "dw3=0x%x\n", dw3);
     }
 
     if(pDPA_EnumCallback)
     {
         nEnum = 0;
         pDPA_EnumCallback(dpa2, CB_EnumFirstThree, (PVOID)dpa2);
-        ok(CheckDPA(dpa2, 0x777456, &dw2), "dw=0x%lx\n", dw2);
+        ok(CheckDPA(dpa2, 0x777456, &dw2), "dw=0x%x\n", dw2);
         ok(nEnum == 3, "nEnum=%d\n", nEnum);
     }
     
@@ -364,7 +364,7 @@ static void test_dpa(void)
     ok(ret == 0x12345, "ret=%d\n", ret);
           
     pDPA_DeleteAllPtrs(dpa2);
-    ok(CheckDPA(dpa2, 0, &dw2), "dw2=0x%lx\n", dw2);
+    ok(CheckDPA(dpa2, 0, &dw2), "dw2=0x%x\n", dw2);
     pDPA_Destroy(dpa2);
 
     if(pDPA_DestroyCallback)
@@ -390,20 +390,20 @@ static void test_dpa(void)
 
         dwMode = STGM_DIRECT|STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE;
         hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
-        ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
 
         hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
-        ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
 
         hRes = pDPA_SaveStream(dpa, CB_Save, pStm, 0xdeadbeef);
-        todo_wine ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+        todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
         pDPA_Destroy(dpa);
         
         hRes = IStream_Seek(pStm, liZero, STREAM_SEEK_SET, NULL);
-        ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
+        ok(hRes == S_OK, "hRes=0x%x\n", hRes);
         hRes = pDPA_LoadStream(&dpa, CB_Load, pStm, 0xdeadbeef);
-        todo_wine ok(hRes == S_OK, "hRes=0x%lx\n", hRes);
-        todo_wine ok(CheckDPA(dpa, 0x123456, &dw), "dw=0x%lx\n", dw);
+        todo_wine ok(hRes == S_OK, "hRes=0x%x\n", hRes);
+        todo_wine ok(CheckDPA(dpa, 0x123456, &dw), "dw=0x%x\n", dw);
         pDPA_Destroy(dpa);
 
         ret = IStream_Release(pStm);
@@ -414,7 +414,7 @@ static void test_dpa(void)
 
         CoUninitialize();
     }
-    else ok(0, "hResult: %ld\n", hRes);
+    else ok(0, "hResult: %d\n", hRes);
 
 skip_stream_tests:
     pDPA_Destroy(dpa);
@@ -428,7 +428,7 @@ START_TEST(dpa)
 
     if(!hcomctl32)
     {
-        ok(0, "error=%ld\n", GetLastError());
+        ok(0, "error=%d\n", GetLastError());
         return;
     }
 

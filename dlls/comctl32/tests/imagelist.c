@@ -264,7 +264,7 @@ static void testHotspot (void)
             /* check new hotspot, it should be the same like the old one */
             himlNew = ImageList_GetDragImage(NULL, &ppt);
             ok(ppt.x == dx1 && ppt.y == dy1,
-                    "Expected drag hotspot [%d,%d] got [%ld,%ld]\n",
+                    "Expected drag hotspot [%d,%d] got [%d,%d]\n",
                     dx1, dy1, ppt.x, ppt.y);
             /* check size of new dragged image */
             ImageList_GetIconSize(himlNew, &newx, &newy);

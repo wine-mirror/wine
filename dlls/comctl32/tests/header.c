@@ -207,13 +207,13 @@ static const WCHAR pszUniTestW[] = {'T','S','T',0};
 
 #define TEST_GET_ITEM(i,c)\
 {   res = getItem(hWndHeader, i, buffer);\
-    ok(res != 0, "Getting item[%d] using valid index failed unexpectedly (%ld)\n", i, res);\
+    ok(res != 0, "Getting item[%d] using valid index failed unexpectedly (%d)\n", i, res);\
     ok(strcmp(str_items[c], buffer) == 0, "Getting item[%d] returned \"%s\" expecting \"%s\"\n", i, buffer, str_items[c]);\
 }
 
 #define TEST_GET_ITEMCOUNT(i)\
 {   res = getItemCount(hWndHeader);\
-    ok(res == i, "Got Item Count as %ld\n", res);\
+    ok(res == i, "Got Item Count as %d\n", res);\
 }
 
 static void check_auto_format(void)
@@ -275,7 +275,7 @@ static void check_auto_fields(void)
     HDITEMA hdiCreate;
     HDITEMA hdiRead;
     static CHAR text[] = "Test";
-    LRESULT res;
+    LONG res;
 
     /* Windows stores the format, width, lparam even if they are not in the item's mask */
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
@@ -390,25 +390,25 @@ static void test_header_control (void)
     {
         TEST_GET_ITEMCOUNT(3-i);
         res = addItem(hWndHeader, 0, str_items[i]);
-        ok(res == 0, "Adding simple item failed (%ld)\n", res);
+        ok(res == 0, "Adding simple item failed (%d)\n", res);
     }
 
     TEST_GET_ITEMCOUNT(4);
     res = addItem(hWndHeader, 99, str_items[i+1]);
-    ok(res != -1, "Adding Out of Range item should fail with -1 got (%ld)\n", res);
+    ok(res != -1, "Adding Out of Range item should fail with -1 got (%d)\n", res);
     TEST_GET_ITEMCOUNT(5);
     res = addItem(hWndHeader, 5, str_items[i+1]);
-    ok(res != -1, "Adding Out of Range item should fail with -1 got (%ld)\n", res);
+    ok(res != -1, "Adding Out of Range item should fail with -1 got (%d)\n", res);
     TEST_GET_ITEMCOUNT(6);
 
     for (i = 0; i < 4; i++) { TEST_GET_ITEM(i,i); TEST_GET_ITEMCOUNT(6); }
 
     res=getItem(hWndHeader, 99, buffer);
-    ok(res == 0, "Getting Out of Range item should fail with 0 (%ld), got %s\n", res,buffer);
+    ok(res == 0, "Getting Out of Range item should fail with 0 (%d), got %s\n", res,buffer);
     res=getItem(hWndHeader, 5, buffer);
-    ok(res == 1, "Getting Out of Range item should fail with 1 (%ld), got %s\n", res,buffer);
+    ok(res == 1, "Getting Out of Range item should fail with 1 (%d), got %s\n", res,buffer);
     res=getItem(hWndHeader, -2, buffer);
-    ok(res == 0, "Getting Out of Range item should fail with 0 (%ld), got %s\n", res,buffer);
+    ok(res == 0, "Getting Out of Range item should fail with 0 (%d), got %s\n", res,buffer);
 
     if (winetest_interactive)
     {
@@ -418,17 +418,17 @@ static void test_header_control (void)
 
     TEST_GET_ITEMCOUNT(6);
     res=setItem(hWndHeader, 99, str_items[5], FALSE);
-    ok(res == 0, "Setting Out of Range item should fail with 0 (%ld)\n", res);
+    ok(res == 0, "Setting Out of Range item should fail with 0 (%d)\n", res);
     res=setItem(hWndHeader, 5, str_items[5], TRUE);
-    ok(res == 1, "Setting Out of Range item should fail with 1 (%ld)\n", res);
+    ok(res == 1, "Setting Out of Range item should fail with 1 (%d)\n", res);
     res=setItem(hWndHeader, -2, str_items[5], FALSE);
-    ok(res == 0, "Setting Out of Range item should fail with 0 (%ld)\n", res);
+    ok(res == 0, "Setting Out of Range item should fail with 0 (%d)\n", res);
     TEST_GET_ITEMCOUNT(6);
 
     for (i = 0; i < 4; i++)
     {
         res = setItem(hWndHeader, i, str_items[4], TRUE);
-        ok(res != 0, "Setting %d item failed (%ld)\n", i+1, res);
+        ok(res != 0, "Setting %d item failed (%d)\n", i+1, res);
         TEST_GET_ITEM(i, 4);
         TEST_GET_ITEMCOUNT(6);
     }
@@ -457,22 +457,22 @@ static void test_header_control (void)
     TEST_GET_ITEMCOUNT(6);
 
     res = delItem(hWndHeader, 5);
-    ok(res == 1, "Deleting Out of Range item should fail with 1 (%ld)\n", res);
+    ok(res == 1, "Deleting Out of Range item should fail with 1 (%d)\n", res);
     res = delItem(hWndHeader, -2);
-    ok(res == 0, "Deleting Out of Range item should fail with 0 (%ld)\n", res);
+    ok(res == 0, "Deleting Out of Range item should fail with 0 (%d)\n", res);
     TEST_GET_ITEMCOUNT(5);
 
     res = delItem(hWndHeader, 3);
-    ok(res != 0, "Deleting using out of range index failed (%ld)\n", res);
+    ok(res != 0, "Deleting using out of range index failed (%d)\n", res);
     TEST_GET_ITEMCOUNT(4);
     res = delItem(hWndHeader, 0);
-    ok(res != 0, "Deleting using out of range index failed (%ld)\n", res);
+    ok(res != 0, "Deleting using out of range index failed (%d)\n", res);
     TEST_GET_ITEMCOUNT(3);
     res = delItem(hWndHeader, 0);
-    ok(res != 0, "Deleting using out of range index failed (%ld)\n", res);
+    ok(res != 0, "Deleting using out of range index failed (%d)\n", res);
     TEST_GET_ITEMCOUNT(2);
     res = delItem(hWndHeader, 0);
-    ok(res != 0, "Deleting using out of range index failed (%ld)\n", res);
+    ok(res != 0, "Deleting using out of range index failed (%d)\n", res);
     TEST_GET_ITEMCOUNT(1);
 
     DestroyWindow(hWndHeader);
