@@ -51,16 +51,16 @@ ME_StreamOutFlush(ME_OutStream *pStream)
   EDITSTREAM *stream = pStream->stream;
 
   do {
-    TRACE("sending %lu bytes\n", pStream->pos - nStart);
+    TRACE("sending %u bytes\n", pStream->pos - nStart);
     /* Some apps seem not to set *pcb unless a problem arises, relying
       on initial random nWritten value, which is usually >STREAMOUT_BUFFER_SIZE */
     nRemaining = pStream->pos - nStart;
     nWritten = 0xDEADBEEF;
     stream->dwError = stream->pfnCallback(stream->dwCookie, (LPBYTE)pStream->buffer + nStart,
                                           pStream->pos - nStart, &nWritten);
-    TRACE("error=%lu written=%lu\n", stream->dwError, nWritten);
+    TRACE("error=%u written=%u\n", stream->dwError, nWritten);
     if (nWritten > (pStream->pos - nStart) || nWritten<0) {
-      FIXME("Invalid returned written size *pcb: 0x%x (%ld) instead of %ld\n", 
+      FIXME("Invalid returned written size *pcb: 0x%x (%d) instead of %d\n", 
             (unsigned)nWritten, nWritten, nRemaining);
       nWritten = nRemaining;
     }
@@ -78,7 +78,7 @@ static LONG
 ME_StreamOutFree(ME_OutStream *pStream)
 {
   LONG written = pStream->written;
-  TRACE("total length = %lu\n", written);
+  TRACE("total length = %u\n", written);
 
   FREE_OBJ(pStream);
   return written;
@@ -346,13 +346,13 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, ME_DisplayItem *para)
         strcat(props, "\\sl-480\\slmult1");
         break;
       case 3:
-        sprintf(props + strlen(props), "\\sl%ld\\slmult0", fmt->dyLineSpacing);
+        sprintf(props + strlen(props), "\\sl%d\\slmult0", fmt->dyLineSpacing);
         break;
       case 4:
-        sprintf(props + strlen(props), "\\sl-%ld\\slmult0", fmt->dyLineSpacing);
+        sprintf(props + strlen(props), "\\sl-%d\\slmult0", fmt->dyLineSpacing);
         break;
       case 5:
-        sprintf(props + strlen(props), "\\sl-%ld\\slmult1", fmt->dyLineSpacing * 240 / 20);
+        sprintf(props + strlen(props), "\\sl-%d\\slmult1", fmt->dyLineSpacing * 240 / 20);
         break;
     }
   }
@@ -377,15 +377,15 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, ME_DisplayItem *para)
     strcat(props, "\\intbl");
   
   if (fmt->dwMask & PFM_OFFSET)
-    sprintf(props + strlen(props), "\\li%ld", fmt->dxOffset);
+    sprintf(props + strlen(props), "\\li%d", fmt->dxOffset);
   if (fmt->dwMask & PFM_OFFSETINDENT || fmt->dwMask & PFM_STARTINDENT)
-    sprintf(props + strlen(props), "\\fi%ld", fmt->dxStartIndent);
+    sprintf(props + strlen(props), "\\fi%d", fmt->dxStartIndent);
   if (fmt->dwMask & PFM_RIGHTINDENT)
-    sprintf(props + strlen(props), "\\ri%ld", fmt->dxRightIndent);
+    sprintf(props + strlen(props), "\\ri%d", fmt->dxRightIndent);
   if (fmt->dwMask & PFM_SPACEAFTER)
-    sprintf(props + strlen(props), "\\sa%ld", fmt->dySpaceAfter);
+    sprintf(props + strlen(props), "\\sa%d", fmt->dySpaceAfter);
   if (fmt->dwMask & PFM_SPACEBEFORE)
-    sprintf(props + strlen(props), "\\sb%ld", fmt->dySpaceBefore);
+    sprintf(props + strlen(props), "\\sb%d", fmt->dySpaceBefore);
   if (fmt->dwMask & PFM_STYLE)
     sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
 
@@ -409,7 +409,7 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, ME_DisplayItem *para)
       }
       if (fmt->rgxTabs[i] >> 28 <= 5)
         strcat(props, leader[fmt->rgxTabs[i] >> 28]);
-      sprintf(props+strlen(props), "\\tx%ld", fmt->rgxTabs[i]&0x00FFFFFF);
+      sprintf(props+strlen(props), "\\tx%d", fmt->rgxTabs[i]&0x00FFFFFF);
     }
   }
     
@@ -486,9 +486,9 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
   /* CFM_LINK is not streamed out by M$ */
   if (fmt->dwMask & CFM_OFFSET) {
     if (fmt->yOffset >= 0)
-      sprintf(props + strlen(props), "\\up%ld", fmt->yOffset);
+      sprintf(props + strlen(props), "\\up%d", fmt->yOffset);
     else
-      sprintf(props + strlen(props), "\\dn%ld", -fmt->yOffset);
+      sprintf(props + strlen(props), "\\dn%d", -fmt->yOffset);
   }
   if (fmt->dwMask & CFM_OUTLINE && fmt->dwEffects & CFE_OUTLINE)
     strcat(props, "\\outl");
@@ -498,7 +498,7 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
   if (fmt->dwMask & CFM_SHADOW && fmt->dwEffects & CFE_SHADOW)
     strcat(props, "\\shad");
   if (fmt->dwMask & CFM_SIZE)
-    sprintf(props + strlen(props), "\\fs%ld", fmt->yHeight / 10);
+    sprintf(props + strlen(props), "\\fs%d", fmt->yHeight / 10);
   if (fmt->dwMask & CFM_SMALLCAPS && fmt->dwEffects & CFE_SMALLCAPS)
     strcat(props, "\\scaps");
   if (fmt->dwMask & CFM_SPACING)

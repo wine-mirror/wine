@@ -121,7 +121,7 @@ static ULONG WINAPI fnTextSrv_AddRef(ITextServices *iface)
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
    DWORD ref = InterlockedIncrement(&This->ref);
 
-   TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, ref - 1);
+   TRACE("(%p/%p)->() AddRef from %d\n", This, iface, ref - 1);
    return ref;
 }
 
@@ -130,7 +130,7 @@ static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
    DWORD ref = InterlockedDecrement(&This->ref);
 
-   TRACE("(%p/%p)->() Release from %ld\n", This, iface, ref + 1);
+   TRACE("(%p/%p)->() Release from %d\n", This, iface, ref + 1);
 
    if (!ref)
    {

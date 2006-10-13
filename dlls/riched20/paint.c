@@ -352,7 +352,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           rc.right = c->rcView.left+run->pt.x+run->nWidth;
           rc.top = c->pt.y+run->pt.y;
           rc.bottom = c->pt.y+run->pt.y+height;
-          TRACE("rc = (%ld, %ld, %ld, %ld)\n", rc.left, rc.top, rc.right, rc.bottom);
+          TRACE("rc = (%d, %d, %d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
           if (run->nFlags & MERF_SKIPPED)
             DrawFocusRect(c->hDC, &rc);
           else

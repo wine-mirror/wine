@@ -96,7 +96,7 @@ IRichEditOle_fnAddRef(IRichEditOle *me)
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE("%p ref = %lu\n", This, ref);
+    TRACE("%p ref = %u\n", This, ref);
 
     return ref;
 }
@@ -107,7 +107,7 @@ IRichEditOle_fnRelease(IRichEditOle *me)
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE ("%p ref=%lu\n", This, ref);
+    TRACE ("%p ref=%u\n", This, ref);
 
     if (!ref)
     {
@@ -158,7 +158,7 @@ IRichEditOle_fnGetClipboardData(IRichEditOle *me, CHARRANGE *lpchrg,
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
     CHARRANGE tmpchrg;
 
-    TRACE("(%p,%p,%ld)\n",This, lpchrg, reco);
+    TRACE("(%p,%p,%d)\n",This, lpchrg, reco);
     if(!lplpdataobj)
         return E_INVALIDARG;
     if(!lpchrg) {

@@ -271,7 +271,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
   WCHAR wszText[STREAMIN_BUFFER_SIZE+1];
   WCHAR *pText;
   
-  TRACE("%08lx %p\n", dwFormat, stream);
+  TRACE("%08x %p\n", dwFormat, stream);
   
   do {
     long nWideChars = 0;
@@ -784,11 +784,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, const WCHAR *te
   ME_DisplayItem *para;
   WCHAR wLastChar = ' ';
 
-  TRACE("flags==0x%08lx, chrg->cpMin==%ld, chrg->cpMax==%ld text==%s\n",
+  TRACE("flags==0x%08x, chrg->cpMin==%d, chrg->cpMax==%d text==%s\n",
         flags, chrg->cpMin, chrg->cpMax, debugstr_w(text));
   
   if (flags & ~(FR_DOWN | FR_MATCHCASE | FR_WHOLEWORD))
-    FIXME("Flags 0x%08lx not implemented\n",
+    FIXME("Flags 0x%08x not implemented\n",
         flags & ~(FR_DOWN | FR_MATCHCASE | FR_WHOLEWORD));
 
   nMin = chrg->cpMin;
@@ -1466,7 +1466,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_NCCREATE:
   {
     CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-    TRACE("WM_NCCREATE: style 0x%08lx\n", pcs->style);
+    TRACE("WM_NCCREATE: style 0x%08x\n", pcs->style);
     editor = ME_MakeEditor(hWnd);
     SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
     pcs = 0; /* ignore */
@@ -1490,7 +1490,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
     ME_GetSelection(editor, (int *)&pRange->cpMin, (int *)&pRange->cpMax);
-    TRACE("EM_EXGETSEL = (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
+    TRACE("EM_EXGETSEL = (%d,%d)\n", pRange->cpMin, pRange->cpMax);
     return 0;
   }
   case EM_SETUNDOLIMIT:
@@ -1600,7 +1600,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     int start, end;
     CHARRANGE range = *(CHARRANGE *)lParam;
 
-    TRACE("EM_EXSETSEL (%ld,%ld)\n", range.cpMin, range.cpMax);
+    TRACE("EM_EXSETSEL (%d,%d)\n", range.cpMin, range.cpMax);
 
     /* if cpMin < 0, then selection is deselected and caret moved to end of
      * the current selection  */
@@ -1975,7 +1975,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     int nStart, nCount;
 
     if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
-      FIXME("GETTEXTEX flags 0x%08lx not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
+      FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
 
     if (ex->flags & GT_SELECTION)
     {
@@ -2030,7 +2030,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETTEXTRANGE:
   {
     TEXTRANGEW *rng = (TEXTRANGEW *)lParam;
-    TRACE("EM_GETTEXTRANGE min=%ld max=%ld unicode=%d emul1.0=%d length=%d\n",
+    TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d emul1.0=%d length=%d\n",
       rng->chrg.cpMin, rng->chrg.cpMax, IsWindowUnicode(hWnd), 
       editor->bEmulateVersion10, ME_GetTextLength(editor));
     if (IsWindowUnicode(hWnd))

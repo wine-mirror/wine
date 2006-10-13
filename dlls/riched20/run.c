@@ -121,7 +121,7 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
         ofs = 0;
         break;
       case diRun:
-        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = \"%s\", flags=%08x, fx&mask = %08lx\n",
+        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = \"%s\", flags=%08x, fx&mask = %08x\n",
           p->member.run.nCharOfs, p->member.run.nCharOfs+ofsp, ofsp+ofs,
           p->member.run.strText->nLen, debugstr_w(p->member.run.strText->szData),
           p->member.run.nFlags,
@@ -284,7 +284,7 @@ ME_DisplayItem *ME_SplitRun(ME_Context *c, ME_DisplayItem *item, int nVChar)
 
   run = &item->member.run;
 
-  TRACE("Before split: %s(%ld, %ld)\n", debugstr_w(run->strText->szData),
+  TRACE("Before split: %s(%d, %d)\n", debugstr_w(run->strText->szData),
         run->pt.x, run->pt.y);
 
   item2 = ME_SplitRunSimple(editor, item, nVChar);
@@ -302,7 +302,7 @@ ME_DisplayItem *ME_SplitRun(ME_Context *c, ME_DisplayItem *item, int nVChar)
     TRACE("Before check after split\n");
     ME_CheckCharOffsets(editor);
     TRACE("After check after split\n");
-    TRACE("After split: %s(%ld, %ld), %s(%ld, %ld)\n",
+    TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
       debugstr_w(run->strText->szData), run->pt.x, run->pt.y,
       debugstr_w(run2->strText->szData), run2->pt.x, run2->pt.y);
   }
