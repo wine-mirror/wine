@@ -272,6 +272,7 @@ static BOOL WINHELP_RegisterWinClasses(void)
 
     class_text = class_main;
     class_text.lpfnWndProc         = WINHELP_TextWndProc;
+    class_text.hbrBackground       = 0;
     class_text.lpszClassName       = TEXT_WIN_CLASS_NAME;
 
     class_shadow = class_main;
@@ -395,6 +396,7 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
     win->hTextWnd      = oldwin->hTextWnd;
     win->hHistoryWnd   = oldwin->hHistoryWnd;
     oldwin->hMainWnd = oldwin->hButtonBoxWnd = oldwin->hTextWnd = oldwin->hHistoryWnd = 0;
+    win->hBrush = oldwin->hBrush;
 
     SetWindowLong(win->hMainWnd,      0, (LONG)win);
     SetWindowLong(win->hButtonBoxWnd, 0, (LONG)win);
@@ -857,6 +859,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win = (WINHELP_WINDOW*) ((LPCREATESTRUCT) lParam)->lpCreateParams;
         SetWindowLong(hWnd, 0, (LONG) win);
         win->hTextWnd = hWnd;
+        win->hBrush = CreateSolidBrush(win->info->sr_color);
         if (win->info->win_style & WS_POPUP) Globals.hPopupWnd = win->hMainWnd = hWnd;
         WINHELP_InitFonts(hWnd);
         break;
@@ -989,6 +992,8 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
         scroll_pos = GetScrollPos(hWnd, SB_VERT);
 
+        /* No DPtoLP needed - MM_TEXT map mode */
+        if (ps.fErase) FillRect(hDc, &ps.rcPaint, win->hBrush);
         for (line = win->first_line; line; line = line->next)
         {
             for (part = &line->first_part; part; part = part->next)
@@ -998,6 +1003,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 case hlp_line_part_text:
                     SelectObject(hDc, part->u.text.hFont);
                     SetTextColor(hDc, part->u.text.color);
+                    SetBkColor(hDc, win->info->sr_color);
                     TextOut(hDc, part->rect.left, part->rect.top - scroll_pos,
                             part->u.text.lpsText, part->u.text.wTextLen);
                     if (part->u.text.wUnderline)
@@ -1122,6 +1128,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
 
         bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
+        DeleteObject(win->hBrush);
 
         WINHELP_DeleteWindow(win);
 

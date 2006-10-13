@@ -111,6 +111,8 @@ typedef struct tagWinHelp
     HCURSOR             hArrowCur;
     HCURSOR             hHandCur;
 
+    HBRUSH              hBrush;
+
     HLPFILE_WINDOWINFO* info;
 
     /* FIXME: for now it's a fixed size */
