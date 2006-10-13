@@ -169,20 +169,20 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     unsigned int i, entry = except - exceptions;
 
     got_exception++;
-    trace( "exception: %lx flags:%lx addr:%p\n",
+    trace( "exception: %x flags:%x addr:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
 
     ok( rec->ExceptionCode == except->status,
-        "%u: Wrong exception code %lx/%lx\n", entry, rec->ExceptionCode, except->status );
+        "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );
     ok( rec->ExceptionAddress == except->code + except->offset,
         "%u: Wrong exception address %p/%p\n", entry,
         rec->ExceptionAddress, except->code + except->offset );
 
     ok( rec->NumberParameters == except->nb_params,
-        "%u: Wrong number of parameters %lu/%lu\n", entry, rec->NumberParameters, except->nb_params );
+        "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
     for (i = 0; i < rec->NumberParameters; i++)
         ok( rec->ExceptionInformation[i] == except->params[i],
-            "%u: Wrong parameter %d: %lx/%lx\n",
+            "%u: Wrong parameter %d: %lx/%x\n",
             entry, i, rec->ExceptionInformation[i], except->params[i] );
 
     /* don't handle exception if it's not the address we expected */
@@ -277,9 +277,9 @@ static void test_debug_regs(void)
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
-    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %lx\n", res);
-    ok(ctx.Dr0 == 0x42424242,"failed to set debugregister 0 to 0x42424242, got %lx\n", ctx.Dr0);
-    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155, got %lx\n", ctx.Dr7);
+    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %x\n", res);
+    ok(ctx.Dr0 == 0x42424242,"failed to set debugregister 0 to 0x42424242, got %x\n", ctx.Dr0);
+    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155, got %x\n", ctx.Dr7);
 }
 
 /* test the single step exception behaviour */

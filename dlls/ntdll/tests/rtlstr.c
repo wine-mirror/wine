@@ -199,7 +199,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, teststring);
     ok(result == STATUS_SUCCESS,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected 0\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected 0\n",
        result);
     ok(uni.Length == 32,
        "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
@@ -230,7 +230,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, teststring2);
     ok(result == STATUS_NAME_TOO_LONG,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected %lx\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected %x\n",
        result, STATUS_NAME_TOO_LONG);
     ok(uni.Length == 12345,
        "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
@@ -263,7 +263,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, 0);
     ok(result == STATUS_SUCCESS,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected 0\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected 0\n",
        result);
     ok(uni.Length == 0,
        "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
@@ -439,7 +439,7 @@ static void test_RtlDuplicateUnicodeString(void)
         dest_ansi_buf[dest_ansi_str.Length] = '\0';
         dest_ansi_str.Buffer = dest_ansi_buf;
 	ok(result == dupl_ustr[test_num].result,
-	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has result %lx, expected %lx\n",
+           "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has result %x, expected %x\n",
 	   test_num, dupl_ustr[test_num].add_nul, result, dupl_ustr[test_num].result);
 	ok(dest_str.Length == dupl_ustr[test_num].res_Length,
 	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) destination has Length %d, expected %d\n",
@@ -778,7 +778,7 @@ static void test_RtlUnicodeStringToAnsiString(void)
 	}
 	result = pRtlUnicodeStringToAnsiString(&ansi_str, &uni_str, ustr2astr[test_num].doalloc);
 	ok(result == ustr2astr[test_num].result,
-	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %lx, expected %lx\n",
+           "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %x, expected %x\n",
 	   test_num, ustr2astr[test_num].doalloc, result, ustr2astr[test_num].result);
 	ok(ansi_str.Length == ustr2astr[test_num].res_Length,
 	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) ansi has Length %d, expected %d\n",
@@ -839,7 +839,7 @@ static void test_RtlAppendAsciizToString(void)
 	}
 	result = pRtlAppendAsciizToString(&dest_str, app_asc2str[test_num].src);
 	ok(result == app_asc2str[test_num].result,
-	   "(test %d): RtlAppendAsciizToString(dest, src) has result %lx, expected %lx\n",
+           "(test %d): RtlAppendAsciizToString(dest, src) has result %x, expected %x\n",
 	   test_num, result, app_asc2str[test_num].result);
 	ok(dest_str.Length == app_asc2str[test_num].res_Length,
 	   "(test %d): RtlAppendAsciizToString(dest, src) dest has Length %d, expected %d\n",
@@ -920,7 +920,7 @@ static void test_RtlAppendStringToString(void)
 	}
 	result = pRtlAppendStringToString(&dest_str, &src_str);
 	ok(result == app_str2str[test_num].result,
-	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
+           "(test %d): RtlAppendStringToString(dest, src) has result %x, expected %x\n",
 	   test_num, result, app_str2str[test_num].result);
 	ok(dest_str.Length == app_str2str[test_num].res_Length,
 	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d\n",
@@ -992,7 +992,7 @@ static void test_RtlAppendUnicodeToString(void)
 	}
 	result = pRtlAppendUnicodeToString(&dest_str, (LPCWSTR) app_uni2str[test_num].src);
 	ok(result == app_uni2str[test_num].result,
-	   "(test %d): RtlAppendUnicodeToString(dest, src) has result %lx, expected %lx\n",
+           "(test %d): RtlAppendUnicodeToString(dest, src) has result %x, expected %x\n",
 	   test_num, result, app_uni2str[test_num].result);
 	ok(dest_str.Length == app_uni2str[test_num].res_Length,
 	   "(test %d): RtlAppendUnicodeToString(dest, src) dest has Length %d, expected %d\n",
@@ -1077,7 +1077,7 @@ static void test_RtlAppendUnicodeStringToString(void)
 	}
 	result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
 	ok(result == app_ustr2str[test_num].result,
-	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
+           "(test %d): RtlAppendStringToString(dest, src) has result %x, expected %x\n",
 	   test_num, result, app_ustr2str[test_num].result);
 	ok(dest_str.Length == app_ustr2str[test_num].res_Length,
 	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d\n",
@@ -1196,7 +1196,7 @@ static void test_RtlFindCharInUnicodeString(void)
 	pos = 12345;
         result = pRtlFindCharInUnicodeString(find_ch_in_ustr[test_num].flags, &main_str, &search_chars, &pos);
         ok(result == find_ch_in_ustr[test_num].result,
-           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) has result %lx, expected %lx\n",
+           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) has result %x, expected %x\n",
            test_num, find_ch_in_ustr[test_num].flags,
            find_ch_in_ustr[test_num].main_str, find_ch_in_ustr[test_num].search_chars,
            result, find_ch_in_ustr[test_num].result);
@@ -1347,7 +1347,7 @@ static void test_RtlUnicodeStringToInteger(void)
 	pRtlInitUnicodeString(&uni, wstr);
 	result = pRtlUnicodeStringToInteger(&uni, str2int[test_num].base, &value);
 	ok(result == str2int[test_num].result,
-	   "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %lx, expected: %lx\n",
+           "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %x, expected: %x\n",
 	   test_num, str2int[test_num].str, str2int[test_num].base, result, str2int[test_num].result);
 	ok(value == str2int[test_num].value,
 	   "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
@@ -1359,17 +1359,17 @@ static void test_RtlUnicodeStringToInteger(void)
     pRtlInitUnicodeString(&uni, wstr);
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "call failed: RtlUnicodeStringToInteger(\"%s\", %d, NULL) has result %lx\n",
+       "call failed: RtlUnicodeStringToInteger(\"%s\", %d, NULL) has result %x\n",
        str2int[1].str, str2int[1].base, result);
     result = pRtlUnicodeStringToInteger(&uni, 20, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "call failed: RtlUnicodeStringToInteger(\"%s\", 20, NULL) has result %lx\n",
+       "call failed: RtlUnicodeStringToInteger(\"%s\", 20, NULL) has result %x\n",
        str2int[1].str, result);
 
     uni.Length = 10; /* Make Length shorter (5 WCHARS instead of 7) */
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS,
-       "call failed: RtlUnicodeStringToInteger(\"12345\", %d, [out]) has result %lx\n",
+       "call failed: RtlUnicodeStringToInteger(\"12345\", %d, [out]) has result %x\n",
        str2int[1].base, result);
     ok(value == 12345,
        "didn't return expected value (test a): expected: %d, got: %d\n",
@@ -1378,7 +1378,7 @@ static void test_RtlUnicodeStringToInteger(void)
     uni.Length = 5; /* Use odd Length (2.5 WCHARS) */
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS,
-       "call failed: RtlUnicodeStringToInteger(\"12\", %d, [out]) has result %lx\n",
+       "call failed: RtlUnicodeStringToInteger(\"12\", %d, [out]) has result %x\n",
        str2int[1].base, result);
     ok(value == 12,
        "didn't return expected value (test b): expected: %d, got: %d\n",
@@ -1387,7 +1387,7 @@ static void test_RtlUnicodeStringToInteger(void)
     uni.Length = 2;
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS,
-       "call failed: RtlUnicodeStringToInteger(\"1\", %d, [out]) has result %lx\n",
+       "call failed: RtlUnicodeStringToInteger(\"1\", %d, [out]) has result %x\n",
        str2int[1].base, result);
     ok(value == 1,
        "didn't return expected value (test c): expected: %d, got: %d\n",
@@ -1409,7 +1409,7 @@ static void test_RtlCharToInteger(void)
 	    value = 0xdeadbeef;
 	    result = pRtlCharToInteger(str2int[test_num].str, str2int[test_num].base, &value);
 	    ok(result == str2int[test_num].result,
-	       "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %lx, expected: %lx\n",
+               "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %x, expected: %x\n",
 	       test_num, str2int[test_num].str, str2int[test_num].base, result, str2int[test_num].result);
 	    ok(value == str2int[test_num].value,
 	       "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
@@ -1419,12 +1419,12 @@ static void test_RtlCharToInteger(void)
 
     result = pRtlCharToInteger(str2int[1].str, str2int[1].base, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "call failed: RtlCharToInteger(\"%s\", %d, NULL) has result %lx\n",
+       "call failed: RtlCharToInteger(\"%s\", %d, NULL) has result %x\n",
        str2int[1].str, str2int[1].base, result);
 
     result = pRtlCharToInteger(str2int[1].str, 20, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "call failed: RtlCharToInteger(\"%s\", 20, NULL) has result %lx\n",
+       "call failed: RtlCharToInteger(\"%s\", 20, NULL) has result %x\n",
        str2int[1].str, result);
 }
 
@@ -1592,22 +1592,22 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	}
     } else {
 	ok(result == int2str->result,
-	   "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) has result %lx, expected: %lx\n",
+           "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) has result %x, expected: %x\n",
 	   test_num, int2str->value, int2str->base, result, int2str->result);
 	if (result == STATUS_SUCCESS) {
 	    ok(unicode_string.Buffer[unicode_string.Length/sizeof(WCHAR)] == '\0',
-	       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string \"%s\" is not NULL terminated\n",
+               "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string \"%s\" is not NULL terminated\n",
 	       test_num, int2str->value, int2str->base, ansi_str.Buffer);
 	}
     }
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, int2str->value, int2str->base, ansi_str.Buffer, expected_ansi_str.Buffer);
     ok(unicode_string.Length == expected_unicode_string.Length,
-       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string has Length %d, expected: %d\n",
+       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string has Length %d, expected: %d\n",
        test_num, int2str->value, int2str->base, unicode_string.Length, expected_unicode_string.Length);
     ok(unicode_string.MaximumLength == expected_unicode_string.MaximumLength,
-       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string has MaximumLength %d, expected: %d\n",
+       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string has MaximumLength %d, expected: %d\n",
        test_num, int2str->value, int2str->base, unicode_string.MaximumLength, expected_unicode_string.MaximumLength);
     pRtlFreeAnsiString(&expected_ansi_str);
     pRtlFreeAnsiString(&ansi_str);
@@ -1632,10 +1632,10 @@ static void one_RtlIntegerToChar_test(int test_num, const int2str_t *int2str)
     dest_str[STRI_BUFFER_LENGTH] = '\0';
     result = pRtlIntegerToChar(int2str->value, int2str->base, int2str->MaximumLength, dest_str);
     ok(result == int2str->result,
-       "(test %d): RtlIntegerToChar(%lu, %d, %d, [out]) has result %lx, expected: %lx\n",
+       "(test %d): RtlIntegerToChar(%u, %d, %d, [out]) has result %x, expected: %x\n",
        test_num, int2str->value, int2str->base, int2str->MaximumLength, result, int2str->result);
     ok(memcmp(dest_str, int2str->Buffer, STRI_BUFFER_LENGTH) == 0,
-       "(test %d): RtlIntegerToChar(%lu, %d, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       "(test %d): RtlIntegerToChar(%u, %d, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, int2str->value, int2str->base, int2str->MaximumLength, dest_str, int2str->Buffer);
 }
 
@@ -1650,22 +1650,22 @@ static void test_RtlIntegerToChar(void)
 
     result = pRtlIntegerToChar(int2str[0].value, 20, int2str[0].MaximumLength, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test a): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
+       "(test a): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
        int2str[0].value, 20, int2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlIntegerToChar(int2str[0].value, 20, 0, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test b): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
+       "(test b): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
        int2str[0].value, 20, 0, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlIntegerToChar(int2str[0].value, int2str[0].base, 0, NULL);
     ok(result == STATUS_BUFFER_OVERFLOW,
-       "(test c): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
+       "(test c): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
        int2str[0].value, int2str[0].base, 0, result, STATUS_BUFFER_OVERFLOW);
 
     result = pRtlIntegerToChar(int2str[0].value, int2str[0].base, int2str[0].MaximumLength, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "(test d): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
+       "(test d): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
        int2str[0].value, int2str[0].base, int2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 
@@ -1688,7 +1688,7 @@ static void test_RtlGUIDFromString(void)
   str.Buffer = (LPWSTR)szGuid;
 
   ret = pRtlGUIDFromString(&str, &guid);
-  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
+  ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
   ok(memcmp(&guid, &IID_Endianess, sizeof(guid)) == 0, "Endianess broken\n");
 
   str.Length = str.MaximumLength = (sizeof(szGuid2) - 1) / sizeof(WCHAR);
@@ -1707,7 +1707,7 @@ static void test_RtlStringFromGUID(void)
   str.Buffer = NULL;
 
   ret = pRtlStringFromGUID(&IID_Endianess, &str);
-  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
+  ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
   ok(str.Buffer && !lstrcmpW(str.Buffer, szGuid), "Endianess broken\n");
 }
 

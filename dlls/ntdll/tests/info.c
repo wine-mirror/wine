@@ -68,33 +68,33 @@ static void test_query_basic(void)
     /* Use a nonexistent info class */
     trace("Check nonexistent info class\n");
     status = pNtQuerySystemInformation(-1, NULL, 0, NULL);
-    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status);
+    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status);
 
     /* Use an existing class but with a zero-length buffer */
     trace("Check zero-length buffer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, NULL, 0, NULL);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Use an existing class, correct length but no SystemInformation buffer */
     trace("Check no SystemInformation buffer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, NULL, sizeof(sbi), NULL);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
 
     /* Use a existing class, correct length, a pointer to a buffer but no ReturnLength pointer */
     trace("Check no ReturnLength pointer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Check a too large buffer size */
     trace("Check a too large buffer size\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi) * 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Finally some correct calls */
     trace("Check with correct parameters\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(sbi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
@@ -108,12 +108,12 @@ static void test_query_cpu(void)
     SYSTEM_CPU_INFORMATION sci;
 
     status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    trace("Processor FeatureSet : %08lx\n", sci.FeatureSet);
-    ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08lx\n", sci.FeatureSet);
+    trace("Processor FeatureSet : %08x\n", sci.FeatureSet);
+    ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08x\n", sci.FeatureSet);
 }
 
 static void test_query_performance(void)
@@ -123,15 +123,15 @@ static void test_query_performance(void)
     SYSTEM_PERFORMANCE_INFORMATION spi;
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi) + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Not return values yet, as struct members are unknown */
 }
@@ -171,46 +171,46 @@ static void test_query_timeofday(void)
         trace("Windows version is NT, we have to cater for differences with W2K/WinXP\n");
  
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
 
         sti.uCurrentTimeZoneId = 0xdeadbeef;
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 28, &ReturnLength);
         ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
 
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( 32 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( 32 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
     }
     else
     {
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
 
         sti.uCurrentTimeZoneId = 0xdeadbeef;
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 24, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( 24 == ReturnLength, "ReturnLength should be 24, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( 24 == ReturnLength, "ReturnLength should be 24, it is (%d)\n", ReturnLength);
         ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
     
         sti.uCurrentTimeZoneId = 0xdeadbeef;
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( 32 == ReturnLength, "ReturnLength should be 32, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( 32 == ReturnLength, "ReturnLength should be 32, it is (%d)\n", ReturnLength);
         ok( 0xdeadbeef != sti.uCurrentTimeZoneId, "Buffer should have been partially filled\n");
     
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 49, &ReturnLength);
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
     
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( sizeof(sti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( sizeof(sti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
     }
 
     /* Check if we have some return values */
-    trace("uCurrentTimeZoneId : (%ld)\n", sti.uCurrentTimeZoneId);
+    trace("uCurrentTimeZoneId : (%d)\n", sti.uCurrentTimeZoneId);
 }
 
 static void test_query_process(void)
@@ -256,7 +256,7 @@ static void test_query_process(void)
         spi = HeapReAlloc(GetProcessHeap(), 0, spi , SystemInformationLength *= 2);
     }
 
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Get the first dwOffset, from this we can deduce the OS version we're running
      *
@@ -304,7 +304,7 @@ static void test_query_process(void)
             {
                 k++;
                 ok ( spi->ti[j].dwOwningPID == spi->dwProcessID, 
-                     "The owning pid of the thread (%ld) doesn't equal the pid (%ld) of the process\n",
+                     "The owning pid of the thread (%d) doesn't equal the pid (%d) of the process\n",
                      spi->ti[j].dwOwningPID, spi->dwProcessID);
             }
         }
@@ -338,25 +338,25 @@ static void test_query_procperf(void)
     sppi = HeapAlloc(GetProcessHeap(), 0, NeededLength);
 
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Try it for 1 processor */
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi,
                                        sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) == ReturnLength,
-        "Inconsistent length %ld\n", ReturnLength);
+        "Inconsistent length %d\n", ReturnLength);
  
     /* Try it for all processors */
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( NeededLength == ReturnLength, "Inconsistent length (%ld) <-> (%ld)\n", NeededLength, ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
 
     /* A too large given buffer size */
     sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( NeededLength == ReturnLength, "Inconsistent length (%ld) <-> (%ld)\n", NeededLength, ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
 
     HeapFree( GetProcessHeap(), 0, sppi);
 }
@@ -373,13 +373,13 @@ static void test_query_module(void)
 
     /* Request the needed length */
     status = pNtQuerySystemInformation(SystemModuleInformation, smi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( ReturnLength > 0, "Expected a ReturnLength to show the needed length\n");
 
     SystemInformationLength = ReturnLength;
     smi = HeapReAlloc(GetProcessHeap(), 0, smi , SystemInformationLength);
     status = pNtQuerySystemInformation(SystemModuleInformation, smi, SystemInformationLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     ModuleCount = smi->ModulesCount;
     sm = &smi->Modules[0];
@@ -391,7 +391,7 @@ static void test_query_module(void)
     /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
     for (i = 0; i < ModuleCount ; i++)
     {
-        ok( i == sm->Id, "Id (%d) should have matched %lu\n", sm->Id, i);
+        ok( i == sm->Id, "Id (%d) should have matched %u\n", sm->Id, i);
         sm++;
     }
 
@@ -411,21 +411,21 @@ static void test_query_handle(void)
     /* The following check assumes more than one handle on any given system */
     todo_wine
     {
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     }
-    ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %ld\n", ReturnLength);
+    ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %d\n", ReturnLength);
 
     SystemInformationLength = ReturnLength;
     shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
     status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Check if we have some return values */
-    trace("Number of Handles : %ld\n", shi->Count);
+    trace("Number of Handles : %d\n", shi->Count);
     todo_wine
     {
         /* our implementation is a stub for now */
-        ok( shi->Count > 1, "Expected more than 1 handles, got (%ld)\n", shi->Count);
+        ok( shi->Count > 1, "Expected more than 1 handles, got (%d)\n", shi->Count);
     }
 
     HeapFree( GetProcessHeap(), 0, shi);
@@ -438,15 +438,15 @@ static void test_query_cache(void)
     SYSTEM_CACHE_INFORMATION sci;
 
     status = pNtQuerySystemInformation(SystemCacheInformation, &sci, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci) + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 }
 
 static void test_query_interrupt(void)
@@ -464,11 +464,11 @@ static void test_query_interrupt(void)
     sii = HeapAlloc(GetProcessHeap(), 0, NeededLength);
 
     status = pNtQuerySystemInformation(SystemInterruptInformation, sii, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Try it for all processors */
     status = pNtQuerySystemInformation(SystemInterruptInformation, sii, NeededLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Windows XP and W2K3 (and others?) always return 0 for the ReturnLength
      * No test added for this as it's highly unlikely that an app depends on this
@@ -484,15 +484,15 @@ static void test_query_kerndebug(void)
     SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi) + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 }
 
 static void test_query_regquota(void)
@@ -502,15 +502,15 @@ static void test_query_regquota(void)
     SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
 
     status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi) + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 }
 
 static void test_query_process_basic(void)
@@ -536,48 +536,48 @@ static void test_query_process_basic(void)
     /* Use a nonexistent info class */
     trace("Check nonexistent info class\n");
     status = pNtQueryInformationProcess(NULL, -1, NULL, 0, NULL);
-    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status);
+    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status);
 
     /* Do not give a handle and buffer */
     trace("Check NULL handle and buffer and zero-length buffersize\n");
     status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, NULL, 0, NULL);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Use a correct info class and buffer size, but still no handle and buffer */
     trace("Check NULL handle and buffer\n");
     status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, NULL, sizeof(pbi), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
     /* Use a correct info class and buffer size, but still no handle */
     trace("Check NULL handle\n");
     status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     /* Use a greater buffer size */
     trace("Check NULL handle and too large buffersize\n");
     status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, &pbi, sizeof(pbi) * 2, NULL);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Use no ReturnLength */
     trace("Check NULL ReturnLength\n");
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Finally some correct calls */
     trace("Check with correct parameters\n");
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Everything is correct except a too large buffersize */
     trace("Too large buffersize\n");
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi) * 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
                                                                                                                                                
     /* Check if we have some return values */
-    trace("ProcessID : %ld\n", pbi.UniqueProcessId);
+    trace("ProcessID : %d\n", pbi.UniqueProcessId);
     ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0\n");
 }
 
@@ -589,10 +589,10 @@ static void test_query_process_vm(void)
 
     status = pNtQueryInformationProcess(NULL, ProcessVmCounters, NULL, sizeof(pvi), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
     status = pNtQueryInformationProcess(NULL, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     /* Windows XP and W2K3 will report success for a size of 44 AND 48 !
        Windows W2K will only report success for 44.
@@ -601,15 +601,15 @@ static void test_query_process_vm(void)
     */
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 24, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 46, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
@@ -635,24 +635,24 @@ static void test_query_process_io(void)
  
     status = pNtQueryInformationProcess(NULL, ProcessIoCounters, NULL, sizeof(pii), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
     status = pNtQueryInformationProcess(NULL, ProcessIoCounters, &pii, sizeof(pii), NULL);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, 24, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pii) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii) * 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pii) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    trace("OtherOperationCount : 0x%lx%08lx\n", (DWORD)(pii.OtherOperationCount >> 32), (DWORD)pii.OtherOperationCount);
+    trace("OtherOperationCount : 0x%x%08x\n", (DWORD)(pii.OtherOperationCount >> 32), (DWORD)pii.OtherOperationCount);
     todo_wine
     {
         ok( pii.OtherOperationCount > 0, "Expected an OtherOperationCount > 0\n");
@@ -669,27 +669,27 @@ static void test_query_process_times(void)
 
     status = pNtQueryInformationProcess(NULL, ProcessTimes, NULL, sizeof(spti), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
     status = pNtQueryInformationProcess(NULL, ProcessTimes, &spti, sizeof(spti), NULL);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, 24, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     if (!process)
     {
-        trace("Could not open process with ID : %ld, error : %08lx. Going to use current one.\n", one_before_last_pid, GetLastError());
+        trace("Could not open process with ID : %d, error : %08x. Going to use current one.\n", one_before_last_pid, GetLastError());
         process = GetCurrentProcess();
         trace("ProcessTimes for current process\n");
     }
     else
-        trace("ProcessTimes for process with ID : %ld\n", one_before_last_pid);
+        trace("ProcessTimes for process with ID : %d\n", one_before_last_pid);
 
     status = pNtQueryInformationProcess( process, ProcessTimes, &spti, sizeof(spti), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
     CloseHandle(process);
 
     FileTimeToSystemTime((const FILETIME *)&spti.CreateTime, &UTC);
@@ -709,8 +709,8 @@ static void test_query_process_times(void)
     trace("UserTime   : %02d:%02d:%02d.%03d\n", Local.wHour, Local.wMinute, Local.wSecond, Local.wMilliseconds);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, sizeof(spti) * 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(spti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 }
 
 static void test_query_process_handlecount(void)
@@ -722,35 +722,35 @@ static void test_query_process_handlecount(void)
 
     status = pNtQueryInformationProcess(NULL, ProcessHandleCount, NULL, sizeof(handlecount), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
     status = pNtQueryInformationProcess(NULL, ProcessHandleCount, &handlecount, sizeof(handlecount), NULL);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     if (!process)
     {
-        trace("Could not open process with ID : %ld, error : %08lx. Going to use current one.\n", one_before_last_pid, GetLastError());
+        trace("Could not open process with ID : %d, error : %08x. Going to use current one.\n", one_before_last_pid, GetLastError());
         process = GetCurrentProcess();
         trace("ProcessHandleCount for current process\n");
     }
     else
-        trace("ProcessHandleCount for process with ID : %ld\n", one_before_last_pid);
+        trace("ProcessHandleCount for process with ID : %d\n", one_before_last_pid);
 
     status = pNtQueryInformationProcess( process, ProcessHandleCount, &handlecount, sizeof(handlecount), &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
     CloseHandle(process);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, sizeof(handlecount) * 2, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    trace("HandleCount : %ld\n", handlecount);
+    trace("HandleCount : %d\n", handlecount);
     todo_wine
     {
         ok( handlecount > 0, "Expected some handles, got 0\n");
@@ -771,32 +771,32 @@ static void test_readvirtualmemory(void)
 
     /* normal operation */
     status = pNtReadVirtualMemory(process, teststring, buffer, 12, &readcount);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
     ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* no number of bytes */
     memset(buffer, 0, 12);
     status = pNtReadVirtualMemory(process, teststring, buffer, 12, NULL);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* illegal remote address */
     todo_wine{
     status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
-    ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08lx\n", status);
+    ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
     ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
     }
 
     /* 0 handle */
     status = pNtReadVirtualMemory(0, teststring, buffer, 12, &readcount);
-    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
     ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
 
     /* pseudo handle for current process*/
     memset(buffer, 0, 12);
     status = pNtReadVirtualMemory((HANDLE)-1, teststring, buffer, 12, &readcount);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
     ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 

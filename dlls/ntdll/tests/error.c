@@ -71,7 +71,7 @@ static void cmp_call(NTSTATUS win_nt, ULONG win32, const char* message)
 
     err = statustodoserror(win_nt);
     ok(err == win32,
-       "%s (%lx): got %ld, expected %ld\n",
+       "%s (%x): got %d, expected %d\n",
             message, win_nt, err, win32);
 }
 
@@ -82,7 +82,7 @@ static void cmp_call2(NTSTATUS win_nt, ULONG win32, const char* message)
     err = statustodoserror(win_nt);
     ok(err == win32 ||
        (!strict && err == ERROR_MR_MID_NOT_FOUND),
-       "%s (%lx): got %ld, expected %ld (or MID_NOT_FOUND)\n",
+       "%s (%x): got %d, expected %d (or MID_NOT_FOUND)\n",
        message, win_nt, err, win32);
 }
 
@@ -92,7 +92,7 @@ static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char*
 
     err = statustodoserror(win_nt);
     ok(err == win32_1 || (!strict && err == win32_2),
-       "%s (%lx): got %ld, expected %ld or %ld\n",
+       "%s (%x): got %d, expected %d or %d\n",
             message, win_nt, err, win32_1, win32_2);
 }
 
@@ -103,7 +103,7 @@ static void cmp_call4(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char*
     err = statustodoserror(win_nt);
     ok(err == win32_1 ||
        (!strict && (err == win32_2 || err == ERROR_MR_MID_NOT_FOUND)),
-       "%s (%lx): got %ld, expected %ld or %ld\n",
+       "%s (%x): got %d, expected %d or %d\n",
             message, win_nt, err, win32_1, win32_2);
 }
 

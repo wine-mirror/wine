@@ -59,22 +59,22 @@ void test_case_sensitive (void)
     pRtlInitUnicodeString(&str, buffer1);
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtCreateMutant(&Mutant, GENERIC_ALL, &attr, FALSE);
-    ok(status == STATUS_SUCCESS, "Failed to create Mutant(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create Mutant(%08x)\n", status);
 
     status = pNtCreateEvent(&Event, GENERIC_ALL, &attr, FALSE, FALSE);
     ok(status == STATUS_OBJECT_NAME_COLLISION,
-        "NtCreateEvent should have failed with STATUS_OBJECT_NAME_COLLISION got(%08lx)\n", status);
+        "NtCreateEvent should have failed with STATUS_OBJECT_NAME_COLLISION got(%08x)\n", status);
 
     pRtlInitUnicodeString(&str, buffer2);
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtCreateEvent(&Event, GENERIC_ALL, &attr, FALSE, FALSE);
-    ok(status == STATUS_SUCCESS, "Failed to create Event(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create Event(%08x)\n", status);
 
     pRtlInitUnicodeString(&str, buffer3);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenMutant(&h, GENERIC_ALL, &attr);
     ok(status == STATUS_OBJECT_TYPE_MISMATCH,
-        "NtOpenMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
+        "NtOpenMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08x)\n", status);
 
     pNtClose(Mutant);
 
@@ -82,16 +82,16 @@ void test_case_sensitive (void)
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtCreateMutant(&Mutant, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_NAME_COLLISION,
-        "NtCreateMutant should have failed with STATUS_OBJECT_NAME_COLLISION got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_NAME_COLLISION got(%08x)\n", status);
 
     status = pNtCreateEvent(&h, GENERIC_ALL, &attr, FALSE, FALSE);
     ok(status == STATUS_OBJECT_NAME_COLLISION,
-        "NtCreateEvent should have failed with STATUS_OBJECT_NAME_COLLISION got(%08lx)\n", status);
+        "NtCreateEvent should have failed with STATUS_OBJECT_NAME_COLLISION got(%08x)\n", status);
 
     attr.Attributes = 0;
     status = pNtCreateMutant(&Mutant, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
-        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08x)\n", status);
 
     pNtClose(Event);
 }
@@ -115,36 +115,36 @@ void test_namespace_pipe(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
-    ok(status == STATUS_SUCCESS, "Failed to create NamedPipe(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create NamedPipe(%08x)\n", status);
 
     status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
     ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
-        "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08lx)\n", status);
+        "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08x)\n", status);
 
     pRtlInitUnicodeString(&str, buffer2);
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
     ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
-        "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08lx)\n", status);
+        "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08x)\n", status);
 
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
     pNtClose(h);
 
     pRtlInitUnicodeString(&str, buffer3);
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_PIPE_NOT_AVAILABLE,
-        "pNtOpenFile should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08lx)\n", status);
+        "pNtOpenFile should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08x)\n", status);
 
     pRtlInitUnicodeString(&str, buffer4);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND,
-        "pNtOpenFile should have failed with STATUS_OBJECT_NAME_NOT_FOUND got(%08lx)\n", status);
+        "pNtOpenFile should have failed with STATUS_OBJECT_NAME_NOT_FOUND got(%08x)\n", status);
 
     pNtClose(pipe);
 }
@@ -154,10 +154,10 @@ void test_namespace_pipe(void)
 
 #define DIR_TEST_CREATE_FAILURE(h,e) \
     status = pNtCreateDirectoryObject(h, DIRECTORY_QUERY, &attr);\
-    ok(status == e,"NtCreateDirectoryObject should have failed with %s got(%08lx)\n", #e, status);
+    ok(status == e,"NtCreateDirectoryObject should have failed with %s got(%08x)\n", #e, status);
 #define DIR_TEST_OPEN_FAILURE(h,e) \
     status = pNtOpenDirectoryObject(h, DIRECTORY_QUERY, &attr);\
-    ok(status == e,"NtOpenDirectoryObject should have failed with %s got(%08lx)\n", #e, status);
+    ok(status == e,"NtOpenDirectoryObject should have failed with %s got(%08x)\n", #e, status);
 #define DIR_TEST_CREATE_OPEN_FAILURE(h,n,e) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
     DIR_TEST_CREATE_FAILURE(h,e) DIR_TEST_OPEN_FAILURE(h,e)\
@@ -165,10 +165,10 @@ void test_namespace_pipe(void)
 
 #define DIR_TEST_CREATE_SUCCESS(h) \
     status = pNtCreateDirectoryObject(h, DIRECTORY_QUERY, &attr); \
-    ok(status == STATUS_SUCCESS, "Failed to create Directory(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create Directory(%08x)\n", status);
 #define DIR_TEST_OPEN_SUCCESS(h) \
     status = pNtOpenDirectoryObject(h, DIRECTORY_QUERY, &attr); \
-    ok(status == STATUS_SUCCESS, "Failed to open Directory(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open Directory(%08x)\n", status);
 #define DIR_TEST_CREATE_OPEN_SUCCESS(h,n) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
     DIR_TEST_CREATE_SUCCESS(h) pNtClose(h); DIR_TEST_OPEN_SUCCESS(h) pNtClose(h); \
@@ -192,13 +192,13 @@ static void test_name_collisions(void)
     pNtClose(h);
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_TYPE_MISMATCH,
-        "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\??\\PIPE\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_OBJECT_PATH_NOT_FOUND,
-        "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
 
@@ -208,68 +208,68 @@ static void test_name_collisions(void)
     InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, dir, NULL);
     
     h = CreateMutexA(NULL, FALSE, "om.c-test");
-    ok(h != 0, "CreateMutexA failed got ret=%p (%ld)\n", h, GetLastError());
+    ok(h != 0, "CreateMutexA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateMutant(&h1, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
-        "NtCreateMutant should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
+        "NtCreateMutant should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
     h2 = CreateMutexA(NULL, FALSE, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
-        "CreateMutexA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%ld)\n", h2, winerr);
+        "CreateMutexA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
     pNtClose(h);
     pNtClose(h1);
     pNtClose(h2);
 
     h = CreateEventA(NULL, FALSE, FALSE, "om.c-test");
-    ok(h != 0, "CreateEventA failed got ret=%p (%ld)\n", h, GetLastError());
+    ok(h != 0, "CreateEventA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateEvent(&h1, GENERIC_ALL, &attr, FALSE, FALSE);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
-        "NtCreateEvent should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
+        "NtCreateEvent should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
     h2 = CreateEventA(NULL, FALSE, FALSE, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
-        "CreateEventA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%ld)\n", h2, winerr);
+        "CreateEventA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
     pNtClose(h);
     pNtClose(h1);
     pNtClose(h2);
 
     h = CreateSemaphoreA(NULL, 1, 2, "om.c-test");
-    ok(h != 0, "CreateSemaphoreA failed got ret=%p (%ld)\n", h, GetLastError());
+    ok(h != 0, "CreateSemaphoreA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateSemaphore(&h1, GENERIC_ALL, &attr, 1, 2);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
-        "NtCreateSemaphore should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
+        "NtCreateSemaphore should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
     h2 = CreateSemaphoreA(NULL, 1, 2, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
-        "CreateSemaphoreA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%ld)\n", h2, winerr);
+        "CreateSemaphoreA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
     pNtClose(h);
     pNtClose(h1);
     pNtClose(h2);
     
     h = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
-    ok(h != 0, "CreateWaitableTimerA failed got ret=%p (%ld)\n", h, GetLastError());
+    ok(h != 0, "CreateWaitableTimerA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateTimer(&h1, GENERIC_ALL, &attr, NotificationTimer);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
-        "NtCreateTimer should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
+        "NtCreateTimer should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
     h2 = CreateWaitableTimerA(NULL, TRUE, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
-        "CreateWaitableTimerA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%ld)\n", h2, winerr);
+        "CreateWaitableTimerA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
     pNtClose(h);
     pNtClose(h1);
     pNtClose(h2);
 
     h = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 256, "om.c-test");
-    ok(h != 0, "CreateFileMappingA failed got ret=%p (%ld)\n", h, GetLastError());
+    ok(h != 0, "CreateFileMappingA failed got ret=%p (%d)\n", h, GetLastError());
     size.u.LowPart = 256;
     size.u.HighPart = 0;
     status = pNtCreateSection(&h1, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0);
     ok(status == STATUS_OBJECT_NAME_EXISTS && h1 != NULL,
-        "NtCreateSection should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08lx)\n", status);
+        "NtCreateSection should have succeeded with STATUS_OBJECT_NAME_EXISTS got(%08x)\n", status);
     h2 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 256, "om.c-test");
     winerr = GetLastError();
     ok(h2 != 0 && winerr == ERROR_ALREADY_EXISTS,
-        "CreateFileMappingA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%ld)\n", h2, winerr);
+        "CreateFileMappingA should have succeeded with ERROR_ALREADY_EXISTS got ret=%p (%d)\n", h2, winerr);
     pNtClose(h);
     pNtClose(h1);
     pNtClose(h2);
@@ -288,17 +288,17 @@ void test_directory(void)
     /* No name and/or no attributes */
     status = pNtCreateDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
     ok(status == STATUS_ACCESS_VIOLATION,
-        "NtCreateDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
+        "NtCreateDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08x)\n", status);
     status = pNtOpenDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
     ok(status == STATUS_ACCESS_VIOLATION,
-        "NtOpenDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
+        "NtOpenDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08x)\n", status);
 
     status = pNtCreateDirectoryObject(&h, DIRECTORY_QUERY, NULL);
-    ok(status == STATUS_SUCCESS, "Failed to create Directory without attributes(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create Directory without attributes(%08x)\n", status);
     pNtClose(h);
     status = pNtOpenDirectoryObject(&h, DIRECTORY_QUERY, NULL);
     ok(status == STATUS_INVALID_PARAMETER,
-        "NtOpenDirectoryObject should have failed with STATUS_INVALID_PARAMETER got(%08lx)\n", status);
+        "NtOpenDirectoryObject should have failed with STATUS_INVALID_PARAMETER got(%08x)\n", status);
 
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
     DIR_TEST_CREATE_SUCCESS(&dir)
@@ -334,7 +334,7 @@ void test_directory(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtOpenSymbolicLinkObject(&dir, SYMBOLIC_LINK_QUERY, &attr);\
-    ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "one more level");
@@ -421,23 +421,23 @@ void test_directory(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
-        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\om.c-mutant\\");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
-        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c\\-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND,
-        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08lx)\n", status);
+        "NtCreateMutant should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
-    ok(status == STATUS_SUCCESS, "Failed to create Mutant(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create Mutant(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     pNtClose(h);
 
@@ -446,10 +446,10 @@ void test_directory(void)
 
 #define SYMLNK_TEST_CREATE_FAILURE(h,e) \
     status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target);\
-    ok(status == e,"NtCreateSymbolicLinkObject should have failed with %s got(%08lx)\n", #e, status);
+    ok(status == e,"NtCreateSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);
 #define SYMLNK_TEST_OPEN_FAILURE(h,e) \
     status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr);\
-    ok(status == e,"NtOpenSymbolicLinkObject should have failed with %s got(%08lx)\n", #e, status);
+    ok(status == e,"NtOpenSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);
 #define SYMLNK_TEST_CREATE_OPEN_FAILURE(h,n,t,e) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
     pRtlCreateUnicodeStringFromAsciiz(&target, t);\
@@ -460,10 +460,10 @@ void test_directory(void)
 
 #define SYMLNK_TEST_CREATE_SUCCESS(h) \
     status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target); \
-    ok(status == STATUS_SUCCESS, "Failed to create SymbolicLink(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to create SymbolicLink(%08x)\n", status);
 #define SYMLNK_TEST_OPEN_SUCCESS(h) \
     status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr); \
-    ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08lx)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08x)\n", status);
 
 void test_symboliclink(void)
 {
@@ -478,10 +478,10 @@ void test_symboliclink(void)
 
     status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL, NULL);
     ok(status == STATUS_ACCESS_VIOLATION,
-        "NtCreateSymbolicLinkObject should have failed with STATUS_ACCESS_VIOLATION got(%08lx)\n", status);
+        "NtCreateSymbolicLinkObject should have failed with STATUS_ACCESS_VIOLATION got(%08x)\n", status);
     status = pNtOpenSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL);
     ok(status == STATUS_INVALID_PARAMETER,
-        "NtOpenSymbolicLinkObject should have failed with STATUS_INVALID_PARAMETER got(%08lx)\n", status);
+        "NtOpenSymbolicLinkObject should have failed with STATUS_INVALID_PARAMETER got(%08x)\n", status);
 
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
     SYMLNK_TEST_CREATE_FAILURE(&link, STATUS_INVALID_PARAMETER)
@@ -523,7 +523,7 @@ void test_symboliclink(void)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "Local\\test-link\\PIPE");
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08lx)\n", status);
+    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pNtClose(h);
