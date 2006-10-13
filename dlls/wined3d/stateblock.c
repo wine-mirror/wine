@@ -985,10 +985,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     for (i = 0; i < GL_LIMITS(texture_stages); i++) {
         TRACE("Setting up default texture states for texture Stage %d\n", i);
         memcpy(&This->transforms[WINED3DTS_TEXTURE0 + i], &identity, sizeof(identity));
-        This->textureState[i][WINED3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_COLOROP               ] = (i==0)? WINED3DTOP_MODULATE :  WINED3DTOP_DISABLE;
         This->textureState[i][WINED3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
         This->textureState[i][WINED3DTSS_COLORARG2             ] = D3DTA_CURRENT;
-        This->textureState[i][WINED3DTSS_ALPHAOP               ] = (i==0)? D3DTOP_SELECTARG1 :  D3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_ALPHAOP               ] = (i==0)? WINED3DTOP_SELECTARG1 :  WINED3DTOP_DISABLE;
         This->textureState[i][WINED3DTSS_ALPHAARG1             ] = D3DTA_TEXTURE;
         This->textureState[i][WINED3DTSS_ALPHAARG2             ] = D3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_BUMPENVMAT00          ] = (DWORD) 0.0;

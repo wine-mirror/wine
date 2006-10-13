@@ -1972,8 +1972,8 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
     for (i = 0; i < GL_LIMITS(texture_stages); ++i) {
         INT texture_idx = -1;
 
-        /* D3DTOP_DISABLE disables the current & any higher texture stages */
-        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] == D3DTOP_DISABLE) break;
+        /* WINED3DTOP_DISABLE disables the current & any higher texture stages */
+        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) break;
 
         if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[i]) {
             texture_idx = current_sampler++;
@@ -2057,7 +2057,7 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
 
     /* If we're using register combiners, set the amount of *used* combiners.
      * Ie, the number of stages below the first stage to have a color op of
-     * D3DTOP_DISABLE. */
+     * WINED3DTOP_DISABLE. */
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         /* NUM_GENERAL_COMBINERS_NV should be > 0 */
         if (!i) glDisable(GL_REGISTER_COMBINERS_NV);
