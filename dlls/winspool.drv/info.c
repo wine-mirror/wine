@@ -427,7 +427,7 @@ static BOOL CUPS_LoadPrinters(void)
 
             if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
                 if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
-                    ERR("printer '%s' not added by AddPrinterA (error %ld)\n",dests[i].name,GetLastError());
+                    ERR("printer '%s' not added by AddPrinterA (error %d)\n",dests[i].name,GetLastError());
             }
         }
 	HeapFree(GetProcessHeap(),0,port);
@@ -549,7 +549,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
 
         if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
             if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-                ERR("%s not added by AddPrinterA (%ld)\n",name,GetLastError());
+                ERR("%s not added by AddPrinterA (%d)\n",name,GetLastError());
         }
     }
     RegCloseKey(hkeyPrinters);
@@ -653,7 +653,7 @@ void WINSPOOL_LoadSystemPrinters(void)
     di3a.pDefaultDataType = default_data_type;
 
     if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
-	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
+	ERR("Failed adding PS Driver (%d)\n",GetLastError());
         return;
     }
 
@@ -782,7 +782,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) == ERROR_SUCCESS) {
         /* Scan all Monitor-Registry-Keys */
         while (RegEnumKeyExW(hroot, index, buffer, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-            TRACE("Monitor_%ld: %s\n", numentries, debugstr_w(buffer));
+            TRACE("Monitor_%d: %s\n", numentries, debugstr_w(buffer));
             dllsize = sizeof(dllname);
             dllname[0] = '\0';
 
@@ -812,7 +812,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
                     mi = (LPMONITOR_INFO_2W) pMonitors;
                     pMonitors += entrysize;
 
-                    TRACE("%p: writing MONITOR_INFO_%ldW #%ld\n", mi, level, numentries);
+                    TRACE("%p: writing MONITOR_INFO_%dW #%d\n", mi, level, numentries);
                     mi->pName = ptr;
                     lstrcpyW(ptr, buffer);      /* Name of the Monitor */
                     ptr += (len+1);               /* len is lstrlenW(monitorname) */
@@ -834,7 +834,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
         RegCloseKey(hroot);
     }
     *lpreturned = numentries;
-    TRACE("need %ld byte for %ld entries\n", needed, numentries);
+    TRACE("need %d byte for %d entries\n", needed, numentries);
     return needed;
 }
 
@@ -846,7 +846,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
  */
 static void monitor_unload(monitor_t * pm)
 {
-    TRACE("%p (refcount: %ld) %s\n", pm, pm->refcount, debugstr_w(pm->name));
+    TRACE("%p (refcount: %d) %s\n", pm, pm->refcount, debugstr_w(pm->name));
 
     EnterCriticalSection(&monitor_handles_cs);
 
@@ -928,7 +928,7 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
         }
 
         pm->hdll = LoadLibraryW(driver);
-        TRACE("%p: LoadLibrary(%s) => %ld\n", pm->hdll, debugstr_w(driver), GetLastError());
+        TRACE("%p: LoadLibrary(%s) => %d\n", pm->hdll, debugstr_w(driver), GetLastError());
 
         if (pm->hdll == NULL) {
             monitor_unload(pm);
@@ -954,7 +954,7 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
             pm->monitorUI = pInitializePrintMonitorUI();
             TRACE("%p: MONITORUI from %s,InitializePrintMonitorUI()\n", pm->monitorUI, debugstr_w(driver)); 
             if (pm->monitorUI) {
-                TRACE(  "0x%08lx: dwMonitorSize (%ld) => %ld Functions\n",
+                TRACE(  "0x%08x: dwMonitorSize (%d) => %d Functions\n",
                         pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize,
                         (pm->monitorUI->dwMonitorUISize - sizeof(DWORD) ) / sizeof(VOID *));
 
@@ -973,7 +973,7 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
         }
 
         if (pm->monitor) {
-            TRACE(  "0x%08lx: dwMonitorSize (%ld) => %ld Functions\n", 
+            TRACE(  "0x%08x: dwMonitorSize (%d) => %d Functions\n", 
                     pm->dwMonitorSize, pm->dwMonitorSize,
                     (pm->dwMonitorSize) / sizeof(VOID *) );
 
@@ -1388,7 +1388,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
     static CHAR port[] = "LPT1:";
     LONG ret;
 
-    TRACE("(%p,%p,%s,%p,%p,%ld)\n",
+    TRACE("(%p,%p,%s,%p,%p,%d)\n",
 	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
     );
 
@@ -1436,7 +1436,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
     LPDEVMODEA pDevModeOutputA = NULL;
     LONG ret;
 
-    TRACE("(%p,%p,%s,%p,%p,%ld)\n",
+    TRACE("(%p,%p,%s,%p,%p,%d)\n",
           hWnd,hPrinter,debugstr_w(pDeviceName),pDevModeOutput,pDevModeInput,
 	  fMode);
     if(pDevModeOutput) {
@@ -1525,7 +1525,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), phPrinter, pDefault);
     if (pDefault) {
-        FIXME("PRINTER_DEFAULTS ignored => %s,%p,0x%08lx\n",
+        FIXME("PRINTER_DEFAULTS ignored => %s,%p,0x%08x\n",
         debugstr_w(pDefault->pDatatype), pDefault->pDevMode, pDefault->DesiredAccess);
     }
 
@@ -1574,7 +1574,7 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
     MONITOR_INFO_2W mi2w;
 
     mi2a = (LPMONITOR_INFO_2A) pMonitors;
-    TRACE("(%s, %ld, %p) :  %s %s %s\n", debugstr_a(pName), Level, pMonitors, 
+    TRACE("(%s, %d, %p) :  %s %s %s\n", debugstr_a(pName), Level, pMonitors, 
             mi2a ? debugstr_a(mi2a->pName) : NULL,
             mi2a ? debugstr_a(mi2a->pEnvironment) : NULL,
             mi2a ? debugstr_a(mi2a->pDLLName) : NULL);
@@ -1650,7 +1650,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
     BOOL    res = FALSE;
 
     mi2w = (LPMONITOR_INFO_2W) pMonitors;
-    TRACE("(%s, %ld, %p) :  %s %s %s\n", debugstr_w(pName), Level, pMonitors, 
+    TRACE("(%s, %d, %p) :  %s %s %s\n", debugstr_w(pName), Level, pMonitors, 
             mi2w ? debugstr_w(mi2w->pName) : NULL,
             mi2w ? debugstr_w(mi2w->pEnvironment) : NULL,
             mi2w ? debugstr_w(mi2w->pDLLName) : NULL);
@@ -1909,7 +1909,7 @@ DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
  */
 BOOL WINAPI SetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter, DWORD Command)
 {
-    FIXME("(%p, %ld, %p, %ld): stub\n", hPrinter, Level, pPrinter, Command);
+    FIXME("(%p, %d, %p, %d): stub\n", hPrinter, Level, pPrinter, Command);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1922,7 +1922,7 @@ BOOL WINAPI WritePrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf, LPDWORD pcWr
     opened_printer_t *printer;
     BOOL ret = FALSE;
 
-    TRACE("(%p, %p, %ld, %p)\n", hPrinter, pBuf, cbBuf, pcWritten);
+    TRACE("(%p, %p, %d, %p)\n", hPrinter, pBuf, cbBuf, pcWritten);
 
     EnterCriticalSection(&printer_handles_cs);
     printer = get_opened_printer(hPrinter);
@@ -1949,7 +1949,7 @@ end:
  */
 BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
-    FIXME("(%p,%ld,%p): stub\n", hPrinter, Level, pForm);
+    FIXME("(%p,%d,%p): stub\n", hPrinter, Level, pForm);
     return 1;
 }
 
@@ -1958,7 +1958,7 @@ BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
  */
 BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
-    FIXME("(%p,%ld,%p): stub\n", hPrinter, Level, pForm);
+    FIXME("(%p,%d,%p): stub\n", hPrinter, Level, pForm);
     return 1;
 }
 
@@ -2009,7 +2009,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     DWORD len;
     ADDJOB_INFO_1W *addjob;
 
-    TRACE("(%p,%ld,%p,%ld,%p)\n", hPrinter, Level, pData, cbBuf, pcbNeeded);
+    TRACE("(%p,%d,%p,%d,%p)\n", hPrinter, Level, pData, cbBuf, pcbNeeded);
     
     EnterCriticalSection(&printer_handles_cs);
 
@@ -2076,7 +2076,7 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
     BOOL    ret;
     INT     len;
 
-    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_a(server), 
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_a(server), 
           debugstr_a(env), level, Info, cbBuf, pcbNeeded);
  
 
@@ -2102,7 +2102,7 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
                                        cbBuf, NULL, NULL) > 0;
 
 
-    TRACE(" required: 0x%lx/%ld\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
+    TRACE(" required: 0x%x/%d\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
     HeapFree(GetProcessHeap(), 0, envW);
     HeapFree(GetProcessHeap(), 0, serverW);
     return ret;
@@ -2145,7 +2145,7 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
     DWORD needed;
     const printenv_t * env_t;
 
-    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(server),
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(server),
             debugstr_w(env), level, Info, cbBuf, pcbNeeded);
 
     if(server != NULL && server[0]) {
@@ -2158,7 +2158,7 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
     if(!env_t) return FALSE;  /* environment invalid or unsupported */
 
     if(level != 1) {
-        WARN("(Level: %ld) is ignored in win9x\n", level);
+        WARN("(Level: %d) is ignored in win9x\n", level);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -2171,7 +2171,7 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
     needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
     if(pcbNeeded) *pcbNeeded = needed;
-    TRACE ("required: 0x%lx/%ld\n", needed, needed);
+    TRACE ("required: 0x%x/%d\n", needed, needed);
     if (needed > cbBuf) {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
@@ -2254,7 +2254,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
     LONG size;
 
-    TRACE("(%s,%ld,%p)\n", debugstr_w(pName), Level, pPrinter);
+    TRACE("(%s,%d,%p)\n", debugstr_w(pName), Level, pPrinter);
 
     if(pName != NULL) {
         ERR("pName = %s - unsupported\n", debugstr_w(pName));
@@ -2262,7 +2262,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	return 0;
     }
     if(Level != 2) {
-        ERR("Level = %ld, unsupported!\n", Level);
+        ERR("Level = %d, unsupported!\n", Level);
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
@@ -2404,9 +2404,9 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
     PRINTER_INFO_2A *piA = (PRINTER_INFO_2A*)pPrinter;
     HANDLE ret;
 
-    TRACE("(%s,%ld,%p): stub\n", debugstr_a(pName), Level, pPrinter);
+    TRACE("(%s,%d,%p): stub\n", debugstr_a(pName), Level, pPrinter);
     if(Level != 2) {
-        ERR("Level = %ld, unsupported!\n", Level);
+        ERR("Level = %d, unsupported!\n", Level);
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
@@ -2561,7 +2561,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                            DWORD Command)
 {
-    FIXME("(%p,%ld,%p,%ld): stub\n",hPrinter,Level,pPrinter,Command);
+    FIXME("(%p,%d,%p,%d): stub\n",hPrinter,Level,pPrinter,Command);
     return FALSE;
 }
 
@@ -2575,7 +2575,7 @@ BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
     LPBYTE JobW;
     UNICODE_STRING usBuffer;
 
-    TRACE("(%p, %ld, %ld, %p, %ld)\n",hPrinter, JobId, Level, pJob, Command);
+    TRACE("(%p, %d, %d, %p, %d)\n",hPrinter, JobId, Level, pJob, Command);
 
     /* JobId, pPrinterName, pMachineName, pDriverName, Size, Submitted, Time and TotalPages
        are all ignored by SetJob, so we don't bother copying them */
@@ -2673,7 +2673,7 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
     BOOL ret = FALSE;
     job_t *job;
 
-    TRACE("(%p, %ld, %ld, %p, %ld)\n", hPrinter, JobId, Level, pJob, Command);
+    TRACE("(%p, %d, %d, %p, %d)\n", hPrinter, JobId, Level, pJob, Command);
     FIXME("Ignoring everything other than document title\n");
 
     EnterCriticalSection(&printer_handles_cs);
@@ -2808,7 +2808,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     HANDLE hf;
     WCHAR *filename;
 
-    TRACE("(hPrinter = %p, Level = %ld, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}):\n",
+    TRACE("(hPrinter = %p, Level = %d, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}):\n",
           hPrinter, Level, doc, debugstr_w(doc->pDocName), debugstr_w(doc->pOutputFile),
           debugstr_w(doc->pDatatype));
 
@@ -2837,7 +2837,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 
     if(!AddJobW(hPrinter, 1, addjob_buf, sizeof(addjob_buf), &needed))
     {
-        ERR("AddJob failed gle %08lx\n", GetLastError());
+        ERR("AddJob failed gle %08x\n", GetLastError());
         goto end;
     }
 
@@ -2878,7 +2878,7 @@ BOOL WINAPI StartPagePrinter(HANDLE hPrinter)
 BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("(%p,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pFormName,
+    FIXME("(%p,%s,%d,%p,%d,%p): stub\n",hPrinter,pFormName,
          Level,pForm,cbBuf,pcbNeeded);
     return FALSE;
 }
@@ -2889,7 +2889,7 @@ BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
 BOOL WINAPI GetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("(%p,%s,%ld,%p,%ld,%p): stub\n",hPrinter,
+    FIXME("(%p,%s,%d,%p,%d,%p): stub\n",hPrinter,
 	  debugstr_w(pFormName),Level,pForm,cbBuf,pcbNeeded);
     return FALSE;
 }
@@ -2900,7 +2900,7 @@ BOOL WINAPI GetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
 BOOL WINAPI SetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                         LPBYTE pForm)
 {
-    FIXME("(%p,%s,%ld,%p): stub\n",hPrinter,pFormName,Level,pForm);
+    FIXME("(%p,%s,%d,%p): stub\n",hPrinter,pFormName,Level,pForm);
     return FALSE;
 }
 
@@ -2910,7 +2910,7 @@ BOOL WINAPI SetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
 BOOL WINAPI SetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
                         LPBYTE pForm)
 {
-    FIXME("(%p,%p,%ld,%p): stub\n",hPrinter,pFormName,Level,pForm);
+    FIXME("(%p,%p,%d,%p): stub\n",hPrinter,pFormName,Level,pForm);
     return FALSE;
 }
 
@@ -2920,7 +2920,7 @@ BOOL WINAPI SetFormW(HANDLE hPrinter, LPWSTR pFormName, DWORD Level,
 BOOL WINAPI ReadPrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf,
                            LPDWORD pNoBytesRead)
 {
-    FIXME("(%p,%p,%ld,%p): stub\n",hPrinter,pBuf,cbBuf,pNoBytesRead);
+    FIXME("(%p,%p,%d,%p): stub\n",hPrinter,pBuf,cbBuf,pNoBytesRead);
     return FALSE;
 }
 
@@ -2955,11 +2955,11 @@ static DWORD WINSPOOL_GetDWORDFromReg(HKEY hkey, LPCSTR ValueName)
     ret = RegQueryValueExA(hkey, ValueName, 0, &type, (LPBYTE)&value, &sz);
 
     if(ret != ERROR_SUCCESS) {
-        WARN("Got ret = %ld on name %s\n", ret, ValueName);
+        WARN("Got ret = %d on name %s\n", ret, ValueName);
 	return 0;
     }
     if(type != REG_DWORD) {
-        ERR("Got type %ld\n", type);
+        ERR("Got type %d\n", type);
 	return 0;
     }
     return value;
@@ -2987,7 +2987,7 @@ static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
 	HeapFree(GetProcessHeap(),0,ValueNameA);
     }
     if(ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
-        WARN("Got ret = %ld\n", ret);
+        WARN("Got ret = %d\n", ret);
 	*needed = 0;
 	return FALSE;
     }
@@ -3097,7 +3097,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if ((ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)) sz = 0;
     if (sz < sizeof(DEVMODEA))
     {
-        TRACE("corrupted registry for %s ( size %ld)\n",debugstr_w(ValueName),sz);
+        TRACE("corrupted registry for %s ( size %d)\n",debugstr_w(ValueName),sz);
 	return FALSE;
     }
     /* ensures that dmSize is not erratically bogus if registry is invalid */
@@ -3367,7 +3367,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     HKEY hkeyPrinter, hkeyPrinters;
     BOOL ret;
 
-    TRACE("(%p,%ld,%p,%ld,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
+    TRACE("(%p,%d,%p,%d,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
 
     if (!(name = get_opened_printer_name(hPrinter))) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -3448,7 +3448,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
       }
 
     default:
-        FIXME("Unimplemented level %ld\n", Level);
+        FIXME("Unimplemented level %d\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
 	RegCloseKey(hkeyPrinters);
 	RegCloseKey(hkeyPrinter);
@@ -3458,7 +3458,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
 
-    TRACE("returning %d needed = %ld\n", ret, needed);
+    TRACE("returning %d needed = %d\n", ret, needed);
     if(pcbNeeded) *pcbNeeded = needed;
     if(!ret)
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -3520,7 +3520,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     }
 
     if (!((dwType & PRINTER_ENUM_LOCAL) || (dwType & PRINTER_ENUM_NAME))) {
-        FIXME("dwType = %08lx\n", dwType);
+        FIXME("dwType = %08x\n", dwType);
 	SetLastError(ERROR_INVALID_FLAGS);
 	return FALSE;
     }
@@ -3537,7 +3537,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	ERR("Can't query Printers key\n");
 	return FALSE;
     }
-    TRACE("Found %ld printers\n", number);
+    TRACE("Found %d printers\n", number);
 
     switch(dwLevel) {
     case 1:
@@ -3566,11 +3566,11 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     for(i = 0; i < number; i++) {
         if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) !=
 	   ERROR_SUCCESS) {
-	    ERR("Can't enum key number %ld\n", i);
+	    ERR("Can't enum key number %d\n", i);
 	    RegCloseKey(hkeyPrinters);
 	    return FALSE;
 	}
-	TRACE("Printer %ld is %s\n", i, debugstr_w(PrinterName));
+	TRACE("Printer %d is %s\n", i, debugstr_w(PrinterName));
 	if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkeyPrinter) !=
 	   ERROR_SUCCESS) {
 	    ERR("Can't open key %s\n", debugstr_w(PrinterName));
@@ -3739,7 +3739,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
     HKEY   hkeyDriver;
     LPBYTE strPtr = pDriverStrings;
 
-    TRACE("%s,%s,%ld,%p,%p,%ld,%d\n",
+    TRACE("%s,%s,%d,%p,%p,%d,%d\n",
           debugstr_w(DriverName), debugstr_w(pEnvironment),
           Level, ptr, pDriverStrings, cbBuf, unicode);
 
@@ -3827,7 +3827,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 
     if(Level == 2 ) {
         RegCloseKey(hkeyDriver);
-        TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
+        TRACE("buffer space %d required %d\n", cbBuf, *pcbNeeded);
         return TRUE;
     }
 
@@ -3875,7 +3875,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
 
-    TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
+    TRACE("buffer space %d required %d\n", cbBuf, *pcbNeeded);
     RegCloseKey(hkeyDriver);
     return TRUE;
 }
@@ -3894,7 +3894,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
     LPBYTE ptr = NULL;
     HKEY hkeyPrinter, hkeyPrinters, hkeyDrivers;
 
-    TRACE("(%p,%s,%ld,%p,%ld,%p)\n",hPrinter,debugstr_w(pEnvironment),
+    TRACE("(%p,%s,%d,%p,%d,%p)\n",hPrinter,debugstr_w(pEnvironment),
 	  Level,pDriverInfo,cbBuf, pcbNeeded);
 
     ZeroMemory(pDriverInfo, cbBuf);
@@ -3975,7 +3975,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
     RegCloseKey(hkeyDrivers);
 
     if(pcbNeeded) *pcbNeeded = size + needed;
-    TRACE("buffer space %ld required %ld\n", cbBuf, size + needed);
+    TRACE("buffer space %d required %d\n", cbBuf, size + needed);
     if(cbBuf >= needed) return TRUE;
     SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return FALSE;
@@ -4046,7 +4046,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
     DWORD needed;
     const printenv_t * env;
 
-    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(pName), 
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName), 
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
     if(pName != NULL && pName[0]) {
         FIXME("pName unsupported: %s\n", debugstr_w(pName));
@@ -4058,7 +4058,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
     if(!env) return FALSE;  /* pEnvironment invalid or unsupported */
 
     if(Level != 1) {
-        WARN("(Level: %ld) is ignored in win9x\n", Level);
+        WARN("(Level: %d) is ignored in win9x\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -4072,7 +4072,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 
     if(pcbNeeded)
         *pcbNeeded = needed;
-    TRACE("required: 0x%lx/%ld\n", needed, needed);
+    TRACE("required: 0x%x/%d\n", needed, needed);
     if(needed > cbBuf) {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
@@ -4118,7 +4118,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     INT len = cbBuf * sizeof(WCHAR)/sizeof(CHAR);
     WCHAR *driverDirectoryW = NULL;
 
-    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_a(pName), 
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_a(pName), 
           debugstr_a(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
  
     if (len) driverDirectoryW = HeapAlloc( GetProcessHeap(), 0, len );
@@ -4140,7 +4140,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     } else 
         if(pcbNeeded) *pcbNeeded = pcbNeededW * sizeof(CHAR)/sizeof(WCHAR);
 
-    TRACE("required: 0x%lx/%ld\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
+    TRACE("required: 0x%x/%d\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
 
     HeapFree( GetProcessHeap(), 0, driverDirectoryW );
     RtlFreeUnicodeString(&environmentW);
@@ -4159,7 +4159,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
     static CHAR empty[]    = "",
                 nullnull[] = "\0";
 
-    TRACE("(%s,%ld,%p)\n",debugstr_a(pName),level,pDriverInfo);
+    TRACE("(%s,%d,%p)\n",debugstr_a(pName),level,pDriverInfo);
 
     if(level != 2 && level != 3) {
         SetLastError(ERROR_INVALID_LEVEL);
@@ -4238,7 +4238,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
 				   LPBYTE pDriverInfo)
 {
-    FIXME("(%s,%ld,%p): stub\n",debugstr_w(printerName),
+    FIXME("(%s,%d,%p): stub\n",debugstr_w(printerName),
 	  level,pDriverInfo);
     return FALSE;
 }
@@ -4270,7 +4270,7 @@ BOOL WINAPI AddPrintProcessorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPathNa
  */
 BOOL WINAPI AddPrintProvidorA(LPSTR pName, DWORD Level, LPBYTE pProviderInfo)
 {
-    FIXME("(%s,0x%08lx,%p): stub\n", debugstr_a(pName), Level, pProviderInfo);
+    FIXME("(%s,0x%08x,%p): stub\n", debugstr_a(pName), Level, pProviderInfo);
     return FALSE;
 }
 
@@ -4279,7 +4279,7 @@ BOOL WINAPI AddPrintProvidorA(LPSTR pName, DWORD Level, LPBYTE pProviderInfo)
  */
 BOOL WINAPI AddPrintProvidorW(LPWSTR pName, DWORD Level, LPBYTE pProviderInfo)
 {
-    FIXME("(%s,0x%08lx,%p): stub\n", debugstr_w(pName), Level, pProviderInfo);
+    FIXME("(%s,0x%08x,%p): stub\n", debugstr_w(pName), Level, pProviderInfo);
     return FALSE;
 }
 
@@ -4332,7 +4332,7 @@ BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
 		      LPDWORD pcReturned)
 {
-    FIXME("(%p,first=%ld,no=%ld,level=%ld,job=%p,cb=%ld,%p,%p), stub!\n",
+    FIXME("(%p,first=%d,no=%d,level=%d,job=%p,cb=%d,%p,%p), stub!\n",
 	hPrinter, FirstJob, NoJobs, Level, pJob, cbBuf, pcbNeeded, pcReturned
     );
     if(pcbNeeded) *pcbNeeded = 0;
@@ -4349,7 +4349,7 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
 		      LPDWORD pcReturned)
 {
-    FIXME("(%p,first=%ld,no=%ld,level=%ld,job=%p,cb=%ld,%p,%p), stub!\n",
+    FIXME("(%p,first=%d,no=%d,level=%d,job=%p,cb=%d,%p,%p), stub!\n",
 	hPrinter, FirstJob, NoJobs, Level, pJob, cbBuf, pcbNeeded, pcReturned
     );
     if(pcbNeeded) *pcbNeeded = 0;
@@ -4380,7 +4380,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
     WCHAR DriverNameW[255];
     PBYTE ptr;
 
-    TRACE("%s,%s,%ld,%p,%ld,%d\n",
+    TRACE("%s,%s,%d,%p,%d,%d\n",
           debugstr_w(pName), debugstr_w(pEnvironment),
           Level, pDriverInfo, cbBuf, unicode);
 
@@ -4393,7 +4393,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
 
     /* check input parameter */
     if((Level < 1) || (Level > 3)) {
-        ERR("unsupported level %ld\n", Level);
+        ERR("unsupported level %d\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -4416,7 +4416,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
         ERR("Can't query Drivers key\n");
         return FALSE;
     }
-    TRACE("Found %ld Drivers\n", number);
+    TRACE("Found %d Drivers\n", number);
 
     /* get size of single struct
      * unicode and ascii structure have the same size
@@ -4441,7 +4441,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
          i++, ptr = (ptr && (cbBuf >= size * i)) ? ptr + size : NULL) {
         if(RegEnumKeyW(hkeyDrivers, i, DriverNameW, sizeof(DriverNameW))
                        != ERROR_SUCCESS) {
-            ERR("Can't enum key number %ld\n", i);
+            ERR("Can't enum key number %d\n", i);
             RegCloseKey(hkeyDrivers);
             return FALSE;
         }
@@ -4554,7 +4554,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     HKEY hkey_printer;
     BOOL retval = TRUE;
 
-    TRACE("(%s,%ld,%p,%ld,%p,%p)\n",
+    TRACE("(%s,%d,%p,%d,%p,%p)\n",
           debugstr_a(name),level,buffer,bufsize,bufneeded,bufreturned);
 
     switch( level )
@@ -4683,7 +4683,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 BOOL WINAPI EnumPortsW(LPWSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
                        LPDWORD bufneeded,LPDWORD bufreturned)
 {
-    FIXME("(%s,%ld,%p,%ld,%p,%p) - stub\n",
+    FIXME("(%s,%d,%p,%d,%p,%p) - stub\n",
           debugstr_w(name),level,buffer,bufsize,bufneeded,bufreturned);
     return FALSE;
 }
@@ -4778,7 +4778,7 @@ BOOL WINAPI GetDefaultPrinterA(LPSTR name, LPDWORD namesize)
         *namesize = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
         retval = FALSE;
     }
-    TRACE("0x%08lx/0x%08lx:%s\n", *namesize, insize, debugstr_w(bufferW));
+    TRACE("0x%08x/0x%08x:%s\n", *namesize, insize, debugstr_w(bufferW));
 
 end:
     HeapFree( GetProcessHeap(), 0, bufferW);
@@ -4840,7 +4840,7 @@ DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     HKEY hkeyPrinter, hkeySubkey;
     DWORD ret;
 
-    TRACE("(%p, %s, %s %08lx, %p, %08lx)\n", hPrinter, debugstr_a(pKeyName),
+    TRACE("(%p, %s, %s %08x, %p, %08x)\n", hPrinter, debugstr_a(pKeyName),
 	  debugstr_a(pValueName), Type, pData, cbData);
 
     if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
@@ -4869,7 +4869,7 @@ DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     HKEY hkeyPrinter, hkeySubkey;
     DWORD ret;
 
-    TRACE("(%p, %s, %s %08lx, %p, %08lx)\n", hPrinter, debugstr_w(pKeyName),
+    TRACE("(%p, %s, %s %08x, %p, %08x)\n", hPrinter, debugstr_w(pKeyName),
 	  debugstr_w(pValueName), Type, pData, cbData);
 
     if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
@@ -4918,7 +4918,7 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     HKEY hkeyPrinter, hkeySubkey;
     DWORD ret;
 
-    TRACE("(%p, %s, %s %p, %p, %08lx, %p)\n", hPrinter,
+    TRACE("(%p, %s, %s %p, %p, %08x, %p)\n", hPrinter,
 	  debugstr_a(pKeyName), debugstr_a(pValueName), pType, pData, nSize,
 	  pcbNeeded);
 
@@ -4949,7 +4949,7 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     HKEY hkeyPrinter, hkeySubkey;
     DWORD ret;
 
-    TRACE("(%p, %s, %s %p, %p, %08lx, %p)\n", hPrinter,
+    TRACE("(%p, %s, %s %p, %p, %08x, %p)\n", hPrinter,
 	  debugstr_w(pKeyName), debugstr_w(pValueName), pType, pData, nSize,
 	  pcbNeeded);
 
@@ -5014,7 +5014,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     ret = WINSPOOL_GetOpenedPrinterRegKey (hPrinter, &hkPrinter);
     if (ret != ERROR_SUCCESS)
     {
-	TRACE ("WINSPOOL_GetOpenedPrinterRegKey (%p) returned %li\n",
+	TRACE ("WINSPOOL_GetOpenedPrinterRegKey (%p) returned %i\n",
 		hPrinter, ret);
 	return ret;
     }
@@ -5024,8 +5024,8 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     {
 	r = RegCloseKey (hkPrinter);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
-	TRACE ("RegOpenKeyExW (%p, %s) returned %li\n", hPrinter,
+	    WARN ("RegCloseKey returned %i\n", r);
+	TRACE ("RegOpenKeyExW (%p, %s) returned %i\n", hPrinter,
 		debugstr_w (pKeyName), ret);
 	return ret;
     }
@@ -5033,10 +5033,10 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     ret = RegCloseKey (hkPrinter);
     if (ret != ERROR_SUCCESS)
     {
-	ERR ("RegCloseKey returned %li\n", ret);
+	ERR ("RegCloseKey returned %i\n", ret);
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ret;
     }
 
@@ -5046,19 +5046,19 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     {
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
-	TRACE ("RegQueryInfoKeyW (%p) returned %li\n", hkSubKey, ret);
+	    WARN ("RegCloseKey returned %i\n", r);
+	TRACE ("RegQueryInfoKeyW (%p) returned %i\n", hkSubKey, ret);
 	return ret;
     }
 
-    TRACE ("RegQueryInfoKeyW returned cValues = %li, cbMaxValueNameLen = %li, "
-	    "cbMaxValueLen = %li\n", cValues, cbMaxValueNameLen, cbMaxValueLen);
+    TRACE ("RegQueryInfoKeyW returned cValues = %i, cbMaxValueNameLen = %i, "
+	    "cbMaxValueLen = %i\n", cValues, cbMaxValueNameLen, cbMaxValueLen);
 
     if (cValues == 0)			/* empty key */
     {
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	*pcbEnumValues = *pnEnumValues = 0;
 	return ERROR_SUCCESS;
     }
@@ -5071,30 +5071,30 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 	ERR ("GetProcessHeap failed\n");
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ERROR_OUTOFMEMORY;
     }
 
     lpValueName = HeapAlloc (hHeap, 0, cbMaxValueNameLen * sizeof (WCHAR));
     if (lpValueName == NULL)
     {
-	ERR ("Failed to allocate %li bytes from process heap\n",
+	ERR ("Failed to allocate %i bytes from process heap\n",
 		cbMaxValueNameLen * sizeof (WCHAR));
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ERROR_OUTOFMEMORY;
     }
 
     lpValue = HeapAlloc (hHeap, 0, cbMaxValueLen);
     if (lpValue == NULL)
     {
-	ERR ("Failed to allocate %li bytes from process heap\n", cbMaxValueLen);
+	ERR ("Failed to allocate %i bytes from process heap\n", cbMaxValueLen);
 	if (HeapFree (hHeap, 0, lpValueName) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ERROR_OUTOFMEMORY;
     }
 
@@ -5102,7 +5102,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 
     cbBufSize = cValues * sizeof (PRINTER_ENUM_VALUESW);
 
-    TRACE ("%li bytes required for %li headers\n", cbBufSize, cValues);
+    TRACE ("%i bytes required for %i headers\n", cbBufSize, cValues);
 
     for (dwIndex = 0; dwIndex < cValues; ++dwIndex)
     {
@@ -5112,17 +5112,17 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 	if (ret != ERROR_SUCCESS)
 	{
 	    if (HeapFree (hHeap, 0, lpValue) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    if (HeapFree (hHeap, 0, lpValueName) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    r = RegCloseKey (hkSubKey);
 	    if (r != ERROR_SUCCESS)
-		WARN ("RegCloseKey returned %li\n", r);
-	    TRACE ("RegEnumValueW (%li) returned %li\n", dwIndex, ret);
+		WARN ("RegCloseKey returned %i\n", r);
+	    TRACE ("RegEnumValueW (%i) returned %i\n", dwIndex, ret);
 	    return ret;
 	}
 
-	TRACE ("%s [%li]: name needs %li bytes, data needs %li bytes\n",
+	TRACE ("%s [%i]: name needs %i bytes, data needs %i bytes\n",
 		debugstr_w (lpValueName), dwIndex,
 		(cbValueNameLen + 1) * sizeof (WCHAR), cbValueLen);
 
@@ -5130,7 +5130,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 	cbBufSize += cbValueLen;
     }
 
-    TRACE ("%li bytes required for all %li values\n", cbBufSize, cValues);
+    TRACE ("%i bytes required for all %i values\n", cbBufSize, cValues);
 
     *pcbEnumValues = cbBufSize;
     *pnEnumValues = cValues;
@@ -5138,13 +5138,13 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     if (cbEnumValues < cbBufSize)	/* buffer too small */
     {
 	if (HeapFree (hHeap, 0, lpValue) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
 	if (HeapFree (hHeap, 0, lpValueName) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
-	TRACE ("%li byte buffer is not large enough\n", cbEnumValues);
+	    WARN ("RegCloseKey returned %i\n", r);
+	TRACE ("%i byte buffer is not large enough\n", cbEnumValues);
 	return ERROR_MORE_DATA;
     }
 
@@ -5161,13 +5161,13 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 	if (ret != ERROR_SUCCESS)
 	{
 	    if (HeapFree (hHeap, 0, lpValue) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    if (HeapFree (hHeap, 0, lpValueName) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    r = RegCloseKey (hkSubKey);
 	    if (r != ERROR_SUCCESS)
-		WARN ("RegCloseKey returned %li\n", r);
-	    TRACE ("RegEnumValueW (%li) returned %li\n", dwIndex, ret);
+		WARN ("RegCloseKey returned %i\n", r);
+	    TRACE ("RegEnumValueW (%i) returned %i\n", dwIndex, ret);
 	    return ret;
 	}
 
@@ -5187,36 +5187,36 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 
 	ppev[dwIndex].cbData = cbValueLen;
 
-	TRACE ("%s [%li]: copied name (%li bytes) and data (%li bytes)\n",
+	TRACE ("%s [%i]: copied name (%i bytes) and data (%i bytes)\n",
 		debugstr_w (lpValueName), dwIndex, cbValueNameLen, cbValueLen);
     }
 
     if (HeapFree (hHeap, 0, lpValue) == 0)
     {
 	ret = GetLastError ();
-	ERR ("HeapFree failed with code %li\n", ret);
+	ERR ("HeapFree failed with code %i\n", ret);
 	if (HeapFree (hHeap, 0, lpValueName) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ret;
     }
 
     if (HeapFree (hHeap, 0, lpValueName) == 0)
     {
 	ret = GetLastError ();
-	ERR ("HeapFree failed with code %li\n", ret);
+	ERR ("HeapFree failed with code %i\n", ret);
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
-	    WARN ("RegCloseKey returned %li\n", r);
+	    WARN ("RegCloseKey returned %i\n", r);
 	return ret;
     }
 
     ret = RegCloseKey (hkSubKey);
     if (ret != ERROR_SUCCESS)
     {
-	ERR ("RegCloseKey returned %li\n", ret);
+	ERR ("RegCloseKey returned %i\n", ret);
 	return ret;
     }
 
@@ -5250,7 +5250,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     if (len == 0)
     {
 	ret = GetLastError ();
-	ERR ("MultiByteToWideChar failed with code %li\n", ret);
+	ERR ("MultiByteToWideChar failed with code %i\n", ret);
 	return ret;
     }
 
@@ -5264,7 +5264,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     pKeyNameW = HeapAlloc (hHeap, 0, len * sizeof (WCHAR));
     if (pKeyNameW == NULL)
     {
-	ERR ("Failed to allocate %li bytes from process heap\n",
+	ERR ("Failed to allocate %i bytes from process heap\n",
 		(LONG) len * sizeof (WCHAR));
 	return ERROR_OUTOFMEMORY;
     }
@@ -5272,9 +5272,9 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     if (MultiByteToWideChar (CP_ACP, 0, pKeyName, -1, pKeyNameW, len) == 0)
     {
 	ret = GetLastError ();
-	ERR ("MultiByteToWideChar failed with code %li\n", ret);
+	ERR ("MultiByteToWideChar failed with code %i\n", ret);
 	if (HeapFree (hHeap, 0, pKeyNameW) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
 	return ret;
     }
 
@@ -5283,15 +5283,15 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     if (ret != ERROR_SUCCESS)
     {
 	if (HeapFree (hHeap, 0, pKeyNameW) == 0)
-	    WARN ("HeapFree failed with code %li\n", GetLastError ());
-	TRACE ("EnumPrinterDataExW returned %li\n", ret);
+	    WARN ("HeapFree failed with code %i\n", GetLastError ());
+	TRACE ("EnumPrinterDataExW returned %i\n", ret);
 	return ret;
     }
 
     if (HeapFree (hHeap, 0, pKeyNameW) == 0)
     {
 	ret = GetLastError ();
-	ERR ("HeapFree failed with code %li\n", ret);
+	ERR ("HeapFree failed with code %i\n", ret);
 	return ret;
     }
 
@@ -5312,12 +5312,12 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 	    dwBufSize = ppev->cbData;
     }
 
-    TRACE ("Largest Unicode name or value is %li bytes\n", dwBufSize);
+    TRACE ("Largest Unicode name or value is %i bytes\n", dwBufSize);
 
     pBuffer = HeapAlloc (hHeap, 0, dwBufSize);
     if (pBuffer == NULL)
     {
-	ERR ("Failed to allocate %li bytes from process heap\n", dwBufSize);
+	ERR ("Failed to allocate %i bytes from process heap\n", dwBufSize);
 	return ERROR_OUTOFMEMORY;
     }
 
@@ -5332,9 +5332,9 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 	if (len == 0)
 	{
 	    ret = GetLastError ();
-	    ERR ("WideCharToMultiByte failed with code %li\n", ret);
+	    ERR ("WideCharToMultiByte failed with code %i\n", ret);
 	    if (HeapFree (hHeap, 0, pBuffer) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    return ret;
 	}
 
@@ -5351,9 +5351,9 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 	if (len == 0)
 	{
 	    ret = GetLastError ();
-	    ERR ("WideCharToMultiByte failed with code %li\n", ret);
+	    ERR ("WideCharToMultiByte failed with code %i\n", ret);
 	    if (HeapFree (hHeap, 0, pBuffer) == 0)
-		WARN ("HeapFree failed with code %li\n", GetLastError ());
+		WARN ("HeapFree failed with code %i\n", GetLastError ());
 	    return ret;
 	}
 
@@ -5366,7 +5366,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     if (HeapFree (hHeap, 0, pBuffer) == 0)
     {
 	ret = GetLastError ();
-	ERR ("HeapFree failed with code %li\n", ret);
+	ERR ("HeapFree failed with code %i\n", ret);
 	return ret;
     }
 
@@ -5426,7 +5426,7 @@ BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
  */
 BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffer, LPSTR lpMonitorName)
 {
-    FIXME("(%p, %s, %ld, %p, %s), stub!\n",hMonitor, debugstr_a(pName), Level,
+    FIXME("(%p, %s, %d, %p, %s), stub!\n",hMonitor, debugstr_a(pName), Level,
           lpBuffer, debugstr_a(lpMonitorName));
     return FALSE;
 }
@@ -5453,7 +5453,7 @@ BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffe
  */
 BOOL WINAPI AddPortExW(HANDLE hMonitor, LPWSTR pName, DWORD Level, LPBYTE lpBuffer, LPWSTR lpMonitorName)
 {
-    FIXME("(%p, %s, %ld, %p, %s), stub!\n", hMonitor, debugstr_w(pName), Level,
+    FIXME("(%p, %s, %d, %p, %s), stub!\n", hMonitor, debugstr_w(pName), Level,
           lpBuffer, debugstr_w(lpMonitorName));
     return FALSE;
 }
@@ -5482,7 +5482,7 @@ BOOL WINAPI AddPrinterConnectionW( LPWSTR pName )
 BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD Level,
     LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
 {
-    FIXME("%s %ld %p %ld\n", debugstr_w(pName),
+    FIXME("%s %d %p %d\n", debugstr_w(pName),
            Level, pDriverInfo, dwFileCopyFlags);
     SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
     return FALSE;
@@ -5494,7 +5494,7 @@ BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD Level,
 BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
     LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
 {
-    FIXME("%s %ld %p %ld\n", debugstr_a(pName),
+    FIXME("%s %d %p %d\n", debugstr_a(pName),
            Level, pDriverInfo, dwFileCopyFlags);
     SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
     return FALSE;
@@ -5541,7 +5541,7 @@ BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
  */
 HANDLE WINAPI ConnectToPrinterDlg( HWND hWnd, DWORD Flags )
 {
-    FIXME("%p %lx\n", hWnd, Flags);
+    FIXME("%p %x\n", hWnd, Flags);
     return NULL;
 }
 
@@ -5569,7 +5569,7 @@ BOOL WINAPI DeletePrinterConnectionW( LPWSTR pName )
 BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
     LPWSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
 {
-    FIXME("%s %s %s %lx %lx\n", debugstr_w(pName), debugstr_w(pEnvironment),
+    FIXME("%s %s %s %x %x\n", debugstr_w(pName), debugstr_w(pEnvironment),
           debugstr_w(pDriverName), dwDeleteFlag, dwVersionFlag);
     return TRUE;
 }
@@ -5580,7 +5580,7 @@ BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
 BOOL WINAPI DeletePrinterDriverExA( LPSTR pName, LPSTR pEnvironment,
     LPSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
 {
-    FIXME("%s %s %s %lx %lx\n", debugstr_a(pName), debugstr_a(pEnvironment),
+    FIXME("%s %s %s %x %x\n", debugstr_a(pName), debugstr_a(pEnvironment),
           debugstr_a(pDriverName), dwDeleteFlag, dwVersionFlag);
     return TRUE;
 }
@@ -5653,7 +5653,7 @@ BOOL WINAPI DeletePrintProvidorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPrin
 BOOL WINAPI EnumFormsA( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
     DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned )
 {
-    FIXME("%p %lx %p %lx %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
+    FIXME("%p %x %p %x %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -5664,7 +5664,7 @@ BOOL WINAPI EnumFormsA( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
 BOOL WINAPI EnumFormsW( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
     DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned )
 {
-    FIXME("%p %lx %p %lx %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
+    FIXME("%p %x %p %x %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -5685,7 +5685,7 @@ BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
     DWORD   numentries = 0;
     INT     len;
 
-    TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_a(pName), Level, pMonitors,
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_a(pName), Level, pMonitors,
           cbBuf, pcbNeeded, pcReturned);
 
     /* convert servername to unicode */
@@ -5732,7 +5732,7 @@ BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
         while (index < numentries) {
             index++;
             needed += entrysize;    /* MONITOR_INFO_?A */
-            TRACE("%p: parsing #%ld (%s)\n", mi2w, index, debugstr_w(mi2w->pName));
+            TRACE("%p: parsing #%d (%s)\n", mi2w, index, debugstr_w(mi2w->pName));
 
             needed += WideCharToMultiByte(CP_ACP, 0, mi2w->pName, -1,
                                             NULL, 0, NULL, NULL);
@@ -5762,7 +5762,7 @@ BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
         /* Second Pass: Fill the User Buffer (if we have one) */
         while ((index < numentries) && pMonitors) {
             index++;
-            TRACE("%p: writing MONITOR_INFO_%ldA #%ld\n", mi2a, Level, index);
+            TRACE("%p: writing MONITOR_INFO_%dA #%d\n", mi2a, Level, index);
             mi2a->pName = ptr;
             len = WideCharToMultiByte(CP_ACP, 0, mi2w->pName, -1,
                                             ptr, cbBuf , NULL, NULL);
@@ -5793,7 +5793,7 @@ emA_cleanup:
     HeapFree(GetProcessHeap(), 0, nameW);
     HeapFree(GetProcessHeap(), 0, bufferW);
 
-    TRACE("returning %d with %ld (%ld byte for %ld entries)\n", 
+    TRACE("returning %d with %d (%d byte for %d entries)\n", 
             (res), GetLastError(), needed, numentries);
 
     return (res);
@@ -5832,7 +5832,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
     DWORD   numentries = 0;
     BOOL    res = FALSE;
 
-    TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
           cbBuf, pcbNeeded, pcReturned);
 
     if (pName && (lstrlenW(pName))) {
@@ -5843,7 +5843,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
 
     /* Level is not checked in win9x */
     if (!Level || (Level > 2)) {
-        WARN("level (%ld) is ignored in win9x\n", Level);
+        WARN("level (%d) is ignored in win9x\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
         goto emW_cleanup;
     }
@@ -5874,7 +5874,7 @@ emW_cleanup:
     if (pcbNeeded)  *pcbNeeded = needed;
     if (pcReturned) *pcReturned = numentries;
 
-    TRACE("returning %d with %ld (%ld byte for %ld entries)\n", 
+    TRACE("returning %d with %d (%d byte for %d entries)\n", 
             res, GetLastError(), needed, numentries);
 
     return (res);
@@ -5890,7 +5890,7 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
     PDWORD pcbOutputNeeded, PDWORD pdwStatus)
 {
-    FIXME("%p %s %p %ld %p %ld %p %p\n", hXcv, debugstr_w(pszDataName), 
+    FIXME("%p %s %p %d %p %d %p %p\n", hXcv, debugstr_w(pszDataName), 
           pInputData, cbInputData, pOutputData,
           cbOutputData, pcbOutputNeeded, pdwStatus);
     return FALSE;
@@ -5904,7 +5904,7 @@ DWORD WINAPI EnumPrinterDataA( HANDLE hPrinter, DWORD dwIndex, LPSTR pValueName,
     DWORD cbValueName, LPDWORD pcbValueName, LPDWORD pType, LPBYTE pData,
     DWORD cbData, LPDWORD pcbData )
 {
-    FIXME("%p %lx %p %lx %p %p %p %lx %p\n", hPrinter, dwIndex, pValueName,
+    FIXME("%p %x %p %x %p %p %p %x %p\n", hPrinter, dwIndex, pValueName,
           cbValueName, pcbValueName, pType, pData, cbData, pcbData);
     return ERROR_NO_MORE_ITEMS;
 }
@@ -5917,7 +5917,7 @@ DWORD WINAPI EnumPrinterDataW( HANDLE hPrinter, DWORD dwIndex, LPWSTR pValueName
     DWORD cbValueName, LPDWORD pcbValueName, LPDWORD pType, LPBYTE pData,
     DWORD cbData, LPDWORD pcbData )
 {
-    FIXME("%p %lx %p %lx %p %p %p %lx %p\n", hPrinter, dwIndex, pValueName,
+    FIXME("%p %x %p %x %p %p %p %x %p\n", hPrinter, dwIndex, pValueName,
           cbValueName, pcbValueName, pType, pData, cbData, pcbData);
     return ERROR_NO_MORE_ITEMS;
 }
@@ -5930,7 +5930,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesA(LPSTR pName, LPSTR pPrintProcessorName,
                                          DWORD Level, LPBYTE pDatatypes, DWORD cbBuf,
                                          LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_a(pName),
+    FIXME("Stub: %s %s %d %p %d %p %p\n", debugstr_a(pName),
           debugstr_a(pPrintProcessorName), Level, pDatatypes, cbBuf,
           pcbNeeded, pcReturned);
     return FALSE;
@@ -5944,7 +5944,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(LPWSTR pName, LPWSTR pPrintProcessorNam
                                          DWORD Level, LPBYTE pDatatypes, DWORD cbBuf,
                                          LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_w(pName),
+    FIXME("Stub: %s %s %d %p %d %p %p\n", debugstr_w(pName),
           debugstr_w(pPrintProcessorName), Level, pDatatypes, cbBuf,
           pcbNeeded, pcReturned);
     return FALSE;
@@ -5957,7 +5957,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(LPWSTR pName, LPWSTR pPrintProcessorNam
 BOOL WINAPI EnumPrintProcessorsA(LPSTR pName, LPSTR pEnvironment, DWORD Level, 
     LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
 {
-    FIXME("Stub: %s %s %ld %p %ld %p %p\n", pName, pEnvironment, Level,
+    FIXME("Stub: %s %s %d %p %d %p %p\n", pName, pEnvironment, Level,
         pPrintProcessorInfo, cbBuf, pcbNeeded, pcbReturned);
     return FALSE;
 }
@@ -5969,7 +5969,7 @@ BOOL WINAPI EnumPrintProcessorsA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
 BOOL WINAPI EnumPrintProcessorsW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
     LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
 {
-    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_w(pName),
+    FIXME("Stub: %s %s %d %p %d %p %p\n", debugstr_w(pName),
         debugstr_w(pEnvironment), Level, pPrintProcessorInfo,
         cbBuf, pcbNeeded, pcbReturned);
     return FALSE;
@@ -5983,7 +5983,7 @@ LONG WINAPI ExtDeviceMode( HWND hWnd, HANDLE hInst, LPDEVMODEA pDevModeOutput,
     LPSTR pDeviceName, LPSTR pPort, LPDEVMODEA pDevModeInput, LPSTR pProfile,
     DWORD fMode)
 {
-    FIXME("Stub: %p %p %p %s %s %p %s %lx\n", hWnd, hInst, pDevModeOutput,
+    FIXME("Stub: %p %p %p %s %s %p %s %x\n", hWnd, hInst, pDevModeOutput,
           debugstr_a(pDeviceName), debugstr_a(pPort), pDevModeInput,
           debugstr_a(pProfile), fMode);
     return -1;
@@ -6006,7 +6006,7 @@ BOOL WINAPI FindClosePrinterChangeNotification( HANDLE hChange )
 HANDLE WINAPI FindFirstPrinterChangeNotification( HANDLE hPrinter,
     DWORD fdwFlags, DWORD fdwOptions, LPVOID pPrinterNotifyOptions )
 {
-    FIXME("Stub: %p %lx %lx %p\n",
+    FIXME("Stub: %p %x %x %p\n",
           hPrinter, fdwFlags, fdwOptions, pPrinterNotifyOptions);
     return INVALID_HANDLE_VALUE;
 }
@@ -6142,7 +6142,7 @@ static BOOL get_job_info(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
     job_t *job;
     LPBYTE ptr = pJob;
 
-    TRACE("%p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded);
+    TRACE("%p %d %d %p %d %p\n", hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded);
 
     EnterCriticalSection(&printer_handles_cs);
     job = get_job(hPrinter, JobId);
@@ -6486,7 +6486,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
     BOOL ret = FALSE;
     struct list *cursor, *cursor2;
 
-    TRACE("(%p, %lx)\n", hPrinter, dwJobID);
+    TRACE("(%p, %x)\n", hPrinter, dwJobID);
     EnterCriticalSection(&printer_handles_cs);
     printer = get_opened_printer(hPrinter);
     if(!printer)
@@ -6512,7 +6512,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             GetPrinterW(hPrinter, 5, NULL, 0, &needed);
             pi5 = HeapAlloc(GetProcessHeap(), 0, needed);
             GetPrinterW(hPrinter, 5, (LPBYTE)pi5, needed, &needed);
-            TRACE("need to schedule job %ld filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
+            TRACE("need to schedule job %d filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
                   debugstr_w(pi5->pPortName));
             
             output[0] = 0;
