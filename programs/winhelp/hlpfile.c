@@ -1429,6 +1429,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 wi->size.cx = (flags & 0x0020) ? GET_USHORT(ptr, 80) : CW_USEDEFAULT;
                 wi->size.cy = (flags & 0x0040) ? GET_USHORT(ptr, 82) : CW_USEDEFAULT;
                 wi->style = (flags & 0x0080) ? GET_USHORT(ptr, 84) : SW_SHOW;
+                wi->win_style = WS_OVERLAPPEDWINDOW;
                 wi->sr_color = (flags & 0x0100) ? GET_UINT(ptr, 86) : 0xFFFFFF;
                 wi->nsr_color = (flags & 0x0200) ? GET_UINT(ptr, 90) : 0xFFFFFF;
                 WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%d,%d)x(%d,%d)\n",
